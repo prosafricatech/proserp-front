@@ -5,16 +5,16 @@ import PdfLogo from '@/components/pdf/PdfLogo';
 import { Document, Page, Text, View } from '@react-pdf/renderer'
 import React from 'react'
 
-function SubContractMaterialIssuedPDF({SubContractMaterialIssuedDetails,organization}) {
+function SubContractMaterialUsedPDF({SubContractMaterialUsedDetails,organization}) {
     const mainColor = organization.settings?.main_color || "#2113AD";
     const lightColor = organization.settings?.light_color || "#bec5da";
     const contrastText = organization.settings?.contrast_text || "#FFFFFF";
 
   return (
     <Document 
-        title={`${SubContractMaterialIssuedDetails.issueNo}`}
-        author={`${SubContractMaterialIssuedDetails.creator?.name}`}
-        subject='Subcontract Material Issued'
+        title={`${SubContractMaterialUsedDetails.issueNo}`}
+        author={`${SubContractMaterialUsedDetails.creator?.name}`}
+        subject='Subcontract Material Used'
         creator='ProsERP'
         producer='ProsERP'
     >
@@ -24,32 +24,32 @@ function SubContractMaterialIssuedPDF({SubContractMaterialIssuedDetails,organiza
                         <PdfLogo organization={organization}/>
                     </View>
                     <View style={{ flex: 1, textAlign: 'right' }}>
-                        <Text style={{...pdfStyles.majorInfo, color: mainColor }}>Subcontract Material Issued</Text>
-                        <Text style={{ ...pdfStyles.minInfo, }}>{SubContractMaterialIssuedDetails.issueNo}</Text>
+                        <Text style={{...pdfStyles.majorInfo, color: mainColor }}>Subcontract Material Used</Text>
+                        <Text style={{ ...pdfStyles.minInfo, }}>{SubContractMaterialUsedDetails.issueNo}</Text>
                     </View>
                 </View>
                 <View style={{ ...pdfStyles.tableRow,marginBottom: 10}}>
                     <View style={{ flex: 0.5, padding: 2 }}>
                         <Text style={{...pdfStyles.minInfo, color: mainColor }}>Issue Date</Text>
-                        <Text style={{...pdfStyles.minInfo }}>{readableDate(SubContractMaterialIssuedDetails.issue_date, false)}</Text>
+                        <Text style={{...pdfStyles.minInfo }}>{readableDate(SubContractMaterialUsedDetails.issue_date, false)}</Text>
                     </View>
                     <View style={{ flex: 1, padding: 2 }}>
                         <Text style={{...pdfStyles.minInfo, color: mainColor }}>Project</Text>
-                        <Text style={{...pdfStyles.minInfo }}>{SubContractMaterialIssuedDetails.subcontract.project.name}</Text>
+                        <Text style={{...pdfStyles.minInfo }}>{SubContractMaterialUsedDetails.subcontract.project.name}</Text>
                     </View>
                     <View style={{ flex: 0.5, padding: 2 }}>
-                        {SubContractMaterialIssuedDetails.reference && <Text style={{...pdfStyles.minInfo, color: mainColor }}>Reference</Text>}
-                        {SubContractMaterialIssuedDetails.reference && <Text style={{...pdfStyles.minInfo }}>{SubContractMaterialIssuedDetails.reference}</Text>}
+                        {SubContractMaterialUsedDetails.reference && <Text style={{...pdfStyles.minInfo, color: mainColor }}>Reference</Text>}
+                        {SubContractMaterialUsedDetails.reference && <Text style={{...pdfStyles.minInfo }}>{SubContractMaterialUsedDetails.reference}</Text>}
                     </View>
                 </View>
                 <View style={{ ...pdfStyles.tableRow,marginBottom: 10}}>
                     <View style={{ flex: 0.5, padding: 2 }}>
                         <Text style={{...pdfStyles.minInfo, color: mainColor }}>Subcontract No</Text>
-                        <Text style={{...pdfStyles.minInfo }}>{SubContractMaterialIssuedDetails.subcontract.subcontractNo}</Text>
+                        <Text style={{...pdfStyles.minInfo }}>{SubContractMaterialUsedDetails.subcontract.subcontractNo}</Text>
                     </View>
                     <View style={{ flex: 1.5, padding: 2 }}>
                         <Text style={{...pdfStyles.minInfo, color: mainColor }}>Subcontractor name</Text>
-                        <Text style={{...pdfStyles.minInfo }}>{SubContractMaterialIssuedDetails.subcontract.subcontractor.name}</Text>
+                        <Text style={{...pdfStyles.minInfo }}>{SubContractMaterialUsedDetails.subcontract.subcontractor.name}</Text>
                     </View>
                 </View>
                 <View style={{...pdfStyles.table, minHeight: 200 }}>
@@ -60,7 +60,7 @@ function SubContractMaterialIssuedPDF({SubContractMaterialIssuedDetails,organiza
                         <Text style={{...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex : 0.8 }}>Quantity</Text>
                     </View>
                     {
-                        SubContractMaterialIssuedDetails.items.map((item,index) => (
+                        SubContractMaterialUsedDetails.items.map((item,index) => (
                             <View key={item.id} style={pdfStyles.tableRow}>
                                 <Text style={{ ...pdfStyles.tableCell,backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex : 0.3 }}>{index+1}</Text>
                                 <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex : 3 }}>{item.product.name}</Text>
@@ -70,18 +70,18 @@ function SubContractMaterialIssuedPDF({SubContractMaterialIssuedDetails,organiza
                         ))
                     }
                 </View> 
-                {!!SubContractMaterialIssuedDetails?.remarks &&
+                {!!SubContractMaterialUsedDetails?.remarks &&
                     <View style={{ ...pdfStyles.tableRow,marginTop: 5}}>
                         <View style={{ flex: 1}}>
                             <Text style={{...pdfStyles.minInfo, color: mainColor }}>Remarks</Text>
-                            <Text style={{...pdfStyles.minInfo }}>{SubContractMaterialIssuedDetails.remarks}</Text>
+                            <Text style={{...pdfStyles.minInfo }}>{SubContractMaterialUsedDetails.remarks}</Text>
                         </View>
                     </View>
                 }
                 <View style={{ ...pdfStyles.tableRow,marginTop: 20}}>
                     <View style={{ flex: 0.4, padding: 2 }}>
                         <Text style={{...pdfStyles.minInfo, color: mainColor, paddingBottom: 10 }}>Issued By:</Text>
-                        <Text style={{...pdfStyles.minInfo }}>{SubContractMaterialIssuedDetails.creator?.name}</Text>
+                        <Text style={{...pdfStyles.minInfo }}>{SubContractMaterialUsedDetails.creator?.name}</Text>
                     </View>
                     <View style={{ flex: 0.4, padding: 2 }}>
                         <Text style={{...pdfStyles.minInfo, color: mainColor, paddingBottom: 10 }}>Received By:</Text>
@@ -111,4 +111,4 @@ function SubContractMaterialIssuedPDF({SubContractMaterialIssuedDetails,organiza
   )
 }
 
-export default SubContractMaterialIssuedPDF
+export default SubContractMaterialUsedPDF

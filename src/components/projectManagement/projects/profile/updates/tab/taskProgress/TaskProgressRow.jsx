@@ -15,11 +15,11 @@ import {
 import { DisabledByDefault, EditOutlined } from '@mui/icons-material';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
-import TaskProgress from './TaskProgress';
-import MaterialUsed from './taskProgressTab/materialUsed/MaterialUsed';
-import MaterialUsedRow from './taskProgressTab/materialUsed/MaterialUsedRow';
 import { useUpdateFormContext } from '../../UpdatesForm';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
+import TaskProgress from './TaskProgress';
+import MaterialUsedForm from './taskProgressTab/materialUsed/MaterialUsedForm';
+import MaterialUsedRow from './taskProgressTab/materialUsed/MaterialUsedRow';
 
 function TaskProgressRow({ taskProgressItem, index }) {
   const { taskProgressItems, setTaskProgressItems } = useUpdateFormContext();
@@ -31,7 +31,7 @@ function TaskProgressRow({ taskProgressItem, index }) {
     .flatMap((task) => task.material_used || [])
     .filter((material) => material.projectTaskIndex === index);
 
-  const [materialUsed, setMaterialUsed] = useState(
+  const [MaterialUsed, setMaterialUsed] = useState(
     taskProgressItem?.material_used
       ? taskProgressItem.material_used.map((material) => ({
           ...material,
@@ -172,20 +172,20 @@ function TaskProgressRow({ taskProgressItem, index }) {
         </Tabs>
 
         {tabValue === 0 && (
-          <MaterialUsed
+          <MaterialUsedForm
             projectTaskIndex={index}
             taskProgressItem={taskProgressItem}
-            materialUsed={materialUsed}
+            MaterialUsed={MaterialUsed}
             setMaterialUsed={setMaterialUsed}
           />
         )}
         {tabValue === 0 &&
-          materialUsed.map((material, materialIndex) => (
+          MaterialUsed.map((material, materialIndex) => (
             <MaterialUsedRow
               key={materialIndex}
               index={materialIndex}
               material={material}
-              materialUsed={materialUsed}
+              MaterialUsed={MaterialUsed}
               setMaterialUsed={setMaterialUsed}
             />
           ))}

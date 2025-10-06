@@ -13,7 +13,7 @@ import ProductSelect from '@/components/productAndServices/products/ProductSelec
 import StoreSelector from '@/components/procurement/stores/StoreSelector';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 
-function MaterialUsed({projectTaskIndex, taskProgressItem, material = null, index = -1, setShowForm = null, materialUsed=[], setMaterialUsed}) {
+function MaterialUsedForm({projectTaskIndex, taskProgressItem, material = null, index = -1, setShowForm = null, MaterialUsed=[], setMaterialUsed}) {
   const { project} = useProjectProfile();
   const [isRetrieving, setIsRetrieving] = useState(false);
   const [selectedUnit, setSelectedUnit] = useState(material?.measurement_unit_id);
@@ -76,7 +76,7 @@ function MaterialUsed({projectTaskIndex, taskProgressItem, material = null, inde
     setIsAdding(true);
     
     if (index > -1) {
-      let updatedItems = [...materialUsed];
+      let updatedItems = [...MaterialUsed];
       updatedItems[index] = item;
       await setMaterialUsed(updatedItems);
     } else {
@@ -92,12 +92,12 @@ function MaterialUsed({projectTaskIndex, taskProgressItem, material = null, inde
     setTaskProgressItems((prevItems) => {
       return prevItems.map((taskItem, taskIndex) => {
         if (taskIndex === projectTaskIndex) {
-          return { ...taskItem, material_used: [...materialUsed] };
+          return { ...taskItem, material_used: [...MaterialUsed] };
         }
         return taskItem;
       });
     });
-  }, [materialUsed, projectTaskIndex, setTaskProgressItems]);
+  }, [MaterialUsed, projectTaskIndex, setTaskProgressItems]);
 
   const combinedUnits = product?.secondary_units?.concat(product?.primary_unit) || [];
 
@@ -328,4 +328,4 @@ function MaterialUsed({projectTaskIndex, taskProgressItem, material = null, inde
   )
 }
 
-export default MaterialUsed
+export default MaterialUsedForm

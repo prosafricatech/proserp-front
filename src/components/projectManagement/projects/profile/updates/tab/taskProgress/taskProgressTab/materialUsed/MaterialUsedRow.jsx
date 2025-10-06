@@ -1,15 +1,15 @@
 import { DisabledByDefault, EditOutlined } from '@mui/icons-material'
 import { Divider, Grid, IconButton, Tooltip, Typography } from '@mui/material'
 import React, { useState } from 'react'
-import MaterialUsed from './MaterialUsed';
+import MaterialUsedForm from './MaterialUsedForm';
 
-function MaterialUsedRow({ material, index, materialUsed=[], setMaterialUsed}) {
+function MaterialUsedRow({ material, index, MaterialUsed=[], setMaterialUsed}) {
     const product = material.product;
     const [showForm, setShowForm] = useState(false);
 
     const handleRemoveItem = () => {
-        setMaterialUsed(materialUsed => {
-            const newItems = [...materialUsed];
+        setMaterialUsed(MaterialUsed => {
+            const newItems = [...MaterialUsed];
             newItems.splice(index,1);
             return newItems;
         });
@@ -65,7 +65,7 @@ function MaterialUsedRow({ material, index, materialUsed=[], setMaterialUsed}) {
                         </Grid>
                     </Grid>
                 ) : (
-                    <MaterialUsed material={material} setShowForm={setShowForm} index={index} materialUsed={materialUsed} setMaterialUsed={setMaterialUsed}/>
+                    <MaterialUsedForm material={material} setShowForm={setShowForm} index={index} MaterialUsed={MaterialUsed} setMaterialUsed={setMaterialUsed}/>
                 )
             }
         </React.Fragment>
