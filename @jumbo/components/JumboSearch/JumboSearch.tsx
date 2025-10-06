@@ -1,6 +1,8 @@
 import React from 'react';
 import SearchIcon from "@mui/icons-material/Search";
+import CloseIcon from "@mui/icons-material/Close";
 import InputBase from "@mui/material/InputBase";
+import IconButton from "@mui/material/IconButton";
 import { SxProps, Theme } from "@mui/material/styles";
 import { Div } from '@jumbo/shared';
 import { useDebouncedCallback } from 'use-debounce';
@@ -15,17 +17,36 @@ interface JumboSearchProps {
 const JumboSearch: React.FC<JumboSearchProps> = React.memo(({ onChange, value = '', sx }) => {
   const dictionary = useDictionary();
   const [searchKeywords, setSearchKeywords] = React.useState<string>(value);
+  const [inputValue, setInputValue] = React.useState<string>(value);
 
   const handleChange = useDebouncedCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      setSearchKeywords(event.target.value);
+    (searchValue: string) => {
+      setSearchKeywords(searchValue);
     },
     1000
   );
 
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = event.target.value;
+    setInputValue(newValue);
+    handleChange(newValue);
+  };
+
+  const handleClear = () => {
+    setInputValue('');
+    setSearchKeywords('');
+    onChange('');
+    handleChange.cancel();
+  };
+
   React.useEffect(() => {
     onChange(searchKeywords);
   }, [searchKeywords, onChange]);
+
+  React.useEffect(() => {
+    setInputValue(value);
+    setSearchKeywords(value);
+  }, [value]);
 
   React.useEffect(() => {
     return () => {
@@ -62,6 +83,7 @@ const JumboSearch: React.FC<JumboSearchProps> = React.memo(({ onChange, value = 
           '& .MuiInputBase-input': {
             padding: (theme: Theme) => theme.spacing(1, 1, 1, 0),
             paddingLeft: (theme: Theme) => `calc(1em + ${theme.spacing(4)})`,
+            paddingRight: (theme: Theme) => inputValue ? theme.spacing(5) : theme.spacing(2),
             transition: (theme: Theme) => theme.transitions.create('width'),
             width: '100%',
             height: 24,
@@ -70,9 +92,51 @@ const JumboSearch: React.FC<JumboSearchProps> = React.memo(({ onChange, value = 
         placeholder={dictionary.rqList.jumboSearch}
         inputProps={{ 'aria-label': 'search' }}
         autoFocus
-        onChange={handleChange}
-        defaultValue={value}
+        onChange={handleInputChange}
+        value={inputValue}
       />
+      {inputValue && (
+        <Div
+          sx={{
+            position: 'absolute',
+            right: 8,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            zIndex: 3,
+          }}
+        >
+          <IconButton
+            size="small"
+            onClick={handleClear}
+            aria-label="clear search"
+            sx={{
+              padding: 0.5,
+              color: (theme: Theme) => theme.palette.text.secondary,
+              backgroundColor: (theme: Theme) => 
+                theme.palette.mode === 'dark'
+                  ? 'rgba(255, 255, 255, 0.1)'
+                  : 'rgba(0, 0, 0, 0.05)',
+              borderRadius: '50%',
+              width: 24,
+              height: 24,
+              '&:hover': {
+                color: (theme: Theme) => theme.palette.text.primary,
+                backgroundColor: (theme: Theme) => 
+                  theme.palette.mode === 'dark'
+                    ? 'rgba(255, 255, 255, 0.2)'
+                    : 'rgba(0, 0, 0, 0.1)',
+              },
+            }}
+          >
+            <CloseIcon 
+              fontSize="small" 
+              sx={{ 
+                fontSize: '16px',
+              }} 
+            />
+          </IconButton>
+        </Div>
+      )}
     </Div>
   );
 });

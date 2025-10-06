@@ -392,7 +392,7 @@ const AdjustmentOnScreen: React.FC<AdjustmentOnScreenProps> = ({
         </>
       )}
 
-      <Grid container spacing={2} sx={{ mt: 4, pt: 3, borderTop: '1px solid', borderColor: 'divider' }}>
+      <Grid container spacing={2} sx={{ mt: 3 }}>
         <Grid size={6}>
           <Typography
             variant="body2"
@@ -401,7 +401,7 @@ const AdjustmentOnScreen: React.FC<AdjustmentOnScreenProps> = ({
             Narration
           </Typography>
           <Typography variant="body1" color="text.primary" sx={{ lineHeight: 1.5 }}>
-            {adjustment.narration || 'No narration provided'}
+            {adjustment.narration}
           </Typography>
         </Grid>
         <Grid size={6}>
@@ -412,7 +412,7 @@ const AdjustmentOnScreen: React.FC<AdjustmentOnScreenProps> = ({
             Posted By
           </Typography>
           <Typography variant="body1" color="text.primary">
-            {adjustment.creator?.name || 'System'}
+            {adjustment.creator?.name}
           </Typography>
         </Grid>
       </Grid>

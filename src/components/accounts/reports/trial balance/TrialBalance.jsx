@@ -137,7 +137,7 @@ function TrialBalance() {
       };
 
       // Pass all filters to the service
-      const responseData = await financialReportsServices.downloadExcelTemplate(filters);
+      const responseData = await financialReportsServices.downloadExcelTrialBalance(filters);
       
       const blob = new Blob([responseData], {
         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -220,7 +220,6 @@ function TrialBalance() {
                       size="small"
                       onClick={downloadExcelTemplate}
                       loading={isDownloadingTemplate}
-                      disabled
                       variant="contained"
                       color="success"
                     >

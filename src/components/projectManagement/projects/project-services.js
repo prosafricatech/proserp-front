@@ -14,14 +14,14 @@ projectsServices.getList = async (
 
 projectsServices.getSubcontractsList = async (params) => {
   const response = await axios.get(`/api/projectManagement/project/${params.project_id}/getSubcontractsList`, {
-    params,  // will send as query string
+    params,
   });
   return response.data;
 };
 
 projectsServices.getSubContractMaterialIssued = async (params) => {
   const response = await axios.get(`/api/projectManagement/project/${params.id}/getSubContractMaterialIssued`, {
-    params,  // will send as query string
+    params,
   });
   return response.data;
 };
@@ -30,6 +30,13 @@ projectsServices.getSubContractDetails = async (id) => {
     const {data} = await axios.get(`/api/projectManagement/project/${id}/getSubContractDetails`);
     return data;
 }
+
+projectsServices.getSubcontractOptions = async (id) => {
+  const { data } = await axios.get(`/api/projectManagement/project/getSubcontractOptions`, {
+    params: { project_id: id }
+  });
+  return data;
+};
 
 projectsServices.getSubContractMaterialIssuedDetails = async (id) => {
     const {data} = await axios.get(`/api/projectManagement/project/${id}/getSubContractMaterialIssuedDetails`);
@@ -48,7 +55,7 @@ projectsServices.getbudgetItemsDetails = async (id) => {
 
 projectsServices.showProjectBudgets = async (params) => {
   const response = await axios.get(`/api/projectManagement/project/showProjectBudgets`, {
-    params,  // will send as query string
+    params,
   });
   return response.data;
 };  

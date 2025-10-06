@@ -189,7 +189,7 @@ const RequisitionsOnScreen: React.FC<Props> = ({
             </Grid>
             <Grid size={5}>
               <Typography variant="body2" align="right">
-                {requisition.amount.toLocaleString('en-US', {
+                {requisition?.items?.reduce((total, item) =>total + (item.quantity || 0) * (item.rate || 0),0).toLocaleString('en-US', {
                   style: 'currency',
                   currency: requisition.currency?.code
                 })}

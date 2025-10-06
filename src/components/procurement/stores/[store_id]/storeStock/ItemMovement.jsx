@@ -323,7 +323,7 @@ function ItemMovement({productStock = null, toggleOpen, isFromDashboard}) {
                                         size="small"
                                         onClick={downloadExcelTemplate}
                                         loading={isDownloadingTemplate}
-                                        disabled={isFromDashboard && !watch('store_id')}
+                                        disabled={(isFromDashboard && !watch('store_id')) || !watch('product_id')}
                                         variant="contained"
                                         color="success"
                                     >

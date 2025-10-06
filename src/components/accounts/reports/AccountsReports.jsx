@@ -29,6 +29,8 @@ function AccountsReports() {
     const [openCashierReport, setOpenCashierReport] = useState(false);
     const [openReceiptDialog, setOpenReceiptDialog] = useState(false);
     const [openTrialBalance, setOpenTrialBalance] = useState(false);
+    const [openCodedTrialBalance, setOpenCodedTrialBalance] = useState(false);
+
     const [report, setReport] = useState(null);
     const {checkOrganizationPermission, authOrganization,organizationHasSubscribed} = useJumboAuth();
 
@@ -56,14 +58,14 @@ function AccountsReports() {
             <Dialog 
                 scroll={belowLargeScreen ? 'body' : 'paper'} 
                 fullWidth
-                maxWidth={(openCashierReport || openTrialBalance) ? 'lg' : 'md'}
+                maxWidth={(openCashierReport || openTrialBalance || openCodedTrialBalance) ? 'lg' : 'md'}
                 fullScreen={(openBalanceSheet || openCashierReport || IncomeStatement) && belowLargeScreen} 
-                open={openDialog || openReceiptDialog || openBalanceSheet || openCashierReport || openTrialBalance}
+                open={openDialog || openReceiptDialog || openBalanceSheet || openCashierReport || openTrialBalance || openCodedTrialBalance}
             >
                 {report}
                 {!openCashierReport &&
                     <DialogActions className={css.hiddenOnPrint}>
-                        <Button sx={{ m:1 }} size='small' variant='outlined' onClick={() =>{ setOpenDialog(false) ; setOpenReceiptDialog(false); setOpenBalanceSheet(false); setOpenTrialBalance(false); setOpenCashierReport(false);}}>
+                        <Button sx={{ m:1 }} size='small' variant='outlined' onClick={() =>{ setOpenDialog(false) ; setOpenReceiptDialog(false); setOpenBalanceSheet(false); setOpenTrialBalance(false); setOpenCashierReport(false); setOpenCodedTrialBalance(false);}}>
                             Close
                         </Button>
                     </DialogActions>
@@ -136,7 +138,7 @@ function AccountsReports() {
                         textAlign={'center'}
                         onClick={() => {
                             setReport(<CodedTrialBalance/>)
-                            setOpenDialog(true);
+                            setOpenCodedTrialBalance(true);
                         }}
                     >
                         <TableChartOutlined sx={{ fontSize: '40px' }} />

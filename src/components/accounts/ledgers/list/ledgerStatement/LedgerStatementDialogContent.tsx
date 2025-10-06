@@ -240,7 +240,7 @@ const LedgerStatementDialogContent: React.FC<LedgerStatementDialogContentProps> 
             link.click();
             setIsDownloadingTemplate(false);
         } catch (error) {
-            enqueueSnackbar('Error downloading Excel template', { variant: 'error' });
+            enqueueSnackbar('Error downloading Excel Statement', { variant: 'error' });
             setIsDownloadingTemplate(false);
         }
     };

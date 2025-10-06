@@ -1,5 +1,5 @@
 import { yupResolver } from "@hookform/resolvers/yup";
-import { DialogContent, DialogTitle, FormControl, Grid, InputLabel, LinearProgress, MenuItem, Select, Tab, Tabs, Typography, useMediaQuery } from "@mui/material";
+import { DialogContent, DialogTitle, FormControl, Grid, InputLabel, LinearProgress, MenuItem, Select, Stack, Tab, Tabs, Typography, useMediaQuery } from "@mui/material";
 import dayjs from "dayjs";
 import { useState } from "react";
 import * as yup from "yup";
@@ -18,6 +18,7 @@ import { useJumboAuth } from "@/app/providers/JumboAuthProvider";
 import { useJumboTheme } from "@jumbo/components/JumboTheme/hooks";
 import { DateTimePicker } from "@mui/x-date-pickers";
 import { Div, Span } from "@jumbo/shared";
+import { useSnackbar } from "notistack";
 
 const ReportDocumet = ({reportData,authOrganization,user}) => {
     const mainColor = authOrganization.organization.settings?.main_color || "#2113AD";
@@ -87,13 +88,15 @@ const ReportDocumet = ({reportData,authOrganization,user}) => {
   }
 
 function DebtorCreditorReport() {
-    
     const css = useProsERPStyles();
     const { authOrganization, authUser: {user} } = useJumboAuth();
     const [reportData, setReportData] = useState(null);
     const [selectedType, setSelectedType] = useState('creditors');
     const [activeTab, setActiveTab] = useState(0);
     const [costCenterIds, setCostCenterIds] = useState(authOrganization?.costCenters.map(cost_center => cost_center.id));
+    const { enqueueSnackbar } = useSnackbar();
+    const [isDownloadingTemplate, setIsDownloadingTemplate] = useState(false);
+    const [uploadFieldsKey, setUploadFieldsKey] = useState(0)
 
     //Screen handling constants
     const {theme} = useJumboTheme();
@@ -129,6 +132,35 @@ function DebtorCreditorReport() {
       reset();
     };
 
+    const downloadExcelTemplate = async () => {
+      try {
+          setIsDownloadingTemplate(true);
+          setUploadFieldsKey((prevKey) => prevKey + 1);
+            
+        // Get all current filter parameters
+        const filters = {
+          as_at: watch('as_at'),
+          cost_center_ids: watch('cost_center_ids')
+        };
+
+        // Pass all filters to the service
+        const responseData = await financialReportsServices.downloadExcelDebtorCreditor(filters);
+        
+        const blob = new Blob([responseData], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        });
+
+        const link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        link.download = `${selectedType === 'debtors' ? 'Debtors Report' : 'Creditors Report'} ${readableDate(filters.as_at, true)}.xlsx`;
+        link.click();
+        setIsDownloadingTemplate(false);
+      } catch (error) {
+        enqueueSnackbar('Error downloading Excel template', { variant: 'error' });
+        setIsDownloadingTemplate(false);
+      }
+    };
+
     const handleTabChange = (event, newValue) => {
       setActiveTab(newValue);
     };
@@ -151,10 +183,11 @@ function DebtorCreditorReport() {
                 container
                 columnSpacing={1}
                 rowSpacing={1}
+                key={uploadFieldsKey}
                 alignItems="center"
                 justifyContent="center"
               >
-                <Grid size={{xs: 12, md: 4, lg: 3}}>
+                <Grid size={{xs: 12, md: 6, lg: 3}}>
                   <Div sx={{ mt: 1, mb: 1 }}>
                     <DateTimePicker
                       label="As at"
@@ -175,7 +208,7 @@ function DebtorCreditorReport() {
                     />
                   </Div>
                 </Grid>
-                <Grid size={{xs: 12, md: 4, lg: 3}}>
+                <Grid size={{xs: 12, md: 6, lg: 3}}>
                   <Div sx={{ mt: 1, mb: 1 }}>
                     <FormControl fullWidth size='small' label="Type" align={'left'}>
                       <InputLabel id="type_select">Type</InputLabel>
@@ -190,7 +223,7 @@ function DebtorCreditorReport() {
                     </FormControl>
                   </Div>
                 </Grid>
-                <Grid size={{xs: 12, md: 10, lg: 5}}>
+                <Grid size={{xs: 12, md: 12, lg: 6}}>
                   <CostCenterSelector
                     label="Cost Centers"
                     multiple={true}
@@ -203,10 +236,24 @@ function DebtorCreditorReport() {
                     }}
                   />
                 </Grid>
-                <Grid size={{xs: 12, md: 2, lg: 1}} textAlign="right">
-                  <LoadingButton loading={isFetching} type="submit" size="small" variant="contained">
-                    Filter
-                  </LoadingButton>
+                <Grid size={{xs: 12, md: 12, lg: 12}} textAlign="right">
+                  <Stack direction="row" spacing={0.5} justifyContent="flex-end" alignItems="center">
+                    <>                                
+                      <LoadingButton
+                        size="small"
+                        onClick={downloadExcelTemplate}
+                        loading={isDownloadingTemplate}
+                        disabled
+                        variant="contained"
+                        color="success"
+                      >
+                        Excel
+                      </LoadingButton>
+                      <LoadingButton loading={isFetching} type='submit' size='small' variant='contained'>
+                        Filter
+                      </LoadingButton>
+                    </>
+                  </Stack>
                 </Grid>
               </Grid>
             </form>

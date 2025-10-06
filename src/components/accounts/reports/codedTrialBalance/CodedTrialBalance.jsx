@@ -1,4 +1,4 @@
-import { DialogContent, DialogTitle, Grid, LinearProgress, Tab, Tabs, Typography, useMediaQuery } from '@mui/material';
+import { DialogContent, DialogTitle, Grid, LinearProgress, Stack, Tab, Tabs, Typography, useMediaQuery } from '@mui/material';
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
 import React, { useState } from 'react'
@@ -101,17 +101,19 @@ function CodedTrialBalance() {
     });
 
     const { setValue, watch, handleSubmit } = useForm({
-        resolver: yupResolver(validationSchema),
-        defaultValues: {
-          as_at: dayjs().toISOString(),
-          cost_center_ids: checkOrganizationPermission(PERMISSIONS.COST_CENTERS_ALL) ? 'all' : authOrganization?.costCenters.map(cost_center => cost_center.id)
-        },
+      resolver: yupResolver(validationSchema),
+      defaultValues: {
+        as_at: dayjs().toISOString(),
+        cost_center_ids: checkOrganizationPermission(PERMISSIONS.COST_CENTERS_ALL) ? 'all' : authOrganization?.costCenters.map(cost_center => cost_center.id)
+      },
     });
 
     const [isFetching, setisFetching] = useState(false);
 
     const [reportData, setReportData] = useState(null);
     const [activeTab, setActiveTab] = useState(0);
+    const [isDownloadingTemplate, setIsDownloadingTemplate] = React.useState(false);
+    const [uploadFieldsKey, setUploadFieldsKey] = useState(0)
 
     //Screen handling constants
     const {theme} = useJumboTheme();
@@ -122,11 +124,40 @@ function CodedTrialBalance() {
     };
 
     const retrieveReport = async (filters) => {
-        setisFetching(true);
-        const report = await financialReportsServices.codedTrialBalance(filters);
+      setisFetching(true);
+      const report = await financialReportsServices.codedTrialBalance(filters);
+      
+      setReportData(report);
+      setisFetching(false);
+    };
+
+    const downloadExcelTemplate = async () => {
+      try {
+        setIsDownloadingTemplate(true);
+        setUploadFieldsKey((prevKey) => prevKey + 1);
+            
+        // Get all current filter parameters
+        const filters = {
+          as_at: watch('as_at'),
+          cost_center_ids: watch('cost_center_ids')
+        };
+  
+        // Pass all filters to the service
+        const responseData = await financialReportsServices.downloadExcelTrialBalance(filters);
         
-        setReportData(report);
-        setisFetching(false);
+        const blob = new Blob([responseData], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        });
+  
+        const link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        link.download = `Trial Balance ${readableDate(filters.as_at, true)}.xlsx`;
+        link.click();
+        setIsDownloadingTemplate(false);
+      } catch (error) {
+        enqueueSnackbar('Error downloading Excel template', { variant: 'error' });
+        setIsDownloadingTemplate(false);
+      }
     };
 
     const downloadFileName = `Trial Balance as of ${readableDate(watch('as_at'),true)}`;
@@ -135,7 +166,7 @@ function CodedTrialBalance() {
     <>
       <DialogTitle textAlign={'center'}>
         <Grid container>
-          <Grid item xs={12} mb={2}>
+          <Grid size={12} mb={2} textAlign={'center'}>
             <Typography variant="h3">Trial Balance</Typography>
           </Grid>
         </Grid>
@@ -159,7 +190,7 @@ function CodedTrialBalance() {
                   }}
                 />
               </Grid>
-              <Grid size={{xs: 12, md: 4, lg: 3}}>
+              <Grid size={{xs: 12, md: 3.5, lg: 2.5}}>
                 <Div sx={{ mt: 1, mb: 1 }}>
                   <DateTimePicker
                     label="As at (MM/DD/YYYY)"
@@ -180,10 +211,24 @@ function CodedTrialBalance() {
                   />
                 </Div>
               </Grid>
-              <Grid size={{xs: 12, md: 2, lg: 1}} textAlign="right">
-                <LoadingButton loading={isFetching} type="submit" size="small" variant="contained">
-                  Filter
-                </LoadingButton>
+              <Grid size={{xs: 12, md: 2.5, lg: 1.5}} textAlign="right">
+                <Stack direction="row" spacing={0.5} justifyContent="flex-end" alignItems="center">
+                  <>                                
+                    <LoadingButton
+                      size="small"
+                      onClick={downloadExcelTemplate}
+                      loading={isDownloadingTemplate}
+                      disabled
+                      variant="contained"
+                      color="success"
+                    >
+                      Excel
+                    </LoadingButton>
+                    <LoadingButton loading={isFetching} type='submit' size='small' variant='contained'>
+                      Filter
+                    </LoadingButton>
+                  </>
+                </Stack>
               </Grid>
             </Grid>
           </form>

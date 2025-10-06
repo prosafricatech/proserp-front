@@ -265,9 +265,9 @@ const SalesListItemTabs: React.FC<SalesListItemTabsProps> = ({
                 <InventoryOutlined/>
               </IconButton>
             </Tooltip>
-            {sale.status !== 'Pending' && 
-             sale.status !== 'Fulfilled' && 
-             checkOrganizationPermission([PERMISSIONS.SALES_DISPATCH]) && (
+            {
+             !sale.is_instant_sale && sale.status !== 'Pending' && sale.status !== 'Fulfilled' && (checkOrganizationPermission([PERMISSIONS.SALES_DISPATCH_NOT_FULLY_PAID]) || (checkOrganizationPermission([PERMISSIONS.SALES_DISPATCH]) && !!sale.is_fully_paid)) && 
+             (
               <Tooltip title={`Dispatch ${sale.saleNo}`}>
                 <IconButton 
                   onClick={() => setOpenDispatchDialog(true)}

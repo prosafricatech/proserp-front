@@ -1,6 +1,6 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Autocomplete, Button, Grid, IconButton, InputAdornment, LinearProgress, TextField, Tooltip } from '@mui/material';
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form';
 import * as yup  from "yup";
 import { useProjectProfile } from '../../../ProjectProfileProvider';
@@ -12,72 +12,155 @@ import projectsServices from '@/components/projectManagement/projects/project-se
 import { Div } from '@jumbo/shared';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
+import { useQuery } from '@tanstack/react-query';
 
 function TaskProgress({taskProgressItem = null, index = -1, setShowForm = null}) {
-    const { taskProgressItems, setTaskProgressItems } = useUpdateFormContext();
-    const [isAdding, setIsAdding] = useState(false);
-    const [isRetrievingDetails, setIsRetrievingDetails] = useState(false);
-    const [unitToDisplay, setUnitToDisplay] = useState(taskProgressItem?.unit_symbol);
-    const {deliverable_groups, setFetchDeliverables, projectTimelineActivities, setFetchTimelineActivities} = useProjectProfile();
+  const { taskProgressItems, setTaskProgressItems } = useUpdateFormContext();
+  const [isAdding, setIsAdding] = useState(false);
+  const [isRetrievingDetails, setIsRetrievingDetails] = useState(false);
+  const [uploadFieldsKey, setUploadFieldsKey] = useState(0)
+  const [unitToDisplay, setUnitToDisplay] = useState(taskProgressItem && taskProgressItem.unit_symbol);
+  const { deliverable_groups, setFetchDeliverables, projectTimelineActivities, setFetchTimelineActivities, project } =
+    useProjectProfile();
 
-    useEffect(() => {
-      if (!deliverable_groups) {
-        setFetchDeliverables(true);
-      } else {
-        setFetchDeliverables(false)
-      }
-  
-      if (!projectTimelineActivities) {
-        setFetchTimelineActivities(true);
-      } else {
-        setFetchTimelineActivities(false)
-      }
-    }, [projectTimelineActivities, deliverable_groups, setFetchDeliverables, setFetchTimelineActivities]);
+  useEffect(() => {
+    if (!deliverable_groups) {
+      setFetchDeliverables(true);
+    } else {
+      setFetchDeliverables(false);
+    }
+
+    if (!projectTimelineActivities) {
+      setFetchTimelineActivities(true);
+    } else {
+      setFetchTimelineActivities(false);
+    }
+  }, [projectTimelineActivities, setFetchTimelineActivities]);
 
     //Define validation Schema
-    const validationSchema = yup.object({
-      quantity_executed: yup
-        .number()
-        .required("Quantity is required")
-        .typeError('Quantity is required')
-        .test(
-          'max-quantity',
-          function (value) {
-            const { unexcuted_task_quantity, task} = this.parent;
-            const { taskProgressItems, taskProgressItem } = this.options.context || {};
+  const validationSchema = yup.object({
+    project_task_id: yup
+      .number()
+      .nullable()
+      .required("Project Task is required"),
 
-            const existTaskProgressItems = taskProgressItems.filter((existTaskProgressItem, itemIndex) => {
-              return existTaskProgressItem.task?.id === task?.id && itemIndex !== index && !existTaskProgressItem.id;
-            });
+    quantity_executed: yup
+      .number()
+      .required("Quantity is required")
+      .typeError("Quantity is required")
+      .test("max-quantity", function (value) {
+        const { unexcuted_task_quantity = 0, task, project_subcontract } = this.parent;
+        const {
+          taskProgressItems = [],
+          taskProgressItem,
+          index,
+        } = this.options.context || {};
 
-            const existingQuantity = existTaskProgressItems.reduce((total, existTaskProgressItem) => total + existTaskProgressItem.quantity_executed, 0);
+        const unit = (task?.measurement_unit?.symbol || task?.unit || "").trim();
 
-            const remainingQuantity = unexcuted_task_quantity - existingQuantity + (taskProgressItem?.id ? taskProgressItem?.quantity_executed : 0);
-            
-            if (value > remainingQuantity) {
-              return this.createError({
-                message: `Quantity should not exceed Project Task Quantity. ${remainingQuantity} remaining.`
-              });
-            }
-            return true;
-          }
-        ),
-    });    
+        // --- Project-level available ---
+        const projectAvailable = Number(
+          taskProgressItem?.id ? taskProgressItem.task.quantity : unexcuted_task_quantity
+        );
 
-    const {setValue, handleSubmit, watch, reset, register, formState: {errors}} = useForm({
-      resolver: yupResolver(validationSchema),
-      defaultValues: {
-        quantity_executed: taskProgressItem?.quantity_executed, 
-        unexcuted_task_quantity: taskProgressItem?.unexcuted_task_quantity,
-        project_task_id: taskProgressItem?.project_task_id, 
-        task: taskProgressItem?.task,
-        execution_date: taskProgressItem ? dayjs(taskProgressItem.execution_date) : dayjs().toISOString(),
-        remarks: taskProgressItem?.remarks,
-        unit_symbol: taskProgressItem?.unit_symbol,
-        material_used: []
-      },
-      context: { taskProgressItems, taskProgressItem }
-    });
+        // Sum of existing progress for THIS TASK across ALL items (exclude current if editing)
+        const existingAll = taskProgressItems
+          .filter((itm, idx) => itm.task?.id === task?.id && idx !== index)
+          .reduce((s, itm) => s + Number(itm.quantity_executed || 0), 0);
+
+        // Previous qty when editing
+        const prevQty = Number(taskProgressItem?.quantity_executed || 0);
+
+        // Remaining at project level
+      const remainingProject = projectAvailable - existingAll + prevQty;
+
+      // --- Subcontract available ---
+      let subcontractAvailable = null;
+      if (project_subcontract) {
+        const taskInSub = (project_subcontract.tasks || []).find(
+          (t) => t.project_task_id === task?.id
+        );
+        if (taskInSub) {
+          subcontractAvailable = Number(
+            taskProgressItem?.id ? taskProgressItem?.quantity_executed : taskInSub.unexecuted_quantity || 0
+          );
+        } else {
+          subcontractAvailable = taskProgressItem?.id ? taskProgressItem?.quantity_executed : 0;
+        }
+      }
+
+      // Sum of existing progress for THIS TASK but ONLY for this subcontract
+      const existingForSub = project_subcontract
+        ? taskProgressItems
+            .filter(
+              (itm, idx) =>
+                itm.task?.id === task?.id &&
+                itm.project_subcontract?.id === project_subcontract.id &&
+                idx !== index
+            )
+            .reduce((s, itm) => s + Number(itm.quantity_executed || 0), 0)
+        : 0;
+
+      const remainingSubcontract =
+        subcontractAvailable !== null ? subcontractAvailable - existingForSub + prevQty : null;
+
+      // --- Validate project balance ---
+      if (value > remainingProject) {
+        if (remainingProject < 0) {
+          const exceededBy = Math.abs(remainingProject);
+          return this.createError({
+            message: `Project allocation already exceeded by ${exceededBy} ${unit}. Please review existing entries.`,
+          });
+        }
+        let msg = `Quantity should not exceed remaining project balance: ${remainingProject} ${unit}.`;
+        if (remainingSubcontract !== null) {
+          msg += ` Subcontract remaining: ${remainingSubcontract} ${unit}.`;
+        }
+        return this.createError({ message: msg });
+      }
+
+      // --- Validate subcontract balance (if applicable) ---
+      if (remainingSubcontract !== null) {
+        if (remainingSubcontract < 0) {
+          const exceededBy = Math.abs(remainingSubcontract);
+          return this.createError({
+            message: `Subcontract allocation already exceeded by ${exceededBy} ${unit}. Please review existing entries. Project balance: ${remainingProject} ${unit}.`,
+          });
+        }
+        if (value > remainingSubcontract) {
+          return this.createError({
+            message: `Quantity should not exceed subcontract balance: ${remainingSubcontract} ${unit}. Project balance: ${remainingProject} ${unit}.`,
+          });
+        }
+      }
+
+      return true;
+    }),
+  });  
+
+  const {
+    setValue,
+    handleSubmit,
+    watch,
+    reset,
+    register,
+    formState: { errors },
+  } = useForm({
+    resolver: yupResolver(validationSchema),
+    defaultValues: {
+      quantity_executed: taskProgressItem && taskProgressItem.quantity_executed,
+      unexcuted_task_quantity: taskProgressItem && taskProgressItem.unexcuted_task_quantity,
+      project_task_id: taskProgressItem && taskProgressItem.project_task_id,
+      task: taskProgressItem && taskProgressItem.task,
+      execution_date: taskProgressItem ? dayjs(taskProgressItem.execution_date) : dayjs().toISOString(),
+      project_subcontract_id: taskProgressItem ? taskProgressItem.project_subcontract_id : null,
+      project_subcontract: taskProgressItem ? taskProgressItem.project_subcontract : null,
+      remarks: taskProgressItem && taskProgressItem.remarks,
+      unit_symbol: taskProgressItem && taskProgressItem.unit_symbol,
+      material_used: [],
+    },
+    context: { taskProgressItems, taskProgressItem },
+  });
 
     const updateItems = async (taskProgressItem) => {
       setIsAdding(true);
@@ -149,14 +232,43 @@ function TaskProgress({taskProgressItem = null, index = -1, setShowForm = null})
       }
     }, [watch(`unexcuted_task_quantity`), setValue, watch]);
 
-    if(isAdding){
-      return <LinearProgress/>
+  const { data: subcontractOptions, isLoading: isFetchingOptions } = useQuery({
+    queryKey: ['subcontractOptions', project?.id],
+    queryFn: () => projectsServices.getSubcontractOptions(project.id),
+    enabled: !!project?.id,
+  });
+
+  // 👇 Ensure project_subcontract always references full object from subcontractOptions
+  useEffect(() => {
+    if (subcontractOptions && taskProgressItem?.project_subcontract) {
+      const current = taskProgressItem.project_subcontract;
+      const full = subcontractOptions.find((s) => s.id === current.id);
+      if (full) {
+        setValue('project_subcontract', full);
+      }
     }
+  }, [subcontractOptions, taskProgressItem, setValue]);
+
+  // 👇 Watch subcontract selection
+  const selectedSubcontract = watch('project_subcontract');
+
+  // 👇 Filter tasks depending on subcontract selection
+  const filteredTasks = useMemo(() => {
+    if (!selectedSubcontract) {
+      return allTasks;
+    }
+    const allowedTaskIds = (selectedSubcontract.tasks || []).map((t) => t.project_task_id);
+    return allTasks.filter((task) => allowedTaskIds.includes(task.id));
+  }, [selectedSubcontract, allTasks]);
+
+  if (isAdding || isFetchingOptions) {
+    return <LinearProgress />;
+  }
 
   return (
     <form autoComplete='off' onSubmit={handleSubmit(updateItems)}>
         <Grid container columnSpacing={1} width={'100%'} rowSpacing={1}>
-            <Grid size={{xs: 12, md: 4, lg: 2.5}}>
+            <Grid size={{xs: 12, md: 4, lg: 4}}>
               <Div sx={{mt: 1}}>
                 <DateTimePicker
                   fullWidth={true}
@@ -185,7 +297,29 @@ function TaskProgress({taskProgressItem = null, index = -1, setShowForm = null})
             <Grid size={{xs: 12, md: 4}}>
               <Div sx={{ mt: 1 }}>
                 <Autocomplete
-                  options={allTasks}
+                  multiple={false}
+                  id="checkboxes-subContracts_Options"
+                  options={subcontractOptions || []}
+                  isOptionEqualToValue={(option, value) => option.id === value.id}
+                  getOptionLabel={(option) => `${option.subcontractor?.name} (${option.subcontractNo})`}
+                  value={watch('project_subcontract')}
+                  renderInput={(params) => (
+                    <TextField {...params} label="Subcontract (Optional)" size="small" fullWidth />
+                  )}
+                  onChange={(e, newValue) => {
+                    setUploadFieldsKey((prevKey) => prevKey + 1);
+                    setValue(`project_subcontract_id`, newValue ? newValue.id : null);
+                    setValue(`project_subcontract`, newValue ? newValue : null);
+                    setValue('task', null);
+                    setValue('project_task_id', null);
+                  }}
+                />
+              </Div>
+            </Grid>
+            <Grid size={{xs: 12, md: 4}}>
+              <Div sx={{ mt: 1 }}>
+                <Autocomplete
+                  options={filteredTasks}
                   isOptionEqualToValue={(option, value) => option.id === value.id}
                   getOptionLabel={(option) => option.name}
                   defaultValue={taskProgressItem?.task}
@@ -227,7 +361,7 @@ function TaskProgress({taskProgressItem = null, index = -1, setShowForm = null})
                 />
               </Div>
             </Grid>
-            <Grid size={{xs: 12, md: 2}}>
+            <Grid size={{xs: 12, md: 4}}>
               <Div sx={{ mt: 1 }}>
                 {isRetrievingDetails ? (
                   <LinearProgress />
@@ -258,7 +392,7 @@ function TaskProgress({taskProgressItem = null, index = -1, setShowForm = null})
                 )}
               </Div>
             </Grid>
-            <Grid size={{xs: 12, md: 3.5}}>
+            <Grid size={{xs: 12, md: 8}}>
               <Div sx={{ mt: 1}}>
                 <TextField
                   label="Remarks"

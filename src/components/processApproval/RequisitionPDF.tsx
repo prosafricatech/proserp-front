@@ -151,7 +151,7 @@ function RequisitionPDF({ requisition, organization }: RequisitionPDFProps) {
                                 Total
                             </Text>
                             <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2.2, textAlign: 'right' }}>
-                                {requisition.amount.toLocaleString('en-US', { 
+                                {requisition?.items?.reduce((total, item) =>total + (item.quantity || 0) * (item.rate || 0),0).toLocaleString('en-US', { 
                                     style: 'currency', 
                                     currency: requisition.currency?.code 
                                 })}

@@ -166,6 +166,7 @@ export const PERMISSIONS = {
     SALES_DISPATCH_BACKDATE: 'SalesDispatch:BackDate',
     SALES_DISPATCH_DELETE: 'SalesDispatch:Delete',
     SALES_DISPATCH_EDIT: 'SalesDispatch:Edit',
+    SALES_DISPATCH_NOT_FULLY_PAID: 'Sales:DispatchNotFullyPaid',
     SALES_DISPATCH_POSTDATE: 'SalesDispatch:PostDate',
     SALES_EDIT: 'Sales:Edit',
     SALES_MODIFY_COMPLETED: 'Sales:ModifyCompleted',

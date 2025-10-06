@@ -1,4 +1,4 @@
-import { Alert, DialogContent, DialogTitle, FormControl, FormControlLabel, FormLabel, Grid, LinearProgress, Radio, RadioGroup, Typography } from '@mui/material';
+import { Alert, DialogContent, DialogTitle, FormControl, FormControlLabel, FormLabel, Grid, LinearProgress, Radio, RadioGroup, Stack, Typography } from '@mui/material';
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
 import React, { useEffect, useState } from 'react'
@@ -157,6 +157,8 @@ const ReportDocument = ({reportData,authOrganization,user}) => {
     const { authOrganization, authUser: { user } } = useJumboAuth();
     const [isFetching, setisFetching] = useState(false);
     const [reportData, setReportData] = useState(null);
+    const [isDownloadingTemplate, setIsDownloadingTemplate] = React.useState(false);
+    const [uploadFieldsKey, setUploadFieldsKey] = useState(0)
   
     const validationSchema = yup.object({
       as_at: yup.string().required('Date is required').typeError('Date is required'),
@@ -175,28 +177,33 @@ const ReportDocument = ({reportData,authOrganization,user}) => {
         as_at: filters.as_at,
         display_as: displayAs
       });
-
-      if(displayAs === 'excel'){
-        downloadExcel(report,filters.as_at);
-      }
       setReportData(report);
       setisFetching(false);
     };
-
-    const downloadExcel = async (reportData,as_at) => {
+0
+    const downloadExcelTemplate = async () => {
       try {
-        // Create a Blob from the response data
-        const blob = new Blob([reportData], {
-          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        });
-    
-        // Create a download link and trigger the download
-        const link = document.createElement('a');
-        link.href = window.URL.createObjectURL(blob);
-        link.download = `Balance Sheet as at ${readableDate(as_at,true)}.xlsx`;
-        link.click();
+        setIsDownloadingTemplate(true);
+        setUploadFieldsKey((prevKey) => prevKey + 1);
+  
+const responseData = await financialReportsServices.balanceSheet({
+  as_at: watch('as_at'),
+  display_as: 'excel'
+});
+
+const blob = new Blob([responseData], {
+  type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+});
+
+const link = document.createElement('a');
+link.href = window.URL.createObjectURL(blob);
+link.download = `Balance Sheet as at ${readableDate(as_at,true)}.xlsx`;
+link.click();
+
+        setIsDownloadingTemplate(false);
       } catch (error) {
         enqueueSnackbar('Error downloading Excel template', { variant: 'error' });
+        setIsDownloadingTemplate(false);
       }
     };
 
@@ -207,14 +214,7 @@ const ReportDocument = ({reportData,authOrganization,user}) => {
           display_as: 'on screen'
         });
         setTriggerFetch(false);
-      } else if (displayAs === 'excel') {
-        setReportData(null);
-        retrieveReport({
-          as_at: watch(`as_at`),
-          display_as: displayAs
-        });
-        setTriggerFetch(true);
-      } else if (!!triggerFetch && !reportData?.balanceSheetData && (displayAs === 'on screen' || displayAs === 'pdf')) {
+      } else if (!!triggerFetch && !reportData.balanceSheetData && (displayAs === 'on screen' || displayAs === 'pdf')) {
         retrieveReport({
           as_at: watch(`as_at`),
           display_as: displayAs
@@ -231,7 +231,7 @@ const ReportDocument = ({reportData,authOrganization,user}) => {
             </Grid>
           </Grid>
           <Span className={css.hiddenOnPrint}>
-            <form autoComplete="off" onSubmit={handleSubmit(retrieveReport)}>
+            <form key={uploadFieldsKey} autoComplete="off" onSubmit={handleSubmit(retrieveReport)}>
               <Grid
                 container
                 columnSpacing={1}
@@ -239,7 +239,7 @@ const ReportDocument = ({reportData,authOrganization,user}) => {
                 alignItems="center"
                 justifyContent="center"
               >
-                <Grid size={{xs: 12, md: 4}}>
+                <Grid size={{xs: 12, md: 4, lg: 6}}>
                   <Div sx={{ mt: 1, mb: 1 }}>
                     <DateTimePicker
                       label="As at (MM/DD/YYYY)"
@@ -260,10 +260,23 @@ const ReportDocument = ({reportData,authOrganization,user}) => {
                     />
                   </Div>
                 </Grid>
-                <Grid size={{xs: 12, md: 2, lg: 1}} textAlign="right">
-                  <LoadingButton loading={isFetching} type="submit" onClick={()=> setTriggerFetch(true)} size="small" variant="contained">
-                    Filter
-                  </LoadingButton>
+                <Grid size={{xs: 12, md: 2, lg: 2.5}} textAlign="right">
+                  <Stack direction="row" spacing={0.5} justifyContent="flex-end" alignItems="center">
+                    <>                                
+                      <LoadingButton
+                        size="small"
+                        onClick={downloadExcelTemplate}
+                        loading={isDownloadingTemplate}
+                        variant="contained"
+                        color="success"
+                      >
+                        Excel
+                      </LoadingButton>
+                      <LoadingButton loading={isFetching} type='submit' size='small' variant='contained'>
+                        Filter
+                      </LoadingButton>
+                    </>
+                  </Stack>
                 </Grid>
                 <Grid size={{xs: 12}}>
                   <FormControl>
@@ -275,9 +288,8 @@ const ReportDocument = ({reportData,authOrganization,user}) => {
                       value={displayAs}
                       onChange={(e) => setDisplayAs(e.target.value)}
                     >
-                      <FormControlLabel value="on screen" control={<Radio />} label="On Screen" />
-                      <FormControlLabel value="pdf" control={<Radio />} label="PDF" />
-                      <FormControlLabel value="excel" control={<Radio />} label="Excel" />
+                      <FormControlLabel value="on screen" control={<Radio/>} label="On Screen"/>
+                      <FormControlLabel value="pdf" control={<Radio/>} label="PDF"/>
                     </RadioGroup>
                   </FormControl>
                 </Grid>
@@ -295,11 +307,6 @@ const ReportDocument = ({reportData,authOrganization,user}) => {
                   document={<ReportDocument reportData={reportData} authOrganization={authOrganization} user={user} />}
                   fileName={`Balance Sheet as of ${readableDate(reportData?.filters?.as_at, true)}`}
                 />
-              ) : (displayAs === 'excel') ? (
-                <Alert variant={'outlined'} severity={'success'}>
-                  <Typography>Please check your downloads folder for the downloaded excel file</Typography>
-                </Alert>
-                // downloadExcelTemplate(reportData)
               ) : (displayAs === 'on screen') ? (
                 <BalanceSheetOnScreen reportData={reportData}/>
               ) : ''

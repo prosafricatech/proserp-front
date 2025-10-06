@@ -92,7 +92,7 @@ interface SalesInvoiceAdjustmentProps {
 
 function SalesInvoiceAdjustment({ isEdit, invoiceData, toggleOpen }: SalesInvoiceAdjustmentProps) {
   const [transaction_date] = useState<Dayjs>(
-    invoiceData ? dayjs(invoiceData.transaction_date) : dayjs()
+    isEdit ? dayjs(invoiceData.transaction_date) : dayjs()
   );
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();

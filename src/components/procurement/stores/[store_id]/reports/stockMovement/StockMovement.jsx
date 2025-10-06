@@ -1,4 +1,4 @@
-import { Button, DialogActions, DialogContent, DialogTitle, Grid, IconButton, LinearProgress, Tab, Tabs, Tooltip, Typography, useMediaQuery} from '@mui/material';
+import { Button, DialogActions, DialogContent, DialogTitle, Grid, IconButton, LinearProgress, Stack, Tab, Tabs, Tooltip, Typography, useMediaQuery} from '@mui/material';
 import { DateTimePicker } from '@mui/x-date-pickers';
 import dayjs from 'dayjs';
 import * as yup from 'yup';
@@ -22,6 +22,7 @@ import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { Div, Span } from '@jumbo/shared';
 import CostCenterSelector from '@/components/masters/costCenters/CostCenterSelector';
 import PDFContent from '@/components/pdf/PDFContent';
+import { useSnackbar } from 'notistack';
 
 const ReportDocument = ({movementsData,authOrganization,user,checkOrganizationPermission,store,reportTitle}) => {
     const mainColor = authOrganization.organization.settings?.main_color || "#2113AD";
@@ -135,6 +136,9 @@ function StockMovement({ toggleOpen, dormantStock = false, isFromDashboard }) {
     const { authOrganization, authUser: { user }, checkOrganizationPermission } = useJumboAuth();
     const { activeStore } = useStoreProfile();
     const [selectedTab, setSelectedTab] = useState(0);
+    const { enqueueSnackbar } = useSnackbar();
+    const [isDownloadingTemplate, setIsDownloadingTemplate] = React.useState(false);
+    const [uploadFieldsKey, setUploadFieldsKey] = useState(0)
 
     //Screen handling constants
     const {theme} = useJumboTheme();
@@ -177,6 +181,37 @@ function StockMovement({ toggleOpen, dormantStock = false, isFromDashboard }) {
         setisFetching(false);
     };
 
+    const downloadExcelTemplate = async () => {
+        try {
+            setIsDownloadingTemplate(true);
+            setUploadFieldsKey((prevKey) => prevKey + 1);
+            
+        // Get all current filter parameters
+        const filters = {
+            from: watch(`from`),
+            to: watch(`to`),
+            store_id: watch(`store_id`),
+            cost_center_ids: watch(`cost_center_ids`)
+        };
+
+        // Pass all filters to the service
+        const responseData = await storeServices.downloadExcelTemplate(filters);
+        
+        const blob = new Blob([responseData], {
+            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        });
+
+        const link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        link.download = `Stock Movement ${readableDate(filters.as_at, true)}.xlsx`;
+        link.click();
+        setIsDownloadingTemplate(false);
+        } catch (error) {
+        enqueueSnackbar('Error downloading Excel template', { variant: 'error' });
+        setIsDownloadingTemplate(false);
+        }
+    };
+
     const handleTabChange = (event, newValue) => {
         setSelectedTab(newValue);
     };
@@ -189,7 +224,7 @@ function StockMovement({ toggleOpen, dormantStock = false, isFromDashboard }) {
             <DialogTitle textAlign={'center'}>
                 <Span className={classes.hiddenOnPrint}>
                     <form autoComplete='off' onSubmit={handleSubmit(getMovements)} >
-                        <Grid container columnSpacing={1} paddingTop={2} rowSpacing={1} alignItems={'center'} justifyContent={'center'}>
+                        <Grid container columnSpacing={1} key={uploadFieldsKey} paddingTop={2} rowSpacing={1} alignItems={'center'} justifyContent={'center'}>
                             <Grid container size={12}>
                                 <Grid size={belowLargeScreen ? 11 : 12}>
                                     <Typography variant="h3">
@@ -288,9 +323,23 @@ function StockMovement({ toggleOpen, dormantStock = false, isFromDashboard }) {
                                 </Div>
                             </Grid>
                             <Grid size={{xs: 12, md: 12}} textAlign={'right'}>
-                                <LoadingButton loading={isFetching} type='submit' size='small' variant='contained'>
-                                    Filter
-                                </LoadingButton>
+                                <Stack direction="row" spacing={0.5} justifyContent="flex-end" alignItems="center">
+                                    <>                                
+                                        <LoadingButton
+                                            size="small"
+                                            onClick={downloadExcelTemplate}
+                                            loading={isDownloadingTemplate}
+                                            disabled
+                                            variant="contained"
+                                            color="success"
+                                        >
+                                            Excel
+                                        </LoadingButton>
+                                        <LoadingButton loading={isFetching} type='submit' size='small' variant='contained'>
+                                            Filter
+                                        </LoadingButton>
+                                    </>
+                                </Stack>
                             </Grid>
                         </Grid>
                     </form>

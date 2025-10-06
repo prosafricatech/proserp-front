@@ -66,7 +66,10 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
       vendors: item.vendors?.map((vendor: Vendor) => ({
         ...vendor,
         stakeholder_id: vendor.id
-      }))
+      })),
+      quantity: item.quantity || 0,
+      rate: item.rate || 0,
+      remarks: item.remarks || ''
     }));
   };
 
@@ -76,7 +79,10 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
       ...item,
       id: item.requisition_ledger_item?.id || item.id,
       ledger: item.ledger || item.requisition_ledger_item?.ledger,
-      measurement_unit: item.measurement_unit || item.requisition_ledger_item?.measurement_unit
+      measurement_unit: item.measurement_unit || item.requisition_ledger_item?.measurement_unit,
+      quantity: item.quantity || 0,
+      rate: item.rate || 0,
+      remarks: item.remarks || ''
     }));
   };
 
@@ -98,15 +104,15 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
           yup.object().shape({
             rate: isFinal
               ? yup.number()
-                  .required('Rate is required for final approval')
-                  .positive('Rate is required for final approval')
-                  .typeError('Rate is required for final approval')
+                .required('Rate is required for final approval')
+                .positive('Rate is required for final approval')
+                .typeError('Rate is required for final approval')
               : yup.number().nullable(),
             quantity: isFinal
               ? yup.number()
-                  .required('Quantity is required for final approval')
-                  .positive('Quantity is required for final approval')
-                  .typeError('Quantity is required for final approval')
+                .required('Quantity is required for final approval')
+                .positive('Quantity is required for final approval')
+                .typeError('Quantity is required for final approval')
               : yup.number().nullable(),
           })
         )
@@ -115,13 +121,13 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
       ? yup.array().of(
           yup.object().shape({
             rate: yup.number()
-                .required('Rate is required')
-                .positive('Rate is required')
-                .typeError('Rate is required'),
+              .required('Rate is required')
+              .positive('Rate is required')
+              .typeError('Rate is required'),
             quantity: yup.number()
-                .required('Quantity is required')
-                .positive('Quantity is required')
-                .typeError('Quantity is required')
+              .required('Quantity is required')
+              .positive('Quantity is required')
+              .typeError('Quantity is required')
           })
         )
       : yup.array().nullable(),
@@ -171,14 +177,26 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
   });
 
   const handleItemChange = ({ index, key, value }: ItemChangeParams) => {
-    if (isPurchaseType) {
-      const updatedItems = [...requisitionProductItem];
-      (updatedItems[index] as any)[key] = Number.isNaN(value) ? null : value;
-      setRequisitionProductItem(updatedItems);
+    let updatedItems;
+
+    if (requisition?.approval_chain?.process_type?.toLowerCase() === 'purchase') {
+      updatedItems = [...requisitionProductItem];
+      if (updatedItems[index]) {
+        updatedItems[index] = {
+          ...updatedItems[index],
+          [key]: Number.isNaN(value) ? null : value
+        };
+        setRequisitionProductItem(updatedItems);
+      }
     } else {
-      const updatedItems = [...requisitionLedgerItem];
-      (updatedItems[index] as any)[key] = Number.isNaN(value) ? null : value;
-      setRequisitionLedgerItem(updatedItems);
+      updatedItems = [...requisitionLedgerItem];
+      if (updatedItems[index]) {
+        updatedItems[index] = {
+          ...updatedItems[index],
+          [key]: Number.isNaN(value) ? null : value
+        };
+        setRequisitionLedgerItem(updatedItems);
+      }
     }
   };
 
@@ -248,59 +266,60 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
           </Grid>
           <Grid size={{xs: 12, md: 4, lg: 4}}>
             <Div sx={{mt: 1}}>
-                <DateTimePicker
-                    label="Approval Date"
-                    readOnly={true}
-                    defaultValue={approvalDate}
-                    minDate={
-                        checkOrganizationPermission(PERMISSIONS.APPROVAL_BACKDATE)
-                        ? dayjs(requisition.requisition_date)
-                        : dayjs().startOf('day')
-                    }
-                    maxDate={
-                        checkOrganizationPermission(PERMISSIONS.APPROVAL_POSTDATE)
-                        ? dayjs().add(10, 'year').endOf('year')
-                        : dayjs().endOf('day')
-                    }
-                    slotProps={{
-                        textField: {
-                            size: 'small',
-                            fullWidth: true,
-                            error: !!errors?.approval_date,
-                            helperText: errors?.approval_date?.message
-                        }
-                    }}
-                    onChange={(newValue: Dayjs | null) => {
-                        if (newValue) {
-                            setValue('approval_date', newValue.toISOString(), {
-                                shouldValidate: true,
-                                shouldDirty: true
-                            });
-                        }
-                    }}
-                />
+              <DateTimePicker
+                label="Approval Date"
+                readOnly={true}
+                defaultValue={approvalDate}
+                minDate={
+                  checkOrganizationPermission(PERMISSIONS.APPROVAL_BACKDATE)
+                  ? dayjs(requisition.requisition_date)
+                  : dayjs().startOf('day')
+                }
+                maxDate={
+                  checkOrganizationPermission(PERMISSIONS.APPROVAL_POSTDATE)
+                  ? dayjs().add(10, 'year').endOf('year')
+                  : dayjs().endOf('day')
+                }
+                slotProps={{
+                  textField: {
+                    size: 'small',
+                    fullWidth: true,
+                    error: !!errors?.approval_date,
+                    helperText: errors?.approval_date?.message
+                  }
+                }}
+                onChange={(newValue: Dayjs | null) => {
+                  if (newValue) {
+                    setValue('approval_date', newValue.toISOString(), {
+                      shouldValidate: true,
+                      shouldDirty: true
+                    });
+                  }
+                }}
+              />
             </Div>
           </Grid>
         </Grid>
       </DialogTitle>
       <DialogContent>
         {isPurchaseType ? 
-          <ApprovalRequisitionProductItem 
-            approval={approval} 
-            requisition={requisition} 
-            errors={errors.product_items} 
-            requisitionProductItem={requisitionProductItem} 
-            setRequisitionProductItem={setRequisitionProductItem} 
-            handleItemChange={handleItemChange}
-          /> :
-          <ApprovalRequisitionLedgerItem 
-            approval={approval} 
-            requisition={requisition} 
-            errors={errors.ledger_items} 
-            requisitionLedgerItem={requisitionLedgerItem} 
-            setRequisitionLedgerItem={setRequisitionLedgerItem} 
-            handleItemChange={handleItemChange}
-          />
+            <ApprovalRequisitionProductItem 
+              approval={approval} 
+              requisition={requisition} 
+              errors={errors.product_items} 
+              requisitionProductItem={requisitionProductItem} 
+              setRequisitionProductItem={setRequisitionProductItem} 
+              handleItemChange={handleItemChange}
+            /> 
+          :
+            <ApprovalRequisitionLedgerItem 
+              approval={approval} 
+              requisition={requisition} 
+              errors={errors.ledger_items} 
+              requisitionLedgerItem={requisitionLedgerItem} 
+              setRequisitionLedgerItem={setRequisitionLedgerItem} 
+              handleItemChange={handleItemChange}
+            />
         }
         <Grid size={{xs: 12}}>
           <Div sx={{ mt: 1, mb: 1 }}>

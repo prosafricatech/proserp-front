@@ -68,7 +68,7 @@ const SubContractMaterialIssuedTab = ({subContract}) => {
                 onChange={handleOnChange}
                 value={queryOptions.queryParams.keyword}
               />
-              <SubContractMaterialIssuedActionTail subContract={subContract}/>
+              {/* <SubContractMaterialIssuedActionTail subContract={subContract}/> */}
             </Stack>
           }
         />
