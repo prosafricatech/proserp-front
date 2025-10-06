@@ -35,7 +35,7 @@ export const fuelPumpSchema = yup.object({
 });
 
 const FuelPumpTab: React.FC<FuelPumpTabProps> = ({ station }) => {
-  const { control, formState: { errors } } = useFormContext();
+  const {  setValue,control, formState: { errors } } = useFormContext();
   const { fields, append, remove } = useFieldArray({
     control,
     name: "fuel_pumps",
@@ -45,7 +45,7 @@ const FuelPumpTab: React.FC<FuelPumpTabProps> = ({ station }) => {
   const canCreateProduct = checkOrganizationPermission([PERMISSIONS.PRODUCTS_CREATE]);
   const [openProductQuickAdd, setOpenProductQuickAdd] = useState<boolean[]>([]);
   const [addedProduct, setAddedProduct] = useState<any>(null);
-
+console.log("productOptions in FuelPumpTab:", productOptions);
   // Fetch store options with proper typing
   const { data: storeOptions, isLoading: isFetchingStores } = useQuery<StoreOption[], Error>({
     queryKey: ["storeOptions"],
@@ -88,51 +88,61 @@ const FuelPumpTab: React.FC<FuelPumpTabProps> = ({ station }) => {
     return <div>Loading product options...</div>;
   }
 
+  function getProductValue(index: number) {
+    throw new Error("Function not implemented.");
+  }
+
   return (
     <Box sx={{ width: "100%" }}>
       {fields.map((field, index) => (
         <Grid container spacing={1} key={field.id} sx={{ mb: 2 }} alignItems="flex-start">
           {/* Fuel Name - 4 columns */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Controller
-              name={`fuel_pumps.${index}.product_id`}
-              control={control}
-              render={({ field }) => (
-                <ProductSelect
-                  label="Fuel Name"
-                  frontError={getFieldError(index, "product_id")}
-                  addedProduct={addedProduct}
-                  value={field.value}
-                  excludeIds={nonInventoryIds}
-                  onChange={async (newValue: Product | null) => {
-                    // ✅ REMOVED: Setting fuelName and unit_id fields
-                    if (newValue) {
-                      field.onChange(newValue.id);
-                    } else {
-                      field.onChange(null);
-                    }
-                  }}
-                  startAdornment={
-                    canCreateProduct && (
-                      <Tooltip title="Add New Fuel Product">
-                        <AddOutlined
-                          onClick={() => {
-                            const newOpen = [...openProductQuickAdd];
-                            newOpen[index] = true;
-                            setOpenProductQuickAdd(newOpen);
-                          }}
-                          sx={{ cursor: "pointer" }}
-                        />
-                      </Tooltip>
-                    )
+      <Grid size={{ xs: 12, md: 3.5 }}>
+        <Controller
+          name={`fuel_pumps.${index}.product_id`}
+          control={control}
+          render={({ field }) => {
+            // FIND THE FULL PRODUCT OBJECT
+            const productValue = productOptions.find(product => product.id === field.value) || null;
+            
+            return (
+              <ProductSelect
+                label="Fuel Name"
+                frontError={getFieldError(index, "product_id")}
+                addedProduct={addedProduct}
+                defaultValue={productValue} // ← TUMIA defaultValue INSTEAD OF value
+                excludeIds={nonInventoryIds}
+                onChange={async (newValue: Product | null) => {
+                  if (newValue) {
+                    setAddedProduct(newValue);
+                    setValue(`fuel_pumps.${index}.product_name`, newValue.name);
+                    field.onChange(newValue.id);
+                  } else {
+                    field.onChange(null);
+                    setValue(`fuel_pumps.${index}.product_name`, "");
                   }
-                />
-              )}
-            />
-          </Grid>
-
+                }}
+                startAdornment={
+                  canCreateProduct && (
+                    <Tooltip title="Add New Fuel Product">
+                      <AddOutlined
+                        onClick={() => {
+                          const newOpen = [...openProductQuickAdd];
+                          newOpen[index] = true;
+                          setOpenProductQuickAdd(newOpen);
+                        }}
+                        sx={{ cursor: "pointer" }}
+                      />
+                    </Tooltip>
+                  )
+                }
+              />
+            );
+          }}
+        />
+      </Grid>
           {/* Pump Name - 4 columns */}
-          <Grid size={{ xs: 12, md: 6 }}>
+          <Grid size={{ xs: 12, md: 3.5 }}>
             <Controller
               name={`fuel_pumps.${index}.name`}
               control={control}
@@ -150,7 +160,7 @@ const FuelPumpTab: React.FC<FuelPumpTabProps> = ({ station }) => {
           </Grid>
 
           {/* Tank Name - 3 columns */}
-          <Grid size={{ xs: 11, md: 6 }}>
+          <Grid size={{ xs: 11, md: 3.5 }}>
             <Controller
               name={`fuel_pumps.${index}.tank_id`}
               control={control}
@@ -180,7 +190,7 @@ const FuelPumpTab: React.FC<FuelPumpTabProps> = ({ station }) => {
           </Grid>
 
           {/* Delete Button - 1 column */}
-          <Grid size={{ xs: 1, md: 1 }} sx={{ display: "flex", justifyContent: "center", alignItems: "flex-start" }}>
+          <Grid size={{ xs: 1, md: 1.5 }} sx={{ display: "flex", justifyContent: "center", alignItems: "flex-start" }}>
             {fields.length > 1 && (
               <IconButton
                 onClick={() => remove(index)}

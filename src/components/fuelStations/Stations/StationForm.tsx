@@ -42,8 +42,10 @@ interface ShiftTeamFormData {
   description?: string | null;
 }
 
+// StationForm.tsx - rekebisha interface
 interface FuelPumpFormData {
   product_id: number | null;
+  product_name?: string; // ✅ ADD THIS
   name: string;
   tank_id: number | null;
 }
@@ -85,6 +87,7 @@ const validationSchema = yup.object({
         .nullable()
         .required("Fuel name is required")
         .typeError("Fuel name is required"),
+      product_name: yup.string().optional(),
       name: yup.string().required("Pump name is required"),
       tank_id: yup.number()
         .nullable()
@@ -103,7 +106,7 @@ const StationForm: React.FC<StationFormProps> = ({ station, setOpenDialog }) => 
     PERMISSIONS.FUEL_STATIONS_UPDATE,
   ]);
 
-  const defaultValues = useMemo(() => {
+ const defaultValues = useMemo(() => {
   return {
     id: station?.id,
     name: station?.name ?? "",
@@ -129,12 +132,17 @@ const StationForm: React.FC<StationFormProps> = ({ station, setOpenDialog }) => 
     
     fuel_pumps: station?.fuel_pumps?.length ? station.fuel_pumps.map(pump => ({
       product_id: pump.product_id ?? null,
+      product_name: pump.product?.name ?? "", // ✅ ONGEZA HII LINE
       name: pump.name || "",
       tank_id: pump.tank_id ?? null,
-    })) : [{ product_id: null, name: "", tank_id: null }],
+    })) : [{ 
+      product_id: null, 
+      product_name: "", // ✅ ONGEZA HII
+      name: "", 
+      tank_id: null 
+    }],
   };
 }, [station]);
-
   const methods = useForm<FormData>({
     defaultValues,
     resolver: yupResolver(validationSchema) as any,
@@ -211,12 +219,13 @@ const StationForm: React.FC<StationFormProps> = ({ station, setOpenDialog }) => 
       })) || [];
 
     const validFuelPumps = formData.fuel_pumps
-      ?.filter(pump => pump.name?.trim() && pump.tank_id && pump.product_id)
-      ?.map(pump => ({
-        name: pump.name.trim(),
-        tank_id: pump.tank_id,
-        product_id: pump.product_id,
-      })) || [];
+    ?.filter(pump => pump.name?.trim() && pump.tank_id && pump.product_id)
+    ?.map(pump => ({
+      name: pump.name.trim(),
+      tank_id: pump.tank_id,
+      product_id: pump.product_id,
+      // product_name haitumiwi kwenye API, ni kwa display tu
+    })) || [];
 
     if (validShifts.length === 0) {
       enqueueSnackbar("At least one valid shift team is required", { variant: "error" });
