@@ -97,50 +97,50 @@ console.log("productOptions in FuelPumpTab:", productOptions);
       {fields.map((field, index) => (
         <Grid container spacing={1} key={field.id} sx={{ mb: 2 }} alignItems="flex-start">
           {/* Fuel Name - 4 columns */}
-      <Grid size={{ xs: 12, md: 3.5 }}>
-        <Controller
-          name={`fuel_pumps.${index}.product_id`}
-          control={control}
-          render={({ field }) => {
-            // FIND THE FULL PRODUCT OBJECT
-            const productValue = productOptions.find(product => product.id === field.value) || null;
-            
-            return (
-              <ProductSelect
-                label="Fuel Name"
-                frontError={getFieldError(index, "product_id")}
-                addedProduct={addedProduct}
-                defaultValue={productValue} // ← TUMIA defaultValue INSTEAD OF value
-                excludeIds={nonInventoryIds}
-                onChange={async (newValue: Product | null) => {
-                  if (newValue) {
-                    setAddedProduct(newValue);
-                    setValue(`fuel_pumps.${index}.product_name`, newValue.name);
-                    field.onChange(newValue.id);
-                  } else {
-                    field.onChange(null);
-                    setValue(`fuel_pumps.${index}.product_name`, "");
+        <Grid size={{ xs: 12, md: 3.5 }}>
+          <Controller
+            name={`fuel_pumps.${index}.product_id`}
+            control={control}
+            render={({ field }) => {
+              // FIND THE FULL PRODUCT OBJECT
+              const productValue = productOptions.find(product => product.id === field.value) || null;
+              
+              return (
+                <ProductSelect
+                  label="Fuel Name"
+                  frontError={getFieldError(index, "product_id")}
+                  addedProduct={addedProduct}
+                  defaultValue={productValue} // ← TUMIA defaultValue INSTEAD OF value
+                  excludeIds={nonInventoryIds}
+                  onChange={async (newValue: Product | null) => {
+                    if (newValue) {
+                      setAddedProduct(newValue);
+                      setValue(`fuel_pumps.${index}.product_name`, newValue.name);
+                      field.onChange(newValue.id);
+                    } else {
+                      field.onChange(null);
+                      setValue(`fuel_pumps.${index}.product_name`, "");
+                    }
+                  }}
+                  startAdornment={
+                    canCreateProduct && (
+                      <Tooltip title="Add New Fuel Product">
+                        <AddOutlined
+                          onClick={() => {
+                            const newOpen = [...openProductQuickAdd];
+                            newOpen[index] = true;
+                            setOpenProductQuickAdd(newOpen);
+                          }}
+                          sx={{ cursor: "pointer" }}
+                        />
+                      </Tooltip>
+                    )
                   }
-                }}
-                startAdornment={
-                  canCreateProduct && (
-                    <Tooltip title="Add New Fuel Product">
-                      <AddOutlined
-                        onClick={() => {
-                          const newOpen = [...openProductQuickAdd];
-                          newOpen[index] = true;
-                          setOpenProductQuickAdd(newOpen);
-                        }}
-                        sx={{ cursor: "pointer" }}
-                      />
-                    </Tooltip>
-                  )
-                }
-              />
-            );
-          }}
-        />
-      </Grid>
+                />
+              );
+            }}
+          />
+        </Grid>
           {/* Pump Name - 4 columns */}
           <Grid size={{ xs: 12, md: 3.5 }}>
             <Controller
