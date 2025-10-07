@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import {
   Button,
   DialogActions,
@@ -23,6 +23,8 @@ import type { AddStationResponse, Station, UpdateStationResponse } from "./Stati
 import { useJumboAuth } from "@/app/providers/JumboAuthProvider";
 import { PERMISSIONS } from "@/utilities/constants/permissions";
 import { User } from "@/components/prosControl/userManagement/UserManagementType";
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 
 interface StationFormProps {
   station?: Station;
@@ -42,10 +44,9 @@ interface ShiftTeamFormData {
   description?: string | null;
 }
 
-// StationForm.tsx - rekebisha interface
 interface FuelPumpFormData {
   product_id: number | null;
-  product_name?: string; // ✅ ADD THIS
+  product_name?: string;
   name: string;
   tank_id: number | null;
 }
@@ -106,43 +107,47 @@ const StationForm: React.FC<StationFormProps> = ({ station, setOpenDialog }) => 
     PERMISSIONS.FUEL_STATIONS_UPDATE,
   ]);
 
- const defaultValues = useMemo(() => {
-  return {
-    id: station?.id,
-    name: station?.name ?? "",
-    address: station?.address ?? "",
-    users: station?.users ?? [],
-    
-    shift_teams: station?.shift_teams?.length ? station.shift_teams.map(team => {
-      const ledgers = Array.isArray(team.ledgers) ? team.ledgers.map(ledger => ({
-        id: ledger.id,
-        name: ledger.name,
-        code: ledger.code || null,
-        ledger_group_id: ledger.ledger_group_id || 0,
-        alias: ledger.alias || null,
-        nature_id: ledger.nature_id
-      })) : [];
+  // State to track current active tab
+  const [activeTab, setActiveTab] = useState<number>(0);
+
+  const defaultValues = useMemo(() => {
+    return {
+      id: station?.id,
+      name: station?.name ?? "",
+      address: station?.address ?? "",
+      users: station?.users ?? [],
       
-      return {
-        name: team.name || "",
-        Ledger: ledgers,
-        description: team.description || null,
-      };
-    }) : [{ name: "", Ledger: [], description: null }],
-    
-    fuel_pumps: station?.fuel_pumps?.length ? station.fuel_pumps.map(pump => ({
-      product_id: pump.product_id ?? null,
-      product_name: pump.product?.name ?? "", // ✅ ONGEZA HII LINE
-      name: pump.name || "",
-      tank_id: pump.tank_id ?? null,
-    })) : [{ 
-      product_id: null, 
-      product_name: "", // ✅ ONGEZA HII
-      name: "", 
-      tank_id: null 
-    }],
-  };
-}, [station]);
+      shift_teams: station?.shift_teams?.length ? station.shift_teams.map(team => {
+        const ledgers = Array.isArray(team.ledgers) ? team.ledgers.map(ledger => ({
+          id: ledger.id,
+          name: ledger.name,
+          code: ledger.code || null,
+          ledger_group_id: ledger.ledger_group_id || 0,
+          alias: ledger.alias || null,
+          nature_id: ledger.nature_id
+        })) : [];
+        
+        return {
+          name: team.name || "",
+          Ledger: ledgers,
+          description: team.description || null,
+        };
+      }) : [{ name: "", Ledger: [], description: null }],
+      
+      fuel_pumps: station?.fuel_pumps?.length ? station.fuel_pumps.map(pump => ({
+        product_id: pump.product_id ?? null,
+        product_name: pump.product?.name ?? "",
+        name: pump.name || "",
+        tank_id: pump.tank_id ?? null,
+      })) : [{ 
+        product_id: null, 
+        product_name: "",
+        name: "", 
+        tank_id: null 
+      }],
+    };
+  }, [station]);
+
   const methods = useForm<FormData>({
     defaultValues,
     resolver: yupResolver(validationSchema) as any,
@@ -219,13 +224,12 @@ const StationForm: React.FC<StationFormProps> = ({ station, setOpenDialog }) => 
       })) || [];
 
     const validFuelPumps = formData.fuel_pumps
-    ?.filter(pump => pump.name?.trim() && pump.tank_id && pump.product_id)
-    ?.map(pump => ({
-      name: pump.name.trim(),
-      tank_id: pump.tank_id,
-      product_id: pump.product_id,
-      // product_name haitumiwi kwenye API, ni kwa display tu
-    })) || [];
+      ?.filter(pump => pump.name?.trim() && pump.tank_id && pump.product_id)
+      ?.map(pump => ({
+        name: pump.name.trim(),
+        tank_id: pump.tank_id,
+        product_id: pump.product_id,
+      })) || [];
 
     if (validShifts.length === 0) {
       enqueueSnackbar("At least one valid shift team is required", { variant: "error" });
@@ -247,6 +251,21 @@ const StationForm: React.FC<StationFormProps> = ({ station, setOpenDialog }) => 
     };
     
     saveMutation(dataToSend as any);
+  };
+
+  // Handle tab change
+  const handleTabChange = (newValue: number) => {
+    setActiveTab(newValue);
+  };
+
+  // Handle next button click
+  const handleNext = () => {
+    setActiveTab(1); // Move to Fuel Pump tab
+  };
+
+  // Handle previous button click
+  const handlePrevious = () => {
+    setActiveTab(0); // Move back to Shift Team tab
   };
 
   return (
@@ -301,22 +320,52 @@ const StationForm: React.FC<StationFormProps> = ({ station, setOpenDialog }) => 
         </DialogTitle>
 
         <DialogContent>
-          <StationTabs station={station} />
+          <StationTabs 
+            station={station} 
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+          />
         </DialogContent>
 
         <DialogActions>
           <Button onClick={() => setOpenDialog(false)} size="small">
             Cancel
           </Button>
-          <LoadingButton
-            type="submit"
-            variant="contained"
-            size="small"
-            loading={addLoading || updateLoading}
-            disabled={!canCreateOrEdit}
-          >
-            Submit
-          </LoadingButton>
+          
+         {/* Previous Button with Back Arrow - Only show on Fuel Pump tab (tab index 1) */}
+          {activeTab === 1 && (
+            <Button 
+              onClick={handlePrevious}
+              size="small"
+              variant="outlined"
+              startIcon={<ArrowBackIcon />}
+            >
+              Previous
+            </Button>
+          )}
+          
+          {/* Next Button with Forward Arrow - Only show on Shift Team tab (tab index 0) */}
+          {activeTab === 0 ? (
+            <Button 
+              onClick={handleNext}
+              size="small"
+              variant="outlined" // Changed to outlined to match Previous button
+              endIcon={<ArrowForwardIcon />} // Forward arrow at the end
+            >
+              Next
+            </Button>
+          ) : (
+            /* Submit Button - Only show on Fuel Pump tab (tab index 1) */
+            <LoadingButton
+              type="submit"
+              variant="contained"
+              size="small"
+              loading={addLoading || updateLoading}
+              disabled={!canCreateOrEdit}
+            >
+              Submit
+            </LoadingButton>
+          )}
         </DialogActions>
       </form>
     </FormProvider>
