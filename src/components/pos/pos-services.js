@@ -13,9 +13,9 @@ posServices.getCounterLedgers = async(counter_id) => {
     return data;
 }
 
-posServices.getCounterSales = async ({ counterId, keyword, page, limit, from, to }) => {
+posServices.getCounterSales = async ({ counterId, keyword, page, limit, from, to, status }) => {
   const response = await axios.get(`/api/pos/counter/${counterId}/getCounterSales`, {
-    params: { counterId, keyword, page, limit, from, to },
+    params: { counterId, keyword, page, limit, from, to, status },
   });
   return response.data;
 };

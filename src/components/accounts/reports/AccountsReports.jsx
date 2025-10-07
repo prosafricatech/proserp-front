@@ -13,7 +13,6 @@ import DebtorCreditorReport from './debtorCreditor/DebtorCreditorReport'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faMoneyBill1} from '@fortawesome/free-regular-svg-icons'
 import CashierReport from './cashierReport/CashierReport'
-import CodedTrialBalance from './codedTrialBalance/CodedTrialBalance'
 import useProsERPStyles from '@/app/helpers/style-helpers'
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider'
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks'
@@ -29,7 +28,6 @@ function AccountsReports() {
     const [openCashierReport, setOpenCashierReport] = useState(false);
     const [openReceiptDialog, setOpenReceiptDialog] = useState(false);
     const [openTrialBalance, setOpenTrialBalance] = useState(false);
-    const [openCodedTrialBalance, setOpenCodedTrialBalance] = useState(false);
 
     const [report, setReport] = useState(null);
     const {checkOrganizationPermission, authOrganization,organizationHasSubscribed} = useJumboAuth();
@@ -58,14 +56,14 @@ function AccountsReports() {
             <Dialog 
                 scroll={belowLargeScreen ? 'body' : 'paper'} 
                 fullWidth
-                maxWidth={(openCashierReport || openTrialBalance || openCodedTrialBalance) ? 'lg' : 'md'}
+                maxWidth={(openCashierReport || openTrialBalance) ? 'lg' : 'md'}
                 fullScreen={(openBalanceSheet || openCashierReport || IncomeStatement) && belowLargeScreen} 
-                open={openDialog || openReceiptDialog || openBalanceSheet || openCashierReport || openTrialBalance || openCodedTrialBalance}
+                open={openDialog || openReceiptDialog || openBalanceSheet || openCashierReport || openTrialBalance}
             >
                 {report}
                 {!openCashierReport &&
                     <DialogActions className={css.hiddenOnPrint}>
-                        <Button sx={{ m:1 }} size='small' variant='outlined' onClick={() =>{ setOpenDialog(false) ; setOpenReceiptDialog(false); setOpenBalanceSheet(false); setOpenTrialBalance(false); setOpenCashierReport(false); setOpenCodedTrialBalance(false);}}>
+                        <Button sx={{ m:1 }} size='small' variant='outlined' onClick={() =>{ setOpenDialog(false) ; setOpenReceiptDialog(false); setOpenBalanceSheet(false); setOpenTrialBalance(false); setOpenCashierReport(false);}}>
                             Close
                         </Button>
                     </DialogActions>
@@ -126,23 +124,6 @@ function AccountsReports() {
                     >
                         <DeckOutlined sx={{ fontSize: '40px' }} />
                         <Typography>Trial Balance</Typography>
-                    </Grid>
-                    <Grid sx={{ 
-                            cursor: 'pointer',
-                            '&:hover': {
-                                bgcolor: 'action.hover',
-                            }
-                        }}
-                        size={{xs: 6, md: 3, lg: 2}} 
-                        p={1}
-                        textAlign={'center'}
-                        onClick={() => {
-                            setReport(<CodedTrialBalance/>)
-                            setOpenCodedTrialBalance(true);
-                        }}
-                    >
-                        <TableChartOutlined sx={{ fontSize: '40px' }} />
-                        <Typography>C-Trial Balance</Typography>
                     </Grid>
                     <Grid sx={{ 
                             cursor: 'pointer',
