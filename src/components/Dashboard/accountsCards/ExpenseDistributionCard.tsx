@@ -1,18 +1,17 @@
-import JumboCardQuick from '@jumbo/components/JumboCardQuick/JumboCardQuick'
-import React, { useEffect, useState } from 'react'
-import { LinearProgress, useMediaQuery } from '@mui/material'
-import financialReportsServices from '../../accounts/reports/financial-reports-services'
-import { useDashboardSettings } from '../Dashboard'
-import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks'
-import { useQuery } from '@tanstack/react-query'
-import Highcharts from 'highcharts'
-import HighchartsReact from 'highcharts-react-official'
+import JumboCardQuick from '@jumbo/components/JumboCardQuick/JumboCardQuick';
+import React, { useEffect, useState } from 'react';
+import { LinearProgress, Typography, useMediaQuery, Box } from '@mui/material';
+import financialReportsServices from '../../accounts/reports/financial-reports-services';
+import { useDashboardSettings } from '../Dashboard';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
+import { useQuery } from '@tanstack/react-query';
+import Highcharts from 'highcharts';
+import HighchartsReact from 'highcharts-react-official';
 
 interface ExpenseData {
   ledger_name: string;
   amount: number;
 }
-
 interface ChartDataPoint {
   name: string;
   y: number;
@@ -28,8 +27,8 @@ function ExpenseDistributionCard() {
   });
 
   useEffect(() => {
-    setParams(prevParams => ({...prevParams, from, to, cost_center_ids}));
-  }, [from, to, cost_center_ids])
+    setParams(prev => ({ ...prev, from, to, cost_center_ids }));
+  }, [from, to, cost_center_ids]);
 
   const { theme } = useJumboTheme();
   const xlScreen = useMediaQuery(theme.breakpoints.up('lg'));
@@ -45,36 +44,22 @@ function ExpenseDistributionCard() {
         cost_center_ids: params.cost_center_ids,
         group_by_ledgers: true
       });
-      
-      return expenses.map((expense: ExpenseData) => {
-        return {
-          name: expense.ledger_name,
-          y: expense.amount
-        } as ChartDataPoint;
-      });
+
+      return expenses.map((expense: ExpenseData) => ({
+        name: expense.ledger_name,
+        y: expense.amount
+      } as ChartDataPoint));
     }
   });
 
   const options: Highcharts.Options = {
-    title: {
-      text: '',
-      align: 'left',
-      useHTML: true
-    },
     chart: {
-      backgroundColor: 'transparent',
-      plotBackgroundColor: undefined,
-      plotBorderWidth: undefined,
-      plotShadow: false,
       type: 'pie',
-      height: 245
+      height: 245,
+      backgroundColor: 'transparent',
+      spacing: [10, 10, 10, 10]
     },
-    accessibility: {
-      enabled: false,
-      point: {
-        valueSuffix: '%'
-      }
-    },
+    title: { text: '' },
     tooltip: {
       pointFormat: '{point.y}: <b>({point.percentage:.1f}%)</b>',
       backgroundColor: isDark ? '#2a2a2a' : '#fff',
@@ -82,11 +67,13 @@ function ExpenseDistributionCard() {
     },
     plotOptions: {
       pie: {
+        size: '70%',
+        center: ['50%', '50%'],
         allowPointSelect: true,
         cursor: 'pointer',
         dataLabels: {
           enabled: true,
-          format: '<b>{point.name}</b>: {point.percentage:.1f} %',
+          format: '<b>{point.name}</b><br>{point.percentage:.1f} %',
           style: { color: isDark ? '#fff' : '#000', textOutline: 'none' }
         }
       }
@@ -101,22 +88,33 @@ function ExpenseDistributionCard() {
 
   return (
     <JumboCardQuick
-      title={`Operating Expenses`}
       sx={{
-        height: xlScreen ? 310 : null
+        height: xlScreen ? 310 : null,
+        display: 'flex',
+        flexDirection: 'column'
       }}
     >
-      {
-        isLoading ? 
-        <LinearProgress/> 
-        : 
-        <HighchartsReact
-          highcharts={Highcharts}
-          options={options}
-        />
-      }
+      <Box sx={{ px: 2, pt: 1 }}>
+        <Typography
+          variant="subtitle1"
+          sx={{
+            color: theme.palette.text.primary,
+            fontFamily: 'NoirPro, Arial',
+          }}
+        >
+          Operating Expenses
+        </Typography>
+      </Box>
+
+      <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {isLoading ? (
+          <LinearProgress sx={{ width: '100%' }} />
+        ) : (
+          <HighchartsReact highcharts={Highcharts} options={options} />
+        )}
+      </Box>
     </JumboCardQuick>
-  )
+  );
 }
 
-export default ExpenseDistributionCard
+export default ExpenseDistributionCard;

@@ -4,7 +4,7 @@ export async function GET(req: NextRequest) {
   const lang = req.nextUrl.searchParams.get('lang') || 'en-US';
   return NextResponse.json({
     name: "ProsERP - Robust ERP Solution",
-    short_name: "ProsERP",
+    short_name: "ProsERP Beta",
     theme_color: "#8936FF",
     background_color: "#ffffff",
     description: "Robust ERP for accounting, project management, payroll, inventory, and requisitions.",

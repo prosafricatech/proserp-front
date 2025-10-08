@@ -1,6 +1,6 @@
 import JumboCardQuick from '@jumbo/components/JumboCardQuick/JumboCardQuick';
 import React, { useEffect, useState } from 'react';
-import { LinearProgress, useMediaQuery } from '@mui/material';
+import { LinearProgress, Typography, useMediaQuery, Box } from '@mui/material';
 import financialReportsServices from '../../accounts/reports/financial-reports-services';
 import { useDashboardSettings } from '../Dashboard';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
@@ -54,16 +54,13 @@ function RevenueDistributionCard() {
   });
 
   const options: Highcharts.Options = {
-    title: {
-      text: '',
-      align: 'left',
-      useHTML: true
-    },
     chart: {
       type: 'pie',
       height: 245,
-      backgroundColor: 'transparent'
+      backgroundColor: 'transparent',
+      spacing: [10, 10, 10, 10]
     },
+    title: { text: '' },
     tooltip: {
       pointFormat: '{point.y}: <b>({point.percentage:.1f}%)</b>',
       backgroundColor: isDark ? '#2a2a2a' : '#fff',
@@ -71,11 +68,13 @@ function RevenueDistributionCard() {
     },
     plotOptions: {
       pie: {
+        size: '70%',
+        center: ['50%', '50%'],
         allowPointSelect: true,
         cursor: 'pointer',
         dataLabels: {
           enabled: true,
-          format: '<b>{point.name}</b>: {point.percentage:.1f} %',
+          format: '<b>{point.name}</b><br>{point.percentage:.1f} %',
           style: { color: isDark ? '#fff' : '#000', textOutline: 'none' }
         }
       }
@@ -89,10 +88,32 @@ function RevenueDistributionCard() {
   };
 
   return (
-    <JumboCardQuick title={`Revenue Composition`} sx={{ height: xlScreen ? 310 : null }}>
-      {isLoading ? <LinearProgress /> :
-        <HighchartsReact highcharts={Highcharts} options={options} />
-      }
+    <JumboCardQuick
+      sx={{
+        height: xlScreen ? 310 : null,
+        display: 'flex',
+        flexDirection: 'column'
+      }}
+    >
+      <Box sx={{ px: 2, pt: 1 }}>
+        <Typography
+          variant="subtitle1"
+          sx={{
+            color: theme.palette.text.primary,
+            fontFamily: 'NoirPro, Arial',
+          }}
+        >
+          Revenue Composition
+        </Typography>
+      </Box>
+
+      <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {isLoading ? (
+          <LinearProgress sx={{ width: '100%' }} />
+        ) : (
+          <HighchartsReact highcharts={Highcharts} options={options} />
+        )}
+      </Box>
     </JumboCardQuick>
   );
 }
