@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
   Box,
@@ -61,6 +62,17 @@ function RequisitionsWaitingForSelector({ onChange, value }: RequisitionsWaiting
           value={nextApprovalRoleId ?? ''}
           label="Waiting For"
           onChange={handleChange}
+          sx={{ textAlign: 'left' }}
+          MenuProps={{
+            PaperProps: {
+              sx: {
+                '& .MuiMenuItem-root': {
+                  justifyContent: 'flex-start',
+                  textAlign: 'left',
+                },
+              },
+            },
+          }}
           endAdornment={
             nextApprovalRoleId !== null && (
               <InputAdornment position="end">
@@ -76,9 +88,9 @@ function RequisitionsWaitingForSelector({ onChange, value }: RequisitionsWaiting
             )
           }
         >
-          <MenuItem value="">All</MenuItem>
+          <MenuItem value="" sx={{ justifyContent: 'flex-start' }}>All</MenuItem>
           {roles?.map((role) => (
-            <MenuItem key={role.id} value={role.id}>
+            <MenuItem key={role.id} value={role.id} sx={{ justifyContent: 'flex-start' }}>
               {role.name}
             </MenuItem>
           ))}

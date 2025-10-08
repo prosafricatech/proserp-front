@@ -23,7 +23,9 @@ export interface ShiftTeam {
 }
 
 export interface FuelPump {
+  product: any;
   product_id: number | null;
+  product_name?: string;
   fuelName?: Product;
   name: string;
   tank_id: number | null;
@@ -60,6 +62,7 @@ export interface FormData {
   }>;
   fuel_pumps: Array<{
     product_id: number | null;
+    product_name?: string;
     name: string;
     tank_id: number | null;
     fuelName?: any; // Adjust based on ProductSelect's type

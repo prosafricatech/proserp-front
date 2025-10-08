@@ -7,11 +7,12 @@ export async function DELETE(
   req: NextRequest, context: any
 ) {
   const { params } = context as { params: { id: string } };
+  const { id } = params;
   const { headers, response } = await getAuthHeaders(req);
   if (response) return response;
 
   // Corrected URL formatting
-  const res = await fetch(`${API_BASE}/fuel-stations/stations/${params.id}`, {
+  const res = await fetch(`${API_BASE}/fuel-stations/stations/${id}`, {
     method: 'DELETE',
     headers,
   });

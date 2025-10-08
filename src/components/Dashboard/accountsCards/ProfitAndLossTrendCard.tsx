@@ -10,6 +10,7 @@ import IncomeStatement from '../../accounts/reports/incomeStatement/IncomeStatem
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks'
 import { useQuery } from '@tanstack/react-query'
 import { Div } from '@jumbo/shared'
+import { shortNumber } from '@/app/helpers/input-sanitization-helpers'
 
 interface FinancialFigure {
   period: string;
@@ -90,15 +91,6 @@ function ProfitAndLossTrendCard() {
       });
     }
   });
-
-  const shortNumber = (value: number) => {
-    if (value >= 1000000) {
-      return (value / 1000000).toFixed(1) + 'M';
-    } else if (value >= 1000) {
-      return (value / 1000).toFixed(1) + 'K';
-    }
-    return value.toString();
-  };
 
   return (
     <JumboCardQuick 

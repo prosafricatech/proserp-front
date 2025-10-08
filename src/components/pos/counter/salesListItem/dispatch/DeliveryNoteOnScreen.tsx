@@ -114,7 +114,7 @@ const DeliveryNoteOnScreen: React.FC<DeliveryNoteOnScreenProps> = ({ delivery, o
         </Grid>
 
         {/* Stakeholder Section */}
-        <Grid container spacing={1} sx={{ mt: 2 }}>
+        <Grid container spacing={1} sx={{ mt: 2 }} width={'100%'}>
           <Grid size={12} textAlign="center">
             <Typography variant="body2" color={mainColor} sx={{ py: 0.5 }}>To</Typography>
             <Divider />

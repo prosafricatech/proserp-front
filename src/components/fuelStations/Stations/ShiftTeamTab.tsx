@@ -62,7 +62,7 @@ const ShiftTeamTab: React.FC<ShiftTeamTabProps> = ({ station }) => {
       {fields.map((field, index) => {
         return (
           <Grid container spacing={1} key={field.id} sx={{ mb: 2 }} alignItems="flex-start">
-            <Grid size={{ xs: 12, md: 6 }}>
+            <Grid size={{ xs: 12, md: 5.5}}>
               <Controller
                 name={`shift_teams.${index}.name`}
                 control={control}
@@ -80,7 +80,7 @@ const ShiftTeamTab: React.FC<ShiftTeamTabProps> = ({ station }) => {
               />
             </Grid>
 
-            <Grid size={{ xs: 12, md: 6 }}>
+            <Grid size={{ xs: 12, md: 5.5 }}>
               <Controller
                 name={`shift_teams.${index}.Ledger`}
                 control={control}
@@ -108,7 +108,15 @@ const ShiftTeamTab: React.FC<ShiftTeamTabProps> = ({ station }) => {
               />
             </Grid>
 
-            <Grid size={{ xs: 11, md: 6 }}>
+            <Grid size={{ xs: 12, md: 1 }} sx={{ display: "flex", justifyContent: "center", alignItems: "flex-start" }}>
+              {fields.length > 1 && (
+                <IconButton onClick={() => remove(index)} color="error" sx={{ mt: 0.5 }}>
+                  <Delete />
+                </IconButton>
+              )}
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 11 }}>
               <Controller
                 name={`shift_teams.${index}.description`}
                 control={control}
@@ -134,13 +142,7 @@ const ShiftTeamTab: React.FC<ShiftTeamTabProps> = ({ station }) => {
               />
             </Grid>
 
-            <Grid size={{ xs: 1, md: 1 }} sx={{ display: "flex", justifyContent: "center", alignItems: "flex-start" }}>
-              {fields.length > 1 && (
-                <IconButton onClick={() => remove(index)} color="error" sx={{ mt: 0.5 }}>
-                  <Delete />
-                </IconButton>
-              )}
-            </Grid>
+           
           </Grid>
         );
       })}

@@ -31,7 +31,6 @@ function ExpenseDistributionCard() {
     setParams(prevParams => ({...prevParams, from, to, cost_center_ids}));
   }, [from, to, cost_center_ids])
 
-  // Screen handling constants
   const { theme } = useJumboTheme();
   const xlScreen = useMediaQuery(theme.breakpoints.up('lg'));
   const isDark = theme.palette.mode === 'dark';
@@ -58,12 +57,9 @@ function ExpenseDistributionCard() {
 
   const options: Highcharts.Options = {
     title: {
-      text: '<div style="font-family: NoirPro,Arial; font-size: 1.1rem; line-height:1.2; display:block; font-weight: 400;">Operating Expenses</div>',
+      text: '',
       align: 'left',
-      useHTML: true,
-      style: {
-        color: 'white'
-      }
+      useHTML: true
     },
     chart: {
       backgroundColor: 'transparent',
@@ -80,7 +76,9 @@ function ExpenseDistributionCard() {
       }
     },
     tooltip: {
-      pointFormat: '{point.y}: <b>({point.percentage:.1f}%)</b>'
+      pointFormat: '{point.y}: <b>({point.percentage:.1f}%)</b>',
+      backgroundColor: isDark ? '#2a2a2a' : '#fff',
+      style: { color: isDark ? '#fff' : '#000' }
     },
     plotOptions: {
       pie: {
@@ -88,7 +86,8 @@ function ExpenseDistributionCard() {
         cursor: 'pointer',
         dataLabels: {
           enabled: true,
-          format: '<b>{point.name}</b>: {point.percentage:.1f} %'
+          format: '<b>{point.name}</b>: {point.percentage:.1f} %',
+          style: { color: isDark ? '#fff' : '#000', textOutline: 'none' }
         }
       }
     },
@@ -102,6 +101,7 @@ function ExpenseDistributionCard() {
 
   return (
     <JumboCardQuick
+      title={`Operating Expenses`}
       sx={{
         height: xlScreen ? 310 : null
       }}

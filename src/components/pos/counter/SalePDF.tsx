@@ -191,8 +191,8 @@ const SalePDF: React.FC<SalePDFProps> = ({ sale, organization, thermalPrinter = 
                         </View>
                     </View>
                 )}
-                
-                <View style={{ ...pdfStyles.tableRow, marginTop: 20}}>
+                    
+                <View style={{ ...pdfStyles.tableRow, marginTop:20,}}>
                     <View style={{flex: 3, padding: 2}}>
                         <Text style={{...pdfStyles.minInfo, textDecoration: 'underline'}}>
                             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
@@ -203,17 +203,17 @@ const SalePDF: React.FC<SalePDFProps> = ({ sale, organization, thermalPrinter = 
                             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                         </Text>
-                        <Text style={{...pdfStyles.minInfo, color: mainColor }}>Name</Text>
+                        <Text style={{...pdfStyles.minInfo, color: mainColor }}>{`Name`}</Text>
                     </View>
                 </View>
-                <View style={{ ...pdfStyles.tableRow, marginTop: 15}}>
+                <View style={{ ...pdfStyles.tableRow, marginTop:15,}}>
                     <View style={{flex: 1.5, padding: 2}}>
                         <Text style={{...pdfStyles.minInfo, textDecoration: 'underline'}}>
                             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                         </Text>
-                        <Text style={{...pdfStyles.minInfo, color: mainColor }}>Signature</Text>
+                        <Text style={{...pdfStyles.minInfo, color: mainColor }}>{`Signature`}</Text>
                     </View>
                     <View style={{flex: 1.5, padding: 2}}>
                         <Text style={{...pdfStyles.minInfo, textDecoration: 'underline'}}>
@@ -221,7 +221,7 @@ const SalePDF: React.FC<SalePDFProps> = ({ sale, organization, thermalPrinter = 
                             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                         </Text>
-                        <Text style={{...pdfStyles.minInfo, color: mainColor }}>Date</Text>
+                        <Text style={{...pdfStyles.minInfo, color: mainColor }}>{`Date`}</Text>
                     </View>
                 </View>
                 <View style={{ ...pdfStyles.tableRow, marginTop: 50, textAlign: 'center'}}>
@@ -348,24 +348,32 @@ const SalePDF: React.FC<SalePDFProps> = ({ sale, organization, thermalPrinter = 
                     </View>
                 </React.Fragment>
             )}
-            <View style={{ ...pdfStyles.tableRow, marginTop: 30}}>
+            <View style={{ ...pdfStyles.tableRow, marginTop:30,}}>
                 <View style={{flex: 3, padding: 2}}>
                     <Text style={{...pdfStyles.minInfo, textDecoration: 'underline'}}>
-                        {' '.repeat(100)}
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                     </Text>
-                    <Text style={{...pdfStyles.minInfo, color: mainColor }}>Name</Text>
+                    <Text style={{...pdfStyles.minInfo, color: mainColor }}>{`Name`}</Text>
                 </View>
                 <View style={{flex: 1.5, padding: 2}}>
                     <Text style={{...pdfStyles.minInfo, textDecoration: 'underline'}}>
-                        {' '.repeat(50)}
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                     </Text>
-                    <Text style={{...pdfStyles.minInfo, color: mainColor }}>Signature</Text>
+                    <Text style={{...pdfStyles.minInfo, color: mainColor }}>{`Signature`}</Text>
                 </View>
                 <View style={{flex: 1.5, padding: 2}}>
                     <Text style={{...pdfStyles.minInfo, textDecoration: 'underline'}}>
-                        {' '.repeat(50)}
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                     </Text>
-                    <Text style={{...pdfStyles.minInfo, color: mainColor }}>Date</Text>
+                    <Text style={{...pdfStyles.minInfo, color: mainColor }}>{`Date`}</Text>
                 </View>
             </View>
             <PageFooter/>
