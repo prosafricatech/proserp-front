@@ -5,7 +5,7 @@ import {
   Typography,
   MenuItem,
   Select,
-  useTheme,
+  useMediaQuery,
   Tooltip,
 } from '@mui/material';
 import {
@@ -16,6 +16,7 @@ import {
 } from '@mui/icons-material';
 import useJumboList, { JumboListContextType } from '../../hooks/useJumboList';
 import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 
 interface JumboListPaginationProps {
   hidePagination?: boolean;
@@ -24,16 +25,12 @@ interface JumboListPaginationProps {
 const JumboListPagination: React.FC<JumboListPaginationProps> = ({
   hidePagination = false,
 }) => {
-  // 🔹 Always call hooks first — no condition before them
-  const {
-    activePage,
-    itemsPerPage,
-    totalCount,
-    setActivePage,
-    setItemsPerPage,
-  } = useJumboList() as JumboListContextType;
+  // Hooks should always be called at the top
+  const { activePage, itemsPerPage, totalCount, setActivePage } =
+    useJumboList() as JumboListContextType;
 
-  const theme = useTheme();
+  const { theme } = useJumboTheme();
+  const smallScreen = useMediaQuery(theme.breakpoints.down('md'));
   const dictionary = useDictionary();
 
   const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
@@ -44,22 +41,24 @@ const JumboListPagination: React.FC<JumboListPaginationProps> = ({
     }
   };
 
+  // Adjust visible pages count based on screen size
   const visiblePages = React.useMemo(() => {
-    const maxVisible = 5;
+    const maxVisible = smallScreen ? 3 : 5;
     const pages: (number | string)[] = [];
+
     if (totalPages <= maxVisible) {
       for (let i = 0; i < totalPages; i++) pages.push(i);
     } else {
-      const start = Math.max(0, activePage - 2);
+      const start = Math.max(0, activePage - Math.floor(maxVisible / 2));
       const end = Math.min(totalPages - 1, start + maxVisible - 1);
+
       if (start > 0) pages.push(0, '...');
       for (let i = start; i <= end; i++) pages.push(i);
       if (end < totalPages - 1) pages.push('...', totalPages - 1);
     }
     return pages;
-  }, [activePage, totalPages]);
+  }, [activePage, totalPages, smallScreen]);
 
-  // ✅ Return after hooks, not before
   if (hidePagination || totalPages <= 1) return null;
 
   return (
@@ -79,7 +78,7 @@ const JumboListPagination: React.FC<JumboListPaginationProps> = ({
         flexWrap: 'wrap',
       }}
     >
-      {/* Navigation Arrows */}
+      {/* First Page */}
       <Tooltip title="Go to first page" arrow>
         <span>
           <IconButton
@@ -92,6 +91,7 @@ const JumboListPagination: React.FC<JumboListPaginationProps> = ({
         </span>
       </Tooltip>
 
+      {/* Previous Page */}
       <Tooltip title="Previous page" arrow>
         <span>
           <IconButton
@@ -148,6 +148,7 @@ const JumboListPagination: React.FC<JumboListPaginationProps> = ({
         )
       )}
 
+      {/* Next Page */}
       <Tooltip title="Next page" arrow>
         <span>
           <IconButton
@@ -160,6 +161,7 @@ const JumboListPagination: React.FC<JumboListPaginationProps> = ({
         </span>
       </Tooltip>
 
+      {/* Last Page */}
       <Tooltip title="Go to last page" arrow>
         <span>
           <IconButton
@@ -172,30 +174,32 @@ const JumboListPagination: React.FC<JumboListPaginationProps> = ({
         </span>
       </Tooltip>
 
-      {/* Page Dropdown */}
-      <Stack direction="row" alignItems="center" spacing={1} ml={2}>
-        <Typography variant="body2">Page</Typography>
-        <Tooltip title="Jump to specific page" arrow>
-          <Select
-            size="small"
-            value={activePage}
-            onChange={(e) => handlePageChange(Number(e.target.value))}
-            sx={{
-              fontSize: '0.85rem',
-              height: 32,
-              width: 64,
-              borderRadius: 2,
-            }}
-          >
-            {Array.from({ length: totalPages }, (_, i) => (
-              <MenuItem key={i} value={i}>
-                {i + 1}
-              </MenuItem>
-            ))}
-          </Select>
-        </Tooltip>
-        <Typography variant="body2">of {totalPages}</Typography>
-      </Stack>
+      {/* Page Dropdown — hidden on small screens */}
+      {!smallScreen && (
+        <Stack direction="row" alignItems="center" spacing={1} ml={2}>
+          <Typography variant="body2">Page</Typography>
+          <Tooltip title="Jump to specific page" arrow>
+            <Select
+              size="small"
+              value={activePage}
+              onChange={(e) => handlePageChange(Number(e.target.value))}
+              sx={{
+                fontSize: '0.85rem',
+                height: 32,
+                width: 64,
+                borderRadius: 2,
+              }}
+            >
+              {Array.from({ length: totalPages }, (_, i) => (
+                <MenuItem key={i} value={i}>
+                  {i + 1}
+                </MenuItem>
+              ))}
+            </Select>
+          </Tooltip>
+          <Typography variant="body2">of {totalPages}</Typography>
+        </Stack>
+      )}
     </Stack>
   );
 };
