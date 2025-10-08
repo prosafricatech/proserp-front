@@ -9,7 +9,7 @@ const Footer = async ({ lang }: { lang: string }) => {
   return (
     <Div
       sx={{
-        py: 1.5,
+        py: 2,
         px: { lg: 6, xs: 3 },
         borderTop: 1,
         borderColor: 'divider',
@@ -19,15 +19,16 @@ const Footer = async ({ lang }: { lang: string }) => {
       <Div
         sx={{
           display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
           justifyContent: 'space-between',
           alignItems: 'center',
-          flexWrap: 'wrap',
+          textAlign: { xs: 'center', sm: 'left' },
           gap: 1,
         }}
       >
         <Typography
-          variant="body2"
-          color="text.secondary"
+          variant="body1"
+          color="text.primary"
           fontStyle="italic"
           sx={{
             flex: 1,
@@ -42,10 +43,9 @@ const Footer = async ({ lang }: { lang: string }) => {
         <Typography
           variant="body2"
           color="text.secondary"
-          textAlign="center"
-          fontStyle="italic"
           sx={{
             whiteSpace: 'nowrap',
+            fontStyle: 'italic',
           }}
         >
           {`ProsAfrica © ${currentYear}`}
