@@ -94,7 +94,7 @@ const DocumentDialogContent: React.FC<DocumentDialogContentProps> = ({
                 variant="fullWidth"
               >
                 <Tab label="ONSCREEN" />
-                <Tab label="PRINT" />
+                <Tab label="PDF" />
               </Tabs>
             </Grid>
             <Grid size={1} textAlign="right">
