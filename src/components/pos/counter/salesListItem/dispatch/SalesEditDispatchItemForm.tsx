@@ -139,7 +139,7 @@ function SalesEditDispatchItemForm({ items }: SalesEditDispatchItemFormProps) {
               <Div sx={{ mt: 1.7, mb: 1.7 }}>
                 <Tooltip title="Undispatched Quantity">
                   <Typography>
-                    {`${item.sale_item.measurement_unit?.symbol || ''} ${item.sale_item.undispatched_quantity}`}
+                    {`${item.sale_item.measurement_unit?.symbol || ''} ${item.sale_item.undispatched_quantity + item.quantity}`}
                   </Typography>
                 </Tooltip>
               </Div>
