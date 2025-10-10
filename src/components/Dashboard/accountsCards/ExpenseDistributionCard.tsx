@@ -32,7 +32,8 @@ function ExpenseDistributionCard() {
 
   const { theme } = useJumboTheme();
   const xlScreen = useMediaQuery(theme.breakpoints.up('lg'));
-  const isDark = theme.palette.mode === 'dark';
+  const textColor = theme.palette.text.primary;
+  const backgroundColor = theme.palette.background.paper;
 
   const { data: expenseDistribution, isLoading } = useQuery({
     queryKey: ['expenseDistribution', params],
@@ -58,30 +59,35 @@ function ExpenseDistributionCard() {
       height: 245,
       backgroundColor: 'transparent',
       spacing: [10, 10, 10, 10],
+      style: { color: textColor }
     },
     title: { text: '' },
     tooltip: {
       pointFormat: '{point.y}: <b>({point.percentage:.1f}%)</b>',
-      backgroundColor: isDark ? '#2a2a2a' : '#fff',
-      style: { color: isDark ? '#fff' : '#000' },
+      backgroundColor,
+      style: { color: textColor }
     },
     plotOptions: {
       pie: {
-        size: '55%', // 👈 reduced from 70% to 55% for better label spacing
-        center: ['50%', '55%'], // 👈 slightly lower to give top labels space
+        size: '55%',
+        center: ['50%', '55%'],
         allowPointSelect: true,
         cursor: 'pointer',
         dataLabels: {
           enabled: true,
-          distance: 15, // 👈 adds some spacing between slices and labels
+          distance: 15,
           format: '<b>{point.name}</b><br>{point.percentage:.1f} %',
           style: {
-            color: isDark ? '#fff' : '#000',
+            color: textColor,
             textOutline: 'none',
-            fontSize: '11px', // 👈 slightly smaller text to avoid clutter
-          },
-        },
-      },
+            fontSize: '11px'
+          }
+        }
+      }
+    },
+    credits: { enabled: false },
+    legend: {
+      itemStyle: { color: textColor }
     },
     series: [
       {
@@ -105,7 +111,7 @@ function ExpenseDistributionCard() {
         <Typography
           variant="subtitle1"
           sx={{
-            color: theme.palette.text.primary,
+            color: textColor,
             fontFamily: 'NoirPro, Arial',
           }}
         >
