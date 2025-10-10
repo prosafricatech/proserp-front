@@ -1,8 +1,9 @@
+import SalesShifts from '@/components/fuelStations/SalesShifts/SalesShifts'
 import React from 'react'
 
 function page() {
   return (
-    <div>salesShifts</div>
+    <SalesShifts/>
   )
 }
 
