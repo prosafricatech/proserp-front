@@ -44,7 +44,10 @@ const JumboListPagination: React.FC<JumboListPaginationProps> = ({
   const { theme } = useJumboTheme();
   const smallScreen = useMediaQuery(theme.breakpoints.down('md'));
 
-  const itemsPerPageOptions = customItemsPerPageOptions || defaultItemsPerPageOptions;
+  // Default rows per page options
+  const defaultRowsOptions = [10, 20, 50, 100, 200];
+  const itemsPerPageOptions = customItemsPerPageOptions || defaultRowsOptions;
+
   const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
 
   const handleRowsPerPageChange = (newCount: number) => {
@@ -127,7 +130,7 @@ const JumboListPagination: React.FC<JumboListPaginationProps> = ({
                   },
                 }}
               >
-                {itemsPerPageOptions?.map((opt) => (
+                {itemsPerPageOptions.map((opt) => (
                   <MenuItem key={opt} value={opt}>
                     {opt}
                   </MenuItem>
