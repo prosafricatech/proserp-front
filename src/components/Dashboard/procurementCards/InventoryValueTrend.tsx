@@ -219,7 +219,6 @@ function InventoryValueTrend() {
                 value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
               }
             />
-            <Legend wrapperStyle={{ color: textColor }} />
             {renderAreas}
             <Line type="monotone" dataKey="Total Value" dot={false} stroke="#1976d2" strokeWidth={2} />
           </ComposedChart>
