@@ -28,6 +28,7 @@ import dayjs from 'dayjs';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { useQuery } from '@tanstack/react-query';
 import { Div } from '@jumbo/shared';
+import { shortNumber } from '@/app/helpers/input-sanitization-helpers';
 
 interface GroupedValue {
   balanceValue?: number;
@@ -116,12 +117,6 @@ function InventoryValueTrend() {
       return processInventoryValues(stockValues, params.aggregate_by);
     }
   });
-
-  const shortNumber = (value: number) => {
-    if (value >= 1000000) return (value / 1000000).toFixed(1) + 'M';
-    if (value >= 1000) return (value / 1000).toFixed(1) + 'K';
-    return value.toString();
-  };
 
   // Generate dynamic colors
   const colorCodes: Record<string, string> = {};
