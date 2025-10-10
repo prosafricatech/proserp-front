@@ -57,33 +57,40 @@ function ExpenseDistributionCard() {
       type: 'pie',
       height: 245,
       backgroundColor: 'transparent',
-      spacing: [10, 10, 10, 10]
+      spacing: [10, 10, 10, 10],
     },
     title: { text: '' },
     tooltip: {
       pointFormat: '{point.y}: <b>({point.percentage:.1f}%)</b>',
       backgroundColor: isDark ? '#2a2a2a' : '#fff',
-      style: { color: isDark ? '#fff' : '#000' }
+      style: { color: isDark ? '#fff' : '#000' },
     },
     plotOptions: {
       pie: {
-        size: '70%',
-        center: ['50%', '50%'],
+        size: '55%', // 👈 reduced from 70% to 55% for better label spacing
+        center: ['50%', '55%'], // 👈 slightly lower to give top labels space
         allowPointSelect: true,
         cursor: 'pointer',
         dataLabels: {
           enabled: true,
+          distance: 15, // 👈 adds some spacing between slices and labels
           format: '<b>{point.name}</b><br>{point.percentage:.1f} %',
-          style: { color: isDark ? '#fff' : '#000', textOutline: 'none' }
-        }
-      }
+          style: {
+            color: isDark ? '#fff' : '#000',
+            textOutline: 'none',
+            fontSize: '11px', // 👈 slightly smaller text to avoid clutter
+          },
+        },
+      },
     },
-    series: [{
-      type: 'pie',
-      name: 'Expenses',
-      colorByPoint: true,
-      data: expenseDistribution || []
-    } as Highcharts.SeriesPieOptions]
+    series: [
+      {
+        type: 'pie',
+        name: 'Expenses',
+        colorByPoint: true,
+        data: expenseDistribution || [],
+      } as Highcharts.SeriesPieOptions,
+    ],
   };
 
   return (

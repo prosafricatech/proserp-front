@@ -1,7 +1,7 @@
 {
-  "name": "ProsERP - Robust ERP Solution",
+  "name": "ProsERP Beta - Robust ERP Solution",
   "short_name": "ProsERP Beta",
-  "theme_color": "#8936FF",
+  "theme_color": "#2113AD",
   "background_color": "#ffffff",
   "description": "Robust ERP for accounting, project management, payroll, inventory, and requisitions.",
   "display": "standalone",
@@ -15,7 +15,7 @@
       "sizes": "196x196"
     },
     {
-      "src": "/assets/images/icons/logo-256.png",
+      "src": "/assets/images/icons/logo256.png",
       "type": "image/png",
       "sizes": "256x256"
     },

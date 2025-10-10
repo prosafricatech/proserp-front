@@ -7,6 +7,7 @@ import Image from "next/image";
 import { keyframes } from "@emotion/react";
 import { useJumboAuth } from "@/app/providers/JumboAuthProvider";
 import { ASSET_IMAGES } from "@/utilities/constants/paths";
+import { useJumboTheme } from "@jumbo/components/JumboTheme/hooks";
 
 interface BackdropSpinnerProps {
   message?: string;
@@ -22,6 +23,7 @@ export const BackdropSpinner: React.FC<BackdropSpinnerProps> = ({
   message,
   isRouterTransfer
 }) => {
+  const { theme } = useJumboTheme();
   const { authOrganization } = useJumboAuth();
   const mainColor = authOrganization?.organization?.settings?.main_color || "#2113AD";
   const lightColor = authOrganization?.organization?.settings?.light_color || "#bec5da";
@@ -102,7 +104,7 @@ export const BackdropSpinner: React.FC<BackdropSpinnerProps> = ({
           }}
         >
           <Image
-            src={`${ASSET_IMAGES}/logos/proserp-blue.png`}
+            src={theme?.type === 'light' ? `${ASSET_IMAGES}/logos/proserp-blue.png` : `${ASSET_IMAGES}/logos/proserp-white.png`}
             alt="ProsERP"
             width={85}
             height={85}
