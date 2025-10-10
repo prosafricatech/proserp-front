@@ -320,7 +320,7 @@ const SaleDeliveryNotesItemAction: React.FC<SaleDeliveryNotesItemActionProps> = 
         scroll={(belowLargeScreen || !openDocumentDialog) ? 'body' : 'paper'}
         fullWidth
         fullScreen={belowLargeScreen}
-        maxWidth="md"
+        maxWidth={openDeliveryEditDialog ? 'lg' : "md"}
         onClose={() => setOpenDocumentDialog(false)}
       >
         {openDocumentDialog && selectedDeliveryNote ? (

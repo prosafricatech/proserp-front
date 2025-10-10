@@ -19,6 +19,7 @@ interface SaleItem {
   measurement_unit?: {
     symbol: string;
   };
+  undispatched_quantity: number
 }
 
 interface Store {
@@ -136,9 +137,9 @@ function SalesEditDispatchItemForm({ items }: SalesEditDispatchItemFormProps) {
             </Grid>
             <Grid size={{xs: 2, md: 3.5, lg: 1}} textAlign={'center'}>
               <Div sx={{ mt: 1.7, mb: 1.7 }}>
-                <Tooltip title="Dispatched Quantity">
+                <Tooltip title="Undispatched Quantity">
                   <Typography>
-                    {`${item.sale_item.measurement_unit?.symbol || ''} ${item.quantity}`}
+                    {`${item.sale_item.measurement_unit?.symbol || ''} ${item.sale_item.undispatched_quantity}`}
                   </Typography>
                 </Tooltip>
               </Div>

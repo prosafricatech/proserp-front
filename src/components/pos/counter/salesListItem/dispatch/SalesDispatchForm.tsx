@@ -173,7 +173,7 @@ const SalesDispatchForm: React.FC<SalesDispatchFormProps> = ({ toggleOpen, sale 
             },
             measurement_unit_id: item.measurement_unit_id,
             measurement_unit: item.measurement_unit,
-            undispatched_quantity: item.quantity,
+            undispatched_quantity: item.sale_item.undispatched_quantity,
             quantity: item.quantity,
             available_balance: 0,
             current_balance: 0,
