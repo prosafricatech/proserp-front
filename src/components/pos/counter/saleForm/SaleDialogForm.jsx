@@ -17,6 +17,7 @@ import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { MODULE_SETTINGS } from '@/utilities/constants/moduleSettings';
+import stakeholderServices from '@/components/masters/stakeholders/stakeholder-services';
 
 function SaleDialogForm({toggleOpen,sale = null}) {
     const [items, setItems] = useState([]);
