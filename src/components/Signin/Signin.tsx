@@ -121,17 +121,6 @@ export const Signin = () => {
               >
                 {dictionary.signin.header}
               </Typography>
-              <Typography
-                variant={'h6'}
-                color={'inherit'}
-                sx={{
-                  opacity: 0.9,
-                  fontSize: { xs: '0.9rem', md: '1rem' },
-                  fontWeight: 300,
-                }}
-              >
-                Welcome back to your account
-              </Typography>
             </Box>
 
             {/* Logo Section */}
@@ -168,34 +157,29 @@ export const Signin = () => {
         </CardContent>
 
         {/* Right Form Section with Matching Curves */}
-        <CardContent 
+       <CardContent 
           sx={{ 
             flex: 1, 
             p: { xs: 3, md: 4 },
             background: 'white',
             position: 'relative',
-            // Curve for mobile (top edge)
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: { xs: '-20px', md: 'auto' },
-              left: 0,
-              width: { xs: '100%', md: '40px' },
-              height: { xs: '40px', md: '100%' },
-              background: 'white',
-              clipPath: {
-                xs: 'polygon(0 30%, 100% 0, 100% 100%, 0 100%)',
-                md: 'polygon(0 0, 100% 0, 100% 100%, 0 100%)'
-              },
-              zIndex: 1,
-            },
-            // Main curve for desktop (left edge)
+            zIndex: 5, // Higher z-index
+            // Simplify clipPath or remove it
             clipPath: {
-              xs: 'none',
-              md: 'polygon(15% 0, 100% 0, 100% 100%, 0 100%)'
+              xs: 'none', // Disable on mobile completely
+              md: 'polygon(10% 0, 100% 0, 100% 100%, 0 100%)' // Less aggressive curve
             },
-            marginLeft: { xs: 0, md: '-5%' },
-            zIndex: 2,
+            // Remove negative margin
+            marginLeft: 0,
+            overflow: 'visible !important',
+            // Ensure content area is properly positioned
+            '& > div': {
+              position: 'relative',
+              zIndex: 6,
+              backgroundColor: 'white',
+              padding: { xs: 2, md: 0 },
+              borderRadius: '8px',
+            }
           }}
         >
           <Box sx={{ position: 'relative', zIndex: 3 }}>

@@ -19,10 +19,10 @@
       "checkbox": "VAT Exempted"
     },
     "messages": {
-      "loading": "Processing currency details...",
-      "createSuccess": "Currency successfully registered!",
-      "updateSuccess": "Currency successfully updated!",
-      "deleteSuccess": "Currency successfully archived."
+      "loading": "Processing product details...",
+      "createSuccess": "product successfully registered!",
+      "updateSuccess": "successfully updated!",
+      "deleteSuccess": "successfully deleted."
     },
     "errors": {
       "validation": {
