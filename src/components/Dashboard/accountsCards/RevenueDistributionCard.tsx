@@ -50,7 +50,7 @@ function RevenueDistributionCard() {
       return revenues.map((rev: RevenueData) => ({
         name: rev.ledger_name,
         y: rev.amount
-      } as ChartDataPoint));
+      })) as ChartDataPoint[];
     }
   });
 
@@ -80,7 +80,7 @@ function RevenueDistributionCard() {
           format: '<b>{point.name}</b><br>{point.percentage:.1f} %',
           style: {
             color: textColor,
-            textOutline: 'none',
+            textOutline: '0px transparent', // prevents shrinking/blurring on theme switch
             fontSize: '11px'
           }
         }
@@ -99,6 +99,14 @@ function RevenueDistributionCard() {
       } as Highcharts.SeriesPieOptions,
     ],
   };
+
+  // 👇 Trigger Highcharts reflow after theme mode changes for proper layout
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      Highcharts.charts.forEach(chart => chart?.reflow());
+    }, 100);
+    return () => clearTimeout(timeout);
+  }, [theme.type]);
 
   return (
     <JumboCardQuick
@@ -120,11 +128,23 @@ function RevenueDistributionCard() {
         </Typography>
       </Box>
 
-      <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Box
+        sx={{
+          flexGrow: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
+      >
         {isLoading ? (
           <LinearProgress sx={{ width: '100%' }} />
         ) : (
-          <HighchartsReact highcharts={Highcharts} options={options} />
+          // 👇 Key ensures full chart redraw when theme changes
+          <HighchartsReact
+            key={theme.type}
+            highcharts={Highcharts}
+            options={options}
+          />
         )}
       </Box>
     </JumboCardQuick>

@@ -1,6 +1,11 @@
 import JumboCardQuick from '@jumbo/components/JumboCardQuick/JumboCardQuick';
 import React, { useEffect, useState } from 'react';
-import { LinearProgress, Typography, useMediaQuery, Box } from '@mui/material';
+import {
+  LinearProgress,
+  Typography,
+  useMediaQuery,
+  Box,
+} from '@mui/material';
 import financialReportsServices from '../../accounts/reports/financial-reports-services';
 import { useDashboardSettings } from '../Dashboard';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
@@ -19,11 +24,11 @@ interface ChartDataPoint {
 
 function ExpenseDistributionCard() {
   const { chartFilters: { from, to, cost_center_ids } } = useDashboardSettings();
-  const [params, setParams] = useState({ 
+  const [params, setParams] = useState({
     from,
     to,
     cost_center_ids,
-    aggregate_by: 'day' as const
+    aggregate_by: 'day' as const,
   });
 
   useEffect(() => {
@@ -32,6 +37,7 @@ function ExpenseDistributionCard() {
 
   const { theme } = useJumboTheme();
   const xlScreen = useMediaQuery(theme.breakpoints.up('lg'));
+
   const textColor = theme.palette.text.primary;
   const backgroundColor = theme.palette.background.paper;
 
@@ -43,14 +49,14 @@ function ExpenseDistributionCard() {
         to: params.to,
         ledgerGroupId: 19,
         cost_center_ids: params.cost_center_ids,
-        group_by_ledgers: true
+        group_by_ledgers: true,
       });
 
       return expenses.map((expense: ExpenseData) => ({
         name: expense.ledger_name,
-        y: expense.amount
-      } as ChartDataPoint));
-    }
+        y: expense.amount,
+      })) as ChartDataPoint[];
+    },
   });
 
   const options: Highcharts.Options = {
@@ -59,13 +65,13 @@ function ExpenseDistributionCard() {
       height: 245,
       backgroundColor: 'transparent',
       spacing: [10, 10, 10, 10],
-      style: { color: textColor }
+      style: { color: textColor },
     },
     title: { text: '' },
     tooltip: {
       pointFormat: '{point.y}: <b>({point.percentage:.1f}%)</b>',
       backgroundColor,
-      style: { color: textColor }
+      style: { color: textColor },
     },
     plotOptions: {
       pie: {
@@ -79,15 +85,15 @@ function ExpenseDistributionCard() {
           format: '<b>{point.name}</b><br>{point.percentage:.1f} %',
           style: {
             color: textColor,
-            textOutline: 'none',
-            fontSize: '11px'
-          }
-        }
-      }
+            textOutline: '0px transparent', // prevents shrinking issue
+            fontSize: '11px',
+          },
+        },
+      },
     },
     credits: { enabled: false },
     legend: {
-      itemStyle: { color: textColor }
+      itemStyle: { color: textColor },
     },
     series: [
       {
@@ -99,12 +105,19 @@ function ExpenseDistributionCard() {
     ],
   };
 
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      Highcharts.charts.forEach(chart => chart?.reflow());
+    }, 100);
+    return () => clearTimeout(timeout);
+  }, [theme.type]);
+
   return (
     <JumboCardQuick
       sx={{
         height: xlScreen ? 310 : null,
         display: 'flex',
-        flexDirection: 'column'
+        flexDirection: 'column',
       }}
     >
       <Box sx={{ px: 2, pt: 1 }}>
@@ -119,11 +132,22 @@ function ExpenseDistributionCard() {
         </Typography>
       </Box>
 
-      <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Box
+        sx={{
+          flexGrow: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
         {isLoading ? (
           <LinearProgress sx={{ width: '100%' }} />
         ) : (
-          <HighchartsReact highcharts={Highcharts} options={options} />
+          <HighchartsReact
+            key={theme.type}
+            highcharts={Highcharts}
+            options={options}
+          />
         )}
       </Box>
     </JumboCardQuick>

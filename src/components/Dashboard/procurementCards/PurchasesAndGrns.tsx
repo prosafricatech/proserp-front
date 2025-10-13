@@ -1,10 +1,29 @@
 import JumboCardQuick from '@jumbo/components/JumboCardQuick/JumboCardQuick';
 import React, { useEffect, useState } from 'react';
+import {
+  Button,
+  ButtonGroup,
+  FormControl,
+  InputLabel,
+  LinearProgress,
+  MenuItem,
+  Select,
+  Tooltip,
+  useMediaQuery
+} from '@mui/material';
 import { useDashboardSettings } from '../Dashboard';
-import { Button, ButtonGroup, FormControl, InputLabel, LinearProgress, MenuItem, Select, Tooltip, useMediaQuery } from '@mui/material';
 import purchaseServices from '../../procurement/purchases/purchase-services';
 import grnServices from '../../procurement/grns/grn-services';
-import { CartesianGrid, ResponsiveContainer, XAxis, YAxis, Tooltip as RechartTooltip, Bar, ComposedChart, Legend } from 'recharts';
+import {
+  CartesianGrid,
+  ResponsiveContainer,
+  XAxis,
+  YAxis,
+  Tooltip as RechartTooltip,
+  Bar,
+  ComposedChart,
+  Legend
+} from 'recharts';
 import dayjs from 'dayjs';
 import { useQuery } from '@tanstack/react-query';
 import { Div } from '@jumbo/shared';
@@ -78,8 +97,8 @@ function PurchasesAndGrns() {
 
   // Dynamic colors depending on theme mode
   const colorCodes: Record<string, string> = {
-    Purchases: theme.palette.mode === 'dark' ? '#4dabf5' : '#1976d2',
-    GRNs: theme.palette.mode === 'dark' ? '#81c784' : '#39960e'
+    Purchases: theme.type === 'dark' ? '#4dabf5' : '#1976d2',
+    GRNs: theme.type === 'dark' ? '#81c784' : '#39960e'
   };
 
   return (
@@ -126,16 +145,31 @@ function PurchasesAndGrns() {
       {isLoading ? (
         <LinearProgress />
       ) : (
-        <ResponsiveContainer width="100%" height={xlScreen ? 250 : 165}>
-          <ComposedChart syncId="1" data={mergedData}>
+        <ResponsiveContainer width="100%" height={xlScreen ? 250 : 180}>
+          <ComposedChart data={mergedData}>
+            <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
             <XAxis dataKey="name" stroke={textColor} />
             <YAxis tickFormatter={shortNumber} stroke={textColor} />
-            <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
+
             <RechartTooltip
-              labelStyle={{ color: textColor }}
+              contentStyle={{
+                backgroundColor:
+                  theme.type === 'dark'
+                    ? theme.palette.background.paper
+                    : '#fff',
+                borderRadius: 8,
+                border: `1px solid ${theme.palette.divider}`,
+                color: textColor,
+              }}
               itemStyle={{ color: textColor }}
+              labelStyle={{ color: textColor }}
               cursor={{ stroke: theme.palette.divider }}
-              formatter={(value: number) => value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              formatter={(value: number) =>
+                value.toLocaleString('en-US', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2
+                })
+              }
             />
             <Legend wrapperStyle={{ color: textColor }} />
             <Bar type="monotone" dataKey="Purchases" fill={colorCodes.Purchases} barSize={10} />

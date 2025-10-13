@@ -26,6 +26,10 @@
     },
     "errors": {
       "validation": {
+        "itemName": {
+            "required": "Item name is required",
+            "string": "Please enter your item name"
+          },
         "currencyCode": {
           "required": "Currency code is required",
           "typeError": "Currency is required"

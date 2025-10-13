@@ -44,6 +44,15 @@ interface DocumentDialogProps {
     salesPersonsSelected: string[];
 }
 
+const COLORS = {
+    quantity: '#000000', // Black for quantity
+    revenue: '#1565c0',  // Blue for sales/revenue
+    cogs: '#c62828',     // Red for CoGS
+    profit: '#2e7d32',   // Green for profit
+    margin: '#2e7d32',   // Green for margin (same as profit)
+    default: '#000000'
+};
+
 const topOptions: TopOption[] = [
     { name: 'Products', value: 'products' },
     { name: 'Categories', value: 'product categories' },
@@ -221,11 +230,11 @@ function ProductSalesCard() {
                                 ) : (
                                 <Autocomplete
                                     id="checkboxes-salesPerson"
-                                    options={salesPersons} // string[]
+                                    options={salesPersons}
                                     multiple
                                     disableCloseOnSelect
                                     isOptionEqualToValue={(option, value) => option === value}
-                                    getOptionLabel={(option: string) => option} // explicitly typed
+                                    getOptionLabel={(option: string) => option}
                                     renderInput={(params) => (
                                         <TextField {...params} label="Sales Person" size="small" fullWidth />
                                     )}
@@ -253,19 +262,29 @@ function ProductSalesCard() {
                 {smallScreen && <Actions />}
                 <Grid container columnSpacing={1} mt={smallScreen ? 2 : 0} mb={1} justifyContent={'center'}>
                     <Grid size={{ xs: 4, md: 3, lg: 1 }}>
-                        <Typography>- {topOptions.find(option => option.value === params.top)?.name || params.top}</Typography>
+                        <Typography sx={{ color: COLORS.default, fontWeight: 600 }}>
+                            - {topOptions.find(option => option.value === params.top)?.name || params.top}
+                        </Typography>
                     </Grid>
                     <Grid size={{ xs: 4, md: 3, lg: 1 }}>
-                        <Typography color={'quantity'}>- Quantity</Typography>
+                        <Typography sx={{ color: COLORS.quantity, fontWeight: 600 }}>
+                            - Quantity
+                        </Typography>
                     </Grid>
                     <Grid size={{ xs: 4, md: 3, lg: 1 }}>
-                        <Typography color={'blue'}> - Revenue</Typography>
+                        <Typography sx={{ color: COLORS.revenue, fontWeight: 600 }}>
+                            - Revenue
+                        </Typography>
                     </Grid>
                     <Grid size={{ xs: 4, md: 3, lg: 1 }}>
-                        <Typography color={'red'}> - CoGS</Typography>
+                        <Typography sx={{ color: COLORS.cogs, fontWeight: 600 }}>
+                            - CoGS
+                        </Typography>
                     </Grid>
                     <Grid size={{ xs: 6, md: 4 }}>
-                        <Typography color={'green'}> - Profit & Margin</Typography>
+                        <Typography sx={{ color: COLORS.profit, fontWeight: 600 }}>
+                            - Profit & Margin
+                        </Typography>
                     </Grid>
                 </Grid>
                 <JumboScrollbar
@@ -293,32 +312,44 @@ function ProductSalesCard() {
                                             <Grid container width={'100%'}>
                                                 <Grid size={{ xs: 12, md: 6, lg: 3.5 }}>
                                                     <Tooltip title={'Product Name'}>
-                                                        <Typography>{product.name}</Typography>
+                                                        <Typography sx={{ color: COLORS.default, fontWeight: 500 }}>
+                                                            {product.name}
+                                                        </Typography>
                                                     </Tooltip>
                                                 </Grid>
                                                 <Grid size={{ xs: 6, lg: 1.5 }} textAlign={'end'}>
                                                     <Tooltip title={'Quantity Sold'}>
-                                                        <Typography color={'black'}>{`${product.unit_symbol} ${product.quantity.toLocaleString()}`}</Typography>
+                                                        <Typography sx={{ color: COLORS.quantity, fontWeight: 500 }}>
+                                                            {`${product.unit_symbol} ${product.quantity.toLocaleString()}`}
+                                                        </Typography>
                                                     </Tooltip>
                                                 </Grid>
                                                 <Grid size={{ xs: 6, lg: 2 }} textAlign={'end'}>
                                                     <Tooltip title={'Sales'}>
-                                                        <Typography color={'blue'}>{product.revenue.toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}</Typography>
+                                                        <Typography sx={{ color: COLORS.revenue, fontWeight: 500 }}>
+                                                            {product.revenue.toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}
+                                                        </Typography>
                                                     </Tooltip>
                                                 </Grid>
                                                 <Grid size={{ xs: 6, lg: 2 }} textAlign={'end'}>
                                                     <Tooltip title={'CoGS'}>
-                                                        <Typography color={'red'}>{product.cogs.toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}</Typography>
+                                                        <Typography sx={{ color: COLORS.cogs, fontWeight: 500 }}>
+                                                            {product.cogs.toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}
+                                                        </Typography>
                                                     </Tooltip>
                                                 </Grid>
                                                 <Grid size={{ xs: 6, lg: 2 }} textAlign={'end'}>
                                                     <Tooltip title={'Profit'}>
-                                                        <Typography color={'green'}>{product.profit.toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}</Typography>
+                                                        <Typography sx={{ color: COLORS.profit, fontWeight: 500 }}>
+                                                            {product.profit.toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}
+                                                        </Typography>
                                                     </Tooltip>
                                                 </Grid>
                                                 <Grid size={{ xs: 6, lg: 1 }} textAlign={'end'}>
                                                     <Tooltip title={'Margin'}>
-                                                        <Typography color={'green'}>{`${(product.profit * 100 / product.revenue).toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}%`}</Typography>
+                                                        <Typography sx={{ color: COLORS.margin, fontWeight: 500 }}>
+                                                            {`${(product.profit * 100 / product.revenue).toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}%`}
+                                                        </Typography>
                                                     </Tooltip>
                                                 </Grid>
                                             </Grid>

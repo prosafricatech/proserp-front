@@ -81,6 +81,13 @@ function BalanceSheetTrend() {
     },
   });
 
+  // Define consistent colors
+  const colorCodes: Record<string, string> = {
+    Assets: theme.palette.success.main,
+    Liabilities: theme.palette.error.main,
+    Equity: theme.palette.info.main,
+  };
+
   return (
     <JumboCardQuick
       title="Balance Sheet Trend"
@@ -175,7 +182,7 @@ function BalanceSheetTrend() {
       {isLoading ? (
         <LinearProgress />
       ) : (
-        <ResponsiveContainer width="100%" height={180}>
+        <ResponsiveContainer width="100%" height={200}>
           <ComposedChart data={balanceSheetTrend}>
             <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
             <XAxis
@@ -188,31 +195,35 @@ function BalanceSheetTrend() {
               tick={{ fill: theme.palette.text.primary }}
               tickFormatter={shortNumber}
             />
+            {/* ✅ Updated Tooltip with dynamic theme + dataset colors */}
             <RechartTooltip
               contentStyle={{
                 backgroundColor:
-                  theme.palette.mode === 'dark'
+                  theme.type === 'dark'
                     ? theme.palette.background.paper
                     : '#fff',
                 borderRadius: 8,
                 border: `1px solid ${theme.palette.divider}`,
                 color: theme.palette.text.primary,
               }}
-              itemStyle={{ color: theme.palette.text.primary }}
-              labelStyle={{ color: theme.palette.text.primary }}
-              cursor={false}
-              formatter={(value: number) =>
+              itemStyle={{
+                color: theme.palette.text.primary,
+              }}
+              labelStyle={{ color: theme.palette.text.primary, fontWeight: 600 }}
+              cursor={{ stroke: theme.palette.divider }}
+              formatter={(value: number, name: string) => [
                 value.toLocaleString('en-US', {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
-                })
-              }
+                }),
+                name,
+              ]}
             />
             <Legend wrapperStyle={{ color: theme.palette.text.primary }} />
             <Line
               type="monotone"
               dataKey="Assets"
-              stroke={theme.palette.success.main}
+              stroke={colorCodes.Assets}
               strokeWidth={2}
               dot={false}
               activeDot={{ r: 5 }}
@@ -220,7 +231,7 @@ function BalanceSheetTrend() {
             <Line
               type="monotone"
               dataKey="Liabilities"
-              stroke={theme.palette.error.main}
+              stroke={colorCodes.Liabilities}
               strokeWidth={2}
               dot={false}
               activeDot={{ r: 5 }}
@@ -228,7 +239,7 @@ function BalanceSheetTrend() {
             <Line
               type="monotone"
               dataKey="Equity"
-              stroke={theme.palette.info.main}
+              stroke={colorCodes.Equity}
               strokeWidth={2}
               dot={false}
               activeDot={{ r: 5 }}

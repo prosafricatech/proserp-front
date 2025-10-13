@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { Divider, Grid, Tab, Tabs, useMediaQuery } from "@mui/material";
 import { useJumboAuth } from "@/app/providers/JumboAuthProvider";
 import { PERMISSIONS } from "@/utilities/constants/permissions";
@@ -12,10 +12,15 @@ import { useFormContext } from "react-hook-form";
 
 interface StationTabsProps {
   station?: Station;
+  activeTab: number;
+  onTabChange: (newValue: number) => void;
 }
 
-const StationTabs: React.FC<StationTabsProps> = ({ station }) => {
-  const [activeTab, setActiveTab] = useState<number>(0);
+const StationTabs: React.FC<StationTabsProps> = ({ 
+  station, 
+  activeTab, 
+  onTabChange 
+}) => {
   const { checkOrganizationPermission } = useJumboAuth();
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down("lg"));
@@ -33,7 +38,7 @@ const StationTabs: React.FC<StationTabsProps> = ({ station }) => {
         <Divider />
         <Tabs
           value={activeTab}
-          onChange={(e, newValue: number) => setActiveTab(newValue)}
+          onChange={(e, newValue: number) => onTabChange(newValue)}
           variant="scrollable"
           scrollButtons="auto"
           allowScrollButtonsMobile

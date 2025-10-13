@@ -205,13 +205,19 @@ function InventoryValueTrend() {
       {isLoading ? (
         <LinearProgress />
       ) : (
-        <ResponsiveContainer width="100%" height={xlScreen ? 200 : 238}>
-          <ComposedChart data={inventoryValues}>
+        <ResponsiveContainer width="100%" height={xlScreen ? 240 : 260}>
+          <ComposedChart
+            data={inventoryValues}
+            margin={{ top: 20, right: 30, left: 10, bottom: 10 }}
+          >
             <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
             <XAxis dataKey="name" stroke={textColor} />
             <YAxis tickFormatter={shortNumber} stroke={textColor} />
             <RechartTooltip
-              contentStyle={{ backgroundColor: theme.palette.background.paper, color: textColor }}
+              contentStyle={{
+                backgroundColor: theme.palette.background.paper,
+                color: textColor,
+              }}
               labelStyle={{ color: textColor }}
               itemStyle={{ color: textColor }}
               cursor={{ stroke: theme.palette.divider }}
@@ -220,7 +226,13 @@ function InventoryValueTrend() {
               }
             />
             {renderAreas}
-            <Line type="monotone" dataKey="Total Value" dot={false} stroke="#1976d2" strokeWidth={2} />
+            <Line
+              type="monotone"
+              dataKey="Total Value"
+              dot={false}
+              stroke="#1976d2"
+              strokeWidth={2}
+            />
           </ComposedChart>
         </ResponsiveContainer>
       )}
