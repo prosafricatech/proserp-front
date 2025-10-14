@@ -146,15 +146,15 @@ export const mainTheme: ThemeOptions = {
     JumboNavbar: {
       nav: {
         action: {
-          active: '#7352C7',
-          hover: '#7352C7',
+          active: '#2196f3',
+          hover: '#2196f3',
         },
         background: {
           active: 'rgba(115, 82, 199, 0.15)',
           hover: '#E9ECEF',
         },
         tick: {
-          active: '#7352C7',
+          active: '#2196f3',
           hover: '#ADB5BD',
         },
       },

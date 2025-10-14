@@ -40,7 +40,7 @@ export const headerTheme: ThemeOptions = {
   },
   palette: {
     primary: {
-      main: "#7352C7",
+      main: "#2196f3",
       light: "#A67FFB",
       dark: "#5E3BB7",
       contrastText: "#FFF",

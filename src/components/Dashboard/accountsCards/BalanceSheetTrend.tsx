@@ -85,7 +85,7 @@ function BalanceSheetTrend() {
   const colorCodes: Record<string, string> = {
     Assets: theme.palette.success.main,
     Liabilities: theme.palette.error.main,
-    Equity: theme.palette.info.main,
+    Equity: '#2196f3',
   };
 
   return (

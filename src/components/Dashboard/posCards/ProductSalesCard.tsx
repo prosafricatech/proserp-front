@@ -44,15 +44,6 @@ interface DocumentDialogProps {
     salesPersonsSelected: string[];
 }
 
-const COLORS = {
-    quantity: '#000000', // Black for quantity
-    revenue: '#1565c0',  // Blue for sales/revenue
-    cogs: '#c62828',     // Red for CoGS
-    profit: '#2e7d32',   // Green for profit
-    margin: '#2e7d32',   // Green for margin (same as profit)
-    default: '#000000'
-};
-
 const topOptions: TopOption[] = [
     { name: 'Products', value: 'products' },
     { name: 'Categories', value: 'product categories' },
@@ -68,6 +59,15 @@ function ProductSalesCard() {
     // Screen handling constants
     const { theme } = useJumboTheme();
     const smallScreen = useMediaQuery(theme.breakpoints.down('md'));
+
+    const COLORS = {
+        quantity: '#000000',
+        revenue: '#2196f3',
+        cogs: '#c62828',
+        profit: theme.palette.success.main,
+        margin: theme.palette.success.main,
+        default: '#000000'
+    };
 
     const { chartFilters: { from, to, cost_center_ids, costCenters } } = useDashboardSettings();
     const [params, setParams] = useState({

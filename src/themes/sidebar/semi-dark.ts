@@ -5,7 +5,7 @@ export const sidebarTheme = {
   // type: "dark",
   palette: {
     primary: {
-      main: "#7352C7",
+      main: "#2196f3",
       light: "#A67FFB",
       dark: "#5E3BB7",
       contrastText: "#FFF",
@@ -64,11 +64,11 @@ export const sidebarTheme = {
           hover: "#FFFFFF",
         },
         background: {
-          active: "#7352C7",
+          active: "#2196f3",
           hover: alpha("#FFFFFF", 0.15),
         },
         tick: {
-          active: darken("#7352C7", 0.25),
+          active: darken("#2196f3", 0.25),
           hover: alpha("#FFFFFF", 0.25),
         },
       },

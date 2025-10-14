@@ -42,7 +42,7 @@ export const mainTheme: ThemeOptions = {
 
   palette: {
     primary: {
-      main: '#7352C7',
+      main: '#2196f3',
       light: '#A67FFB',
       dark: '#5E3BB7',
       contrastText: '#FFF',
@@ -146,15 +146,15 @@ export const mainTheme: ThemeOptions = {
     JumboNavbar: {
       nav: {
         action: {
-          active: '#7352C7',
-          hover: '#7352C7',
+          active: '#2196f3',
+          hover: '#2196f3',
         },
         background: {
           active: 'rgba(115, 82, 199, 0.15)',
           hover: '#E9ECEF',
         },
         tick: {
-          active: '#7352C7',
+          active: '#2196f3',
           hover: '#ADB5BD',
         },
       },
