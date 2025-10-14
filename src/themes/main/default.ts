@@ -73,7 +73,7 @@ export const mainTheme: ThemeOptions = {
     },
     success: {
       main: '#0f8507',
-      light: '#78FFD3',
+      light: '#07ab2d',
       dark: '#00A073',
       contrastText: '#FFF'
     },

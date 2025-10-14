@@ -36,7 +36,7 @@ export const sidebarTheme = {
     },
     success: {
       main: "#3BD2A2",
-      light: "#78FFD3",
+      light: "#07ab2d",
       dark: "#00A073",
       contrastText: "#FFF",
     },
