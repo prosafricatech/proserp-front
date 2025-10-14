@@ -148,7 +148,6 @@ export const mainTheme: ThemeOptions = {
           borderColor: alpha('#000', 0.1),
         },
         head: {
-          textTransform: 'uppercase',
           letterSpacing: 1.5,
           fontWeight: 400,
           fontSize: 12,
