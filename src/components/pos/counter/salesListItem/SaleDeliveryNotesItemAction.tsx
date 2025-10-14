@@ -8,7 +8,6 @@ import {
   DialogTitle,
   Grid,
   IconButton,
-  LinearProgress,
   Switch,
   Tab,
   Tabs,
@@ -16,7 +15,7 @@ import {
   Typography,
   useMediaQuery
 } from '@mui/material';
-import React, { Suspense, useState } from 'react';
+import React, { useState } from 'react';
 import { useSnackbar } from 'notistack';
 import posServices from '../../pos-services';
 import { HighlightOff } from '@mui/icons-material';
@@ -28,6 +27,7 @@ import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { Organization } from '@/types/auth-types';
 import AttachmentForm from '@/components/filesShelf/attachments/AttachmentForm';
 import PDFContent from '@/components/pdf/PDFContent';
+import { BackdropSpinner } from '@/shared/ProgressIndicators/BackdropSpinner';
 
 // Lazy loaded components
 const SalesDispatchForm = React.lazy(() => import('./dispatch/SalesDispatchForm'));
@@ -76,7 +76,7 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
   };
 
   if (isLoading) {
-    return <LinearProgress />;
+    return <BackdropSpinner />;
   }
 
   return (
@@ -221,7 +221,7 @@ const EditDeliveryNote: React.FC<EditDeliveryNoteProps> = ({ deliveryNote, toggl
   });
 
   if (isFetching) {
-    return <LinearProgress />;
+    return <BackdropSpinner />;
   }
 
   return (

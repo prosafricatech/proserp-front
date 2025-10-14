@@ -7,7 +7,6 @@ import {
   DialogTitle, 
   Grid, 
   IconButton, 
-  LinearProgress, 
   Switch, 
   Tab, 
   Tabs, 
@@ -39,6 +38,7 @@ import { PERMISSIONS } from '@/utilities/constants/permissions';
 import UnauthorizedAccess from '@/shared/Information/UnauthorizedAccess';
 import PDFContent from '@/components/pdf/PDFContent';
 import { useCounter } from '../CounterProvider';
+import { BackdropSpinner } from '@/shared/ProgressIndicators/BackdropSpinner';
 
 const SaleReceipt = React.lazy(() => import('../saleReceipt/SaleReceipt'));
 const SaleDialogForm = React.lazy(() => import('../saleForm/SaleDialogForm'));
@@ -79,7 +79,7 @@ const DocumentDialogContent: React.FC<DocumentDialogContentProps> = ({
     setPdfKey(prev => prev + 1); // Force PDF remount when changing format
   };
 
-  if (isFetching) return <LinearProgress />;
+  if (isFetching) return <BackdropSpinner />;
   if (!sale) return null;
 
   return (
@@ -111,7 +111,7 @@ const DocumentDialogContent: React.FC<DocumentDialogContentProps> = ({
 
       <DialogContent dividers>
         {belowLargeScreen && activeTab === 0 ? (
-          <Suspense fallback={<LinearProgress />}>
+          <Suspense fallback={<BackdropSpinner />}>
             <SalePreviewOnscreen organization={organization} sale={sale}/>
           </Suspense>
         ) : (
@@ -127,7 +127,7 @@ const DocumentDialogContent: React.FC<DocumentDialogContentProps> = ({
               <Typography variant="body2">80mm</Typography>
             </Box>
             
-            <Suspense fallback={<LinearProgress />}>
+            <Suspense fallback={<BackdropSpinner />}>
               <PDFContent
                 key={`pdf-${pdfKey}`}
                 fileName={`${sale.saleNo}_${thermalPrinter ? '80mm' : 'A4'}`}
@@ -200,7 +200,7 @@ const Receipt: React.FC<ReceiptProps> = ({
   };
 
   if (isFetching) {
-    return <LinearProgress />;
+    return <BackdropSpinner />;
   }
 
   if (!sale) return null;
@@ -213,7 +213,7 @@ const Receipt: React.FC<ReceiptProps> = ({
           <Tab label="Receipt" />
         </Tabs>
       }
-      <Suspense fallback={<LinearProgress />}>
+      <Suspense fallback={<BackdropSpinner />}>
         {belowLargeScreen && activeTab === 0 ? 
           <ReceiptPreviewOnScreen 
             setOpenReceiptDialog={setOpenReceiptDialog} 
@@ -245,13 +245,13 @@ const EditSales: React.FC<EditSalesProps> = ({ saleId, toggleOpen }) => {
   });
 
   if (isFetching) {
-    return <LinearProgress />;
+    return <BackdropSpinner />;
   }
 
   if (!sale) return null;
 
   return (
-    <Suspense fallback={<LinearProgress />}>
+    <Suspense fallback={<BackdropSpinner />}>
       <SaleDialogForm toggleOpen={toggleOpen} sale={sale} />
     </Suspense>
   );

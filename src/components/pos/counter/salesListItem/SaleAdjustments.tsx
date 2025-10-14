@@ -5,7 +5,6 @@ import {
   Box,
   Grid,
   IconButton,
-  LinearProgress,
   Tooltip,
   Typography,
   useMediaQuery,
@@ -17,6 +16,7 @@ import { useQuery } from '@tanstack/react-query';
 import { SalesOrder } from '../SalesOrderType';
 import { Currency } from '@/components/masters/Currencies/CurrencyType';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
+import { BackdropSpinner } from '@/shared/ProgressIndicators/BackdropSpinner';
 
 interface SaleAdjustmentsProps {
   expanded: boolean;
@@ -55,7 +55,7 @@ const SaleAdjustments: React.FC<SaleAdjustmentsProps> = ({ expanded, sale, activ
 
   return (
     <>
-      {isLoading && <LinearProgress />}
+      {isLoading && <BackdropSpinner />}
 
       {saleAdjustments?.length ? (
         saleAdjustments.map((adjustment, index) => (
