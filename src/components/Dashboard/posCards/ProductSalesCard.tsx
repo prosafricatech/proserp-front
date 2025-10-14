@@ -61,12 +61,12 @@ function ProductSalesCard() {
     const smallScreen = useMediaQuery(theme.breakpoints.down('md'));
 
     const COLORS = {
-        quantity: '#000000',
+        quantity: theme.palette.text.primary,
         revenue: '#2196f3',
         cogs: '#c62828',
         profit: theme.palette.success.main,
         margin: theme.palette.success.main,
-        default: '#000000'
+        default: theme.palette.text.primary
     };
 
     const { chartFilters: { from, to, cost_center_ids, costCenters } } = useDashboardSettings();
