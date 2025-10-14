@@ -148,7 +148,7 @@ function BalanceSheetTrend() {
               </Div>
             )}
           </Grid>
-          <Grid size={4}>
+          <Grid size={4} textAlign={'end'}>
             <Tooltip title="Open Balance Sheet Report">
               <IconButton onClick={() => setOpenDialog(true)} size="small" color="primary">
                 <BalanceOutlined
