@@ -28,7 +28,7 @@ const StationItemAction = ({ station }: StationItemActionProps) => {
   const { mutate: deleteStation } = useMutation({
     mutationFn: stationServices.delete,
     onSuccess: (data: { message: string }) => {
-      queryClient.invalidateQueries({ queryKey: ['Station'] });
+      queryClient.invalidateQueries({ queryKey: ['station'] });
       enqueueSnackbar('Station deleted successfully', {
         variant: 'success',
       });

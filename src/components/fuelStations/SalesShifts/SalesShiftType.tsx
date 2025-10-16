@@ -2,9 +2,7 @@ import { Ledger } from '@/components/accounts/ledgers/LedgerType';
 import { Product } from '@/components/productAndServices/products/ProductType';
 import { Stakeholder } from '@/components/masters/stakeholders/StakeholderType';
 import { FuelPump, Station } from '../Stations/StationType';
-
-
-
+import { User } from '@/types/auth-types';
 
 
 export interface ShiftTeam {
@@ -65,6 +63,7 @@ export interface SalesShift {
   other_ledgers: LedgerAmount[];
   created_at?: string;
   updated_at?: string;
+  users: User[];
 }
 export interface ShiftTeam {
   id: number;

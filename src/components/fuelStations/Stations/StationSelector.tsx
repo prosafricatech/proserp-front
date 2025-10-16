@@ -7,7 +7,7 @@ import {
   TextField
 } from "@mui/material";
 import { CheckBox, CheckBoxOutlineBlank } from "@mui/icons-material";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useJumboAuth } from "@/app/providers/JumboAuthProvider";
 import { Station } from "./StationType";
@@ -31,12 +31,28 @@ const StationSelector = ({
 }: StationSelectorProps) => {
   const { authUser } = useJumboAuth();
 
-  const { data: rawStations = [], isPending } = useQuery({
-    queryKey: ["userStations", authUser?.user?.id],
-    queryFn: ({ queryKey }) =>
-      stationServices.getUserStations({ userId: queryKey[1] }),
-    select: (data) =>
-      data.map((station: any) => ({
+  // Get user ID
+  const getUserId = () => {
+    return authUser?.user?.id || null;
+  };
+
+  const userId = getUserId();
+
+  const { data: stations = [], isPending } = useQuery({
+    queryKey: ["userStations", userId],
+    queryFn: ({ queryKey }) => {
+      const userId = queryKey[1];
+      if (!userId) {
+        console.log('❌ No user ID available');
+        return [];
+      }
+      console.log('🔄 Fetching stations for user:', userId);
+      // PASS USER ID to the service
+      return stationServices.getUserStations({ userId });
+    },
+    select: (data) => {
+      console.log('📊 Raw stations data:', data);
+      return Array.isArray(data) ? data.map((station: any) => ({
         id: station.id,
         name: station.name,
         address: station.address,
@@ -46,26 +62,10 @@ const StationSelector = ({
         fuel_pumps: station.fuel_pumps,
         ledger: station.ledger,
         product: station.product
-      })),
-    enabled: !!authUser?.user?.id
+      })) : [];
+    },
+    enabled: !!userId // Only enable if userId exists
   });
-
-  const allStation: any = useMemo(
-    () => ({
-      id: "all",
-      name: "All Stations",
-      address: "",
-      description: "",
-      users: [],
-      shift_teams: [],
-      fuel_pumps: [],
-      ledger: [],
-      product: []
-    }),
-    []
-  );
-
-  const stations: Station[] = useMemo(() => [allStation, ...rawStations], [rawStations, allStation]);
 
   const [selectedStation, setSelectedStation] = useState<Station | Station[] | null>(null);
 
@@ -74,23 +74,24 @@ const StationSelector = ({
 
     if (defaultValue !== null) {
       newValue = defaultValue;
-    } else if (rawStations.length === 1) {
-      newValue = multiple ? [rawStations[0]] : rawStations[0];
+    } else if (stations.length === 1 && !multiple) {
+      newValue = stations[0];
+    } else if (stations.length > 0 && multiple) {
+      newValue = [...stations];
     } else {
-      newValue = multiple ? [allStation] : allStation;
+      newValue = multiple ? [] : null;
     }
 
-    const getId = (v: any) => (Array.isArray(v) ? v.map((o) => o.id).join(",") : v?.id);
-
-    if (getId(selectedStation) !== getId(newValue)) {
-      setSelectedStation(newValue);
-      onChange(newValue);
-    }
-  }, [defaultValue, multiple, rawStations, allStation]);
+    console.log('🎯 Setting selected station:', newValue);
+    setSelectedStation(newValue);
+    onChange(newValue);
+  }, [defaultValue, multiple, stations]);
 
   if (isPending) {
     return <LinearProgress />;
   }
+
+  console.log('🎪 Available stations for dropdown:', stations);
 
   return (
     <Autocomplete
@@ -145,6 +146,7 @@ const StationSelector = ({
         }
       })}
       onChange={(e, newValue) => {
+        console.log('🔄 Station selection changed:', newValue);
         setSelectedStation(newValue);
         onChange(newValue);
       }}

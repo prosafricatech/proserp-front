@@ -163,7 +163,7 @@ const StationForm: React.FC<StationFormProps> = ({ station, setOpenDialog }) => 
     mutationFn: stationServices.add,
     onSuccess: (data) => {
       enqueueSnackbar(data.message, { variant: "success" });
-      queryClient.invalidateQueries({ queryKey: ["Station"] });
+      queryClient.invalidateQueries({ queryKey: ["station"] });
       setOpenDialog(false);
     },
     onError: (error: unknown) => {
@@ -190,7 +190,7 @@ const StationForm: React.FC<StationFormProps> = ({ station, setOpenDialog }) => 
     mutationFn: stationServices.update,
     onSuccess: (data) => {
       enqueueSnackbar(data.message, { variant: "success" });
-      queryClient.invalidateQueries({ queryKey: ["Station"] });
+      queryClient.invalidateQueries({ queryKey: ["station"] });
       setOpenDialog(false);
     },
     onError: (error: unknown) => {
