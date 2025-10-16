@@ -2,6 +2,7 @@ import axios from "@/lib/services/config";
 
 const stationServices = {};
 
+// Get all stations (for admin or general listing)
 stationServices.getList = async (params = {}) => {
     const { page = 1, limit = 10, ...queryParams } = params;
     const { data } = await axios.get("/api/fuelStations/stations", {
@@ -10,8 +11,15 @@ stationServices.getList = async (params = {}) => {
     return data;
 };
 
+// Get user-specific stations - MUST PASS USER ID
 stationServices.getUserStations = async (params) => {
-    const { data } = await axios.get(`/fuel-stations/user-stations/${params.userId}`);
+    if (!params.userId) {
+        throw new Error('User ID is required to fetch user stations');
+    }
+    
+    const { data } = await axios.get(`/api/fuelStations/user-stations`, {
+        params: { userId: params.userId } // Pass userId as query parameter
+    });
     return data;
 };
 

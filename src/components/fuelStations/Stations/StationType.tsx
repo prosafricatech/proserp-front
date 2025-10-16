@@ -1,7 +1,7 @@
 import { Ledger } from "@/components/accounts/ledgers/LedgerType";
 import { Store } from "@/components/procurement/stores/storeTypes";
 import { Product } from "@/components/productAndServices/products/ProductType";
-import { User } from "@/components/prosControl/userManagement/UserManagementType";
+import { User } from "@/types/auth-types";
 
 export interface Station {
   id?: number;
