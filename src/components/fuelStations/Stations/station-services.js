@@ -17,7 +17,7 @@ stationServices.getUserStations = async (params) => {
         throw new Error('User ID is required to fetch user stations');
     }
     
-    const { data } = await axios.get(`/api/fuelStations/user-stations`, {
+    const { data } = await axios.get(`/api/fuelStations/stations/userStations`, {
         params: { userId: params.userId } // Pass userId as query parameter
     });
     return data;
