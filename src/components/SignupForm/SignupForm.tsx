@@ -81,7 +81,7 @@ const SignupForm = () => {
       <CardContent
         sx={{
           flex: '0 1 300px',
-          background: 'white',
+          background: 'linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%)',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
@@ -123,7 +123,7 @@ const SignupForm = () => {
         sx={{ 
           flex: 1, 
           p: 4,
-         background: 'white',
+         background: 'linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%)',
         }}
       >
         {/* Title */}

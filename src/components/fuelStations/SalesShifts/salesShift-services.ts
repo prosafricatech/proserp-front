@@ -87,7 +87,7 @@ interface SalesShiftServices {
 
 const salesShiftServices: SalesShiftServices = {
   getStationShifts: async ({ queryParams }) => {
-    const response = await axios.get('/api/pos/sales-shift', {
+    const response = await axios.get('/api/fuelStation/salesShifts/getStationShifts', {
       params: queryParams,
     });
     return response.data;
