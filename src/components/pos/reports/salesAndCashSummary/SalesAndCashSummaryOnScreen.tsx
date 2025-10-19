@@ -83,7 +83,7 @@ const SalesAndCashSummaryOnScreen: React.FC<SalesAndCashSummaryOnScreenProps> = 
   };
 
   return (
-    <Box sx={{ padding: 2 }}>
+    <>
       {/* Sales Section */}
       <Box sx={{ textAlign: 'right', mb: 3 }}>
         <Typography variant="h5" color={headerColor} fontWeight="bold">
@@ -375,7 +375,7 @@ const SalesAndCashSummaryOnScreen: React.FC<SalesAndCashSummaryOnScreenProps> = 
           </Grid>
         </Box>
       )}
-    </Box>
+    </>
   );
 };
 
