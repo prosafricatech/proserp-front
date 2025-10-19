@@ -1,6 +1,7 @@
 import { Currency } from '@/components/masters/Currencies/CurrencyType';
 import { MeasurementUnit } from '@/components/masters/measurementUnits/MeasurementUnitType';
 import { Organization } from '@/types/auth-types';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { Grid, Typography } from '@mui/material';
 import React from 'react';
 
@@ -29,6 +30,8 @@ interface SaleReceiptOnScreenProps {
 }
 
 const SaleReceiptOnScreen: React.FC<SaleReceiptOnScreenProps> = ({ sale, organization }) => {
+  const { theme } = useJumboTheme();
+
   // Calculate VAT amounts
   const { vatAmount, totalWithVAT } = React.useMemo(() => {
     const totalForVAT = sale.sale_items
@@ -69,7 +72,7 @@ const SaleReceiptOnScreen: React.FC<SaleReceiptOnScreenProps> = ({ sale, organiz
           key={`${item.product.name}-${index}`}
           borderBottom={1} 
           borderColor="#484848" 
-          color="black"
+          color={theme.type === 'dark' ? 'white' : 'black'}
           display="flex" 
           alignItems="flex-end"
           py={0.5}
@@ -96,7 +99,7 @@ const SaleReceiptOnScreen: React.FC<SaleReceiptOnScreenProps> = ({ sale, organiz
         container 
         mt={1} 
         borderBottom={1} 
-        color="black" 
+        color={theme.type === 'dark' ? 'white' : 'black'} 
         display="flex" 
         alignItems="flex-end"
         py={0.5}

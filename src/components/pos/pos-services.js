@@ -39,7 +39,7 @@ posServices.saleRelatableAdjustments = async (id) => {
 
 posServices.addSale = async(sale) => {
     return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-         const {data} = await axios.post(`/api/pos/counter/add`,sale);
+         const {data} = await axios.post(`/api/pos/counter/addSale`,sale);
          return data;
      })
 }

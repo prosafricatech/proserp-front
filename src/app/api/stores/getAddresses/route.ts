@@ -8,7 +8,7 @@ const { params } = context as { params: { id: string } };
   const { headers, response } = await getAuthHeaders(req);
   if (response) return response;
 
-  const url = new URL(`${API_BASE}/accounts/journal_vouchers/${params.id}`);
+  const url = new URL(`${API_BASE}/pos/delivery-addresses`);
   req.nextUrl.searchParams.forEach((value, key) => url.searchParams.set(key, value));
 
   const res = await fetch(url.toString(), {

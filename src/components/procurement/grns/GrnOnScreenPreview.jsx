@@ -1,13 +1,14 @@
 import React from 'react';
-import { Grid, Typography, Divider, Box, Tooltip } from '@mui/material';
+import { Grid, Typography, Divider, Box, Tooltip, useTheme } from '@mui/material';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 
 function GrnOnScreenPreview({ grn, baseCurrency, checkOrganizationPermission, organization }) {
+    const theme = useTheme();
     const currencySymbol = grn.currency.symbol;
     const base_Currency = baseCurrency.symbol;
-    const mainColor = organization.settings?.main_color || "#2113AD";
-    const displayAmounts = checkOrganizationPermission([PERMISSIONS.ACCOUNTS_REPORTS]);;
+    const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || "#2113AD");
+    const displayAmounts = checkOrganizationPermission([PERMISSIONS.ACCOUNTS_REPORTS]);
 
     const exchangeRate = grn.exchange_rate;
     const costFactor = grn.cost_factor;
@@ -27,178 +28,351 @@ function GrnOnScreenPreview({ grn, baseCurrency, checkOrganizationPermission, or
         totalAdditionalCosts += (item.amount * item.exchange_rate);
     });
 
+    const formatNumber = (value) => {
+        return value.toLocaleString('en-US', { 
+            maximumFractionDigits: 2, 
+            minimumFractionDigits: 2 
+        });
+    };
+
     return (
-        <Box padding={1}>
-            <Grid container spacing={2} style={{ marginTop: 20 }}>
-                <Grid item xs={12} style={{ textAlign: 'center' }}>
-                    <Typography variant="h4" color={mainColor}>GOODS RECEIVED NOTE</Typography>
-                    <Typography variant="subtitle1" fontWeight="bold">{grn.grnNo}</Typography>
+        <Box sx={{ padding: 2 }}>
+            {/* Header Section */}
+            <Grid container spacing={2} sx={{ mb: 3 }}>
+                <Grid size={12}>
+                    <Box 
+                        sx={{ 
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            textAlign: 'center',
+                            width: '100%'
+                        }}
+                    >
+                        <Typography variant="h4" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                            GOODS RECEIVED NOTE
+                        </Typography>
+                        <Typography variant="h6" fontWeight="bold" gutterBottom>
+                            {grn.grnNo}
+                        </Typography>
+                    </Box>
                 </Grid>
             </Grid>
-            <Grid container spacing={2} style={{ marginTop: 5, marginBottom: 10 }}>
-                <Grid item xs={6}>
-                    <Typography variant="body2" color={mainColor}>Date Received</Typography>
-                    <Typography variant="body2">{readableDate(grn.date_received)}</Typography>
+
+            {/* Metadata Section */}
+            <Grid container spacing={2} sx={{ mb: 3 }}>
+                <Grid size={{xs: 12, sm: 6, md: 4}}>
+                    <Box>
+                        <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                            Date Received
+                        </Typography>
+                        <Typography variant="body1">
+                            {readableDate(grn.date_received)}
+                        </Typography>
+                    </Box>
                 </Grid>
                 {grn?.reference && (
-                    <Grid item xs={6}>
-                        <Typography variant="body2" color={mainColor}>Reference</Typography>
-                        <Typography variant="body2">{grn.reference}</Typography>
+                    <Grid size={{xs: 12, sm: 6, md: 4}}>
+                        <Box>
+                            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                                Reference
+                            </Typography>
+                            <Typography variant="body1">{grn.reference}</Typography>
+                        </Box>
                     </Grid>
                 )}
-                <Grid item xs={6}>
-                    <Typography variant="body2" color={mainColor}>Currency</Typography>
-                    <Typography variant="body2">{grn.currency.name}</Typography>
+                <Grid size={{xs: 12, sm: 6, md: 4}}>
+                    <Box>
+                        <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                            Currency
+                        </Typography>
+                        <Typography variant="body1">{grn.currency.name}</Typography>
+                    </Box>
                 </Grid>
                 {grn?.currency.id > 1 && displayAmounts && (
-                    <Grid item xs={6}>
-                        <Typography variant="body2" color={mainColor}>Exchange Rate</Typography>
-                        <Typography variant="body2">{exchangeRate}</Typography>
+                    <Grid size={{xs: 12, sm: 6, md: 4}}>
+                        <Box>
+                            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                                Exchange Rate
+                            </Typography>
+                            <Typography variant="body1">{exchangeRate}</Typography>
+                        </Box>
                     </Grid>
                 )}
                 {grn?.cost_factor > 1 && displayAmounts && (
-                    <Grid item xs={6}>
-                        <Typography variant="body2" color={mainColor}>Cost Factor</Typography>
-                        <Typography variant="body2">{costFactor}</Typography>
+                    <Grid size={{xs: 12, sm: 6, md: 4}}>
+                        <Box>
+                            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                                Cost Factor
+                            </Typography>
+                            <Typography variant="body1">{costFactor}</Typography>
+                        </Box>
                     </Grid>
                 )}
-                <Grid item xs={6}>
-                    <Typography variant="body2" color={mainColor}>Supplier</Typography>
-                    <Typography variant="body2">{grn.order.stakeholder?.name}</Typography>
+                <Grid size={{xs: 12, sm: 6, md: 4}}>
+                    <Box>
+                        <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                            Supplier
+                        </Typography>
+                        <Typography variant="body1">{grn.order.stakeholder?.name}</Typography>
+                    </Box>
                 </Grid>
-                <Grid item xs={6}>
-                    <Typography variant="body2" color={mainColor}>Receiving Store</Typography>
-                    <Typography variant="body2">{grn.store.name}</Typography>
+                <Grid size={{xs: 12, sm: 6, md: 4}}>
+                    <Box>
+                        <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                            Receiving Store
+                        </Typography>
+                        <Typography variant="body1">{grn.store.name}</Typography>
+                    </Box>
                 </Grid>
                 {grn?.cost_centers && (
-                    <Grid item xs={6}>
-                        <Typography variant="body2" color={mainColor}>Cost Center</Typography>
-                        <Typography variant="body2">{grn.cost_centers.map((cc) => cc.name).join(', ')}</Typography>
+                    <Grid size={{xs: 12, sm: 6, md: 4}}>
+                        <Box>
+                            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                                Cost Center{grn.cost_centers.length > 1 ? 's' : ''}
+                            </Typography>
+                            <Typography variant="body1">{grn.cost_centers.map((cc) => cc.name).join(', ')}</Typography>
+                        </Box>
                     </Grid>
                 )}
-                <Grid item xs={6}>
-                    <Typography variant="body2" color={mainColor}>Received By</Typography>
-                    <Typography variant="body2">{grn.creator?.name}</Typography>
+                <Grid size={{xs: 12, sm: 6, md: 4}}>
+                    <Box>
+                        <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                            Received By
+                        </Typography>
+                        <Typography variant="body1">{grn.creator?.name}</Typography>
+                    </Box>
                 </Grid>
             </Grid>
 
-            {/* Items Table */}
-            <Grid container spacing={1} paddingTop={3}>
-                <Grid item xs={12} textAlign={'center'}>
-                    <Typography variant="h6" color={mainColor}>ITEMS</Typography>
-                </Grid>
-            </Grid>
-
-            <Grid container spacing={1}>
-                <Divider style={{ width: '100%', margin: '8px 0' }} />
-                {grn.items.map((grnItem, index) => (
-                    <Grid container key={index}>
-                        <Grid item xs={1}><Typography variant="body2">{index + 1}.</Typography></Grid>
-                        <Grid item xs={8} md={7}><Typography variant="body2">{grnItem.product.name}</Typography></Grid>
-                        <Grid item xs={3} md={4} textAlign={'end'}><Typography variant="body2">{grnItem.quantity} {grnItem.measurement_unit?.symbol}</Typography></Grid>
-                        {displayAmounts && (
-                            <>
-                                <Grid item xs={5} md={6}>
-                                    <Tooltip title={`Unit Price`}>
-                                        <Typography variant="body2" align="right">{currencySymbol} {grnItem.rate.toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}</Typography>
-                                    </Tooltip>
+            {/* Items Section */}
+            <Box sx={{ mb: 3 }}>
+                <Typography 
+                    variant="h6" 
+                    sx={{ 
+                        color: headerColor, 
+                        textAlign: 'center', 
+                        fontWeight: 'bold',
+                        mb: 2
+                    }}
+                >
+                    ITEMS RECEIVED
+                </Typography>
+                
+                <Box 
+                    sx={{ 
+                        p: 2, 
+                        backgroundColor: theme.palette.background.default,
+                        border: `1px solid ${theme.palette.divider}`,
+                        borderRadius: 1
+                    }}
+                >
+                    {grn.items.map((grnItem, index) => (
+                        <Box key={index}>
+                            <Grid container alignItems="center" sx={{ py: 1 }}>
+                                <Grid size={{xs: 1, md: 1}}>
+                                    <Typography variant="body2" fontWeight="medium">
+                                        {index + 1}.
+                                    </Typography>
                                 </Grid>
-                                <Grid item xs={7} md={6}>
-                                    <Tooltip title={`Amount`}>
-                                        <Typography variant="body2" align="right">{currencySymbol} {(grnItem.quantity * grnItem.rate).toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}</Typography>
-                                    </Tooltip>
+                                <Grid size={{xs: 7, md: 5}}>
+                                    <Typography variant="body2" fontWeight="medium">
+                                        {grnItem.product.name}
+                                    </Typography>
                                 </Grid>
-                                {grn.additional_costs.length > 0 && (
+                                <Grid size={{xs: 4, md: 2}} sx={{ textAlign: 'right' }}>
+                                    <Typography variant="body2" fontFamily="monospace" fontWeight="medium">
+                                        {`${grnItem.quantity} ${grnItem.measurement_unit?.symbol}`}
+                                    </Typography>
+                                </Grid>
+                                
+                                {displayAmounts && (
                                     <>
-                                        <Grid item xs={5}>
-                                            <Tooltip title={`Cost Per Unit in ${base_Currency}`}>
-                                                <Typography variant="body2" align="right">{base_Currency} {(costFactor * grnItem.rate * exchangeRate).toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}</Typography>
+                                        <Grid size={{xs: 6, md: 2}} sx={{ textAlign: 'right' }}>
+                                            <Tooltip title="Unit Price">
+                                                <Typography variant="body2" fontFamily="monospace">
+                                                    {currencySymbol} {formatNumber(grnItem.rate)}
+                                                </Typography>
                                             </Tooltip>
                                         </Grid>
-                                        <Grid item xs={7}>
-                                            <Tooltip title={`Amount in ${base_Currency}`}>
-                                                <Typography variant="body2" align="right">{base_Currency} {(costFactor * grnItem.rate * exchangeRate * grnItem.quantity).toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}</Typography>
+                                        <Grid size={{xs: 6, md: 2}} sx={{ textAlign: 'right' }}>
+                                            <Tooltip title="Amount">
+                                                <Typography variant="body2" fontWeight="bold" fontFamily="monospace">
+                                                    {currencySymbol} {formatNumber(grnItem.quantity * grnItem.rate)}
+                                                </Typography>
                                             </Tooltip>
                                         </Grid>
                                     </>
                                 )}
-                            </>
-                        )}
-                        <Divider style={{ width: '100%', margin: '8px 0' }} />
-                    </Grid>
-                ))}
-                {
-                    displayAmounts &&
-                    <Grid container>
-                        <Grid item xs={4}><Typography variant="body2">TOTAL</Typography></Grid>
-                        <Grid item xs={8} style={{ textAlign: 'right' }}>
-                            <Typography variant="body2" fontWeight="bold">{currencySymbol} {totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</Typography>
-                        </Grid>
-                    </Grid>
-                }
-            </Grid>
-
-            {/* Additional Costs Title */}
-            {displayAmounts && grn.additional_costs.length > 0 && (
-                <Grid container spacing={1} paddingTop={5}>
-                    <Grid item xs={12} textAlign={'center'}>
-                        <Typography variant="h6" color={mainColor}>ADDITIONAL COSTS</Typography>
-                    </Grid>
-                </Grid>
-            )}
+                            </Grid>
+                            
+                            {displayAmounts && grn.additional_costs.length > 0 && (
+                                <Grid container sx={{ pl: 4, py: 0.5 }}>
+                                    <Grid size={{xs: 6, md: 3}} sx={{ textAlign: 'right' }}>
+                                        <Tooltip title={`Cost Per Unit in ${base_Currency}`}>
+                                            <Typography variant="body2" color="text.secondary" fontFamily="monospace">
+                                                {base_Currency} {formatNumber(costFactor * grnItem.rate * exchangeRate)}
+                                            </Typography>
+                                        </Tooltip>
+                                    </Grid>
+                                    <Grid size={{xs: 6, md: 3}} sx={{ textAlign: 'right' }}>
+                                        <Tooltip title={`Amount in ${base_Currency}`}>
+                                            <Typography variant="body2" color="text.secondary" fontWeight="medium" fontFamily="monospace">
+                                                {base_Currency} {formatNumber(costFactor * grnItem.rate * exchangeRate * grnItem.quantity)}
+                                            </Typography>
+                                        </Tooltip>
+                                    </Grid>
+                                </Grid>
+                            )}
+                            
+                            {index < grn.items.length - 1 && (
+                                <Divider sx={{ borderColor: theme.palette.divider, my: 1 }} />
+                            )}
+                        </Box>
+                    ))}
+                    
+                    {displayAmounts && (
+                        <Box sx={{ mt: 2, pt: 2, borderTop: `1px solid ${theme.palette.divider}` }}>
+                            <Grid container>
+                                <Grid size={8}>
+                                    <Typography variant="body1" fontWeight="bold">
+                                        TOTAL ({currencySymbol})
+                                    </Typography>
+                                </Grid>
+                                <Grid size={4} sx={{ textAlign: 'right' }}>
+                                    <Typography variant="body1" fontWeight="bold" fontFamily="monospace">
+                                        {currencySymbol} {formatNumber(totalAmount)}
+                                    </Typography>
+                                </Grid>
+                            </Grid>
+                        </Box>
+                    )}
+                </Box>
+            </Box>
 
             {/* Additional Costs Section */}
             {displayAmounts && grn.additional_costs.length > 0 && (
-                <Grid container spacing={1} paddingTop={1}>
-                    <Divider style={{ width: '100%', margin: '8px 0' }} />
-                    {grn.additional_costs.map((item, index) => (
-                        <Grid container key={index}>
-                            <Grid item xs={7}><Typography variant="body2">{item.name}</Typography></Grid>
-                            <Grid item xs={5}>  
-                                <Tooltip title={`Amount in ${item.currency?.symbol}`}>
-                                    <Typography variant="body2">{item.currency?.symbol} {item.amount?.toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}</Typography>
-                                </Tooltip>
-                                <Typography variant="body2">Exchange Rate: {item.exchange_rate}</Typography>
+                <Box sx={{ mb: 3 }}>
+                    <Typography 
+                        variant="h6" 
+                        sx={{ 
+                            color: headerColor, 
+                            textAlign: 'center', 
+                            fontWeight: 'bold',
+                            mb: 2
+                        }}
+                    >
+                        ADDITIONAL COSTS
+                    </Typography>
+                    
+                    <Box 
+                        sx={{ 
+                            p: 2, 
+                            backgroundColor: theme.palette.background.default,
+                            border: `1px solid ${theme.palette.divider}`,
+                            borderRadius: 1
+                        }}
+                    >
+                        {grn.additional_costs.map((item, index) => (
+                            <Box key={index}>
+                                <Grid container alignItems="center" sx={{ py: 1 }}>
+                                    <Grid size={7}>
+                                        <Typography variant="body2" fontWeight="medium">
+                                            {item.name}
+                                        </Typography>
+                                    </Grid>
+                                    <Grid size={5} sx={{ textAlign: 'right' }}>
+                                        <Tooltip title={`Amount in ${item.currency?.symbol}`}>
+                                            <Typography variant="body2" fontFamily="monospace">
+                                                {item.currency?.symbol} {formatNumber(item.amount)}
+                                            </Typography>
+                                        </Tooltip>
+                                        <Typography variant="caption" color="text.secondary">
+                                            Exchange Rate: {item.exchange_rate}
+                                        </Typography>
+                                    </Grid>
+                                </Grid>
+                                {index < grn.additional_costs.length - 1 && (
+                                    <Divider sx={{ borderColor: theme.palette.divider }} />
+                                )}
+                            </Box>
+                        ))}
+                        
+                        <Box sx={{ mt: 2, pt: 2, borderTop: `1px solid ${theme.palette.divider}` }}>
+                            <Grid container>
+                                <Grid size={8}>
+                                    <Typography variant="body1" fontWeight="bold">
+                                        TOTAL Additional Costs ({base_Currency})
+                                    </Typography>
+                                </Grid>
+                                <Grid size={4} sx={{ textAlign: 'right' }}>
+                                    <Tooltip title={`Total Additional Costs in ${base_Currency}`}>
+                                        <Typography variant="body1" fontWeight="bold" fontFamily="monospace">
+                                            {base_Currency} {formatNumber(totalAdditionalCosts)}
+                                        </Typography>
+                                    </Tooltip>
+                                </Grid>
                             </Grid>
-                            <Divider style={{ width: '100%', margin: '8px 0' }} />
-                        </Grid>
-                    ))}
-                    {displayAmounts && (
-                        <Grid container key="total-additional-costs">
-                            <Grid item xs={8}>
-                                <Typography variant="body2">TOTAL Additional Costs ({base_Currency})</Typography>
-                            </Grid>
-                            <Grid item xs={4} style={{ textAlign: 'right' }}>
-                                <Tooltip title={`Total Additional Costs in ${base_Currency}`}>
-                                    <Typography variant="body2" fontWeight="bold">{totalAdditionalCosts?.toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}</Typography>
-                                </Tooltip>
-                            </Grid>
-                        </Grid>
-                    )}
-                </Grid>
+                        </Box>
+                    </Box>
+                </Box>
             )}
 
             {/* Totals Section */}
             {displayAmounts && (
-                <Grid container spacing={1} paddingTop={3}>
-                    <Divider style={{ width: '100%', margin: '8px 0' }} />
+                <Box 
+                    sx={{ 
+                        p: 2, 
+                        backgroundColor: theme.palette.background.default,
+                        border: `1px solid ${theme.palette.divider}`,
+                        borderRadius: 1
+                    }}
+                >
                     <Grid container>
-                        <Grid item xs={8}><Typography variant="body2" fontWeight={'bold'}>Total Value of Goods ({base_Currency})</Typography></Grid>
-                        <Grid item xs={4} style={{ textAlign: 'right' }}>
-                            <Typography variant="body2" fontWeight="bold">{totalAmountBaseCurrency?.toLocaleString('en-US', { minimumFractionDigits: 2 })}</Typography>
+                        <Grid size={8}>
+                            <Typography variant="h6" fontWeight="bold" color={headerColor}>
+                                Total Value of Goods ({base_Currency})
+                            </Typography>
+                        </Grid>
+                        <Grid size={4} sx={{ textAlign: 'right' }}>
+                            <Typography variant="h6" fontWeight="bold" color={headerColor} fontFamily="monospace">
+                                {formatNumber(totalAmountBaseCurrency)}
+                            </Typography>
                         </Grid>
                     </Grid>
-                </Grid>
+                </Box>
             )}
 
-            {grn.remarks &&
-                <Grid container spacing={2} style={{ marginTop: 20 }}>
-                    <Grid item xs={12} style={{ textAlign: 'center' }}>
-                        <Typography variant="h4" color={mainColor}>Remarks</Typography>
-                        <Typography variant="subtitle1">{grn.remarks}</Typography>
-                    </Grid>
-                </Grid>
-            }
+            {/* Remarks Section */}
+            {grn.remarks && (
+                <Box sx={{ mt: 3 }}>
+                    <Typography 
+                        variant="h6" 
+                        sx={{ 
+                            color: headerColor, 
+                            textAlign: 'center', 
+                            fontWeight: 'bold',
+                            mb: 2
+                        }}
+                    >
+                        REMARKS
+                    </Typography>
+                    <Box 
+                        sx={{ 
+                            p: 2, 
+                            backgroundColor: theme.palette.background.default,
+                            border: `1px solid ${theme.palette.divider}`,
+                            borderRadius: 1,
+                            textAlign: 'center'
+                        }}
+                    >
+                        <Typography variant="body1" sx={{ lineHeight: 1.5 }}>
+                            {grn.remarks}
+                        </Typography>
+                    </Box>
+                </Box>
+            )}
         </Box>
     );
 }

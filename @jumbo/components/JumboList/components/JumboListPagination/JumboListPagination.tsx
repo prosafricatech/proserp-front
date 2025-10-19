@@ -44,7 +44,6 @@ const JumboListPagination: React.FC<JumboListPaginationProps> = ({
   const { theme } = useJumboTheme();
   const smallScreen = useMediaQuery(theme.breakpoints.down('md'));
 
-  // Default rows per page options
   const defaultRowsOptions = [10, 20, 50, 100, 200];
   const itemsPerPageOptions = customItemsPerPageOptions || defaultRowsOptions;
 
@@ -105,9 +104,6 @@ const JumboListPagination: React.FC<JumboListPaginationProps> = ({
       sx={{
         borderRadius: 2,
         p: 2,
-        bgcolor: theme.palette.background.paper,
-        boxShadow: theme.shadows[1],
-        border: `1px solid ${theme.palette.divider}`,
       }}
     >
       <Stack direction="row" alignItems="center" spacing={2}>
@@ -174,7 +170,12 @@ const JumboListPagination: React.FC<JumboListPaginationProps> = ({
                 {visiblePages.map((page, index) => {
                   if (page === 'left-ellipsis' || page === 'right-ellipsis') {
                     return (
-                      <Typography key={`ellipsis-${index}`} variant="body2" color="text.secondary" sx={{ px: 1 }}>
+                      <Typography
+                        key={`ellipsis-${index}`}
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ px: 1 }}
+                      >
                         ...
                       </Typography>
                     );
@@ -255,7 +256,11 @@ const JumboListPagination: React.FC<JumboListPaginationProps> = ({
             </Tooltip>
 
             {!smallScreen && (
-              <Typography variant="body2" color="text.secondary" sx={{ minWidth: 100, textAlign: 'center' }}>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ minWidth: 100, textAlign: 'center' }}
+              >
                 Page {activePage + 1} of {totalPages}
               </Typography>
             )}

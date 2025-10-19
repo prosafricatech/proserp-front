@@ -1,115 +1,261 @@
 import React from 'react';
 import {
-  Box,
+  Grid,
   Typography,
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
   TableRow,
   Paper,
-  Grid,
+  useTheme,
+  Box,
+  TableContainer,
+  Divider
 } from '@mui/material';
 
 function BillOfMaterialOnScreen({ billOfMaterial, organization }) {
+  const theme = useTheme();
+  
+  const mainColor = organization.settings?.main_color || "#2113AD";
+  const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || "#2113AD");
+  const contrastText = organization.settings?.contrast_text || "#FFFFFF";
 
-  const mainColor = organization.settings?.main_color || '#2113AD';
-  const lightColor = organization.settings?.light_color || '#bec5da';
-  const contrastText = organization.settings?.contrast_text || '#FFFFFF';
+  // Format quantity values
+  const formatQuantity = (value) => {
+    return value?.toLocaleString('en-US', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 4
+    }) || '0';
+  };
 
   return (
-    <Box p={2}>
-      {/* Header */}
-      <Grid container justifyContent="space-between" alignItems="center" mb={3}>
-        <Grid size={{xs: 12, sm: 6}} textAlign={{ xs: 'left', sm: 'right' }}>
-          <Typography variant="h6" fontWeight="bold" color={mainColor}>
-            Bill Of Material
-          </Typography>
-          <Typography variant="subtitle1">{billOfMaterial.bomNo}</Typography>
+    <>
+      {/* Header Section */}
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid size={12}>
+          <Box 
+            sx={{ 
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              textAlign: 'center',
+              width: '100%'
+            }}
+          >
+            <Typography 
+              variant="h4" 
+              sx={{ color: headerColor, fontWeight: 'bold' }} 
+              gutterBottom
+            >
+              BILL OF MATERIAL
+            </Typography>
+            <Typography 
+              variant="h6" 
+              fontWeight="bold"
+              gutterBottom
+            >
+              {billOfMaterial?.bomNo}
+            </Typography>
+          </Box>
         </Grid>
       </Grid>
 
-      {/* Output product info */}
-      <Grid container spacing={2} mb={2}>
-        <Grid size={{xs: 12, sm: 8}}>
-          <Typography variant="subtitle2" color={mainColor}>
-            Output Product
-          </Typography>
-          <Typography variant="body1">{billOfMaterial.product.name}</Typography>
+      {/* Output Product Information */}
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid size={{xs: 12, sm: 6, md: 4}}>
+          <Box>
+            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+              Output Product
+            </Typography>
+            <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
+              {billOfMaterial.product.name}
+            </Typography>
+          </Box>
         </Grid>
-        <Grid size={{xs: 12, sm: 4}}>
-          <Typography variant="subtitle2" color={mainColor}>
-            Quantity
-          </Typography>
-          <Typography variant="body1">
-            {billOfMaterial.quantity} {billOfMaterial.measurement_unit.symbol}
-          </Typography>
+        <Grid size={{xs: 12, sm: 6, md: 4}}>
+          <Box>
+            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+              Output Quantity
+            </Typography>
+            <Typography variant="body1" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+              {`${formatQuantity(billOfMaterial.quantity)} ${billOfMaterial.measurement_unit.symbol}`}
+            </Typography>
+          </Box>
+        </Grid>
+        <Grid size={{xs: 12, sm: 6, md: 4}}>
+          <Box>
+            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+              Total Input Items
+            </Typography>
+            <Typography variant="body1">
+              {billOfMaterial.items?.length || 0}
+            </Typography>
+          </Box>
         </Grid>
       </Grid>
 
-      {/* Input products table */}
-      <TableContainer component={Paper} variant="outlined" sx={{ mb: 4 }}>
-        <Table size="small">
-          <TableHead>
-            <TableRow sx={{ backgroundColor: mainColor }}>
-              <TableCell sx={{ color: contrastText, width: '5%' }}>S/N</TableCell>
-              <TableCell sx={{ color: contrastText }}>Input Products</TableCell>
-              <TableCell sx={{ color: contrastText, textAlign: 'right' }}>Quantity</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {billOfMaterial.items?.map((item, index) => (
-              <React.Fragment key={item.id}>
-                <TableRow sx={{ backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor }}>
-                  <TableCell>{index + 1}</TableCell>
-                  <TableCell>{item.product.name}</TableCell>
-                  <TableCell align="right">
-                    {item.quantity?.toLocaleString()} {item.measurement_unit.symbol}
-                  </TableCell>
-                </TableRow>
+      <Divider sx={{ my: 3 }} />
 
-                {item.alternatives?.length > 0 && (
-                  <>
-                    <TableRow sx={{ backgroundColor: mainColor }}>
-                      <TableCell />
-                      <TableCell colSpan={2} sx={{ color: contrastText, textAlign: 'center' }}>
-                        Alternative Input Products
-                      </TableCell>
-                    </TableRow>
+      {/* Input Products Section */}
+      <Box sx={{ mb: 3 }}>
+        <Typography 
+          variant="h5" 
+          sx={{ 
+            color: headerColor, 
+            textAlign: 'center', 
+            fontWeight: 'bold',
+            mb: 2
+          }}
+        >
+          INPUT MATERIALS
+        </Typography>
+        
+        <TableContainer 
+          component={Paper}
+          sx={{
+            boxShadow: theme.shadows[2],
+            '& .MuiTableRow-root:hover': {
+              backgroundColor: theme.palette.action.hover,
+            }
+          }}
+        >
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem', width: '8%' }}>
+                  #
+                </TableCell>
+                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
+                  Input Product
+                </TableCell>
+                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                  Quantity Required
+                </TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {billOfMaterial.items?.map((item, index) => (
+                <React.Fragment key={item.id}>
+                  {/* Main Input Item */}
+                  <TableRow 
+                    sx={{ 
+                      backgroundColor: theme.palette.background.paper,
+                      '&:nth-of-type(even)': {
+                        backgroundColor: theme.palette.action.hover,
+                      }
+                    }}
+                  >
+                    <TableCell sx={{ fontWeight: 'bold', verticalAlign: 'top' }}>{index + 1}</TableCell>
+                    <TableCell sx={{ fontWeight: 'medium', verticalAlign: 'top' }}>
+                      {item.product.name}
+                    </TableCell>
+                    <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'bold', verticalAlign: 'top' }}>
+                      {`${formatQuantity(item.quantity)} ${item.measurement_unit.symbol}`}
+                    </TableCell>
+                  </TableRow>
 
-                    {item.alternatives.map((alt, altIndex) => (
-                      <TableRow
-                        key={altIndex}
-                      >
-                        <TableCell />
-                        <TableCell sx={{ backgroundColor: altIndex % 2 === 0 ? '#FFFFFF' : lightColor }}>{alt.product.name}</TableCell>
-                        <TableCell align="right" sx={{ backgroundColor: altIndex % 2 === 0 ? '#FFFFFF' : lightColor }}>
-                          {alt.quantity?.toLocaleString()} {item.measurement_unit.symbol}
+                  {/* Alternatives Section */}
+                  {item.alternatives?.length > 0 && (
+                    <>
+                      {/* Alternatives Header */}
+                      <TableRow sx={{ backgroundColor: theme.palette.background.default }}>
+                        <TableCell colSpan={3} sx={{ py: 1, borderBottom: 'none' }}>
+                          <Typography 
+                            variant="subtitle2" 
+                            sx={{ 
+                              color: headerColor, 
+                              fontWeight: 'bold',
+                              pl: 2
+                            }}
+                          >
+                            Alternative Options
+                          </Typography>
                         </TableCell>
                       </TableRow>
-                    ))}
 
-                    {/* Add space after the alternatives */}
-                    <TableRow>
-                      <TableCell colSpan={3} sx={{ py: 1 }} />
-                    </TableRow>
-                  </>
-                )}
-              </React.Fragment>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+                      {/* Alternative Items */}
+                      {item.alternatives.map((alt, altIndex) => (
+                        <TableRow
+                          key={alt.id || altIndex}
+                          sx={{ 
+                            backgroundColor: theme.palette.background.paper,
+                            '&:nth-of-type(even)': {
+                              backgroundColor: theme.palette.action.hover,
+                            }
+                          }}
+                        >
+                          <TableCell sx={{ pl: 4, fontStyle: 'italic', verticalAlign: 'top' }}>
+                            {String.fromCharCode(97 + altIndex)}. {/* a, b, c, etc. */}
+                          </TableCell>
+                          <TableCell sx={{ fontStyle: 'italic', verticalAlign: 'top' }}>
+                            {alt.product.name}
+                          </TableCell>
+                          <TableCell align="right" sx={{ fontFamily: 'monospace', fontStyle: 'italic', verticalAlign: 'top' }}>
+                            {`${formatQuantity(alt.quantity)} ${item.measurement_unit.symbol}`}
+                          </TableCell>
+                        </TableRow>
+                      ))}
 
-      {/* Created by */}
-      <Box mt={2}>
-        <Typography variant="body2" color={mainColor}>
-          Created By
-        </Typography>
-        <Typography variant="body2">{billOfMaterial.creator.name}</Typography>
+                      {/* Spacer after alternatives */}
+                      <TableRow>
+                        <TableCell colSpan={3} sx={{ py: 1, borderBottom: 'none' }} />
+                      </TableRow>
+                    </>
+                  )}
+                </React.Fragment>
+              ))}
+              
+              {/* Empty State */}
+              {(!billOfMaterial.items || billOfMaterial.items.length === 0) && (
+                <TableRow>
+                  <TableCell colSpan={3} sx={{ textAlign: 'center', py: 4 }}>
+                    <Typography variant="body1" color="text.secondary">
+                      No input materials defined
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
       </Box>
-    </Box>
+
+      {/* Summary Information */}
+      <Grid container spacing={2} sx={{ mt: 3 }}>
+        <Grid size={{xs: 12, sm: 6, md: 4}}>
+          <Box>
+            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+              Total Alternative Options
+            </Typography>
+            <Typography variant="body1">
+              {billOfMaterial.items?.reduce((total, item) => total + (item.alternatives?.length || 0), 0) || 0}
+            </Typography>
+          </Box>
+        </Grid>
+        <Grid size={{xs: 12, sm: 6, md: 4}}>
+          <Box>
+            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+              Created By
+            </Typography>
+            <Typography variant="body1">{billOfMaterial.creator.name}</Typography>
+          </Box>
+        </Grid>
+      </Grid>
+
+      {/* Description Section */}
+      {billOfMaterial.description && (
+        <Box sx={{ mt: 3, p: 2, backgroundColor: theme.palette.background.default, borderRadius: 1 }}>
+          <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+            Description
+          </Typography>
+          <Typography variant="body1" sx={{ lineHeight: 1.6 }}>
+            {billOfMaterial.description}
+          </Typography>
+        </Box>
+      )}
+    </>
   );
 }
 

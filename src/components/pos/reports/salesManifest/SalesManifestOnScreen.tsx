@@ -74,14 +74,14 @@ const SalesManifestOnScreen: React.FC<SalesManifestOnScreenProps> = ({
   authObject, 
   separateVAT 
 }) => {
+  const { theme } = useJumboTheme();
   const { checkOrganizationPermission, authOrganization: { organization } } = authObject;
   const [expanded, setExpanded] = useState<boolean[]>(Array(reportData.transactions.length).fill(true));
   const financePersonnel = checkOrganizationPermission([PERMISSIONS.ACCOUNTS_REPORTS]);
   const mainColor = organization.settings?.main_color || "#2113AD";
-  const lightColor = organization.settings?.light_color || "#bec5da";
+  const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || "#2113AD");
   const contrastText = organization.settings?.contrast_text || "#FFFFFF";
 
-  const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
   const saleAmount = (sale: Transaction): number => {
@@ -155,7 +155,7 @@ const SalesManifestOnScreen: React.FC<SalesManifestOnScreenProps> = ({
                 sx={{ 
                   paddingTop: 1, 
                   paddingBottom: 1, 
-                  backgroundColor: mainColor, 
+                   backgroundColor: mainColor, 
                   color: contrastText 
                 }}
               >
@@ -246,7 +246,7 @@ const SalesManifestOnScreen: React.FC<SalesManifestOnScreenProps> = ({
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell colSpan={2} sx={{ backgroundColor: mainColor, textAlign: 'center' }}>
+                    <TableCell colSpan={2} sx={{  backgroundColor: mainColor, textAlign: 'center' }}>
                       <Typography variant="h5" sx={{ color: contrastText }}>
                         Collected Cash Distribution
                       </Typography>
@@ -258,7 +258,12 @@ const SalesManifestOnScreen: React.FC<SalesManifestOnScreenProps> = ({
                     reportData.collection_distribution.map((cd, index) => (
                       <TableRow 
                         key={index} 
-                        sx={{ backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor }}
+                        sx={{ 
+                          backgroundColor: theme => 
+                            index % 2 === 0 
+                              ? theme.palette.background.paper 
+                              : theme.palette.action.hover
+                        }}
                       >
                         <TableCell sx={{ flex: 0.7 }}>{cd.name}</TableCell>
                         <TableCell sx={{ flex: 0.3, textAlign: 'right' }}>
@@ -272,14 +277,14 @@ const SalesManifestOnScreen: React.FC<SalesManifestOnScreenProps> = ({
                   }
                   <TableRow>
                     <TableCell sx={{ 
-                      backgroundColor: mainColor, 
+                       backgroundColor: mainColor, 
                       color: contrastText, 
                       flex: 0.7 
                     }}>
                       Total
                     </TableCell>
                     <TableCell sx={{ 
-                      backgroundColor: mainColor, 
+                       backgroundColor: mainColor, 
                       color: contrastText, 
                       flex: 0.3, 
                       textAlign: 'right' 
@@ -299,7 +304,7 @@ const SalesManifestOnScreen: React.FC<SalesManifestOnScreenProps> = ({
       
       {/* Sales Details Section */}
       <Grid size={12} mt={5} textAlign={'center'}>
-        <Typography variant='h4' textAlign={'center'} sx={{ color: mainColor }}>
+        <Typography variant='h4' textAlign={'center'} sx={{ color: headerColor }}>
           Sales Details
         </Typography>
       </Grid>

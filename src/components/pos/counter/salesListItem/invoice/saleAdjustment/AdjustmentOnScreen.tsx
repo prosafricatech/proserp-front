@@ -10,6 +10,7 @@ import {
   TableRow,
   Paper,
   Box,
+  useTheme,
 } from '@mui/material';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import { MeasurementUnit } from '@/components/masters/measurementUnits/MeasurementUnitType';
@@ -79,13 +80,14 @@ const AdjustmentOnScreen: React.FC<AdjustmentOnScreenProps> = ({
   adjustment,
   authObject,
 }) => {
+  const theme = useTheme();
   const currencyCode = adjustment.currency.code;
   const {
     authOrganization: { organization },
   } = authObject;
 
   const mainColor = organization.settings?.main_color || '#2113AD';
-  const lightColor = organization.settings?.light_color || '#bec5da';
+  const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || '#2113AD');
   const contrastText = organization.settings?.contrast_text || '#FFFFFF';
 
   const calculatedValues = React.useMemo(() => {
@@ -129,17 +131,20 @@ const AdjustmentOnScreen: React.FC<AdjustmentOnScreenProps> = ({
         <TableRow
           key={`${item.product?.name || index}-${index}`}
           sx={{
-            backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
+            backgroundColor: theme.palette.background.paper,
+            '&:nth-of-type(even)': {
+              backgroundColor: theme.palette.action.hover,
+            },
             '&:hover': {
-              backgroundColor: `${lightColor} !important`,
+              backgroundColor: theme.palette.action.hover,
             },
           }}
         >
-          <TableCell>{index + 1}</TableCell>
+          <TableCell sx={{ fontWeight: 'medium' }}>{index + 1}</TableCell>
           <TableCell>
             <Box>
-              <Typography variant="body2" component="span">
-                {item.product?.name || 'No Product'}
+              <Typography variant="body2" component="span" fontWeight="medium">
+                {item.product?.name}
               </Typography>
               {item.description && (
                 <Typography
@@ -158,37 +163,38 @@ const AdjustmentOnScreen: React.FC<AdjustmentOnScreenProps> = ({
             </Box>
           </TableCell>
           <TableCell>{unitDisplay}</TableCell>
-          <TableCell sx={{ textAlign: 'right' }}>
-            {item.quantity}
+          <TableCell sx={{ textAlign: 'right', fontFamily: 'monospace', fontWeight: 'medium' }}>
+            {item.quantity.toLocaleString()}
           </TableCell>
-          <TableCell sx={{ textAlign: 'right' }}>
+          <TableCell sx={{ textAlign: 'right', fontFamily: 'monospace', fontWeight: 'medium' }}>
             {formatNumber(item.rate)}
           </TableCell>
           {hasVAT && (
-            <TableCell sx={{ textAlign: 'right' }}>
+            <TableCell sx={{ textAlign: 'right', fontFamily: 'monospace', fontWeight: 'medium' }}>
               {item.vat_exempted !== 1
                 ? formatNumber(vatAmount)
                 : 'Exempt'
               }
             </TableCell>
           )}
-          <TableCell sx={{ textAlign: 'right', fontWeight: 'bold' }}>
+          <TableCell sx={{ textAlign: 'right', fontFamily: 'monospace', fontWeight: 'bold' }}>
             {formatNumber(itemAmount)}
           </TableCell>
         </TableRow>
       );
     });
-  }, [adjustment.items, hasVAT, lightColor]);
+  }, [adjustment.items, hasVAT, theme]);
 
   const renderTotalsRow = (label: string, amount: number, bold = false) => (
-    <Grid container sx={{ mb: 1 }}>
+    <Grid container columnSpacing={1} sx={{ mb: 1 }}>
       <Grid size={8} />
       <Grid size={2}>
         <Typography
           variant="body1"
           sx={{
             textAlign: 'right',
-            fontWeight: bold ? 'bold' : 'normal',
+            fontWeight: bold ? 'bold' : 'medium',
+            color: bold ? headerColor : 'text.primary',
           }}
         >
           {label}
@@ -198,8 +204,9 @@ const AdjustmentOnScreen: React.FC<AdjustmentOnScreenProps> = ({
         <Typography
           variant="body1"
           sx={{
-            textAlign: 'right',
-            fontWeight: bold ? 'bold' : 'normal',
+            fontWeight: bold ? 'bold' : 'medium',
+            fontFamily: 'monospace',
+            color: bold ? headerColor : 'text.primary',
           }}
         >
           {formatCurrency(amount, currencyCode)}
@@ -209,65 +216,71 @@ const AdjustmentOnScreen: React.FC<AdjustmentOnScreenProps> = ({
   );
 
   return (
-    <Box>
+    <>
+      {/* Header Section */}
       <Grid container spacing={2} sx={{ mb: 3, alignItems: 'center' }}>
         <Grid size={6}>
+          <Box>
+            <Typography
+              variant="h4"
+              sx={{
+                color: headerColor,
+                fontWeight: 'bold',
+              }}
+            >
+              {adjustment.note_type === 'debit' ? 'DEBIT NOTE' : 'CREDIT NOTE'}
+            </Typography>
+            <Typography variant="h6" sx={{ mt: 0.5, fontWeight: 'bold' }}>
+              {adjustment.voucherNo}
+            </Typography>
+          </Box>
         </Grid>
         <Grid size={6} sx={{ textAlign: 'right' }}>
           <Typography
-            variant="h6"
+            variant="body1"
             sx={{
-              color: mainColor,
-              fontWeight: 'bold',
-              letterSpacing: '0.5px',
+              color: 'text.secondary',
+              fontWeight: 'medium',
             }}
           >
-            {adjustment.note_type === 'debit' ? 'Debit Note' : 'Credit Note'}
-          </Typography>
-          <Typography variant="h4" sx={{ color: mainColor, mt: 0.5 }}>
-            {adjustment.voucherNo}
+            {readableDate(adjustment.adjustment_date)}
           </Typography>
         </Grid>
       </Grid>
 
+      {/* Metadata Section */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid size={6}>
-          <Typography
-            variant="body2"
-            sx={{ color: mainColor, fontWeight: 'bold', mb: 0.5 }}
-          >
-            Adjustment Date
-          </Typography>
-          <Typography variant="body1" color="text.primary">
-            {readableDate(adjustment.adjustment_date)}
-          </Typography>
-        </Grid>
         {adjustment.cost_centers.length > 0 && (
-          <Grid size={6}>
-            <Typography
-              variant="body2"
-              sx={{ color: mainColor, fontWeight: 'bold', mb: 0.5 }}
-            >
-              Cost Center
-            </Typography>
-            <Typography variant="body1" color="text.primary">
-              {adjustment.cost_centers
-                .map((cost_center: CostCenter) => cost_center.name)
-                .join(', ')}
-            </Typography>
+          <Grid size={{xs: 12, md: 6}}>
+            <Box>
+              <Typography
+                variant="subtitle2"
+                sx={{ color: headerColor, fontWeight: 'bold', mb: 0.5 }}
+              >
+                Cost Center{adjustment.cost_centers.length > 1 ? 's' : ''}
+              </Typography>
+              <Typography variant="body1" color="text.primary">
+                {adjustment.cost_centers
+                  .map((cost_center: CostCenter) => cost_center.name)
+                  .join(', ')}
+              </Typography>
+            </Box>
           </Grid>
         )}
       </Grid>
 
+      {/* Items Table */}
       <TableContainer
         component={Paper}
         sx={{
           mb: 2,
           borderRadius: 1,
           overflow: 'hidden',
-          boxShadow: (theme) => theme.shadows[2],
+          boxShadow: theme.shadows[2],
+          '& .MuiTableRow-root:hover': {
+            backgroundColor: theme.palette.action.hover,
+          }
         }}
-        elevation={0}
       >
         <Table sx={{ minWidth: 650 }} aria-label="Adjustment items table">
           <TableHead>
@@ -282,7 +295,7 @@ const AdjustmentOnScreen: React.FC<AdjustmentOnScreenProps> = ({
                   py: 1.5,
                 }}
               >
-                S/N
+                #
               </TableCell>
               <TableCell
                 sx={{
@@ -379,24 +392,30 @@ const AdjustmentOnScreen: React.FC<AdjustmentOnScreenProps> = ({
         </Table>
       </TableContainer>
 
+      {/* Totals Section */}
       {adjustment.items.length > 0 && (
         <>
-          {renderTotalsRow('Total', totalAmount)}
+          {renderTotalsRow('Subtotal', totalAmount)}
           
           {hasVAT && (
             <>
-              {renderTotalsRow('VAT', totalAmountForVAT, true)}
+              {renderTotalsRow(`VAT`, totalAmountForVAT)}
               {renderTotalsRow('Grand Total', grandTotal, true)}
             </>
+          )}
+          
+          {!hasVAT && (
+            renderTotalsRow('Total', totalAmount, true)
           )}
         </>
       )}
 
+      {/* Footer Section */}
       <Grid container spacing={2} sx={{ mt: 3 }}>
-        <Grid size={6}>
+        <Grid size={{xs: 12, md: 8}}>
           <Typography
-            variant="body2"
-            sx={{ color: mainColor, fontWeight: 'bold', mb: 0.5 }}
+            variant="subtitle2"
+            sx={{ color: headerColor, fontWeight: 'bold', mb: 0.5 }}
           >
             Narration
           </Typography>
@@ -404,19 +423,19 @@ const AdjustmentOnScreen: React.FC<AdjustmentOnScreenProps> = ({
             {adjustment.narration}
           </Typography>
         </Grid>
-        <Grid size={6}>
+        <Grid size={{xs: 12, md: 4}}>
           <Typography
-            variant="body2"
-            sx={{ color: mainColor, fontWeight: 'bold', mb: 0.5 }}
+            variant="subtitle2"
+            sx={{ color: headerColor, fontWeight: 'bold', mb: 0.5 }}
           >
             Posted By
           </Typography>
-          <Typography variant="body1" color="text.primary">
+          <Typography variant="body1" color="text.primary" fontWeight="medium">
             {adjustment.creator?.name}
           </Typography>
         </Grid>
       </Grid>
-    </Box>
+    </>
   );
 };
 

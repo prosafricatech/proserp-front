@@ -52,7 +52,7 @@ function SalesReports() {
                         scroll={belowLargeScreen ? 'body' : 'paper'} 
                         fullScreen={belowLargeScreen} 
                         fullWidth 
-                        maxWidth={openSalesAndCashSummary ? 'md' : 'xl'} 
+                        maxWidth={openSalesAndCashSummary ? 'md' : 'lg'} 
                         open={openCashierReport || openSalesManifest || openSalesAndCashSummary}
                     >
                         {report}

@@ -82,12 +82,12 @@ const SaleAdjustmentItemRow: React.FC<SaleAdjustmentItemRowProps> = ({
     .filter((product, idx, self) => self.findIndex((p: any) => p.id === product?.id) === idx);
 
     useEffect(() => {
-        if (formValues.isSelected === undefined) {
-            setIsChecked(true);
-            setFormValue('isSelected', true);
-        } else {
-            setIsChecked(!!formValues.isSelected);
-        }
+      if (formValues.isSelected === undefined) {
+          setIsChecked(true);
+          setFormValue('isSelected', true);
+      } else {
+          setIsChecked(!!formValues.isSelected);
+      }
     }, [formValues.isSelected]);
 
     useEffect(() => {
@@ -167,7 +167,7 @@ const SaleAdjustmentItemRow: React.FC<SaleAdjustmentItemRowProps> = ({
     <React.Fragment>
       <Divider />
       <Grid container spacing={1} mb={0.5} sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}>
-        <Grid size={{xs: 1, md: 0.5}} >
+        <Grid size={{xs: 1.5, md: 0.5}} >
           <FormControlLabel
             control={
               <Checkbox
@@ -242,7 +242,7 @@ const SaleAdjustmentItemRow: React.FC<SaleAdjustmentItemRowProps> = ({
               </Div>
             </Grid>
 
-            <Grid size={{xs: 4, md: 2}}>
+            <Grid size={{xs: 12, md: 2}}>
               <Div sx={{ mt: 0.3 }}>
                 <TextField
                   size="small"
@@ -257,7 +257,7 @@ const SaleAdjustmentItemRow: React.FC<SaleAdjustmentItemRowProps> = ({
               </Div>
             </Grid>
 
-            <Grid size={{xs: 4, md: 2}}>
+            <Grid size={{xs: 12, md: 2}}>
               <Div sx={{ mt: 0.3 }}>
                 <TextField
                   size="small"

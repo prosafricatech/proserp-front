@@ -10,7 +10,9 @@ import {
   TableCell, 
   Paper, 
   Divider, 
-  Tooltip 
+  Tooltip,
+  useTheme,
+  Box
 } from '@mui/material';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import { Stakeholder } from '@/components/masters/stakeholders/StakeholderType';
@@ -64,122 +66,256 @@ interface SalePreviewOnscreenProps {
 }
 
 const SalePreviewOnscreen: React.FC<SalePreviewOnscreenProps> = ({ sale, organization }) => {
+  const theme = useTheme();
   const currencyCode = sale.currency?.code;
   const mainColor = organization.settings?.main_color || "#2113AD";
-  const lightColor = organization.settings?.light_color || "#bec5da";
+  const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || "#2113AD");
   const contrastText = organization.settings?.contrast_text || "#FFFFFF";
 
+  const formatCurrency = (amount: number) => {
+    return amount.toLocaleString("en-US", { 
+      style: "currency", 
+      currency: currencyCode,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  };
+
+  const formatNumber = (value: number) => {
+    return value.toLocaleString('en-US', { 
+      maximumFractionDigits: 2, 
+      minimumFractionDigits: 2 
+    });
+  };
+
+  const grandTotal = sale.amount + sale.vat_amount;
+
   return (
-    <div>
-      <Grid container spacing={1} textAlign="center">
+    <Box sx={{ padding: 2 }}>
+      {/* Header Section */}
+      <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid size={12}>
-          <Typography variant="h4" style={{ color: mainColor }}>SALES ORDER</Typography>
-          <Typography variant="body1" fontWeight="bold">{sale.saleNo}</Typography>
-          {sale.reference && <Typography variant="body2">Ref: {sale.reference}</Typography>}
+          <Box 
+            sx={{ 
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              textAlign: 'center',
+              width: '100%'
+            }}
+          >
+            <Typography 
+              variant="h4" 
+              color={headerColor} 
+              fontWeight="bold" 
+              gutterBottom
+            >
+              SALES ORDER
+            </Typography>
+            <Typography 
+              variant="h6" 
+              fontWeight="bold"
+              gutterBottom
+            >
+              {sale.saleNo}
+            </Typography>
+            {sale.reference && (
+              <Typography variant="body1" color="text.secondary">
+                Reference: {sale.reference}
+              </Typography>
+            )}
+          </Box>
         </Grid>
       </Grid>
 
-      <Grid container spacing={1} marginTop={2}>
-        <Grid size={6}>
-          <Typography variant="body2" style={{ color: mainColor }}>Sale Date & Time:</Typography>
-          <Typography variant="body2">{readableDate(sale.transaction_date, true)}</Typography>
+      {/* Sale Information */}
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid size={{xs: 12, sm: 6, md: 3}}>
+          <Box>
+            <Typography variant="subtitle2" color={headerColor} fontWeight="bold" gutterBottom>
+              Sale Date & Time
+            </Typography>
+            <Typography variant="body1">
+              {readableDate(sale.transaction_date, true)}
+            </Typography>
+          </Box>
         </Grid>
-        <Grid size={6}>
-          <Typography variant="body2" style={{ color: mainColor }}>Outlet:</Typography>
-          <Typography variant="body2">{sale.sales_outlet.name}</Typography>
+        <Grid size={{xs: 12, sm: 6, md: 3}}>
+          <Box>
+            <Typography variant="subtitle2" color={headerColor} fontWeight="bold" gutterBottom>
+              Outlet
+            </Typography>
+            <Typography variant="body1">{sale.sales_outlet.name}</Typography>
+          </Box>
         </Grid>
-        {sale.sales_person &&
-          <Grid size={6}>
-            <Typography variant="body2" style={{ color: mainColor }}>Sales Person:</Typography>
-            <Typography variant="body2">{sale.sales_person}</Typography>
+        {sale.sales_person && (
+          <Grid size={{xs: 12, sm: 6, md: 3}}>
+            <Box>
+              <Typography variant="subtitle2" color={headerColor} fontWeight="bold" gutterBottom>
+                Sales Person
+              </Typography>
+              <Typography variant="body1">{sale.sales_person}</Typography>
+            </Box>
           </Grid>
-        }
-        <Grid size={6}>
-          <Typography variant="body2" style={{ color: mainColor }}>Served By:</Typography>
-          <Typography variant="body2">{sale.creator.name}</Typography>
+        )}
+        <Grid size={{xs: 12, sm: 6, md: 3}}>
+          <Box>
+            <Typography variant="subtitle2" color={headerColor} fontWeight="bold" gutterBottom>
+              Served By
+            </Typography>
+            <Typography variant="body1">{sale.creator.name}</Typography>
+          </Box>
         </Grid>
       </Grid>
 
-      <Grid container spacing={1} marginTop={2}>
-        <Grid size={12} textAlign="center">
-          <Typography variant="body2" style={{ color: mainColor, padding: '5px' }}>CLIENT</Typography>
-          <Divider />
-          <Typography variant="body1">{sale.stakeholder.name}</Typography>
-          {sale.stakeholder?.address && <Typography variant="body2">{sale.stakeholder.address}</Typography>}
-          {sale.stakeholder?.tin && (
-            <Grid container justifyContent="space-between">
-              <Typography variant="body2">TIN:</Typography>
-              <Typography variant="body2">{sale.stakeholder.tin}</Typography>
+      {/* Client Information */}
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid size={12}>
+          <Box 
+            sx={{ 
+              p: 2, 
+              border: `1px solid ${theme.palette.divider}`,
+              borderRadius: 1,
+              backgroundColor: theme.palette.background.default
+            }}
+          >
+            <Typography 
+              variant="subtitle1" 
+              color={headerColor} 
+              fontWeight="bold" 
+              textAlign="center"
+              gutterBottom
+            >
+              CLIENT
+            </Typography>
+            <Divider sx={{ mb: 2 }} />
+            <Typography variant="body1" fontWeight="medium" textAlign="center">
+              {sale.stakeholder.name}
+            </Typography>
+            {sale.stakeholder?.address && (
+              <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ mt: 1 }}>
+                {sale.stakeholder.address}
+              </Typography>
+            )}
+            <Grid container spacing={1} sx={{ mt: 1, justifyContent: 'center' }}>
+              {sale.stakeholder?.tin && (
+                <Grid container size="auto" spacing={1}>
+                  <Typography variant="body2" fontWeight="medium">TIN:</Typography>
+                  <Typography variant="body2" color="text.secondary">{sale.stakeholder.tin}</Typography>
+                </Grid>
+              )}
+              {sale.stakeholder?.vrn && (
+                <Grid container size="auto" spacing={1}>
+                  <Typography variant="body2" fontWeight="medium">VRN:</Typography>
+                  <Typography variant="body2" color="text.secondary">{sale.stakeholder.vrn}</Typography>
+                </Grid>
+              )}
+              {sale.stakeholder?.phone && (
+                <Grid container size="auto" spacing={1}>
+                  <Typography variant="body2" fontWeight="medium">Phone:</Typography>
+                  <Typography variant="body2" color="text.secondary">{sale.stakeholder.phone}</Typography>
+                </Grid>
+              )}
+              {sale.stakeholder?.email && (
+                <Grid container size="auto" spacing={1}>
+                  <Typography variant="body2" fontWeight="medium">Email:</Typography>
+                  <Typography variant="body2" color="text.secondary">{sale.stakeholder.email}</Typography>
+                </Grid>
+              )}
             </Grid>
-          )}
-          {sale.stakeholder?.vrn && (
-            <Grid container justifyContent="space-between">
-              <Typography variant="body2">VRN:</Typography>
-              <Typography variant="body2">{sale.stakeholder.vrn}</Typography>
-            </Grid>
-          )}
-          {sale.stakeholder?.phone && (
-            <Grid container justifyContent="space-between">
-              <Typography variant="body2">Phone:</Typography>
-              <Typography variant="body2">{sale.stakeholder.phone}</Typography>
-            </Grid>
-          )}
-          {sale.stakeholder?.email && (
-            <Grid container justifyContent="space-between">
-              <Typography variant="body2">Email:</Typography>
-              <Typography variant="body2">{sale.stakeholder.email}</Typography>
-            </Grid>
-          )}
+          </Box>
         </Grid>
       </Grid>
 
-      <TableContainer component={Paper} style={{ marginTop: 20 }}>
+      {/* Items Table */}
+      <TableContainer 
+        component={Paper}
+        sx={{
+          boxShadow: theme.shadows[2],
+          '& .MuiTableRow-root:hover': {
+            backgroundColor: theme.palette.action.hover,
+          }
+        }}
+      >
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell sx={{ backgroundColor: mainColor, color: contrastText }}>S/N</TableCell>
-              <TableCell sx={{ backgroundColor: mainColor, color: contrastText }}>Product/Service</TableCell>
-              <TableCell sx={{ backgroundColor: mainColor, color: contrastText }} align="right">Qty</TableCell>
-              <TableCell sx={{ backgroundColor: mainColor, color: contrastText }} align="right">Price {sale?.vat_percentage ? '(Excl.)' : ''}</TableCell>
+              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
+                #
+              </TableCell>
+              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
+                Product/Service
+              </TableCell>
+              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                Qty
+              </TableCell>
+              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                Price {sale?.vat_percentage ? '(Excl.)' : ''}
+              </TableCell>
               {sale?.vat_percentage > 0 && (
-                <TableCell sx={{ backgroundColor: mainColor, color: contrastText }} align="right">VAT</TableCell>
+                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                  VAT
+                </TableCell>
               )}
-              <TableCell sx={{ backgroundColor: mainColor, color: contrastText }} align="right">Amount {sale?.vat_percentage ? '(Incl.)' : ''}</TableCell>
+              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                Amount {sale?.vat_percentage ? '(Incl.)' : ''}
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {sale.sale_items.map((saleItem, index) => (
-              <TableRow key={saleItem.id} sx={{ backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor }}>
-                <TableCell>{index + 1}</TableCell>
+              <TableRow 
+                key={saleItem.id} 
+                sx={{ 
+                  backgroundColor: theme.palette.background.paper,
+                  '&:nth-of-type(even)': {
+                    backgroundColor: theme.palette.action.hover,
+                  }
+                }}
+              >
+                <TableCell sx={{ fontWeight: 'medium' }}>{index + 1}</TableCell>
                 <TableCell>
-                  <div>{saleItem.product.name}</div>
-                  {saleItem.description && <div>({saleItem.description})</div>}
+                  <Box>
+                    <Typography variant="body2" fontWeight="medium">
+                      {saleItem.product.name}
+                    </Typography>
+                    {saleItem.description && (
+                      <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem', mt: 0.5 }}>
+                        ({saleItem.description})
+                      </Typography>
+                    )}
+                  </Box>
                 </TableCell>
-                <TableCell align="right">{`${saleItem.quantity} ${saleItem.measurement_unit.symbol}`}</TableCell>
-                <TableCell align="right">
+                <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                  {`${saleItem.quantity} ${saleItem.measurement_unit.symbol}`}
+                </TableCell>
+                <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
                   <Tooltip title="Price" arrow>
                     <Typography variant="body2">
-                      {saleItem.rate.toLocaleString('en-US', { maximumFractionDigits: 2 })}
+                      {formatNumber(saleItem.rate)}
                     </Typography>
                   </Tooltip>
                 </TableCell>
                 {sale?.vat_percentage > 0 && (
-                  <TableCell align="right">
+                  <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
                     <Tooltip title="VAT" arrow>
                       <Typography variant="body2">
-                        {(!saleItem.product?.vat_exempted
-                          ? (sale.vat_percentage * saleItem.rate * 0.01).toLocaleString('en-US', { maximumFractionDigits: 2 })
-                          : 0
-                        )}
+                        {!saleItem.product?.vat_exempted
+                          ? formatNumber(sale.vat_percentage * saleItem.rate * 0.01)
+                          : '0.00'
+                        }
                       </Typography>
                     </Tooltip>
                   </TableCell>
                 )}
-                <TableCell align="right">
+                <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
                   <Tooltip title="Amount" arrow>
                     <Typography variant="body2">
-                      {(saleItem.quantity * saleItem.rate * (!saleItem.product?.vat_exempted ? (100 + sale.vat_percentage) * 0.01 : 1))
-                        .toLocaleString('en-US', { maximumFractionDigits: 2 })}
+                      {formatNumber(
+                        saleItem.quantity * saleItem.rate * 
+                        (!saleItem.product?.vat_exempted ? (100 + sale.vat_percentage) * 0.01 : 1)
+                      )}
                     </Typography>
                   </Tooltip>
                 </TableCell>
@@ -189,24 +325,71 @@ const SalePreviewOnscreen: React.FC<SalePreviewOnscreenProps> = ({ sale, organiz
         </Table>
       </TableContainer>
 
-      <Grid container spacing={1} marginTop={5}>
-        <Grid size={6}><Typography variant="body2" style={{ padding: '5px' }}>Total</Typography></Grid>
-        <Grid size={6} textAlign="right"><Typography variant="body2" fontWeight="bold" style={{ padding: '5px' }}>{sale.amount.toLocaleString("en-US", { style: "currency", currency: currencyCode })}</Typography></Grid>
-      </Grid>
+      {/* Totals Section */}
+      <Box 
+        sx={{ 
+          mt: 3, 
+          p: 2, 
+          backgroundColor: theme.palette.background.default,
+          border: `1px solid ${theme.palette.divider}`,
+          borderRadius: 1
+        }}
+      >
+        <Grid container spacing={1}>
+          <Grid size={7}>
+            <Typography variant="body1" fontWeight="medium">
+              Subtotal
+            </Typography>
+          </Grid>
+          <Grid size={5} sx={{ textAlign: 'right' }}>
+            <Typography variant="body1" fontWeight="medium" fontFamily="monospace">
+              {formatCurrency(sale.amount)}
+            </Typography>
+          </Grid>
 
-      {sale.vat_percentage > 0 && (
-        <>
-          <Grid container spacing={1}>
-            <Grid size={6}><Typography variant="body2" style={{ padding: '5px' }}>VAT</Typography></Grid>
-            <Grid size={6} textAlign="right"><Typography variant="body2" fontWeight="bold" style={{ padding: '5px' }}>{sale.vat_amount.toLocaleString("en-US", { style: "currency", currency: currencyCode })}</Typography></Grid>
-          </Grid>
-          <Grid container spacing={1}>
-            <Grid size={7}><Typography variant="body2" style={{ padding: '5px' }}>Grand Total (VAT Incl.)</Typography></Grid>
-            <Grid size={5} textAlign="right"><Typography variant="body2" fontWeight="bold" style={{ padding: '5px' }}>{(sale.amount + sale.vat_amount).toLocaleString("en-US", { style: "currency", currency: currencyCode })}</Typography></Grid>
-          </Grid>
-        </>
-      )}
-    </div>
+          {sale.vat_percentage > 0 && (
+            <>
+              <Grid size={7}>
+                <Typography variant="body1" fontWeight="medium">
+                  VAT ({sale.vat_percentage}%)
+                </Typography>
+              </Grid>
+              <Grid size={5} sx={{ textAlign: 'right' }}>
+                <Typography variant="body1" fontWeight="medium" fontFamily="monospace">
+                  {formatCurrency(sale.vat_amount)}
+                </Typography>
+              </Grid>
+              
+              <Grid size={7}>
+                <Typography variant="h6" fontWeight="bold" color={headerColor}>
+                  Grand Total
+                </Typography>
+              </Grid>
+              <Grid size={5} sx={{ textAlign: 'right' }}>
+                <Typography variant="h6" fontWeight="bold" color={headerColor} fontFamily="monospace">
+                  {formatCurrency(grandTotal)}
+                </Typography>
+              </Grid>
+            </>
+          )}
+
+          {!sale.vat_percentage && (
+            <>
+              <Grid size={7}>
+                <Typography variant="h6" fontWeight="bold" color={headerColor}>
+                  Total
+                </Typography>
+              </Grid>
+              <Grid size={5} sx={{ textAlign: 'right' }}>
+                <Typography variant="h6" fontWeight="bold" color={headerColor} fontFamily="monospace">
+                  {formatCurrency(sale.amount)}
+                </Typography>
+              </Grid>
+            </>
+          )}
+        </Grid>
+      </Box>
+    </Box>
   );
 };
 

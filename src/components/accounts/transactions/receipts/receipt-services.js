@@ -4,7 +4,7 @@ const receiptServices = {};
 
 receiptServices.add = async(receipt) => {
    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.post(`/api/accountsAndFinance/transactions/transfers/add`,receipt);
+        const {data} = await axios.post(`/api/accountsAndFinance/transactions/receipts/add`,receipt);
         return data;
     })
 }

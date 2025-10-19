@@ -57,19 +57,21 @@ function SaleDialogForm({toggleOpen,sale = null}) {
             .string()
             .required('Submit type is required')
             .oneOf(['complete', 'pending'], 'Submit type must be either "complete" or "pending"'),
-        debit_ledger_id: yup.number()
-            .when('submitType', (submitType, schema) => {
-                return submitType === 'complete' 
-                ? schema.required('Debit account is required').typeError('Debit account is required')
-                : schema.nullable();
+        debit_ledger_id: yup
+            .number()
+            .nullable()
+            .when('submitType', {
+                is: (val) => val === 'complete',
+                then: (schema) => schema.required('Debit account is required').typeError('Debit account is required'),
+                otherwise: (schema) => schema.nullable(),
         }),
         items: yup.array()
             .min(1, "You must add at least one item")
             .of(
                 yup.object().shape({
-                product_id: yup.number().required("Product is required").positive('Product is required'),
-                quantity: yup.number().required("Quantity is required").positive("Quantity is required"),
-                rate: yup.number().required("Price is required").positive("Price is required"),
+                    product_id: yup.number().required("Product is required").positive('Product is required'),
+                    quantity: yup.number().required("Quantity is required").positive("Quantity is required"),
+                    rate: yup.number().required("Price is required").positive("Price is required"),
                 })
             )
         .required("You must add at least one item"),

@@ -158,7 +158,7 @@ const SaleInvoiceItemAction: React.FC<SaleInvoiceItemActionProps> = ({
         open={openDocumentDialog || openInvoiceEditDialog || openAdjustmentDialog}
         scroll={(belowLargeScreen || !openDocumentDialog) ? 'body' : 'paper'}
         fullWidth
-        fullScreen={!!openInvoiceEditDialog && belowLargeScreen}
+        fullScreen={(!!openInvoiceEditDialog || openAdjustmentDialog) && belowLargeScreen}
         maxWidth={openDocumentDialog ? 'md' : "lg"}
         onClose={() => setOpenDocumentDialog(false)}
       >

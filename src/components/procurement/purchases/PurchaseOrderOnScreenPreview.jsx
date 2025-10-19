@@ -1,191 +1,378 @@
 import React from 'react';
-import { Grid, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Divider } from '@mui/material';
+import { 
+  Grid, 
+  Typography, 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableContainer, 
+  TableHead, 
+  TableRow, 
+  Paper, 
+  Divider,
+  useTheme,
+  Box
+} from '@mui/material';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 
 function PurchaseOrderOnScreenPreview({ order }) {
+    const theme = useTheme();
     const currencyCode = order.currency.code;
     const {checkOrganizationPermission, authOrganization : {organization}} = useJumboAuth();
     const mainColor = organization.settings?.main_color || "#2113AD";
-    const lightColor = organization.settings?.light_color || "#bec5da";
+    const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || "#2113AD");
     const contrastText = organization.settings?.contrast_text || "#FFFFFF";
-    const withPrices = checkOrganizationPermission([PERMISSIONS.PURCHASES_CREATE,PERMISSIONS.ACCOUNTS_REPORTS]);
+    const withPrices = checkOrganizationPermission([PERMISSIONS.PURCHASES_CREATE, PERMISSIONS.ACCOUNTS_REPORTS]);
 
     const vatAmount = order.purchase_order_items.reduce((total, item) => {
         return total += item.rate * item.quantity * item.vat_percentage * 0.01;
     }, 0);
 
+    const grandTotal = order.amount + vatAmount;
+
+    const formatCurrency = (amount) => {
+        return amount.toLocaleString("en-US", { 
+            style: "currency", 
+            currency: currencyCode,
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+    };
+
+    const formatNumber = (value) => {
+        return value.toLocaleString('en-US', {
+            maximumFractionDigits: 2,
+            minimumFractionDigits: 2
+        });
+    };
+
     return (
-        <div>
-            <Grid container spacing={2} style={{ marginTop: 20 }}>
-                <Grid size={12} style={{ textAlign: 'center' }}>
-                    <Typography variant="h4" color={mainColor}>PURCHASE ORDER</Typography>
-                    <Typography variant="subtitle1" fontWeight="bold">{order.orderNo}</Typography>
+        <>
+            {/* Header Section */}
+            <Grid container spacing={2} sx={{ mb: 3 }}>
+                <Grid size={12}>
+                    <Box 
+                        sx={{ 
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            textAlign: 'center',
+                            width: '100%'
+                        }}
+                    >
+                        <Typography 
+                            variant="h4" 
+                            sx={{ color: headerColor, fontWeight: 'bold' }} 
+                            gutterBottom
+                        >
+                            PURCHASE ORDER
+                        </Typography>
+                        <Typography 
+                            variant="h6" 
+                            fontWeight="bold"
+                            gutterBottom
+                        >
+                            {order.orderNo}
+                        </Typography>
+                    </Box>
                 </Grid>
             </Grid>
 
-            <Grid container spacing={2} style={{ marginTop: 5, marginBottom: 10 }}>
-                <Grid size={8}>
-                    <Typography variant="body2" color={mainColor}>Order Date</Typography>
-                    <Typography variant="body2">{readableDate(order.order_date)}</Typography>
+            {/* Order Information */}
+            <Grid container spacing={2} sx={{ mb: 3 }}>
+                <Grid size={{xs: 12, sm: 6, md: 4}}>
+                    <Box>
+                        <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                            Order Date
+                        </Typography>
+                        <Typography variant="body1">
+                            {readableDate(order.order_date)}
+                        </Typography>
+                    </Box>
                 </Grid>
                 {order?.date_required && (
-                    <Grid size={4}>
-                        <Typography variant="body2" color={mainColor}>Date Required</Typography>
-                        <Typography variant="body2">{readableDate(order.date_required)}</Typography>
+                    <Grid size={{xs: 12, sm: 6, md: 4}}>
+                        <Box>
+                            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                                Date Required
+                            </Typography>
+                            <Typography variant="body1">
+                                {readableDate(order.date_required)}
+                            </Typography>
+                        </Box>
                     </Grid>
                 )}
                 {order?.cost_centers && (
-                    <Grid size={8}>
-                        <Typography variant="body2" color={mainColor}>Purchase For</Typography>
-                        <Typography variant="body2">{order.cost_centers.map(cc => cc.name).join(',')}</Typography>
+                    <Grid size={{xs: 12, sm: 6, md: 4}}>
+                        <Box>
+                            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                                Purchase For
+                            </Typography>
+                            <Typography variant="body1">
+                                {order.cost_centers.map(cc => cc.name).join(', ')}
+                            </Typography>
+                        </Box>
                     </Grid>
                 )}
-                <Grid size={8}>
-                    <Typography variant="body2" color={mainColor}>Created By:</Typography>
-                    <Typography variant="body2">{order?.creator.name}</Typography>
+                <Grid size={{xs: 12, sm: 6, md: 4}}>
+                    <Box>
+                        <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                            Created By
+                        </Typography>
+                        <Typography variant="body1">{order?.creator.name}</Typography>
+                    </Box>
                 </Grid>
                 {(order?.reference || order?.requisitionNo) && (
-                    <Grid size={4}>
-                        <Typography variant="body2" color={mainColor}>Reference</Typography>
-                        <Typography variant="body2">{order.reference}</Typography>
-                        <Typography variant="body2">{order.requisitionNo}</Typography>
+                    <Grid size={{xs: 12, sm: 6, md: 4}}>
+                        <Box>
+                            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                                Reference
+                            </Typography>
+                            <Typography variant="body1">
+                                {order.reference || order.requisitionNo}
+                            </Typography>
+                        </Box>
                     </Grid>
                 )}
                 {order?.currency_id > 1 && (
-                    <Grid size={8}>
-                        <Typography variant="body2" color={mainColor}>Exchange Rate</Typography>
-                        <Typography variant="body2">{order.exchange_rate}</Typography>
+                    <Grid size={{xs: 12, sm: 6, md: 4}}>
+                        <Box>
+                            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                                Exchange Rate
+                            </Typography>
+                            <Typography variant="body1">{order.exchange_rate}</Typography>
+                        </Box>
                     </Grid>
                 )}
             </Grid>
 
-            <Grid container spacing={1} marginTop={2} marginBottom={3}>
-                <Grid size={12} textAlign="center">
-                    <Typography variant="body2" color={mainColor} style={{ padding: '5px' }}>SUPPLIER</Typography>
-                    <Divider/>
-                    <Typography variant="body1">{order.stakeholder.name}</Typography>
-                    {order.stakeholder?.address && <Typography variant="body2">{order.stakeholder.address}</Typography>}
-                    {order.stakeholder_id === null && (
-                        <Grid container justifyContent="space-between">
-                            <Typography variant="body2">Paid From:</Typography>
-                            <Typography variant="body2">{order.paid_from.name}</Typography>
+            {/* Supplier Information */}
+            <Grid container spacing={2} sx={{ mb: 3 }}>
+                <Grid size={12}>
+                    <Box 
+                        sx={{ 
+                            p: 2, 
+                            border: `1px solid ${theme.palette.divider}`,
+                            borderRadius: 1,
+                            backgroundColor: theme.palette.background.default
+                        }}
+                    >
+                        <Typography 
+                            variant="subtitle1" 
+                            sx={{ color: headerColor, fontWeight: 'bold', textAlign: 'center' }} 
+                            gutterBottom
+                        >
+                            SUPPLIER
+                        </Typography>
+                        <Divider sx={{ mb: 2 }} />
+                        <Typography variant="body1" fontWeight="medium" textAlign="center">
+                            {order.stakeholder.name}
+                        </Typography>
+                        {order.stakeholder?.address && (
+                            <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ mt: 1 }}>
+                                {order.stakeholder.address}
+                            </Typography>
+                        )}
+                        <Grid container spacing={1} sx={{ mt: 1, justifyContent: 'center' }}>
+                            {order.stakeholder_id === null && (
+                                <Grid container size="auto" spacing={1}>
+                                    <Typography variant="body2" fontWeight="medium">Paid From:</Typography>
+                                    <Typography variant="body2" color="text.secondary">{order.paid_from.name}</Typography>
+                                </Grid>
+                            )}
+                            {order.stakeholder?.tin && (
+                                <Grid container size="auto" spacing={1}>
+                                    <Typography variant="body2" fontWeight="medium">TIN:</Typography>
+                                    <Typography variant="body2" color="text.secondary">{order.stakeholder.tin}</Typography>
+                                </Grid>
+                            )}
+                            {order.stakeholder?.vrn && (
+                                <Grid container size="auto" spacing={1}>
+                                    <Typography variant="body2" fontWeight="medium">VRN:</Typography>
+                                    <Typography variant="body2" color="text.secondary">{order.stakeholder.vrn}</Typography>
+                                </Grid>
+                            )}
+                            {order.stakeholder?.phone && (
+                                <Grid container size="auto" spacing={1}>
+                                    <Typography variant="body2" fontWeight="medium">Phone:</Typography>
+                                    <Typography variant="body2" color="text.secondary">{order.stakeholder.phone}</Typography>
+                                </Grid>
+                            )}
+                            {order.stakeholder?.email && (
+                                <Grid container size="auto" spacing={1}>
+                                    <Typography variant="body2" fontWeight="medium">Email:</Typography>
+                                    <Typography variant="body2" color="text.secondary">{order.stakeholder.email}</Typography>
+                                </Grid>
+                            )}
                         </Grid>
-                    )}
-                    {order.stakeholder?.tin && (
-                        <Grid container justifyContent="space-between">
-                            <Typography variant="body2">TIN:</Typography>
-                            <Typography variant="body2">{order.stakeholder.tin}</Typography>
-                        </Grid>
-                    )}
-                    {order.stakeholder?.vrn && (
-                        <Grid container justifyContent="space-between">
-                            <Typography variant="body2">VRN:</Typography>
-                            <Typography variant="body2">{order.stakeholder.vrn}</Typography>
-                        </Grid>
-                    )}
-                    {order.stakeholder?.phone && (
-                        <Grid container justifyContent="space-between">
-                            <Typography variant="body2">Phone:</Typography>
-                            <Typography variant="body2">{order.stakeholder.phone}</Typography>
-                        </Grid>
-                    )}
-                    {order.stakeholder?.email && (
-                        <Grid container justifyContent="space-between">
-                            <Typography variant="body2">Email:</Typography>
-                            <Typography variant="body2">{order.stakeholder.email}</Typography>
-                        </Grid>
-                    )}
+                    </Box>
                 </Grid>
             </Grid>
 
-            {
-                <>
-                    <Grid container spacing={1} paddingTop={2}>
-                        <Grid size={12} textAlign={'center'}>
-                            <Typography variant="h6" color={mainColor}>ITEMS</Typography>
-                        </Grid>
-                    </Grid>
-                    <TableContainer component={Paper}>
-                        <Table>
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell sx={{backgroundColor: mainColor, color: contrastText}}>S/N</TableCell>
-                                    <TableCell sx={{backgroundColor: mainColor, color: contrastText}}>Product/Service</TableCell>
-                                    <TableCell sx={{backgroundColor: mainColor, color: contrastText}}>Unit</TableCell>
-                                    <TableCell sx={{backgroundColor: mainColor, color: contrastText}}>Quantity</TableCell>
-                                    {
-                                        withPrices &&
-                                        <>
-                                            <TableCell sx={{backgroundColor: mainColor, color: contrastText}}>Price { vatAmount > 0 ? ' (Excl. )' : ''}</TableCell>
-                                            {vatAmount > 0 &&
-                                                <TableCell sx={{backgroundColor: mainColor, color: contrastText}}>VAT</TableCell>
-                                            }
-                                            <TableCell sx={{backgroundColor: mainColor, color: contrastText}}>Amount { vatAmount > 0 ? ' (Incl. )' : ''}</TableCell>
-                                        </>
-                                    }
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {order.purchase_order_items.map((orderItem, index) => (
-                                    <TableRow key={orderItem.id} sx={{ backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor }}>
-                                        <TableCell>{index + 1}</TableCell>
-                                        <TableCell>{orderItem.product.name}</TableCell>
-                                        <TableCell>{orderItem.measurement_unit.symbol}</TableCell>
-                                        <TableCell align="right">{orderItem.quantity}</TableCell>
-                                        {
-                                            withPrices &&
-                                            <>
-                                                <TableCell align="right">{orderItem.rate.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</TableCell>
-                                                {vatAmount > 0 &&
-                                                    <TableCell align="right">{(orderItem.rate * orderItem.vat_percentage*0.01).toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</TableCell>
-                                                }
-                                                <TableCell align="right">{(orderItem.rate * orderItem.quantity * (1 + orderItem.vat_percentage*0.01)).toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</TableCell>
-                                            </>
+            {/* Items Section */}
+            <Box sx={{ mb: 3 }}>
+                <Typography 
+                    variant="h6" 
+                    sx={{ 
+                        color: headerColor, 
+                        textAlign: 'center', 
+                        fontWeight: 'bold',
+                        mb: 2
+                    }}
+                >
+                    ORDER ITEMS
+                </Typography>
+                
+                <TableContainer 
+                    component={Paper}
+                    sx={{
+                        boxShadow: theme.shadows[2],
+                        '& .MuiTableRow-root:hover': {
+                            backgroundColor: theme.palette.action.hover,
+                        }
+                    }}
+                >
+                    <Table>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
+                                    #
+                                </TableCell>
+                                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
+                                    Product/Service
+                                </TableCell>
+                                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
+                                    Unit
+                                </TableCell>
+                                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                                    Quantity
+                                </TableCell>
+                                {withPrices && (
+                                    <>
+                                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                                            Price {vatAmount > 0 ? '(Excl.)' : ''}
+                                        </TableCell>
+                                        {vatAmount > 0 && (
+                                            <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                                                VAT
+                                            </TableCell>
+                                        )}
+                                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                                            Amount {vatAmount > 0 ? '(Incl.)' : ''}
+                                        </TableCell>
+                                    </>
+                                )}
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {order.purchase_order_items.map((orderItem, index) => (
+                                <TableRow 
+                                    key={orderItem.id} 
+                                    sx={{ 
+                                        backgroundColor: theme.palette.background.paper,
+                                        '&:nth-of-type(even)': {
+                                            backgroundColor: theme.palette.action.hover,
                                         }
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
-                </>
-            }
-            {
-                withPrices &&
-                <>
-                    <Grid container style={{ paddingTop: 15 }}>
+                                    }}
+                                >
+                                    <TableCell sx={{ fontWeight: 'medium' }}>{index + 1}</TableCell>
+                                    <TableCell sx={{ fontWeight: 'medium' }}>{orderItem.product.name}</TableCell>
+                                    <TableCell>{orderItem.measurement_unit.symbol}</TableCell>
+                                    <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                                        {orderItem.quantity.toLocaleString()}
+                                    </TableCell>
+                                    {withPrices && (
+                                        <>
+                                            <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                                                {formatNumber(orderItem.rate)}
+                                            </TableCell>
+                                            {vatAmount > 0 && (
+                                                <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                                                    {formatNumber(orderItem.rate * orderItem.vat_percentage * 0.01)}
+                                                </TableCell>
+                                            )}
+                                            <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
+                                                {formatNumber(orderItem.rate * orderItem.quantity * (1 + orderItem.vat_percentage * 0.01))}
+                                            </TableCell>
+                                        </>
+                                    )}
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+            </Box>
+
+            {/* Totals Section */}
+            {withPrices && (
+                <Box 
+                    sx={{ 
+                        mt: 3, 
+                        p: 2, 
+                        backgroundColor: theme.palette.background.default,
+                        border: `1px solid ${theme.palette.divider}`,
+                        borderRadius: 1
+                    }}
+                >
+                    <Grid container spacing={1}>
                         <Grid size={7}>
-                            <Typography variant="body2">Total</Typography>
+                            <Typography variant="body1" fontWeight="medium">
+                                Subtotal
+                            </Typography>
                         </Grid>
-                        <Grid size={5} style={{ textAlign: 'right' }}>
-                            <Typography variant="body2" fontWeight="bold">{order.amount.toLocaleString("en-US", { style: "currency", currency: currencyCode })}</Typography>
+                        <Grid size={5} sx={{ textAlign: 'right' }}>
+                            <Typography variant="body1" fontWeight="medium" fontFamily="monospace">
+                                {formatCurrency(order.amount)}
+                            </Typography>
                         </Grid>
+
+                        {vatAmount > 0 && (
+                            <>
+                                <Grid size={7}>
+                                    <Typography variant="body1" fontWeight="medium">
+                                        VAT
+                                    </Typography>
+                                </Grid>
+                                <Grid size={5} sx={{ textAlign: 'right' }}>
+                                    <Typography variant="body1" fontWeight="medium" fontFamily="monospace">
+                                        {formatCurrency(vatAmount)}
+                                    </Typography>
+                                </Grid>
+                                
+                                <Grid size={7}>
+                                    <Typography variant="h6" fontWeight="bold" color={headerColor}>
+                                        Grand Total
+                                    </Typography>
+                                </Grid>
+                                <Grid size={5} sx={{ textAlign: 'right' }}>
+                                    <Typography variant="h6" fontWeight="bold" color={headerColor} fontFamily="monospace">
+                                        {formatCurrency(grandTotal)}
+                                    </Typography>
+                                </Grid>
+                            </>
+                        )}
+
+                        {!vatAmount && (
+                            <>
+                                <Grid size={7}>
+                                    <Typography variant="h6" fontWeight="bold" color={headerColor}>
+                                        Total
+                                    </Typography>
+                                </Grid>
+                                <Grid size={5} sx={{ textAlign: 'right' }}>
+                                    <Typography variant="h6" fontWeight="bold" color={headerColor} fontFamily="monospace">
+                                        {formatCurrency(order.amount)}
+                                    </Typography>
+                                </Grid>
+                            </>
+                        )}
                     </Grid>
-        
-                    {vatAmount > 0 &&(
-                        <>
-                            <Grid container style={{ marginTop: 1 }}>
-                                <Grid size={7}>
-                                    <Typography variant="body2">VAT</Typography>
-                                </Grid>
-                                <Grid size={5} style={{ textAlign: 'right' }}>
-                                    <Typography variant="body2" fontWeight="bold">{vatAmount.toLocaleString("en-US", { style: "currency", currency: currencyCode })}</Typography>
-                                </Grid>
-                            </Grid>
-                            <Grid container style={{ marginTop: 1 }}>
-                                <Grid size={7}>
-                                    <Typography variant="body2">Grand Total (VAT Incl.)</Typography>
-                                </Grid>
-                                <Grid size={5} style={{ textAlign: 'right' }}>
-                                    <Typography variant="body2" fontWeight="bold">{(order.amount + vatAmount).toLocaleString("en-US", { style: "currency", currency: currencyCode })}</Typography>
-                                </Grid>
-                            </Grid>
-                        </>
-                    )}
-                </>
-            }
-        </div>
+                </Box>
+            )}
+        </>
     );
 }
 

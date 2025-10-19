@@ -9,78 +9,160 @@ import {
   TableHead,
   TableRow,
   Paper,
+  useTheme,
+  Box,
 } from '@mui/material';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 
 function InventoryConsumptionsOnScreen({ inventoryConsumption, authObject }) {
+  const theme = useTheme();
   const {authOrganization: {organization}} = authObject;
   const mainColor = organization.settings?.main_color || "#2113AD";
+  const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || "#2113AD");
   const contrastText = organization.settings?.contrast_text || "#FFFFFF";
-  const lightColor = organization.settings?.light_color || "#bec5da";
 
   const transformedItems = inventoryConsumption.items.map((item, index) => {
     const journal = inventoryConsumption.journals[index];
     return {
       ...item,
-      ledger: journal?.debit_ledger ,
+      ledger: journal?.debit_ledger,
     };
   });
 
   return (
-    <div>
-      <Grid container spacing={2} marginBottom={2} paddingTop={2}>
-        <Grid size={12} textAlign="center">
-          <Typography variant="h4" color={mainColor}>INVENTORY CONSUMPTION</Typography>
-          <Typography variant="subtitle1" fontWeight="bold">{inventoryConsumption.consumptionNo}</Typography>
-          {inventoryConsumption.reference && <Typography variant="body2">Ref: {inventoryConsumption.reference}</Typography>}
+    <>
+      {/* Header Section */}
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid size={12}>
+          <Box 
+            sx={{ 
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              textAlign: 'center',
+              width: '100%'
+            }}
+          >
+            <Typography 
+              variant="h4" 
+              sx={{ color: headerColor, fontWeight: 'bold' }} 
+              gutterBottom
+            >
+              INVENTORY CONSUMPTION
+            </Typography>
+            <Typography 
+              variant="h6" 
+              fontWeight="bold"
+              gutterBottom
+            >
+              {inventoryConsumption.consumptionNo}
+            </Typography>
+            {inventoryConsumption.reference && (
+              <Typography variant="body1" color="text.secondary">
+                Reference: {inventoryConsumption.reference}
+              </Typography>
+            )}
+          </Box>
         </Grid>
       </Grid>
 
-      <Grid container spacing={1} marginBottom={2}>
-        <Grid size={6}>
-          <Typography variant="body2" color={mainColor}>Consumption Date:</Typography>
-          <Typography variant="body2">{readableDate(inventoryConsumption.consumption_date)}</Typography>
+      {/* Metadata Section */}
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid size={{xs: 12, sm: 6, md: 4}}>
+          <Box>
+            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+              Consumption Date
+            </Typography>
+            <Typography variant="body1">
+              {readableDate(inventoryConsumption.consumption_date)}
+            </Typography>
+          </Box>
         </Grid>
-        <Grid size={6}>
-            <Typography variant="body2" color={mainColor}>Cost Center:</Typography>
-            <Typography variant="body2">{inventoryConsumption.cost_center.name}</Typography>
+        <Grid size={{xs: 12, sm: 6, md: 4}}>
+          <Box>
+            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+              Cost Center
+            </Typography>
+            <Typography variant="body1">{inventoryConsumption.cost_center.name}</Typography>
+          </Box>
         </Grid>
       </Grid>
 
-      {(
-        <TableContainer component={Paper} style={{ marginTop: 20 }}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell style={{backgroundColor: mainColor, color: contrastText}}>S/N</TableCell>
-                <TableCell style={{backgroundColor: mainColor, color: contrastText}}>Product</TableCell>
-                <TableCell style={{backgroundColor: mainColor, color: contrastText}}>Expense Ledger</TableCell>
-                <TableCell style={{backgroundColor: mainColor, color: contrastText}}>Quantity</TableCell>
+      {/* Items Table */}
+      <TableContainer 
+        component={Paper}
+        sx={{
+          boxShadow: theme.shadows[2],
+          '& .MuiTableRow-root:hover': {
+            backgroundColor: theme.palette.action.hover,
+          }
+        }}
+      >
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
+                #
+              </TableCell>
+              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
+                Product
+              </TableCell>
+              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
+                Expense Ledger
+              </TableCell>
+              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
+                Quantity
+              </TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {transformedItems.map((item, index) => (
+              <TableRow 
+                key={index} 
+                sx={{ 
+                  backgroundColor: theme.palette.background.paper,
+                  '&:nth-of-type(even)': {
+                    backgroundColor: theme.palette.action.hover,
+                  }
+                }}
+              >
+                <TableCell sx={{ fontWeight: 'medium' }}>{index + 1}</TableCell>
+                <TableCell>
+                  <Box>
+                    <Typography variant="body2" fontWeight="medium">
+                      {item.product.name}
+                    </Typography>
+                    {item.description && (
+                      <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem', mt: 0.5 }}>
+                        ({item.description})
+                      </Typography>
+                    )}
+                  </Box>
+                </TableCell>
+                <TableCell sx={{ fontWeight: 'medium' }}>
+                  {item.ledger?.name}
+                </TableCell>
+                <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                  {`${item.quantity.toLocaleString()} ${item.measurement_unit.symbol}`}
+                </TableCell>
               </TableRow>
-            </TableHead>
-            <TableBody>
-              {transformedItems.map((item, index) => (
-                <TableRow key={index} sx={{backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor}}>
-                  <TableCell>{index + 1}</TableCell>
-                  <TableCell>
-                      <div>
-                          {item.product.name}
-                      </div>
-                      {item.description && (
-                        <div>
-                            {`(${item.description})`}
-                        </div>
-                      )}
-                  </TableCell>
-                  <TableCell>{item.ledger.name}</TableCell>
-                  <TableCell align="right">{item.quantity.toLocaleString()} {item.measurement_unit.symbol}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
-    </div>
+            ))}
+            
+            {/* Empty State */}
+            {transformedItems.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={4} sx={{ textAlign: 'center', py: 4 }}>
+                  <Typography variant="body1" color="text.secondary">
+                    No consumption items found
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </>
   );
 }
 
