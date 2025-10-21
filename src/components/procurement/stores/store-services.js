@@ -27,6 +27,11 @@ storeServices.show = async({queryKey}) => {
     return data;
 }
 
+storeServices.getAddresses = async () => {
+    const { data } = await axios.get(`/api/stores/getAddresses`);
+    return data;
+}
+
 storeServices.getStoreOptions = async(mainOnly = true) => {
     const {data} = await axios.get(`/api/stores/getStoreOptions`,{
         params: {

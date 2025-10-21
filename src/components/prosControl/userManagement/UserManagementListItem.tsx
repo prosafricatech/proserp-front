@@ -13,6 +13,7 @@ import {
 import UserManagementListItemActions from './UserManagementListItemAction';
 import { User } from './UserManagementType';
 import { Div } from '@jumbo/shared';
+import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
 
     type Props = {
       user: User;
@@ -21,6 +22,7 @@ import { Div } from '@jumbo/shared';
     };
 
     const UserManagementListItem = ({ user, onUserUpdated, actionTail }: Props) => {
+    const dictionary = useDictionary();
     const isActive = user.status === 'active';
 
  return (
@@ -41,7 +43,7 @@ import { Div } from '@jumbo/shared';
     >
       <Grid size={{xs: 12, md: 3}}>
         <Div sx={{ mt: 1, mb: 1 }}>
-          <Tooltip title={'Name'}>
+          <Tooltip title={dictionary.userManagement.list.labels.name}>
             <Typography>{user.name}</Typography>
           </Tooltip>
         </Div>
@@ -49,7 +51,7 @@ import { Div } from '@jumbo/shared';
 
       <Grid size={{xs: 12, md: 3}}>
         <Div sx={{ mt: 1, mb: 1 }}>
-          <Tooltip title={'Email'}>
+          <Tooltip title={dictionary.userManagement.list.labels.email}>
             <Typography variant="body1">{user.email}</Typography>
           </Tooltip>
           <Tooltip title={'Phone'}>
@@ -100,7 +102,7 @@ import { Div } from '@jumbo/shared';
     </Grid>
 
     <Grid size={{ xs: 4, md: 1 }} textAlign={"end"}>
-      <Tooltip title={'Status'}>
+      <Tooltip title={dictionary.userManagement.list.labels.status}>
           <Chip size='small' color={user.status === 'active' ? 'success' : 'error'} label={user.status} />
       </Tooltip>
     </Grid>

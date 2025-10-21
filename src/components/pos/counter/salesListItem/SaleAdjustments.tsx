@@ -5,16 +5,18 @@ import {
   Box,
   Grid,
   IconButton,
-  LinearProgress,
   Tooltip,
   Typography,
+  useMediaQuery,
 } from '@mui/material';
-import { DeleteOutlined, EditOutlined } from '@mui/icons-material';
+import { ContentPasteSearchOutlined, DeleteOutlined, EditOutlined } from '@mui/icons-material';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import SaleAdjustmentAction from './invoice/saleAdjustment/SaleAdjustmentAction';
 import { useQuery } from '@tanstack/react-query';
 import { SalesOrder } from '../SalesOrderType';
 import { Currency } from '@/components/masters/Currencies/CurrencyType';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
+import { BackdropSpinner } from '@/shared/ProgressIndicators/BackdropSpinner';
 
 interface SaleAdjustmentsProps {
   expanded: boolean;
@@ -28,6 +30,7 @@ interface Adjustment {
   transaction_date: string;
   type: 'debit' | 'credit';
   narration?: string;
+  VoucherNo: number;
   amount: number;
   currency: Currency;
 }
@@ -36,6 +39,7 @@ const SaleAdjustments: React.FC<SaleAdjustmentsProps> = ({ expanded, sale, activ
   const [selectedAdjustment, setSelectedAdjustment] = useState<Adjustment | null>(null);
   const [openAdjustmentDeleteDialog, setOpenAdjustmentDeleteDialog] = useState(false);
   const [openAdjustmentEditDialog, setOpenAdjustmentEditDialog] = useState(false);
+  const [openDocumentDialog, setOpenDocumentDialog] = useState(false);
 
   const { data: saleAdjustments, isLoading } = useQuery<Adjustment[]>({
     queryKey: ['SaleAdjustments', { saleId: sale.id }],
@@ -45,14 +49,18 @@ const SaleAdjustments: React.FC<SaleAdjustmentsProps> = ({ expanded, sale, activ
       activeTab === (!sale.is_instant_sale ? 3 : sale.payment_method === 'On Account' ? 2 : 1),
   });
 
+  //Screen handling constants
+  const {theme} = useJumboTheme();
+  const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
+
   return (
     <>
-      {isLoading && <LinearProgress />}
+      {isLoading && <BackdropSpinner />}
 
       {saleAdjustments?.length ? (
-        saleAdjustments.map((adjustment) => (
+        saleAdjustments.map((adjustment, index) => (
           <Grid
-            key={adjustment.id}
+            key={`${adjustment.id}-${index}`} // ✅ Fix: ensure uniqueness
             sx={{
               cursor: 'pointer',
               borderTop: 1,
@@ -80,9 +88,7 @@ const SaleAdjustments: React.FC<SaleAdjustmentsProps> = ({ expanded, sale, activ
                 </Typography>
               </Tooltip>
               <Tooltip title="Adjustment No.">
-                <Typography>
-                  {adjustment.adjustmentableNo}
-                </Typography>
+                <Typography>{adjustment.adjustmentableNo}</Typography>
               </Tooltip>
             </Grid>
 
@@ -105,6 +111,18 @@ const SaleAdjustments: React.FC<SaleAdjustmentsProps> = ({ expanded, sale, activ
 
             <Grid size={{ xs: 12, md: 2, lg: 2 }}>
               <Box display="flex" flexDirection="row" justifyContent="flex-end">
+                <Tooltip title={belowLargeScreen ? `Download Adjustment ${adjustment.VoucherNo}` : `View Adjustment ${adjustment.VoucherNo}`}>
+                  <IconButton
+                    onClick={() => {
+                      setSelectedAdjustment(adjustment);
+                      setOpenDocumentDialog(true);
+                    }}
+                  >
+                    {
+                      <ContentPasteSearchOutlined fontSize={'small'}/>
+                    }
+                  </IconButton>
+              </Tooltip>
                 <Tooltip title={`Edit ${adjustment.adjustmentableNo}`}>
                   <IconButton
                     onClick={() => {
@@ -140,6 +158,8 @@ const SaleAdjustments: React.FC<SaleAdjustmentsProps> = ({ expanded, sale, activ
 
       {/* SaleAdjustmentItemAction */}
       <SaleAdjustmentAction
+        openDocumentDialog={openDocumentDialog}
+        setOpenDocumentDialog={setOpenDocumentDialog}
         setOpenAdjustmentEditDialog={setOpenAdjustmentEditDialog}
         openAdjustmentDeleteDialog={openAdjustmentDeleteDialog}
         openAdjustmentEditDialog={openAdjustmentEditDialog}

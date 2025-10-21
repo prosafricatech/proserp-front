@@ -42,7 +42,7 @@ const MeasurementUnitForm: React.FC<MeasurementUnitFormProps> = ({ setOpenDialog
       queryClient.invalidateQueries({ queryKey: ['measurementUnits'] });
     },
     onError: (error) => {
-      enqueueSnackbar(error.response?.data?.message || 'An error occurred', {
+      enqueueSnackbar(dictionary.measurementUnits.form.errors.messages.createResponse, {
         variant: 'error',
       });
     },
@@ -56,7 +56,7 @@ const MeasurementUnitForm: React.FC<MeasurementUnitFormProps> = ({ setOpenDialog
       queryClient.invalidateQueries({ queryKey: ['measurementUnits'] });
     },
     onError: (error) => {
-      enqueueSnackbar(error.response?.data?.message || 'An error occurred', {
+      enqueueSnackbar(dictionary.measurementUnits.form.errors.messages.deleteResponse, {
         variant: 'error',
       });
     },

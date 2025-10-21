@@ -138,6 +138,17 @@ productServices.deleteUnit = async ({productId, unitId}) => {
     })
 };
 
+productServices.ItemMovementDownloadExcel = async (params) => {
+  const response = await axios.post(
+    `/api/masters/products/${params.product_id}/ItemMovementDownloadExcel`,
+    params,
+    {
+      responseType: 'blob',
+    }
+  );
+  return response.data;
+};
+
 productServices.mergeProducts = async(product) => {
     return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
         const {data} = await axios.post(`/api/masters/products/mergeProducts`,product)

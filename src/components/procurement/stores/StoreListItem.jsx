@@ -5,10 +5,12 @@ import React from 'react'
 import StoreItemAction from './StoreItemAction'
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/app/[lang]/contexts/LanguageContext';
+import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
 
 const StoreListItem = ({store}) => {
   const lang = useLanguage();
   const router = useRouter();
+  const dictionary = useDictionary();
 
   return( 
     <Grid container 
@@ -27,7 +29,7 @@ const StoreListItem = ({store}) => {
     <Grid size={5}>
       <ListItemText
         primary={
-          <Tooltip title="Name">
+          <Tooltip title={dictionary.stores.form.labels.storeName}>
             <Typography variant="h5" fontSize={14} lineHeight={1.25} mb={0}>
             {store.name}
             </Typography>
@@ -50,7 +52,7 @@ const StoreListItem = ({store}) => {
     <Grid size={{xs: 3, lg: 2}}>
       <ListItemText
         primary={
-          <Tooltip title="Description">
+          <Tooltip title={dictionary.stores.form.labels.description}>
             <Typography variant="h5" fontSize={14} lineHeight={1.25} mb={0} noWrap>
             {store.description}
             </Typography>

@@ -31,7 +31,7 @@ const MeasurementUnitItemAction = ({measurementUnit}:{measurementUnit: Measureme
       });
     },
     onError: (error: any) => {
-      enqueueSnackbar(error?.response?.data?.message || 'Failed to delete Measurement Unit', {
+      enqueueSnackbar(dictionary.measurementUnits.form.errors.messages.deleteResponse, {
         variant: 'error'
       });
     },

@@ -24,12 +24,14 @@ import dayjs from 'dayjs';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import productServices from './productServices';
 import { Div } from '@jumbo/shared';
+import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
 
 function ExcelTemplateDownloadTab({ setOpenDialog }) {
   const { enqueueSnackbar } = useSnackbar();
   const [isDownloadingTemplate, setIsDownloadingTemplate] = useState(false);
   const { storeOptions } = useProductApp();
   const { authOrganization } = useJumboAuth();
+  const dictionary = useDictionary();
 
   const validationSchema = yup.object({
     stores: yup.array().of(
@@ -180,7 +182,7 @@ function ExcelTemplateDownloadTab({ setOpenDialog }) {
                   })
                 }
               >
-                <AddOutlined fontSize="10" /> Add Store
+                <AddOutlined fontSize="10" /> {dictionary.products.excelForm.buttons.addStore}
               </Button>
             </Tooltip>
           </Div>
@@ -188,7 +190,7 @@ function ExcelTemplateDownloadTab({ setOpenDialog }) {
         <Grid size={12}>
             <Stack direction={{ xs: 'column', md: 'row' }} justifyContent={{ xs: 'start', md: 'space-evenly' }}>
               <Stack direction={'row'} spacing={0.5} alignItems={'center'}>
-                <Checkbox onChange={(e,checked) => setValue('withProducts',checked)} /><Typography>With Products</Typography>
+                <Checkbox onChange={(e,checked) => setValue('withProducts',checked)} /><Typography>{dictionary.products.excelForm.labels.withProduct}</Typography>
               </Stack>
               {
                 watch('stores')?.length > 0 &&
@@ -206,7 +208,7 @@ function ExcelTemplateDownloadTab({ setOpenDialog }) {
         </Grid>
         <DialogActions>
           <Button size="small" onClick={() => setOpenDialog(false)}>
-            Cancel
+            {dictionary.products.excelForm.buttons.cancel}
           </Button>
           <LoadingButton
             size="small"
@@ -215,7 +217,7 @@ function ExcelTemplateDownloadTab({ setOpenDialog }) {
             variant="contained"
             color="success"
           >
-            Download
+           {dictionary.products.excelForm.buttons.download}
           </LoadingButton>
         </DialogActions>
       </React.Fragment>

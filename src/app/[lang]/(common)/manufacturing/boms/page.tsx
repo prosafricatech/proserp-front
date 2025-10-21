@@ -1,10 +1,10 @@
 export const dynamic = "force-dynamic";
-import Boms from '@/components/manufacturing/boms/Boms'
+import BillOfMaterials from '@/components/production/boms/BillOfMaterials';
 import React from 'react'
 
 function page() {
   return (
-    <Boms/>
+    <BillOfMaterials/>
   )
 }
 

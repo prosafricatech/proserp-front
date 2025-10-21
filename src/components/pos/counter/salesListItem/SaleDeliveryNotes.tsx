@@ -5,7 +5,6 @@ import {
   Chip, 
   Grid, 
   IconButton, 
-  LinearProgress, 
   Tooltip, 
   Typography, 
   useMediaQuery 
@@ -26,6 +25,7 @@ import { useQuery } from '@tanstack/react-query';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import { SalesOrder } from '../SalesOrderType';
+import { BackdropSpinner } from '@/shared/ProgressIndicators/BackdropSpinner';
 
 interface DeliveryNote {
   id: string;
@@ -66,7 +66,7 @@ const SaleDeliveryNotes: React.FC<SaleDeliveryNotesProps> = ({ expanded, sale })
 
   return (
     <React.Fragment>
-      {isLoading && <LinearProgress/>}
+      {isLoading && <BackdropSpinner/>}
       {saleDeliveryNotes?.length > 0 ? (
         saleDeliveryNotes.map((deliveryNote: DeliveryNote) => (
           <Grid

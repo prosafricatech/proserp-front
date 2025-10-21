@@ -18,7 +18,6 @@ import CostCenterSelector from '@/components/masters/costCenters/CostCenterSelec
 import PDFContent from '@/components/pdf/PDFContent';
 import {  Organization } from '@/types/auth-types';
 import { deviceType } from '@/utilities/helpers/user-agent-helpers';
-import { CostCenter } from '@/components/masters/costCenters/CostCenterType';
 import { useSnackbar } from 'notistack';
 
 interface ReportDocumentProps {
@@ -196,7 +195,6 @@ const LedgerStatementDialogContent: React.FC<LedgerStatementDialogContentProps> 
     }
   });
 
-
   const fetchTransactions = useCallback(async (filters: {
     from: string;
     to: string;
@@ -242,7 +240,7 @@ const LedgerStatementDialogContent: React.FC<LedgerStatementDialogContentProps> 
             link.click();
             setIsDownloadingTemplate(false);
         } catch (error) {
-            enqueueSnackbar('Error downloading Excel template', { variant: 'error' });
+            enqueueSnackbar('Error downloading Excel Statement', { variant: 'error' });
             setIsDownloadingTemplate(false);
         }
     };
@@ -355,7 +353,6 @@ const LedgerStatementDialogContent: React.FC<LedgerStatementDialogContentProps> 
                                                 size="small"
                                                 onClick={downloadExcelTemplate}
                                                 loading={isDownloadingTemplate}
-                                                disabled
                                                 variant="contained"
                                                 color="success"
                                             >

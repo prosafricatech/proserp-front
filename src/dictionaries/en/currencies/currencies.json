@@ -34,6 +34,11 @@
           "min": "The least amount of ExchangeRate is 0.00000000000000000001",
           "typeError": "Exchange rate is required"
         }
+      },
+       "messages": {
+        "deleteResponse": " Failed tp delete Currency",
+        "updateResponse": "Update failed",
+        "createResponse": "Currency failed to be added!"
       }
     }
   },
@@ -57,7 +62,7 @@
       }
     },
     "updateForm": {
-      "title": "Update Exchange Rate{currencyName}",
+      "title": "Update Exchange Rate {currencyName}",
       "buttons": {
         "update": "Update",
         "cancel": "Cancel"
@@ -96,6 +101,16 @@
         "showDialog": {
           "title": "Delete Confirmation",
           "content": "Are you sure you want to delete this Exchange Rate?"
+        }
+      },
+      "exchangeRate": {
+        "labels": {
+        "date": "Date",
+        "rate": "Rate",
+        "updateBy": "Upadate by"
+        },
+        "alert": {
+          "info": "Base currency cannot have exchange rates"
         }
       }
     }

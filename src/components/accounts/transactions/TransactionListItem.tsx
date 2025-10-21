@@ -122,12 +122,7 @@ function TransactionListItem({ transaction, type }: { transaction: Transaction, 
                 <ListItemText
                     secondary={
                         <Tooltip title={'Narration'}>
-                            <Typography
-                                variant={"h5"}
-                                lineHeight={1.25}
-                                mb={0}
-                                component="span"
-                            >
+                            <Typography component={'span'} lineHeight={1.25} mb={0}>
                                 {transaction.narration}
                             </Typography>
                         </Tooltip>

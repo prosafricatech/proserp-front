@@ -134,7 +134,7 @@ const StakeholderDialogForm: React.FC<StakeholderDialogFormProps> = ({ stakehold
     },
     onError: (error) => {
       const errorMessage = error?.response?.data?.message;
-      errorMessage && enqueueSnackbar(errorMessage, { variant: 'error' });
+      errorMessage && enqueueSnackbar(dictionary.stakeholders.form.errors.messages.createResponse, { variant: 'error' });
 
       const validationErrors = error?.response?.data?.validation_errors;
       if (validationErrors) {
@@ -157,7 +157,7 @@ const StakeholderDialogForm: React.FC<StakeholderDialogFormProps> = ({ stakehold
       queryClient.invalidateQueries({ queryKey: ['stakeholders'] });
     },
     onError: (error) => {
-      enqueueSnackbar(error?.response?.data?.message || 'An error occurred', {
+      enqueueSnackbar(dictionary.stakeholders.form.errors.messages.updateResponse, {
         variant: 'error',
       });
     },

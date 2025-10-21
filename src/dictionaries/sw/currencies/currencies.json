@@ -34,6 +34,11 @@
           "min": "kiwango cha chini cha ubadilishaji sio chini ya 0.00000000000000000001",
           "typeError": "Kiwango cha ubadilishaji kinahitajika"
         }
+      },
+       "messages": {
+        "deleteResponse": "Sarafu imefeli kufutika",
+        "updateResponse": "Sarafu imefeli kubadilishwa",
+        "createResponse": "Sarafu imefeli kuongezwa!"
       }
     }
   },
@@ -57,7 +62,7 @@
       }
     },
     "updateForm": {
-      "title": "Kiwango Kipya Cha Ubadilishaji{currencyName}",
+      "title": "Kiwango Kipya Cha Ubadilishaji {currencyName}",
       "buttons": {
         "update": "Sasisha",
         "cancel": "Ghairi"
@@ -96,6 +101,16 @@
         "showDialog": {
           "title": "Thibitisha ufutaji",
           "content": "Je, una uhakika unataka kufuta hiki kiwango cha ubadilishaji ?"
+        }
+      },
+      "exchangeRate": {
+        "labels": {
+        "date": "Tarehe",
+        "rate": "Kiwango",
+        "updateBy": "badilisha kwa"
+        },
+        "alert": {
+          "info": "Sarafu ya msingi haiwezi kuwa na viwango vya ubadilishaji"
         }
       }
     }

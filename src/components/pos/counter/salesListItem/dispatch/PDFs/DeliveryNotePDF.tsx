@@ -55,42 +55,46 @@ const DeliveryNotePDF: React.FC<DeliveryNotePDFProps> = ({ delivery, organizatio
 
   const renderSignatureSection = () => (
     <>
-      <View style={{ ...pdfStyles.tableRow, marginTop: thermalPrinter ? 10 : 30 }}>
-        <View style={{ flex: 1, padding: 2 }}>
-          <Text style={pdfStyles.minInfo}>Received the above mentioned goods in good order and condition</Text>
+      <View style={{ ...pdfStyles.tableRow, marginTop:10,}}>
+        <View style={{flex: 1, padding: 2}}>
+            <Text style={{...pdfStyles.minInfo}}>Received the above mentioned goods in good order and condition</Text>
         </View>
       </View>
-      <View style={{ ...pdfStyles.tableRow, marginTop: thermalPrinter ? 10 : 30 }}>
-        {thermalPrinter ? (
-          <>
-            <View style={{ flex: 3, padding: 2 }}>
-              <Text style={{ ...pdfStyles.minInfo, textDecoration: 'underline' }}>
-                {' '.repeat(80)}
-              </Text>
-              <Text style={{ ...pdfStyles.minInfo, color: mainColor }}>Name</Text>
-            </View>
-          </>
-        ) : (
-          <>
-            <View style={{ flex: 3, padding: 2 }}>
-              <Text style={{ ...pdfStyles.minInfo, textDecoration: 'underline' }}>
-                {' '.repeat(50)}
-              </Text>
-              <Text style={{ ...pdfStyles.minInfo, color: mainColor }}>Name</Text>
-            </View>
-          </>
-        )}
-        <View style={{ flex: 1.5, padding: 2 }}>
-          <Text style={{ ...pdfStyles.minInfo, textDecoration: 'underline' }}>
-            {' '.repeat(30)}
+      <View style={{ ...pdfStyles.tableRow, marginTop:10}}>
+        <View style={{flex: 3, padding: 2}}>
+          <Text style={{...pdfStyles.minInfo, textDecoration: 'underline'}}>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
           </Text>
-          <Text style={{ ...pdfStyles.minInfo, color: mainColor }}>Signature</Text>
+          <Text style={{...pdfStyles.minInfo, color: mainColor }}>{`Name`}</Text>
         </View>
-        <View style={{ flex: 1.5, padding: 2 }}>
-          <Text style={{ ...pdfStyles.minInfo, textDecoration: 'underline' }}>
-            {' '.repeat(30)}
+      </View>
+      <View style={{ ...pdfStyles.tableRow, marginTop:10,}}>
+        <View style={{flex: 1.5, padding: 2}}>
+          <Text style={{...pdfStyles.minInfo, textDecoration: 'underline'}}>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
           </Text>
-          <Text style={{ ...pdfStyles.minInfo, color: mainColor }}>Date</Text>
+          <Text style={{...pdfStyles.minInfo, color: mainColor }}>{`Signature`}</Text>
+        </View>
+        <View style={{flex: 1.5, padding: 2}}>
+          <Text style={{...pdfStyles.minInfo, textDecoration: 'underline'}}>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+          </Text>
+          <Text style={{...pdfStyles.minInfo, color: mainColor }}>{`Date`}</Text>
+        </View>
+      </View>
+      <View style={{ ...pdfStyles.tableRow, marginTop: 50, textAlign: 'center'}}>
+        <View style={{ flex: 1, padding: 2}}>
+          <Text style={{...pdfStyles.minInfo }}>Powered by: proserp.co.tz</Text>
         </View>
       </View>
     </>
@@ -179,12 +183,86 @@ const DeliveryNotePDF: React.FC<DeliveryNotePDFProps> = ({ delivery, organizatio
         </View>
 
         {/* Stakeholders */}
-        <DocumentStakeholders 
-          organization={organization} 
-          stakeholder={delivery.sale.stakeholder} 
-          fromLabel="FROM" 
-          toLabel="TO" 
-        />
+        <View style={{ ...pdfStyles.tableRow, marginBottom: 10 }}>
+            <View style={{ flex: 1, padding: 1 }}>
+                <Text 
+                    style={{
+                        ...pdfStyles.tableCell, 
+                        backgroundColor: mainColor, 
+                        color: contrastText,
+                        textAlign: 'center'
+                    }}
+                >
+                {'FROM'}
+                </Text>
+                <Text style={{...pdfStyles.midInfo, textAlign: 'center'}}>{organization.name}</Text>
+                {organization?.address && <Text style={{...pdfStyles.minInfo, textAlign: 'center'}}>{organization.address}</Text>}
+                {organization?.tin && 
+                    <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+                        <Text style={{...pdfStyles.minInfo}}>TIN:</Text>
+                        <Text style={{...pdfStyles.minInfo}}>{organization.tin}</Text>
+                    </View>
+                }
+                {organization?.settings?.vrn && 
+                    <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+                        <Text style={{...pdfStyles.minInfo}}>VRN:</Text>
+                        <Text style={{...pdfStyles.minInfo}}>{organization.settings.vrn}</Text>
+                    </View>
+                }
+                {organization?.phone && 
+                    <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+                        <Text style={{...pdfStyles.minInfo}}>Phone:</Text>
+                        <Text style={{...pdfStyles.minInfo}}>{organization.phone}</Text>
+                    </View>
+                }
+                {organization?.email && 
+                    <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+                        <Text style={{...pdfStyles.minInfo}}>Email:</Text>
+                        <Text style={{...pdfStyles.minInfo}}>{organization.email}</Text>
+                    </View>
+                }
+            </View>
+        </View>
+        <View style={{ ...pdfStyles.tableRow, marginBottom: 10 }}>
+            <View style={{ flex: 1, padding: 1 }}>
+                <Text 
+                    style={{
+                        ...pdfStyles.tableCell, 
+                        backgroundColor: mainColor, 
+                        color: contrastText,
+                        textAlign: 'center'
+                    }}
+                >
+                {'TO'}
+                </Text>
+                <Text style={{...pdfStyles.midInfo, fontWeight: 'bold', textAlign: 'center'}}>{delivery.sale.stakeholder.name}</Text>
+                {delivery.sale.stakeholder?.address && <Text style={{...pdfStyles.minInfo, textAlign: 'center'}}>{delivery.sale.stakeholder.address}</Text>}
+                {delivery.sale.stakeholder?.tin && 
+                    <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+                        <Text style={{...pdfStyles.minInfo}}>TIN:</Text>
+                        <Text style={{...pdfStyles.minInfo}}>{delivery.sale.stakeholder.tin}</Text>
+                    </View>
+                }
+                {delivery.sale.stakeholder?.vrn && 
+                    <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+                        <Text style={{...pdfStyles.minInfo}}>VRN:</Text>
+                        <Text style={{...pdfStyles.minInfo}}>{delivery.sale.stakeholder.vrn}</Text>
+                    </View>
+                }
+                {delivery.sale.stakeholder?.phone && 
+                    <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+                        <Text style={{...pdfStyles.minInfo}}>Phone:</Text>
+                        <Text style={{...pdfStyles.minInfo}}>{delivery.sale.stakeholder.phone}</Text>
+                    </View>
+                }
+                {delivery.sale.stakeholder?.email && 
+                    <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+                        <Text style={{...pdfStyles.minInfo}}>Email:</Text>
+                        <Text style={{...pdfStyles.minInfo}}>{delivery.sale.stakeholder.email}</Text>
+                    </View>
+                }
+            </View>
+        </View>
 
         {/* Items Table */}
         {renderItemsTable()}

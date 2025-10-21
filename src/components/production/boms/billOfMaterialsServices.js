@@ -2,16 +2,11 @@ import axios from "@/lib/services/config";
 
 const billOfMaterialsServices = {};
 
-billOfMaterialsServices.getList = async ({queryKey}) => {
-    const {page, limit, queryParams} = queryKey[queryKey.length - 1];
-    const {data} = await axios.get(`/boms`, {
-        params: {
-            page: page,
-            limit: limit,
-            ...queryParams
-        }
-    });
-    return data;    
+billOfMaterialsServices.getList = async (params) => {
+  const response = await axios.get('/api/manufacturing/boms', {
+    params,
+  });
+  return response.data;  
 };
 
 billOfMaterialsServices.getBOMs = async() => {
@@ -26,7 +21,7 @@ billOfMaterialsServices.billOfMaterialDetails = async (id) => {
 
 billOfMaterialsServices.addBillOfMaterials = async(billOfMaterial) => {
     return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.post(`/boms`,billOfMaterial)
+        const {data} = await axios.post(`/api/manufacturing/boms/add`,billOfMaterial)
         return data;
     })
 }
@@ -34,14 +29,14 @@ billOfMaterialsServices.addBillOfMaterials = async(billOfMaterial) => {
 billOfMaterialsServices.updateBillOfMaterial = async(billOfMaterial) => {
     const id = billOfMaterial.id;
     return await axios.get('/sanctum/csrf-cookie').then(    async (response) => {
-        const {data} = await axios.put(`/boms/${id}`,billOfMaterial)
+        const {data} = await axios.put(`/api/manufacturing/boms/${id}/update`,billOfMaterial)
         return data;    
     })
 }
 
 billOfMaterialsServices.delete = async (id) => {
     return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.delete(`/boms/${id}`);
+        const {data} = await axios.delete(`/api/manufacturing/boms/${id}/delete`);
         return data;
     })
 };

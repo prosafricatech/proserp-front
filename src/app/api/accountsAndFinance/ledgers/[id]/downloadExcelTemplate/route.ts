@@ -9,7 +9,7 @@ export async function POST(req: NextRequest, context: any) {
   if (response) return response;
 
   const body = await req.json();
-  const res = await fetch(`${API_BASE}/stores/${params.id}/stock_list_excel`, {
+  const res = await fetch(`${API_BASE}/accounts/ledger/${params.id}/statement`, {
     method: 'POST',
     headers,
     body: JSON.stringify(body),

@@ -4,9 +4,11 @@ import RemoveIcon from '@mui/icons-material/Remove';
 import AddIcon from '@mui/icons-material/Add'
 import ProductItemAction from './ProductItemAction';
 import ProductListItemTabs from './ProductListItemTabs';
+import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
 
 function ProductListItem({product}) {
   const [expanded, setExpanded] = useState(false);
+  const dictionary = useDictionary();
 
   return (
     <Accordion
@@ -66,14 +68,14 @@ function ProductListItem({product}) {
           <Grid size={{xs: 12, md: 5}}>
             <ListItemText
               primary={
-                <Tooltip title={'Name'}>
+                <Tooltip title={dictionary.products.list.labels.name}>
                   <Typography variant={"h5"} fontSize={14} mb={0}>
                     {product.name}
                   </Typography>
                 </Tooltip>
               }
               secondary={
-                <Tooltip title={'Item Type'}>
+                <Tooltip title={dictionary.products.list.labels.itemType}>
                   <Typography variant={"span"} fontSize={14} mb={0}
                     noWrap>{product.type}
                   </Typography>
@@ -84,7 +86,7 @@ function ProductListItem({product}) {
           <Grid size={{xs: 6, md: 2}}>
             <ListItemText
               primary={
-                <Tooltip title={'Primary Measurement unit'}>
+                <Tooltip title={dictionary.products.list.labels.primaryMeasurementUnit}>
                   <Typography variant={"span"} fontSize={14} mb={0} noWrap>
                     {`${product.measurement_unit.name} (${product.measurement_unit.symbol})`}
                   </Typography>
@@ -95,7 +97,7 @@ function ProductListItem({product}) {
           <Grid size={{xs: 6, md: 3}}>
             <ListItemText
               primary={
-                <Tooltip title={'Category'}>
+                <Tooltip title={dictionary.products.list.labels.category}>
                   <Typography fontSize={14} mb={0}>
                     {product.category.name}
                   </Typography>

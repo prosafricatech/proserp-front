@@ -5,11 +5,13 @@ import React, { useState } from 'react'
 import { DownloadOutlined, UploadOutlined } from '@mui/icons-material';
 import ExcelTemplateDownloadTab from './ExcelTemplateDownloadTab';
 import ProductsExcelImport from './ProductsExcelImport';
+import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
 
 function ProductRegistrationExcelDownload() {
 
   const [openDialog, setOpenDialog] = useState(false);
   const [content, setContent] = useState(0);
+  const dictionary = useDictionary();
 
   return (
     <React.Fragment>
@@ -19,7 +21,7 @@ function ProductRegistrationExcelDownload() {
         maxWidth={'md'}
         onClose={() => setOpenDialog(false)}
       >
-        <DialogTitle textAlign={'center'}>{content === 0 ? `Download Template` : 'Upload Template'}</DialogTitle>
+        <DialogTitle textAlign={'center'}>{content === 0 ? dictionary.products.excelForm.title : dictionary.products.excelForm.labels.uploadTitle }</DialogTitle>
         <DialogContent>
 
           <Tabs 
@@ -27,15 +29,15 @@ function ProductRegistrationExcelDownload() {
             allowScrollButtonsMobile
             value={content} onChange={(event, newValue) => setContent(newValue)}
           >
-              <Tab label="Download" icon={<DownloadOutlined/>} />
-              <Tab label="Upload" icon={<UploadOutlined/>}/>
+              <Tab label={dictionary.products.excelForm.labels.download} icon={<DownloadOutlined/>} />
+              <Tab label={dictionary.products.excelForm.labels.upload} icon={<UploadOutlined/>}/>
           </Tabs>
           {
             content === 0 ? <ExcelTemplateDownloadTab  setOpenDialog={setOpenDialog} content={content}/> : <ProductsExcelImport setOpenDialog={setOpenDialog} content={content}/>
           }
         </DialogContent>
       </Dialog>
-      <Tooltip title='Excel Template'>
+      <Tooltip title={dictionary.products.list.labels.excelTamplate}>
         <IconButton size='small' onClick={() => setOpenDialog(true)}>
           <FontAwesomeIcon icon={faFileExcel} color='green' />
         </IconButton>

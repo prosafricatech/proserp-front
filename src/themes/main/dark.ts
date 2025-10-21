@@ -39,7 +39,7 @@ export const mainTheme: ThemeOptions = {
   },
   palette: {
     primary: {
-      main: '#7352C7',
+      main: '#2196f3',
       light: '#A67FFB',
       dark: '#5E3BB7',
       contrastText: '#FFF',
@@ -70,7 +70,7 @@ export const mainTheme: ThemeOptions = {
     },
     success: {
       main: '#3BD2A2',
-      light: '#78FFD3',
+      light: '#07ab2d',
       dark: '#00A073',
       contrastText: '#FFF',
     },
@@ -148,7 +148,6 @@ export const mainTheme: ThemeOptions = {
           borderColor: alpha('#000', 0.1),
         },
         head: {
-          textTransform: 'uppercase',
           letterSpacing: 1.5,
           fontWeight: 400,
           fontSize: 12,

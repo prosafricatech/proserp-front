@@ -38,6 +38,11 @@
           "required": "Stakeholder type  is required",
           "typeError": "Stakeholder type is required"
         }
+      },
+       "messages": {
+        "deleteResponse": " Failed tp delete Stakeholder",
+        "updateResponse": "Update failed",
+        "createResponse": "Stakeholder failed to be added!"
       }
     }  
   },

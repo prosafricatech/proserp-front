@@ -1,0 +1,170 @@
+{
+  "form": {
+    "title": "Bidhaa/Huduma Mpya",
+    "buttons": {
+      "save": "Hifadhi",
+      "cancel": "Ghairi"
+    },
+    "labels": {
+      "listHeader": "Bidhaa",
+      "category": "Kategoria",
+      "type": "Aina",
+      "itemName": "Jina la bidhaa",
+      "brand": "Chapa (Sio lazima)",
+      "model": "Mfano(Sio lazima)",
+      "sku": "SKU (Sio lazima)",
+      "specifications": "Sifa bainifu (Sio lazima)",
+      "primaryMeasurementUnit": "Kipimo Kikuu",
+      "description": "Maelezo",
+      "checkbox": "VAT Inatarajiwa"
+    },
+    "messages": {
+      "loading": "Inachakata maelezo ya bidhaa...",
+      "createSuccess": "Bidhaa imesajiliwa kwa mafanikio!",
+      "updateSuccess": "Imesasishwa kwa mafanikio!",
+      "deleteSuccess": "Imefutwa kwa mafanikio."
+    },
+    "errors": {
+      "validation": {
+       "itemName": {
+            "required": "Jina la kipengee linahitajika",
+            "string": "Weka jina la kipengee chako"
+          },
+        "exchangeRate": {
+          "required": "Exchange rate is required",
+          "min": "The least amount of ExchangeRate is 0.00000000000000000001",
+          "typeError": "Exchange rate is required"
+        }
+      },
+       "messages": {
+        "deleteResponse": " Failed tp delete Currency",
+        "updateResponse": "Update failed",
+        "createResponse": "Currency failed to be added!"
+      }
+    }
+  },
+  "list": {
+    "labels": {
+      "name": "Jina",
+      "itemType": "Aina ya bidhaa",
+      "primaryMeasurementUnit": "Kipimo Kikuu",
+      "category": "Kategoria",
+      "actions": "Vitendo",
+      "newCreateLabel": "Bidhaa/Huduma Mpya",
+      "mergeLabel": "Kuunganisha  bidhaa",
+      "excelTamplate": "Kiolezo cha Excel" 
+    },
+    "mainActions": {
+      "delete": "Ondoa {name}",
+      "edit": "Hariri {name}"
+    },
+    "dialog": {
+      "showDialog": {
+        "title": "Thibitisha kuondoa?",
+        "content": "Kama ukibofya ndiyo, bidhaa hii itaondolewa."
+      }
+    },
+    "secondaryForm": {
+      "title": "Ongeza Vipimo vya Sekondari.",
+      "buttons": {
+        "add": "Ongeza",
+        "submit": "Wasilisha",
+        "cancel": "Ghairi"
+      },
+      "pageTitle": "Hariri: {unitName}",
+      "heading": "Inahaririwa: {unitName}",
+      "labels": {
+        "unitName": "Jina la kipimo",
+        "symbol": "Alama",
+        "conversionFactor": "Kipimo cha Kubadilisha",
+        "newCreateLabel": "Ongeza Kitengo cha Sekondari",
+        "secondaryMeasurementUnit": "Kitengo cha Sekondari cha Kipimo",
+        "secondaryTitle": "Vipimo Sekondari"
+      },
+       "messages": {
+        "loading": "Inachakata maelezo ya Kitengo cha Sekondari...",
+        "createSuccess": "Kitengo cha Sekondari kimesajiliwa kwa mafanikio!",
+        "updateSuccess": "Kitengo cha Sekondari kimesasishwa kwa mafanikiossfully updated!",
+        "deleteSuccess": "Kitengo cha Sekondari kimefutwa kwa mafanikio"
+        },
+        "actionsTitle": {
+        "delete": "Ondoa {unitName}",
+        "edit": "Hariri {unitName}"
+        },
+      "errors": {
+        "validation": {
+         "measurementUnit": {
+            "required": "Kipimo kinahitajika",
+            "typeError": "kipimo kinahitajika"
+          },
+          "conversionFactor": {
+            "required": "Kiwango cha kubadilisha kinahitajika",
+            "typeError": "Kiwango cha kubadilisha"
+          }
+        }
+      }
+      },
+      "secondaryDialog": {
+        "showDialog": {
+          "title": "Thibitisha kuondoa?",
+          "content": "Una uhakika unataka kufuta Kitengo hiki cha Sekondari cha Kipimo?"
+        },
+         "dialogActions": {
+          "cancel": "Ghairi",
+          "yes": "Ndiyo"
+        }
+      },
+        "alert": {
+          "info": "Hakuna Kitengo cha Sekondari Kilichopatikana"
+        }
+      },
+      "quickAddForm": {
+        "button": "Ongeza Kategoria Haraka"
+      },
+      "excelForm": {
+        "title": "Pakua Kigeuza",
+        "buttons": {
+          "download": "Pakua",
+          "cancel": "Ghairi",
+          "addStore": "Ongeza Duka",
+          "upload": "Pakia"
+        },
+         "labels": {
+          "download": "Pakua",
+          "upload": "Pakia",
+          "uploadTitle": "Pakia Kigeuza",
+          "stockComplementtLedger": "Rekodi ya Hisa za Kumaliza",
+          "stockAsAt": "Hisa Kufikia",
+          "withProduct": "Na Bidhaa"
+        }
+      },
+      "mergeForm": {
+        "title": "Kuunganisha Bidhaa",
+        "buttons": {
+          "merge": "Unganisha",
+          "cancel": "Ghairi"
+        },
+         "labels": {
+          "productToRemain": "Bidhaa Itabaki",
+          "productToDissolve": "Bidhaa Itayoondolewa"
+        },
+         "messages": {
+          "loading": "Inachakata Maelezo ya Kuunganisha...",
+          "createSuccess": "Kuunganisha Kimefanikiwa"
+        },
+          "errors": {
+          "validation": {
+            "remaining_product_id": {
+              "required": "Tafadhali chagua bidhaa itakayobaki",
+              "typeError": "Tafadhali chagua bidhaa itakayobaki"
+            },
+            "dissolved_products_ids": {
+              "required": "Tafadhali chagua bidhaa zitakayoondolewa",
+              "min": "Tafadhali chagua angalau bidhaa moja itakayoondolewa"
+            }
+           }
+         }
+      }
+    }
+
+  

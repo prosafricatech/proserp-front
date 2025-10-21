@@ -1,0 +1,45 @@
+{
+    "form": {
+        "title": "Verify User",
+    "buttons": {
+      "verify": "Verify",
+      "cancel": "Cancel"
+    },
+    "labels": {
+      "listHeader": "Users",
+      "name": "Name",
+      "email": "Email",
+      "status": "Status"
+    },
+    "messages": {
+      "loading": "Processing Verification details...",
+      "verifySuccess": "User verified successfully!"
+    },
+    "errors": {
+      "validation": {
+        "email": {
+          "required": "Email is required"
+        },
+         "valid": "Enter a valid Email"
+      },
+      "messages": {
+        "response": "Verification failed"
+      }
+    } 
+  },
+  "list": {
+    "labels": {
+      "name": "Name",
+      "email": "Email",
+      "status": "Status",
+      "userActions": "User Actions",
+      "newCreateLabel": "Verify User"
+    },
+     "actionsTitle": {
+      "labels": {
+      "reactivate": "Reactivate",
+      "deactivate": "Deactivate"
+      }
+    }
+  }
+}

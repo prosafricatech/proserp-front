@@ -59,7 +59,7 @@ const UpdatesAccordion = ({ expanded, handleChange, update }) => {
           },
         }}
       >
-        <Grid container paddingLeft={1} width={'100%'} paddingRight={1} columnSpacing={1} rowSpacing={1} alignItems={'center'}>
+        <Grid container paddingLeft={1} width={'100%'} columnSpacing={1} rowSpacing={1} alignItems={'center'}>
           <Grid size={11}>
             <Tooltip title='Start Date'>
               <Typography variant="h5" fontSize={14} lineHeight={1.25} mb={0} noWrap>

@@ -1,5 +1,5 @@
 import { LoadingButton } from '@mui/lab'
-import { Button, DialogActions, DialogContent, DialogTitle, Grid, IconButton, LinearProgress, Tab, Tabs, Tooltip, Typography, useMediaQuery } from '@mui/material'
+import { Button, DialogActions, DialogContent, DialogTitle, Grid, IconButton, LinearProgress, Stack, Tab, Tabs, Tooltip, Typography, useMediaQuery } from '@mui/material'
 import { DateTimePicker } from '@mui/x-date-pickers'
 import dayjs from 'dayjs'
 import React, { useState } from 'react'
@@ -23,6 +23,7 @@ import ProductSelect from '@/components/productAndServices/products/ProductSelec
 import CostCenterSelector from '@/components/masters/costCenters/CostCenterSelector'
 import PDFContent from '@/components/pdf/PDFContent'
 import productServices from '@/components/productAndServices/products/productServices'
+import { useSnackbar } from 'notistack'
 
 const ReportDocument = ({movementsData,authObject,store}) => {
     const {authOrganization,authUser: { user}} = authObject;
@@ -110,6 +111,9 @@ function ItemMovement({productStock = null, toggleOpen, isFromDashboard}) {
     const {activeStore} = useStoreProfile();
     const {productOptions} = useProductsSelect();
     const [selectedTab, setSelectedTab] = useState(0);
+    const { enqueueSnackbar } = useSnackbar();
+    const [isDownloadingTemplate, setIsDownloadingTemplate] = React.useState(false);
+    const [uploadFieldsKey, setUploadFieldsKey] = useState(0)
 
     //Screen handling constants
     const {theme} = useJumboTheme();
@@ -138,7 +142,7 @@ function ItemMovement({productStock = null, toggleOpen, isFromDashboard}) {
             to: today.endOf('day').toISOString(),
             product_id: productStock?.id || null,
             store_id: isFromDashboard ? null : activeStore?.id,
-            cost_center_ids: authOrganization.costCenters.map(cc => cc.id)
+            cost_center_ids: authOrganization?.costCenters.map(cc => cc.id)
         }
     });
 
@@ -153,6 +157,37 @@ function ItemMovement({productStock = null, toggleOpen, isFromDashboard}) {
         setisFetching(false);
     }
 
+    const downloadExcelTemplate = async () => {
+        try {
+            setIsDownloadingTemplate(true);
+            setUploadFieldsKey((prevKey) => prevKey + 1);
+
+            const filters = {
+                from: watch('from'),
+                to: watch('to'),
+                store_id: watch('store_id'),
+                cost_center_ids: watch('cost_center_ids'),
+                product_id: watch('product_id'),
+            };
+
+            const responseData = await productServices.ItemMovementDownloadExcel(filters);
+
+            const blob = new Blob([responseData], {
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            });
+
+            const link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            link.download = 'Item Movement.xlsx';
+            link.click();
+
+            setIsDownloadingTemplate(false);
+        } catch (error) {
+            enqueueSnackbar('Error downloading Excel template', { variant: 'error' });
+            setIsDownloadingTemplate(false);
+        }
+    };
+
     const handleTabChange = (event, newValue) => {
         setSelectedTab(newValue);
     };
@@ -162,7 +197,7 @@ function ItemMovement({productStock = null, toggleOpen, isFromDashboard}) {
     <React.Fragment>
         <DialogTitle textAlign={'center'}>
             <Span className={classes.hiddenOnPrint}>
-                <form autoComplete='off' onSubmit={handleSubmit(getMovements)} >
+                <form autoComplete='off' key={uploadFieldsKey} onSubmit={handleSubmit(getMovements)} >
                     <Grid container columnSpacing={1} paddingTop={2} rowSpacing={1} alignItems={'center'} justifyContent={'center'}>
                         <Grid size={12} container>
                             <Grid size={belowLargeScreen ? 11 : 12}>
@@ -201,7 +236,7 @@ function ItemMovement({productStock = null, toggleOpen, isFromDashboard}) {
                                 </Div>
                             </Grid>
                         }
-                        <Grid size={{xs: 12, md: isFromDashboard ? 6 : 4}}>
+                        <Grid size={{xs: 12, md: 6}}>
                             <Div sx={{mt: 1, mb: 1}}>
                                 <ProductSelect
                                     label="Product"
@@ -226,12 +261,12 @@ function ItemMovement({productStock = null, toggleOpen, isFromDashboard}) {
                                 />
                             </Div>
                         </Grid>
-                        <Grid size={{xs: 12, md: 3}}>
+                        <Grid size={{xs: 12, md: isFromDashboard ? 6 : 3}}>
                             <Div sx={{mt: 1, mb: 1}}>
                                 <DateTimePicker
                                     label="From (MM/DD/YYYY)"
                                     value={dayjs(watch('from'))}
-                                    minDate={dayjs(authOrganization.organization.recording_start_date)}
+                                    minDate={dayjs(authOrganization?.organization.recording_start_date)}
                                     maxDate={dayjs(watch('to'))}
                                     slotProps={{
                                         textField: {
@@ -248,7 +283,7 @@ function ItemMovement({productStock = null, toggleOpen, isFromDashboard}) {
                                 />
                             </Div>
                         </Grid>
-                        <Grid size={{xs: 12, md: 3}}>
+                        <Grid size={{xs: 12, md: isFromDashboard ? 6 : 3}}>
                             <Div sx={{mt: 1, mb: 1}}>
                                 <DateTimePicker
                                     label="To (MM/DD/YYYY)"
@@ -269,7 +304,7 @@ function ItemMovement({productStock = null, toggleOpen, isFromDashboard}) {
                                 />
                             </Div>
                         </Grid>
-                        <Grid size={{xs: 12, md: isFromDashboard ? 5 : 9}}>
+                        <Grid size={{xs: 12, md: 12}}>
                             <Div sx={{mt: 1, mb: 1}}>
                                 <CostCenterSelector
                                     label="Cost and Profit Centers"
@@ -281,10 +316,24 @@ function ItemMovement({productStock = null, toggleOpen, isFromDashboard}) {
                                 />
                             </Div>
                         </Grid>
-                        <Grid size={{xs: 12, md: 1}} textAlign={'right'}>
-                            <LoadingButton loading={isFetching} type='submit' size='small' variant='contained'>
-                                Filter
-                            </LoadingButton>
+                        <Grid size={{xs: 12, md: 12}} textAlign={'right'}>
+                            <Stack direction="row" spacing={0.5} justifyContent="flex-end" alignItems="center">
+                                <>                                
+                                    <LoadingButton
+                                        size="small"
+                                        onClick={downloadExcelTemplate}
+                                        loading={isDownloadingTemplate}
+                                        disabled={(isFromDashboard && !watch('store_id')) || !watch('product_id')}
+                                        variant="contained"
+                                        color="success"
+                                    >
+                                        Excel
+                                    </LoadingButton>
+                                    <LoadingButton loading={isFetching} type='submit' size='small' variant='contained'>
+                                        Filter
+                                    </LoadingButton>
+                                </>
+                            </Stack>
                         </Grid>
                     </Grid>
                 </form>
@@ -301,7 +350,7 @@ function ItemMovement({productStock = null, toggleOpen, isFromDashboard}) {
               {!isFetching && movements?.movements?.length > 0 && (
                 <React.Fragment>
                     {
-                    belowLargeScreen && selectedTab === 0 ? 
+                        belowLargeScreen && selectedTab === 0 ? 
                         <ItemMovementOnScreen
                             movementsData={movements}
                             authObject={authObject}

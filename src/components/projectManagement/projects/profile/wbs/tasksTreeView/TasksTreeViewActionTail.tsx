@@ -1,6 +1,7 @@
 import { ButtonGroup, Dialog, IconButton, Tooltip } from "@mui/material";
 import React, { useState } from "react";
 import { AccountTreeOutlined } from "@mui/icons-material";
+import TasksTreeView from "./TasksTreeView";
 
 const TasksTreeViewActionTail = () => {
     const [openTasksTreeView, setOpenTasksTreeView] = useState(false);
@@ -8,7 +9,7 @@ const TasksTreeViewActionTail = () => {
     return (
         <React.Fragment>
             <Dialog maxWidth="xl" fullWidth fullScreen={true} open={openTasksTreeView}>
-                {/* <TasksTreeView setOpenTasksTreeView={setOpenTasksTreeView}/> */}
+                <TasksTreeView setOpenTasksTreeView={setOpenTasksTreeView}/>
             </Dialog>
     
             <ButtonGroup variant="outlined" size="small" disableElevation sx={{ '& .MuiButton-root': { px: 1 } }}>

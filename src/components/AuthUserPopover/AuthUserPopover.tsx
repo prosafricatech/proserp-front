@@ -34,7 +34,6 @@ const JumboDdPopover = dynamic(() =>
   { ssr: false }
 );
 
-// --- Custom types ---
 type Dictionary = {
   commons: {
     switchOrganization: string;
@@ -49,6 +48,7 @@ interface User {
 }
 
 interface Organization {
+  id: string | number;
   name: string;
 }
 
@@ -56,7 +56,6 @@ interface AuthUserPopoverProps {
   dictionary: Dictionary;
 }
 
-// --- Component ---
 export const AuthUserPopover: React.FC<AuthUserPopoverProps> = ({ dictionary }) => {
   const router = useRouter();
   const lang = useLanguage();
@@ -117,16 +116,31 @@ export const AuthUserPopover: React.FC<AuthUserPopoverProps> = ({ dictionary }) 
           <Typography noWrap variant="body1" color="text.secondary">
             {user.email}
           </Typography>
+
           <Stack direction="row" alignItems="center" spacing={1} mt={1}>
             <Chip
               label={organization?.name}
               size="small"
               color="primary"
               variant="outlined"
+              clickable
+              onClick={() => {
+                if (organization?.id) {
+                  router.push(`/${lang}/organizations/profile/${organization.id}`);
+                }
+              }}
+              sx={{
+                cursor: 'pointer',
+                '&:hover': {
+                  backgroundColor: 'rgba(56, 13, 250, 0.1)',
+                },
+              }}
             />
           </Stack>
         </Div>
+
         <Divider />
+
         <nav>
           <List disablePadding sx={{ pb: 1 }}>
             <ListItemButton onClick={switchOrganization}>
@@ -151,7 +165,7 @@ export const AuthUserPopover: React.FC<AuthUserPopoverProps> = ({ dictionary }) 
         </nav>
       </JumboDdPopover>
 
-      {/* Confirmation Dialog */}
+      {/* Logout Confirmation Dialog */}
       <Dialog open={openLogoutDialog} onClose={() => setOpenLogoutDialog(false)}>
         <DialogTitle>Confirm Logout</DialogTitle>
         <DialogContent>
@@ -160,35 +174,35 @@ export const AuthUserPopover: React.FC<AuthUserPopoverProps> = ({ dictionary }) 
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button 
-          onClick={() => setOpenLogoutDialog(false)} 
-          variant="text" // Changed from 'outlined' to 'text'
-          sx={{
-            color: '#380dfaff',
-            backgroundColor: 'transparent',
-            '&:hover': {
-              backgroundColor: 'rgba(25, 118, 210, 0.04)'
-            }
-          }}
-        >
-          Cancel
-            </Button>
-            <Button
-              onClick={() => {
-                setOpenLogoutDialog(false);
-                logout();
-              }}
-              variant="text" // Changed from 'outlined' to 'text'
-              sx={{
-                color: '#380dfaff', // Blue color for logout action
-                backgroundColor: 'transparent',
-                '&:hover': {
-                  backgroundColor: 'rgba(25, 118, 210, 0.04)'
-                }
-              }}
-            >
-              Logout
-            </Button>
+          <Button
+            onClick={() => setOpenLogoutDialog(false)}
+            variant="text"
+            sx={{
+              color: '#380dfaff',
+              backgroundColor: 'transparent',
+              '&:hover': {
+                backgroundColor: 'rgba(25, 118, 210, 0.04)',
+              },
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={() => {
+              setOpenLogoutDialog(false);
+              logout();
+            }}
+            variant="text"
+            sx={{
+              color: '#380dfaff',
+              backgroundColor: 'transparent',
+              '&:hover': {
+                backgroundColor: 'rgba(25, 118, 210, 0.04)',
+              },
+            }}
+          >
+            Logout
+          </Button>
         </DialogActions>
       </Dialog>
     </ThemeProvider>

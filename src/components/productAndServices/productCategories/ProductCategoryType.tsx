@@ -15,3 +15,15 @@ export type ProductCategory = {
   deleted_at: string | null;
   created_by: number;
 };
+export type productCategoryOption = {
+  id: number;
+  name: string;
+};
+export interface ProductCategoryFormData {
+  id?: number;
+  name: string;
+  parent_id: number | null;
+  description: string;
+  income_ledger_id: number;
+  expense_ledger_id: number;
+}

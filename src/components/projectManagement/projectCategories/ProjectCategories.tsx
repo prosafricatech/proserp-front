@@ -15,12 +15,14 @@ import UnauthorizedAccess from '@/shared/Information/UnauthorizedAccess';
 import ProjectCategoryListItem from './ProjectCategoryListItem';
 import ProjectCategoryActionTail from './ProjectCategoryActionTail';
 import projectCategoryServices from './project-category-services';
+import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
 
 const ProjectCategories = () => {
     const params = useParams();
     const listRef = useRef<any>(null);
     const { organizationHasSubscribed, checkOrganizationPermission } = useJumboAuth();
     const [mounted, setMounted] = useState(false);
+    const dictionary = useDictionary();
 
     const [queryOptions, setQueryOptions] = useState({
         queryKey: 'projectCategories',

@@ -16,16 +16,18 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import productServices from '../../productServices';
 import { Div } from '@jumbo/shared';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
+import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
 
 const EditSecondaryUnitForm = ({ product, setOpenDialog, unit }) => {
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
+  const dictionary = useDictionary();
 
   const { mutate: updateUnit, isPending } = useMutation({
     mutationFn: productServices.updateUnit,
     onSuccess: (data) => {
       setOpenDialog(false);
-      enqueueSnackbar(data.message, { variant: 'success' });
+      enqueueSnackbar(dictionary.products.list.secondaryForm.messages.updateSuccess, { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['secondaryUnits'] });
     },
     onError: (error) => {
@@ -54,7 +56,7 @@ const EditSecondaryUnitForm = ({ product, setOpenDialog, unit }) => {
 
   return (
     <form autoComplete="off" onSubmit={handleSubmit(saveMutation)}>
-      <DialogTitle textAlign={'center'}>{`Edit: ${unit.name}`}</DialogTitle>
+      <DialogTitle textAlign={'center'}>{dictionary.products.list.secondaryForm.pageTitle.replace('{unitName}',unit.name)}</DialogTitle>
         <DialogContent>
             <Grid container columnSpacing={1}>
                 <Grid size={{xs: 12, md: 7, lg: 7}}>
@@ -63,7 +65,7 @@ const EditSecondaryUnitForm = ({ product, setOpenDialog, unit }) => {
                             size="small"
                             fullWidth
                             defaultValue={unit.name}
-                            label="Conversion factor"
+                            label={dictionary.products.list.secondaryForm.labels.conversionFactor}
                             InputProps={{
                                 readOnly: true,
                               }}
@@ -79,7 +81,7 @@ const EditSecondaryUnitForm = ({ product, setOpenDialog, unit }) => {
                             defaultValue={unit.conversion_factor}
                             error={errors && !!errors?.conversion_factor}
                             helperText={errors && errors.conversion_factor?.message}
-                            label="Conversion factor"
+                            label={dictionary.products.list.secondaryForm.labels.conversionFactor}
                             onChange={(e) => {
                                 setValue(`conversion_factor`,e.target.value ? sanitizedNumber(e.target.value ): '',{
                                     shouldValidate: true,
@@ -93,7 +95,7 @@ const EditSecondaryUnitForm = ({ product, setOpenDialog, unit }) => {
         </DialogContent>
         <DialogActions>
             <Button size="small" onClick={() => setOpenDialog(false)}>
-                Cancel
+               {dictionary.products.list.secondaryForm.buttons.cancel}
             </Button>
             <LoadingButton
                 type="submit"
@@ -102,7 +104,7 @@ const EditSecondaryUnitForm = ({ product, setOpenDialog, unit }) => {
                 sx={{ display: 'flex' }}
                 loading={isPending}
             >
-                Submit
+                {dictionary.products.list.secondaryForm.buttons.submit}
             </LoadingButton>
         </DialogActions>
     </form>

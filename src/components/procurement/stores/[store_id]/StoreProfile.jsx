@@ -9,6 +9,7 @@ import StoreProfileProvider from './StoreProfileProvider';
 import StoreProfileSidebar from './StoreProfileSidebar';
 import StoreSelectionForMobile from './StoreSelectionForMobile';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
+import JumboContentLayoutProvider from '@jumbo/components/JumboContentLayout/JumboContentLayoutProvider';
 
 function StoreProfile() {
     const { theme } = useJumboTheme();
@@ -44,14 +45,16 @@ function StoreProfile() {
 
     return (
         <StoreProfileProvider>
-            <JumboContentLayout
-                header={<StoreProfileHeader />}
-                sidebar={<StoreProfileSidebar />}
-                layoutOptions={layoutOptions}
-            >
-                {smallScreen && <StoreSelectionForMobile />}
-                <StoreProfileContent />
-            </JumboContentLayout>
+            <JumboContentLayoutProvider>
+                <JumboContentLayout
+                    header={<StoreProfileHeader />}
+                    sidebar={<StoreProfileSidebar />}
+                    layoutOptions={layoutOptions}
+                >
+                    {smallScreen && <StoreSelectionForMobile />}
+                    <StoreProfileContent />
+                </JumboContentLayout>
+            </JumboContentLayoutProvider>
         </StoreProfileProvider>
     );
 }

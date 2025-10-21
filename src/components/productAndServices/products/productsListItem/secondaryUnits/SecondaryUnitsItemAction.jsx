@@ -5,17 +5,19 @@ import EditSecondaryUnitForm from './EditSecondaryUnitForm';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import productServices from '../../productServices';
+import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
 
 function SecondaryUnitsItemAction({ product, selectedUnit, setSelectedUnit, openUnitEditDialog, setOpenUnitEditDialog, openUnitDeleteDialog, setOpenUnitDeleteDialog}) {
     const {theme} = useJumboTheme();
     const smallScreen = useMediaQuery(theme.breakpoints.down('md'));
     const { enqueueSnackbar } = useSnackbar();
     const queryClient = useQueryClient();
+    const dictionary = useDictionary();
 
     const { mutate: deleteUnit } = useMutation({
       mutationFn: productServices.deleteUnit,
       onSuccess: (data) => {
-        enqueueSnackbar(data.message, {
+        enqueueSnackbar(dictionary.products.list.secondaryForm.messages.deleteSuccess, {
           variant: 'success',
         });
         queryClient.invalidateQueries({
@@ -33,15 +35,15 @@ function SecondaryUnitsItemAction({ product, selectedUnit, setSelectedUnit, open
     <React.Fragment>
       {/* Delete Confirmation Dialog */}
       <Dialog open={openUnitDeleteDialog}>
-        <DialogTitle>Delete Confirmation</DialogTitle>
+        <DialogTitle>{dictionary.products.list.secondaryDialog.showDialog.title}</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Are you sure you want to Delete this Secondary Measurement Unit?
+           {dictionary.products.list.secondaryDialog.showDialog.content}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => {setSelectedUnit(null); setOpenUnitDeleteDialog(false); }} color="primary">
-            Cancel
+            {dictionary.products.list.secondaryDialog.dialogActions.cancel}
           </Button>
           <Button
             onClick={() => {
@@ -53,7 +55,7 @@ function SecondaryUnitsItemAction({ product, selectedUnit, setSelectedUnit, open
             }}
             color="primary"
           >
-            Yes
+           {dictionary.products.list.secondaryDialog.dialogActions.yes}
           </Button>
         </DialogActions>
       </Dialog>

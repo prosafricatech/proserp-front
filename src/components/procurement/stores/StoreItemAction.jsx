@@ -8,12 +8,14 @@ import StoreForm from './StoreForm';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { JumboDdMenu } from '@jumbo/components';
+import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
 
 const StoreItemAction = ({store}) => {
   const [openEditDialog,setOpenEditDialog] = useState(false);
   const {showDialog,hideDialog} = useJumboDialog();
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
+  const dictionary = useDictionary();
 
   //Screen handling constants
   const {theme} = useJumboTheme();
@@ -22,17 +24,17 @@ const StoreItemAction = ({store}) => {
   const deleteStore = useMutation({
     mutationFn: storeServices.delete,
     onSuccess: (data) => {
-      enqueueSnackbar(data?.message, { variant: 'success' });
+      enqueueSnackbar(dictionary.stores.form.messages.deleteSuccess, { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['stores'] });
     },
     onError: (error) => {
-      enqueueSnackbar(error?.response?.data?.message, { variant: 'error' });
+      enqueueSnackbar(dictionary.stores.form.errors.messages.deleteSuccess, { variant: 'error' });
     },
   });
 
   const menuItems = [
-    {icon: <EditOutlined/>, title: 'Edit', action: 'edit'},
-    {icon: <DeleteOutlined color='error'/>, title: 'Delete', action: 'delete'}
+    {icon: <EditOutlined/>, title: dictionary.stores.list.actionsTitle.labels.edit, action: 'edit'},
+    {icon: <DeleteOutlined color='error'/>, title: dictionary.stores.list.actionsTitle.labels.delete, action: 'delete'}
   ]
 
   const handleItemAction = (menuItem) => {
@@ -42,8 +44,8 @@ const StoreItemAction = ({store}) => {
         break;
       case 'delete':
         showDialog({
-          title: 'Confirm Store',
-          content: 'Are you sure you want to delete this Store?',
+          title: dictionary.stores.list.dialog.showDialog.title,
+          content: dictionary.stores.list.dialog.showDialog.content,
           onYes: () =>{ 
             hideDialog();
             deleteStore(store.id)
@@ -69,7 +71,7 @@ const StoreItemAction = ({store}) => {
       </Dialog>
       <JumboDdMenu
         icon={
-          <Tooltip title='Actions'>
+          <Tooltip title={dictionary.stores.list.labels.actions}>
             <MoreHorizOutlined fontSize='small'/>
           </Tooltip>
       }

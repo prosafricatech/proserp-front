@@ -1,25 +1,69 @@
-import React from 'react';
-import { Button, DialogActions, DialogContent, DialogTitle, IconButton, Tooltip } from '@mui/material';
-import { useProjectProfile } from '../../ProjectProfileProvider';
-import { HighlightOff } from '@mui/icons-material';
-import Highcharts from 'highcharts';
-import HighchartsReact from 'highcharts-react-official';
-import treemap from "highcharts/modules/treemap";
-import treegraph from 'highcharts/modules/treegraph';
-import exporting from 'highcharts/modules/exporting';
-import exportData from 'highcharts/modules/export-data';
-import offlineExporting from 'highcharts/modules/offline-exporting';
+"use client";
 
-if (typeof Highcharts === 'object') {
-  treemap(Highcharts);
-  treegraph(Highcharts);
-  exporting(Highcharts);
-  exportData(Highcharts);
-  offlineExporting(Highcharts);
-}
+import React, { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
+import Highcharts from "highcharts";
+import { Button, DialogActions, DialogContent, DialogTitle, IconButton, LinearProgress, Tooltip } from "@mui/material";
+import { HighlightOff } from "@mui/icons-material";
+import { useProjectProfile } from "../../ProjectProfileProvider";
+import { BackdropSpinner } from "@/shared/ProgressIndicators/BackdropSpinner";
+
+const HighchartsReact = dynamic(
+  () => import("highcharts-react-official").then((m) => (m && (m.default ?? m))),
+  { ssr: false }
+);
 
 function TasksTreeView({ setOpenTasksTreeView }) {
   const { project, projectTimelineActivities } = useProjectProfile();
+  const [modulesLoaded, setModulesLoaded] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const initModule = (mod) => {
+      const fn = mod && (mod.default ?? mod);
+      if (typeof fn === "function") {
+        try {
+          fn(Highcharts);
+          return true;
+        } catch (err) {
+          console.warn("Highcharts module initializer threw:", err);
+          return false;
+        }
+      } else {
+        console.warn("Highcharts module is not a function:", mod);
+        return false;
+      }
+    };
+
+    async function load() {
+      try {
+        const modules = await Promise.all([
+          import("highcharts/modules/treemap"),
+          import("highcharts/modules/treegraph"),
+          import("highcharts/modules/exporting"),
+          import("highcharts/modules/export-data"),
+          import("highcharts/modules/offline-exporting"),
+        ]);
+
+        modules.forEach(initModule);
+      } catch (err) {
+        console.error("Failed to load Highcharts modules:", err);
+      } finally {
+        if (mounted) setModulesLoaded(true);
+      }
+    }
+
+    if (typeof window !== "undefined") load();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  if (!modulesLoaded) {
+    return <BackdropSpinner/>;
+  }
 
   const tasksTreeViewSeriesData = (groups) => {
     if (!Array.isArray(groups)) return [];
@@ -162,24 +206,18 @@ function TasksTreeView({ setOpenTasksTreeView }) {
 
   return (
     <>
-      <DialogTitle sx={{ textAlign: 'center', display: 'flex', justifyContent: 'flex-end', alignItems: 'center', border: 'none' }}>
+      <DialogTitle sx={{ textAlign: "center", display: "flex", justifyContent: "flex-end", alignItems: "center" }}>
         <Tooltip title="Close">
-          <IconButton
-            size="small"
-            color="primary"
-            onClick={() => setOpenTasksTreeView(false)}
-          >
+          <IconButton size="small" color="primary" onClick={() => setOpenTasksTreeView(false)}>
             <HighlightOff color="primary" />
           </IconButton>
         </Tooltip>
       </DialogTitle>
+
       <DialogContent>
-        <HighchartsReact
-          highcharts={Highcharts}
-          options={chartOptions}
-          constructorType="chart"
-        />
+        <HighchartsReact highcharts={Highcharts} options={chartOptions} constructorType="chart" />
       </DialogContent>
+
       <DialogActions>
         <Button onClick={() => setOpenTasksTreeView(false)}>Close</Button>
       </DialogActions>

@@ -19,6 +19,7 @@ import userManagementServices from './user-management-services';
 import VerifyUserFormDialog from './VerifyUserFormDialog';
 import { User } from './UserManagementType';
 import { MenuItemProps } from '@jumbo/types';
+import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
 
     interface ApiResponse {
       message?: string;
@@ -38,7 +39,8 @@ import { MenuItemProps } from '@jumbo/types';
         const queryClient = useQueryClient();
         const { theme } = useJumboTheme();
         const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
-
+        const dictionary = useDictionary();
+console.log(dictionary.userManagement.list)
         const handleApiError = (error: any, fallback: string) => {
           const message = error?.response?.data?.message || error.message || fallback;
           enqueueSnackbar(message, { variant: 'error' });
@@ -69,7 +71,7 @@ import { MenuItemProps } from '@jumbo/types';
           const menuItems: MenuItemProps[] = [
             {
               icon: isActive ? <BlockIcon sx={{ color: 'error.main' }} /> : <ReplayIcon sx={{ color: 'primary.main' }} />,
-              title: isActive ? 'Deactivate' : 'Reactivate',
+              title: isActive ? dictionary.userManagement.list.actionsTitle.labels.deactivate : dictionary.userManagement.list.actionsTitle.labels.reactivate,
               action: isActive ? 'deactivate' : 'reactivate',
             },
           ];
@@ -125,7 +127,7 @@ import { MenuItemProps } from '@jumbo/types';
 
         <JumboDdMenu
           icon={
-            <Tooltip title="User Actions">
+            <Tooltip title={dictionary.userManagement.list.labels.userActions}>
               <MoreHorizOutlined fontSize="small" />
             </Tooltip>
           }

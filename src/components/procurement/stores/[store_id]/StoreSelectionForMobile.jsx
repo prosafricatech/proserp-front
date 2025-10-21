@@ -13,7 +13,7 @@ function StoreSelectionForMobile() {
 
   return (
     <Grid container m={2} spacing={2}>
-        <Grid size={10}>
+        <Grid size={12}>
             <Autocomplete
                 options={selectOptions}
                 getOptionLabel={(option) => option.name}

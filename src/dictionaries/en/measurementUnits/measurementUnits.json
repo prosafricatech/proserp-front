@@ -35,6 +35,11 @@
           "required": "symbol is required",
           "invalid": "A valid format is required (e.g. dz)"
         }
+      },
+       "messages": {
+        "deleteResponse": " Measurement failed to delete",
+        "updateResponse": "Update failed",
+        "createResponse": "new measurement failed to be added!"
       }
     }
   },

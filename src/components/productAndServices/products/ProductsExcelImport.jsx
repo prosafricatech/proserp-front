@@ -11,6 +11,7 @@ import {yupResolver} from '@hookform/resolvers/yup'
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import productServices from './productServices';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
 
 function ProductsExcelImport({setOpenDialog}) {
       //Validation schema
@@ -32,6 +33,7 @@ function ProductsExcelImport({setOpenDialog}) {
     const queryClient = useQueryClient();
     const {enqueueSnackbar} = useSnackbar();
     const {authOrganization} = useJumboAuth();
+    const dictionary = useDictionary();
 
     const uploadExcel = useMutation({
         mutationFn: productServices.importProductsExcel,
@@ -66,7 +68,7 @@ function ProductsExcelImport({setOpenDialog}) {
             </Grid>
             <Grid size={{xs: 12, md: 6}}>
                 <DateTimePicker
-                    label="Stock As at"
+                    label={dictionary.products.excelForm.labels.stockAsAt}
                     fullWidth
                     defaultValue={dayjs()}
                     minDate={dayjs(authOrganization.organization.recording_start_date)}
@@ -89,7 +91,7 @@ function ProductsExcelImport({setOpenDialog}) {
             </Grid>
             <Grid size={{xs: 12, md: 6}}>
                 <LedgerSelect
-                    label={'Stock Complement Ledger'}
+                    label={dictionary.products.excelForm.labels.stockComplementtLedger}
                     allowedGroups={['Capital','Expenses','Accounts Payable']}
                     frontError={errors.stock_complement_ledger_id}
                     onChange={(newValue) => setValue('stock_complement_ledger_id', !!newValue ? newValue.id : null,{
@@ -104,7 +106,7 @@ function ProductsExcelImport({setOpenDialog}) {
                 size='small'
                 onClick={() => setOpenDialog(false)}
             >
-            Cancel
+            {dictionary.products.excelForm.buttons.cancel}
             </Button>
             <LoadingButton
                 size='small'
@@ -113,7 +115,7 @@ function ProductsExcelImport({setOpenDialog}) {
                 variant='contained'
                 color='success'
             >
-                Upload
+                {dictionary.products.excelForm.buttons.upload}
             </LoadingButton>
         </DialogActions>
     </form>

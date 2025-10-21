@@ -1,0 +1,56 @@
+{
+    "form": {
+     "title": "New Store",
+   "buttons": {
+     "submit": "Submit",
+     "cancel": "Cancel"
+    },
+    "pageTitle": "Edit: {storeName}",
+     "heading": "Editing: {storeName}",
+    "labels": {
+      "listHeader": "Stores",
+      "storeName": "Store Name",
+      "storeAlias": "Store Alias",
+      "storeUsers": "Store Users",
+      "description": "Description"
+    },
+    "messages": {
+      "loading": "Processing Store details...",
+      "createSuccess": "Store successfully registered!",
+      "updateSuccess": "Store successfully updated!",
+      "deleteSuccess": "Store successfully deleted"
+    },
+    "errors": {
+      "validation": {
+        "storeName": {
+          "required": "Store name is required"
+        }
+      },
+      "messages": {
+        "createResponse": "Failed to add store!",
+        "updateResponse": "Failed to update store",
+        "deleteResponse": "Failed to delete store"
+      }
+    } 
+  },
+  "list": {
+    "labels": {
+      "storeName": "Store Name",
+      "description": "Description",
+      "actions": "actions",
+      "newCreateLabel": "New store"
+    },
+    "actionsTitle": {
+      "labels": {
+      "edit": "Edit",
+      "delete": "Delete"
+      }
+    },
+     "dialog": {
+      "showDialog": {
+        "title":"Delete confirmation",
+        "content": "Are you sure you want to delete this Store?"
+      }
+    }
+  }
+}

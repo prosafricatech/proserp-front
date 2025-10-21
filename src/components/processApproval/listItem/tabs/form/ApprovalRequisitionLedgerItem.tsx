@@ -134,7 +134,11 @@ function ApprovalRequisitionLedgerItem({
                                 fullWidth
                                 size="small"
                                 defaultValue={item.quantity}
-                                onChange={(e) => handleItemChange(itemIndex, 'quantity', sanitizedNumber(e.target.value))}
+                                onChange={(e) => handleItemChange({ 
+                                    index: itemIndex, 
+                                    key: 'quantity', 
+                                    value: sanitizedNumber(e.target.value) 
+                                })}
                                 error={!!errors?.[itemIndex]?.quantity}
                                 helperText={errors?.[itemIndex]?.quantity?.message || ''}
                                 InputProps={{
@@ -153,7 +157,11 @@ function ApprovalRequisitionLedgerItem({
                                 defaultValue={item.rate}
                                 error={!!errors?.[itemIndex]?.rate}
                                 helperText={errors?.[itemIndex]?.rate?.message || ''}
-                                onChange={(e) => handleItemChange(itemIndex, 'rate', sanitizedNumber(e.target.value))}
+                                onChange={(e) => handleItemChange({
+                                    index: itemIndex, 
+                                    key: 'rate', 
+                                    value: sanitizedNumber(e.target.value)
+                                })}
                                 InputProps={{
                                     inputComponent: CommaSeparatedField,
                                 }}
@@ -185,7 +193,11 @@ function ApprovalRequisitionLedgerItem({
                                 fullWidth
                                 size="small"
                                 defaultValue={item.remarks}
-                                onChange={(e) => handleItemChange(itemIndex, 'remarks', e.target.value)}
+                                onChange={(e) => handleItemChange({
+                                    index: itemIndex, 
+                                    key: 'remarks', 
+                                    value: e.target.value
+                                })}
                             />
                         </Div>
                     </Grid>

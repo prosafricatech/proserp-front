@@ -4,11 +4,13 @@ import { DeleteOutlined, EditOutlined } from '@mui/icons-material';
 import SecondaryUnitsItemAction from './SecondaryUnitsItemAction';
 import productServices from '../../productServices';
 import { useQuery } from '@tanstack/react-query';
+import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
 
 function SecondaryUnits({expanded, product}) {
   const [selectedUnit, setSelectedUnit] = useState(null);
   const [openUnitDeleteDialog, setOpenUnitDeleteDialog] = useState(false);
   const [openUnitEditDialog, setOpenUnitEditDialog] = useState(false);
+  const dictionary = useDictionary();
 
   const { data: secondaryUnits, isLoading } = useQuery({
     queryKey: ['secondaryUnits', product.id],
@@ -40,17 +42,17 @@ function SecondaryUnits({expanded, product}) {
           container
         >
           <Grid size={{xs: 6, md: 4, lg: 4}}>
-            <Tooltip title={'Unit Name'}>
+            <Tooltip title={dictionary.products.list.secondaryForm.labels.unitName}>
               <Typography>{secondaryUnit?.name}</Typography>
             </Tooltip>
           </Grid>
           <Grid size={{xs: 6, md: 3}}>
-            <Tooltip title={'Symbol'}>
+            <Tooltip title={dictionary.products.list.secondaryForm.labels.symbol}>
               <Typography variant='caption'>{secondaryUnit?.unit_symbol}</Typography>
             </Tooltip>
           </Grid>
           <Grid size={{xs: 6, md: 3}}>
-            <Tooltip title={'Conversion Factor'}>
+            <Tooltip title={dictionary.products.list.secondaryForm.labels.conversionFactor}>
               <Typography>{secondaryUnit?.conversion_factor}</Typography>
             </Tooltip>
           </Grid>
@@ -60,7 +62,7 @@ function SecondaryUnits({expanded, product}) {
               flexDirection={'row'}
               justifyContent={'flex-end'}
             >
-              <Tooltip  title={`Edit ${secondaryUnit.name}`}>
+              <Tooltip  title={dictionary.products.list.secondaryForm.actionsTitle.edit.replace('{unitName}',secondaryUnit.name)}>
                 <IconButton 
                   onClick={() => {
                     setSelectedUnit(secondaryUnit);
@@ -70,7 +72,7 @@ function SecondaryUnits({expanded, product}) {
                   <EditOutlined fontSize={'small'} />
                 </IconButton>
               </Tooltip>
-              <Tooltip title={`Delete ${secondaryUnit.name}`}>
+              <Tooltip title={dictionary.products.list.secondaryForm.actionsTitle.delete.replace('{unitName}',secondaryUnit.name)}>
                 <IconButton
                   onClick={() => {
                     setSelectedUnit(secondaryUnit);
@@ -85,7 +87,7 @@ function SecondaryUnits({expanded, product}) {
         </Grid>
         ))
         :
-        !isLoading && <Alert variant='outlined' color='primary' severity='info'>No Secondary Unit Found</Alert> 
+        !isLoading && <Alert variant='outlined' color='primary' severity='info'>{dictionary.products.list.alert.info}</Alert> 
       }
 
       {/* ItemAction*/}

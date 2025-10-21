@@ -37,12 +37,12 @@ const ExchangeRatesItemAction: React.FC<ExchangeRatesItemActionProps> = ({
     mutationFn: currencyServices.deleteExchangeRate,
     onSuccess: (data: { message: string }) => {
       queryClient.invalidateQueries({ queryKey: ['exchangeRates'] });
-      enqueueSnackbar(data.message, {
+      enqueueSnackbar(dictionary.currencies.form.messages.deleteSuccess, {
         variant: 'success',
       });
     },
     onError: (error: any) => {
-      enqueueSnackbar(error?.response?.data.message, { variant: 'error' });
+      enqueueSnackbar(dictionary.currencies.form.errors.messages.deleteResponse, { variant: 'error' });
     },
   });
 

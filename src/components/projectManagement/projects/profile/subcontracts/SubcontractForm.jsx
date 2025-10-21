@@ -28,7 +28,6 @@ function SubcontractForm({setOpenDialog, subContract = null }) {
     const [stakeholderQuickAddDisplay, setStakeholderQuickAddDisplay] = useState(false);
     const [addedStakeholder, setAddedStakeholder] = useState(null);
 
-    // React Query v5 syntax for useMutation
     const { mutate: addSubcontract, isPending } = useMutation({
         mutationFn: projectsServices.addSubcontract,
         onSuccess: (data) => {
@@ -97,7 +96,7 @@ function SubcontractForm({setOpenDialog, subContract = null }) {
         <Grid container spacing={1}>
           {!stakeholderQuickAddDisplay &&
             <Grid size={{xs: 12, md: 4}}>
-              <Div sx={{ mt: 1, mb: 1 }}>
+              <Div sx={{ mt: 1 }}>
                 <StakeholderSelector
                   label='Sub Contractor Name'
                   defaultValue={subContract && subContract.subcontractor_id}
@@ -174,7 +173,7 @@ function SubcontractForm({setOpenDialog, subContract = null }) {
                         )
                     }
                     <Grid size={{xs: 12, md: 4}}>
-                        <Div sx={{ mt: 1, mb: 1 }}>
+                        <Div sx={{ mt: 1 }}>
                             <TextField
                                 label="Reference"
                                 size="small"
@@ -185,7 +184,7 @@ function SubcontractForm({setOpenDialog, subContract = null }) {
                         </Div>
                     </Grid>
                     <Grid size={{xs: 12, md: 4}}>
-                        <Div sx={{ mt: 1, mb: 1 }}>
+                        <Div sx={{ mt: 1 }}>
                             <DateTimePicker
                                 label='Commencement Date'
                                 fullWidth
@@ -208,7 +207,7 @@ function SubcontractForm({setOpenDialog, subContract = null }) {
                         </Div>
                     </Grid>
                     <Grid size={{xs: 12, md: 4}}>
-                        <Div sx={{ mt: 1, mb: 1 }}>
+                        <Div sx={{ mt: 1 }}>
                             <DateTimePicker
                                 label='Completion Date'
                                 fullWidth
@@ -231,7 +230,7 @@ function SubcontractForm({setOpenDialog, subContract = null }) {
                         </Div>
                     </Grid>
                     <Grid size={{xs: 12, md: watch('currency_id') > 1 ? 12 : 4}}>
-                        <Div sx={{ mt: 1, mb: 1 }}>
+                        <Div sx={{ mt: 1 }}>
                             <TextField
                                 label="Remarks"
                                 size="small"

@@ -309,7 +309,7 @@ function PurchaseOrderItemForm({ setClearFormKey, submitMainForm, submitItemForm
                                 />
                             </Typography>
                         </Grid>
-                        <Grid size={{xs: 3, md: vat_factor ? 2 : 3}}>
+                        <Grid size={{xs: 12, md: vat_factor ? 2 : 3}}>
                             {isRetrieving ? (
                                 <LinearProgress />
                             ) : (

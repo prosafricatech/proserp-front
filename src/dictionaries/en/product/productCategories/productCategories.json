@@ -1,0 +1,65 @@
+{
+    "form": {
+        "title": "New Category",
+    "buttons": {
+      "save": "Save",
+      "cancel": "Cancel"
+    },
+    "pageTitle": "Edit: {categoryName}",
+    "heading": "Editing: {categoryName}",
+    "labels": {
+      "categoryName": "Category Name",
+      "incomeLedger": "Income Ledger",
+      "description": "Description",
+      "parentCategory": "Parent Category",
+      "expenseLedger": "Expense Ledger"
+    },
+    "messages": {
+      "loading": "Processing product category details...",
+      "createSuccess": "New product category successfully added!",
+      "updateSuccess": "Product category successfully updated!",
+      "deleteSuccess": "Product category successfully deleted"
+    },
+    "errors": {
+      "validation": {
+        "name": {
+          "required": "Category name is required"
+        },
+        "income_ledger_id": {
+          "required": "Income ledger is required",
+          "positive": " Income ledger id must be positive number"
+        },
+        "expense_ledger_id": {
+          "required": "Expense ledger is required",
+          "positive": " Expense ledger id must be positive number"
+        }
+      },
+      "messages": {
+        "CreateResponse": "Something went wrong",
+        "updateResponse": "Error occur",
+        "deleteResponse": " Failed to deleted product category"
+      }
+    } 
+  },
+  "list": {
+    "labels": {
+      "listHeader": "Product Categories",
+      "categoryName": "Category Name",
+      "incomeLedger": "Income Ledger",
+      "actions": "Actions",
+      "newCreateLabel": "New Product Category"
+    },
+     "actionsTitle": {
+      "labels": {
+      "edit": "Edit",
+      "delete": "Delete"
+      }
+    },
+    "dialog": {
+      "showDialog": {
+        "title": "Confirm Delete?",
+        "content": "If you say yes, this item will be deleted provided it is not associated with any transactions"
+      }
+    } 
+  }
+}

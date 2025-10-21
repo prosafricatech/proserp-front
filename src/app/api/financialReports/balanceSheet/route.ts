@@ -15,5 +15,19 @@ export async function GET(req: NextRequest) {
     credentials: 'include',
   });
 
-   return handleJsonResponse(res);
+  const contentType = res.headers.get("content-type");
+
+  if (contentType?.includes("application/json")) {
+    return handleJsonResponse(res);
+  } else {
+    // forward blob (Excel file)
+    const buffer = await res.arrayBuffer();
+    return new Response(buffer, {
+      status: res.status,
+      headers: {
+        "Content-Type": contentType || "application/octet-stream",
+        "Content-Disposition": res.headers.get("content-disposition") || "",
+      },
+    });
+  }
 }

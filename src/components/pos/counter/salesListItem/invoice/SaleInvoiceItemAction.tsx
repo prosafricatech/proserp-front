@@ -20,7 +20,7 @@ import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { Theme } from '@mui/material/styles';
 import { Organization } from '@/types/auth-types';
 import { Invoice } from '../SaleInvoices';
-import SalesInvoiceAdjustment from './saleAdjustment/SalesInvoiceAdjustment';
+import SalesInvoiceAdjustment from './saleAdjustment/form/SalesInvoiceAdjustment';
 
 interface SaleInvoiceItemActionProps {
   selectedInvoice: Invoice | null;
@@ -158,7 +158,7 @@ const SaleInvoiceItemAction: React.FC<SaleInvoiceItemActionProps> = ({
         open={openDocumentDialog || openInvoiceEditDialog || openAdjustmentDialog}
         scroll={(belowLargeScreen || !openDocumentDialog) ? 'body' : 'paper'}
         fullWidth
-        fullScreen={!!openInvoiceEditDialog && belowLargeScreen}
+        fullScreen={(!!openInvoiceEditDialog || openAdjustmentDialog) && belowLargeScreen}
         maxWidth={openDocumentDialog ? 'md' : "lg"}
         onClose={() => setOpenDocumentDialog(false)}
       >

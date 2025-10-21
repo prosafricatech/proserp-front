@@ -22,6 +22,8 @@ import {
   TroubleshootOutlined,
   CardMembershipOutlined,
   SmsOutlined,
+  LocalGasStation,
+  RoomPreferences,
 } from '@mui/icons-material';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -30,6 +32,7 @@ import {
   faUsersGear,
   faBarsProgress,
   faFillDrip,
+  faRulerVertical,
 } from '@fortawesome/free-solid-svg-icons';
 
 import { Box } from '@mui/material';
@@ -83,6 +86,9 @@ export const iconMap: Record<string, React.ReactNode> = {
   prosAfricans: faIcon(faUsersGear),
   troubleshooting: muiIcon(TroubleshootOutlined),
   subscriptions: muiIcon(CardMembershipOutlined),
+  salesShifts: muiIcon(LocalGasStation),
+  dippings: faIcon(faRulerVertical),
+  fuelMasters: muiIcon(RoomPreferences),
   projects: faIcon(faBarsProgress),
   consumptions: faIcon(faFillDrip),
   approvedPurchases: muiIcon(ShoppingCartCheckoutOutlined),
@@ -191,6 +197,42 @@ export async function getMenus(locale: string): Promise<MenuEntry[]> {
             {
               uri: `/${locale}/pos/pos-settings`,
               label: sidebar.menuItem.settings,
+              type: 'nav-item',
+            },
+          ],
+        },
+      ],
+    },
+    {
+      label: sidebar.menu.fuelStations,
+      type: 'section',
+      children: [
+        {
+          uri: `/${locale}/fuelStations/salesShifts`,
+          label: sidebar.menuItem.salesShifts,
+          type: 'nav-item',
+          icon: iconMap.salesShifts,
+        },
+        {
+          uri: `/${locale}/fuelStations/dippings`,
+          label: sidebar.menuItem.dippings,
+          type: 'nav-item',
+          icon: iconMap.dippings,
+        },
+        {
+          uri: `/${locale}/fuelStations/reports`,
+          label: sidebar.menuItem.reports,
+          type: 'nav-item',
+          icon: iconMap.reports,
+        },
+        {
+          label: sidebar.menuItem.masters,
+          type: 'collapsible',
+          icon: iconMap.fuelMasters,
+          children: [
+            {
+              uri: `/${locale}/fuelStations/stations`,
+              label: sidebar.menuItem.stations,
               type: 'nav-item',
             },
           ],

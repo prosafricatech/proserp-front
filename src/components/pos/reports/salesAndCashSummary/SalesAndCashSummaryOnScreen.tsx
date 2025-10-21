@@ -7,7 +7,10 @@ import {
   TableContainer, 
   TableHead, 
   TableRow, 
-  Paper 
+  Paper,
+  useTheme,
+  Box,
+  Grid
 } from '@mui/material';
 import { AuthOrganization } from '@/types/auth-types';
 
@@ -45,8 +48,9 @@ const SalesAndCashSummaryOnScreen: React.FC<SalesAndCashSummaryOnScreenProps> = 
   reportData, 
   authOrganization 
 }) => {
+  const theme = useTheme();
   const mainColor = authOrganization.organization.settings?.main_color || "#2113AD";
-  const lightColor = authOrganization.organization.settings?.light_color || "#bec5da";
+  const headerColor = theme.type === 'dark' ? '#29f096' : (authOrganization.organization.settings?.main_color || "#2113AD");
   const contrastText = authOrganization.organization.settings?.contrast_text || "#FFFFFF";
 
   // Calculate totals
@@ -71,93 +75,119 @@ const SalesAndCashSummaryOnScreen: React.FC<SalesAndCashSummaryOnScreenProps> = 
     0
   );
 
+  const formatNumber = (value: number) => {
+    return value.toLocaleString("en-US", {
+      maximumFractionDigits: 2,
+      minimumFractionDigits: 2,
+    });
+  };
+
   return (
-    <div>
+    <Box sx={{ padding: 2 }}>
       {/* Sales Section */}
-      <Typography variant="h5" sx={{ padding: 1, textAlign: 'right', marginTop: 2 }}>
-        <span style={{ color: mainColor }}>Sales:</span>{" "}
-        {reportData.revenue.toLocaleString("en-US", {
-          maximumFractionDigits: 2,
-          minimumFractionDigits: 2,
-        })}
-      </Typography>
+      <Box sx={{ textAlign: 'right', mb: 3 }}>
+        <Typography variant="h5" color={headerColor} fontWeight="bold">
+          Sales: {formatNumber(reportData.revenue)}
+        </Typography>
+      </Box>
 
       {/* Payments Collected Section */}
       {reportData.collection_distribution.length > 0 && (
-        <>
+        <Box sx={{ mb: 3 }}>
           <Typography
             variant="h6"
             sx={{
               backgroundColor: mainColor,
               color: contrastText,
-              padding: 1,
+              padding: 1.5,
               textAlign: "center",
-              marginTop: 2,
+              fontWeight: 'bold',
+              fontSize: '1rem'
             }}
           >
             Payments Collected
           </Typography>
-          <TableContainer component={Paper}>
+          <TableContainer 
+            component={Paper}
+            sx={{
+              boxShadow: theme.shadows[1],
+              '& .MuiTableRow-root:hover': {
+                backgroundColor: theme.palette.action.hover,
+              }
+            }}
+          >
             <Table>
               <TableBody>
                 {reportData.collection_distribution.map((cd, index) => (
                   <TableRow
                     key={index}
                     sx={{
-                      backgroundColor: index % 2 === 0 ? "#FFFFFF" : lightColor,
+                      backgroundColor: theme.palette.background.paper,
+                      '&:nth-of-type(even)': {
+                        backgroundColor: theme.palette.action.hover,
+                      }
                     }}
                   >
-                    <TableCell>{cd.name}</TableCell>
-                    <TableCell align="right">
-                      {cd.amount.toLocaleString("en-US", {
-                        maximumFractionDigits: 2,
-                        minimumFractionDigits: 2,
-                      })}
+                    <TableCell sx={{ fontWeight: 'medium' }}>{cd.name}</TableCell>
+                    <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                      {formatNumber(cd.amount)}
                     </TableCell>
                   </TableRow>
                 ))}
-                <TableRow>
-                  <TableCell>
-                    <strong>Total</strong>
+                <TableRow sx={{ backgroundColor: theme.palette.background.default }}>
+                  <TableCell sx={{ fontWeight: 'bold', borderBottom: 'none' }}>
+                    Total
                   </TableCell>
-                  <TableCell align="right">
-                    <strong>
-                      {totalCollectedAmount.toLocaleString("en-US", {
-                        maximumFractionDigits: 2,
-                        minimumFractionDigits: 2,
-                      })}
-                    </strong>
+                  <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'bold', borderBottom: 'none' }}>
+                    {formatNumber(totalCollectedAmount)}
                   </TableCell>
                 </TableRow>
               </TableBody>
             </Table>
           </TableContainer>
-        </>
+        </Box>
       )}
 
       {/* Credits and Received Payments Section */}
       {reportData.credit_sales.length > 0 && (
-        <>
+        <Box sx={{ mb: 3 }}>
           <Typography
             variant="h6"
             sx={{
               backgroundColor: mainColor,
               color: contrastText,
-              padding: 1,
+              padding: 1.5,
               textAlign: "center",
-              marginTop: 3,
+              fontWeight: 'bold',
+              fontSize: '1rem'
             }}
           >
             Credits and Received Payments
           </Typography>
-          <TableContainer component={Paper}>
+          <TableContainer 
+            component={Paper}
+            sx={{
+              boxShadow: theme.shadows[1],
+              '& .MuiTableRow-root:hover': {
+                backgroundColor: theme.palette.action.hover,
+              }
+            }}
+          >
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell align="left">Paid</TableCell>
-                  <TableCell align="right">Purchase</TableCell>
-                  <TableCell align="right">Payment</TableCell>
-                  <TableCell align="right">Balance</TableCell>
+                  <TableCell sx={{ backgroundColor: theme.palette.background.default, fontWeight: 'bold', fontSize: '0.875rem' }}>
+                    Paid To
+                  </TableCell>
+                  <TableCell align="right" sx={{ backgroundColor: theme.palette.background.default, fontWeight: 'bold', fontSize: '0.875rem' }}>
+                    Purchase
+                  </TableCell>
+                  <TableCell align="right" sx={{ backgroundColor: theme.palette.background.default, fontWeight: 'bold', fontSize: '0.875rem' }}>
+                    Payment
+                  </TableCell>
+                  <TableCell align="right" sx={{ backgroundColor: theme.palette.background.default, fontWeight: 'bold', fontSize: '0.875rem' }}>
+                    Balance
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -165,91 +195,96 @@ const SalesAndCashSummaryOnScreen: React.FC<SalesAndCashSummaryOnScreenProps> = 
                   <TableRow
                     key={index}
                     sx={{
-                      backgroundColor: index % 2 === 0 ? "#FFFFFF" : lightColor,
+                      backgroundColor: theme.palette.background.paper,
+                      '&:nth-of-type(even)': {
+                        backgroundColor: theme.palette.action.hover,
+                      }
                     }}
                   >
-                    <TableCell>{creditSale.name}</TableCell>
-                    <TableCell align="right">
-                      {creditSale.debit_amount
-                        ? creditSale.debit_amount.toLocaleString("en-US", {
-                            maximumFractionDigits: 2,
-                            minimumFractionDigits: 2,
-                          })
-                        : "-"}
+                    <TableCell sx={{ fontWeight: 'medium' }}>{creditSale.name}</TableCell>
+                    <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                      {creditSale.debit_amount ? formatNumber(creditSale.debit_amount) : "-"}
                     </TableCell>
-                    <TableCell align="right">
-                      {creditSale.credit_amount
-                        ? creditSale.credit_amount.toLocaleString("en-US", {
-                            maximumFractionDigits: 2,
-                            minimumFractionDigits: 2,
-                          })
-                        : "-"}
+                    <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                      {creditSale.credit_amount ? formatNumber(creditSale.credit_amount) : "-"}
                     </TableCell>
-                    <TableCell align="right">
-                      {creditSale.balance.toLocaleString("en-US", {
-                        maximumFractionDigits: 2,
-                        minimumFractionDigits: 2,
-                      })}
+                    <TableCell 
+                      align="right" 
+                      sx={{ 
+                        fontFamily: 'monospace', 
+                        fontWeight: 'bold',
+                        color: (creditSale.balance || 0) < 0 ? 'error.main' : 'success.main'
+                      }}
+                    >
+                      {formatNumber(creditSale.balance)}
                     </TableCell>
                   </TableRow>
                 ))}
-                <TableRow>
-                  <TableCell>
-                    <strong>Total</strong>
+                <TableRow sx={{ backgroundColor: theme.palette.background.default }}>
+                  <TableCell sx={{ fontWeight: 'bold', borderBottom: 'none' }}>
+                    Total
                   </TableCell>
-                  <TableCell align="right">
-                    <strong>
-                      {totalDebitAmount.toLocaleString("en-US", {
-                        maximumFractionDigits: 2,
-                        minimumFractionDigits: 2,
-                      })}
-                    </strong>
+                  <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'bold', borderBottom: 'none' }}>
+                    {formatNumber(totalDebitAmount)}
                   </TableCell>
-                  <TableCell align="right">
-                    <strong>
-                      {totalCreditAmount.toLocaleString("en-US", {
-                        maximumFractionDigits: 2,
-                        minimumFractionDigits: 2,
-                      })}
-                    </strong>
+                  <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'bold', borderBottom: 'none' }}>
+                    {formatNumber(totalCreditAmount)}
                   </TableCell>
-                  <TableCell align="right">
-                    <strong>
-                      {totalBalance.toLocaleString("en-US", {
-                        maximumFractionDigits: 2,
-                        minimumFractionDigits: 2,
-                      })}
-                    </strong>
+                  <TableCell 
+                    align="right" 
+                    sx={{ 
+                      fontFamily: 'monospace', 
+                      fontWeight: 'bold', 
+                      borderBottom: 'none',
+                      color: totalBalance < 0 ? 'error.main' : 'success.main'
+                    }}
+                  >
+                    {formatNumber(totalBalance)}
                   </TableCell>
                 </TableRow>
               </TableBody>
             </Table>
           </TableContainer>
-        </>
+        </Box>
       )}
 
       {/* Payments Section */}
       {reportData.payments.length > 0 && (
-        <>
+        <Box sx={{ mb: 3 }}>
           <Typography
             variant="h6"
             sx={{
               backgroundColor: mainColor,
               color: contrastText,
-              padding: 1,
+              padding: 1.5,
               textAlign: "center",
-              marginTop: 3,
+              fontWeight: 'bold',
+              fontSize: '1rem'
             }}
           >
-            Payments
+            Payments Made
           </Typography>
-          <TableContainer component={Paper}>
+          <TableContainer 
+            component={Paper}
+            sx={{
+              boxShadow: theme.shadows[1],
+              '& .MuiTableRow-root:hover': {
+                backgroundColor: theme.palette.action.hover,
+              }
+            }}
+          >
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell align="left">Paid</TableCell>
-                  <TableCell align="left">Paid From</TableCell>
-                  <TableCell align="right">Amount</TableCell>
+                  <TableCell sx={{ backgroundColor: theme.palette.background.default, fontWeight: 'bold', fontSize: '0.875rem' }}>
+                    Paid To
+                  </TableCell>
+                  <TableCell sx={{ backgroundColor: theme.palette.background.default, fontWeight: 'bold', fontSize: '0.875rem' }}>
+                    Paid From
+                  </TableCell>
+                  <TableCell align="right" sx={{ backgroundColor: theme.palette.background.default, fontWeight: 'bold', fontSize: '0.875rem' }}>
+                    Amount
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -257,39 +292,90 @@ const SalesAndCashSummaryOnScreen: React.FC<SalesAndCashSummaryOnScreenProps> = 
                   <TableRow
                     key={index}
                     sx={{
-                      backgroundColor: index % 2 === 0 ? "#FFFFFF" : lightColor,
+                      backgroundColor: theme.palette.background.paper,
+                      '&:nth-of-type(even)': {
+                        backgroundColor: theme.palette.action.hover,
+                      }
                     }}
                   >
-                    <TableCell>{payment.paid}</TableCell>
-                    <TableCell align="left">{payment.from}</TableCell>
-                    <TableCell align="right">
-                      {payment.amount.toLocaleString("en-US", {
-                        maximumFractionDigits: 2,
-                        minimumFractionDigits: 2,
-                      })}
+                    <TableCell sx={{ fontWeight: 'medium' }}>{payment.paid}</TableCell>
+                    <TableCell sx={{ fontWeight: 'medium' }}>{payment.from}</TableCell>
+                    <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                      {formatNumber(payment.amount)}
                     </TableCell>
                   </TableRow>
                 ))}
-                <TableRow>
-                  <TableCell>
-                    <strong>Total</strong>
+                <TableRow sx={{ backgroundColor: theme.palette.background.default }}>
+                  <TableCell sx={{ fontWeight: 'bold', borderBottom: 'none' }}>
+                    Total
                   </TableCell>
-                  <TableCell></TableCell>
-                  <TableCell align="right">
-                    <strong>
-                      {totalPaymentsAmount.toLocaleString("en-US", {
-                        maximumFractionDigits: 2,
-                        minimumFractionDigits: 2,
-                      })}
-                    </strong>
+                  <TableCell sx={{ borderBottom: 'none' }}></TableCell>
+                  <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'bold', borderBottom: 'none' }}>
+                    {formatNumber(totalPaymentsAmount)}
                   </TableCell>
                 </TableRow>
               </TableBody>
             </Table>
           </TableContainer>
-        </>
+        </Box>
       )}
-    </div>
+
+      {/* Summary Section */}
+      {(reportData.collection_distribution.length > 0 || reportData.credit_sales.length > 0 || reportData.payments.length > 0) && (
+        <Box 
+          sx={{ 
+            mt: 3, 
+            p: 2, 
+            backgroundColor: theme.palette.background.default,
+            border: `1px solid ${theme.palette.divider}`,
+            borderRadius: 1
+          }}
+        >
+          <Typography variant="h6" color={headerColor} fontWeight="bold" gutterBottom>
+            Summary
+          </Typography>
+          <Grid container spacing={2}>
+            {reportData.collection_distribution.length > 0 && (
+              <Grid size={{xs: 12, sm: 6, md: 3}}>
+                <Typography variant="body2" fontWeight="medium">Total Collected:</Typography>
+                <Typography variant="body1" fontWeight="bold" fontFamily="monospace" color="success.main">
+                  {formatNumber(totalCollectedAmount)}
+                </Typography>
+              </Grid>
+            )}
+            {reportData.credit_sales.length > 0 && (
+              <>
+                <Grid size={{xs: 12, sm: 6, md: 3}}>
+                  <Typography variant="body2" fontWeight="medium">Total Credit:</Typography>
+                  <Typography variant="body1" fontWeight="bold" fontFamily="monospace">
+                    {formatNumber(totalCreditAmount)}
+                  </Typography>
+                </Grid>
+                <Grid size={{xs: 12, sm: 6, md: 3}}>
+                  <Typography variant="body2" fontWeight="medium">Net Balance:</Typography>
+                  <Typography 
+                    variant="body1" 
+                    fontWeight="bold" 
+                    fontFamily="monospace"
+                    color={totalBalance < 0 ? 'error.main' : 'success.main'}
+                  >
+                    {formatNumber(totalBalance)}
+                  </Typography>
+                </Grid>
+              </>
+            )}
+            {reportData.payments.length > 0 && (
+              <Grid size={{xs: 12, sm: 6, md: 3}}>
+                <Typography variant="body2" fontWeight="medium">Total Payments:</Typography>
+                <Typography variant="body1" fontWeight="bold" fontFamily="monospace" color="error.main">
+                  {formatNumber(totalPaymentsAmount)}
+                </Typography>
+              </Grid>
+            )}
+          </Grid>
+        </Box>
+      )}
+    </Box>
   );
 };
 

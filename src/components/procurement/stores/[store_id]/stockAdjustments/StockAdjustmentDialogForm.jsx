@@ -20,6 +20,7 @@ import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect'
 import ProductSelect from '@/components/productAndServices/products/ProductSelect'
 import productServices from '@/components/productAndServices/products/productServices'
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField'
+import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers'
 
 function StockAdjustmentDialogForm({toggleOpen,stockAdjustment = null}) {
   //Initial necessary constants
@@ -66,7 +67,7 @@ function StockAdjustmentDialogForm({toggleOpen,stockAdjustment = null}) {
   const {handleSubmit, setValue, control, register, watch, formState: {errors}} = useForm({
     resolver: yupResolver(validationSchema),
     defaultValues: {
-      id: stockAdjustment && stockAdjustment.id,
+      id: stockAdjustment ? stockAdjustment.id : null,
       reason: stockAdjustment ? stockAdjustment.reason : 'Stock-taking',
       cost_center_id: stockAdjustment && stockAdjustment.inventory_movements[0].cost_center_id,
       adjustment_date: stockAdjustment ? stockAdjustment.adjustment_date : dayjs().toISOString(),

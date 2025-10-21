@@ -116,7 +116,11 @@ function ApprovalRequisitionProductItem({
                                     fullWidth
                                     size="small"
                                     defaultValue={item.quantity}
-                                    onChange={(e) => handleItemChange(itemIndex, 'quantity', sanitizedNumber(e.target.value))}
+                                    onChange={(e) => handleItemChange({ 
+                                        index: itemIndex, 
+                                        key: 'quantity', 
+                                        value: sanitizedNumber(e.target.value) 
+                                    })}
                                     error={!!errors?.[itemIndex]?.quantity}
                                     helperText={errors?.[itemIndex]?.quantity?.message || ''}
                                     InputProps={{
@@ -134,11 +138,11 @@ function ApprovalRequisitionProductItem({
                                     checked={!!item.vat_percentage}
                                     onChange={(e) => {
                                         const checked = e.target.checked;
-                                        handleItemChange(
-                                            itemIndex, 
-                                            'vat_percentage', 
-                                            checked ? authOrganization?.organization?.settings?.vat_percentage || 0 : 0
-                                        );
+                                        handleItemChange({
+                                            index: itemIndex, 
+                                            key: 'vat_percentage', 
+                                            value: checked ? authOrganization?.organization?.settings?.vat_percentage || 0 : 0
+                                        });
                                     }} 
                                 />
                             </Typography>
@@ -164,7 +168,11 @@ function ApprovalRequisitionProductItem({
                                             isVatfieldChange: false,
                                             priceInclusiveVAT: 0
                                         });
-                                        handleItemChange(itemIndex, 'rate', sanitizedNumber(e.target.value));
+                                        handleItemChange({
+                                            index: itemIndex, 
+                                            key: 'rate', 
+                                            value: sanitizedNumber(e.target.value)
+                                        });
                                         updateItemState(itemIndex, {
                                             vatKey: (fieldKeys[itemIndex]?.vatKey || 0) + 1
                                         });
@@ -196,11 +204,11 @@ function ApprovalRequisitionProductItem({
                                                 isVatfieldChange: true,
                                                 priceInclusiveVAT: newValue
                                             });
-                                            handleItemChange(
-                                                itemIndex, 
-                                                'rate', 
-                                                newValue / (1 + vat_factor)
-                                            );
+                                            handleItemChange({
+                                                index: itemIndex, 
+                                                key: 'rate', 
+                                                value: newValue / (1 + vat_factor)
+                                            });
                                             updateItemState(itemIndex, {
                                                 priceKey: (fieldKeys[itemIndex]?.priceKey || 0) + 1
                                             });
@@ -233,7 +241,11 @@ function ApprovalRequisitionProductItem({
                                     fullWidth
                                     size="small"
                                     defaultValue={item.remarks}
-                                    onChange={(e) => handleItemChange(itemIndex, 'remarks', e.target.value)}
+                                    onChange={(e) => handleItemChange({
+                                        index: itemIndex, 
+                                        key: 'remarks', 
+                                        value: e.target.value
+                                    })}
                                 />
                             </Div>
                         </Grid>

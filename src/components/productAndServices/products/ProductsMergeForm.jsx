@@ -11,6 +11,7 @@ import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import productServices from './productServices';
+import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
 
 function ProductsMergeForm({toggleOpen}) {
   const { productOptions } = useProductsSelect();
@@ -18,6 +19,7 @@ function ProductsMergeForm({toggleOpen}) {
   const [selectedRemainProduct, setSelectedRemainProduct] = useState([]);
   const queryClient = useQueryClient();
   const {enqueueSnackbar} = useSnackbar();
+  const dictionary = useDictionary();
 
   const newProductOptions=[...selectedRemainProduct[0] ? productOptions.filter(product => product.id !== selectedRemainProduct[0]?.id).filter(product => product.type === selectedRemainProduct[0]?.type) : productOptions]
 
@@ -25,14 +27,14 @@ function ProductsMergeForm({toggleOpen}) {
     mutationFn: productServices.mergeProducts,
     onSuccess: (data) => {
       toggleOpen(false);
-      enqueueSnackbar(data.message, { variant: 'success' });
+      enqueueSnackbar(dictionary.products.mergeForm.messages.createSuccess, { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['products'] });
     },
   });
 
   const validationSchema = yup.object().shape({
-    remaining_product_id: yup.number().required('Please select a product to remain').typeError('Please select a product to remain'),
-    dissolved_products_ids: yup.array().required('Please select products to dissolve').min(1, 'Please select at least one product to dissolve')
+    remaining_product_id: yup.number().required(dictionary.products.mergeForm.errors.validation.remaining_product_id.required).typeError(dictionary.products.mergeForm.errors.validation.remaining_product_id.typeError),
+    dissolved_products_ids: yup.array().required(dictionary.products.mergeForm.errors.validation.dissolved_products_ids.required).min(1, dictionary.products.mergeForm.errors.validation.dissolved_products_ids.min)
   });
  
   const { setValue, handleSubmit, clearErrors, formState:{ errors}} = useForm({
@@ -52,13 +54,13 @@ function ProductsMergeForm({toggleOpen}) {
   return (
     <form autoComplete='false' onSubmit={handleSubmit(saveMutation)}>
       <DialogTitle>
-        <Grid textAlign={'center'}>Products Merge</Grid>
+        <Grid textAlign={'center'}>{dictionary.products.mergeForm.title}</Grid>
       </DialogTitle>
       <DialogContent>
         <Grid container columnSpacing={2} rowSpacing={1} mt={1}>
           <Grid size={{xs: 12, md: 6}}>
             <ProductSelect
-              label='Product To Remain'
+              label={dictionary.products.mergeForm.labels.productToRemain}
               frontError={errors.remaining_product_id}
               onChange={(newValue) => {
                 newValue?.id && clearErrors(`remaining_product_id`);
@@ -81,7 +83,7 @@ function ProductsMergeForm({toggleOpen}) {
                   error={!!errors?.dissolved_products_ids}
                   helperText={errors?.dissolved_products_ids?.message}
                   size='small'
-                  label='Products To Dissolve' 
+                  label={dictionary.products.mergeForm.labels.productToDissolve} 
                 />
               )}
 
@@ -115,13 +117,13 @@ function ProductsMergeForm({toggleOpen}) {
         </Grid>
       </DialogContent>
       <DialogActions>
-          <Button onClick={() => toggleOpen(false)}>Cancel</Button>
+          <Button onClick={() => toggleOpen(false)}>{dictionary.products.mergeForm.buttons.cancel}</Button>
           <LoadingButton 
               type='submit'
               loading={mergeProducts.isPending} 
               variant='contained'
               size='small' 
-          >Merge</LoadingButton>
+          >{dictionary.products.mergeForm.buttons.merge}</LoadingButton>
       </DialogActions>
     </form>
   )

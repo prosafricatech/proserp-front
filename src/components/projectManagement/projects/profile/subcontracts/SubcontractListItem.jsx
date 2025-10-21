@@ -4,9 +4,9 @@ import RemoveIcon from '@mui/icons-material/Remove';
 import React, { useState } from 'react';
 import SubcontractItemAction from './SubcontractItemAction';
 import SubContractTaskTab from './tabs/tasks/SubContractTaskTab';
-import SubContractMaterialIssuedTab from './tabs/materialIssued/SubContractMaterialIssuedTab';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import AttachmentForm from '@/components/filesShelf/attachments/AttachmentForm';
+import SubContractMaterialUsedTab from './tabs/materialUsed/SubContractMaterialUsedTab';
 
 function SubcontractListItem({ subContract }) {
     const [expanded, setExpanded] = useState({});
@@ -149,7 +149,7 @@ function SubcontractListItem({ subContract }) {
                         >
                             <Tab label="Tasks" />
                             <Tab label="Certificates" />
-                            <Tab label="Material Issued" />
+                            <Tab label="Material Used" />
                             <Tab label="Attachments" />
                         </Tabs>
                     </Grid>
@@ -163,7 +163,7 @@ function SubcontractListItem({ subContract }) {
                         <Typography sx={{ p: 2 }}>Certificates content goes here.</Typography>
                     )}
                     {activeTab === 2 && (
-                        <SubContractMaterialIssuedTab  isExpanded={expanded[subContract.id]} subContract={subContract}/>
+                        <SubContractMaterialUsedTab  isExpanded={expanded[subContract.id]} subContract={subContract}/>
                     )}
                     {activeTab === 3 && (
                         <Grid container width={'100%'} columnSpacing={1} justifyContent="center" marginTop={1}>

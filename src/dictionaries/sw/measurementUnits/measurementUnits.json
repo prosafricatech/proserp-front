@@ -27,7 +27,7 @@
     "errors": {
       "validation": {
         "name": {
-          "required": "Jina rasmihitajika",
+          "required": "Jina rasmi hitajika",
           "min": "Jina lazima liwe sio chini ya herufi 2",
           "max": "Jina haliwezi kuzidi herufi 10"
         },
@@ -35,6 +35,10 @@
           "required": "alama rasmi inahitajika",
           "invalid": "Umbizo sahihi linahitajika (mf. dz)"
         }
+      }, "messages": {
+        "deleteResponse": " imefeli kufutwa",
+        "updateResponse": "imefeli kubadilishwa",
+        "createResponse": "imefeli kuongezwa!"
       }
     }
   },

@@ -42,7 +42,7 @@ const StakeholderItemAction: React.FC<StakeholderItemActionProps> = ({ stakehold
       setOpenDeleteDialog(false);
     },
     onError: (error) => {
-      enqueueSnackbar(error.message || 'Failed to delete stakeholder', {
+      enqueueSnackbar(dictionary.stakeholders.form.errors.messages.deleteResponse, {
         variant: 'error',
       });
       queryClient.invalidateQueries({ queryKey: ['stakeholders'] });

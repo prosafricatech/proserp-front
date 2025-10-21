@@ -1,6 +1,5 @@
-import { getAuthHeaders, handleJsonResponse } from '@/lib/utils/apiUtils';
+import { handleJsonResponse } from '@/lib/utils/apiUtils';
 import { getToken } from 'next-auth/jwt';
-import { NextResponse } from 'next/server';
 import { NextRequest } from 'next/server';
 
 const API_BASE = process.env.API_BASE_URL;

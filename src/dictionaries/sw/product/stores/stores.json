@@ -1,0 +1,57 @@
+{
+    "form": {
+     "title": "Duka Jipya",
+   "buttons": {
+     "submit": "Wasilisha",
+     "cancel": "Ghairi"
+    },
+    "pageTitle": "Hariri: {storeName}",
+     "heading": "Inahaririwa: {storeName}",
+    "labels": {
+      "listHeader": "Maduka",
+      "storeName": "Jina la duka",
+      "storeAlias": "Jina mbadala",
+      "storeUsers": "Watumiaji wa duka",
+      "description": "Maelezo"
+    },
+    "messages": {
+      "loading": "Inachakata maelezo ya duka...",
+      "createSuccess": "Duka limeandikishwa kwa mafanikio!",
+      "updateSuccess": "Duka limesasishwa kwa mafanikio!",
+      "deleteSuccess": "Duka limeondolewa kwa mafanikio!"
+    },
+    "errors": {
+      "validation": {
+        "storeName": {
+          "required": "Jina la duka linahitajika"
+        }
+      },
+        "messages": {
+        "createResponse": "Imeshindikana kuongeza duka!",
+        "updateResponse": "Imeshindikana kusasisha duka!",
+        "deleteResponse": "Imeshindikana kuondoa duka!"
+      }
+    } 
+  },
+  "list": {
+    "labels": {
+      "storeName": "Jina la duka",
+      "description": "Maelezo",
+      "actions": "vitendo",
+      "newCreateLabel": "Duka Jipya"
+
+    },
+    "actionsTitle": {
+      "labels": {
+      "edit": "Hariri",
+      "delete": "Futa"
+      }
+    },
+     "dialog": {
+      "showDialog": {
+        "title":"Thibitisha kufuta",
+        "content": "Je, una uhakika unataka kuondoa duka hili?"
+      }
+    }
+  }
+}

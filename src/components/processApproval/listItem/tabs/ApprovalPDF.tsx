@@ -160,7 +160,7 @@ function ApprovalPDF({ approval, organization }: ApprovalPDFProps) {
             Total
           </Text>
           <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2.2, textAlign: 'right' }}>
-            {approval.amount.toLocaleString('en-US', { 
+            {approval?.items?.reduce((total, item) =>total + (item.quantity || 0) * (item.rate || 0),0).toLocaleString('en-US', { 
               style: 'currency', 
               currency: approval.requisition.currency?.code 
             })}

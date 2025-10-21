@@ -21,6 +21,7 @@ import Image from 'next/image';
 import { useJumboAuth } from "@/app/providers/JumboAuthProvider";
 import { ASSET_IMAGES } from '@/utilities/constants/paths';
 import { keyframes } from '@emotion/css';
+import { useJumboTheme } from '../JumboTheme/hooks';
 
 interface MultiSelectOption {
     label: React.ReactNode;
@@ -152,6 +153,7 @@ const JumboList = React.forwardRef<{ resetSelection: () => void }, JumboListProp
         view = 'list'
     } = props;
 
+    const { theme } = useJumboTheme();
     const { authOrganization } = useJumboAuth();
     const mainColor = authOrganization?.organization?.settings?.main_color || "#2113AD";
     const lightColor = authOrganization?.organization?.settings?.light_color || "#bec5da";
@@ -293,7 +295,7 @@ const JumboList = React.forwardRef<{ resetSelection: () => void }, JumboListProp
                             }}
                         >
                             <Image
-                                src={`${ASSET_IMAGES}/logos/proserp-blue.png`}
+                                src={theme?.type === 'light' ? `${ASSET_IMAGES}/logos/proserp-blue.png` : `${ASSET_IMAGES}/logos/proserp-white.png`}
                                 alt="ProsERP"
                                 width={85}
                                 height={85}

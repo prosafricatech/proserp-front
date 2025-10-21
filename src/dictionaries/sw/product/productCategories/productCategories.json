@@ -1,0 +1,65 @@
+{
+    "form": {
+        "title": "Kategoria Mpya",
+    "buttons": {
+      "save": "Hifadhi",
+      "cancel": "Ghairi"
+    },
+    "pageTitle": "Hariri: {categoryName}",
+    "heading": "Inahaririwa: {categoryName}",
+    "labels": {
+      "categoryName": "Jina la categoria",
+      "incomeLedger": "Daftari la Mapato",
+      "description": "Maelezo",
+      "parentCategory": "Kategoria Mama",
+      "expenseLedger": "Daftari la Matumizi"
+    },
+    "messages": {
+      "loading": "Inachakata maelezo ya kategoria ya bidhaa...",
+      "createSuccess": "Kategoria mpya ya bidhaa imeongezwa kikamilifu!",
+      "updateSuccess": "Kategoria ya bidhaa imesasishwa kikamilifu!",
+      "deleteSuccess": "Kategoria ya bidhaa imefutwa kikamilifu"
+    },
+    "errors": {
+      "validation": {
+        "name": {
+          "required": "Jina la kategoria ni linahitajika"
+        },
+        "income_ledger_id": {
+          "required": "Daftari la mapato linahitajika",
+          "positive": " Kitambulisho cha daftari la mapato lazima kiwe namba chanya."
+        },
+        "expense_ledger_id": {
+          "required": "Daftari la matumizi linahitajika",
+          "positive": "Kitambulisho cha daftari la matumizi lazima kiwe namba chanya"
+        }
+      },
+      "messages": {
+        "CreateResponse": "Kuna kitu hakipo sawa",
+        "updateResponse": "Hitilafu imetokea",
+        "deleteResponse": " Imeshindwa kufuta kategoria ya mradi"
+      }
+    } 
+  },
+  "list": {
+    "labels": {
+      "listHeader": "Kategoria za Bidhaa",
+      "categoryName": "Jina la categoria",
+      "incomeLedger": "Daftari la Mapato",
+      "actions": "Vitendo",
+      "newCreateLabel": "Kategoria Mpya ya Bidhaa"
+    },
+     "actionsTitle": {
+      "labels": {
+      "edit": "Hariri",
+      "delete": "Futa"
+      }
+    },
+    "dialog": {
+      "showDialog": {
+        "title": "Thibitisha kategoria ya kufuta",
+        "content": "Kama ndiyo, kipengele hiki kitafutwa iwapo hakijahusishwa na miamala yoyote"
+      }
+    }
+  }
+}

@@ -118,7 +118,7 @@ function StockAdjustmentListItemAction({stockAdjustment}) {
             content: 'Are you sure you want to delete this Stock Adjustment?',
             onYes: () =>{ 
               hideDialog();
-              deleteAdjustment(stockAdjustment)
+              deleteAdjustment.mutate(stockAdjustment)
             },
             onNo: () => hideDialog(),
             variant:'confirm'

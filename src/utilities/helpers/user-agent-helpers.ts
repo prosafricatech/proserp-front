@@ -1,4 +1,5 @@
 export function deviceType(){
+    if (typeof window === 'undefined') return null;
     // Get the User-Agent string from the browser
     const userAgent = window.navigator.userAgent;
 

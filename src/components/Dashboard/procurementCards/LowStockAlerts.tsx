@@ -122,7 +122,7 @@ function LowStockAlerts() {
                     <AccordionSummary
                         expandIcon={<ExpandMoreOutlined/>}
                     >
-                      <Grid container>
+                      <Grid container width={'100%'}>
                         <Grid size={{ xs: 9 }}>
                           <Tooltip title={'Store Name'}>
                             <Typography variant='h4'>{store.name}</Typography>

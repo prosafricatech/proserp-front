@@ -21,18 +21,20 @@ import { useProductsSelect } from '../../ProductsSelectProvider';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import productServices from '../../productServices';
 import { Div } from '@jumbo/shared';
+import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
 
 const SecondaryUnitForm = ({ product, setOpenDialog }) => {
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
   const { measurementUnits} = useProductApp();
   const { productOptions } = useProductsSelect();
+  const dictionary =useDictionary();
 
   const { mutate: addSecondaryUnit, isPending: isLoading } = useMutation({
     mutationFn: productServices.addSecondaryUnit,
     onSuccess: (data) => {
       setOpenDialog(false);
-      enqueueSnackbar(data.message, { variant: 'success' });
+      enqueueSnackbar(dictionary.products.list.secondaryForm.messages.createSuccess, { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['secondaryUnits'] });
     },
     onError: (error) => {
@@ -49,8 +51,8 @@ const SecondaryUnitForm = ({ product, setOpenDialog }) => {
   const validationSchema = yup.object({
     secondary_units: yup.array().of(
       yup.object().shape({
-        measurement_unit_id: yup.string().required('Measurement Unit Required').typeError(`Measurement Unit Required`),
-        conversion_factor: yup.number().required('Conversion factor').typeError(`Conversion factor`),
+        measurement_unit_id: yup.string().required(dictionary.products.list.secondaryForm.errors.validation.measurementUnit.required).typeError(dictionary.products.list.secondaryForm.errors.validation.measurementUnit.typeError),
+        conversion_factor: yup.number().required(dictionary.products.list.secondaryForm.errors.validation.conversionFactor.required).typeError(dictionary.products.list.secondaryForm.errors.validation.conversionFactor.typeError),
       })
     )
   })
@@ -81,7 +83,7 @@ const SecondaryUnitForm = ({ product, setOpenDialog }) => {
 
   return (
     <>
-      <DialogTitle textAlign={'center'}>Add Secondary Units</DialogTitle>
+      <DialogTitle textAlign={'center'}>{dictionary.products.list.secondaryForm.title}</DialogTitle>
       <DialogContent>
         <form autoComplete="off">
           <Grid container columnSpacing={1}>
@@ -106,7 +108,7 @@ const SecondaryUnitForm = ({ product, setOpenDialog }) => {
                             renderInput={(params) => (
                               <TextField 
                                 {...params} 
-                                label="Secondary Measurement Unit"
+                                label={dictionary.products.list.secondaryForm.labels.secondaryMeasurementUnit}
                                 error={errors.secondary_units && !!errors?.secondary_units[index]?.measurement_unit_id}
                                 helperText={errors.secondary_units && errors.secondary_units[index]?.measurement_unit_id?.message}
                               />
@@ -145,7 +147,7 @@ const SecondaryUnitForm = ({ product, setOpenDialog }) => {
                             fullWidth
                             error={errors.secondary_units && !!errors?.secondary_units[index]?.conversion_factor}
                             helperText={errors.secondary_units && errors.secondary_units[index]?.conversion_factor?.message}
-                            label="Conversion factor"
+                            label={dictionary.products.list.secondaryForm.labels.conversionFactor}
                             {...register(`secondary_units.${index}.conversion_factor`)}
                           />
                         </Div>
@@ -169,7 +171,7 @@ const SecondaryUnitForm = ({ product, setOpenDialog }) => {
                 <Div sx={{ mt: 1}}>
                   <Tooltip title="Add Group">
                     <Button size="small" variant="outlined" onClick={() => append({measurement_unit_id: '', conversion_factor: ''})}>
-                      <AddOutlined fontSize="10" /> Add
+                      <AddOutlined fontSize="10" /> {dictionary.products.list.secondaryForm.buttons.add}
                     </Button>
                   </Tooltip>
                 </Div>
@@ -180,7 +182,7 @@ const SecondaryUnitForm = ({ product, setOpenDialog }) => {
       </DialogContent>
       <DialogActions>
         <Button size="small" onClick={() => setOpenDialog(false)}>
-          Cancel
+         {dictionary.products.list.secondaryForm.buttons.cancel}
         </Button>
         <LoadingButton
           type="submit"
@@ -190,7 +192,7 @@ const SecondaryUnitForm = ({ product, setOpenDialog }) => {
           sx={{ display: 'flex' }}
           loading={isLoading}
         >
-          Submit
+          {dictionary.products.list.secondaryForm.buttons.submit}
         </LoadingButton>
       </DialogActions>
     </>

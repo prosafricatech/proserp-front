@@ -46,11 +46,11 @@ const CurrencyForm: React.FC<CurrencyFormProps> = ({ setOpenDialog }) => {
     mutationFn: (data: FormData) => currencyServices.add(data),
     onSuccess: (data) => {
       setOpenDialog(false);
-      enqueueSnackbar(data.message, { variant: 'success' });
+      enqueueSnackbar(dictionary.currencies.form.messages.createSuccess, { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['currencies'] });
     },
     onError: (error) => {
-      enqueueSnackbar(error.message, {
+      enqueueSnackbar(dictionary.currencies.form.errors.messages.createResponse, {
         variant: 'error',
       });
     },

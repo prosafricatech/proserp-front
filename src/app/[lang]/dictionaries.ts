@@ -7,13 +7,17 @@ interface LocaleDictionary {
 
 const dictionaries: LocaleDictionary = {
   'en-US': async () => {
-    const [main, organizations,measurementUnits,currencies,stakeholders,filesShelf] = await Promise.all([
+    const [main, organizations,measurementUnits,currencies,stakeholders,filesShelf,userManagement,productCategories,stores,products] = await Promise.all([
       import('@/dictionaries/en/en.json').then(m => m.default),
       import('@/dictionaries/en/organizations/organizations.json').then(m => m.default),
       import('@/dictionaries/en/measurementUnits/measurementUnits.json').then(m => m.default),
       import('@/dictionaries/en/currencies/currencies.json').then(m => m.default),
       import('@/dictionaries/en/stakeholders/stakeholders.json').then(m => m.default),
-      import('@/dictionaries/en/filesShelf/filesShelf.json').then(m => m.default)
+      import('@/dictionaries/en/filesShelf/filesShelf.json').then(m => m.default),
+      import('@/dictionaries/en/userManagement/userManagement.json').then(m => m.default),
+      import('@/dictionaries/en/product/productCategories/productCategories.json').then(m =>m.default),
+      import('@/dictionaries/en/product/stores/stores.json').then(m =>m.default),
+      import('@/dictionaries/en/product/products.json').then(m =>m.default)
     ]);
     return {
       ...main,
@@ -21,17 +25,26 @@ const dictionaries: LocaleDictionary = {
       measurementUnits,
       currencies,
       stakeholders,
-      filesShelf
+      filesShelf,
+      userManagement,
+      productCategories,
+      stores,
+      products
+      
     };
   },
   'sw-TZ': async () => {
-    const [main, organizations,measurementUnits,currencies,stakeholders,filesShelf] = await Promise.all([
+    const [main, organizations,measurementUnits,currencies,stakeholders,filesShelf,userManagement,productCategories,stores,products] = await Promise.all([
       import('@/dictionaries/sw/sw.json').then(m => m.default),
       import('@/dictionaries/sw/organizations/organizations.json').then(m => m.default),
       import('@/dictionaries/sw/measurementUnits/measurementUnits.json').then(m => m.default),
       import('@/dictionaries/sw/currencies/currencies.json').then(m => m.default),
       import('@/dictionaries/sw/stakeholders/stakeholders.json').then(m => m.default),
-      import('@/dictionaries/sw/filesShelf/filesShelf.json').then(m => m.default)
+      import('@/dictionaries/sw/filesShelf/filesShelf.json').then(m => m.default),
+      import('@/dictionaries/sw/userManagement/userManagement.json').then(m => m.default),
+      import('@/dictionaries/sw/product/productCategories/productCategories.json').then(m =>m.default),
+      import('@/dictionaries/sw/product/stores/stores.json').then(m =>m.default),
+      import('@/dictionaries/sw/product/products.json').then(m =>m.default)
     ]);
     return {
       ...main,
@@ -39,7 +52,11 @@ const dictionaries: LocaleDictionary = {
       measurementUnits,
       currencies,
       stakeholders,
-      filesShelf
+      filesShelf,
+      userManagement,
+      productCategories,
+      stores,
+      products
     };
   },
 

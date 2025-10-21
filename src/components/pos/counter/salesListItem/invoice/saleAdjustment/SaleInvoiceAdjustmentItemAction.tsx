@@ -1,14 +1,23 @@
 import React, { useState } from 'react';
 import {
+  Box,
+  Button,
   Dialog,
+  DialogContent,
+  Grid,
+  IconButton,
   LinearProgress,
+  Tab,
+  Tabs,
   Tooltip,
   useMediaQuery,
 } from '@mui/material';
 import {
   DeleteOutlined,
   EditOutlined,
+  HighlightOff,
   MoreHorizOutlined,
+  VisibilityOutlined,
 } from '@mui/icons-material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
@@ -20,9 +29,12 @@ import { PERMISSIONS } from '@/utilities/constants/permissions';
 import UnauthorizedAccess from '@/shared/Information/UnauthorizedAccess';
 import { MenuItemProps } from '@jumbo/types';
 import { Transaction, TransactionTypes } from '@/components/accounts/transactions/TransactionTypes';
-import SalesInvoiceAdjustment from './SalesInvoiceAdjustment';
+import SalesInvoiceAdjustment from './form/SalesInvoiceAdjustment';
 import posServices from '@/components/pos/pos-services';
 import StakeholderSelectProvider from '@/components/masters/stakeholders/StakeholderSelectProvider';
+import AdjustmentOnScreen from './AdjustmentOnScreen';
+import PDFContent from '@/components/pdf/PDFContent';
+import AdjustmentPDF from './AdjustmentPDF';
 
 interface SaleInvoiceAdjustmentItemActionProps {
   transaction: Transaction;
@@ -34,6 +46,69 @@ interface EditAdjustmentProps {
   toggleOpen: (open: boolean) => void;
   type: TransactionTypes;
 }
+
+const DocumentDialog = ({ transaction, type, authObject, setOpenDocumentDialog }: any) => {
+  const {
+    data: adjustmentData,
+    isFetching,
+  } = useQuery({
+    queryKey: ["adjustmentdetails", transaction.id, type],
+    queryFn: () => posServices.invoiceAdjustmentDetails(transaction.id, type),
+  });
+  const [activeTab, setActiveTab] = useState(0);
+
+  //Screen handling constants
+  const {theme} = useJumboTheme();
+  const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
+
+  if (isFetching) {
+    return <LinearProgress />;
+  }
+
+  const handleTabChange = (event: any, newValue: any) => {
+    setActiveTab(newValue);
+  };
+
+  return (
+    <DialogContent>
+      {belowLargeScreen && (
+        <Grid container alignItems="center" justifyContent="space-between" marginBottom={2}>
+          <Grid size={11}>
+            <Tabs
+              value={activeTab} 
+              onChange={handleTabChange} 
+              aria-label="Adjustments View Tabs"
+            >
+              <Tab label="ONSCREEN" />
+              <Tab label="PDF" />
+            </Tabs>
+          </Grid>
+
+          <Grid size={1} textAlign="right">
+            <Tooltip title="Close">
+              <IconButton 
+                size="small" 
+                onClick={() => setOpenDocumentDialog(false)}
+              >
+                <HighlightOff color="primary" />
+              </IconButton>
+            </Tooltip>
+          </Grid>
+        </Grid>
+      )}
+      {belowLargeScreen && activeTab === 0 ?
+        <AdjustmentOnScreen adjustment={adjustmentData} authObject={authObject} /> 
+        :
+        <PDFContent fileName={`Adjustment ${adjustmentData.voucherNo}`} document={<AdjustmentPDF adjustment={adjustmentData} authObject={authObject}/>}/>
+      }
+      <Box textAlign="right" marginTop={5}>
+        <Button variant="outlined" size='small' color="primary" onClick={() => setOpenDocumentDialog(false)}>
+          Close
+        </Button>
+      </Box>
+    </DialogContent>
+  );
+};
 
 const EditAdjustment: React.FC<EditAdjustmentProps> = ({ transaction, toggleOpen, type }) => {
   const {
@@ -62,6 +137,7 @@ const SaleInvoiceAdjustmentItemAction: React.FC<SaleInvoiceAdjustmentItemActionP
     const authObject = useJumboAuth();
     const checkPermission = authObject.checkOrganizationPermission;
     const [openEditDialog, setOpenEditDialog] = useState(false);
+    const [openDocumentDialog, setOpenDocumentDialog] = useState(false);
 
     const { theme } = useJumboTheme();
     const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
@@ -78,6 +154,11 @@ const SaleInvoiceAdjustmentItemAction: React.FC<SaleInvoiceAdjustmentItemActionP
     });
 
     const menuItems: MenuItemProps[] = [
+        checkPermission([PERMISSIONS.ACCOUNTS_TRANSACTIONS_READ]) && {
+          icon: <VisibilityOutlined />,
+          title: 'View',
+          action: 'open',
+        },
         checkPermission([PERMISSIONS.ACCOUNTS_TRANSACTIONS_EDIT]) && {
             icon: <EditOutlined />,
             title: 'Edit',
@@ -110,13 +191,18 @@ const SaleInvoiceAdjustmentItemAction: React.FC<SaleInvoiceAdjustmentItemActionP
         case 'edit':
             setOpenEditDialog(true);
             break;
+        case 'open':
+          setOpenDocumentDialog(true);
+          break;
+         default:
+          break;
         }
     };
 
   return (
     <>
       <Dialog
-        open={openEditDialog}
+        open={openEditDialog || openDocumentDialog}
         scroll="paper"
         fullScreen={belowLargeScreen}
         fullWidth
@@ -128,6 +214,7 @@ const SaleInvoiceAdjustmentItemAction: React.FC<SaleInvoiceAdjustmentItemActionP
           ) : (
             <UnauthorizedAccess />
           ))}
+          {openDocumentDialog && (checkPermission([PERMISSIONS.ACCOUNTS_TRANSACTIONS_READ]) ? <DocumentDialog type={type} setOpenDocumentDialog={setOpenDocumentDialog} transaction={transaction} authObject={authObject}/> : <UnauthorizedAccess/>)}
       </Dialog>
 
       <JumboDdMenu

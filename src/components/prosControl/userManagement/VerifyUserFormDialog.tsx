@@ -17,6 +17,7 @@ import { useSnackbar } from 'notistack';
 import userManagementServices from './user-management-services';
 import { AxiosError } from 'axios';
 import { User } from './UserManagementType';
+import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
 
   interface VerifyUserFormValues {
     email: string;
@@ -36,16 +37,18 @@ import { User } from './UserManagementType';
     user?: User;
   };
 
-  const validationSchema = yup.object({
-    email: yup.string().required('Email is required').email('Enter a valid email'),
-  });
-
   const VerifyUserFormDialog: React.FC<VerifyUserFormDialogProps> = ({
     open,
     setOpenDialog,
   }) => {
-    const queryClient = useQueryClient();
-    const { enqueueSnackbar } = useSnackbar();
+  const dictionary = useDictionary();
+  const queryClient = useQueryClient();
+  const { enqueueSnackbar } = useSnackbar();
+
+console.log(dictionary.userManagement.form)
+  const validationSchema = yup.object({
+     email: yup.string().required(dictionary.userManagement.form.errors.validation.email.required).email(dictionary.userManagement.form.errors.validation.valid),
+   });
 
     const {
       register,
@@ -67,7 +70,7 @@ import { User } from './UserManagementType';
   >({
     mutationFn: (data) => userManagementServices.verify(data),
     onSuccess: (data) => {
-      enqueueSnackbar(data.message || 'User verified successfully', {
+      enqueueSnackbar(dictionary.userManagement.form.errors.messages.verifySuccess, {
         variant: 'success',
       });
       queryClient.invalidateQueries({ queryKey: ['userManagement'] });
@@ -75,8 +78,8 @@ import { User } from './UserManagementType';
     },
     onError: (error) => {
       const message =
-        error.response?.data?.message || error.message || 'Verification failed';
-      enqueueSnackbar(message, { variant: 'error' });
+        error.response?.data?.message || error.message;
+      enqueueSnackbar(dictionary.userManagement.form.errors.messages.response, { variant: 'error' });
     },
   });
 
@@ -98,14 +101,14 @@ import { User } from './UserManagementType';
     >
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
         <DialogTitle sx={{ textAlign: 'center' }}>
-          Verify User
+          {dictionary.userManagement.form.title}
         </DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
             <Grid size={12}>
               <TextField
                 fullWidth
-                label="Email"
+                label={dictionary.userManagement.form.labels.email}
                 size="small"
                 {...register('email')}
                 error={!!errors.email}
@@ -121,7 +124,7 @@ import { User } from './UserManagementType';
             size="small" 
             disabled={isVerifying}
           >
-            Cancel
+            {dictionary.userManagement.form.buttons.cancel}
           </Button>
           <LoadingButton 
             type="submit" 
@@ -129,7 +132,7 @@ import { User } from './UserManagementType';
             size="small" 
             loading={isVerifying}
           >
-            Verify
+            {dictionary.userManagement.form.buttons.verify}
           </LoadingButton>
         </DialogActions>
       </form>

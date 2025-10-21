@@ -39,6 +39,11 @@
           "typeError": "Aina ya wadau inahitajika"
         },
         "email": "Barua Pepe Sahihi Inahitajika" 
+      },
+       "messages": {
+        "deleteResponse": " Imefeli kufuta",
+        "updateResponse": "Imefeli kubadilisha",
+        "createResponse": "imefeli kuongea Mdau!"
       }
     }  
   },
@@ -62,7 +67,7 @@
     "dialog": {
       "showDialog": {
         "title":"Thibitisha kufuta",
-        "content": "Je, una uhakika unataka kufuta{name}?"
+        "content": "Je, una uhakika unataka kufuta {name}?"
       }
     }
   }

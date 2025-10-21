@@ -8,6 +8,7 @@ import { useSnackbar } from 'notistack';
 import React, { lazy, useState } from 'react'
 import productServices from '../productServices';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
+import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
 
 const ProductFormDialogContent = lazy(() => import('../ProductFormDialogContent'));
 
@@ -17,6 +18,7 @@ function ProductItemAction({product}) {
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const queryClient = useQueryClient();
   const {checkOrganizationPermission} = useJumboAuth();
+  const dictionary =useDictionary();
 
   //Screen handling constants
   const {theme} = useJumboTheme();
@@ -35,8 +37,8 @@ function ProductItemAction({product}) {
 
   const handleDelete = () => {
     showDialog({
-      title : 'Confirm Delete?',
-      content: 'If you click yes, this Product will be deleted',
+      title :dictionary.products.list.dialog.showDialog.title,
+      content: dictionary.products.list.dialog.showDialog.content,
       onYes: () => {
         hideDialog();
         deleteProduct.mutate(product);
@@ -59,7 +61,7 @@ function ProductItemAction({product}) {
           >
             <ProductFormDialogContent product={product} title={`Edit ${product.type === 'Service' ? 'Service' : 'Product'}`} toggleOpen={setOpenEditDialog} />
           </Dialog>
-          <Tooltip  title={`Edit ${product.name}`}>
+          <Tooltip  title={dictionary.products.list.mainActions.edit.replace('{name}',product.name)}>
             <IconButton onClick={() => setOpenEditDialog(true)}>
               <EditOutlined />
             </IconButton>
@@ -68,7 +70,7 @@ function ProductItemAction({product}) {
       }
       {
         checkOrganizationPermission([PERMISSIONS.PRODUCTS_DELETE]) &&
-        <Tooltip  title={`Delete ${product.name}`}>
+        <Tooltip  title={dictionary.products.list.mainActions.delete.replace('{name}',product.name)}>
           <IconButton onClick={handleDelete}>
             <DeleteOutlined color="error" />
           </IconButton>

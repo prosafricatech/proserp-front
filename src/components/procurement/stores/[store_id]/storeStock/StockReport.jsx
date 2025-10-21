@@ -3,7 +3,7 @@ import { Autocomplete, Box, Button, Checkbox, Chip, DialogActions, DialogContent
 import { DateTimePicker } from '@mui/x-date-pickers'
 import dayjs from 'dayjs'
 import * as yup from 'yup';
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useStoreProfile } from '../StoreProfileProvider'
 import { Document, Page, Text, View } from '@react-pdf/renderer'
@@ -143,11 +143,16 @@ function StockReport({ setOpenDialog, isFromDashboard }) {
     const hasPermissionToView = checkOrganizationPermission(PERMISSIONS.ACCOUNTS_REPORTS)
 
     const validationSchema = yup.object().shape({
-        store_id: yup.number().when('isFromDashboard', {
-            is: true,
-            then: yup.number().required('Store is required').typeError('Store is required'),
-            otherwise: yup.number().nullable(),
-        }),
+        isFromDashboard: yup.boolean().default(false),
+        store_id: yup
+            .number()
+            .nullable()
+            .when('isFromDashboard', {
+                is: true,
+                then: (schema) =>
+                    schema.required('Store is required').typeError('Store is required'),
+                otherwise: (schema) => schema.nullable(),
+            }),
     });
 
     const { setValue, watch, handleSubmit, register, formState: { errors } } = useForm({
@@ -191,7 +196,7 @@ function StockReport({ setOpenDialog, isFromDashboard }) {
 
             const link = document.createElement('a');
             link.href = window.URL.createObjectURL(blob);
-            link.download = 'Stock Report.xlsx';  // More descriptive filename
+            link.download = 'Stock Report.xlsx';
             link.click();
             setIsDownloadingTemplate(false);
         } catch (error) {
@@ -199,6 +204,17 @@ function StockReport({ setOpenDialog, isFromDashboard }) {
             setIsDownloadingTemplate(false);
         }
     };
+
+    useEffect(() => {
+        const initialFilters = {
+            as_at: watch('as_at'),
+            store_id: watch('store_id'),
+            cost_center_ids: watch('cost_center_ids'),
+            product_category_ids: watch('product_category_ids'),
+            show_zero_balance: watch('show_zero_balance'),
+        };
+        getAvailableStock(initialFilters);
+    }, [!isFromDashboard]);
 
     const handleTabChange = (event, newValue) => {
         setSelectedTab(newValue);

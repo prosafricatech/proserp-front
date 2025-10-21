@@ -146,21 +146,21 @@ const CurrenciesExchangeRate: React.FC<CurrenciesExchangeRateProps> = ({
                 container
               >
                 <Grid size={{xs: 6, md: 3}}>
-                  <Tooltip title="Date">
+                  <Tooltip title={dictionary.currencies.list.updateForm.exchangeRate.labels.date}>
                     <Typography variant="h5" fontSize={14} lineHeight={1.25} mb={0} noWrap>
                       {readableDate(exchangeRate.rate_datetime, true)}
                     </Typography>
                   </Tooltip>
                 </Grid>
                 <Grid size={{xs: 6, md: 3}}>
-                  <Tooltip title="Rate">
+                  <Tooltip title={dictionary.currencies.list.updateForm.exchangeRate.labels.rate}>
                     <Typography textAlign={{ xs: 'end', md: 'start' }}>
                       {exchangeRate.rate}
                     </Typography>
                   </Tooltip>
                 </Grid>
                 <Grid size={{xs: 6, md: 4}}>
-                  <Tooltip title="Updated by">
+                  <Tooltip title={dictionary.currencies.list.updateForm.exchangeRate.labels.updateBy}>
                     <Typography>{exchangeRate.updated_by.name}</Typography>
                   </Tooltip>
                 </Grid>
@@ -184,7 +184,7 @@ const CurrenciesExchangeRate: React.FC<CurrenciesExchangeRateProps> = ({
             currency.id === 1 && (
               <Grid size={12}>
                 <Alert variant="outlined" severity="info">
-                  Base currency cannot have exchange rates
+                  {dictionary.currencies.list.updateForm.exchangeRate.alert.info}
                 </Alert>
               </Grid>
             )

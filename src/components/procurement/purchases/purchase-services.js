@@ -67,12 +67,26 @@ purchaseServices.receive = async(order) => {
     })
 }
 
-purchaseServices.getPurchasesReport = async(params) => {
-    const {data} = await axios.get(`/api/purchaseOrders/getPurchasesReport`,{
-        params
+purchaseServices.getPurchasesReport = async (params) => {
+    const { data } = await axios.get(`/api/purchaseOrders/getPurchasesReport`, {
+        params: params,
+        paramsSerializer: (params) => {
+            const searchParams = new URLSearchParams();
+            
+            Object.keys(params).forEach(key => {
+                const value = params[key];
+                if (Array.isArray(value)) {
+                    value.forEach(item => searchParams.append(`${key}[]`, item));
+                } else if (value !== null && value !== undefined && value !== '') {
+                    searchParams.append(key, value);
+                }
+            });
+            
+            return searchParams.toString();
+        }
     });
     return data;
-}
+};
 
 purchaseServices.getLastPrice = async(params) => {
     const {data} = await axios.get(`/api/purchaseOrders/getLastPrice`,{

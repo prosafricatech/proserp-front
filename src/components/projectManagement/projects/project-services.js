@@ -2,27 +2,25 @@ import axios from "@/lib/services/config";
 
 const projectsServices = {};
 
-projectsServices.getList = async (
-  params = {}
-) => {
-  const { page = 1, limit = 10, ...queryParams } = params;
-  const { data } = await axios.get('/api/projectManagement/project', {
-    params: { page, limit, ...queryParams },
-  });
-  return data;
-};
-
-projectsServices.getSubcontractsList = async (params) => {
-  const response = await axios.get(`/api/projectManagement/project/${params.project_id}/getSubcontractsList`, {
-    params,  // will send as query string
+projectsServices.getList = async (params) => {
+  const response = await axios.get('/api/projectManagement/project', {
+    params,
   });
   return response.data;
 };
 
-projectsServices.getSubContractMaterialIssued = async (params) => {
-  const response = await axios.get(`/api/projectManagement/project/${params.id}/getSubContractMaterialIssued`, {
-    params,  // will send as query string
+projectsServices.getSubcontractsList = async (params) => {
+  const response = await axios.get(`/api/projectManagement/project/${params.project_id}/getSubcontractsList`, {
+    params,
   });
+  return response.data;
+};
+
+projectsServices.getSubContractMaterialUsed = async (params) => {
+  const response = await axios.get(
+    `/api/projectManagement/project/${params.subcontract_id}/getSubContractMaterialUsed`,
+    { params }
+  );
   return response.data;
 };
 
@@ -31,8 +29,15 @@ projectsServices.getSubContractDetails = async (id) => {
     return data;
 }
 
-projectsServices.getSubContractMaterialIssuedDetails = async (id) => {
-    const {data} = await axios.get(`/api/projectManagement/project/${id}/getSubContractMaterialIssuedDetails`);
+projectsServices.getSubcontractOptions = async (id) => {
+  const { data } = await axios.get(`/api/projectManagement/project/getSubcontractOptions`, {
+    params: { project_id: id }
+  });
+  return data;
+};
+
+projectsServices.getSubContractMaterialUsedDetails = async (id) => {
+    const {data} = await axios.get(`/api/projectManagement/project/${id}/getSubContractMaterialUsedDetails`);
     return data;
 }
 
@@ -48,7 +53,7 @@ projectsServices.getbudgetItemsDetails = async (id) => {
 
 projectsServices.showProjectBudgets = async (params) => {
   const response = await axios.get(`/api/projectManagement/project/showProjectBudgets`, {
-    params,  // will send as query string
+    params,
   });
   return response.data;
 };  
@@ -67,9 +72,9 @@ projectsServices.addSubContractTask = async(tasks) => {
     })
 }
 
-projectsServices.addSubContractMaterialIssued = async(tasks) => {
+projectsServices.addSubContractMaterialUsed = async(tasks) => {
     return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.post('/api/projectManagement/project/addSubContractMaterialIssued',tasks)
+        const {data} = await axios.post('/api/projectManagement/project/addSubContractMaterialUsed',tasks)
         return data;
     })
 }
@@ -172,9 +177,9 @@ projectsServices.updateSubcontract = async(subcontract) => {
     })
 }
 
-projectsServices.updateSubContractMaterialIssued = async(material) => {
+projectsServices.updateSubContractMaterialUsed = async(material) => {
     return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.put(`/api/projectManagement/project/${material.id}/updateSubContractMaterialIssued`,material)
+        const {data} = await axios.put(`/api/projectManagement/project/${material.id}/updateSubContractMaterialUsed`,material)
         return data;    
     })
 }
@@ -299,9 +304,9 @@ projectsServices.deleteSubContract = async (id) => {
     })
 };
 
-projectsServices.deleteSubContractMaterialIssued = async (id) => {
+projectsServices.deleteSubContractMaterialUsed = async (id) => {
     return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.delete(`/api/projectManagement/project/${id}/deleteSubContractMaterialIssued`);
+        const {data} = await axios.delete(`/api/projectManagement/project/${id}/deleteSubContractMaterialUsed`);
         return data;
     })
 };

@@ -6,12 +6,14 @@ import SecondaryUnits from './secondaryUnits/SecondaryUnits'
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider'
 import { PERMISSIONS } from '@/utilities/constants/permissions'
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks'
+import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext'
 
 function ProductListItemTabs ({ product, expanded}) {
   const [activeTab, setActiveTab] = useState(0);
   const {authOrganization : {organization},checkOrganizationPermission} = useJumboAuth();
   const [openSecondaryUnit, setOpenSecondaryUnit] = useState(false);
   const canCreateOrEdit = checkOrganizationPermission([PERMISSIONS.PRODUCTS_CREATE,PERMISSIONS.PRODUCTS_EDIT]);
+  const dictionary = useDictionary();
 
   //Screen handling constants
   const {theme} = useJumboTheme();
@@ -28,7 +30,7 @@ function ProductListItemTabs ({ product, expanded}) {
           scrollButtons='auto'
           allowScrollButtonsMobile
         >
-          <Tab label="Secondary units"/>
+          <Tab label={dictionary.products.list.secondaryForm.labels.secondaryTitle}/>
         </Tabs>
       </Grid>
 
@@ -37,7 +39,7 @@ function ProductListItemTabs ({ product, expanded}) {
           <Grid size={12} textAlign={'end'}>
             {
               canCreateOrEdit &&
-              <Tooltip  title={`Add Secondary Units`}>
+              <Tooltip  title={dictionary.products.list.secondaryForm.labels.newCreateLabel}>
                 <IconButton onClick={()=> setOpenSecondaryUnit(true)}>
                   <AddOutlined/>
                 </IconButton>

@@ -45,11 +45,11 @@ const UpdateCurrencyExchangeRate: React.FC<UpdateCurrencyExchangeRateProps> = ({
     mutationFn: currencyServices.updateCurrencyExchangeRate,
     onSuccess: (data) => {
       setOpenDialog(false);
-      enqueueSnackbar(data.message, { variant: 'success' });
+      enqueueSnackbar(dictionary.currencies.form.messages.updateSuccess, { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['exchangeRates'] });
     },
     onError: (error: any) => {
-      enqueueSnackbar(error.response?.data?.message || 'An error occurred', {
+      enqueueSnackbar(dictionary.currencies.form.errors.messages.updateResponse, {
         variant: 'error',
       });
     },

@@ -13,12 +13,14 @@ import { PROS_CONTROL_PERMISSIONS } from '@/utilities/constants/prosControlPermi
 import UserManagementListItem from './UserManagementListItem';
 import UserManagementActionTail from './UserManagementActionTail';
 import { User } from './UserManagementType';
+import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
 
 const UserManagement = () => {
     const params = useParams<{ id?: string }>();
     const listRef = useRef<any>(null);
     const { checkPermission } = useJumboAuth();
     const [mounted, setMounted] = useState(false);
+    const dictionary = useDictionary();
 
     const [queryOptions, setQueryOptions] = useState({
       queryKey: 'userManagement',
@@ -61,7 +63,7 @@ const UserManagement = () => {
   return (
           <>
               <Typography variant="h4" mb={2}>
-                Users
+                {dictionary.userManagement.form.labels.listHeader}
               </Typography>
 
               <JumboRqList
