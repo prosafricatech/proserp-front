@@ -110,7 +110,7 @@ console.log("productOptions in FuelPumpTab:", productOptions);
                   label="Fuel Name"
                   frontError={getFieldError(index, "product_id")}
                   addedProduct={addedProduct}
-                  defaultValue={productValue} // ← TUMIA defaultValue INSTEAD OF value
+                  defaultValue={productValue} 
                   excludeIds={nonInventoryIds}
                   onChange={async (newValue: Product | null) => {
                     if (newValue) {
