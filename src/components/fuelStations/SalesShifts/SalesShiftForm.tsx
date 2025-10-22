@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+"use client";
+
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
@@ -6,31 +8,22 @@ import {
   Grid,
   TextField,
   Button,
-  Card,
-  CardContent,
-  Divider,
-  FormControlLabel,
-  Checkbox,
   Alert,
-  Stepper,
-  Step,
-  StepLabel,
-  StepContent,
+  Autocomplete,
   Paper
 } from '@mui/material';
 import { DateTimePicker } from '@mui/x-date-pickers';
 import { useSnackbar } from 'notistack';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useForm, FormProvider } from 'react-hook-form';
 import dayjs, { Dayjs } from 'dayjs';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { useSalesStation } from '../Stations/StationProvider';
-import ProductsSelectProvider from '@/components/productAndServices/products/ProductsSelectProvider';
-import ProductSelect from '@/components/productAndServices/products/ProductSelect';
-import StakeholderSelectProvider from '@/components/masters/stakeholders/StakeholderSelectProvider';
-import StakeholderSelector from '@/components/masters/stakeholders/StakeholderSelector';
-import LedgerSelectProvider from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
 import { SalesShift } from './SalesShiftType';
 import salesShiftServices from './salesShift-services';
+import SalesShiftTabs from './tabs/SalesShiftTabs';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 
 interface SalesShiftFormProps {
   toggleOpen: (open: boolean) => void;
@@ -38,32 +31,23 @@ interface SalesShiftFormProps {
   isClosing?: boolean;
 }
 
-interface ProductPrice {
-  product_id: number;
-  price: number;
-  product?: any;
-}
-
-interface PumpReading {
-  pump_id: number;
-  product_id: number | null;
-  tank_id: number | null;
-  opening: number;
-  closing: number;
-}
-
-interface FuelVoucher {
-  stakeholder_id: number | null;
-  reference?: string;
-  narration?: string;
-  product_id: number;
-  quantity: number;
-  expense_ledger_id?: number | null;
-}
-
-interface LedgerAmount {
-  id: number;
-  amount: number;
+// Define the form data structure
+interface SalesShiftFormData {
+  shift_team_id: string;
+  shift_start: string;
+  shift_end: string | null;
+  pump_readings: Array<{
+    pump_id: number;
+    product_id: number | null;
+    tank_id: number | null;
+    opening: number;
+    closing: number;
+  }>;
+  fuel_vouchers: Array<any>;
+  dipping_readings: Array<any>;
+  adjustments: Array<any>;
+  cash_reconciliation: any;
+  submit_type: 'open' | 'close';
 }
 
 const SalesShiftForm: React.FC<SalesShiftFormProps> = ({
@@ -75,28 +59,36 @@ const SalesShiftForm: React.FC<SalesShiftFormProps> = ({
   const queryClient = useQueryClient();
   const { authUser } = useJumboAuth();
   const { activeStation } = useSalesStation();
-  const [activeStep, setActiveStep] = useState(0);
+  const [activeTab, setActiveTab] = useState(0);
 
-  // Form state
-  const [formData, setFormData] = useState({
-    shift_team_id: salesShift?.shift_team_id || '',
-    shift_start: salesShift?.shift_start || dayjs().toISOString(),
-    shift_end: salesShift?.shift_end || null,
-    product_prices: salesShift?.product_prices || [] as ProductPrice[],
-    pump_readings: salesShift?.pump_readings || [] as PumpReading[],
-    fuel_vouchers: salesShift?.fuel_vouchers || [] as FuelVoucher[],
-    main_ledger: salesShift?.main_ledger || { id: '', amount: 0 },
-    other_ledgers: salesShift?.other_ledgers || [] as LedgerAmount[],
-    submit_type: isClosing ? 'close' : 'open'
+  const shiftTeams = activeStation?.shift_teams || [];
+  const fuelPumps = activeStation?.fuel_pumps || [];
+
+  // Initialize form with react-hook-form
+  const methods = useForm<SalesShiftFormData>({
+    defaultValues: {
+      shift_team_id: String(salesShift?.shift_team_id ?? ''),
+      shift_start: salesShift?.shift_start || dayjs().toISOString(),
+      shift_end: salesShift?.shift_end || null,
+      pump_readings: salesShift?.pump_readings || fuelPumps.map(pump => ({
+        pump_id: pump.id,
+        product_id: pump.product?.id || null,
+        tank_id: pump.tank?.id || null,
+        opening: 0,
+        closing: 0
+      })),
+      fuel_vouchers: salesShift?.fuel_vouchers || [],
+      dipping_readings: salesShift?.dipping_readings || [],
+      adjustments: salesShift?.adjustments || [],
+      cash_reconciliation: salesShift?.cash_reconciliation || {},
+      submit_type: isClosing ? 'close' : 'open'
+    }
   });
 
-  const steps = [
-    'Basic Information',
-    'Product Prices',
-    'Pump Readings',
-    'Fuel Vouchers',
-    'Financial Summary'
-  ];
+  const { watch, setValue, handleSubmit, formState: { isSubmitting, errors } } = methods;
+
+  // Watch form values
+  const formValues = watch();
 
   const { mutate: createSalesShift, isPending: isCreating } = useMutation({
     mutationFn: salesShiftServices.createSalesShift,
@@ -122,463 +114,250 @@ const SalesShiftForm: React.FC<SalesShiftFormProps> = ({
     },
   });
 
-  const isPending = isCreating || isUpdating;
+  const isPending = isCreating || isUpdating || isSubmitting;
 
-  const handleSubmit = () => {
+  // Handle tab change
+  const handleTabChange = (newValue: number) => {
+    setActiveTab(newValue);
+  };
+
+  // Handle next button click
+  const handleNext = () => {
+    if (activeTab < 4) {
+      setActiveTab(activeTab + 1);
+    }
+  };
+
+  // Handle previous button click
+  const handlePrevious = () => {
+    if (activeTab > 0) {
+      setActiveTab(activeTab - 1);
+    }
+  };
+
+  const onSubmit = (data: SalesShiftFormData) => {
+    if (data.shift_end && dayjs(data.shift_end).isBefore(dayjs(data.shift_start))) {
+      enqueueSnackbar('Shift end cannot be before shift start', { variant: 'error' });
+      return;
+    }
+
+    if (!data.shift_team_id || !data.shift_start) {
+      enqueueSnackbar('Shift team and shift start are required', { variant: 'error' });
+      return;
+    }
+
     const submitData = {
-      ...formData,
+      ...data,
       station_id: activeStation?.id,
-      shift_start: dayjs(formData.shift_start).toISOString(),
-      shift_end: formData.shift_end ? dayjs(formData.shift_end).toISOString() : null,
+      shift_start: dayjs(data.shift_start).toISOString(),
+      shift_end: data.shift_end ? dayjs(data.shift_end).toISOString() : null,
     };
 
     if (salesShift) {
       updateSalesShift(submitData);
     } else {
-      createSalesShift(submitData);
+      createSalesShift(submitData as any);
     }
-  };
-
-  const handleNext = () => {
-    setActiveStep((prev) => prev + 1);
-  };
-
-  const handleBack = () => {
-    setActiveStep((prev) => prev - 1);
-  };
-
-  // Add product price
-  const addProductPrice = () => {
-    setFormData(prev => ({
-      ...prev,
-      product_prices: [...prev.product_prices, { product_id: 0, price: 0 }]
-    }));
-  };
-
-  // Update product price
-  const updateProductPrice = (index: number, field: string, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      product_prices: prev.product_prices.map((price, i) =>
-        i === index ? { ...price, [field]: value } : price
-      )
-    }));
-  };
-
-  // Add pump reading
-  const addPumpReading = () => {
-    setFormData(prev => ({
-      ...prev,
-      pump_readings: [...prev.pump_readings, {
-        pump_id: 0,
-        product_id: null,
-        tank_id: null,
-        opening: 0,
-        closing: 0
-      }]
-    }));
-  };
-
-  // Update pump reading
-  const updatePumpReading = (index: number, field: string, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      pump_readings: prev.pump_readings.map((reading, i) =>
-        i === index ? { ...reading, [field]: value } : reading
-      )
-    }));
-  };
-
-  // Add fuel voucher
-  const addFuelVoucher = () => {
-    setFormData(prev => ({
-      ...prev,
-      fuel_vouchers: [...prev.fuel_vouchers, {
-        stakeholder_id: null,
-        product_id: 0,
-        quantity: 0,
-        reference: '',
-        narration: ''
-      }]
-    }));
-  };
-
-  // Update fuel voucher
-  const updateFuelVoucher = (index: number, field: string, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      fuel_vouchers: prev.fuel_vouchers.map((voucher, i) =>
-        i === index ? { ...voucher, [field]: value } : voucher
-      )
-    }));
-  };
-
-  // Add other ledger
-  const addOtherLedger = () => {
-    setFormData(prev => ({
-      ...prev,
-      other_ledgers: [...prev.other_ledgers, { id: 0, amount: 0 }]
-    }));
-  };
-
-  // Update other ledger
-  const updateOtherLedger = (index: number, field: string, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      other_ledgers: prev.other_ledgers.map((ledger, i) =>
-        i === index ? { ...ledger, [field]: value } : ledger
-      )
-    }));
   };
 
   if (isPending) {
     return <LinearProgress />;
   }
 
+  // Get tab names for display
+  const tabNames = ['Pump Reading', 'Fuel Voucher', 'Dipping', 'Adjustments', 'Cash Reconciliation'];
+
   return (
-    <ProductsSelectProvider>
-      <StakeholderSelectProvider type="customers">
-        <LedgerSelectProvider>
-          <Box p={3}>
-            <Typography variant="h4" gutterBottom>
-              {isClosing ? 'Close Sales Shift' : salesShift ? 'Edit Sales Shift' : 'New Sales Shift'}
+    <FormProvider {...methods}>
+      <Box 
+        component="form" 
+        onSubmit={handleSubmit(onSubmit)}
+        sx={{ 
+          maxHeight: '90vh',
+          overflow: 'auto',
+          p: 1.5
+        }}
+      >
+        {/* Header Section - More Compact */}
+        <Paper elevation={1} sx={{ p: 2, mb: 2 }}>
+          <Typography variant="h5" gutterBottom align="center">
+            Fuel Sales Shift
+          </Typography>
+
+          {activeStation && (
+            <Alert severity="info" sx={{ mb: 2, py: 0 }}>
+              <Typography variant="body2">Station: {activeStation.name}</Typography>
+            </Alert>
+          )}
+
+          {/* Current Tab Indicator - Smaller */}
+          <Box sx={{ mb: 1, textAlign: 'center' }}>
+            <Typography variant="body2" color="primary.main" fontWeight="bold">
+              Step {activeTab + 1} of 5: {tabNames[activeTab]}
             </Typography>
-
-            {activeStation && (
-              <Alert severity="info" sx={{ mb: 2 }}>
-                Station: {activeStation.name}
-              </Alert>
-            )}
-
-            <Stepper activeStep={activeStep} orientation="vertical">
-              {/* Step 1: Basic Information */}
-              <Step>
-                <StepLabel>Basic Information</StepLabel>
-                <StepContent>
-                  <Grid container spacing={2}>
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <TextField
-                        fullWidth
-                        label="Shift Team ID"
-                        value={formData.shift_team_id}
-                        onChange={(e) => setFormData(prev => ({ ...prev, shift_team_id: e.target.value }))}
-                        size="small"
-                      />
-                    </Grid>
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <DateTimePicker
-                        label="Shift Start"
-                        value={dayjs(formData.shift_start)}
-                        onChange={(value: Dayjs | null) => 
-                          setFormData(prev => ({ ...prev, shift_start: value?.toISOString() || '' }))
-                        }
-                        slotProps={{
-                          textField: {
-                            size: 'small',
-                            fullWidth: true,
-                          }
-                        }}
-                      />
-                    </Grid>
-                    {isClosing && (
-                      <Grid size={{ xs: 12, md: 6 }}>
-                        <DateTimePicker
-                          label="Shift End"
-                          value={formData.shift_end ? dayjs(formData.shift_end) : null}
-                          onChange={(value: Dayjs | null) => 
-                            setFormData(prev => ({ ...prev, shift_end: value?.toISOString() || null }))
-                          }
-                          slotProps={{
-                            textField: {
-                              size: 'small',
-                              fullWidth: true,
-                            }
-                          }}
-                        />
-                      </Grid>
-                    )}
-                  </Grid>
-                  <Box sx={{ mb: 2, mt: 2 }}>
-                    <Button variant="contained" onClick={handleNext}>
-                      Next
-                    </Button>
-                  </Box>
-                </StepContent>
-              </Step>
-
-              {/* Step 2: Product Prices */}
-              <Step>
-                <StepLabel>Product Prices</StepLabel>
-                <StepContent>
-                  <Typography variant="body2" color="textSecondary" gutterBottom>
-                    Set current prices for products
-                  </Typography>
-                  
-                  {formData.product_prices.map((price, index) => (
-                    <Card key={index} sx={{ mb: 2 }}>
-                      <CardContent>
-                        <Grid container spacing={2}>
-                          <Grid size={{ xs: 12, md: 6 }}>
-                            <ProductSelect
-                              value={price.product_id}
-                              onChange={(newValue) => updateProductPrice(index, 'product_id', newValue?.id || 0)}
-                              label="Product"
-                            />
-                          </Grid>
-                          <Grid size={{ xs: 12, md: 6 }}>
-                            <TextField
-                              fullWidth
-                              label="Price"
-                              type="number"
-                              value={price.price}
-                              onChange={(e) => updateProductPrice(index, 'price', parseFloat(e.target.value) || 0)}
-                              size="small"
-                            />
-                          </Grid>
-                        </Grid>
-                      </CardContent>
-                    </Card>
-                  ))}
-                  
-                  <Button variant="outlined" onClick={addProductPrice} sx={{ mb: 2 }}>
-                    Add Product Price
-                  </Button>
-                  
-                  <Box sx={{ mb: 2 }}>
-                    <Button onClick={handleBack} sx={{ mr: 1 }}>
-                      Back
-                    </Button>
-                    <Button variant="contained" onClick={handleNext}>
-                      Next
-                    </Button>
-                  </Box>
-                </StepContent>
-              </Step>
-
-              {/* Step 3: Pump Readings */}
-              <Step>
-                <StepLabel>Pump Readings</StepLabel>
-                <StepContent>
-                  <Typography variant="body2" color="textSecondary" gutterBottom>
-                    Record pump opening and closing readings
-                  </Typography>
-                  
-                  {formData.pump_readings.map((reading, index) => (
-                    <Card key={index} sx={{ mb: 2 }}>
-                      <CardContent>
-                        <Grid container spacing={2}>
-                          <Grid size={{ xs: 12, md: 4 }}>
-                            <TextField
-                              fullWidth
-                              label="Pump ID"
-                              type="number"
-                              value={reading.pump_id}
-                              onChange={(e) => updatePumpReading(index, 'pump_id', parseInt(e.target.value) || 0)}
-                              size="small"
-                            />
-                          </Grid>
-                          <Grid size={{ xs: 12, md: 4 }}>
-                            <TextField
-                              fullWidth
-                              label="Opening Reading"
-                              type="number"
-                              value={reading.opening}
-                              onChange={(e) => updatePumpReading(index, 'opening', parseInt(e.target.value) || 0)}
-                              size="small"
-                            />
-                          </Grid>
-                          <Grid size={{ xs: 12, md: 4 }}>
-                            <TextField
-                              fullWidth
-                              label="Closing Reading"
-                              type="number"
-                              value={reading.closing}
-                              onChange={(e) => updatePumpReading(index, 'closing', parseInt(e.target.value) || 0)}
-                              size="small"
-                            />
-                          </Grid>
-                        </Grid>
-                      </CardContent>
-                    </Card>
-                  ))}
-                  
-                  <Button variant="outlined" onClick={addPumpReading} sx={{ mb: 2 }}>
-                    Add Pump Reading
-                  </Button>
-                  
-                  <Box sx={{ mb: 2 }}>
-                    <Button onClick={handleBack} sx={{ mr: 1 }}>
-                      Back
-                    </Button>
-                    <Button variant="contained" onClick={handleNext}>
-                      Next
-                    </Button>
-                  </Box>
-                </StepContent>
-              </Step>
-
-              {/* Step 4: Fuel Vouchers */}
-              <Step>
-                <StepLabel>Fuel Vouchers</StepLabel>
-                <StepContent>
-                  <Typography variant="body2" color="textSecondary" gutterBottom>
-                    Record fuel vouchers and expenses
-                  </Typography>
-                  
-                  {formData.fuel_vouchers.map((voucher, index) => (
-                    <Card key={index} sx={{ mb: 2 }}>
-                      <CardContent>
-                        <Grid container spacing={2}>
-                          <Grid size={{ xs: 12, md: 6 }}>
-                            <StakeholderSelector
-                              value={voucher.stakeholder_id}
-                              onChange={(newValue) => updateFuelVoucher(index, 'stakeholder_id', newValue?.id || null)}
-                              label="Customer"
-                            />
-                          </Grid>
-                          <Grid size={{ xs: 12, md: 6 }}>
-                            <ProductSelect
-                              value={voucher.product_id}
-                              onChange={(newValue) => updateFuelVoucher(index, 'product_id', newValue?.id || 0)}
-                              label="Product"
-                            />
-                          </Grid>
-                          <Grid size={{ xs: 12, md: 6 }}>
-                            <TextField
-                              fullWidth
-                              label="Quantity"
-                              type="number"
-                              value={voucher.quantity}
-                              onChange={(e) => updateFuelVoucher(index, 'quantity', parseFloat(e.target.value) || 0)}
-                              size="small"
-                            />
-                          </Grid>
-                          <Grid size={{ xs: 12, md: 6 }}>
-                            <TextField
-                              fullWidth
-                              label="Reference"
-                              value={voucher.reference || ''}
-                              onChange={(e) => updateFuelVoucher(index, 'reference', e.target.value)}
-                              size="small"
-                            />
-                          </Grid>
-                          {!voucher.stakeholder_id && (
-                            <Grid size={{ xs: 12 }}>
-                              <LedgerSelectProvider
-                                value={voucher.expense_ledger_id}
-                                onChange={(newValue) => updateFuelVoucher(index, 'expense_ledger_id', newValue?.id || null)}
-                                label="Expense Ledger"
-                              />
-                            </Grid>
-                          )}
-                        </Grid>
-                      </CardContent>
-                    </Card>
-                  ))}
-                  
-                  <Button variant="outlined" onClick={addFuelVoucher} sx={{ mb: 2 }}>
-                    Add Fuel Voucher
-                  </Button>
-                  
-                  <Box sx={{ mb: 2 }}>
-                    <Button onClick={handleBack} sx={{ mr: 1 }}>
-                      Back
-                    </Button>
-                    <Button variant="contained" onClick={handleNext}>
-                      Next
-                    </Button>
-                  </Box>
-                </StepContent>
-              </Step>
-
-              {/* Step 5: Financial Summary */}
-              <Step>
-                <StepLabel>Financial Summary</StepLabel>
-                <StepContent>
-                  <Grid container spacing={2}>
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <LedgerSelector
-                        value={formData.main_ledger.id}
-                        onChange={(newValue) => setFormData(prev => ({
-                          ...prev,
-                          main_ledger: { ...prev.main_ledger, id: newValue?.id || 0 }
-                        }))}
-                        label="Main Ledger"
-                      />
-                    </Grid>
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <TextField
-                        fullWidth
-                        label="Main Ledger Amount"
-                        type="number"
-                        value={formData.main_ledger.amount}
-                        onChange={(e) => setFormData(prev => ({
-                          ...prev,
-                          main_ledger: { ...prev.main_ledger, amount: parseFloat(e.target.value) || 0 }
-                        }))}
-                        size="small"
-                      />
-                    </Grid>
-                  </Grid>
-
-                  <Typography variant="h6" sx={{ mt: 3, mb: 2 }}>
-                    Other Ledgers
-                  </Typography>
-                  
-                  {formData.other_ledgers.map((ledger, index) => (
-                    <Card key={index} sx={{ mb: 2 }}>
-                      <CardContent>
-                        <Grid container spacing={2}>
-                          <Grid size={{ xs: 12, md: 6 }}>
-                            <LedgerSelector
-                              value={ledger.id}
-                              onChange={(newValue) => updateOtherLedger(index, 'id', newValue?.id || 0)}
-                              label="Ledger"
-                            />
-                          </Grid>
-                          <Grid size={{ xs: 12, md: 6 }}>
-                            <TextField
-                              fullWidth
-                              label="Amount"
-                              type="number"
-                              value={ledger.amount}
-                              onChange={(e) => updateOtherLedger(index, 'amount', parseFloat(e.target.value) || 0)}
-                              size="small"
-                            />
-                          </Grid>
-                        </Grid>
-                      </CardContent>
-                    </Card>
-                  ))}
-                  
-                  <Button variant="outlined" onClick={addOtherLedger} sx={{ mb: 2 }}>
-                    Add Other Ledger
-                  </Button>
-                  
-                  <Box sx={{ mb: 2 }}>
-                    <Button onClick={handleBack} sx={{ mr: 1 }}>
-                      Back
-                    </Button>
-                    <Button variant="contained" onClick={handleSubmit}>
-                      {salesShift ? 'Update' : 'Create'} Sales Shift
-                    </Button>
-                  </Box>
-                </StepContent>
-              </Step>
-            </Stepper>
-
-            {activeStep === steps.length && (
-              <Paper square elevation={0} sx={{ p: 3 }}>
-                <Typography>All steps completed - you&apos;re finished</Typography>
-                <Button onClick={handleSubmit} sx={{ mt: 1, mr: 1 }}>
-                  {salesShift ? 'Update' : 'Create'} Sales Shift
-                </Button>
-              </Paper>
-            )}
           </Box>
-        </LedgerSelectProvider>
-      </StakeholderSelectProvider>
-    </ProductsSelectProvider>
+
+          {/* Header Fields - More Compact */}
+          <Grid container spacing={1.5}>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Autocomplete
+                options={shiftTeams}
+                getOptionLabel={(option) => option.name || `Team ${option.id}`}
+                value={shiftTeams.find(team => team.id === formValues.shift_team_id) || null}
+                onChange={(event, newValue) => {
+                  setValue('shift_team_id', newValue?.id || '');
+                }}
+                renderInput={(params) => (
+                  <TextField 
+                    {...params} 
+                    label="Shift Team" 
+                    size="small" 
+                    fullWidth 
+                    required
+                    error={!!errors.shift_team_id}
+                    helperText={errors.shift_team_id?.message}
+                  />
+                )}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <DateTimePicker
+                label="Shift Start"
+                value={dayjs(formValues.shift_start)}
+                onChange={(value: Dayjs | null) => 
+                  setValue('shift_start', value?.toISOString() || '')
+                }
+                slotProps={{
+                  textField: {
+                    size: "small",
+                    fullWidth: true,
+                    required: true,
+                    error: !!errors.shift_start,
+                    helperText: errors.shift_start?.message,
+                  }
+                }}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <DateTimePicker
+                label="Shift End"
+                value={formValues.shift_end ? dayjs(formValues.shift_end) : null}
+                minDateTime={dayjs(formValues.shift_start)}
+                onChange={(value: Dayjs | null) => 
+                  setValue('shift_end', value?.toISOString() || null)
+                }
+                slotProps={{
+                  textField: {
+                    size: "small",
+                    fullWidth: true,
+                    error: !!errors.shift_end,
+                    helperText: errors.shift_end?.message,
+                  }
+                }}
+              />
+            </Grid>
+          </Grid>
+        </Paper>
+
+        {/* Tabs Section - Reduced Height */}
+        <Box sx={{ maxHeight: '50vh', overflow: 'auto' }}>
+          <SalesShiftTabs
+            salesShift={salesShift}
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+            isClosing={isClosing}
+          />
+        </Box>
+
+        {/* Action Buttons - More Compact */}
+        <Paper elevation={1} sx={{ p: 1.5, mt: 2 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            {/* Previous Button */}
+            <Box>
+              {activeTab > 0 && (
+                <Button 
+                  onClick={handlePrevious}
+                  variant="outlined"
+                  size="small"
+                  startIcon={<ArrowBackIcon />}
+                  disabled={isPending}
+                >
+                  Previous
+                </Button>
+              )}
+            </Box>
+
+            {/* Cancel Button */}
+            <Button 
+              onClick={() => toggleOpen(false)}
+              variant="outlined"
+              size="small"
+              disabled={isPending}
+            >
+              Cancel
+            </Button>
+
+            {/* Next/Submit Buttons */}
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              {activeTab < 4 ? (
+                <Button 
+                  onClick={handleNext}
+                  variant="contained"
+                  size="small"
+                  endIcon={<ArrowForwardIcon />}
+                  disabled={isPending}
+                >
+                  Next
+                </Button>
+              ) : (
+                <Button 
+                  type="submit"
+                  variant="contained"
+                  size="small"
+                  disabled={isPending || !formValues.shift_team_id || !formValues.shift_start}
+                >
+                  {salesShift ? 'Update' : 'Create'} Shift
+                </Button>
+              )}
+            </Box>
+          </Box>
+
+          {/* Progress Indicator - Smaller */}
+          <Box sx={{ mt: 1 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              {tabNames.map((tabName, index) => (
+                <Box key={index} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
+                  <Box
+                    sx={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      backgroundColor: index === activeTab 
+                        ? 'primary.main' 
+                        : index < activeTab 
+                          ? 'success.main' 
+                          : 'grey.400',
+                    }}
+                  />
+                  <Typography 
+                    variant="caption" 
+                    sx={{ 
+                      fontSize: '0.6rem',
+                      fontWeight: index === activeTab ? 'bold' : 'normal',
+                      color: index === activeTab ? 'primary.main' : 'text.secondary',
+                      textAlign: 'center',
+                      lineHeight: 1
+                    }}
+                  >
+                    {tabName.split(' ')[0]}
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
+          </Box>
+        </Paper>
+      </Box>
+    </FormProvider>
   );
 };
 

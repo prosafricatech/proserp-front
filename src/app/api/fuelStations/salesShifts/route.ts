@@ -12,13 +12,20 @@ export async function GET(request: NextRequest) {
   const page = searchParams.get('page') || '1';
   const limit = searchParams.get('limit') || '10';
   const stationId = searchParams.get('stationId') || '';
-  const query = new URLSearchParams({ keyword, page, limit }).toString();
+  
+  // Build query parameters
+  const queryParams = new URLSearchParams({
+    keyword,
+    page,
+    limit,
+    ...(stationId && { stationId }) // Only include stationId if it exists
+  }).toString();
 
-  const res = await fetch(`${API_BASE}/fuel-stations/${stationId}/sales-shifts?${query}`, {
+  // Fixed URL - using the stationId from searchParams
+  const res = await fetch(`${API_BASE}/fuel-stations/${queryParams.stationId}/sales-shifts`, {
     headers,
     credentials: 'include',
   });
-
 
   return handleJsonResponse(res);
 }

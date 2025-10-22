@@ -149,7 +149,7 @@ const StationForm: React.FC<StationFormProps> = ({ station, setOpenDialog }) => 
   }, [station]);
 
   const methods = useForm<FormData>({
-    defaultValues,
+    defaultValues: defaultValues as unknown as FormData,
     resolver: yupResolver(validationSchema) as any,
   });
 

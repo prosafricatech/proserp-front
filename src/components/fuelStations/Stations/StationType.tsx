@@ -16,6 +16,7 @@ export interface Station {
 }
 
 export interface ShiftTeam {
+  id: string | number;
   ledgers: any;
   name: string;
   ledger_ids: number[];
@@ -23,6 +24,8 @@ export interface ShiftTeam {
 }
 
 export interface FuelPump {
+  id: any;
+  tank: any;
   product: any;
   product_id: number | null;
   product_name?: string;

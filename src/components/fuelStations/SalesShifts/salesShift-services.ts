@@ -87,7 +87,7 @@ interface SalesShiftServices {
 
 const salesShiftServices: SalesShiftServices = {
   getStationShifts: async ({ queryParams }) => {
-    const response = await axios.get('/api/fuelStation/salesShifts/getStationShifts', {
+    const response = await axios.get('/api/fuelStations/salesShifts', {
       params: queryParams,
     });
     return response.data;
@@ -119,7 +119,7 @@ const salesShiftServices: SalesShiftServices = {
       params.sortOrder = rqList.sortOrder || 'asc';
     }
 
-    const response = await axios.get('/api/pos/sales-shift', {
+    const response = await axios.get('/api/fuelStations/salesShifts', {
       params,
     });
     return response.data;
