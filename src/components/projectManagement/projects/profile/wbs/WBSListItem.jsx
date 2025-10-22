@@ -1,5 +1,5 @@
 import React, { lazy, useState, useMemo, useEffect } from 'react';
-import { Alert, Grid, ListItemText, Stack, Typography, Divider, Tooltip, useMediaQuery } from '@mui/material';
+import { Alert, Grid, ListItemText, Stack, Typography, Divider, Tooltip, useMediaQuery, Chip, LinearProgress, Box } from '@mui/material';
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
@@ -13,63 +13,103 @@ import TasksActionTail from './task/TasksActionTail';
 import TasksListItem from './task/TasksListItem';
 import TasksTreeViewActionTail from './tasksTreeView/TasksTreeViewActionTail';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
+import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 
 const GanttChartActionTail = lazy(() => import('./ganttChart/GanttChartActionTail'));
+
+function LinearProgressWithLabel({ value, label, color }) {
+  return (
+    <Box sx={{ width: '100%' }}>
+      <Stack direction="row" alignItems="center" spacing={1}>
+        <Typography variant="body2" color="text.secondary" sx={{ minWidth: 80 }}>
+          {label}
+        </Typography>
+        <Box sx={{ flexGrow: 1 }}>
+          <LinearProgress
+            variant="determinate"
+            value={Math.min(Number(value) || 0, 100)}
+            color={color}
+            sx={{ height: 8, borderRadius: 2 }}
+          />
+        </Box>
+        <Typography variant="caption" color="text.secondary">
+          {`${Math.min(Number(value) || 0, 100)}%`}
+        </Typography>
+      </Stack>
+    </Box>
+  );
+}
 
 const TimelineActivityAccordion = ({ activity, expanded, handleChange }) => {
   const [childExpanded, setChildExpanded] = useState({});
   const [openDialog, setOpenDialog] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const filteredTasks = activity?.tasks?.filter(task => {
+  const filteredTasks = activity?.tasks?.filter((task) => {
     const description = task.description?.toLowerCase() || '';
     const name = task.name?.toLowerCase() || '';
-
-    return description.includes(searchQuery.toLowerCase()) ||
-           name.includes(searchQuery.toLowerCase());
-    });
+    return (
+      description.includes(searchQuery.toLowerCase()) ||
+      name.includes(searchQuery.toLowerCase())
+    );
+  });
 
   const filterActivityChildren = (children) => {
     return children
-      .filter(child => 
-        child.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        (child.description && child.description.toLowerCase().includes(searchQuery.toLowerCase())) || 
-        child.tasks?.some(task => task.name.toLowerCase().includes(searchQuery.toLowerCase()))
+      .filter(
+        (child) =>
+          child.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (child.description &&
+            child.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+          child.tasks?.some((task) =>
+            task.name.toLowerCase().includes(searchQuery.toLowerCase())
+          )
       )
-      .map(child => ({
+      .map((child) => ({
         ...child,
-        tasks: child.tasks?.filter(task => task.name.toLowerCase().includes(searchQuery.toLowerCase())),
-        children: filterActivityChildren(child.children)
+        tasks: child.tasks?.filter((task) =>
+          task.name.toLowerCase().includes(searchQuery.toLowerCase())
+        ),
+        children: filterActivityChildren(child.children),
       }));
-  };  
+  };
 
   const filteredChildren = filterActivityChildren(activity?.children || []);
 
   const handleChildChange = (childIndex) => {
-    setChildExpanded((prevState) => ({
-      ...prevState,
-      [childIndex]: !prevState[childIndex],
+    setChildExpanded((prev) => ({
+      ...prev,
+      [childIndex]: !prev[childIndex],
     }));
   };
 
+  // --- Color Logic ---
+  const execPercent = activity.executed_percentage ?? 0;
+  const timePercent = activity.percentage_time_elapsed ?? 0;
+
+  let execColor = 'primary';
+  if (execPercent >= 100) execColor = 'success';
+  else if (execPercent >= 70) execColor = 'warning';
+  else if (execPercent < 30) execColor = 'error';
+
+  let timeColor = 'primary';
+  if (timePercent >= 100) timeColor = 'error';     
+  else if (timePercent >= 80) timeColor = 'warning'; 
+  else if (timePercent < 30) timeColor = 'success';
+
   return (
     <Accordion
-      expanded={expanded === true}
+      expanded={expanded}
       onChange={handleChange}
       square
       sx={{
         borderRadius: 2,
         borderTop: 2,
         width: '100%',
-        paddingLeft: 1,
-        paddingRight: 1,
+        px: 1,
         borderColor: 'divider',
-        '&:hover': {
-          bgcolor: 'action.hover',
-        },
-        '& > .MuiAccordionDetails-root:hover': {
-          bgcolor: 'transparent',
-        },
+        '&:hover': { bgcolor: 'action.hover' },
+        '& > .MuiAccordionDetails-root:hover': { bgcolor: 'transparent' },
       }}
     >
       <AccordionSummary
@@ -79,9 +119,7 @@ const TimelineActivityAccordion = ({ activity, expanded, handleChange }) => {
           flexDirection: 'row-reverse',
           '.MuiAccordionSummary-content': {
             alignItems: 'center',
-            '&.Mui-expanded': {
-              margin: '12px 0',
-            },
+            '&.Mui-expanded': { margin: '12px 0' },
           },
           '.MuiAccordionSummary-expandIconWrapper': {
             borderRadius: 1,
@@ -94,40 +132,123 @@ const TimelineActivityAccordion = ({ activity, expanded, handleChange }) => {
               color: 'primary.main',
               borderColor: 'primary.main',
             },
-            '& svg': {
-              fontSize: '1.25rem',
-            },
+            '& svg': { fontSize: '1.25rem' },
           },
         }}
       >
-        <Grid container paddingLeft={0.1} width={'100%'} paddingRight={0.1} columnSpacing={1} rowSpacing={1} alignItems={'center'}>
-          <Grid size={{xs: 8, md: 5.5}}>
+        <Grid
+          container
+          width={'100%'}
+          spacing={1}
+          alignItems="center"
+          justifyContent="space-between"
+          sx={{ mb: 1, px: 2 }}
+        >
+          <Grid size={{xs: 8, md: 5}}>
             <ListItemText
               primary={
-                <Tooltip title={'Activity Name'}>
-                  <Typography component="span">{activity.name}</Typography>
-                </Tooltip>
+                <>
+                  <Tooltip title="Activity Name">
+                    <Typography component="span" fontWeight={500}>
+                      {activity.name}
+                    </Typography>
+                  </Tooltip>
+                  {activity.code && (
+                    <Tooltip title="Activity Code">
+                      <Typography
+                        component="h4"
+                        variant="body2"
+                        color="text.secondary"
+                      >
+                        {activity.code}
+                      </Typography>
+                    </Tooltip>
+                  )}
+                </>
               }
               secondary={
-                <Tooltip title={'Code'}>
-                  <Typography component="span">{activity.code}</Typography>
+                <Tooltip title="Description">
+                  <Typography component="span">
+                    {activity.description}
+                  </Typography>
                 </Tooltip>
               }
             />
           </Grid>
-          {activity.description &&
-            <Grid size={{xs: 8, md: 5.5}}>
+
+          <Grid size={{xs: 12, md: 2.5}}>
+            <Tooltip title="Start to End Date">
+              <Typography variant="body2">
+                {activity.start_date || activity.end_date
+                  ? `${activity.start_date ? readableDate(activity.start_date, false) : 'Not Set'} ${
+                      activity.end_date
+                        ? '→ ' + readableDate(activity.end_date, false)
+                        : ''
+                    }`
+                  : 'Not Set'}
+              </Typography>
+            </Tooltip>
+          </Grid>
+
+          <Grid size={{xs: 12, md: 2.5}}>
+            <Tooltip title="Duration (in days) and Days Remaining">
               <ListItemText
+                primary={
+                  <Typography variant="body2" color="text.secondary">
+                    <strong>Duration:</strong>{' '}
+                    {activity.number_of_days
+                      ? `${activity.number_of_days} days`
+                      : '-'}
+                  </Typography>
+                }
                 secondary={
-                  <Tooltip title={'Description'}>
-                    <Typography component="span">{activity.description}</Typography>
-                  </Tooltip>
+                  <Typography
+                    variant="caption"
+                    color={
+                      activity.days_remaining < 0
+                        ? 'error.main'
+                        : 'text.secondary'
+                    }
+                  >
+                    <strong>Remaining:</strong>{' '}
+                    {activity.days_remaining ?? '—'}
+                  </Typography>
                 }
               />
-            </Grid>
-          }
-          <Grid size={{xs: 4, md: activity.description ? 1 : 6.5}} textAlign={'end'}>
-            <WBSItemAction activity={activity} />
+            </Tooltip>
+          </Grid>
+
+          <Grid size={{xs: 12, md: 8}}>
+            <Stack spacing={2.5} direction="column">
+              <LinearProgressWithLabel
+                value={execPercent}
+                label="Execution"
+                color={execColor}
+              />
+              <LinearProgressWithLabel
+                value={timePercent}
+                label="Time"
+                color={timeColor}
+              />
+            </Stack>
+          </Grid>
+
+          <Grid size={{xs: 12, md: 4}} textAlign="end">
+            <Stack
+              direction="row"
+              spacing={1}
+              alignItems="center"
+              justifyContent="flex-end"
+            >
+              <Tooltip title="Weighted Percentage">
+                <Chip
+                  size="small"
+                  label={`${activity.weighted_percentage?.toLocaleString() ?? 0}% Weight`}
+                  color="default"
+                />
+              </Tooltip>
+              <WBSItemAction activity={activity} />
+            </Stack>
           </Grid>
         </Grid>
         <Divider />
@@ -136,40 +257,63 @@ const TimelineActivityAccordion = ({ activity, expanded, handleChange }) => {
       <AccordionDetails
         sx={{
           backgroundColor: 'background.paper',
-          marginBottom: 3,
-          paddingLeft: 0,
-          paddingRight: 0,
+          mb: 3,
+          px: 0,
         }}
       >
-        <Grid container width={'100%'}>
-          <Grid size={{xs: 12}} textAlign={'end'} display="flex" justifyContent="flex-end" alignItems="center">
-            {((activity.children?.length > 0) || (activity.tasks?.length > 0)) &&
-              <Grid paddingBottom={1} >
-                <JumboSearch
-                  value={searchQuery}
-                  onChange={(value) => setSearchQuery(value)}
-                />
+        <Grid container>
+          <Grid
+            size={12}
+            textAlign="end"
+            display="flex"
+            justifyContent="flex-end"
+            alignItems="center"
+          >
+            {(activity.children?.length > 0 || activity.tasks.length > 0) && (
+              <Grid item pb={1}>
+                <Tooltip title="Search Tasks or Activities">
+                  <div>
+                    <JumboSearch
+                      value={searchQuery}
+                      onChange={(v) => setSearchQuery(v)}
+                    />
+                  </div>
+                </Tooltip>
               </Grid>
-            }
+            )}
             <Grid>
-              {!activity.children?.length && <TasksActionTail openDialog={openDialog} setOpenDialog={setOpenDialog} activity={activity} />}
+              {!activity.children.length > 0 && (
+                <Tooltip title="Add Task">
+                  <div>
+                    <TasksActionTail
+                      openDialog={openDialog}
+                      setOpenDialog={setOpenDialog}
+                      activity={activity}
+                    />
+                  </div>
+                </Tooltip>
+              )}
             </Grid>
             <Grid>
-              {!activity.tasks?.length && <WBSItemAction activity={activity} isAccDetails={true} />}
+              {!activity.tasks?.length > 0 && (
+                <Tooltip title="Add Sub-Activity">
+                  <div>
+                    <WBSItemAction activity={activity} isAccDetails />
+                  </div>
+                </Tooltip>
+              )}
             </Grid>
           </Grid>
 
-          {/* Tasks List Item */}
-          <TasksListItem filteredTasks={filteredTasks} activity={activity}/>
+          <TasksListItem filteredTasks={filteredTasks} activity={activity} />
 
-          {/* Render child activity as nested Accordions */}
-          {filteredChildren?.length > 0 && (
-            <Grid size={{xs: 12}}>
-              {filteredChildren?.map((child, index) => (
+          {filteredChildren.length > 0 && (
+            <Grid size={12}>
+              {filteredChildren.map((child, index) => (
                 <TimelineActivityAccordion
-                  key={child.id || index}
+                  key={index}
                   activity={child}
-                  expanded={childExpanded[index] === true}
+                  expanded={!!childExpanded[index]}
                   handleChange={() => handleChildChange(index)}
                   openDialog={openDialog}
                   setOpenDialog={setOpenDialog}
@@ -184,26 +328,22 @@ const TimelineActivityAccordion = ({ activity, expanded, handleChange }) => {
 };
 
 function WBSListItem() {
-  const { projectTimelineActivities, timelineLoading } = useProjectProfile();
+  const { projectTimelineActivities } = useProjectProfile();
   const [openDialog, setOpenDialog] = useState(false);
-  const [expanded, setExpanded] = useState([]);
+  const [expanded, setExpanded] = useState(
+    Array(projectTimelineActivities?.length).fill(false)
+  );
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Initialize expanded state with proper boolean values when data loads
-  useEffect(() => {
-    if (projectTimelineActivities) {
-      // Initialize with all accordions closed (false)
-      setExpanded(Array(projectTimelineActivities.length).fill(false));
-    }
-  }, [projectTimelineActivities]);
-
-  const filteredTimelineActivity = projectTimelineActivities?.filter(activity =>
-    activity.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (activity.description && activity.description.toLowerCase().includes(searchQuery.toLowerCase()))
+  const filteredTimelineActivity = projectTimelineActivities?.filter(
+    (activity) =>
+      activity.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (activity.description &&
+        activity.description.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   const sortedTimelineActivity = filteredTimelineActivity?.sort((a, b) => {
-    if (a.position_index === null) return 1; 
+    if (a.position_index === null) return 1;
     if (b.position_index === null) return -1;
     return a.position_index - b.position_index;
   });
@@ -217,42 +357,43 @@ function WBSListItem() {
   const { theme } = useJumboTheme();
   const isLargeScreen = useMediaQuery(theme.breakpoints.up('md'));
 
-  if (timelineLoading) {
-    return <Alert variant="outlined" color="info" severity="info">Loading timeline activities...</Alert>;
-  }
-
   return (
-    <React.Fragment>
-      <Grid container columnSpacing={1} width={'100%'} justifyContent="flex-end" alignItems="center">
-        {projectTimelineActivities?.length > 0 &&
+    <>
+      <Grid container columnSpacing={1} justifyContent="flex-end" alignItems="center">
+        {projectTimelineActivities?.length > 0 && (
           <Grid>
             <JumboSearch
               value={searchQuery}
               onChange={(value) => setSearchQuery(value)}
             />
           </Grid>
-        }
-        {isLargeScreen &&
-          <Grid>
-            <GanttChartActionTail/>
-          </Grid>
-        }
-        {isLargeScreen &&
-          <Grid>
-            <TasksTreeViewActionTail/>
-          </Grid>
-        }
+        )}
+        {isLargeScreen && (
+          <>
+            <Grid>
+              <GanttChartActionTail />
+            </Grid>
+            <Grid>
+              <TasksTreeViewActionTail />
+            </Grid>
+          </>
+        )}
         <Grid>
-          <WBSActionTail openDialog={openDialog} setOpenDialog={setOpenDialog} activity={null}/>
+          <WBSActionTail
+            openDialog={openDialog}
+            setOpenDialog={setOpenDialog}
+            activity={null}
+          />
         </Grid>
       </Grid>
-      <Stack direction={'column'}>
-        {sortedTimelineActivity && sortedTimelineActivity.length > 0 ? (
+
+      <Stack direction="column">
+        {sortedTimelineActivity?.length > 0 ? (
           sortedTimelineActivity.map((activity, index) => (
             <TimelineActivityAccordion
-              key={activity.id || index}
+              key={index}
               activity={activity}
-              expanded={expanded[index] === true}
+              expanded={expanded[index]}
               handleChange={() => handleChange(index)}
               openDialog={openDialog}
               setOpenDialog={setOpenDialog}
@@ -264,7 +405,7 @@ function WBSListItem() {
           </Alert>
         )}
       </Stack>
-    </React.Fragment>
+    </>
   );
 }
 
