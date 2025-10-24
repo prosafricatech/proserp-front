@@ -1,5 +1,5 @@
 import React from 'react';
-import { Typography, Box, Grid, Table, TableHead, TableRow, TableCell, TableBody } from '@mui/material';
+import { Typography, Box, Grid, Table, TableHead, TableRow, TableCell, TableBody, useTheme } from '@mui/material';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import { Organization } from '@/types/auth-types';
 
@@ -41,9 +41,10 @@ const LedgerStatementOnScreen: React.FC<LedgerStatementOnScreenProps> = ({
   authOrganization, 
   ledger 
 }) => {
+  const theme = useTheme();
   const mainColor = authOrganization.organization.settings?.main_color || "#2113AD";
-  const lightColor = authOrganization.organization.settings?.light_color || "#bec5da";
   const contrastText = authOrganization.organization.settings?.contrast_text || "#FFFFFF";
+  const headerColor = theme.type === 'dark' ? '#29f096' : (authOrganization?.organization.settings?.main_color || "#2113AD");
 
   const totalCredits = transactionsData.transactions.reduce((total, transaction) => total + transaction.credit, 0);
   const totalDebits = transactionsData.transactions.reduce((total, transaction) => total + transaction.debit, 0);
@@ -63,11 +64,11 @@ const LedgerStatementOnScreen: React.FC<LedgerStatementOnScreenProps> = ({
       {/* Summary Section */}
       <Grid container spacing={2} mb={3}>
         <Grid size={6}>
-          <Typography variant="subtitle2" style={{ color: mainColor }}>Total Credits</Typography>
+          <Typography variant="subtitle2" style={{ color: headerColor }}>Total Credits</Typography>
           <Typography variant="body2">{formatBalance(totalCredits)}</Typography>
         </Grid>
         <Grid size={6}>
-          <Typography variant="subtitle2" style={{ color: mainColor }}>Total Debits</Typography>
+          <Typography variant="subtitle2" style={{ color: headerColor }}>Total Debits</Typography>
           <Typography variant="body2">{formatBalance(totalDebits)}</Typography>
         </Grid>
       </Grid>
@@ -91,7 +92,14 @@ const LedgerStatementOnScreen: React.FC<LedgerStatementOnScreenProps> = ({
                 : transaction.credit - transaction.debit;
 
             return (
-              <TableRow key={index} sx={{ backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor }}>
+              <TableRow 
+                key={index} 
+                sx={{ 
+                  backgroundColor: index % 2 === 0 
+                    ? theme.palette.background.paper 
+                    : theme.palette.action.hover
+                }}
+              >
                 <TableCell>{readableDate(transaction.transactionDate)}</TableCell>
                 <TableCell>{transaction.voucherNo || ''} {transaction.reference || ''}</TableCell>
                 <TableCell>{transaction.description}</TableCell>

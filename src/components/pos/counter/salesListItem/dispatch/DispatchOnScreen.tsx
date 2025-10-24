@@ -9,7 +9,8 @@ import {
   TableHead, 
   TableRow, 
   TableCell, 
-  TableBody 
+  TableBody,
+  useTheme
 } from '@mui/material';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import { Organization, User } from '@/types/auth-types';
@@ -52,91 +53,175 @@ interface DispatchOnScreenProps {
 }
 
 function DispatchOnScreen({ delivery, organization }: DispatchOnScreenProps) {
+  const theme = useTheme();
   const mainColor = organization.settings?.main_color || "#2113AD";
+  const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || "#2113AD");
   const contrastText = organization.settings?.contrast_text || "#FFFFFF";
-  const lightColor = organization.settings?.light_color || "#bec5da";
 
   return (
-    <Box sx={{ padding: 1 }}>
-      <Grid container spacing={1}>
-        <Grid container spacing={2} sx={{ marginTop: 2 }}>
-          <Grid size={12} sx={{ textAlign: 'center' }}>
-            <Typography variant="h4" color={mainColor}>SALE DISPATCH</Typography>
-            <Typography variant="subtitle1">{delivery.deliveryNo}</Typography>
-          </Grid>
-        </Grid>
-
-        <Grid container spacing={2} sx={{ marginTop: 0.5, marginBottom: 1 }}>
-          <Grid size={6}>
-            <Typography variant="body2" color={mainColor}>Dispatch Date</Typography>
-            <Typography variant="body2">{readableDate(delivery.dispatch_date)}</Typography>
-          </Grid>
-          <Grid size={6}>
-            <Typography variant="body2" color={mainColor}>Dispatched By</Typography>
-            <Typography variant="body2">{delivery.creator.name}</Typography>
-          </Grid>
-          <Grid size={6}>
-            <Typography variant="body2" color={mainColor}>From</Typography>
-            <Typography variant="body2">{delivery.dispatch_from}</Typography>
-          </Grid>
-          <Grid size={6}>
-            <Typography variant="body2" color={mainColor}>Destination</Typography>
-            <Typography variant="body2">{delivery.destination}</Typography>
-          </Grid>
-        </Grid>
-
+    <>
+      {/* Header Section */}
+      <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid size={12}>
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell sx={{ backgroundColor: mainColor, color: contrastText }}>S/N</TableCell>
-                  <TableCell sx={{ backgroundColor: mainColor, color: contrastText }}>Product/Service</TableCell>
-                  <TableCell sx={{ backgroundColor: mainColor, color: contrastText }}>Unit</TableCell>
-                  <TableCell sx={{ backgroundColor: mainColor, color: contrastText }}>Quantity</TableCell>
-                  <TableCell sx={{ backgroundColor: mainColor, color: contrastText }}>Store</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {delivery.items.map((deliveryItem, index) => (
-                  <TableRow 
-                    key={`${deliveryItem.product.name}-${index}`} 
-                    sx={{ backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor }}
-                  >
-                    <TableCell>{index + 1}</TableCell>
-                    <TableCell>{deliveryItem.product.name}</TableCell>
-                    <TableCell>{deliveryItem.sale_item.measurement_unit?.symbol || '-'}</TableCell>
-                    <TableCell align="right">{deliveryItem.quantity}</TableCell>
-                    <TableCell>{deliveryItem.store.name}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+          <Box 
+            sx={{ 
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              textAlign: 'center',
+              width: '100%'
+            }}
+          >
+            <Typography 
+              variant="h4" 
+              color={headerColor} 
+              fontWeight="bold" 
+              gutterBottom
+            >
+              SALE DISPATCH
+            </Typography>
+            <Typography 
+              variant="h6" 
+              fontWeight="bold"
+              gutterBottom
+            >
+              {delivery.deliveryNo}
+            </Typography>
+          </Box>
         </Grid>
+      </Grid>
 
-        <Grid size={12} container spacing={2}>
+      {/* Dispatch Info Section */}
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid size={{xs: 12, sm: 6, md: 3}}>
+          <Box>
+            <Typography variant="subtitle2" color={headerColor} fontWeight="bold" gutterBottom>
+              Dispatch Date
+            </Typography>
+            <Typography variant="body1">
+              {readableDate(delivery.dispatch_date)}
+            </Typography>
+          </Box>
+        </Grid>
+        <Grid size={{xs: 12, sm: 6, md: 3}}>
+          <Box>
+            <Typography variant="subtitle2" color={headerColor} fontWeight="bold" gutterBottom>
+              Dispatched By
+            </Typography>
+            <Typography variant="body1">{delivery.creator.name}</Typography>
+          </Box>
+        </Grid>
+        <Grid size={{xs: 12, sm: 6, md: 3}}>
+          <Box>
+            <Typography variant="subtitle2" color={headerColor} fontWeight="bold" gutterBottom>
+              From
+            </Typography>
+            <Typography variant="body1">{delivery.dispatch_from}</Typography>
+          </Box>
+        </Grid>
+        <Grid size={{xs: 12, sm: 6, md: 3}}>
+          <Box>
+            <Typography variant="subtitle2" color={headerColor} fontWeight="bold" gutterBottom>
+              Destination
+            </Typography>
+            <Typography variant="body1">{delivery.destination}</Typography>
+          </Box>
+        </Grid>
+      </Grid>
+
+      {/* Items Table */}
+      <Grid size={12}>
+        <TableContainer 
+          component={Paper}
+          sx={{
+            boxShadow: theme.shadows[2],
+            '& .MuiTableRow-root:hover': {
+              backgroundColor: theme.palette.action.hover,
+            }
+          }}
+        >
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
+                  #
+                </TableCell>
+                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
+                  Product/Service
+                </TableCell>
+                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
+                  Unit
+                </TableCell>
+                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                  Quantity
+                </TableCell>
+                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
+                  Store
+                </TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {delivery.items.map((deliveryItem, index) => (
+                <TableRow 
+                  key={`${deliveryItem.product.name}-${index}`}
+                  sx={{ 
+                    backgroundColor: theme.palette.background.paper,
+                    '&:nth-of-type(even)': {
+                      backgroundColor: theme.palette.action.hover,
+                    }
+                  }}
+                >
+                  <TableCell sx={{ fontWeight: 'medium' }}>{index + 1}</TableCell>
+                  <TableCell sx={{ fontWeight: 'medium' }}>{deliveryItem.product.name}</TableCell>
+                  <TableCell>{deliveryItem.sale_item.measurement_unit?.symbol || '-'}</TableCell>
+                  <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                    {deliveryItem.quantity.toLocaleString()}
+                  </TableCell>
+                  <TableCell>{deliveryItem.store.name}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Grid>
+
+      {/* Additional Info Section */}
+      {(delivery.vehicle_information || delivery.driver_information || delivery.remarks) && (
+        <Grid container spacing={2} sx={{ mt: 2 }}>
           {delivery.vehicle_information && (
-            <Grid size={6}>
-              <Typography variant="subtitle2" color={mainColor}>Vehicle Information</Typography>
-              <Typography variant="body2">{delivery.vehicle_information}</Typography>
+            <Grid size={{xs: 12, md: 6}}>
+              <Box>
+                <Typography variant="subtitle2" color={headerColor} fontWeight="bold" gutterBottom>
+                  Vehicle Information
+                </Typography>
+                <Typography variant="body1">{delivery.vehicle_information}</Typography>
+              </Box>
             </Grid>
           )}
           {delivery.driver_information && (
-            <Grid size={6}>
-              <Typography variant="subtitle2" color={mainColor}>Driver Information</Typography>
-              <Typography variant="body2">{delivery.driver_information}</Typography>
+            <Grid size={{xs: 12, md: 6}}>
+              <Box>
+                <Typography variant="subtitle2" color={headerColor} fontWeight="bold" gutterBottom>
+                  Driver Information
+                </Typography>
+                <Typography variant="body1">{delivery.driver_information}</Typography>
+              </Box>
             </Grid>
           )}
           {delivery.remarks && (
             <Grid size={12}>
-              <Typography variant="subtitle2" color={mainColor}>Remarks</Typography>
-              <Typography variant="body2">{delivery.remarks}</Typography>
+              <Box>
+                <Typography variant="subtitle2" color={headerColor} fontWeight="bold" gutterBottom>
+                  Remarks
+                </Typography>
+                <Typography variant="body1">{delivery.remarks}</Typography>
+              </Box>
             </Grid>
           )}
         </Grid>
-      </Grid>
-    </Box>
+      )}
+    </>
   );
 }
 

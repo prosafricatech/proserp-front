@@ -13,14 +13,13 @@ import {
   DialogTitle, 
   Divider, 
   Grid, 
-  IconButton, 
-  LinearProgress, 
+  IconButton,
   Tab, 
   Tabs, 
   Tooltip, 
   useMediaQuery 
 } from '@mui/material';
-import { InventoryOutlined, HighlightOff } from '@mui/icons-material';
+import { InventoryOutlined } from '@mui/icons-material';
 import React, { useState, lazy, Suspense } from 'react';
 import posServices from '../../pos-services';
 import SaleDeliveryNotes from './SaleDeliveryNotes';
@@ -36,6 +35,7 @@ import UnauthorizedAccess from '@/shared/Information/UnauthorizedAccess';
 import { DispatchReportOnScreen } from './saleDispatchReport/DispatchReportOnScreen';
 import { useCounter } from '../CounterProvider';
 import SaleAdjustments from './SaleAdjustments';
+import { BackdropSpinner } from '@/shared/ProgressIndicators/BackdropSpinner';
 
 // Lazy-loaded components
 const SaleInvoiceForm = lazy(() => import('./invoice/SaleInvoiceForm'));
@@ -68,7 +68,7 @@ const DispatchReport: React.FC<DispatchReportProps> = ({
   };
 
   if (isFetching) {
-    return <LinearProgress />;
+    return <BackdropSpinner />;
   }
 
   if (!saleDispatchReport) return null;
@@ -84,7 +84,7 @@ const DispatchReport: React.FC<DispatchReportProps> = ({
         )}
       </DialogTitle>
       <DialogContent>
-        <Suspense fallback={<LinearProgress />}>
+        <Suspense fallback={<BackdropSpinner />}>
           {belowLargeScreen && activeTab === 0 ? (
             <DispatchReportOnScreen
               organization={organization} 
@@ -131,11 +131,11 @@ const DispatchDialog: React.FC<DialogProps> = ({ saleId, toggleOpen }) => {
   });
 
   if (isFetching) {
-    return <LinearProgress/>;
+    return <BackdropSpinner/>;
   }
 
   return (
-    <Suspense fallback={<LinearProgress />}>
+    <Suspense fallback={<BackdropSpinner />}>
       {saleData && <SalesDispatchForm toggleOpen={toggleOpen} sale={saleData} />}
     </Suspense>
   );
@@ -148,11 +148,11 @@ const InvoicesDialog: React.FC<DialogProps> = ({ saleId, toggleOpen }) => {
   });
 
   if (isFetching) {
-    return <LinearProgress/>;
+    return <BackdropSpinner/>;
   }
 
   return (
-    <Suspense fallback={<LinearProgress />}>
+    <Suspense fallback={<BackdropSpinner />}>
       {saleData && <SaleInvoiceForm toggleOpen={toggleOpen} sale={saleData} />}
     </Suspense>
   );
@@ -165,11 +165,11 @@ const ReceiptDialog: React.FC<DialogProps> = ({ saleId, toggleOpen }) => {
   });
 
   if (isFetching) {
-    return <LinearProgress/>;
+    return <BackdropSpinner/>;
   }
 
   return (
-    <Suspense fallback={<LinearProgress />}>
+    <Suspense fallback={<BackdropSpinner />}>
       {saleData && <SaleReceiptForm toggleOpen={toggleOpen} sale={saleData} />}
     </Suspense>
   );

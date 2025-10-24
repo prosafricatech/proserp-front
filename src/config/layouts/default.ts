@@ -27,10 +27,6 @@ const defaultLayoutConfig: LayoutOptions = {
   header: {
     hide: false,
     fixed: true,
-    sx: {
-      height: 80,
-    },
-    drawerBreakpoint: 'lg',
   },
   footer: {
     hide: false,
@@ -38,8 +34,9 @@ const defaultLayoutConfig: LayoutOptions = {
   root: {},
   content: {
     sx: {
-      py: 4,
-    },
+      py: { md: 4, xs:1},
+      px: {lg: 6, xs: 1}
+    }
   },
   wrapper: {},
   main: {},

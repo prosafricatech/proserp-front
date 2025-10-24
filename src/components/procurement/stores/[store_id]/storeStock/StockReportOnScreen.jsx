@@ -1,61 +1,213 @@
 import React from 'react';
-import { Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper as TablePaper } from '@mui/material';
+import {
+  Grid,
+  Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  Paper,
+  useTheme,
+  Box,
+  TableContainer
+} from '@mui/material';
 
-const StockReportOnScreen = ({ stockData, authObject, hasPermissionToView}) => {
-    const { authOrganization } = authObject;
-    const mainColor = authOrganization.organization.settings?.main_color || "#2113AD";
-    const contrastText = authOrganization.organization.settings?.contrast_text || "#FFFFFF";
-    const lightColor = authOrganization.organization.settings?.light_color || "#bec5da";
+function StockReportOnScreen({ stockData, authObject, hasPermissionToView }) {
+  const theme = useTheme();
+  const { authOrganization } = authObject;
+  
+  const mainColor = authOrganization.organization.settings?.main_color || "#2113AD";
+  const headerColor = theme.type === 'dark' ? '#29f096' : (authOrganization.organization.settings?.main_color || "#2113AD");
+  const contrastText = authOrganization.organization.settings?.contrast_text || "#FFFFFF";
 
-    //Total amount
-    const totalAmount = stockData.reduce((total, stock) => total + (stock.latest_rate * stock.balance),0)
+  // Calculate total amount
+  const totalAmount = stockData.reduce((total, stock) => total + (stock.latest_rate * stock.balance), 0);
 
-    return stockData ? (
-        <Box sx={{ marginTop: 3 }}>
-            {
-                <TableContainer component={TablePaper}>
-                    <Table>
-                        <TableHead>
-                            <TableRow>
-                                <TableCell style={{backgroundColor: mainColor, color: contrastText}}>S/N</TableCell>
-                                <TableCell style={{backgroundColor: mainColor, color: contrastText}}>Product Name</TableCell>
-                                <TableCell style={{backgroundColor: mainColor, color: contrastText}}>Unit</TableCell>
-                                <TableCell style={{backgroundColor: mainColor, color: contrastText}}>Balance</TableCell>
-                                { hasPermissionToView &&
-                                    <>
-                                        <TableCell style={{backgroundColor: mainColor, color: contrastText}}>Latest Rate</TableCell>
-                                        <TableCell style={{backgroundColor: mainColor, color: contrastText}}>Amount</TableCell>
-                                    </>
-                                }
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {stockData.map((stock, index) => (
-                                <TableRow key={index} sx={{ backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor}}>
-                                    <TableCell>{index + 1}</TableCell>
-                                    <TableCell>{stock.name}</TableCell>
-                                    <TableCell>{stock.measurement_unit.symbol}</TableCell>
-                                    <TableCell align="right">{stock.balance.toLocaleString()}</TableCell>
-                                    { hasPermissionToView &&
-                                        <>
-                                            <TableCell align="right">{stock.latest_rate.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</TableCell>
-                                            <TableCell align="right">{(stock.balance * stock.latest_rate).toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</TableCell>
-                                        </>
-                                    }
-                                </TableRow>
-                            ))}
-                            {hasPermissionToView &&
-                                <TableRow>
-                                    <TableCell colSpan={5} align='center' style={{backgroundColor: mainColor, color: contrastText}}>Total</TableCell>
-                                    <TableCell align="right" style={{backgroundColor: mainColor, color: contrastText}}>{totalAmount.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</TableCell>
-                                </TableRow>
-                            }
-                        </TableBody>
-                    </Table>
-                </TableContainer>
+  // Format currency values
+  const formatCurrency = (value) => {
+    return value.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  };
+
+  // Format quantity values
+  const formatQuantity = (value) => {
+    return value.toLocaleString('en-US', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 4
+    });
+  };
+
+  return stockData ? (
+    <>
+      {/* Header Section */}
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid size={12}>
+          <Box 
+            sx={{ 
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              textAlign: 'center',
+              width: '100%'
+            }}
+          >
+            <Typography 
+              variant="h4" 
+              sx={{ color: headerColor, fontWeight: 'bold' }} 
+              gutterBottom
+            >
+              STOCK REPORT
+            </Typography>
+          </Box>
+        </Grid>
+      </Grid>
+
+      {/* Summary Information */}
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        {hasPermissionToView && (
+          <Grid size={{xs: 12, sm: 6, md: 4}}>
+            <Box>
+              <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                Total Stock Value
+              </Typography>
+              <Typography variant="body1" sx={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
+                {formatCurrency(totalAmount)}
+              </Typography>
+            </Box>
+          </Grid>
+        )}
+      </Grid>
+
+      {/* Stock Items Table */}
+      <Box sx={{ mb: 3 }}>
+        <Typography 
+          variant="h6" 
+          sx={{ 
+            color: headerColor, 
+            textAlign: 'center', 
+            fontWeight: 'bold',
+            mb: 2
+          }}
+        >
+          STOCK ITEMS
+        </Typography>
+        
+        <TableContainer 
+          component={Paper}
+          sx={{
+            boxShadow: theme.shadows[2],
+            '& .MuiTableRow-root:hover': {
+              backgroundColor: theme.palette.action.hover,
             }
-        </Box>
-    ) : null;
-};
+          }}
+        >
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
+                  #
+                </TableCell>
+                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
+                  Product Name
+                </TableCell>
+                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
+                  Unit
+                </TableCell>
+                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
+                  Balance
+                </TableCell>
+                {hasPermissionToView && (
+                  <>
+                    <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
+                      Unit Cost
+                    </TableCell>
+                    <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
+                      Amount
+                    </TableCell>
+                  </>
+                )}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {stockData.map((stock, index) => (
+                <TableRow 
+                  key={index} 
+                  sx={{ 
+                    backgroundColor: theme.palette.background.paper,
+                    '&:nth-of-type(even)': {
+                      backgroundColor: theme.palette.action.hover,
+                    }
+                  }}
+                >
+                  <TableCell sx={{ fontWeight: 'medium' }}>{index + 1}</TableCell>
+                  <TableCell sx={{ fontWeight: 'medium' }}>{stock.name}</TableCell>
+                  <TableCell>{stock.measurement_unit.symbol}</TableCell>
+                  <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                    {formatQuantity(stock.balance)}
+                  </TableCell>
+                  {hasPermissionToView && (
+                    <>
+                      <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                        {formatCurrency(stock.latest_rate)}
+                      </TableCell>
+                      <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
+                        {formatCurrency(stock.balance * stock.latest_rate)}
+                      </TableCell>
+                    </>
+                  )}
+                </TableRow>
+              ))}
+              
+              {/* Empty State */}
+              {stockData.length === 0 && (
+                <TableRow>
+                  <TableCell 
+                    colSpan={hasPermissionToView ? 6 : 4} 
+                    sx={{ textAlign: 'center', py: 4 }}
+                  >
+                    <Typography variant="body1" color="text.secondary">
+                      No stock data available
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              )}
+
+              {/* Total Row */}
+              {hasPermissionToView && stockData.length > 0 && (
+                <TableRow sx={{ backgroundColor: theme.palette.background.default }}>
+                  <TableCell 
+                    colSpan={5} 
+                    align="center" 
+                    sx={{ 
+                      fontWeight: 'bold',
+                      borderBottom: 'none'
+                    }}
+                  >
+                    Total Stock Value
+                  </TableCell>
+                  <TableCell 
+                    align="right" 
+                    sx={{ 
+                      fontFamily: 'monospace',
+                      fontWeight: 'bold',
+                      borderBottom: 'none',
+                      color: contrastText
+                    }}
+                  >
+                    {formatCurrency(totalAmount)}
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Box>
+    </>
+  ) : null;
+}
 
 export default StockReportOnScreen;

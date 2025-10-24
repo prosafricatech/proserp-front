@@ -5,12 +5,13 @@ import { Typography } from '@mui/material';
 
 const Footer = async ({ lang }: { lang: string }) => {
   const { branding } = await getDictionary(lang);
+
   return (
     <Div
       sx={{
         py: 2,
-        px: { lg: 6, sm: 4, xs: 2.5 },
-        borderTop: 2,
+        px: { lg: 6, xs: 3 },
+        borderTop: 1,
         borderColor: 'divider',
         bgcolor: 'background.paper',
       }}
@@ -18,14 +19,35 @@ const Footer = async ({ lang }: { lang: string }) => {
       <Div
         sx={{
           display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
           justifyContent: 'space-between',
           alignItems: 'center',
+          textAlign: { xs: 'center', sm: 'left' },
+          gap: 1,
         }}
       >
-        <Typography variant={'body1'} color={'text.primary'}>
-          {`${branding.tagline}`}
+        <Typography
+          variant="body1"
+          color="text.primary"
+          fontStyle="italic"
+          sx={{
+            flex: 1,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}
+        >
+          {branding.tagline}
         </Typography>
-        <Typography variant={'body1'} color={'text.primary'}>
+
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{
+            whiteSpace: 'nowrap',
+            fontStyle: 'italic',
+          }}
+        >
           {`ProsAfrica © ${currentYear}`}
         </Typography>
       </Div>

@@ -4,8 +4,7 @@ import {
   Alert, 
   Box, 
   Grid, 
-  IconButton, 
-  LinearProgress, 
+  IconButton,
   Tooltip, 
   Typography, 
   useMediaQuery 
@@ -21,6 +20,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import { SalesOrder } from '../SalesOrderType';
+import { BackdropSpinner } from '@/shared/ProgressIndicators/BackdropSpinner';
 
 export interface Invoice {
   id: number;
@@ -63,7 +63,7 @@ const SaleInvoices: React.FC<SaleInvoicesProps> = ({
 
   return (
     <>
-      {isLoading && <LinearProgress/>}
+      {isLoading && <BackdropSpinner/>}
       {saleInvoices?.length > 0 ? (
         saleInvoices.map((invoice: Invoice) => (
           <Grid

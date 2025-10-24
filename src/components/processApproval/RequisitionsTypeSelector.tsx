@@ -32,10 +32,21 @@ function RequisitionsTypeSelector({ onChange, value = 'all' }: RequisitionsTypeS
           label="Type"
           value={type}
           onChange={handleChange}
+          sx={{ textAlign: 'left' }}
+          MenuProps={{
+            PaperProps: {
+              sx: {
+                '& .MuiMenuItem-root': {
+                  justifyContent: 'flex-start',
+                  textAlign: 'left',
+                },
+              },
+            },
+          }}
         >
-          <MenuItem value="all">All</MenuItem>
-          <MenuItem value="purchase">PURCHASE</MenuItem>
-          <MenuItem value="payment">PAYMENT</MenuItem>
+          <MenuItem value="all" sx={{ justifyContent: 'flex-start' }}>All</MenuItem>
+          <MenuItem value="purchase" sx={{ justifyContent: 'flex-start' }}>PURCHASE</MenuItem>
+          <MenuItem value="payment" sx={{ justifyContent: 'flex-start' }}>PAYMENT</MenuItem>
         </Select>
       </FormControl>
     </Box>

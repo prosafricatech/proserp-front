@@ -256,7 +256,10 @@ const methods = useForm<SalesShiftFormData>({
               />
             </Grid>
           </Grid>
-           {/* Tabs Section - Reduced Height */}
+          
+        </Paper>
+
+        {/* Tabs Section - Reduced Height */}
         <Box sx={{ maxHeight: '50vh', overflow: 'auto' }}>
           <SalesShiftTabs
             salesShift={salesShift}
@@ -265,7 +268,6 @@ const methods = useForm<SalesShiftFormData>({
             isClosing={isClosing}
           />
         </Box>
-        </Paper>
 
         {/* Action Buttons - More Compact */}
         <Paper elevation={1} sx={{ p: 1.5, mt: 2 }}>

@@ -1,95 +1,231 @@
 import React from 'react';
-import { Box, Typography, Grid, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
+import { 
+  Box, 
+  Typography, 
+  Grid, 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableContainer, 
+  TableHead, 
+  TableRow, 
+  Paper,
+  useTheme
+} from '@mui/material';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 
 const StockMovementOnScreen = ({ movementsData, authOrganization, checkOrganizationPermission }) => {
+    const theme = useTheme();
     const mainColor = authOrganization.organization.settings?.main_color || "#2113AD";
+    const headerColor = theme.type === 'dark' ? '#29f096' : (authOrganization.organization.settings?.main_color || "#2113AD");
     const contrastText = authOrganization.organization.settings?.contrast_text || "#FFFFFF";
-    const lightColor = authOrganization.organization.settings?.light_color || "#bec5da";
 
     if (!movementsData) return null;
 
+    const formatNumber = (value) => {
+        return value.toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+    };
+
+    const formatQuantity = (value) => {
+        return value.toLocaleString('en-US', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 4
+        });
+    };
+
     const renderHeader = () => (
-        <>
-                {checkOrganizationPermission(PERMISSIONS.ACCOUNTS_REPORTS) && (
-                    <Grid item xs={12} marginBottom={2}>
-                        <Box>
-                            <Typography variant="body2" style={{ color: mainColor }}>
-                                Estimated Closing Value
-                            </Typography>
-                            <Typography variant="body2">
-                                {movementsData.movements.reduce((total, movement) => total + movement.latest_rate*(
-                                    parseFloat(movement.opening_balance)+parseFloat(movement.quantity_received)-parseFloat(movement.quantity_sold)-parseFloat(movement.quantity_consumed)-parseFloat(movement.quantity_transferred_out)+parseFloat(movement.quantity_transferred_in)+parseFloat(movement.stock_gain)-parseFloat(movement.stock_loss)
-                                ), 0).toLocaleString()}
-                            </Typography>
-                        </Box>
-                    </Grid>
-                )}
-        </>
+        checkOrganizationPermission(PERMISSIONS.ACCOUNTS_REPORTS) && (
+            <Box sx={{ mb: 3 }}>
+                <Box 
+                    sx={{ 
+                        p: 2, 
+                        backgroundColor: theme.palette.background.default,
+                        border: `1px solid ${theme.palette.divider}`,
+                        borderRadius: 1
+                    }}
+                >
+                    <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                        Estimated Closing Stock Value
+                    </Typography>
+                    <Typography variant="h6" fontWeight="bold" fontFamily="monospace">
+                        {movementsData.movements.reduce((total, movement) => {
+                            const closingBalance = (
+                                parseFloat(movement.opening_balance) +
+                                parseFloat(movement.quantity_received) -
+                                parseFloat(movement.quantity_sold) -
+                                parseFloat(movement.quantity_consumed) -
+                                parseFloat(movement.quantity_transferred_out) +
+                                parseFloat(movement.quantity_transferred_in) +
+                                parseFloat(movement.stock_gain) -
+                                parseFloat(movement.stock_loss)
+                            );
+                            return total + (movement.latest_rate * closingBalance);
+                        }, 0).toLocaleString('en-US', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        })}
+                    </Typography>
+                </Box>
+            </Box>
+        )
     );
 
     const renderTable = () => (
-        <TableContainer>
+        <TableContainer 
+            component={Paper}
+            sx={{
+                boxShadow: theme.shadows[2],
+                '& .MuiTableRow-root:hover': {
+                    backgroundColor: theme.palette.action.hover,
+                }
+            }}
+        >
             <Table>
                 <TableHead>
                     <TableRow>
-                        <TableCell style={{backgroundColor: mainColor, color: contrastText}}>S/N</TableCell>
-                        <TableCell style={{backgroundColor: mainColor, color: contrastText}}>Product</TableCell>
-                        <TableCell style={{backgroundColor: mainColor, color: contrastText}}>Unit</TableCell>
-                        <TableCell style={{backgroundColor: mainColor, color: contrastText}} align="right">Opening Balance</TableCell>
-                        <TableCell style={{backgroundColor: mainColor, color: contrastText}} align="right">Purchase Received</TableCell>
-                        <TableCell style={{backgroundColor: mainColor, color: contrastText}} align="right">Transfer In</TableCell>
-                        <TableCell style={{backgroundColor: mainColor, color: contrastText}} align="right">Transfer Out</TableCell>
-                        <TableCell style={{backgroundColor: mainColor, color: contrastText}} align="right">Stock Gain</TableCell>
-                        <TableCell style={{backgroundColor: mainColor, color: contrastText}} align="right">Stock Loss</TableCell>
-                        <TableCell style={{backgroundColor: mainColor, color: contrastText}} align="right">Consumed</TableCell>
-                        <TableCell style={{backgroundColor: mainColor, color: contrastText}} align="right">Sold</TableCell>
-                        <TableCell style={{backgroundColor: mainColor, color: contrastText}} align="right">Closing Balance</TableCell>
+                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
+                            #
+                        </TableCell>
+                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
+                            Product
+                        </TableCell>
+                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
+                            Unit
+                        </TableCell>
+                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                            Opening
+                        </TableCell>
+                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                            Purchased
+                        </TableCell>
+                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                            Trans In
+                        </TableCell>
+                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                            Trans Out
+                        </TableCell>
+                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                            Gain
+                        </TableCell>
+                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                            Loss
+                        </TableCell>
+                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                            Consumed
+                        </TableCell>
+                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                            Sold
+                        </TableCell>
+                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                            Closing
+                        </TableCell>
                         {checkOrganizationPermission(PERMISSIONS.ACCOUNTS_REPORTS) && (
                             <>
-                                <TableCell style={{backgroundColor: mainColor, color: contrastText}} align="right">Latest Rate</TableCell>
-                                <TableCell style={{backgroundColor: mainColor, color: contrastText}} align="right">Estimated Closing Value</TableCell>
+                                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                                    Rate
+                                </TableCell>
+                                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                                    Value
+                                </TableCell>
                             </>
                         )}
                     </TableRow>
                 </TableHead>
                 <TableBody>
                     {movementsData.movements.map((movement, index) => {
-                        const closing_balance = Math.round((parseFloat(movement.opening_balance)+parseFloat(movement.quantity_received)-parseFloat(movement.quantity_sold)-parseFloat(movement.quantity_consumed)-parseFloat(movement.quantity_transferred_out)+parseFloat(movement.quantity_transferred_in)+parseFloat(movement.stock_gain)-parseFloat(movement.stock_loss))*10000)/10000;
-    
+                        const closing_balance = Math.round((
+                            parseFloat(movement.opening_balance) +
+                            parseFloat(movement.quantity_received) -
+                            parseFloat(movement.quantity_sold) -
+                            parseFloat(movement.quantity_consumed) -
+                            parseFloat(movement.quantity_transferred_out) +
+                            parseFloat(movement.quantity_transferred_in) +
+                            parseFloat(movement.stock_gain) -
+                            parseFloat(movement.stock_loss)
+                        ) * 10000) / 10000;
+
+                        const estimatedValue = closing_balance * parseFloat(movement.latest_rate);
+
                         return (
-                            <TableRow key={index} style={{ backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor }}>
-                                <TableCell>{index + 1}</TableCell>
-                                <TableCell>{movement.name}</TableCell>
+                            <TableRow 
+                                key={index} 
+                                sx={{ 
+                                    backgroundColor: theme.palette.background.paper,
+                                    '&:nth-of-type(even)': {
+                                        backgroundColor: theme.palette.action.hover,
+                                    }
+                                }}
+                            >
+                                <TableCell sx={{ fontWeight: 'medium' }}>{index + 1}</TableCell>
+                                <TableCell sx={{ fontWeight: 'medium' }}>{movement.name}</TableCell>
                                 <TableCell>{movement.unit_symbol}</TableCell>
-                                <TableCell align="right">{parseFloat(movement.opening_balance).toLocaleString()}</TableCell>
-                                <TableCell align="right">{parseFloat(movement.quantity_received).toLocaleString()}</TableCell>
-                                <TableCell align="right">{parseFloat(movement.quantity_transferred_in).toLocaleString()}</TableCell>
-                                <TableCell align="right">{parseFloat(movement.quantity_transferred_out).toLocaleString()}</TableCell>
-                                <TableCell align="right">{parseFloat(movement.stock_gain).toLocaleString()}</TableCell>
-                                <TableCell align="right">{parseFloat(movement.stock_loss).toLocaleString()}</TableCell>
-                                <TableCell align="right">{parseFloat(movement.quantity_consumed).toLocaleString()}</TableCell>
-                                <TableCell align="right">{parseFloat(movement.quantity_sold).toLocaleString()}</TableCell>
-                                <TableCell align="right">{closing_balance.toLocaleString()}</TableCell>
+                                <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                                    {formatQuantity(parseFloat(movement.opening_balance))}
+                                </TableCell>
+                                <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                                    {formatQuantity(parseFloat(movement.quantity_received))}
+                                </TableCell>
+                                <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                                    {formatQuantity(parseFloat(movement.quantity_transferred_in))}
+                                </TableCell>
+                                <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                                    {formatQuantity(parseFloat(movement.quantity_transferred_out))}
+                                </TableCell>
+                                <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                                    {formatQuantity(parseFloat(movement.stock_gain))}
+                                </TableCell>
+                                <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                                    {formatQuantity(parseFloat(movement.stock_loss))}
+                                </TableCell>
+                                <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                                    {formatQuantity(parseFloat(movement.quantity_consumed))}
+                                </TableCell>
+                                <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                                    {formatQuantity(parseFloat(movement.quantity_sold))}
+                                </TableCell>
+                                <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
+                                    {formatQuantity(closing_balance)}
+                                </TableCell>
                                 {checkOrganizationPermission(PERMISSIONS.ACCOUNTS_REPORTS) && (
                                     <>
-                                        <TableCell align="right">{parseFloat(movement.latest_rate).toLocaleString('en-US',{ minimumFractionsDigits: 2,maximumFractionDigits:2})}</TableCell>
-                                        <TableCell align="right">{(closing_balance * parseFloat(movement.latest_rate)).toLocaleString('en-US',{ minimumFractionsDigits: 2,maximumFractionDigits:2})}</TableCell>
+                                        <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                                            {formatNumber(parseFloat(movement.latest_rate))}
+                                        </TableCell>
+                                        <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
+                                            {formatNumber(estimatedValue)}
+                                        </TableCell>
                                     </>
                                 )}
                             </TableRow>
                         );
                     })}
+
+                    {/* Empty State */}
+                    {movementsData.movements.length === 0 && (
+                        <TableRow>
+                            <TableCell 
+                                colSpan={checkOrganizationPermission(PERMISSIONS.ACCOUNTS_REPORTS) ? 13 : 11} 
+                                sx={{ textAlign: 'center', py: 4 }}
+                            >
+                                <Typography variant="body1" color="text.secondary">
+                                    No stock movement data found
+                                </Typography>
+                            </TableCell>
+                        </TableRow>
+                    )}
                 </TableBody>
             </Table>
         </TableContainer>
     ); 
 
     return (
-        <div padding={2}>
+        <Box sx={{ padding: 2 }}>
             {renderHeader()}
             {renderTable()}
-        </div>
+        </Box>
     );
 };
 

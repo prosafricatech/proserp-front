@@ -154,7 +154,7 @@ function SaleAdjustmentItemForm({
 
   return (
     <Grid container spacing={1} sx={{ mt: 0.5 }}>
-      <Grid size={{ xs: 10.5, md: 6 }}>
+      <Grid size={{ xs: 12, md: 6 }}>
         <Div sx={{ mt: 0.3 }}>
           <Autocomplete<Product>
             id={`product-select-${index}`}
@@ -229,7 +229,7 @@ function SaleAdjustmentItemForm({
         </Div>
       </Grid>
 
-      <Grid size={{ xs: 4, md: 2 }}>
+      <Grid size={{ xs: 12, md: 2 }}>
         <Div sx={{ mt: 0.3 }}>
           <TextField
             size="small"
@@ -246,7 +246,7 @@ function SaleAdjustmentItemForm({
         </Div>
       </Grid>
 
-      <Grid size={{ xs: 4, md: 2 }}>
+      <Grid size={{ xs: 12, md: 2 }}>
         <Div sx={{ mt: 0.3 }}>
           <TextField
             size="small"

@@ -43,7 +43,7 @@ function Header({ dictionary }: { dictionary: any }) {
       <Search show={searchVisibility} onClose={handleSearchVisibility} />
       <Stack direction='row' alignItems='center' gap={1.25} sx={{ ml: 'auto' }}>
         <ThemeModeOption />
-        <TranslationPopover />
+        {/* <TranslationPopover /> */}
         {/* <SearchIconButtonOnSmallScreen onClick={handleSearchVisibility} /> */}
         {/* <NotificationsPopover /> */}
         <AuthUserPopover dictionary={dictionary}/>

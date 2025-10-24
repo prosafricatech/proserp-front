@@ -5,29 +5,30 @@ const stockAdjustmentServices = {};
 stockAdjustmentServices.add = async (postData) => {
   return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
     const formData = new FormData();
-    
     Object.keys(postData).forEach((key) => {
       if (key === 'stock_excel') {
-        // If the value is a FileList (like it will be for file inputs),
-        // append the first file in the list.
         formData.append(key, postData[key][0]);
-      } else if (key === 'items') {
-        // If key is 'items' and its value is an array, append each item individually
-        if (Array.isArray(postData[key])) {
-          postData[key].forEach((item, index) => {
-            // Append each item with a unique key
-            Object.keys(item).forEach((itemKey) => {
-              formData.append(`items[${index}][${itemKey}]`, item[itemKey]);
-            });
+      } else if (key === 'items' && Array.isArray(postData[key])) {
+        postData[key].forEach((item, index) => {
+          Object.keys(item).forEach((itemKey) => {
+            formData.append(`items[${index}][${itemKey}]`, item[itemKey]);
           });
-        }
+        });
       } else {
-        // Append other key-value pairs
-        !(postData['stock_excel'] && key === 'items') && formData.append(key, postData[key] !== 'null' ? postData[key] : null);
+        // append everything else normally
+        formData.append(
+          key,
+          postData[key] !== 'null' && postData[key] !== undefined
+            ? postData[key]
+            : ''
+        );
       }
     });
 
-    const { data } = await axios.post(`/api/stockAdjustment/add`, formData);
+    const { data } = await axios.post(`/api/stockAdjustment/add`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+
     return data;
   });
 };

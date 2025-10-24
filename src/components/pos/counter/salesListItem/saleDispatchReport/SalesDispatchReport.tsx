@@ -7,15 +7,11 @@ import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import { Organization } from '@/types/auth-types';
 import { MeasurementUnit } from '@/components/masters/measurementUnits/MeasurementUnitType';
 import { Stakeholder } from '@/components/masters/stakeholders/StakeholderType';
+import { Product } from '@/components/productAndServices/products/ProductType';
 
 interface SalesDispatchReportProps {
   organization: Organization;
   dispatchReport: DispatchReport;
-}
-
-interface Product {
-  id: string;
-  name: string;
 }
 
 interface DispatchedItem {

@@ -1,12 +1,12 @@
 import JumboCardQuick from '@jumbo/components/JumboCardQuick/JumboCardQuick';
-import { HighchartsReact } from 'highcharts-react-official';
-import Highcharts from 'highcharts';
 import React, { useEffect, useState } from 'react';
-import { LinearProgress, useMediaQuery } from '@mui/material';
+import { LinearProgress, Typography, useMediaQuery, Box } from '@mui/material';
 import financialReportsServices from '../../accounts/reports/financial-reports-services';
 import { useDashboardSettings } from '../Dashboard';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { useQuery } from '@tanstack/react-query';
+import Highcharts from 'highcharts';
+import HighchartsReact from 'highcharts-react-official';
 
 interface RevenueData {
   ledger_name: string;
@@ -20,7 +20,7 @@ interface ChartDataPoint {
 
 function RevenueDistributionCard() {
   const { chartFilters: { from, to, cost_center_ids } } = useDashboardSettings();
-  const [params, setParams] = useState({ 
+  const [params, setParams] = useState({
     from,
     to,
     cost_center_ids,
@@ -28,13 +28,13 @@ function RevenueDistributionCard() {
   });
 
   useEffect(() => {
-    setParams(prevParams => ({...prevParams, from, to, cost_center_ids}));
+    setParams(prev => ({ ...prev, from, to, cost_center_ids }));
   }, [from, to, cost_center_ids]);
 
-  // Theme awareness
   const { theme } = useJumboTheme();
   const xlScreen = useMediaQuery(theme.breakpoints.up('lg'));
-  const isDark = theme.palette.mode === 'dark';
+  const textColor = theme.palette.text.primary;
+  const backgroundColor = theme.palette.background.paper;
 
   const { data: revenueDistribution, isLoading } = useQuery({
     queryKey: ['revenueDistribution', params],
@@ -46,13 +46,11 @@ function RevenueDistributionCard() {
         cost_center_ids: params.cost_center_ids,
         group_by_ledgers: true
       });
-      
-      return revenues.map((revenue: RevenueData) => {
-        return {
-          name: revenue.ledger_name,
-          y: revenue.amount
-        } as ChartDataPoint;
-      });
+
+      return revenues.map((rev: RevenueData) => ({
+        name: rev.ledger_name,
+        y: rev.amount
+      })) as ChartDataPoint[];
     }
   });
 
@@ -61,59 +59,94 @@ function RevenueDistributionCard() {
       type: 'pie',
       height: 245,
       backgroundColor: 'transparent',
-      plotBackgroundColor: undefined,
-      plotBorderWidth: undefined,
-      plotShadow: false,
-      style: {
-        fontFamily: 'NoirPro, Arial',
-        color: isDark ? '#fff' : '#000'
-      }
+      spacing: [10, 10, 10, 10],
+      style: { color: textColor }
     },
-    title: {
-      text: '<div style="font-size: 1.1rem; line-height:1.2; font-weight:400;">Revenue Composition</div>',
-      align: 'left',
-      useHTML: true,
-      style: {
-        color: '#fff'
-      }
-    },
-    accessibility: { enabled: false },
+    title: { text: '' },
     tooltip: {
       pointFormat: '{point.y}: <b>({point.percentage:.1f}%)</b>',
-      backgroundColor: isDark ? '#2a2a2a' : '#fff',
-      style: {
-        color: isDark ? '#fff' : '#000'
-      }
+      backgroundColor,
+      style: { color: textColor }
     },
     plotOptions: {
       pie: {
+        size: '55%',
+        center: ['50%', '55%'],
         allowPointSelect: true,
         cursor: 'pointer',
         dataLabels: {
           enabled: true,
-          format: '<b>{point.name}</b>: {point.percentage:.1f} %',
+          distance: 15,
+          format: '<b>{point.name}</b><br>{point.percentage:.1f} %',
           style: {
-            color: isDark ? '#fff' : '#000',
-            textOutline: 'none'
+            color: textColor,
+            textOutline: '0px transparent', // prevents shrinking/blurring on theme switch
+            fontSize: '11px'
           }
         }
       }
     },
-    series: [{
-      type: 'pie',
-      name: 'Revenue',
-      colorByPoint: true,
-      data: revenueDistribution || []
-    } as Highcharts.SeriesPieOptions]
+    credits: { enabled: false },
+    legend: {
+      itemStyle: { color: textColor }
+    },
+    series: [
+      {
+        type: 'pie',
+        name: 'Revenue',
+        colorByPoint: true,
+        data: revenueDistribution || [],
+      } as Highcharts.SeriesPieOptions,
+    ],
   };
 
+  // 👇 Trigger Highcharts reflow after theme mode changes for proper layout
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      Highcharts.charts.forEach(chart => chart?.reflow());
+    }, 100);
+    return () => clearTimeout(timeout);
+  }, [theme.type]);
+
   return (
-    <JumboCardQuick sx={{ height: xlScreen ? 310 : null }}>
-      {isLoading ? (
-        <LinearProgress />
-      ) : (
-        <HighchartsReact highcharts={Highcharts} options={options} />
-      )}
+    <JumboCardQuick
+      sx={{
+        height: xlScreen ? 310 : null,
+        display: 'flex',
+        flexDirection: 'column'
+      }}
+    >
+      <Box sx={{ px: 2, pt: 1 }}>
+        <Typography
+          variant="subtitle1"
+          sx={{
+            color: textColor,
+            fontFamily: 'NoirPro, Arial',
+          }}
+        >
+          Revenue Composition
+        </Typography>
+      </Box>
+
+      <Box
+        sx={{
+          flexGrow: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
+      >
+        {isLoading ? (
+          <LinearProgress sx={{ width: '100%' }} />
+        ) : (
+          // 👇 Key ensures full chart redraw when theme changes
+          <HighchartsReact
+            key={theme.type}
+            highcharts={Highcharts}
+            options={options}
+          />
+        )}
+      </Box>
     </JumboCardQuick>
   );
 }

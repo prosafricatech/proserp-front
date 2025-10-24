@@ -8,10 +8,10 @@ export async function GET(req: NextRequest) {
   if (response) return response;
 
   const { searchParams } = new URL(req.url);
-
   const url = new URL(`${API_BASE}/cashier-report`);
-  searchParams.forEach((value, key) => {
-    url.searchParams.set(key, value);
+
+  Array.from(searchParams.entries()).forEach(([key, value]) => {
+    url.searchParams.append(key, value);
   });
 
   const res = await fetch(url.toString(), {

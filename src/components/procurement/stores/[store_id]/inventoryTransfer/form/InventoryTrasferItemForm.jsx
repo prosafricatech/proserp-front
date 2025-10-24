@@ -20,28 +20,32 @@ function InventoryTrasferItemForm({ setClearFormKey, submitMainForm, submitItemF
     const validationSchema = yup.object({
         product: yup.object().required("Product is required").typeError('Product is required'),
         quantity: yup.number()
+            .transform((value) => (isNaN(value) ? undefined : value))
+            .nullable()
             .when('product', {
-                is: (product) => product !== null && product !== undefined && product.type === 'Inventory',
-                then: yup.number()
-                    .required("Quantity is required")
-                    .positive("Quantity must be a positive number")
-                    .typeError('Quantity is required')
-                    .when(['current_balance', 'available_balance'], {
-                        is: (currentBalance, availableBalance) => currentBalance < availableBalance,
-                        then: yup.number()
-                        .test('currentBalanceCheck', 'This quantity will lead to negative balance', function (value) {
-                            const currentBalance = parseFloat(watch('current_balance'));
-                            return value <= currentBalance;
-                        }),
-                    otherwise: yup.number().positive("Quantity must be a positive number").typeError('Quantity is required'),
-                    })        
-                    .test('quantity Exceeded', 'The quantity exceeds the balance', function (value) {
-                        const availableBalance = parseFloat(watch('available_balance'));
-                        return availableBalance === 'N/A' || !value || value <= availableBalance;
-                    }),
-                otherwise: yup.number().positive("Quantity must be a positive number").typeError('Quantity is required')
+            is: (product) => product?.type === 'Inventory',
+            then: (schema) => schema
+                .required("Quantity is required")
+                .positive("Quantity must be a positive number")
+                .typeError('Quantity must be a number')
+                .test('balance-check', 'The quantity exceeds the available balance', function(value) {
+                    const availableBalance = this.parent.available_balance;
+                    if (availableBalance === 'N/A' || !value) return true;
+                    return value <= parseFloat(availableBalance);
+                })
+                .test('current-balance-check', 'This quantity will lead to negative balance', function(value) {
+                    const currentBalance = this.parent.current_balance;
+                    const availableBalance = this.parent.available_balance;
+                    
+                    if (currentBalance >= availableBalance) return true;
+                    return value <= parseFloat(currentBalance);
+                }),
+            otherwise: (schema) => schema
+                .required("Quantity is required")
+                .positive("Quantity must be a positive number")
+                .typeError('Quantity must be a number')
             }),
-    })
+    });
 
     const { setValue, handleSubmit, watch, reset, register, formState: { errors, dirtyFields} } = useForm({
         resolver: yupResolver(validationSchema),

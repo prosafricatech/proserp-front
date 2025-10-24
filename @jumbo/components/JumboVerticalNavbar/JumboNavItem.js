@@ -1,10 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import ListItemButton from '@mui/material/ListItemButton';
-import { ListItemIcon, ListItemText } from '@mui/material';
+import { ListItemButton, ListItemIcon, ListItemText } from '@mui/material';
 import CircleIcon from '@mui/icons-material/Circle';
 import { useTranslation } from '@/hooks/useTranslation';
 import { SIDEBAR_VIEWS } from '@jumbo/utilities/constants';
@@ -31,20 +30,20 @@ const JumboNavItem = ({ item, isNested, translate }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
-  const isMiniAndClosed = React.useMemo(() => {
-    return sidebarOptions?.view === SIDEBAR_VIEWS.MINI && !sidebarOptions?.open;
-  }, [sidebarOptions.view, sidebarOptions.open]);
+  const isMiniAndClosed = useMemo(
+    () => sidebarOptions?.view === SIDEBAR_VIEWS.MINI && !sidebarOptions?.open,
+    [sidebarOptions.view, sidebarOptions.open]
+  );
 
-  const label = React.useMemo(() => {
-    return translate ? t(item.label) : item.label;
-  }, [item, translate, t]);
+  const label = useMemo(() => (translate ? t(item.label) : item.label), [item, translate, t]);
 
   const handleClick = async (e) => {
     if (pathname !== item.uri) {
       e.preventDefault();
       setIsLoading(true);
-      router.push(item.uri);
+      await router.push(item.uri);
     } else if (isMobile) {
+      // Only close if already on same page (and on mobile)
       setSidebarOptions({ open: false });
     }
   };
@@ -53,8 +52,15 @@ const JumboNavItem = ({ item, isNested, translate }) => {
     setIsMobile(deviceType() === 'mobile');
   }, []);
 
+  // Once navigation completes, stop loading
+  // Close sidebar ONLY if mobile
   useEffect(() => {
-    setIsLoading(false);
+    if (isLoading) {
+      setIsLoading(false);
+      if (isMobile) {
+        setSidebarOptions({ open: false });
+      }
+    }
   }, [pathname]);
 
   if (!item) return null;
@@ -121,11 +127,7 @@ const JumboNavItem = ({ item, isNested, translate }) => {
           aria-disabled={isLoading}
         >
           <ListItemIcon sx={{ minWidth: isMiniAndClosed ? 5 : 15, color: 'inherit' }}>
-            {isNested ? (
-              <CircleIcon sx={{ fontSize: 6, ml: 1 }} />
-            ) : (
-              item.icon
-            )}
+            {isNested ? <CircleIcon sx={{ fontSize: 6, ml: 1 }} /> : item.icon}
           </ListItemIcon>
           {!isMiniAndClosed && (
             <ListItemText
