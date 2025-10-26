@@ -104,7 +104,7 @@ export const BackdropSpinner: React.FC<BackdropSpinnerProps> = ({
           }}
         >
           <Image
-            src={theme?.type === 'light' ? `${ASSET_IMAGES}/logos/proserp-blue.png` : `${ASSET_IMAGES}/logos/proserp-white.png`}
+            src={theme?.type === 'light' ? `${ASSET_IMAGES}/logos/logopros123.png` : `${ASSET_IMAGES}/logos/proserp-white.png`}
             alt="ProsERP"
             width={85}
             height={85}
