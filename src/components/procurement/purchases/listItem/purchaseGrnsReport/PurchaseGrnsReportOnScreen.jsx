@@ -16,8 +16,8 @@ import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 
 function PurchaseGrnsReportOnScreen({ organization, purchaseGrnsReport }) {
   const theme = useTheme();
-  const mainColor = organization.settings?.main_color || "#2113AD";
-  const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || "#2113AD");
+  const mainColor = organization.settings?.main_color || "#2196f3";
+  const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || "#2196f3");
   const contrastText = organization.settings?.contrast_text || "#FFFFFF";
 
   const groupedGrnsItems = purchaseGrnsReport.purchase_order_items.reduce((acc, item) => {

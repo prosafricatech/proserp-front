@@ -58,8 +58,8 @@ const RequisitionsOnScreen: React.FC<Props> = ({
   const [selectedRelated, setSelectedRelated] = useState<{ id: number } | null>(null);
   const [openViewDialog, setOpenViewDialog] = useState(false);
 
-  const mainColor = organization.settings?.main_color || '#2113AD';
-  const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || '#2113AD');
+  const mainColor = organization.settings?.main_color || '#2196f3';
+  const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || '#2196f3');
   const contrastText = organization.settings?.contrast_text || '#FFFFFF';
 
   const isPurchase = requisition?.approval_chain.process_type?.toLowerCase() === 'purchase';

@@ -68,8 +68,8 @@ interface SalePreviewOnscreenProps {
 const SalePreviewOnscreen: React.FC<SalePreviewOnscreenProps> = ({ sale, organization }) => {
   const theme = useTheme();
   const currencyCode = sale.currency?.code;
-  const mainColor = organization.settings?.main_color || "#2113AD";
-  const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || "#2113AD");
+  const mainColor = organization.settings?.main_color || "#2196f3";
+  const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || "#2196f3");
   const contrastText = organization.settings?.contrast_text || "#FFFFFF";
 
   const formatCurrency = (amount: number) => {

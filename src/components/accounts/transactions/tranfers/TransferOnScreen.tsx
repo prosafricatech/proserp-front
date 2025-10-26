@@ -42,8 +42,8 @@ function TransferOnScreen({ transaction, authObject }: TransferOnScreenProps) {
   const theme = useTheme();
   const currencyCode = transaction.currency.code;
   const { authOrganization: { organization } } = authObject;
-  const mainColor = organization.settings?.main_color || "#2113AD";
-  const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || "#2113AD");
+  const mainColor = organization.settings?.main_color || "#2196f3";
+  const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || "#2196f3");
   const contrastText = organization.settings?.contrast_text || "#FFFFFF";
 
   const totalAmount = transaction.items.reduce((total, item) => total + item.amount, 0);

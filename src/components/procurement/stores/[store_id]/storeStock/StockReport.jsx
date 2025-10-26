@@ -27,7 +27,7 @@ import PDFContent from '@/components/pdf/PDFContent';
 
 const ReportDocument = ({productCategories, stockData,authObject,store,costCenter, date, hasPermissionToView}) => {
     const {authOrganization,authUser: { user}} = authObject;
-    const mainColor = authOrganization.organization.settings?.main_color || "#2113AD";
+    const mainColor = authOrganization?.organization?.settings?.main_color || "#2196f3";
     const lightColor = authOrganization.organization.settings?.light_color || "#bec5da";
     const contrastText = authOrganization.organization.settings?.contrast_text || "#FFFFFF";
     const reportPeriod =  `As at: ${readableDate(date,true)}`;

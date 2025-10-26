@@ -49,8 +49,8 @@ const SalesAndCashSummaryOnScreen: React.FC<SalesAndCashSummaryOnScreenProps> = 
   authOrganization 
 }) => {
   const theme = useTheme();
-  const mainColor = authOrganization.organization.settings?.main_color || "#2113AD";
-  const headerColor = theme.type === 'dark' ? '#29f096' : (authOrganization.organization.settings?.main_color || "#2113AD");
+  const mainColor = authOrganization?.organization?.settings?.main_color || "#2196f3";
+  const headerColor = theme.type === 'dark' ? '#29f096' : (authOrganization.organization.settings?.main_color || "#2196f3");
   const contrastText = authOrganization.organization.settings?.contrast_text || "#FFFFFF";
 
   // Calculate totals

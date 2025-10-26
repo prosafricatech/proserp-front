@@ -155,7 +155,7 @@ const JumboList = React.forwardRef<{ resetSelection: () => void }, JumboListProp
 
     const { theme } = useJumboTheme();
     const { authOrganization } = useJumboAuth();
-    const mainColor = authOrganization?.organization?.settings?.main_color || "#2113AD";
+    const mainColor = authOrganization?.organization?.settings?.main_color || "#2196f3";
     const lightColor = authOrganization?.organization?.settings?.light_color || "#bec5da";
     const contrastText = authOrganization?.organization?.settings?.contrast_text || "#FFFFFF";
 

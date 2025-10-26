@@ -17,8 +17,8 @@ function StockReportOnScreen({ stockData, authObject, hasPermissionToView }) {
   const theme = useTheme();
   const { authOrganization } = authObject;
   
-  const mainColor = authOrganization.organization.settings?.main_color || "#2113AD";
-  const headerColor = theme.type === 'dark' ? '#29f096' : (authOrganization.organization.settings?.main_color || "#2113AD");
+  const mainColor = authOrganization?.organization?.settings?.main_color || "#2196f3";
+  const headerColor = theme.type === 'dark' ? '#29f096' : (authOrganization.organization.settings?.main_color || "#2196f3");
   const contrastText = authOrganization.organization.settings?.contrast_text || "#FFFFFF";
 
   // Calculate total amount

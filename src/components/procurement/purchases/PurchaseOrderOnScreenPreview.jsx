@@ -21,8 +21,8 @@ function PurchaseOrderOnScreenPreview({ order }) {
     const theme = useTheme();
     const currencyCode = order.currency.code;
     const {checkOrganizationPermission, authOrganization : {organization}} = useJumboAuth();
-    const mainColor = organization.settings?.main_color || "#2113AD";
-    const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || "#2113AD");
+    const mainColor = organization.settings?.main_color || "#2196f3";
+    const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || "#2196f3");
     const contrastText = organization.settings?.contrast_text || "#FFFFFF";
     const withPrices = checkOrganizationPermission([PERMISSIONS.PURCHASES_CREATE, PERMISSIONS.ACCOUNTS_REPORTS]);
 

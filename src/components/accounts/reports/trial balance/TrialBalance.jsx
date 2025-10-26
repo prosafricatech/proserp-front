@@ -22,7 +22,7 @@ import { Div, Span } from '@jumbo/shared';
 import { useSnackbar } from 'notistack';
 
 const ReportDocumet = ({reportData,authOrganization,user}) => {
-    const mainColor = authOrganization.organization.settings?.main_color || "#2113AD";
+    const mainColor = authOrganization?.organization?.settings?.main_color || "#2196f3";
     const lightColor = authOrganization.organization.settings?.light_color || "#bec5da";
     const contrastText = authOrganization.organization.settings?.contrast_text || "#FFFFFF";
     const reportPeriod = `As at: ${readableDate(reportData.filters.as_at,true)}`;

@@ -27,7 +27,7 @@ const DocumentStakeholders: React.FC<DocumentStakeholdersProps> = ({
   toLabel = 'BILL TO',
   order
 }) => {
-  const mainColor = organization.settings?.main_color || "#2113AD";
+  const mainColor = organization.settings?.main_color || "#2196f3";
   const contrastText = organization.settings?.contrast_text || "#FFFFFF";
 
   return (

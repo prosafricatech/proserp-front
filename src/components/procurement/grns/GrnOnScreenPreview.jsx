@@ -7,7 +7,7 @@ function GrnOnScreenPreview({ grn, baseCurrency, checkOrganizationPermission, or
     const theme = useTheme();
     const currencySymbol = grn.currency.symbol;
     const base_Currency = baseCurrency.symbol;
-    const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || "#2113AD");
+    const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || "#2196f3");
     const displayAmounts = checkOrganizationPermission([PERMISSIONS.ACCOUNTS_REPORTS]);
 
     const exchangeRate = grn.exchange_rate;

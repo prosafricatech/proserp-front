@@ -42,7 +42,7 @@ export const mainTheme: ThemeOptions = {
 
   palette: {
     primary: {
-      main: '#2113AD',
+      main: '#2196f3',
       light: '#567FFB',
       dark: '#473bb7',
       contrastText: '#FFFFFF'
@@ -182,7 +182,7 @@ export const mainTheme: ThemeOptions = {
       styleOverrides: {
         root: {
           borderRadius: 12,
-          boxShadow: `0 0.5rem 1.25rem ${alpha('#2113AD', .175)}`
+          boxShadow: `0 0.5rem 1.25rem ${alpha('#2196f3', .175)}`
         },
       },
     },

@@ -58,8 +58,8 @@ function ApprovalOnScreen({ approval, organization, belowLargeScreen }: Approval
     const [selectedRelated, setSelectedRelated] = useState<any>(null);
     const [openViewDialog, setOpenViewDialog] = useState(false);
 
-    const mainColor = organization.settings?.main_color || "#2113AD";
-    const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || "#2113AD");
+    const mainColor = organization.settings?.main_color || "#2196f3";
+    const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || "#2196f3");
     const contrastText = organization.settings?.contrast_text || "#FFFFFF";
 
     const isPurchase = approval.requisition?.process_type?.toLowerCase() === 'purchase';
