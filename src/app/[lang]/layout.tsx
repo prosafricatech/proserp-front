@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from 'next';
 import { ReactNode } from 'react';
 import { Providers } from '../providers';
+import '@/styles/style.css';
+import '@assets/fonts/noir-pro/styles.css';
 import { getDictionary } from './dictionaries';
 import { DictionaryProvider } from './contexts/DictionaryContext';
 import { LanguageProvider } from './contexts/LanguageContext';
