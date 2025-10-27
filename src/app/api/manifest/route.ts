@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
     scope: "/",
     start_url: `/${lang}/dashboard`,
     icons: [
-      { src: "/assets/images/icons/192lllog.png", type: "image/png", sizes: "192x192" },
+      { src: "/assets/images/icons/Untitled-196pros.png", type: "image/png", sizes: "196x196" },
       { src: "/assets/images/icons/Untitled-2560g.png", type: "image/png", sizes: "256x256" },
       { src: "/assets/images/icons/Untitled-512logo.png", type: "image/png", sizes: "512x512" },
     ],
