@@ -22,6 +22,7 @@ export const headerTheme: ThemeOptions = {
       styleOverrides: {
         root: {
           color: '#8595A6',
+          textTransform: 'capitalize',
           background: '#FFFFFF',
           '&:hover': {
             color: '#475259',

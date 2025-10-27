@@ -1,6 +1,4 @@
 import type { Metadata, Viewport } from 'next';
-import '@/styles/style.css';
-import '@assets/fonts/noir-pro/styles.css';
 import { ReactNode } from 'react';
 import { Providers } from '../providers';
 import { getDictionary } from './dictionaries';
@@ -41,8 +39,8 @@ export const metadata: Metadata = {
   manifest: '/manifest.json',
   keywords: ['nextjs', 'next14', 'pwa', 'next-pwa'],
   icons: [
-    { rel: 'apple-touch-icon', url: '/assets/images/icons/logo512n-nw.png' },
-    { rel: 'icon', url: '/assets/images/icons/logo512n-nw.png' },
+    { rel: 'apple-touch-icon', url: '/assets/images/icons/Untitled-512logo.png' },
+    { rel: 'icon', url: '/assets/images/icons/Untitled-512logo.png' },
   ],
   appleWebApp: {
     capable: true,
@@ -85,8 +83,8 @@ export default async function RootLayout({ children, params }: RootLayoutProps) 
     <html lang={lang} data-lt-installed="true">
       <head>
         <link rel="manifest" href={`/api/manifest?lang=${lang}`} />
-        <link rel="icon" href="/assets/images/icons/logo512n-nw.png" />
-        <link rel="apple-touch-icon" href="/assets/images/icons/logo512n-nw.png" />
+        <link rel="icon" href="/assets/images/icons/Untitled-512logo.png" />
+        <link rel="apple-touch-icon" href="/assets/images/icons/Untitled-512logo.png" />
       </head>
       <body cz-shortcut-listen="true">
         <div id="root">

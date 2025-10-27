@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
     icons: [
       { src: "/assets/images/icons/192lllog.png", type: "image/png", sizes: "192x192" },
       { src: "/assets/images/icons/Untitled-2560g.png", type: "image/png", sizes: "256x256" },
-      { src: "/assets/images/icons/logo512n-nw.png", type: "image/png", sizes: "512x512" },
+      { src: "/assets/images/icons/Untitled-512logo.png", type: "image/png", sizes: "512x512" },
     ],
   });
 }

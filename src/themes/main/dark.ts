@@ -254,6 +254,7 @@ export const mainTheme: ThemeOptions = {
     MuiButton: {
       styleOverrides: {
         root: {
+          textTransform: 'capitalize',
           fontWeight: 400,
           letterSpacing: 1,
         },
