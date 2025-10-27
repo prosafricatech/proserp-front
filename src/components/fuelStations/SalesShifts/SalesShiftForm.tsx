@@ -82,9 +82,6 @@ const methods = useForm<SalesShiftFormData>({
       closing: 0
     })),
     fuel_vouchers: salesShift?.fuel_vouchers || [],
-    dipping_readings: salesShift?.dipping_readings || [],
-    adjustments: salesShift?.adjustments || [],
-    cash_reconciliation: salesShift?.cash_reconciliation || {},
     submit_type: isClosing ? 'close' : 'open',
     product_prices: salesShift?.product_prices || []  // Add this
   }
@@ -188,7 +185,6 @@ const methods = useForm<SalesShiftFormData>({
           <Typography variant="h5" gutterBottom align="center">
             Fuel Sales Shift
           </Typography>
-
           {/* Current Tab Indicator - Smaller */}
           <Box sx={{ mb: 1, textAlign: 'center' }}>
             <Typography variant="body2" color="primary.main" fontWeight="bold">

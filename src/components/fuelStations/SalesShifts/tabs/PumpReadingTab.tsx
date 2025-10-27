@@ -507,15 +507,6 @@ const PumpReadingTab: React.FC<PumpReadingTabProps> = ({ salesShift, isClosing =
                       </Box>
                     </Grid>
                   </Grid>
-
-                  {/* Debug info - shows which products contribute to this store */}
-                  {store.productIds.length > 0 && (
-                    <Box sx={{ mt: 1, textAlign: 'center' }}>
-                      <Typography variant="caption" color="text.secondary">
-                        Products: {store.productIds.map(id => `#${id}`).join(', ')}
-                      </Typography>
-                    </Box>
-                  )}
                 </CardContent>
               </Card>
             </Grid>

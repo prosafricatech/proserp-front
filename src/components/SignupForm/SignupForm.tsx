@@ -96,7 +96,7 @@ const SignupForm = () => {
             <Link href="#" underline="none" sx={{ display: 'inline-flex' }}>
               <img
                 width={250}
-                src={`${ASSET_IMAGES}/logos/proserp-logo.jpeg`}
+                src={`${ASSET_IMAGES}/logos/logo-pros8632.png`}
                 alt="Proserp"
               />
             </Link>
@@ -132,7 +132,7 @@ const SignupForm = () => {
           component="h1"
           sx={{
             fontWeight: 600,
-            color: '#1976d2',
+            color: '#2196f3',
             textAlign: 'center',
             mb: 1,
             fontSize: '1.75rem',
