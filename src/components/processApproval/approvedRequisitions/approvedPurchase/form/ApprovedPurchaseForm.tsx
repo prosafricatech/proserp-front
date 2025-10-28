@@ -175,7 +175,7 @@ const ApprovedPurchaseForm: React.FC<ApprovedPurchaseFormProps> = ({
       stakeholder_id: order?.stakeholder?.id || null,
       store_id: (order?.instant_receive && order?.store) ? order.store.id : null,
       date_required: order?.date_required,
-      instant_pay: order?.instant_pay ?? true,
+      instant_pay: order?.instant_pay ? true : false,
       instant_receive: order?.instant_receive ?? false,
       credit_ledger_id: (order?.instant_pay && order?.credit_ledger) ? order.credit_ledger.id : null,
       cost_centers: approvedRequisition ? [approvedRequisition.requisition.cost_center] : order?.cost_centers || [],

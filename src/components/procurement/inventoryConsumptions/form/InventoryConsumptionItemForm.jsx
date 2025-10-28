@@ -59,8 +59,12 @@ function InventoryConsumptionItemForm({ setClearFormKey, submitMainForm, submitI
     });
 
     useEffect(() => {
-        setIsDirty(Object.keys(dirtyFields).length > 0); // Update dirty state
-    }, [dirtyFields, setIsDirty, watch]);
+        const subscription = watch(() => {
+            const hasDirtyFields = Object.keys(dirtyFields).length > 0;
+            setIsDirty(hasDirtyFields);
+        });
+        return () => subscription.unsubscribe();
+    }, [watch, dirtyFields, setIsDirty]);
 
     const product = watch('product');
     const [isAdding, setIsAdding] = useState(false);

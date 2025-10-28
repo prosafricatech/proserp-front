@@ -61,14 +61,18 @@ function PurchaseOrderDialogForm({toggleOpen, order = null}) {
           .typeError('Receiving store is required'),
         otherwise: (schema) => schema.nullable()
       }),
-    stakeholder_ledger_id: yup.number()
-      .when(['instant_pay', 'stakeholder_id', 'instant_receive'], {
-        is: (instant_pay, stakeholder_id, instant_receive) => instant_pay && stakeholder_id && !instant_receive,
-        then: (schema) => schema.positive(`Selected supplier doesn't have any account`)
-          .required(`Selected supplier doesn't have any account`)
-          .typeError(`Selected supplier doesn't have any account`),
-        otherwise: (schema) => schema.nullable()
-      }),
+      stakeholder_ledger_id: yup
+        .number()
+        .nullable()
+        .when(['instant_pay', 'stakeholder_id', 'instant_receive'], {
+          is: (instant_pay, stakeholder_id, instant_receive) =>
+            !!instant_pay && !!stakeholder_id && !instant_receive,
+          then: (schema) =>
+            schema
+              .positive(`Selected supplier doesn't have any account`)
+              .required(`Selected supplier doesn't have any account`)
+              .typeError(`Selected supplier doesn't have any account`),
+        }),
     items: yup.array().min(1, "You must add at least one item")
       .typeError('You must add at least one item')
       .of(
@@ -146,22 +150,29 @@ function PurchaseOrderDialogForm({toggleOpen, order = null}) {
     orderTotalAmount();
   },[items]);
 
-  //Load Stakeholder credit ledgers
-  const stakeholder_id = watch('stakeholder_id');
   const { data: stakeholderPayableLedgers } = useQuery({
-    queryKey: ['stakeholderPayableLedgers', { stakeholderId: stakeholder_id }],
-    queryFn: async () => {
-      if (!stakeholder_id) return [];
-      return stakeholderServices.getLedgers({ stakeholder_id, type: 'all' });
-    },
-    enabled: !!stakeholder_id, // avoid unnecessary fetches
-    onSuccess: (data) => {
-      if (data.length > 0) {
-        setValue('stakeholder_ledger_id', data[0].id);
+    queryKey: ['stakeholderPayableLedgers', { stakeholderId: watch('stakeholder_id') }],
+    queryFn: async ({ queryKey }) => {
+      const [{ stakeholderId }] = queryKey.slice(1);
+      if (!stakeholderId) {
+        setValue('stakeholder_ledger_id', null);
+        return [];
+      }
+
+      const retVal = await stakeholderServices.getLedgers({
+        stakeholder_id: stakeholderId,
+        type: 'all',
+      });
+
+      if (retVal.length > 0) {
+        setValue('stakeholder_ledger_id', retVal[0].id);
       } else {
         setValue('stakeholder_ledger_id', null);
       }
+
+      return retVal;
     },
+    enabled: !!watch('stakeholder_id'),
   });
   
   const addPurchaseOrder = useMutation({

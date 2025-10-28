@@ -5,7 +5,7 @@ import { Document, Page, Text, View } from '@react-pdf/renderer'
 import React from 'react'
 
 function BillOfMaterialPDF({billOfMaterial, organization}) {
-    const mainColor = organization.settings?.main_color || "#2113AD";
+    const mainColor = organization.settings?.main_color || "#2196f3";
     const lightColor = organization.settings?.light_color || "#bec5da";
     const contrastText = organization.settings?.contrast_text || "#FFFFFF";
 

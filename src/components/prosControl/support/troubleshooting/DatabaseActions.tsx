@@ -179,13 +179,14 @@ function DatabaseActions() {
                                     <>
                                         <FormControlLabel value="up" control={<Radio />} label="Migrate:Up" />
                                         <FormControlLabel value="down" control={<Radio />} label="Migrate:Down" />
+                                        <FormControlLabel value="removeTrashed" control={<Radio />} label="Database:RemoveTrashed" />
                                     </>
                                 )}
-                                {checkPermission(PROS_CONTROL_PERMISSIONS.DATABASE_REFRESH) && currentDatabases.length > 0 && (
+                                {checkPermission(PROS_CONTROL_PERMISSIONS.DATABASE_REFRESH) && watch('databases').length > 0 && (
                                     <>
-                                        {!currentDatabases.find(database => database.id === 'core') &&
+                                        {!watch('databases').find(database => database.id === 'core') &&
                                             <FormControlLabel value="refresh" control={<Radio />} label="Migrate:Refresh" />}
-                                        {currentDatabases.find(database => database.id === 'core') &&
+                                        {watch('databases').find(database => database.id === 'core') &&
                                             <FormControlLabel value="constantsReseed" control={<Radio />} label="Constants:Reseed" />}
                                     </>
                                 )}
@@ -236,11 +237,12 @@ function DatabaseActions() {
                         sx={{ color: 'red', fontSize: '1.2rem' }}
                     >
                         {
-                            selectedData?.action === "up" ? "Migrate:Up?"  :
+                            selectedData?.action === "up" ? "Migrate:Up?" :
                             selectedData?.action === "down" ? "Migrate:Down?" :
                             selectedData?.action === "refresh" ? "Migrate:Refresh?" :
-                            selectedData?.action === "runScripts" ? "Run Scripts?" :
                             selectedData?.action === "constantsReseed" ? "Constants:Reseed?" :
+                            selectedData?.action === "runScripts" ? "Run Scripts?" :
+                            selectedData?.action === "removeTrashed" ? "Database:RemoveTrashed?" :
                             "Unknown Action"
                         }
                     </Typography> 

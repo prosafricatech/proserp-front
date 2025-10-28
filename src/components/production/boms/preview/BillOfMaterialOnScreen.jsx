@@ -17,8 +17,8 @@ import {
 function BillOfMaterialOnScreen({ billOfMaterial, organization }) {
   const theme = useTheme();
   
-  const mainColor = organization.settings?.main_color || "#2113AD";
-  const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || "#2113AD");
+  const mainColor = organization.settings?.main_color || "#2196f3";
+  const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || "#2196f3");
   const contrastText = organization.settings?.contrast_text || "#FFFFFF";
 
   // Format quantity values

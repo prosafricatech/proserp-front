@@ -19,8 +19,8 @@ const TrialBalanceOnScreen = ({ reportData, authOrganization, user }) => {
   
   if (!reportData) return null;
 
-  const mainColor = authOrganization?.organization.settings?.main_color || "#2113AD";
-  const headerColor = theme.type === 'dark' ? '#29f096' : (authOrganization?.organization.settings?.main_color || "#2113AD");
+  const mainColor = authOrganization?.organization.settings?.main_color || "#2196f3";
+  const headerColor = theme.type === 'dark' ? '#29f096' : (authOrganization?.organization.settings?.main_color || "#2196f3");
   const contrastText = authOrganization?.organization.settings?.contrast_text || "#FFFFFF";
 
   const debitLedgers = reportData.ledgers.filter(ledger => ledger.balance.side === 'DR');

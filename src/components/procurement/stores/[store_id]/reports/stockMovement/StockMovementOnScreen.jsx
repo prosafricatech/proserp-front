@@ -16,8 +16,8 @@ import { PERMISSIONS } from '@/utilities/constants/permissions';
 
 const StockMovementOnScreen = ({ movementsData, authOrganization, checkOrganizationPermission }) => {
     const theme = useTheme();
-    const mainColor = authOrganization.organization.settings?.main_color || "#2113AD";
-    const headerColor = theme.type === 'dark' ? '#29f096' : (authOrganization.organization.settings?.main_color || "#2113AD");
+    const mainColor = authOrganization?.organization?.settings?.main_color || "#2196f3";
+    const headerColor = theme.type === 'dark' ? '#29f096' : (authOrganization.organization.settings?.main_color || "#2196f3");
     const contrastText = authOrganization.organization.settings?.contrast_text || "#FFFFFF";
 
     if (!movementsData) return null;

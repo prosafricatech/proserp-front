@@ -19,12 +19,12 @@ const Logo = ({ mini = false, mode = 'light', sx }: LogoProps) => {
           <Image
             src={
               mode === 'light'
-                ? `/assets/images/logos/logo.png`
+                ? `/assets/images/logos/logopros123.png`
                 : `/assets/images/logos/proserp-white.png`
             }
             alt='Jumbo React'
-            width={110}
-            height={35}
+            width={mode === 'dark' ? 110: 140}
+            height={mode === 'dark' ? 35 : 100}
             style={{ verticalAlign: 'middle' }}
           />
         ) : (

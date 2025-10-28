@@ -5,7 +5,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     name: "ProsERP Beta",
     short_name: "ProsERP Beta",
-    theme_color: "#2113AD",
+    theme_color: "#2196f3",
     background_color: "#ffffff",
     description: "Robust ERP for accounting, project management, payroll, inventory, and requisitions.",
     display: "standalone",
@@ -13,9 +13,9 @@ export async function GET(req: NextRequest) {
     scope: "/",
     start_url: `/${lang}/dashboard`,
     icons: [
-      { src: "/assets/images/icons/logo196.png", type: "image/png", sizes: "192x192" },
-      { src: "/assets/images/icons/logo256.png", type: "image/png", sizes: "256x256" },
-      { src: "/assets/images/icons/logo512.png", type: "image/png", sizes: "512x512" },
+      { src: "/assets/images/icons/Untitled-196pros.png", type: "image/png", sizes: "196x196" },
+      { src: "/assets/images/icons/Untitled-2560g.png", type: "image/png", sizes: "256x256" },
+      { src: "/assets/images/icons/Untitled-512logo.png", type: "image/png", sizes: "512x512" },
     ],
   });
 }

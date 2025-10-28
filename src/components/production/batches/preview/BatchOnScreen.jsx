@@ -20,8 +20,8 @@ function BatchOnScreen({ batch }) {
   const theme = useTheme();
   const { authOrganization } = useJumboAuth();
   
-  const mainColor = authOrganization.organization.settings?.main_color || "#2113AD";
-  const headerColor = theme.type === 'dark' ? '#29f096' : (authOrganization.organization.settings?.main_color || "#2113AD");
+  const mainColor = authOrganization?.organization?.settings?.main_color || "#2196f3";
+  const headerColor = theme.type === 'dark' ? '#29f096' : (authOrganization.organization.settings?.main_color || "#2196f3");
   const contrastText = authOrganization.organization.settings?.contrast_text || "#FFFFFF";
 
   // Calculations
@@ -123,16 +123,6 @@ function BatchOnScreen({ batch }) {
             </Typography>
             <Typography variant="body1" sx={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
               {formatCurrency(combinedInputsOtherExpensesByProduct)}
-            </Typography>
-          </Box>
-        </Grid>
-        <Grid size={{xs: 12, sm: 6, md: 3}}>
-          <Box>
-            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
-              Total Outputs
-            </Typography>
-            <Typography variant="body1">
-              {batch.outputs?.length || 0}
             </Typography>
           </Box>
         </Grid>

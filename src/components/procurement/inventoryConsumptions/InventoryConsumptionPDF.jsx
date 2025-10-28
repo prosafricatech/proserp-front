@@ -6,7 +6,7 @@ import React from 'react'
 
 function InventoryConsumptionPDF({inventoryConsumption,authObject}) {
   const {authOrganization : { organization }, authUser : { user}} = authObject;
-  const mainColor = organization.settings?.main_color || "#2113AD";
+  const mainColor = organization.settings?.main_color || "#2196f3";
   const lightColor = organization.settings?.light_color || "#bec5da";
   const contrastText = organization.settings?.contrast_text || "#FFFFFF";
 

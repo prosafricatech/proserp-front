@@ -82,8 +82,12 @@ function OutputsItemForm({setClearFormKey, submitMainForm, submitItemForm, setSu
   });
 
   useEffect(() => {
-      setIsDirty(Object.keys(dirtyFields).length > 0); // Update dirty state
-  }, [dirtyFields, setIsDirty, watch, item]);
+      const subscription = watch(() => {
+          const hasDirtyFields = Object.keys(dirtyFields).length > 0;
+          setIsDirty(hasDirtyFields);
+      });
+      return () => subscription.unsubscribe();
+  }, [watch, dirtyFields, setIsDirty, item]);
 
   const store_id = watch('store_id');
 

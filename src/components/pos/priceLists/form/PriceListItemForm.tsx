@@ -89,8 +89,12 @@ const PriceListItemForm: React.FC<PriceListItemFormProps> = ({
   });
 
   useEffect(() => {
-    setIsDirty(Object.keys(dirtyFields).length > 0);
-  }, [dirtyFields, setIsDirty, watch]);
+      const subscription = watch(() => {
+          const hasDirtyFields = Object.keys(dirtyFields).length > 0;
+          setIsDirty(hasDirtyFields);
+      });
+      return () => subscription.unsubscribe();
+  }, [watch, dirtyFields, setIsDirty]);
 
   const updateItems = async (itemData: FormValues) => {
     setIsAdding(true);
