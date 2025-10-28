@@ -43,7 +43,6 @@ const StationSelector = ({
     queryFn: ({ queryKey }) => {
       const userId = queryKey[1];
       if (!userId) {
-        console.log('❌ No user ID available');
         return [];
       }
       console.log('🔄 Fetching stations for user:', userId);

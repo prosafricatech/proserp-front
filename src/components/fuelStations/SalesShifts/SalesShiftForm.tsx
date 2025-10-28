@@ -31,7 +31,7 @@ interface SalesShiftFormProps {
   isClosing?: boolean;
 }
 
-// Define the form data structure
+// Update the SalesShiftFormData interface
 interface SalesShiftFormData {
   shift_team_id: string;
   shift_start: string;
@@ -48,6 +48,10 @@ interface SalesShiftFormData {
   adjustments: Array<any>;
   cash_reconciliation: any;
   submit_type: 'open' | 'close';
+  product_prices: Array<{  // Add this
+    product_id: number;
+    price: number;
+  }>;
 }
 
 const SalesShiftForm: React.FC<SalesShiftFormProps> = ({
@@ -64,26 +68,24 @@ const SalesShiftForm: React.FC<SalesShiftFormProps> = ({
   const shiftTeams = activeStation?.shift_teams || [];
   const fuelPumps = activeStation?.fuel_pumps || [];
 
-  // Initialize form with react-hook-form
-  const methods = useForm<SalesShiftFormData>({
-    defaultValues: {
-      shift_team_id: String(salesShift?.shift_team_id ?? ''),
-      shift_start: salesShift?.shift_start || dayjs().toISOString(),
-      shift_end: salesShift?.shift_end || null,
-      pump_readings: salesShift?.pump_readings || fuelPumps.map(pump => ({
-        pump_id: pump.id,
-        product_id: pump.product?.id || null,
-        tank_id: pump.tank?.id || null,
-        opening: 0,
-        closing: 0
-      })),
-      fuel_vouchers: salesShift?.fuel_vouchers || [],
-      dipping_readings: salesShift?.dipping_readings || [],
-      adjustments: salesShift?.adjustments || [],
-      cash_reconciliation: salesShift?.cash_reconciliation || {},
-      submit_type: isClosing ? 'close' : 'open'
-    }
-  });
+  // In the useForm initialization, add product_prices to defaultValues
+const methods = useForm<SalesShiftFormData>({
+  defaultValues: {
+    shift_team_id: String(salesShift?.shift_team_id ?? ''),
+    shift_start: salesShift?.shift_start || dayjs().toISOString(),
+    shift_end: salesShift?.shift_end || null,
+    pump_readings: salesShift?.pump_readings || fuelPumps.map(pump => ({
+      pump_id: pump.id,
+      product_id: pump.product?.id || null,
+      tank_id: pump.tank?.id || null,
+      opening: 0,
+      closing: 0
+    })),
+    fuel_vouchers: salesShift?.fuel_vouchers || [],
+    submit_type: isClosing ? 'close' : 'open',
+    product_prices: salesShift?.product_prices || []  // Add this
+  }
+});
 
   const { watch, setValue, handleSubmit, formState: { isSubmitting, errors } } = methods;
 
@@ -183,13 +185,6 @@ const SalesShiftForm: React.FC<SalesShiftFormProps> = ({
           <Typography variant="h5" gutterBottom align="center">
             Fuel Sales Shift
           </Typography>
-
-          {activeStation && (
-            <Alert severity="info" sx={{ mb: 2, py: 0 }}>
-              <Typography variant="body2">Station: {activeStation.name}</Typography>
-            </Alert>
-          )}
-
           {/* Current Tab Indicator - Smaller */}
           <Box sx={{ mb: 1, textAlign: 'center' }}>
             <Typography variant="body2" color="primary.main" fontWeight="bold">
@@ -203,9 +198,9 @@ const SalesShiftForm: React.FC<SalesShiftFormProps> = ({
               <Autocomplete
                 options={shiftTeams}
                 getOptionLabel={(option) => option.name || `Team ${option.id}`}
-                value={shiftTeams.find(team => team.id === formValues.shift_team_id) || null}
+                value={shiftTeams.find(team => String(team.id) === formValues.shift_team_id) || null}
                 onChange={(event, newValue) => {
-                  setValue('shift_team_id', newValue?.id || '');
+                  setValue('shift_team_id', String(newValue?.id ?? ''));
                 }}
                 renderInput={(params) => (
                   <TextField 
@@ -257,6 +252,7 @@ const SalesShiftForm: React.FC<SalesShiftFormProps> = ({
               />
             </Grid>
           </Grid>
+          
         </Paper>
 
         {/* Tabs Section - Reduced Height */}
