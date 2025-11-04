@@ -1,4 +1,5 @@
 'use client';
+
 import React from 'react';
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
@@ -108,6 +109,7 @@ const JumboNavCollapsible = ({ item, translate }) => {
             sx={{
               m: 0,
               '& .MuiTypography-root': {
+                fontSize: '0.8rem',
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
