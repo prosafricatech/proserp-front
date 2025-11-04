@@ -105,7 +105,7 @@ export const Signin = () => {
             }}
           >
             <Typography
-              variant={'h2'}
+              variant={'h4'}
               color={'inherit'}
               fontWeight={600}
               sx={{

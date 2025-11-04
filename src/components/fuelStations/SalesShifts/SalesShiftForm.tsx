@@ -166,9 +166,6 @@ const methods = useForm<SalesShiftFormData>({
     return <LinearProgress />;
   }
 
-  // Get tab names for display
-  const tabNames = ['Pump Reading', 'Fuel Voucher', 'Dipping', 'Adjustments', 'Cash Reconciliation'];
-
   return (
     <FormProvider {...methods}>
       <Box 
@@ -180,19 +177,13 @@ const methods = useForm<SalesShiftFormData>({
           p: 1.5
         }}
       >
-        {/* Header Section - More Compact */}
+        {/* Header Section */}
         <Paper elevation={1} sx={{ p: 2, mb: 2 }}>
           <Typography variant="h5" gutterBottom align="center">
             Fuel Sales Shift
           </Typography>
-          {/* Current Tab Indicator - Smaller */}
-          <Box sx={{ mb: 1, textAlign: 'center' }}>
-            <Typography variant="body2" color="primary.main" fontWeight="bold">
-              Step {activeTab + 1} of 5: {tabNames[activeTab]}
-            </Typography>
-          </Box>
 
-          {/* Header Fields - More Compact */}
+          {/* Header Fields */}
           <Grid container spacing={1.5}>
             <Grid size={{ xs: 12, md: 4 }}>
               <Autocomplete
@@ -252,10 +243,9 @@ const methods = useForm<SalesShiftFormData>({
               />
             </Grid>
           </Grid>
-          
         </Paper>
 
-        {/* Tabs Section - Reduced Height */}
+        {/* Tabs Section */}
         <Box sx={{ maxHeight: '50vh', overflow: 'auto' }}>
           <SalesShiftTabs
             salesShift={salesShift}
@@ -265,7 +255,7 @@ const methods = useForm<SalesShiftFormData>({
           />
         </Box>
 
-        {/* Action Buttons - More Compact */}
+        {/* Action Buttons */}
         <Paper elevation={1} sx={{ p: 1.5, mt: 2 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             {/* Previous Button */}
@@ -283,18 +273,17 @@ const methods = useForm<SalesShiftFormData>({
               )}
             </Box>
 
-            {/* Cancel Button */}
-            <Button 
-              onClick={() => toggleOpen(false)}
-              variant="outlined"
-              size="small"
-              disabled={isPending}
-            >
-              Cancel
-            </Button>
-
-            {/* Next/Submit Buttons */}
+            {/* Cancel and Next/Submit Buttons Grouped Together */}
             <Box sx={{ display: 'flex', gap: 1 }}>
+              <Button 
+                onClick={() => toggleOpen(false)}
+                variant="outlined"
+                size="small"
+                disabled={isPending}
+              >
+                Cancel
+              </Button>
+
               {activeTab < 4 ? (
                 <Button 
                   onClick={handleNext}
@@ -315,40 +304,6 @@ const methods = useForm<SalesShiftFormData>({
                   {salesShift ? 'Update' : 'Create'} Shift
                 </Button>
               )}
-            </Box>
-          </Box>
-
-          {/* Progress Indicator - Smaller */}
-          <Box sx={{ mt: 1 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              {tabNames.map((tabName, index) => (
-                <Box key={index} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
-                  <Box
-                    sx={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: '50%',
-                      backgroundColor: index === activeTab 
-                        ? 'primary.main' 
-                        : index < activeTab 
-                          ? 'success.main' 
-                          : 'grey.400',
-                    }}
-                  />
-                  <Typography 
-                    variant="caption" 
-                    sx={{ 
-                      fontSize: '0.6rem',
-                      fontWeight: index === activeTab ? 'bold' : 'normal',
-                      color: index === activeTab ? 'primary.main' : 'text.secondary',
-                      textAlign: 'center',
-                      lineHeight: 1
-                    }}
-                  >
-                    {tabName.split(' ')[0]}
-                  </Typography>
-                </Box>
-              ))}
             </Box>
           </Box>
         </Paper>
