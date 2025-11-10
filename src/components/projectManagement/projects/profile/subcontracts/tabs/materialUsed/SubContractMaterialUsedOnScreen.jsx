@@ -18,8 +18,8 @@ import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 function SubContractMaterialUsedOnScreen({ SubContractMaterialUsedDetails, organization }) {
   const theme = useTheme();
   
-  const mainColor = organization.settings?.main_color || "#2196f3";
-  const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || "#2196f3");
+  const mainColor = organization.settings?.main_color || "#2113AD";
+  const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || "#2113AD");
   const contrastText = organization.settings?.contrast_text || "#FFFFFF";
 
   // Format quantity values
@@ -47,7 +47,7 @@ function SubContractMaterialUsedOnScreen({ SubContractMaterialUsedDetails, organ
           >
             <Typography 
               variant="h4" 
-              sx={{ color: headerColor, fontWeight: 'bold' }} 
+              sx={{ color: headerColor }} 
               gutterBottom
             >
               SUBCONTRACT MATERIALS USED
@@ -67,7 +67,7 @@ function SubContractMaterialUsedOnScreen({ SubContractMaterialUsedDetails, organ
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid size={{xs: 12, sm: 6, md: 4}}>
           <Box>
-            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+            <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
               Issue No
             </Typography>
             <Typography variant="body1">{SubContractMaterialUsedDetails.issueNo}</Typography>
@@ -75,7 +75,7 @@ function SubContractMaterialUsedOnScreen({ SubContractMaterialUsedDetails, organ
         </Grid>
         <Grid size={{xs: 12, sm: 6, md: 4}}>
           <Box>
-            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+            <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
               Issue Date
             </Typography>
             <Typography variant="body1">
@@ -85,17 +85,17 @@ function SubContractMaterialUsedOnScreen({ SubContractMaterialUsedDetails, organ
         </Grid>
         <Grid size={{xs: 12, sm: 6, md: 4}}>
           <Box>
-            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+            <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
               Project
             </Typography>
-            <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
+            <Typography variant="body1">
               {SubContractMaterialUsedDetails.subcontract.project.name}
             </Typography>
           </Box>
         </Grid>
         <Grid size={{xs: 12, sm: 6, md: 4}}>
           <Box>
-            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+            <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
               Reference
             </Typography>
             <Typography variant="body1">{SubContractMaterialUsedDetails.reference}</Typography>
@@ -103,7 +103,7 @@ function SubContractMaterialUsedOnScreen({ SubContractMaterialUsedDetails, organ
         </Grid>
         <Grid size={{xs: 12, sm: 6, md: 4}}>
           <Box>
-            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+            <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
               Subcontract No
             </Typography>
             <Typography variant="body1">{SubContractMaterialUsedDetails.subcontract.subcontractNo}</Typography>
@@ -111,10 +111,10 @@ function SubContractMaterialUsedOnScreen({ SubContractMaterialUsedDetails, organ
         </Grid>
         <Grid size={{xs: 12, sm: 6, md: 4}}>
           <Box>
-            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+            <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
               Subcontractor Name
             </Typography>
-            <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
+            <Typography variant="body1">
               {SubContractMaterialUsedDetails.subcontract.subcontractor.name}
             </Typography>
           </Box>
@@ -130,7 +130,6 @@ function SubContractMaterialUsedOnScreen({ SubContractMaterialUsedDetails, organ
           sx={{ 
             color: headerColor, 
             textAlign: 'center', 
-            fontWeight: 'bold',
             mb: 2
           }}
         >
@@ -149,16 +148,16 @@ function SubContractMaterialUsedOnScreen({ SubContractMaterialUsedDetails, organ
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
-                  #
+                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
+                  S/N
                 </TableCell>
-                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
+                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
                   Material
                 </TableCell>
-                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
+                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
                   Unit
                 </TableCell>
-                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
                   Quantity
                 </TableCell>
               </TableRow>
@@ -174,10 +173,10 @@ function SubContractMaterialUsedOnScreen({ SubContractMaterialUsedDetails, organ
                     }
                   }}
                 >
-                  <TableCell sx={{ fontWeight: 'medium' }}>{index + 1}</TableCell>
-                  <TableCell sx={{ fontWeight: 'medium' }}>{item.product.name}</TableCell>
+                  <TableCell>{index + 1}</TableCell>
+                  <TableCell>{item.product.name}</TableCell>
                   <TableCell>{item.measurement_unit.symbol}</TableCell>
-                  <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                  <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                     {formatQuantity(item.quantity)}
                   </TableCell>
                 </TableRow>
@@ -201,7 +200,6 @@ function SubContractMaterialUsedOnScreen({ SubContractMaterialUsedDetails, organ
                     colSpan={3} 
                     align="center" 
                     sx={{ 
-                      fontWeight: 'bold',
                       borderBottom: 'none'
                     }}
                   >
@@ -211,7 +209,6 @@ function SubContractMaterialUsedOnScreen({ SubContractMaterialUsedDetails, organ
                     align="right" 
                     sx={{ 
                       fontFamily: 'monospace',
-                      fontWeight: 'bold',
                       borderBottom: 'none',
                       color: contrastText
                     }}
@@ -229,7 +226,7 @@ function SubContractMaterialUsedOnScreen({ SubContractMaterialUsedDetails, organ
       <Box sx={{ mt: 3, p: 2, backgroundColor: theme.palette.background.default, borderRadius: 1 }}>
         <Grid container spacing={2}>
           <Grid size={{xs: 12, sm: 6}}>
-            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+            <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
               Subcontractor Details
             </Typography>
             <Typography variant="body2">
@@ -242,7 +239,7 @@ function SubContractMaterialUsedOnScreen({ SubContractMaterialUsedDetails, organ
             )}
           </Grid>
           <Grid size={{xs: 12, sm: 6}}>
-            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+            <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
               Project Information
             </Typography>
             <Typography variant="body2">

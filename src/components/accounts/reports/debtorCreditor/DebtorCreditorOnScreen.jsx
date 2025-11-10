@@ -13,8 +13,8 @@ import {
 
 const DebtorCreditorOnScreen = ({ reportData, authOrganization, user }) => {
     const theme = useTheme();
-    const mainColor = authOrganization?.organization.settings?.main_color || "#2196f3";
-    const headerColor = theme.type === 'dark' ? '#29f096' : (authOrganization?.organization.settings?.main_color || "#2196f3");
+    const mainColor = authOrganization?.organization.settings?.main_color || "#2113AD";
+    const headerColor = theme.type === 'dark' ? '#29f096' : (authOrganization?.organization.settings?.main_color || "#2113AD");
     const contrastText = authOrganization?.organization.settings?.contrast_text || "#FFFFFF";
 
     return reportData ? (

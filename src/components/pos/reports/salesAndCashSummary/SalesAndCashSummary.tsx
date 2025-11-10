@@ -70,7 +70,7 @@ interface ReportDocumentProps {
 
 const ReportDocument: React.FC<ReportDocumentProps> = ({ reportData, authOrganization, user, from, to, costCenters }) => {
   const reportPeriod = `${readableDate(from, true)} to ${readableDate(to, true)}`;
-  const mainColor = authOrganization?.organization?.settings?.main_color || "#2196f3";
+  const mainColor = authOrganization.organization.settings?.main_color || "#2113AD";
   const lightColor = authOrganization.organization.settings?.light_color || "#bec5da";
   const contrastText = authOrganization.organization.settings?.contrast_text || "#FFFFFF";
 

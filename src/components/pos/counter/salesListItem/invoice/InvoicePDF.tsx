@@ -56,7 +56,7 @@ interface InvoicePDFProps {
 
 function InvoicePDF({ invoice, organization }: InvoicePDFProps) {
     const currencyCode = invoice.currency.code;
-    const mainColor = organization.settings?.main_color || "#2196f3";
+    const mainColor = organization.settings?.main_color || "#2113AD";
     const lightColor = organization.settings?.light_color || "#bec5da";
     const contrastText = organization.settings?.contrast_text || "#FFFFFF";
 

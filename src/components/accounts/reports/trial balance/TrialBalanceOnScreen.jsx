@@ -19,8 +19,8 @@ const TrialBalanceOnScreen = ({ reportData, authOrganization, user }) => {
   
   if (!reportData) return null;
 
-  const mainColor = authOrganization?.organization.settings?.main_color || "#2196f3";
-  const headerColor = theme.type === 'dark' ? '#29f096' : (authOrganization?.organization.settings?.main_color || "#2196f3");
+  const mainColor = authOrganization?.organization.settings?.main_color || "#2113AD";
+  const headerColor = theme.type === 'dark' ? '#29f096' : (authOrganization?.organization.settings?.main_color || "#2113AD");
   const contrastText = authOrganization?.organization.settings?.contrast_text || "#FFFFFF";
 
   const debitLedgers = reportData.ledgers.filter(ledger => ledger.balance.side === 'DR');
@@ -51,16 +51,16 @@ const TrialBalanceOnScreen = ({ reportData, authOrganization, user }) => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold' }}>
+              <TableCell sx={{ backgroundColor: mainColor, color: contrastText }}>
                 S/N
               </TableCell>
-              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold' }}>
+              <TableCell sx={{ backgroundColor: mainColor, color: contrastText }}>
                 Ledger Name
               </TableCell>
-              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, textAlign: 'right', fontWeight: 'bold' }}>
+              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, textAlign: 'right' }}>
                 Debit
               </TableCell>
-              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, textAlign: 'right', fontWeight: 'bold' }}>
+              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, textAlign: 'right' }}>
                 Credit
               </TableCell>
             </TableRow>
@@ -101,7 +101,6 @@ const TrialBalanceOnScreen = ({ reportData, authOrganization, user }) => {
                 sx={{ 
                   backgroundColor: mainColor, 
                   color: contrastText,
-                  fontWeight: 'bold',
                   borderBottom: 'none'
                 }}
               >
@@ -112,7 +111,6 @@ const TrialBalanceOnScreen = ({ reportData, authOrganization, user }) => {
                   backgroundColor: mainColor, 
                   color: contrastText, 
                   textAlign: 'right',
-                  fontWeight: 'bold',
                   borderBottom: 'none'
                 }}
               >
@@ -126,7 +124,6 @@ const TrialBalanceOnScreen = ({ reportData, authOrganization, user }) => {
                   backgroundColor: mainColor, 
                   color: contrastText, 
                   textAlign: 'right',
-                  fontWeight: 'bold',
                   borderBottom: 'none'
                 }}
               >

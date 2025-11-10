@@ -6,7 +6,7 @@ import React from 'react'
 
 function StockAdjustmentPDF({stockAdjustment,authObject}) {
     const {authOrganization : { organization }, authUser : { user}} = authObject;
-    const mainColor = organization.settings?.main_color || "#2196f3";
+    const mainColor = organization.settings?.main_color || "#2113AD";
     const lightColor = organization.settings?.light_color || "#bec5da";
     const contrastText = organization.settings?.contrast_text || "#FFFFFF";
 

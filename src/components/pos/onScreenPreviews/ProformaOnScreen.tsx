@@ -50,8 +50,8 @@ interface ProformaOnScreenProps {
 function ProformaOnScreen({ proforma, organization }: ProformaOnScreenProps) {
   const theme = useTheme();
   const currencyCode = proforma.currency?.code;
-  const mainColor = organization.settings?.main_color || "#2196f3";
-  const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || "#2196f3");
+  const mainColor = organization.settings?.main_color || "#2113AD";
+  const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || "#2113AD");
   const contrastText = organization.settings?.contrast_text || "#FFFFFF";
 
   const formatCurrency = (amount: number) => {
@@ -145,27 +145,27 @@ function ProformaOnScreen({ proforma, organization }: ProformaOnScreenProps) {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
-                #
+              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
+                S/N
               </TableCell>
-              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
+              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
                 Product/Service
               </TableCell>
-              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
+              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
                 Unit
               </TableCell>
-              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
                 Quantity
               </TableCell>
-              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
                 Price {proforma?.vat_percentage ? '(Excl.)' : ''}
               </TableCell>
               {proforma?.vat_percentage > 0 && (
-                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
                   VAT
                 </TableCell>
               )}
-              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
                 Amount {proforma?.vat_percentage ? '(Incl.)' : ''}
               </TableCell>
             </TableRow>
@@ -181,24 +181,24 @@ function ProformaOnScreen({ proforma, organization }: ProformaOnScreenProps) {
                   }
                 }}
               >
-                <TableCell sx={{ fontWeight: 'medium' }}>{index + 1}</TableCell>
-                <TableCell sx={{ fontWeight: 'medium' }}>{proformaItem.product.name}</TableCell>
+                <TableCell>{index + 1}</TableCell>
+                <TableCell>{proformaItem.product.name}</TableCell>
                 <TableCell>{proformaItem.measurement_unit.symbol}</TableCell>
-                <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                   {proformaItem.quantity.toLocaleString()}
                 </TableCell>
-                <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                   {formatNumber(proformaItem.rate)}
                 </TableCell>
                 {proforma?.vat_percentage > 0 && (
-                  <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                  <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                     {!proformaItem.product?.vat_exempted
                       ? formatNumber(proforma.vat_percentage * proformaItem.rate * 0.01)
                       : '0.00'
                     }
                   </TableCell>
                 )}
-                <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
+                <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                   {formatNumber(
                     proformaItem.quantity * proformaItem.rate * 
                     (!proformaItem.product?.vat_exempted ? (100 + proforma.vat_percentage) * 0.01 : 1)

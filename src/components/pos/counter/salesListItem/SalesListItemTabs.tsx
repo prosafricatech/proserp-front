@@ -201,6 +201,8 @@ const SalesListItemTabs: React.FC<SalesListItemTabsProps> = ({
     PERMISSIONS.ACCOUNTS_TRANSACTIONS_CREATE
   ]);
 
+  const createReceipts = accountsPersonnel || checkOrganizationPermission([PERMISSIONS.RECEIPTS_CREATE]);
+
   const theme = useTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
@@ -238,7 +240,7 @@ const SalesListItemTabs: React.FC<SalesListItemTabsProps> = ({
           {!sale.is_instant_sale && (
             <Tab label="Dispatches" aria-label="dispatches tab"/>
           )}
-          {accountsPersonnel && !sale.vfd_receipt && (!sale.is_instant_sale || sale.payment_method === 'On Account') && (
+          {createReceipts && !sale.vfd_receipt && (!sale.is_instant_sale || sale.payment_method === 'On Account') && (
             <Tab label="Receipts" aria-label="receipts tab"/>
           )}
           {accountsPersonnel && !sale.vfd_receipt && (!!sale.is_invoiceable || !!sale.is_invoiced) && (
@@ -285,7 +287,7 @@ const SalesListItemTabs: React.FC<SalesListItemTabsProps> = ({
       )}
 
       {/* Receipts */}
-      {accountsPersonnel && 
+      {createReceipts && 
        !sale.vfd_receipt && 
        (!sale.is_instant_sale || sale.payment_method === 'On Account') && 
        activeTab === (sale.is_instant_sale ? tabIndex.receipts : 1) && (

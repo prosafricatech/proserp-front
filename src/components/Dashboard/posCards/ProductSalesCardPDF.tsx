@@ -44,7 +44,7 @@ const ProductSalesCardPDF: React.FC<ProductSalesCardPDFProps> = ({
   selectedTop,
   salesPersonsSelected = [],
 }) => {
-  const mainColor = organization?.settings?.main_color || '#2196f3';
+  const mainColor = organization?.settings?.main_color || '#2113AD';
   const contrastText = organization?.settings?.contrast_text || '#FFFFFF';
   const lightColor = organization?.settings?.light_color || '#bec5da';
   const reportPeriod = `${readableDate(topProductsData.params.from, true)} - ${readableDate(topProductsData.params.to, true)}`;

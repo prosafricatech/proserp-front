@@ -28,7 +28,7 @@ import { useSnackbar } from 'notistack'
 const ReportDocument = ({movementsData,authObject,store}) => {
     const {authOrganization,authUser: { user}} = authObject;
     const {from, to, cost_centers, product} = movementsData.filters;
-    const mainColor = authOrganization?.organization?.settings?.main_color || "#2196f3";
+    const mainColor = authOrganization.organization.settings?.main_color || "#2113AD";
     const lightColor = authOrganization.organization.settings?.light_color || "#bec5da";
     const contrastText = authOrganization.organization.settings?.contrast_text || "#FFFFFF";
     const reportPeriod = `${readableDate(from, true)} - ${readableDate(to, true)}`

@@ -19,7 +19,7 @@ import PDFContent from '@/components/pdf/PDFContent';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 
 const ReportDocument = ({reportData,authOrganization,user,checkOrganizationPermission,baseCurrency}) => {
-    const mainColor = authOrganization?.organization?.settings?.main_color || "#2196f3";
+    const mainColor = authOrganization.organization.settings?.main_color || "#2113AD";
     const lightColor = authOrganization.organization.settings?.light_color || "#bec5da";
     const contrastText = authOrganization.organization.settings?.contrast_text || "#FFFFFF";
     const costCenters = reportData.filters.cost_centers;

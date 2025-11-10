@@ -86,8 +86,8 @@ const AdjustmentOnScreen: React.FC<AdjustmentOnScreenProps> = ({
     authOrganization: { organization },
   } = authObject;
 
-  const mainColor = organization.settings?.main_color || '#2196f3';
-  const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || '#2196f3');
+  const mainColor = organization.settings?.main_color || '#2113AD';
+  const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || '#2113AD');
   const contrastText = organization.settings?.contrast_text || '#FFFFFF';
 
   const calculatedValues = React.useMemo(() => {
@@ -140,7 +140,7 @@ const AdjustmentOnScreen: React.FC<AdjustmentOnScreenProps> = ({
             },
           }}
         >
-          <TableCell sx={{ fontWeight: 'medium' }}>{index + 1}</TableCell>
+          <TableCell>{index + 1}</TableCell>
           <TableCell>
             <Box>
               <Typography variant="body2" component="span" fontWeight="medium">
@@ -163,21 +163,21 @@ const AdjustmentOnScreen: React.FC<AdjustmentOnScreenProps> = ({
             </Box>
           </TableCell>
           <TableCell>{unitDisplay}</TableCell>
-          <TableCell sx={{ textAlign: 'right', fontFamily: 'monospace', fontWeight: 'medium' }}>
+          <TableCell sx={{ textAlign: 'right', fontFamily: 'monospace' }}>
             {item.quantity.toLocaleString()}
           </TableCell>
-          <TableCell sx={{ textAlign: 'right', fontFamily: 'monospace', fontWeight: 'medium' }}>
+          <TableCell sx={{ textAlign: 'right', fontFamily: 'monospace' }}>
             {formatNumber(item.rate)}
           </TableCell>
           {hasVAT && (
-            <TableCell sx={{ textAlign: 'right', fontFamily: 'monospace', fontWeight: 'medium' }}>
+            <TableCell sx={{ textAlign: 'right', fontFamily: 'monospace' }}>
               {item.vat_exempted !== 1
                 ? formatNumber(vatAmount)
                 : 'Exempt'
               }
             </TableCell>
           )}
-          <TableCell sx={{ textAlign: 'right', fontFamily: 'monospace', fontWeight: 'bold' }}>
+          <TableCell sx={{ textAlign: 'right', fontFamily: 'monospace' }}>
             {formatNumber(itemAmount)}
           </TableCell>
         </TableRow>
@@ -225,12 +225,11 @@ const AdjustmentOnScreen: React.FC<AdjustmentOnScreenProps> = ({
               variant="h4"
               sx={{
                 color: headerColor,
-                fontWeight: 'bold',
               }}
             >
               {adjustment.note_type === 'debit' ? 'DEBIT NOTE' : 'CREDIT NOTE'}
             </Typography>
-            <Typography variant="h6" sx={{ mt: 0.5, fontWeight: 'bold' }}>
+            <Typography variant="h6" sx={{ mt: 0.5 }}>
               {adjustment.voucherNo}
             </Typography>
           </Box>
@@ -240,7 +239,6 @@ const AdjustmentOnScreen: React.FC<AdjustmentOnScreenProps> = ({
             variant="body1"
             sx={{
               color: 'text.secondary',
-              fontWeight: 'medium',
             }}
           >
             {readableDate(adjustment.adjustment_date)}
@@ -255,7 +253,6 @@ const AdjustmentOnScreen: React.FC<AdjustmentOnScreenProps> = ({
             <Box>
               <Typography
                 variant="subtitle2"
-                sx={{ color: headerColor, fontWeight: 'bold', mb: 0.5 }}
               >
                 Cost Center{adjustment.cost_centers.length > 1 ? 's' : ''}
               </Typography>
@@ -289,7 +286,6 @@ const AdjustmentOnScreen: React.FC<AdjustmentOnScreenProps> = ({
                 sx={{
                   backgroundColor: mainColor,
                   color: contrastText,
-                  fontWeight: 'bold',
                   width: '5%',
                   fontSize: '0.875rem',
                   py: 1.5,
@@ -301,7 +297,6 @@ const AdjustmentOnScreen: React.FC<AdjustmentOnScreenProps> = ({
                 sx={{
                   backgroundColor: mainColor,
                   color: contrastText,
-                  fontWeight: 'bold',
                   width: '35%',
                   fontSize: '0.875rem',
                   py: 1.5,
@@ -313,7 +308,6 @@ const AdjustmentOnScreen: React.FC<AdjustmentOnScreenProps> = ({
                 sx={{
                   backgroundColor: mainColor,
                   color: contrastText,
-                  fontWeight: 'bold',
                   width: '10%',
                   fontSize: '0.875rem',
                   py: 1.5,
@@ -325,7 +319,6 @@ const AdjustmentOnScreen: React.FC<AdjustmentOnScreenProps> = ({
                 sx={{
                   backgroundColor: mainColor,
                   color: contrastText,
-                  fontWeight: 'bold',
                   width: '10%',
                   textAlign: 'right',
                   fontSize: '0.875rem',
@@ -338,7 +331,6 @@ const AdjustmentOnScreen: React.FC<AdjustmentOnScreenProps> = ({
                 sx={{
                   backgroundColor: mainColor,
                   color: contrastText,
-                  fontWeight: 'bold',
                   width: '10%',
                   textAlign: 'right',
                   fontSize: '0.875rem',
@@ -352,7 +344,6 @@ const AdjustmentOnScreen: React.FC<AdjustmentOnScreenProps> = ({
                   sx={{
                     backgroundColor: mainColor,
                     color: contrastText,
-                    fontWeight: 'bold',
                     width: '10%',
                     textAlign: 'right',
                     fontSize: '0.875rem',
@@ -366,7 +357,6 @@ const AdjustmentOnScreen: React.FC<AdjustmentOnScreenProps> = ({
                 sx={{
                   backgroundColor: mainColor,
                   color: contrastText,
-                  fontWeight: 'bold',
                   width: '10%',
                   textAlign: 'right',
                   fontSize: '0.875rem',
@@ -415,7 +405,6 @@ const AdjustmentOnScreen: React.FC<AdjustmentOnScreenProps> = ({
         <Grid size={{xs: 12, md: 8}}>
           <Typography
             variant="subtitle2"
-            sx={{ color: headerColor, fontWeight: 'bold', mb: 0.5 }}
           >
             Narration
           </Typography>
@@ -426,7 +415,6 @@ const AdjustmentOnScreen: React.FC<AdjustmentOnScreenProps> = ({
         <Grid size={{xs: 12, md: 4}}>
           <Typography
             variant="subtitle2"
-            sx={{ color: headerColor, fontWeight: 'bold', mb: 0.5 }}
           >
             Posted By
           </Typography>

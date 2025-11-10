@@ -3,7 +3,6 @@
 import { LoginForm } from '@/components/LoginForm';
 import { Link } from '@/components/NextLink';
 import { ASSET_IMAGES } from '@/utilities/constants/paths';
-import { getAssetPath } from '@/utilities/helpers';
 import { Div } from '@jumbo/shared';
 import { Facebook, Google, Twitter } from '@mui/icons-material';
 import {
@@ -11,7 +10,6 @@ import {
   CardContent,
   IconButton,
   Typography,
-  alpha,
   Box,
 } from '@mui/material';
 import Stack from '@mui/material/Stack';
@@ -190,11 +188,9 @@ export const Signin = () => {
               <Typography variant={'body1'} mb={2} align='center'>
                 <Link 
                   underline='none' 
-                  href={`/${lang}/auth/forgot-password`}
+                  href={`/${lang}/auth/reset-password`}
                   sx={{ 
                     color: '#0267a0',
-                    fontWeight: 500,
-                    '&:hover': { color: '#00a8ff' }
                   }}
                 >
                   {dictionary.signin.forgotPassword.text}

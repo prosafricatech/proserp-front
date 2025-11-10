@@ -37,7 +37,7 @@ const PaymentPDF: React.FC<PaymentPDFProps> = ({ transaction, authObject }) => {
   const currencyCode = transaction.currency.code;
   const { authUser: { user } } = authObject;
   const { authOrganization: { organization } } = authObject;
-  const mainColor = organization.settings?.main_color || "#2196f3";
+  const mainColor = organization.settings?.main_color || "#2113AD";
   const lightColor = organization.settings?.light_color || "#bec5da";
   const contrastText = organization.settings?.contrast_text || "#FFFFFF";
     

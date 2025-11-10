@@ -72,7 +72,7 @@ export interface RequisitionLedgerItem {
   quantity?: number;
   rate?: number;
   amount?: number;
-  relatable_type?: string;
+  relatable_type?: string | null;
   relatable?: RelatableTransaction | null;
   relatable_id?: number | null;
   measurement_unit_id?: number;

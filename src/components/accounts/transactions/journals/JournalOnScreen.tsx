@@ -41,8 +41,8 @@ function JournalOnScreen({ transaction, authObject }: JournalOnScreenProps) {
   const theme = useTheme();
   const currencyCode = transaction.currency.code;
   const { authOrganization: { organization } } = authObject;
-  const mainColor = organization.settings?.main_color || "#2196f3";
-  const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || "#2196f3");
+  const mainColor = organization.settings?.main_color || "#2113AD";
+  const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || "#2113AD");
   const contrastText = organization.settings?.contrast_text || "#FFFFFF";
 
   const totalAmount = transaction.items.reduce((total, item) => total + item.amount, 0);
@@ -82,19 +82,19 @@ function JournalOnScreen({ transaction, authObject }: JournalOnScreenProps) {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold' }}>
+              <TableCell sx={{ backgroundColor: mainColor, color: contrastText }}>
                 S/N
               </TableCell>
-              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold' }}>
+              <TableCell sx={{ backgroundColor: mainColor, color: contrastText }}>
                 Description
               </TableCell>
-              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold' }}>
+              <TableCell sx={{ backgroundColor: mainColor, color: contrastText }}>
                 Credit Account
               </TableCell>
-              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold' }}>
+              <TableCell sx={{ backgroundColor: mainColor, color: contrastText }}>
                 Debit Account
               </TableCell>
-              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold' }} align="right">
+              <TableCell sx={{ backgroundColor: mainColor, color: contrastText }} align="right">
                 Amount
               </TableCell>
             </TableRow>

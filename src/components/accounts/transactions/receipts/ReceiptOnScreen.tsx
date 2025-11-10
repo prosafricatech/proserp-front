@@ -42,8 +42,8 @@ function ReceiptOnScreen({ transaction, authObject }: ReceiptOnScreenProps) {
   const theme = useTheme();
   const currencyCode = transaction.currency.code;
   const { authOrganization: { organization } } = authObject;
-  const mainColor = organization.settings?.main_color || "#2196f3";
-  const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || "#2196f3");
+  const mainColor = organization.settings?.main_color || "#2113AD";
+  const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || "#2113AD");
   const contrastText = organization.settings?.contrast_text || "#FFFFFF";
 
   const totalAmount = transaction.items.reduce((total, item) => total + item.amount, 0);
@@ -82,7 +82,7 @@ function ReceiptOnScreen({ transaction, authObject }: ReceiptOnScreenProps) {
             <Typography variant="subtitle2" color={headerColor} gutterBottom>
               Receiving Account (Debit)
             </Typography>
-            <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
+            <Typography variant="body1">
               {transaction.debitLedgerName}
             </Typography>
           </Box>
@@ -115,7 +115,7 @@ function ReceiptOnScreen({ transaction, authObject }: ReceiptOnScreenProps) {
           <TableHead>
             <TableRow>
               <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
-                #
+                S/N
               </TableCell>
               <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
                 From (Credit)
@@ -143,7 +143,7 @@ function ReceiptOnScreen({ transaction, authObject }: ReceiptOnScreenProps) {
                 }}
               >
                 <TableCell>{index + 1}</TableCell>
-                <TableCell sx={{ fontWeight: 'medium' }}>
+                <TableCell>
                   {item.creditLedgerName}
                 </TableCell>
                 <TableCell>{item.description}</TableCell>
@@ -151,7 +151,6 @@ function ReceiptOnScreen({ transaction, authObject }: ReceiptOnScreenProps) {
                   align="right" 
                   sx={{ 
                     fontFamily: 'monospace',
-                    fontWeight: 'medium',
                     fontSize: '0.875rem'
                   }}
                 >

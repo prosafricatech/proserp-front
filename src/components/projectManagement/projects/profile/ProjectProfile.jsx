@@ -54,15 +54,6 @@ function ProfileContent() {
     enabled: activeTab === 1 || fetchTimelineActivities,
   });
 
-  const { 
-    data: updatesData, 
-    isLoading: isUpdatesLoading 
-  } = useQuery({
-    queryKey: ['projectUpdates', { id: project.id }],
-    queryFn: () => projectsServices.projectUpdatesList(project.id),
-    enabled: activeTab === 2,
-  });
-
   // Use useEffect to handle side effects when data changes
   useEffect(() => {
     if (deliverablesData) {
@@ -83,12 +74,6 @@ function ProfileContent() {
   }, [timelineActivitiesData, updateProjectProfile]);
 
   useEffect(() => {
-    if (updatesData) {
-      updateProjectProfile({ projectUpdates: updatesData });
-    }
-  }, [updatesData, updateProjectProfile]);
-
-  useEffect(() => {
     setIsDashboardTab(activeTab === 0);
   }, [activeTab, setIsDashboardTab]);
   
@@ -99,7 +84,6 @@ function ProfileContent() {
         deliverablesLoading: isDeliverablesLoading,
         budgetsLoading: isBudgetLoading,
         timelineLoading: isTimelineActivitiesLoading,
-        updatesLoading: isUpdatesLoading,
       });
     }
   }, [
@@ -107,7 +91,6 @@ function ProfileContent() {
     isDeliverablesLoading, 
     isBudgetLoading, 
     isTimelineActivitiesLoading, 
-    isUpdatesLoading, 
     fetchDeliverables, 
     fetchTimelineActivities, 
     updateProjectProfile
@@ -125,7 +108,6 @@ function ProfileContent() {
     deliverables: isDeliverablesLoading,
     budgets: isBudgetLoading,
     timeline: isTimelineActivitiesLoading,
-    updates: isUpdatesLoading,
   }).some(Boolean);
 
   const renderTabContent = () => {

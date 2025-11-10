@@ -1,11 +1,12 @@
 import { AddOutlined } from "@mui/icons-material";
 import { ButtonGroup, Dialog, IconButton, Tooltip, useMediaQuery } from "@mui/material";
-import React from "react";
+import React, { useState } from "react";
 import UpdatesForm from "./UpdatesForm";
 import { useJumboTheme } from "@jumbo/components/JumboTheme/hooks";
 
-const UpdatesActionTail = ({ openDialog, setOpenDialog}) => {
+const UpdatesActionTail = () => {
   const { theme } = useJumboTheme();
+  const [openDialog, setOpenDialog] = useState(false);
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
   
   return (

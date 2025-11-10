@@ -68,8 +68,8 @@ const IncomeStatementOnScreen = ({ reportData }) => {
                 <Table size="small" aria-label="income-statement">
                     <TableHead>
                         <TableRow>
-                            <TableCell style={{ fontWeight: 'bold' }}>CATEGORY</TableCell>
-                            <TableCell align="right" style={{ fontWeight: 'bold' }}>AMOUNT</TableCell>
+                            <TableCell>CATEGORY</TableCell>
+                            <TableCell align="right">AMOUNT</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -151,10 +151,10 @@ const IncomeStatementOnScreen = ({ reportData }) => {
 
                         {/* Gross Profit section */}
                         <TableRow sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}>
-                            <TableCell style={{ fontWeight: 'bold'}}>
+                            <TableCell>
                                 Gross Profit
                             </TableCell>
-                            <TableCell align="right" style={{ fontWeight: 'bold'}}>
+                            <TableCell align="right">
                                 {(totalRevenue - totalCostOfRevenue).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </TableCell>
                         </TableRow>
@@ -199,10 +199,10 @@ const IncomeStatementOnScreen = ({ reportData }) => {
 
                         {/* Net Income section */}
                         <TableRow sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}>
-                            <TableCell style={{ fontWeight: 'bold'}}>
+                            <TableCell>
                                 Net Income
                             </TableCell>
-                            <TableCell align="right" style={{ fontWeight: 'bold'}}>
+                            <TableCell align="right">
                                 {(totalRevenue - totalCostOfRevenue - totalOperatingExpenses).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </TableCell>
                         </TableRow>

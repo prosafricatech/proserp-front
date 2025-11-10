@@ -54,8 +54,8 @@ interface DispatchOnScreenProps {
 
 function DispatchOnScreen({ delivery, organization }: DispatchOnScreenProps) {
   const theme = useTheme();
-  const mainColor = organization.settings?.main_color || "#2196f3";
-  const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || "#2196f3");
+  const mainColor = organization.settings?.main_color || "#2113AD";
+  const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || "#2113AD");
   const contrastText = organization.settings?.contrast_text || "#FFFFFF";
 
   return (
@@ -144,19 +144,19 @@ function DispatchOnScreen({ delivery, organization }: DispatchOnScreenProps) {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
-                  #
+                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
+                  S/N
                 </TableCell>
-                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
+                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
                   Product/Service
                 </TableCell>
-                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
+                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
                   Unit
                 </TableCell>
-                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
                   Quantity
                 </TableCell>
-                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
+                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
                   Store
                 </TableCell>
               </TableRow>
@@ -172,10 +172,10 @@ function DispatchOnScreen({ delivery, organization }: DispatchOnScreenProps) {
                     }
                   }}
                 >
-                  <TableCell sx={{ fontWeight: 'medium' }}>{index + 1}</TableCell>
-                  <TableCell sx={{ fontWeight: 'medium' }}>{deliveryItem.product.name}</TableCell>
-                  <TableCell>{deliveryItem.sale_item.measurement_unit?.symbol || '-'}</TableCell>
-                  <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                  <TableCell>{index + 1}</TableCell>
+                  <TableCell>{deliveryItem.product.name}</TableCell>
+                  <TableCell>{deliveryItem.sale_item.measurement_unit?.symbol}</TableCell>
+                  <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                     {deliveryItem.quantity.toLocaleString()}
                   </TableCell>
                   <TableCell>{deliveryItem.store.name}</TableCell>

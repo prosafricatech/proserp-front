@@ -145,7 +145,7 @@ const RequisitionsListItem = ({ requisition }: RequisitionsListItemProps) => {
                 size='small' 
                 label={requisition.status_label}
                 color={
-                  requisition.status?.toLowerCase() === 'suspended'
+                  requisition.status === 'suspended'
                     ? 'primary'
                     : requisition.status?.toLowerCase() === 'rejected'
                     ? 'error'
