@@ -16,7 +16,6 @@ import {
   Stack,
   Typography,
   useMediaQuery,
-  Box,
 } from '@mui/material';
 import LoadingButton from '@mui/lab/LoadingButton';
 import { useSnackbar } from 'notistack';
@@ -40,7 +39,7 @@ const SignupForm = () => {
 
   const handleClickShowPassword = () => setShowPassword((s) => !s);
   const handleClickShowPasswordConfirm = () =>
-    setShowPasswordConfirm((s) => !s);
+  setShowPasswordConfirm((s) => !s);
 
   const onSubmit = async (data: any) => {
     await signUp(
@@ -73,87 +72,45 @@ const SignupForm = () => {
         width: 720,
         maxWidth: '100%',
         margin: 'auto',
-        p: 0,
-        overflow: 'hidden',
+        p: 4,
       }}
     >
       {/* Left side (branding) */}
       <CardContent
         sx={{
           flex: '0 1 300px',
-          background: 'linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%)',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          p: 4,
-          textAlign: 'center',
+          position: 'relative',
+          backgroundSize: 'cover',
         }}
       >
-        <Stack spacing={3} alignItems="center">
-          {/* Logo */}
-          <Box sx={{ mb: 2 }}>
+        <Stack height="100%" justifyContent="space-between">
+          <Stack alignItems="center" mt="auto">
             <Link href="#" underline="none" sx={{ display: 'inline-flex' }}>
               <img
                 width={250}
-                src={`${ASSET_IMAGES}/logos/logo-pros8632.png`}
+                src={`${ASSET_IMAGES}/logos/proserp-logo.jpeg`}
                 alt="Proserp"
               />
             </Link>
-          </Box>
-          
-          {/* Company Motto */}
-          <Typography 
-            variant="h6" 
-            component="div"
-            sx={{
-              color: 'text.secondary',
-              fontWeight: 500,
-              fontSize: '1.1rem',
-              lineHeight: 1.4,
-            }}
-          >
-            simplified management and control
-          </Typography>
+          </Stack>
+          <Stack mt="auto">
+            <Typography variant="body1" mb={2}>
+              Create your ProsID Account
+            </Typography>
+            <Typography variant="body1">
+              Already have an account?{' '}
+              <Link href="/login" underline="always">
+                Sign in
+              </Link>
+            </Typography>
+          </Stack>
         </Stack>
       </CardContent>
 
       {/* Right side (form) */}
-      <CardContent 
-        sx={{ 
-          flex: 1, 
-          p: 4,
-         background: 'linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%)',
-        }}
-      >
-        {/* Title */}
-        <Typography 
-          variant="h4" 
-          component="h1"
-          sx={{
-            fontWeight: 600,
-            color: '#2196f3',
-            textAlign: 'center',
-            mb: 1,
-            fontSize: '1.75rem',
-          }}
-        >
-          Create your Pros ID Account
-        </Typography>
-
-        <Typography 
-          variant="body2" 
-          sx={{ 
-            textAlign: 'center', 
-            color: 'text.secondary',
-            mb: 3 
-          }}
-        >
-          Join us today and experience simplified management
-        </Typography>
-
+      <CardContent sx={{ flex: 1, p: 1 }}>
         <JumboForm validationSchema={validationSchema} onSubmit={onSubmit} onChange={() => {}}>
-          <Stack spacing={2} mb={3}>
+          <Stack spacing={1} mb={3}>
             <JumboInput fieldName="name" label="Full Name" fullWidth />
             <JumboInput fieldName="email" label="Email" fullWidth />
             <JumboInput fieldName="phone" label="Phone Number" fullWidth />
@@ -198,46 +155,15 @@ const SignupForm = () => {
 
             <LoadingButton
               type="submit"
-              fullWidth
+              fullWidth={smallScreen}
               variant="contained"
               size="large"
-              sx={{
-                mt: 2,
-                backgroundColor: '#1976d2',
-                '&:hover': {
-                  backgroundColor: '#1565c0',
-                },
-                fontWeight: 600,
-                fontSize: '1rem',
-                py: 1.5,
-              }}
+              // loading={isSubmitting}
             >
-              Sign Up
+              Signup
             </LoadingButton>
           </Stack>
         </JumboForm>
-
-        {/* Sign in link */}
-        <Typography 
-          variant="body2" 
-          sx={{ 
-            textAlign: 'center', 
-            mt: 2,
-            color: 'text.secondary'
-          }}
-        >
-          Already have an account?{' '}
-          <Link 
-            href="/login" 
-            underline="always"
-            sx={{ 
-              fontWeight: 600,
-              color: '#1976d2'
-            }}
-          >
-            Sign in
-          </Link>
-        </Typography>
       </CardContent>
     </Card>
   );

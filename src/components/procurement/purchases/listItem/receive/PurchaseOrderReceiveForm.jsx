@@ -369,21 +369,23 @@ function PurchaseOrderReceiveForm({ toggleOpen, order }) {
         </Dialog>
       </DialogContent>
       <DialogActions>
-        <Grid container spacing={1} width={'100%'}>
-          <Grid size={{xs: 12, md: 9}}>
-            <Tabs
-              value={activeTab}
-              onChange={(e, newValue) => handleTabChange(e, newValue)}
-              variant="scrollable"
-              scrollButtons='auto'
-              allowScrollButtonsMobile
-            >
-              <Tab label="Items"/>
-              <Tab label="Additional Costs"/>
-              <Tab label="Summary Preview"/>
-            </Tabs>
+        <Grid container spacing={1}>
+          <Grid size={{xs: 12, md: 8}}>
+            <Div sx={{ mt: 1, mb: 1 }}>
+              <Tabs
+                value={activeTab}
+                onChange={(e, newValue) => handleTabChange(e, newValue)}
+                variant="scrollable"
+                scrollButtons='auto'
+                allowScrollButtonsMobile
+              >
+                <Tab label="Items"/>
+                <Tab label="Additional Costs"/>
+                <Tab label="Summary Preview"/>
+              </Tabs>
+            </Div>
           </Grid>
-          <Grid size={{xs: 12, md: 3}}>
+          <Grid size={{xs: 12, md: 4}}>
             <Stack spacing={1} direction={'row'} justifyContent={'end'} sx={{ mt: 1, mb: 1 }}>
               <Button size='small' onClick={() => toggleOpen(false)}>
                   Cancel

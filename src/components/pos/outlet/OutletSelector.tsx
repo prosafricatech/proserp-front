@@ -63,16 +63,14 @@ const OutletSelector = ({
 
   const outlets: Outlet[] = useMemo(() => [allOutlet, ...rawOutlets], [rawOutlets, allOutlet]);
 
-  const [selectedOutlet, setSelectedOutlet] = useState<Outlet | Outlet[] | null>(
-    multiple ? [] : null
-  );
+  const [selectedOutlet, setSelectedOutlet] = useState<Outlet | Outlet[] | null>(null);
 
   useEffect(() => {
     let newValue: Outlet | Outlet[] | null = null;
 
     if (defaultValue !== null) {
       newValue = defaultValue;
-    } else if (rawOutlets?.length === 1) {
+    } else if (rawOutlets.length === 1) {
       newValue = multiple ? [rawOutlets[0]] : rawOutlets[0];
     } else {
       newValue = multiple ? [allOutlet] : allOutlet;
@@ -81,8 +79,8 @@ const OutletSelector = ({
     const getId = (v: any) => (Array.isArray(v) ? v.map((o) => o.id).join(",") : v?.id);
 
     if (getId(selectedOutlet) !== getId(newValue)) {
-      setSelectedOutlet(newValue ?? (multiple ? [] : null));
-      onChange(newValue ?? (multiple ? [] : null));
+      setSelectedOutlet(newValue);
+      onChange(newValue);
     }
   }, [defaultValue, multiple, rawOutlets, allOutlet]);
 
@@ -95,7 +93,7 @@ const OutletSelector = ({
       multiple={multiple}
       size="small"
       isOptionEqualToValue={(option, value) => option?.id === value?.id}
-      options={outlets ?? outlets}
+      options={outlets}
       disableCloseOnSelect={multiple}
       value={selectedOutlet}
       getOptionLabel={(option: Outlet) => option?.name || ""}

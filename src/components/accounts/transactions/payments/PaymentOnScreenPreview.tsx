@@ -50,8 +50,8 @@ const PaymentOnScreenPreview: React.FC<PaymentOnScreenPreviewProps> = ({
   const theme = useTheme();
   const currencyCode = transaction.currency.code;
   const { authOrganization: { organization } } = authObject;
-  const mainColor = organization.settings?.main_color || "#2196f3";
-  const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || "#2196f3");
+  const mainColor = organization.settings?.main_color || "#2113AD";
+  const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || "#2113AD");
   const contrastText = organization.settings?.contrast_text || "#FFFFFF";
 
   const totalAmount = transaction.items.reduce((total, item) => total + item.amount, 0);
@@ -187,7 +187,6 @@ const PaymentOnScreenPreview: React.FC<PaymentOnScreenPreviewProps> = ({
                   align="right" 
                   sx={{ 
                     fontFamily: 'monospace',
-                    fontWeight: 'medium',
                     fontSize: '0.875rem'
                   }}
                 >

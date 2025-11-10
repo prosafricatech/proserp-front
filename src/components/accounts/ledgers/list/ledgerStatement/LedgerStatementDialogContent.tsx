@@ -77,7 +77,7 @@ const ReportDocument: React.FC<ReportDocumentProps> = ({
 }) => {
   const totalCredits = transactionsData.transactions.reduce((total: number, transaction) => total + transaction.credit, 0);
   const totalDebits = transactionsData.transactions.reduce((total: number, transaction) => total + transaction.debit, 0);
-  const mainColor = authOrganization?.organization?.settings?.main_color || "#2196f3";
+  const mainColor = authOrganization.organization.settings?.main_color || "#2113AD";
   const lightColor = authOrganization.organization.settings?.light_color || "#bec5da";
   const contrastText = authOrganization.organization.settings?.contrast_text || "#FFFFFF";
   const costCenters = transactionsData.filters.cost_centers;

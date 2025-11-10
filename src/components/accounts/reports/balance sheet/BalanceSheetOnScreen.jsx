@@ -48,9 +48,9 @@ const BalanceSheetOnScreen = ({ reportData }) => {
         {!!totalLevelAmount && (
           <TableRow sx={{cursor: 'pointer', '&:hover': {bgcolor: 'action.hover'}}}>
             <TableCell style={{ paddingLeft: level * 20 }}>
-              <span style={{ fontWeight: 'bold'}}>Total {levelName}</span>
+              <span>Total {levelName}</span>
             </TableCell>
-            <TableCell align="right"><span style={{ fontWeight: 'bold'}}>{totalLevelAmount?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></TableCell>
+            <TableCell align="right"><span>{totalLevelAmount?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></TableCell>
           </TableRow>
         )}
       </>
@@ -63,8 +63,8 @@ const BalanceSheetOnScreen = ({ reportData }) => {
       <Table size="small" aria-label="balance-sheet">
         <TableHead>
           <TableRow>
-            <TableCell style={{ fontWeight: 'bold' }}>CATEGORY</TableCell>
-            <TableCell align="right" style={{ fontWeight: 'bold' }}>AMOUNT</TableCell>
+            <TableCell>CATEGORY</TableCell>
+            <TableCell align="right">AMOUNT</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -72,7 +72,7 @@ const BalanceSheetOnScreen = ({ reportData }) => {
             <React.Fragment key={index}>
               {
                 <TableRow onClick={() => toggleRow(component.id)} sx={{cursor: 'pointer', '&:hover': {bgcolor: 'action.hover'}}}>
-                  <TableCell style={{ fontWeight: 'bold' }}>
+                  <TableCell>
                     {component.children && component.children.length > 0 && (
                       <>
                         {openRows.includes(component.id) ? (

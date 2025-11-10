@@ -1,4 +1,5 @@
 'use client';
+
 import { ASSET_IMAGES } from '@/utilities/constants/paths';
 import { getAssetPath } from '@/utilities/helpers';
 import { Div, Link } from '@jumbo/shared';

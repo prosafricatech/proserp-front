@@ -58,8 +58,8 @@ const RequisitionsOnScreen: React.FC<Props> = ({
   const [selectedRelated, setSelectedRelated] = useState<{ id: number } | null>(null);
   const [openViewDialog, setOpenViewDialog] = useState(false);
 
-  const mainColor = organization.settings?.main_color || '#2196f3';
-  const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || '#2196f3');
+  const mainColor = organization.settings?.main_color || '#2113AD';
+  const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || '#2113AD');
   const contrastText = organization.settings?.contrast_text || '#FFFFFF';
 
   const isPurchase = requisition?.approval_chain.process_type?.toLowerCase() === 'purchase';
@@ -93,7 +93,7 @@ const RequisitionsOnScreen: React.FC<Props> = ({
   return (
     <>
       <Box sx={{ p: 2 }}>
-        <Grid container spacing={2}>
+        <Grid container spacing={2} width={'100%'}>
           {/* Header Section */}
           <Grid size={12} sx={{ mb: 3 }}>
             <Box 
@@ -106,20 +106,20 @@ const RequisitionsOnScreen: React.FC<Props> = ({
                 width: '100%'
               }}
             >
-              <Typography variant="h4" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+              <Typography variant="h4" sx={{ color: headerColor }}>
                 {isPurchase ? 'PURCHASE REQUISITION' : 'PAYMENT REQUISITION'}
               </Typography>
-              <Typography variant="h6" fontWeight="bold" gutterBottom>
+              <Typography variant="h6">
                 {requisition.requisitionNo}
               </Typography>
             </Box>
           </Grid>
 
           {/* Meta Information */}
-          <Grid container spacing={2} sx={{ mb: 3 }}>
+          <Grid container spacing={2} sx={{ mb: 3 }} width={'100%'}>
             <Grid size={{xs: 12, sm: 6, md: 4}}>
               <Box>
-                <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                <Typography variant="subtitle2" sx={{ color: headerColor }}>
                   Requisition Date
                 </Typography>
                 <Typography variant="body1">
@@ -129,7 +129,7 @@ const RequisitionsOnScreen: React.FC<Props> = ({
             </Grid>
             <Grid size={{xs: 12, sm: 6, md: 4}}>
               <Box>
-                <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                <Typography variant="subtitle2" sx={{ color: headerColor }}>
                   Cost Center
                 </Typography>
                 <Typography variant="body1">{requisition.cost_center.name}</Typography>
@@ -137,7 +137,7 @@ const RequisitionsOnScreen: React.FC<Props> = ({
             </Grid>
             <Grid size={{xs: 12, sm: 6, md: 4}}>
               <Box>
-                <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                <Typography variant="subtitle2" sx={{ color: headerColor }}>
                   Requested By
                 </Typography>
                 <Typography variant="body1">{requisition.creator.name}</Typography>
@@ -159,24 +159,24 @@ const RequisitionsOnScreen: React.FC<Props> = ({
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
-                      #
+                    <TableCell sx={{ backgroundColor: mainColor, color: contrastText }}>
+                      S/N
                     </TableCell>
-                    <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
+                    <TableCell sx={{ backgroundColor: mainColor, color: contrastText }}>
                       {isPurchase ? 'Product' : 'Ledger'}
                     </TableCell>
-                    <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                    <TableCell sx={{ backgroundColor: mainColor, color: contrastText }} align="right">
                       Quantity
                     </TableCell>
-                    <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                    <TableCell sx={{ backgroundColor: mainColor, color: contrastText }} align="right">
                       Rate
                     </TableCell>
                     {isPurchase && requisition.vat_amount > 0 && (
-                      <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                      <TableCell sx={{ backgroundColor: mainColor, color: contrastText }} align="right">
                         VAT
                       </TableCell>
                     )}
-                    <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                    <TableCell sx={{ backgroundColor: mainColor, color: contrastText }} align="right">
                       Amount
                     </TableCell>
                   </TableRow>
@@ -190,14 +190,14 @@ const RequisitionsOnScreen: React.FC<Props> = ({
                           backgroundColor: theme.palette.action.hover,
                         }
                       }}>
-                        <TableCell sx={{ fontWeight: 'medium' }}>{index + 1}</TableCell>
+                        <TableCell>{index + 1}</TableCell>
                         <TableCell>
                           <Box>
-                            <Typography variant="body2" fontWeight="medium">
+                            <Typography variant="body2">
                               {isPurchase ? (item as PurchaseItem).product?.name : (item as PaymentItem).ledger?.name}
                             </Typography>
                             {item.remarks && (
-                              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem', mt: 0.5 }}>
+                              <Typography variant="body2" color="text.secondary" sx={{  mt: 0.5 }}>
                                 ({item.remarks})
                               </Typography>
                             )}
@@ -227,18 +227,18 @@ const RequisitionsOnScreen: React.FC<Props> = ({
                             )}
                           </Box>
                         </TableCell>
-                        <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                        <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                           {`${item.quantity?.toLocaleString()} ${item.measurement_unit.symbol}`}
                         </TableCell>
-                        <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                        <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                           {formatNumber(item.rate)}
                         </TableCell>
                         {isPurchase && requisition?.vat_amount > 0 && (
-                          <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                          <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                             {formatNumber(item.rate * (item.vat_percentage || 0) * 0.01)}
                           </TableCell>
                         )}
-                        <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
+                        <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                           {formatCurrency(item.quantity * item.rate * (1 + (item.vat_percentage || 0) * 0.01))}
                         </TableCell>
                       </TableRow>
@@ -251,8 +251,7 @@ const RequisitionsOnScreen: React.FC<Props> = ({
                               sx={{ 
                                 textAlign: 'center', 
                                 backgroundColor: theme.palette.background.default,
-                                fontWeight: 'bold',
-                                fontSize: '0.875rem',
+                                
                                 borderBottom: `1px solid ${theme.palette.divider}`
                               }}
                             >
@@ -269,7 +268,7 @@ const RequisitionsOnScreen: React.FC<Props> = ({
                                 }
                               }}
                             >
-                              <TableCell colSpan={2} sx={{ fontWeight: 'medium' }}>{vendor.name}</TableCell>
+                              <TableCell colSpan={2}>{vendor.name}</TableCell>
                               <TableCell colSpan={isPurchase && requisition.vat_amount > 0 ? 4 : 3}>
                                 {vendor.remarks}
                               </TableCell>
@@ -297,12 +296,12 @@ const RequisitionsOnScreen: React.FC<Props> = ({
             >
               <Grid container spacing={1}>
                 <Grid size={7}>
-                  <Typography variant="body1" fontWeight="medium">
+                  <Typography variant="body1">
                     Subtotal
                   </Typography>
                 </Grid>
                 <Grid size={5} sx={{ textAlign: 'right' }}>
-                  <Typography variant="body1" fontWeight="medium" fontFamily="monospace">
+                  <Typography variant="body1" fontFamily="monospace">
                     {formatCurrency(subtotal)}
                   </Typography>
                 </Grid>
@@ -310,22 +309,22 @@ const RequisitionsOnScreen: React.FC<Props> = ({
                 {isPurchase && (
                   <>
                     <Grid size={7}>
-                      <Typography variant="body1" fontWeight="medium">
+                      <Typography variant="body1">
                         VAT
                       </Typography>
                     </Grid>
                     <Grid size={5} sx={{ textAlign: 'right' }}>
-                      <Typography variant="body1" fontWeight="medium" fontFamily="monospace">
+                      <Typography variant="body1" fontFamily="monospace">
                         {formatCurrency(totalVAT)}
                       </Typography>
                     </Grid>
                     <Grid size={7}>
-                      <Typography variant="h6" fontWeight="bold" color={headerColor}>
+                      <Typography variant="h6" color={headerColor}>
                         Grand Total
                       </Typography>
                     </Grid>
                     <Grid size={5} sx={{ textAlign: 'right' }}>
-                      <Typography variant="h6" fontWeight="bold" color={headerColor} fontFamily="monospace">
+                      <Typography variant="h6" color={headerColor} fontFamily="monospace">
                         {formatCurrency(grandTotal)}
                       </Typography>
                     </Grid>
@@ -335,12 +334,12 @@ const RequisitionsOnScreen: React.FC<Props> = ({
                 {!isPurchase && (
                   <>
                     <Grid size={7}>
-                      <Typography variant="h6" fontWeight="bold" color={headerColor}>
+                      <Typography variant="h6" color={headerColor}>
                         Total
                       </Typography>
                     </Grid>
                     <Grid size={5} sx={{ textAlign: 'right' }}>
-                      <Typography variant="h6" fontWeight="bold" color={headerColor} fontFamily="monospace">
+                      <Typography variant="h6" color={headerColor} fontFamily="monospace">
                         {formatCurrency(subtotal)}
                       </Typography>
                     </Grid>
@@ -354,7 +353,7 @@ const RequisitionsOnScreen: React.FC<Props> = ({
           {requisition.remarks && (
             <Grid size={12} sx={{ mt: 2 }}>
               <Box>
-                <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                <Typography variant="subtitle2" sx={{ color: headerColor }}>
                   Remarks
                 </Typography>
                 <Typography variant="body1" sx={{ 

@@ -38,13 +38,6 @@ financialReportsServices.downloadExcelTrialBalance = async(params) => {
   return data;
 }
 
-financialReportsServices.codedTrialBalance = async(params) => {
-  const {data} = await axios.get(`/api/financialReports/codedTrialBalance`,{
-    params
-  })
-  return data;
-}
-
 financialReportsServices.downloadExcelDebtorCreditor = async(params) => {
   const {data} = await axios.post(`/api/financialReports/downloadExcelDebtorCreditor`,params,{
     responseType: 'blob',

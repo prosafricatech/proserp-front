@@ -13,7 +13,7 @@ function SummaryTab() {
     const baseCurrency = currencies.find((currency) => !!currency?.is_base).symbol;
     const withPrices = checkOrganizationPermission([PERMISSIONS.ACCOUNTS_REPORTS,PERMISSIONS.PURCHASES_CREATE]);
 
-    const mainColor = authOrganization?.organization?.settings?.main_color || "#2196f3";
+    const mainColor = authOrganization.organization.settings?.main_color || "#2113AD";
     const lightColor = authOrganization.organization.settings?.light_color || "#bec5da";
     const contrastText = authOrganization.organization.settings?.contrast_text || "#FFFFFF";
     

@@ -33,6 +33,7 @@ const authOptions = {
             id: data.authUser.user.id,
             name: data.authUser.user.name,
             email: data.authUser.user.email,
+            permissions: data?.authUser?.permissions || [],
             token: data.token,
             organization_id: data.authOrganization?.organization?.id,
             organization_name: data.authOrganization?.organization?.name,
@@ -53,6 +54,7 @@ const authOptions = {
           name: user.name,
           email: user.email,
         };
+        token.permissions = user.permissions;
         token.organization_id = user.organization_id;
         token.organization_name = user.organization_name;
         token.accessToken = user.token;
@@ -63,6 +65,7 @@ const authOptions = {
       session.user = token.user;
       session.organization_id = token.organization_id;
       session.organization_name = token.organization_name;
+      session.permissions = token.permissions;
       return session;
     },
   },

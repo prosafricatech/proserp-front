@@ -16,6 +16,13 @@ projectsServices.getSubcontractsList = async (params) => {
   return response.data;
 };
 
+projectsServices.projectUpdatesList = async (params) => {
+  const response = await axios.get(`/api/projectManagement/project/${params.project_id}/projectUpdatesList`, {
+    params,
+  });
+  return response.data;
+}
+
 projectsServices.getSubContractMaterialUsed = async (params) => {
   const response = await axios.get(
     `/api/projectManagement/project/${params.subcontract_id}/getSubContractMaterialUsed`,
@@ -212,11 +219,6 @@ projectsServices.showDeliverablesAndGroups = async (id) => {
 
 projectsServices.showProjectTimelineActivities = async (id) => {
     const {data} = await axios.get(`/api/projectManagement/project/${id}/showProjectTimelineActivities`);
-    return data;
-}
-
-projectsServices.projectUpdatesList = async (id) => {
-    const {data} = await axios.get(`/api/projectManagement/project/${id}/projectUpdatesList`);
     return data;
 }
 

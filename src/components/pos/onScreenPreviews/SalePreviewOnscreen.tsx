@@ -68,8 +68,8 @@ interface SalePreviewOnscreenProps {
 const SalePreviewOnscreen: React.FC<SalePreviewOnscreenProps> = ({ sale, organization }) => {
   const theme = useTheme();
   const currencyCode = sale.currency?.code;
-  const mainColor = organization.settings?.main_color || "#2196f3";
-  const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || "#2196f3");
+  const mainColor = organization.settings?.main_color || "#2113AD";
+  const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || "#2113AD");
   const contrastText = organization.settings?.contrast_text || "#FFFFFF";
 
   const formatCurrency = (amount: number) => {
@@ -241,24 +241,24 @@ const SalePreviewOnscreen: React.FC<SalePreviewOnscreenProps> = ({ sale, organiz
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
-                #
+              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
+                S/N
               </TableCell>
-              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
+              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
                 Product/Service
               </TableCell>
-              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
                 Qty
               </TableCell>
-              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
                 Price {sale?.vat_percentage ? '(Excl.)' : ''}
               </TableCell>
               {sale?.vat_percentage > 0 && (
-                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
                   VAT
                 </TableCell>
               )}
-              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
                 Amount {sale?.vat_percentage ? '(Incl.)' : ''}
               </TableCell>
             </TableRow>
@@ -274,7 +274,7 @@ const SalePreviewOnscreen: React.FC<SalePreviewOnscreenProps> = ({ sale, organiz
                   }
                 }}
               >
-                <TableCell sx={{ fontWeight: 'medium' }}>{index + 1}</TableCell>
+                <TableCell>{index + 1}</TableCell>
                 <TableCell>
                   <Box>
                     <Typography variant="body2" fontWeight="medium">
@@ -287,10 +287,10 @@ const SalePreviewOnscreen: React.FC<SalePreviewOnscreenProps> = ({ sale, organiz
                     )}
                   </Box>
                 </TableCell>
-                <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                   {`${saleItem.quantity} ${saleItem.measurement_unit.symbol}`}
                 </TableCell>
-                <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                   <Tooltip title="Price" arrow>
                     <Typography variant="body2">
                       {formatNumber(saleItem.rate)}
@@ -298,7 +298,7 @@ const SalePreviewOnscreen: React.FC<SalePreviewOnscreenProps> = ({ sale, organiz
                   </Tooltip>
                 </TableCell>
                 {sale?.vat_percentage > 0 && (
-                  <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                  <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                     <Tooltip title="VAT" arrow>
                       <Typography variant="body2">
                         {!saleItem.product?.vat_exempted
@@ -309,7 +309,7 @@ const SalePreviewOnscreen: React.FC<SalePreviewOnscreenProps> = ({ sale, organiz
                     </Tooltip>
                   </TableCell>
                 )}
-                <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
+                <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                   <Tooltip title="Amount" arrow>
                     <Typography variant="body2">
                       {formatNumber(

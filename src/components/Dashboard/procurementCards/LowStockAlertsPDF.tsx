@@ -25,7 +25,7 @@ interface LowStockStoresPDFProps {
 }
 
 function LowStockStoresPDF({ organization = null, stores }: LowStockStoresPDFProps) {
-  const mainColor = organization?.settings?.main_color || "#2196f3";
+  const mainColor = organization?.settings?.main_color || "#2113AD";
   const lightColor = organization?.settings?.light_color || "#bec5da";
   const contrastText = organization?.settings?.contrast_text || "#FFFFFF";
   const { authUser } = useJumboAuth();

@@ -20,7 +20,6 @@ import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 
 const ProductFormDialogContent = ({ title = 'New Product/Service', product = null, toggleOpen }) => {
-
   const DefaultContent = () => {
     const { productCategories, item_names, brands, models, measurementUnits, specifications, storeOptions } = useProductApp();
     const { enqueueSnackbar } = useSnackbar();
@@ -28,6 +27,7 @@ const ProductFormDialogContent = ({ title = 'New Product/Service', product = nul
     const { costCenters } = authOrganization;
     const queryClient = useQueryClient();
     const [isInventory, setIsInventory] = useState(false);
+    const [isVatExempt, setIsVatExempt] = useState(product ? product.vat_exempted === 1 : false);
 
     const validationObject = {
       item_name: yup.string().required('Item name is required'),
@@ -101,11 +101,8 @@ const ProductFormDialogContent = ({ title = 'New Product/Service', product = nul
         product_category_id: product?.id && product.product_category_id,
         type: product?.id && product.type,
         id: product?.id && product.id,
-        brand: product?.id && product.brand,
-        specifications: product?.id && product.specifications,
-        model: product?.id && product.model,
-        description: product?.id && product.description,
         cost_center_id: (costCenters.length === 1 && costCenters[0].id) || null,
+        vat_exempted: isVatExempt,
         store_id: null,
         opening_balance: null,
         unit_cost: null,
@@ -326,7 +323,7 @@ const ProductFormDialogContent = ({ title = 'New Product/Service', product = nul
                 />
               </Div>
             </Grid>
-            <Grid size={{xs: 12, md: 6}}>
+            <Grid size={12}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <Autocomplete
                   size="small"
@@ -384,6 +381,22 @@ const ProductFormDialogContent = ({ title = 'New Product/Service', product = nul
                 />
               </Div>
             </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Div sx={{ mt: 1, mb: 1 }}>
+                <Checkbox
+                  checked={isVatExempt}
+                  onChange={(e) => {
+                    const isChecked = e.target.checked;
+                    setIsVatExempt(isChecked);
+                    setValue('vat_exempted', isChecked, {
+                      shouldValidate: true,
+                      shouldDirty: true,
+                    });
+                  }}
+                />
+                VAT Exempted
+              </Div>
+            </Grid>
             <Grid size={12}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
@@ -439,7 +452,7 @@ const ProductFormDialogContent = ({ title = 'New Product/Service', product = nul
                   <DateTimePicker
                     label="As of"
                     fullWidth
-                    minDate={dayjs(authOrganization?.organization.recording_start_date)}
+                    minDate={dayjs(authOrganization.organization.recording_start_date)}
                     slotProps={{
                       textField: {
                         size: 'small',

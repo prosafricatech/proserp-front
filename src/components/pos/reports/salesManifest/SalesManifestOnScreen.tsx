@@ -78,8 +78,8 @@ const SalesManifestOnScreen: React.FC<SalesManifestOnScreenProps> = ({
   const { checkOrganizationPermission, authOrganization: { organization } } = authObject;
   const [expanded, setExpanded] = useState<boolean[]>(Array(reportData.transactions.length).fill(true));
   const financePersonnel = checkOrganizationPermission([PERMISSIONS.ACCOUNTS_REPORTS]);
-  const mainColor = organization.settings?.main_color || "#2196f3";
-  const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || "#2196f3");
+  const mainColor = organization.settings?.main_color || "#2113AD";
+  const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || "#2113AD");
   const contrastText = organization.settings?.contrast_text || "#FFFFFF";
 
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
@@ -362,7 +362,6 @@ const SalesManifestOnScreen: React.FC<SalesManifestOnScreenProps> = ({
                         },
                         '&:hover': {
                             '.MuiTypography-root': {
-                            // fontWeight: 'bold',
                             },
                         },
                     }}
@@ -422,8 +421,8 @@ const SalesManifestOnScreen: React.FC<SalesManifestOnScreenProps> = ({
                         >
                             <Grid size={12}>
                                 <Stack direction={'row'} p={1} spacing={1} justifyContent={'end'}>
-                                    <Typography  variant='caption' fontWeight={'bold'}>Counter:</Typography>
-                                    <Typography variant='caption'>{sale.counter}</Typography>
+                                  <Typography  variant='caption' fontWeight={'bold'}>Counter:</Typography>
+                                  <Typography variant='caption'>{sale.counter}</Typography>
                                 </Stack>
                                 <TableContainer
                                     sx={{
@@ -522,7 +521,7 @@ const SalesManifestOnScreen: React.FC<SalesManifestOnScreenProps> = ({
                                                 <TableCell size='small'></TableCell>
                                                 <TableCell size='small'></TableCell>
                                                 <TableCell size='small'></TableCell>
-                                                <TableCell size='small' sx={{fontWeight: 'bold'}}>Total</TableCell>
+                                                <TableCell size='small'>Total</TableCell>
                                                 <SalesItemInfo label={'Total Amount'} textAlign={'right'} color='blue' value={sale.items.reduce((total, currentItem) => total + (!!separateVAT ? (currentItem.quantity*currentItem.rate) : ((currentItem.quantity*currentItem.rate) + (!!currentItem.product.vat_exempted ? 0 : (currentItem.quantity*currentItem.rate)*vat_percentage*0.01))), 0).toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}/>
                                                 {!!separateVAT && !!vat_percentage && <SalesItemInfo textAlign={'right'} value={sale.items.reduce((total, currentItem) => total + (!!currentItem.product.vat_exempted ? 0 : (currentItem.quantity*currentItem.rate*vat_percentage*0.01)), 0).toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}/>}
                                                 {

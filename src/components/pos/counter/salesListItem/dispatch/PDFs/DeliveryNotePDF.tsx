@@ -49,7 +49,7 @@ interface DeliveryNotePDFProps {
 }
 
 const DeliveryNotePDF: React.FC<DeliveryNotePDFProps> = ({ delivery, organization, thermalPrinter = false }) => {
-  const mainColor = organization.settings?.main_color || "#2196f3";
+  const mainColor = organization.settings?.main_color || "#2113AD";
   const contrastText = organization.settings?.contrast_text || "#FFFFFF";
   const lightColor = organization.settings?.light_color || "#bec5da";
 
@@ -235,7 +235,7 @@ const DeliveryNotePDF: React.FC<DeliveryNotePDFProps> = ({ delivery, organizatio
                 >
                 {'TO'}
                 </Text>
-                <Text style={{...pdfStyles.midInfo, fontWeight: 'bold', textAlign: 'center'}}>{delivery.sale.stakeholder.name}</Text>
+                <Text style={{...pdfStyles.midInfo, textAlign: 'center'}}>{delivery.sale.stakeholder.name}</Text>
                 {delivery.sale.stakeholder?.address && <Text style={{...pdfStyles.minInfo, textAlign: 'center'}}>{delivery.sale.stakeholder.address}</Text>}
                 {delivery.sale.stakeholder?.tin && 
                     <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>

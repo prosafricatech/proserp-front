@@ -33,7 +33,7 @@ import { Div, Span } from '@jumbo/shared';
 import { useSnackbar } from 'notistack';
 
 const ReportDocumet = ({reportData,authOrganization,user}) => {
-  const mainColor = authOrganization?.organization?.settings?.main_color || "#2196f3";
+  const mainColor = authOrganization.organization.settings?.main_color || "#2113AD";
   const totalRevenue = reportData ? reportData.incomes.reduce((total, income) => total + income.amount, 0) : 0;
   const costOfRevenue = reportData ? reportData.directExpenses.reduce((total, expense) => total + expense.amount, 0) : 0;
   const operationalExpenseTotal = reportData ? reportData.indirectExpenses.reduce((total, expense) => total + expense.amount, 0) : 0;

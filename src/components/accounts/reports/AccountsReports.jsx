@@ -1,7 +1,7 @@
 'use client'
 
 import JumboCardQuick from '@jumbo/components/JumboCardQuick/JumboCardQuick'
-import { BalanceOutlined, DeckOutlined, Money, ReceiptLongOutlined, TableChartOutlined, ViewTimelineOutlined } from '@mui/icons-material'
+import { BalanceOutlined, DeckOutlined, Money, ReceiptLongOutlined, ViewTimelineOutlined } from '@mui/icons-material'
 import { Button, Dialog, DialogActions, Grid,Typography, useMediaQuery } from '@mui/material'
 import React, { useEffect, useState } from 'react'
 import IncomeStatement from './incomeStatement/IncomeStatement'

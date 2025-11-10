@@ -19,7 +19,7 @@ import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { Div, Span } from '@jumbo/shared';
 
 const ReportDocument = ({reportData,authOrganization,user}) => {
-    const mainColor = authOrganization?.organization?.settings?.main_color || "#2196f3";
+    const mainColor = authOrganization.organization.settings?.main_color || "#2113AD";
     const reportPeriod = `As at: ${readableDate(reportData.filters?.as_at,true)}`;
 
     return reportData ?

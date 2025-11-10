@@ -77,7 +77,7 @@ function RelatableOrderDetails({ order, toggleOpen }: RelatableOrderDetailsProps
     const currencyCode = order.currency.code;
     const { checkOrganizationPermission, authOrganization } = useJumboAuth();
     const organization = authOrganization?.organization;
-    const mainColor = organization?.settings?.main_color || "#2196f3";
+    const mainColor = organization?.settings?.main_color || "#2113AD";
     const lightColor = organization?.settings?.light_color || "#bec5da";
     const contrastText = organization?.settings?.contrast_text || "#FFFFFF";
     const withPrices = checkOrganizationPermission([PERMISSIONS.PURCHASES_CREATE, PERMISSIONS.ACCOUNTS_REPORTS]);

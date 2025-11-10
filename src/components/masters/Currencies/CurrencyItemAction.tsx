@@ -40,8 +40,8 @@ const CurrencyItemAction = ({currency}:{currency: Currency}) => {
     switch (menuItem.action) {
       case 'delete':
         showDialog({
-          title: dictionary.currencies.list.dialog.showDialog.title,
-          content: dictionary.currencies.list.dialog.showDialog.content ,
+          title: dictionary.currencies.list.dialog.showdialog.title,
+          content: dictionary.currencies.list.dialog.showdialog.content ,
           onYes: () =>{ 
             hideDialog();
             deleteCurrency(currency.id)

@@ -42,9 +42,9 @@ const LedgerStatementOnScreen: React.FC<LedgerStatementOnScreenProps> = ({
   ledger 
 }) => {
   const theme = useTheme();
-  const mainColor = authOrganization?.organization?.settings?.main_color || "#2196f3";
+  const mainColor = authOrganization.organization.settings?.main_color || "#2113AD";
   const contrastText = authOrganization.organization.settings?.contrast_text || "#FFFFFF";
-  const headerColor = theme.type === 'dark' ? '#29f096' : (authOrganization?.organization.settings?.main_color || "#2196f3");
+  const headerColor = theme.type === 'dark' ? '#29f096' : (authOrganization?.organization.settings?.main_color || "#2113AD");
 
   const totalCredits = transactionsData.transactions.reduce((total, transaction) => total + transaction.credit, 0);
   const totalDebits = transactionsData.transactions.reduce((total, transaction) => total + transaction.debit, 0);
