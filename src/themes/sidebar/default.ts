@@ -5,7 +5,7 @@ export const sidebarTheme: ThemeOptions = {
   // type: 'light',
   palette: {
     primary: {
-      main: '#2196f3',
+      main: '#2113AD',
       light: '#A67FFB',
       dark: '#5E3BB7',
       contrastText: '#FFF'
@@ -59,15 +59,15 @@ export const sidebarTheme: ThemeOptions = {
     JumboNavbar: {
       nav: {
         action: {
-          active: '#2196f3',
-          hover: '#2196f3',
+          active: '#2113AD',
+          hover: '#2113AD',
         },
         background: {
-          active: alpha('#2196f3', .15),
+          active: alpha('#2113AD', .15),
           hover: "#E9ECEF"
         },
         tick: {
-          active: '#2196f3',
+          active: '#2113AD',
           hover: "#ADB5BD"
         },
       },

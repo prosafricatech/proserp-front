@@ -315,9 +315,9 @@
 
   "signin": {
     "pageTitle": "Ingia kwenye Akaunti Yako",
-    "header": "Karibu ",
+    "header": "Karibu Tena",
     "forgotPassword": {
-      "text": "Umesahau nenosiri?",
+      "text": "Umesahau nenosiri? Rudisha",
       "action": "Weka upya sasa"
     },
     "accountPrompt": {

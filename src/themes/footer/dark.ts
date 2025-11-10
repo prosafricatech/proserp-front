@@ -4,7 +4,7 @@ export const footerTheme: ThemeOptions = {
   // type:'dark',
   palette: {
     primary: {
-      main: "#2196f3",
+      main: "#2113AD",
       light: "#A67FFB",
       dark: "#5E3BB7",
       contrastText: "#FFF",

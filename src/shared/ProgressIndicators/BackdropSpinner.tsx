@@ -25,7 +25,7 @@ export const BackdropSpinner: React.FC<BackdropSpinnerProps> = ({
 }) => {
   const { theme } = useJumboTheme();
   const { authOrganization } = useJumboAuth();
-  const mainColor = authOrganization?.organization?.settings?.main_color || "#2196f3";
+  const mainColor = authOrganization?.organization?.settings?.main_color || "#2113AD";
   const lightColor = authOrganization?.organization?.settings?.light_color || "#bec5da";
   const contrastText = authOrganization?.organization?.settings?.contrast_text || "#FFFFFF";
 
@@ -104,7 +104,7 @@ export const BackdropSpinner: React.FC<BackdropSpinnerProps> = ({
           }}
         >
           <Image
-            src={theme?.type === 'light' ? `${ASSET_IMAGES}/logos/logopros123.png` : `${ASSET_IMAGES}/logos/proserp-white.png`}
+            src={theme?.type === 'light' ? `${ASSET_IMAGES}/logos/proserp-blue.png` : `${ASSET_IMAGES}/logos/proserp-white.png`}
             alt="ProsERP"
             width={85}
             height={85}
