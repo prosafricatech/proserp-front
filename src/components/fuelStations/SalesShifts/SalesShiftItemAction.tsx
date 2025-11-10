@@ -24,20 +24,14 @@ const SalesShiftItemAction: React.FC<SalesShiftItemActionProps> = ({ salesShift 
   };
 
   const handleEdit = () => {
-    // TODO: Implement edit functionality
-    console.log('Edit sales shift:', salesShift.id);
     handleClose();
   };
 
   const handleDelete = () => {
-    // TODO: Implement delete functionality
-    console.log('Delete sales shift:', salesShift.id);
     handleClose();
   };
 
   const handleView = () => {
-    // TODO: Implement view details functionality
-    console.log('View sales shift:', salesShift.id);
     handleClose();
   };
 

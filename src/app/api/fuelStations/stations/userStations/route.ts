@@ -12,7 +12,6 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
     
-    console.log('🆔 User ID from query params:', userId);
 
     if (!userId) {
       return new Response(JSON.stringify({ error: 'User ID is required' }), {
@@ -27,24 +26,19 @@ export async function GET(request: NextRequest) {
     const limit = searchParams.get('limit') || '10';
     const query = new URLSearchParams({ keyword, page, limit }).toString();
 
-    console.log('🌐 Calling backend with user ID:', userId);
 
     const res = await fetch(`${API_BASE}/fuel-stations/user-stations/${userId}?${query}`, {
       headers,
       credentials: 'include',
     });
 
-    console.log('📡 Backend response status:', res.status);
-
     if (!res.ok) {
       const errorText = await res.text();
-      console.error('❌ Backend error:', errorText);
       throw new Error(`Backend responded with ${res.status}: ${errorText}`);
     }
 
     return handleJsonResponse(res);
   } catch (error) {
-    console.error('💥 Error in user stations API:', error);
     return new Response(
       JSON.stringify({ 
         error: 'Failed to fetch user stations',

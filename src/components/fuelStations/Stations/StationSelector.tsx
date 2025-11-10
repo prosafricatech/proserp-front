@@ -45,12 +45,10 @@ const StationSelector = ({
       if (!userId) {
         return [];
       }
-      console.log('🔄 Fetching stations for user:', userId);
       // PASS USER ID to the service
       return stationServices.getUserStations({ userId });
     },
     select: (data) => {
-      console.log('📊 Raw stations data:', data);
       return Array.isArray(data) ? data.map((station: any) => ({
         id: station.id,
         name: station.name,
@@ -81,7 +79,6 @@ const StationSelector = ({
       newValue = multiple ? [] : null;
     }
 
-    console.log('🎯 Setting selected station:', newValue);
     setSelectedStation(newValue);
     onChange(newValue);
   }, [defaultValue, multiple, stations]);
@@ -89,8 +86,6 @@ const StationSelector = ({
   if (isPending) {
     return <LinearProgress />;
   }
-
-  console.log('🎪 Available stations for dropdown:', stations);
 
   return (
     <Autocomplete
@@ -145,7 +140,6 @@ const StationSelector = ({
         }
       })}
       onChange={(e, newValue) => {
-        console.log('🔄 Station selection changed:', newValue);
         setSelectedStation(newValue);
         onChange(newValue);
       }}

@@ -42,10 +42,7 @@ const StationProvider: React.FC<StationProviderProps> = ({ children }) => {
     const fetchUserStations = async () => {
       const userId = getUserId();
       
-      console.log('🆔 User ID for stations:', userId);
-
       if (!userId) {
-        console.log('❌ No user ID found');
         setUserStations([]);
         setActiveStation(null);
         setIsLoading(false);
@@ -54,14 +51,11 @@ const StationProvider: React.FC<StationProviderProps> = ({ children }) => {
 
       try {
         setIsLoading(true);
-        console.log('🚀 Fetching stations for user:', userId);
-        
         // PASS USER ID to the service
         const response = await stationServices.getUserStations({ 
           userId: userId 
         });
         
-        console.log('📦 Stations API response:', response);
 
         const stations = Array.isArray(response) ? response.map((station: any) => ({
           id: station.id,
@@ -75,16 +69,13 @@ const StationProvider: React.FC<StationProviderProps> = ({ children }) => {
           product: station.product
         })) : [];
 
-        console.log('🏪 Processed stations:', stations);
         setUserStations(stations);
         
         // Auto-select first station if available
         if (stations.length > 0 && !activeStation) {
           setActiveStation(stations[0]);
-          console.log('✅ Auto-selected station:', stations[0].name);
         }
       } catch (error) {
-        console.error('❌ Error fetching user stations:', error);
         setUserStations([]);
       } finally {
         setIsLoading(false);

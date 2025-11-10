@@ -31,8 +31,8 @@ interface FormContextType {
   setValue: (name: string, value: any) => void;
   watch: (name?: string) => any;
   errors: any;
-  fuel_pumps: FuelPump[];
-  tanks: Tank[];
+  fuel_pumps?: FuelPump[];
+  tanks?: Tank[];
   [key: string]: any;
 }
 
@@ -42,15 +42,33 @@ function DippingTab() {
     const [closingSwitch, setClosingSwitch] = useState<boolean>(!!watch('isCloseSwitchON'));
     
     const renderFields = (type: 'before' | 'after') => {
-        const uniqueTanks = Object.values(fuel_pumps.reduce((acc: Record<number, Tank>, item: FuelPump) => {
-            if (!acc[item.tank_id]) {
-                const tank = tanks.find((t: Tank) => t.id === item.tank_id);
-                if (tank) {
-                    acc[item.tank_id] = tank;
+        // Add null/undefined checks
+        if (!fuel_pumps || !tanks) {
+            return null;
+        }
+
+        const uniqueTanks = Object.values(
+            fuel_pumps.reduce((acc: Record<number, Tank>, item: FuelPump) => {
+                if (!acc[item.tank_id]) {
+                    const tank = tanks.find((t: Tank) => t.id === item.tank_id);
+                    if (tank) {
+                        acc[item.tank_id] = tank;
+                    }
                 }
-            }
-            return acc;
-        }, {}));
+                return acc;
+            }, {})
+        );
+
+        // Check if we have any tanks to render
+        if (uniqueTanks.length === 0) {
+            return (
+                <Grid size={12}>
+                    <Typography variant="body2" color="textSecondary">
+                        No tanks available
+                    </Typography>
+                </Grid>
+            );
+        }
 
         return uniqueTanks.map((tankInfo: Tank, tankIndex: number) => (
             <Grid size={{xs:12, md:4, lg:3}} key={tankInfo.id}>
@@ -90,14 +108,18 @@ function DippingTab() {
         const checked = e.target.checked;
         setOpenSwitch(checked);
         setValue('isOpenSwitchON', checked);
-        setValue('dipping_before', null);
+        if (!checked) {
+            setValue('dipping_before', null);
+        }
     };
 
     const handleClosingSwitchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const checked = e.target.checked;
         setClosingSwitch(checked);
         setValue('isCloseSwitchON', checked);
-        setValue('dipping_after', null);
+        if (!checked) {
+            setValue('dipping_after', null);
+        }
     };
 
     return (
