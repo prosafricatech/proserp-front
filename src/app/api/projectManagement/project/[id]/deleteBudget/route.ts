@@ -18,4 +18,3 @@ export async function DELETE(
 
   return handleJsonResponse(res);
 }
-
