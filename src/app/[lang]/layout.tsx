@@ -1,8 +1,8 @@
 import type { Metadata, Viewport } from 'next';
-import { ReactNode } from 'react';
-import { Providers } from '../providers';
 import '@/styles/style.css';
 import '@assets/fonts/noir-pro/styles.css';
+import { ReactNode } from 'react';
+import { Providers } from '../providers';
 import { getDictionary } from './dictionaries';
 import { DictionaryProvider } from './contexts/DictionaryContext';
 import { LanguageProvider } from './contexts/LanguageContext';
@@ -23,7 +23,7 @@ export async function generateStaticParams() {
 }
 
 export const viewport: Viewport = {
-  themeColor: [{ media: '(prefers-color-scheme: light)', color: '#2196f3' }],
+  themeColor: [{ media: '(prefers-color-scheme: light)', color: '#2113AD' }],
   width: 'device-width',
   initialScale: 1,
   minimumScale: 1,
@@ -41,8 +41,8 @@ export const metadata: Metadata = {
   manifest: '/manifest.json',
   keywords: ['nextjs', 'next14', 'pwa', 'next-pwa'],
   icons: [
-    { rel: 'apple-touch-icon', url: '/assets/images/icons/Untitled-512logo.png' },
-    { rel: 'icon', url: '/assets/images/icons/Untitled-512logo.png' },
+    { rel: 'apple-touch-icon', url: '/assets/images/icons/logo512.png' },
+    { rel: 'icon', url: '/assets/images/icons/logo512.png' },
   ],
   appleWebApp: {
     capable: true,
@@ -70,7 +70,7 @@ export const metadata: Metadata = {
     description: APP_DESCRIPTION,
   },
   other: {
-    'msapplication-TileColor': '#2196f3',
+    'msapplication-TileColor': '#2113AD',
     keywords:
       'Robust ERP, ProsERP, Accounts, Project Management, Inventory Management, Payroll, Requisitions',
   },
@@ -85,8 +85,8 @@ export default async function RootLayout({ children, params }: RootLayoutProps) 
     <html lang={lang} data-lt-installed="true">
       <head>
         <link rel="manifest" href={`/api/manifest?lang=${lang}`} />
-        <link rel="icon" href="/assets/images/icons/Untitled-512logo.png" />
-        <link rel="apple-touch-icon" href="/assets/images/icons/Untitled-512logo.png" />
+        <link rel="icon" href="/assets/images/icons/logo512.png" />
+        <link rel="apple-touch-icon" href="/assets/images/icons/logo512.png" />
       </head>
       <body cz-shortcut-listen="true">
         <div id="root">

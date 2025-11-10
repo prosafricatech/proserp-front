@@ -399,7 +399,7 @@ export const JumboAuthProvider = ({
     const rolesArray = Array.isArray(roles) ? roles : [roles];
     const check = (role: string) => 
       authRoles.some(authRole => 
-        authRole?.name.toLowerCase() === role.toLowerCase()
+        authRole?.name?.toLowerCase() === role?.toLowerCase()
       );
 
     return mustHaveAll 
