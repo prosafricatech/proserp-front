@@ -13,16 +13,14 @@ export async function GET(request: NextRequest) {
   const limit = searchParams.get('limit') || '10';
   const stationId = searchParams.get('stationId') || '';
   
-  // Build query parameters
   const queryParams = new URLSearchParams({
     keyword,
     page,
     limit,
-    ...(stationId && { stationId }) // Only include stationId if it exists
+    ...(stationId && { stationId })
   }).toString();
 
-  // Fixed URL - using the stationId from searchParams
-  const res = await fetch(`${API_BASE}/fuel-stations/${queryParams.stationId}/sales-shifts`, {
+  const res = await fetch(`${API_BASE}/fuel-stations/${stationId}/sales-shifts?${queryParams}`, {
     headers,
     credentials: 'include',
   });
