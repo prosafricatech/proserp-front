@@ -81,6 +81,13 @@ const SalesManifestOnScreen: React.FC<SalesManifestOnScreenProps> = ({
   const mainColor = organization.settings?.main_color || "#2113AD";
   const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || "#2113AD");
   const contrastText = organization.settings?.contrast_text || "#FFFFFF";
+  const isDark = theme.type === 'dark';
+
+  const colors = {
+    amount: isDark ? '#64B5F6' : 'blue',
+    cogs: isDark ? '#EF9A9A' : 'red',
+    profit: isDark ? '#81C784' : 'green',
+  };
 
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
@@ -169,7 +176,7 @@ const SalesManifestOnScreen: React.FC<SalesManifestOnScreenProps> = ({
                   <TableBody>
                     <TableRow>
                       <TableCell>Total Sales:</TableCell>
-                      <TableCell align="right" style={{ color: 'blue' }}>
+                      <TableCell align="right" style={{ color: colors.amount }}>
                         {totalSalesVatInclusive.toLocaleString('en-US', { 
                           maximumFractionDigits: 2, 
                           minimumFractionDigits: 2 
@@ -204,7 +211,7 @@ const SalesManifestOnScreen: React.FC<SalesManifestOnScreenProps> = ({
                       <>
                         <TableRow>
                           <TableCell>Total CoGS:</TableCell>
-                          <TableCell align="right" style={{ color: 'red' }}>
+                          <TableCell align="right" style={{ color: colors.cogs }}>
                             {totalCoGS.toLocaleString('en-US', { 
                               maximumFractionDigits: 2, 
                               minimumFractionDigits: 2 
@@ -213,7 +220,7 @@ const SalesManifestOnScreen: React.FC<SalesManifestOnScreenProps> = ({
                         </TableRow>
                         <TableRow>
                           <TableCell>Total Profit:</TableCell>
-                          <TableCell align="right" style={{ color: 'green' }}>
+                          <TableCell align="right" style={{ color: colors.profit }}>
                             {(totalSales - totalCoGS).toLocaleString('en-US', { 
                               maximumFractionDigits: 2, 
                               minimumFractionDigits: 2 
@@ -397,10 +404,10 @@ const SalesManifestOnScreen: React.FC<SalesManifestOnScreenProps> = ({
                     </Grid>
                     <Grid size={{xs: 7, md: 2.4}}>
                         <Tooltip title="Total Sales">
-                        <Typography sx={{ color: expanded[index] ? 'blue' : 'inherit' }}>
+                        <Typography sx={{ color: expanded[index] ? colors.amount : 'inherit' }}>
                             {totalSalesVatInclusive.toLocaleString('en-US', {
-                            maximumFractionDigits: 2,
-                            minimumFractionDigits: 2
+                              maximumFractionDigits: 2,
+                              minimumFractionDigits: 2
                             })}
                         </Typography>
                         </Tooltip>
@@ -457,7 +464,7 @@ const SalesManifestOnScreen: React.FC<SalesManifestOnScreenProps> = ({
                                                 <SalesItemInfo value={'Product'}/>
                                                 <SalesItemInfo value={'Quantity'}/>
                                                 <SalesItemInfo value={'Price'}/>
-                                                <SalesItemInfo color='blue' value={'Amount'}/>
+                                                <SalesItemInfo color={colors.amount} value={'Amount'}/>
                                                 {
                                                 !!separateVAT && !!vat_percentage && 
                                                     <SalesItemInfo value={'VAT'}/>
@@ -466,8 +473,8 @@ const SalesManifestOnScreen: React.FC<SalesManifestOnScreenProps> = ({
                                                     financePersonnel && 
                                                         <>
                                                             <SalesItemInfo value={'P.U Cost'}/>
-                                                            <SalesItemInfo color='red' value={'CoGS'}/>
-                                                            <SalesItemInfo color='green' value={'Profit'}/>
+                                                            <SalesItemInfo color={colors.cogs} value={'CoGS'}/>
+                                                            <SalesItemInfo color={colors.profit} value={'Profit'}/>
                                                         </>
                                                 }
                                             </TableRow>
@@ -491,14 +498,14 @@ const SalesManifestOnScreen: React.FC<SalesManifestOnScreenProps> = ({
                                                         <SalesItemInfo label={'Product'} value={item.product.name}/>
                                                         <SalesItemInfo label={'Quantity'} textAlign={'right'} value={`${item.quantity} ${item.measurement_unit.symbol}`}/>
                                                         <SalesItemInfo label={'Price'} textAlign={'right'} value={!!separateVAT ? item.rate.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2}) : (item.rate + (!!item.product.vat_exempted ? 0 : item.rate * vat_percentage * 0.01)).toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}/>
-                                                        <SalesItemInfo label={'Amount'} color='blue' textAlign={'right'} value={!!separateVAT ? (item.quantity*item.rate).toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2}) : ((item.quantity*item.rate) + (!!item.product.vat_exempted ? 0 : (item.quantity*item.rate)*vat_percentage*0.01)).toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}/>
+                                                        <SalesItemInfo label={'Amount'} color={colors.amount} textAlign={'right'} value={!!separateVAT ? (item.quantity*item.rate).toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2}) : ((item.quantity*item.rate) + (!!item.product.vat_exempted ? 0 : (item.quantity*item.rate)*vat_percentage*0.01)).toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}/>
                                                         {!!separateVAT && !!vat_percentage && <SalesItemInfo label={'VAT'} textAlign={'right'} value={!!item.product.vat_exempted ? 0 : (item.quantity*item.rate*vat_percentage*0.01).toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}/>}
                                                         {
                                                           financePersonnel &&
                                                             <>
                                                               <SalesItemInfo label={'P.U Cost'} textAlign={'right'} value={(item.cost / item.quantity).toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}/>
-                                                              <SalesItemInfo label={'CoGS'} color='red' textAlign={'right'} value={item.cost.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}/>
-                                                              <SalesItemInfo label={'Profit'} color='green' textAlign={'right'} value={((!!separateVAT ? (item.quantity*item.rate) : ((item.quantity*item.rate) + (!!item.product.vat_exempted ? 0 : (item.quantity*item.rate)*vat_percentage*0.01))) - (item.cost)).toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})} />
+                                                              <SalesItemInfo label={'CoGS'} color={colors.cogs} textAlign={'right'} value={item.cost.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}/>
+                                                              <SalesItemInfo label={'Profit'} color={colors.profit} textAlign={'right'} value={((!!separateVAT ? (item.quantity*item.rate) : ((item.quantity*item.rate) + (!!item.product.vat_exempted ? 0 : (item.quantity*item.rate)*vat_percentage*0.01))) - (item.cost)).toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})} />
                                                             </>
                                                         }
                                                     </TableRow>
@@ -522,14 +529,14 @@ const SalesManifestOnScreen: React.FC<SalesManifestOnScreenProps> = ({
                                                 <TableCell size='small'></TableCell>
                                                 <TableCell size='small'></TableCell>
                                                 <TableCell size='small'>Total</TableCell>
-                                                <SalesItemInfo label={'Total Amount'} textAlign={'right'} color='blue' value={sale.items.reduce((total, currentItem) => total + (!!separateVAT ? (currentItem.quantity*currentItem.rate) : ((currentItem.quantity*currentItem.rate) + (!!currentItem.product.vat_exempted ? 0 : (currentItem.quantity*currentItem.rate)*vat_percentage*0.01))), 0).toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}/>
+                                                <SalesItemInfo label={'Total Amount'} textAlign={'right'} color={colors.amount} value={sale.items.reduce((total, currentItem) => total + (!!separateVAT ? (currentItem.quantity*currentItem.rate) : ((currentItem.quantity*currentItem.rate) + (!!currentItem.product.vat_exempted ? 0 : (currentItem.quantity*currentItem.rate)*vat_percentage*0.01))), 0).toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}/>
                                                 {!!separateVAT && !!vat_percentage && <SalesItemInfo textAlign={'right'} value={sale.items.reduce((total, currentItem) => total + (!!currentItem.product.vat_exempted ? 0 : (currentItem.quantity*currentItem.rate*vat_percentage*0.01)), 0).toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}/>}
                                                 {
                                                     financePersonnel &&
                                                         <>
                                                           <SalesItemInfo value={''}/>
-                                                          <SalesItemInfo label={'Total CoGS'} textAlign={'right'} color={'red'} value={sale.items.reduce((total, currentItem) => total + currentItem.cost, 0).toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}/>
-                                                          <SalesItemInfo label={'Total Profit'} textAlign={'right'} color={'green'} value={sale.items.reduce((total, currentItem) => total + ((!!separateVAT ? (currentItem.quantity*currentItem.rate) : ((currentItem.quantity*currentItem.rate) + (!!currentItem.product.vat_exempted ? 0 : (currentItem.quantity*currentItem.rate)*vat_percentage*0.01))) - (currentItem.cost)), 0).toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})} />
+                                                          <SalesItemInfo label={'Total CoGS'} textAlign={'right'} color={colors.cogs} value={sale.items.reduce((total, currentItem) => total + currentItem.cost, 0).toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}/>
+                                                          <SalesItemInfo label={'Total Profit'} textAlign={'right'} color={colors.profit} value={sale.items.reduce((total, currentItem) => total + ((!!separateVAT ? (currentItem.quantity*currentItem.rate) : ((currentItem.quantity*currentItem.rate) + (!!currentItem.product.vat_exempted ? 0 : (currentItem.quantity*currentItem.rate)*vat_percentage*0.01))) - (currentItem.cost)), 0).toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})} />
                                                         </>
                                                 }
                                             </TableRow>
@@ -598,7 +605,7 @@ const SalesManifestOnScreen: React.FC<SalesManifestOnScreenProps> = ({
                                                   <SalesItemInfo label={'Cost'} value={(sale.cost/sale.quantity).toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})} />
                                                 </Grid>
                                                 <Grid size={{xs: 6, md: 4, lg: 3}}>
-                                                  <SalesItemInfo  color={'red'}  label={'CoGS'} value={sale.cost.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}/>
+                                                  <SalesItemInfo  color={'red'} label={'CoGS'} value={sale.cost.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}/>
                                                 </Grid>
                                                 <Grid size={{xs: 6, md: 4, lg: 3}}>
                                                   <SalesItemInfo label={'Profit'} color={'green'} value={((!!separateVAT ? (sale.quantity*sale.rate) : ((sale.quantity*sale.rate) + (!!sale.product.vat_exempted ? 0 : (sale.quantity*sale.rate)*vat_percentage*0.01))) - (sale.cost)).toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}/>
