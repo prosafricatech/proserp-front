@@ -185,13 +185,7 @@ function Adjustments({ index = -1, setShowForm, adjustment }: AdjustmentsProps) 
   const watchedDescription = watch('description');
 
   return (
-    // ✅ REPLACED form with Box to avoid nested forms
-    <Box
-      component="div" 
-      autoComplete='off'
-      onSubmit={handleFormSubmit}
-      sx={{ width: '100%' }}
-    >
+    <Box sx={{ width: '100%' }}>
       <Grid container spacing={1} marginTop={0.5}>
         <Grid size={{xs:12, md:6, lg:2.6}}>
           <Div sx={{ mt: 1 }}>
@@ -211,8 +205,8 @@ function Adjustments({ index = -1, setShowForm, adjustment }: AdjustmentsProps) 
               allowSubStores={true}
               label='Tank'
               defaultValue={adjustment && tanks.find((tank: Tank) => tank.id === adjustment?.tank_id)}
-              proposedOptions={productTanks}
-              frontError={errors?.tank_id}
+              proposedOptions={productTanks.length ? (productTanks as any) : undefined}
+              frontError={errors?.tank_id as any}
               onChange={handleTankChange}
             />
           </Div>

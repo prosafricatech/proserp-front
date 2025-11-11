@@ -176,10 +176,6 @@ const methods = useForm<SalesShiftFormData>({
     }
   }, [open, methods]);
 
-  if (isPending) {
-    return <LinearProgress />;
-  }
-
   return (
     <Dialog 
       open={open} 

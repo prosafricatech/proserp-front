@@ -45,8 +45,6 @@ const FuelPumpTab: React.FC<FuelPumpTabProps> = ({ station }) => {
   const canCreateProduct = checkOrganizationPermission([PERMISSIONS.PRODUCTS_CREATE]);
   const [openProductQuickAdd, setOpenProductQuickAdd] = useState<boolean[]>([]);
 
-  console.log("productOptions in FuelPumpTab:", productOptions);
-
   // Fetch store options with proper typing
   const { data: storeOptions, isLoading: isFetchingStores } = useQuery<StoreOption[], Error>({
     queryKey: ["storeOptions"],
