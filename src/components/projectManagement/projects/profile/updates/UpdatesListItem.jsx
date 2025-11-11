@@ -6,7 +6,6 @@ import AccordionDetails from '@mui/material/AccordionDetails';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
-import ProductsSelectProvider from '@/components/productAndServices/products/ProductsSelectProvider';
 import UpdateItemAction from './UpdateItemAction';
 
 const UpdatesAccordion = ({ expanded, handleChange, update }) => {
@@ -92,18 +91,16 @@ function UpdatesListItem({update}) {
   };
 
   return (
-    <ProductsSelectProvider>
-      <Stack direction={'column'}>
-        <UpdatesAccordion
-          key={update?.id}
-          update={update}
-          expanded={expanded}
-          handleChange={handleChange}
-          openDialog={openDialog}
-          setOpenDialog={setOpenDialog}
-        />
-      </Stack>
-    </ProductsSelectProvider>
+    <Stack direction={'column'}>
+      <UpdatesAccordion
+        key={update?.id}
+        update={update}
+        expanded={expanded}
+        handleChange={handleChange}
+        openDialog={openDialog}
+        setOpenDialog={setOpenDialog}
+      />
+    </Stack>
   );
 }
 

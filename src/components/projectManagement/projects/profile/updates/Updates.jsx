@@ -13,6 +13,7 @@ import { useProjectProfile } from '../ProjectProfileProvider';
 import projectsServices from '../../project-services';
 import UpdatesListItem from './UpdatesListItem';
 import UpdatesActionTail from './UpdatesActionTail';
+import ProductsSelectProvider from '@/components/productAndServices/products/ProductsSelectProvider';
 
 const Updates = () => {
   const params = useParams();
@@ -94,96 +95,98 @@ const Updates = () => {
   }, []);
 
   return (
-    <JumboRqList
-      ref={listRef}
-      wrapperComponent={Card}
-      service={projectsServices.projectUpdatesList}
-      primaryKey="id"
-      queryOptions={queryOptions}
-      itemsPerPage={10}
-      itemsPerPageOptions={[5, 10, 15, 20]}
-      renderItem={renderUpdate}
-      componentElement="div"
-      bulkActions={null}
-      wrapperSx={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-      toolbar={
-        <JumboListToolbar
-          hideItemsPerPage
-          action={
-            <Grid container columnSpacing={1} rowSpacing={1} justifyContent={'end'}>
-              {/* Date Filters Section */}
-              {openFilters && (
-                <Grid size={6}>
-                  <Grid container spacing={1} alignItems={'center'}>
-                    <Grid size={{xs: 12, md: 5}}>
-                      <DateTimePicker
-                        label="From Date"
-                        value={filterDate.from ? dayjs(filterDate.from) : null}
-                        slotProps={{
-                          textField: {
-                            size: 'small',
-                            fullWidth: true,
-                          }
-                        }}
-                        onChange={(value) => handleDateChange(value, 'from')}
-                      />
-                    </Grid>
-                    <Grid size={{xs: 12, md: 5}}>
-                      <DateTimePicker
-                        label="To Date"
-                        value={filterDate.to ? dayjs(filterDate.to) : null}
-                        minDate={filterDate.from ? dayjs(filterDate.from) : undefined}
-                        slotProps={{
-                          textField: {
-                            size: 'small',
-                            fullWidth: true,
-                          }
-                        }}
-                        onChange={(value) => handleDateChange(value, 'to')}
-                      />
-                    </Grid>
-                    <Grid size={{xs: 12, md: 2}} textAlign={'center'}>
-                      <Tooltip title="Apply Date Filters">
-                        <IconButton onClick={applyDateFilters} size="small">
-                          <EventAvailableOutlined/>
-                        </IconButton> 
-                      </Tooltip>   
+    <ProductsSelectProvider>
+      <JumboRqList
+        ref={listRef}
+        wrapperComponent={Card}
+        service={projectsServices.projectUpdatesList}
+        primaryKey="id"
+        queryOptions={queryOptions}
+        itemsPerPage={10}
+        itemsPerPageOptions={[5, 10, 15, 20]}
+        renderItem={renderUpdate}
+        componentElement="div"
+        bulkActions={null}
+        wrapperSx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+        toolbar={
+          <JumboListToolbar
+            hideItemsPerPage
+            action={
+              <Grid container columnSpacing={1} rowSpacing={1} justifyContent={'end'}>
+                {/* Date Filters Section */}
+                {openFilters && (
+                  <Grid size={6}>
+                    <Grid container spacing={1} alignItems={'center'}>
+                      <Grid size={{xs: 12, md: 5}}>
+                        <DateTimePicker
+                          label="From Date"
+                          value={filterDate.from ? dayjs(filterDate.from) : null}
+                          slotProps={{
+                            textField: {
+                              size: 'small',
+                              fullWidth: true,
+                            }
+                          }}
+                          onChange={(value) => handleDateChange(value, 'from')}
+                        />
+                      </Grid>
+                      <Grid size={{xs: 12, md: 5}}>
+                        <DateTimePicker
+                          label="To Date"
+                          value={filterDate.to ? dayjs(filterDate.to) : null}
+                          minDate={filterDate.from ? dayjs(filterDate.from) : undefined}
+                          slotProps={{
+                            textField: {
+                              size: 'small',
+                              fullWidth: true,
+                            }
+                          }}
+                          onChange={(value) => handleDateChange(value, 'to')}
+                        />
+                      </Grid>
+                      <Grid size={{xs: 12, md: 2}} textAlign={'center'}>
+                        <Tooltip title="Apply Date Filters">
+                          <IconButton onClick={applyDateFilters} size="small">
+                            <EventAvailableOutlined/>
+                          </IconButton> 
+                        </Tooltip>   
+                      </Grid>
                     </Grid>
                   </Grid>
+                )}
+                
+                {/* Main Actions Row */}
+                <Grid size={{xs: 1}}>
+                  <Tooltip title={!openFilters ? 'Show Filters' : 'Clear and Hide Filters'}>
+                    <IconButton 
+                      size='small' 
+                      onClick={!openFilters ? () => setOpenFilters(true) : resetFilters}
+                    >
+                      {!openFilters ? <FilterAltOutlined/> : <FilterAltOffOutlined/>}
+                    </IconButton>
+                  </Tooltip>
                 </Grid>
-              )}
-              
-              {/* Main Actions Row */}
-              <Grid size={{xs: 1}}>
-                <Tooltip title={!openFilters ? 'Show Filters' : 'Cleasr and Hide Filters'}>
-                  <IconButton 
-                    size='small' 
-                    onClick={!openFilters ? () => setOpenFilters(true) : resetFilters}
-                  >
-                    {!openFilters ? <FilterAltOutlined/> : <FilterAltOffOutlined/>}
-                  </IconButton>
-                </Tooltip>
+                
+                <Grid size={{xs: 10, md: !openFilters ? 5 : 4}}>
+                  <JumboSearch
+                    onChange={handleOnChange}
+                    value={queryOptions.queryParams.keyword}
+                  />
+                </Grid>
+                
+                <Grid size={{xs: 1, md: 1}}>
+                  <UpdatesActionTail />
+                </Grid>
               </Grid>
-              
-              <Grid size={{xs: 10, md: !openFilters ? 5 : 4}}>
-                <JumboSearch
-                  onChange={handleOnChange}
-                  value={queryOptions.queryParams.keyword}
-                />
-              </Grid>
-              
-              <Grid size={{xs: 1, md: 1}}>
-                <UpdatesActionTail />
-              </Grid>
-            </Grid>
-          }
-        />
-      }
-    />
+            }
+          />
+        }
+      />
+    </ProductsSelectProvider>
   );
 };
 
