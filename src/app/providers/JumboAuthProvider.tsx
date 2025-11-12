@@ -314,9 +314,12 @@ export const JumboAuthProvider = ({
       };
 
       await getFCMToken();
-    } else if (!currentUser || refresh) {
+    }
+
+    if (!currentUser || refresh) {
       await refreshAuth();
     }
+    
   }, [refreshAuth, setAuthValues]);
 
   const resetAuth = useCallback(() => {
