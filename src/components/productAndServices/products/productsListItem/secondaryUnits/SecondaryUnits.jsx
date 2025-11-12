@@ -87,7 +87,7 @@ function SecondaryUnits({expanded, product}) {
         </Grid>
         ))
         :
-        !isLoading && <Alert variant='outlined' color='primary' severity='info'>{dictionary.products.list.alert.info}</Alert> 
+        !isLoading && <Alert variant='outlined' severity='info'>{dictionary.products.list.alert.info}</Alert> 
       }
 
       {/* ItemAction*/}
