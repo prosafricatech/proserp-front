@@ -33,10 +33,36 @@ interface SalesShiftFormProps {
   toggleOpen: (open: boolean) => void;
   salesShift?: SalesShift;
   isClosing?: boolean;
-  open: boolean; // ✅ Added open prop
+  open: boolean;
 }
 
-// Update the SalesShiftFormData interface
+// Add these interfaces for adjustments and fuel vouchers
+interface AdjustmentData {
+  id?: number;
+  product_id?: number;
+  product?: any;
+  tank_id?: number;
+  quantity?: number;
+  description?: string;
+  operator?: string;
+  operator_name?: string;
+  [key: string]: any;
+}
+
+interface FuelVoucherData {
+  id?: number;
+  product_id?: number;
+  quantity?: number;
+  amount?: number;
+  reference?: string | null;
+  narration?: string | null;
+  stakeholder?: any | null;
+  stakeholder_id?: number | null;
+  expense_ledger?: any | null;
+  expense_ledger_id?: number | null;
+  product?: any | null;
+}
+
 interface SalesShiftFormData {
   shift_team_id: string;
   shift_start: string;
@@ -53,7 +79,7 @@ interface SalesShiftFormData {
   adjustments: Array<any>;
   cash_reconciliation: any;
   submit_type: 'open' | 'close';
-  product_prices: Array<{  // Add this
+  product_prices: Array<{
     product_id: number;
     price: number;
   }>;
@@ -63,7 +89,7 @@ const SalesShiftForm: React.FC<SalesShiftFormProps> = ({
   toggleOpen,
   salesShift,
   isClosing = false,
-  open // ✅ Now receiving open prop
+  open
 }) => {
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
@@ -73,25 +99,31 @@ const SalesShiftForm: React.FC<SalesShiftFormProps> = ({
 
   const shiftTeams = activeStation?.shift_teams || [];
   const fuelPumps = activeStation?.fuel_pumps || [];
+  const products = activeStation?.products || [];
+  const tanks = activeStation?.tanks || [];
 
-  // In the useForm initialization, add product_prices to defaultValues
-const methods = useForm<SalesShiftFormData>({
-  defaultValues: {
-    shift_team_id: String(salesShift?.shift_team_id ?? ''),
-    shift_start: salesShift?.shift_start || dayjs().toISOString(),
-    shift_end: salesShift?.shift_end || null,
-    pump_readings: salesShift?.pump_readings || fuelPumps.map(pump => ({
-      pump_id: pump.id,
-      product_id: pump.product?.id || null,
-      tank_id: pump.tank?.id || null,
-      opening: 0,
-      closing: 0
-    })),
-    fuel_vouchers: salesShift?.fuel_vouchers || [],
-    submit_type: isClosing ? 'close' : 'open',
-    product_prices: salesShift?.product_prices || []  // Add this
-  }
-});
+  // ✅ ADD THE MISSING STATE HERE
+  const [adjustments, setAdjustments] = useState<AdjustmentData[]>(salesShift?.adjustments || []);
+  const [fuelVouchers, setFuelVouchers] = useState<FuelVoucherData[]>(salesShift?.fuel_vouchers || []);
+
+  const methods = useForm<SalesShiftFormData>({
+    defaultValues: {
+      shift_team_id: String(salesShift?.shift_team_id ?? ''),
+      shift_start: salesShift?.shift_start || dayjs().toISOString(),
+      shift_end: salesShift?.shift_end || null,
+      pump_readings: salesShift?.pump_readings || fuelPumps.map(pump => ({
+        pump_id: pump.id,
+        product_id: pump.product?.id || null,
+        tank_id: pump.tank?.id || null,
+        opening: 0,
+        closing: 0
+      })),
+      fuel_vouchers: salesShift?.fuel_vouchers || [],
+      adjustments: salesShift?.adjustments || [],
+      submit_type: isClosing ? 'close' : 'open',
+      product_prices: salesShift?.product_prices || []
+    }
+  });
 
   const { watch, setValue, handleSubmit, formState: { isSubmitting, errors } } = methods;
 
@@ -154,11 +186,14 @@ const methods = useForm<SalesShiftFormData>({
       return;
     }
 
+    // ✅ INCLUDE ADJUSTMENTS AND FUEL VOUCHERS IN SUBMISSION
     const submitData = {
       ...data,
       station_id: activeStation?.id,
       shift_start: dayjs(data.shift_start).toISOString(),
       shift_end: data.shift_end ? dayjs(data.shift_end).toISOString() : null,
+      adjustments: adjustments, // Include adjustments from state
+      fuel_vouchers: fuelVouchers, // Include fuel vouchers from state
     };
 
     if (salesShift) {
@@ -173,8 +208,24 @@ const methods = useForm<SalesShiftFormData>({
     if (!open) {
       setActiveTab(0);
       methods.reset();
+      // Also reset adjustments and fuel vouchers
+      setAdjustments([]);
+      setFuelVouchers([]);
     }
   }, [open, methods]);
+
+  // ✅ CREATE THE ENHANCED FORM CONTEXT
+  const formContextValue = {
+    ...methods,
+    // Provide the state and setters to all child components
+    adjustments,
+    setAdjustments,
+    fuelVouchers, 
+    setFuelVouchers,
+    products,
+    tanks,
+    fuel_pumps: fuelPumps,
+  };
 
   return (
     <Dialog 
@@ -186,7 +237,8 @@ const methods = useForm<SalesShiftFormData>({
         sx: { maxHeight: '90vh' }
       }}
     >
-      <FormProvider {...methods}>
+      {/* ✅ USE THE ENHANCED FORM CONTEXT */}
+      <FormProvider {...formContextValue}>
         <Box component="form" onSubmit={handleSubmit(onSubmit)}>
           
           {/* DIALOG TITLE - Contains Shift Team info and Tabs */}

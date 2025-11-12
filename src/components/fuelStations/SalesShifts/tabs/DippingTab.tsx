@@ -127,21 +127,6 @@ function DippingTab() {
             <Grid size={12}>
                 <Box display="flex" alignItems="center">
                     <Switch
-                        checked={openSwitch}
-                        size='small'
-                        onChange={handleOpenSwitchChange}
-                    />
-                    <Typography variant="body1" style={{ marginLeft: 8 }}>
-                        Opening
-                    </Typography>
-                </Box>
-            </Grid>
-
-            {openSwitch && renderFields('before')}
-
-            <Grid size={12}>
-                <Box display="flex" alignItems="center">
-                    <Switch
                         checked={closingSwitch}
                         size='small'
                         onChange={handleClosingSwitchChange}
@@ -153,6 +138,21 @@ function DippingTab() {
             </Grid>
 
             {closingSwitch && renderFields('after')}
+
+            <Grid size={12}>
+                <Box display="flex" alignItems="center">
+                    <Switch
+                        checked={openSwitch}
+                        size='small'
+                        onChange={handleOpenSwitchChange}
+                    />
+                    <Typography variant="body1" style={{ marginLeft: 8 }}>
+                        Opening
+                    </Typography>
+                </Box>
+            </Grid>
+
+            {openSwitch && renderFields('before')}
         </Grid>
     );
 }
