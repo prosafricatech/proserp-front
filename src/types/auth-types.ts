@@ -3,6 +3,7 @@
     name: string;
     email: string;
     phone: string;
+    is_admin: boolean;
     status: "active" | "invited" | "suspended";
     organization_roles?: Array<{ id: string; name: string; [key: string]: any }>;
     [key: string]: any;
