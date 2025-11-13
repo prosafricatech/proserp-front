@@ -192,10 +192,6 @@ const PumpReadingTab: React.FC<PumpReadingTabProps> = ({ salesShift, isClosing =
     return closing >= opening;
   };
 
-  if (isFetchingStores) {
-    return <div>Loading store options...</div>;
-  }
-
   return (
     <Box sx={{ width: "100%" }}>
       <Grid container spacing={2}>
@@ -263,19 +259,17 @@ const PumpReadingTab: React.FC<PumpReadingTabProps> = ({ salesShift, isClosing =
                   >
                     {productName}
                   </Typography>
-
-                  {/* Opening and Closing Readings */}
                   <Grid container spacing={1}>
                     <Grid size={{ xs: 12 }}>
                       <TextField
                         fullWidth
-                        label="Opening Reading"
+                        label="Closing Reading"
                         type="number"
-                        value={reading.opening}
-                        onChange={(e) => updatePumpReading(index, 'opening', parseFloat(e.target.value) || 0)}
+                        value={reading.closing}
+                        onChange={(e) => updatePumpReading(index, 'closing', parseFloat(e.target.value) || 0)}
                         size="small"
-                        error={openingError}
-                        helperText={openingError ? "Opening reading should not exceed closing reading" : ""}
+                        error={closingError}
+                        helperText={closingError ? "Closing reading should exceed opening reading" : ""}
                         inputProps={{ 
                           min: 0,
                           style: { textAlign: 'center' },
@@ -295,13 +289,13 @@ const PumpReadingTab: React.FC<PumpReadingTabProps> = ({ salesShift, isClosing =
                     <Grid size={{ xs: 12 }}>
                       <TextField
                         fullWidth
-                        label="Closing Reading"
+                        label="Opening Reading"
                         type="number"
-                        value={reading.closing}
-                        onChange={(e) => updatePumpReading(index, 'closing', parseFloat(e.target.value) || 0)}
+                        value={reading.opening}
+                        onChange={(e) => updatePumpReading(index, 'opening', parseFloat(e.target.value) || 0)}
                         size="small"
-                        error={closingError}
-                        helperText={closingError ? "Closing reading should exceed opening reading" : ""}
+                        error={openingError}
+                        helperText={openingError ? "Opening reading should not exceed closing reading" : ""}
                         inputProps={{ 
                           min: 0,
                           style: { textAlign: 'center' },

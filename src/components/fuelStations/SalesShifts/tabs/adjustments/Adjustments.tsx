@@ -80,109 +80,164 @@ interface FormData {
 
 function Adjustments({ index = -1, setShowForm, adjustment }: AdjustmentsProps) {
   const [isAdding, setIsAdding] = useState<boolean>(false);
-  const { products, fuel_pumps, adjustments = [], setAdjustments, tanks } = useFormContext() as unknown as FormContextType;
-  const { productOptions } = useProductsSelect();
+  const { products, fuel_pumps, adjustments = [], setAdjustments, tanks = [] } = useFormContext() as unknown as FormContextType;
+  const { productOptions = [] } = useProductsSelect();
   const [productTanks, setProductTanks] = useState<Tank[]>([]);
-  const [tanksKey, setTanksKey] = useState<number>(0); // key to re-render tanks field after product changed
-
-  // Define validation Schema
-  const validationSchema = yup.object({
-    product_id: yup.number().required("Product is required").typeError('Product is required'),
-    tank_id: yup.number().required("Tank is required").typeError('Tank is required'),
-    operator: yup.string().required("Operator is required").typeError('Operator is required'),
-    description: yup.string().required("Description is required").typeError('Description is required'),
-    quantity: yup.number().required("Quantity is required").positive("Quantity is required").typeError('Quantity is required'),
-  });
-
-  const { setValue, handleSubmit, watch, reset, formState: { errors } } = useForm<FormData>({
-    resolver: yupResolver(validationSchema)as any,
-    defaultValues: {
-      product: adjustment && productOptions.find((product: Product) => product.id === adjustment.product_id),
-      product_id: adjustment?.product_id, 
-      quantity: adjustment?.quantity, 
-      tank_id: adjustment && tanks.find((tank: Tank) => tank.id === adjustment?.tank_id)?.id,
-      description: adjustment?.description,
-      operator: adjustment?.operator,
-      operator_name: adjustment?.operator_name
-    }
-  });
+  const [tanksKey, setTanksKey] = useState<number>(0);
   
-  const updateItems = async (item: FormData) => {
-    setIsAdding(true);
-    // normalize item to match AdjustmentData (avoid null product)
-    const normalizedItem: AdjustmentData = {
-      ...(item as any),
-      product: item.product ?? undefined,
+  // Use local state for form fields instead of useForm
+  const [formData, setFormData] = useState<FormData>(() => {
+    // Use function to initialize state safely
+    const initialProduct = adjustment && productOptions?.find((product: Product) => product.id === adjustment.product_id);
+    const initialTankId = adjustment && tanks?.find((tank: Tank) => tank.id === adjustment?.tank_id)?.id;
+    
+    return {
+      product: initialProduct || null,
+      product_id: adjustment?.product_id,
+      quantity: adjustment?.quantity,
+      tank_id: initialTankId,
+      description: adjustment?.description || '',
+      operator: adjustment?.operator || '',
+      operator_name: adjustment?.operator_name || ''
     };
+  });
 
-    if (index > -1) {
-      // Replace the existing item with the edited item
-      const updatedAdjustments = [...adjustments];
-      updatedAdjustments[index] = normalizedItem;
-      await setAdjustments(updatedAdjustments);
-    } else { 
-      // Add the new item to the Adjustments array
-      await setAdjustments((prevAdjustments: AdjustmentData[]) => [...prevAdjustments, normalizedItem]);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Add a safe function to get tank value
+  const getTankValue = () => {
+    if (!formData.tank_id || !tanks || tanks.length === 0) return null;
+    return tanks.find((tank: Tank) => tank.id === formData.tank_id) || null;
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.product_id) {
+      newErrors.product_id = "Product is required";
+    }
+    if (!formData.tank_id) {
+      newErrors.tank_id = "Tank is required";
+    }
+    if (!formData.operator) {
+      newErrors.operator = "Operator is required";
+    }
+    if (!formData.description) {
+      newErrors.description = "Description is required";
+    }
+    if (!formData.quantity || formData.quantity <= 0) {
+      newErrors.quantity = "Quantity is required";
     }
 
-    reset();
-    setIsAdding(false);
-    setShowForm && setShowForm(false);
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const updateItems = async () => {
+    if (!validateForm()) {
+      return;
+    }
+
+    // SOLUTION 1: Check if setAdjustments exists and is a function
+    if (typeof setAdjustments !== 'function') {
+      console.error('setAdjustments is not available');
+      setIsAdding(false);
+      return;
+    }
+
+    setIsAdding(true);
+    
+    const normalizedItem: AdjustmentData = {
+      ...formData,
+      product: formData.product ?? undefined,
+    } as AdjustmentData;
+
+    try {
+      if (index > -1) {
+        // Replace existing item
+        const updatedAdjustments = [...adjustments];
+        updatedAdjustments[index] = normalizedItem;
+        await setAdjustments(updatedAdjustments);
+      } else { 
+        // Add new item
+        await setAdjustments((prevAdjustments: AdjustmentData[]) => [...prevAdjustments, normalizedItem]);
+      }
+
+      // Only reset if it's a new item, not when editing
+      if (index === -1) {
+        setFormData({
+          product: null,
+          product_id: undefined,
+          quantity: undefined,
+          tank_id: undefined,
+          description: '',
+          operator: '',
+          operator_name: ''
+        });
+      }
+    } catch (error) {
+      console.error('Error updating adjustments:', error);
+    } finally {
+      setIsAdding(false);
+      setShowForm && setShowForm(false);
+    }
   };
 
   const handleProductChange = (newValue: Product | null) => {
     setTanksKey(prevKey => prevKey + 1);
-    const relatedPumps = fuel_pumps.filter((pump: FuelPump) => pump.product_id === newValue?.id);
+    const relatedPumps = fuel_pumps?.filter((pump: FuelPump) => pump.product_id === newValue?.id) || [];
     const relatedTankIds = relatedPumps.map(pump => pump.tank_id);
-    const tanksHavingProduct = tanks.filter((tank: Tank) => relatedTankIds.includes(tank.id));
+    const tanksHavingProduct = tanks?.filter((tank: Tank) => relatedTankIds.includes(tank.id)) || [];
     setProductTanks(tanksHavingProduct);
-    setValue('product_id', newValue ? newValue.id : undefined, {
-      shouldValidate: true, 
-      shouldDirty: true,
-    });
+    
+    setFormData(prev => ({
+      ...prev,
+      product: newValue,
+      product_id: newValue ? newValue.id : undefined,
+      tank_id: undefined // Reset tank when product changes
+    }));
   };
 
   const handleTankChange = (newValue: Tank | null) => {
-    setValue('tank_id', newValue ? newValue.id : undefined, {
-      shouldValidate: true,
-      shouldDirty: true,
-    });
+    setFormData(prev => ({
+      ...prev,
+      tank_id: newValue ? newValue.id : undefined
+    }));
   };
 
   const handleOperatorChange = (newValue: OperationOption | null) => {
-    setValue('operator_name', newValue?.label || '');
-    setValue('operator', newValue ? newValue.value : '', {
-      shouldValidate: true,
-      shouldDirty: true,
-    });
+    setFormData(prev => ({
+      ...prev,
+      operator_name: newValue?.label || '',
+      operator: newValue ? newValue.value : ''
+    }));
   };
 
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value ? sanitizedNumber(e.target.value) : 0;
-    setValue('quantity', value, {
-      shouldValidate: true,
-      shouldDirty: true
-    });
+    setFormData(prev => ({
+      ...prev,
+      quantity: value
+    }));
   };
 
   const handleDescriptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setValue('description', e.target.value, {
-      shouldValidate: true,
-      shouldDirty: true
-    });
+    setFormData(prev => ({
+      ...prev,
+      description: e.target.value
+    }));
   };
 
-  // Handle form submission without using nested form
-  const handleFormSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    handleSubmit(updateItems)(e);
+  // Remove the form submission handler since we're handling click directly
+  const handleAddClick = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevent any form submission
+    e.stopPropagation(); // Stop event bubbling
+    updateItems();
   };
 
   if (isAdding) {
     return <LinearProgress />;
   }
-
-  const watchedDescription = watch('description');
 
   return (
     <Box sx={{ width: '100%' }}>
@@ -192,7 +247,7 @@ function Adjustments({ index = -1, setShowForm, adjustment }: AdjustmentsProps) 
             <ProductSelect
               label='Fuel'
               frontError={errors.product_id}
-              defaultValue={adjustment && productOptions.find((product: Product) => product.id === adjustment.product_id)}
+              value={formData.product}
               requiredProducts={products}
               onChange={handleProductChange}
             />
@@ -204,9 +259,9 @@ function Adjustments({ index = -1, setShowForm, adjustment }: AdjustmentsProps) 
               key={tanksKey}
               allowSubStores={true}
               label='Tank'
-              defaultValue={adjustment && tanks.find((tank: Tank) => tank.id === adjustment?.tank_id)}
+              value={getTankValue()} // Use value instead of defaultValue
               proposedOptions={productTanks.length ? (productTanks as any) : undefined}
-              frontError={errors?.tank_id as any}
+              frontError={errors.tank_id}
               onChange={handleTankChange}
             />
           </Div>
@@ -215,8 +270,8 @@ function Adjustments({ index = -1, setShowForm, adjustment }: AdjustmentsProps) 
           <Div sx={{ mt: 1 }}>
             <OperationSelector
               label='Operator'
-              frontError={errors?.operator}
-              defaultValue={adjustment?.operator}
+              frontError={errors.operator}
+              value={formData.operator}
               onChange={handleOperatorChange}
             />
           </Div>
@@ -226,9 +281,9 @@ function Adjustments({ index = -1, setShowForm, adjustment }: AdjustmentsProps) 
             <TextField
               size="small"
               fullWidth
-              defaultValue={adjustment?.quantity}
-              error={!!errors?.quantity}
-              helperText={errors?.quantity?.message}
+              value={formData.quantity || ''}
+              error={!!errors.quantity}
+              helperText={errors.quantity}
               label="Quantity"
               InputProps={{
                 inputComponent: CommaSeparatedField as any
@@ -244,9 +299,9 @@ function Adjustments({ index = -1, setShowForm, adjustment }: AdjustmentsProps) 
               fullWidth
               multiline={true}
               rows={2}
-              defaultValue={watchedDescription}
-              error={!!errors?.description}
-              helperText={errors?.description?.message}
+              value={formData.description || ''}
+              error={!!errors.description}
+              helperText={errors.description}
               label="Description"
               onChange={handleDescriptionChange}
             />
@@ -256,9 +311,9 @@ function Adjustments({ index = -1, setShowForm, adjustment }: AdjustmentsProps) 
           <LoadingButton
             loading={false}
             variant='contained'
-            type='submit' // This will now submit the parent form
             size='small'
             sx={{ marginBottom: 0.5 }}
+            onClick={handleAddClick}
           >
             {adjustment ? (
               <><CheckOutlined fontSize='small' /> Done</>

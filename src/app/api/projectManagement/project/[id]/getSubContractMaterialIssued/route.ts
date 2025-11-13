@@ -8,7 +8,7 @@ export async function GET(req: NextRequest, context: any) {
   const { headers, response } = await getAuthHeaders(req);
   if (response) return response;
 
-  const url = new URL(`${API_BASE}/project-subcontract/${params.id}/material-used`);
+  const url = new URL(`${API_BASE}/project-subcontract/${params.id}/material-issued`);
   req.nextUrl.searchParams.forEach((value, key) => url.searchParams.set(key, value));
 
   const res = await fetch(url.toString(), {
