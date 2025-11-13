@@ -14,7 +14,9 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions
+  DialogActions,
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
 import { DateTimePicker } from '@mui/x-date-pickers';
 import { useSnackbar } from 'notistack';
@@ -97,10 +99,14 @@ const SalesShiftForm: React.FC<SalesShiftFormProps> = ({
   const { activeStation } = useSalesStation();
   const [activeTab, setActiveTab] = useState(0);
 
+  // ✅ ADD RESPONSIVE HOOKS
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('md'));
+
   const shiftTeams = activeStation?.shift_teams || [];
   const fuelPumps = activeStation?.fuel_pumps || [];
-  const products = activeStation?.products || [];
-  const tanks = activeStation?.tanks || [];
+  const products = activeStation?.product || [];
+  const tanks = (activeStation as any)?.tanks || [];
 
   // ✅ ADD THE MISSING STATE HERE
   const [adjustments, setAdjustments] = useState<AdjustmentData[]>(salesShift?.adjustments || []);
@@ -233,8 +239,17 @@ const SalesShiftForm: React.FC<SalesShiftFormProps> = ({
       onClose={() => toggleOpen(false)} 
       maxWidth="lg" 
       fullWidth
+      // ✅ MAKE IT FULLSCREEN ON SMALL DEVICES
+      fullScreen={isSmallScreen}
       PaperProps={{
-        sx: { maxHeight: '90vh' }
+        sx: { 
+          maxHeight: isSmallScreen ? '100vh' : '90vh',
+          // ✅ IMPROVE MOBILE LAYOUT
+          ...(isSmallScreen && {
+            m: 0,
+            borderRadius: 0
+          })
+        }
       }}
     >
       {/* ✅ USE THE ENHANCED FORM CONTEXT */}
@@ -242,9 +257,9 @@ const SalesShiftForm: React.FC<SalesShiftFormProps> = ({
         <Box component="form" onSubmit={handleSubmit(onSubmit)}>
           
           {/* DIALOG TITLE - Contains Shift Team info and Tabs */}
-          <DialogTitle sx={{ p: 1 }}>
-            <Paper elevation={1} sx={{ p: 1 }}>
-              <Typography variant="h5" gutterBottom align="center">
+          <DialogTitle sx={{ p: isSmallScreen ? 1 : 1 }}>
+            <Paper elevation={1} sx={{ p: isSmallScreen ? 1 : 1 }}>
+              <Typography variant={isSmallScreen ? "h6" : "h5"} gutterBottom align="center">
                 Fuel Sales Shift
               </Typography>
 
@@ -321,8 +336,17 @@ const SalesShiftForm: React.FC<SalesShiftFormProps> = ({
           </DialogTitle>
 
           {/* DIALOG CONTENT - Contains Tab Contents */}
-          <DialogContent sx={{ p: 0, maxHeight: '50vh', overflow: 'auto' }}>
-            <Box sx={{ p: 2 }}>
+          <DialogContent sx={{ 
+            p: 0, 
+            maxHeight: isSmallScreen ? 'calc(100vh - 200px)' : '50vh', 
+            overflow: 'auto',
+            // ✅ IMPROVE MOBILE SCROLLING
+            ...(isSmallScreen && {
+              maxHeight: 'calc(100vh - 180px)',
+              WebkitOverflowScrolling: 'touch' // Smooth scrolling on iOS
+            })
+          }}>
+            <Box sx={{ p: isSmallScreen ? 1 : 2 }}>
               <SalesShiftTabs
                 salesShift={salesShift}
                 activeTab={activeTab}
@@ -335,10 +359,30 @@ const SalesShiftForm: React.FC<SalesShiftFormProps> = ({
 
           {/* DIALOG ACTIONS - Contains Navigation and Submit Buttons */}
           <DialogActions sx={{ p: 0 }}>
-            <Paper elevation={1} sx={{ p: 1.5, width: '100%' }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Paper elevation={1} sx={{ 
+              p: isSmallScreen ? 1 : 1.5, 
+              width: '100%',
+              // ✅ STICKY FOOTER ON MOBILE
+              ...(isSmallScreen && {
+                position: 'sticky',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                zIndex: 1
+              })
+            }}>
+              <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center',
+                flexDirection: isSmallScreen ? 'column' : 'row',
+                gap: isSmallScreen ? 1 : 0
+              }}>
                 {/* Previous Button */}
-                <Box>
+                <Box sx={{
+                  width: isSmallScreen ? '100%' : 'auto',
+                  order: isSmallScreen ? 2 : 1
+                }}>
                   {activeTab > 0 && (
                     <Button 
                       onClick={handlePrevious}
@@ -346,6 +390,7 @@ const SalesShiftForm: React.FC<SalesShiftFormProps> = ({
                       size="small"
                       startIcon={<ArrowBackIcon />}
                       disabled={isPending}
+                      fullWidth={isSmallScreen}
                     >
                       Previous
                     </Button>
@@ -353,12 +398,18 @@ const SalesShiftForm: React.FC<SalesShiftFormProps> = ({
                 </Box>
 
                 {/* Cancel and Next/Submit Buttons Grouped Together */}
-                <Box sx={{ display: 'flex', gap: 1 }}>
+                <Box sx={{ 
+                  display: 'flex', 
+                  gap: 1,
+                  width: isSmallScreen ? '100%' : 'auto',
+                  order: isSmallScreen ? 1 : 2
+                }}>
                   <Button 
                     onClick={() => toggleOpen(false)}
                     variant="outlined"
                     size="small"
                     disabled={isPending}
+                    fullWidth={isSmallScreen}
                   >
                     Cancel
                   </Button>
@@ -370,6 +421,7 @@ const SalesShiftForm: React.FC<SalesShiftFormProps> = ({
                       size="small"
                       endIcon={<ArrowForwardIcon />}
                       disabled={isPending}
+                      fullWidth={isSmallScreen}
                     >
                       Next
                     </Button>
@@ -379,6 +431,7 @@ const SalesShiftForm: React.FC<SalesShiftFormProps> = ({
                       variant="contained"
                       size="small"
                       disabled={isPending || !formValues.shift_team_id || !formValues.shift_start}
+                      fullWidth={isSmallScreen}
                     >
                       {salesShift ? 'Update' : 'Create'} Shift
                     </Button>
