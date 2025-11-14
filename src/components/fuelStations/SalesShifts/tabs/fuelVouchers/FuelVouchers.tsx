@@ -15,44 +15,11 @@ import { useLedgerSelect } from '@/components/accounts/ledgers/forms/LedgerSelec
 import { useStakeholderSelect } from '@/components/masters/stakeholders/StakeholderSelectProvider';
 import { useProductsSelect } from '@/components/productAndServices/products/ProductsSelectProvider';
 import StakeholderQuickAdd from '@/components/masters/stakeholders/StakeholderQuickAdd';
+import { Ledger } from '@/components/accounts/ledgers/LedgerType';
+import { Stakeholder } from '@/components/masters/stakeholders/StakeholderType';
+import { Product } from '@/components/productAndServices/products/ProductType';
+import { FuelVoucherData, ProductPrice } from '../../SalesShiftType';
 
-// Type definitions
-interface Stakeholder {
-  id: number;
-  name: string;
-  [key: string]: any;
-}
-
-interface Product {
-  id: number;
-  name: string;
-  [key: string]: any;
-}
-
-interface ProductPrice {
-  product_id: number;
-  price: number;
-  [key: string]: any;
-}
-
-interface Ledger {
-  id: number;
-  name: string;
-  [key: string]: any;
-}
-
-interface FuelVoucherData {
-  product_id?: number;
-  quantity?: number;
-  amount?: number;
-  reference?: string | null;
-  narration?: string | null;
-  stakeholder?: Stakeholder | null;
-  stakeholder_id?: number | null;
-  expense_ledger?: Ledger | null;
-  expense_ledger_id?: number | null;
-  product?: Product | null;
-}
 
 interface FuelVouchersProps {
   index?: number;
@@ -75,7 +42,7 @@ interface FormData {
 }
 
 function FuelVouchers({ index = -1, setShowForm = undefined, fuelVoucher, productPrices }: FuelVouchersProps) {
-  const iu: Stakeholder = { id: 0, name: 'Calibration/Internal use' };
+  const iu = { id: 0, name: 'Calibration/Internal use' } as Partial<Stakeholder>;
   const [isAdding, setIsAdding] = useState<boolean>(false);
   const { products, fuelVouchers = [], setFuelVouchers } = useFormContext() as UseFormReturn<FieldValues> & {
     products?: Product[];
@@ -283,7 +250,7 @@ function FuelVouchers({ index = -1, setShowForm = undefined, fuelVoucher, produc
               <StakeholderSelector
                 label='Client'
                 initialOptions={[iu as any]}
-                defaultValue={formData.stakeholder}
+                defaultValue={formData.stakeholder_id}
                 frontError={errors.stakeholder_id ? { message: errors.stakeholder_id } : undefined}
                 addedStakeholder={addedStakeholder}
                 onChange={handleStakeholderChange}
@@ -316,7 +283,7 @@ function FuelVouchers({ index = -1, setShowForm = undefined, fuelVoucher, produc
               <LedgerSelect
                 label={'Expense Ledger'}
                 frontError={errors.expense_ledger_id ? { message: errors.expense_ledger_id } : undefined}
-                defaultValue={formData.expense_ledger}
+                defaultValue={formData.expense_ledger ? [formData.expense_ledger] : undefined}
                 onChange={handleExpenseLedgerChange}
               />
             </Div>

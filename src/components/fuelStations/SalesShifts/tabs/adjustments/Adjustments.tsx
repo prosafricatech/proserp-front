@@ -259,9 +259,8 @@ function Adjustments({ index = -1, setShowForm, adjustment }: AdjustmentsProps) 
               key={tanksKey}
               allowSubStores={true}
               label='Tank'
-              value={getTankValue()} // Use value instead of defaultValue
-              proposedOptions={productTanks.length ? (productTanks as any) : undefined}
-              frontError={errors.tank_id}
+              defaultValue={getTankValue()}
+              frontError={errors.tank_id ? null : undefined}           
               onChange={handleTankChange}
             />
           </Div>
