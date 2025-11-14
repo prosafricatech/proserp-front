@@ -12,19 +12,7 @@ export async function GET(request: NextRequest) {
   const keyword = searchParams.get('keyword') || '';
   const page = searchParams.get('page') || '1';
   const limit = searchParams.get('limit') || '10';
-<<<<<<< HEAD
   const stationId = searchParams.get('stationId') || '';
-  
-  const queryParams = new URLSearchParams({
-    keyword,
-    page,
-    limit,
-    ...(stationId && { stationId })
-  }).toString();
-
-  const res = await fetch(`${API_BASE}/fuel-stations/${stationId}/sales-shifts?${queryParams}`, {
-=======
-  const stationId = searchParams.get('stationId') || ''; // HII NDIO ULIKUWA NAYO SAWA!
 
   if (!stationId) {
     return new Response(
@@ -33,9 +21,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // Tumia stationId moja kwa moja (sio kutoka queryParams string)
   const res = await fetch(`${API_BASE}/fuel-stations/${stationId}/sales-shifts`, {
->>>>>>> 029f1171b30a81be30531107a51da2d7a38b7e5f
     headers,
     credentials: 'include',
   });

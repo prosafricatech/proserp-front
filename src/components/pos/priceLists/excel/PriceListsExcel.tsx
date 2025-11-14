@@ -181,7 +181,6 @@ const PriceListsExcel: React.FC<PriceListsExcelProps> = ({ setOpenExcelDialog })
                             size="small"
                             onClick={downloadExcelTemplate}
                             loading={isDownloadingTemplate}
-                            disabled
                             variant="outlined"
                             color="primary"
                         >
