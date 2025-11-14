@@ -6,31 +6,11 @@ import React, { useState } from 'react'
 import { useFormContext } from 'react-hook-form';
 import FuelVouchers from './FuelVouchers';
 import { useProductsSelect } from '@/components/productAndServices/products/ProductsSelectProvider';
+import { Stakeholder } from '@/components/masters/stakeholders/StakeholderType';
+import { Ledger } from '@/components/accounts/ledgers/LedgerType';
+import { Product } from '@/components/productAndServices/products/ProductType';
+import { ProductPrice } from '../../SalesShiftType';
 
-// Type definitions
-interface Stakeholder {
-  id: number;
-  name: string;
-  [key: string]: any;
-}
-
-interface Product {
-  id: number;
-  name: string;
-  [key: string]: any;
-}
-
-interface Ledger {
-  id: number;
-  name: string;
-  [key: string]: any;
-}
-
-interface ProductPrice {
-  product_id: number;
-  price: number;
-  [key: string]: any;
-}
 
 interface FuelVoucherData {
   id?: number;
@@ -160,7 +140,7 @@ function FuelVouchersItemRow({ fuelVoucher, index, productPrices }: FuelVouchers
                 ) : (
                     <FuelVouchers 
                         productPrices={productPrices} 
-                        fuelVoucher={fuelVoucher} 
+                        fuelVoucher={fuelVoucher as any} 
                         setShowForm={setShowForm} 
                         index={index}
                     />

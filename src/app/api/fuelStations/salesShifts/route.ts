@@ -8,21 +8,21 @@ export async function GET(request: NextRequest) {
   if (response) return response;
 
   const { searchParams } = new URL(request.url);
+  
   const keyword = searchParams.get('keyword') || '';
   const page = searchParams.get('page') || '1';
   const limit = searchParams.get('limit') || '10';
-  const stationId = searchParams.get('stationId') || '';
-  
-  // Build query parameters
-  const queryParams = new URLSearchParams({
-    keyword,
-    page,
-    limit,
-    ...(stationId && { stationId }) // Only include stationId if it exists
-  }).toString();
+  const stationId = searchParams.get('stationId') || ''; // HII NDIO ULIKUWA NAYO SAWA!
 
-  // Fixed URL - using the stationId from searchParams
-  const res = await fetch(`${API_BASE}/fuel-stations/${queryParams.stationId}/sales-shifts`, {
+  if (!stationId) {
+    return new Response(
+      JSON.stringify({ error: 'stationId is required' }),
+      { status: 400, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
+  // Tumia stationId moja kwa moja (sio kutoka queryParams string)
+  const res = await fetch(`${API_BASE}/fuel-stations/${stationId}/sales-shifts`, {
     headers,
     credentials: 'include',
   });

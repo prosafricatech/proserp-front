@@ -47,6 +47,14 @@ export interface LedgerAmount {
   ledger?: Ledger;
 }
 
+export interface Adjustments {
+  id?: number;
+  ledger_id?: number;
+  amount?: number;
+  narration?: string;
+  ledger?: Ledger;
+}
+
 export interface SalesShift {
   id?: number;
   shift_team_id: number;
@@ -64,6 +72,7 @@ export interface SalesShift {
   created_at?: string;
   updated_at?: string;
   users: User[];
+  adjustments?: Adjustments[];
 }
 export interface ShiftTeam {
   id: number;
@@ -123,4 +132,23 @@ export interface SalesShift {
   other_ledgers: LedgerAmount[];
   created_at?: string;
   updated_at?: string;
+}
+
+export interface ProductPrice {
+  product_id: number;
+  price: number;
+  [key: string]: any;
+}
+
+export interface FuelVoucherData {
+  product_id?: number;
+  quantity?: number;
+  amount?: number;
+  reference?: string | null;
+  narration?: string | null;
+  stakeholder?: Stakeholder | null;
+  stakeholder_id?: number | null;
+  expense_ledger?: Ledger | null;
+  expense_ledger_id?: number | null;
+  product?: Product | null;
 }
