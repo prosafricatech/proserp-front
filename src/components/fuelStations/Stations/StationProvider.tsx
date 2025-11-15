@@ -51,7 +51,6 @@ const StationProvider: React.FC<StationProviderProps> = ({ children }) => {
 
       try {
         setIsLoading(true);
-        // PASS USER ID to the service
         const response = await stationServices.getUserStations({ 
           userId: userId 
         });
@@ -71,11 +70,11 @@ const StationProvider: React.FC<StationProviderProps> = ({ children }) => {
 
         setUserStations(stations);
         
-        // Auto-select first station if available
-        if (stations.length > 0 && !activeStation) {
-          setActiveStation(stations[0]);
-        }
+        // REMOVED the auto-selection logic
+        // Let the user explicitly select a station
+        
       } catch (error) {
+        console.error('Error fetching user stations:', error);
         setUserStations([]);
       } finally {
         setIsLoading(false);

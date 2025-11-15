@@ -64,24 +64,17 @@ const StationSelector = ({
     enabled: !!userId // Only enable if userId exists
   });
 
-  const [selectedStation, setSelectedStation] = useState<Station | Station[] | null>(null);
+  const [selectedStation, setSelectedStation] = useState<Station | Station[] | null>(defaultValue);
 
+  // Only set default value on initial load, don't auto-select
   useEffect(() => {
-    let newValue: Station | Station[] | null = null;
-
     if (defaultValue !== null) {
-      newValue = defaultValue;
-    } else if (stations.length === 1 && !multiple) {
-      newValue = stations[0];
-    } else if (stations.length > 0 && multiple) {
-      newValue = [...stations];
-    } else {
-      newValue = multiple ? [] : null;
+      setSelectedStation(defaultValue);
+      // Don't call onChange here - let the parent handle defaults
     }
+  }, [defaultValue]);
 
-    setSelectedStation(newValue);
-    onChange(newValue);
-  }, [defaultValue, multiple, stations]);
+  // Remove the auto-selection logic that was causing the issue
 
   if (isPending) {
     return <LinearProgress />;
@@ -141,7 +134,7 @@ const StationSelector = ({
       })}
       onChange={(e, newValue) => {
         setSelectedStation(newValue);
-        onChange(newValue);
+        onChange(newValue); // Only call onChange on user interaction
       }}
     />
   );

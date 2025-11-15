@@ -165,7 +165,7 @@ const RqList: React.FC<RqListProps> = ({ activeStation }) => {
                   </Grid>
                 </>
               )}
-              <Grid size={{ xs: 1.5, md: 1, lg: 0.5 }}>
+              <Grid size={{ xs: 1.5, md: 1, lg: 0.5 }}mt={-3}>
                 <Tooltip title={!openFilters ? 'Filter' : 'Clear Filters'}>
                   <IconButton onClick={() => {
                     setOpenFilters(!openFilters);
@@ -186,7 +186,7 @@ const RqList: React.FC<RqListProps> = ({ activeStation }) => {
                 </Tooltip>
               </Grid>
               <Grid size={{ xs: 10.5, md: 11, lg: 5 }}>
-                <Stack direction="row">
+                <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1} mt={-3}>
                   <JumboSearch
                     onChange={handleOnChange}
                     value={queryOptions.queryParams.keyword}

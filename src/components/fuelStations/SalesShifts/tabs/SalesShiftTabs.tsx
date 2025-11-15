@@ -38,7 +38,6 @@ const SalesShiftTabs: React.FC<SalesShiftTabsProps> = ({
   if (showTabsOnly) {
     return (
       <Grid size={12}>
-        <Divider />
         <Tabs
           value={activeTab}
           onChange={(e, newValue: number) => onTabChange(newValue)}
@@ -94,7 +93,6 @@ const SalesShiftTabs: React.FC<SalesShiftTabsProps> = ({
   return (
     <>
       <Grid size={12}>
-        <Divider />
         <Tabs
           value={activeTab}
           onChange={(e, newValue: number) => onTabChange(newValue)}

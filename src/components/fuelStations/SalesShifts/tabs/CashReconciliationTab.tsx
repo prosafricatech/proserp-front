@@ -6,11 +6,13 @@ import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   TextField, Button, IconButton
 } from "@mui/material";
-import { useFormContext, useFieldArray } from "react-hook-form";
+import { useFormContext, useFieldArray, Controller } from "react-hook-form";
 import { Add as AddIcon, Delete as DeleteIcon } from "@mui/icons-material";
 import { SalesShift } from "../SalesShiftType";
 import { useSalesStation } from "../../Stations/StationProvider";
 import { useProductsSelect } from "@/components/productAndServices/products/ProductsSelectProvider";
+import LedgerSelect from "@/components/accounts/ledgers/forms/LedgerSelect";
+import { useLedgerSelect } from "@/components/accounts/ledgers/forms/LedgerSelectProvider";
 
 interface CashReconciliationTabProps {
   salesShift?: SalesShift;
@@ -34,7 +36,14 @@ interface FuelVoucherSummary {
 }
 
 interface CashDistribution {
-  ledgerName: string;
+  ledger: {
+    id: number;
+    name: string;
+    code?: string | null;
+    ledger_group_id?: number;
+    alias?: string | null;
+    nature_id?: number;
+  } | null;
   amount: number;
 }
 
@@ -42,6 +51,7 @@ const CashReconciliationTab: React.FC<CashReconciliationTabProps> = ({ salesShif
   const { watch, setValue, control } = useFormContext();
   const { activeStation } = useSalesStation();
   const { productOptions } = useProductsSelect();
+  const { ungroupedLedgerOptions } = useLedgerSelect();
 
   const fuelPumps = activeStation?.fuel_pumps || [];
   const pumpReadings = watch("pump_readings") || [];
@@ -195,6 +205,20 @@ const CashReconciliationTab: React.FC<CashReconciliationTabProps> = ({ salesShif
     };
   }, [cashDistributions, cashRemaining]);
 
+  // Get used ledger IDs to prevent duplicates
+  const usedLedgerIds = useMemo(() => {
+    return cashDistributions
+      .filter((dist: CashDistribution, index: number) => index > 0 && dist.ledger)
+      .map((dist: CashDistribution) => dist.ledger!.id);
+  }, [cashDistributions]);
+
+  // Filter available ledgers (exclude already selected ones)
+  const availableLedgers = useMemo(() => {
+    return ungroupedLedgerOptions.filter(ledger => 
+      !usedLedgerIds.includes(ledger.id)
+    );
+  }, [ungroupedLedgerOptions, usedLedgerIds]);
+
   // Format currency
   const formatCurrency = (amount: number) => {
     return amount.toLocaleString(undefined, {
@@ -204,10 +228,10 @@ const CashReconciliationTab: React.FC<CashReconciliationTabProps> = ({ salesShif
   };
 
   // Update cash distribution
-  const updateCashDistribution = (index: number, field: 'ledgerName' | 'amount', value: string | number) => {
+  const updateCashDistribution = (index: number, field: 'ledger' | 'amount', value: any) => {
     const updatedDistributions = [...cashDistributions];
     if (!updatedDistributions[index]) {
-      updatedDistributions[index] = { ledgerName: '', amount: 0 };
+      updatedDistributions[index] = { ledger: null, amount: 0 };
     }
     updatedDistributions[index] = {
       ...updatedDistributions[index],
@@ -218,10 +242,12 @@ const CashReconciliationTab: React.FC<CashReconciliationTabProps> = ({ salesShif
 
   // Add new cash distribution
   const addCashDistribution = () => {
-    append({
-      ledgerName: "",
-      amount: 0
-    });
+    if (availableLedgers.length > 0) {
+      append({
+        ledger: null,
+        amount: 0
+      });
+    }
   };
 
   // Remove cash distribution (cannot remove main ledger)
@@ -235,7 +261,11 @@ const CashReconciliationTab: React.FC<CashReconciliationTabProps> = ({ salesShif
   React.useEffect(() => {
     if (cashDistributions.length === 0 && cashRemaining !== 0) {
       setValue("cash_distributions", [{
-        ledgerName: "Main Ledger",
+        ledger: {
+          id: 0,
+          name: "Main Ledger",
+          code: "MAIN"
+        },
         amount: cashRemaining
       }]);
     }
@@ -246,7 +276,14 @@ const CashReconciliationTab: React.FC<CashReconciliationTabProps> = ({ salesShif
     if (cashDistributions.length > 0) {
       const updatedDistributions = [...cashDistributions];
       if (!updatedDistributions[0]) {
-        updatedDistributions[0] = { ledgerName: "Main Ledger", amount: 0 };
+        updatedDistributions[0] = { 
+          ledger: {
+            id: 0,
+            name: "Main Ledger",
+            code: "MAIN"
+          }, 
+          amount: 0 
+        };
       }
       updatedDistributions[0] = {
         ...updatedDistributions[0],
@@ -264,7 +301,7 @@ const CashReconciliationTab: React.FC<CashReconciliationTabProps> = ({ salesShif
         <Grid size={{ xs: 6 }}>
           <Card>
             <CardContent sx={{ p: 2 }}>
-              <Typography variant="h6" sx={{ mb: 1, fontWeight: 'bold' }}>
+              <Typography variant="h6" sx={{ mb: 1, fontWeight: 'bold' }}align="center">
                 Total Products Amount
               </Typography>
               <Divider sx={{ mb: 1 }} />
@@ -272,7 +309,7 @@ const CashReconciliationTab: React.FC<CashReconciliationTabProps> = ({ salesShif
               <TableContainer component={Paper} variant="outlined">
                 <Table size="small">
                   <TableHead>
-                    <TableRow sx={{ backgroundColor: 'grey.50' }}>
+                    <TableRow sx={{ backgroundColor: 'white' }}>
                       <TableCell sx={{ fontWeight: 'bold' }}>Product Name</TableCell>
                       <TableCell align="right" sx={{ fontWeight: 'bold' }}>Quantity</TableCell>
                       <TableCell align="right" sx={{ fontWeight: 'bold' }}>Price</TableCell>
@@ -291,8 +328,8 @@ const CashReconciliationTab: React.FC<CashReconciliationTabProps> = ({ salesShif
                       </TableRow>
                     ))}
                     {/* Grand Total Row */}
-                    <TableRow sx={{ backgroundColor: 'grey.100' }}>
-                      <TableCell colSpan={3} align="right" sx={{ fontWeight: 'bold' }}>
+                    <TableRow sx={{ backgroundColor: 'white' }}>
+                      <TableCell colSpan={3} align="left" sx={{ fontWeight: 'bold' }}>
                         Grand Total:
                       </TableCell>
                       <TableCell align="right" sx={{ fontWeight: 'bold' }}>
@@ -310,7 +347,7 @@ const CashReconciliationTab: React.FC<CashReconciliationTabProps> = ({ salesShif
         <Grid size={{ xs: 6 }}>
           <Card>
             <CardContent sx={{ p: 2 }}>
-              <Typography variant="h6" sx={{ mb: 1, fontWeight: 'bold' }}>
+              <Typography variant="h6" sx={{ mb: 1, fontWeight: 'bold' }}align="center">
                 Fuel Vouchers
               </Typography>
               <Divider sx={{ mb: 1 }} />
@@ -318,7 +355,7 @@ const CashReconciliationTab: React.FC<CashReconciliationTabProps> = ({ salesShif
               <TableContainer component={Paper} variant="outlined">
                 <Table size="small">
                   <TableHead>
-                    <TableRow sx={{ backgroundColor: 'grey.50' }}>
+                    <TableRow sx={{ backgroundColor: 'white' }}>
                       <TableCell sx={{ fontWeight: 'bold' }}>Product Name</TableCell>
                       <TableCell align="right" sx={{ fontWeight: 'bold' }}>Quantity</TableCell>
                       <TableCell align="right" sx={{ fontWeight: 'bold' }}>Price</TableCell>
@@ -338,7 +375,7 @@ const CashReconciliationTab: React.FC<CashReconciliationTabProps> = ({ salesShif
                     ))}
                     {/* Grand Total Row */}
                     <TableRow sx={{ backgroundColor: 'grey.100' }}>
-                      <TableCell colSpan={3} align="right" sx={{ fontWeight: 'bold' }}>
+                      <TableCell colSpan={3} align="left" sx={{ fontWeight: 'bold' }}>
                         Grand Total:
                       </TableCell>
                       <TableCell align="right" sx={{ fontWeight: 'bold' }}>
@@ -356,7 +393,7 @@ const CashReconciliationTab: React.FC<CashReconciliationTabProps> = ({ salesShif
         <Grid size={{ xs: 6 }}>
           <Card>
             <CardContent sx={{ p: 2 }}>
-              <Typography variant="h6" sx={{ mb: 1, fontWeight: 'bold' }}>
+              <Typography variant="h6" sx={{ mb: 1, fontWeight: 'bold' }}align="center">
                 Final Summary
               </Typography>
               <Divider sx={{ mb: 1 }} />
@@ -376,7 +413,7 @@ const CashReconciliationTab: React.FC<CashReconciliationTabProps> = ({ salesShif
                         {formatCurrency(fuelVouchersGrandTotal)}
                       </TableCell>
                     </TableRow>
-                    <TableRow sx={{ backgroundColor: 'grey.100' }}>
+                    <TableRow sx={{ backgroundColor: 'white' }}>
                       <TableCell sx={{ fontWeight: 'bold' }}>Cash Remaining</TableCell>
                       <TableCell align="right" sx={{ fontWeight: 'bold', color: cashRemaining >= 0 ? 'success.main' : 'error.main' }}>
                         {formatCurrency(cashRemaining)}
@@ -393,97 +430,107 @@ const CashReconciliationTab: React.FC<CashReconciliationTabProps> = ({ salesShif
         <Grid size={{ xs: 12 }}>
           <Card>
             <CardContent sx={{ p: 2 }}>
-              <Typography variant="h6" sx={{ mb: 1, fontWeight: 'bold' }}>
+              <Typography variant="h6" sx={{ mb: 1, fontWeight: 'bold' }}align="center">
                 Cash Distribution
               </Typography>
               <Divider sx={{ mb: 1 }} />
               
               <Box sx={{ mb: 1 }}>
-                {/* Main Ledger Row */}
+                {/* Main Ledger Row - Always visible as placeholder */}
                 <Grid container spacing={1} sx={{ mb: 1, alignItems: 'center' }}>
                   <Grid size={{ xs: 6 }}>
                     <TextField
                       fullWidth
                       size="small"
+                      label="Ledger"
                       value="Main Ledger"
                       disabled
                       variant="outlined"
                       sx={{
                         '& .MuiInputBase-input': {
                           fontWeight: 'bold',
-                          backgroundColor: 'grey.50'
+                          backgroundColor: 'white'
                         }
                       }}
                     />
                   </Grid>
                   <Grid size={{ xs: 4 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography sx={{ fontWeight: 'bold', color: 'text.secondary', minWidth: '20px', textAlign: 'center' }}>
-                        =
-                      </Typography>
-                      <TextField
-                        fullWidth
-                        size="small"
-                        type="number"
-                        value={cashDistributionSummary.mainLedgerRemaining}
-                        disabled
-                        variant="outlined"
-                        inputProps={{ 
-                          style: { 
-                            textAlign: 'right', 
-                            fontWeight: 'bold',
-                            backgroundColor: 'grey.50'
-                          }
-                        }}
-                      />
-                    </Box>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      type="number"
+                      label="Amount"
+                      value={cashDistributionSummary.mainLedgerRemaining}
+                      disabled
+                      variant="outlined"
+                      inputProps={{ 
+                        style: { 
+                          textAlign: 'right', 
+                          fontWeight: 'bold',
+                          backgroundColor: 'white'
+                        }
+                      }}
+                    />
                   </Grid>
                   <Grid size={{ xs: 2 }}>
-                    {/* Empty space for alignment with delete buttons */}
+                    {/* Empty space for alignment */}
                   </Grid>
                 </Grid>
 
                 {/* Additional Ledgers */}
                 {fields.slice(1).map((field, index) => {
                   const actualIndex = index + 1;
+                  const distribution = cashDistributions[actualIndex];
+                  
                   return (
                     <Grid key={field.id} container spacing={1} sx={{ mb: 1, alignItems: 'center' }}>
                       <Grid size={{ xs: 6 }}>
-                        <TextField
-                          fullWidth
-                          size="small"
-                          value={cashDistributions[actualIndex]?.ledgerName || ""}
-                          onChange={(e) => updateCashDistribution(actualIndex, 'ledgerName', e.target.value)}
-                          placeholder="Enter ledger name"
-                          variant="outlined"
+                        <Controller
+                          name={`cash_distributions.${actualIndex}.ledger`}
+                          control={control}
+                          render={({ field: controllerField }) => (
+                           <LedgerSelect
+                            {...controllerField}
+                            label="Ledger"
+                            value={controllerField.value || null}
+                            onChange={(newValue) => {
+                              controllerField.onChange(newValue);
+                              if (newValue) {
+                                setTimeout(() => {
+                                  const amountInput = document.getElementById(`amount-${actualIndex}`);
+                                  if (amountInput) amountInput.focus();
+                                }, 100);
+                              }
+                            }}
+                          />
+                          )}
                         />
                       </Grid>
                       <Grid size={{ xs: 4 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Typography sx={{ fontWeight: 'bold', color: 'text.secondary', minWidth: '20px', textAlign: 'center' }}>
-                            =
-                          </Typography>
-                          <TextField
-                            fullWidth
-                            size="small"
-                            type="number"
-                            value={cashDistributions[actualIndex]?.amount || 0}
-                            onChange={(e) => updateCashDistribution(actualIndex, 'amount', parseFloat(e.target.value) || 0)}
-                            placeholder="0.00"
-                            variant="outlined"
-                            inputProps={{ 
-                              min: 0,
-                              step: "0.01",
-                              style: { textAlign: 'right' }
-                            }}
-                          />
-                        </Box>
+                        <TextField
+                          id={`amount-${actualIndex}`}
+                          fullWidth
+                          size="small"
+                          type="number"
+                          label="Amount"
+                          value={distribution?.amount || 0}
+                          onChange={(e) => updateCashDistribution(actualIndex, 'amount', parseFloat(e.target.value) || 0)}
+                          placeholder="0.00"
+                          variant="outlined"
+                          inputProps={{ 
+                            min: 0,
+                            step: "0.01",
+                            style: { textAlign: 'right' }
+                          }}
+                          disabled={!distribution?.ledger}
+                        />
                       </Grid>
                       <Grid size={{ xs: 2 }}>
                         <IconButton
                           size="small"
                           onClick={() => removeCashDistribution(actualIndex)}
                           color="error"
+                          sx={{ mt: 0.5 }}
                         >
                           <DeleteIcon fontSize="small" />
                         </IconButton>
@@ -493,15 +540,15 @@ const CashReconciliationTab: React.FC<CashReconciliationTabProps> = ({ salesShif
                 })}
 
                 {/* Add Button */}
-                <Box sx={{ display: 'flex', justifyContent: 'flex-start', mt: 1 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
                   <Button
                     startIcon={<AddIcon />}
                     onClick={addCashDistribution}
                     size="small"
                     variant="outlined"
-                    sx={{ fontSize: '0.75rem' }}
+                    disabled={availableLedgers.length === 0}
                   >
-                    Add Ledger
+                    Add
                   </Button>
                 </Box>
               </Box>
