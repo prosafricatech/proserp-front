@@ -65,7 +65,7 @@ const StationListItem = React.memo(({ station, onClick }: StationListItemProps) 
       <Divider />
       <Grid
         container
-        spacing={1}
+        spacing={2}
         alignItems="center"
         px={2}
         py={1}
@@ -79,7 +79,7 @@ const StationListItem = React.memo(({ station, onClick }: StationListItemProps) 
         onClick={() => onClick?.(station)}
       >
         {/* Station Name */}
-        <Grid size={{ xs: 12, md: 3 }}>
+        <Grid size={{ xs: 12, md: 2.5 }}>
           <Tooltip title="Station Name">
             <Typography variant="subtitle1" noWrap>
               {station.name}
@@ -87,54 +87,49 @@ const StationListItem = React.memo(({ station, onClick }: StationListItemProps) 
           </Tooltip>
         </Grid>
 
-        {/* Address */}
-        <Grid size={{ xs: 12, md: 2 }}>
-          <Tooltip title="Address">
-            <Typography variant="body2" noWrap>
-              {station.address || 'No address'}
-            </Typography>
+        {/* Fuel Pump Badge */}
+        <Grid size={{ xs: 12, md: 1.5 }} container justifyContent="center">
+          <Tooltip title="Fuel Pumps">
+            <StyledCountBadge
+              badgeContent={fuelPumpCount}
+              color="primary"
+            >
+              <LocalGasStationIcon fontSize="small" />
+            </StyledCountBadge>
           </Tooltip>
         </Grid>
 
-        {/* Badges Section */}
-        <Grid size={{ xs: 12, md: 5 }} container justifyContent="flex-end">
-          <Stack
-            direction="row"
-            spacing={1}
-            alignItems="center"
-            flexWrap="wrap"
-            useFlexGap
-          >
-            {/* Fuel Pumps Badge */}
-            <Tooltip title="Fuel Pumps">
-              <StyledCountBadge
-                badgeContent={fuelPumpCount}
-                color="primary"
-              >
-                <LocalGasStationIcon fontSize="small" />
-              </StyledCountBadge>
-            </Tooltip>
+        {/* Tanks Badge */}
+        <Grid size={{ xs: 12, md: 1.5 }} container justifyContent="center">
+          <Tooltip title="Tanks">
+            <StyledCountBadge
+              badgeContent={uniqueTankCount}
+              color="primary"
+            >
+              <PropaneTankIcon fontSize="small" />
+            </StyledCountBadge>
+          </Tooltip>
+        </Grid>
 
-            {/* Tanks Badge */}
-            <Tooltip title="Tanks">
-              <StyledCountBadge
-                badgeContent={uniqueTankCount}
-                color="primary"
-              >
-                <PropaneTankIcon fontSize="small" />
-              </StyledCountBadge>
-            </Tooltip>
+        {/* Users Badge */}
+        <Grid size={{ xs: 12, md: 1.5 }} container justifyContent="center">
+          <Tooltip title="Users">
+            <StyledCountBadge
+              badgeContent={userCount}
+              color="primary"
+            >
+              <PeopleIcon fontSize="small" />
+            </StyledCountBadge>
+          </Tooltip>
+        </Grid>
 
-            {/* Users Badge */}
-            <Tooltip title="Users">
-              <StyledCountBadge
-                badgeContent={userCount}
-                color="primary"
-              >
-                <PeopleIcon fontSize="small" />
-              </StyledCountBadge>
-            </Tooltip>
-          </Stack>
+        {/* Address */}
+        <Grid size={{ xs: 12, md: 3 }} textAlign="end">
+          <Tooltip title="Address">
+            <Typography variant="body2" noWrap>
+              {station.address || ''}
+            </Typography>
+          </Tooltip>
         </Grid>
 
         {/* Action Menu */}

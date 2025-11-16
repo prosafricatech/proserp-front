@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Divider, Grid, Typography } from '@mui/material';
+import { Alert, Divider, Grid, Typography } from '@mui/material';
 import JumboCardQuick from '@jumbo/components/JumboCardQuick/JumboCardQuick';
 import ProductsProvider from '@/components/productAndServices/products/ProductsProvider';
 import ProductsSelectProvider from '@/components/productAndServices/products/ProductsSelectProvider';
@@ -28,16 +28,15 @@ const Toolbar = () => {
           }}
         />
       </Grid>
-      <Grid size={12}>
-        <Divider />
-      </Grid>
     </Grid>
   );
 };
 
-function SalesShifts() {
+const SalesShiftContent = () => {
+  const { activeStation } = useSalesStation(); 
+
   return (
-    <StationProvider>
+    <>
       <Typography variant={'h4'} mb={2}>
         Sales Shifts
       </Typography>
@@ -45,16 +44,30 @@ function SalesShifts() {
         sx={{ height: '100%' }}
         title={<Toolbar />}
       >
-        <ProductsProvider>
-          <ProductsSelectProvider>
-            <LedgerSelectProvider>
-              <StakeholderSelectProvider type='customers'>
-                <SalesShiftList/>
-              </StakeholderSelectProvider>
-            </LedgerSelectProvider>
-          </ProductsSelectProvider>
-        </ProductsProvider>
+        {activeStation ? (
+          <ProductsProvider>
+            <ProductsSelectProvider>
+              <LedgerSelectProvider>
+                <StakeholderSelectProvider type='customers'>
+                  <SalesShiftList/>
+                </StakeholderSelectProvider>
+              </LedgerSelectProvider>
+            </ProductsSelectProvider>
+          </ProductsProvider>
+        ) : (
+          <Alert severity='info' variant='outlined' sx={{ mt: -3 }}>
+            Please select a station to view sales shifts
+          </Alert>
+        )}
       </JumboCardQuick>
+    </>
+  );
+};
+
+function SalesShifts() {
+  return (
+    <StationProvider>
+      <SalesShiftContent /> 
     </StationProvider>
   );
 }

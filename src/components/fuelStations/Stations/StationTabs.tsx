@@ -29,7 +29,6 @@ const StationTabs: React.FC<StationTabsProps> = ({
     PERMISSIONS.FUEL_STATIONS_UPDATE,
   ]);
 
-  // ✅ now using parent form context
   const { formState: { errors } } = useFormContext();
 
   return (

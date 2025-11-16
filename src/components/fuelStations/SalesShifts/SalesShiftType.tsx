@@ -141,7 +141,7 @@ export interface ProductPrice {
 }
 
 export interface FuelVoucherData {
-  product_id?: number;
+  product_id?: number | null;
   quantity?: number;
   amount?: number;
   reference?: string | null;

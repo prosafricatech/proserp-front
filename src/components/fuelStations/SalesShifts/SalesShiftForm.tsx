@@ -38,7 +38,6 @@ interface SalesShiftFormProps {
   open: boolean;
 }
 
-// Add these interfaces for adjustments and fuel vouchers
 interface AdjustmentData {
   id?: number;
   product_id?: number;
@@ -99,7 +98,6 @@ const SalesShiftForm: React.FC<SalesShiftFormProps> = ({
   const { activeStation } = useSalesStation();
   const [activeTab, setActiveTab] = useState(0);
 
-  // ✅ ADD RESPONSIVE HOOKS
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('md'));
 
@@ -108,7 +106,6 @@ const SalesShiftForm: React.FC<SalesShiftFormProps> = ({
   const products = activeStation?.product || [];
   const tanks = (activeStation as any)?.tanks || [];
 
-  // ✅ ADD THE MISSING STATE HERE
   const [adjustments, setAdjustments] = useState<AdjustmentData[]>(salesShift?.adjustments || []);
   const [fuelVouchers, setFuelVouchers] = useState<FuelVoucherData[]>(salesShift?.fuel_vouchers || []);
 
@@ -133,7 +130,6 @@ const SalesShiftForm: React.FC<SalesShiftFormProps> = ({
 
   const { watch, setValue, handleSubmit, formState: { isSubmitting, errors } } = methods;
 
-  // Watch form values
   const formValues = watch();
 
   const { mutate: createSalesShift, isPending: isCreating } = useMutation({
@@ -162,7 +158,6 @@ const SalesShiftForm: React.FC<SalesShiftFormProps> = ({
 
   const isPending = isCreating || isUpdating || isSubmitting;
 
-  // Handle tab change
   const handleTabChange = (newValue: number) => {
     setActiveTab(newValue);
   };
@@ -220,10 +215,8 @@ const SalesShiftForm: React.FC<SalesShiftFormProps> = ({
     }
   }, [open, methods]);
 
-  // ✅ CREATE THE ENHANCED FORM CONTEXT
   const formContextValue = {
     ...methods,
-    // Provide the state and setters to all child components
     adjustments,
     setAdjustments,
     fuelVouchers, 
@@ -239,12 +232,10 @@ const SalesShiftForm: React.FC<SalesShiftFormProps> = ({
       onClose={() => toggleOpen(false)} 
       maxWidth="lg" 
       fullWidth
-      // ✅ MAKE IT FULLSCREEN ON SMALL DEVICES
       fullScreen={isSmallScreen}
       PaperProps={{
         sx: { 
           maxHeight: isSmallScreen ? '100vh' : '90vh',
-          // ✅ IMPROVE MOBILE LAYOUT
           ...(isSmallScreen && {
             m: 0,
             borderRadius: 0
@@ -252,19 +243,18 @@ const SalesShiftForm: React.FC<SalesShiftFormProps> = ({
         }
       }}
     >
-      {/* ✅ USE THE ENHANCED FORM CONTEXT */}
       <FormProvider {...formContextValue}>
         <Box component="form" onSubmit={handleSubmit(onSubmit)}>
           
           {/* DIALOG TITLE - Contains Shift Team info and Tabs */}
           <DialogTitle sx={{ p: isSmallScreen ? 1 : 1 }}>
-            <Paper elevation={1} sx={{ p: isSmallScreen ? 1 : 1 }}>
+            <Paper elevation={0} sx={{ p: isSmallScreen ? 1 : 1 }}>
               <Typography variant={isSmallScreen ? "h6" : "h5"} gutterBottom align="center">
                 Fuel Sales Shift
               </Typography>
 
               {/* Header Fields and Tabs in Dialog Title */}
-              <Grid container spacing={1.5} sx={{ mb: 0 }}>
+              <Grid container spacing={1} sx={{ mb: 0 }}>
                 <Grid size={{ xs: 12, md: 4 }}>
                   <Autocomplete
                     options={shiftTeams}
@@ -324,7 +314,6 @@ const SalesShiftForm: React.FC<SalesShiftFormProps> = ({
                 </Grid>
               </Grid>
 
-              {/* Tabs in Dialog Title */}
               <SalesShiftTabs
                 salesShift={salesShift}
                 activeTab={activeTab}
@@ -335,7 +324,6 @@ const SalesShiftForm: React.FC<SalesShiftFormProps> = ({
             </Paper>
           </DialogTitle>
 
-          {/* DIALOG CONTENT - Contains Tab Contents */}
           <DialogContent sx={{ 
             p: 0, 
             maxHeight: isSmallScreen ? 'calc(100vh - 200px)' : '50vh', 
@@ -343,7 +331,7 @@ const SalesShiftForm: React.FC<SalesShiftFormProps> = ({
             // ✅ IMPROVE MOBILE SCROLLING
             ...(isSmallScreen && {
               maxHeight: 'calc(100vh - 180px)',
-              WebkitOverflowScrolling: 'touch' // Smooth scrolling on iOS
+              WebkitOverflowScrolling: 'touch' 
             })
           }}>
             <Box sx={{ p: isSmallScreen ? 1 : 2 }}>
@@ -357,12 +345,10 @@ const SalesShiftForm: React.FC<SalesShiftFormProps> = ({
             </Box>
           </DialogContent>
 
-          {/* DIALOG ACTIONS - Contains Navigation and Submit Buttons */}
           <DialogActions sx={{ p: 0 }}>
-            <Paper elevation={1} sx={{ 
+            <Paper elevation={0} sx={{ 
               p: isSmallScreen ? 1 : 1.5, 
               width: '100%',
-              // ✅ STICKY FOOTER ON MOBILE
               ...(isSmallScreen && {
                 position: 'sticky',
                 bottom: 0,
@@ -397,7 +383,6 @@ const SalesShiftForm: React.FC<SalesShiftFormProps> = ({
                   )}
                 </Box>
 
-                {/* Cancel and Next/Submit Buttons Grouped Together */}
                 <Box sx={{ 
                   display: 'flex', 
                   gap: 1,

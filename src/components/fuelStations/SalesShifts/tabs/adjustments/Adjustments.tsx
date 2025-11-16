@@ -14,20 +14,9 @@ import { useProductsSelect } from '@/components/productAndServices/products/Prod
 import ProductSelect from '@/components/productAndServices/products/ProductSelect';
 import StoreSelector from '@/components/procurement/stores/StoreSelector';
 import OperationSelector from '@/components/sharedComponents/OperationSelector';
+import { Product } from '@/components/productAndServices/products/ProductType';
+import { FuelPump } from '@/components/fuelStations/Stations/StationType';
 
-// Type definitions
-interface Product {
-  id: number;
-  name: string;
-  [key: string]: any;
-}
-
-interface FuelPump {
-  id: number;
-  product_id: number;
-  tank_id: number;
-  [key: string]: any;
-}
 
 interface Tank {
   id: number;
@@ -70,7 +59,7 @@ interface FormContextType {
 
 interface FormData {
   product?: Product | null;
-  product_id?: number;
+  product_id?: number | null;
   quantity?: number;
   tank_id?: number;
   description?: string;
@@ -85,7 +74,6 @@ function Adjustments({ index = -1, setShowForm, adjustment }: AdjustmentsProps) 
   const [productTanks, setProductTanks] = useState<Tank[]>([]);
   const [tanksKey, setTanksKey] = useState<number>(0);
   
-  // Use local state for form fields instead of useForm
   const [formData, setFormData] = useState<FormData>(() => {
     // Use function to initialize state safely
     const initialProduct = adjustment && productOptions?.find((product: Product) => product.id === adjustment.product_id);

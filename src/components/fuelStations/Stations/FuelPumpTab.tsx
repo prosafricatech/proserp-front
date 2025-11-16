@@ -15,6 +15,7 @@ import { Product } from "@/components/productAndServices/products/ProductType";
 import { useQuery } from "@tanstack/react-query";
 import storeServices from "@/components/procurement/stores/store-services";
 import { StoreOption } from "@/components/procurement/stores/storeTypes";
+import { BackdropSpinner } from "@/shared/ProgressIndicators/BackdropSpinner";
 
 interface FuelPumpTabProps {
   station?: Station;
@@ -51,20 +52,14 @@ const FuelPumpTab: React.FC<FuelPumpTabProps> = ({ station }) => {
     queryFn: () => storeServices.getStoreOptions(true), // Pass mainOnly: true
   });
 
-  // Filter out invalid store options
-  const validStoreOptions = useMemo(() => {
-    if (!storeOptions) return [];
-    return storeOptions.filter((store) => {
-      if (
-        store.name == null ||
-        typeof store.name !== "string" ||
-        store.name.trim() === ""
-      ) {
-        return false;
-      }
-      return true;
-    });
-  }, [storeOptions]);
+// Filter out invalid store options
+const validStoreOptions = useMemo(() => {
+  if (!storeOptions) return [];
+  return storeOptions.filter((store) => {
+    // Check only ID validity, remove name checks
+    return store.id != null && typeof store.id === "number";
+  });
+}, [storeOptions]);
 
   // Compute nonInventoryIds safely
   const nonInventoryIds = useMemo(() => {
@@ -80,11 +75,11 @@ const FuelPumpTab: React.FC<FuelPumpTabProps> = ({ station }) => {
   };
 
   if (isFetchingStores) {
-    return <div>Loading store options...</div>;
+    return <BackdropSpinner />;
   }
 
   if (!productOptions) {
-    return <div>Loading product options...</div>;
+    return <BackdropSpinner />;
   }
 
   return (
@@ -155,35 +150,34 @@ const FuelPumpTab: React.FC<FuelPumpTabProps> = ({ station }) => {
               )}
             />
           </Grid>
-
-          {/* Tank Name - 3 columns */}
-          <Grid size={{ xs: 11, md: 3.5 }}>
-            <Controller
-              name={`fuel_pumps.${index}.tank_id`}
-              control={control}
-              render={({ field }) => {
-                // Find valid default store
-                const selectedStore = validStoreOptions.find(
-                  (store) => store.id === field.value && store.name && typeof store.name === "string" && store.name.trim() !== ""
-                ) || null;
-                
-                return (
-                 <StoreSelector
-                  label="Tank Name"
-                  defaultValue={selectedStore}
-                  frontError={getFieldError(index, "tank_id")}
-                  onChange={(newValue: StoreOption | null) => {
-                    if (newValue) {
-                      field.onChange(newValue.id);
-                    } else {
-                      field.onChange(null);
-                    }
-                  }}
-                />
-                );
-              }}
-            />
-          </Grid>
+            {/* Tank Name - 3 columns */}
+            <Grid size={{ xs: 11, md: 3.5 }}>
+              <Controller
+                name={`fuel_pumps.${index}.tank_id`}
+                control={control}
+                render={({ field }) => {
+                  // Find valid default store by ID only
+                  const selectedStore = validStoreOptions.find(
+                    (store) => store.id === field.value
+                  ) || null;
+                  
+                  return (
+                    <StoreSelector
+                      label="Tank Name"
+                      defaultValue={selectedStore}
+                      frontError={getFieldError(index, "tank_id")}
+                      onChange={(newValue: StoreOption | null) => {
+                        if (newValue) {
+                          field.onChange(newValue.id);
+                        } else {
+                          field.onChange(null);
+                        }
+                      }}
+                    />
+                  );
+                }}
+              />
+            </Grid>
 
           {/* Delete Button - 1 column */}
           <Grid size={{ xs: 1, md: 1.5 }} sx={{ display: "flex", justifyContent: "center", alignItems: "flex-start" }}>
