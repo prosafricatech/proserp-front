@@ -208,7 +208,7 @@ const CashReconciliationTab: React.FC<CashReconciliationTabProps> = ({ salesShif
   // Get used ledger IDs to prevent duplicates
   const usedLedgerIds = useMemo(() => {
     return cashDistributions
-      .filter((dist: CashDistribution, index: number) => index > 0 && dist.ledger)
+      .filter((dist: CashDistribution, index: number) => index >= 0 && dist.ledger)
       .map((dist: CashDistribution) => dist.ledger!.id);
   }, [cashDistributions]);
 
@@ -261,11 +261,7 @@ const CashReconciliationTab: React.FC<CashReconciliationTabProps> = ({ salesShif
   React.useEffect(() => {
     if (cashDistributions.length === 0 && cashRemaining !== 0) {
       setValue("cash_distributions", [{
-        ledger: {
-          id: 0,
-          name: "Main Ledger",
-          code: "MAIN"
-        },
+        ledger: null,
         amount: cashRemaining
       }]);
     }
@@ -277,11 +273,7 @@ const CashReconciliationTab: React.FC<CashReconciliationTabProps> = ({ salesShif
       const updatedDistributions = [...cashDistributions];
       if (!updatedDistributions[0]) {
         updatedDistributions[0] = { 
-          ledger: {
-            id: 0,
-            name: "Main Ledger",
-            code: "MAIN"
-          }, 
+          ledger: null, 
           amount: 0 
         };
       }
@@ -436,26 +428,34 @@ const CashReconciliationTab: React.FC<CashReconciliationTabProps> = ({ salesShif
               <Divider sx={{ mb: 1 }} />
               
               <Box sx={{ mb: 1 }}>
-                {/* Main Ledger Row - Always visible as placeholder */}
+                {/* Main Ledger Row - Now editable */}
                 <Grid container spacing={1} sx={{ mb: 1, alignItems: 'center' }}>
                   <Grid size={{ xs: 6 }}>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      label="Ledger"
-                      value="Main Ledger"
-                      disabled
-                      variant="outlined"
-                      sx={{
-                        '& .MuiInputBase-input': {
-                          fontWeight: 'bold',
-                          backgroundColor: 'white'
-                        }
-                      }}
+                    <Controller
+                      name={`cash_distributions.0.ledger`}
+                      control={control}
+                      render={({ field: controllerField }) => (
+                        <LedgerSelect
+                          {...controllerField}
+                          label="Main Ledger"
+                          value={controllerField.value || null}
+                          onChange={(newValue) => {
+                            controllerField.onChange(newValue);
+                            // Auto-focus amount field after selecting ledger
+                            if (newValue) {
+                              setTimeout(() => {
+                                const amountInput = document.getElementById(`amount-0`);
+                                if (amountInput) amountInput.focus();
+                              }, 100);
+                            }
+                          }}
+                        />
+                      )}
                     />
                   </Grid>
                   <Grid size={{ xs: 4 }}>
                     <TextField
+                      id={`amount-0`}
                       fullWidth
                       size="small"
                       type="number"
@@ -467,13 +467,13 @@ const CashReconciliationTab: React.FC<CashReconciliationTabProps> = ({ salesShif
                         style: { 
                           textAlign: 'right', 
                           fontWeight: 'bold',
-                          backgroundColor: 'white'
+                          backgroundColor: 'grey.50'
                         }
                       }}
                     />
                   </Grid>
                   <Grid size={{ xs: 2 }}>
-                    {/* Empty space for alignment */}
+                    {/* Empty space for alignment - Main ledger cannot be deleted */}
                   </Grid>
                 </Grid>
 
@@ -489,20 +489,20 @@ const CashReconciliationTab: React.FC<CashReconciliationTabProps> = ({ salesShif
                           name={`cash_distributions.${actualIndex}.ledger`}
                           control={control}
                           render={({ field: controllerField }) => (
-                           <LedgerSelect
-                            {...controllerField}
-                            label="Ledger"
-                            value={controllerField.value || null}
-                            onChange={(newValue) => {
-                              controllerField.onChange(newValue);
-                              if (newValue) {
-                                setTimeout(() => {
-                                  const amountInput = document.getElementById(`amount-${actualIndex}`);
-                                  if (amountInput) amountInput.focus();
-                                }, 100);
-                              }
-                            }}
-                          />
+                            <LedgerSelect
+                              {...controllerField}
+                              label="Distribution Ledger"
+                              value={controllerField.value || null}
+                              onChange={(newValue) => {
+                                controllerField.onChange(newValue);
+                                if (newValue) {
+                                  setTimeout(() => {
+                                    const amountInput = document.getElementById(`amount-${actualIndex}`);
+                                    if (amountInput) amountInput.focus();
+                                  }, 100);
+                                }
+                              }}
+                            />
                           )}
                         />
                       </Grid>
@@ -548,7 +548,7 @@ const CashReconciliationTab: React.FC<CashReconciliationTabProps> = ({ salesShif
                     variant="outlined"
                     disabled={availableLedgers.length === 0}
                   >
-                    Add
+                    Add 
                   </Button>
                 </Box>
               </Box>

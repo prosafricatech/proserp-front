@@ -24,6 +24,9 @@ interface FuelVouchersProps {
   setShowForm?: (show: boolean) => void;
   fuelVoucher?: FuelVoucherData;
   productPrices: ProductPrice[];
+  showList?: boolean;
+  onAddSuccess?: (voucher: FuelVoucherData) => void;
+  onUpdateSuccess?: (voucher: FuelVoucherData, index: number) => void;
 }
 
 interface FormData {
@@ -39,7 +42,7 @@ interface FormData {
   stakeholder?: Partial<Stakeholder> | null | undefined;
 }
 
-function FuelVouchers({ index = -1, setShowForm, fuelVoucher, productPrices }: FuelVouchersProps) {
+function FuelVouchers({ index = -1, setShowForm, fuelVoucher, productPrices,showList = true,onAddSuccess, onUpdateSuccess  }: FuelVouchersProps) {
   const iu = { id: 0, name: 'Calibration/Internal use' } as Partial<Stakeholder>;
   const [isAdding, setIsAdding] = useState(false);
   const [stakeholderQuickAddDisplay, setStakeholderQuickAddDisplay] = useState(false);
