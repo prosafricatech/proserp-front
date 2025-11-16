@@ -23,6 +23,14 @@ projectsServices.projectUpdatesList = async (params) => {
   return response.data;
 }
 
+projectsServices.projectUsersList = async (params) => {
+  const response = await axios.get(`/api/projectManagement/project/${params.project_id}/projectUsersList`, {
+    params,
+  });
+  return response.data;
+}
+
+
 projectsServices.getSubContractMaterialUsed = async (params) => {
   const response = await axios.get(
     `/api/projectManagement/project/${params.subcontract_id}/getSubContractMaterialUsed`,

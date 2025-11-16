@@ -15,14 +15,13 @@ export async function POST(req: NextRequest, context: any) {
     body: JSON.stringify(body),
   });
 
-  // If backend returns Excel, forward it as a Blob
   const arrayBuffer = await res.arrayBuffer();
 
   return new Response(arrayBuffer, {
     status: res.status,
     headers: {
       'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'Content-Disposition': 'attachment; filename="stock_list.xlsx"', // optional
+      'Content-Disposition': 'attachment; filename="stock_list.xlsx"',
     },
   });
 }

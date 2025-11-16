@@ -12,6 +12,7 @@ import CurrencySelectProvider from '@/components/masters/Currencies/CurrencySele
 
 const AttachmentForm = lazy(() => import('@/components/filesShelf/attachments/AttachmentForm'));
 const Subcontracts = lazy(() => import('./subcontracts/Subcontracts'));
+const ProjectUsers = lazy(() => import('./projectUsers/ProjectUsers'));
 const TimelineActivitiesListItem = lazy(() => import('./wbs/WBSListItem'));
 const Deliverables = lazy(() => import('./deliverables/DeliverableGroupsListItem'));
 const Budgets = lazy(() => import('./budgets/BudgetsListItem'));
@@ -129,6 +130,8 @@ function ProfileContent() {
       case 5:
         return <Subcontracts />;
       case 6:
+        return <ProjectUsers />;
+      case 7:
         return (
           <AttachmentForm
             hideFeatures
@@ -166,6 +169,7 @@ function ProfileContent() {
             <Tab label="Deliverables" />
             <Tab label="Budgets" />
             <Tab label="Subcontracts" />
+            <Tab label="Users" />
             <Tab label="Attachments" />
           </Tabs>
           {!fetchDeliverables && !fetchTimelineActivities && isLoading ? (

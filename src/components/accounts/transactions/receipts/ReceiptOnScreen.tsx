@@ -31,6 +31,10 @@ interface Transaction {
   cost_centers: CostCenter[];
   items: ReceiptItem[];
   currency: Currency;
+  narration: string;
+  creator: {
+    name: string
+  }
 }
 
 interface ReceiptOnScreenProps {
@@ -200,6 +204,29 @@ function ReceiptOnScreen({ transaction, authObject }: ReceiptOnScreenProps) {
           </Grid>
         </Grid>
       </Box>
+
+      <Grid container spacing={2} sx={{ mt: 3 }}>
+        <Grid size={{xs: 12, md: 6, lg: 4}}>
+          <Box>
+            <Typography variant="subtitle2">
+              Narration
+            </Typography>
+            <Typography variant="body1">
+              {transaction?.narration}
+            </Typography>
+          </Box>
+        </Grid>
+        <Grid size={{xs: 12, md: 6, lg: 4}}>
+          <Box>
+            <Typography variant="subtitle2">
+              Posted By
+            </Typography>
+            <Typography variant="body1">
+              {transaction?.creator?.name}
+            </Typography>
+          </Box>
+        </Grid>
+      </Grid>
     </Box>
   );
 }

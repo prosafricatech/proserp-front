@@ -72,7 +72,7 @@ const PriceListsExcel: React.FC<PriceListsExcelProps> = ({ setOpenExcelDialog })
       try {
         setIsDownloadingTemplate(true);
         setUploadFieldsKey((prevKey) => prevKey + 1);
-        const responseData = await priceListServices.downloadExcelTemplate();
+        const responseData = await priceListServices.downloadExcelTemplate({});
         const blob = new Blob([responseData], {
           type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         });
@@ -94,101 +94,101 @@ const PriceListsExcel: React.FC<PriceListsExcelProps> = ({ setOpenExcelDialog })
       <>
         <DialogTitle textAlign={'center'}>{`Excel Template`}</DialogTitle>
         <DialogContent>
-            <form 
-              autoComplete='off' 
-              key={uploadFieldsKey} 
-              onSubmit={handleSubmit((data) => uploadExcel.mutate(data))}
-            >
-                <Grid container py={1} spacing={2}>
-                    <Grid size={{xs: 12, md: 4}}>
-                      <DatePicker
-                        label="Effective Date"
-                        minDate={dayjs(authOrganization?.organization.recording_start_date)}
-                        slotProps={{
-                          textField: {
-                            size: 'small',
-                            fullWidth: true,
-                            error: !!errors?.effective_date,
-                            helperText: errors?.effective_date?.message
-                          }
-                        }}
-                        onChange={(newValue: Dayjs | null) => {
-                          setValue('effective_date', newValue ? newValue.toISOString() : '', {
-                            shouldDirty: true,
-                            shouldValidate: true
-                          });
-                        }}
-                      />
-                    </Grid>
-                    <Grid size={{xs: 12, md: 8}}>
-                        <OutletSelector
-                          multiple={true}
-                          label='Outlets'
-                          frontError={errors.sales_outlet_ids}
-                          onChange={(newValue: any) => {
-                            setValue('sales_outlet_ids', newValue?.map((value: any) => value.id), {
-                              shouldValidate: true
-                            });
-                          }}
-                        />
-                    </Grid>
-                    <Grid size={12}>
-                        <Input
-                            type="file"
-                            required
-                            id="excel-import"
-                            inputProps={{
-                                accept: '.xlsx, .xls'
-                            }}
-                            {...register("price_lists_excel")}
-                        />
-                        {errors.price_lists_excel && (
-                          <Typography color="error" variant="caption">
-                            {errors.price_lists_excel.message}
-                          </Typography>
-                        )}
-                    </Grid>
-                </Grid>
-                <Grid size={12} mt={2}>
-                    <Stack direction="row" spacing={2} justifyContent="flex-end" alignItems="center">
-                        <LoadingButton
-                            size='small'
-                            loading={uploadExcel.isPending}
-                            type='submit'
-                            variant='contained'
-                            color='success'
-                            disabled={selectedOutlets.length === 0}
-                        >
-                            Upload
-                        </LoadingButton>
-                    </Stack>
-                </Grid>
-            </form>
+          <form 
+            autoComplete='off' 
+            key={uploadFieldsKey} 
+            onSubmit={handleSubmit((data) => uploadExcel.mutate(data))}
+          >
+            <Grid container py={1} spacing={2}>
+              <Grid size={{xs: 12, md: 4}}>
+                <DatePicker
+                  label="Effective Date"
+                  minDate={dayjs(authOrganization?.organization.recording_start_date)}
+                  slotProps={{
+                    textField: {
+                      size: 'small',
+                      fullWidth: true,
+                      error: !!errors?.effective_date,
+                      helperText: errors?.effective_date?.message
+                    }
+                  }}
+                  onChange={(newValue: Dayjs | null) => {
+                    setValue('effective_date', newValue ? newValue.toISOString() : '', {
+                      shouldDirty: true,
+                      shouldValidate: true
+                    });
+                  }}
+                />
+              </Grid>
+              <Grid size={{xs: 12, md: 8}}>
+                <OutletSelector
+                  multiple={true}
+                  label='Outlets'
+                  frontError={errors.sales_outlet_ids}
+                  onChange={(newValue: any) => {
+                    setValue('sales_outlet_ids', newValue?.map((value: any) => value.id), {
+                      shouldValidate: true
+                    });
+                  }}
+                />
+              </Grid>
+              <Grid size={12}>
+                <Input
+                  type="file"
+                  required
+                  id="excel-import"
+                  inputProps={{
+                    accept: '.xlsx, .xls'
+                  }}
+                  {...register("price_lists_excel")}
+                />
+                {errors.price_lists_excel && (
+                  <Typography color="error" variant="caption">
+                    {errors.price_lists_excel.message}
+                  </Typography>
+                )}
+              </Grid>
+            </Grid>
+            <Grid size={12} mt={2}>
+              <Stack direction="row" spacing={2} justifyContent="flex-end" alignItems="center">
+                <LoadingButton
+                  size='small'
+                  loading={uploadExcel.isPending}
+                  type='submit'
+                  variant='contained'
+                  color='success'
+                  disabled={selectedOutlets.length === 0}
+                >
+                  Upload
+                </LoadingButton>
+              </Stack>
+            </Grid>
+          </form>
 
-            <Box sx={{ my: 2 }}>
-                <Divider>
-                    <Typography variant="body2" color="text.secondary">OR</Typography>
-                </Divider>
-            </Box>
+          <Box sx={{ my: 2 }}>
+            <Divider>
+              <Typography variant="body2" color="text.secondary">OR</Typography>
+            </Divider>
+          </Box>
 
-            <Box>
-                <Typography variant="body1" gutterBottom>
-                    Download Excel template to prepare your data:
-                </Typography>
-                <Grid size={12} mt={2}>
-                    <Stack direction="row" spacing={2} justifyContent="flex-end" alignItems="center">
-                        <LoadingButton
-                            size="small"
-                            onClick={downloadExcelTemplate}
-                            loading={isDownloadingTemplate}
-                            variant="outlined"
-                            color="primary"
-                        >
-                            Download Template
-                        </LoadingButton>
-                    </Stack>
-                </Grid>
-            </Box>
+          <Box>
+            <Typography variant="body1" gutterBottom>
+              Download Excel template to prepare your data:
+            </Typography>
+            <Grid size={12} mt={2}>
+              <Stack direction="row" spacing={2} justifyContent="flex-end" alignItems="center">
+                <LoadingButton
+                  size="small"
+                  onClick={downloadExcelTemplate}
+                  loading={isDownloadingTemplate}
+                  variant="outlined"
+                  color="primary"
+                >
+                  Download Template
+                </LoadingButton>
+              </Stack>
+            </Grid>
+          </Box>
         </DialogContent>
         <DialogActions>
           <Button

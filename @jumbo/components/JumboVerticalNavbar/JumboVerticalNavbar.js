@@ -7,10 +7,17 @@ import { useJumboLayout } from '../JumboLayout/hooks';
 
 const JumboVerticalNavbar = ({items}) => {
     const { sidebarOptions } = useJumboLayout();
+    const [mounted, setMounted] = React.useState(false);
+
+    React.useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const isMiniAndClosed = React.useMemo(() => {
         return sidebarOptions?.view === SIDEBAR_VIEWS.MINI && !sidebarOptions?.open;
     }, [sidebarOptions.view, sidebarOptions.open]);
+
+    if (!mounted) return null;
 
     return (
         <List

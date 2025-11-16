@@ -10,6 +10,7 @@ import {
   TableRow,
   Paper,
   useTheme,
+  Box,
 } from '@mui/material';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import { AuthObject } from '@/types/auth-types';
@@ -30,6 +31,10 @@ interface Transaction {
   cost_centers: CostCenter[];
   items: JournalItem[];
   currency: Currency;
+  narration: string;
+  creator: {
+    name: string
+  }
 }
 
 interface JournalOnScreenProps {
@@ -151,6 +156,29 @@ function JournalOnScreen({ transaction, authObject }: JournalOnScreenProps) {
               maximumFractionDigits: 2
             })}
           </Typography>
+        </Grid>
+      </Grid>
+
+      <Grid container spacing={2} sx={{ mt: 3 }}>
+        <Grid size={{xs: 12, md: 6, lg: 4}}>
+          <Box>
+            <Typography variant="subtitle2" color={headerColor}>
+              Narration
+            </Typography>
+            <Typography variant="body1">
+              {transaction?.narration}
+            </Typography>
+          </Box>
+        </Grid>
+        <Grid size={{xs: 12, md: 6, lg: 4}}>
+          <Box>
+            <Typography variant="subtitle2" color={headerColor}>
+              Posted By
+            </Typography>
+            <Typography variant="body1">
+              {transaction?.creator?.name}
+            </Typography>
+          </Box>
         </Grid>
       </Grid>
     </div>

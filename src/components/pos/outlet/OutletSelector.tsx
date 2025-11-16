@@ -6,20 +6,18 @@ import {
   LinearProgress,
   TextField
 } from "@mui/material";
-import { CheckBox, CheckBoxOutlineBlank } from "@mui/icons-material";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useJumboAuth } from "@/app/providers/JumboAuthProvider";
 import { Outlet } from "./OutletType";
+import { CheckBox, CheckBoxOutlineBlank } from "@mui/icons-material";
 
 interface OutletSelectorProps {
   onChange: (newValue: Outlet | Outlet[] | null) => void;
   multiple?: boolean;
   label?: string;
   defaultValue?: Outlet | Outlet[] | null;
-  frontError?: {
-    message?: string;
-  } | null;
+  frontError?: { message?: string } | null;
 }
 
 const OutletSelector = ({
@@ -61,10 +59,15 @@ const OutletSelector = ({
     []
   );
 
-  const outlets: Outlet[] = useMemo(() => [allOutlet, ...rawOutlets], [rawOutlets, allOutlet]);
+  const outlets: Outlet[] = useMemo(
+    () => [allOutlet, ...rawOutlets],
+    [rawOutlets, allOutlet]
+  );
 
-  const [selectedOutlet, setSelectedOutlet] = useState<Outlet | Outlet[] | null>(null);
+  const [selectedOutlet, setSelectedOutlet] =
+    useState<Outlet | Outlet[] | null>(null);
 
+  // Initialize selection
   useEffect(() => {
     let newValue: Outlet | Outlet[] | null = null;
 
@@ -76,7 +79,8 @@ const OutletSelector = ({
       newValue = multiple ? [allOutlet] : allOutlet;
     }
 
-    const getId = (v: any) => (Array.isArray(v) ? v.map((o) => o.id).join(",") : v?.id);
+    const getId = (v: any) =>
+      Array.isArray(v) ? v.map((o) => o.id).join(",") : v?.id;
 
     if (getId(selectedOutlet) !== getId(newValue)) {
       setSelectedOutlet(newValue);
@@ -84,32 +88,37 @@ const OutletSelector = ({
     }
   }, [defaultValue, multiple, rawOutlets, allOutlet]);
 
-  if (isPending) {
-    return <LinearProgress />;
-  }
+  // Safe normalization (always called before any return)
+  const normalizedValue = useMemo(() => {
+    if (multiple) {
+      return Array.isArray(selectedOutlet) ? selectedOutlet : [];
+    }
+    return selectedOutlet || null;
+  }, [selectedOutlet, multiple]);
+
+  // --- NOW SAFE TO RETURN SOMETHING ---
+  if (isPending) return <LinearProgress />;
 
   return (
     <Autocomplete
       multiple={multiple}
       size="small"
-      isOptionEqualToValue={(option, value) => option?.id === value?.id}
       options={outlets}
       disableCloseOnSelect={multiple}
-      value={selectedOutlet}
-      getOptionLabel={(option: Outlet) => option?.name || ""}
+      value={normalizedValue}
+      isOptionEqualToValue={(option: any, value: any) => option?.id === value?.id}
+      getOptionLabel={(option: any) => option?.name || ""}
       renderInput={(params) => (
         <TextField
           {...params}
-          error={!!frontError}
-          helperText={frontError?.message}
-          fullWidth
           label={label}
           size="small"
-          placeholder={label}
+          error={!!frontError}
+          helperText={frontError?.message}
         />
       )}
-      renderTags={(tagValue: Outlet[], getTagProps) =>
-        tagValue.map((option, index) => {
+      renderTags={(tagValue, getTagProps) =>
+        tagValue.map((option: any, index) => {
           const { key, ...restProps } = getTagProps({ index });
           return (
             <Chip
@@ -121,19 +130,15 @@ const OutletSelector = ({
         })
       }
       {...(multiple && {
-        renderOption: (
-          props: React.HTMLAttributes<HTMLLIElement> & { key?: React.Key },
-          option: Outlet,
-          { selected }
-        ) => {
+        renderOption: (props, option: any, { selected }) => {
           const { key, ...otherProps } = props;
           return (
             <li key={option.id} {...otherProps}>
               <Checkbox
                 icon={<CheckBoxOutlineBlank fontSize="small" />}
                 checkedIcon={<CheckBox fontSize="small" />}
-                style={{ marginRight: 8 }}
                 checked={selected}
+                style={{ marginRight: 8 }}
               />
               {option.name}
             </li>
