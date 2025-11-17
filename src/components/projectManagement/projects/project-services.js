@@ -44,6 +44,15 @@ projectsServices.getSubContractDetails = async (id) => {
     return data;
 }
 
+projectsServices.detachUsers = async (costCenterId, payload) => {
+    const { data } = await axios.put(
+        `/api/accountsAndFinance/cost-centers/${costCenterId}/detach-users`,
+        payload
+    );
+    return data;
+};
+
+
 projectsServices.getSubcontractOptions = async (id) => {
   const { data } = await axios.get(`/api/projectManagement/project/getSubcontractOptions`, {
     params: { project_id: id }

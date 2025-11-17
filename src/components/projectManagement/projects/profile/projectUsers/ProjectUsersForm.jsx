@@ -19,7 +19,7 @@ import { Div } from "@jumbo/shared";
 import { LoadingButton } from "@mui/lab";
 import { useProjectProfile } from "../ProjectProfileProvider";
 
-const ProjectUsersForm = ({ setOpenDialog, actionType }) => {
+const ProjectUsersForm = ({ setOpenDialog }) => {
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
   const { project } = useProjectProfile();
@@ -40,10 +40,7 @@ const ProjectUsersForm = ({ setOpenDialog, actionType }) => {
 
   const mutation = useMutation({
     mutationFn: async () => {
-      const route =
-        actionType === "attach"
-          ? `/api/accountsAndFinance/cost-centers/${costCenterId}/attach-users`
-          : `/api/accountsAndFinance/cost-centers/${costCenterId}/detach-users`;
+      const route = `/api/accountsAndFinance/cost-centers/${costCenterId}/attach-users`
 
       return await axios.put(route, {
         user_ids: selectedUserIds,
@@ -52,9 +49,7 @@ const ProjectUsersForm = ({ setOpenDialog, actionType }) => {
 
     onSuccess: () => {
       enqueueSnackbar(
-        actionType === "attach"
-          ? "Users attached successfully"
-          : "Users detached successfully",
+         "Users attached successfully",
         { variant: "success" }
       );
 
@@ -67,78 +62,45 @@ const ProjectUsersForm = ({ setOpenDialog, actionType }) => {
 
   return (
     <>
-        <DialogTitle>
-            <Typography
-                variant="h4"
-                component="div"
-                textAlign="center"
-            >
-                {actionType === "attach" ? "Attach Users" : "Detach Users"}
-            </Typography>
-        </DialogTitle>
+      <DialogTitle>
+        <Typography
+          variant="h4"
+          component="div"
+          textAlign="center"
+        >
+          {"Attach Users"}
+        </Typography>
+      </DialogTitle>
 
-        <DialogContent>
-            <Div sx={{ mt: 1 }}>
-                {actionType === "attach" ? (
-                    <UsersSelector
-                        label="Select Users"
-                        multiple
-                        excludeUsers={costCenterUsersQuery?.data || []}
-                        onChange={(newValue) =>
-                            setSelectedUserIds(newValue?.map((u) => u.id) || [])
-                    }
-                    />
-                ) : (
-                    <Autocomplete
-                        multiple
-                        size="small"
-                        options={costCenterUsersQuery?.data || []}
-                        getOptionLabel={(opt) => opt?.name || ""}
-                        disableCloseOnSelect
-                        value={
-                            (costCenterUsersQuery?.data || []).filter((u) =>
-                                selectedUserIds.includes(u.id)
-                            )
-                        }
-                        onChange={(e, newValue) =>
-                            setSelectedUserIds(newValue?.map((u) => u.id) || [])
-                        }
-                        renderOption={(optionProps, option, { selected }) => {
-                            const { key, ...rest } = optionProps;
-                            return (
-                                <li key={key} {...rest}>
-                                    <Checkbox
-                                        style={{ marginRight: 8 }}
-                                        checked={selected}
-                                    />
-                                    {option.name}
-                                </li>
-                            );
-                        }}
-                        renderInput={(params) => (
-                            <TextField {...params} label="Current Users" />
-                        )}
-                    />
-                )}
-            </Div>
-        </DialogContent>
+      <DialogContent>
+        <Div sx={{ mt: 1 }}>
+          <UsersSelector
+            label="Select Users"
+            multiple
+            excludeUsers={costCenterUsersQuery?.data || []}
+            onChange={(newValue) =>
+              setSelectedUserIds(newValue?.map((u) => u.id) || [])
+            }
+          />
+        </Div>
+      </DialogContent>
 
-        <DialogActions>
-            <Button variant="outlined" size="small" onClick={() => setOpenDialog(false)}>
-                Cancel
-            </Button>
+      <DialogActions>
+        <Button variant="outlined" size="small" onClick={() => setOpenDialog(false)}>
+          Cancel
+        </Button>
 
-            <LoadingButton
-                variant="contained"
-                color={actionType === "attach" ? "success" : "error"}
-                size="small"
-                loading={mutation.isPending}
-                disabled={selectedUserIds.length === 0}
-                onClick={() => mutation.mutate()}
-            >
-                {actionType === "attach" ? "Attach" : "Detach"}
-            </LoadingButton>
-        </DialogActions>
+        <LoadingButton
+          variant="contained"
+          color={"success"}
+          size="small"
+          loading={mutation.isPending}
+          disabled={selectedUserIds.length === 0}
+          onClick={() => mutation.mutate()}
+        >
+          {"Attach"}
+        </LoadingButton>
+      </DialogActions>
     </>
   );
 };
