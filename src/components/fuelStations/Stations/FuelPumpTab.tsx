@@ -46,22 +46,21 @@ const FuelPumpTab: React.FC<FuelPumpTabProps> = ({ station }) => {
   const canCreateProduct = checkOrganizationPermission([PERMISSIONS.PRODUCTS_CREATE]);
   const [openProductQuickAdd, setOpenProductQuickAdd] = useState<boolean[]>([]);
 
-  // Fetch store options with proper typing
+  // Fetch store options - SAME PATTERN AS PRODUCT
   const { data: storeOptions, isLoading: isFetchingStores } = useQuery<StoreOption[], Error>({
     queryKey: ["storeOptions"],
     queryFn: () => storeServices.getStoreOptions(true), // Pass mainOnly: true
   });
 
-// Filter out invalid store options
-const validStoreOptions = useMemo(() => {
-  if (!storeOptions) return [];
-  return storeOptions.filter((store) => {
-    // Check only ID validity, remove name checks
-    return store.id != null && typeof store.id === "number";
-  });
-}, [storeOptions]);
+  // Filter store options for tanks only - SAME PATTERN AS PRODUCT
+  const tankOptions = useMemo(() => {
+    if (!storeOptions) return [];
+    return storeOptions.filter((store) => {
+      return store.id != null && typeof store.id === "number";
+    });
+  }, [storeOptions]);
 
-  // Compute nonInventoryIds safely
+  // Compute nonInventoryIds safely - PRODUCT PATTERN
   const nonInventoryIds = useMemo(() => {
     if (!productOptions) return [];
     return productOptions
@@ -86,7 +85,7 @@ const validStoreOptions = useMemo(() => {
     <Box sx={{ width: "100%" }}>
       {fields.map((field, index) => (
         <Grid container spacing={1} key={field.id} sx={{ mb: 2 }} alignItems="flex-start">
-          {/* Fuel Name - 4 columns */}
+          {/* Fuel Name - FOLLOWS PRODUCT PATTERN */}
           <Grid size={{ xs: 12, md: 3.5 }}>
             <Controller
               name={`fuel_pumps.${index}.product_id`}
@@ -105,7 +104,6 @@ const validStoreOptions = useMemo(() => {
                     excludeIds={nonInventoryIds}
                     onChange={async (newValue: Product | null) => {
                       if (newValue) {
-                        // Only update the current field's data
                         setValue(`fuel_pumps.${index}.product_name`, newValue.name);
                         controllerField.onChange(newValue.id);
                       } else {
@@ -150,34 +148,38 @@ const validStoreOptions = useMemo(() => {
               )}
             />
           </Grid>
-            {/* Tank Name - 3 columns */}
-            <Grid size={{ xs: 11, md: 3.5 }}>
-              <Controller
-                name={`fuel_pumps.${index}.tank_id`}
-                control={control}
-                render={({ field }) => {
-                  // Find valid default store by ID only
-                  const selectedStore = validStoreOptions.find(
-                    (store) => store.id === field.value
-                  ) || null;
-                  
-                  return (
-                    <StoreSelector
-                      label="Tank Name"
-                      defaultValue={selectedStore}
-                      frontError={getFieldError(index, "tank_id")}
-                      onChange={(newValue: StoreOption | null) => {
-                        if (newValue) {
-                          field.onChange(newValue.id);
-                        } else {
-                          field.onChange(null);
-                        }
-                      }}
-                    />
-                  );
-                }}
-              />
-            </Grid>
+
+          {/* Tank Name - FOLLOWS SAME PATTERN AS PRODUCT */}
+          <Grid size={{ xs: 11, md: 3.5 }}>
+            <Controller
+              name={`fuel_pumps.${index}.tank_id`}
+              control={control}
+              render={({ field }) => {
+                // Get current tank ID from form
+                const currentTankId = watch(`fuel_pumps.${index}.tank_id`);
+                
+                // Find tank in options - SAME PATTERN AS PRODUCT
+                const tankValue = tankOptions.find(tank => tank.id === currentTankId) || null;
+                
+                return (
+                  <StoreSelector
+                    label="Tank Name"
+                    defaultValue={tankValue} // Pass the object, not just ID
+                    frontError={getFieldError(index, "tank_id")}
+                    onChange={(newValue: StoreOption | null) => {
+                      // StoreSelector returns the full object, extract ID for form
+                      if (newValue) {
+                        field.onChange(newValue.id);
+                      } else {
+                        field.onChange(null);
+                      }
+                    }}
+                    allowSubStores={false}
+                  />
+                );
+              }}
+            />
+          </Grid>
 
           {/* Delete Button - 1 column */}
           <Grid size={{ xs: 1, md: 1.5 }} sx={{ display: "flex", justifyContent: "center", alignItems: "flex-start" }}>

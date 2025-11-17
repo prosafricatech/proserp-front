@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect, useRef } from "react";
 import { 
   Grid, Card, CardContent, Typography, Box, Divider, Paper, 
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
@@ -13,6 +13,7 @@ import { useSalesStation } from "../../Stations/StationProvider";
 import { useProductsSelect } from "@/components/productAndServices/products/ProductsSelectProvider";
 import LedgerSelect from "@/components/accounts/ledgers/forms/LedgerSelect";
 import { useLedgerSelect } from "@/components/accounts/ledgers/forms/LedgerSelectProvider";
+import CommaSeparatedField from "@/shared/Inputs/CommaSeparatedField";
 
 interface CashReconciliationTabProps {
   salesShift?: SalesShift;
@@ -58,6 +59,10 @@ const CashReconciliationTab: React.FC<CashReconciliationTabProps> = ({ salesShif
   const fuelPrices = watch("product_prices") || [];
   const fuelVouchers = watch("fuel_vouchers") || [];
   const cashDistributions = watch("cash_distributions") || [];
+
+  // Refs for maintaining focus
+  const amountInputRefs = useRef<{[key: string]: HTMLInputElement | null}>({});
+  const focusedFieldRef = useRef<string | null>(null);
 
   // Use field array for cash distributions
   const { fields, append, remove } = useFieldArray({
@@ -227,8 +232,13 @@ const CashReconciliationTab: React.FC<CashReconciliationTabProps> = ({ salesShif
     });
   };
 
-  // Update cash distribution
+  // Update cash distribution with focus management
   const updateCashDistribution = (index: number, field: 'ledger' | 'amount', value: any) => {
+    // Store which field is currently focused
+    if (field === 'amount') {
+      focusedFieldRef.current = `amount-${index}`;
+    }
+
     const updatedDistributions = [...cashDistributions];
     if (!updatedDistributions[index]) {
       updatedDistributions[index] = { ledger: null, amount: 0 };
@@ -267,7 +277,7 @@ const CashReconciliationTab: React.FC<CashReconciliationTabProps> = ({ salesShif
     }
   }, [cashDistributions.length, cashRemaining, setValue]);
 
-  // Update main ledger amount when cash remaining changes
+  // Update main ledger amount when cash remaining changes - WITHOUT losing focus
   React.useEffect(() => {
     if (cashDistributions.length > 0) {
       const updatedDistributions = [...cashDistributions];
@@ -277,13 +287,45 @@ const CashReconciliationTab: React.FC<CashReconciliationTabProps> = ({ salesShif
           amount: 0 
         };
       }
-      updatedDistributions[0] = {
-        ...updatedDistributions[0],
-        amount: cashDistributionSummary.mainLedgerRemaining
-      };
-      setValue("cash_distributions", updatedDistributions);
+      
+      // Only update if the value actually changed to prevent unnecessary re-renders
+      if (updatedDistributions[0].amount !== cashDistributionSummary.mainLedgerRemaining) {
+        updatedDistributions[0] = {
+          ...updatedDistributions[0],
+          amount: cashDistributionSummary.mainLedgerRemaining
+        };
+        setValue("cash_distributions", updatedDistributions);
+      }
     }
   }, [cashDistributionSummary.mainLedgerRemaining, setValue]);
+
+  // Effect to restore focus after re-render
+  useEffect(() => {
+    if (focusedFieldRef.current) {
+      const inputElement = amountInputRefs.current[focusedFieldRef.current];
+      if (inputElement) {
+        // Small timeout to ensure the DOM has updated
+        setTimeout(() => {
+          inputElement.focus();
+          // Move cursor to end of input
+          const length = inputElement.value.length;
+          inputElement.setSelectionRange(length, length);
+        }, 10);
+      }
+    }
+  }, [cashDistributions]); // Run when cashDistributions change
+
+  // Clear focused field ref when component unmounts or when user clicks elsewhere
+  useEffect(() => {
+    const handleClickOutside = () => {
+      focusedFieldRef.current = null;
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   return (
     <Box sx={{ width: "100%" }}>
@@ -511,17 +553,24 @@ const CashReconciliationTab: React.FC<CashReconciliationTabProps> = ({ salesShif
                           id={`amount-${actualIndex}`}
                           fullWidth
                           size="small"
-                          type="number"
                           label="Amount"
                           value={distribution?.amount || 0}
-                          onChange={(e) => updateCashDistribution(actualIndex, 'amount', parseFloat(e.target.value) || 0)}
-                          placeholder="0.00"
-                          variant="outlined"
-                          inputProps={{ 
-                            min: 0,
-                            step: "0.01",
+                          InputProps={{ 
+                            inputComponent: CommaSeparatedField as any,
                             style: { textAlign: 'right' }
                           }}
+                          inputRef={el => amountInputRefs.current[`amount-${actualIndex}`] = el}
+                          onFocus={() => {
+                            focusedFieldRef.current = `amount-${actualIndex}`;
+                          }}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            const value = e.target.value;
+                            // Convert comma separated string back to number
+                            const numericValue = parseFloat(value.replace(/,/g, '')) || 0;
+                            updateCashDistribution(actualIndex, 'amount', numericValue);
+                          }}
+                          placeholder="0.00"
+                          variant="outlined"
                           disabled={!distribution?.ledger}
                         />
                       </Grid>

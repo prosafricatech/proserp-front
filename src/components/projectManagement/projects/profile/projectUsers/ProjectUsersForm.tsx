@@ -1,96 +1,129 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
-  Box,
-  Card,
-  CardContent,
   Typography,
-  Checkbox,
-  FormControlLabel,
   Button,
-  Divider,
   DialogContent,
   DialogActions,
   DialogTitle,
 } from "@mui/material";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSnackbar } from "notistack";
-import { useProjectProfile } from "../ProjectProfileProvider";
 import axios from "@/lib/services/config";
+import UsersSelector from "@/components/sharedComponents/UsersSelector";
+import { Div } from "@jumbo/shared";
+import { LoadingButton } from "@mui/lab";
+import { useProjectProfile } from "../ProjectProfileProvider";
 
-function ProjectUsersForm() {
+const ProjectUsersForm = ({ setOpenDialog, actionType }) => {
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
   const { project } = useProjectProfile();
-  const costCenterId = project?.costcenter?.id;
+  const costCenterId = project?.cost_center?.id;
   const [selectedUserIds, setSelectedUserIds] = useState([]);
 
-  const usersQuery = useQuery({
+  // GET cost center users
+  const costCenterUsersQuery = useQuery({
     enabled: !!costCenterId,
-    queryKey: ["costcenter-users", costCenterId],
+    queryKey: ["cost-center-users", costCenterId],
     queryFn: async () => {
-      const { data } = await axios.get(`/api/cost-centers/${costCenterId}/users`);
+      const { data } = await axios.get(
+        `/api/accountsAndFinance/cost-centers/${costCenterId}/costCenterUsers`
+      );
       return data?.data ?? [];
     },
   });
 
-  const toggleUser = (userId) => {
-    setSelectedUserIds((prev) =>
-      prev.includes(userId)
-        ? prev.filter((id) => id !== userId)
-        : [...prev, userId]
-    );
+  // For ATTACH: filter out already attached users
+  const filteredUsersForAttach = (allUsers = [], attachedUsers = []) => {
+    if (actionType !== "attach") return allUsers;
+    const attachedIds = new Set(attachedUsers.map((u) => u.id));
+    return allUsers.filter((u) => !attachedIds.has(u.id));
   };
 
-  const attachUsers = useMutation({
+  const mutation = useMutation({
     mutationFn: async () => {
-      return await axios.put(
-        `/api/cost-centers/${costCenterId}/attach-users`,
-        { user_ids: selectedUserIds }
-      );
+      const route =
+        actionType === "attach"
+          ? `/api/accountsAndFinance/cost-centers/${costCenterId}/attach-users`
+          : `/api/accountsAndFinance/cost-centers/${costCenterId}/detach-users`;
+
+      return await axios.put(route, {
+        user_ids: selectedUserIds,
+      });
     },
+
     onSuccess: () => {
-      enqueueSnackbar("Users attached successfully", { variant: "success" });
-      queryClient.invalidateQueries(["costcenter-users", costCenterId]);
+      enqueueSnackbar(
+        actionType === "attach"
+          ? "Users attached successfully"
+          : "Users detached successfully",
+        { variant: "success" }
+      );
+
+      queryClient.invalidateQueries({ queryKey: ["projectUsers"] });
+      queryClient.invalidateQueries({ queryKey: ["cost-center-users"] });
+      setOpenDialog(false);
     },
-    onError: () => enqueueSnackbar("Failed to attach users", { variant: "error" }),
+    onError: () => enqueueSnackbar("Operation failed", { variant: "error" }),
   });
 
   return (
     <>
-       <DialogTitle>
-             <Typography variant="h6" gutterBottom>
-                Project Users
-            </Typography>
-       </DialogTitle>
-        <DialogContent>
-            {usersQuery.data?.map((user) => (
-                <FormControlLabel
-                    key={user.id}
-                    control={
-                        <Checkbox
-                            checked={selectedUserIds.includes(user.id)}
-                            onChange={() => toggleUser(user.id)}
-                        />
-                    }
-                    label={user.name}
-                />
-            ))
-            }
-        </DialogContent>
-        <DialogActions>
-            <Button
-                variant="contained"
-                color="success"
-                disabled={selectedUserIds.length === 0 || attachUsers.isPending}
-                onClick={() => attachUsers.mutate()}
-            >
-                Attach
-            </Button>
-        </DialogActions>
+      <DialogTitle>
+        <Typography variant="h4" textAlign="center">
+          {actionType === "attach" ? "Attach Users" : "Detach Users"}
+        </Typography>
+      </DialogTitle>
+
+      <DialogContent>
+        <Div sx={{ mt: 1 }}>
+          {actionType === "attach" ? (
+            <UsersSelector
+              label="Select Users"
+              multiple
+              onChange={(newUsers) =>
+                setSelectedUserIds(newUsers?.map((u) => u.id) || [])
+              }
+              filterUsers={(users) =>
+                filteredUsersForAttach(
+                  users,
+                  costCenterUsersQuery.data || []
+                )
+              }
+            />
+          ) : (
+            <UsersSelector
+              label="Current Users"
+              multiple
+              defaultValue={costCenterUsersQuery.data || []}
+              onChange={(newUsers) =>
+                setSelectedUserIds(newUsers?.map((u) => u.id) || [])
+              }
+            />
+          )}
+        </Div>
+      </DialogContent>
+
+      <DialogActions>
+        <Button variant="outlined" size="small" onClick={() => setOpenDialog(false)}>
+          Cancel
+        </Button>
+
+        <LoadingButton
+          variant="contained"
+          color={actionType === "attach" ? "success" : "error"}
+          size="small"
+          loading={mutation.isPending}
+          disabled={selectedUserIds.length === 0}
+          onClick={() => mutation.mutate()}
+        >
+          {actionType === "attach" ? "Attach" : "Detach"}
+        </LoadingButton>
+      </DialogActions>
     </>
   );
-}
+};
 
 export default ProjectUsersForm;

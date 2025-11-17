@@ -31,6 +31,7 @@ const PumpReadingTab: React.FC<PumpReadingTabProps> = ({ salesShift, isClosing =
   const { activeStation } = useSalesStation();
   const { productOptions } = useProductsSelect();
   
+  // Fetch store options - SAME PATTERN AS PRODUCT FETCHING
   const { data: storeOptions, isLoading: isFetchingStores } = useQuery<StoreOption[], Error>({
     queryKey: ["storeOptions"],
     queryFn: () => storeServices.getStoreOptions(true),
@@ -38,10 +39,12 @@ const PumpReadingTab: React.FC<PumpReadingTabProps> = ({ salesShift, isClosing =
 
   const fuelPumps = activeStation?.fuel_pumps || [];
 
+  // PRODUCT PATTERN: Get all products
   const allProducts = useMemo(() => {
     return productOptions || [];
   }, [productOptions]);
 
+  // STORE PATTERN: Get all stores (same as products)
   const allStores = useMemo(() => {
     if (!storeOptions) return [];
     return storeOptions.filter((store) => {
@@ -49,14 +52,16 @@ const PumpReadingTab: React.FC<PumpReadingTabProps> = ({ salesShift, isClosing =
     });
   }, [storeOptions]);
 
+  // PRODUCT PATTERN: Find product by ID
   const findProductById = (productId?: string | number | null): Product | undefined => {
     if (productId == null) return undefined;
-    return allProducts.find(product => product.id === productId);
+    return allProducts.find(product => product.id === Number(productId));
   };
   
+  // STORE PATTERN: Find store by ID (same as product)
   const findStoreById = (storeId?: string | number | null): StoreOption | undefined => {
     if (storeId == null) return undefined;
-    return allStores.find(store => store.id === storeId);
+    return allStores.find(store => store.id === Number(storeId));
   };
 
   const { fields, update } = useFieldArray({
@@ -67,12 +72,12 @@ const PumpReadingTab: React.FC<PumpReadingTabProps> = ({ salesShift, isClosing =
   const pumpReadings = watch("pump_readings") || [];
   const fuelPrices = watch("product_prices") || [];
 
-  // NEW: Format number with commas
+  // Format number with commas
   const formatNumberWithCommas = (value: number): string => {
     return value.toLocaleString();
   };
 
-  // NEW: Parse comma-separated number
+  // Parse comma-separated number
   const parseCommaNumber = (value: string): number => {
     return sanitizedNumber(value) || 0;
   };
@@ -81,7 +86,7 @@ const PumpReadingTab: React.FC<PumpReadingTabProps> = ({ salesShift, isClosing =
     return closing - opening;
   };
 
-  // UPDATED: Handle comma-formatted input
+  // Handle comma-formatted input
   const updatePumpReading = (pumpIndex: number, field: 'opening' | 'closing', value: string) => {
     const numericValue = parseCommaNumber(value);
     update(pumpIndex, {
@@ -90,7 +95,7 @@ const PumpReadingTab: React.FC<PumpReadingTabProps> = ({ salesShift, isClosing =
     });
   };
 
-  // UPDATED: Handle comma-formatted input for prices
+  // Handle comma-formatted input for prices
   const updateFuelPrice = (productId: string | number, value: string) => {
     const numericValue = parseCommaNumber(value);
     const existingPriceIndex = fuelPrices.findIndex((fp: any) => fp.product_id === productId);
@@ -113,6 +118,7 @@ const PumpReadingTab: React.FC<PumpReadingTabProps> = ({ salesShift, isClosing =
     }
   };
 
+  // PRODUCT PATTERN: Get unique products from fuel pumps
   const uniqueProducts = useMemo(() => {
     const productMap = new Map();
     fuelPumps.forEach(pump => {
@@ -124,25 +130,35 @@ const PumpReadingTab: React.FC<PumpReadingTabProps> = ({ salesShift, isClosing =
     return Array.from(productMap.values());
   }, [fuelPumps, allProducts]);
 
+  // STORE PATTERN: Get unique stores from fuel pumps (same as products)
+  const uniqueStores = useMemo(() => {
+    const storeMap = new Map();
+    fuelPumps.forEach(pump => {
+      const store = findStoreById(pump.tank_id);
+      if (store && !storeMap.has(store.id)) {
+        storeMap.set(store.id, store);
+      }
+    });
+    return Array.from(storeMap.values());
+  }, [fuelPumps, allStores]);
+
+  // STORE PATTERN: Calculate store summary (consistent with product logic)
   const storeSummary = useMemo((): StoreSummary[] => {
     const storeMap = new Map<number, StoreSummary>();
 
-    fuelPumps.forEach(pump => {
-      if (pump.tank_id) {
-        const store = findStoreById(pump.tank_id);
-        if (store && !storeMap.has(store.id)) {
-          storeMap.set(store.id, {
-            storeId: store.id,
-            storeName: store.name,
-            quantity: 0,
-            amount: 0,
-            productIds: []
-          });
-        }
-      }
+    // Initialize store summaries
+    uniqueStores.forEach(store => {
+      storeMap.set(store.id, {
+        storeId: store.id,
+        storeName: store.name,
+        quantity: 0,
+        amount: 0,
+        productIds: []
+      });
     });
 
-    fuelPumps.forEach((pump, pumpIndex) => {
+    // Calculate quantities and amounts
+    fuelPumps.forEach((pump) => {
       if (!pump.tank_id) return;
 
       const storeId = pump.tank_id;
@@ -157,24 +173,27 @@ const PumpReadingTab: React.FC<PumpReadingTabProps> = ({ salesShift, isClosing =
       if (storeSummary) {
         storeSummary.quantity += pumpDifference;
 
+        // Track associated products
         if (pump.product_id && !storeSummary.productIds.includes(pump.product_id)) {
           storeSummary.productIds.push(pump.product_id);
         }
       }
     });
 
+    // Calculate amounts based on fuel prices
     const summaries = Array.from(storeMap.values());
     summaries.forEach(summary => {
       if (summary.productIds.length > 0) {
+        // Use the first product's price for calculation
         const firstProductId = summary.productIds[0];
         const fuelPrice = fuelPrices.find((fp: any) => fp.product_id === firstProductId);
-        const price = fuelPrice?.price ? parseFloat(fuelPrice.price) : 0;
+        const price = fuelPrice?.price ? parseFloat(String(fuelPrice.price)) : 0;
         summary.amount = summary.quantity * price;
       }
     });
 
     return summaries;
-  }, [pumpReadings, fuelPrices, fuelPumps, allStores]);
+  }, [pumpReadings, fuelPrices, fuelPumps, uniqueStores]);
 
   const validateOpeningReading = (opening: number, closing: number) => {
     return opening <= closing;
@@ -197,11 +216,13 @@ const PumpReadingTab: React.FC<PumpReadingTabProps> = ({ salesShift, isClosing =
           const openingError = !validateOpeningReading(reading.opening, reading.closing);
           const closingError = !validateClosingReading(reading.opening, reading.closing);
 
+          // PRODUCT PATTERN: Find product
           const product = findProductById(pump.product_id);
+          // STORE PATTERN: Find store (same as product)
           const store = findStoreById(pump.tank_id);
 
-          const productName = product?.name || 'No Product';
-          const tankName = store?.name || 'No Tank';
+          const productName = product?.name || 'Unknown Product';
+          const tankName = store?.name || 'Unknown Tank';
 
           return (
             <Grid key={pump.id} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
@@ -216,6 +237,7 @@ const PumpReadingTab: React.FC<PumpReadingTabProps> = ({ salesShift, isClosing =
                 }}
               >
                 <CardContent sx={{ flexGrow: 1, p: 2 }}>
+                  {/* Header with Pump Name and Tank Name */}
                   <Grid container spacing={1} sx={{ mb: 1 }}>
                     <Grid size={{ xs: 6 }}>
                       <Typography 
@@ -228,7 +250,10 @@ const PumpReadingTab: React.FC<PumpReadingTabProps> = ({ salesShift, isClosing =
                     <Grid size={{ xs: 6 }}>
                       <Typography 
                         variant="body2" 
-                        sx={{ textAlign: 'right' }}
+                        sx={{ 
+                          textAlign: 'right',
+                          color: 'text.secondary'
+                        }}
                       >
                         {tankName}
                       </Typography>
@@ -237,29 +262,33 @@ const PumpReadingTab: React.FC<PumpReadingTabProps> = ({ salesShift, isClosing =
 
                   <Divider sx={{ my: 1 }} />
                 
+                  {/* Product Name - CONSISTENT STYLING */}
                   <Typography 
                     variant="body2" 
                     sx={{ 
                       mb: 2,
                       fontStyle: 'italic',
+                      color: 'text.secondary'
                     }}
                   >
                     {productName}
                   </Typography>
+
+                  {/* Readings Inputs */}
                   <Grid container spacing={1}>
                     <Grid size={{ xs: 12 }}>
                       <TextField
                         fullWidth
                         label="Closing Reading"
-                        value={formatNumberWithCommas(reading.closing)} // ← UPDATED
-                        onChange={(e) => updatePumpReading(index, 'closing', e.target.value)} // ← UPDATED
+                        value={formatNumberWithCommas(reading.closing)} 
+                        onChange={(e) => updatePumpReading(index, 'closing', e.target.value)} 
                         size="small"
                         error={closingError}
                         helperText={closingError ? "Closing reading should exceed opening reading" : ""}
-                        InputProps={{ inputComponent: CommaSeparatedField as any }} // ← ADDED
+                        InputProps={{ inputComponent: CommaSeparatedField as any }}
                         sx={{
                           '& input': {
-                            textAlign: 'center',
+                            textAlign: 'left',
                           }
                         }}
                       />
@@ -268,21 +297,22 @@ const PumpReadingTab: React.FC<PumpReadingTabProps> = ({ salesShift, isClosing =
                       <TextField
                         fullWidth
                         label="Opening Reading"
-                        value={formatNumberWithCommas(reading.opening)} // ← UPDATED
-                        onChange={(e) => updatePumpReading(index, 'opening', e.target.value)} // ← UPDATED
+                        value={formatNumberWithCommas(reading.opening)}
+                        onChange={(e) => updatePumpReading(index, 'opening', e.target.value)}
                         size="small"
                         error={openingError}
                         helperText={openingError ? "Opening reading should not exceed closing reading" : ""}
-                        InputProps={{ inputComponent: CommaSeparatedField as any }} // ← ADDED
+                        InputProps={{ inputComponent: CommaSeparatedField as any }}
                         sx={{
                           '& input': {
-                            textAlign: 'center',
+                            textAlign: 'left',
                           }
                         }}
                       />
                     </Grid>
                   </Grid>
 
+                  {/* Pump Difference Display */}
                   <Box 
                     sx={{ 
                       mt: 2,
@@ -298,7 +328,7 @@ const PumpReadingTab: React.FC<PumpReadingTabProps> = ({ salesShift, isClosing =
                         fontWeight: 'normal'
                       }}
                     >
-                      Pump Difference: {formatNumberWithCommas(difference)} {/* ← UPDATED */}
+                      Pump Difference: {formatNumberWithCommas(difference)}
                     </Typography>
                   </Box>
                 </CardContent>
@@ -308,6 +338,7 @@ const PumpReadingTab: React.FC<PumpReadingTabProps> = ({ salesShift, isClosing =
         })}
       </Grid>
 
+      {/* Fuel Prices Section - PRODUCT FOCUSED */}
       {uniqueProducts.length > 0 && (
         <Box sx={{ mt: 4 }}>
           <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold' }}>
@@ -330,13 +361,23 @@ const PumpReadingTab: React.FC<PumpReadingTabProps> = ({ salesShift, isClosing =
                     }}
                   >
                     <CardContent sx={{ flexGrow: 1, p: 2 }}>
+                      <Typography 
+                        variant="body2" 
+                        sx={{ 
+                          mb: 1,
+                          textAlign: 'center',
+                          color: 'text.secondary'
+                        }}
+                      >
+                        {product.name}
+                      </Typography>
                       <TextField
                         fullWidth
-                        label={product.name}
-                        value={formatNumberWithCommas(currentPrice)} // ← UPDATED
-                        onChange={(e) => updateFuelPrice(product.id, e.target.value)} // ← UPDATED
+                        label="Price"
+                        value={formatNumberWithCommas(Number(currentPrice))}
+                        onChange={(e) => updateFuelPrice(product.id, e.target.value)}
                         size="small"
-                        InputProps={{ inputComponent: CommaSeparatedField as any }} // ← ADDED
+                        InputProps={{ inputComponent: CommaSeparatedField as any }}
                         sx={{
                           '& input': {
                             textAlign: 'center',
@@ -352,10 +393,11 @@ const PumpReadingTab: React.FC<PumpReadingTabProps> = ({ salesShift, isClosing =
         </Box>
       )}
 
+      {/* Tank Summary Section - STORE FOCUSED (SAME PATTERN AS PRODUCTS) */}
       {storeSummary.length > 0 && (
         <Box sx={{ mt: 4 }}>
           <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold' }}>
-            Tank Difference Summary
+            Tank Summary
           </Typography>
           <Grid container spacing={2}>
             {storeSummary.map((store) => (
@@ -371,10 +413,11 @@ const PumpReadingTab: React.FC<PumpReadingTabProps> = ({ salesShift, isClosing =
                   }}
                 >
                   <CardContent sx={{ flexGrow: 1, p: 2 }}>
+                    {/* Store/Tank Name Header */}
                     <Typography 
                       variant="subtitle1" 
                       sx={{ 
-                        fontWeight: 'normal',
+                        fontWeight: 'bold',
                         textAlign: 'center',
                         mb: 2
                       }}
@@ -383,6 +426,7 @@ const PumpReadingTab: React.FC<PumpReadingTabProps> = ({ salesShift, isClosing =
                     </Typography>
                     <Divider/>
 
+                    {/* Quantity Display - CONSISTENT WITH PRODUCT STYLING */}
                     <Grid container alignItems="center" spacing={1} sx={{ mb: 2, mt: 2 }}>
                       <Grid size={{ xs: 6 }}>
                         <Typography 
@@ -411,12 +455,13 @@ const PumpReadingTab: React.FC<PumpReadingTabProps> = ({ salesShift, isClosing =
                               color: 'text.primary'
                             }}
                           >
-                            {store.quantity.toLocaleString()} {/* ← ALREADY HAS COMMAS */}
+                            {formatNumberWithCommas(store.quantity)}
                           </Typography>
                         </Box>
                       </Grid>
                     </Grid>
 
+                    {/* Amount Display - CONSISTENT WITH PRODUCT STYLING */}
                     <Grid container alignItems="center" spacing={1} sx={{ mb: 1 }}>
                       <Grid size={{ xs: 6 }}>
                         <Typography 
@@ -445,10 +490,7 @@ const PumpReadingTab: React.FC<PumpReadingTabProps> = ({ salesShift, isClosing =
                               color: 'text.primary'
                             }}
                           >
-                            {store.amount.toLocaleString(undefined, {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2
-                            })} {/* ← ALREADY HAS COMMAS */}
+                            {formatNumberWithCommas(store.amount)}
                           </Typography>
                         </Box>
                       </Grid>
