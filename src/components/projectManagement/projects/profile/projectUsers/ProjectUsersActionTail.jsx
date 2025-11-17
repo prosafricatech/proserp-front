@@ -27,7 +27,6 @@ const ProjectUsersActionTail = () => {
       <Dialog
         maxWidth="xs"
         fullWidth
-        fullScreen={belowLargeScreen}
         open={openDialog}
       >
         <ProjectUsersForm

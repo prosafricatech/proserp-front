@@ -61,7 +61,6 @@ const ProjectUsers = () => {
       itemsPerPageOptions={[5, 10, 15, 20]}
       renderItem={ProjectUsers}
       componentElement="div"
-      bulkActions={null}
       wrapperSx={{
         flex: 1,
         display: 'flex',

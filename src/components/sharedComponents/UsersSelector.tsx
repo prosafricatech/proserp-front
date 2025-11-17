@@ -13,11 +13,7 @@ interface User {
 }
 
 interface ApiResponse {
-  current_page: number;
   data: User[];
-  first_page_url: string;
-  from: number;
-  // Add other pagination properties as needed
 }
 
 interface UsersSelectorProps {
@@ -25,9 +21,10 @@ interface UsersSelectorProps {
   multiple?: boolean;
   label?: string;
   defaultValue?: User | User[] | null;
-  frontError?: {
-    message?: string;
-  } | null;
+  frontError?: { message?: string } | null;
+
+  /** NEW: list of users to exclude */
+  excludeUsers?: User[];
 }
 
 const UsersSelector: React.FC<UsersSelectorProps> = ({
@@ -36,55 +33,59 @@ const UsersSelector: React.FC<UsersSelectorProps> = ({
   label = 'Users',
   defaultValue = null,
   frontError = null,
+  excludeUsers = [],
 }) => {
   const { authOrganization } = useJumboAuth();
   const organization = authOrganization?.organization;
-  
-  // Use react-query for data fetching with proper typing
+
+  /** fetch users */
   const { data: response = { data: [] }, isLoading, error } = useQuery<ApiResponse>({
     queryKey: ['users', organization?.id],
-    queryFn: () => organizationServices.getUsers({ organizationId: organization?.id }),
+    queryFn: () =>
+      organizationServices.getUsers({ organizationId: organization?.id }),
     enabled: !!organization?.id,
-    select: (data) => data || { data: [] }, // Ensure we always have a data property
   });
 
-  const users = response.data || []; // Extract the users array from the response
+  const rawUsers = response.data || [];
+
+  /** NEW: automatic filtering */
+  const excludedIds = new Set(excludeUsers.map((u) => u.id));
+  const users = rawUsers.filter((u) => !excludedIds.has(u.id));
 
   const [selectedUsers, setSelectedUsers] = useState<User | User[] | null>(() => {
     if (!defaultValue) return multiple ? [] : null;
-    
-    return multiple 
-      ? (Array.isArray(defaultValue) ? defaultValue : [defaultValue])
-      : (Array.isArray(defaultValue) ? defaultValue[0] : defaultValue);
+
+    return multiple
+      ? Array.isArray(defaultValue)
+        ? defaultValue
+        : [defaultValue]
+      : Array.isArray(defaultValue)
+      ? defaultValue[0]
+      : defaultValue;
   });
 
-  // Update selected users when defaultValue or users change
+  /** update when defaults change */
   useEffect(() => {
     if (!defaultValue || users.length === 0) return;
 
     if (multiple) {
-      const defaultIds = Array.isArray(defaultValue) 
-        ? defaultValue.map(user => user.id)
+      const defIds = Array.isArray(defaultValue)
+        ? defaultValue.map((u) => u.id)
         : [defaultValue.id];
-      setSelectedUsers(users.filter((user: User) => defaultIds.includes(user.id)));
+
+      setSelectedUsers(users.filter((u) => defIds.includes(u.id)));
     } else {
-      const targetId = Array.isArray(defaultValue) ? defaultValue[0]?.id : defaultValue?.id;
-      setSelectedUsers(users.find((user: User) => user.id === targetId) || null);
+      const id = Array.isArray(defaultValue) ? defaultValue[0]?.id : defaultValue?.id;
+      setSelectedUsers(users.find((u) => u.id === id) || null);
     }
-  }, [defaultValue, users, multiple]);
+  }, [defaultValue, rawUsers, multiple]);
 
   const handleChange = useCallback((_: any, newValue: User | User[] | null) => {
     onChange(newValue);
     setSelectedUsers(newValue);
   }, [onChange]);
 
-  if (isLoading) {
-    return <LinearProgress />;
-  }
-
-  if (error) {
-    return <div>Error loading users: {(error as Error).message}</div>;
-  }
+  if (isLoading) return <LinearProgress />;
 
   return (
     <Autocomplete
@@ -92,8 +93,8 @@ const UsersSelector: React.FC<UsersSelectorProps> = ({
       size="small"
       isOptionEqualToValue={(option: User, value: User) => option.id === value.id}
       options={users}
-      disableCloseOnSelect={multiple}
       value={selectedUsers}
+      disableCloseOnSelect={multiple}
       getOptionLabel={(option: User) => option.name}
       renderInput={(params) => (
         <TextField
