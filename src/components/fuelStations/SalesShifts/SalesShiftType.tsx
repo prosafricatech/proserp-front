@@ -53,6 +53,13 @@ export interface Adjustments {
   amount?: number;
   narration?: string;
   ledger?: Ledger;
+  quantity?: number;
+  product_id?: number;
+  product?: Product;
+  operator?: string;
+  tank_id?: number;
+  operator_name: string;
+  description?: string;
 }
 
 export interface SalesShift {

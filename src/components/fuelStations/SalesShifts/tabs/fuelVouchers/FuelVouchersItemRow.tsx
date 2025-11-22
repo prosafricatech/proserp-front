@@ -9,20 +9,7 @@ import { useProductsSelect } from '@/components/productAndServices/products/Prod
 import { Stakeholder } from '@/components/masters/stakeholders/StakeholderType';
 import { Ledger } from '@/components/accounts/ledgers/LedgerType';
 import { Product } from '@/components/productAndServices/products/ProductType';
-import { ProductPrice } from '../../SalesShiftType';
-
-
-interface FuelVoucherData {
-  id?: number;
-  product_id: number;
-  quantity: number;
-  amount?: number;
-  reference?: string | null;
-  narration?: string | null;
-  stakeholder?: Stakeholder | null;
-  expense_ledger?: Ledger | null;
-  [key: string]: any;
-}
+import { ProductPrice, FuelVoucherData } from '../../SalesShiftType'; // Import from shared type
 
 interface FuelVouchersItemRowProps {
   fuelVoucher: FuelVoucherData;
@@ -40,7 +27,8 @@ function FuelVouchersItemRow({ fuelVoucher, index, productPrices }: FuelVouchers
     const { productOptions } = useProductsSelect();
     const { fuelVouchers = [], setFuelVouchers } = useFormContext() as unknown as FormContextType;
 
-    const product = productOptions.find((product: Product) => product.id === fuelVoucher.product_id);
+    // Add null/undefined checks since product_id might be null/undefined
+    const product = fuelVoucher.product_id ? productOptions.find((product: Product) => product.id === fuelVoucher.product_id) : undefined;
     const client = fuelVoucher.stakeholder;
     const expense_ledger = fuelVoucher.expense_ledger;
     const product_price = productPrices?.find((price: ProductPrice) => price?.product_id === product?.id)?.price || 0;
@@ -100,7 +88,7 @@ function FuelVouchersItemRow({ fuelVoucher, index, productPrices }: FuelVouchers
                         </Grid>
                         <Grid size={{xs:6, md:1, lg:1}}>
                             <Tooltip title="Quantity">
-                                <Typography>{fuelVoucher.quantity.toLocaleString()}</Typography>
+                                <Typography>{fuelVoucher.quantity?.toLocaleString() || '0'}</Typography> {/* Added null check */}
                             </Tooltip>
                         </Grid>
                         <Grid  
@@ -111,7 +99,7 @@ function FuelVouchersItemRow({ fuelVoucher, index, productPrices }: FuelVouchers
                             }}
                             >
                             <Tooltip title="Amount">
-                                <Typography>{(product_price * fuelVoucher.quantity).toLocaleString()}</Typography>
+                                <Typography>{((product_price || 0) * (fuelVoucher.quantity || 0)).toLocaleString()}</Typography> {/* Added null checks */}
                             </Tooltip>
                         </Grid>
                        <Grid size={{xs:6, md:5, lg:1.5}}>
@@ -140,7 +128,7 @@ function FuelVouchersItemRow({ fuelVoucher, index, productPrices }: FuelVouchers
                 ) : (
                     <FuelVouchers 
                         productPrices={productPrices} 
-                        fuelVoucher={fuelVoucher as any} 
+                        fuelVoucher={fuelVoucher} 
                         setShowForm={setShowForm} 
                         index={index}
                     />

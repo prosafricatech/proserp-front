@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Grid, IconButton, LinearProgress, TextField, Tooltip, Box } from '@mui/material';
+import { Grid, IconButton, LinearProgress, TextField, Tooltip, Box, Typography } from '@mui/material';
 import { AddOutlined, CheckOutlined, DisabledByDefault } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
-import { useFormContext } from 'react-hook-form';          // ← HII NDIO ILIKUWA INAKOSA
+import { useFormContext } from 'react-hook-form';         
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import StakeholderSelector from '@/components/masters/stakeholders/StakeholderSelector';
@@ -18,6 +18,7 @@ import { Ledger } from '@/components/accounts/ledgers/LedgerType';
 import { Stakeholder } from '@/components/masters/stakeholders/StakeholderType';
 import { Product } from '@/components/productAndServices/products/ProductType';
 import { FuelVoucherData, ProductPrice } from '../../SalesShiftType';
+import FuelVouchersItemRow from './FuelVouchersItemRow';
 
 interface FuelVouchersProps {
   index?: number;
@@ -42,7 +43,7 @@ interface FormData {
   stakeholder?: Partial<Stakeholder> | null | undefined;
 }
 
-function FuelVouchers({ index = -1, setShowForm, fuelVoucher, productPrices,showList = true,onAddSuccess, onUpdateSuccess  }: FuelVouchersProps) {
+function FuelVouchers({ index = -1, setShowForm, fuelVoucher, productPrices, showList = true, onAddSuccess, onUpdateSuccess }: FuelVouchersProps) {
   const iu = { id: 0, name: 'Calibration/Internal use' } as Partial<Stakeholder>;
   const [isAdding, setIsAdding] = useState(false);
   const [stakeholderQuickAddDisplay, setStakeholderQuickAddDisplay] = useState(false);
@@ -160,8 +161,10 @@ function FuelVouchers({ index = -1, setShowForm, fuelVoucher, productPrices,show
       if (index > -1) {
         const updated = fuelVouchers.map((v, i) => (i === index ? voucherData : v));
         setFuelVouchers(updated);
+        onUpdateSuccess?.(voucherData, index);
       } else {
         setFuelVouchers(prev => [...prev, voucherData]);
+        onAddSuccess?.(voucherData);
         // Reset form
         setFormData({
           product_id: null, product: null, quantity: undefined, amount: 0,
@@ -362,6 +365,56 @@ function FuelVouchers({ index = -1, setShowForm, fuelVoucher, productPrices,show
           )}
         </Grid>
       </Grid>
+
+      {/* Display Added Vouchers */}
+      {showList && fuelVouchers.length > 0 && (
+        <Box sx={{ mt: 3 }}>
+          <Typography variant="h6" sx={{ mb: 2, pb: 1, borderBottom: '1px solid', borderColor: 'divider' }}>
+            Added Fuel Vouchers ({fuelVouchers.length})
+          </Typography>
+          
+          {/* List Header - Match your existing styling */}
+          <Grid container sx={{ px: 2, py: 1, bgcolor: 'grey.100', borderRadius: 1, mb: 1 }}>
+            <Grid size={{ xs: 1, md: 0.5 }}>
+              <Typography variant="subtitle2">#</Typography>
+            </Grid>
+            <Grid size={{ xs: 5, md: 4, lg: 3 }}>
+              <Typography variant="subtitle2">Client</Typography>
+            </Grid>
+            <Grid size={{ xs: 6, md: 2.5, lg: 1.5 }}>
+              <Typography variant="subtitle2">Expense Ledger</Typography>
+            </Grid>
+            <Grid size={{ xs: 6, md: 5, lg: 2.5 }}>
+              <Typography variant="subtitle2">Product</Typography>
+            </Grid>
+            <Grid size={{ xs: 6, md: 1, lg: 1 }}>
+              <Typography variant="subtitle2">Quantity</Typography>
+            </Grid>
+            <Grid size={{ xs: 6, md: 1, lg: 1 }}>
+              <Typography variant="subtitle2">Amount</Typography>
+            </Grid>
+            <Grid size={{ xs: 6, md: 5, lg: 1.5 }}>
+              <Typography variant="subtitle2">Reference</Typography>
+            </Grid>
+            <Grid size={{ xs: 6, md: 4, lg: 1.5 }}>
+              <Typography variant="subtitle2">Narration</Typography>
+            </Grid>
+            <Grid size={{ xs: 6, md: 4, lg: 1.5 }} textAlign="end">
+              <Typography variant="subtitle2">Actions</Typography>
+            </Grid>
+          </Grid>
+
+          {/* Use your existing FuelVouchersItemRow for each item */}
+          {fuelVouchers.map((voucher, idx) => (
+            <FuelVouchersItemRow
+              key={idx}
+              fuelVoucher={voucher}
+              index={idx}
+              productPrices={productPrices}
+            />
+          ))}
+        </Box>
+      )}
     </Box>
   );
 }

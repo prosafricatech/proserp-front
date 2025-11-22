@@ -82,7 +82,7 @@ const SignupForm = () => {
         <CardContent
           sx={{
             flex: 0.45,
-            background: '#fafbff',
+            background: 'white',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
@@ -122,7 +122,7 @@ const SignupForm = () => {
             mb={4}
             color="text.secondary"
           >
-            Join us today and experience simplified management
+            Join us today
           </Typography>
 
           <JumboForm validationSchema={validationSchema} onSubmit={onSubmit}>

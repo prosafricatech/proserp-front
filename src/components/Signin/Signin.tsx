@@ -23,27 +23,29 @@ export const Signin = () => {
   const lang = useLanguage();
 
   return (
-    <Div
+    <Box
       sx={{
-        width: { xs: '100%', md: 800 },
-        maxWidth: '100%',
-        margin: 'auto',
-        p: { xs: 2, md: 4 },
+        width: { xs: '100%'},
         minHeight: '100vh',
+        margin: '0',
+        p: { xs: 2, sm: 3, md: 4 },
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
+        background: '#f5f7fb',
+        overflowX: 'hidden',
       }}
     >
       <Card
         sx={{
           display: 'flex',
-          minWidth: 0,
           flexDirection: { xs: 'column', md: 'row' },
           borderRadius: { xs: '24px', md: '32px' },
           overflow: 'hidden',
           boxShadow: '0 20px 60px rgba(0,0,0,0.1)',
-          minHeight: { xs: 'auto', md: '500px' },
+          maxWidth: 720,
+          width: '100%',
+          mx: 'auto',
         }}
       >
         {/* Left Hero Section with Curves */}
@@ -289,6 +291,6 @@ export const Signin = () => {
           </Box>
         </CardContent>
       </Card>
-    </Div>
+    </Box>
   );
 };

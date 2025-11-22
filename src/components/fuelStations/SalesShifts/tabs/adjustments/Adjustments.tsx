@@ -1,10 +1,8 @@
 'use client';
 
-import { Grid, IconButton, LinearProgress, TextField, Tooltip, Box } from '@mui/material';
+import { Grid, IconButton, LinearProgress, TextField, Tooltip, Box, Typography } from '@mui/material';
 import React, { useState } from 'react'
-import * as yup from "yup";
-import { useForm, useFormContext } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
+import { useFormContext } from 'react-hook-form';
 import { AddOutlined, CheckOutlined, DisabledByDefault } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 import { Div } from '@jumbo/shared';
@@ -16,7 +14,7 @@ import StoreSelector from '@/components/procurement/stores/StoreSelector';
 import OperationSelector from '@/components/sharedComponents/OperationSelector';
 import { Product } from '@/components/productAndServices/products/ProductType';
 import { FuelPump } from '@/components/fuelStations/Stations/StationType';
-
+import AdjustmentsRow from './AdjustmentsRow'; // Import the row component
 
 interface Tank {
   id: number;
@@ -46,6 +44,7 @@ interface AdjustmentsProps {
   index?: number;
   setShowForm?: (show: boolean) => void;
   adjustment?: AdjustmentData;
+  showList?: boolean; // ADD THIS PROP
 }
 
 interface FormContextType {
@@ -67,15 +66,15 @@ interface FormData {
   operator_name?: string;
 }
 
-function Adjustments({ index = -1, setShowForm, adjustment }: AdjustmentsProps) {
+function Adjustments({ index = -1, setShowForm, adjustment, showList = true }: AdjustmentsProps) { // ADD showList prop
   const [isAdding, setIsAdding] = useState<boolean>(false);
   const { products, fuel_pumps, adjustments = [], setAdjustments, tanks = [] } = useFormContext() as unknown as FormContextType;
   const { productOptions = [] } = useProductsSelect();
   const [productTanks, setProductTanks] = useState<Tank[]>([]);
   const [tanksKey, setTanksKey] = useState<number>(0);
+  const [quantityFieldKey, setQuantityFieldKey] = useState(0);
   
   const [formData, setFormData] = useState<FormData>(() => {
-    // Use function to initialize state safely
     const initialProduct = adjustment && productOptions?.find((product: Product) => product.id === adjustment.product_id);
     const initialTankId = adjustment && tanks?.find((tank: Tank) => tank.id === adjustment?.tank_id)?.id;
     
@@ -90,9 +89,13 @@ function Adjustments({ index = -1, setShowForm, adjustment }: AdjustmentsProps) 
     };
   });
 
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const selectedProduct = formData.product_id
+    ? productOptions.find(p => p.id === formData.product_id) || formData.product
+    : formData.product;
 
-  // Add a safe function to get tank value
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const inventoryProductIds = productOptions.filter(p => p.type !== 'Inventory').map(p => p.id);
+
   const getTankValue = () => {
     if (!formData.tank_id || !tanks || tanks.length === 0) return null;
     return tanks.find((tank: Tank) => tank.id === formData.tank_id) || null;
@@ -114,7 +117,7 @@ function Adjustments({ index = -1, setShowForm, adjustment }: AdjustmentsProps) 
       newErrors.description = "Description is required";
     }
     if (!formData.quantity || formData.quantity <= 0) {
-      newErrors.quantity = "Quantity is required";
+      newErrors.quantity = "Valid quantity required";
     }
 
     setErrors(newErrors);
@@ -126,7 +129,6 @@ function Adjustments({ index = -1, setShowForm, adjustment }: AdjustmentsProps) 
       return;
     }
 
-    // SOLUTION 1: Check if setAdjustments exists and is a function
     if (typeof setAdjustments !== 'function') {
       console.error('setAdjustments is not available');
       setIsAdding(false);
@@ -142,16 +144,13 @@ function Adjustments({ index = -1, setShowForm, adjustment }: AdjustmentsProps) 
 
     try {
       if (index > -1) {
-        // Replace existing item
         const updatedAdjustments = [...adjustments];
         updatedAdjustments[index] = normalizedItem;
         await setAdjustments(updatedAdjustments);
       } else { 
-        // Add new item
         await setAdjustments((prevAdjustments: AdjustmentData[]) => [...prevAdjustments, normalizedItem]);
       }
 
-      // Only reset if it's a new item, not when editing
       if (index === -1) {
         setFormData({
           product: null,
@@ -162,6 +161,7 @@ function Adjustments({ index = -1, setShowForm, adjustment }: AdjustmentsProps) 
           operator: '',
           operator_name: ''
         });
+        setQuantityFieldKey(k => k + 1);
       }
     } catch (error) {
       console.error('Error updating adjustments:', error);
@@ -182,7 +182,7 @@ function Adjustments({ index = -1, setShowForm, adjustment }: AdjustmentsProps) 
       ...prev,
       product: newValue,
       product_id: newValue ? newValue.id : undefined,
-      tank_id: undefined // Reset tank when product changes
+      tank_id: undefined
     }));
   };
 
@@ -202,11 +202,8 @@ function Adjustments({ index = -1, setShowForm, adjustment }: AdjustmentsProps) 
   };
 
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value ? sanitizedNumber(e.target.value) : 0;
-    setFormData(prev => ({
-      ...prev,
-      quantity: value
-    }));
+    const value = sanitizedNumber(e.target.value);
+    setFormData(prev => ({ ...prev, quantity: value }));
   };
 
   const handleDescriptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -216,10 +213,9 @@ function Adjustments({ index = -1, setShowForm, adjustment }: AdjustmentsProps) 
     }));
   };
 
-  // Remove the form submission handler since we're handling click directly
   const handleAddClick = (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent any form submission
-    e.stopPropagation(); // Stop event bubbling
+    e.preventDefault();
+    e.stopPropagation();
     updateItems();
   };
 
@@ -234,10 +230,10 @@ function Adjustments({ index = -1, setShowForm, adjustment }: AdjustmentsProps) 
           <Div sx={{ mt: 1 }}>
             <ProductSelect
               label='Fuel'
-              frontError={errors.product_id}
-              value={formData.product}
-              requiredProducts={products}
+              defaultValue={selectedProduct}
+              frontError={errors.product_id ? { message: errors.product_id } : undefined}
               onChange={handleProductChange}
+              excludeIds={inventoryProductIds}
             />
           </Div>
         </Grid>
@@ -268,7 +264,8 @@ function Adjustments({ index = -1, setShowForm, adjustment }: AdjustmentsProps) 
             <TextField
               size="small"
               fullWidth
-              value={formData.quantity || ''}
+              key={quantityFieldKey}
+              value={formData.quantity?.toLocaleString() || ''}
               error={!!errors.quantity}
               helperText={errors.quantity}
               label="Quantity"
@@ -322,6 +319,49 @@ function Adjustments({ index = -1, setShowForm, adjustment }: AdjustmentsProps) 
           )}
         </Grid>
       </Grid>
+
+      {/* ADD THIS DISPLAY SECTION */}
+      {showList && adjustments.length > 0 && (
+        <Box sx={{ mt: 3 }}>
+          <Typography variant="h6" sx={{ mb: 2, pb: 1, borderBottom: '1px solid', borderColor: 'divider' }}>
+            Added Adjustments ({adjustments.length})
+          </Typography>
+          
+          {/* List Header */}
+          <Grid container sx={{ px: 2, py: 1, bgcolor: 'grey.100', borderRadius: 1, mb: 1 }}>
+            <Grid size={{ xs: 1, md: 0.5 }}>
+              <Typography variant="subtitle2">#</Typography>
+            </Grid>
+            <Grid size={{ xs: 5.5, md: 2.5, lg: 2.5 }}>
+              <Typography variant="subtitle2">Product</Typography>
+            </Grid>
+            <Grid size={{ xs: 5.5, md: 2.5 }}>
+              <Typography variant="subtitle2">Tank</Typography>
+            </Grid>
+            <Grid size={{ xs: 6, md: 1.5 }}>
+              <Typography variant="subtitle2">Operator</Typography>
+            </Grid>
+            <Grid size={{ xs: 6, md: 2 }}>
+              <Typography variant="subtitle2">Quantity</Typography>
+            </Grid>
+            <Grid size={{ xs: 6, md: 2, lg: 2 }}>
+              <Typography variant="subtitle2">Description</Typography>
+            </Grid>
+            <Grid size={{ xs: 6, md: 1, lg: 1 }} textAlign="end">
+              <Typography variant="subtitle2">Actions</Typography>
+            </Grid>
+          </Grid>
+
+          {/* Use your existing AdjustmentsRow for each item */}
+          {adjustments.map((adjustmentItem, idx) => (
+            <AdjustmentsRow
+              key={idx}
+              adjustment={adjustmentItem}
+              index={idx}
+            />
+          ))}
+        </Box>
+      )}
     </Box>
   );
 }
