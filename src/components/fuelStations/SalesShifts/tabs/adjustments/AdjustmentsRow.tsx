@@ -34,7 +34,7 @@ interface AdjustmentsRowProps {
 const AdjustmentsRow = memo(function AdjustmentsRow({ adjustment, index }: AdjustmentsRowProps) {
   const [showForm, setShowForm] = useState(false);
 
-  const { adjustments = [], setAdjustments, products = [], tanks = [] } = useFormContext() as FormContextType;
+  const { adjustments = [], setAdjustments, products = [], tanks = [] } = useFormContext() as unknown as FormContextType;
 
   const product = adjustment.product || (adjustment.product_id
     ? products.find(p => p.id === adjustment.product_id)

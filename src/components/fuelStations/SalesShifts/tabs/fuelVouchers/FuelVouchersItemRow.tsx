@@ -71,7 +71,7 @@ export default function FuelVouchersItemRow({
         alignItems="center"
         sx={{
           py: 1.5,
-          px: 2,
+          px: 1.5,
           cursor: 'pointer',
           transition: 'background-color 0.2s',
           '&:hover': { bgcolor: 'action.hover' },

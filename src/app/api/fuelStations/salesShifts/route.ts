@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   const keyword = searchParams.get('keyword') || '';
   const page = searchParams.get('page') || '1';
   const limit = searchParams.get('limit') || '10';
-  const stationId = searchParams.get('stationId') || ''; // HII NDIO ULIKUWA NAYO SAWA!
+  const stationId = searchParams.get('stationId') || ''; 
 
   if (!stationId) {
     return new Response(
@@ -21,7 +21,6 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // Tumia stationId moja kwa moja (sio kutoka queryParams string)
   const res = await fetch(`${API_BASE}/fuel-stations/${stationId}/sales-shifts`, {
     headers,
     credentials: 'include',

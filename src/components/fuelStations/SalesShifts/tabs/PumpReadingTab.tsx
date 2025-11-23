@@ -221,8 +221,8 @@ const PumpReadingTab: React.FC<PumpReadingTabProps> = ({ salesShift, isClosing =
           // STORE PATTERN: Find store (same as product)
           const store = findStoreById(pump.tank_id);
 
-          const productName = product?.name || 'Unknown Product';
-          const tankName = store?.name || 'Unknown Tank';
+          const productName = product?.name || '';
+          const tankName = store?.name || '';
 
           return (
             <Grid key={pump.id} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
@@ -302,7 +302,7 @@ const PumpReadingTab: React.FC<PumpReadingTabProps> = ({ salesShift, isClosing =
                         size="small"
                         error={openingError}
                         helperText={openingError ? "Opening reading should not exceed closing reading" : ""}
-                        InputProps={{ inputComponent: CommaSeparatedField as any }}
+                        InputProps={{ inputComponent: CommaSeparatedField }}
                         sx={{
                           '& input': {
                             textAlign: 'left',
@@ -377,7 +377,7 @@ const PumpReadingTab: React.FC<PumpReadingTabProps> = ({ salesShift, isClosing =
                         value={formatNumberWithCommas(Number(currentPrice))}
                         onChange={(e) => updateFuelPrice(product.id, e.target.value)}
                         size="small"
-                        InputProps={{ inputComponent: CommaSeparatedField as any }}
+                        InputProps={{ inputComponent: CommaSeparatedField }}
                         sx={{
                           '& input': {
                             textAlign: 'center',
