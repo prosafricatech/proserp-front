@@ -323,36 +323,6 @@ function Adjustments({ index = -1, setShowForm, adjustment, showList = true }: A
       {/* ADD THIS DISPLAY SECTION */}
       {showList && adjustments.length > 0 && (
         <Box sx={{ mt: 3 }}>
-          <Typography variant="h6" sx={{ mb: 2, pb: 1, borderBottom: '1px solid', borderColor: 'divider' }}>
-            Added Adjustments ({adjustments.length})
-          </Typography>
-          
-          {/* List Header */}
-          <Grid container sx={{ px: 2, py: 1, bgcolor: 'grey.100', borderRadius: 1, mb: 1 }}>
-            <Grid size={{ xs: 1, md: 0.5 }}>
-              <Typography variant="subtitle2">#</Typography>
-            </Grid>
-            <Grid size={{ xs: 5.5, md: 2.5, lg: 2.5 }}>
-              <Typography variant="subtitle2">Product</Typography>
-            </Grid>
-            <Grid size={{ xs: 5.5, md: 2.5 }}>
-              <Typography variant="subtitle2">Tank</Typography>
-            </Grid>
-            <Grid size={{ xs: 6, md: 1.5 }}>
-              <Typography variant="subtitle2">Operator</Typography>
-            </Grid>
-            <Grid size={{ xs: 6, md: 2 }}>
-              <Typography variant="subtitle2">Quantity</Typography>
-            </Grid>
-            <Grid size={{ xs: 6, md: 2, lg: 2 }}>
-              <Typography variant="subtitle2">Description</Typography>
-            </Grid>
-            <Grid size={{ xs: 6, md: 1, lg: 1 }} textAlign="end">
-              <Typography variant="subtitle2">Actions</Typography>
-            </Grid>
-          </Grid>
-
-          {/* Use your existing AdjustmentsRow for each item */}
           {adjustments.map((adjustmentItem, idx) => (
             <AdjustmentsRow
               key={idx}

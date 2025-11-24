@@ -129,6 +129,24 @@ function FuelVouchers({ index = -1, setShowForm, fuelVoucher, productPrices, sho
     }
   }, [addedStakeholder]);
 
+  // CALCULATION LOGIC FROM VERSION 1 - IMPLEMENTED PROPERLY
+  const calculateAndSetValues = (field: 'quantity' | 'amount', value: number) => {
+    if (formData.product_id) {
+      const product = productPrices.find(price => price?.product_id === formData.product_id);
+      if (product) {
+        if (field === 'quantity') {
+          const calculatedAmount = sanitizedNumber(value * product.price);
+          setFormData(prev => ({ ...prev, amount: calculatedAmount }));
+          setAmountFieldKey(key => key + 1);
+        } else if (field === 'amount') {
+          const calculatedQuantity = sanitizedNumber(value / product.price);
+          setFormData(prev => ({ ...prev, quantity: calculatedQuantity }));
+          setQuantityFieldKey(key => key + 1);
+        }
+      }
+    }
+  };
+
   const calculateAmount = () => {
     if (!formData.product_id || !formData.quantity) return 0;
     const price = productPrices.find(p => p.product_id === formData.product_id)?.price || 0;
@@ -147,7 +165,9 @@ function FuelVouchers({ index = -1, setShowForm, fuelVoucher, productPrices, sho
     if (!validateForm()) return;
 
     setIsAdding(true);
-    const finalAmount = calculateAmount();
+    
+    // Use the calculated amount for final submission
+    const finalAmount = formData.amount || calculateAmount();
 
     const voucherData: FuelVoucherData = {
       ...formData,
@@ -186,25 +206,21 @@ function FuelVouchers({ index = -1, setShowForm, fuelVoucher, productPrices, sho
       product_id: newValue?.id ?? null,
       product: newValue,
     }));
+    // Reset calculations when product changes
+    setFormData(prev => ({ ...prev, amount: 0 }));
     setAmountFieldKey(k => k + 1);
   };
 
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = sanitizedNumber(e.target.value);
     setFormData(prev => ({ ...prev, quantity: value }));
-    setAmountFieldKey(k => k + 1);
+    calculateAndSetValues('quantity', value);
   };
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = sanitizedNumber(e.target.value);
-    if (formData.product_id) {
-      const price = productPrices.find(p => p.product_id === formData.product_id)?.price || 0;
-      if (price > 0) {
-        setFormData(prev => ({ ...prev, quantity: sanitizedNumber(value / price) }));
-        setQuantityFieldKey(k => k + 1);
-      }
-    }
     setFormData(prev => ({ ...prev, amount: value }));
+    calculateAndSetValues('amount', value);
   };
 
   if (isAdding) return <LinearProgress />;
@@ -223,11 +239,11 @@ function FuelVouchers({ index = -1, setShowForm, fuelVoucher, productPrices, sho
                 frontError={errors.stakeholder_id ? { message: errors.stakeholder_id } : undefined}
                 addedStakeholder={addedStakeholder}
                 onChange={(newValue: any | null) => {
-                  setValue('stakeholder', newValue);
-                  setValue('stakeholder_id', newValue ? newValue.id : null, {
-                    shouldDirty: true,
-                    shouldValidate: true
-                  });
+                  setFormData(prev => ({
+                    ...prev,
+                    stakeholder: newValue,
+                    stakeholder_id: newValue ? newValue.id : null
+                  }));
                 }}
                 startAdornment={
                   <Tooltip title={'Add Client'}>
@@ -308,7 +324,7 @@ function FuelVouchers({ index = -1, setShowForm, fuelVoucher, productPrices, sho
               fullWidth
               size="small"
               key={amountFieldKey}
-              value={calculateAmount().toLocaleString()}
+              value={formData.amount?.toLocaleString() || '0'}
               InputProps={{ inputComponent: CommaSeparatedField as any }}
               onChange={handleAmountChange}
             />
@@ -369,42 +385,6 @@ function FuelVouchers({ index = -1, setShowForm, fuelVoucher, productPrices, sho
       {/* Display Added Vouchers */}
       {showList && fuelVouchers.length > 0 && (
         <Box sx={{ mt: 3 }}>
-          <Typography variant="h6" sx={{ mb: 2, pb: 1, borderBottom: '1px solid', borderColor: 'divider' }}>
-            Added Fuel Vouchers ({fuelVouchers.length})
-          </Typography>
-          
-          {/* List Header - Match your existing styling */}
-          <Grid container sx={{ px: 2, py: 1, bgcolor: 'grey.100', borderRadius: 1, mb: 1 }}>
-            <Grid size={{ xs: 1, md: 0.5 }}>
-              <Typography variant="subtitle2">#</Typography>
-            </Grid>
-            <Grid size={{ xs: 5, md: 4, lg: 3 }}>
-              <Typography variant="subtitle2">Client</Typography>
-            </Grid>
-            <Grid size={{ xs: 6, md: 2.5, lg: 1.5 }}>
-              <Typography variant="subtitle2">Expense Ledger</Typography>
-            </Grid>
-            <Grid size={{ xs: 6, md: 5, lg: 2.5 }}>
-              <Typography variant="subtitle2">Product</Typography>
-            </Grid>
-            <Grid size={{ xs: 6, md: 1, lg: 1 }}>
-              <Typography variant="subtitle2">Quantity</Typography>
-            </Grid>
-            <Grid size={{ xs: 6, md: 1, lg: 1 }}>
-              <Typography variant="subtitle2">Amount</Typography>
-            </Grid>
-            <Grid size={{ xs: 6, md: 5, lg: 1.5 }}>
-              <Typography variant="subtitle2">Reference</Typography>
-            </Grid>
-            <Grid size={{ xs: 6, md: 4, lg: 1.5 }}>
-              <Typography variant="subtitle2">Narration</Typography>
-            </Grid>
-            <Grid size={{ xs: 6, md: 4, lg: 1.5 }} textAlign="end">
-              <Typography variant="subtitle2">Actions</Typography>
-            </Grid>
-          </Grid>
-
-          {/* Use your existing FuelVouchersItemRow for each item */}
           {fuelVouchers.map((voucher, idx) => (
             <FuelVouchersItemRow
               key={idx}

@@ -48,7 +48,6 @@ export default function FuelVouchersItemRow({
     );
   };
 
-  // Edit mode — show the full form inline
   if (showForm) {
     return (
       <FuelVouchers
