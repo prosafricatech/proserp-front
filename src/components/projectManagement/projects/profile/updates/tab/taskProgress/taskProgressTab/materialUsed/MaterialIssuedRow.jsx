@@ -1,15 +1,15 @@
 import { DisabledByDefault, EditOutlined } from '@mui/icons-material'
 import { Divider, Grid, IconButton, Tooltip, Typography } from '@mui/material'
 import React, { useState } from 'react'
-import MaterialUsedForm from './MaterialUsedForm';
+import MaterialIssuedForm from './MaterialIssuedForm';
 
-function MaterialUsedRow({ material, index, MaterialUsed=[], setMaterialUsed}) {
+function MaterialIssuedRow({ material, index, MaterialIssued=[], setMaterialIssued}) {
     const product = material.product;
     const [showForm, setShowForm] = useState(false);
 
     const handleRemoveItem = () => {
-        setMaterialUsed(MaterialUsed => {
-            const newItems = [...MaterialUsed];
+        setMaterialIssued(MaterialIssued => {
+            const newItems = [...MaterialIssued];
             newItems.splice(index,1);
             return newItems;
         });
@@ -65,11 +65,11 @@ function MaterialUsedRow({ material, index, MaterialUsed=[], setMaterialUsed}) {
                         </Grid>
                     </Grid>
                 ) : (
-                    <MaterialUsedForm material={material} setShowForm={setShowForm} index={index} MaterialUsed={MaterialUsed} setMaterialUsed={setMaterialUsed}/>
+                    <MaterialIssuedForm material={material} setShowForm={setShowForm} index={index} MaterialIssued={MaterialIssued} setMaterialIssued={setMaterialIssued}/>
                 )
             }
         </React.Fragment>
   )
 }
 
-export default MaterialUsedRow
+export default MaterialIssuedRow

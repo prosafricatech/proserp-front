@@ -28,55 +28,57 @@ function InventoryInputsItemForm({setClearFormKey, submitMainForm, submitItemFor
             .typeError('Consumption Date is required'),
         product: yup
             .object()
-            .required("Product is required")
+            .required('Product is required')
             .typeError('Product is required'),
         store_id: yup
             .number()
-            .when('product', {
-                is: (product) => product?.type === 'Inventory',
-                then: yup.number().required("Store is required").typeError('Store is required'),
-                otherwise: yup.number().nullable(),
+            .nullable()
+            .transform((value) => (isNaN(value) ? null : value))
+            .when('product', (product, schema) => {
+            return product && product.type === 'Inventory'
+                ? schema.required('Store is required').typeError('Store is required')
+                : schema.nullable();
             }),
         quantity: yup
             .number()
-            .when('product', {
-                is: (product) => product?.type === 'Inventory',
-                then: yup
-                    .number()
-                    .required("Quantity is required")
-                    .positive("Quantity must be a positive number")
-                    .typeError('Quantity is required')
-                    .when(['current_balance', 'available_balance'], {
-                        is: (currentBalance, availableBalance) => currentBalance < availableBalance,
-                        then: yup.number()
-                            .test('currentBalanceCheck', 'This quantity will lead to negative balance', function (value) {
-                                const currentBalance = parseFloat(this.parent.current_balance);
-                                return value <= currentBalance;
-                            }),
-                        otherwise: yup
-                            .number()
-                            .positive("Quantity must be a positive number")
-                            .typeError('Quantity is required'),
-                    })
-                    .test('quantityExceeded', 'The quantity exceeds the balance', function (value) {
-                        const availableBalance = parseFloat(this.parent.available_balance);
-                        return availableBalance === 'N/A' || !value || value <= availableBalance;
-                    }),
-                otherwise: yup
-                    .number()
-                    .positive("Quantity must be a positive number")
-                    .typeError('Quantity is required'),
+            .transform((value, originalValue) => (originalValue === '' || originalValue === null ? null : value))
+            .nullable()
+            .when('product', (product, schema) => {
+                if (!product || product.type !== 'Inventory') {
+                    return schema
+                    .positive('Quantity must be a positive number')
+                    .typeError('Quantity must be a number');
+                }
+            return schema
+                .required('Quantity is required')
+                .positive('Quantity must be a positive number')
+                .test(
+                'not-exceed-current',
+                'This quantity will lead to a negative balance',
+                    function (value) {
+                        const currentBalance = parseFloat(this.parent.current_balance) || 0;
+                        return value == null || value <= currentBalance;
+                    }
+                )
+                .test(
+                'not-exceed-available',
+                'The quantity exceeds the available balance',
+                    function (value) {
+                        const availableBalance = parseFloat(this.parent.available_balance) || 0;
+                        return value == null || availableBalance === 0 || value <= availableBalance;
+                    }
+                );
             }),
-        rate: yup
+            rate: yup
             .number()
-            .when('product', {
-                is: (product) => product?.type !== 'Inventory',
-                then: yup
-                    .number()
-                    .required("Rate is required")
-                    .positive("Rate must be a positive number")
-                    .typeError('Rate is required'),
-                otherwise: yup.number().nullable(),
+            .when('product', (product, schema) => {
+                if (product && product.type !== 'Inventory') {
+                return schema
+                    .required('Rate is required')
+                    .positive('Rate must be a positive number')
+                    .typeError('Rate must be a number');
+                }
+                return schema.nullable().optional();
             }),
     });
 
@@ -117,13 +119,11 @@ function InventoryInputsItemForm({setClearFormKey, submitMainForm, submitItemFor
     const updateItems = async (item) => {
         setIsAdding(true);
         if (index > -1) {
-            // Replace the existing item with the edited item
             let updatedItems = [...inventoryInputs];
             updatedItems[index] = item;
             await setInventoryInputs(updatedItems);
             setClearFormKey(prevKey => prevKey + 1);
         } else {
-            // Add the new item to the items array
             await setInventoryInputs((items) => [...items, item]);
             if (!!submitItemForm) {
                 submitMainForm()
@@ -159,7 +159,7 @@ function InventoryInputsItemForm({setClearFormKey, submitMainForm, submitItemFor
     useEffect(() => {
       if (submitItemForm) {
         handleSubmit(updateItems, () => {
-          setSubmitItemForm(false); // Reset submitItemForm if there are errors
+          setSubmitItemForm(false);
         })();
       }
     }, [submitItemForm]);
@@ -230,6 +230,8 @@ function InventoryInputsItemForm({setClearFormKey, submitMainForm, submitItemFor
     if(isAdding){
         return <LinearProgress/>
     }
+
+    console.log(errors, product)
 
   return (
     <form autoComplete='off' onSubmit={handleSubmit(updateItems)} >
@@ -387,11 +389,10 @@ function InventoryInputsItemForm({setClearFormKey, submitMainForm, submitItemFor
                     }}
                     error={!!errors?.quantity}
                     helperText={errors?.quantity?.message}
-                    onChange={(e)=> {
-                        setValue(`quantity`,e.target.value ? sanitizedNumber(e.target.value ) : 0,{
-                          shouldValidate: true,
-                          shouldDirty: true
-                        });
+                    onChange={(e) => {
+                        const val = e.target.value;
+                        const num = val ? sanitizedNumber(val) : null;
+                        setValue('quantity', num, { shouldValidate: true, shouldDirty: true });
                     }}
                 />
             </Grid>
@@ -409,10 +410,9 @@ function InventoryInputsItemForm({setClearFormKey, submitMainForm, submitItemFor
                             inputComponent: CommaSeparatedField,
                         }}
                         onChange={(e) => {
-                            setValue(`rate`,e.target.value ? sanitizedNumber(e.target.value) : 0,{
-                                shouldValidate: true,
-                                shouldDirty: true
-                            });
+                            const val = e.target.value;
+                            const num = val ? sanitizedNumber(val) : null;
+                            setValue('rate', num, { shouldValidate: true, shouldDirty: true });
                         }}
                     />
                 </Grid>

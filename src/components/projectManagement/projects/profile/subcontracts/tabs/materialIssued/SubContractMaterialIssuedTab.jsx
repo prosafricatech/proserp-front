@@ -3,17 +3,17 @@ import { Card, Grid } from '@mui/material';
 import JumboRqList from '@jumbo/components/JumboReactQuery/JumboRqList/JumboRqList';
 import JumboSearch from '@jumbo/components/JumboSearch/JumboSearch';
 import JumboListToolbar from '@jumbo/components/JumboList/components/JumboListToolbar/JumboListToolbar';
-import SubContractMaterialUsedListItem from './SubContractMaterialUsedListItem';
+import SubContractMaterialIssuedListItem from './SubContractMaterialIssuedListItem';
 import { useParams } from 'next/navigation';
 import projectsServices from '@/components/projectManagement/projects/project-services';
-import MaterialUsedSelector from './MaterialUsedSelector';
+import MaterialIssuedSelector from './MaterialIssuedSelector';
 
-const SubContractMaterialUsedTab = ({ subContract }) => {
+const SubContractMaterialIssuedTab = ({ subContract }) => {
   const params = useParams();
   const listRef = React.useRef();
 
   const [queryOptions, setQueryOptions] = React.useState({
-    queryKey: 'SubContractMaterialUsed',
+    queryKey: 'SubContractMaterialIssued',
     queryParams: { 
       id: subContract?.id,
       keyword: '', 
@@ -31,8 +31,8 @@ const SubContractMaterialUsedTab = ({ subContract }) => {
     }));
   }, [params]);
 
-  const renderSubcontractMaterialUsed = React.useCallback((subContractMaterialsUsed) => {
-    return <SubContractMaterialUsedListItem subContractMaterialsUsed={subContractMaterialsUsed} />;
+  const renderSubcontractMaterialIssued = React.useCallback((subContractMaterialsUsed) => {
+    return <SubContractMaterialIssuedListItem subContractMaterialsUsed={subContractMaterialsUsed} />;
   }, []);
 
   const handleOnChange = React.useCallback(
@@ -65,12 +65,12 @@ const SubContractMaterialUsedTab = ({ subContract }) => {
     <JumboRqList
       ref={listRef}
       wrapperComponent={Card}
-      service={projectsServices.getSubContractMaterialUsed}
+      service={projectsServices.getSubContractMaterialIssued}
       primaryKey={queryOptions.queryParams.aggregated ? "product_name" : "id"} 
       queryOptions={queryOptions}
       itemsPerPage={10}
       itemsPerPageOptions={[5, 8, 10, 15, 20]}
-      renderItem={renderSubcontractMaterialUsed}
+      renderItem={renderSubcontractMaterialIssued}
       componentElement="div"
       wrapperSx={{
         flex: 1,
@@ -83,7 +83,7 @@ const SubContractMaterialUsedTab = ({ subContract }) => {
           actionTail={
             <Grid container columnSpacing={1} rowSpacing={1} justifyContent={'end'}>
               <Grid size={{xs: 6, md: 4}}>
-                <MaterialUsedSelector
+                <MaterialIssuedSelector
                   aggregated={queryOptions.queryParams.aggregated} 
                   onChange={handleAggregatedChange} 
                 />
@@ -102,4 +102,4 @@ const SubContractMaterialUsedTab = ({ subContract }) => {
   );
 };
 
-export default SubContractMaterialUsedTab;
+export default SubContractMaterialIssuedTab;

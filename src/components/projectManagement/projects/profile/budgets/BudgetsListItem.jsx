@@ -6,6 +6,7 @@ import {
   Grid,
   Tooltip,
   Typography,
+  Alert,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
@@ -141,9 +142,7 @@ function BudgetsListItem() {
               </Accordion>
             ))
           ) : (
-            <Typography variant="body2" color="textSecondary" align="center" mt={2}>
-              No budgets found.
-            </Typography>
+            <Alert variant='outlined' severity='info'>No budgets found.</Alert>
           )}
         </ProductsProvider>
       </ProductsSelectProvider>

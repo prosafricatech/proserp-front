@@ -41,7 +41,7 @@ function ProfileContent() {
     data: budgetsData, 
     isLoading: isBudgetLoading 
   } = useQuery({
-    queryKey: ['projectBudgets', { id: project.id, cost_center: project.cost_center.id }],
+    queryKey: ['projectBudgets', { id: project.id, cost_center: project?.cost_center?.id }],
     queryFn: projectsServices.showProjectBudgets,
     enabled: activeTab === 4,
   });

@@ -160,6 +160,7 @@ function BillOfMaterialItemRow({
             <BillOfMaterialItemForm
               submitMainForm={submitMainForm}
               setClearFormKey={setClearFormKey}
+              setSubmitItemForm={setSubmitItemForm}
               setIsDirty={setIsDirty}
               item={item}
               setShowForm={setShowForm}

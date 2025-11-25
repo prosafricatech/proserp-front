@@ -10,7 +10,7 @@ export async function DELETE(
   const { headers, response } = await getAuthHeaders(req);
   if (response) return response;
 
-  const res = await fetch(`${API_BASE}/project-subcontracts/${params.id}`, {
+  const res = await fetch(`${API_BASE}/project-subcontract-certificates/${params.id}`, {
     method: 'DELETE',
     headers,
   });

@@ -73,7 +73,7 @@ function SaleItemRow({setClearFormKey, submitMainForm, setSubmitItemForm, submit
                                 <Typography>{(item.quantity*item.rate*((1+(product?.vat_exempted !== 1 ? vat_factor : 0)))).toLocaleString()}</Typography>
                             </Tooltip>
                         </Grid>
-                        <Grid textAlign={'end'} size={{xs: 12, md: 1}}>
+                        <Grid textAlign={'end'} size={{xs: 12, md: 12, lg: 1}}>
                             <Tooltip title='Edit Item'>
                                 <IconButton size='small' onClick={() => {setShowForm(true)}}>
                                     <EditOutlined fontSize='small'/>

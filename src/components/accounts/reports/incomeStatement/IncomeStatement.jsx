@@ -219,7 +219,7 @@ function IncomeStatement({from, to, cost_center_ids}) {
       };
 
       // Pass all filters to the service
-      const responseData = await financialReportsServices.downloadExcelTemplate(filters);
+      const responseData = await financialReportsServices.downloadIcomeStatementExcel(filters);
       
       const blob = new Blob([responseData], {
         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -334,7 +334,6 @@ function IncomeStatement({from, to, cost_center_ids}) {
                       size="small"
                       onClick={downloadExcelTemplate}
                       loading={isDownloadingTemplate}
-                      disabled
                       variant="contained"
                       color="success"
                     >

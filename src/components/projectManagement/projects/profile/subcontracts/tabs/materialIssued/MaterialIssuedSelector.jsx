@@ -1,6 +1,6 @@
 import { FormControlLabel, Switch } from '@mui/material';
 
-function MaterialUsedSelector({ aggregated, onChange }) {
+function MaterialIssuedSelector({ aggregated, onChange }) {
   const handleToggle = (event) => {
     onChange(event.target.checked);
   };
@@ -19,4 +19,4 @@ function MaterialUsedSelector({ aggregated, onChange }) {
   );
 }
 
-export default MaterialUsedSelector;
+export default MaterialIssuedSelector;

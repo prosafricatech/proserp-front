@@ -3,16 +3,16 @@ import { Dialog,LinearProgress,Tooltip, useMediaQuery } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import React, { useState } from 'react';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
-import SubcontractForm from './SubcontractForm';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
-import projectsServices from '../../project-services';
 import { JumboDdMenu } from '@jumbo/components';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import CertificateForm from './form/CertificateForm';
+import projectsServices from '@/components/projectManagement/projects/project-services';
 
-const EditSubContract = ({subContract,setOpenDialog}) => {
-  const {data:SubContractDetails,isFetching} = useQuery({
-    queryKey: ['SubContractDetails',{id:subContract.id}],
-    queryFn: async() => projectsServices.getSubContractDetails(subContract.id)
+const EditCertificate = ({certificate,setOpenDialog}) => {
+  const {data:CertificateDetails, isFetching} = useQuery({
+    queryKey: ['CertificateDetails',{id:certificate.id}],
+    queryFn: async() => projectsServices.getCertificateDetails(certificate.id)
   });
 
   if(isFetching){
@@ -20,11 +20,11 @@ const EditSubContract = ({subContract,setOpenDialog}) => {
   }
 
   return (
-    <SubcontractForm setOpenDialog={setOpenDialog} subContract={SubContractDetails} />
+    <CertificateForm setOpenDialog={setOpenDialog} certificate={CertificateDetails} />
   )
 }
 
-const SubcontractItemAction = ({subContract}) => {
+const CertificateItemAction = ({certificate}) => {
   const [openEditDialog,setOpenEditDialog] = useState(false);
   const {showDialog,hideDialog} = useJumboDialog();
   const { enqueueSnackbar } = useSnackbar();
@@ -33,11 +33,10 @@ const SubcontractItemAction = ({subContract}) => {
   const {theme} = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
-  // React Query v5 syntax for useMutation
-  const { mutate: deleteSubContract } = useMutation({
-    mutationFn: projectsServices.deleteSubContract,
+  const { mutate: deleteCertificate } = useMutation({
+    mutationFn: projectsServices.deleteCertificate,
     onSuccess: (data) => {
-      queryClient.invalidateQueries({queryKey: ['subcontracts']});
+      queryClient.invalidateQueries({queryKey: ['Certificates']});
       enqueueSnackbar(data.message, {
         variant: 'success',
       });
@@ -60,10 +59,10 @@ const SubcontractItemAction = ({subContract}) => {
       case 'delete':
         showDialog({
           title: 'Confirm Delete',
-          content: 'Are you sure you want to delete this Sub Contract?',
+          content: 'Are you sure you want to delete this Certificate?',
           onYes: () =>{ 
             hideDialog();
-            deleteSubContract(subContract.id)
+            deleteCertificate(certificate.id)
           },
           onNo: () => hideDialog(),
           variant:'confirm'
@@ -83,7 +82,7 @@ const SubcontractItemAction = ({subContract}) => {
         maxWidth={'md'} 
         scroll={belowLargeScreen ? 'body' : 'paper'}
       >
-        {openEditDialog && <EditSubContract subContract={subContract} setOpenDialog={setOpenEditDialog}/>}
+        {openEditDialog && <EditCertificate certificate={certificate} setOpenDialog={setOpenEditDialog}/>}
       </Dialog>
       <JumboDdMenu
         icon={
@@ -98,4 +97,4 @@ const SubcontractItemAction = ({subContract}) => {
   );
 };
 
-export default SubcontractItemAction;
+export default CertificateItemAction;
