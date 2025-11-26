@@ -53,6 +53,13 @@ export interface Adjustments {
   amount?: number;
   narration?: string;
   ledger?: Ledger;
+  quantity?: number;
+  product_id?: number;
+  product?: Product;
+  operator?: string;
+  tank_id?: number;
+  operator_name: string;
+  description?: string;
 }
 
 export interface SalesShift {
@@ -108,6 +115,7 @@ export interface FuelVoucher {
   stakeholder?: Stakeholder;
   product?: Product;
   expense_ledger?: Ledger;
+  fuelVoucherData?: FuelVoucherData | null | undefined;
 }
 
 export interface LedgerAmount {
@@ -141,6 +149,7 @@ export interface ProductPrice {
 }
 
 export interface FuelVoucherData {
+  id?: number;
   product_id?: number | null;
   quantity?: number;
   amount?: number;

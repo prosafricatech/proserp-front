@@ -4,11 +4,9 @@ import React, { useState } from 'react';
 import {
   Box,
   Typography,
-  LinearProgress,
   Grid,
   TextField,
   Button,
-  Alert,
   Autocomplete,
   Paper,
   Dialog,
@@ -84,6 +82,7 @@ interface SalesShiftFormData {
     product_id: number;
     price: number;
   }>;
+  cash_distributions?: Array<any>;
 }
 
 const SalesShiftForm: React.FC<SalesShiftFormProps> = ({
@@ -103,8 +102,6 @@ const SalesShiftForm: React.FC<SalesShiftFormProps> = ({
 
   const shiftTeams = activeStation?.shift_teams || [];
   const fuelPumps = activeStation?.fuel_pumps || [];
-  const products = activeStation?.product || [];
-  const tanks = (activeStation as any)?.tanks || [];
 
   const [adjustments, setAdjustments] = useState<AdjustmentData[]>(salesShift?.adjustments || []);
   const [fuelVouchers, setFuelVouchers] = useState<FuelVoucherData[]>(salesShift?.fuel_vouchers || []);
@@ -124,7 +121,7 @@ const SalesShiftForm: React.FC<SalesShiftFormProps> = ({
       fuel_vouchers: salesShift?.fuel_vouchers || [],
       adjustments: salesShift?.adjustments || [],
       submit_type: isClosing ? 'close' : 'open',
-      product_prices: salesShift?.product_prices || []
+      product_prices: salesShift?.product_prices || [],
     }
   });
 
@@ -136,11 +133,15 @@ const SalesShiftForm: React.FC<SalesShiftFormProps> = ({
     mutationFn: salesShiftServices.createSalesShift,
     onSuccess: (data: { message: string }) => {
       queryClient.invalidateQueries({ queryKey: ['salesShifts'] });
-      enqueueSnackbar(data.message, { variant: 'success' });
+      enqueueSnackbar(data.message || 'Shift created successfully!', { variant: 'success' });
       toggleOpen(false);
     },
     onError: (error: any) => {
-      enqueueSnackbar(error?.response?.data.message || 'Failed to create sales shift', { variant: 'error' });
+      enqueueSnackbar(
+        error?.response?.data?.message || 
+        'Failed to create sales shift', 
+        { variant: 'error' }
+      );
     },
   });
 
@@ -148,11 +149,15 @@ const SalesShiftForm: React.FC<SalesShiftFormProps> = ({
     mutationFn: (data: any) => salesShiftServices.updateSalesShift(salesShift!.id!, data),
     onSuccess: (data: { message: string }) => {
       queryClient.invalidateQueries({ queryKey: ['salesShifts'] });
-      enqueueSnackbar(data.message, { variant: 'success' });
+      enqueueSnackbar(data.message || 'Shift updated successfully!', { variant: 'success' });
       toggleOpen(false);
     },
     onError: (error: any) => {
-      enqueueSnackbar(error?.response?.data.message || 'Failed to update sales shift', { variant: 'error' });
+      enqueueSnackbar(
+        error?.response?.data?.message || 
+        'Failed to update sales shift', 
+        { variant: 'error' }
+      );
     },
   });
 
@@ -162,14 +167,12 @@ const SalesShiftForm: React.FC<SalesShiftFormProps> = ({
     setActiveTab(newValue);
   };
 
-  // Handle next button click
   const handleNext = () => {
     if (activeTab < 4) {
       setActiveTab(activeTab + 1);
     }
   };
 
-  // Handle previous button click
   const handlePrevious = () => {
     if (activeTab > 0) {
       setActiveTab(activeTab - 1);
@@ -187,14 +190,13 @@ const SalesShiftForm: React.FC<SalesShiftFormProps> = ({
       return;
     }
 
-    // ✅ INCLUDE ADJUSTMENTS AND FUEL VOUCHERS IN SUBMISSION
     const submitData = {
       ...data,
       station_id: activeStation?.id,
       shift_start: dayjs(data.shift_start).toISOString(),
       shift_end: data.shift_end ? dayjs(data.shift_end).toISOString() : null,
-      adjustments: adjustments, // Include adjustments from state
-      fuel_vouchers: fuelVouchers, // Include fuel vouchers from state
+      adjustments: adjustments,
+      fuel_vouchers: fuelVouchers,
     };
 
     if (salesShift) {
@@ -204,12 +206,10 @@ const SalesShiftForm: React.FC<SalesShiftFormProps> = ({
     }
   };
 
-  // ✅ Reset form and tabs when dialog closes
   React.useEffect(() => {
     if (!open) {
       setActiveTab(0);
       methods.reset();
-      // Also reset adjustments and fuel vouchers
       setAdjustments([]);
       setFuelVouchers([]);
     }
@@ -221,39 +221,22 @@ const SalesShiftForm: React.FC<SalesShiftFormProps> = ({
     setAdjustments,
     fuelVouchers, 
     setFuelVouchers,
-    products,
-    tanks,
-    fuel_pumps: fuelPumps,
   };
 
   return (
     <Dialog 
       open={open} 
-      onClose={() => toggleOpen(false)} 
       maxWidth="lg" 
       fullWidth
       fullScreen={isSmallScreen}
-      PaperProps={{
-        sx: { 
-          maxHeight: isSmallScreen ? '100vh' : '90vh',
-          ...(isSmallScreen && {
-            m: 0,
-            borderRadius: 0
-          })
-        }
-      }}
     >
       <FormProvider {...formContextValue}>
-        <Box component="form" onSubmit={handleSubmit(onSubmit)}>
-          
-          {/* DIALOG TITLE - Contains Shift Team info and Tabs */}
-          <DialogTitle sx={{ p: isSmallScreen ? 1 : 1 }}>
-            <Paper elevation={0} sx={{ p: isSmallScreen ? 1 : 1 }}>
+          <DialogTitle sx={{ p: 1 }}>
+            <Paper elevation={0} sx={{ p: 1 }}>
               <Typography variant={isSmallScreen ? "h6" : "h5"} gutterBottom align="center">
                 Fuel Sales Shift
               </Typography>
 
-              {/* Header Fields and Tabs in Dialog Title */}
               <Grid container spacing={1} sx={{ mb: 0 }}>
                 <Grid size={{ xs: 12, md: 4 }}>
                   <Autocomplete
@@ -328,7 +311,6 @@ const SalesShiftForm: React.FC<SalesShiftFormProps> = ({
             p: 0, 
             maxHeight: isSmallScreen ? 'calc(100vh - 200px)' : '50vh', 
             overflow: 'auto',
-            // ✅ IMPROVE MOBILE SCROLLING
             ...(isSmallScreen && {
               maxHeight: 'calc(100vh - 180px)',
               WebkitOverflowScrolling: 'touch' 
@@ -364,7 +346,6 @@ const SalesShiftForm: React.FC<SalesShiftFormProps> = ({
                 flexDirection: isSmallScreen ? 'column' : 'row',
                 gap: isSmallScreen ? 1 : 0
               }}>
-                {/* Previous Button */}
                 <Box sx={{
                   width: isSmallScreen ? '100%' : 'auto',
                   order: isSmallScreen ? 2 : 1
@@ -412,10 +393,14 @@ const SalesShiftForm: React.FC<SalesShiftFormProps> = ({
                     </Button>
                   ) : (
                     <Button 
-                      type="submit"
+                      onClick={handleSubmit(onSubmit)}
                       variant="contained"
                       size="small"
-                      disabled={isPending || !formValues.shift_team_id || !formValues.shift_start}
+                      disabled={
+                        isPending || 
+                        !formValues.shift_team_id || 
+                        !formValues.shift_start
+                      }
                       fullWidth={isSmallScreen}
                     >
                       {salesShift ? 'Update' : 'Create'} Shift
@@ -425,7 +410,6 @@ const SalesShiftForm: React.FC<SalesShiftFormProps> = ({
               </Box>
             </Paper>
           </DialogActions>
-        </Box>
       </FormProvider>
     </Dialog>
   );

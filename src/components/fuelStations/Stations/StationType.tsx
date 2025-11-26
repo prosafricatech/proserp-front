@@ -13,6 +13,9 @@ export interface Station {
   ledger?:Ledger[];
   product?:Product[];
   description?: string;
+  tanks?: Store[];
+  tank_ids?: number[];
+  tank ?: Store;
 }
 
 export interface ShiftTeam {
@@ -68,7 +71,7 @@ export interface FormData {
     product_name?: string;
     name: string;
     tank_id: number | null;
-    fuelName?: any; // Adjust based on ProductSelect's type
-    tankName?: any; // Adjust based on StoreSelector's type
+    fuelName?: any;
+    tankName?: any; 
   }>;
 }

@@ -151,7 +151,7 @@ const salesShiftServices: SalesShiftServices = {
       other_ledgers: data.other_ledgers
     };
 
-    const response = await axios.post('/api/pos/sales-shift/add', requestData);
+    const response = await axios.post('/api/fuelStations/salesShifts/add');
     return response.data;
   },
 

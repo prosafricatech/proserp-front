@@ -12,7 +12,11 @@ export async function GET(request: NextRequest) {
   const keyword = searchParams.get('keyword') || '';
   const page = searchParams.get('page') || '1';
   const limit = searchParams.get('limit') || '10';
+<<<<<<< HEAD
   const stationId = searchParams.get('stationId') || '';
+=======
+  const stationId = searchParams.get('stationId') || ''; 
+>>>>>>> 120122672610cd4a26397d74042f4b6474593ff6
 
   if (!stationId) {
     return new Response(

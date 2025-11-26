@@ -556,8 +556,8 @@ const CashReconciliationTab: React.FC<CashReconciliationTabProps> = ({ salesShif
                           label="Amount"
                           value={distribution?.amount || 0}
                           InputProps={{ 
-                            inputComponent: CommaSeparatedField as any,
-                            style: { textAlign: 'right' }
+                            inputComponent: CommaSeparatedField,
+                            style: { textAlign: 'left' }
                           }}
                           inputRef={el => amountInputRefs.current[`amount-${actualIndex}`] = el}
                           onFocus={() => {
@@ -570,7 +570,6 @@ const CashReconciliationTab: React.FC<CashReconciliationTabProps> = ({ salesShif
                             updateCashDistribution(actualIndex, 'amount', numericValue);
                           }}
                           placeholder="0.00"
-                          variant="outlined"
                           disabled={!distribution?.ledger}
                         />
                       </Grid>

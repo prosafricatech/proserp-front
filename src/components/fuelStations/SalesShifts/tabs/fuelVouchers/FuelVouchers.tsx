@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Grid, IconButton, LinearProgress, TextField, Tooltip, Box } from '@mui/material';
 import { AddOutlined, CheckOutlined, DisabledByDefault } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
-import { useFormContext } from 'react-hook-form';          // ← HII NDIO ILIKUWA INAKOSA
+import { useFormContext } from 'react-hook-form';         
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import StakeholderSelector from '@/components/masters/stakeholders/StakeholderSelector';
@@ -18,6 +18,7 @@ import { Ledger } from '@/components/accounts/ledgers/LedgerType';
 import { Stakeholder } from '@/components/masters/stakeholders/StakeholderType';
 import { Product } from '@/components/productAndServices/products/ProductType';
 import { FuelVoucherData, ProductPrice } from '../../SalesShiftType';
+import FuelVouchersItemRow from './FuelVouchersItemRow';
 
 interface FuelVouchersProps {
   index?: number;
@@ -42,7 +43,7 @@ interface FormData {
   stakeholder?: Partial<Stakeholder> | null | undefined;
 }
 
-function FuelVouchers({ index = -1, setShowForm, fuelVoucher, productPrices,showList = true,onAddSuccess, onUpdateSuccess  }: FuelVouchersProps) {
+function FuelVouchers({ index = -1, setShowForm, fuelVoucher, productPrices, showList = true, onAddSuccess, onUpdateSuccess }: FuelVouchersProps) {
   const iu = { id: 0, name: 'Calibration/Internal use' } as Partial<Stakeholder>;
   const [isAdding, setIsAdding] = useState(false);
   const [stakeholderQuickAddDisplay, setStakeholderQuickAddDisplay] = useState(false);
@@ -128,6 +129,24 @@ function FuelVouchers({ index = -1, setShowForm, fuelVoucher, productPrices,show
     }
   }, [addedStakeholder]);
 
+  // CALCULATION LOGIC FROM VERSION 1 - IMPLEMENTED PROPERLY
+  const calculateAndSetValues = (field: 'quantity' | 'amount', value: number) => {
+    if (formData.product_id) {
+      const product = productPrices.find(price => price?.product_id === formData.product_id);
+      if (product) {
+        if (field === 'quantity') {
+          const calculatedAmount = sanitizedNumber(value * product.price);
+          setFormData(prev => ({ ...prev, amount: calculatedAmount }));
+          setAmountFieldKey(key => key + 1);
+        } else if (field === 'amount') {
+          const calculatedQuantity = sanitizedNumber(value / product.price);
+          setFormData(prev => ({ ...prev, quantity: calculatedQuantity }));
+          setQuantityFieldKey(key => key + 1);
+        }
+      }
+    }
+  };
+
   const calculateAmount = () => {
     if (!formData.product_id || !formData.quantity) return 0;
     const price = productPrices.find(p => p.product_id === formData.product_id)?.price || 0;
@@ -146,7 +165,9 @@ function FuelVouchers({ index = -1, setShowForm, fuelVoucher, productPrices,show
     if (!validateForm()) return;
 
     setIsAdding(true);
-    const finalAmount = calculateAmount();
+    
+    // Use the calculated amount for final submission
+    const finalAmount = formData.amount || calculateAmount();
 
     const voucherData: FuelVoucherData = {
       ...formData,
@@ -154,14 +175,16 @@ function FuelVouchers({ index = -1, setShowForm, fuelVoucher, productPrices,show
       product: selectedProduct,
       stakeholder: formData.stakeholder_id === 0 ? iu as any : formData.stakeholder,
       expense_ledger: formData.expense_ledger,
-    };
+    } as FuelVoucherData;
 
     try {
       if (index > -1) {
         const updated = fuelVouchers.map((v, i) => (i === index ? voucherData : v));
         setFuelVouchers(updated);
+        onUpdateSuccess?.(voucherData, index);
       } else {
         setFuelVouchers(prev => [...prev, voucherData]);
+        onAddSuccess?.(voucherData);
         // Reset form
         setFormData({
           product_id: null, product: null, quantity: undefined, amount: 0,
@@ -183,25 +206,21 @@ function FuelVouchers({ index = -1, setShowForm, fuelVoucher, productPrices,show
       product_id: newValue?.id ?? null,
       product: newValue,
     }));
+    // Reset calculations when product changes
+    setFormData(prev => ({ ...prev, amount: 0 }));
     setAmountFieldKey(k => k + 1);
   };
 
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = sanitizedNumber(e.target.value);
     setFormData(prev => ({ ...prev, quantity: value }));
-    setAmountFieldKey(k => k + 1);
+    calculateAndSetValues('quantity', value);
   };
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = sanitizedNumber(e.target.value);
-    if (formData.product_id) {
-      const price = productPrices.find(p => p.product_id === formData.product_id)?.price || 0;
-      if (price > 0) {
-        setFormData(prev => ({ ...prev, quantity: sanitizedNumber(value / price) }));
-        setQuantityFieldKey(k => k + 1);
-      }
-    }
     setFormData(prev => ({ ...prev, amount: value }));
+    calculateAndSetValues('amount', value);
   };
 
   if (isAdding) return <LinearProgress />;
@@ -220,11 +239,11 @@ function FuelVouchers({ index = -1, setShowForm, fuelVoucher, productPrices,show
                 frontError={errors.stakeholder_id ? { message: errors.stakeholder_id } : undefined}
                 addedStakeholder={addedStakeholder}
                 onChange={(newValue: any | null) => {
-                  setValue('stakeholder', newValue);
-                  setValue('stakeholder_id', newValue ? newValue.id : null, {
-                    shouldDirty: true,
-                    shouldValidate: true
-                  });
+                  setFormData(prev => ({
+                    ...prev,
+                    stakeholder: newValue,
+                    stakeholder_id: newValue ? newValue.id : null
+                  }));
                 }}
                 startAdornment={
                   <Tooltip title={'Add Client'}>
@@ -305,7 +324,7 @@ function FuelVouchers({ index = -1, setShowForm, fuelVoucher, productPrices,show
               fullWidth
               size="small"
               key={amountFieldKey}
-              value={calculateAmount().toLocaleString()}
+              value={formData.amount?.toLocaleString() || '0'}
               InputProps={{ inputComponent: CommaSeparatedField as any }}
               onChange={handleAmountChange}
             />
@@ -362,6 +381,20 @@ function FuelVouchers({ index = -1, setShowForm, fuelVoucher, productPrices,show
           )}
         </Grid>
       </Grid>
+
+      {/* Display Added Vouchers */}
+      {showList && fuelVouchers.length > 0 && (
+        <Box sx={{ mt: 3 }}>
+          {fuelVouchers.map((voucher, idx) => (
+            <FuelVouchersItemRow
+              key={idx}
+              fuelVoucher={voucher}
+              index={idx}
+              productPrices={productPrices}
+            />
+          ))}
+        </Box> 
+      )}
     </Box>
   );
 }

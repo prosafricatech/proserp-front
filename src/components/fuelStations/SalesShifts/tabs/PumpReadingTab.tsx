@@ -6,8 +6,6 @@ import { useFormContext, useFieldArray } from "react-hook-form";
 import { SalesShift } from "../SalesShiftType";
 import { useSalesStation } from "../../Stations/StationProvider";
 import { useProductsSelect } from "@/components/productAndServices/products/ProductsSelectProvider";
-import { useQuery } from "@tanstack/react-query";
-import storeServices from "@/components/procurement/stores/store-services";
 import { StoreOption } from "@/components/procurement/stores/storeTypes";
 import { Product } from "@/components/productAndServices/products/ProductType";
 import CommaSeparatedField from "@/shared/Inputs/CommaSeparatedField"; 
@@ -30,21 +28,16 @@ const PumpReadingTab: React.FC<PumpReadingTabProps> = ({ salesShift, isClosing =
   const { control, watch, setValue } = useFormContext();
   const { activeStation } = useSalesStation();
   const { productOptions } = useProductsSelect();
-  
-  // Fetch store options - SAME PATTERN AS PRODUCT FETCHING
-  const { data: storeOptions, isLoading: isFetchingStores } = useQuery<StoreOption[], Error>({
-    queryKey: ["storeOptions"],
-    queryFn: () => storeServices.getStoreOptions(true),
-  });
+  const storeOptions = activeStation?.tanks || [];
+
+  console.log(activeStation)
 
   const fuelPumps = activeStation?.fuel_pumps || [];
 
-  // PRODUCT PATTERN: Get all products
-  const allProducts = useMemo(() => {
+  const allProducts = useMemo(() => { 
     return productOptions || [];
   }, [productOptions]);
 
-  // STORE PATTERN: Get all stores (same as products)
   const allStores = useMemo(() => {
     if (!storeOptions) return [];
     return storeOptions.filter((store) => {
@@ -52,13 +45,11 @@ const PumpReadingTab: React.FC<PumpReadingTabProps> = ({ salesShift, isClosing =
     });
   }, [storeOptions]);
 
-  // PRODUCT PATTERN: Find product by ID
   const findProductById = (productId?: string | number | null): Product | undefined => {
     if (productId == null) return undefined;
     return allProducts.find(product => product.id === Number(productId));
   };
   
-  // STORE PATTERN: Find store by ID (same as product)
   const findStoreById = (storeId?: string | number | null): StoreOption | undefined => {
     if (storeId == null) return undefined;
     return allStores.find(store => store.id === Number(storeId));
@@ -184,7 +175,6 @@ const PumpReadingTab: React.FC<PumpReadingTabProps> = ({ salesShift, isClosing =
     const summaries = Array.from(storeMap.values());
     summaries.forEach(summary => {
       if (summary.productIds.length > 0) {
-        // Use the first product's price for calculation
         const firstProductId = summary.productIds[0];
         const fuelPrice = fuelPrices.find((fp: any) => fp.product_id === firstProductId);
         const price = fuelPrice?.price ? parseFloat(String(fuelPrice.price)) : 0;
@@ -221,8 +211,8 @@ const PumpReadingTab: React.FC<PumpReadingTabProps> = ({ salesShift, isClosing =
           // STORE PATTERN: Find store (same as product)
           const store = findStoreById(pump.tank_id);
 
-          const productName = product?.name || 'Unknown Product';
-          const tankName = store?.name || 'Unknown Tank';
+          const productName = product?.name || '';
+          const tankName = store?.name || '';
 
           return (
             <Grid key={pump.id} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
@@ -302,7 +292,7 @@ const PumpReadingTab: React.FC<PumpReadingTabProps> = ({ salesShift, isClosing =
                         size="small"
                         error={openingError}
                         helperText={openingError ? "Opening reading should not exceed closing reading" : ""}
-                        InputProps={{ inputComponent: CommaSeparatedField as any }}
+                        InputProps={{ inputComponent: CommaSeparatedField }}
                         sx={{
                           '& input': {
                             textAlign: 'left',
@@ -377,7 +367,7 @@ const PumpReadingTab: React.FC<PumpReadingTabProps> = ({ salesShift, isClosing =
                         value={formatNumberWithCommas(Number(currentPrice))}
                         onChange={(e) => updateFuelPrice(product.id, e.target.value)}
                         size="small"
-                        InputProps={{ inputComponent: CommaSeparatedField as any }}
+                        InputProps={{ inputComponent: CommaSeparatedField }}
                         sx={{
                           '& input': {
                             textAlign: 'center',
