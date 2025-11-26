@@ -7,27 +7,29 @@ import { useFormContext } from 'react-hook-form';
 import Adjustments from './Adjustments';
 import { Product } from '@/components/productAndServices/products/ProductType';
 
-interface Adjustments {
+// Update the interface to match the Adjustment interface from Adjustments component
+interface Adjustment {
   id?: number;
-  product_id?: number;
-  tank_id?: number;
-  quantity?: number;
-  operator?: string;
-  description?: string;
+  product_id: number;
+  tank_id: number;
+  quantity: number;
+  operator: string;
+  description: string;
   product?: Product;
-  operator_name?: string;
+  operator_name: string;
+  [key: string]: any;
 }
 
 interface FormContextType {
-  adjustments: Adjustments[];
-  setAdjustments: (adjustments: Adjustments[] | ((prev: Adjustments[]) => Adjustments)) => void;
+  adjustments: Adjustment[];
+  setAdjustments: (adjustments: Adjustment[] | ((prev: Adjustment[]) => Adjustment[])) => void;
   products: Product[];
   tanks: { id: number; name: string }[];
   [key: string]: any;
 }
 
 interface AdjustmentsRowProps {
-  adjustment: Adjustments;
+  adjustment: Adjustment;
   index: number;
 }
 
@@ -134,12 +136,10 @@ function AdjustmentsRow({ adjustment, index }: AdjustmentsRowProps) {
           </Grid>
         </Grid>
       ) : (
-        
-           <Adjustments adjustment={adjustment} setShowForm={setShowForm} index={index} adjustments={adjustments} setAdjustments={setAdjustments}/>
-
+        <Adjustments adjustment={adjustment} setShowForm={setShowForm} index={index} />
       )}
     </React.Fragment>
   );
 };
 
-export default AdjustmentsRow; 
+export default AdjustmentsRow;
