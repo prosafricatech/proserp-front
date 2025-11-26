@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Grid, IconButton, LinearProgress, TextField, Tooltip, Box, Typography } from '@mui/material';
+import { Grid, IconButton, LinearProgress, TextField, Tooltip, Box } from '@mui/material';
 import { AddOutlined, CheckOutlined, DisabledByDefault } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 import { useFormContext } from 'react-hook-form';         
@@ -175,7 +175,7 @@ function FuelVouchers({ index = -1, setShowForm, fuelVoucher, productPrices, sho
       product: selectedProduct,
       stakeholder: formData.stakeholder_id === 0 ? iu as any : formData.stakeholder,
       expense_ledger: formData.expense_ledger,
-    };
+    } as FuelVoucherData;
 
     try {
       if (index > -1) {
@@ -393,7 +393,7 @@ function FuelVouchers({ index = -1, setShowForm, fuelVoucher, productPrices, sho
               productPrices={productPrices}
             />
           ))}
-        </Box>
+        </Box> 
       )}
     </Box>
   );

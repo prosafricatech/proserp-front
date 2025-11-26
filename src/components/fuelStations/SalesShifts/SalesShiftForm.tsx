@@ -226,24 +226,13 @@ const SalesShiftForm: React.FC<SalesShiftFormProps> = ({
   return (
     <Dialog 
       open={open} 
-      onClose={() => toggleOpen(false)} 
       maxWidth="lg" 
       fullWidth
       fullScreen={isSmallScreen}
-      PaperProps={{
-        sx: { 
-          maxHeight: isSmallScreen ? '100vh' : '90vh',
-          ...(isSmallScreen && {
-            m: 0,
-            borderRadius: 0
-          })
-        }
-      }}
     >
       <FormProvider {...formContextValue}>
-        <Box>
-          <DialogTitle sx={{ p: isSmallScreen ? 1 : 1 }}>
-            <Paper elevation={0} sx={{ p: isSmallScreen ? 1 : 1 }}>
+          <DialogTitle sx={{ p: 1 }}>
+            <Paper elevation={0} sx={{ p: 1 }}>
               <Typography variant={isSmallScreen ? "h6" : "h5"} gutterBottom align="center">
                 Fuel Sales Shift
               </Typography>
@@ -421,7 +410,6 @@ const SalesShiftForm: React.FC<SalesShiftFormProps> = ({
               </Box>
             </Paper>
           </DialogActions>
-        </Box>
       </FormProvider>
     </Dialog>
   );

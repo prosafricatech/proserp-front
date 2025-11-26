@@ -50,15 +50,7 @@ const StationSelector = ({
     },
     select: (data) => {
       return Array.isArray(data) ? data.map((station: any) => ({
-        id: station.id,
-        name: station.name,
-        address: station.address,
-        description: station.description,
-        users: station.users,
-        shift_teams: station.shift_teams,
-        fuel_pumps: station.fuel_pumps,
-        ledger: station.ledger,
-        product: station.product
+        ...station
       })) : [];
     },
     enabled: !!userId // Only enable if userId exists

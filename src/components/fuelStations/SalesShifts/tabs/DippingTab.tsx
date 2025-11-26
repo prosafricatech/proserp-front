@@ -5,60 +5,36 @@ import { Box, Card, CardContent, Grid, TextField, Switch, Typography } from '@mu
 import { useFormContext } from 'react-hook-form';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
-
-// Type definitions
-interface Tank {
-  id: number;
-  name: string;
-  [key: string]: any;
-}
-
-interface FuelPump {
-  id: number;
-  tank_id: number;
-  product_id: number;
-  [key: string]: any;
-}
-
-interface DippingReading {
-  tank_id?: number;
-  reading?: number;
-  product_id?: number;
-  [key: string]: any;
-}
+import { useSalesStation } from '../../Stations/StationProvider';
+import { FuelPump } from '../../Stations/StationType';
 
 interface FormContextType {
   setValue: (name: string, value: any) => void;
-  watch: (name?: string) => any;
-  errors: any;
+  watch: (name: string) => any;
+  errors: Record<string, any>;
   fuel_pumps?: FuelPump[];
-  tanks?: Tank[];
-  [key: string]: any;
+}
+
+interface Tank {
+  id: number;
+  name: string;
 }
 
 type DippingType = 'before' | 'after';
 
 function DippingTab() {
-  const { setValue, watch, errors, fuel_pumps = [], tanks = [] } = useFormContext() as unknown as FormContextType;
+  const { setValue, watch, errors, fuel_pumps = [] } = useFormContext() as unknown as FormContextType;
   const [openSwitch, setOpenSwitch] = useState<boolean>(!!watch('isOpenSwitchON'));
   const [closingSwitch, setClosingSwitch] = useState<boolean>(!!watch('isCloseSwitchON'));
   
-  const renderFields = (type: DippingType) => {
-    // Get unique tanks from fuel_pumps
-    const uniqueTanks = fuel_pumps.reduce((acc: Record<number, Tank>, item: FuelPump) => {
-      if (!acc[item.tank_id]) {
-        const tank = tanks.find((t: Tank) => t.id === item.tank_id);
-        if (tank) {
-          acc[item.tank_id] = tank;
-        }
-      }
-      return acc;
-    }, {});
+  const { activeStation } = useSalesStation();
+  const storeOptions = activeStation?.tanks || [];
 
-    return Object.values(uniqueTanks).map((tankInfo: Tank, tankIndex: number) => {
-      const fieldName = `dipping_${type}.${tankIndex}.reading`;
-      const fieldError = errors[`dipping_${type}`]?.[tankIndex]?.reading;
-      const defaultValue = watch(fieldName);
+  const renderFields = (type: DippingType) => {
+    return storeOptions.map((tankInfo: Tank, tankIndex: number) => {
+      const fieldError = errors?.[`dipping_${type}`]?.[tankIndex]?.reading;
+      const watchedDipping = watch(`dipping_${type}`)?.[tankIndex];
+      const defaultValue = watchedDipping ? watchedDipping.reading : '';
 
       return (
         <Grid size={{xs:12, md:4, lg:3}} key={tankInfo.id}>
@@ -73,7 +49,7 @@ function DippingTab() {
                   error={!!fieldError}
                   helperText={fieldError?.message}
                   InputProps={{
-                    inputComponent: CommaSeparatedField as any,
+                    inputComponent: CommaSeparatedField,
                   }}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     const newValue = e.target.value;

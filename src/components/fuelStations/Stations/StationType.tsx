@@ -13,6 +13,8 @@ export interface Station {
   ledger?:Ledger[];
   product?:Product[];
   description?: string;
+  tanks?: Store[];
+  tank_ids?: number[];
 }
 
 export interface ShiftTeam {

@@ -4,12 +4,8 @@ import React, { useState } from 'react';
 import { DisabledByDefault, EditOutlined } from '@mui/icons-material';
 import { Divider, Grid, IconButton, Tooltip, Typography } from '@mui/material';
 import { useFormContext } from 'react-hook-form';
-
-import FuelVouchers from './FuelVouchers';
 import { useProductsSelect } from '@/components/productAndServices/products/ProductsSelectProvider';
-
 import { FuelVoucherData, ProductPrice } from '../../SalesShiftType';
-import { Product } from '@/components/productAndServices/products/ProductType';
 
 interface FuelVouchersItemRowProps {
   fuelVoucher: FuelVoucherData;
@@ -17,49 +13,28 @@ interface FuelVouchersItemRowProps {
   productPrices: ProductPrice[];
 }
 
-export default function FuelVouchersItemRow({
+function FuelVouchersItemRow({
   fuelVoucher,
   index,
   productPrices,
 }: FuelVouchersItemRowProps) {
+  const { productOptions } = useProductsSelect();
+  const product = productOptions.find(product => product.id === fuelVoucher.product_id);
+  const client = fuelVoucher.stakeholder;
+  const expense_ledger = fuelVoucher.expense_ledger;
+  const product_price = productPrices?.find(price => price?.product_id === product?.id)?.price || 0;
   const [showForm, setShowForm] = useState(false);
-
-  const { productOptions = [] } = useProductsSelect();
+  
   const { setValue, watch } = useFormContext<any>();
   const fuelVouchers: FuelVoucherData[] = watch('fuelVouchers') || [];
-
-  // Safe lookups
-  const product = fuelVoucher.product_id
-    ? productOptions.find((p: Product) => p.id === fuelVoucher.product_id) ?? null
-    : null;
-
-  const client = fuelVoucher.stakeholder;
-  const expenseLedger = fuelVoucher.expense_ledger;
-
-  const price = productPrices.find(p => p.product_id === product?.id)?.price || 0;
-  const amount = price * (fuelVoucher.quantity ?? 0);
-
-  const hasExpenseLedger = !!expenseLedger;
-
-  const handleRemove = () => {
-    setValue(
-      'fuelVouchers',
-      fuelVouchers.filter((_: any, i: number) => i !== index)
-    );
+  
+  const setFuelVouchers = (newVouchers: FuelVoucherData[] | ((prev: FuelVoucherData[]) => FuelVoucherData[])) => {
+    if (typeof newVouchers === 'function') {
+      setValue('fuelVouchers', newVouchers(fuelVouchers));
+    } else {
+      setValue('fuelVouchers', newVouchers);
+    }
   };
-
-  if (showForm) {
-    return (
-      <FuelVouchers
-        productPrices={productPrices}
-        fuelVoucher={fuelVoucher}
-        index={index}
-        setShowForm={setShowForm}
-        showList={false}
-        onUpdateSuccess={() => setShowForm(false)}
-      />
-    );
-  }
 
   return (
     <>
@@ -72,7 +47,6 @@ export default function FuelVouchersItemRow({
           py: 1.5,
           px: 1.5,
           cursor: 'pointer',
-          transition: 'background-color 0.2s',
           '&:hover': { bgcolor: 'action.hover' },
         }}
       >
@@ -84,7 +58,7 @@ export default function FuelVouchersItemRow({
         </Grid>
 
         {/* Client */}
-        <Grid size={{ xs: 5, md: hasExpenseLedger ? 4.5 : 4, lg: hasExpenseLedger ? 2 : 3 }}>
+        <Grid size={{ xs: 5, md: expense_ledger ? 4.5 : 4, lg: expense_ledger ? 2 : 3 }}>
           <Tooltip title="Client">
             <Typography variant="body2" noWrap>
               {client?.name || 'Internal use'}
@@ -92,31 +66,30 @@ export default function FuelVouchersItemRow({
           </Tooltip>
         </Grid>
 
-        {/* Expense Ledger (only if no client) */}
-        {hasExpenseLedger && (
+        {expense_ledger && (
           <Grid size={{ xs: 6, md: 2.5, lg: 1.5 }}>
             <Tooltip title="Expense Ledger">
-              <Typography variant="body2" color="text.secondary" noWrap>
-                {expenseLedger?.name}
+              <Typography variant="body2" noWrap>
+                {expense_ledger?.name}
               </Typography>
             </Tooltip>
           </Grid>
         )}
 
         {/* Product */}
-        <Grid size={{ xs: 6, md: hasExpenseLedger ? 3.5 : 5, lg: hasExpenseLedger ? 2 : 2.5 }}>
+        <Grid size={{ xs: 6, md: expense_ledger ? 3.5 : 5, lg: expense_ledger ? 2 : 2.5 }}>
           <Tooltip title="Product">
             <Typography variant="body2" noWrap>
-              {product?.name || 'N/A'}
+              {product?.name}
             </Typography>
           </Tooltip>
         </Grid>
 
         {/* Quantity */}
         <Grid size={{ xs: 6, md: 1, lg: 1 }} textAlign="right">
-          <Tooltip title="Quantity (Liters)">
+          <Tooltip title="Quantity">
             <Typography variant="body2">
-              {(fuelVoucher.quantity ?? 0).toLocaleString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+              {(fuelVoucher.quantity ?? 0).toLocaleString()}
             </Typography>
           </Tooltip>
         </Grid>
@@ -124,49 +97,57 @@ export default function FuelVouchersItemRow({
         {/* Amount */}
         <Grid size={{ xs: 6, md: 3, lg: 1 }} textAlign="right">
           <Tooltip title="Amount">
-            <Typography variant="body2" fontWeight="600" color="primary">
-              {amount.toLocaleString()}
+            <Typography variant="body2">
+              {(product_price * (fuelVoucher.quantity ?? 0)).toLocaleString()}
             </Typography>
           </Tooltip>
         </Grid>
 
         {/* Reference */}
         <Grid size={{ xs: 6, md: 5, lg: 1.5 }}>
-          <Tooltip title={fuelVoucher.reference || 'No reference'}>
-            <Typography variant="body2" color="text.secondary" noWrap>
-              {fuelVoucher.reference || '—'}
+          <Tooltip title="Reference">
+            <Typography variant="body2" noWrap>
+              {fuelVoucher.reference}
             </Typography>
           </Tooltip>
         </Grid>
 
         {/* Narration */}
         <Grid size={{ xs: 6, md: 4, lg: 1.5 }}>
-          <Tooltip title={fuelVoucher.narration || 'No narration'}>
-            <Typography variant="body2" color="text.secondary" noWrap>
-              {fuelVoucher.narration || '—'}
+          <Tooltip title="Narration">
+            <Typography variant="body2" noWrap>
+              {fuelVoucher.narration}
             </Typography>
           </Tooltip>
         </Grid>
 
         {/* Actions */}
-        <Grid size={{ xs: 12, md: 12, lg: 1 }} textAlign="right">
-          <Tooltip title="Edit Voucher">
+        <Grid size={{ xs: 12, md: 12, lg: 1 }} textAlign="end">
+          <Tooltip title="Edit Fuel Voucher">
             <IconButton
               size="small"
               onClick={() => setShowForm(true)}
-              sx={{ mr: 0.5 }}
             >
               <EditOutlined fontSize="small" />
             </IconButton>
           </Tooltip>
 
-          <Tooltip title="Remove Voucher">
-            <IconButton size="small" color="error" onClick={handleRemove}>
-              <DisabledByDefault fontSize="small" />
+          <Tooltip title="Remove Fuel Voucher">
+            <IconButton 
+              size='small' 
+              onClick={() => setFuelVouchers(prev => {
+                const newItems = [...prev];
+                newItems.splice(index, 1);
+                return newItems;
+              })}
+            >
+              <DisabledByDefault fontSize='small' color='error'/>
             </IconButton>
           </Tooltip>
-        </Grid>
+        </Grid> 
       </Grid>
     </>
   );
 }
+
+export default FuelVouchersItemRow;

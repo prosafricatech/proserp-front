@@ -57,15 +57,7 @@ const StationProvider: React.FC<StationProviderProps> = ({ children }) => {
         
 
         const stations = Array.isArray(response) ? response.map((station: any) => ({
-          id: station.id,
-          name: station.name,
-          address: station.address,
-          description: station.description,
-          users: station.users,
-          shift_teams: station.shift_teams,
-          fuel_pumps: station.fuel_pumps,
-          ledger: station.ledger,
-          product: station.product
+          ...station
         })) : [];
 
         setUserStations(stations);

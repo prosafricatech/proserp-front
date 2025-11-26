@@ -7,7 +7,7 @@ import { useFormContext } from 'react-hook-form';
 import Adjustments from './Adjustments';
 import { Product } from '@/components/productAndServices/products/ProductType';
 
-interface AdjustmentData {
+interface Adjustments {
   id?: number;
   product_id?: number;
   tank_id?: number;
@@ -15,51 +15,30 @@ interface AdjustmentData {
   operator?: string;
   description?: string;
   product?: Product;
+  operator_name?: string;
 }
 
 interface FormContextType {
-  adjustments: AdjustmentData[];
-  setAdjustments: (adjustments: AdjustmentData[] | ((prev: AdjustmentData[]) => AdjustmentData[])) => void;
+  adjustments: Adjustments[];
+  setAdjustments: (adjustments: Adjustments[] | ((prev: Adjustments[]) => Adjustments)) => void;
   products: Product[];
   tanks: { id: number; name: string }[];
   [key: string]: any;
 }
 
 interface AdjustmentsRowProps {
-  adjustment: AdjustmentData;
+  adjustment: Adjustments;
   index: number;
 }
 
-// Memoize to prevent unnecessary re-renders in lists
-const AdjustmentsRow = memo(function AdjustmentsRow({ adjustment, index }: AdjustmentsRowProps) {
+function AdjustmentsRow({ adjustment, index }: AdjustmentsRowProps) {
   const [showForm, setShowForm] = useState(false);
-
   const { adjustments = [], setAdjustments, products = [], tanks = [] } = useFormContext() as unknown as FormContextType;
-
-  const product = adjustment.product || (adjustment.product_id
-    ? products.find(p => p.id === adjustment.product_id)
-    : undefined);
-
-  const tank = adjustment.tank_id
-    ? tanks.find(t => t.id === adjustment.tank_id)
-    : undefined;
-
-  const handleRemove = useCallback(() => {
-    if (typeof setAdjustments === 'function') {
-      setAdjustments(prev => prev.filter((_, i) => i !== index));
-    }
-  }, [index, setAdjustments]);
-
-  const operatorText = adjustment.operator === '-' ? 'Subtract (-)' : 'Add (+)';
-
-  // Don't render if form context is not available
-  if (typeof setAdjustments !== 'function') {
-    console.error('setAdjustments function not available in form context');
-    return null;
-  }
+  const product = products.find(product => product.id === adjustment.product_id);
+  const tank = tanks.find(tank => tank.id === adjustment.tank_id);
 
   return (
-    <Box sx={{ width: '100%' }}>
+    <React.Fragment>
       <Divider />
 
       {!showForm ? (
@@ -75,72 +54,60 @@ const AdjustmentsRow = memo(function AdjustmentsRow({ adjustment, index }: Adjus
           }}
         >
           {/* Index */}
-          <Grid size={{ xs: 1, md:1}}>
+          <Grid size={{ xs: 1, md:0.5}}>
             <Typography variant="body2" color="text.secondary">
               {index + 1}.
             </Typography>
           </Grid>
 
           {/* Product */}
-         <Grid size={{ xs: 3, md: 2.5 }}>
-            <Tooltip title={product?.name || "Product"} placement="top">
-              <Typography variant="body2" noWrap sx={{ fontWeight: 'medium' }}>
-                {product?.name || '—'}
+         <Grid size={{ xs: 5.5, md: 2.5 , lg:2.5 }}>
+            <Tooltip title="Product" placement="top">
+              <Typography >
+                {product?.name}
               </Typography>
             </Tooltip>
           </Grid>
 
           {/* Tank */}
-          <Grid size={{ xs: 3, md: 2 }}>
-            <Tooltip title={tank?.name || "Tank"} placement="top">
-              <Typography variant="body2" noWrap>
-                {tank?.name || '—'}
+          <Grid size={{ xs: 5.5, md: 2.5 }}>
+            <Tooltip title= "Tank" placement="top">
+              <Typography>
+                {tank?.name}
               </Typography>
             </Tooltip>
           </Grid>
 
           {/* Operator */}
-         <Grid size={{ xs: 2, md: 1.5 }}>
+         <Grid size={{ xs: 6, md: 1.5 }}>
             <Tooltip title="Operator" placement="top">
-              <Typography 
-                variant="body2" 
-                sx={{ 
-                  color: adjustment.operator === '-' ? 'error.main' : 'success.main',
-                  fontWeight: 'medium'
-                }}
-              >
-                {operatorText}
+              <Typography>
+                   {adjustment.operator === '-' ? 'Subtract (-)' : 'Add (+)'}
               </Typography>
             </Tooltip>
           </Grid>
 
           {/* Quantity */}
-          <Grid size={{ xs: 3, md: 2 }}>
+          <Grid size={{ xs: 6, md: 2 }}>
             <Tooltip title="Quantity" placement="top">
-              <Typography 
-                variant="body2" 
-                fontWeight="bold"
-                sx={{ 
-                  color: adjustment.operator === '-' ? 'error.main' : 'success.main'
-                }}
-              >
-                {adjustment.operator === '-' ? '-' : '+'}{(adjustment.quantity ?? 0).toLocaleString()}
+              <Typography>
+                {adjustment.quantity?.toLocaleString()}
               </Typography>
             </Tooltip>
           </Grid>
 
           {/* Description */}
-         <Grid size={{ xs: 8, md: 2 }}>
-            <Tooltip title={adjustment.description || "No description"} placement="top">
-              <Typography variant="body2" color="text.secondary" noWrap>
-                {adjustment.description || '—'}
+         <Grid size={{ xs: 6, md: 2 , lg:2 }}>
+            <Tooltip title= "Description" placement="top">
+              <Typography>
+                {adjustment.description}
               </Typography>
             </Tooltip>
           </Grid>
 
           {/* Actions */}
-          <Grid size={{ xs: 4, md: 1 }} sx={{ textAlign: 'right' }}>
-            <Tooltip title="Edit">
+          <Grid size={{ xs: 6, md: 1, lg:1 }} sx={{ textAlign: 'end' }}>
+            <Tooltip title="Edit Adjustment">
               <IconButton 
                 size="small" 
                 onClick={(e) => {
@@ -153,32 +120,26 @@ const AdjustmentsRow = memo(function AdjustmentsRow({ adjustment, index }: Adjus
               </IconButton>
             </Tooltip>
 
-            <Tooltip title="Remove">
-              <IconButton 
-                size="small" 
-                color="error" 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleRemove();
-                }}
-              >
-                <DisabledByDefault fontSize="small" />
+            <Tooltip title="Remove Adjustment">
+              <IconButton size='small' 
+                onClick={() => setAdjustments(adjustments => {
+                    const newItems = [...adjustments];
+                    newItems.splice(index,1);
+                    return newItems;
+                })}
+            >
+                <DisabledByDefault fontSize='small' color='error'/>
               </IconButton>
             </Tooltip>
           </Grid>
         </Grid>
       ) : (
-        <Box sx={{ py: 2, bgcolor: 'background.default', borderRadius: 1 }}>
-          <Adjustments 
-            adjustment={adjustment} 
-            setShowForm={setShowForm} 
-            index={index} 
-            showList={false} // Don't show the list when editing
-          />
-        </Box>
+        
+           <Adjustments adjustment={adjustment} setShowForm={setShowForm} index={index} adjustments={adjustments} setAdjustments={setAdjustments}/>
+
       )}
-    </Box>
+    </React.Fragment>
   );
-});
+};
 
 export default AdjustmentsRow; 

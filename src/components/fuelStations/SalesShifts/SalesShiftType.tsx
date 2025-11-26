@@ -115,6 +115,7 @@ export interface FuelVoucher {
   stakeholder?: Stakeholder;
   product?: Product;
   expense_ledger?: Ledger;
+  fuelVoucherData?: FuelVoucherData | null | undefined;
 }
 
 export interface LedgerAmount {
@@ -148,6 +149,7 @@ export interface ProductPrice {
 }
 
 export interface FuelVoucherData {
+  id?: number;
   product_id?: number | null;
   quantity?: number;
   amount?: number;
