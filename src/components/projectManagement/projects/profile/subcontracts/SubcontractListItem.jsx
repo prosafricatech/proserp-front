@@ -109,7 +109,7 @@ function SubcontractListItem({ subContract }) {
                             secondary={
                                 <Tooltip title="Remarks">
                                     <Typography component="span">
-                                        {subContract.remarks || 'No remarks'}
+                                        {subContract.remarks}
                                     </Typography>
                                 </Tooltip>
                             }

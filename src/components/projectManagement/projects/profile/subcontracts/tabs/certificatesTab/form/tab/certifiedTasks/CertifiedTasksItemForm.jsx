@@ -4,7 +4,6 @@ import { useForm } from 'react-hook-form';
 import { AddOutlined, CheckOutlined, DisabledByDefault } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 import * as yup from 'yup';
-import dayjs from 'dayjs'
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Div } from '@jumbo/shared';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
@@ -176,12 +175,12 @@ const CertifiedTasksItemForm= ({
                             if (newValue) {
                                 setUnitToDisplay(newValue.measurement_unit?.symbol);
                                 setValue("task", newValue?.project_task);
-                                setValue("project_subcontract_task_id", newValue.project_task_id, {
+                                setValue("project_subcontract_task_id", newValue.id, {
                                     shouldValidate: true,
                                     shouldDirty: true,
                                 });
 
-                                retrieveTaskDetails(newValue.project_task_id);
+                                retrieveTaskDetails(newValue.id);
                             } else {
                                 setUnitToDisplay(null);
                                 setValue("task", null);
