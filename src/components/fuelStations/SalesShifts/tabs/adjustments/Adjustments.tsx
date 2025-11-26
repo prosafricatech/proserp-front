@@ -1,6 +1,6 @@
 'use client';
 import { Grid, IconButton, LinearProgress, TextField, Tooltip } from '@mui/material';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import * as yup from "yup";
 import { useForm, useFormContext } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -16,6 +16,14 @@ import OperationSelector from '@/components/sharedComponents/OperationSelector';
 import { Product } from '@/components/productAndServices/products/ProductType';
 import { FuelPump } from '@/components/fuelStations/Stations/StationType';
 import { useSalesStation } from '@/components/fuelStations/Stations/StationProvider';
+
+// First, add the Tank type definition
+interface Tank {
+  id: number;
+  name: string;
+  product_id?: number;
+  [key: string]: any;
+}
 
 interface Adjustment {
   product_id: number;
@@ -50,7 +58,6 @@ interface AdjustmentFormData {
   operator: string;
   operator_name: string;
   product?: Product | null;
-
 }
 
 // Validation Schema
@@ -72,7 +79,34 @@ function Adjustments({ index = -1, setShowForm, adjustment = null }: Adjustments
 
   const storeOptions = activeStation?.tanks || [];
 
-  const fuelPumps = activeStation?.fuel_pumps || [];
+  // Initialize with default values when editing
+  useEffect(() => {
+    if (adjustment) {
+      // Find tanks related to the selected product when editing
+      const selectedProductId = adjustment.product_id;
+      if (selectedProductId) {
+        const relatedTanks = getTanksByProductId(selectedProductId);
+        setProductTanks(relatedTanks);
+      }
+    }
+  }, [adjustment]);
+
+  // Function to get tanks by product ID
+  const getTanksByProductId = (productId: number): Tank[] => {
+    // Method 1: If tanks have direct product_id reference
+    const tanksWithProduct = tanks.filter((tank: Tank) => tank.product_id === productId);
+    
+    if (tanksWithProduct.length > 0) {
+      return tanksWithProduct;
+    }
+    
+    // Method 2: If tanks are linked through fuel_pumps
+    const relatedPumps = fuel_pumps.filter((pump: FuelPump) => pump.product_id === productId);
+    const relatedTankIds = relatedPumps.map((pump: FuelPump) => pump.tank_id);
+    const tanksThroughPumps = tanks.filter((tank: Tank) => relatedTankIds.includes(tank.id));
+    
+    return tanksThroughPumps;
+  };
 
   const { setValue, handleSubmit, watch, reset, formState: { errors } } = useForm<AdjustmentFormData>({
     resolver: yupResolver(validationSchema) as any,
@@ -80,7 +114,7 @@ function Adjustments({ index = -1, setShowForm, adjustment = null }: Adjustments
       product: adjustment && productOptions.find((product: Product) => product.id === adjustment.product_id),
       product_id: adjustment?.product_id || undefined,
       quantity: adjustment?.quantity || undefined,
-      tank_id: adjustment && tanks.find((tank: Tank) => tank.id === adjustment?.tank_id)?.id,
+      tank_id: adjustment?.tank_id || undefined,
       description: adjustment?.description || '',
       operator: adjustment?.operator || '',
       operator_name: adjustment?.operator_name || ''
@@ -118,7 +152,7 @@ function Adjustments({ index = -1, setShowForm, adjustment = null }: Adjustments
   return (
     <form autoComplete='off' onSubmit={handleSubmit(updateItems)}>
       <Grid container spacing={1} marginTop={0.5}>
-       <Grid size={{ xs: 12, md: 6, lg: 2.6 }}>
+        <Grid size={{ xs: 12, md: 6, lg: 2.6 }}>
           <Div sx={{ mt: 1 }}>
             <ProductSelect
               label='Fuel'
@@ -127,10 +161,21 @@ function Adjustments({ index = -1, setShowForm, adjustment = null }: Adjustments
               requiredProducts={products}
               onChange={(newValue: Product | null) => {
                 setTanksKey(prevKey => prevKey + 1);
-                const relatedPumps = fuel_pumps.filter((pump: FuelPump) => pump.product_id === newValue?.id);
-                const relatedTankIds = relatedPumps.map((pump: FuelPump) => pump.tank_id);
-                const tanksHavingProduct = tanks.filter((tank: Tank) => relatedTankIds.includes(tank.id));
-                setProductTanks(tanksHavingProduct);
+                
+                if (newValue) {
+                  // Get tanks related to the selected product
+                  const relatedTanks = getTanksByProductId(newValue.id);
+                  setProductTanks(relatedTanks);
+                  
+                  // Reset tank selection when product changes
+                  setValue(`tank_id`, 0, {
+                    shouldValidate: false,
+                    shouldDirty: true,
+                  });
+                } else {
+                  setProductTanks([]);
+                }
+                
                 setValue(`product_id`, newValue ? newValue.id : 0, {
                   shouldValidate: true,
                   shouldDirty: true,
@@ -139,7 +184,7 @@ function Adjustments({ index = -1, setShowForm, adjustment = null }: Adjustments
             />
           </Div>
         </Grid>
-       <Grid size={{ xs: 12, md: 6, lg: 2.4 }}>
+        <Grid size={{ xs: 12, md: 6, lg: 2.4 }}>
           <Div sx={{ mt: 1 }}>
             <StoreSelector
               key={tanksKey}
@@ -157,13 +202,13 @@ function Adjustments({ index = -1, setShowForm, adjustment = null }: Adjustments
             />
           </Div>
         </Grid>
-       <Grid size={{ xs: 12, md: 3, lg: 1.5 }}>
+        <Grid size={{ xs: 12, md: 3, lg: 1.5 }}>
           <Div sx={{ mt: 1 }}>
             <OperationSelector
               label='Operator'
               frontError={errors?.operator}
               defaultValue={adjustment?.operator}
-              onChange={(newValue: OperationOption | null) => {
+              onChange={(newValue) => {
                 setValue(`operator_name`, newValue?.label || '');
                 setValue(`operator`, newValue ? newValue.value : '', {
                   shouldValidate: true,
@@ -173,7 +218,7 @@ function Adjustments({ index = -1, setShowForm, adjustment = null }: Adjustments
             />
           </Div>
         </Grid>
-        <Grid size={{ xs: 12, md: 3, lg: 2 }}>
+        <Grid size={{ xs: 12, md: 3, lg:2 }}>
           <Div sx={{ mt: 1 }}>
             <TextField
               size="small"

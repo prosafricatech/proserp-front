@@ -15,6 +15,7 @@ export interface Station {
   description?: string;
   tanks?: Store[];
   tank_ids?: number[];
+  tank ?: Store;
 }
 
 export interface ShiftTeam {
