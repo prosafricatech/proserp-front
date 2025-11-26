@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
   const page = searchParams.get('page') || '1';
   const limit = searchParams.get('limit') || '10';
   const stationId = searchParams.get('stationId') || '';
-
+  
   if (!stationId) {
     return new Response(
       JSON.stringify({ error: 'stationId is required' }),

@@ -15,7 +15,6 @@ import {
   Link,
   Stack,
   Typography,
-  useMediaQuery,
   Box,
 } from '@mui/material';
 import LoadingButton from '@mui/lab/LoadingButton';
@@ -31,7 +30,6 @@ const SignupForm = () => {
   const { enqueueSnackbar } = useSnackbar();
   const { stopAuthLoading, signUp } = useJumboAuth();
   const { theme } = useJumboTheme();
-  const smallScreen = useMediaQuery(theme.breakpoints.down('md'));
   const router = useRouter();
   const lang = useLanguage();
 
