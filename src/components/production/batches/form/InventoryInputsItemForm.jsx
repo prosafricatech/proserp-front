@@ -70,16 +70,16 @@ function InventoryInputsItemForm({setClearFormKey, submitMainForm, submitItemFor
                 );
             }),
             rate: yup
-            .number()
-            .when('product', (product, schema) => {
-                if (product && product.type !== 'Inventory') {
-                return schema
-                    .required('Rate is required')
-                    .positive('Rate must be a positive number')
-                    .typeError('Rate must be a number');
-                }
-                return schema.nullable().optional();
-            }),
+                .number()
+                .when('product', (product, schema) => {
+                    if (product && product.type === 'Inventory') {
+                        return schema
+                        .required('Rate is required')
+                        .positive('Rate must be a positive number')
+                        .typeError('Rate must be a number');
+                    }
+                    return schema.nullable();
+                }),
     });
 
     const {setValue, clearErrors, register, handleSubmit, watch, reset, formState: {errors, dirtyFields}} = useForm({
@@ -230,8 +230,6 @@ function InventoryInputsItemForm({setClearFormKey, submitMainForm, submitItemFor
     if(isAdding){
         return <LinearProgress/>
     }
-
-    console.log(errors, product)
 
   return (
     <form autoComplete='off' onSubmit={handleSubmit(updateItems)} >

@@ -112,6 +112,7 @@ function OutputsItemForm({setClearFormKey, submitMainForm, submitItemForm, setSu
     }
 
     reset();
+    setIsDirty(false);
     setIsAdding(false);
     setShowForm && setShowForm(false);
   };
