@@ -191,8 +191,8 @@ function Adjustments({ index = -1, setShowForm, adjustment = null }: Adjustments
               allowSubStores={true}
               label='Tank'
               defaultValue={adjustment && tanks.find((tank: Tank) => tank.id === adjustment?.tank_id)}
-              proposedOptions={productTanks}
-              frontError={errors?.tank_id}
+              proposedOptions={productTanks as any}
+              frontError={errors?.tank_id as any}
               onChange={(newValue: Tank | null) => {
                 setValue(`tank_id`, newValue ? newValue.id : 0, {
                   shouldValidate: true,
@@ -208,7 +208,7 @@ function Adjustments({ index = -1, setShowForm, adjustment = null }: Adjustments
               label='Operator'
               frontError={errors?.operator}
               defaultValue={adjustment?.operator}
-              onChange={(newValue) => {
+              onChange={(newValue:any ) => {
                 setValue(`operator_name`, newValue?.label || '');
                 setValue(`operator`, newValue ? newValue.value : '', {
                   shouldValidate: true,
