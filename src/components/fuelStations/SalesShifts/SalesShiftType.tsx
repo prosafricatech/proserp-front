@@ -3,7 +3,8 @@ import { Product } from '@/components/productAndServices/products/ProductType';
 import { Stakeholder } from '@/components/masters/stakeholders/StakeholderType';
 import { FuelPump, Station } from '../Stations/StationType';
 import { User } from '@/types/auth-types';
-
+import { PaginatedUserResponse } from '@/components/prosControl/userManagement/UserManagementType';
+import { JumboRqListProps } from '@jumbo/types/JumboRqListProps';
 
 export interface ShiftTeam {
   id: number;
@@ -160,4 +161,48 @@ export interface FuelVoucherData {
   expense_ledger?: Ledger | null;
   expense_ledger_id?: number | null;
   product?: Product | null;
+}
+
+
+export interface CreateSalesShiftData {
+  shift_team_id: number;
+  shift_start: string;
+  shift_end: string;
+  submit_type: 'close' | 'draft'; 
+  product_prices: ProductPrice[];
+  pump_readings: PumpReading[];
+  fuel_vouchers: FuelVoucher[];
+  main_ledger: Ledger;
+  other_ledgers: Ledger[];
+}
+
+export interface UpdateSalesShiftData extends Partial<CreateSalesShiftData> {
+  id?: number;
+}
+
+export interface SalesShiftServices {
+  getStationShifts: (params: Station ) => Promise<PaginatedUserResponse>;
+  getStationShiftsRq: (rqList: JumboRqListProps) => Promise<PaginatedUserResponse>;
+  createSalesShift: (data: CreateSalesShiftData) => Promise<any>;
+  updateSalesShift: (id: number, data: UpdateSalesShiftData) => Promise<any>;
+  deleteSalesShift: (id: number) => Promise<any>;
+  getSalesShiftDetails: (id: number) => Promise<SalesShift>;
+  closeSalesShift: (id: number) => Promise<any>;
+}
+export interface AddSalesShiftResponse {
+  message: string;
+  data?: any; 
+}
+export interface DeleteSalesShiftResponse {
+  message: string;
+}
+export interface UpdateSalesShiftResponse {
+  message: string;
+  data?: SalesShift;  
+}
+export interface PaginatedSalesShiftResponse {
+  data: SalesShift[];
+  current_page: number;
+  total: number;
+  last_page: number;
 }

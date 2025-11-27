@@ -1,4 +1,4 @@
-'use client';
+'use client'; // Add this at the very top
 
 import React, { useState } from 'react';
 import { DisabledByDefault, EditOutlined } from '@mui/icons-material';
@@ -11,12 +11,16 @@ interface FuelVouchersItemRowProps {
   fuelVoucher: FuelVoucherData;
   index: number;
   productPrices: ProductPrice[];
+  onEdit?: (index: number) => void; // Add this prop
+  isEditing?: boolean; // Add this prop
 }
 
 function FuelVouchersItemRow({
   fuelVoucher,
   index,
   productPrices,
+  onEdit, // Add this prop
+  isEditing, // Add this prop
 }: FuelVouchersItemRowProps) {
   const { productOptions } = useProductsSelect();
   const product = productOptions.find(product => product.id === fuelVoucher.product_id);
@@ -34,6 +38,10 @@ function FuelVouchersItemRow({
     } else {
       setValue('fuelVouchers', newVouchers);
     }
+  };
+
+  const handleEdit = () => {
+    onEdit?.(index); // Call the onEdit prop when edit is clicked
   };
 
   return (
@@ -126,7 +134,8 @@ function FuelVouchersItemRow({
           <Tooltip title="Edit Fuel Voucher">
             <IconButton
               size="small"
-              onClick={() => setShowForm(true)}
+              onClick={handleEdit} // Use the handleEdit function
+              disabled={isEditing} // Disable if already editing
             >
               <EditOutlined fontSize="small" />
             </IconButton>
@@ -140,6 +149,7 @@ function FuelVouchersItemRow({
                 newItems.splice(index, 1);
                 return newItems;
               })}
+              disabled={isEditing} // Disable if editing
             >
               <DisabledByDefault fontSize='small' color='error'/>
             </IconButton>

@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   const keyword = searchParams.get('keyword') || '';
   const page = searchParams.get('page') || '1';
   const limit = searchParams.get('limit') || '10';
-  const stationId = searchParams.get('stationId') || ''; 
+  const stationId = searchParams.get('stationId') || '';
 
   if (!stationId) {
     return new Response(
@@ -21,7 +21,23 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const res = await fetch(`${API_BASE}/fuel-stations/${stationId}/sales-shifts`, {
+  // Kuunda query parameters object
+  const queryParams = new URLSearchParams();
+  queryParams.append('page', page);
+  queryParams.append('limit', limit);
+  
+  if (keyword) {
+    queryParams.append('keyword', keyword);
+  }
+
+  // Ongeza parameters zingine kama zinahitajika
+  // queryParams.append('from', from);
+  // queryParams.append('to', to);
+
+  const apiUrl = `${API_BASE}/fuel-stations/${stationId}/sales-shifts?${queryParams.toString()}`;
+
+  const res = await fetch(apiUrl, {
+    method: 'GET',
     headers,
     credentials: 'include',
   });

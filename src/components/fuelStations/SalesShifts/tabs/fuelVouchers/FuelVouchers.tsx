@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Grid, IconButton, LinearProgress, TextField, Tooltip, Box } from '@mui/material';
-import { AddOutlined, CheckOutlined, DisabledByDefault } from '@mui/icons-material';
+import { AddOutlined, CheckOutlined, DisabledByDefault, EditOutlined } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 import { useFormContext } from 'react-hook-form';         
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
@@ -28,6 +28,8 @@ interface FuelVouchersProps {
   showList?: boolean;
   onAddSuccess?: (voucher: FuelVoucherData) => void;
   onUpdateSuccess?: (voucher: FuelVoucherData, index: number) => void;
+  onEdit?: (index: number) => void; // Add this prop
+  isEditing?: boolean; // Add this prop
 }
 
 interface FormData {
@@ -43,11 +45,22 @@ interface FormData {
   stakeholder?: Partial<Stakeholder> | null | undefined;
 }
 
-function FuelVouchers({ index = -1, setShowForm, fuelVoucher, productPrices, showList = true, onAddSuccess, onUpdateSuccess }: FuelVouchersProps) {
+function FuelVouchers({ 
+  index = -1, 
+  setShowForm, 
+  fuelVoucher, 
+  productPrices, 
+  showList = true, 
+  onAddSuccess, 
+  onUpdateSuccess,
+  onEdit, // New prop
+  isEditing = false // New prop
+}: FuelVouchersProps) {
   const iu = { id: 0, name: 'Calibration/Internal use' } as Partial<Stakeholder>;
   const [isAdding, setIsAdding] = useState(false);
   const [stakeholderQuickAddDisplay, setStakeholderQuickAddDisplay] = useState(false);
   const [addedStakeholder, setAddedStakeholder] = useState<any>(null);
+  const [editingIndex, setEditingIndex] = useState<number>(-1); // Track which item is being edited
 
   const { productOptions = [] } = useProductsSelect();
   const { ungroupedLedgerOptions = [] } = useLedgerSelect();
@@ -88,16 +101,16 @@ function FuelVouchers({ index = -1, setShowForm, fuelVoucher, productPrices, sho
     ? iu
     : formData.stakeholder || null;
 
-  // Sync when editing
+  // Sync when editing - FIXED VERSION
   useEffect(() => {
     if (fuelVoucher && productOptions.length) {
       const product = productOptions.find(p => p.id === fuelVoucher.product_id) || null;
       const stakeholder = fuelVoucher.stakeholder?.id === 0
         ? iu
-        : ungroupedLedgerOptions.find(s => s.id === fuelVoucher.stakeholder?.id) || null;
+        : fuelVoucher.stakeholder || null;
 
       const priceInfo = productPrices.find(p => p.product_id === product?.id);
-      const amount = fuelVoucher.quantity && priceInfo ? fuelVoucher.quantity * priceInfo.price : 0;
+      const amount = fuelVoucher.amount || (fuelVoucher.quantity && priceInfo ? fuelVoucher.quantity * priceInfo.price : 0);
 
       setFormData({
         product_id: fuelVoucher.product_id ?? null,
@@ -115,7 +128,26 @@ function FuelVouchers({ index = -1, setShowForm, fuelVoucher, productPrices, sho
       setQuantityFieldKey(k => k + 1);
       setAmountFieldKey(k => k + 1);
     }
-  }, [fuelVoucher, productOptions, productPrices, ungroupedLedgerOptions]);
+  }, [fuelVoucher, productOptions, productPrices]);
+
+  // Reset form when not in edit mode
+  useEffect(() => {
+    if (!fuelVoucher && !isEditing) {
+      setFormData({
+        product_id: null,
+        product: null,
+        quantity: undefined,
+        amount: 0,
+        reference: '',
+        narration: '',
+        stakeholder_id: null,
+        stakeholder: null,
+        expense_ledger_id: null,
+        expense_ledger: null,
+      });
+      setEditingIndex(-1);
+    }
+  }, [fuelVoucher, isEditing]);
 
   // Quick-add stakeholder
   useEffect(() => {
@@ -161,6 +193,53 @@ function FuelVouchers({ index = -1, setShowForm, fuelVoucher, productPrices, sho
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleEdit = (index: number) => {
+    const voucherToEdit = fuelVouchers[index];
+    if (voucherToEdit) {
+      setEditingIndex(index);
+      onEdit?.(index);
+      
+      // Set form data with the voucher to edit
+      const product = productOptions.find(p => p.id === voucherToEdit.product_id) || null;
+      const stakeholder = voucherToEdit.stakeholder?.id === 0
+        ? iu
+        : voucherToEdit.stakeholder || null;
+
+      setFormData({
+        product_id: voucherToEdit.product_id ?? null,
+        product,
+        quantity: voucherToEdit.quantity ?? undefined,
+        amount: voucherToEdit.amount ?? 0,
+        reference: voucherToEdit.reference ?? '',
+        narration: voucherToEdit.narration ?? '',
+        stakeholder_id: voucherToEdit.stakeholder?.id ?? null,
+        stakeholder,
+        expense_ledger_id: voucherToEdit.expense_ledger?.id ?? null,
+        expense_ledger: voucherToEdit.expense_ledger ?? null,
+      });
+
+      setQuantityFieldKey(k => k + 1);
+      setAmountFieldKey(k => k + 1);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingIndex(-1);
+    setFormData({
+      product_id: null,
+      product: null,
+      quantity: undefined,
+      amount: 0,
+      reference: '',
+      narration: '',
+      stakeholder_id: null,
+      stakeholder: null,
+      expense_ledger_id: null,
+      expense_ledger: null,
+    });
+    setShowForm?.(false);
+  };
+
   const updateItems = async () => {
     if (!validateForm()) return;
 
@@ -178,11 +257,14 @@ function FuelVouchers({ index = -1, setShowForm, fuelVoucher, productPrices, sho
     } as FuelVoucherData;
 
     try {
-      if (index > -1) {
-        const updated = fuelVouchers.map((v, i) => (i === index ? voucherData : v));
+      if (editingIndex > -1) {
+        // Update existing voucher
+        const updated = fuelVouchers.map((v, i) => (i === editingIndex ? voucherData : v));
         setFuelVouchers(updated);
-        onUpdateSuccess?.(voucherData, index);
+        onUpdateSuccess?.(voucherData, editingIndex);
+        setEditingIndex(-1); // Reset edit mode
       } else {
+        // Add new voucher
         setFuelVouchers(prev => [...prev, voucherData]);
         onAddSuccess?.(voucherData);
         // Reset form
@@ -235,7 +317,7 @@ function FuelVouchers({ index = -1, setShowForm, fuelVoucher, productPrices, sho
               <StakeholderSelector
                 label='Client'
                 initialOptions={[iu as any]}
-                defaultValue={fuelVoucher && fuelVoucher.stakeholder?.id}
+               defaultValue={fuelVoucher && fuelVoucher.stakeholder?.id}
                 frontError={errors.stakeholder_id ? { message: errors.stakeholder_id } : undefined}
                 addedStakeholder={addedStakeholder}
                 onChange={(newValue: any | null) => {
@@ -291,7 +373,7 @@ function FuelVouchers({ index = -1, setShowForm, fuelVoucher, productPrices, sho
           <Div sx={{ mt: 1 }}>
             <ProductSelect
               label="Fuel"
-              defaultValue={selectedProduct}
+              value={selectedProduct}
               frontError={errors.product_id ? { message: errors.product_id } : undefined}
               onChange={handleProductChange}
               excludeIds={productOptions.filter(p => p.type !== 'Inventory').map(p => p.id)}
@@ -366,11 +448,22 @@ function FuelVouchers({ index = -1, setShowForm, fuelVoucher, productPrices, sho
             variant="contained"
             size="small"
             onClick={updateItems}
-            startIcon={fuelVoucher ? <CheckOutlined /> : <AddOutlined />}
-            sx={{ mb: 0.5 }}
+            startIcon={editingIndex > -1 ? <CheckOutlined /> : <AddOutlined />}
+            sx={{ mb: 0.5, mr: 1 }}
           >
-            {fuelVoucher ? 'Done' : 'Add'}
+            {editingIndex > -1 ? 'Update' : 'Add'}
           </LoadingButton>
+
+          {editingIndex > -1 && (
+            <LoadingButton
+              variant="outlined"
+              size="small"
+              onClick={handleCancelEdit}
+              sx={{ mb: 0.5 }}
+            >
+              Cancel
+            </LoadingButton>
+          )}
 
           {fuelVoucher && setShowForm && (
             <Tooltip title="Close">
@@ -391,6 +484,8 @@ function FuelVouchers({ index = -1, setShowForm, fuelVoucher, productPrices, sho
               fuelVoucher={voucher}
               index={idx}
               productPrices={productPrices}
+              onEdit={handleEdit} // Pass edit handler
+              isEditing={editingIndex === idx} // Pass editing state
             />
           ))}
         </Box> 

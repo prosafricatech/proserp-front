@@ -64,29 +64,24 @@ const CashReconciliationTab: React.FC<CashReconciliationTabProps> = ({ salesShif
   const amountInputRefs = useRef<{[key: string]: HTMLInputElement | null}>({});
   const focusedFieldRef = useRef<string | null>(null);
 
-  // Use field array for cash distributions
   const { fields, append, remove } = useFieldArray({
     control,
     name: "cash_distributions"
   });
 
-  // Get all products from productOptions
   const allProducts = useMemo(() => {
     return productOptions || [];
   }, [productOptions]);
 
-  // Find product by product_id
   const findProductById = (productId?: string | number | null) => {
     if (productId == null) return undefined;
     return allProducts.find(product => product.id === productId);
   };
 
-  // Calculate pump difference
   const calculatePumpDifference = (opening: number, closing: number) => {
     return closing - opening;
   };
 
-  // Calculate Product Summary (First Card) - Total Products Amount
   const productSummary = useMemo((): ProductSummary[] => {
     const productMap = new Map<number, ProductSummary>();
 
@@ -483,7 +478,6 @@ const CashReconciliationTab: React.FC<CashReconciliationTabProps> = ({ salesShif
                           value={controllerField.value || null}
                           onChange={(newValue) => {
                             controllerField.onChange(newValue);
-                            // Auto-focus amount field after selecting ledger
                             if (newValue) {
                               setTimeout(() => {
                                 const amountInput = document.getElementById(`amount-0`);
@@ -508,14 +502,13 @@ const CashReconciliationTab: React.FC<CashReconciliationTabProps> = ({ salesShif
                       inputProps={{ 
                         style: { 
                           textAlign: 'right', 
-                          fontWeight: 'bold',
-                          backgroundColor: 'grey.50'
+                          fontWeight: 'normal',
+                          backgroundColor: 'white'
                         }
                       }}
                     />
                   </Grid>
                   <Grid size={{ xs: 2 }}>
-                    {/* Empty space for alignment - Main ledger cannot be deleted */}
                   </Grid>
                 </Grid>
 
@@ -587,7 +580,6 @@ const CashReconciliationTab: React.FC<CashReconciliationTabProps> = ({ salesShif
                   );
                 })}
 
-                {/* Add Button */}
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
                   <Button
                     startIcon={<AddIcon />}
@@ -601,7 +593,6 @@ const CashReconciliationTab: React.FC<CashReconciliationTabProps> = ({ salesShif
                 </Box>
               </Box>
 
-              {/* Validation Message */}
               {cashDistributionSummary.mainLedgerRemaining < 0 && (
                 <Typography 
                   variant="body2" 
