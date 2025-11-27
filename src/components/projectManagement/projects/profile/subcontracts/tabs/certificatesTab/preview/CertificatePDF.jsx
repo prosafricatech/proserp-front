@@ -101,19 +101,19 @@ function CertificatePDF({ certificate, organization }) {
               ))}
 
               <View style={{ ...pdfStyles.tableRow, marginTop: 8 }}>
-                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 3.2, textAlign: 'center', fontSize: 9, fontWeight: 'bold' }}>
+                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 3.2, textAlign: 'center', fontSize: 9 }}>
                   Grand Total ({currencyCode})
                 </Text>
-                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1, textAlign: 'right', fontSize: 9, fontWeight: 'bold' }}>
+                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1, textAlign: 'right', fontSize: 9 }}>
                   {grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                 </Text>
               </View>
 
               <View style={{ ...pdfStyles.tableRow, marginTop: 1 }}>
-                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 3.2, textAlign: 'center', fontSize: 9, fontWeight: 'bold' }}>
+                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 3.2, textAlign: 'center', fontSize: 9 }}>
                   Total Amount Payable to this Certificate
                 </Text>
-                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1, textAlign: 'right', fontSize: 9, fontWeight: 'bold' }}>
+                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1, textAlign: 'right', fontSize: 9 }}>
                   {grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })} {currencyCode}
                 </Text>
               </View>
