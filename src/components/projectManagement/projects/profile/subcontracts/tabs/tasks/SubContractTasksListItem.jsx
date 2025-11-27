@@ -231,7 +231,7 @@ function SubContractTasksListItem({ subContract, subContractTasks = [], isLoadin
         })
       ) : (
         !isLoading && (
-          <Alert variant="outlined" color="primary" severity="info">
+          <Alert variant="outlined" severity="info">
             No Subcontract Tasks Found
           </Alert>
         )
