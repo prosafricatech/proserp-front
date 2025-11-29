@@ -1,0 +1,92 @@
+import React, { createContext } from 'react';
+import { useParams } from 'react-router-dom';
+import { Alert, Box, Stack } from '@mui/material';
+import JumboListToolbar from '@jumbo/components/JumboList/components/JumboListToolbar/JumboListToolbar';
+import JumboRqList from '@jumbo/components/JumboReactQuery/JumboRqList/JumboRqList';
+import JumboSearch from '@jumbo/components/JumboSearch/JumboSearch';
+import fuelStationServices from '../fuelStationServices';
+import DippingsListItem from './DippingsListItem';
+import DippingsActionTail from './DippingsActionTail';
+import ProductsSelectProvider from '../../productAndServices/products/ProductsSelectProvider';
+
+export const DippingsFormContext = createContext({});
+
+const Dippings = ({activeStation}) => {
+  const params = useParams();
+  const listRef = React.useRef();
+
+  const [queryOptions, setQueryOptions] = React.useState({
+    queryKey: 'stationDippings',
+    queryParams: { id: params.id, keyword: '', stationId: !!activeStation?.id && activeStation?.id},
+    countKey: 'total',
+    dataKey: 'data',
+  });
+
+  React.useEffect(() => {
+    setQueryOptions((state) => ({
+      ...state,
+      queryKey: 'stationDippings',
+      queryParams: { ...state.queryParams, stationId: !!activeStation?.id && activeStation.id },
+    }));
+  }, [activeStation]);
+
+  const salesShifts  = React.useCallback((dipping) => {
+    return <DippingsListItem dipping={dipping}/>;
+  }, []);
+
+  const handleOnChange = React.useCallback(
+    (keyword) => {
+      setQueryOptions((state) => ({
+        ...state,
+        queryParams: {
+          ...state.queryParams,
+          keyword: keyword,
+        },
+      }));
+    },
+    []
+  );
+
+  return (
+    <ProductsSelectProvider>
+      <DippingsFormContext.Provider value={{activeStation}}>
+        {
+          activeStation ? 
+            <JumboRqList
+              ref={listRef}
+              wrapperComponent={Box}
+              service={fuelStationServices.getStationDippings}
+              primaryKey="id"
+              queryOptions={queryOptions}
+              itemsPerPage={10}
+              itemsPerPageOptions={[5, 8, 10, 15, 20]}
+              renderItem={salesShifts}
+              componentElement="div"
+              bulkActions={null}
+              wrapperSx={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+              toolbar={
+                <JumboListToolbar hideItemsPerPage={true} actionTail={
+                  <Stack direction="row">
+                    <JumboSearch
+                      onChange={handleOnChange}
+                      value={queryOptions.queryParams.keyword}
+                    />
+                    {/* <DippingsActionTail/> */}
+                  </Stack>
+              }/>
+              }
+            />
+            :
+          <Alert variant='outlined' color='primary' severity='info'>Please select a Station</Alert>
+        } 
+      </DippingsFormContext.Provider>
+    </ProductsSelectProvider>
+
+  );
+};
+
+export default Dippings;

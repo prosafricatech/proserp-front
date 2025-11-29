@@ -21,7 +21,6 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // Kuunda query parameters object
   const queryParams = new URLSearchParams();
   queryParams.append('page', page);
   queryParams.append('limit', limit);
@@ -30,9 +29,6 @@ export async function GET(request: NextRequest) {
     queryParams.append('keyword', keyword);
   }
 
-  // Ongeza parameters zingine kama zinahitajika
-  // queryParams.append('from', from);
-  // queryParams.append('to', to);
 
   const apiUrl = `${API_BASE}/fuel-stations/${stationId}/sales-shifts?${queryParams.toString()}`;
 
