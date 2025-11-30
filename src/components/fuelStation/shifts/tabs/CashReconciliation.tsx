@@ -7,6 +7,15 @@ import { useLedgerSelect } from '@/components/accounts/ledgers/forms/LedgerSelec
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import { Div } from '@jumbo/shared';
 
+interface TableCellInfoProps {
+  label?: string;
+  value: string | number | React.ReactNode;
+  colSpan?: number;
+  align?: 'left' | 'center' | 'right' | 'justify';
+  fontWeight?: string | number;
+}
+
+
 function CashReconciliation() {
   const [fuelVoucherTotals, setFuelVoucherTotals] = useState({});
   const { ungroupedLedgerOptions } = useLedgerSelect();
@@ -142,12 +151,17 @@ function CashReconciliation() {
       });
     }
   }, []); // Empty dependency array - runs only once
-
-  // Memoized component to prevent unnecessary re-renders
-  const TableCellInfo = useCallback(({ label, value, colSpan, align = 'left', fontWeight }) => (
+  
+  const TableCellInfo = useCallback(({ 
+    label, 
+    value, 
+    colSpan = 1, 
+    align = 'left', 
+    fontWeight = 'normal' 
+  }: TableCellInfoProps) => (
     <Tooltip title={label}>
       <TableCell colSpan={colSpan} size="small" align={align}>
-        <Typography variant="body2" fontWeight={fontWeight} sx={{ fontWeight }}>
+        <Typography variant="body2" sx={{ fontWeight }}>
           {value}
         </Typography>
       </TableCell>
@@ -423,7 +437,7 @@ function CashReconciliation() {
                           onClick={() => cashReconciliationAppend({ id: '', amount: '' })}
                           disabled={availableLedgers.length === 0}
                         >
-                          <AddOutlined fontSize="10" /> Add
+                          <AddOutlined sx={{ fontSize: 10 }} /> Add
                         </Button>
                       </Tooltip>
                     </Div>
