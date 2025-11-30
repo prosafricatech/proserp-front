@@ -1,4 +1,4 @@
-import Stations from '@/components/fuelStations/Stations/Stations'
+import Stations from '@/components/fuelStation/Stations/Stations'
 import React from 'react'
 
 function page() {

@@ -1,9 +1,9 @@
-import SalesShifts from '@/components/fuelStations/SalesShifts/SalesShifts'
+import StationShiftsSelector from '@/components/fuelStation/shifts/StationShiftsSelector'
 import React from 'react'
 
 function page() {
   return (
-    <SalesShifts/>
+    <StationShiftsSelector/>
   )
 }
 

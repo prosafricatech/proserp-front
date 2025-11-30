@@ -13,7 +13,11 @@ export async function GET(request: NextRequest) {
   const page = searchParams.get('page') || '1';
   const limit = searchParams.get('limit') || '10';
   const stationId = searchParams.get('stationId') || '';
+<<<<<<< HEAD
   
+=======
+
+>>>>>>> 0705573ef28edb3f8faea44f75035c041c048907
   if (!stationId) {
     return new Response(
       JSON.stringify({ error: 'stationId is required' }),
@@ -21,7 +25,19 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const res = await fetch(`${API_BASE}/fuel-stations/${stationId}/sales-shifts`, {
+  const queryParams = new URLSearchParams();
+  queryParams.append('page', page);
+  queryParams.append('limit', limit);
+  
+  if (keyword) {
+    queryParams.append('keyword', keyword);
+  }
+
+
+  const apiUrl = `${API_BASE}/fuel-stations/${stationId}/sales-shifts?${queryParams.toString()}`;
+
+  const res = await fetch(apiUrl, {
+    method: 'GET',
     headers,
     credentials: 'include',
   });
