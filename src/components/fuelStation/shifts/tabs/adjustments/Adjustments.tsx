@@ -13,6 +13,20 @@ import StoreSelector from '@/components/procurement/stores/StoreSelector';
 import OperationSelector from '@/components/sharedComponents/OperationSelector';
 import { Div } from '@jumbo/shared';
 
+interface Adjustment {
+  product_id: number;
+  tank_id: number;
+  operator: string;
+  operator_name: string;
+  quantity: number;
+  description: string;
+}
+
+interface AdjustmentsRowProps {
+  adjustment: Adjustment;
+  index: number;
+}
+
 function Adjustments({index = -1, setShowForm = null, adjustment}) {
   const [isAdding, setIsAdding] = useState(false);
   const { products, fuel_pumps, adjustments = [], setAdjustments, tanks} = useFormContext();

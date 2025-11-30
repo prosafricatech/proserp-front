@@ -22,13 +22,19 @@ import AdjustmentsRow from './tabs/adjustments/AdjustmentsRow';
 import FuelVouchers from './tabs/fuelVouchers/FuelVouchers';
 import Dipping from './tabs/Dipping';
 import Adjustments from './tabs/adjustments/Adjustments';
+import { AddOutletResponse, SalesShift } from './SalesShiftTypes';
+
+interface SaleShiftFormProps {
+  salesShift: SalesShift | null;
+  setOpenDialog: (open: boolean) => void;
+}
 
 const PumpReadings = React.lazy(() => import('./tabs/PumpReadings'));
 const CashReconciliation = React.lazy(() => import('./tabs/CashReconciliation'));
 
-function SaleShiftForm({ shiftData, setOpenDialog }) {
-  const [fuelVouchers, setFuelVouchers] = useState(shiftData ? shiftData.fuel_vouchers : []);
-  const [adjustments, setAdjustments] = useState(shiftData?.adjustments  ? shiftData.adjustments : []);
+function SaleShiftForm({ SalesShift, setOpenDialog }) {
+  const [fuelVouchers, setFuelVouchers] = useState(SalesShift ? SalesShift.fuel_vouchers : []);
+  const [adjustments, setAdjustments] = useState(SalesShift?.adjustments  ? SalesShift.adjustments : []);
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
   const [activeTab, setActiveTab] = useState(0);
@@ -41,19 +47,31 @@ function SaleShiftForm({ shiftData, setOpenDialog }) {
   const [pumpReadingsKey, setPumpReadingsKey] = useState(0);
   const { productOptions } = useProductsSelect();
 
- const { mutate: addSalesShifts, isPending } = useMutation({
+ const { mutate: addSalesShifts, isPending, } = useMutation<AddOutletResponse,unknown,SalesShift >({
   mutationFn: fuelStationServices.addSalesShifts,
   onSuccess: (data) => {
     setOpenDialog(false);
     enqueueSnackbar(data.message, { variant: 'success' });
-    queryClient.invalidateQueries({ queryKey: ['closedShifts'] });
+    queryClient.invalidateQueries({ queryKey: ['salesShift'] });
+    setOpenDialog(false);
   },
-  onError: (error) => {
-    enqueueSnackbar(error.response.data.message, {
-      variant: 'error',
-    });
-  },
-});
+  onError: (error: unknown) => {
+          let message = 'Something went wrong';
+
+          if (
+            typeof error === 'object' &&
+            error !== null &&
+            'response' in error &&
+            typeof (error as any).response?.data?.message === 'string'
+          ) {
+            message = (error as any).response.data.message;
+          } else if (error instanceof Error) {
+            message = error.message;
+          }
+
+          enqueueSnackbar(message, { variant: 'error' });
+        },
+      });
 
 const { mutate: updateSalesShifts, isPending: updateLoading } = useMutation({
   mutationFn: fuelStationServices.updateSalesShifts,
@@ -70,8 +88,8 @@ const { mutate: updateSalesShifts, isPending: updateLoading } = useMutation({
 });
 
   const saveMutation = React.useMemo(() => {
-    return shiftData?.id ? updateSalesShifts : addSalesShifts;
-  }, [shiftData, addSalesShifts, updateSalesShifts]);
+    return SalesShift?.id ? updateSalesShifts : addSalesShifts;
+  }, [SalesShift, addSalesShifts, updateSalesShifts]);
 
   const validationSchema = yup.object({
       shift_team_id: yup.number().required('Shift Team is required').typeError('Shift Team is required'),
@@ -144,14 +162,14 @@ const { mutate: updateSalesShifts, isPending: updateLoading } = useMutation({
   const { register, getValues, control, handleSubmit, setError, clearErrors, setValue, watch, formState: { errors } } = useForm({
     resolver: yupResolver(validationSchema),
     defaultValues: {
-      id: shiftData?.id,
-      submit_type: shiftData?.status,
-      isOpenSwitchON: shiftData?.opening_dipping?.readings.length > 0 ? true : false,
-      isCloseSwitchON: shiftData?.closing_dipping?.readings.length > 0 ? true : false,
-      shift_team_id: shiftData?.shift_team_id,
-      shift_start: shiftData && dayjs(shiftData.shift_start).toISOString(),
-      shift_end: shiftData && dayjs(shiftData?.shift_end).toISOString(),
-      fuel_vouchers: shiftData?.fuel_vouchers.map(fuelVoucher => ({
+      id: SalesShift?.id,
+      submit_type: SalesShift?.status,
+      isOpenSwitchON: SalesShift?.opening_dipping?.readings.length > 0 ? true : false,
+      isCloseSwitchON: SalesShift?.closing_dipping?.readings.length > 0 ? true : false,
+      shift_team_id: SalesShift?.shift_team_id,
+      shift_start: SalesShift && dayjs(SalesShift.shift_start).toISOString(),
+      shift_end: SalesShift && dayjs(SalesShift?.shift_end).toISOString(),
+      fuel_vouchers: SalesShift?.fuel_vouchers.map(fuelVoucher => ({
         id: fuelVoucher.id,
         stakeholder_id: fuelVoucher.stakeholder?.id,
         quantity : fuelVoucher.quantity,
@@ -160,31 +178,31 @@ const { mutate: updateSalesShifts, isPending: updateLoading } = useMutation({
         product_id: fuelVoucher.product_id,
         expense_ledger_id: fuelVoucher.expense_ledger?.id,
       })),
-      dipping_before: shiftData?.opening_dipping?.readings.map(od => ({
+      dipping_before: SalesShift?.opening_dipping?.readings.map(od => ({
         id: od.id,
         reading : od.reading,
         product_id: od.product_id,
         tank_id: od.tank_id,
       })),
-      dipping_after: shiftData?.closing_dipping?.readings.map(cd => ({
+      dipping_after: SalesShift?.closing_dipping?.readings.map(cd => ({
         id: cd.id,
         reading : cd.reading,
         product_id: cd.product_id,
         tank_id: cd.tank_id,
       })),
-      main_ledger: { id: shiftData?.main_ledger?.id, amount: shiftData?.main_ledger?.amount },
-      main_ledger_id: shiftData?.main_ledger?.id,
-      other_ledgers: shiftData && shiftData.other_ledgers,
+      main_ledger: { id: SalesShift?.main_ledger?.id, amount: SalesShift?.main_ledger?.amount },
+      main_ledger_id: SalesShift?.main_ledger?.id,
+      other_ledgers: SalesShift && SalesShift.other_ledgers,
       pump_readings: (() => {
         const pumpReadings = [];
-        shiftData?.pump_readings.forEach(reading => {
+        SalesShift?.pump_readings.forEach(reading => {
           pumpReadings[reading.fuel_pump_id] = reading;
         });
         return pumpReadings;
       })(),
       product_prices: (() => {
         const productPrices = [];
-        shiftData?.fuel_prices.forEach(price => {
+        SalesShift?.fuel_prices.forEach(price => {
           productPrices[price.product_id] = price;
         });
         return productPrices;
@@ -199,10 +217,10 @@ const { mutate: updateSalesShifts, isPending: updateLoading } = useMutation({
   
   //set value of ShiftLedgers on Edit
   useEffect(() => {
-    if (shiftData) {
-      setShiftLedgers(shift_teams?.find(team => team.id === shiftData?.shift_team_id).ledgers)
+    if (SalesShift) {
+      setShiftLedgers(shift_teams?.find(team => team.id === SalesShift?.shift_team_id).ledgers)
     }
-  }, [shiftData,shift_teams])
+  }, [SalesShift,shift_teams])
 
   useEffect(() => {
     setValue('fuel_vouchers', fuelVouchers?.map(fuelVoucher => ({
@@ -333,7 +351,7 @@ const { mutate: updateSalesShifts, isPending: updateLoading } = useMutation({
         <form autoComplete='off'>    
           <Grid container spacing={1} marginTop={1}>
             <Grid size={12} textAlign={'center'} marginBottom={1}>
-              {shiftData ? `Edit ${shiftData.shiftNo}` : `Fuel Sales Shift`}
+              {SalesShift ? `Edit ${SalesShift.shiftNo}` : `Fuel Sales Shift`}
             </Grid>
             <Grid size={{xs: 12, md: 4}}>
               <Div sx={{ mt: 0.3}}>
@@ -341,7 +359,7 @@ const { mutate: updateSalesShifts, isPending: updateLoading } = useMutation({
                   size="small"
                   isOptionEqualToValue={(option, value) => option.id === value.id}
                   options={shift_teams}
-                  defaultValue={shift_teams?.find(team => team.id === shiftData?.shift_team_id)}
+                  defaultValue={shift_teams?.find(team => team.id === SalesShift?.shift_team_id)}
                   getOptionLabel={(option) => option.name}
                   renderInput={(params) => (
                     <TextField
@@ -372,7 +390,7 @@ const { mutate: updateSalesShifts, isPending: updateLoading } = useMutation({
                 <DateTimePicker
                   label='Shift Start'
                   fullWidth
-                  defaultValue={shiftData ? dayjs(shiftData?.shift_start) : null}
+                  defaultValue={SalesShift ? dayjs(SalesShift?.shift_start) : null}
                   minDate={dayjs(organization.recording_start_date)}
                   slotProps={{
                     textField : {
@@ -398,7 +416,7 @@ const { mutate: updateSalesShifts, isPending: updateLoading } = useMutation({
                 <DateTimePicker
                   label='Shift End'
                   fullWidth
-                  defaultValue={shiftData ? dayjs(shiftData?.shift_end) : null}
+                  defaultValue={SalesShift ? dayjs(SalesShift?.shift_end) : null}
                   minDate={dayjs(organization.recording_start_date)}
                   slotProps={{
                     textField : {
