@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
   if (response) return response;
 
   const body = await req.json();
-  const res = await fetch(`${API_BASE}/fuel-stations/sales-shifts`, {
+  const res = await fetch(`${API_BASE} /fuel-stations/sales-shifts`, {
     method: 'POST',
     headers,
     body: JSON.stringify(body),
@@ -16,4 +16,3 @@ export async function POST(req: NextRequest) {
 
   return handleJsonResponse(res);
 }
- 

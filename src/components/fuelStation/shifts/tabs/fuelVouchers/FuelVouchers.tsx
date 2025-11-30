@@ -268,10 +268,10 @@ function FuelVouchers({ index = -1, setShowForm = null, fuelVoucher, productPric
           </LoadingButton>
           {
             fuelVoucher && 
-            <Tooltip title='Close Edit'>
+             <Tooltip title='Close Edit'>
               <IconButton size='small' 
                 onClick={() => {
-                  setShowForm(false);
+                  setShowForm?.(false);
                 }}
               >
                 <DisabledByDefault fontSize='small' color='success'/>
