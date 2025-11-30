@@ -22,7 +22,7 @@ import AdjustmentsRow from './tabs/adjustments/AdjustmentsRow';
 import FuelVouchers from './tabs/fuelVouchers/FuelVouchers';
 import Dipping from './tabs/Dipping';
 import Adjustments from './tabs/adjustments/Adjustments';
-import { AddOutletResponse, SalesShift } from './SalesShiftTypes';
+import { AddSalesShifResponse, SalesShift, updateSalesShiftResponse } from './SalesShiftTypes';
 
 interface SaleShiftFormProps {
   salesShift: SalesShift | null;
@@ -47,7 +47,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
   const [pumpReadingsKey, setPumpReadingsKey] = useState(0);
   const { productOptions } = useProductsSelect();
 
- const { mutate: addSalesShifts, isPending, } = useMutation<AddOutletResponse,unknown,SalesShift >({
+ const { mutate: addSalesShifts, isPending, } = useMutation<AddSalesShifResponse,unknown,SalesShift >({
   mutationFn: fuelStationServices.addSalesShifts,
   onSuccess: (data) => {
     setOpenDialog(false);
@@ -73,19 +73,31 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
         },
       });
 
-const { mutate: updateSalesShifts, isPending: updateLoading } = useMutation({
+const { mutate: updateSalesShifts, isPending: updateLoading } = useMutation<updateSalesShiftResponse,unknown,SalesShift >({
   mutationFn: fuelStationServices.updateSalesShifts,
   onSuccess: (data) => {
     setOpenDialog(false);
     enqueueSnackbar(data.message, { variant: 'success' });
-    queryClient.invalidateQueries({ queryKey: ['closedShifts'] });
+    queryClient.invalidateQueries({ queryKey: ['salesShift'] });
+    setOpenDialog(false);
   },
-  onError: (error) => {
-    enqueueSnackbar(error.response.data.message, {
-      variant: 'error',
-    });
-  },
-});
+  onError: (error: unknown) => {
+          let message = 'Something went wrong';
+
+          if (
+            typeof error === 'object' &&
+            error !== null &&
+            'response' in error &&
+            typeof (error as any).response?.data?.message === 'string'
+          ) {
+            message = (error as any).response.data.message;
+          } else if (error instanceof Error) {
+            message = error.message;
+          }
+
+          enqueueSnackbar(message, { variant: 'error' });
+        },
+      });
 
   const saveMutation = React.useMemo(() => {
     return SalesShift?.id ? updateSalesShifts : addSalesShifts;
