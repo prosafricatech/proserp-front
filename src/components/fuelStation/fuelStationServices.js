@@ -4,7 +4,7 @@ const fuelStationServices = {};
 
 fuelStationServices.getStationShifts = async ({queryKey}) => {
     const {page, limit, queryParams} = queryKey[queryKey.length - 1];
-    const {data} = await axios.get(`/fuel-stations/${queryParams.stationId}/sales-shifts`, {
+    const {data} = await axios.get(`/api/fuelStations/salesShifts`, {
         params: {
             page: page,
             limit: limit,
@@ -28,7 +28,7 @@ fuelStationServices.getStationDippings = async ({queryKey}) => {
 
 fuelStationServices.getStationsList = async ({queryKey}) => {
     const {page, limit, queryParams} = queryKey[queryKey.length - 1];
-    const {data} = await axios.get('/api/fuelStations/salesShifts', {
+    const {data} = await axios.get('/api/fuelStations/stations', {
         params: {
             page: page,
             limit: limit,
@@ -86,7 +86,7 @@ fuelStationServices.addStation = async(station) => {
 
 fuelStationServices.addSalesShifts = async(salesShift) => {
     return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.post('/fuelStations/salesShifts/add',salesShift)
+        const {data} = await axios.post('/api/fuelStations/salesShifts/add',salesShift)
         return data;
     })
 }
@@ -100,7 +100,7 @@ fuelStationServices.editStation = async(station) => {
 
 fuelStationServices.updateSalesShifts = async(shift) => {
     return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.put(`/fuelStations/salesShifts/${id}/update`,shift)
+        const {data} = await axios.put(`/api/fuelStations/salesShifts/${id}/update`,shift)
         return data;    
     })
 }
@@ -114,7 +114,7 @@ fuelStationServices.deleteStation = async (id) => {
 
 fuelStationServices.deleteSalesShift = async (id) => {
     return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.delete(`/fuelStations/salesShifts/${id}/delete`);
+        const {data} = await axios.delete(`/api/fuelStations/salesShifts/${id}/delete`);
         return data;
     })
 };
