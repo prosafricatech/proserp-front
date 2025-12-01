@@ -72,7 +72,7 @@ const { mutate: updateSalesShifts, isPending: updateLoading } = useMutation({
   onSuccess: (data) => {
     setOpenDialog(false);
     enqueueSnackbar(data.message, { variant: 'success' });
-    queryClient.invalidateQueries({ queryKey: ['Shift'] });
+    queryClient.invalidateQueries({ queryKey: ['salesShift'] });
     setOpenDialog(false);
   },
   onError: (error) => {

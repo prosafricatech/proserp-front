@@ -98,9 +98,9 @@ fuelStationServices.editStation = async(station) => {
     })
 }
 
-fuelStationServices.updateSalesShifts = async(shift) => {
+fuelStationServices.updateSalesShifts = async(salesShift) => {
     return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.put(`/api/fuelStations/salesShifts/${id}/update`,shift)
+        const {data} = await axios.put(`/api/fuelStations/salesShifts/${shift.id}/update`,shift)
         return data;    
     })
 }

@@ -1,21 +1,65 @@
 import { Box, FormControl, InputLabel, MenuItem, Select } from '@mui/material'
-import { useDebouncedCallback } from 'beautiful-react-hooks';
-import React from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
+
+// Custom debounce hook to replace beautiful-react-hooks
+function useDebouncedCallback(callback, delay = 300) {
+  const timeoutRef = useRef(null);
+  const callbackRef = useRef(callback);
+  
+  // Update callback ref if callback changes
+  useEffect(() => {
+    callbackRef.current = callback;
+  }, [callback]);
+  
+  const debouncedCallback = useCallback((...args) => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    
+    timeoutRef.current = setTimeout(() => {
+      callbackRef.current(...args);
+    }, delay);
+  }, [delay]);
+  
+  // Add cancel method to match beautiful-react-hooks API
+  debouncedCallback.cancel = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  };
+  
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+  
+  return debouncedCallback;
+}
 
 function StationShiftsStatusSelector({onChange,value}) {
-    const [status, setStatus] = React.useState(value);
+    const [status, setStatus] = useState(value || 'All');
 
     const handleChange = useDebouncedCallback((event) => {
-        setStatus(event.target.value);
+        const newValue = event.target.value;
+        setStatus(newValue);
     }); 
 
-    React.useEffect(() => {
-        onChange(status);
-    }, [status]);
+    // Update parent when status changes
+    useEffect(() => {
+        if (status !== undefined) {
+            onChange(status);
+        }
+    }, [status, onChange]);
 
-    React.useEffect(() => {
+    // Cancel debounced calls on unmount
+    useEffect(() => {
         return () => handleChange.cancel();
-    });
+    }, [handleChange]);
 
   return (
     <Box sx={{ minWidth: 120 }}>
@@ -24,7 +68,7 @@ function StationShiftsStatusSelector({onChange,value}) {
             <Select
                 labelId="station-shifts-status-filter-label"
                 id="station-shifts-status-filter-select"
-                value={value}
+                value={status} // Use local state value, not prop
                 label={'Status'}
                 onChange={handleChange}
             >
@@ -37,4 +81,4 @@ function StationShiftsStatusSelector({onChange,value}) {
   )
 }
 
-export default StationShiftsStatusSelector
+export default StationShiftsStatusSelector;

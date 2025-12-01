@@ -1,27 +1,71 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { StationFormContext } from './SalesShifts';
-import { useDebouncedCallback } from 'beautiful-react-hooks';
 import { Box, FormControl, InputLabel, MenuItem, Select } from '@mui/material';
 
+// Custom debounce hook to replace beautiful-react-hooks' useDebouncedCallback
+function useDebouncedCallback(callback, delay = 300) {
+  const timeoutRef = useRef(null);
+  const callbackRef = useRef(callback);
+  
+  // Update callback ref if callback changes
+  useEffect(() => {
+    callbackRef.current = callback;
+  }, [callback]);
+  
+  const debouncedCallback = useCallback((...args) => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    
+    timeoutRef.current = setTimeout(() => {
+      callbackRef.current(...args);
+    }, delay);
+  }, [delay]);
+  
+  // Add cancel method to match beautiful-react-hooks API
+  debouncedCallback.cancel = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  };
+  
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+  
+  return debouncedCallback;
+}
+
 function ShiftTeamsSelector({ onChange, value }) {
-  const [shift_team_id, setShift_team_id] = React.useState(value);
+  const [shift_team_id, setShift_team_id] = useState(value || 'null');
 
   const handleChange = useDebouncedCallback((event) => {
-    setShift_team_id(event.target.value);
-  });
+    const newValue = event.target.value;
+    setShift_team_id(newValue);
+  }, 300);
 
-  React.useEffect(() => {
-    onChange(shift_team_id);
-  }, [shift_team_id]);
+  // Update parent when shift_team_id changes
+  useEffect(() => {
+    if (shift_team_id !== undefined && shift_team_id !== value) {
+      onChange(shift_team_id);
+    }
+  }, [shift_team_id, onChange, value]);
 
-  React.useEffect(() => {
+  // Cancel debounced calls on unmount
+  useEffect(() => {
     return () => handleChange.cancel();
-  });
+  }, [handleChange]);
 
   const { activeStation } = useContext(StationFormContext);
-  const { shift_teams } = activeStation;
+  const { shift_teams = [] } = activeStation || {};
 
-  //new array with the 'All' option and the existing shift teams
+  // New array with the 'All' option and the existing shift teams
   const shiftTeamsWithAll = [{ id: 'null', name: 'All' }, ...shift_teams];
 
   return (
