@@ -22,12 +22,6 @@ import AdjustmentsRow from './tabs/adjustments/AdjustmentsRow';
 import FuelVouchers from './tabs/fuelVouchers/FuelVouchers';
 import Dipping from './tabs/Dipping';
 import Adjustments from './tabs/adjustments/Adjustments';
-import { AddSalesShifResponse, SalesShift, updateSalesShiftResponse } from './SalesShiftTypes';
-
-interface SaleShiftFormProps {
-  salesShift: SalesShift | null;
-  setOpenDialog: (open: boolean) => void;
-}
 
 const PumpReadings = React.lazy(() => import('./tabs/PumpReadings'));
 const CashReconciliation = React.lazy(() => import('./tabs/CashReconciliation'));
@@ -47,7 +41,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
   const [pumpReadingsKey, setPumpReadingsKey] = useState(0);
   const { productOptions } = useProductsSelect();
 
- const { mutate: addSalesShifts, isPending, } = useMutation<AddSalesShifResponse,unknown,SalesShift >({
+ const { mutate: addSalesShifts, isPending, } = useMutation({
   mutationFn: fuelStationServices.addSalesShifts,
   onSuccess: (data) => {
     setOpenDialog(false);
@@ -55,16 +49,16 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
     queryClient.invalidateQueries({ queryKey: ['salesShift'] });
     setOpenDialog(false);
   },
-  onError: (error: unknown) => {
+  onError: (error) => {
           let message = 'Something went wrong';
 
           if (
             typeof error === 'object' &&
             error !== null &&
             'response' in error &&
-            typeof (error as any).response?.data?.message === 'string'
+            typeof (error).response?.data?.message === 'string'
           ) {
-            message = (error as any).response.data.message;
+            message = (error).response.data.message;
           } else if (error instanceof Error) {
             message = error.message;
           }
@@ -73,7 +67,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
         },
       });
 
-const { mutate: updateSalesShifts, isPending: updateLoading } = useMutation<updateSalesShiftResponse,unknown,SalesShift >({
+const { mutate: updateSalesShifts, isPending: updateLoading } = useMutation({
   mutationFn: fuelStationServices.updateSalesShifts,
   onSuccess: (data) => {
     setOpenDialog(false);
@@ -81,16 +75,16 @@ const { mutate: updateSalesShifts, isPending: updateLoading } = useMutation<upda
     queryClient.invalidateQueries({ queryKey: ['Shift'] });
     setOpenDialog(false);
   },
-  onError: (error: unknown) => {
+  onError: (error) => {
           let message = 'Something went wrong';
 
           if (
             typeof error === 'object' &&
             error !== null &&
             'response' in error &&
-            typeof (error as any).response?.data?.message === 'string'
+            typeof (error).response?.data?.message === 'string'
           ) {
-            message = (error as any).response.data.message;
+            message = (error).response.data.message;
           } else if (error instanceof Error) {
             message = error.message;
           }
