@@ -13,13 +13,7 @@ export async function GET(request: NextRequest) {
   const keyword = searchParams.get('keyword') || '';
   const page = searchParams.get('page') || '1';
   const limit = searchParams.get('limit') || '10';
-<<<<<<< HEAD
-  const stationId = searchParams.get('stationId') || '';
-<<<<<<< HEAD
   
-=======
-
->>>>>>> 0705573ef28edb3f8faea44f75035c041c048907
   if (!stationId) {
     return new Response(
       JSON.stringify({ error: 'stationId is required' }),
@@ -27,12 +21,6 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const queryParams = new URLSearchParams();
-  queryParams.append('page', page);
-  queryParams.append('limit', limit);
-=======
->>>>>>> 072dc1e0f48596541ca9f724c429412e885e71d9
-  
   // Build query parameters including all necessary params
   const queryParams = new URLSearchParams({
     keyword,
