@@ -12,7 +12,7 @@ import { useProductsSelect } from '../../productAndServices/products/ProductsSel
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { JumboDdMenu } from '@jumbo/components';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 const EditShift = ({ClosedShift, setOpenEditDialog}) => {
   const {data:shiftData,isFetching} = useQuery(['showshiftDetails',{id:ClosedShift.id}], () => fuelStationServices.showshiftDetails(ClosedShift.id));
@@ -71,17 +71,18 @@ const SalesShiftsItemAction = ({ ClosedShift}) => {
   const {theme} = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
-  const { mutate: deleteShift } = useMutation(fuelStationServices.deleteSalesShift, {
-    onSuccess: (data) => {
-      queryClient.invalidateQueries(['closedShifts']);
-      enqueueSnackbar(data.message, {
-        variant: 'success',
-      });
-    },
-    onError: (error) => {
-      enqueueSnackbar(error?.response?.data.message,{variant : 'error'});
-    },
-  });
+ const { mutate: deleteShift } = useMutation({
+  mutationFn: fuelStationServices.deleteSalesShift,
+  onSuccess: (data) => {
+    queryClient.invalidateQueries({ queryKey: ['closedShifts'] });
+    enqueueSnackbar(data.message, {
+      variant: 'success',
+    });
+  },
+  onError: (error) => {
+    enqueueSnackbar(error?.response?.data.message, { variant: 'error' });
+  },
+});
 
   const menuItems = [
     {icon: belowLargeScreen ? <DownloadOutlined/> : <VisibilityOutlined/> , title: belowLargeScreen ? "Download" : "View", action: "open"},
