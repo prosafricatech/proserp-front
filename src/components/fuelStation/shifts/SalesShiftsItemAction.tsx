@@ -15,25 +15,35 @@ import { JumboDdMenu } from '@jumbo/components';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { deleteSalesShiftResponse, SalesShift } from './SalesShiftTypes';
 
-const EditShift = ({salesShift, setOpenEditDialog}) => {
-  const {data:salesShift,isFetching} = useQuery(['showshiftDetails',{id:salesShift.id}], () => fuelStationServices.showshiftDetails(salesShift.id));
+// Fixed: Renamed parameter to avoid conflict
+const EditShift = ({salesShift: shiftData, setOpenEditDialog}) => {
+  // Fixed: Renamed variable to avoid duplicate const declaration
+  const {data: shiftDetails, isFetching} = useQuery(
+    ['showshiftDetails', {id: shiftData.id}], 
+    () => fuelStationServices.showshiftDetails(shiftData.id)
+  );
 
   if(isFetching){
     return <LinearProgress/>;
   }
 
   return (
-    <SaleShiftForm SalesShift={salesShift} setOpenDialog={setOpenEditDialog}/>
+    <SaleShiftForm SalesShift={shiftDetails} setOpenDialog={setOpenEditDialog}/>
   )
 }
 
-const DocumentDialog = ({organization, salesShift}) => {
+// Fixed: Renamed parameter to avoid conflict
+const DocumentDialog = ({organization, salesShift: shiftData}) => {
   const {activeStation} = useContext(StationFormContext);
   const { shift_teams, fuel_pumps, tanks } = activeStation;
   const { productOptions } = useProductsSelect();
   const [includeFuelVouchers, setIncludeFuelVouchers] = useState(false);
 
-  const {data:salesShift,isFetching} = useQuery(['showshiftDetails',{id:salesShift.id}], () => fuelStationServices.showshiftDetails(salesShift.id));
+  // Fixed: Renamed variable to avoid duplicate const declaration
+  const {data: shiftDetails, isFetching} = useQuery(
+    ['showshiftDetails', {id: shiftData.id}], 
+    () => fuelStationServices.showshiftDetails(shiftData.id)
+  );
 
   if(isFetching){
     return <LinearProgress/>;
@@ -54,17 +64,30 @@ const DocumentDialog = ({organization, salesShift}) => {
         </Stack>
       </DialogTitle>
       <DialogContent>
-        <PDFContent fileName={salesShift.shiftNo} document={<SalesShiftPDF includeFuelVouchers={includeFuelVouchers} productOptions={productOptions} salesShift={salesShift} tanks={tanks} fuel_pumps={fuel_pumps} shift_teams={shift_teams} organization={organization}/>}/>
+        <PDFContent 
+          fileName={shiftDetails.shiftNo} 
+          document={
+            <SalesShiftPDF 
+              includeFuelVouchers={includeFuelVouchers} 
+              productOptions={productOptions} 
+              salesShift={shiftDetails} 
+              tanks={tanks} 
+              fuel_pumps={fuel_pumps} 
+              shift_teams={shift_teams} 
+              organization={organization}
+            />
+          }
+        />
       </DialogContent>
     </>
   )
 }
 
-const SalesShiftsItemAction = ({ salesShift}) => {
-  const [openEditDialog,setOpenEditDialog] = useState(false);
+const SalesShiftsItemAction = ({ salesShift }) => {
+  const [openEditDialog, setOpenEditDialog] = useState(false);
   const [openDocumentDialog, setOpenDocumentDialog] = useState(false);
   const {authOrganization : {organization}} = useJumboAuth();
-  const {showDialog,hideDialog} = useJumboDialog();
+  const {showDialog, hideDialog} = useJumboDialog();
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
 
@@ -72,24 +95,24 @@ const SalesShiftsItemAction = ({ salesShift}) => {
   const {theme} = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
- const { mutate: deleteShift, isPending } = useMutation<deleteSalesShiftResponse,unknown,SalesShift >({
-  mutationFn: fuelStationServices.deleteSalesShift,
-  onSuccess: (data) => {
-    queryClient.invalidateQueries({ queryKey: ['salesShift'] });
-    enqueueSnackbar(data.message, {
-      variant: 'success',
-    });
-  },
-  onError: (error: any) => {
+  const { mutate: deleteShift, isPending } = useMutation<deleteSalesShiftResponse, unknown, SalesShift>({
+    mutationFn: fuelStationServices.deleteSalesShift,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['salesShift'] });
+      enqueueSnackbar(data.message, {
+        variant: 'success',
+      });
+    },
+    onError: (error: any) => {
       enqueueSnackbar(
         error?.response?.data?.message || 'Failed to delete salesShift',
         { variant: 'error' }
       );
     },
-    });
+  });
 
   const menuItems = [
-    {icon: belowLargeScreen ? <DownloadOutlined/> : <VisibilityOutlined/> , title: belowLargeScreen ? "Download" : "View", action: "open"},
+    {icon: belowLargeScreen ? <DownloadOutlined/> : <VisibilityOutlined/>, title: belowLargeScreen ? "Download" : "View", action: "open"},
     {icon: <EditOutlined/>, title: 'Edit', action: 'edit'},
     {icon: <DeleteOutlined color='error'/>, title: 'Delete', action: 'delete'}
   ];
@@ -106,15 +129,15 @@ const SalesShiftsItemAction = ({ salesShift}) => {
         showDialog({
           title: `Delete`,
           content: 'Are you sure you want to delete this Shift?',
-          onYes: () =>{ 
+          onYes: () => { 
             hideDialog();
-            deleteShift(salesShift.id)
+            deleteShift(salesShift.id);
           },
           onNo: () => hideDialog(),
-          variant:'confirm'
+          variant: 'confirm'
         });
         break;
-        default:
+      default:
         break;
     }
   }
