@@ -134,16 +134,17 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
         amount: yup.string().required("Amount is required").typeError('Amount is required'),
       })
     ),
-    main_ledger_id: yup.number().when('submit_type', {
-      is: 'close',
-      then: (schema) => schema.required('Main Ledger is required').typeError('Main Ledger is required'),
-      otherwise: (schema) => schema.nullable(),
-    }),   
-    main_ledger_amount: yup.number().when('submit_type', {
-      is: 'close',
-      then: (schema) => schema.positive('Amount Must be Positive').required('Amount Must be Positive').typeError('Amount Must be Positive'),
-      otherwise: (schema) => schema.nullable(),
-    }),
+    main_ledger: yup.object().when('submit_type', {
+    is: 'close',
+    then: (schema) => schema.shape({
+      id: yup.number().required('Main Ledger is required'),
+      amount: yup.number()
+        .positive('Amount Must be Positive')
+        .required('Amount Must be Positive')
+        .typeError('Amount Must be Positive')
+    }).required('Main Ledger is required'),
+    otherwise: (schema) => schema.nullable()
+  }),
     dipping_before: yup.array().when('isOpenSwitchON', {
       is: true,
       then: (schema) => schema.of(
