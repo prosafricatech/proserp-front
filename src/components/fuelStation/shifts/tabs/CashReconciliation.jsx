@@ -7,13 +7,6 @@ import { useLedgerSelect } from '@/components/accounts/ledgers/forms/LedgerSelec
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import { Div } from '@jumbo/shared';
 
-interface TableCellInfoProps {
-  label?: string;
-  value: string | number | React.ReactNode;
-  colSpan?: number;
-  align?: 'left' | 'center' | 'right' | 'justify';
-  fontWeight?: string | number;
-}
 
 
 function CashReconciliation() {
@@ -152,21 +145,15 @@ function CashReconciliation() {
     }
   }, []); // Empty dependency array - runs only once
   
-  const TableCellInfo = useCallback(({ 
-    label, 
-    value, 
-    colSpan = 1, 
-    align = 'left', 
-    fontWeight = 'normal' 
-  }: TableCellInfoProps) => (
+   const TableCellInfo = ({ label, value, colSpan, align = 'left', fontWeight }) => (
     <Tooltip title={label}>
       <TableCell colSpan={colSpan} size="small" align={align}>
-        <Typography variant="body2" sx={{ fontWeight }}>
+        <Typography variant="body2" fontWeight={fontWeight} sx={{ fontWeight }}>
           {value}
         </Typography>
       </TableCell>
     </Tooltip>
-  ), []);
+  );
 
   // Filter available ledgers for dropdowns
   const availableLedgers = useMemo(() => {
