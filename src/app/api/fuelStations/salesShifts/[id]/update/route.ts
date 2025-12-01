@@ -10,8 +10,7 @@ const { params } = context as { params: {id: string } };
 
   const {id } = params;
   const body = await req.json();
-  const res = await fetch(`${API_BASE}/fuel-stations/sales-shifts/${shift.id}
-`, {
+  const res = await fetch(`${API_BASE}/fuel-stations/sales-shifts/${id}`, {
     method: 'PUT',
     headers,
     body: JSON.stringify(body),
