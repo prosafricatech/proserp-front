@@ -2,17 +2,13 @@ import axios from "@/lib/services/config";
 
 const fuelStationServices = {};
 
-fuelStationServices.getStationShifts = async ({queryKey}) => {
-    const {page = 1 , limit = 10, ...queryParams} = queryKey[queryKey.length - 1];
-    const {data} = await axios.get(`/api/fuelStations/salesShifts`, {
-        params: {
-            page: page,
-            limit: limit,
-            ...queryParams
-        }
+fuelStationServices.getStationShifts = async (params = {}) => {
+    const { page = 1, limit = 10, ...queryParams } = params;
+    const { data } = await axios.get(`/api/fuelStations/salesShifts/${queryParams.stationId}/getStationShifts`, {
+        params: { page, limit, ...queryParams }
     });
     return data;
-};
+}
 
 fuelStationServices.getStationDippings = async ({queryKey}) => {
     const {page, limit, queryParams} = queryKey[queryKey.length - 1];

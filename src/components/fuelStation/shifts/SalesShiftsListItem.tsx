@@ -4,7 +4,7 @@ import { StationFormContext } from './SalesShifts';
 import SalesShiftsItemAction from './SalesShiftsItemAction';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 
-const SalesShiftsListItem = ({ ClosedShift }) => {
+const SalesShiftsListItem = ({ salesShift }) => {
     const {activeStation} = useContext(StationFormContext);
     const { shift_teams } = activeStation;
 
@@ -28,28 +28,28 @@ const SalesShiftsListItem = ({ ClosedShift }) => {
         <Grid size={{xs:6, md:2}}>
             <Tooltip title='Shift No'>
                 <Typography fontWeight={'bold'}>
-                    {ClosedShift.shiftNo}
+                    {salesShift?.shiftNo}
                 </Typography>
             </Tooltip>
         </Grid>
         <Grid size={{xs:6, md:3}}>
             <Tooltip title='Shift Team'>
                 <Typography>
-                    {shift_teams?.find(team => team.id === ClosedShift.shift_team_id)?.name}
+                    {shift_teams?.find(team => team.id === salesShift?.shift_team_id)?.name}
                 </Typography>
             </Tooltip>
         </Grid>
         <Grid size={{xs:6, md:2}}>
             <Tooltip title='Shift Start'>
                 <Typography>
-                    {readableDate(ClosedShift.shift_start, true)}
+                    {readableDate(salesShift?.shift_start, true)}
                 </Typography>
             </Tooltip>
         </Grid>
         <Grid size={{xs:6, md:2}}>
             <Tooltip title='Shift End'>
                 <Typography>
-                    {readableDate(ClosedShift.shift_end, true)}
+                    {readableDate(salesShift?.shift_end, true)}
                 </Typography>
             </Tooltip>
         </Grid>
@@ -57,14 +57,14 @@ const SalesShiftsListItem = ({ ClosedShift }) => {
             <Tooltip title='Status'>
                 <Chip
                     size='small' 
-                    label={ClosedShift.status}
-                    color={ClosedShift.status === 'closed'? 'success' : 'primary'}
+                    label={salesShift?.status}
+                    color={salesShift?.status === 'closed'? 'success' : 'primary'}
                 /> 
             </Tooltip>
         </Grid>
         <Grid size={{xs:6, md:1}}>
             <Box display={'flex'} flexDirection={'row'} justifyContent={'flex-end'} > 
-                <SalesShiftsItemAction ClosedShift={ClosedShift} />
+                <SalesShiftsItemAction salesShift={salesShift} />
             </Box>
         </Grid>
     </Grid>

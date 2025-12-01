@@ -232,3 +232,6 @@ export interface updateSalesShiftResponse {
   message: string;
   data?: SalesShift;
 }
+export interface deleteSalesShiftResponse {
+  message: string;
+}

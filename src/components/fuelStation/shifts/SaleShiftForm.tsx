@@ -73,16 +73,16 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
         },
       });
 
-  const { mutate: updateSalesShifts, isPending: updateLoading } = useMutation<updateSalesShiftResponse,unknown,SalesShift >({
-    mutationFn: fuelStationServices.updateSalesShifts,
-    onSuccess: (data) => {
-      setOpenDialog(false);
-      enqueueSnackbar(data.message, { variant: 'success' });
-      queryClient.invalidateQueries({ queryKey: ['salesShift'] });
-      setOpenDialog(false);
-    },
-    onError: (error: unknown) => {
-            let message = 'Something went wrong';
+    const { mutate: updateSalesShifts, isPending: updateLoading } = useMutation<updateSalesShiftResponse,unknown,SalesShift >({
+      mutationFn: fuelStationServices.updateSalesShifts,
+      onSuccess: (data) => {
+        setOpenDialog(false);
+        enqueueSnackbar(data.message, { variant: 'success' });
+        queryClient.invalidateQueries({ queryKey: ['Shift'] });
+        setOpenDialog(false);
+      },
+      onError: (error: unknown) => {
+              let message = 'Something went wrong';
 
             if (
               typeof error === 'object' &&
