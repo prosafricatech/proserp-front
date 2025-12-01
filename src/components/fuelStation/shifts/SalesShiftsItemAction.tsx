@@ -13,16 +13,17 @@ import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { JumboDdMenu } from '@jumbo/components';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { deleteSalesShiftResponse, SalesShift } from './SalesShiftTypes';
 
 const EditShift = ({salesShift, setOpenEditDialog}) => {
-  const {data:shiftData,isFetching} = useQuery(['showshiftDetails',{id:salesShift.id}], () => fuelStationServices.showshiftDetails(salesShift.id));
+  const {data:salesShift,isFetching} = useQuery(['showshiftDetails',{id:salesShift.id}], () => fuelStationServices.showshiftDetails(salesShift.id));
 
   if(isFetching){
     return <LinearProgress/>;
   }
 
   return (
-    <SaleShiftForm shiftData={shiftData} setOpenDialog={setOpenEditDialog}/>
+    <SaleShiftForm SalesShift={salesShift} setOpenDialog={setOpenEditDialog}/>
   )
 }
 
@@ -32,7 +33,7 @@ const DocumentDialog = ({organization, salesShift}) => {
   const { productOptions } = useProductsSelect();
   const [includeFuelVouchers, setIncludeFuelVouchers] = useState(false);
 
-  const {data:shiftData,isFetching} = useQuery(['showshiftDetails',{id:salesShift.id}], () => fuelStationServices.showshiftDetails(salesShift.id));
+  const {data:salesShift,isFetching} = useQuery(['showshiftDetails',{id:salesShift.id}], () => fuelStationServices.showshiftDetails(salesShift.id));
 
   if(isFetching){
     return <LinearProgress/>;
@@ -53,7 +54,7 @@ const DocumentDialog = ({organization, salesShift}) => {
         </Stack>
       </DialogTitle>
       <DialogContent>
-        <PDFContent fileName={shiftData.shiftNo} document={<SalesShiftPDF includeFuelVouchers={includeFuelVouchers} productOptions={productOptions} shiftData={shiftData} tanks={tanks} fuel_pumps={fuel_pumps} shift_teams={shift_teams} organization={organization}/>}/>
+        <PDFContent fileName={salesShift.shiftNo} document={<SalesShiftPDF includeFuelVouchers={includeFuelVouchers} productOptions={productOptions} salesShift={salesShift} tanks={tanks} fuel_pumps={fuel_pumps} shift_teams={shift_teams} organization={organization}/>}/>
       </DialogContent>
     </>
   )
@@ -71,7 +72,7 @@ const SalesShiftsItemAction = ({ salesShift}) => {
   const {theme} = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
- const { mutate: deleteShift, isPending } = useMutation({
+ const { mutate: deleteShift, isPending } = useMutation<deleteSalesShiftResponse,unknown,SalesShift >({
   mutationFn: fuelStationServices.deleteSalesShift,
   onSuccess: (data) => {
     queryClient.invalidateQueries({ queryKey: ['salesShift'] });
@@ -79,10 +80,13 @@ const SalesShiftsItemAction = ({ salesShift}) => {
       variant: 'success',
     });
   },
-  onError: (error) => {
-    enqueueSnackbar(error?.response?.data.message, { variant: 'error' });
-  },
-});
+  onError: (error: any) => {
+      enqueueSnackbar(
+        error?.response?.data?.message || 'Failed to delete salesShift',
+        { variant: 'error' }
+      );
+    },
+    });
 
   const menuItems = [
     {icon: belowLargeScreen ? <DownloadOutlined/> : <VisibilityOutlined/> , title: belowLargeScreen ? "Download" : "View", action: "open"},
