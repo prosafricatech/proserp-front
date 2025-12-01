@@ -1,7 +1,7 @@
 import { Ledger } from '@/components/accounts/ledgers/LedgerType';
 import { Product } from '@/components/productAndServices/products/ProductType';
 import { Stakeholder } from '@/components/masters/stakeholders/StakeholderType';
-import { FuelPump, Station } from '../../fuelStation/Stations/StationType';
+import { FuelPump, Station } from '../Stations/StationType';
 import { User } from '@/types/auth-types';
 import { PaginatedUserResponse } from '@/components/prosControl/userManagement/UserManagementType';
 import { JumboRqListProps } from '@jumbo/types/JumboRqListProps';
