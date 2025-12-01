@@ -35,7 +35,10 @@ const DocumentDialog = ({organization, ClosedShift}) => {
   const { productOptions } = useProductsSelect();
   const [includeFuelVouchers, setIncludeFuelVouchers] = useState(false);
 
-  const {data:shiftData,isFetching} = useQuery(['showshiftDetails',{id:ClosedShift.id}], () => fuelStationServices.showshiftDetails(ClosedShift.id));
+ const { data: shiftData, isFetching } = useQuery({
+  queryKey: ['showshiftDetails', { id: ClosedShift.id }],
+  queryFn: () => fuelStationServices.showshiftDetails(ClosedShift.id)
+});
 
   if(isFetching){
     return <LinearProgress/>;
