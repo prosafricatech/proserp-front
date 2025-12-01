@@ -224,7 +224,11 @@ export interface PaginatedSalesShiftResponse {
   total: number;
   last_page: number;
 }
-export interface AddOutletResponse {
+export interface AddSalesShifResponse {
   message: string;
   data?: any; 
+}
+export interface updateSalesShiftResponse {
+  message: string;
+  data?: SalesShift;
 }
