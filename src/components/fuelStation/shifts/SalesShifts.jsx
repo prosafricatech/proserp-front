@@ -53,17 +53,17 @@ const SalesShifts = ({activeStation}) => {
         shift_team_id: shift_team_id
       }
     }));
-}, [queryOptions.queryParams.shift_team_id]);
+  }, [queryOptions.queryParams.shift_team_id]);
 
-const handleOnStatusChange = React.useCallback((status) => {
-  setQueryOptions(state => ({
+  const handleOnStatusChange = React.useCallback((status) => {
+    setQueryOptions(state => ({
       ...state,
       queryParams: {
           ...state.queryParams,
           status: status
       }
-  }));
-}, [queryOptions.queryParams.status]);
+    }));
+  }, [queryOptions.queryParams.status]);
 
   const handleOnChange = React.useCallback(
     (keyword) => {
