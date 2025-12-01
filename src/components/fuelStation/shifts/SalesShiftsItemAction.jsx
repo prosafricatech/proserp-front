@@ -85,7 +85,7 @@ const SalesShiftsItemAction = ({ ClosedShift}) => {
       variant: 'success',
     });
   },
-   onError: (error: any) => {
+   onError: (error) => {
       enqueueSnackbar(
         error?.response?.data?.message || 'Failed to delete outlet',
         { variant: 'error' }
