@@ -31,6 +31,10 @@ interface Transaction {
   cost_centers: CostCenter[];
   items: TransferItem[];
   currency: Currency;
+  narration: string;
+  creator: {
+    name: string
+  }
 }
 
 interface TransferOnScreenProps {
@@ -167,7 +171,7 @@ function TransferOnScreen({ transaction, authObject }: TransferOnScreenProps) {
       {/* Total Section */}
       <Grid container paddingTop={5}>
         <Grid size={4}>
-          <Typography variant="body2">
+          <Typography variant="body2" color={headerColor}>
             TOTAL
           </Typography>
         </Grid>
@@ -178,6 +182,7 @@ function TransferOnScreen({ transaction, authObject }: TransferOnScreenProps) {
             sx={{ 
               fontFamily: 'monospace'
             }}
+            color={headerColor}
           >
             {totalAmount.toLocaleString("en-US", { 
               style: "currency", 
@@ -186,6 +191,29 @@ function TransferOnScreen({ transaction, authObject }: TransferOnScreenProps) {
               maximumFractionDigits: 2
             })}
           </Typography>
+        </Grid>
+      </Grid>
+
+      <Grid container spacing={2} sx={{ mt: 3 }}>
+        <Grid size={{xs: 12, md: 6, lg: 4}}>
+          <Box>
+            <Typography variant="subtitle2" color={headerColor}>
+              Narration
+            </Typography>
+            <Typography variant="body1">
+              {transaction?.narration}
+            </Typography>
+          </Box>
+        </Grid>
+        <Grid size={{xs: 12, md: 6, lg: 4}}>
+          <Box>
+            <Typography variant="subtitle2" color={headerColor}>
+              Posted By
+            </Typography>
+            <Typography variant="body1">
+              {transaction?.creator?.name}
+            </Typography>
+          </Box>
         </Grid>
       </Grid>
     </Box>

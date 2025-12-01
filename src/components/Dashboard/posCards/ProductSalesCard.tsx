@@ -58,12 +58,13 @@ function ProductSalesCard() {
 
     // Screen handling constants
     const { theme } = useJumboTheme();
+    const isDark = theme.type === 'dark';
     const smallScreen = useMediaQuery(theme.breakpoints.down('md'));
 
     const COLORS = {
         quantity: theme.palette.text.primary,
         revenue: '#2196f3',
-        cogs: '#c62828',
+        cogs: isDark ? '#EF9A9A' : 'red',
         profit: theme.palette.success.main,
         margin: theme.palette.success.main,
         default: theme.palette.text.primary

@@ -67,6 +67,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
         },
       });
 
+<<<<<<< HEAD
 const { mutate: updateSalesShifts, isPending: updateLoading } = useMutation({
   mutationFn: fuelStationServices.updateSalesShifts,
   onSuccess: (data) => {
@@ -77,92 +78,103 @@ const { mutate: updateSalesShifts, isPending: updateLoading } = useMutation({
   },
   onError: (error) => {
           let message = 'Something went wrong';
+=======
+  const { mutate: updateSalesShifts, isPending: updateLoading } = useMutation({
+    mutationFn: fuelStationServices.updateSalesShifts,
+    onSuccess: (data) => {
+      setOpenDialog(false);
+      enqueueSnackbar(data.message, { variant: 'success' });
+      queryClient.invalidateQueries({ queryKey: ['Shift'] });
+      setOpenDialog(false);
+    },
+    onError: (error) => {
+            let message = 'Something went wrong';
+>>>>>>> d80ef037c0abaa2fda3895af0ad66bc824e9d2f7
 
-          if (
-            typeof error === 'object' &&
-            error !== null &&
-            'response' in error &&
-            typeof (error).response?.data?.message === 'string'
-          ) {
-            message = (error).response.data.message;
-          } else if (error instanceof Error) {
-            message = error.message;
-          }
-
-          enqueueSnackbar(message, { variant: 'error' });
-        },
-      });
+            if (
+              typeof error === 'object' &&
+              error !== null &&
+              'response' in error &&
+              typeof (error).response?.data?.message === 'string'
+            ) {
+              message = (error).response.data.message;
+            } else if (error instanceof Error) {
+              message = error.message;
+            }
+              enqueueSnackbar(message, { variant: 'error' });
+            },
+          });
 
   const saveMutation = React.useMemo(() => {
     return SalesShift?.id ? updateSalesShifts : addSalesShifts;
   }, [SalesShift, addSalesShifts, updateSalesShifts]);
 
   const validationSchema = yup.object({
-      shift_team_id: yup.number().required('Shift Team is required').typeError('Shift Team is required'),
-      shift_start: yup.string().required('Start Date is required').typeError('Start Date is required'),
-      shift_end: yup.string()
-        .required('End Date is required')
-        .typeError('End Date is required')
-        .test(
-          'is-greater',
-          'Shift End Date must be greater than Start Date by at least 1 minute',
-          function (value) {
-            const { shift_start } = this.parent;
-            return dayjs(value).isAfter(dayjs(shift_start).add(1, 'minute'));
-          }
-        ),
-      pump_readings: yup.array().of(
+    shift_team_id: yup.number().required('Shift Team is required').typeError('Shift Team is required'),
+    shift_start: yup.string().required('Start Date is required').typeError('Start Date is required'),
+    shift_end: yup.string()
+      .required('End Date is required')
+      .typeError('End Date is required')
+      .test(
+        'is-greater',
+        'Shift End Date must be greater than Start Date by at least 1 minute',
+        function (value) {
+          const { shift_start } = this.parent;
+          return dayjs(value).isAfter(dayjs(shift_start).add(1, 'minute'));
+        }
+      ),
+    pump_readings: yup.array().of(
+      yup.object().shape({
+        opening: yup.number()
+          .required("Opening Reading is required")
+          .typeError('Opening Reading is required')
+          .max(yup.ref('closing'), "Opening Reading should not exceed the Closing Reading"),
+        closing: yup.number()
+          .required("Closing Reading is required")
+          .typeError('Closing Reading is required')
+          .min(yup.ref('opening'), "Closing Reading should exceed the Opening Reading"),
+      })
+    ),
+    product_prices: yup.array().of(
+      yup.object().shape({
+        product_id: yup.number().required("Fuel name is required").typeError('Fuel name is required'),
+        price: yup.string().required("Price is required").typeError('Price is required'),
+      })
+    ),
+    other_ledgers: yup.array().of(
+      yup.object().shape({
+        id: yup.number().positive('Ledger name must be Positive').required("Ledger name is required").typeError('Ledger name is required'),
+        amount: yup.string().required("Amount is required").typeError('Amount is required'),
+      })
+    ),
+    main_ledger_id: yup.number().when('submit_type', {
+      is: 'close',
+      then: (schema) => schema.required('Main Ledger is required').typeError('Main Ledger is required'),
+      otherwise: (schema) => schema.nullable(),
+    }),   
+    main_ledger_amount: yup.number().when('submit_type', {
+      is: 'close',
+      then: (schema) => schema.positive('Amount Must be Positive').required('Amount Must be Positive').typeError('Amount Must be Positive'),
+      otherwise: (schema) => schema.nullable(),
+    }),
+    dipping_before: yup.array().when('isOpenSwitchON', {
+      is: true,
+      then: (schema) => schema.of(
         yup.object().shape({
-          opening: yup.number()
-            .required("Opening Reading is required")
-            .typeError('Opening Reading is required')
-            .max(yup.ref('closing'), "Opening Reading should not exceed the Closing Reading"),
-          closing: yup.number()
-            .required("Closing Reading is required")
-            .typeError('Closing Reading is required')
-            .min(yup.ref('opening'), "Closing Reading should exceed the Opening Reading"),
+          reading: yup.string().required('Opening Reading is required').typeError('Opening Reading is required')
         })
       ),
-      product_prices: yup.array().of(
+      otherwise: (schema) => schema.nullable()
+    }),
+    dipping_after: yup.array().when('isCloseSwitchON', {
+      is: true,
+      then: (schema) => schema.of(
         yup.object().shape({
-          product_id: yup.number().required("Fuel name is required").typeError('Fuel name is required'),
-          price: yup.string().required("Price is required").typeError('Price is required'),
+          reading: yup.string().required('Closing Reading is required').typeError('Closing Reading is required')
         })
       ),
-      other_ledgers: yup.array().of(
-        yup.object().shape({
-          id: yup.number().positive('Ledger name must be Positive').required("Ledger name is required").typeError('Ledger name is required'),
-          amount: yup.string().required("Amount is required").typeError('Amount is required'),
-        })
-      ),
-      main_ledger_id: yup.number().when('submit_type', {
-        is: 'close',
-        then: (schema) => schema.required('Main Ledger is required').typeError('Main Ledger is required'),
-        otherwise: (schema) => schema.nullable(),
-      }),   
-      main_ledger_amount: yup.number().when('submit_type', {
-        is: 'close',
-        then: (schema) => schema.positive('Amount Must be Positive').required('Amount Must be Positive').typeError('Amount Must be Positive'),
-        otherwise: (schema) => schema.nullable(),
-      }),
-      dipping_before: yup.array().when('isOpenSwitchON', {
-        is: true,
-        then: (schema) => schema.of(
-          yup.object().shape({
-            reading: yup.string().required('Opening Reading is required').typeError('Opening Reading is required')
-          })
-        ),
-        otherwise: (schema) => schema.nullable()
-      }),
-      dipping_after: yup.array().when('isCloseSwitchON', {
-        is: true,
-        then: (schema) => schema.of(
-          yup.object().shape({
-            reading: yup.string().required('Closing Reading is required').typeError('Closing Reading is required')
-          })
-        ),
-        otherwise: (schema) => schema.nullable()
-      }),
+      otherwise: (schema) => schema.nullable()
+    }),
   });
 
   const { register, getValues, control, handleSubmit, setError, clearErrors, setValue, watch, formState: { errors } } = useForm({
@@ -221,7 +233,6 @@ const { mutate: updateSalesShifts, isPending: updateLoading } = useMutation({
     name: 'other_ledgers',
   });
   
-  //set value of ShiftLedgers on Edit
   useEffect(() => {
     if (SalesShift) {
       setShiftLedgers(shift_teams?.find(team => team.id === SalesShift?.shift_team_id).ledgers)
@@ -249,7 +260,6 @@ const { mutate: updateSalesShifts, isPending: updateLoading } = useMutation({
     })));
   }, [adjustments, setValue]);  
 
-  //for setting pump readings from last shift
   const [lastPumpReadings, setLastPumpReadings] = useState(null);
   const retrieveLastShiftReadings = async () => {
     const lastReadings =  await fuelStationServices.retrieveLastReadings({

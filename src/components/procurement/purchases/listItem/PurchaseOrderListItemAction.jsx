@@ -208,7 +208,7 @@ function PurchaseOrderListItemAction({ order }) {
   // Receive Function component
   const ReceiveDialog = () => {
     const { data: orderDetails, isLoading } = useQuery({
-      queryKey: ['purchaseOrder', { id: order.id }],
+      queryKey: ['purchaseOrderDetails', { id: order.id }],
       queryFn: () => purchaseServices.orderDetails(order.id),
     });
 

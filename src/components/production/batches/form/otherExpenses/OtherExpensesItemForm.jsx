@@ -77,6 +77,7 @@ function OtherExpensesItemForm({setClearFormKey, submitMainForm, submitItemForm,
     }
 
     reset();
+    setIsDirty(false);
     setIsAdding(false);
     setShowForm && setShowForm(false);
   };

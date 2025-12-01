@@ -344,7 +344,7 @@ function OtherExpenses({productionDates, setClearFormKey, clearFormKey, submitMa
                   })}
                 </>
               ) : (
-                isFetchedAtLeastOnce && <Alert sx={{marginTop: 1, marginBottom: 1}} variant='outlined' color='primary' severity='info'>No Expense to Add</Alert>
+                isFetchedAtLeastOnce && <Alert sx={{marginTop: 1, marginBottom: 1}} variant='outlined' severity='info'>No Expense to Add</Alert>
               )
               :
               <LinearProgress sx={{marginTop: 2}}/>

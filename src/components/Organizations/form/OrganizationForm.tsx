@@ -269,25 +269,25 @@ const OrganizationForm: React.FC<OrganizationFormProps> = ({ organization = null
     const updateOrganization = useMutation<any, Error, FormValues>({
         mutationFn: organizationServices.update,
         onSuccess: (data) => {
-            queryClient.invalidateQueries({ queryKey: ['organizationDetails'] });
-            enqueueSnackbar(
-                dictForm.messages.updateSuccess,
-                { variant: 'success' }
-            );
-            router.push(`/${lang}/organizations`);
+          queryClient.invalidateQueries({ queryKey: ['organizationDetails'] });
+          enqueueSnackbar(
+              dictForm.messages.updateSuccess,
+              { variant: 'success' }
+          );
+          router.push(`/${lang}/organizations`);
         },
         onError: (error: any) => {
             if (error?.response?.data?.validation_errors) {
-                Object.entries(error.response.data.validation_errors).forEach(
-                ([fieldName, messages]) => {
-                    setError(fieldName as keyof FormValues, {
-                    type: 'manual',
-                    message: (messages as string[]).join('<br/>'),
-                    });
-                }
+              Object.entries(error.response.data.validation_errors).forEach(
+              ([fieldName, messages]) => {
+                setError(fieldName as keyof FormValues, {
+                  type: 'manual',
+                  message: (messages as string[]).join('<br/>'),
+                });
+              }
                 );
             } else if (error?.response?.data?.message) {
-                enqueueSnackbar(error.response.data.message, { variant: 'error' });
+              enqueueSnackbar(error.response.data.message, { variant: 'error' });
             }
         },
     });

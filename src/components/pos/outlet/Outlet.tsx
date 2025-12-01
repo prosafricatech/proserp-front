@@ -24,7 +24,7 @@ import outletServices from './outlet-services';
     const [mounted, setMounted] = useState(false);
 
     const [queryOptions, setQueryOptions] = useState({
-      queryKey: 'outlet',
+      queryKey: 'Outlets',
       queryParams: { id: params.id, keyword: '' },
       countKey: 'total',
       dataKey: 'data',

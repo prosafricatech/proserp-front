@@ -21,19 +21,23 @@ function AlternativesForm({alternativeIndex, alternative, setItems, alternatives
     const [selectedUnit, setSelectedUnit] = useState(alternative && (alternative.measurement_unit_id ? alternative.measurement_unit_id : alternative.measurement_unit.id));
 
     const validationSchema = yup.object({
-        product: yup.object().required("Material is required").typeError('Material is required'),
-        quantity: yup
-            .number()
-            .when(['product'], {
-            is: (product) =>
-                !!product && product.type === 'Inventory',
-        then: yup
-            .number()
-            .required("Quantity is required")
-            .positive("Quantity must be a positive number")
-            .typeError('Quantity is required'),
+      product: yup.object().required("Material is required").typeError('Material is required'),
+      quantity: yup
+        .number()
+        .transform((value, originalValue) => 
+          originalValue === '' || originalValue === null ? null : value
+        )
+        .nullable()
+        .when('product', (product, schema) => {
+          if (product && product.type === 'Inventory') {
+            return schema
+              .required("Quantity is required")
+              .positive("Quantity must be a positive number")
+              .typeError("Quantity must be a number");
+          }
+          return schema.nullable();
         }),
-    })
+    });
 
   const {setValue, handleSubmit, watch, reset, formState: {errors, dirtyFields}} = useForm({
     resolver: yupResolver(validationSchema),
@@ -222,11 +226,10 @@ function AlternativesForm({alternativeIndex, alternative, setItems, alternatives
                 }}
                 error={!!errors?.quantity}
                 helperText={errors?.quantity?.message}
-                onChange={(e)=> {
-                    setValue(`quantity`,e.target.value ? sanitizedNumber(e.target.value ) : 0,{
-                        shouldValidate: true,
-                        shouldDirty: true
-                    });
+                onChange={(e) => {
+                  const rawValue = e.target.value;
+                  const numValue = rawValue ? sanitizedNumber(rawValue) : null;
+                  setValue('quantity', numValue, { shouldValidate: true, shouldDirty: true });
                 }}
               />
             </Grid>

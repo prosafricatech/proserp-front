@@ -15,6 +15,7 @@ import { PriceList } from './PriceListType';
 function PriceLists() {
     const params = useParams<{ id?: string }>();
     const listRef = React.useRef<any>(null);
+    const [mounted, setMounted] = React.useState(false);
 
     const [queryOptions, setQueryOptions] = React.useState({
         queryKey: 'priceLists',
@@ -23,7 +24,6 @@ function PriceLists() {
         dataKey: 'data',
     });
 
-    const [mounted, setMounted] = React.useState(false);
     React.useEffect(() => {
        setMounted(true);
     }, []);

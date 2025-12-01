@@ -6,7 +6,7 @@ const OperationSelector = (props) => {
 
   const operations = [
     { label: 'Add (+)', value: '+' },
-    { label: 'Subtract (-)', value: '-' },
+    { label: 'Deduct (-)', value: '-' },
   ];
 
   // Initsalize selectedOperator based on defaultValue
@@ -34,15 +34,15 @@ const OperationSelector = (props) => {
         value={selectedOperator}
         getOptionLabel={(option) => option.label}
         renderInput={(params) => (
-            <TextField
-                {...params}
-                error={!!frontError}
-                helperText={frontError?.message}
-                fullWidth
-                label={label}
-                size='small'
-                placeholder={label}
-            />
+          <TextField
+            {...params}
+            error={!!frontError}
+            helperText={frontError?.message}
+            fullWidth
+            label={label}
+            size='small'
+            placeholder={label}
+          />
         )}
 
         renderTags={(tagValue, getTagProps) => {

@@ -13,7 +13,7 @@ import ProductSelect from '@/components/productAndServices/products/ProductSelec
 import StoreSelector from '@/components/procurement/stores/StoreSelector';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 
-function MaterialUsedForm({projectTaskIndex, taskProgressItem, material = null, index = -1, setShowForm = null, MaterialUsed=[], setMaterialUsed}) {
+function MaterialIssuedForm({projectTaskIndex, taskProgressItem, material = null, index = -1, setShowForm = null, MaterialIssued=[], setMaterialIssued}) {
   const { project} = useProjectProfile();
   const [isRetrieving, setIsRetrieving] = useState(false);
   const [selectedUnit, setSelectedUnit] = useState(material?.measurement_unit_id);
@@ -76,11 +76,11 @@ function MaterialUsedForm({projectTaskIndex, taskProgressItem, material = null, 
     setIsAdding(true);
     
     if (index > -1) {
-      let updatedItems = [...MaterialUsed];
+      let updatedItems = [...MaterialIssued];
       updatedItems[index] = item;
-      await setMaterialUsed(updatedItems);
+      await setMaterialIssued(updatedItems);
     } else {
-      await setMaterialUsed((items) => [...items, item]);
+      await setMaterialIssued((items) => [...items, item]);
     }
   
     reset();
@@ -92,12 +92,12 @@ function MaterialUsedForm({projectTaskIndex, taskProgressItem, material = null, 
     setTaskProgressItems((prevItems) => {
       return prevItems.map((taskItem, taskIndex) => {
         if (taskIndex === projectTaskIndex) {
-          return { ...taskItem, material_used: [...MaterialUsed] };
+          return { ...taskItem, material_used: [...MaterialIssued] };
         }
         return taskItem;
       });
     });
-  }, [MaterialUsed, projectTaskIndex, setTaskProgressItems]);
+  }, [MaterialIssued, projectTaskIndex, setTaskProgressItems]);
 
   const combinedUnits = product?.secondary_units?.concat(product?.primary_unit) || [];
 
@@ -116,9 +116,9 @@ function MaterialUsedForm({projectTaskIndex, taskProgressItem, material = null, 
   
         if (balances) {
           const pickedUnit = combinedUnits?.find(unit => unit.id === measurement_unit_id);
-          const allMaterialUsed = taskProgressItems?.flatMap(task => task.material_used) || []; //from all task executions
+          const allMaterialIssued = taskProgressItems?.flatMap(task => task.material_used) || []; //from all task executions
 
-          const existingItems = allMaterialUsed?.filter((existingItem, itemIndex) => {
+          const existingItems = allMaterialIssued?.filter((existingItem, itemIndex) => {
             return existingItem?.store?.id === storeId 
               && existingItem?.product?.id === product?.id 
               && itemIndex !== index
@@ -328,4 +328,4 @@ function MaterialUsedForm({projectTaskIndex, taskProgressItem, material = null, 
   )
 }
 
-export default MaterialUsedForm
+export default MaterialIssuedForm

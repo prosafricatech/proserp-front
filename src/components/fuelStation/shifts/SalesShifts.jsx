@@ -10,10 +10,8 @@ import ProductsSelectProvider from '../../productAndServices/products/ProductsSe
 import StakeholderSelectProvider from '../../masters/stakeholders/StakeholderSelectProvider';
 import LedgerSelectProvider from '../../accounts/ledgers/forms/LedgerSelectProvider';
 import { DateTimePicker } from '@mui/x-date-pickers';
-import ShiftTeamsSelector from './ShiftTeamsSelector';
 import dayjs from 'dayjs';
 import { EventAvailableOutlined, FilterAltOffOutlined, FilterAltOutlined } from '@mui/icons-material';
-import StationShiftsStatusSelector from './StationShiftsStatusSelector';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { useParams } from 'next/navigation';
 import SalesShiftsActionTail from './SalesShiftsActionTail';
@@ -55,17 +53,17 @@ const SalesShifts = ({activeStation}) => {
         shift_team_id: shift_team_id
       }
     }));
-}, [queryOptions.queryParams.shift_team_id]);
+  }, [queryOptions.queryParams.shift_team_id]);
 
-const handleOnStatusChange = React.useCallback((status) => {
-  setQueryOptions(state => ({
+  const handleOnStatusChange = React.useCallback((status) => {
+    setQueryOptions(state => ({
       ...state,
       queryParams: {
           ...state.queryParams,
           status: status
       }
-  }));
-}, [queryOptions.queryParams.status]);
+    }));
+  }, [queryOptions.queryParams.status]);
 
   const handleOnChange = React.useCallback(
     (keyword) => {

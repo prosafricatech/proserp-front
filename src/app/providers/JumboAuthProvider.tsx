@@ -13,6 +13,7 @@ interface AuthUser {
     id: string;
     name: string;
     email: string;
+    is_admin: boolean;
     organization_roles?: Array<{ name: string }>;
   }
   permissions?: string[];
@@ -247,6 +248,7 @@ export const JumboAuthProvider = ({
             id: response.authUser.user.id,
             name: response.authUser.user.name,
             email: response.authUser.user.email,
+            is_admin: response.authUser.user.is_admin,
             organization_roles: response.authUser.user.organization_roles
           },
           permissions: response.authUser.permissions || [],
@@ -314,9 +316,12 @@ export const JumboAuthProvider = ({
       };
 
       await getFCMToken();
-    } else if (!currentUser || refresh) {
+    }
+
+    if (!currentUser || refresh) {
       await refreshAuth();
     }
+    
   }, [refreshAuth, setAuthValues]);
 
   const resetAuth = useCallback(() => {

@@ -9,13 +9,13 @@ import PDFContent from '@/components/pdf/PDFContent';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { JumboDdMenu } from '@jumbo/components';
 import projectsServices from '@/components/projectManagement/projects/project-services';
-import SubContractMaterialUsedOnScreen from './SubContractMaterialUsedOnScreen';
-import SubContractMaterialUsedPDF from './SubContractMaterialUsedPDF';
+import SubContractMaterialIssuedOnScreen from './SubContractMaterialIssuedOnScreen';
+import SubContractMaterialIssuedPDF from './SubContractMaterialIssuedPDF';
 
-const DocumentDialog = ({ setOpenDocumentDialog, SubContractMaterialUsed, organization }) => {
-    const {data:SubContractMaterialUsedDetails,isFetching} = useQuery({
-        queryKey: ['SubContractMaterialUsedDetails',{id:SubContractMaterialUsed.id}],
-        queryFn: async() => projectsServices.getSubContractMaterialUsedDetails(SubContractMaterialUsed.id)
+const DocumentDialog = ({ setOpenDocumentDialog, SubContractMaterialIssued, organization }) => {
+    const {data:SubContractMaterialIssuedDetails,isFetching} = useQuery({
+        queryKey: ['SubContractMaterialIssuedDetails',{id:SubContractMaterialIssued.id}],
+        queryFn: async() => projectsServices.getSubContractMaterialIssuedDetails(SubContractMaterialIssued.id)
     });
     const [selectedTab, setSelectedTab] = useState(0);
   
@@ -60,20 +60,20 @@ const DocumentDialog = ({ setOpenDocumentDialog, SubContractMaterialUsed, organi
                 </Grid>
               <Box>
                 {selectedTab === 0 && (
-                  <SubContractMaterialUsedOnScreen SubContractMaterialUsedDetails={SubContractMaterialUsedDetails} setOpenDocumentDialog={setOpenDocumentDialog} organization={organization} />
+                  <SubContractMaterialIssuedOnScreen SubContractMaterialIssuedDetails={SubContractMaterialIssuedDetails} setOpenDocumentDialog={setOpenDocumentDialog} organization={organization} />
                 )}
                 {selectedTab === 1 && (
                   <PDFContent
-                    document={<SubContractMaterialUsedPDF organization={organization} SubContractMaterialUsedDetails={SubContractMaterialUsedDetails} />}
-                    fileName={SubContractMaterialUsed.issueNo}
+                    document={<SubContractMaterialIssuedPDF organization={organization} SubContractMaterialIssuedDetails={SubContractMaterialIssuedDetails} />}
+                    fileName={SubContractMaterialIssued.issueNo}
                   />
                 )}
               </Box>
             </Box>
           ) : (
             <PDFContent
-              document={<SubContractMaterialUsedPDF organization={organization} SubContractMaterialUsedDetails={SubContractMaterialUsedDetails} />}
-              fileName={SubContractMaterialUsed.issueNo}
+              document={<SubContractMaterialIssuedPDF organization={organization} SubContractMaterialIssuedDetails={SubContractMaterialIssuedDetails} />}
+              fileName={SubContractMaterialIssued.issueNo}
             />
           )}
         </DialogContent>
@@ -88,7 +88,7 @@ const DocumentDialog = ({ setOpenDocumentDialog, SubContractMaterialUsed, organi
     );
 };
 
-const SubContractMaterialUsedItemAction = ({ SubContractMaterialUsed}) => {
+const SubContractMaterialIssuedItemAction = ({ SubContractMaterialIssued}) => {
     const {showDialog,hideDialog} = useJumboDialog();
     const [openDocumentDialog, setOpenDocumentDialog] = useState(false);
     const { enqueueSnackbar } = useSnackbar();
@@ -100,10 +100,10 @@ const SubContractMaterialUsedItemAction = ({ SubContractMaterialUsed}) => {
     const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
     // React Query v5 syntax for useMutation
-    const { mutate: deleteSubContractMaterialUsed } = useMutation({
-        mutationFn: projectsServices.deleteSubContractMaterialUsed,
+    const { mutate: deleteSubContractMaterialIssued } = useMutation({
+        mutationFn: projectsServices.deleteSubContractMaterialIssued,
         onSuccess: (data) => {
-            queryClient.invalidateQueries({queryKey: ['SubContractMaterialUsed']});
+            queryClient.invalidateQueries({queryKey: ['SubContractMaterialIssued']});
             enqueueSnackbar(data.message, {
                 variant: 'success',
             });
@@ -130,7 +130,7 @@ const SubContractMaterialUsedItemAction = ({ SubContractMaterialUsed}) => {
             content: 'Are you sure you want to delete this Material Used?',
             onYes: () =>{ 
                 hideDialog();
-                deleteSubContractMaterialUsed(SubContractMaterialUsed.id)
+                deleteSubContractMaterialIssued(SubContractMaterialIssued.id)
             },
             onNo: () => hideDialog(),
             variant:'confirm'
@@ -151,7 +151,7 @@ const SubContractMaterialUsedItemAction = ({ SubContractMaterialUsed}) => {
             scroll={belowLargeScreen ? 'body' : 'paper'}
             onClose={() => setOpenDocumentDialog(false)}
         >
-          {!!openDocumentDialog && <DocumentDialog SubContractMaterialUsed={SubContractMaterialUsed} organization={organization} setOpenDocumentDialog={setOpenDocumentDialog} openDocumentDialog={openDocumentDialog}/>}
+          {!!openDocumentDialog && <DocumentDialog SubContractMaterialIssued={SubContractMaterialIssued} organization={organization} setOpenDocumentDialog={setOpenDocumentDialog} openDocumentDialog={openDocumentDialog}/>}
         </Dialog>
         <JumboDdMenu
             icon={
@@ -166,4 +166,4 @@ const SubContractMaterialUsedItemAction = ({ SubContractMaterialUsed}) => {
   );
 };
 
-export default SubContractMaterialUsedItemAction;
+export default SubContractMaterialIssuedItemAction;

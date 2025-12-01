@@ -10,7 +10,6 @@ import { JumboDdMenu } from '@jumbo/components';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 const EditSubContract = ({subContract,setOpenDialog}) => {
-  // React Query v5 syntax for useQuery
   const {data:SubContractDetails,isFetching} = useQuery({
     queryKey: ['SubContractDetails',{id:subContract.id}],
     queryFn: async() => projectsServices.getSubContractDetails(subContract.id)

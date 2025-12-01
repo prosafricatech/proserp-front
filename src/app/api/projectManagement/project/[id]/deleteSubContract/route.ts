@@ -10,7 +10,6 @@ export async function DELETE(
   const { headers, response } = await getAuthHeaders(req);
   if (response) return response;
 
-  // Corrected URL formatting
   const res = await fetch(`${API_BASE}/project-subcontracts/${params.id}`, {
     method: 'DELETE',
     headers,

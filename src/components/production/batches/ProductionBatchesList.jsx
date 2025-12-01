@@ -87,7 +87,7 @@ const ProductionBatchesList = ({activeWorkCenter}) => {
                                     }
                                 />
                                 :
-                            <Alert variant='outlined' color='primary' severity='info'>Please select a Work Center</Alert>
+                            <Alert variant='outlined' severity='info'>Please select a Work Center</Alert>
                         } 
                     </ProductionBatchesContext.Provider>
                 </ProductsSelectProvider>

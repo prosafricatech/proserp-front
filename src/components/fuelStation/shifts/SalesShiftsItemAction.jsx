@@ -25,7 +25,7 @@ const { data: shiftData, isFetching } = useQuery({
   }
 
   return (
-    <SaleShiftForm shiftData={shiftData} setOpenDialog={setOpenEditDialog}/>
+    <SaleShiftForm SalesShift={shiftData} setOpenDialog={setOpenEditDialog}/>
   )
 }
 

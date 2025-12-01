@@ -183,7 +183,7 @@ function TaskProgress({taskProgressItem = null, index = -1, setShowForm = null})
 
     const retrieveTaskDetails = async (taskId) => {
       setIsRetrievingDetails(true);
-      const details = await projectsServices.showTaskDetails(taskId);
+      const details = await projectsServices.showProjectTaskDetails(taskId);
       setValue('unexcuted_task_quantity', details?.unexecuted_quantity);
       setIsRetrievingDetails(false);
     }

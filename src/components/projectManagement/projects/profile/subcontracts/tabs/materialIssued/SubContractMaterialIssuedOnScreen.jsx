@@ -15,7 +15,7 @@ import {
 } from '@mui/material';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 
-function SubContractMaterialUsedOnScreen({ SubContractMaterialUsedDetails, organization }) {
+function SubContractMaterialIssuedOnScreen({ SubContractMaterialIssuedDetails, organization }) {
   const theme = useTheme();
   
   const mainColor = organization.settings?.main_color || "#2113AD";
@@ -50,14 +50,14 @@ function SubContractMaterialUsedOnScreen({ SubContractMaterialUsedDetails, organ
               sx={{ color: headerColor }} 
               gutterBottom
             >
-              SUBCONTRACT MATERIALS USED
+              SUBCONTRACT MATERIALS ISSUED
             </Typography>
             <Typography 
               variant="h6" 
               fontWeight="bold"
               gutterBottom
             >
-              {SubContractMaterialUsedDetails.proformaNo}
+              {SubContractMaterialIssuedDetails.proformaNo}
             </Typography>
           </Box>
         </Grid>
@@ -70,7 +70,7 @@ function SubContractMaterialUsedOnScreen({ SubContractMaterialUsedDetails, organ
             <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
               Issue No
             </Typography>
-            <Typography variant="body1">{SubContractMaterialUsedDetails.issueNo}</Typography>
+            <Typography variant="body1">{SubContractMaterialIssuedDetails.issueNo}</Typography>
           </Box>
         </Grid>
         <Grid size={{xs: 12, sm: 6, md: 4}}>
@@ -79,7 +79,7 @@ function SubContractMaterialUsedOnScreen({ SubContractMaterialUsedDetails, organ
               Issue Date
             </Typography>
             <Typography variant="body1">
-              {readableDate(SubContractMaterialUsedDetails.issue_date)}
+              {readableDate(SubContractMaterialIssuedDetails.issue_date)}
             </Typography>
           </Box>
         </Grid>
@@ -89,7 +89,7 @@ function SubContractMaterialUsedOnScreen({ SubContractMaterialUsedDetails, organ
               Project
             </Typography>
             <Typography variant="body1">
-              {SubContractMaterialUsedDetails.subcontract.project.name}
+              {SubContractMaterialIssuedDetails.subcontract.project.name}
             </Typography>
           </Box>
         </Grid>
@@ -98,7 +98,7 @@ function SubContractMaterialUsedOnScreen({ SubContractMaterialUsedDetails, organ
             <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
               Reference
             </Typography>
-            <Typography variant="body1">{SubContractMaterialUsedDetails.reference}</Typography>
+            <Typography variant="body1">{SubContractMaterialIssuedDetails.reference}</Typography>
           </Box>
         </Grid>
         <Grid size={{xs: 12, sm: 6, md: 4}}>
@@ -106,7 +106,7 @@ function SubContractMaterialUsedOnScreen({ SubContractMaterialUsedDetails, organ
             <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
               Subcontract No
             </Typography>
-            <Typography variant="body1">{SubContractMaterialUsedDetails.subcontract.subcontractNo}</Typography>
+            <Typography variant="body1">{SubContractMaterialIssuedDetails.subcontract.subcontractNo}</Typography>
           </Box>
         </Grid>
         <Grid size={{xs: 12, sm: 6, md: 4}}>
@@ -115,7 +115,7 @@ function SubContractMaterialUsedOnScreen({ SubContractMaterialUsedDetails, organ
               Subcontractor Name
             </Typography>
             <Typography variant="body1">
-              {SubContractMaterialUsedDetails.subcontract.subcontractor.name}
+              {SubContractMaterialIssuedDetails.subcontract.subcontractor.name}
             </Typography>
           </Box>
         </Grid>
@@ -163,7 +163,7 @@ function SubContractMaterialUsedOnScreen({ SubContractMaterialUsedDetails, organ
               </TableRow>
             </TableHead>
             <TableBody>
-              {SubContractMaterialUsedDetails.items.map((item, index) => (
+              {SubContractMaterialIssuedDetails.items.map((item, index) => (
                 <TableRow 
                   key={item.id} 
                   sx={{ 
@@ -183,7 +183,7 @@ function SubContractMaterialUsedOnScreen({ SubContractMaterialUsedDetails, organ
               ))}
               
               {/* Empty State */}
-              {(!SubContractMaterialUsedDetails.items || SubContractMaterialUsedDetails.items.length === 0) && (
+              {(!SubContractMaterialIssuedDetails.items || SubContractMaterialIssuedDetails.items.length === 0) && (
                 <TableRow>
                   <TableCell colSpan={4} sx={{ textAlign: 'center', py: 4 }}>
                     <Typography variant="body1" color="text.secondary">
@@ -194,7 +194,7 @@ function SubContractMaterialUsedOnScreen({ SubContractMaterialUsedDetails, organ
               )}
 
               {/* Summary Row */}
-              {SubContractMaterialUsedDetails.items && SubContractMaterialUsedDetails.items.length > 0 && (
+              {SubContractMaterialIssuedDetails.items && SubContractMaterialIssuedDetails.items.length > 0 && (
                 <TableRow sx={{ backgroundColor: theme.palette.background.default }}>
                   <TableCell 
                     colSpan={3} 
@@ -213,7 +213,7 @@ function SubContractMaterialUsedOnScreen({ SubContractMaterialUsedDetails, organ
                       color: contrastText
                     }}
                   >
-                    {SubContractMaterialUsedDetails.items.length}
+                    {SubContractMaterialIssuedDetails.items.length}
                   </TableCell>
                 </TableRow>
               )}
@@ -230,11 +230,11 @@ function SubContractMaterialUsedOnScreen({ SubContractMaterialUsedDetails, organ
               Subcontractor Details
             </Typography>
             <Typography variant="body2">
-              {SubContractMaterialUsedDetails.subcontract.subcontractor.name}
+              {SubContractMaterialIssuedDetails.subcontract.subcontractor.name}
             </Typography>
-            {SubContractMaterialUsedDetails.subcontract.subcontractor.contact_info && (
+            {SubContractMaterialIssuedDetails.subcontract.subcontractor.contact_info && (
               <Typography variant="body2" color="text.secondary">
-                {SubContractMaterialUsedDetails.subcontract.subcontractor.contact_info}
+                {SubContractMaterialIssuedDetails.subcontract.subcontractor.contact_info}
               </Typography>
             )}
           </Grid>
@@ -243,11 +243,11 @@ function SubContractMaterialUsedOnScreen({ SubContractMaterialUsedDetails, organ
               Project Information
             </Typography>
             <Typography variant="body2">
-              {SubContractMaterialUsedDetails.subcontract.project.name}
+              {SubContractMaterialIssuedDetails.subcontract.project.name}
             </Typography>
-            {SubContractMaterialUsedDetails.subcontract.project.description && (
+            {SubContractMaterialIssuedDetails.subcontract.project.description && (
               <Typography variant="body2" color="text.secondary">
-                {SubContractMaterialUsedDetails.subcontract.project.description}
+                {SubContractMaterialIssuedDetails.subcontract.project.description}
               </Typography>
             )}
           </Grid>
@@ -257,4 +257,4 @@ function SubContractMaterialUsedOnScreen({ SubContractMaterialUsedDetails, organ
   );
 }
 
-export default SubContractMaterialUsedOnScreen;
+export default SubContractMaterialIssuedOnScreen;

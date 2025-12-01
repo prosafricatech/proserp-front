@@ -18,8 +18,8 @@ import RemoveIcon from '@mui/icons-material/Remove';
 import { useUpdateFormContext } from '../../UpdatesForm';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import TaskProgress from './TaskProgress';
-import MaterialUsedForm from './taskProgressTab/materialUsed/MaterialUsedForm';
-import MaterialUsedRow from './taskProgressTab/materialUsed/MaterialUsedRow';
+import MaterialIssuedForm from './taskProgressTab/materialUsed/MaterialIssuedForm';
+import MaterialIssuedRow from './taskProgressTab/materialUsed/MaterialIssuedRow';
 
 function TaskProgressRow({ taskProgressItem, index }) {
   const { taskProgressItems, setTaskProgressItems } = useUpdateFormContext();
@@ -27,17 +27,17 @@ function TaskProgressRow({ taskProgressItem, index }) {
   const [showForm, setShowForm] = useState(false);
   const [tabValue, setTabValue] = useState(0);
 
-  const taskMaterialUsed = taskProgressItems
+  const taskMaterialIssued = taskProgressItems
     .flatMap((task) => task.material_used || [])
     .filter((material) => material.projectTaskIndex === index);
 
-  const [MaterialUsed, setMaterialUsed] = useState(
+  const [MaterialIssued, setMaterialIssued] = useState(
     taskProgressItem?.material_used
       ? taskProgressItem.material_used.map((material) => ({
           ...material,
           execution_date: taskProgressItem.execution_date,
         }))
-      : taskMaterialUsed
+      : taskMaterialIssued
   );
 
   const handleTabChange = (event, newValue) => {
@@ -168,25 +168,25 @@ function TaskProgressRow({ taskProgressItem, index }) {
           onChange={handleTabChange}
           aria-label="task progress tabs"
         >
-          <Tab label="Material Used" />
+          <Tab label="Material Issued" />
         </Tabs>
 
         {tabValue === 0 && (
-          <MaterialUsedForm
+          <MaterialIssuedForm
             projectTaskIndex={index}
             taskProgressItem={taskProgressItem}
-            MaterialUsed={MaterialUsed}
-            setMaterialUsed={setMaterialUsed}
+            MaterialIssued={MaterialIssued}
+            setMaterialIssued={setMaterialIssued}
           />
         )}
         {tabValue === 0 &&
-          MaterialUsed.map((material, materialIndex) => (
-            <MaterialUsedRow
+          MaterialIssued.map((material, materialIndex) => (
+            <MaterialIssuedRow
               key={materialIndex}
               index={materialIndex}
               material={material}
-              MaterialUsed={MaterialUsed}
-              setMaterialUsed={setMaterialUsed}
+              MaterialIssued={MaterialIssued}
+              setMaterialIssued={setMaterialIssued}
             />
           ))}
       </AccordionDetails>

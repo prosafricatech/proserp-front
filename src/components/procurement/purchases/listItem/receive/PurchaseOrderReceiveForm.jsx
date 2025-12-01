@@ -60,6 +60,7 @@ function PurchaseOrderReceiveForm({ toggleOpen, order }) {
     onSuccess: (data) => {
       toggleOpen(false);
       enqueueSnackbar(data.message, { variant: 'success' });
+      queryClient.invalidateQueries({ queryKey: ['purchaseOrderDetails'] });
       queryClient.invalidateQueries({ queryKey: ['purchaseOrders'] });
       queryClient.invalidateQueries({ queryKey: ['purchaseOrderGrns'] });
     },
@@ -74,32 +75,61 @@ function PurchaseOrderReceiveForm({ toggleOpen, order }) {
 
   const validationSchema = yup.object({
     date_received: yup.string().required('Receive Date is required'),
-    store_id: yup.number().positive('Store is required').required('Store is required').typeError('Store is required'),
-    exchange_rate: yup.number().positive('Exchange rate is required').required('Exchange rate is required').typeError('Exchange rate is required'),
+    store_id: yup
+      .number()
+      .typeError('Store is required')
+      .positive('Store is required')
+      .required('Store is required'),
+    exchange_rate: yup
+      .number()
+      .typeError('Exchange rate is required')
+      .positive('Exchange rate is required')
+      .required('Exchange rate is required'),
     items: yup.array().of(
       yup.object().shape({
         quantity: yup
-          .number().required('Quantity is Required').typeError('Quantity is required')
-          .test('maxQuantity', 'Quantity cannot exceed unreceived quantity', function (value) {
-            const unreceivedQuantity = this.parent.unreceived_quantity;
-            return value <= unreceivedQuantity;
-          }),
+          .number()
+          .typeError('Quantity is required')
+          .required('Quantity is Required')
+          .test(
+            'maxQuantity',
+            'Quantity cannot exceed unreceived quantity',
+            function (value) {
+              const unreceivedQuantity = this.parent.unreceived_quantity;
+              return value <= unreceivedQuantity;
+            }
+          ),
       })
     ),
     additional_costs: yup.array().of(
       yup.object().shape({
         credit_ledger_id: yup.number().nullable(),
         amount: yup.number().when('credit_ledger_id', {
-          is: (creditLedgerId) => !!creditLedgerId,
-          then: yup.number().required('Amount is required').positive('Amount must be positive').typeError('Amount is required'),
+          is: (id) => !!id,
+          then: (schema) =>
+            schema
+              .required('Amount is required')
+              .positive('Amount must be positive')
+              .typeError('Amount is required'),
+          otherwise: (schema) => schema.nullable(),
         }),
         currency_id: yup.number().when('credit_ledger_id', {
-          is: (creditLedgerId) => !!creditLedgerId,
-          then: yup.number().positive('Currency is required').required('Currency is required').typeError('Currency is required'),
+          is: (id) => !!id,
+          then: (schema) =>
+            schema
+              .required('Currency is required')
+              .positive('Currency is required')
+              .typeError('Currency is required'),
+          otherwise: (schema) => schema.nullable(),
         }),
         exchange_rate: yup.number().when('credit_ledger_id', {
-          is: (creditLedgerId) => !!creditLedgerId,
-          then: yup.number().positive('Exchange rate is required').required('Exchange rate is required').typeError('Exchange rate is required'),
+          is: (id) => !!id,
+          then: (schema) =>
+            schema
+              .required('Exchange rate is required')
+              .positive('Exchange rate is required')
+              .typeError('Exchange rate is required'),
+          otherwise: (schema) => schema.nullable(),
         }),
       })
     ),

@@ -74,6 +74,7 @@ function SaleTopInformation() {
                                 shouldDirty: true,
                                 shouldValidate: true
                             });
+                            setValue('currency', newValue ?? newValue);
 
                             clearErrors('exchange_rate');
 

@@ -131,18 +131,37 @@ const organizationServices = {
 };
 
 // Helper function for form data construction
-function buildFormData(data) {
+export function buildFormData(data) {
   const formData = new FormData();
-  Object.entries(data).forEach(([key, value]) => {
-    if (value == null) return;
+  Object.keys(data).forEach((key) => {
+    const value = data[key];
+    if (value === null || value === undefined) return;
 
-    if (key === "logo" || key === "organization_symbol") {
-      const file = Array.isArray(value) ? value[0] : value;
-      if (file) formData.append(key, file);
-    } else {
-      formData.append(key, value !== "null" ? value : null);
+    if (value instanceof FileList) {
+      if (value.length > 0) {
+        formData.append(key, value[0]);
+      }
+      return;
     }
+
+    if (value instanceof File) {
+      formData.append(key, value);
+      return;
+    }
+
+    if (Array.isArray(value)) {
+      value.forEach((v) => formData.append(`${key}[]`, v));
+      return;
+    }
+
+    if (typeof value === "object") {
+      formData.append(key, JSON.stringify(value));
+      return;
+    }
+
+    formData.append(key, value);
   });
+
   return formData;
 }
 

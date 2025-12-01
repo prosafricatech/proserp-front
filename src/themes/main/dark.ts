@@ -174,7 +174,6 @@ export const mainTheme: ThemeOptions = {
     MuiAlert: {
       styleOverrides: {
         root: {
-          padding: '12px 16px',
           display: 'flex',
           alignItems: 'center',
           '& .MuiAlert-icon': {

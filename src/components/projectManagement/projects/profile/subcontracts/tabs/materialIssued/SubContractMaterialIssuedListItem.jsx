@@ -2,7 +2,7 @@ import { Grid, Tooltip, Typography } from '@mui/material';
 import React from 'react';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 
-function SubContractMaterialUsedListItem({ subContractMaterialsUsed }) {
+function SubContractMaterialIssuedListItem({ subContractMaterialsUsed }) {
     const hasDate = Boolean(subContractMaterialsUsed?.date);
 
     return (
@@ -49,4 +49,4 @@ function SubContractMaterialUsedListItem({ subContractMaterialsUsed }) {
     );
 }
 
-export default SubContractMaterialUsedListItem;
+export default SubContractMaterialIssuedListItem;

@@ -3,7 +3,6 @@
 import { LoginForm } from '@/components/LoginForm';
 import { Link } from '@/components/NextLink';
 import { ASSET_IMAGES } from '@/utilities/constants/paths';
-import { Div } from '@jumbo/shared';
 import { Facebook, Google, Twitter } from '@mui/icons-material';
 import {
   Card,
