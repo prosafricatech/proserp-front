@@ -14,8 +14,8 @@ import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { JumboDdMenu } from '@jumbo/components';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-const EditShift = ({ClosedShift, setOpenEditDialog}) => {
-  const {data:shiftData,isFetching} = useQuery(['showshiftDetails',{id:ClosedShift.id}], () => fuelStationServices.showshiftDetails(ClosedShift.id));
+const EditShift = ({salesShift, setOpenEditDialog}) => {
+  const {data:shiftData,isFetching} = useQuery(['showshiftDetails',{id:salesShift.id}], () => fuelStationServices.showshiftDetails(salesShift.id));
 
   if(isFetching){
     return <LinearProgress/>;
@@ -26,13 +26,13 @@ const EditShift = ({ClosedShift, setOpenEditDialog}) => {
   )
 }
 
-const DocumentDialog = ({organization, ClosedShift}) => {
+const DocumentDialog = ({organization, salesShift}) => {
   const {activeStation} = useContext(StationFormContext);
   const { shift_teams, fuel_pumps, tanks } = activeStation;
   const { productOptions } = useProductsSelect();
   const [includeFuelVouchers, setIncludeFuelVouchers] = useState(false);
 
-  const {data:shiftData,isFetching} = useQuery(['showshiftDetails',{id:ClosedShift.id}], () => fuelStationServices.showshiftDetails(ClosedShift.id));
+  const {data:shiftData,isFetching} = useQuery(['showshiftDetails',{id:salesShift.id}], () => fuelStationServices.showshiftDetails(salesShift.id));
 
   if(isFetching){
     return <LinearProgress/>;
@@ -59,7 +59,7 @@ const DocumentDialog = ({organization, ClosedShift}) => {
   )
 }
 
-const SalesShiftsItemAction = ({ ClosedShift}) => {
+const SalesShiftsItemAction = ({ salesShift}) => {
   const [openEditDialog,setOpenEditDialog] = useState(false);
   const [openDocumentDialog, setOpenDocumentDialog] = useState(false);
   const {authOrganization : {organization}} = useJumboAuth();
@@ -74,7 +74,7 @@ const SalesShiftsItemAction = ({ ClosedShift}) => {
  const { mutate: deleteShift, isPending } = useMutation({
   mutationFn: fuelStationServices.deleteSalesShift,
   onSuccess: (data) => {
-    queryClient.invalidateQueries({ queryKey: ['closedShifts'] });
+    queryClient.invalidateQueries({ queryKey: ['salesShift'] });
     enqueueSnackbar(data.message, {
       variant: 'success',
     });
@@ -104,7 +104,7 @@ const SalesShiftsItemAction = ({ ClosedShift}) => {
           content: 'Are you sure you want to delete this Shift?',
           onYes: () =>{ 
             hideDialog();
-            deleteShift(ClosedShift.id)
+            deleteShift(salesShift.id)
           },
           onNo: () => hideDialog(),
           variant:'confirm'
@@ -127,8 +127,8 @@ const SalesShiftsItemAction = ({ ClosedShift}) => {
           setOpenDocumentDialog(false);
         }}
       >
-        {openEditDialog && <EditShift ClosedShift={ClosedShift} setOpenEditDialog={setOpenEditDialog} />}
-        {openDocumentDialog && <DocumentDialog ClosedShift={ClosedShift} organization={organization} />}
+        {openEditDialog && <EditShift salesShift={salesShift} setOpenEditDialog={setOpenEditDialog} />}
+        {openDocumentDialog && <DocumentDialog salesShift={salesShift} organization={organization} />}
       </Dialog>
       <JumboDdMenu
         icon={
