@@ -15,7 +15,10 @@ import { JumboDdMenu } from '@jumbo/components';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 const EditShift = ({ClosedShift, setOpenEditDialog}) => {
-  const {data:shiftData,isFetching} = useQuery(['showshiftDetails',{id:ClosedShift.id}], () => fuelStationServices.showshiftDetails(ClosedShift.id));
+const { data: shiftData, isFetching } = useQuery({
+  queryKey: ['showshiftDetails', { id: ClosedShift.id }],
+  queryFn: () => fuelStationServices.showshiftDetails(ClosedShift.id)
+});
 
   if(isFetching){
     return <LinearProgress/>;
@@ -79,10 +82,13 @@ const SalesShiftsItemAction = ({ ClosedShift}) => {
       variant: 'success',
     });
   },
-  onError: (error) => {
-    enqueueSnackbar(error?.response?.data.message, { variant: 'error' });
-  },
-});
+   onError: (error: any) => {
+      enqueueSnackbar(
+        error?.response?.data?.message || 'Failed to delete outlet',
+        { variant: 'error' }
+      );
+    },
+    });
 
   const menuItems = [
     {icon: belowLargeScreen ? <DownloadOutlined/> : <VisibilityOutlined/> , title: belowLargeScreen ? "Download" : "View", action: "open"},

@@ -64,7 +64,7 @@ fuelStationServices.showStation = async (id) => {
 }
 
 fuelStationServices.showshiftDetails = async (id) => {
-    const {data} = await axios.get(`fuel-stations/sales-shifts/${id}`);
+    const {data} = await axios.get(`/api/fuelStations/salesShifts/${id}/showshiftDetails`);
     return data;
 }
 
