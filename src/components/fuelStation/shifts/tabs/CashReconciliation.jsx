@@ -7,13 +7,11 @@ import { useLedgerSelect } from '@/components/accounts/ledgers/forms/LedgerSelec
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import { Div } from '@jumbo/shared';
 
-
-
 function CashReconciliation() {
   const [fuelVoucherTotals, setFuelVoucherTotals] = useState({});
   const { ungroupedLedgerOptions } = useLedgerSelect();
   const { adjustments, setCheckShiftBalanced, products, fuel_pumps, fuelVouchers, shiftLedgers, setValue, errors, watch, cashReconciliationFields, cashReconciliationAppend, cashReconciliationRemove } = useFormContext();
-
+ 
   // Extract all watched values at the top level to prevent unnecessary re-renders
   const productPrices = watch('product_prices') || [];
   const pumpReadings = watch('pump_readings') || [];
@@ -99,10 +97,15 @@ function CashReconciliation() {
   }, [otherLedgers]);
 
   // Calculate main ledger amount - NO useEffect for this!
-  const main_ledger_amount = cashRemaining - totalOtherLedgersAmount;
+  const main_ledger_amount = Math.max(0, cashRemaining - totalOtherLedgersAmount);
 
   // Single, stable useEffect for form synchronization
-  useEffect(() => {
+    useEffect(() => {
+    // Prevent calculation if cashRemaining is invalid
+    if (isNaN(cashRemaining) || cashRemaining < 0) {
+      setCheckShiftBalanced(false);
+      return;
+    }
     // Only update if values are meaningfully different
     const currentMainLedgerAmount = parseFloat(mainLedger?.amount || 0);
     const calculatedAmount = sanitizedNumber(main_ledger_amount);
@@ -124,10 +127,10 @@ function CashReconciliation() {
       shouldDirty: true
     });
 
-    // Check balance (with tolerance for floating point arithmetic)
-    const isBalanced = Math.abs(cashRemaining - (calculatedAmount + totalOtherLedgersAmount)) < 0.01;
-    setCheckShiftBalanced(isBalanced);
-  }, [main_ledger_amount, cashRemaining, totalOtherLedgersAmount, setValue, setCheckShiftBalanced]);
+     // Check balance (with tolerance for floating point arithmetic)
+  const isBalanced = Math.abs(cashRemaining - (calculatedAmount + totalOtherLedgersAmount)) < 0.01;
+  setCheckShiftBalanced(isBalanced);
+ }, [main_ledger_amount, cashRemaining, totalOtherLedgersAmount, setValue, setCheckShiftBalanced]);
 
   // Separate effect for initial setup - runs only once
   useEffect(() => {

@@ -16,6 +16,8 @@ import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { useParams } from 'next/navigation';
 import SalesShiftsActionTail from './SalesShiftsActionTail';
 import SalesShiftsListItem from './SalesShiftsListItem';
+import StationShiftsStatusSelector from './StationShiftsStatusSelector';
+import ShiftTeamsSelector from './ShiftTeamsSelector';
 
 export const StationFormContext = createContext({});
 
@@ -159,7 +161,7 @@ const SalesShifts = ({activeStation}) => {
                               </Grid>
                             </>
                         }
-                        {/* <Grid size={{ xs: 12, md: 12, lg: openFilters ? 2.5 : 3 }} alignItems="center">
+                         <Grid size={{ xs: 12, md: 12, lg: openFilters ? 2.5 : 3 }} alignItems="center">
                           <StationShiftsStatusSelector
                             value={queryOptions.queryParams.status}
                             onChange={handleOnStatusChange}
@@ -170,7 +172,7 @@ const SalesShifts = ({activeStation}) => {
                             value={queryOptions.queryParams.shift_team_id}
                             onChange={handleOnTeamChange}
                           />
-                        </Grid> */}
+                        </Grid>
                        <Grid size={{xs: 1.5, md: 0.5}}>
                           <Tooltip title={!openFilters ? 'Filter' : 'Clear Filters'}>
                             <IconButton onClick={() => {

@@ -142,6 +142,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
         .positive('Amount Must be Positive')
         .required('Amount Must be Positive')
         .typeError('Amount Must be Positive')
+        .min(0, 'Amount cannot be negative') 
     }).required('Main Ledger is required'),
     otherwise: (schema) => schema.nullable()
   }),
