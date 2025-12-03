@@ -12,14 +12,12 @@ function CashReconciliation() {
   const { ungroupedLedgerOptions } = useLedgerSelect();
   const { adjustments, setCheckShiftBalanced, products, fuel_pumps, fuelVouchers, shiftLedgers, setValue, errors, watch, cashReconciliationFields, cashReconciliationAppend, cashReconciliationRemove } = useFormContext();
  
-  // Extract all watched values at the top level to prevent unnecessary re-renders
   const productPrices = watch('product_prices') || [];
   const pumpReadings = watch('pump_readings') || [];
   const mainLedgerId = watch('main_ledger_id');
   const otherLedgers = watch('other_ledgers') || [];
   const mainLedger = watch('main_ledger') || {};
 
-  // Calculate fuel voucher totals - simplified and stable
   useEffect(() => {
     if (!fuelVouchers?.length || !productPrices?.length) {
       setFuelVoucherTotals({});
@@ -39,7 +37,6 @@ function CashReconciliation() {
     setFuelVoucherTotals(fuelVouchertotal);
   }, [fuelVouchers, productPrices]);
 
-  // Calculate product totals - stable calculation
   const productTotals = useMemo(() => {
     const totals = {};
     
@@ -54,7 +51,6 @@ function CashReconciliation() {
       totals[productId] = (totals[productId] || 0) + difference;
     });
 
-    // Apply adjustments
     adjustments?.forEach((adjustment) => {
       const productId = adjustment?.product_id;
       const quantity = adjustment?.quantity || 0;
@@ -69,7 +65,6 @@ function CashReconciliation() {
     return totals;
   }, [fuel_pumps, pumpReadings, adjustments]);
 
-  // Calculate grand totals - stable and independent
   const { grandFuelVoucherTotal, grandProductsTotal, cashRemaining } = useMemo(() => {
     const grandFuelVoucherTotal = Object.values(fuelVoucherTotals).reduce((acc, curr) => acc + (curr || 0), 0);
     
@@ -88,7 +83,6 @@ function CashReconciliation() {
     };
   }, [fuelVoucherTotals, products, productTotals, productPrices]);
 
-  // Calculate other ledgers total
   const totalOtherLedgersAmount = useMemo(() => {
     return otherLedgers.reduce((total, field) => {
       const amount = parseFloat(field?.amount || 0);
@@ -96,45 +90,33 @@ function CashReconciliation() {
     }, 0);
   }, [otherLedgers]);
 
-  // Calculate main ledger amount - NO useEffect for this!
-  const main_ledger_amount = Math.max(0, cashRemaining - totalOtherLedgersAmount);
+  const main_ledger_amount = cashRemaining - totalOtherLedgersAmount;
 
-  // Single, stable useEffect for form synchronization
-    useEffect(() => {
-    // Prevent calculation if cashRemaining is invalid
+  useEffect(() => {
     if (isNaN(cashRemaining) || cashRemaining < 0) {
       setCheckShiftBalanced(false);
       return;
     }
-    // Only update if values are meaningfully different
     const currentMainLedgerAmount = parseFloat(mainLedger?.amount || 0);
     const calculatedAmount = sanitizedNumber(main_ledger_amount);
     
-    // Update main ledger if significantly different (avoid floating point issues)
-    if (Math.abs(currentMainLedgerAmount - calculatedAmount) > 0.01) {
+    if (currentMainLedgerAmount !== calculatedAmount) {
       setValue('main_ledger', {
         id: mainLedgerId,
         amount: calculatedAmount,
-      }, { 
-        shouldValidate: true, 
-        shouldDirty: true 
-      });
+      }, { shouldValidate: true, shouldDirty: true });
     }
 
-    // Update the main_ledger_amount field separately
     setValue('main_ledger_amount', calculatedAmount, {
       shouldValidate: true,
       shouldDirty: true
     });
 
-     // Check balance (with tolerance for floating point arithmetic)
   const isBalanced = Math.abs(cashRemaining - (calculatedAmount + totalOtherLedgersAmount)) < 0.01;
   setCheckShiftBalanced(isBalanced);
- }, [main_ledger_amount, cashRemaining, totalOtherLedgersAmount, setValue, setCheckShiftBalanced]);
+ }, [mainLedgerId, main_ledger_amount, cashRemaining, totalOtherLedgersAmount, setValue, setCheckShiftBalanced]);
 
-  // Separate effect for initial setup - runs only once
   useEffect(() => {
-    // Initialize other ledgers with sanitized amounts if they exist
     if (otherLedgers.length > 0) {
       const sanitizedLedgers = otherLedgers.map(field => ({
         id: field.id,
@@ -146,7 +128,7 @@ function CashReconciliation() {
         shouldDirty: true 
       });
     }
-  }, []); // Empty dependency array - runs only once
+  }, []);
   
    const TableCellInfo = ({ label, value, colSpan, align = 'left', fontWeight }) => (
     <Tooltip title={label}>
@@ -158,21 +140,18 @@ function CashReconciliation() {
     </Tooltip>
   );
 
-  // Filter available ledgers for dropdowns
   const availableLedgers = useMemo(() => {
     return shiftLedgers?.filter(shift => 
       !otherLedgers.some(otherLedger => otherLedger?.id === shift.id)
     ) || [];
   }, [shiftLedgers, otherLedgers]);
 
-  // Safe product accessor
   const getProductPrice = useCallback((productId) => {
     return productPrices.find(price => price?.product_id === productId)?.price || 0;
   }, [productPrices]);
 
   return (
     <Grid container columnSpacing={1} rowSpacing={1}>
-      {/* Total Products Amount Section */}
       <Grid size={{xs: 12, md: 12, lg: 6}}>
         <Card>
           <CardContent>
@@ -216,7 +195,6 @@ function CashReconciliation() {
         </Card>
       </Grid>
 
-      {/* Fuel Vouchers Section */}
       <Grid size={{xs: 12, md: 12, lg: 6}}>
         <Card>
           <CardContent>
@@ -266,7 +244,6 @@ function CashReconciliation() {
         </Card>
       </Grid>
 
-      {/* Final Summary Section */}
       <Grid size={{xs: 12, md: 12, lg: 6}}>
         <Card>
           <CardContent>
@@ -296,7 +273,6 @@ function CashReconciliation() {
         </Card>
       </Grid>
 
-      {/* Cash Distribution Section - Simplified and stable */}
       <Grid size={{xs: 12, md: 12}}>
         <Card>
           <CardContent>
@@ -324,7 +300,17 @@ function CashReconciliation() {
                           />
                         )}
                         onChange={(e, newValue) => {
-                          setValue('main_ledger_id', newValue ? newValue.id : null, {
+                          const id = newValue ? newValue.id : null;
+
+                          setValue('main_ledger_id', id, {
+                            shouldValidate: true,
+                            shouldDirty: true,
+                          });
+
+                          setValue('main_ledger', prev => ({
+                            ...prev,
+                            id: id
+                          }), {
                             shouldValidate: true,
                             shouldDirty: true,
                           });
@@ -349,7 +335,7 @@ function CashReconciliation() {
                     </Div>
                   </Grid>
                   {cashReconciliationFields.map((field, index) => (
-                    <Grid key={field.id} container columnSpacing={1} paddingLeft={1}>
+                    <Grid key={field.id} container columnSpacing={1} paddingLeft={1} width={'100%'}>
                       <Grid size={11} marginBottom={0.5}>
                         <Divider />
                         <Grid container columnSpacing={1}>

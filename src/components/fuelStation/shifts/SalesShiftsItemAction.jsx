@@ -15,10 +15,10 @@ import { JumboDdMenu } from '@jumbo/components';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 const EditShift = ({ClosedShift, setOpenEditDialog}) => {
-const { data: shiftData, isFetching } = useQuery({
-  queryKey: ['showshiftDetails', { id: ClosedShift.id }],
-  queryFn: () => fuelStationServices.showshiftDetails(ClosedShift.id)
-});
+  const { data: shiftData, isFetching } = useQuery({
+    queryKey: ['showshiftDetails', { id: ClosedShift.id }],
+    queryFn: () => fuelStationServices.showshiftDetails(ClosedShift.id)
+  });
 
   if(isFetching){
     return <LinearProgress/>;

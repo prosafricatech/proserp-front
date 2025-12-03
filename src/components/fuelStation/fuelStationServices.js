@@ -43,10 +43,6 @@ fuelStationServices.dippingReport = async(params) => {
 
 fuelStationServices.getUserStations = async({queryKey}) => {
     const { userId } = queryKey[1]; 
-    console.log(userId)
-    if (!userId) {
-      throw new Error('User ID is required');
-    }
     const { data } = await axios.get(`/api/fuelStations/stations/${userId}/userStations`);
     return data;
 }
