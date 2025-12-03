@@ -109,14 +109,14 @@ const SalesShiftsItemAction = ({ ClosedShift}) => {
         break;
       case 'delete':
         showDialog({
-          title: Delete,
+          title: 'Delete',
           content: 'Are you sure you want to delete this Shift?',
-          onYes: () =>{ 
+          onYes: () => { 
             hideDialog();
-            deleteShift(ClosedShift.id)
+            deleteShift(ClosedShift.id);
           },
           onNo: () => hideDialog(),
-          variant:'confirm'
+          variant: 'confirm'
         });
         break;
         default:
