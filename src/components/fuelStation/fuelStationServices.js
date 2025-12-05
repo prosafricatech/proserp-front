@@ -12,7 +12,7 @@ fuelStationServices.getStationShifts = async (params = {}) => {
 
 fuelStationServices.getStationDippings = async ({queryKey}) => {
     const {page, limit, queryParams} = queryKey[queryKey.length - 1];
-    const {data} = await axios.get(`/fuel-stations/${queryParams.stationId}/dippings`, {
+    const {data} = await axios.get(`/api/fuelStations/dippings`, {
         params: {
             page: page,
             limit: limit,
@@ -65,7 +65,7 @@ fuelStationServices.showshiftDetails = async (id) => {
 }
 
 fuelStationServices.showDippingDetails = async (id) => {
-    const {data} = await axios.get(`/fuel-stations/dippings/${id}`);
+    const {data} = await axios.get(`/api/fuelStations/dippings/${id}/showDippingDetails`);
     return data;
 }
 
@@ -113,7 +113,7 @@ fuelStationServices.deleteSalesShift = async (id) => {
 
 fuelStationServices.deleteDipping = async (id) => {
     return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.delete(`/fuel-stations/dippings/${id}`);
+        const {data} = await axios.delete(`/api/fuelStations/dippings/${id}/delete`);
         return data;
     })
 };
