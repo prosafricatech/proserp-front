@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     limit,
   }).toString();
 
-  const res = await fetch(`${API_BASE}/fuel-stations/${stationId}`, {
+  const res = await fetch(`${API_BASE}/fuel-stations/${stationId}/dippings?${queryParams}`, {
     headers,
     credentials: 'include',
   });
