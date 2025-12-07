@@ -17,7 +17,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 const EditShift = ({ClosedShift, setOpenEditDialog}) => {
   const { data: shiftData, isFetching } = useQuery({
     queryKey: ['showshiftDetails', { id: ClosedShift.id }],
-    queryFn: () => fuelStationServices.showshiftDetails(ClosedShift.id)
+    queryFn: () => fuelStationServices.showShiftDetails(ClosedShift.id)
   });
 
   if(isFetching){
@@ -37,7 +37,7 @@ const DocumentDialog = ({organization, ClosedShift}) => {
 
  const { data: shiftData, isFetching } = useQuery({
   queryKey: ['showshiftDetails', { id: ClosedShift.id }],
-  queryFn: () => fuelStationServices.showshiftDetails(ClosedShift.id)
+  queryFn: () => fuelStationServices.showShiftDetails(ClosedShift.id)
 });
 
   if(isFetching){
