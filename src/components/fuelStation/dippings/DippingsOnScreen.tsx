@@ -12,8 +12,18 @@ import {
   Box,
 } from '@mui/material';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
+import { DippingDetails, Organization } from './DippingsTypes';
+import { Product } from '@/components/productAndServices/products/ProductType';
 
-function DippingsOnScreen({ dippingData, organization }) {
+interface DippingsOnScreenProps {
+  productOptions: Product[];
+  dippingData: DippingDetails; // au badilisha na type halisi kama una Dipping type
+  fuel_pumps: any[];
+  shift_teams: any[]; // au ShiftTeam[]
+  organization: Organization;
+}
+
+const DippingsOnScreen: React.FC<DippingsOnScreenProps> = ({ dippingData, organization }) => {
   const mainColor = organization.settings?.main_color || "#2113AD";
   const lightColor = organization.settings?.light_color || "#bec5da";
   const contrastText = organization.settings?.contrast_text || "#FFFFFF";
@@ -72,31 +82,44 @@ function DippingsOnScreen({ dippingData, organization }) {
               </TableCell>
             </TableRow>
           </TableHead>
-          <TableBody>
-            {dippingData?.readings?.map((reading, index) => (
-              <TableRow 
-                key={index} 
-                sx={{ 
-                  backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor 
-                }}
-              >
-                <TableCell>{reading.tank?.name}</TableCell>
-                <TableCell>{reading.product?.name}</TableCell>
-                <TableCell align="right">
-                  {reading.reading.toLocaleString('en-US', {
-                    minimumFractionDigits: 3, 
-                    maximumFractionDigits: 3
-                  })}
-                </TableCell>
-                <TableCell align="right">
-                  {reading.deviation.toLocaleString('en-US', {
-                    minimumFractionDigits: 3, 
-                    maximumFractionDigits: 3
-                  })}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
+         <TableBody>
+          {dippingData?.readings?.map((reading, index) => (
+            <TableRow
+              key={reading.id ?? index} // use real id if exists, fallback to index
+              sx={{
+                backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
+              }}
+            >
+              <TableCell>{reading.tank?.name ?? '—'}</TableCell>
+              <TableCell>{reading.product?.name ?? '—'}</TableCell>
+              <TableCell align="right">
+                {reading.reading != null
+                  ? Number(reading.reading).toLocaleString('en-US', {
+                      minimumFractionDigits: 3,
+                      maximumFractionDigits: 3,
+                    })
+                  : '0.000'}
+              </TableCell>
+              <TableCell align="right">
+                {reading.deviation != null
+                  ? Number(reading.deviation).toLocaleString('en-US', {
+                      minimumFractionDigits: 3,
+                      maximumFractionDigits: 3,
+                    })
+                  : '0.000'}
+              </TableCell>
+            </TableRow>
+          ))}
+
+          {/* Optional: Show message when no readings */}
+          {(!dippingData?.readings || dippingData.readings.length === 0) && (
+            <TableRow>
+              <TableCell colSpan={4} align="center" sx={{ py: 3, fontStyle: 'italic' }}>
+                No readings available
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
         </Table>
       </TableContainer>
 

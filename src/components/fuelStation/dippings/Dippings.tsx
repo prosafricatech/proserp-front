@@ -9,11 +9,13 @@ import DippingsListItem from './DippingsListItem';
 import DippingsActionTail from './DippingsActionTail';
 import ProductsSelectProvider from '../../productAndServices/products/ProductsSelectProvider';
 import { useParams } from 'next/navigation';
+import { Dipping, DippingsProps } from './DippingsTypes';
+
 
 export const DippingsFormContext = createContext({});
-const Dippings = ({activeStation}) => {
+const Dippings: React.FC<DippingsProps> = ({ activeStation }) => {
   const params = useParams();
-  const listRef = React.useRef();
+  const listRef = React.useRef<any>(null);
   
   const [queryOptions, setQueryOptions] = React.useState({
   queryKey: 'stationDippings',
@@ -30,12 +32,12 @@ const Dippings = ({activeStation}) => {
       }));
   }, [activeStation]);
 
-  const salesShifts = React.useCallback((dipping) => {
+  const salesShifts = React.useCallback((dipping: Dipping) => {
     return <DippingsListItem dipping={dipping}/>;
   }, []);
 
   const handleOnChange = React.useCallback(
-   (keyword) => {
+   (keyword: string) => {
      setQueryOptions((state) => ({
       ...state,
         queryParams: {
@@ -49,7 +51,7 @@ const Dippings = ({activeStation}) => {
 
   return (
     <ProductsSelectProvider>
-     <DippingsFormContext.Provider value={{activeStation}}>
+     <DippingsFormContext.Provider value={{ activeStation: activeStation ?? null }}>
        {
         activeStation ?
             <JumboRqList
@@ -62,7 +64,6 @@ const Dippings = ({activeStation}) => {
               itemsPerPageOptions={[5, 8, 10, 15, 20]}
               renderItem={salesShifts}
               componentElement="div"
-              bulkActions={null}
               wrapperSx={{
                 flex: 1,
                 display: 'flex',
@@ -81,7 +82,7 @@ const Dippings = ({activeStation}) => {
  }
             />
           :
-         <Alert variant='outlined' color='primary' severity='info'>Please select a Station</Alert>
+         <Alert variant='outlined' severity='info'>Please select a Station</Alert>
         }
     </DippingsFormContext.Provider>
     </ProductsSelectProvider>

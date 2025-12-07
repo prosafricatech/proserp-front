@@ -2,8 +2,13 @@ import React from 'react';
 import { Box, Grid, Tooltip, Typography } from '@mui/material';
 import DippingsItemAction from './DippingsItemAction';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
+import { Dipping } from './DippingsTypes';
 
-const DippingsListItem = ({ dipping }) => {
+interface DippingsListItemProps {
+  dipping: Dipping;
+}
+
+const DippingsListItem: React.FC<DippingsListItemProps> = ({ dipping }) => {
 
   return (
     <Grid 

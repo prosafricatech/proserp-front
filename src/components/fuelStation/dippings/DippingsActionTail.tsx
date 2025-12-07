@@ -17,10 +17,10 @@ const DippingsActionTail = () => {
   return (
     <React.Fragment>
         <Dialog maxWidth="md" scroll={belowLargeScreen ? 'body' : 'paper'} fullWidth fullScreen={belowLargeScreen} open={openDialog}>
-            <DippingsForm setOpenDialog={setOpenDialog} />
+            {/* <DippingsForm setOpenDialog={setOpenDialog} /> */}
         </Dialog>
 
-        <ButtonGroup variant="outlined" size="small" disableElevation sx={{ '& .MuiButton-root': { px: 1 } }}>
+       {/* <ButtonGroup variant="outlined" size="small" disableElevation sx={{ '& .MuiButton-root': { px: 1 } }}>
             {checkOrganizationPermission(PERMISSIONS.USERS_INVITE) && (
             <Tooltip title={"New Dippings"}>
                 <IconButton onClick={() => setOpenDialog(true)}>
@@ -28,7 +28,7 @@ const DippingsActionTail = () => {
                 </IconButton>
             </Tooltip>
             )}
-        </ButtonGroup>
+        </ButtonGroup>  */}
     </React.Fragment>
   );
 };

@@ -108,14 +108,6 @@ export interface ProductPrice {
   price: number;
 }
 
-export interface PumpReading {
-  opening: number;
-  closing: number;
-  fuel_pump_id: number;
-  product_id: number;
-  tank_id: number;
-}
-
 
 export interface ShiftTeam {
   id: number;

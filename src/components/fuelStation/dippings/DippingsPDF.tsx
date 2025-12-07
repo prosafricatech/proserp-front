@@ -2,10 +2,21 @@ import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import pdfStyles from '@/components/pdf/pdf-styles';
 import PdfLogo from '@/components/pdf/PdfLogo';
 import { Document, Page, Text, View } from '@react-pdf/renderer';
+import { DippingDetails } from './DippingsTypes';
+import { Organization } from '@/types/auth-types';
 
-const safe = (value, fallback = 'N/A') => (value !== null && value !== undefined ? value : fallback);
+const safe = (value: any, fallback = 'N/A') => (value !== null && value !== undefined ? value : fallback);
 
-function DippingsPDF({ dippingData = {}, organization = {} }) {
+interface DippingsPDFProps {
+  dippingData: DippingDetails;
+  organization: Organization;
+  productOptions?: any[]; // optional if used elsewhere
+}
+
+const DippingsPDF: React.FC<DippingsPDFProps> = ({ 
+  dippingData, 
+  organization 
+}) => {
   const mainColor = organization?.settings?.main_color ?? '#2113AD';
   const lightColor = organization?.settings?.light_color ?? '#bec5da';
   const contrastText = organization?.settings?.contrast_text ?? '#FFFFFF';

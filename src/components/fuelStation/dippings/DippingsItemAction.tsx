@@ -14,8 +14,23 @@ import { JumboDdMenu } from '@jumbo/components';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Dipping } from './DippingsTypes';
+import { Station } from './DippingsTypes';
+import { MenuItemProps } from '@jumbo/types';
 
-const EditDipping = ({dipping, setOpenEditDialog}) => {
+interface EditDippingProps {
+  dipping: Dipping;
+  setOpenEditDialog: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+interface DocumentDialogProps {
+  openDocumentDialog: boolean;
+  setOpenDocumentDialog: React.Dispatch<React.SetStateAction<boolean>>;
+  organization: any; 
+  dipping: Dipping;
+}
+
+const EditDipping: React.FC<EditDippingProps> = ({ dipping, setOpenEditDialog }) => {
   const { data: dippingData, isFetching } = useQuery({
     queryKey: ['showDippingDetails', { id: dipping.id }],
     queryFn: () => fuelStationServices.showDippingDetails(dipping.id)
@@ -30,13 +45,18 @@ const EditDipping = ({dipping, setOpenEditDialog}) => {
   )
 }
 
-const DocumentDialog = ({openDocumentDialog, setOpenDocumentDialog, organization, dipping}) => {
+const DocumentDialog: React.FC<DocumentDialogProps> = ({
+  openDocumentDialog,
+  setOpenDocumentDialog,
+  organization,
+  dipping,
+}) => {
  const { data: dippingData, isFetching } = useQuery({
     queryKey: ['showDippingDetails', { id: dipping.id }],
     queryFn: () => fuelStationServices.showDippingDetails(dipping.id)
 });
 
-  const {activeStation} = useContext(DippingsFormContext);
+  const { activeStation } = useContext(DippingsFormContext) as { activeStation?: any };
   const { shift_teams, fuel_pumps } = activeStation?.shift_teams || [];
   const { productOptions } = useProductsSelect();
   const [selectedTab, setSelectedTab] = useState(0);
@@ -45,7 +65,7 @@ const DocumentDialog = ({openDocumentDialog, setOpenDocumentDialog, organization
   const {theme} = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
-  const handleTabChange = (event, newValue) => {
+const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
     setSelectedTab(newValue);
   };
 
@@ -92,12 +112,12 @@ const DocumentDialog = ({openDocumentDialog, setOpenDocumentDialog, organization
                 <DippingsOnScreen productOptions={productOptions} dippingData={dippingData} fuel_pumps={fuel_pumps} shift_teams={shift_teams} organization={organization}/>
               )}
               {selectedTab === 1 && (
-                <PDFContent fileName={dippingData.remarks} document={<DippingsPDF productOptions={productOptions} dippingData={dippingData} fuel_pumps={fuel_pumps} shift_teams={shift_teams} organization={organization}/>}/>
+                <PDFContent fileName={dippingData.remarks} document={<DippingsPDF productOptions={productOptions} dippingData={dippingData} organization={organization}/>}/>
               )}
             </Box>
           </Box>
         ) : (
-          <PDFContent fileName={dippingData.remarks} document={<DippingsPDF productOptions={productOptions} dippingData={dippingData} fuel_pumps={fuel_pumps} shift_teams={shift_teams} organization={organization}/>}/>
+          <PDFContent fileName={dippingData.remarks} document={<DippingsPDF productOptions={productOptions} dippingData={dippingData} organization={organization}/>}/>
         )}
       </DialogContent>
       {belowLargeScreen &&
@@ -111,10 +131,11 @@ const DocumentDialog = ({openDocumentDialog, setOpenDocumentDialog, organization
   )
 }
 
-const DippingsItemAction = ({ dipping}) => {
+const DippingsItemAction: React.FC<{ dipping: Dipping; activeStation?: Station | null }> = ({ dipping }) => {
   const [openEditDialog,setOpenEditDialog] = useState(false);
   const [openDocumentDialog, setOpenDocumentDialog] = useState(false);
-  const {authOrganization : {organization}} = useJumboAuth();
+  const { authOrganization } = useJumboAuth();
+  const organization = authOrganization?.organization;
   const {showDialog,hideDialog} = useJumboDialog();
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
@@ -131,18 +152,20 @@ const DippingsItemAction = ({ dipping}) => {
             variant: 'success',
         });
     },
-    onError: (error) => {
-        enqueueSnackbar(error?.response?.data.message, { variant: 'error' });
+    onError: (error: any) => {
+      enqueueSnackbar(error?.response?.data?.message || 'Error deleting', {
+        variant: 'error',
+      });
     },
-});
+  });
 
-  const menuItems = [
+  const menuItems: (MenuItemProps & { action: string })[] = [
     { icon: <VisibilityOutlined />, title: "View", action: "open" },
     // {icon: <EditOutlined/>, title: 'Edit', action: 'edit'},
     {icon: <DeleteOutlined color='error'/>, title: 'Delete', action: 'delete'}
   ];
 
-  const handleItemAction = (menuItem) => {
+  const handleItemAction = (menuItem: MenuItemProps & { action: string }) => {
     switch (menuItem.action) {
       case 'open':
         setOpenDocumentDialog(true);
@@ -189,7 +212,7 @@ const DippingsItemAction = ({ dipping}) => {
           </Tooltip>
         }
         menuItems={menuItems}
-        onClickCallback={handleItemAction}
+        onClickCallback={(option) => handleItemAction(option as MenuItemProps & { action: string })}
       />
     </>
   );
