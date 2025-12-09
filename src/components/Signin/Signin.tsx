@@ -215,7 +215,7 @@ export const Signin = () => {
                 </Link>
               </Typography>
 
-              {/* Social Login Section */}
+              {/* Social Login Section
               <Box sx={{ textAlign: 'center' }}>
                 <Typography 
                   variant={'body2'} 
@@ -285,7 +285,7 @@ export const Signin = () => {
                     <Google fontSize='small' />
                   </IconButton>
                 </Stack>
-              </Box>
+              </Box> */}
             </Box>
           </Box>
         </CardContent>

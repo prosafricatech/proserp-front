@@ -3,10 +3,19 @@ import { Box, Chip, Grid, Tooltip, Typography } from '@mui/material';
 import { StationFormContext } from './SalesShifts';
 import SalesShiftsItemAction from './SalesShiftsItemAction';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
+import { SalesShift } from './SalesShiftTypes';
+import { Station } from '../Stations/StationType';
 
-const SalesShiftsListItem = ({ ClosedShift }) => {
-    const {activeStation} = useContext(StationFormContext);
-    const { shift_teams } = activeStation;
+interface SalesShiftsListItemProps {
+  ClosedShift: SalesShift;
+}
+
+const SalesShiftsListItem: React.FC<SalesShiftsListItemProps> = ({ ClosedShift }) => {
+    const { activeStation } = useContext<{ activeStation?: Station }>(StationFormContext);
+    const teamName =
+    activeStation?.shift_teams
+      ?.find((team) => team.id === ClosedShift.shift_team_id)
+      ?.name ?? 'Unknown Team';
 
   return (
     <Grid 
@@ -34,9 +43,7 @@ const SalesShiftsListItem = ({ ClosedShift }) => {
         </Grid>
       <Grid size={{xs: 6, md: 3}}>
             <Tooltip title='Shift Team'>
-                <Typography>
-                    {shift_teams?.find(team => team.id === ClosedShift.shift_team_id)?.name}
-                </Typography>
+                <Typography noWrap>{teamName}</Typography>
             </Tooltip>
         </Grid>
        <Grid size={{xs: 6, md: 2}}>
