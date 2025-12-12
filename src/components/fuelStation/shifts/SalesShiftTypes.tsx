@@ -83,6 +83,9 @@ export interface SalesShift {
   main_ledger_amount?: number; // Added from payload
   other_ledgers: LedgerAmount[];
   adjustments: Adjustment[]; // Changed from optional to required, fixed plural name
+  opening_dipping: Dipping[]; // Added from payload
+  closing_dipping: Dipping[]; // Added from payload
+  dipping_before: Dipping[]; // Added from payload
   dipping_after: Dipping[]; // Added from payload
   isOpenSwitchON?: boolean; // Added from payload
   isCloseSwitchON?: boolean; // Added from payload
@@ -96,12 +99,6 @@ export interface Adjustment {
   quantity: number;
   operator: string;
   description?: string;
-  product_id: number;
-}
-
-export interface Dipping {
-  tank_id: number;
-  reading: number;
   product_id: number;
 }
 
@@ -326,7 +323,7 @@ export interface Dipping {
     id?: number;
     tank_id?: number;
     product_id?: number;
-    reading: string | number;
+    readings: string | number;
   }>;
 }
 

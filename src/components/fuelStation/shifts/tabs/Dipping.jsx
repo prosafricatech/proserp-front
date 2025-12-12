@@ -19,7 +19,7 @@ function Dipping() {
             }
             return acc;
         }, {})).map((tankInfo, tankIndex) => (
-             <Grid size={{xs: 12, md: 4, lg: 3}} key={tankIndex}>
+             <Grid size={{xs: 12, md: 4 , lg: 3}} key={tankIndex}>
                 <Card variant="outlined">
                     <CardContent>
                         <Grid container columnSpacing={1} marginTop={1}>
