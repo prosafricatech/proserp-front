@@ -12,13 +12,35 @@ import { useProductsSelect } from '@/components/productAndServices/products/Prod
 import StoreSelector from '@/components/procurement/stores/StoreSelector';
 import OperationSelector from '@/components/sharedComponents/OperationSelector';
 import { Div } from '@jumbo/shared';
+import { Adjustment, Tank } from '../../SalesShiftTypes';
+import { FuelPump } from '@/components/fuelStation/Stations/StationType';
+import { Product } from '@/components/productAndServices/products/ProductType';
 
-function Adjustments({index = -1, setShowForm = null, adjustment}) {
+interface AdjustmentsProps {
+  index?: number;
+  setShowForm?: (show: boolean) => void | null;
+  adjustment?: Adjustment;
+  fuel_pumps: FuelPump[];
+  tanks: Tank[];
+  products: Product[];
+  adjustments: Adjustment[];
+  setAdjustments: (adjustments: Adjustment[] | ((prev: Adjustment[]) => Adjustment[])) => void;
+}
+
+const Adjustments: React.FC<AdjustmentsProps> = ({
+  index = -1,
+  setShowForm = null,
+  adjustment,
+  fuel_pumps,
+  tanks,
+  products,
+  adjustments,
+  setAdjustments,
+}) => {
   const [isAdding, setIsAdding] = useState(false);
-  const { products, fuel_pumps, adjustments = [], setAdjustments, tanks} = useFormContext();
   const { productOptions } = useProductsSelect();
-  const [productTanks, setProductTanks] = useState([])
-  const [tanksKey, setTanksKeyKey] = useState(0);//key to re-render tanks field after product changed
+  const [productTanks, setProductTanks] = useState<Tank[]>([]);
+  const [tanksKey, setTanksKey] = useState(0);
 
   // Define validation Schema
   const validationSchema = yup.object({
@@ -28,8 +50,14 @@ function Adjustments({index = -1, setShowForm = null, adjustment}) {
     description: yup.string().required("Description is required").typeError('Description is required'),
     quantity: yup.number().required("Quantity is required").positive("Quantity is required").typeError('Quantity is required'),
   });
+  
+  type FormData = yup.InferType<typeof validationSchema> & {
+  operator_name?: string;  // <-- Add this
+  product?: Product;
 
-  const {setValue, handleSubmit, watch, reset, formState: {errors}} = useForm({
+};
+
+  const {setValue, handleSubmit, watch, reset, formState: {errors}} = useForm<FormData>({
     resolver: yupResolver(validationSchema),
     defaultValues: {
       product: adjustment && productOptions.find(product => product.id === adjustment.product_id),
@@ -42,7 +70,7 @@ function Adjustments({index = -1, setShowForm = null, adjustment}) {
     }
   });
   
-  const updateItems = async (item) => {
+  const updateItems = async (item: any) => {
     setIsAdding(true);
       if (index > -1) {
         // Replace the existing item with the edited item
@@ -73,8 +101,8 @@ function Adjustments({index = -1, setShowForm = null, adjustment}) {
               frontError={errors.product_id}
               defaultValue={adjustment && productOptions.find(product => product.id === adjustment.product_id)}
               requiredProducts={products}
-              onChange={(newValue) => {
-                setTanksKeyKey(prevKey => prevKey + 1);
+              onChange={(newValue: any) => {
+                setTanksKey(prevKey => prevKey + 1);
                 const relatedPumps = fuel_pumps.filter(pump => pump.product_id === newValue?.id);
                 const relatedTankIds = relatedPumps.map(pump => pump.tank_id);
                 const tanksHavingProduct = tanks.filter(tank => relatedTankIds.includes(tank.id));
@@ -94,9 +122,9 @@ function Adjustments({index = -1, setShowForm = null, adjustment}) {
                   allowSubStores={true}
                   label='Tank'
                   defaultValue={adjustment && tanks.find(tank => tank.id === adjustment?.tank_id)}
-                  proposedOptions={productTanks}
-                  frontError={errors?.tank_id}
-                  onChange={(newValue) => {
+                  proposedOptions={productTanks as any}
+                  frontError={errors?.tank_id as any}
+                  onChange={(newValue: any) => {
                       setValue(`tank_id`, newValue ? newValue.id : '', {
                           shouldValidate: true,
                           shouldDirty: true,
@@ -111,7 +139,7 @@ function Adjustments({index = -1, setShowForm = null, adjustment}) {
               label='Operator'
               frontError={errors?.operator}
               defaultValue={adjustment && adjustment.operator}
-              onChange={(newValue) => {
+              onChange={(newValue: any) => {
                 setValue(`operator_name`, newValue.label);
                 setValue(`operator`, newValue ? newValue.value : '', {
                     shouldValidate: true,
@@ -183,7 +211,7 @@ function Adjustments({index = -1, setShowForm = null, adjustment}) {
             <Tooltip title='Close Edit'>
               <IconButton size='small' 
                 onClick={() => {
-                  setShowForm(false);
+                  setShowForm && setShowForm(false);
                 }}
               >
                 <DisabledByDefault fontSize='small' color='success'/>

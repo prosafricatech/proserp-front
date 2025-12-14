@@ -15,27 +15,70 @@ import StakeholderSelector from '@/components/masters/stakeholders/StakeholderSe
 import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
 import ProductSelect from '@/components/productAndServices/products/ProductSelect';
 import StakeholderQuickAdd from '@/components/masters/stakeholders/StakeholderQuickAdd';
+import { FuelVoucher, ProductPrice } from '../../SalesShiftTypes';
+import { Product } from '@/components/productAndServices/products/ProductType';
+import { Stakeholder } from '@/components/masters/stakeholders/StakeholderType';
+import { Ledger } from '@/components/accounts/ledgers/LedgerType';
 
-function FuelVouchers({ index = -1, setShowForm = null, fuelVoucher, productPrices }) {
-  const iu = {id: null, name: 'Calibration/Internal use'};
+interface FuelVouchersProps {
+  index?: number;
+  setShowForm?: (show: boolean) => void;
+  fuelVoucher?: FuelVoucher;
+  productPrices: ProductPrice[];
+  products: Product[];
+  fuelVouchers: FuelVoucher[];
+  setFuelVouchers: (
+    vouchers: FuelVoucher[] | ((prev: FuelVoucher[]) => FuelVoucher[])
+  ) => void;
+}
+
+const FuelVouchers: React.FC<FuelVouchersProps> = ({
+  index = -1,
+  setShowForm = null,
+  fuelVoucher,
+  productPrices,
+  products = [],
+  fuelVouchers = [],
+  setFuelVouchers,
+}) => {
+  const iu = { id: null as null, name: 'Calibration/Internal use' };
   const [isAdding, setIsAdding] = useState(false);
-  const { products, fuelVouchers=[], setFuelVouchers} = useFormContext();
-  const { productOptions } = useProductsSelect();
-  const {stakeholders} = useStakeholderSelect();
-  const { ungroupedLedgerOptions } = useLedgerSelect();
   const [stakeholderQuickAddDisplay, setStakeholderQuickAddDisplay] = useState(false);
-  const [addedStakeholder, setAddedStakeholder] = useState(null);
+  const [addedStakeholder, setAddedStakeholder] = useState<Stakeholder| null>(null);
 
-  const product = fuelVoucher && productOptions.find(product => product.id === fuelVoucher?.product_id);
-  const product_price = fuelVoucher && productPrices.find(price => price?.product_id === product.id)?.price
+  const { productOptions = [] } = useProductsSelect();
+  const { stakeholders = [] } = useStakeholderSelect();
+  const { ungroupedLedgerOptions = [] } = useLedgerSelect();
 
+  const [quantityFieldKey, setQuantityFieldKey] = useState(0);
+  const [amountFieldKey, setAmountFieldKey] = useState(0);
+
+  const product = fuelVoucher
+  ? productOptions.find((p) => p.id === fuelVoucher.product_id)
+  : null;
+
+const productPrice = product
+  ? productPrices.find((price) => price.product_id === product.id)?.price ?? 0
+  : 0;
   // Define validation schema
   const validationSchema = yup.object({
     product_id: yup.number().required("Product is required").typeError('Product is required'),
     quantity: yup.number().required("Quantity is required").positive("Quantity is required").typeError('Quantity is required'),
   });
 
-  const {setValue, handleSubmit, watch, reset, formState: {errors}} = useForm({
+type FormData = yup.InferType<typeof validationSchema> & {
+    amount?: number;
+    stakeholder_id?: number | null;
+    expense_ledger_id?: number | null;
+    reference?: string | null;
+    narration?: string | null;
+    expense_ledger?: Ledger | null;
+    product?: Product | null;
+    stakeholder?: Stakeholder | null;
+    product_price?: number;
+  };
+
+  const {setValue, handleSubmit, watch, reset, formState: {errors}} = useForm<FormData>({
     resolver: yupResolver(validationSchema),
     defaultValues: {
       product: fuelVoucher && product,
@@ -45,7 +88,7 @@ function FuelVouchers({ index = -1, setShowForm = null, fuelVoucher, productPric
       expense_ledger_id: fuelVoucher && fuelVoucher.expense_ledger?.id,
       product_id: fuelVoucher && fuelVoucher.product_id, 
       quantity: fuelVoucher && fuelVoucher.quantity,
-      amount: fuelVoucher && product_price * fuelVoucher.quantity, 
+      amount: fuelVoucher && productPrice * (fuelVoucher.quantity ?? 0),
       reference: fuelVoucher && fuelVoucher.reference,
       narration: fuelVoucher && fuelVoucher.narration,
     }
@@ -60,7 +103,7 @@ function FuelVouchers({ index = -1, setShowForm = null, fuelVoucher, productPric
     }
   }, [addedStakeholder])
 
-  const updateItems = async (item) => {
+  const updateItems = async (item: any) => {
     setIsAdding(true);
     if (index > -1) {
       // Replace the existing item with the edited item
@@ -78,10 +121,7 @@ function FuelVouchers({ index = -1, setShowForm = null, fuelVoucher, productPric
     setShowForm && setShowForm(false);
   };
 
-  const [quantityFieldKey, setQuantityFieldKey] = useState(0)
-  const [amountFieldKey, setAmountFieldKey] = useState(0)
-
-  const calculateAndSetValues = (field, value) => {
+  const calculateAndSetValues = (field: 'quantity' | 'amount', value: number) => {
     const productId = watch('product_id');
     if (productId) {
       const product = productPrices.find(price => price?.product_id === productId);
@@ -111,11 +151,11 @@ function FuelVouchers({ index = -1, setShowForm = null, fuelVoucher, productPric
             <Div sx={{ mt: 1}}>
               <StakeholderSelector
                 label='Client'
-                initialOptions={[iu]}
+                initialOptions={[]}
                 defaultValue={fuelVoucher && fuelVoucher.stakeholder?.id}
-                frontError={errors.stakeholder_id}
+                frontError={errors.stakeholder_id as any}
                 addedStakeholder={addedStakeholder}
-                onChange={(newValue) => {
+                onChange={(newValue: any) => {
                   setValue(`stakeholder`, newValue)
                   setValue(`stakeholder_id`, newValue ? newValue.id : null,{
                     shouldDirty: true,
@@ -146,7 +186,7 @@ function FuelVouchers({ index = -1, setShowForm = null, fuelVoucher, productPric
                 label={'Expense Ledger'}
                 frontError={errors.expense_ledger_id}
                 defaultValue={ungroupedLedgerOptions.find(ledger => ledger.id === watch(`expense_ledger`)?.id)}
-                onChange={(newValue) => {
+                onChange={(newValue:any) => {
                   setValue(`expense_ledger`, newValue)
                   setValue('expense_ledger_id', newValue ? newValue.id : null,{
                     shouldValidate: true,
@@ -164,7 +204,7 @@ function FuelVouchers({ index = -1, setShowForm = null, fuelVoucher, productPric
               frontError={errors.product_id}
               defaultValue={fuelVoucher && productOptions.find(product => product.id === fuelVoucher.product_id)}
               requiredProducts={products}
-              onChange={(newValue) => {
+              onChange={(newValue: any) => {
                 setValue(`product`, newValue)
                 calculateAndSetValues('amount', 0);
                 setValue(`product_id`, newValue ? newValue.id : '', {

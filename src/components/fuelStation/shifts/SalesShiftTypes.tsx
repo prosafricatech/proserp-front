@@ -95,11 +95,14 @@ export interface SalesShift {
 }
 
 export interface Adjustment {
+  id?: number;
+  product?: Product;
   tank_id?: number;
   quantity: number;
   operator: string;
   description?: string;
   product_id: number;
+  operator_name?: string;
 }
 
 export interface ProductPrice {
@@ -108,7 +111,7 @@ export interface ProductPrice {
 }
 
 export interface Tank {
-  id: number | string;
+  id: number;
   name: string;
   // add more if needed
 }

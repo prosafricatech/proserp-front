@@ -9,7 +9,7 @@ import SaleShiftForm from './SaleShiftForm';
 import { SalesShift } from './SalesShiftTypes';
 
 interface SaleShiftFormProps {
-  SalesShift?: SalesShift | null;     // Make it optional + allow null
+  SalesShift?: SalesShift | null; 
   setOpenDialog: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
