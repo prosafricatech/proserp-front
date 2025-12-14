@@ -95,7 +95,7 @@ function CashReconciliation() {
 
   useEffect(() => {
     if (isNaN(cashRemaining) || cashRemaining < 0) {
-      setCheckShiftBalanced(false);
+      setCheckShiftBalanced?.(false);
       return;
     }
     const currentMainLedgerAmount = parseFloat(mainLedger?.amount || 0);
@@ -114,7 +114,7 @@ function CashReconciliation() {
     });
 
   const isBalanced = Math.abs(cashRemaining - (calculatedAmount + totalOtherLedgersAmount)) < 0.01;
-  setCheckShiftBalanced(isBalanced);
+  setCheckShiftBalanced?.(isBalanced);
  }, [mainLedgerId, main_ledger_amount, cashRemaining, totalOtherLedgersAmount, setValue, setCheckShiftBalanced]);
 
   useEffect(() => {
@@ -296,8 +296,8 @@ function CashReconciliation() {
                           <TextField 
                             {...params} 
                             label="Main Ledger"
-                            error={!!errors.main_ledger_id}
-                            helperText={errors.main_ledger_id?.message}
+                            error={!!errors?.main_ledger_id}
+                            helperText={errors?.main_ledger_id?.message}
                           />
                         )}
                         onChange={(e, newValue) => {
@@ -325,17 +325,17 @@ function CashReconciliation() {
                         size="small"
                         fullWidth
                         label="Amount"
-                        value={main_ledger_amount}
-                        error={!!errors.main_ledger_amount}
-                        helperText={errors.main_ledger_amount?.message}
+                        value={main_ledger_amount ?? 0}
+                        error={!!(errors?.main_ledger_amount)}
+                        helperText={errors?.main_ledger_amount?.message}
                         InputProps={{
                           inputComponent: CommaSeparatedField,
                           readOnly: true
                         }}
-                      />  
+                      />
                     </Div>
                   </Grid>
-                  {cashReconciliationFields.map((field, index) => (
+                  {(cashReconciliationFields ?? []).map((field, index) =>(
                     <Grid key={field.id} container columnSpacing={1} paddingLeft={1} width={'100%'}>
                       <Grid size={11} marginBottom={0.5}>
                         <Divider />
