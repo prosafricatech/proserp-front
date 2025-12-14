@@ -40,7 +40,7 @@ const DippingsOnScreen: React.FC<DippingsOnScreenProps> = ({
       : organization.settings?.main_color || '#2113AD';
 
   return (
-    <Box sx={{ p: 2 }}>
+    <>
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid size={12}>
           <Box textAlign="center">
@@ -184,7 +184,6 @@ const DippingsOnScreen: React.FC<DippingsOnScreenProps> = ({
       {dippingData.remarks && (
         <Box
           sx={{
-            p: 2,
             border: `1px solid ${theme.palette.divider}`,
             borderRadius: 1,
             backgroundColor: theme.palette.background.default,
@@ -204,7 +203,7 @@ const DippingsOnScreen: React.FC<DippingsOnScreenProps> = ({
           </Typography>
         </Box>
       )}
-    </Box>
+    </>
   );
 };
 
