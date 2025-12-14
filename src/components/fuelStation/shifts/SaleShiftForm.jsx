@@ -349,10 +349,34 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
     }
   
     await saveMutation(cleanedData);
-  };      
+  };    
+  
+  const methods = useForm({
+  resolver: yupResolver(validationSchema),
+  defaultValues: {
+    id: SalesShift?.id,
+    submit_type: SalesShift?.status || 'pending',
+    isOpenSwitchON: !!SalesShift?.opening_dipping?.readings?.length,
+    isCloseSwitchON: !!SalesShift?.closing_dipping?.readings?.length,
+    shift_team_id: SalesShift?.shift_team_id,
+    shift_start: SalesShift?.shift_start ? dayjs(SalesShift.shift_start).toISOString() : null,
+    shift_end: SalesShift?.shift_end ? dayjs(SalesShift.shift_end).toISOString() : null,
+    // ... rest of your defaultValues
+    dipping_before: SalesShift?.opening_dipping?.readings?.map(r => ({
+      tank_id: r.tank_id,
+      product_id: r.product_id,
+      reading: r.reading,
+    })) || [],
+    dipping_after: SalesShift?.closing_dipping?.readings?.map(r => ({
+      tank_id: r.tank_id,
+      product_id: r.product_id,
+      reading: r.reading,
+    })) || [],
+  },
+});
 
   return (
-    <FormProvider {...{setCheckShiftBalanced, shiftLedgers, fuel_pumps, tanks, adjustments, setAdjustments, fuelVouchers, setFuelVouchers, products, register, handleSubmit, setError, clearErrors, setValue, watch, errors, cashReconciliationFields, cashReconciliationAppend, cashReconciliationRemove}}>
+    <FormProvider {...methods}>
       <DialogTitle>
         <form autoComplete='off'>    
           <Grid container spacing={1} marginTop={1}>
@@ -567,6 +591,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
           </>
         }
       </DialogActions>
+    
     </FormProvider>
   )
 }
