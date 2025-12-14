@@ -1,10 +1,13 @@
-import { getAuthHeaders, handleJsonResponse } from '@/lib/utils/apiUtils';
 import { NextRequest } from 'next/server';
+import { getAuthHeaders, handleJsonResponse } from '@/lib/utils/apiUtils';
 
 const API_BASE = process.env.API_BASE_URL!;
 
-export async function GET(request: NextRequest, context: any) {
-  const { type } = await context.params; 
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ type: string }> }
+) {
+  const { type } = await params;
 
   const { headers, response } = await getAuthHeaders(request);
   if (response) return response;

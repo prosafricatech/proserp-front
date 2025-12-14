@@ -1,3 +1,4 @@
+'use client'
 import JumboCardQuick from '@jumbo/components/JumboCardQuick';
 import { DateRangeOutlined, DomainAddRounded, EditCalendarOutlined, Handshake, LocalGasStationOutlined, MoneyRounded, PointOfSaleRounded, PostAddRounded, PrecisionManufacturingRounded, ShoppingCartRounded, StorageRounded } from '@mui/icons-material';
 import RemoveIcon from '@mui/icons-material/Remove';

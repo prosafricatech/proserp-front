@@ -79,14 +79,14 @@ const TrialBalanceOnScreen = ({ reportData, authOrganization, user }) => {
                 <TableCell>{ledger.name}</TableCell>
                 <TableCell sx={{ textAlign: 'right' }}>
                   {ledger.balance.side === 'DR' &&
-                    ledger.balance.amount.toLocaleString('en-US', {
+                    ledger.balance.amount?.toLocaleString('en-US', {
                       maximumFractionDigits: 2,
                       minimumFractionDigits: 2,
                     })}
                 </TableCell>
                 <TableCell sx={{ textAlign: 'right' }}>
                   {ledger.balance.side === 'CR' &&
-                    ledger.balance.amount.toLocaleString('en-US', {
+                    ledger.balance.amount?.toLocaleString('en-US', {
                       maximumFractionDigits: 2,
                       minimumFractionDigits: 2,
                     })}

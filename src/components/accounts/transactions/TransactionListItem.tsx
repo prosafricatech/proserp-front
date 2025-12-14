@@ -146,7 +146,7 @@ function TransactionListItem({ transaction, type }: { transaction: Transaction, 
                             noWrap
                             component="span"
                         >
-                            {transaction.amount.toLocaleString("en-US", {
+                            {transaction.amount?.toLocaleString("en-US", {
                                 style: "currency",
                                 currency: transaction.currency.code
                             })}

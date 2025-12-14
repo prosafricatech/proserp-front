@@ -84,7 +84,7 @@ const ReportDocument = ({reportData,authOrganization,user}) => {
                                           <Text style={{ ...pdfStyles.tableCellText}}>{lg.name}</Text>
                                         </View>
                                         <View style={{...pdfStyles.tableCell, flex : 1}}>
-                                          <Text style={{ ...pdfStyles.tableCellText, textAlign:'right'}}>{lg.amount.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
+                                          <Text style={{ ...pdfStyles.tableCellText, textAlign:'right'}}>{lg.amount?.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
                                         </View>
                                       </>
                                     }
@@ -97,7 +97,7 @@ const ReportDocument = ({reportData,authOrganization,user}) => {
                                       <Text style={{ ...pdfStyles.tableCellText}}>Total {group.name}</Text>
                                     </View>
                                     <View style={{...pdfStyles.tableHeader, backgroundColor: pdfStyles.shadedBG, flex : 1}}>
-                                      <Text style={{ ...pdfStyles.tableCellText,textAlign:'right'}}>{group.amount.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
+                                      <Text style={{ ...pdfStyles.tableCellText,textAlign:'right'}}>{group.amount?.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
                                     </View>
                                   </View>
                                 )}
@@ -108,7 +108,7 @@ const ReportDocument = ({reportData,authOrganization,user}) => {
                                       <Text style={{ ...pdfStyles.tableCellText}}>{group.name}</Text>
                                     </View>
                                     <View style={{...pdfStyles.tableCell, flex : 1}}>
-                                      <Text style={{ ...pdfStyles.tableCellText, textAlign:'right'}}>{group.amount.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
+                                      <Text style={{ ...pdfStyles.tableCellText, textAlign:'right'}}>{group.amount?.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
                                     </View>
                                   </View>
                                 )}
@@ -123,7 +123,7 @@ const ReportDocument = ({reportData,authOrganization,user}) => {
                       <Text style={pdfStyles.tableCellText}>Total {ledger_group.name}</Text>
                     </View>
                     <View style={{...pdfStyles.tableHeader, flex : 1}}>
-                      <Text style={{ ...pdfStyles.tableCellText, textAlign:'right' }}>{ledger_group.amount.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
+                      <Text style={{ ...pdfStyles.tableCellText, textAlign:'right' }}>{ledger_group.amount?.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
                     </View>
                   </View>
                 </View>

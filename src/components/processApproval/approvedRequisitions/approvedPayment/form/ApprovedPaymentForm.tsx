@@ -337,7 +337,7 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
             }}>
               <Tooltip title={'Total Amount'}>
                 <Typography variant={"h5"}>
-                  {totalAmount.toLocaleString()}
+                  {totalAmount?.toLocaleString()}
                 </Typography>
               </Tooltip>
             </Grid>

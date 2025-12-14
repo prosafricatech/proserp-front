@@ -167,7 +167,7 @@ function GrnPDF({grn,organization = null,baseCurrency,checkOrganizationPermissio
                         displayAmounts &&
                         <View style={styles.tableRow}>
                             <Text style={{ ...styles.tableCell, ...styles.tableHeader, backgroundColor: mainColor, color: contrastText,   flex : 12.4, textAlign : 'center'  }}>TOTAL</Text>
-                            <Text style={{ ...styles.tableCell, ...styles.tableHeader, backgroundColor: mainColor, color: contrastText,   flex : 3.5,textAlign : 'right' }}>{currencySymbol}{totalAmount.toLocaleString('en-US',{minimumFractionDigits:2})}</Text>
+                            <Text style={{ ...styles.tableCell, ...styles.tableHeader, backgroundColor: mainColor, color: contrastText,   flex : 3.5,textAlign : 'right' }}>{currencySymbol}{totalAmount?.toLocaleString('en-US',{minimumFractionDigits:2})}</Text>
                             { grn.additional_costs.length > 0 &&
                             <>
                                 <Text style={{ ...styles.tableCell, ...styles.tableHeader, backgroundColor: mainColor, color: contrastText,   flex : 3.7 }}>{}</Text>

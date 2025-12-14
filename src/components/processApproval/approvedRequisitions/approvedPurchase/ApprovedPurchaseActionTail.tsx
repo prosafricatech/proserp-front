@@ -1,3 +1,4 @@
+'use client'
 import { ShoppingCartOutlined } from "@mui/icons-material";
 import { ButtonGroup, Dialog, IconButton, LinearProgress, Tooltip, useMediaQuery } from "@mui/material";
 import React, { useState } from "react";

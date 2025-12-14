@@ -12,7 +12,7 @@ import { useTheme } from '@mui/material/styles';
 function SummaryTab() {
     const theme = useTheme();
     const {
-        authOrganization, order, getReceivedItemsSummary, getTotalAmount,
+        authOrganization, order, getReceivedItemsSummary, gettotalAmount,
         getTotalCostAmount, getTotalAdditionalCostsAmount, getAdditionalCostsSummary
     } = useFormContext();
 
@@ -128,7 +128,7 @@ function SummaryTab() {
 
                                     <TableCell sx={{ backgroundColor: mainColor, color: contrastText }} colSpan={2} align="right">
                                         <Typography noWrap>
-                                            {currency.symbol} {getTotalAmount().toLocaleString()}
+                                            {currency.symbol} {gettotalAmount().toLocaleString()}
                                         </Typography>
                                     </TableCell>
 
@@ -176,7 +176,7 @@ function SummaryTab() {
                                         <TableCell>{item.costName}</TableCell>
                                         <TableCell align="right">{item.exchangeRate.toLocaleString()}</TableCell>
                                         <TableCell align="right">
-                                            {item.itemCurrency} {item.amount.toLocaleString()}
+                                            {item.itemCurrency} {item.amount?.toLocaleString()}
                                         </TableCell>
                                     </TableRow>
                                 ))}

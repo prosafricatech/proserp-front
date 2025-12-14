@@ -1,3 +1,4 @@
+'use client'
 import React, { lazy, useState, useMemo, useEffect } from 'react';
 import { Alert, Grid, ListItemText, Stack, Typography, Divider, Tooltip, useMediaQuery, Chip, LinearProgress, Box } from '@mui/material';
 import Accordion from '@mui/material/Accordion';

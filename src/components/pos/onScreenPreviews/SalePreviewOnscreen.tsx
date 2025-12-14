@@ -73,7 +73,7 @@ const SalePreviewOnscreen: React.FC<SalePreviewOnscreenProps> = ({ sale, organiz
   const contrastText = organization.settings?.contrast_text || "#FFFFFF";
 
   const formatCurrency = (amount: number) => {
-    return amount.toLocaleString("en-US", { 
+    return amount?.toLocaleString("en-US", { 
       style: "currency", 
       currency: currencyCode,
       minimumFractionDigits: 2,

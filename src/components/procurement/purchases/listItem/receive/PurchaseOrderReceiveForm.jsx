@@ -33,7 +33,7 @@ function PurchaseOrderReceiveForm({ toggleOpen, order }) {
   const {currencies} = useCurrencySelect();
   const {authOrganization,checkOrganizationPermission} = useJumboAuth();
   const [totalReceivedAmount, setTotalReceivedAmount] = useState(0);
-  const [totalAmount, setTotalAmount] = useState(0);
+  const [totalAmount, settotalAmount] = useState(0);
 
   const [nextTab, setNextTab] = useState(null);
   const [showWarning, setShowWarning] = useState(false);
@@ -200,7 +200,7 @@ function PurchaseOrderReceiveForm({ toggleOpen, order }) {
 
       total += currency_id > 1 ? amount * exchange_rate : amount;
     }
-    setTotalAmount(total);
+    settotalAmount(total);
   }, [watch()]);
 
   useEffect(() => {
@@ -233,7 +233,7 @@ function PurchaseOrderReceiveForm({ toggleOpen, order }) {
     });
   };
 
-  const getTotalAmount = () => {
+  const gettotalAmount = () => {
     return getReceivedItemsSummary().reduce((total, item) => {
       return total + item.receivedQuantity * item.rate;
     }, 0);
@@ -266,7 +266,7 @@ function PurchaseOrderReceiveForm({ toggleOpen, order }) {
   };
 
   return (
-    <FormProvider {...{additionalCosts, setAdditionalCosts, purchase_order_items, totalAmount, order, getReceivedItemsSummary, getTotalAmount, getTotalCostAmount, getTotalAdditionalCostsAmount, getAdditionalCostsSummary,errors, register, setValue, watch, clearErrors,authOrganization}}>
+    <FormProvider {...{additionalCosts, setAdditionalCosts, purchase_order_items, totalAmount, order, getReceivedItemsSummary, gettotalAmount, getTotalCostAmount, getTotalAdditionalCostsAmount, getAdditionalCostsSummary,errors, register, setValue, watch, clearErrors,authOrganization}}>
       <DialogTitle>
         <form autoComplete='off'>
           <Grid container spacing={1}>

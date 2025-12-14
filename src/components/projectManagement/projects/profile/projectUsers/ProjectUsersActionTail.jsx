@@ -1,3 +1,4 @@
+'use client'
 import { AddOutlined, LinkOffOutlined } from "@mui/icons-material";
 import { ButtonGroup, Dialog, IconButton, Tooltip, Menu, MenuItem, useMediaQuery } from "@mui/material";
 import React, { useState } from "react";

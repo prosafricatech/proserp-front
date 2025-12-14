@@ -1,3 +1,4 @@
+'use client'
 import { LoadingButton } from '@mui/lab';
 import { Button, DialogActions, DialogContent, DialogTitle, Grid, Alert, Dialog, Tooltip, IconButton, Box, useMediaQuery} from '@mui/material'
 import React, { useEffect, useState } from 'react'

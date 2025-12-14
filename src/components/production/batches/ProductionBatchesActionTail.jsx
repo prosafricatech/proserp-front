@@ -1,3 +1,4 @@
+'use client'
 import React, { useState } from 'react';
 import { AddCircleOutlineOutlined, AddOutlined, PlaylistAddOutlined } from '@mui/icons-material';
 import { Tooltip, Dialog, useMediaQuery} from '@mui/material';

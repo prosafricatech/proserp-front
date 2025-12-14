@@ -33,7 +33,7 @@ function PurchaseOrderOnScreenPreview({ order }) {
     const grandTotal = order.amount + vatAmount;
 
     const formatCurrency = (amount) => {
-        return amount.toLocaleString("en-US", { 
+        return amount?.toLocaleString("en-US", { 
             style: "currency", 
             currency: currencyCode,
             minimumFractionDigits: 2,

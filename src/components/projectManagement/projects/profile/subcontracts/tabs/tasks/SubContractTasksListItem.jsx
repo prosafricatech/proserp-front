@@ -145,7 +145,7 @@ function SubContractTasksListItem({ subContract, subContractTasks = [], isLoadin
                     <Tooltip title="Amount">
                       <Typography variant="body2">
                         Amount:{' '}
-                        {amount.toLocaleString('en-US', {
+                        {amount?.toLocaleString('en-US', {
                           style: 'currency',
                           currency: baseCurrency,
                         })}

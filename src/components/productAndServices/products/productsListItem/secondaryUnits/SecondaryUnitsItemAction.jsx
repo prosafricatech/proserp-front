@@ -1,3 +1,4 @@
+'use client'
 import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, useMediaQuery } from '@mui/material';
 import React from 'react'
 import { useSnackbar } from 'notistack';

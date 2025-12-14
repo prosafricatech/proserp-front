@@ -1,3 +1,4 @@
+'use client'
 import { Box, Button, Dialog, DialogActions, DialogContent, Grid, IconButton, LinearProgress, Tab, Tabs, Tooltip, useMediaQuery } from '@mui/material';
 import React, { useState } from 'react';
 import ApprovalForm from './form/ApprovalForm';

@@ -1,3 +1,4 @@
+'use client'
 import { AddOutlined } from '@mui/icons-material';
 import {
   ButtonGroup,

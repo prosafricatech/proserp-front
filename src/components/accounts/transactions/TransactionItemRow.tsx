@@ -103,7 +103,7 @@ const TransactionItemRow: React.FC<TransactionItemRowProps> = ({
           {/* Amount Display */}
           <Grid size={{xs: 6, md: 3, lg: 2}}>
             <Tooltip title="Amount">
-              <Typography textAlign={'right'}>{item.amount.toLocaleString()}</Typography>
+              <Typography textAlign={'right'}>{item.amount?.toLocaleString()}</Typography>
             </Tooltip>
           </Grid>
           

@@ -405,7 +405,7 @@ function TransferFormDialogContent({ setOpen, transfer = null }: TransferFormDia
                             justifyContent: 'flex-end'
                         }}>
                             <Typography variant={"h5"}>
-                                {totalAmount.toLocaleString()}
+                                {totalAmount?.toLocaleString()}
                             </Typography>
                         </Grid>
                         <Grid size={12}>

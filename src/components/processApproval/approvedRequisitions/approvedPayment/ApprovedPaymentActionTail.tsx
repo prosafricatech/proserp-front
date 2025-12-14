@@ -1,3 +1,4 @@
+'use client'
 import { CreditScoreOutlined } from "@mui/icons-material";
 import { 
   ButtonGroup, 

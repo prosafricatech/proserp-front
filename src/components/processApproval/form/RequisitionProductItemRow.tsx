@@ -56,7 +56,7 @@ function RequisitionProductItemRow({
 
   const vat_factor = (product_item.vat_percentage ?? 0) * 0.01;
   const lineVat = product_item.product_item_vat ?? (product_item.rate ?? 0) * vat_factor;
-  const lineTotalAmount = product_item.amount ?? (product_item.rate ?? 0) * (product_item.quantity ?? 0) * (1 + vat_factor);
+  const linetotalAmount = product_item.amount ?? (product_item.rate ?? 0) * (product_item.quantity ?? 0) * (1 + vat_factor);
 
   const handleRemoveItem = () => {
     setRequisition_product_items(items => {
@@ -173,7 +173,7 @@ function RequisitionProductItemRow({
               {product_item.rate && product_item.quantity && (
                 <Tooltip title="Amount">
                   <Typography>
-                    {lineTotalAmount.toLocaleString('en-US', {
+                    {linetotalAmount?.toLocaleString('en-US', {
                       style: 'currency',
                       currency: currencyDetails?.code,
                     })}

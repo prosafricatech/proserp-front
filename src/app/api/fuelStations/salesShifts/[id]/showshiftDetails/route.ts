@@ -1,16 +1,16 @@
-import { getAuthHeaders, handleJsonResponse } from '@/lib/utils/apiUtils';
 import { NextRequest } from 'next/server';
+import { getAuthHeaders, handleJsonResponse } from '@/lib/utils/apiUtils';
 
 const API_BASE = process.env.API_BASE_URL!;
 
-export async function GET(request: NextRequest) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+
   const { headers, response } = await getAuthHeaders(request);
   if (response) return response;
-  const url = new URL(request.url);
-
-  // Extract ID from the pathname
-  const pathnameParts = url.pathname.split('/');
-  const id = pathnameParts[pathnameParts.length - 2];
 
   const res = await fetch(`${API_BASE}/fuel-stations/sales-shifts/${id}`, {
     headers,

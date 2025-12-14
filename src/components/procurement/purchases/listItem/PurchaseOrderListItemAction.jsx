@@ -1,3 +1,4 @@
+'use client'
 import React, { lazy, useState } from 'react';
 import {
   Tooltip,

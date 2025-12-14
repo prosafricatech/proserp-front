@@ -1,5 +1,5 @@
-import { getAuthHeaders, handleJsonResponse } from '@/lib/utils/apiUtils';
 import { NextRequest } from 'next/server';
+import { getAuthHeaders, handleJsonResponse } from '@/lib/utils/apiUtils';
 
 const API_BASE = process.env.API_BASE_URL!;
 
@@ -7,14 +7,12 @@ export async function GET(request: NextRequest) {
   const { headers, response } = await getAuthHeaders(request);
   if (response) return response;
 
-  // Declare searchParams FIRST before using it
   const { searchParams } = new URL(request.url);
   const stationId = searchParams.get('stationId') || '';
   const keyword = searchParams.get('keyword') || '';
   const page = searchParams.get('page') || '1';
   const limit = searchParams.get('limit') || '10';
-  
-  // Build query parameters including all necessary params
+
   const queryParams = new URLSearchParams({
     keyword,
     page,

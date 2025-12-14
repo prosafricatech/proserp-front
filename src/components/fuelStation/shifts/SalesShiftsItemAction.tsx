@@ -1,3 +1,4 @@
+'use client'
 import { DeleteOutlined, DownloadOutlined, EditOutlined, MoreHorizOutlined, VisibilityOutlined } from '@mui/icons-material';
 import { Checkbox, Dialog,DialogContent,DialogTitle,LinearProgress,Stack,Tooltip, Typography, useMediaQuery } from '@mui/material';
 import { useSnackbar } from 'notistack';
@@ -35,7 +36,7 @@ interface SalesShiftsItemActionProps {
 const EditShift: React.FC<EditShiftProps> = ({ ClosedShift, setOpenEditDialog }) => {
   const { data: shiftData, isFetching } = useQuery({
     queryKey: ['showshiftDetails', { id: ClosedShift.id }],
-    queryFn: () => fuelStationServices.showshiftDetails(ClosedShift.id)
+    queryFn: () => fuelStationServices.showShiftDetails(ClosedShift.id)
   });
 
   if(isFetching){
@@ -55,7 +56,7 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({ organization, ClosedShi
 
  const { data: shiftData, isFetching } = useQuery({
   queryKey: ['showshiftDetails', { id: ClosedShift.id }],
-  queryFn: () => fuelStationServices.showshiftDetails(ClosedShift.id)
+  queryFn: () => fuelStationServices.showShiftDetails(ClosedShift.id)
 });
 
   if(isFetching){

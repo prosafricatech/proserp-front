@@ -108,7 +108,7 @@ const ReceiptPreviewOnScreen: React.FC<ReceiptPreviewOnScreenProps> = ({
   }, [sale.vfd_receipt]);
 
   const formatCurrency = (amount: number) => {
-    return amount.toLocaleString("en-US", { 
+    return amount?.toLocaleString("en-US", { 
       style: "currency", 
       currency: sale.currency.code,
       minimumFractionDigits: 2,

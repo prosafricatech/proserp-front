@@ -1,21 +1,21 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { getAuthHeaders, handleJsonResponse } from '@/lib/utils/apiUtils';
 
-const API_BASE = process.env.API_BASE_URL;
+const API_BASE = process.env.API_BASE_URL!;
 
 export async function DELETE(
-  req: NextRequest, context: any
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string; type: string }> }
 ) {
-  const { params } = context as { params: { type: string,id: string } };
+  const { id, type } = await params;
+
   const { headers, response } = await getAuthHeaders(req);
   if (response) return response;
 
-  // Corrected URL formatting
-  const res = await fetch(`${API_BASE}/budget-items/${params.type}/${params.id}`, {
+  const res = await fetch(`${API_BASE}/budget-items/${type}/${id}`, {
     method: 'DELETE',
     headers,
   });
 
   return handleJsonResponse(res);
 }
-

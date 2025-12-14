@@ -58,7 +58,7 @@ const LedgerListItem: React.FC<LedgerListItemProps> = ({ ledger, type }) => {
         <Grid size={{xs: 6, md: 3.5}} sx={{ textAlign: { 'md': 'right' } }}>
           <Tooltip title='Balance'>
             <Typography variant={"body1"}>
-              {ledger.balance?.amount.toLocaleString('en-US', {
+              {ledger.balance?.amount?.toLocaleString('en-US', {
                 maximumFractionDigits: 2,
                 minimumFractionDigits: 2
               })}

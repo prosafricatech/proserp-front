@@ -241,7 +241,7 @@ function RelatableOrderDetails({ order, toggleOpen }: RelatableOrderDetailsProps
                             </Grid>
                             <Grid size={5} sx={{ textAlign: 'right' }}>
                                 <Typography variant="body2" fontWeight="bold">
-                                    {order.amount.toLocaleString("en-US", { 
+                                    {order.amount?.toLocaleString("en-US", { 
                                         style: "currency", 
                                         currency: currencyCode 
                                     })}
@@ -257,7 +257,7 @@ function RelatableOrderDetails({ order, toggleOpen }: RelatableOrderDetailsProps
                                     </Grid>
                                     <Grid size={5} sx={{ textAlign: 'right' }}>
                                         <Typography variant="body2" fontWeight="bold">
-                                            {vatAmount.toLocaleString("en-US", { 
+                                            {vatAmount?.toLocaleString("en-US", { 
                                                 style: "currency", 
                                                 currency: currencyCode 
                                             })}

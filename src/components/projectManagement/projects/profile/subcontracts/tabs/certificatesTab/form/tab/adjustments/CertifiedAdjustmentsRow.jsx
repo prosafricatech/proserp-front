@@ -28,7 +28,7 @@ function CertifiedAdjustmentsRow({ adjustment, adjustments = [], setAdjustments,
                         </Grid>
                         <Grid size={{xs: 6, md: 3.5}}>
                             <Tooltip title="Amount">
-                                <Typography>{adjustment.amount.toLocaleString()}</Typography>
+                                <Typography>{adjustment.amount?.toLocaleString()}</Typography>
                             </Tooltip>
                         </Grid>
                         <Grid size={{xs: 6, md: 3}}>

@@ -1,3 +1,4 @@
+'use client'
 import React, { useState } from 'react'
 import { MoreHorizOutlined, ViewTimelineOutlined } from '@mui/icons-material';
 import { Dialog, Tooltip, useMediaQuery } from '@mui/material';

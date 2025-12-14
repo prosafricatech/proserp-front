@@ -1,17 +1,21 @@
-import { getAuthHeaders, handleJsonResponse } from '@/lib/utils/apiUtils';
 import { NextRequest } from 'next/server';
+import { getAuthHeaders, handleJsonResponse } from '@/lib/utils/apiUtils';
 
-const API_BASE = process.env.API_BASE_URL
+const API_BASE = process.env.API_BASE_URL!;
 
-export async function GET(req: NextRequest, context: any) {
-const { params } = context as { params: { id: string } };
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+
   const { headers, response } = await getAuthHeaders(req);
   if (response) return response;
 
-  const url = new URL(`${API_BASE}/accounts/ledger/${params.id}/statement`);
+  const url = new URL(`${API_BASE}/accounts/ledger/${id}/statement`);
   req.nextUrl.searchParams.forEach((value, key) => {
     if (key.endsWith('[]')) {
-      url.searchParams.append(key, value); // preserve multiple values
+      url.searchParams.append(key, value);
     } else {
       url.searchParams.set(key, value);
     }
@@ -22,5 +26,5 @@ const { params } = context as { params: { id: string } };
     credentials: 'include',
   });
 
-   return handleJsonResponse(res);
+  return handleJsonResponse(res);
 }

@@ -1,3 +1,4 @@
+'use client'
 import JumboCardQuick from '@jumbo/components/JumboCardQuick/JumboCardQuick'
 import { FeedOutlined, ListAltOutlined, Money, SummarizeOutlined, ViewTimelineOutlined } from '@mui/icons-material'
 import { Button, Dialog, DialogActions, Grid, LinearProgress, Typography, useMediaQuery } from '@mui/material'
