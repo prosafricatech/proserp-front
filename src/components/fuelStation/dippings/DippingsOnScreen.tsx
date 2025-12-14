@@ -10,6 +10,8 @@ import {
   TableRow,
   Paper,
   Box,
+  Divider,
+  useTheme,
 } from '@mui/material';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import { DippingDetails, Organization } from './DippingsTypes';
@@ -17,33 +19,48 @@ import { Product } from '@/components/productAndServices/products/ProductType';
 
 interface DippingsOnScreenProps {
   productOptions: Product[];
-  dippingData: DippingDetails; // au badilisha na type halisi kama una Dipping type
+  dippingData: DippingDetails;
   fuel_pumps: any[];
-  shift_teams: any[]; // au ShiftTeam[]
+  shift_teams: any[];
   organization: Organization;
 }
 
-const DippingsOnScreen: React.FC<DippingsOnScreenProps> = ({ dippingData, organization }) => {
-  const mainColor = organization.settings?.main_color || "#2113AD";
-  const lightColor = organization.settings?.light_color || "#bec5da";
-  const contrastText = organization.settings?.contrast_text || "#FFFFFF";
+const DippingsOnScreen: React.FC<DippingsOnScreenProps> = ({
+  dippingData,
+  organization,
+}) => {
+  const theme = useTheme();
+
+  const mainColor = organization.settings?.main_color || '#2113AD';
+  const contrastText = organization.settings?.contrast_text || '#FFFFFF';
+
+  const headerColor =
+    theme.type === 'dark'
+      ? '#29f096'
+      : organization.settings?.main_color || '#2113AD';
 
   return (
-    <Box style={{ padding: 5 }}>
-      <Grid container spacing={2} marginBottom={2} paddingTop={2}>
-        <Grid size={6}>
-          <Typography variant="h4" color={mainColor}>
-            Fuel Station Dippings
-          </Typography>
-          <Typography variant="subtitle1">
-            {dippingData.station?.name}
-          </Typography>
+    <Box sx={{ p: 2 }}>
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid size={12}>
+          <Box textAlign="center">
+            <Typography variant="h4" sx={{ color: headerColor }} gutterBottom>
+              Fuel Station Dippings
+            </Typography>
+            <Typography variant="subtitle1" fontWeight="medium">
+              {dippingData.station?.name}
+            </Typography>
+          </Box>
         </Grid>
       </Grid>
 
-      <Grid container spacing={2} marginBottom={3}>
-       <Grid size={{xs:12, md:6}}>
-          <Typography variant="body2" color={mainColor}>
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Typography
+            variant="subtitle2"
+            sx={{ color: headerColor }}
+            gutterBottom
+          >
             As At
           </Typography>
           <Typography variant="body2">
@@ -52,91 +69,143 @@ const DippingsOnScreen: React.FC<DippingsOnScreenProps> = ({ dippingData, organi
         </Grid>
       </Grid>
 
-      <TableContainer component={Paper} style={{ marginTop: 20, marginBottom: 20 }}>
+      <TableContainer
+        component={Paper}
+        sx={{
+          boxShadow: theme.shadows[2],
+          mb: 3,
+          '& .MuiTableRow-root:hover': {
+            backgroundColor: theme.palette.action.hover,
+          },
+        }}
+      >
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell style={{ backgroundColor: mainColor, color: contrastText }}>
+              <TableCell
+                sx={{
+                  backgroundColor: mainColor,
+                  color: contrastText,
+                  fontSize: '0.875rem',
+                }}
+              >
                 Tank
               </TableCell>
-              <TableCell style={{ backgroundColor: mainColor, color: contrastText }}>
+              <TableCell
+                sx={{
+                  backgroundColor: mainColor,
+                  color: contrastText,
+                  fontSize: '0.875rem',
+                }}
+              >
                 Product
               </TableCell>
-              <TableCell 
-                style={{ 
-                  backgroundColor: mainColor, 
+              <TableCell
+                align="right"
+                sx={{
+                  backgroundColor: mainColor,
                   color: contrastText,
-                  textAlign: 'right'
+                  fontSize: '0.875rem',
                 }}
               >
                 Reading
               </TableCell>
-              <TableCell 
-                style={{ 
-                  backgroundColor: mainColor, 
+              <TableCell
+                align="right"
+                sx={{
+                  backgroundColor: mainColor,
                   color: contrastText,
-                  textAlign: 'right'
+                  fontSize: '0.875rem',
                 }}
               >
                 Deviation
               </TableCell>
             </TableRow>
           </TableHead>
-         <TableBody>
-          {dippingData?.readings?.map((reading, index) => (
-            <TableRow
-              key={reading.id ?? index} // use real id if exists, fallback to index
-              sx={{
-                backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
-              }}
-            >
-              <TableCell>{reading.tank?.name ?? '—'}</TableCell>
-              <TableCell>{reading.product?.name ?? '—'}</TableCell>
-              <TableCell align="right">
-                {reading.reading != null
-                  ? Number(reading.reading).toLocaleString('en-US', {
-                      minimumFractionDigits: 3,
-                      maximumFractionDigits: 3,
-                    })
-                  : '0.000'}
-              </TableCell>
-              <TableCell align="right">
-                {reading.deviation != null
-                  ? Number(reading.deviation).toLocaleString('en-US', {
-                      minimumFractionDigits: 3,
-                      maximumFractionDigits: 3,
-                    })
-                  : '0.000'}
-              </TableCell>
-            </TableRow>
-          ))}
 
-          {/* Optional: Show message when no readings */}
-          {(!dippingData?.readings || dippingData.readings.length === 0) && (
-            <TableRow>
-              <TableCell colSpan={4} align="center" sx={{ py: 3, fontStyle: 'italic' }}>
-                No readings available
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
+          <TableBody>
+            {dippingData?.readings?.map((reading, index) => (
+              <TableRow
+                key={reading.id ?? index}
+                sx={{
+                  backgroundColor:
+                    index % 2 === 0
+                      ? theme.palette.background.paper
+                      : theme.palette.action.hover,
+                }}
+              >
+                <TableCell>
+                  {reading.tank?.name ?? '—'}
+                </TableCell>
+                <TableCell>
+                  {reading.product?.name ?? '—'}
+                </TableCell>
+                <TableCell
+                  align="right"
+                  sx={{ fontFamily: 'monospace' }}
+                >
+                  {reading.reading != null
+                    ? Number(reading.reading).toLocaleString('en-US', {
+                        minimumFractionDigits: 3,
+                        maximumFractionDigits: 3,
+                      })
+                    : '0.000'}
+                </TableCell>
+                <TableCell
+                  align="right"
+                  sx={{ fontFamily: 'monospace' }}
+                >
+                  {reading.deviation != null
+                    ? Number(reading.deviation).toLocaleString('en-US', {
+                        minimumFractionDigits: 3,
+                        maximumFractionDigits: 3,
+                      })
+                    : '0.000'}
+                </TableCell>
+              </TableRow>
+            ))}
+
+            {(!dippingData?.readings ||
+              dippingData.readings.length === 0) && (
+              <TableRow>
+                <TableCell
+                  colSpan={4}
+                  align="center"
+                  sx={{ py: 3, fontStyle: 'italic' }}
+                >
+                  No readings available
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
         </Table>
       </TableContainer>
 
       {dippingData.remarks && (
-        <Grid container spacing={2} marginTop={3}>
-          <Grid size={12}>
-            <Typography variant="subtitle2" style={{ color: mainColor }} fontWeight="bold">
-              Remarks
-            </Typography>
-            <Typography variant="body2" style={{ marginTop: 8 }}>
-              {dippingData.remarks}
-            </Typography>
-          </Grid>
-        </Grid>
+        <Box
+          sx={{
+            p: 2,
+            border: `1px solid ${theme.palette.divider}`,
+            borderRadius: 1,
+            backgroundColor: theme.palette.background.default,
+          }}
+        >
+          <Typography
+            variant="subtitle2"
+            sx={{ color: headerColor }}
+            fontWeight="bold"
+            gutterBottom
+          >
+            Remarks
+          </Typography>
+          <Divider sx={{ mb: 1 }} />
+          <Typography variant="body2">
+            {dippingData.remarks}
+          </Typography>
+        </Box>
       )}
     </Box>
   );
-}
+};
 
 export default DippingsOnScreen;
