@@ -219,7 +219,7 @@ const BudgetItemsForm = ({ budget, setOpenDialog }) => {
                   <Grid size={{xs: 12, md: 6}}>
                     <Tooltip title='Total Expenses Items'>
                       <Typography fontWeight="bold" variant="h4" component="span">
-                        {totalExpenseTabamount?.toLocaleString('en-US', { style: 'currency', currency: baseCurrency?.code })}
+                        {totalExpenseTabAmount?.toLocaleString('en-US', { style: 'currency', currency: baseCurrency?.code })}
                       </Typography>
                     </Tooltip>
                   </Grid>
@@ -254,7 +254,7 @@ const BudgetItemsForm = ({ budget, setOpenDialog }) => {
                   <Grid size={{xs: 12, md: 6}}>
                     <Tooltip title='Total Product Items'>
                       <Typography fontWeight="bold" variant="h4" component="span">
-                        {totalProductTabamount?.toLocaleString('en-US', { style: 'currency', currency: baseCurrency?.code })}
+                        {totalProductTabAmount?.toLocaleString('en-US', { style: 'currency', currency: baseCurrency?.code })}
                       </Typography>
                     </Tooltip>
                   </Grid>
@@ -275,7 +275,7 @@ const BudgetItemsForm = ({ budget, setOpenDialog }) => {
                   <Grid size={{xs: 12, md: 6}}>
                     <Tooltip title='Total Subcontract Tasks'>
                       <Typography fontWeight="bold" variant="h4" component="span">
-                        {totalSubContractTabamount?.toLocaleString('en-US', { style: 'currency', currency: baseCurrency?.code })}
+                        {totalSubContractTabAmount?.toLocaleString('en-US', { style: 'currency', currency: baseCurrency?.code })}
                       </Typography>
                     </Tooltip>  
                   </Grid>

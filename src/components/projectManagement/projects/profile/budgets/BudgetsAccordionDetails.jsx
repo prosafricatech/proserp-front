@@ -61,13 +61,13 @@ function BudgetsAccordionDetails({ budget, expanded }) {
             <Grid size={{xs: 12, md: 4}}>
               <Typography variant="subtitle1" color="textSecondary">Total Budgeted</Typography>
               <Typography variant="h5">
-                {totalBudgetedamount?.toLocaleString('en-US', { style: 'currency', currency: baseCurrency?.code })}
+                {totalBudgetedAmount?.toLocaleString('en-US', { style: 'currency', currency: baseCurrency?.code })}
               </Typography>
             </Grid>
             <Grid size={{xs: 12, md: 4}}>
               <Typography variant="subtitle1" color="textSecondary">Total Spent</Typography>
               <Typography variant="h5">
-                {totalSpentamount?.toLocaleString('en-US', { style: 'currency', currency: baseCurrency?.code })}
+                {totalSpentAmount?.toLocaleString('en-US', { style: 'currency', currency: baseCurrency?.code })}
               </Typography>
             </Grid>
             <Grid size={{xs: 12, md: 4}}>
