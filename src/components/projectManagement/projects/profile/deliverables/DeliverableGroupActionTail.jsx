@@ -1,3 +1,4 @@
+'use client'
 import { PlaylistAdd } from "@mui/icons-material";
 import { ButtonGroup, Dialog, IconButton, Tooltip, useMediaQuery } from "@mui/material";
 import React from "react";

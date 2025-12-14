@@ -227,7 +227,7 @@ const CashierReportOnScreen: React.FC<CashierReportOnScreenProps> = ({
                           <Grid size={{xs: 6, md: 3}} textAlign="end">
                             <Tooltip title="Amount">
                               <Typography>
-                                {incomingItem.amount.toLocaleString('en-US', {
+                                {incomingItem.amount?.toLocaleString('en-US', {
                                   style: 'currency',
                                   currency: currencyCode
                                 })}
@@ -296,7 +296,7 @@ const CashierReportOnScreen: React.FC<CashierReportOnScreenProps> = ({
                           <Grid size={{xs: 6, md: 3}} textAlign="end">
                             <Tooltip title="Amount">
                               <Typography>
-                                {outgoingItem.amount.toLocaleString('en-US', {
+                                {outgoingItem.amount?.toLocaleString('en-US', {
                                   style: 'currency',
                                   currency: currencyCode
                                 })}

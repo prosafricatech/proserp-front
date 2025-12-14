@@ -145,7 +145,7 @@ function TransferPDF({ transaction, authObject }: TransferPDFProps) {
                                 flex: 1.5, 
                                 textAlign: 'right' 
                             }}>
-                                {transactionItem.amount.toLocaleString()}
+                                {transactionItem.amount?.toLocaleString()}
                             </Text>
                         </View>
                     ))}

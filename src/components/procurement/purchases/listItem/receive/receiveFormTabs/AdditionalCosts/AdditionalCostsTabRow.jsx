@@ -45,7 +45,7 @@ function AdditionalCostsTabRow({ additionalCost, setIsDirty, index}) {
             </Grid>
             <Grid size={{xs: 6, md: 1.5}} textAlign={{md: 'right'}}>
               <Tooltip title="Amount">
-                <Typography>{additionalCost.amount.toLocaleString()}</Typography>
+                <Typography>{additionalCost.amount?.toLocaleString()}</Typography>
               </Tooltip>
             </Grid>
             <Grid textAlign={'end'} size={{xs: 6, md: 1}}>

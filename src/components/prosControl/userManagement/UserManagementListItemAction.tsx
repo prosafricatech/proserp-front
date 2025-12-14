@@ -1,3 +1,4 @@
+'use client'
 import {
   MoreHorizOutlined,
   Block as BlockIcon,

@@ -1,3 +1,4 @@
+'use client'
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';

@@ -1,3 +1,4 @@
+'use client'
 import JumboCardQuick from '@jumbo/components/JumboCardQuick'
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { Alert, useMediaQuery } from '@mui/material';

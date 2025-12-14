@@ -76,7 +76,7 @@ function ApprovalOnScreen({ approval, organization, belowLargeScreen }: Approval
     const subtotal = approval?.items?.reduce((total, item) => total + (item.quantity || 0) * (item.rate || 0), 0);
 
     const formatCurrency = (amount: number) => {
-        return amount.toLocaleString('en-US', { 
+        return amount?.toLocaleString('en-US', { 
             style: 'currency', 
             currency: approval.requisition?.currency?.code,
             minimumFractionDigits: 2,
@@ -167,7 +167,7 @@ function ApprovalOnScreen({ approval, organization, belowLargeScreen }: Approval
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {approval.items.map((item: RequisitionItem, index: number) => (
+                                    {approval?.items?.map((item: RequisitionItem, index: number) => (
                                         <React.Fragment key={item.id}>
                                             <TableRow sx={{ 
                                                 backgroundColor: theme.palette.background.paper,
@@ -362,7 +362,7 @@ function ApprovalOnScreen({ approval, organization, belowLargeScreen }: Approval
                             <Typography variant="subtitle2" sx={{ color: headerColor }}>
                                 Approved By
                             </Typography>
-                            <Typography variant="body1">{approval.creator.name}</Typography>
+                            <Typography variant="body1">{approval?.creator?.name}</Typography>
                         </Box>
                     </Grid>
                 </Grid>

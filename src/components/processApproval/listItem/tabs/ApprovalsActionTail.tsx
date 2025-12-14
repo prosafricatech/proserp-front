@@ -1,3 +1,4 @@
+'use client'
 import { FactCheckOutlined } from "@mui/icons-material";
 import { 
   ButtonGroup, 

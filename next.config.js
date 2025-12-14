@@ -40,6 +40,7 @@ const nextConfig = {
       },
     ];
   },
+  turbopack: {},
   images: {
     remotePatterns: [
       {
@@ -49,6 +50,7 @@ const nextConfig = {
         pathname: '/**',
       },
     ],
+    unoptimized: false,
   },
 };
 

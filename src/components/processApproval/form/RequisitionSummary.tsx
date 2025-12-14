@@ -19,7 +19,7 @@ function RequisitionSummary({ vatableAmount, totalAmount, isPurchase }: Requisit
       </Grid>
       <Grid size={{xs: 7}}>
         <Typography align='right' variant='h5'>
-          {totalAmount.toLocaleString('en-US', {maximumFractionDigits: 2, minimumFractionDigits: 2})}
+          {totalAmount?.toLocaleString('en-US', {maximumFractionDigits: 2, minimumFractionDigits: 2})}
         </Typography>
       </Grid>
       {isPurchase &&

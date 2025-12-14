@@ -1,3 +1,4 @@
+'use client'
 import React, { useEffect, useState } from 'react';
 import { useDashboardSettings } from '../Dashboard';
 import JumboCardQuick from '@jumbo/components/JumboCardQuick';

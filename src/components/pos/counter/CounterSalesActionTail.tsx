@@ -1,3 +1,4 @@
+'use client'
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { AddOutlined } from '@mui/icons-material'
 import { Dialog, IconButton, Tooltip, useMediaQuery } from '@mui/material'

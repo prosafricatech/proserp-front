@@ -41,7 +41,7 @@ const DebtorCreditorOnScreen = ({ reportData, authOrganization, user }) => {
                             <TableCell>{index + 1}</TableCell>
                             <TableCell>{data.name}</TableCell>
                             <TableCell align="right">
-                                {data.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                {data.amount?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </TableCell>
                         </TableRow>
                     ))}

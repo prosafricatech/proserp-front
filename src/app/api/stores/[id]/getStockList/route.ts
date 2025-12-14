@@ -1,21 +1,25 @@
-import { getAuthHeaders, handleJsonResponse } from '@/lib/utils/apiUtils';
 import { NextRequest } from 'next/server';
+import { getAuthHeaders, handleJsonResponse } from '@/lib/utils/apiUtils';
 
 const API_BASE = process.env.API_BASE_URL!;
 
-export async function GET(request: NextRequest, context: any) {
-const { params } = context as { params: { id: string } };
-  const { headers, response } = await getAuthHeaders(request);
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+
+  const { headers, response } = await getAuthHeaders(req);
   if (response) return response;
 
-  const { searchParams } = new URL(request.url);
+  const { searchParams } = new URL(req.url);
   const keyword = searchParams.get('keyword') || '';
   const page = searchParams.get('page') || '1';
   const limit = searchParams.get('limit') || '10';
 
   const query = new URLSearchParams({ keyword, page, limit }).toString();
 
-  const res = await fetch(`${API_BASE}/stores/${params.id}/stock_list?${query}`, {
+  const res = await fetch(`${API_BASE}/stores/${id}/stock_list?${query}`, {
     headers,
     credentials: 'include',
   });

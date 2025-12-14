@@ -1,3 +1,4 @@
+'use client'
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
 import { 
   AttachmentOutlined, 

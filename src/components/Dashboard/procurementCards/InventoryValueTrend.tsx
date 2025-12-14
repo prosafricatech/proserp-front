@@ -1,3 +1,4 @@
+'use client'
 import JumboCardQuick from '@jumbo/components/JumboCardQuick/JumboCardQuick';
 import React, { useEffect, useState } from 'react';
 import financialReportsServices from '../../accounts/reports/financial-reports-services';

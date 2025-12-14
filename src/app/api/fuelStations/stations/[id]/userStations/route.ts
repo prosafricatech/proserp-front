@@ -1,10 +1,13 @@
+// src/app/api/fuelStations/stations/[id]/userStations/route.ts
+
 import { getAuthHeaders, handleJsonResponse } from '@/lib/utils/apiUtils';
 import { NextRequest } from 'next/server';
 
-const API_BASE = process.env.API_BASE_URL
+const API_BASE = process.env.API_BASE_URL;
 
-export async function GET(request: NextRequest, context: any) {
-const { params } = context as { params: { id: string } };
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+
   const { headers, response } = await getAuthHeaders(request);
   if (response) return response;
 
@@ -14,7 +17,7 @@ const { params } = context as { params: { id: string } };
   const limit = searchParams.get('limit') || '10';
   const query = new URLSearchParams({ keyword, page, limit }).toString();
 
-  const res = await fetch(`${API_BASE}/fuel-stations/user-stations/${params.id}/?${query}`, {
+  const res = await fetch(`${API_BASE}/fuel-stations/user-stations/${id}/?${query}`, {
     headers,
     credentials: 'include',
   });

@@ -1,3 +1,4 @@
+'use client'
 import { DeleteOutlined, EditOutlined, HighlightOffOutlined, MoreHorizOutlined, VisibilityOutlined } from '@mui/icons-material';
 import { Box, Button, Dialog, DialogContent, Grid, IconButton, LinearProgress, Tab, Tabs, Tooltip, useMediaQuery } from '@mui/material';
 import React, { useState } from 'react'

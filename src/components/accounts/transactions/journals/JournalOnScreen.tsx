@@ -119,7 +119,7 @@ function JournalOnScreen({ transaction, authObject }: JournalOnScreenProps) {
                 <TableCell>{item.creditLedgerName}</TableCell>
                 <TableCell>{item.debitLedgerName}</TableCell>
                 <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
-                  {item.amount.toLocaleString('en-US', {
+                  {item.amount?.toLocaleString('en-US', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
                   })}
@@ -149,7 +149,7 @@ function JournalOnScreen({ transaction, authObject }: JournalOnScreenProps) {
               fontFamily: 'monospace'
             }}
           >
-            {totalAmount.toLocaleString("en-US", { 
+            {totalAmount?.toLocaleString("en-US", { 
               style: "currency", 
               currency: currencyCode,
               minimumFractionDigits: 2,

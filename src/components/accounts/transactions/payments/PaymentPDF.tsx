@@ -139,7 +139,7 @@ const PaymentPDF: React.FC<PaymentPDFProps> = ({ transaction, authObject }) => {
                 backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, 
                 flex: 1.5, 
                 textAlign: 'right' 
-              }}>{transactionItem.amount.toLocaleString()}</Text>
+              }}>{transactionItem.amount?.toLocaleString()}</Text>
             </View>
           ))}
         </View>

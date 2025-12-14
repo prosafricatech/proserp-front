@@ -75,7 +75,7 @@ const RequisitionsOnScreen: React.FC<Props> = ({
   const subtotal = requisition?.items?.reduce((total, item) => total + (item.quantity || 0) * (item.rate || 0), 0);
 
   const formatCurrency = (amount: number) => {
-    return amount.toLocaleString('en-US', {
+    return amount?.toLocaleString('en-US', {
       style: 'currency',
       currency: requisition.currency?.code,
       minimumFractionDigits: 2,

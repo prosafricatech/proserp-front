@@ -1,7 +1,14 @@
-'use client'
+'use client';
 
 import React from 'react';
-import { Card, CardHeader, CardContent, CardProps, CardHeaderProps, CardContentProps } from "@mui/material";
+import {
+  Card,
+  CardHeader,
+  CardContent,
+  CardProps,
+  CardHeaderProps,
+  CardContentProps,
+} from '@mui/material';
 import { getBgColorStyle, getBgImageStyle } from '@jumbo/utilities/styleHelpers';
 import { JumboBackdrop } from '../JumboBackdrop';
 
@@ -37,8 +44,8 @@ const JumboCardQuick: React.FC<JumboCardQuickProps> = ({
   noWrapper = false,
   wrapperSx,
   backdrop = false,
-  backdropColor = "#000000",
-  backdropOpacity = "0.7",
+  backdropColor = '#000000',
+  backdropOpacity = '0.7',
   reverse = false,
   divider = false,
   sx,
@@ -49,42 +56,49 @@ const JumboCardQuick: React.FC<JumboCardQuickProps> = ({
 
   React.useEffect(() => {
     let newStyle: React.CSSProperties = {};
-    
+
     if (bgImage) {
       const imageStyle = getBgImageStyle(bgImage);
       if (imageStyle) {
         newStyle = { ...newStyle, ...imageStyle };
       }
     } else if (bgColor) {
-      // Convert color array to valid CSS string
       const colors = Array.isArray(bgColor) ? bgColor.join(', ') : bgColor;
-      const colorStyle = getBgColorStyle({ 
-        colors, 
-        gradientDir: bgGradientDir 
+      const colorStyle = getBgColorStyle({
+        colors,
+        gradientDir: bgGradientDir,
       });
-      
+
       if (colorStyle) {
         const safeStyle: React.CSSProperties = {
           ...colorStyle,
           background: colorStyle.backgroundImage as string | undefined,
           backgroundColor: colorStyle.backgroundColor as React.CSSProperties['backgroundColor'],
-          backgroundImage: colorStyle.backgroundImage as React.CSSProperties['backgroundImage']
+          backgroundImage: colorStyle.backgroundImage as React.CSSProperties['backgroundImage'],
         };
         newStyle = { ...newStyle, ...safeStyle };
       }
     }
-    
+
     setBgStyle(newStyle);
   }, [bgColor, bgImage, bgGradientDir]);
 
   return (
-    <Card sx={{ ...bgStyle, position: "relative", ...sx }} {...restProps}>
+    <Card
+      sx={[
+        bgStyle,
+        { position: 'relative' },
+        ...(Array.isArray(sx) ? sx : [sx ?? false]).filter(Boolean),
+      ]}
+      {...restProps}
+    >
       <JumboBackdrop
         color={backdropColor}
         opacity={backdropOpacity}
         open={backdrop}
       />
-      {(action || title || avatar) && !reverse && (
+
+      {(action || title || avatar || subheader) && !reverse && (
         <CardHeader
           title={title}
           subheader={subheader}
@@ -92,19 +106,27 @@ const JumboCardQuick: React.FC<JumboCardQuickProps> = ({
           avatar={avatar}
           sx={{
             zIndex: 2,
-            position: "relative",
+            position: 'relative',
             ...headerSx,
           }}
         />
       )}
+
       {noWrapper ? (
         children
       ) : (
-        <CardContent sx={{ ...wrapperSx, zIndex: 2, position: "relative" }}>
+        <CardContent
+          sx={{
+            ...wrapperSx,
+            zIndex: 2,
+            position: 'relative',
+          }}
+        >
           {children}
         </CardContent>
       )}
-      {(action || title || avatar) && reverse && (
+
+      {(action || title || avatar || subheader) && reverse && (
         <CardHeader
           title={title}
           subheader={subheader}
@@ -112,8 +134,9 @@ const JumboCardQuick: React.FC<JumboCardQuickProps> = ({
           avatar={avatar}
           sx={{
             zIndex: 2,
-            position: "relative",
-            borderBottomColor: (theme) => theme.palette.divider,
+            position: 'relative',
+            borderTop: divider ? 1 : 0,
+            borderTopColor: 'divider',
             ...headerSx,
           }}
         />

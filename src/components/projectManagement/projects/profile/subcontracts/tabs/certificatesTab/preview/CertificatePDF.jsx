@@ -172,13 +172,13 @@ function CertificatePDF({ certificate, organization }) {
                     <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFF' : lightColor, flex: 0.7, textAlign: 'center' }}>{item.unit}</Text>
                     <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFF' : lightColor, flex: 1, textAlign: 'right' }}>{item.contractQty}</Text>
                     <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFF' : lightColor, flex: 1, textAlign: 'right', fontSize: 7.5 }}>{item.unitRate.toLocaleString()}</Text>
-                    <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFF' : lightColor, flex: 1, textAlign: 'right', fontSize: 7.5 }}>{item.contractAmount.toLocaleString()}</Text>
+                    <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFF' : lightColor, flex: 1, textAlign: 'right', fontSize: 7.5 }}>{item.contractamount?.toLocaleString()}</Text>
                     <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFF' : lightColor, flex: 1.2, textAlign: 'right' }}>{item.previousQty}</Text>
                     <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFF' : lightColor, flex: 1.2, textAlign: 'right' }}>{item.presentQty}</Text>
                     <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFF' : lightColor, flex: 1.2, textAlign: 'right' }}>{item.cumulativeQty}</Text>
-                    <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFF' : lightColor, flex: 1.2, textAlign: 'right', fontSize: 7.5 }}>{item.previousAmount.toLocaleString()}</Text>
-                    <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFF' : lightColor, flex: 1.2, textAlign: 'right', fontSize: 7.5 }}>{item.presentAmount.toLocaleString()}</Text>
-                    <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFF' : lightColor, flex: 1.2, textAlign: 'right', fontSize: 7.5 }}>{item.cumulativeAmount.toLocaleString()}</Text>
+                    <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFF' : lightColor, flex: 1.2, textAlign: 'right', fontSize: 7.5 }}>{item.previousamount?.toLocaleString()}</Text>
+                    <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFF' : lightColor, flex: 1.2, textAlign: 'right', fontSize: 7.5 }}>{item.presentamount?.toLocaleString()}</Text>
+                    <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFF' : lightColor, flex: 1.2, textAlign: 'right', fontSize: 7.5 }}>{item.cumulativeamount?.toLocaleString()}</Text>
                   </View>
                 ))}
 
@@ -188,17 +188,17 @@ function CertificatePDF({ certificate, organization }) {
                     GRAND TOTAL {currencyCode}
                   </Text>
                   <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1, textAlign: 'right', fontSize: 7 }}>
-                    {totals.contractAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    {totals.contractamount?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                   </Text>
                   <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 3.9 }}></Text>
                   <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.2, textAlign: 'right', fontSize: 7 }}>
-                    {totals.previousAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    {totals.previousamount?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                   </Text>
                   <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.2, textAlign: 'right', fontSize: 7 }}>
-                    {totals.presentAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    {totals.presentamount?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                   </Text>
                   <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.2, textAlign: 'right', fontSize: 7 }}>
-                    {totals.cumulativeAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    {totals.cumulativeamount?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                   </Text>
                 </View>
               </View>

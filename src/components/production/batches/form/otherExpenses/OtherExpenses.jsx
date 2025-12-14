@@ -332,7 +332,7 @@ function OtherExpenses({productionDates, setClearFormKey, clearFormKey, submitMa
                               <Grid size={{xs: 6, md: 2}} textAlign={{xs:'end', md:'start'}}>
                                   <Tooltip title={'Amount'}>
                                       <Typography variant="h5" fontSize={14} lineHeight={1.25} mb={0} noWrap>
-                                          {expensemanifest.amount.toLocaleString("en-US", { 
+                                          {expensemanifest.amount?.toLocaleString("en-US", { 
                                               style: "currency", 
                                               currency: expensemanifest.journalable.currency?.code 
                                           })}

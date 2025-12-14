@@ -11,7 +11,6 @@ import ProductsSelectProvider from '../../productAndServices/products/ProductsSe
 import { useParams } from 'next/navigation';
 import { Dipping, DippingsProps } from './DippingsTypes';
 
-
 export const DippingsFormContext = createContext({});
 const Dippings: React.FC<DippingsProps> = ({ activeStation }) => {
   const params = useParams();

@@ -1,3 +1,4 @@
+'use client'
 import { DeleteOutlined, DownloadOutlined, EditOutlined, MoreHorizOutlined, VisibilityOutlined } from '@mui/icons-material';
 import { Dialog, DialogContent, LinearProgress, Tooltip, useMediaQuery } from '@mui/material';
 import { useSnackbar } from 'notistack';

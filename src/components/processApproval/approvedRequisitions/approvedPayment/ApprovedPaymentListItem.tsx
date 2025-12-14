@@ -1,3 +1,4 @@
+'use client'
 import React, { useState } from 'react';
 import { 
   Grid, 
@@ -220,7 +221,7 @@ const ApprovedPaymentListItem: React.FC<ApprovedPaymentListItemProps> = ({
             <Tooltip title={'Amount'}>
               <Box sx={{ marginRight: 1 }}>
                 <Typography variant="body1" fontSize={14} lineHeight={1.25} mb={0} noWrap>
-                  {pay.journals_sum_amount.toLocaleString("en-US", {
+                  {pay.journals_sum_amount?.toLocaleString("en-US", {
                     style: "currency", 
                     currency: pay.currency.code
                   })}

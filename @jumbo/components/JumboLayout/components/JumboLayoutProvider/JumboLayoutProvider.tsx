@@ -13,10 +13,10 @@ import {
   LayoutWrapperOptions,
 } from '@jumbo/types';
 import { LAYOUT_ACTIONS, SIDEBAR_VARIANTS } from '@jumbo/utilities/constants';
-import { useMediaQuery } from '@mui/system';
 import React from 'react';
 import { JumboLayoutContext, defaultLayoutOptions } from './JumboLayoutContext';
 import { jumboLayoutReducer } from './reducer';
+import { useMediaQuery } from '@mui/material';
 
 function JumboLayoutProvider({
   children,

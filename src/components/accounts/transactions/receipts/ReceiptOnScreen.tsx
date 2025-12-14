@@ -158,7 +158,7 @@ function ReceiptOnScreen({ transaction, authObject }: ReceiptOnScreenProps) {
                     fontSize: '0.875rem'
                   }}
                 >
-                  {item.amount.toLocaleString('en-US', {
+                  {item.amount?.toLocaleString('en-US', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
                   })}
@@ -194,7 +194,7 @@ function ReceiptOnScreen({ transaction, authObject }: ReceiptOnScreenProps) {
                 fontFamily: 'monospace'
               }}
             >
-              {totalAmount.toLocaleString("en-US", { 
+              {totalAmount?.toLocaleString("en-US", { 
                 style: "currency", 
                 currency: currencyCode,
                 minimumFractionDigits: 2,

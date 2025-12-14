@@ -157,7 +157,7 @@ function TransferOnScreen({ transaction, authObject }: TransferOnScreenProps) {
                     fontFamily: 'monospace',
                   }}
                 >
-                  {item.amount.toLocaleString('en-US', {
+                  {item.amount?.toLocaleString('en-US', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
                   })}
@@ -184,7 +184,7 @@ function TransferOnScreen({ transaction, authObject }: TransferOnScreenProps) {
             }}
             color={headerColor}
           >
-            {totalAmount.toLocaleString("en-US", { 
+            {totalAmount?.toLocaleString("en-US", { 
               style: "currency", 
               currency: currencyCode,
               minimumFractionDigits: 2,

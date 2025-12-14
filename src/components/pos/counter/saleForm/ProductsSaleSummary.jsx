@@ -5,8 +5,8 @@ import { useVFD } from "@/components/vfd/VFDProvider";
 import { debounce } from 'lodash';
 
 function ProductsSaleSummary() {
-  const [totalAmount, setTotalAmount] = useState(0);
-  const [vatableAmount, setVatableAmount] = useState(0);
+  const [totalAmount, settotalAmount] = useState(0);
+  const [vatableAmount, setvatableAmount] = useState(0);
 
   const {
     items,
@@ -41,7 +41,7 @@ function ProductsSaleSummary() {
         setValue(`items.${index}.store_id`, item.store_id);
       });
 
-      setTotalAmount(total);
+      settotalAmount(total);
     }
 
     async function loopItemsForVAT() {
@@ -53,7 +53,7 @@ function ProductsSaleSummary() {
           vatable += item.rate * item.quantity;
         });
 
-      setVatableAmount(vatable);
+      setvatableAmount(vatable);
     }
 
     loopItems();
@@ -91,7 +91,7 @@ function ProductsSaleSummary() {
       </Grid>
       <Grid size={6}>
         <Typography align="right" variant="h5">
-          {totalAmount.toLocaleString('en-US', {
+          {totalAmount?.toLocaleString('en-US', {
             maximumFractionDigits: 2,
             minimumFractionDigits: 2
           })}
@@ -121,7 +121,7 @@ function ProductsSaleSummary() {
 
           <Grid size={6} display="flex" alignItems="center" justifyContent="end">
             <Typography align="right" variant="h5">
-              {vatAmount.toLocaleString('en-US', {
+              {vatAmount?.toLocaleString('en-US', {
                 maximumFractionDigits: 2,
                 minimumFractionDigits: 2
               })}

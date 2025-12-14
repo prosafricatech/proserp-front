@@ -12,8 +12,12 @@ const getTimezoneOffset = (): string => {
   return `${sign}${hours}:${minutes}`;
 };
 
-export async function POST(request: NextRequest, context: any) {
-  const { params } = context;
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+
   try {
     const token = await getToken({ req: request });
 
@@ -31,7 +35,7 @@ export async function POST(request: NextRequest, context: any) {
     headers.append('X-Timezone', getTimezoneOffset());
     headers.append('X-OrganizationId', token.organizationId as string);
 
-    const res = await fetch(`${API_BASE}/organizations/update/${params.id}`, {
+    const res = await fetch(`${API_BASE}/organizations/update/${id}`, {
       method: 'POST',
       headers,
       body: formData,

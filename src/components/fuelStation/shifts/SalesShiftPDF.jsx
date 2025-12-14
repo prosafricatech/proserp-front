@@ -154,12 +154,12 @@ function SalesShiftPDF({ includeFuelVouchers, shiftData, organization, shift_tea
                     {cashAccounts.map((account, index) => (
                         <View key={index} style={pdfStyles.tableRow}>
                             <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 3 }}>{account.name}</Text>
-                            <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1.5, textAlign: 'right' }}>{account.amount.toLocaleString('en-US',{minimumFractionDigits: 2, maximumFractionDigits:2})}</Text>
+                            <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1.5, textAlign: 'right' }}>{account.amount?.toLocaleString('en-US',{minimumFractionDigits: 2, maximumFractionDigits:2})}</Text>
                         </View>
                     ))}
                     <View style={{ ...pdfStyles.tableRow}}>
                         <Text style={{ ...pdfStyles.tableHeader, ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, flex: 3, textAlign: 'left', fontWeight: 'bold' }}>Total</Text>
-                        <Text style={{ ...pdfStyles.tableHeader, ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, flex: 1.5, textAlign: 'right', fontWeight: 'bold' }}>{totalCashAccountsAmount.toLocaleString('en-US',{minimumFractionDigits: 2, maximumFractionDigits:2})}</Text>
+                        <Text style={{ ...pdfStyles.tableHeader, ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, flex: 1.5, textAlign: 'right', fontWeight: 'bold' }}>{totalCashAccountsamount?.toLocaleString('en-US',{minimumFractionDigits: 2, maximumFractionDigits:2})}</Text>
                     </View>
                 </View>
 
@@ -286,7 +286,7 @@ function SalesShiftPDF({ includeFuelVouchers, shiftData, organization, shift_tea
                     ))}
                     <View style={{ ...pdfStyles.tableRow}}>
                         <Text style={{ ...pdfStyles.tableHeader, ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, flex: 13.5, textAlign: 'left', fontWeight: 'bold' }}>Total</Text>
-                        <Text style={{ ...pdfStyles.tableHeader, ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, flex: 1.5, textAlign: 'right', fontWeight: 'bold' }}>{totalFuelVouchersAmount.toLocaleString('en-US',{minimumFractionDigits: 2, maximumFractionDigits:2})}</Text>
+                        <Text style={{ ...pdfStyles.tableHeader, ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, flex: 1.5, textAlign: 'right', fontWeight: 'bold' }}>{totalFuelVouchersamount?.toLocaleString('en-US',{minimumFractionDigits: 2, maximumFractionDigits:2})}</Text>
                     </View>
                 </View>
             }

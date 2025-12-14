@@ -51,7 +51,7 @@ function ProformaItemRow({
     return item.quantity * item.rate * (1 + (product?.vat_exempted ? 0 : vat_factor));
   };
 
-  const calculateVatAmount = (): number => {
+  const calculatevatAmount = (): number => {
     return product?.vat_exempted ? 0 : item.rate * vat_factor;
   };
 
@@ -108,7 +108,7 @@ function ProformaItemRow({
             <Grid size={{ xs: 4, md: 2, lg: 2 }}>
               <Tooltip title="VAT">
                 <Typography textAlign="end" variant="body2">
-                  {calculateVatAmount().toLocaleString()}
+                  {calculatevatAmount().toLocaleString()}
                 </Typography>
               </Tooltip>
             </Grid>

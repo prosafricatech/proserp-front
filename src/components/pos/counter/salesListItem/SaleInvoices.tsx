@@ -1,3 +1,4 @@
+'use client'
 import React, { useState } from 'react';
 import posServices from '../../pos-services';
 import { 

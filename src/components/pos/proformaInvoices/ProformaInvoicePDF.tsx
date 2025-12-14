@@ -153,7 +153,7 @@ function ProformaInvoicePDF({ proforma, organization }: ProformaInvoicePDFProps)
                         Total
                     </Text>
                     <Text style={{...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2.2, textAlign: 'right'}}>
-                        {proforma.amount.toLocaleString("en-US", { style: "currency", currency: currencyCode })}
+                        {proforma.amount?.toLocaleString("en-US", { style: "currency", currency: currencyCode })}
                     </Text>
                 </View>
 
@@ -165,7 +165,7 @@ function ProformaInvoicePDF({ proforma, organization }: ProformaInvoicePDFProps)
                                 VAT
                             </Text>
                             <Text style={{...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2.2, textAlign: 'right'}}>
-                                {proforma.vat_amount.toLocaleString("en-US", { style: "currency", currency: currencyCode })}
+                                {proforma.vat_amount?.toLocaleString("en-US", { style: "currency", currency: currencyCode })}
                             </Text>
                         </View>
                         <View style={{ ...pdfStyles.tableRow, marginTop: 4 }}>

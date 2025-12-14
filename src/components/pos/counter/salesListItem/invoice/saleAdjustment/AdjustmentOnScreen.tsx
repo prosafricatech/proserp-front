@@ -57,7 +57,7 @@ const formatCurrency = (
   currencyCode: string,
   options?: Intl.NumberFormatOptions
 ): string => {
-  return amount.toLocaleString('en-US', {
+  return amount?.toLocaleString('en-US', {
     style: 'currency',
     currency: currencyCode,
     minimumFractionDigits: 2,

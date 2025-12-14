@@ -16,6 +16,7 @@ import { isUrlInChildren } from '@jumbo/utilities/urlHelpers';
 import { ArrowWrapper } from "@jumbo/components/JumboVerticalNavbar/style";
 import JumboNavIdentifier from "@jumbo/components/JumboVerticalNavbar/JumboNavIdentifier";
 import { useJumboLayout } from '../JumboLayout/hooks';
+import AppIcon from '@/components/AppIcon';
 
 const menuBefore = {
   left: 0,
@@ -100,7 +101,7 @@ const JumboNavCollapsible = ({ item, translate }) => {
         )}
         {item.icon && (
           <ListItemIcon sx={{ minWidth: isMiniAndClosed ? 20 : 32, color: 'inherit' }}>
-            {item.icon}
+            {typeof item.icon === 'string' ? <AppIcon name={item.icon} /> : item.icon}
           </ListItemIcon>
         )}
         {!isMiniAndClosed && (

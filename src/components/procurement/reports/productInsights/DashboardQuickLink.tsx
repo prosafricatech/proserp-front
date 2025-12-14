@@ -1,3 +1,4 @@
+'use client'
 import { InsightsOutlined } from '@mui/icons-material'
 import { Button, Dialog, DialogActions, Typography, useMediaQuery } from '@mui/material'
 import React, { useState } from 'react'

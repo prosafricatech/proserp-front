@@ -1,5 +1,5 @@
-import { getAuthHeaders, handleJsonResponse } from '@/lib/utils/apiUtils';
 import { NextRequest } from 'next/server';
+import { getAuthHeaders, handleJsonResponse } from '@/lib/utils/apiUtils';
 
 const API_BASE = process.env.API_BASE_URL!;
 
@@ -11,9 +11,9 @@ export async function GET(request: NextRequest) {
   const searchParams = url.searchParams;
   const queryString = searchParams.toString();
 
-  // Extract ID from the pathname
   const pathnameParts = url.pathname.split('/');
-  const id = pathnameParts[pathnameParts.length - 2];
+  const idIndex = pathnameParts.indexOf('inventory-consumptions') - 1;
+  const id = pathnameParts[idIndex];
 
   const res = await fetch(`${API_BASE}/stores/${id}/inventory-consumptions?${queryString}`, {
     headers,

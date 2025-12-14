@@ -163,7 +163,7 @@ const SalePDF: React.FC<SalePDFProps> = ({ sale, organization, thermalPrinter = 
                 <View style={{...pdfStyles.tableRow, marginTop: 5}}>
                     <Text style={{ ...pdfStyles.tableHeader, ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, flex: 2}}>Total</Text>
                     <Text style={{ ...pdfStyles.tableHeader, ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, flex: 2.2, textAlign: 'right'}}>
-                        {sale.amount.toLocaleString("en-US", {style: "currency", currency: currencyCode})}
+                        {sale.amount?.toLocaleString("en-US", {style: "currency", currency: currencyCode})}
                     </Text>
                 </View>
                 {sale.vat_percentage > 0 && (
@@ -171,7 +171,7 @@ const SalePDF: React.FC<SalePDFProps> = ({ sale, organization, thermalPrinter = 
                         <View style={{ ...pdfStyles.tableRow, marginTop: 2 }}>
                             <Text style={{...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, flex: 2}}>VAT</Text>
                             <Text style={{...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, flex: 2.2, textAlign: 'right'}}>
-                                {sale.vat_amount.toLocaleString("en-US", {style: "currency", currency: currencyCode})}
+                                {sale.vat_amount?.toLocaleString("en-US", {style: "currency", currency: currencyCode})}
                             </Text>
                         </View>
                         <View style={{ ...pdfStyles.tableRow, marginTop: 2 }}>
@@ -327,7 +327,7 @@ const SalePDF: React.FC<SalePDFProps> = ({ sale, organization, thermalPrinter = 
                 <Text style={{ textAlign: 'center', flex: 4.5 }}></Text>
                 <Text style={{ ...pdfStyles.tableCell, ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2, textAlign: 'right' }}>Total</Text>
                 <Text style={{ ...pdfStyles.tableCell, ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2.2, textAlign: 'right' }}>
-                    {sale.amount.toLocaleString("en-US", {style: "currency", currency: currencyCode})}
+                    {sale.amount?.toLocaleString("en-US", {style: "currency", currency: currencyCode})}
                 </Text>
             </View>
             {sale.vat_percentage > 0 && (
@@ -336,7 +336,7 @@ const SalePDF: React.FC<SalePDFProps> = ({ sale, organization, thermalPrinter = 
                         <Text style={{ textAlign: 'center', flex: 4.5 }}></Text>
                         <Text style={{...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2, textAlign: 'right' }}>VAT</Text>
                         <Text style={{...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2.2, textAlign: 'right' }}>
-                            {sale.vat_amount.toLocaleString("en-US", {style: "currency", currency: currencyCode})}
+                            {sale.vat_amount?.toLocaleString("en-US", {style: "currency", currency: currencyCode})}
                         </Text>
                     </View>
                     <View style={{ ...pdfStyles.tableRow, marginTop: 4 }}>
