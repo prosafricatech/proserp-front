@@ -5,21 +5,45 @@ import axios from "@/lib/services/config";
 import { ASSET_IMAGES } from "@/utilities/constants/paths";
 import { Div } from "@jumbo/shared";
 import { LoadingButton } from "@mui/lab";
-import { Card, CardContent, TextField, Typography } from "@mui/material";
+import {
+  Card,
+  CardContent,
+  TextField,
+  Typography,
+  Divider,
+  CircularProgress,
+} from "@mui/material";
 import Link from "next/link";
 import { useSnackbar } from "notistack";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { signOut } from "next-auth/react";
 
 const EmailVerificationNotice = () => {
   const { authUser } = useJumboAuth();
   const [isSending, setIsSending] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
   const router = useRouter();
 
+  if (!authUser) {
+    return (
+      <Div
+        sx={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <CircularProgress />
+      </Div>
+    );
+  }
+
   useEffect(() => {
     if (authUser?.user?.email_verified_at) {
-      router.push("/"); // already verified → go home
+      router.replace("/");
     }
   }, [authUser, router]);
 
@@ -27,26 +51,31 @@ const EmailVerificationNotice = () => {
     if (!authUser?.user?.email) return;
 
     setIsSending(true);
-
     try {
-      const response = await axios.post(`/api/auth/verification-notification`, {
-        email: authUser.user.email,
-      });
+      const response = await axios.post(
+        "/api/auth/verification-notification",
+        { email: authUser.user.email }
+      );
 
-      if (response.status === 200) {
-        enqueueSnackbar(response.data.message, { variant: "success" });
-      }
+      enqueueSnackbar(response.data?.message || "Verification link sent", {
+        variant: "success",
+      });
     } catch (err) {
-      if (err.response?.status === 401) {
-        router.push("/login");
-      } else {
-        enqueueSnackbar(err?.response?.data?.message || "Something went wrong", {
-          variant: "error",
-        });
-      }
+      enqueueSnackbar(
+        err?.response?.data?.message || "Failed to resend verification email",
+        { variant: "error" }
+      );
     } finally {
       setIsSending(false);
     }
+  };
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    await signOut({
+      redirect: true,
+      callbackUrl: "/auth/signin",
+    });
   };
 
   return (
@@ -95,19 +124,33 @@ const EmailVerificationNotice = () => {
             fullWidth
             variant="contained"
             size="large"
-            sx={{ mb: 3, mt: 2 }}
+            sx={{ mb: 2 }}
           >
             Resend verification link
           </LoadingButton>
 
-          <Typography textAlign="center" variant="body1" mb={1}>
+          <Divider sx={{ my: 2 }} />
+
+          <LoadingButton
+            onClick={handleLogout}
+            loading={isLoggingOut}
+            fullWidth
+            variant="outlined"
+            color="error"
+            size="large"
+            sx={{ mb: 2 }}
+          >
+            Logout
+          </LoadingButton>
+
+          <Typography textAlign="center" variant="body2" mb={1}>
             Already Verified?{" "}
             <Link href="/" style={{ textDecoration: "none" }}>
               Proceed to Homepage
             </Link>
           </Typography>
 
-          <Typography textAlign="center" variant="body1" mb={1}>
+          <Typography textAlign="center" variant="body2">
             Don't remember your email?{" "}
             <Link href="/support" style={{ textDecoration: "none" }}>
               Contact Support

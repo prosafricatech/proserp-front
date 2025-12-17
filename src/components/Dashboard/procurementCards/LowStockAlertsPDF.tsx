@@ -2,10 +2,9 @@ import { Text, View, Document, Page } from '@react-pdf/renderer'
 import React from 'react'
 import pdfStyles from '../../pdf/pdf-styles';
 import PdfLogo from '../../pdf/PdfLogo';
-import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import { CostCenter } from '@/components/masters/costCenters/CostCenterType';
-import { Organization } from '@/types/auth-types';
+import { AuthUser, Organization } from '@/types/auth-types';
 
 interface AlertItem {
   product_name: string;
@@ -22,13 +21,13 @@ interface Store {
 interface LowStockStoresPDFProps {
   organization?: Organization | null;
   stores: Store[];
+  authUser: AuthUser
 }
 
-function LowStockStoresPDF({ organization = null, stores }: LowStockStoresPDFProps) {
+function LowStockStoresPDF({ organization = null, stores, authUser }: LowStockStoresPDFProps) {
   const mainColor = organization?.settings?.main_color || "#2113AD";
   const lightColor = organization?.settings?.light_color || "#bec5da";
   const contrastText = organization?.settings?.contrast_text || "#FFFFFF";
-  const { authUser } = useJumboAuth();
 
   return (
     <Document 
@@ -61,28 +60,28 @@ function LowStockStoresPDF({ organization = null, stores }: LowStockStoresPDFPro
               </View>
               <View style={{ ...pdfStyles.table, padding:2 }}>
               <View style={pdfStyles.tableRow}>
-                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.2 }}>S/N</Text>
-                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1 }}>Product</Text>
-                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.3 }}>Threshold</Text>
-                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.3 }}>Available Stock</Text>
-                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1 }}>Cost Centers</Text>
+                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.1 }}>S/N</Text>
+                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.25 }}>Product</Text>
+                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.2 }}>Threshold</Text>
+                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.2 }}>Available Stock</Text>
+                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.25 }}>Cost Centers</Text>
               </View>
                 {
-                  store.alerts.map((item, itemIndex) => (
+                  store?.alerts?.map((item, itemIndex) => (
                     <View key={itemIndex} style={pdfStyles.tableRow}>
-                      <Text style={{ ...pdfStyles.tableCell, backgroundColor: itemIndex % 2 === 0 ? '#FFFFFF' : lightColor, flex:0.2 }}>{itemIndex+1}</Text>
-                      <Text style={{ ...pdfStyles.tableCell, backgroundColor: itemIndex % 2 === 0 ? '#FFFFFF' : lightColor, flex:1 }}>{item.product_name}</Text>
-                      <Text style={{ ...pdfStyles.tableCell, backgroundColor: itemIndex % 2 === 0 ? '#FFFFFF' : lightColor, flex: 0.3, textAlign:'right'  }}>{item.threshold}</Text>
+                      <Text style={{ ...pdfStyles.tableCell, backgroundColor: itemIndex % 2 === 0 ? '#FFFFFF' : lightColor, flex: 0.1 }}>{itemIndex+1}</Text>
+                      <Text style={{ ...pdfStyles.tableCell, backgroundColor: itemIndex % 2 === 0 ? '#FFFFFF' : lightColor, flex: 0.25 }}>{item.product_name}</Text>
+                      <Text style={{ ...pdfStyles.tableCell, backgroundColor: itemIndex % 2 === 0 ? '#FFFFFF' : lightColor, flex: 0.2, textAlign:'right'  }}>{item.threshold}</Text>
                       <Text style={{ 
                         ...pdfStyles.tableCell, 
                         backgroundColor: itemIndex % 2 === 0 ? '#FFFFFF' : lightColor, 
-                        flex: 0.3, 
+                        flex: 0.2, 
                         textAlign:'right', 
                         color: item.available_stock < (item.threshold/2) ? '#d60404' : '#f54905' 
                       }}>
                         {item.available_stock}
                       </Text>
-                      <Text style={{ ...pdfStyles.tableCell, backgroundColor: itemIndex % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1}}>
+                      <Text style={{ ...pdfStyles.tableCell, backgroundColor: itemIndex % 2 === 0 ? '#FFFFFF' : lightColor, flex: 0.25}}>
                         {item.cost_centers.map(cc => cc.name).join(',')}
                       </Text>
                     </View>

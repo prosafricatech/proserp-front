@@ -6,14 +6,8 @@ import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import SaleShiftForm from './SaleShiftForm';
-import { SalesShift } from './SalesShiftTypes';
 
-interface SaleShiftFormProps {
-  SalesShift?: SalesShift | null;     // Make it optional + allow null
-  setOpenDialog: React.Dispatch<React.SetStateAction<boolean>>;
-}
-
-const SalesShiftsActionTail: React.FC = () => {
+const SalesShiftsActionTail = () => {
   const { checkOrganizationPermission } = useJumboAuth();
   const [openDialog, setOpenDialog] = useState(false);
 
@@ -24,10 +18,7 @@ const SalesShiftsActionTail: React.FC = () => {
   return (
     <React.Fragment>
       <Dialog maxWidth="lg" scroll={belowLargeScreen ? 'body' : 'paper'} fullWidth fullScreen={belowLargeScreen} open={openDialog}>
-        <SaleShiftForm
-          SalesShift={null}                     // This tells the form: "create mode"
-          setOpenDialog={setOpenDialog}
-        />
+        <SaleShiftForm setOpenDialog={setOpenDialog} />
       </Dialog>
 
       <ButtonGroup variant="outlined" size="small" disableElevation sx={{ '& .MuiButton-root': { px: 1 } }}>

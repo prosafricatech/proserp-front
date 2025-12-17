@@ -33,6 +33,7 @@ const authOptions = {
             id: data.authUser.user.id,
             name: data.authUser.user.name,
             email: data.authUser.user.email,
+            email_verified_at: data.authUser.user.email_verified_at,
             permissions: data?.authUser?.permissions || [],
             token: data.token,
             organization_id: data.authOrganization?.organization?.id,
@@ -46,29 +47,40 @@ const authOptions = {
     }),
   ],
 
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.user = {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-        };
-        token.permissions = user.permissions;
-        token.organization_id = user.organization_id;
-        token.organization_name = user.organization_name;
-        token.accessToken = user.token;
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      session.user = token.user;
-      session.organization_id = token.organization_id;
-      session.organization_name = token.organization_name;
-      session.permissions = token.permissions;
-      return session;
-    },
+callbacks: {
+  async jwt({ token, user }) {
+    // Wakati user ana-login tu (user exists)
+    if (user) {
+      token.accessToken = user.token;
+      token.organization_id = user.organization_id;
+      token.organization_name = user.organization_name;
+      token.permissions = user.permissions;
+
+      // Weka direct kwenye token (sio nested ndani ya token.user)
+      token.id = user.id;
+      token.name = user.name;
+      token.email = user.email;
+      token.email_verified_at = user.email_verified_at;  // ← HAPA MUHIMU!
+    }
+    return token;
   },
+
+  async session({ session, token }) {
+    // Rudisha data kwenye session kutoka token
+    session.user = {
+      id: token.id,
+      name: token.name,
+      email: token.email,
+      email_verified_at: token.email_verified_at | null,  // ← HAPA PIA!
+    };
+    session.accessToken = token.accessToken;
+    session.organization_id = token.organization_id;
+    session.organization_name = token.organization_name;
+    session.permissions = token.permissions;
+
+    return session;
+  },
+},
 
   session: { strategy: 'jwt', maxAge: 24 * 60 * 60 },
   pages: { signIn: '/login' },

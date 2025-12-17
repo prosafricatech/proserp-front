@@ -43,7 +43,7 @@ const SignupForm = () => {
   const onSubmit = async (data: any) => {
     await signUp(
       data,
-      () => router.push(`/${lang}/auth/verify-email`),
+      () => router.push(`/${lang}/auth/verifyEmail`),
       (error) => {
         stopAuthLoading();
         if (error?.response?.data?.message) {

@@ -21,6 +21,9 @@ import { PurchaseApprovalRequisition } from '../ApprovalRequisitionType';
 import { MenuItemProps } from '@jumbo/types';
 import { Stakeholder } from '@/components/masters/stakeholders/StakeholderType';
 import { Currency } from '@/components/masters/Currencies/CurrencyType';
+import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
+
+dayjs.extend(isSameOrAfter);
 
 interface Order {
   id: number;
@@ -195,20 +198,37 @@ const ApprovedPurchaseItemAction: React.FC<ApprovedPurchaseItemActionProps> = ({
     },
   });
 
+  const canBackdate =
+    checkOrganizationPermission(PERMISSIONS.PURCHASES_BACKDATE) ||
+    dayjs(order.order_date).isSameOrAfter(dayjs().startOf('day'));
+
+  const canManagePurchase =
+    checkOrganizationPermission(
+      PERMISSIONS.APPROVED_REQUISITIONS_PURCHASE
+    ) && order.status !== 'Fully Received';
+
+  const canDelete =
+    canManagePurchase &&
+    !order.has_payment_requisition &&
+    canBackdate;
+
+  const canEdit = canManagePurchase && canBackdate;
+
   const menuItems: MenuItemProps[] = [
-    { icon: <VisibilityOutlined />, title: "View", action: "open" },
-    ...(order.status !== 'Fully Received' && 
-      (checkOrganizationPermission(PERMISSIONS.PURCHASES_BACKDATE) || 
-      dayjs(order.order_date).isSameOrAfter(dayjs().startOf('day'))) && 
-      checkOrganizationPermission(PERMISSIONS.APPROVED_REQUISITIONS_PURCHASE) ? 
-      [{ icon: <EditOutlined />, title: 'Edit', action: 'edit' }] : []),
-    ...(order.status !== 'Fully Received' && 
-      !order.has_payment_requisition && 
-      (checkOrganizationPermission(PERMISSIONS.PURCHASES_BACKDATE) || 
-      dayjs(order.order_date).isSameOrAfter(dayjs().startOf('day'))) && 
-      checkOrganizationPermission(PERMISSIONS.APPROVED_REQUISITIONS_PURCHASE) ? 
-      [{ icon: <DeleteOutlined color="error" />, title: 'Delete', action: 'delete' }] : [])
-  ].flat();
+    { icon: <VisibilityOutlined />, title: 'View', action: 'open' },
+    ...(canEdit
+      ? [{ icon: <EditOutlined />, title: 'Edit', action: 'edit' }]
+      : []),
+    ...(canDelete
+      ? [
+          {
+            icon: <DeleteOutlined color="error" />,
+            title: 'Delete',
+            action: 'delete',
+          },
+        ]
+      : []),
+  ];
 
   const handleItemAction = (menuItem: MenuItemProps) => {
     switch (menuItem.action) {

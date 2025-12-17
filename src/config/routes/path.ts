@@ -5,5 +5,5 @@ export const anonymousPaths = [
     '/auth/signup',
     '/auth/reset-password',
     '/auth/forgot-password',
-    '/auth/verify-email',
+    '/auth/verifyEmail',
 ];

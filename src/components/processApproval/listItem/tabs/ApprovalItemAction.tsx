@@ -16,6 +16,8 @@ import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import PDFContent from '@/components/pdf/PDFContent';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
+import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
+dayjs.extend(isSameOrAfter);
 
 interface EditApprovalProps {
   requisition: Requisition;
@@ -237,6 +239,10 @@ const ApprovalItemAction: React.FC<ApprovalItemActionProps> = ({
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
+  const canEditOrDeleteDate =
+    checkOrganizationPermission(PERMISSIONS.APPROVAL_BACKDATE) ||
+    dayjs(approval.approval_date).isSameOrAfter(dayjs().startOf('day'));
+
   return (
     <>
       <Dialog
@@ -282,8 +288,8 @@ const ApprovalItemAction: React.FC<ApprovalItemActionProps> = ({
         </IconButton>
       </Tooltip>
 
-      {(checkOrganizationPermission(PERMISSIONS.APPROVAL_BACKDATE) || 
-        dayjs(approval.approval_date).isSameOrAfter(dayjs().startOf('date'))) && 
+      {
+        canEditOrDeleteDate && 
         !hideOtherActions &&
         (approvals && approvals[approvals.length - 1]?.id) === approval?.id && 
         (approval?.creator?.id === authUser?.user?.id) &&
@@ -307,8 +313,8 @@ const ApprovalItemAction: React.FC<ApprovalItemActionProps> = ({
           </Tooltip>
       )}
 
-      {(checkOrganizationPermission(PERMISSIONS.APPROVAL_BACKDATE) || 
-        dayjs(approval.approval_date).isSameOrAfter(dayjs().startOf('date'))) && 
+      {
+        canEditOrDeleteDate &&
         !hideOtherActions &&
         (approvals && approvals[approvals.length - 1]?.id) === approval?.id && 
         ((approval?.creator?.id === authUser?.user?.id) || 
