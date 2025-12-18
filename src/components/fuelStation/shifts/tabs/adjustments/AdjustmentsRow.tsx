@@ -3,9 +3,10 @@ import { Divider, Grid, IconButton, Tooltip, Typography } from '@mui/material';
 import React, { useState } from 'react';
 import Adjustments from './Adjustments';
 
-import { Adjustment, Tank } from '../../SalesShiftTypes';
+import { Adjustment } from '../../SalesShiftTypes';
 import { Product } from '@/components/productAndServices/products/ProductType';
 import { FuelPump } from '@/components/fuelStation/Stations/StationType';
+import { Tank } from '@/components/fuelStation/dippings/DippingsTypes';
 
 interface AdjustmentsRowProps {
   adjustment: Adjustment;

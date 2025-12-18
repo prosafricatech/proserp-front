@@ -12,9 +12,10 @@ import { useProductsSelect } from '@/components/productAndServices/products/Prod
 import StoreSelector from '@/components/procurement/stores/StoreSelector';
 import OperationSelector from '@/components/sharedComponents/OperationSelector';
 import { Div } from '@jumbo/shared';
-import { Adjustment, Tank } from '../../SalesShiftTypes';
+import { Adjustment } from '../../SalesShiftTypes';
 import { FuelPump } from '@/components/fuelStation/Stations/StationType';
 import { Product } from '@/components/productAndServices/products/ProductType';
+import { Tank } from '@/components/fuelStation/dippings/DippingsTypes';
 
 interface AdjustmentsProps {
   index?: number;
@@ -66,7 +67,7 @@ const Adjustments: React.FC<AdjustmentsProps> = ({
       tank_id: adjustment && tanks.find(tank => tank.id === adjustment?.tank_id)?.id,
       description: adjustment && adjustment.description,
       operator: adjustment && adjustment.operator,
-      operator_name: adjustment && adjustment.operator_name
+      operator_name: adjustment && adjustment.operator_name,
     }
   });
   

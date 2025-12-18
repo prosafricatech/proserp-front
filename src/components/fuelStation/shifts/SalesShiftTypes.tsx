@@ -101,6 +101,7 @@ export interface Adjustment {
   operator: '+' | '-'; // Based on your payload
   description: string;
   product_id: number;
+  operator_name: string;
 }
 
 export interface Dipping {

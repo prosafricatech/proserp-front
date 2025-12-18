@@ -17,6 +17,8 @@ import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { useLanguage } from '@/app/[lang]/contexts/LanguageContext';
 import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
 import organizationServices from '../Organizations/organizationServices';
+import { useSession } from 'next-auth/react';
+import { useTransition } from 'react';
 
 const LoginForm = () => {
   const lang = useLanguage();
@@ -24,6 +26,7 @@ const LoginForm = () => {
 
   const [loading, setLoading] = React.useState(false);
   const { enqueueSnackbar } = useSnackbar();
+  const { update } = useSession();
   const { setAuthValues, configAuth } = useJumboAuth();
   const router = useRouter();
   const [values, setValues] = React.useState({
@@ -38,8 +41,10 @@ const LoginForm = () => {
     password: yup.string().required(dictionary.signin.form.errors.password.required),
   });
 
+  const [isPending, startTransition] = useTransition();
+
   const handleLogin = async (data) => {
-    setLoading(true);
+    setLoading(true); 
     try {
       const signInResponse = await signIn('credentials', {
         email: data.email,
@@ -52,25 +57,26 @@ const LoginForm = () => {
         throw new Error(signInResponse.error);
       }
 
+      await update(); // Session update
+
       const session = await getSession();
-      if (!session) {
+      if (!session || !session.user) {
         throw new Error('Failed to retrieve session');
       }
 
-      if (!session.organization_id) {
-        setAuthValues({
-          authUser: {
-            user: session.user,
-            permissions: [],
-          },
-          authOrganization: {
-            permissions: [],
-          },
-          isAuthenticated: true,
-          isLoading: false,
-        }, { persist: true });
+      let targetUrl = `/${lang}/dashboard`;
 
-        router.push(`/${lang}/organizations`);
+      if (!session.organization_id) {
+        targetUrl = `/${lang}/organizations`;
+        setAuthValues(
+          {
+            authUser: { user: session.user, permissions: [] },
+            authOrganization: { permissions: [] },
+            isAuthenticated: true,
+            isLoading: false,
+          },
+          { persist: true }
+        );
       } else {
         const orgResponse = await organizationServices.loadOrganization({
           organization_id: session.organization_id,
@@ -85,23 +91,31 @@ const LoginForm = () => {
           currentOrganization: orgResponse.data.authOrganization,
         });
 
-        setAuthValues({
-          authUser: orgResponse.data.authUser,
-          authOrganization: orgResponse.data.authOrganization,
-          isAuthenticated: true,
-          isLoading: false,
-        }, { persist: true });
-
-        router.push(`/${lang}/dashboard`);
+        setAuthValues(
+          {
+            authUser: orgResponse.data.authUser,
+            authOrganization: orgResponse.data.authOrganization,
+            isAuthenticated: true,
+            isLoading: false,
+          },
+          { persist: true }
+        );
       }
+
+      // Navigate na useTransition ili loading iendelee hadi page i-load
+      startTransition(() => {
+        router.push(targetUrl);
+      });
+
     } catch (error) {
       enqueueSnackbar(
-        dictionary.signin.form.messages.loginError,
+        dictionary.signin.form.messages.loginError || 'Login failed. Please try again.',
         { variant: 'error' }
       );
       console.error('Login error:', error);
     } finally {
-      setLoading(false);
+      //  transition
+      // useTransition ina-handle isPending automatically
     }
   };
 
@@ -218,7 +232,7 @@ const LoginForm = () => {
             type='submit'
             variant='contained'
             size='large'
-            disabled={loading}
+            disabled={loading || isPending}
             sx={{
               background: 'linear-gradient(45deg, #0267a0, #00a8ff)',
               borderRadius: '12px',
@@ -234,7 +248,7 @@ const LoginForm = () => {
               transition: 'all 0.3s ease',
             }}
           >
-            {loading ? <CircularProgress size={24} sx={{ color: 'white' }} /> : dictionary.signin.form.submit}
+            {loading || isPending ? <CircularProgress size={24} sx={{ color: 'white' }} /> : dictionary.signin.form.submit}
           </Button>
         </Stack>
       </JumboForm>
