@@ -14,6 +14,7 @@ interface AuthUser {
     name: string;
     email: string;
     is_admin: boolean;
+    email_verified_at?: any;
     organization_roles?: Array<{ name: string }>;
   }
   permissions?: string[];

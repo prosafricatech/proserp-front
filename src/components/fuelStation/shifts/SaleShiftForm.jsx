@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useContext, useEffect, useState } from 'react';
-import { Button, DialogActions, DialogContent, DialogTitle, Tabs, Tab, Grid, TextField, Autocomplete, Chip,Card,CardContent,Skeleton, } from '@mui/material';
+import { Button, DialogActions, DialogContent, DialogTitle, Tabs, Tab, Grid, TextField, Autocomplete, Chip } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 import { useSnackbar } from 'notistack';
 import * as yup from 'yup';
@@ -349,34 +349,10 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
     }
   
     await saveMutation(cleanedData);
-  };    
-  
-  const methods = useForm({
-  resolver: yupResolver(validationSchema),
-  defaultValues: {
-    id: SalesShift?.id,
-    submit_type: SalesShift?.status || 'pending',
-    isOpenSwitchON: !!SalesShift?.opening_dipping?.readings?.length,
-    isCloseSwitchON: !!SalesShift?.closing_dipping?.readings?.length,
-    shift_team_id: SalesShift?.shift_team_id,
-    shift_start: SalesShift?.shift_start ? dayjs(SalesShift.shift_start).toISOString() : null,
-    shift_end: SalesShift?.shift_end ? dayjs(SalesShift.shift_end).toISOString() : null,
-    // ... rest of your defaultValues
-    dipping_before: SalesShift?.opening_dipping?.readings?.map(r => ({
-      tank_id: r.tank_id,
-      product_id: r.product_id,
-      reading: r.reading,
-    })) || [],
-    dipping_after: SalesShift?.closing_dipping?.readings?.map(r => ({
-      tank_id: r.tank_id,
-      product_id: r.product_id,
-      reading: r.reading,
-    })) || [],
-  },
-});
+  };      
 
   return (
-    <FormProvider {...methods}>
+    <FormProvider {...{setCheckShiftBalanced, shiftLedgers, fuel_pumps, tanks, adjustments, setAdjustments, fuelVouchers, setFuelVouchers, products, register, handleSubmit, setError, clearErrors, setValue, watch, errors, cashReconciliationFields, cashReconciliationAppend, cashReconciliationRemove}}>
       <DialogTitle>
         <form autoComplete='off'>    
           <Grid container spacing={1} marginTop={1}>
@@ -485,37 +461,8 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
       </DialogTitle>
       <DialogContent>
 
-      {activeTab === 0 && (
-  <React.Suspense fallback={
-    <Grid container spacing={3} sx={{ mt: 2 }}>
-      {[...Array(6)].map((_, i) => (
-        <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={i}>
-          <Card variant="outlined">
-            <CardContent>
-              <Skeleton variant="text" width="60%" height={32} />
-              <Skeleton variant="text" width="40%" sx={{ mt: 1 }} />
-              <Skeleton variant="rectangular" height={56} sx={{ mt: 3, borderRadius: 1 }} />
-              <Skeleton variant="rectangular" height={56} sx={{ mt: 2, borderRadius: 1 }} />
-              <Skeleton variant="text" width="80%" sx={{ mt: 2 }} />
-            </CardContent>
-          </Card>
-        </Grid>
-      ))}
-    </Grid>
-  }>
-    <PumpReadings
-      key={pumpReadingsKey}
-      fuel_pumps={fuel_pumps || []}
-      tanks={tanks || []}
-      products={products || []}
-      pumpReadings={watch('pump_readings') || []}
-      productPrices={watch('product_prices') || []}
-      setValue={setValue}
-      watch={watch}
-      errors={errors}
-    />
-  </React.Suspense>
-)}
+        {/* activeTab for Pump Readings */}
+        {activeTab === 0 && <PumpReadings key={pumpReadingsKey} />}
 
         {/* activeTab for Fuel Vouchers */}
         {activeTab === 1 && <FuelVouchers productPrices={watch(`product_prices`)}/>}
@@ -591,7 +538,6 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
           </>
         }
       </DialogActions>
-    
     </FormProvider>
   )
 }

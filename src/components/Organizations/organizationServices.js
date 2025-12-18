@@ -1,33 +1,13 @@
 import axios from "../../lib/services/config";
-import { enqueueSnackbar } from "notistack";
 
 const organizationServices = {
   // GET METHODS
-  getList: async ({ type, keyword, page, limit, lang, router }) => {
-    try {
-      const response = await axios.get("/api/organizations", {
-        params: { type, keyword, page, limit },
-      });
+  getList: async ({ type, keyword, page, limit }) => {
+    const response = await axios.get("/api/organizations", {
+      params: { type, keyword, page, limit },
+    });
 
-      if (response.status === 200) {
-        return response.data;
-      }
-    } catch (err) {
-      if (err?.response?.status === 401) {
-        router.push(`/${lang}/auth/signin`);
-      } else if(err.response.status === 403 && err.response?.data.message === 'Your email address is not verified.') {
-          router.push(`/${lang}/auth/verify-email`);
-        } else {
-        enqueueSnackbar(
-          "Something went wrong! Please check your connection",
-          {
-            variant: "error",
-            preventDuplicate: true,
-          }
-        );
-      }
-      throw err;
-    }
+    return response.data;
   },
 
   getUsers: async (params = {}) => {

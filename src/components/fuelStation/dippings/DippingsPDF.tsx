@@ -10,7 +10,7 @@ const safe = (value: any, fallback = 'N/A') => (value !== null && value !== unde
 interface DippingsPDFProps {
   dippingData: DippingDetails;
   organization: Organization;
-  productOptions?: any[];
+  productOptions?: any[]; // optional if used elsewhere
 }
 
 const DippingsPDF: React.FC<DippingsPDFProps> = ({ 

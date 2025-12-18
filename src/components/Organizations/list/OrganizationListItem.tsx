@@ -75,7 +75,7 @@ export const OrganizationListItem: React.FC<OrganizationListItemProps> = ({ orga
       queryClient.clear();
       setIsLoading(false);
     }
-    window.location.href = `/${lang}/dashboard`;
+    router.replace(`/${lang}/dashboard`);
   };
 
   if (isLoading) {
