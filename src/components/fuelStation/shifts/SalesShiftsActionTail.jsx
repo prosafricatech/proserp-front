@@ -7,16 +7,13 @@ import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import SaleShiftForm from './SaleShiftForm';
 
-<<<<<<< HEAD:src/components/fuelStation/shifts/SalesShiftsActionTail.tsx
-interface SaleShiftFormProps {
-  SalesShift?: SalesShift | null; 
-  setOpenDialog: React.Dispatch<React.SetStateAction<boolean>>;
-}
 
-const SalesShiftsActionTail: React.FC = () => {
-=======
 const SalesShiftsActionTail = () => {
->>>>>>> a6a3276664039bc567c842adfe23d80354b46a56:src/components/fuelStation/shifts/SalesShiftsActionTail.jsx
+
+
+
+
+
   const { checkOrganizationPermission } = useJumboAuth();
   const [openDialog, setOpenDialog] = useState(false);
 
@@ -28,6 +25,9 @@ const SalesShiftsActionTail = () => {
     <React.Fragment>
       <Dialog maxWidth="lg" scroll={belowLargeScreen ? 'body' : 'paper'} fullWidth fullScreen={belowLargeScreen} open={openDialog}>
         <SaleShiftForm setOpenDialog={setOpenDialog} />
+
+
+
       </Dialog>
 
       <ButtonGroup variant="outlined" size="small" disableElevation sx={{ '& .MuiButton-root': { px: 1 } }}>
