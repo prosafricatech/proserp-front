@@ -66,7 +66,7 @@ const ApprovedPaymentItemForm: React.FC<ApprovedPaymentItemFormProps> = ({
           <Grid size={{xs: 6, md: 2.5, lg: 2.5}}>
             <Div sx={{ mt: 2, mb: 1.7 }}>
               <Tooltip title="Unpaid Amount">
-                <Typography>{item.unpaid_amount.toLocaleString()}</Typography>
+                <Typography>{item.unpaid_amount?.toLocaleString()}</Typography>
               </Tooltip>
             </Div>
           </Grid>

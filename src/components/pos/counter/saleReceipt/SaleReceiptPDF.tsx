@@ -72,7 +72,7 @@ const SaleReceiptPDF: React.FC<SaleReceiptPDFProps> = ({ user, organization, sal
   };
 
   const formatCurrency = (amount: number) => {
-    return amount.toLocaleString('en-US', {
+    return amount?.toLocaleString('en-US', {
       style: 'currency',
       currency: sale.currency.code,
       minimumFractionDigits: 2,

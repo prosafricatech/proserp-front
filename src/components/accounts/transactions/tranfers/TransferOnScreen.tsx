@@ -31,6 +31,10 @@ interface Transaction {
   cost_centers: CostCenter[];
   items: TransferItem[];
   currency: Currency;
+  narration: string;
+  creator: {
+    name: string
+  }
 }
 
 interface TransferOnScreenProps {
@@ -52,10 +56,10 @@ function TransferOnScreen({ transaction, authObject }: TransferOnScreenProps) {
     <Box sx={{ padding: 2 }}>
       {/* Header Section */}
       <Box sx={{ textAlign: 'center', mb: 3, padding: 2, borderBottom: `2px solid ${mainColor}` }}>
-        <Typography variant="h4" color={headerColor} fontWeight="bold" gutterBottom>
+        <Typography variant="h4" color={headerColor}>
           TRANSFER VOUCHER
         </Typography>
-        <Typography variant="h6" fontWeight="bold" gutterBottom>
+        <Typography variant="h6" fontWeight="bold">
           {transaction.voucherNo}
         </Typography>
         {transaction.reference && (
@@ -69,7 +73,7 @@ function TransferOnScreen({ transaction, authObject }: TransferOnScreenProps) {
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid size={{xs: 12, md: 6, lg: 4}}>
           <Box>
-            <Typography variant="subtitle2" color={headerColor} gutterBottom>
+            <Typography variant="subtitle2" color={headerColor}>
               Transaction Date
             </Typography>
             <Typography variant="body1">
@@ -79,10 +83,10 @@ function TransferOnScreen({ transaction, authObject }: TransferOnScreenProps) {
         </Grid>
         <Grid size={{xs: 12, md: 6, lg: 4}}>
           <Box>
-            <Typography variant="subtitle2" color={headerColor} gutterBottom>
+            <Typography variant="subtitle2" color={headerColor}>
               From (Credit)
             </Typography>
-            <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
+            <Typography variant="body1">
               {transaction.creditLedgerName}
             </Typography>
           </Box>
@@ -90,7 +94,7 @@ function TransferOnScreen({ transaction, authObject }: TransferOnScreenProps) {
         {transaction.cost_centers.length > 0 && (
           <Grid size={{xs: 12, md: 6, lg: 4}}>
             <Box>
-              <Typography variant="subtitle2" color={headerColor} gutterBottom>
+              <Typography variant="subtitle2" color={headerColor}>
                 Cost Center{transaction.cost_centers.length > 1 ? 's' : ''}
               </Typography>
               <Typography variant="body1">
@@ -114,17 +118,17 @@ function TransferOnScreen({ transaction, authObject }: TransferOnScreenProps) {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
-                #
+              <TableCell sx={{ backgroundColor: mainColor, color: contrastText }}>
+                S/N
               </TableCell>
-              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
+              <TableCell sx={{ backgroundColor: mainColor, color: contrastText }}>
                 To (Debit)
               </TableCell>
-              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
+              <TableCell sx={{ backgroundColor: mainColor, color: contrastText }}>
                 Description
               </TableCell>
               <TableCell 
-                sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} 
+                sx={{ backgroundColor: mainColor, color: contrastText }} 
                 align="right"
               >
                 Amount ({currencyCode})
@@ -143,7 +147,7 @@ function TransferOnScreen({ transaction, authObject }: TransferOnScreenProps) {
                 }}
               >
                 <TableCell>{index + 1}</TableCell>
-                <TableCell sx={{ fontWeight: 'medium' }}>
+                <TableCell>
                   {item.debitLedgerName}
                 </TableCell>
                 <TableCell>{item.description}</TableCell>
@@ -151,11 +155,9 @@ function TransferOnScreen({ transaction, authObject }: TransferOnScreenProps) {
                   align="right" 
                   sx={{ 
                     fontFamily: 'monospace',
-                    fontWeight: 'medium',
-                    fontSize: '0.875rem'
                   }}
                 >
-                  {item.amount.toLocaleString('en-US', {
+                  {item.amount?.toLocaleString('en-US', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
                   })}
@@ -167,40 +169,53 @@ function TransferOnScreen({ transaction, authObject }: TransferOnScreenProps) {
       </TableContainer>
 
       {/* Total Section */}
-      <Box 
-        sx={{ 
-          mt: 3, 
-          p: 2, 
-          backgroundColor: theme.palette.background.default,
-          border: `1px solid ${theme.palette.divider}`,
-          borderRadius: 1
-        }}
-      >
-        <Grid container alignItems="center">
-          <Grid size={4}>
-            <Typography variant="h6" color={headerColor} fontWeight="bold">
-              TOTAL
-            </Typography>
-          </Grid>
-          <Grid size={8} sx={{ textAlign: 'right' }}>
-            <Typography 
-              variant="h6" 
-              fontWeight="bold"
-              sx={{ 
-                color: headerColor,
-                fontFamily: 'monospace'
-              }}
-            >
-              {totalAmount.toLocaleString("en-US", { 
-                style: "currency", 
-                currency: currencyCode,
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-              })}
-            </Typography>
-          </Grid>
+      <Grid container paddingTop={5}>
+        <Grid size={4}>
+          <Typography variant="body2" color={headerColor}>
+            TOTAL
+          </Typography>
         </Grid>
-      </Box>
+        <Grid size={8} sx={{ textAlign: 'right' }}>
+          <Typography 
+            variant="body2" 
+            fontWeight="bold"
+            sx={{ 
+              fontFamily: 'monospace'
+            }}
+            color={headerColor}
+          >
+            {totalAmount?.toLocaleString("en-US", { 
+              style: "currency", 
+              currency: currencyCode,
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2
+            })}
+          </Typography>
+        </Grid>
+      </Grid>
+
+      <Grid container spacing={2} sx={{ mt: 3 }}>
+        <Grid size={{xs: 12, md: 6, lg: 4}}>
+          <Box>
+            <Typography variant="subtitle2" color={headerColor}>
+              Narration
+            </Typography>
+            <Typography variant="body1">
+              {transaction?.narration}
+            </Typography>
+          </Box>
+        </Grid>
+        <Grid size={{xs: 12, md: 6, lg: 4}}>
+          <Box>
+            <Typography variant="subtitle2" color={headerColor}>
+              Posted By
+            </Typography>
+            <Typography variant="body1">
+              {transaction?.creator?.name}
+            </Typography>
+          </Box>
+        </Grid>
+      </Grid>
     </Box>
   );
 }

@@ -1,3 +1,4 @@
+'use client'
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
 import { DeleteOutlined, EditOutlined, MoreHorizOutlined } from '@mui/icons-material'
 import { Dialog, Tooltip, useMediaQuery } from '@mui/material';

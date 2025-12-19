@@ -57,7 +57,7 @@ function StockReportOnScreen({ stockData, authObject, hasPermissionToView }) {
           >
             <Typography 
               variant="h4" 
-              sx={{ color: headerColor, fontWeight: 'bold' }} 
+              sx={{ color: headerColor }} 
               gutterBottom
             >
               STOCK REPORT
@@ -71,10 +71,10 @@ function StockReportOnScreen({ stockData, authObject, hasPermissionToView }) {
         {hasPermissionToView && (
           <Grid size={{xs: 12, sm: 6, md: 4}}>
             <Box>
-              <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+              <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
                 Total Stock Value
               </Typography>
-              <Typography variant="body1" sx={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
+              <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>
                 {formatCurrency(totalAmount)}
               </Typography>
             </Box>
@@ -89,7 +89,6 @@ function StockReportOnScreen({ stockData, authObject, hasPermissionToView }) {
           sx={{ 
             color: headerColor, 
             textAlign: 'center', 
-            fontWeight: 'bold',
             mb: 2
           }}
         >
@@ -109,7 +108,7 @@ function StockReportOnScreen({ stockData, authObject, hasPermissionToView }) {
             <TableHead>
               <TableRow>
                 <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
-                  #
+                  S/N
                 </TableCell>
                 <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
                   Product Name
@@ -143,18 +142,18 @@ function StockReportOnScreen({ stockData, authObject, hasPermissionToView }) {
                     }
                   }}
                 >
-                  <TableCell sx={{ fontWeight: 'medium' }}>{index + 1}</TableCell>
-                  <TableCell sx={{ fontWeight: 'medium' }}>{stock.name}</TableCell>
+                  <TableCell>{index + 1}</TableCell>
+                  <TableCell>{stock.name}</TableCell>
                   <TableCell>{stock.measurement_unit.symbol}</TableCell>
-                  <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                  <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                     {formatQuantity(stock.balance)}
                   </TableCell>
                   {hasPermissionToView && (
                     <>
-                      <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                      <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                         {formatCurrency(stock.latest_rate)}
                       </TableCell>
-                      <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
+                      <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                         {formatCurrency(stock.balance * stock.latest_rate)}
                       </TableCell>
                     </>
@@ -183,7 +182,6 @@ function StockReportOnScreen({ stockData, authObject, hasPermissionToView }) {
                     colSpan={5} 
                     align="center" 
                     sx={{ 
-                      fontWeight: 'bold',
                       borderBottom: 'none'
                     }}
                   >
@@ -193,7 +191,6 @@ function StockReportOnScreen({ stockData, authObject, hasPermissionToView }) {
                     align="right" 
                     sx={{ 
                       fontFamily: 'monospace',
-                      fontWeight: 'bold',
                       borderBottom: 'none',
                       color: contrastText
                     }}

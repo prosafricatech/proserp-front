@@ -1,3 +1,4 @@
+'use client'
 import { LoadingButton } from '@mui/lab'
 import { Autocomplete, Box, Button, Checkbox, Chip, DialogActions, DialogContent, DialogTitle, Grid, IconButton, LinearProgress, Stack, Tab, Tabs, TextField, Tooltip, Typography, useMediaQuery } from '@mui/material'
 import { DateTimePicker } from '@mui/x-date-pickers'
@@ -112,7 +113,7 @@ const ReportDocument = ({productCategories, stockData,authObject,store,costCente
                         { hasPermissionToView &&
                             <>
                                 <Text style={{ ...pdfStyles.tableCell, ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, textAlign: 'center', flex: 9.3}}>Total</Text>
-                                <Text style={{ ...pdfStyles.tableCell, ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, textAlign: 'right', flex: 2 }}>{totalAmount.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
+                                <Text style={{ ...pdfStyles.tableCell, ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, textAlign: 'right', flex: 2 }}>{totalAmount?.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
                             </>
                         }
                     </View>

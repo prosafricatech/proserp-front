@@ -1,33 +1,13 @@
 import axios from "../../lib/services/config";
-import { enqueueSnackbar } from "notistack";
 
 const organizationServices = {
   // GET METHODS
-  getList: async ({ type, keyword, page, limit, lang, router }) => {
-    try {
-      const response = await axios.get("/api/organizations", {
-        params: { type, keyword, page, limit },
-      });
+  getList: async ({ type, keyword, page, limit }) => {
+    const response = await axios.get("/api/organizations", {
+      params: { type, keyword, page, limit },
+    });
 
-      if (response.status === 200) {
-        return response.data;
-      }
-    } catch (err) {
-      if (err?.response?.status === 401) {
-        router.push(`/${lang}/auth/signin`);
-      } else if(err.response.status === 403 && err.response?.data.message === 'Your email address is not verified.') {
-          router.push(`/${lang}/auth/verify-email`);
-        } else {
-        enqueueSnackbar(
-          "Something went wrong! Please check your connection",
-          {
-            variant: "error",
-            preventDuplicate: true,
-          }
-        );
-      }
-      throw err;
-    }
+    return response.data;
   },
 
   getUsers: async (params = {}) => {
@@ -35,6 +15,18 @@ const organizationServices = {
     const { data } = await axios.get(`/api/organizations/${organizationId}/profileUsers`, {
       params: { page, limit, ...rest },
     });
+    return data;
+  },
+
+  getOrganizationUsers: async (params = {}) => {
+    const { organizationId, keyword = '', ...rest } = params;
+    const { data } = await axios.get(`/api/organizations/${organizationId}/getOrganizationUsers`, {
+      params: {
+        keyword,
+        ...rest,
+      },
+    });
+
     return data;
   },
 
@@ -131,18 +123,37 @@ const organizationServices = {
 };
 
 // Helper function for form data construction
-function buildFormData(data) {
+export function buildFormData(data) {
   const formData = new FormData();
-  Object.entries(data).forEach(([key, value]) => {
-    if (value == null) return;
+  Object.keys(data).forEach((key) => {
+    const value = data[key];
+    if (value === null || value === undefined) return;
 
-    if (key === "logo" || key === "organization_symbol") {
-      const file = Array.isArray(value) ? value[0] : value;
-      if (file) formData.append(key, file);
-    } else {
-      formData.append(key, value !== "null" ? value : null);
+    if (value instanceof FileList) {
+      if (value.length > 0) {
+        formData.append(key, value[0]);
+      }
+      return;
     }
+
+    if (value instanceof File) {
+      formData.append(key, value);
+      return;
+    }
+
+    if (Array.isArray(value)) {
+      value.forEach((v) => formData.append(`${key}[]`, v));
+      return;
+    }
+
+    if (typeof value === "object") {
+      formData.append(key, JSON.stringify(value));
+      return;
+    }
+
+    formData.append(key, value);
   });
+
   return formData;
 }
 

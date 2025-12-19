@@ -6,7 +6,8 @@ import SubcontractItemAction from './SubcontractItemAction';
 import SubContractTaskTab from './tabs/tasks/SubContractTaskTab';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import AttachmentForm from '@/components/filesShelf/attachments/AttachmentForm';
-import SubContractMaterialUsedTab from './tabs/materialUsed/SubContractMaterialUsedTab';
+import SubContractMaterialIssuedTab from './tabs/materialIssued/SubContractMaterialIssuedTab';
+import CertificatesTab from './tabs/certificatesTab/CertificatesTab';
 
 function SubcontractListItem({ subContract }) {
     const [expanded, setExpanded] = useState({});
@@ -108,7 +109,7 @@ function SubcontractListItem({ subContract }) {
                             secondary={
                                 <Tooltip title="Remarks">
                                     <Typography component="span">
-                                        {subContract.remarks || 'No remarks'}
+                                        {subContract.remarks}
                                     </Typography>
                                 </Tooltip>
                             }
@@ -149,7 +150,7 @@ function SubcontractListItem({ subContract }) {
                         >
                             <Tab label="Tasks" />
                             <Tab label="Certificates" />
-                            <Tab label="Material Used" />
+                            <Tab label="Material Issued" />
                             <Tab label="Attachments" />
                         </Tabs>
                     </Grid>
@@ -160,10 +161,10 @@ function SubcontractListItem({ subContract }) {
                         <SubContractTaskTab  isExpanded={expanded[subContract.id]} subContract={subContract}/>
                     )}
                     {activeTab === 1 && (
-                        <Typography sx={{ p: 2 }}>Certificates content goes here.</Typography>
+                        <CertificatesTab  isExpanded={expanded[subContract.id]} subContract={subContract}/>
                     )}
                     {activeTab === 2 && (
-                        <SubContractMaterialUsedTab  isExpanded={expanded[subContract.id]} subContract={subContract}/>
+                        <SubContractMaterialIssuedTab  isExpanded={expanded[subContract.id]} subContract={subContract}/>
                     )}
                     {activeTab === 3 && (
                         <Grid container width={'100%'} columnSpacing={1} justifyContent="center" marginTop={1}>

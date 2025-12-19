@@ -1,3 +1,4 @@
+'use client'
 import { yupResolver } from "@hookform/resolvers/yup";
 import { DialogContent, DialogTitle, FormControl, Grid, InputLabel, LinearProgress, MenuItem, Select, Stack, Tab, Tabs, Typography, useMediaQuery } from "@mui/material";
 import dayjs from "dayjs";

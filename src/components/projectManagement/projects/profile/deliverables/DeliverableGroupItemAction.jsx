@@ -1,3 +1,4 @@
+'use client'
 import { Dialog, IconButton, Tooltip, useMediaQuery } from '@mui/material';
 import React, { useState } from 'react';
 import {

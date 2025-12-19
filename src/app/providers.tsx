@@ -15,6 +15,7 @@ import { JumboAuthProvider } from './providers/JumboAuthProvider';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { BackdropSpinner } from '@/shared/ProgressIndicators/BackdropSpinner';
+import { VFDProvider } from '@/components/vfd/VFDProvider';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient({
@@ -28,7 +29,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
       <AppSnackbar>
-        <LocalizationProvider dateAdapter={AdapterDayjs}>
+        <VFDProvider>
+         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <QueryClientProvider client={queryClient}>
             <JumboAuthProvider>
               <AppRouterCacheProvider>
@@ -49,6 +51,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
             </JumboAuthProvider>
           </QueryClientProvider>
         </LocalizationProvider>
+        </VFDProvider>
       </AppSnackbar>
     </SessionProvider>
   );

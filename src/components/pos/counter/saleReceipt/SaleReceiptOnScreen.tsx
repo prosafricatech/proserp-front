@@ -46,7 +46,7 @@ const SaleReceiptOnScreen: React.FC<SaleReceiptOnScreenProps> = ({ sale, organiz
   }, [sale.sale_items, sale.vat_percentage, sale.amount]);
 
   const formatCurrency = (amount: number) => {
-    return amount.toLocaleString('en-US', {
+    return amount?.toLocaleString('en-US', {
       style: 'currency',
       currency: sale.currency.code,
       minimumFractionDigits: 2,

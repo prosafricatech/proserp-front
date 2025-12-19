@@ -78,7 +78,7 @@ function BatchOnScreen({ batch }) {
           >
             <Typography 
               variant="h4" 
-              sx={{ color: headerColor, fontWeight: 'bold' }} 
+              sx={{ color: headerColor }} 
               gutterBottom
             >
               BATCH PRODUCTION REPORT
@@ -98,37 +98,37 @@ function BatchOnScreen({ batch }) {
       <Grid container spacing={2} sx={{ mb: 4 }}>
         <Grid size={{xs: 12, sm: 6, md: 3}}>
           <Box>
-            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+            <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
               Total Input Cost
             </Typography>
-            <Typography variant="body1" sx={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
+            <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>
               {formatCurrency(totalConsumptions + totalOtherExpenses)}
             </Typography>
           </Box>
         </Grid>
         <Grid size={{xs: 12, sm: 6, md: 3}}>
           <Box>
-            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+            <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
               By-Products Value
             </Typography>
-            <Typography variant="body1" sx={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
+            <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>
               {formatCurrency(totalByProducts)}
             </Typography>
           </Box>
         </Grid>
         <Grid size={{xs: 12, sm: 6, md: 3}}>
           <Box>
-            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+            <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
               Net Production Cost
             </Typography>
-            <Typography variant="body1" sx={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
+            <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>
               {formatCurrency(combinedInputsOtherExpensesByProduct)}
             </Typography>
           </Box>
         </Grid>
         <Grid size={{xs: 12, sm: 6, md: 3}}>
           <Box>
-            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+            <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
               Total Outputs
             </Typography>
             <Typography variant="body1">
@@ -148,7 +148,6 @@ function BatchOnScreen({ batch }) {
             sx={{ 
               color: headerColor, 
               textAlign: 'center', 
-              fontWeight: 'bold',
               mb: 2
             }}
           >
@@ -167,25 +166,25 @@ function BatchOnScreen({ batch }) {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
-                    #
+                  <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
+                    S/N
                   </TableCell>
-                  <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
+                  <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
                     Product
                   </TableCell>
-                  <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                  <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
                     Quantity
                   </TableCell>
-                  <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                  <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
                     Unit Cost
                   </TableCell>
-                  <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                  <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
                     Amount
                   </TableCell>
-                  <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                  <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
                     Value %
                   </TableCell>
-                  <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
+                  <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
                     Remarks
                   </TableCell>
                 </TableRow>
@@ -205,18 +204,18 @@ function BatchOnScreen({ batch }) {
                         }
                       }}
                     >
-                      <TableCell sx={{ fontWeight: 'medium' }}>{index + 1}</TableCell>
-                      <TableCell sx={{ fontWeight: 'medium' }}>{item.product.name}</TableCell>
-                      <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                      <TableCell>{index + 1}</TableCell>
+                      <TableCell>{item.product.name}</TableCell>
+                      <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                         {`${formatQuantity(item.quantity)} ${getUnitSymbol(item)}`}
                       </TableCell>
-                      <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                      <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                         {formatCurrency(unitCost)}
                       </TableCell>
-                      <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
+                      <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                         {formatCurrency(itemAmount)}
                       </TableCell>
-                      <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                      <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                         {item.value_percentage}%
                       </TableCell>
                       <TableCell>{item.description || item.remarks}</TableCell>
@@ -230,7 +229,6 @@ function BatchOnScreen({ batch }) {
                     colSpan={4} 
                     align="center" 
                     sx={{ 
-                      fontWeight: 'bold',
                       borderBottom: 'none'
                     }}
                   >
@@ -240,7 +238,6 @@ function BatchOnScreen({ batch }) {
                     align="right" 
                     sx={{ 
                       fontFamily: 'monospace',
-                      fontWeight: 'bold',
                       borderBottom: 'none',
                       color: contrastText
                     }}
@@ -270,7 +267,6 @@ function BatchOnScreen({ batch }) {
             sx={{ 
               color: headerColor, 
               textAlign: 'center', 
-              fontWeight: 'bold',
               mb: 2
             }}
           >
@@ -289,25 +285,25 @@ function BatchOnScreen({ batch }) {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
+                  <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
                     #
                   </TableCell>
-                  <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
+                  <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
                     Product
                   </TableCell>
-                  <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
+                  <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
                     Store
                   </TableCell>
-                  <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                  <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
                     Quantity
                   </TableCell>
-                  <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                  <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
                     Market Value
                   </TableCell>
-                  <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                  <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
                     Amount
                   </TableCell>
-                  <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
+                  <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
                     Remarks
                   </TableCell>
                 </TableRow>
@@ -323,16 +319,16 @@ function BatchOnScreen({ batch }) {
                       }
                     }}
                   >
-                    <TableCell sx={{ fontWeight: 'medium' }}>{index + 1}</TableCell>
-                    <TableCell sx={{ fontWeight: 'medium' }}>{item.product.name}</TableCell>
+                    <TableCell>{index + 1}</TableCell>
+                    <TableCell>{item.product.name}</TableCell>
                     <TableCell>{item.store?.name}</TableCell>
-                    <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                    <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                       {`${formatQuantity(item.quantity)} ${getUnitSymbol(item)}`}
                     </TableCell>
-                    <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                    <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                       {formatCurrency(item.market_value)}
                     </TableCell>
-                    <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
+                    <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                       {formatCurrency(item.quantity * item.market_value)}
                     </TableCell>
                     <TableCell>{item.description || item.remarks}</TableCell>
@@ -345,7 +341,6 @@ function BatchOnScreen({ batch }) {
                     colSpan={5} 
                     align="center" 
                     sx={{ 
-                      fontWeight: 'bold',
                       borderBottom: 'none'
                     }}
                   >
@@ -355,7 +350,6 @@ function BatchOnScreen({ batch }) {
                     align="right" 
                     sx={{ 
                       fontFamily: 'monospace',
-                      fontWeight: 'bold',
                       borderBottom: 'none',
                       color: contrastText
                     }}
@@ -378,7 +372,6 @@ function BatchOnScreen({ batch }) {
             sx={{ 
               color: headerColor, 
               textAlign: 'center', 
-              fontWeight: 'bold',
               mb: 2
             }}
           >
@@ -390,7 +383,7 @@ function BatchOnScreen({ batch }) {
               {/* Consumption Header */}
               <Grid container spacing={2} sx={{ mb: 2, p: 2, backgroundColor: theme.palette.background.default, borderRadius: 1 }}>
                 <Grid size={{xs: 12, sm: 4}}>
-                  <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                  <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
                     Date
                   </Typography>
                   <Typography variant="body1">
@@ -398,13 +391,13 @@ function BatchOnScreen({ batch }) {
                   </Typography>
                 </Grid>
                 <Grid size={{xs: 12, sm: 4}}>
-                  <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                  <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
                     Consumption No
                   </Typography>
                   <Typography variant="body1">{consumption.consumptionNo}</Typography>
                 </Grid>
                 <Grid size={{xs: 12, sm: 4}}>
-                  <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                  <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
                     Store
                   </Typography>
                   <Typography variant="body1">{consumption.store?.name}</Typography>
@@ -424,22 +417,22 @@ function BatchOnScreen({ batch }) {
                 <Table>
                   <TableHead>
                     <TableRow>
-                      <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
+                      <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
                         #
                       </TableCell>
-                      <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
+                      <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
                         Product
                       </TableCell>
-                      <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                      <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
                         Quantity
                       </TableCell>
-                      <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                      <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
                         Unit Cost
                       </TableCell>
-                      <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                      <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
                         Amount
                       </TableCell>
-                      <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
+                      <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
                         Description
                       </TableCell>
                     </TableRow>
@@ -455,15 +448,15 @@ function BatchOnScreen({ batch }) {
                           }
                         }}
                       >
-                        <TableCell sx={{ fontWeight: 'medium' }}>{idx + 1}</TableCell>
-                        <TableCell sx={{ fontWeight: 'medium' }}>{item.product?.name || "N/A"}</TableCell>
-                        <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                        <TableCell>{idx + 1}</TableCell>
+                        <TableCell>{item.product?.name || "N/A"}</TableCell>
+                        <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                           {`${formatQuantity(item.quantity)} ${getUnitSymbol(item)}`}
                         </TableCell>
-                        <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                        <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                           {formatCurrency(item.unit_cost || item.rate)}
                         </TableCell>
-                        <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
+                        <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                           {formatCurrency((item.unit_cost || item.rate) * item.quantity)}
                         </TableCell>
                         <TableCell>{item.description}</TableCell>
@@ -485,7 +478,6 @@ function BatchOnScreen({ batch }) {
             sx={{ 
               color: headerColor, 
               textAlign: 'center', 
-              fontWeight: 'bold',
               mb: 2
             }}
           >
@@ -504,19 +496,19 @@ function BatchOnScreen({ batch }) {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
+                  <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
                     #
                   </TableCell>
-                  <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
+                  <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
                     Expense Name
                   </TableCell>
-                  <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                  <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
                     Quantity
                   </TableCell>
-                  <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                  <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
                     Rate
                   </TableCell>
-                  <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                  <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
                     Amount
                   </TableCell>
                 </TableRow>
@@ -532,15 +524,15 @@ function BatchOnScreen({ batch }) {
                       }
                     }}
                   >
-                    <TableCell sx={{ fontWeight: 'medium' }}>{index + 1}</TableCell>
-                    <TableCell sx={{ fontWeight: 'medium' }}>{item.ledger?.name}</TableCell>
-                    <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                    <TableCell>{index + 1}</TableCell>
+                    <TableCell>{item.ledger?.name}</TableCell>
+                    <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                       {formatQuantity(item.quantity)}
                     </TableCell>
-                    <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                    <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                       {formatCurrency(item.rate)}
                     </TableCell>
-                    <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
+                    <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                       {formatCurrency(item.quantity * item.rate)}
                     </TableCell>
                   </TableRow>
@@ -552,7 +544,6 @@ function BatchOnScreen({ batch }) {
                     colSpan={4} 
                     align="center" 
                     sx={{ 
-                      fontWeight: 'bold',
                       borderBottom: 'none'
                     }}
                   >
@@ -562,7 +553,6 @@ function BatchOnScreen({ batch }) {
                     align="right" 
                     sx={{ 
                       fontFamily: 'monospace',
-                      fontWeight: 'bold',
                       borderBottom: 'none',
                       color: contrastText
                     }}

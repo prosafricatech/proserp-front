@@ -131,7 +131,7 @@ function SubContractTasks({setOpenDialog, subContract = null, subContractTask = 
 
   const retrieveTaskDetails = async (taskId) => {
     setIsRetrievingDetails(true);
-    const details =  await projectsServices.showTaskDetails(taskId)
+    const details =  await projectsServices.showProjectTaskDetails(taskId)
     setValue('unsubcontracted_quantity', details?.unsubcontracted_quantity);
     setIsRetrievingDetails(false);
   }

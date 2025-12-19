@@ -38,7 +38,7 @@ function InventoryTransferOnScreen({ transfer, organization }) {
           >
             <Typography 
               variant="h4" 
-              sx={{ color: headerColor, fontWeight: 'bold' }} 
+              sx={{ color: headerColor }} 
               gutterBottom
             >
               INVENTORY TRANSFER
@@ -58,7 +58,7 @@ function InventoryTransferOnScreen({ transfer, organization }) {
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid size={{xs: 12, sm: 6, md: 4}}>
           <Box>
-            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+            <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
               Transfer Date
             </Typography>
             <Typography variant="body1">
@@ -68,7 +68,7 @@ function InventoryTransferOnScreen({ transfer, organization }) {
         </Grid>
         <Grid size={{xs: 12, sm: 6, md: 4}}>
           <Box>
-            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+            <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
               Cost Center
             </Typography>
             <Typography variant="body1">{transfer.source_cost_center.name}</Typography>
@@ -76,7 +76,7 @@ function InventoryTransferOnScreen({ transfer, organization }) {
         </Grid>
         <Grid size={{xs: 12, sm: 6, md: 4}}>
           <Box>
-            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+            <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
               From Store
             </Typography>
             <Typography variant="body1">{transfer.source_store.name}</Typography>
@@ -84,7 +84,7 @@ function InventoryTransferOnScreen({ transfer, organization }) {
         </Grid>
         <Grid size={{xs: 12, sm: 6, md: 4}}>
           <Box>
-            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+            <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
               To Store
             </Typography>
             <Typography variant="body1">{transfer.destination_store.name}</Typography>
@@ -92,7 +92,7 @@ function InventoryTransferOnScreen({ transfer, organization }) {
         </Grid>
         <Grid size={{xs: 12, sm: 6, md: 4}}>
           <Box>
-            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+            <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
               Transferred By
             </Typography>
             <Typography variant="body1">{transfer.creator.name}</Typography>
@@ -107,7 +107,6 @@ function InventoryTransferOnScreen({ transfer, organization }) {
           sx={{ 
             color: headerColor, 
             textAlign: 'center', 
-            fontWeight: 'bold',
             mb: 2
           }}
         >
@@ -126,13 +125,13 @@ function InventoryTransferOnScreen({ transfer, organization }) {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
-                  #
+                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
+                  S/N
                 </TableCell>
-                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
+                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
                   Product
                 </TableCell>
-                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
                   Quantity
                 </TableCell>
               </TableRow>
@@ -148,9 +147,9 @@ function InventoryTransferOnScreen({ transfer, organization }) {
                     }
                   }}
                 >
-                  <TableCell sx={{ fontWeight: 'medium' }}>{index + 1}</TableCell>
-                  <TableCell sx={{ fontWeight: 'medium' }}>{item.product.name}</TableCell>
-                  <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                  <TableCell>{index + 1}</TableCell>
+                  <TableCell>{item.product.name}</TableCell>
+                  <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                     {`${item.quantity} ${item.measurement_unit?.symbol}`}
                   </TableCell>
                 </TableRow>
@@ -183,7 +182,7 @@ function InventoryTransferOnScreen({ transfer, organization }) {
             {transfer.vehicle_information && (
               <Box sx={{ mb: 2 }}>
                 <Tooltip title="Information about the vehicle used for the transfer">
-                  <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                  <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
                     Vehicle Information
                   </Typography>
                 </Tooltip>
@@ -194,7 +193,7 @@ function InventoryTransferOnScreen({ transfer, organization }) {
             {transfer.driver_information && (
               <Box sx={{ mb: 2 }}>
                 <Tooltip title="Information about the driver handling the transfer">
-                  <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                  <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
                     Driver Information
                   </Typography>
                 </Tooltip>
@@ -204,7 +203,7 @@ function InventoryTransferOnScreen({ transfer, organization }) {
 
             {transfer.narration && (
               <Box>
-                <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
                   Narration
                 </Typography>
                 <Typography variant="body1" sx={{ lineHeight: 1.5 }}>

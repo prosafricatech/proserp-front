@@ -109,7 +109,6 @@ const CashierReportOnScreen: React.FC<CashierReportOnScreenProps> = ({
                 },
                 '&:hover': {
                   '.MuiTypography-root': {
-                    // fontWeight: 'bold',
                   },
                 },
               }}
@@ -228,7 +227,7 @@ const CashierReportOnScreen: React.FC<CashierReportOnScreenProps> = ({
                           <Grid size={{xs: 6, md: 3}} textAlign="end">
                             <Tooltip title="Amount">
                               <Typography>
-                                {incomingItem.amount.toLocaleString('en-US', {
+                                {incomingItem.amount?.toLocaleString('en-US', {
                                   style: 'currency',
                                   currency: currencyCode
                                 })}
@@ -239,7 +238,7 @@ const CashierReportOnScreen: React.FC<CashierReportOnScreenProps> = ({
                       ))}
                       {/* Incoming Transactions Total */}
                       <Grid size={12} sx={{ marginTop: 2 }}>
-                        <Typography variant="h6" sx={{ textAlign: 'end', fontWeight: 'bold' }}>
+                        <Typography variant="h6" sx={{ textAlign: 'end' }}>
                           Total: {incomingTotal.toLocaleString('en-US', { 
                             style: 'currency', 
                             currency: currencyCode 
@@ -297,7 +296,7 @@ const CashierReportOnScreen: React.FC<CashierReportOnScreenProps> = ({
                           <Grid size={{xs: 6, md: 3}} textAlign="end">
                             <Tooltip title="Amount">
                               <Typography>
-                                {outgoingItem.amount.toLocaleString('en-US', {
+                                {outgoingItem.amount?.toLocaleString('en-US', {
                                   style: 'currency',
                                   currency: currencyCode
                                 })}
@@ -308,7 +307,7 @@ const CashierReportOnScreen: React.FC<CashierReportOnScreenProps> = ({
                       ))}
                       {/* Outgoing Transactions Total */}
                       <Grid size={12} sx={{ marginTop: 2 }}>
-                        <Typography variant="h6" sx={{ textAlign: 'end', fontWeight: 'bold' }}>
+                        <Typography variant="h6" sx={{ textAlign: 'end' }}>
                           Total: {outgoingTotal.toLocaleString('en-US', { 
                             style: 'currency', 
                             currency: currencyCode 

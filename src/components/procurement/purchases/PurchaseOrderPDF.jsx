@@ -119,7 +119,7 @@ function PurchaseOrderPDF({order,organization = null,checkOrganizationPermission
                         <View style={{ ...pdfStyles.tableRow, marginTop: 10 }}>
                             <Text style={{ textAlign: 'center', flex : 4.5  }}></Text>
                             <Text style={{...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex : 2, textAlign : 'right'}}>Total</Text>
-                            <Text style={{...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex : 2.2, textAlign : 'right'}}>{order.amount.toLocaleString("en-US", {style:"currency", currency:currencyCode})}</Text>
+                            <Text style={{...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex : 2.2, textAlign : 'right'}}>{order.amount?.toLocaleString("en-US", {style:"currency", currency:currencyCode})}</Text>
                         </View>
                         {
                             vatAmount > 0 &&
@@ -127,7 +127,7 @@ function PurchaseOrderPDF({order,organization = null,checkOrganizationPermission
                                 <View style={{ ...pdfStyles.tableRow, marginTop: 4 }}>
                                     <Text style={{ textAlign: 'center', flex : 4.5  }}></Text>
                                     <Text style={{...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex : 2, textAlign : 'right'}}>VAT</Text>
-                                    <Text style={{...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex : 2.2, textAlign : 'right'}}>{vatAmount.toLocaleString("en-US", {style:"currency", currency:currencyCode})}</Text>
+                                    <Text style={{...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex : 2.2, textAlign : 'right'}}>{vatAmount?.toLocaleString("en-US", {style:"currency", currency:currencyCode})}</Text>
                                 </View>
                                 <View style={{ ...pdfStyles.tableRow, marginTop: 4 }}>
                                     <Text style={{ textAlign: 'center', flex : 4.5  }}></Text>

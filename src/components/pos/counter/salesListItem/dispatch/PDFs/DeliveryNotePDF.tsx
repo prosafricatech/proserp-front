@@ -235,7 +235,7 @@ const DeliveryNotePDF: React.FC<DeliveryNotePDFProps> = ({ delivery, organizatio
                 >
                 {'TO'}
                 </Text>
-                <Text style={{...pdfStyles.midInfo, fontWeight: 'bold', textAlign: 'center'}}>{delivery.sale.stakeholder.name}</Text>
+                <Text style={{...pdfStyles.midInfo, textAlign: 'center'}}>{delivery.sale.stakeholder.name}</Text>
                 {delivery.sale.stakeholder?.address && <Text style={{...pdfStyles.minInfo, textAlign: 'center'}}>{delivery.sale.stakeholder.address}</Text>}
                 {delivery.sale.stakeholder?.tin && 
                     <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>

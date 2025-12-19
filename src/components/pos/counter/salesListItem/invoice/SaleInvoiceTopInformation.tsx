@@ -49,8 +49,8 @@ interface DeliveryNote {
 const SaleInvoiceTopInformation: React.FC = () => {
     const { authOrganization } = useJumboAuth();
     const organization = authOrganization?.organization;
-    const [totalAmount, setTotalAmount] = useState<number>(0);
-    const [vatableAmount, setVatableAmount] = useState<number>(0);
+    const [totalAmount, settotalAmount] = useState<number>(0);
+    const [vatableAmount, setvatableAmount] = useState<number>(0);
     
     // Use type assertion for the form context
     const formContext = useFormContext<FormValues>();
@@ -100,8 +100,8 @@ const SaleInvoiceTopInformation: React.FC = () => {
             return acc;
         }, { total: 0, vatable: 0 });
 
-        setTotalAmount(total);
-        setVatableAmount(vatable);
+        settotalAmount(total);
+        setvatableAmount(vatable);
     }, [sale_items]);
 
     // Retrieve items from selected delivery notes
@@ -352,7 +352,7 @@ const SaleInvoiceTopInformation: React.FC = () => {
                     </Grid>
                     <Grid size={6}>
                         <Typography align='right'>
-                            {totalAmount.toLocaleString("en-US", { 
+                            {totalAmount?.toLocaleString("en-US", { 
                                 style: "currency", 
                                 currency: currencyCode 
                             })}
@@ -366,7 +366,7 @@ const SaleInvoiceTopInformation: React.FC = () => {
                             </Grid>
                             <Grid size={6}>
                                 <Typography align='right'>
-                                    {vatAmount.toLocaleString("en-US", { 
+                                    {vatAmount?.toLocaleString("en-US", { 
                                         style: "currency", 
                                         currency: currencyCode 
                                     })}

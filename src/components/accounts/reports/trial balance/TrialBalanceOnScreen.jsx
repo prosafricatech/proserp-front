@@ -51,16 +51,16 @@ const TrialBalanceOnScreen = ({ reportData, authOrganization, user }) => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold' }}>
+              <TableCell sx={{ backgroundColor: mainColor, color: contrastText }}>
                 S/N
               </TableCell>
-              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold' }}>
+              <TableCell sx={{ backgroundColor: mainColor, color: contrastText }}>
                 Ledger Name
               </TableCell>
-              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, textAlign: 'right', fontWeight: 'bold' }}>
+              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, textAlign: 'right' }}>
                 Debit
               </TableCell>
-              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, textAlign: 'right', fontWeight: 'bold' }}>
+              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, textAlign: 'right' }}>
                 Credit
               </TableCell>
             </TableRow>
@@ -79,14 +79,14 @@ const TrialBalanceOnScreen = ({ reportData, authOrganization, user }) => {
                 <TableCell>{ledger.name}</TableCell>
                 <TableCell sx={{ textAlign: 'right' }}>
                   {ledger.balance.side === 'DR' &&
-                    ledger.balance.amount.toLocaleString('en-US', {
+                    ledger.balance.amount?.toLocaleString('en-US', {
                       maximumFractionDigits: 2,
                       minimumFractionDigits: 2,
                     })}
                 </TableCell>
                 <TableCell sx={{ textAlign: 'right' }}>
                   {ledger.balance.side === 'CR' &&
-                    ledger.balance.amount.toLocaleString('en-US', {
+                    ledger.balance.amount?.toLocaleString('en-US', {
                       maximumFractionDigits: 2,
                       minimumFractionDigits: 2,
                     })}
@@ -101,7 +101,6 @@ const TrialBalanceOnScreen = ({ reportData, authOrganization, user }) => {
                 sx={{ 
                   backgroundColor: mainColor, 
                   color: contrastText,
-                  fontWeight: 'bold',
                   borderBottom: 'none'
                 }}
               >
@@ -112,7 +111,6 @@ const TrialBalanceOnScreen = ({ reportData, authOrganization, user }) => {
                   backgroundColor: mainColor, 
                   color: contrastText, 
                   textAlign: 'right',
-                  fontWeight: 'bold',
                   borderBottom: 'none'
                 }}
               >
@@ -126,7 +124,6 @@ const TrialBalanceOnScreen = ({ reportData, authOrganization, user }) => {
                   backgroundColor: mainColor, 
                   color: contrastText, 
                   textAlign: 'right',
-                  fontWeight: 'bold',
                   borderBottom: 'none'
                 }}
               >

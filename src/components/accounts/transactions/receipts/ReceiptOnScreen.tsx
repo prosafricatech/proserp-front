@@ -31,6 +31,10 @@ interface Transaction {
   cost_centers: CostCenter[];
   items: ReceiptItem[];
   currency: Currency;
+  narration: string;
+  creator: {
+    name: string
+  }
 }
 
 interface ReceiptOnScreenProps {
@@ -82,7 +86,7 @@ function ReceiptOnScreen({ transaction, authObject }: ReceiptOnScreenProps) {
             <Typography variant="subtitle2" color={headerColor} gutterBottom>
               Receiving Account (Debit)
             </Typography>
-            <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
+            <Typography variant="body1">
               {transaction.debitLedgerName}
             </Typography>
           </Box>
@@ -115,7 +119,7 @@ function ReceiptOnScreen({ transaction, authObject }: ReceiptOnScreenProps) {
           <TableHead>
             <TableRow>
               <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
-                #
+                S/N
               </TableCell>
               <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
                 From (Credit)
@@ -143,7 +147,7 @@ function ReceiptOnScreen({ transaction, authObject }: ReceiptOnScreenProps) {
                 }}
               >
                 <TableCell>{index + 1}</TableCell>
-                <TableCell sx={{ fontWeight: 'medium' }}>
+                <TableCell>
                   {item.creditLedgerName}
                 </TableCell>
                 <TableCell>{item.description}</TableCell>
@@ -151,11 +155,10 @@ function ReceiptOnScreen({ transaction, authObject }: ReceiptOnScreenProps) {
                   align="right" 
                   sx={{ 
                     fontFamily: 'monospace',
-                    fontWeight: 'medium',
                     fontSize: '0.875rem'
                   }}
                 >
-                  {item.amount.toLocaleString('en-US', {
+                  {item.amount?.toLocaleString('en-US', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
                   })}
@@ -191,7 +194,7 @@ function ReceiptOnScreen({ transaction, authObject }: ReceiptOnScreenProps) {
                 fontFamily: 'monospace'
               }}
             >
-              {totalAmount.toLocaleString("en-US", { 
+              {totalAmount?.toLocaleString("en-US", { 
                 style: "currency", 
                 currency: currencyCode,
                 minimumFractionDigits: 2,
@@ -201,6 +204,29 @@ function ReceiptOnScreen({ transaction, authObject }: ReceiptOnScreenProps) {
           </Grid>
         </Grid>
       </Box>
+
+      <Grid container spacing={2} sx={{ mt: 3 }}>
+        <Grid size={{xs: 12, md: 6, lg: 4}}>
+          <Box>
+            <Typography variant="subtitle2">
+              Narration
+            </Typography>
+            <Typography variant="body1">
+              {transaction?.narration}
+            </Typography>
+          </Box>
+        </Grid>
+        <Grid size={{xs: 12, md: 6, lg: 4}}>
+          <Box>
+            <Typography variant="subtitle2">
+              Posted By
+            </Typography>
+            <Typography variant="body1">
+              {transaction?.creator?.name}
+            </Typography>
+          </Box>
+        </Grid>
+      </Grid>
     </Box>
   );
 }

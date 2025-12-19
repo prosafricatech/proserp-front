@@ -1,3 +1,4 @@
+'use client'
 import { 
   Button, 
   DialogActions, 
@@ -138,14 +139,14 @@ const ReportDocument: React.FC<ReportDocumentProps> = ({ reportData, authOrganiz
                   reportData.collection_distribution.map((cd, index) => (
                     <View key={index} style={{ ...pdfStyles.tableRow, flexDirection: 'row' }}>
                       <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex : 0.7 }}>{cd.name}</Text>
-                      <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex : 0.3, textAlign: 'right' }}>{cd.amount.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
+                      <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex : 0.3, textAlign: 'right' }}>{cd.amount?.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
                     </View>
                   ))
                 }
                 {/* Totals Row for Payments Collected */}
                 <View style={{ ...pdfStyles.tableRow, flexDirection: 'row' }}>
                   <Text style={{ ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, flex : 0.7 }}>Total</Text>
-                  <Text style={{ ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, flex : 0.3, textAlign: 'right' }}>{totalCollectedAmount.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
+                  <Text style={{ ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, flex : 0.3, textAlign: 'right' }}>{totalCollectedAmount?.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
                 </View>
               </View>
             }
@@ -170,8 +171,8 @@ const ReportDocument: React.FC<ReportDocumentProps> = ({ reportData, authOrganiz
                 <View key={index} style={pdfStyles.tableRow}>
                   <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex : 0.1 }}>{index + 1}</Text>
                   <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex : 0.3 }}>{creditSale.name}</Text>
-                  <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex : 0.2, textAlign: 'right' }}>{creditSale.debit_amount ? creditSale.debit_amount.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2}) : '-'}</Text>
-                  <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex : 0.2, textAlign: 'right' }}>{creditSale.credit_amount ? creditSale.credit_amount.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2}) : '-'}</Text>
+                  <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex : 0.2, textAlign: 'right' }}>{creditSale.debit_amount ? creditSale.debit_amount?.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2}) : '-'}</Text>
+                  <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex : 0.2, textAlign: 'right' }}>{creditSale.credit_amount ? creditSale.credit_amount?.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2}) : '-'}</Text>
                   <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex : 0.2, textAlign: 'right' }}>{creditSale.balance.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
                 </View>
               ))
@@ -179,8 +180,8 @@ const ReportDocument: React.FC<ReportDocumentProps> = ({ reportData, authOrganiz
             {/* Totals Row */}
             <View style={pdfStyles.tableRow}>
               <Text style={{ ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, flex: 0.41, textAlign: 'center' }}>Total</Text>
-              <Text style={{ ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, flex: 0.2, textAlign: 'right' }}>{totalDebitAmount.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
-              <Text style={{ ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, flex: 0.2, textAlign: 'right' }}>{totalCreditAmount.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
+              <Text style={{ ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, flex: 0.2, textAlign: 'right' }}>{totalDebitAmount?.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
+              <Text style={{ ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, flex: 0.2, textAlign: 'right' }}>{totalCreditAmount?.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
               <Text style={{ ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, flex: 0.2, textAlign: 'right' }}>{totalBalance.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
             </View>
           </View>
@@ -204,14 +205,14 @@ const ReportDocument: React.FC<ReportDocumentProps> = ({ reportData, authOrganiz
                   <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex : 0.1 }}>{index + 1}</Text>
                   <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex : 0.4 }}>{payment.paid}</Text>
                   <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex : 0.25 }}>{payment.from}</Text>
-                  <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex : 0.25, textAlign: 'right' }}>{payment.amount.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
+                  <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex : 0.25, textAlign: 'right' }}>{payment.amount?.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
                 </View>
               ))
             }
             {/* Totals Row for Payments */}
             <View style={pdfStyles.tableRow}>
               <Text style={{ ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, flex: 0.77, textAlign: 'center' }}>Total</Text>
-              <Text style={{ ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, flex: 0.25, textAlign: 'right' }}>{totalPaymentsAmount.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
+              <Text style={{ ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, flex: 0.25, textAlign: 'right' }}>{totalPaymentsAmount?.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
             </View>
           </View>
         }

@@ -47,7 +47,7 @@ const StockMovementOnScreen = ({ movementsData, authOrganization, checkOrganizat
                         borderRadius: 1
                     }}
                 >
-                    <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                    <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
                         Estimated Closing Stock Value
                     </Typography>
                     <Typography variant="h6" fontWeight="bold" fontFamily="monospace">
@@ -86,48 +86,48 @@ const StockMovementOnScreen = ({ movementsData, authOrganization, checkOrganizat
             <Table>
                 <TableHead>
                     <TableRow>
-                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
-                            #
+                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
+                            S/N
                         </TableCell>
-                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
+                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
                             Product
                         </TableCell>
-                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
+                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
                             Unit
                         </TableCell>
-                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
                             Opening
                         </TableCell>
-                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
                             Purchased
                         </TableCell>
-                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
                             Trans In
                         </TableCell>
-                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
                             Trans Out
                         </TableCell>
-                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
                             Gain
                         </TableCell>
-                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
                             Loss
                         </TableCell>
-                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
                             Consumed
                         </TableCell>
-                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
                             Sold
                         </TableCell>
-                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
                             Closing
                         </TableCell>
                         {checkOrganizationPermission(PERMISSIONS.ACCOUNTS_REPORTS) && (
                             <>
-                                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
                                     Rate
                                 </TableCell>
-                                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
                                     Value
                                 </TableCell>
                             </>
@@ -159,42 +159,42 @@ const StockMovementOnScreen = ({ movementsData, authOrganization, checkOrganizat
                                     }
                                 }}
                             >
-                                <TableCell sx={{ fontWeight: 'medium' }}>{index + 1}</TableCell>
-                                <TableCell sx={{ fontWeight: 'medium' }}>{movement.name}</TableCell>
+                                <TableCell>{index + 1}</TableCell>
+                                <TableCell>{movement.name}</TableCell>
                                 <TableCell>{movement.unit_symbol}</TableCell>
-                                <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                                <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                                     {formatQuantity(parseFloat(movement.opening_balance))}
                                 </TableCell>
-                                <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                                <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                                     {formatQuantity(parseFloat(movement.quantity_received))}
                                 </TableCell>
-                                <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                                <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                                     {formatQuantity(parseFloat(movement.quantity_transferred_in))}
                                 </TableCell>
-                                <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                                <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                                     {formatQuantity(parseFloat(movement.quantity_transferred_out))}
                                 </TableCell>
-                                <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                                <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                                     {formatQuantity(parseFloat(movement.stock_gain))}
                                 </TableCell>
-                                <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                                <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                                     {formatQuantity(parseFloat(movement.stock_loss))}
                                 </TableCell>
-                                <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                                <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                                     {formatQuantity(parseFloat(movement.quantity_consumed))}
                                 </TableCell>
-                                <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                                <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                                     {formatQuantity(parseFloat(movement.quantity_sold))}
                                 </TableCell>
-                                <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
+                                <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                                     {formatQuantity(closing_balance)}
                                 </TableCell>
                                 {checkOrganizationPermission(PERMISSIONS.ACCOUNTS_REPORTS) && (
                                     <>
-                                        <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                                        <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                                             {formatNumber(parseFloat(movement.latest_rate))}
                                         </TableCell>
-                                        <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
+                                        <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                                             {formatNumber(estimatedValue)}
                                         </TableCell>
                                     </>

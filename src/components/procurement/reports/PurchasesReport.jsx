@@ -117,8 +117,8 @@ const ReportDocument = ({reportData,authOrganization,user,checkOrganizationPermi
                                     <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 2}}>{order.cost_centers.map(cc => cc.name)}</Text>
                                     { currency?.is_base !== 1 &&
                                         <>
-                                            <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1.5, textAlign: 'right' }}>{order.currency.code} {order.amount.toLocaleString()}</Text>
-                                            <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1.5, textAlign: 'right' }}>{order.currency.code} {order.received_amount.toLocaleString()}</Text>
+                                            <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1.5, textAlign: 'right' }}>{order.currency.code} {order.amount?.toLocaleString()}</Text>
+                                            <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1.5, textAlign: 'right' }}>{order.currency.code} {order.received_amount?.toLocaleString()}</Text>
                                             <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1.5, textAlign: 'right' }}>{order.currency.code} {(order.amount - order.received_amount).toLocaleString()}</Text>
                                         </>
                                     }
@@ -131,8 +131,8 @@ const ReportDocument = ({reportData,authOrganization,user,checkOrganizationPermi
                     )}
                     <View style={pdfStyles.tableRow}>
                         <Text style={{ ...pdfStyles.tableCell, ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: currency?.is_base !== 1 ? 11.7 : 5.8, textAlign: 'center' }}>TOTAL</Text>
-                        <Text style={{ ...pdfStyles.tableCell, ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.5, textAlign: 'right' }}>{baseCurrency.symbol} {totalOrderAmount.toLocaleString()}</Text>
-                        <Text style={{ ...pdfStyles.tableCell, ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.5, textAlign: 'right' }}>{baseCurrency.symbol} {totalReceivedAmount.toLocaleString()}</Text>
+                        <Text style={{ ...pdfStyles.tableCell, ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.5, textAlign: 'right' }}>{baseCurrency.symbol} {totalOrderamount?.toLocaleString()}</Text>
+                        <Text style={{ ...pdfStyles.tableCell, ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.5, textAlign: 'right' }}>{baseCurrency.symbol} {totalReceivedamount?.toLocaleString()}</Text>
                         <Text style={{ ...pdfStyles.tableCell, ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.5, textAlign: 'right' }}>{baseCurrency.symbol} {totalBalance.toLocaleString()}</Text>
                     </View>
                 </View>

@@ -212,7 +212,7 @@ function InvoicePDF({ invoice, organization }: InvoicePDFProps) {
                         Total
                     </Text>
                     <Text style={{...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2, textAlign: 'right'}}>
-                        {invoice.amount.toLocaleString("en-US", {style: "currency", currency: currencyCode})}
+                        {invoice.amount?.toLocaleString("en-US", {style: "currency", currency: currencyCode})}
                     </Text>
                 </View>
 

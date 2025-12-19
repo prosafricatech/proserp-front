@@ -1,3 +1,4 @@
+'use client'
 import React, { useContext, useState } from 'react';
 import { DeleteOutlined, EditOutlined, HighlightOff, VisibilityOutlined } from '@mui/icons-material';
 import { Box, Button, Dialog, DialogActions, DialogContent, Grid, IconButton, LinearProgress, Tab, Tabs, Tooltip, useMediaQuery } from '@mui/material';
@@ -16,6 +17,9 @@ import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { Requisition } from '../RequisitionType';
 import { Organization } from '@/types/auth-types';
+import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
+
+dayjs.extend(isSameOrAfter);
 
 interface EditRequisitionProps {
   requisition: Requisition;
@@ -192,6 +196,13 @@ const RequisitionsItemAction: React.FC<RequisitionsItemActionProps> = ({ requisi
     });
   };
 
+  const canEditOrDelete =
+    requisition.approvals.length === 0 &&
+    (checkOrganizationPermission(PERMISSIONS.REQUISITIONS_BACKDATE) ||
+      dayjs(requisition.requisition_date).isSameOrAfter(
+        dayjs().startOf('day')
+      ));
+
   return (
     <>
       <Dialog
@@ -222,9 +233,8 @@ const RequisitionsItemAction: React.FC<RequisitionsItemActionProps> = ({ requisi
         </IconButton>
       </Tooltip>
 
-      {requisition.approvals.length === 0 && 
-        (checkOrganizationPermission(PERMISSIONS.REQUISITIONS_BACKDATE) || 
-        dayjs(requisition.requisition_date).isSameOrAfter(dayjs().startOf('date'))) && (
+      {
+        canEditOrDelete &&(
         <>
           <Tooltip title="Edit">
             <IconButton onClick={() => {

@@ -104,8 +104,12 @@ function RequisitionProductItemForm({
     });
 
     useEffect(() => {
-      setIsDirty(Object.keys(dirtyFields).length > 0);
-    }, [dirtyFields, setIsDirty, watch]);
+        const subscription = watch(() => {
+            const hasDirtyFields = Object.keys(dirtyFields).length > 0;
+            setIsDirty(hasDirtyFields);
+        });
+        return () => subscription.unsubscribe();
+    }, [watch, dirtyFields, setIsDirty]);
 
     const product: Product | undefined | null = watch('product');
     const vat_percentage: number = watch('vat_percentage') || 0;

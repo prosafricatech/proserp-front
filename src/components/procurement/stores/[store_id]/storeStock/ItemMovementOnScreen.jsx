@@ -29,7 +29,6 @@ function ItemMovementOnScreen({ movementsData, authObject }) {
   const getBalanceStyle = (balance) => {
     if (balance < 0) {
       return {
-        fontWeight: 'bold',
         backgroundColor: theme.palette.mode === 'dark' 
           ? 'rgba(244, 67, 54, 0.1)' 
           : 'rgba(244, 67, 54, 0.05)'
@@ -37,11 +36,9 @@ function ItemMovementOnScreen({ movementsData, authObject }) {
     } else if (balance > 0) {
       return {
         color: theme.palette.success.main,
-        fontWeight: 'bold'
       };
     }
     return {
-      fontWeight: 'bold',
       color: theme.palette.text.primary
     };
   };
@@ -72,7 +69,7 @@ function ItemMovementOnScreen({ movementsData, authObject }) {
           >
             <Typography 
               variant="h4" 
-              sx={{ color: headerColor, fontWeight: 'bold' }} 
+              sx={{ color: headerColor}} 
               gutterBottom
             >
               ITEM MOVEMENT REPORT
@@ -95,7 +92,6 @@ function ItemMovementOnScreen({ movementsData, authObject }) {
           sx={{ 
             color: headerColor, 
             textAlign: 'center', 
-            fontWeight: 'bold',
             mb: 2
           }}
         >
@@ -153,16 +149,16 @@ function ItemMovementOnScreen({ movementsData, authObject }) {
                       }
                     }}
                   >
-                    <TableCell sx={{ fontWeight: 'medium' }}>{index + 1}</TableCell>
-                    <TableCell sx={{ fontWeight: 'medium' }}>
+                    <TableCell>{index + 1}</TableCell>
+                    <TableCell>
                       {readableDate(movement.movement_date)}
                     </TableCell>
                     <TableCell>{movement.description}</TableCell>
                     <TableCell>{movement.reference}</TableCell>
-                    <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                    <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                       {movement.quantity_in !== 0 && formatQuantity(movement.quantity_in)}
                     </TableCell>
-                    <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                    <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                       {movement.quantity_out !== 0 && formatQuantity(movement.quantity_out)}
                     </TableCell>
                     <TableCell 
@@ -196,14 +192,12 @@ function ItemMovementOnScreen({ movementsData, authObject }) {
                   backgroundColor: theme.palette.background.default,
                   '& td': {
                     borderBottom: 'none',
-                    fontWeight: 'bold'
                   }
                 }}>
                   <TableCell 
                     colSpan={4} 
                     align="right" 
                     sx={{ 
-                      fontWeight: 'bold'
                     }}
                   >
                     Final Balance
@@ -212,7 +206,6 @@ function ItemMovementOnScreen({ movementsData, authObject }) {
                     align="right" 
                     sx={{ 
                       fontFamily: 'monospace',
-                      fontWeight: 'medium'
                     }}
                   >
                     {formatQuantity(movements.reduce((sum, m) => sum + m.quantity_in, 0))}
@@ -221,7 +214,6 @@ function ItemMovementOnScreen({ movementsData, authObject }) {
                     align="right" 
                     sx={{ 
                       fontFamily: 'monospace',
-                      fontWeight: 'medium'
                     }}
                   >
                     {formatQuantity(movements.reduce((sum, m) => sum + m.quantity_out, 0))}
@@ -230,7 +222,6 @@ function ItemMovementOnScreen({ movementsData, authObject }) {
                     align="right" 
                     sx={{ 
                       fontFamily: 'monospace',
-                      fontWeight: 'bold',
                       ...getBalanceStyle(cumulativeBalance),
                       fontSize: '1rem'
                     }}

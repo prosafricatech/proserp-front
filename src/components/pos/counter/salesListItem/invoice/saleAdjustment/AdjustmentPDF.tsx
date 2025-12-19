@@ -273,7 +273,7 @@ const AdjustmentPDF: React.FC<AdjustmentPDFProps> = ({ adjustment, authObject })
                     }}
                   >
                     {invoiceItem.vat_exempted !== 1
-                      ? vatAmount.toLocaleString('en-US', {
+                      ? vatAmount?.toLocaleString('en-US', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })
@@ -288,7 +288,7 @@ const AdjustmentPDF: React.FC<AdjustmentPDFProps> = ({ adjustment, authObject })
                     textAlign: 'right',
                   }}
                 >
-                  {itemAmount.toLocaleString('en-US', {
+                  {itemAmount?.toLocaleString('en-US', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}
@@ -321,7 +321,7 @@ const AdjustmentPDF: React.FC<AdjustmentPDFProps> = ({ adjustment, authObject })
               textAlign: 'right',
             }}
           >
-            {totalAmount.toLocaleString('en-US', { style: 'currency', currency: currencyCode })}
+            {totalAmount?.toLocaleString('en-US', { style: 'currency', currency: currencyCode })}
           </Text>
         </View>
 

@@ -1,8 +1,9 @@
+import FuelStationReports from '@/components/fuelStation/reports/FuelStationReports'
 import React from 'react'
 
 function page() {
   return (
-    <div>reports</div>
+    <FuelStationReports/>
   )
 }
 

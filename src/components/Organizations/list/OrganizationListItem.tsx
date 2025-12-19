@@ -42,13 +42,13 @@ export const OrganizationListItem: React.FC<OrganizationListItemProps> = ({ orga
   const roles = organization.roles || [];
   const rolesCount = roles.length;
 
-  useEffect(() => {
-    if (!authUser?.user) {
-      signOut({
-        callbackUrl: `http://localhost:3000/${lang}/auth/signin`,
-      });
+
+  React.useEffect(() => {
+    if (authUser?.user === null) {
+      signOut();
+      router.replace(`/${lang}/auth/signin`);
     }
-  }, [authUser, router]);
+  }, [authUser?.user, signOut, router, lang]);
 
   const onLoad = async () => {
     setIsLoading(true);
@@ -75,7 +75,7 @@ export const OrganizationListItem: React.FC<OrganizationListItemProps> = ({ orga
       queryClient.clear();
       setIsLoading(false);
     }
-    window.location.href = `/${lang}/dashboard`;
+    router.replace(`/${lang}/dashboard`);
   };
 
   if (isLoading) {

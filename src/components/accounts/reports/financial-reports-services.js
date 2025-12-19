@@ -38,13 +38,6 @@ financialReportsServices.downloadExcelTrialBalance = async(params) => {
   return data;
 }
 
-financialReportsServices.codedTrialBalance = async(params) => {
-  const {data} = await axios.get(`/api/financialReports/codedTrialBalance`,{
-    params
-  })
-  return data;
-}
-
 financialReportsServices.downloadExcelDebtorCreditor = async(params) => {
   const {data} = await axios.post(`/api/financialReports/downloadExcelDebtorCreditor`,params,{
     responseType: 'blob',
@@ -313,13 +306,13 @@ financialReportsServices.inventoryValue =async (params) => {
   return data;
 }
 
-financialReportsServices.downloadExcelTemplate = async (filters) => {
-    const { data } = await axios.post(`/stores/1/stock_list_excel`,filters,
-        {
-            responseType: 'blob',
-        }
-    );      
-    return data;
+financialReportsServices.downloadIcomeStatementExcel = async (filters) => {
+  const { data } = await axios.post(`/api/financialReports/getIncomeStatementTemplate`,filters,
+    {
+      responseType: 'blob',
+    }
+  );      
+  return data;
 };
 
 export default financialReportsServices;

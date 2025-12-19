@@ -98,8 +98,8 @@ function SalesInvoiceAdjustment({ isEdit, invoiceData, toggleOpen }: SalesInvoic
   const queryClient = useQueryClient();
   const { authOrganization } = useJumboAuth();
   const organization = authOrganization?.organization;
-  const [totalAmount, setTotalAmount] = useState(0);
-  const [vatableAmount, setVatableAmount] = useState(0);
+  const [totalAmount, settotalAmount] = useState(0);
+  const [vatableAmount, setvatableAmount] = useState(0);
   const [sale_items, setSale_items] = useState<InvoiceItem[]>(
     invoiceData ? invoiceData.items : []
   );
@@ -228,7 +228,7 @@ function SalesInvoiceAdjustment({ isEdit, invoiceData, toggleOpen }: SalesInvoic
         total += quantity * rate;
       }
     });
-    setTotalAmount(total);
+    settotalAmount(total);
 
     const vatable = sale_items
       .filter(
@@ -242,7 +242,7 @@ function SalesInvoiceAdjustment({ isEdit, invoiceData, toggleOpen }: SalesInvoic
         const vatPercentage = item.vat_percentage || 0;
         return sum + (quantity * rate * vatPercentage) / 100;
       }, 0);
-    setVatableAmount(vatable);
+    setvatableAmount(vatable);
   }, [formValues, sale_items]);
 
   const onSubmit = async (data: FormData) => {
@@ -401,7 +401,7 @@ function SalesInvoiceAdjustment({ isEdit, invoiceData, toggleOpen }: SalesInvoic
               </Grid>
               <Grid size={6}>
                 <Typography align="right" variant="h5">
-                  {totalAmount.toLocaleString('en-US', {
+                  {totalAmount?.toLocaleString('en-US', {
                     style: 'currency',
                     currency: currencyCode,
                   })}
@@ -416,7 +416,7 @@ function SalesInvoiceAdjustment({ isEdit, invoiceData, toggleOpen }: SalesInvoic
                   </Grid>
                   <Grid size={6}>
                     <Typography align="right" variant="h5">
-                      {vatableAmount.toLocaleString('en-US', {
+                      {vatableAmount?.toLocaleString('en-US', {
                         style: 'currency',
                         currency: currencyCode,
                       })}

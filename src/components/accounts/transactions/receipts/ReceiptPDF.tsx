@@ -145,7 +145,7 @@ function ReceiptPDF({ transaction, authObject }: ReceiptPDFProps) {
                                 flex: 1.5, 
                                 textAlign: 'right' 
                             }}>
-                                {transactionItem.amount.toLocaleString()}
+                                {transactionItem.amount?.toLocaleString()}
                             </Text>
                         </View>
                     ))}

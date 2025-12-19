@@ -46,7 +46,7 @@ function InventoryConsumptionsOnScreen({ inventoryConsumption, authObject }) {
           >
             <Typography 
               variant="h4" 
-              sx={{ color: headerColor, fontWeight: 'bold' }} 
+              sx={{ color: headerColor }} 
               gutterBottom
             >
               INVENTORY CONSUMPTION
@@ -71,7 +71,7 @@ function InventoryConsumptionsOnScreen({ inventoryConsumption, authObject }) {
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid size={{xs: 12, sm: 6, md: 4}}>
           <Box>
-            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+            <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
               Consumption Date
             </Typography>
             <Typography variant="body1">
@@ -81,7 +81,7 @@ function InventoryConsumptionsOnScreen({ inventoryConsumption, authObject }) {
         </Grid>
         <Grid size={{xs: 12, sm: 6, md: 4}}>
           <Box>
-            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+            <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
               Cost Center
             </Typography>
             <Typography variant="body1">{inventoryConsumption.cost_center.name}</Typography>
@@ -127,7 +127,7 @@ function InventoryConsumptionsOnScreen({ inventoryConsumption, authObject }) {
                   }
                 }}
               >
-                <TableCell sx={{ fontWeight: 'medium' }}>{index + 1}</TableCell>
+                <TableCell>{index + 1}</TableCell>
                 <TableCell>
                   <Box>
                     <Typography variant="body2" fontWeight="medium">
@@ -140,10 +140,10 @@ function InventoryConsumptionsOnScreen({ inventoryConsumption, authObject }) {
                     )}
                   </Box>
                 </TableCell>
-                <TableCell sx={{ fontWeight: 'medium' }}>
+                <TableCell>
                   {item.ledger?.name}
                 </TableCell>
-                <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                   {`${item.quantity.toLocaleString()} ${item.measurement_unit.symbol}`}
                 </TableCell>
               </TableRow>

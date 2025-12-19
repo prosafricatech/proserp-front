@@ -1,3 +1,4 @@
+'use client'
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogTitle, IconButton, SpeedDial, SpeedDialAction, SpeedDialIcon, Tab, Tabs, Tooltip, useMediaQuery } from '@mui/material';
 import { AddOutlined, DownloadOutlined, MergeOutlined, UploadOutlined } from '@mui/icons-material';

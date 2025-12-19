@@ -17,6 +17,7 @@ import organizationServices from '../organizationServices';
 import { useLanguage } from '@/app/[lang]/contexts/LanguageContext';
 import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
 import { Dictionary } from '@/dictionaries/type';
+import { signOut } from 'next-auth/react';
 
 interface QueryOptions<TQueryKey> {
   queryKey: string;
@@ -49,7 +50,7 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({ user }) => {
 
   const router = useRouter();
   const listRef = useRef<{ refresh: () => Promise<void> }>(null);
-  const { checkPermission } = useJumboAuth();
+  const { checkPermission, authUser, resetAuth } = useJumboAuth();
 
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => {
@@ -101,6 +102,15 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({ user }) => {
     display: 'flex',
     flexDirection: 'column',
   };
+
+  React.useEffect(() => {
+    if (authUser?.user === null) {
+      signOut({
+        callbackUrl: `http://localhost:3000/${lang}/auth/signin`,
+      });
+      resetAuth();
+    }
+  }, [authUser?.user, signOut, router, lang]);
 
   if (!mounted) return null;
 

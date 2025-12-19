@@ -87,14 +87,12 @@ export const AuthUserPopover: React.FC<AuthUserPopoverProps> = ({ dictionary }) 
   const user: User | undefined = authData?.authUser?.user;
   const organization: Organization | undefined = authOrganization?.organization;
 
-  if (!user) return null;
-
   return (
     <ThemeProvider theme={theme}>
       <JumboDdPopover
         triggerButton={
           <Avatar
-            src={user.avatar}
+            src={user?.avatar}
             sizes="small"
             sx={{ boxShadow: 23, cursor: 'pointer' }}
           />
@@ -109,12 +107,12 @@ export const AuthUserPopover: React.FC<AuthUserPopoverProps> = ({ dictionary }) 
             p: (theme) => theme.spacing(2.5),
           }}
         >
-          <Avatar src={user.avatar} sx={{ width: 60, height: 60, mb: 2 }} />
+          <Avatar src={user?.avatar} sx={{ width: 60, height: 60, mb: 2 }} />
           <Typography noWrap variant="h5">
-            {user.name}
+            {user?.name}
           </Typography>
           <Typography noWrap variant="body1" color="text.secondary">
-            {user.email}
+            {user?.email}
           </Typography>
 
           <Stack direction="row" alignItems="center" spacing={1} mt={1}>
@@ -177,13 +175,6 @@ export const AuthUserPopover: React.FC<AuthUserPopoverProps> = ({ dictionary }) 
           <Button
             onClick={() => setOpenLogoutDialog(false)}
             variant="text"
-            sx={{
-              color: '#380dfaff',
-              backgroundColor: 'transparent',
-              '&:hover': {
-                backgroundColor: 'rgba(25, 118, 210, 0.04)',
-              },
-            }}
           >
             Cancel
           </Button>
@@ -193,13 +184,6 @@ export const AuthUserPopover: React.FC<AuthUserPopoverProps> = ({ dictionary }) 
               logout();
             }}
             variant="text"
-            sx={{
-              color: '#380dfaff',
-              backgroundColor: 'transparent',
-              '&:hover': {
-                backgroundColor: 'rgba(25, 118, 210, 0.04)',
-              },
-            }}
           >
             Logout
           </Button>

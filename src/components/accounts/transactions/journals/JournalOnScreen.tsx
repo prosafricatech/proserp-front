@@ -10,6 +10,7 @@ import {
   TableRow,
   Paper,
   useTheme,
+  Box,
 } from '@mui/material';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import { AuthObject } from '@/types/auth-types';
@@ -30,6 +31,10 @@ interface Transaction {
   cost_centers: CostCenter[];
   items: JournalItem[];
   currency: Currency;
+  narration: string;
+  creator: {
+    name: string
+  }
 }
 
 interface JournalOnScreenProps {
@@ -82,19 +87,19 @@ function JournalOnScreen({ transaction, authObject }: JournalOnScreenProps) {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold' }}>
+              <TableCell sx={{ backgroundColor: mainColor, color: contrastText }}>
                 S/N
               </TableCell>
-              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold' }}>
+              <TableCell sx={{ backgroundColor: mainColor, color: contrastText }}>
                 Description
               </TableCell>
-              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold' }}>
+              <TableCell sx={{ backgroundColor: mainColor, color: contrastText }}>
                 Credit Account
               </TableCell>
-              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold' }}>
+              <TableCell sx={{ backgroundColor: mainColor, color: contrastText }}>
                 Debit Account
               </TableCell>
-              <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold' }} align="right">
+              <TableCell sx={{ backgroundColor: mainColor, color: contrastText }} align="right">
                 Amount
               </TableCell>
             </TableRow>
@@ -114,7 +119,7 @@ function JournalOnScreen({ transaction, authObject }: JournalOnScreenProps) {
                 <TableCell>{item.creditLedgerName}</TableCell>
                 <TableCell>{item.debitLedgerName}</TableCell>
                 <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
-                  {item.amount.toLocaleString('en-US', {
+                  {item.amount?.toLocaleString('en-US', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
                   })}
@@ -144,13 +149,36 @@ function JournalOnScreen({ transaction, authObject }: JournalOnScreenProps) {
               fontFamily: 'monospace'
             }}
           >
-            {totalAmount.toLocaleString("en-US", { 
+            {totalAmount?.toLocaleString("en-US", { 
               style: "currency", 
               currency: currencyCode,
               minimumFractionDigits: 2,
               maximumFractionDigits: 2
             })}
           </Typography>
+        </Grid>
+      </Grid>
+
+      <Grid container spacing={2} sx={{ mt: 3 }}>
+        <Grid size={{xs: 12, md: 6, lg: 4}}>
+          <Box>
+            <Typography variant="subtitle2" color={headerColor}>
+              Narration
+            </Typography>
+            <Typography variant="body1">
+              {transaction?.narration}
+            </Typography>
+          </Box>
+        </Grid>
+        <Grid size={{xs: 12, md: 6, lg: 4}}>
+          <Box>
+            <Typography variant="subtitle2" color={headerColor}>
+              Posted By
+            </Typography>
+            <Typography variant="body1">
+              {transaction?.creator?.name}
+            </Typography>
+          </Box>
         </Grid>
       </Grid>
     </div>

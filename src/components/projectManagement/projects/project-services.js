@@ -16,9 +16,32 @@ projectsServices.getSubcontractsList = async (params) => {
   return response.data;
 };
 
-projectsServices.getSubContractMaterialUsed = async (params) => {
+projectsServices.projectUpdatesList = async (params) => {
+  const response = await axios.get(`/api/projectManagement/project/${params.project_id}/projectUpdatesList`, {
+    params,
+  });
+  return response.data;
+}
+
+projectsServices.projectUsersList = async (params) => {
+  const response = await axios.get(`/api/projectManagement/project/${params.project_id}/projectUsersList`, {
+    params,
+  });
+  return response.data;
+}
+
+
+projectsServices.getSubContractMaterialIssued = async (params) => {
   const response = await axios.get(
-    `/api/projectManagement/project/${params.subcontract_id}/getSubContractMaterialUsed`,
+    `/api/projectManagement/project/${params.subcontract_id}/getSubContractMaterialIssued`,
+    { params }
+  );
+  return response.data;
+};
+
+projectsServices.getCertificates = async (params) => {
+  const response = await axios.get(
+    `/api/projectManagement/project/${params.subcontract_id}/getCertificates`,
     { params }
   );
   return response.data;
@@ -29,6 +52,20 @@ projectsServices.getSubContractDetails = async (id) => {
     return data;
 }
 
+projectsServices.getCertificateDetails = async (id) => {
+    const {data} = await axios.get(`/api/projectManagement/project/${id}/getCertificateDetails`);
+    return data;
+}
+
+projectsServices.detachUsers = async (costCenterId, payload) => {
+    const { data } = await axios.put(
+        `/api/accountsAndFinance/cost-centers/${costCenterId}/detach-users`,
+        payload
+    );
+    return data;
+};
+
+
 projectsServices.getSubcontractOptions = async (id) => {
   const { data } = await axios.get(`/api/projectManagement/project/getSubcontractOptions`, {
     params: { project_id: id }
@@ -36,8 +73,8 @@ projectsServices.getSubcontractOptions = async (id) => {
   return data;
 };
 
-projectsServices.getSubContractMaterialUsedDetails = async (id) => {
-    const {data} = await axios.get(`/api/projectManagement/project/${id}/getSubContractMaterialUsedDetails`);
+projectsServices.getSubContractMaterialIssuedDetails = async (id) => {
+    const {data} = await axios.get(`/api/projectManagement/project/${id}/getSubContractMaterialIssuedDetails`);
     return data;
 }
 
@@ -72,9 +109,16 @@ projectsServices.addSubContractTask = async(tasks) => {
     })
 }
 
-projectsServices.addSubContractMaterialUsed = async(tasks) => {
+projectsServices.addCertificates = async(certificate) => {
     return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.post('/api/projectManagement/project/addSubContractMaterialUsed',tasks)
+        const {data} = await axios.post('/api/projectManagement/project/addCertificates',certificate)
+        return data;
+    })
+}
+
+projectsServices.addSubContractMaterialIssued = async(tasks) => {
+    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
+        const {data} = await axios.post('/api/projectManagement/project/addSubContractMaterialIssued',tasks)
         return data;
     })
 }
@@ -156,6 +200,13 @@ projectsServices.updateSubContractTask = async(subContractTask) => {
     })
 }
 
+projectsServices.updateCertificates = async(certificate) => {
+    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
+        const {data} = await axios.put(`/api/projectManagement/project/${certificate.id}/updateCertificates`,certificate)
+        return data;    
+    })
+}
+
 projectsServices.updateDeliverables = async(deliverable) => {
     return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
         const {data} = await axios.put(`/api/projectManagement/project/${deliverable.id}/updateDeliverables`,deliverable)
@@ -177,9 +228,9 @@ projectsServices.updateSubcontract = async(subcontract) => {
     })
 }
 
-projectsServices.updateSubContractMaterialUsed = async(material) => {
+projectsServices.updateSubContractMaterialIssued = async(material) => {
     return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.put(`/api/projectManagement/project/${material.id}/updateSubContractMaterialUsed`,material)
+        const {data} = await axios.put(`/api/projectManagement/project/${material.id}/updateSubContractMaterialIssued`,material)
         return data;    
     })
 }
@@ -215,20 +266,27 @@ projectsServices.showProjectTimelineActivities = async (id) => {
     return data;
 }
 
-projectsServices.projectUpdatesList = async (id) => {
-    const {data} = await axios.get(`/api/projectManagement/project/${id}/projectUpdatesList`);
-    return data;
-}
-
 projectsServices.projectUpdateDetails = async (id) => {
     const {data} = await axios.get(`/api/projectManagement/project/${id}/projectUpdateDetails`);
     return data;
 }
 
-projectsServices.showTaskDetails = async (taskId) => {
-    const {data} = await axios.get(`/api/projectManagement/project/${taskId}/showTaskDetails`);
+projectsServices.showProjectTaskDetails = async (taskId) => {
+    const {data} = await axios.get(`/api/projectManagement/project/${taskId}/showProjectTaskDetails`);
     return data;
 }
+
+projectsServices.showSubcontractTaskDetails = async (taskId, certificateDate) => {
+    const { data } = await axios.get(
+        `/api/projectManagement/project/${taskId}/showSubcontractTaskDetails`,
+        {
+            params: {
+                as_at: certificateDate
+            }
+        }
+    );
+    return data;
+};
 
 projectsServices.showDeliverableDetails = async (id) => {
     const {data} = await axios.get(`/api/projectManagement/project/${id}/showDeliverableDetails`);
@@ -304,9 +362,16 @@ projectsServices.deleteSubContract = async (id) => {
     })
 };
 
-projectsServices.deleteSubContractMaterialUsed = async (id) => {
+projectsServices.deleteCertificate = async (id) => {
     return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.delete(`/api/projectManagement/project/${id}/deleteSubContractMaterialUsed`);
+        const {data} = await axios.delete(`/api/projectManagement/project/${id}/deleteCertificate`);
+        return data;
+    })
+};
+
+projectsServices.deleteSubContractMaterialIssued = async (id) => {
+    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
+        const {data} = await axios.delete(`/api/projectManagement/project/${id}/deleteSubContractMaterialIssued`);
         return data;
     })
 };

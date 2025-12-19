@@ -1,3 +1,4 @@
+'use client'
 import { DeleteOutlined, EditOutlined, MoreHorizOutlined } from '@mui/icons-material';
 import { Dialog, Tooltip, useMediaQuery } from '@mui/material';
 import { useSnackbar } from 'notistack';
@@ -23,7 +24,7 @@ const OutletListItemActions = ({ outlet }: { outlet: Outlet }) => {
     mutationFn: (params: { id: number }) => outletServices.delete(params), 
     onSuccess: (data: { message: string }) => {
     enqueueSnackbar(data.message, { variant: 'success' });
-    queryClient.invalidateQueries({ queryKey: ['Outlet'] });
+    queryClient.invalidateQueries({ queryKey: ['Outlets'] });
     },
     onError: (error: any) => {
       enqueueSnackbar(

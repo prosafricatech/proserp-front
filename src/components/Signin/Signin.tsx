@@ -3,15 +3,12 @@
 import { LoginForm } from '@/components/LoginForm';
 import { Link } from '@/components/NextLink';
 import { ASSET_IMAGES } from '@/utilities/constants/paths';
-import { getAssetPath } from '@/utilities/helpers';
-import { Div } from '@jumbo/shared';
 import { Facebook, Google, Twitter } from '@mui/icons-material';
 import {
   Card,
   CardContent,
   IconButton,
   Typography,
-  alpha,
   Box,
 } from '@mui/material';
 import Stack from '@mui/material/Stack';
@@ -25,27 +22,29 @@ export const Signin = () => {
   const lang = useLanguage();
 
   return (
-    <Div
+    <Box
       sx={{
-        width: { xs: '100%', md: 800 },
-        maxWidth: '100%',
-        margin: 'auto',
-        p: { xs: 2, md: 4 },
+        width: { xs: '100%'},
         minHeight: '100vh',
+        margin: '0',
+        p: { xs: 2, sm: 3, md: 4 },
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
+        background: '#f5f7fb',
+        overflowX: 'hidden',
       }}
     >
       <Card
         sx={{
           display: 'flex',
-          minWidth: 0,
           flexDirection: { xs: 'column', md: 'row' },
           borderRadius: { xs: '24px', md: '32px' },
           overflow: 'hidden',
           boxShadow: '0 20px 60px rgba(0,0,0,0.1)',
-          minHeight: { xs: 'auto', md: '500px' },
+          maxWidth: 720,
+          width: '100%',
+          mx: 'auto',
         }}
       >
         {/* Left Hero Section with Curves */}
@@ -82,78 +81,78 @@ export const Signin = () => {
           }}
         >
           <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              color: 'common.white',
-              position: 'relative',
-              zIndex: 2,
-              height: '100%',
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            color: 'common.white',
+            position: 'relative',
+            zIndex: 2,
+            height: '100%',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          {/* Header Section - Centered at top */}
+          <Box 
+            sx={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              alignItems: 'center',
+              textAlign: 'center',
+              justifyContent: 'center',
+              mb: 3,
             }}
           >
-            {/* Header Section */}
-            <Box 
-              sx={{ 
-                flex: 1,
-                display: 'flex', 
-                flexDirection: 'column', 
-                alignItems: 'center',
-                textAlign: 'center',
-                justifyContent: 'center',
-                mb: 3,
+            <Typography
+              variant={'h4'}
+              color={'inherit'}
+              fontWeight={600}
+              sx={{
+                fontSize: { 
+                  xs: '1.75rem',
+                  sm: '2rem', 
+                  md: '2.5rem',
+                  lg: '3rem'
+                },
+                lineHeight: 1.2,
+                textShadow: '2px 2px 8px rgba(0,0,0,0.3)',
+                mb: 2,
               }}
             >
-              <Typography
-                variant={'h2'}
-                color={'inherit'}
-                fontWeight={600}
-                sx={{
-                  fontSize: { 
-                    xs: '1.75rem',
-                    sm: '2rem', 
-                    md: '2.5rem',
-                    lg: '3rem'
-                  },
-                  lineHeight: 1.2,
-                  textShadow: '2px 2px 8px rgba(0,0,0,0.3)',
-                  mb: 2,
-                }}
-              >
-                {dictionary.signin.header}
-              </Typography>
-            </Box>
-
-            {/* Logo Section */}
-            <Box 
-              sx={{ 
-                display: 'flex', 
-                justifyContent: 'center',
-                alignItems: 'center',
-                width: '100%',
-                pt: 2,
-              }}
-            >
-              <Link 
-                underline='none' 
-                href='#' 
-                sx={{ 
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                }}
-              >
-                <Image
-                  height={40}
-                  width={120}
-                  src={`${ASSET_IMAGES}/logos/proserp-white.png`}
-                  alt='ProsERP'
-                  style={{
-                    filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.3))'
-                  }}
-                />
-              </Link>
-            </Box>
+              {dictionary.signin.header}
+            </Typography>
           </Box>
+
+          {/* Logo Section - Centered below header */}
+          <Box 
+            sx={{ 
+              display: 'flex', 
+              justifyContent: 'center',
+              alignItems: 'center',
+              width: '100%',
+            }}
+          >
+            <Link 
+              underline='none' 
+              href='#' 
+              sx={{ 
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
+            >
+              <Image
+                height={50}
+                width={150}
+                src={`${ASSET_IMAGES}/logos/proserp-white.png`}
+                alt='ProsERP'
+                style={{
+                  filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.3))'
+                }}
+              />
+            </Link>
+          </Box>
+        </Box>
         </CardContent>
 
         {/* Right Form Section with Matching Curves */}
@@ -190,11 +189,9 @@ export const Signin = () => {
               <Typography variant={'body1'} mb={2} align='center'>
                 <Link 
                   underline='none' 
-                  href={`/${lang}/auth/forgot-password`}
+                  href={`/${lang}/auth/reset-password`}
                   sx={{ 
                     color: '#0267a0',
-                    fontWeight: 500,
-                    '&:hover': { color: '#00a8ff' }
                   }}
                 >
                   {dictionary.signin.forgotPassword.text}
@@ -218,7 +215,7 @@ export const Signin = () => {
                 </Link>
               </Typography>
 
-              {/* Social Login Section */}
+              {/* Social Login Section
               <Box sx={{ textAlign: 'center' }}>
                 <Typography 
                   variant={'body2'} 
@@ -288,11 +285,11 @@ export const Signin = () => {
                     <Google fontSize='small' />
                   </IconButton>
                 </Stack>
-              </Box>
+              </Box> */}
             </Box>
           </Box>
         </CardContent>
       </Card>
-    </Div>
+    </Box>
   );
 };

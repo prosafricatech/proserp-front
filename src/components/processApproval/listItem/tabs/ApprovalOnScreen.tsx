@@ -76,7 +76,7 @@ function ApprovalOnScreen({ approval, organization, belowLargeScreen }: Approval
     const subtotal = approval?.items?.reduce((total, item) => total + (item.quantity || 0) * (item.rate || 0), 0);
 
     const formatCurrency = (amount: number) => {
-        return amount.toLocaleString('en-US', { 
+        return amount?.toLocaleString('en-US', { 
             style: 'currency', 
             currency: approval.requisition?.currency?.code,
             minimumFractionDigits: 2,
@@ -107,41 +107,25 @@ function ApprovalOnScreen({ approval, organization, belowLargeScreen }: Approval
                                 width: '100%'
                             }}
                         >
-                            <Typography variant="h4" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                            <Typography variant="h4" sx={{ color: headerColor }}>
                                 {isPurchase ? 'PURCHASE REQUISITION APPROVAL' : 'PAYMENT REQUISITION APPROVAL'}
                             </Typography>
-                            <Typography variant="h6" fontWeight="bold" gutterBottom>
+                            <Typography variant="h6">
                                 {approval.requisition?.requisitionNo}
                             </Typography>
                         </Box>
                     </Grid>
 
                     {/* Approval Information */}
-                    <Grid container spacing={2} sx={{ mb: 3 }}>
-                        <Grid size={{xs: 12, sm: 6, md: 4}}>
+                    <Grid container spacing={2} sx={{ mb: 3 }} width={'100%'}>
+                        <Grid size={{xs: 12}}>
                             <Box>
-                                <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                                <Typography variant="subtitle2" sx={{ color: headerColor }}>
                                     Approval Date
                                 </Typography>
                                 <Typography variant="body1">
                                     {readableDate(approval.approval_date)}
                                 </Typography>
-                            </Box>
-                        </Grid>
-                        <Grid size={{xs: 12, sm: 6, md: 4}}>
-                            <Box>
-                                <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
-                                    Requested By
-                                </Typography>
-                                <Typography variant="body1">{approval.requisition?.creator.name}</Typography>
-                            </Box>
-                        </Grid>
-                        <Grid size={{xs: 12, sm: 6, md: 4}}>
-                            <Box>
-                                <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
-                                    Approved By
-                                </Typography>
-                                <Typography variant="body1">{approval.creator.name}</Typography>
                             </Box>
                         </Grid>
                     </Grid>
@@ -160,30 +144,30 @@ function ApprovalOnScreen({ approval, organization, belowLargeScreen }: Approval
                             <Table>
                                 <TableHead>
                                     <TableRow>
-                                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
-                                            #
+                                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
+                                            S/N
                                         </TableCell>
-                                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
+                                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
                                             {isPurchase ? 'Product' : 'Ledger'}
                                         </TableCell>
-                                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
                                             Quantity
                                         </TableCell>
-                                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
                                             Rate
                                         </TableCell>
                                         {isPurchase && approval.vat_amount > 0 && (
-                                            <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                                            <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
                                                 VAT
                                             </TableCell>
                                         )}
-                                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
                                             Amount
                                         </TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {approval.items.map((item: RequisitionItem, index: number) => (
+                                    {approval?.items?.map((item: RequisitionItem, index: number) => (
                                         <React.Fragment key={item.id}>
                                             <TableRow sx={{ 
                                                 backgroundColor: theme.palette.background.paper,
@@ -191,10 +175,10 @@ function ApprovalOnScreen({ approval, organization, belowLargeScreen }: Approval
                                                     backgroundColor: theme.palette.action.hover,
                                                 }
                                             }}>
-                                                <TableCell sx={{ fontWeight: 'medium' }}>{index + 1}</TableCell>
+                                                <TableCell>{index + 1}</TableCell>
                                                 <TableCell>
                                                     <Box>
-                                                        <Typography variant="body2" fontWeight="medium">
+                                                        <Typography variant="body2">
                                                             {isPurchase
                                                                 ? item.requisition_product?.product?.name
                                                                 : item.requisition_ledger_item?.ledger?.name
@@ -231,18 +215,18 @@ function ApprovalOnScreen({ approval, organization, belowLargeScreen }: Approval
                                                         )}
                                                     </Box>
                                                 </TableCell>
-                                                <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                                                <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                                                     {`${item.quantity?.toLocaleString()} ${item.measurement_unit?.symbol || item.requisition_ledger_item?.measurement_unit?.symbol}`}
                                                 </TableCell>
-                                                <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                                                <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                                                     {formatNumber(item.rate)}
                                                 </TableCell>
                                                 {isPurchase && approval.vat_amount > 0 && (
-                                                    <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                                                    <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                                                         {formatNumber((item.rate * (item.vat_percentage ?? 0) * 0.01))}
                                                     </TableCell>
                                                 )}
-                                                <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
+                                                <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                                                     {formatCurrency(item.quantity * item.rate * (1 + (item.vat_percentage ?? 0) * 0.01))}
                                                 </TableCell>
                                             </TableRow>
@@ -256,7 +240,6 @@ function ApprovalOnScreen({ approval, organization, belowLargeScreen }: Approval
                                                             sx={{ 
                                                                 textAlign: 'center', 
                                                                 backgroundColor: theme.palette.background.default,
-                                                                fontWeight: 'bold',
                                                                 fontSize: '0.875rem',
                                                                 borderBottom: `1px solid ${theme.palette.divider}`
                                                             }}
@@ -274,7 +257,7 @@ function ApprovalOnScreen({ approval, organization, belowLargeScreen }: Approval
                                                                 }
                                                             }}
                                                         >
-                                                            <TableCell colSpan={2} sx={{ fontWeight: 'medium' }}>{vendor.name}</TableCell>
+                                                            <TableCell colSpan={2}>{vendor.name}</TableCell>
                                                             <TableCell colSpan={isPurchase && approval.vat_amount > 0 ? 4 : 3}>
                                                                 {vendor.remarks}
                                                             </TableCell>
@@ -302,12 +285,12 @@ function ApprovalOnScreen({ approval, organization, belowLargeScreen }: Approval
                         >
                             <Grid container spacing={1}>
                                 <Grid size={7}>
-                                    <Typography variant="body1" fontWeight="medium">
+                                    <Typography variant="body1">
                                         Subtotal
                                     </Typography>
                                 </Grid>
                                 <Grid size={5} sx={{ textAlign: 'right' }}>
-                                    <Typography variant="body1" fontWeight="medium" fontFamily="monospace">
+                                    <Typography variant="body1" fontFamily="monospace">
                                         {formatCurrency(subtotal)}
                                     </Typography>
                                 </Grid>
@@ -315,22 +298,22 @@ function ApprovalOnScreen({ approval, organization, belowLargeScreen }: Approval
                                 {isPurchase && (totalVAT ?? 0) > 0 && (
                                     <>
                                         <Grid size={7}>
-                                            <Typography variant="body1" fontWeight="medium">
+                                            <Typography variant="body1">
                                                 VAT
                                             </Typography>
                                         </Grid>
                                         <Grid size={5} sx={{ textAlign: 'right' }}>
-                                            <Typography variant="body1" fontWeight="medium" fontFamily="monospace">
+                                            <Typography variant="body1" fontFamily="monospace">
                                                 {formatCurrency(totalVAT ?? 0)}
                                             </Typography>
                                         </Grid>
                                         <Grid size={7}>
-                                            <Typography variant="h6" fontWeight="bold" color={headerColor}>
+                                            <Typography variant="h6" color={headerColor}>
                                                 Grand Total
                                             </Typography>
                                         </Grid>
                                         <Grid size={5} sx={{ textAlign: 'right' }}>
-                                            <Typography variant="h6" fontWeight="bold" color={headerColor} fontFamily="monospace">
+                                            <Typography variant="h6" color={headerColor} fontFamily="monospace">
                                                 {formatCurrency(grandTotal ?? 0)}
                                             </Typography>
                                         </Grid>
@@ -340,12 +323,12 @@ function ApprovalOnScreen({ approval, organization, belowLargeScreen }: Approval
                                 {!isPurchase && (
                                     <>
                                         <Grid size={7}>
-                                            <Typography variant="h6" fontWeight="bold" color={headerColor}>
+                                            <Typography variant="h6" color={headerColor}>
                                                 Total
                                             </Typography>
                                         </Grid>
                                         <Grid size={5} sx={{ textAlign: 'right' }}>
-                                            <Typography variant="h6" fontWeight="bold" color={headerColor} fontFamily="monospace">
+                                            <Typography variant="h6" color={headerColor} fontFamily="monospace">
                                                 {formatCurrency(subtotal)}
                                             </Typography>
                                         </Grid>
@@ -358,22 +341,30 @@ function ApprovalOnScreen({ approval, organization, belowLargeScreen }: Approval
                     {/* Remarks Section */}
                     {approval.remarks && (
                         <Grid size={12} sx={{ mt: 2 }}>
-                            <Box>
-                                <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
-                                    Approval Remarks
-                                </Typography>
-                                <Typography variant="body1" sx={{ 
-                                    p: 2, 
-                                    backgroundColor: theme.palette.background.default,
-                                    border: `1px solid ${theme.palette.divider}`,
-                                    borderRadius: 1,
-                                    lineHeight: 1.5
-                                }}>
-                                    {approval.remarks}
-                                </Typography>
-                            </Box>
+                            <Typography variant="subtitle2" sx={{ color: headerColor }}>
+                                Approval Remarks
+                            </Typography>
+                            <Typography variant="body1">
+                                {approval.remarks}
+                            </Typography>
                         </Grid>
-                    )}
+                    )} 
+                    <Grid size={{xs: 12, sm: 6}}>
+                        <Box>
+                            <Typography variant="subtitle2" sx={{ color: headerColor }}>
+                                Requested By
+                            </Typography>
+                            <Typography variant="body1">{approval.requisition?.creator.name}</Typography>
+                        </Box>
+                    </Grid>
+                    <Grid size={{xs: 12, sm: 6}}>
+                        <Box>
+                            <Typography variant="subtitle2" sx={{ color: headerColor }}>
+                                Approved By
+                            </Typography>
+                            <Typography variant="body1">{approval?.creator?.name}</Typography>
+                        </Box>
+                    </Grid>
                 </Grid>
             </Box>
 

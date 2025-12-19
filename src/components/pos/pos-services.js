@@ -240,7 +240,7 @@ posServices.getSalesPerson = async () => {
 }
 
 posServices.downloadExcelTemplate = async (filters) => {
-    const { data } = await axios.post(`/stores/1/stock_list_excel`,filters,
+    const { data } = await axios.post(`/api/pos/sales-manifest-excel`,filters,
         {
             responseType: 'blob',
         }

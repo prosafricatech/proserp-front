@@ -396,7 +396,7 @@ const PaymentFormDialogContent: React.FC<PaymentFormDialogContentProps> = ({ set
               justifyContent: 'flex-end'
             }}>
               <Typography variant={"h5"}>
-                {totalAmount.toLocaleString()}
+                {totalAmount?.toLocaleString()}
               </Typography>
             </Grid>
             <Grid size={12}>

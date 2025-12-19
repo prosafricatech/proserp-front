@@ -9,7 +9,7 @@ function PurchaseOrderItemRow({ setClearFormKey, submitMainForm, setSubmitItemFo
 
     const vat_factor = item.vat_percentage*0.01;
     const lineVat = item.item_vat ?  item.item_vat : (item.rate * vat_factor)
-    const lineTotalAmount = item.amount ? item.amount : (item.rate* item.quantity * (1 + vat_factor));
+    const linetotalAmount = item.amount ? item.amount : (item.rate* item.quantity * (1 + vat_factor));
 
   return (
     <React.Fragment>
@@ -48,7 +48,7 @@ function PurchaseOrderItemRow({ setClearFormKey, submitMainForm, setSubmitItemFo
                     </Grid>
                     <Grid textAlign={'end'} size={{xs: 4, md: 2}}>
                         <Tooltip title="Line Total">
-                            <Typography>{lineTotalAmount.toLocaleString()}</Typography>
+                            <Typography>{linetotalAmount?.toLocaleString()}</Typography>
                         </Tooltip>
                     </Grid>
                     <Grid textAlign={'end'} size={{xs: 12, md: 1}}>

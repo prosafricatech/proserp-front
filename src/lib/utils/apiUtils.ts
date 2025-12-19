@@ -1,10 +1,11 @@
 import { getToken } from 'next-auth/jwt';
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function getAuthHeaders(req: NextRequest) {
+export async function getAuthHeaders(req: NextRequest, requireAuth = true) {
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
 
-  if (!token?.accessToken) {
+  // ❗Allow anonymous if requireAuth is false
+  if (requireAuth && !token?.accessToken) {
     return {
       headers: null,
       response: NextResponse.json({ message: 'Unauthorized' }, { status: 401 }),
@@ -21,12 +22,18 @@ export async function getAuthHeaders(req: NextRequest) {
   };
 
   const headers: Record<string, string> = {
-    Authorization: `Bearer ${token.accessToken}`,
     'Content-Type': 'application/json',
     Accept: 'application/json',
     'X-Timezone': getTimezoneOffset(),
-    'X-OrganizationId': String(token.organization_id),
   };
+ 
+  // Only include auth header if token exists
+  if (token?.accessToken) {
+    headers.Authorization = `Bearer ${token.accessToken}`;
+    if (token.organization_id) {
+      headers['X-OrganizationId'] = String(token.organization_id);
+    }
+  }
 
   return { headers, response: null };
 }

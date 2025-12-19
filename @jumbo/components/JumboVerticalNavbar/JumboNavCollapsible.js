@@ -1,4 +1,5 @@
 'use client';
+
 import React from 'react';
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
@@ -15,6 +16,7 @@ import { isUrlInChildren } from '@jumbo/utilities/urlHelpers';
 import { ArrowWrapper } from "@jumbo/components/JumboVerticalNavbar/style";
 import JumboNavIdentifier from "@jumbo/components/JumboVerticalNavbar/JumboNavIdentifier";
 import { useJumboLayout } from '../JumboLayout/hooks';
+import AppIcon from '@/components/AppIcon';
 
 const menuBefore = {
   left: 0,
@@ -99,7 +101,7 @@ const JumboNavCollapsible = ({ item, translate }) => {
         )}
         {item.icon && (
           <ListItemIcon sx={{ minWidth: isMiniAndClosed ? 20 : 32, color: 'inherit' }}>
-            {item.icon}
+            {typeof item.icon === 'string' ? <AppIcon name={item.icon} /> : item.icon}
           </ListItemIcon>
         )}
         {!isMiniAndClosed && (
@@ -108,6 +110,7 @@ const JumboNavCollapsible = ({ item, translate }) => {
             sx={{
               m: 0,
               '& .MuiTypography-root': {
+                fontSize: '0.8rem',
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',

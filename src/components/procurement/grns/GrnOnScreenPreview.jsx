@@ -50,7 +50,7 @@ function GrnOnScreenPreview({ grn, baseCurrency, checkOrganizationPermission, or
                             width: '100%'
                         }}
                     >
-                        <Typography variant="h4" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                        <Typography variant="h4" sx={{ color: headerColor }} gutterBottom>
                             GOODS RECEIVED NOTE
                         </Typography>
                         <Typography variant="h6" fontWeight="bold" gutterBottom>
@@ -64,7 +64,7 @@ function GrnOnScreenPreview({ grn, baseCurrency, checkOrganizationPermission, or
             <Grid container spacing={2} sx={{ mb: 3 }}>
                 <Grid size={{xs: 12, sm: 6, md: 4}}>
                     <Box>
-                        <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                        <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
                             Date Received
                         </Typography>
                         <Typography variant="body1">
@@ -75,7 +75,7 @@ function GrnOnScreenPreview({ grn, baseCurrency, checkOrganizationPermission, or
                 {grn?.reference && (
                     <Grid size={{xs: 12, sm: 6, md: 4}}>
                         <Box>
-                            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                            <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
                                 Reference
                             </Typography>
                             <Typography variant="body1">{grn.reference}</Typography>
@@ -84,7 +84,7 @@ function GrnOnScreenPreview({ grn, baseCurrency, checkOrganizationPermission, or
                 )}
                 <Grid size={{xs: 12, sm: 6, md: 4}}>
                     <Box>
-                        <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                        <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
                             Currency
                         </Typography>
                         <Typography variant="body1">{grn.currency.name}</Typography>
@@ -93,7 +93,7 @@ function GrnOnScreenPreview({ grn, baseCurrency, checkOrganizationPermission, or
                 {grn?.currency.id > 1 && displayAmounts && (
                     <Grid size={{xs: 12, sm: 6, md: 4}}>
                         <Box>
-                            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                            <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
                                 Exchange Rate
                             </Typography>
                             <Typography variant="body1">{exchangeRate}</Typography>
@@ -103,7 +103,7 @@ function GrnOnScreenPreview({ grn, baseCurrency, checkOrganizationPermission, or
                 {grn?.cost_factor > 1 && displayAmounts && (
                     <Grid size={{xs: 12, sm: 6, md: 4}}>
                         <Box>
-                            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                            <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
                                 Cost Factor
                             </Typography>
                             <Typography variant="body1">{costFactor}</Typography>
@@ -112,7 +112,7 @@ function GrnOnScreenPreview({ grn, baseCurrency, checkOrganizationPermission, or
                 )}
                 <Grid size={{xs: 12, sm: 6, md: 4}}>
                     <Box>
-                        <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                        <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
                             Supplier
                         </Typography>
                         <Typography variant="body1">{grn.order.stakeholder?.name}</Typography>
@@ -120,7 +120,7 @@ function GrnOnScreenPreview({ grn, baseCurrency, checkOrganizationPermission, or
                 </Grid>
                 <Grid size={{xs: 12, sm: 6, md: 4}}>
                     <Box>
-                        <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                        <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
                             Receiving Store
                         </Typography>
                         <Typography variant="body1">{grn.store.name}</Typography>
@@ -129,7 +129,7 @@ function GrnOnScreenPreview({ grn, baseCurrency, checkOrganizationPermission, or
                 {grn?.cost_centers && (
                     <Grid size={{xs: 12, sm: 6, md: 4}}>
                         <Box>
-                            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                            <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
                                 Cost Center{grn.cost_centers.length > 1 ? 's' : ''}
                             </Typography>
                             <Typography variant="body1">{grn.cost_centers.map((cc) => cc.name).join(', ')}</Typography>
@@ -138,7 +138,7 @@ function GrnOnScreenPreview({ grn, baseCurrency, checkOrganizationPermission, or
                 )}
                 <Grid size={{xs: 12, sm: 6, md: 4}}>
                     <Box>
-                        <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                        <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
                             Received By
                         </Typography>
                         <Typography variant="body1">{grn.creator?.name}</Typography>
@@ -153,7 +153,6 @@ function GrnOnScreenPreview({ grn, baseCurrency, checkOrganizationPermission, or
                     sx={{ 
                         color: headerColor, 
                         textAlign: 'center', 
-                        fontWeight: 'bold',
                         mb: 2
                     }}
                 >
@@ -259,7 +258,6 @@ function GrnOnScreenPreview({ grn, baseCurrency, checkOrganizationPermission, or
                         sx={{ 
                             color: headerColor, 
                             textAlign: 'center', 
-                            fontWeight: 'bold',
                             mb: 2
                         }}
                     >
@@ -352,7 +350,6 @@ function GrnOnScreenPreview({ grn, baseCurrency, checkOrganizationPermission, or
                         sx={{ 
                             color: headerColor, 
                             textAlign: 'center', 
-                            fontWeight: 'bold',
                             mb: 2
                         }}
                     >

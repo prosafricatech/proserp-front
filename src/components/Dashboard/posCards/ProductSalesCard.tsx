@@ -1,3 +1,4 @@
+'use client'
 import JumboCardQuick from '@jumbo/components/JumboCardQuick/JumboCardQuick';
 import React, { useEffect, useState } from 'react';
 import {
@@ -58,12 +59,13 @@ function ProductSalesCard() {
 
     // Screen handling constants
     const { theme } = useJumboTheme();
+    const isDark = theme.type === 'dark';
     const smallScreen = useMediaQuery(theme.breakpoints.down('md'));
 
     const COLORS = {
         quantity: theme.palette.text.primary,
         revenue: '#2196f3',
-        cogs: '#c62828',
+        cogs: isDark ? '#EF9A9A' : 'red',
         profit: theme.palette.success.main,
         margin: theme.palette.success.main,
         default: theme.palette.text.primary
@@ -262,27 +264,27 @@ function ProductSalesCard() {
                 {smallScreen && <Actions />}
                 <Grid container columnSpacing={1} mt={smallScreen ? 2 : 0} mb={1} justifyContent={'center'}>
                     <Grid size={{ xs: 4, md: 3, lg: 1 }}>
-                        <Typography sx={{ color: COLORS.default, fontWeight: 600 }}>
+                        <Typography sx={{ color: COLORS.default}}>
                             - {topOptions.find(option => option.value === params.top)?.name || params.top}
                         </Typography>
                     </Grid>
                     <Grid size={{ xs: 4, md: 3, lg: 1 }}>
-                        <Typography sx={{ color: COLORS.quantity, fontWeight: 600 }}>
+                        <Typography sx={{ color: COLORS.quantity}}>
                             - Quantity
                         </Typography>
                     </Grid>
                     <Grid size={{ xs: 4, md: 3, lg: 1 }}>
-                        <Typography sx={{ color: COLORS.revenue, fontWeight: 600 }}>
+                        <Typography sx={{ color: COLORS.revenue}}>
                             - Revenue
                         </Typography>
                     </Grid>
                     <Grid size={{ xs: 4, md: 3, lg: 1 }}>
-                        <Typography sx={{ color: COLORS.cogs, fontWeight: 600 }}>
+                        <Typography sx={{ color: COLORS.cogs}}>
                             - CoGS
                         </Typography>
                     </Grid>
                     <Grid size={{ xs: 6, md: 4 }}>
-                        <Typography sx={{ color: COLORS.profit, fontWeight: 600 }}>
+                        <Typography sx={{ color: COLORS.profit}}>
                             - Profit & Margin
                         </Typography>
                     </Grid>
@@ -312,42 +314,42 @@ function ProductSalesCard() {
                                             <Grid container width={'100%'}>
                                                 <Grid size={{ xs: 12, md: 6, lg: 3.5 }}>
                                                     <Tooltip title={'Product Name'}>
-                                                        <Typography sx={{ color: COLORS.default, fontWeight: 500 }}>
+                                                        <Typography sx={{ color: COLORS.default }}>
                                                             {product.name}
                                                         </Typography>
                                                     </Tooltip>
                                                 </Grid>
                                                 <Grid size={{ xs: 6, lg: 1.5 }} textAlign={'end'}>
                                                     <Tooltip title={'Quantity Sold'}>
-                                                        <Typography sx={{ color: COLORS.quantity, fontWeight: 500 }}>
+                                                        <Typography sx={{ color: COLORS.quantity }}>
                                                             {`${product.unit_symbol} ${product.quantity.toLocaleString()}`}
                                                         </Typography>
                                                     </Tooltip>
                                                 </Grid>
                                                 <Grid size={{ xs: 6, lg: 2 }} textAlign={'end'}>
                                                     <Tooltip title={'Sales'}>
-                                                        <Typography sx={{ color: COLORS.revenue, fontWeight: 500 }}>
+                                                        <Typography sx={{ color: COLORS.revenue }}>
                                                             {product.revenue.toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}
                                                         </Typography>
                                                     </Tooltip>
                                                 </Grid>
                                                 <Grid size={{ xs: 6, lg: 2 }} textAlign={'end'}>
                                                     <Tooltip title={'CoGS'}>
-                                                        <Typography sx={{ color: COLORS.cogs, fontWeight: 500 }}>
+                                                        <Typography sx={{ color: COLORS.cogs }}>
                                                             {product.cogs.toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}
                                                         </Typography>
                                                     </Tooltip>
                                                 </Grid>
                                                 <Grid size={{ xs: 6, lg: 2 }} textAlign={'end'}>
                                                     <Tooltip title={'Profit'}>
-                                                        <Typography sx={{ color: COLORS.profit, fontWeight: 500 }}>
+                                                        <Typography sx={{ color: COLORS.profit }}>
                                                             {product.profit.toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}
                                                         </Typography>
                                                     </Tooltip>
                                                 </Grid>
                                                 <Grid size={{ xs: 6, lg: 1 }} textAlign={'end'}>
                                                     <Tooltip title={'Margin'}>
-                                                        <Typography sx={{ color: COLORS.margin, fontWeight: 500 }}>
+                                                        <Typography sx={{ color: COLORS.margin }}>
                                                             {`${(product.profit * 100 / product.revenue).toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}%`}
                                                         </Typography>
                                                     </Tooltip>

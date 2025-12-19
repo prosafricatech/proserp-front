@@ -91,7 +91,7 @@ const ReportDocumet = ({reportData,authOrganization,user}) => {
                       <Text style={{ ...pdfStyles.tableCellText,marginLeft: 10 }}>{income.ledger_name}</Text>
                   </View>
                   <View style={{...pdfStyles.tableCell, flex:1,textAlign : 'right' }}>
-                    <Text style={pdfStyles.tableCellText}>{income.amount.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
+                    <Text style={pdfStyles.tableCellText}>{income.amount?.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
                   </View>
                 </View>
               ))
@@ -119,7 +119,7 @@ const ReportDocumet = ({reportData,authOrganization,user}) => {
                       <Text style={{ ...pdfStyles.tableCellText,marginLeft: 15 }}>{expense.ledger_name}</Text>
                   </View>
                   <View style={{...pdfStyles.tableCell, flex:1,textAlign : 'right' }}>
-                    <Text style={pdfStyles.tableCellText}>{expense.amount.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
+                    <Text style={pdfStyles.tableCellText}>{expense.amount?.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
                   </View>
                 </View>
               ))
@@ -153,7 +153,7 @@ const ReportDocumet = ({reportData,authOrganization,user}) => {
                       <Text style={{ ...pdfStyles.tableCellText,marginLeft: 10 }}>{expense.ledger_name}</Text>
                   </View>
                   <View style={{...pdfStyles.tableCell, flex:1,textAlign : 'right' }}>
-                    <Text style={pdfStyles.tableCellText}>{expense.amount.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
+                    <Text style={pdfStyles.tableCellText}>{expense.amount?.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
                   </View>
                 </View>                        
               ))
@@ -219,7 +219,7 @@ function IncomeStatement({from, to, cost_center_ids}) {
       };
 
       // Pass all filters to the service
-      const responseData = await financialReportsServices.downloadExcelTemplate(filters);
+      const responseData = await financialReportsServices.downloadIcomeStatementExcel(filters);
       
       const blob = new Blob([responseData], {
         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -334,7 +334,6 @@ function IncomeStatement({from, to, cost_center_ids}) {
                       size="small"
                       onClick={downloadExcelTemplate}
                       loading={isDownloadingTemplate}
-                      disabled
                       variant="contained"
                       color="success"
                     >

@@ -65,7 +65,7 @@ function PurchaseGrnsReportOnScreen({ organization, purchaseGrnsReport }) {
           >
             <Typography 
               variant="h4" 
-              sx={{ color: headerColor, fontWeight: 'bold' }} 
+              sx={{ color: headerColor }} 
               gutterBottom
             >
               PURCHASE ORDER GRNS REPORT
@@ -101,16 +101,14 @@ function PurchaseGrnsReportOnScreen({ organization, purchaseGrnsReport }) {
                 backgroundColor: mainColor, 
                 color: contrastText, 
                 borderRight: `1px solid ${theme.palette.divider}`,
-                fontWeight: 'bold',
                 fontSize: '0.875rem',
                 width: '5%'
-              }}>#</TableCell>
+              }}>S/N</TableCell>
               
               <TableCell sx={{
                 backgroundColor: mainColor, 
                 color: contrastText, 
                 borderRight: `1px solid ${theme.palette.divider}`,
-                fontWeight: 'bold',
                 fontSize: '0.875rem',
                 width: '25%'
               }}>Products</TableCell>
@@ -119,7 +117,6 @@ function PurchaseGrnsReportOnScreen({ organization, purchaseGrnsReport }) {
                 backgroundColor: mainColor, 
                 color: contrastText, 
                 borderRight: `1px solid ${theme.palette.divider}`,
-                fontWeight: 'bold',
                 fontSize: '0.875rem',
                 width: '8%'
               }}>Unit</TableCell>
@@ -128,7 +125,6 @@ function PurchaseGrnsReportOnScreen({ organization, purchaseGrnsReport }) {
                 backgroundColor: mainColor, 
                 color: contrastText, 
                 borderRight: `1px solid ${theme.palette.divider}`,
-                fontWeight: 'bold',
                 fontSize: '0.875rem',
                 width: '8%'
               }}>Ordered</TableCell>
@@ -139,7 +135,6 @@ function PurchaseGrnsReportOnScreen({ organization, purchaseGrnsReport }) {
                     backgroundColor: mainColor, 
                     color: contrastText, 
                     borderRight: `1px solid ${theme.palette.divider}`,
-                    fontWeight: 'bold',
                     fontSize: '0.875rem',
                     minWidth: '120px'
                   }} 
@@ -160,7 +155,6 @@ function PurchaseGrnsReportOnScreen({ organization, purchaseGrnsReport }) {
               <TableCell sx={{
                 backgroundColor: mainColor, 
                 color: contrastText,
-                fontWeight: 'bold',
                 fontSize: '0.875rem',
                 width: '10%'
               }} align="center">
@@ -194,10 +188,10 @@ function PurchaseGrnsReportOnScreen({ organization, purchaseGrnsReport }) {
                     }
                   }}
                 >
-                  <TableCell sx={{ fontWeight: 'medium' }}>{index + 1}</TableCell>
-                  <TableCell sx={{ fontWeight: 'medium' }}>{item.product.name}</TableCell>
+                  <TableCell>{index + 1}</TableCell>
+                  <TableCell>{item.product.name}</TableCell>
                   <TableCell>{item.measurement_unit.symbol}</TableCell>
-                  <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                  <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                     {item.quantity.toLocaleString()}
                   </TableCell>
                   
@@ -207,7 +201,7 @@ function PurchaseGrnsReportOnScreen({ organization, purchaseGrnsReport }) {
                       <TableCell 
                         key={receivedItems.grnNo} 
                         align="right"
-                        sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}
+                        sx={{ fontFamily: 'monospace' }}
                       >
                         {product ? formatNumber(product.quantity) : '0.000'}
                       </TableCell>
@@ -218,7 +212,6 @@ function PurchaseGrnsReportOnScreen({ organization, purchaseGrnsReport }) {
                     align="right"
                     sx={{ 
                       fontFamily: 'monospace', 
-                      fontWeight: 'bold',
                       color: unReceivedQuantity > 0 ? 'warning.main' : 'success.main'
                     }}
                   >

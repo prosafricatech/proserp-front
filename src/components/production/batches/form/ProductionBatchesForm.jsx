@@ -53,37 +53,40 @@ function ProductionBatchesForm({ toggleOpen, production, setIsConsumptionDeleted
 
     const validationSchema = yup.object({
         start_date: yup.string().required('Start Date is required').typeError('Start Date is required'),
-        end_date: yup.string().when('submit_type', (submit_type, schema) => {
-            return submit_type === 'close'
-                ? schema.required('Ending date is required').typeError('Ending date is required')
-                : schema.nullable();
+        end_date: yup
+            .string()
+            .nullable()
+            .when('submit_type', {
+                is: 'close',
+                then: (schema) =>
+                schema.required('Ending date is required').typeError('Ending date is required'),
+                otherwise: (schema) =>
+                schema.notRequired().nullable(),
         }),
-        outputs: yup.array().when('submit_type', (submit_type, schema) => {
-            return submit_type === 'close'
-                ? schema
-                    .min(1, 'You must add at least one Output')
-                    .of(
-                        yup.object().shape({
-                            product: yup.object().required('Product is required').typeError('Product is required'),
-                            store_id: yup.number().required('Store is required').typeError('Store is required'),
-                            quantity: yup.number().required('Quantity is required').positive('Quantity must be positive').typeError('Quantity is required'),
-                            measurement_unit_id: yup.number().required('Measurement Unit is required').typeError('Measurement Unit is required'),
-                            value_percentage: yup
-                                .number()
-                                .min(0, 'Value Percentage must be greater or equal to 0')
-                                .max(100, 'Value Percentage must be less than or equal to 100')
-                                .required('Value Percentage is required')
-                                .typeError('Value Percentage is required'),
-                        })
-                    )
-                    .required('Outputs are required')
+        outputs: yup.array().of(
+            yup.object().shape({
+                product: yup.object().required('Product is required').typeError('Product is required'),
+                store_id: yup.number().required('Store is required').typeError('Store is required'),
+                quantity: yup.number().required('Quantity is required').positive('Quantity must be positive').typeError('Quantity is required'),
+                measurement_unit_id: yup.number().required('Measurement Unit is required').typeError('Measurement Unit is required'),
+                value_percentage: yup
+                    .number()
+                    .min(0, 'Value Percentage must be greater or equal to 0')
+                    .max(100, 'Value Percentage must be less than or equal to 100')
+                    .required('Value Percentage is required')
+                    .typeError('Value Percentage is required'),
+            })
+            ).when('submit_type', {
+                is: 'close',
+                then: (schema) => schema
+                    .min(1, 'You must add at least one Output when closing')
                     .test('sum-check', 'Total Value Percentage must be exactly 100%', function (value) {
-                        if (!value || value.length === 0) return true;
+                        if (!value || value.length === 0) return this.createError({ message: 'At least one output is required when closing' });
                         const totalPercentage = value.reduce((total, it) => total + (Number(it.value_percentage) || 0), 0);
-                        return totalPercentage === 100;
-                    })
-                : schema.notRequired();
-        }),
+                        return totalPercentage === 100 || this.createError({ message: 'Total Value Percentage must be exactly 100%' });
+                    }),
+                otherwise: (schema) => schema.notRequired()
+            }),
     });
     
     const {handleSubmit, setValue, watch, register, formState : {errors}} = useForm({
@@ -286,9 +289,9 @@ function ProductionBatchesForm({ toggleOpen, production, setIsConsumptionDeleted
                     </Grid>
                 </Grid>
 
-                {
-                    errors?.outputs?.message && outputs.length < 1 && <Alert severity='error'>{errors.outputs.message}</Alert>
-                }
+                {errors?.outputs?.message && (
+                    <Alert severity='error' sx={{ mt: 1 }}>{errors.outputs.message}</Alert>
+                )}
 
                 {
                     errors.outputs?.[0]?.value_percentage?.message && (

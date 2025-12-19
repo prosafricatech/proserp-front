@@ -19,10 +19,10 @@
       "checkbox": "VAT Inatarajiwa"
     },
     "messages": {
-      "loading": "Inachakata maelezo ya bidhaa...",
-      "createSuccess": "Bidhaa imesajiliwa kwa mafanikio!",
-      "updateSuccess": "Imesasishwa kwa mafanikio!",
-      "deleteSuccess": "Imefutwa kwa mafanikio."
+      "loading": "Processing currency details...",
+      "createSuccess": "Currency successfully registered!",
+      "updateSuccess": "Currency successfully updated!",
+      "deleteSuccess": "Currency successfully archived."
     },
     "errors": {
       "validation": {
@@ -51,7 +51,7 @@
       "category": "Kategoria",
       "actions": "Vitendo",
       "newCreateLabel": "Bidhaa/Huduma Mpya",
-      "mergeLabel": "Kuunganisha  bidhaa",
+      "mergeLabel": "Kuunganisha bidhaa",
       "excelTamplate": "Kiolezo cha Excel" 
     },
     "mainActions": {

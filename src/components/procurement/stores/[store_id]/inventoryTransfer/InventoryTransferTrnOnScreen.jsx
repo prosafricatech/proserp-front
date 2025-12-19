@@ -37,7 +37,7 @@ function InventoryTransferTrnOnScreen({ trn, organization }) {
                     >
                         <Typography 
                             variant="h4" 
-                            sx={{ color: headerColor, fontWeight: 'bold' }} 
+                            sx={{ color: headerColor }} 
                             gutterBottom
                         >
                             TRANSFER RECEIPT NOTE
@@ -57,7 +57,7 @@ function InventoryTransferTrnOnScreen({ trn, organization }) {
             <Grid container spacing={2} sx={{ mb: 3 }}>
                 <Grid size={{xs: 12, sm: 6, md: 4}}>
                     <Box>
-                        <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                        <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
                             Transfer No
                         </Typography>
                         <Typography variant="body1">{trn.transfer.transferNo}</Typography>
@@ -65,7 +65,7 @@ function InventoryTransferTrnOnScreen({ trn, organization }) {
                 </Grid>
                 <Grid size={{xs: 12, sm: 6, md: 4}}>
                     <Box>
-                        <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                        <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
                             Date Received
                         </Typography>
                         <Typography variant="body1">{readableDate(trn.date_received)}</Typography>
@@ -73,7 +73,7 @@ function InventoryTransferTrnOnScreen({ trn, organization }) {
                 </Grid>
                 <Grid size={{xs: 12, sm: 6, md: 4}}>
                     <Box>
-                        <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                        <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
                             Received By
                         </Typography>
                         <Typography variant="body1">{trn.creator.name}</Typography>
@@ -88,7 +88,6 @@ function InventoryTransferTrnOnScreen({ trn, organization }) {
                     sx={{ 
                         color: headerColor, 
                         textAlign: 'center', 
-                        fontWeight: 'bold',
                         mb: 2
                     }}
                 >
@@ -107,13 +106,13 @@ function InventoryTransferTrnOnScreen({ trn, organization }) {
                     <Table>
                         <TableHead>
                             <TableRow>
-                                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
-                                    #
+                                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
+                                    S/N
                                 </TableCell>
-                                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
+                                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
                                     Product
                                 </TableCell>
-                                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
                                     Quantity
                                 </TableCell>
                             </TableRow>
@@ -129,9 +128,9 @@ function InventoryTransferTrnOnScreen({ trn, organization }) {
                                         }
                                     }}
                                 >
-                                    <TableCell sx={{ fontWeight: 'medium' }}>{index + 1}</TableCell>
-                                    <TableCell sx={{ fontWeight: 'medium' }}>{item.product.name}</TableCell>
-                                    <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                                    <TableCell>{index + 1}</TableCell>
+                                    <TableCell>{item.product.name}</TableCell>
+                                    <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                                         {`${item.quantity} ${item.measurement_unit?.symbol}`}
                                     </TableCell>
                                 </TableRow>
@@ -159,7 +158,6 @@ function InventoryTransferTrnOnScreen({ trn, organization }) {
                         variant="h6" 
                         sx={{ 
                             color: headerColor, 
-                            fontWeight: 'bold',
                             mb: 2
                         }}
                     >

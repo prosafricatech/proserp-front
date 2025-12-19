@@ -46,7 +46,7 @@ function BillOfMaterialOnScreen({ billOfMaterial, organization }) {
           >
             <Typography 
               variant="h4" 
-              sx={{ color: headerColor, fontWeight: 'bold' }} 
+              sx={{ color: headerColor }} 
               gutterBottom
             >
               BILL OF MATERIAL
@@ -66,27 +66,27 @@ function BillOfMaterialOnScreen({ billOfMaterial, organization }) {
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid size={{xs: 12, sm: 6, md: 4}}>
           <Box>
-            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+            <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
               Output Product
             </Typography>
-            <Typography variant="body1" sx={{ fontWeight: 'medium' }}>
+            <Typography variant="body1">
               {billOfMaterial.product.name}
             </Typography>
           </Box>
         </Grid>
         <Grid size={{xs: 12, sm: 6, md: 4}}>
           <Box>
-            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+            <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
               Output Quantity
             </Typography>
-            <Typography variant="body1" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+            <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>
               {`${formatQuantity(billOfMaterial.quantity)} ${billOfMaterial.measurement_unit.symbol}`}
             </Typography>
           </Box>
         </Grid>
         <Grid size={{xs: 12, sm: 6, md: 4}}>
           <Box>
-            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+            <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
               Total Input Items
             </Typography>
             <Typography variant="body1">
@@ -105,7 +105,6 @@ function BillOfMaterialOnScreen({ billOfMaterial, organization }) {
           sx={{ 
             color: headerColor, 
             textAlign: 'center', 
-            fontWeight: 'bold',
             mb: 2
           }}
         >
@@ -124,13 +123,13 @@ function BillOfMaterialOnScreen({ billOfMaterial, organization }) {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem', width: '8%' }}>
-                  #
+                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem', width: '8%' }}>
+                  S/N
                 </TableCell>
-                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
+                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
                   Input Product
                 </TableCell>
-                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
                   Quantity Required
                 </TableCell>
               </TableRow>
@@ -147,11 +146,11 @@ function BillOfMaterialOnScreen({ billOfMaterial, organization }) {
                       }
                     }}
                   >
-                    <TableCell sx={{ fontWeight: 'bold', verticalAlign: 'top' }}>{index + 1}</TableCell>
-                    <TableCell sx={{ fontWeight: 'medium', verticalAlign: 'top' }}>
+                    <TableCell sx={{  verticalAlign: 'top' }}>{index + 1}</TableCell>
+                    <TableCell sx={{ verticalAlign: 'top' }}>
                       {item.product.name}
                     </TableCell>
-                    <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'bold', verticalAlign: 'top' }}>
+                    <TableCell align="right" sx={{ fontFamily: 'monospace', verticalAlign: 'top' }}>
                       {`${formatQuantity(item.quantity)} ${item.measurement_unit.symbol}`}
                     </TableCell>
                   </TableRow>
@@ -166,7 +165,6 @@ function BillOfMaterialOnScreen({ billOfMaterial, organization }) {
                             variant="subtitle2" 
                             sx={{ 
                               color: headerColor, 
-                              fontWeight: 'bold',
                               pl: 2
                             }}
                           >
@@ -226,7 +224,7 @@ function BillOfMaterialOnScreen({ billOfMaterial, organization }) {
       <Grid container spacing={2} sx={{ mt: 3 }}>
         <Grid size={{xs: 12, sm: 6, md: 4}}>
           <Box>
-            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+            <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
               Total Alternative Options
             </Typography>
             <Typography variant="body1">
@@ -236,7 +234,7 @@ function BillOfMaterialOnScreen({ billOfMaterial, organization }) {
         </Grid>
         <Grid size={{xs: 12, sm: 6, md: 4}}>
           <Box>
-            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+            <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
               Created By
             </Typography>
             <Typography variant="body1">{billOfMaterial.creator.name}</Typography>
@@ -247,7 +245,7 @@ function BillOfMaterialOnScreen({ billOfMaterial, organization }) {
       {/* Description Section */}
       {billOfMaterial.description && (
         <Box sx={{ mt: 3, p: 2, backgroundColor: theme.palette.background.default, borderRadius: 1 }}>
-          <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+          <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
             Description
           </Typography>
           <Typography variant="body1" sx={{ lineHeight: 1.6 }}>

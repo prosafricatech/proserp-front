@@ -10,6 +10,7 @@ import { SIDEBAR_VIEWS } from '@jumbo/utilities/constants';
 import { deviceType } from '@/utilities/helpers/user-agent-helpers';
 import { useJumboLayout } from '../JumboLayout/hooks';
 import { BackdropSpinner } from '@/shared/ProgressIndicators/BackdropSpinner';
+import AppIcon from '@/components/AppIcon';
 
 const menuBefore = {
   left: 0,
@@ -127,7 +128,13 @@ const JumboNavItem = ({ item, isNested, translate }) => {
           aria-disabled={isLoading}
         >
           <ListItemIcon sx={{ minWidth: isMiniAndClosed ? 5 : 15, color: 'inherit' }}>
-            {isNested ? <CircleIcon sx={{ fontSize: 6, ml: 1 }} /> : item.icon}
+            {isNested ? (
+  <CircleIcon sx={{ fontSize: 6, ml: 1 }} />
+) : typeof item.icon === 'string' ? (
+  <AppIcon name={item.icon} />
+) : (
+  item.icon
+)}
           </ListItemIcon>
           {!isMiniAndClosed && (
             <ListItemText

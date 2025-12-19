@@ -1,3 +1,4 @@
+'use client'
 import { Dialog, Divider, Grid, IconButton, Tab, Tabs, Tooltip, useMediaQuery } from '@mui/material'
 import React, { useState } from 'react'
 import { AddOutlined } from '@mui/icons-material'

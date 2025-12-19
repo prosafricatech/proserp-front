@@ -1,3 +1,4 @@
+'use client'
 import React, { useEffect, useState } from 'react';
 import { useDashboardSettings } from '../Dashboard';
 import JumboCardQuick from '@jumbo/components/JumboCardQuick';
@@ -27,6 +28,7 @@ import lowStockThresholdServices from '@/components/procurement/stores/[store_id
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { JumboScrollbar } from '@jumbo/components';
 import { Div } from '@jumbo/shared';
+import { AuthUser } from '@/types/auth-types';
 
 interface AlertItem {
   product_name: string;
@@ -50,7 +52,6 @@ interface DocumentDialogProps {
 
 function LowStockAlerts() {
   const [openDocumentDialog, setOpenDocumentDialog] = useState(false);
-
   const { theme } = useJumboTheme();
   const smallScreen = useMediaQuery(theme.breakpoints.down('md'));
   const midScreen = useMediaQuery(theme.breakpoints.down('lg'));
@@ -73,7 +74,7 @@ function LowStockAlerts() {
   });
 
   const DocumentDialog: React.FC<DocumentDialogProps> = ({ open, onClose, stores }) => {
-    const { authOrganization } = useJumboAuth();
+    const { authOrganization, authUser } = useJumboAuth();
     const organization = authOrganization?.organization;
     return (
       <Dialog
@@ -84,7 +85,7 @@ function LowStockAlerts() {
         onClose={onClose}
       >
         <DialogContent>
-          <PDFContent fileName='Low Stock Alert' document={<LowStockAlertsPDF stores={stores as any} organization={organization as any} />} />
+          <PDFContent fileName='Low Stock Alert' document={<LowStockAlertsPDF stores={stores as any} organization={organization as any} authUser={authUser as AuthUser}/>} />
         </DialogContent>
       </Dialog>
     );

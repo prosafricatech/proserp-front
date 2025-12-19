@@ -1,3 +1,4 @@
+'use client'
 import { DialogContent, DialogTitle, Grid, LinearProgress, Stack, Tab, Tabs, Typography, useMediaQuery } from '@mui/material';
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -78,8 +79,8 @@ const ReportDocumet = ({reportData,authOrganization,user}) => {
                     <View key={index} style={pdfStyles.tableRow}>
                         <Text style={{ ...pdfStyles.tableCell,backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 0.3 }}>{index+1}</Text>
                         <Text style={{ ...pdfStyles.tableCell,backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 3 }}>{ledger.name}</Text>
-                        <Text style={{ ...pdfStyles.tableCell,backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1,textAlign: 'right' }}>{ledger.balance.side === 'DR' && ledger.balance.amount.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
-                        <Text style={{ ...pdfStyles.tableCell,backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1,textAlign: 'right' }}>{ledger.balance.side === 'CR' && ledger.balance.amount.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
+                        <Text style={{ ...pdfStyles.tableCell,backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1,textAlign: 'right' }}>{ledger.balance.side === 'DR' && ledger.balance.amount?.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
+                        <Text style={{ ...pdfStyles.tableCell,backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1,textAlign: 'right' }}>{ledger.balance.side === 'CR' && ledger.balance.amount?.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
                     </View>
                 ))
               }

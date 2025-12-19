@@ -187,11 +187,10 @@ const PaymentOnScreenPreview: React.FC<PaymentOnScreenPreviewProps> = ({
                   align="right" 
                   sx={{ 
                     fontFamily: 'monospace',
-                    fontWeight: 'medium',
                     fontSize: '0.875rem'
                   }}
                 >
-                  {item.amount.toLocaleString('en-US', {
+                  {item.amount?.toLocaleString('en-US', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
                   })}
@@ -227,7 +226,7 @@ const PaymentOnScreenPreview: React.FC<PaymentOnScreenPreviewProps> = ({
                 fontFamily: 'monospace'
               }}
             >
-              {totalAmount.toLocaleString("en-US", { 
+              {totalAmount?.toLocaleString("en-US", { 
                 style: "currency", 
                 currency: currencyCode,
                 minimumFractionDigits: 2,

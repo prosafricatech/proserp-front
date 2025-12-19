@@ -48,8 +48,8 @@ function ProformaForm({ toggleOpen, proforma = null }: ProformaFormProps) {
   const [proforma_date] = useState(proforma ? dayjs(proforma.proforma_date) : dayjs());
   const [expiry_date] = useState(proforma?.expiry_date ? dayjs(proforma.expiry_date) : null);
   const { activeOutlet } = useSalesOutlet();
-  const [totalAmount, setTotalAmount] = useState(0);
-  const [vatableAmount, setVatableAmount] = useState(0);
+  const [totalAmount, settotalAmount] = useState(0);
+  const [vatableAmount, setvatableAmount] = useState(0);
   const [items, setItems] = useState<ProformaItem[]>(proforma?.items || []);
   const [stakeholderQuickAddDisplay, setStakeholderQuickAddDisplay] = useState(false);
   const [addedStakeholder, setAddedStakeholder] = useState<Stakeholder | null>(null);
@@ -95,7 +95,7 @@ function ProformaForm({ toggleOpen, proforma = null }: ProformaFormProps) {
     }
   });
 
-  const orderTotalAmount = () => {
+  const ordertotalAmount = () => {
     let total = 0;
     let vatableTotal = 0;
 
@@ -116,14 +116,14 @@ function ProformaForm({ toggleOpen, proforma = null }: ProformaFormProps) {
           setValue(`items.${index}.store_id`, item.store_id);
         }
       });
-      setTotalAmount(total);
+      settotalAmount(total);
     }
 
     async function loopItemsForVAT() {
       items.filter((item) => item.product?.vat_exempted !== true).forEach((item) => {
         vatableTotal += item.rate * item.quantity;
       });
-      setVatableAmount(vatableTotal);
+      setvatableAmount(vatableTotal);
     }
 
     loopItems();
@@ -134,7 +134,7 @@ function ProformaForm({ toggleOpen, proforma = null }: ProformaFormProps) {
   const vatAmount = vatableAmount * Number(vat_percentage) / 100;
 
   React.useEffect(() => {
-    orderTotalAmount();
+    ordertotalAmount();
   }, [items]);
 
   useEffect(() => {
@@ -383,7 +383,7 @@ function ProformaForm({ toggleOpen, proforma = null }: ProformaFormProps) {
                   </Grid>
                   <Grid size={{xs: 7}}>
                     <Typography variant="body1" align="right">
-                      {totalAmount.toLocaleString()}
+                      {totalAmount?.toLocaleString()}
                     </Typography>
                   </Grid>
 
@@ -407,7 +407,7 @@ function ProformaForm({ toggleOpen, proforma = null }: ProformaFormProps) {
                       </Grid>
                       <Grid size={{xs: 7}}>
                         <Typography variant="body1" align="right">
-                          {vatAmount.toLocaleString()}
+                          {vatAmount?.toLocaleString()}
                         </Typography>
                       </Grid>
 

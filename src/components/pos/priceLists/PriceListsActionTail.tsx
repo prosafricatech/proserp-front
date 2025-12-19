@@ -1,3 +1,4 @@
+'use client'
 import { AddOutlined, AddTaskOutlined } from '@mui/icons-material';
 import { ButtonGroup, IconButton, Dialog, useMediaQuery, Menu, MenuItem, ListItemIcon } from '@mui/material';
 import React, { lazy, useState } from 'react';

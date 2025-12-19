@@ -1,3 +1,4 @@
+'use client'
 import { VisibilityOutlined } from "@mui/icons-material";
 import { ButtonGroup, Dialog, IconButton, Tooltip, useMediaQuery } from "@mui/material";
 import React, { useState } from "react";

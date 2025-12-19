@@ -6,23 +6,40 @@ const COOKIE_NAME = process.env.NODE_ENV === 'production'
   : 'next-auth.session-token';
 
 export async function authMiddleware(request: NextRequest) {
-  // 1. Get token from secure HTTP-only cookie
-  const token = await getToken({
-    req: request,
-    secret: process.env.NEXTAUTH_SECRET,
-    cookieName: process.env.NODE_ENV === 'production'
-      ? '__Secure-next-auth.session-token'
-      : 'next-auth.session-token'
+  const pathname = request.nextUrl.pathname;
+
+  if (
+    pathname.includes('/auth/verifyEmail') ||
+    pathname === '/api/auth/status' || 
+    pathname.startsWith('/api/auth/')
+  ) {
+    return NextResponse.next();
+  }
+
+  if (pathname.startsWith('/api')) {
+    return NextResponse.next();
+  }
+
+  const statusRes = await fetch(new URL('/api/auth/status', request.url), {
+    headers: request.headers,
   });
 
-  // 2. Handle unauthenticated requests
-  if (!token) {
+  if (!statusRes.ok) {
     return createAuthRedirect(request);
   }
 
-  // 3. Check token expiration (if using JWT)
-  if (token.exp && Math.floor(Date.now() / 1000) > token.exp) {
-    return createAuthRedirect(request, 'SessionExpired');
+  const { authenticated, verified } = await statusRes.json();
+
+  if (!authenticated) {
+    return createAuthRedirect(request);
+  }
+
+  if (!verified) {
+    const lang = pathname.split('/')[1] || 'en-US';
+    const url = request.nextUrl.clone();
+    url.pathname = `/${lang}/auth/verifyEmail`;
+    url.searchParams.set('callbackUrl', pathname);
+    return NextResponse.redirect(url);
   }
 
   return NextResponse.next();
@@ -32,10 +49,15 @@ export async function anonymousMiddleware(request: NextRequest) {
   const token = await getToken({
     req: request,
     secret: process.env.NEXTAUTH_SECRET,
-    cookieName: COOKIE_NAME
+    cookieName: COOKIE_NAME,
   });
 
-  // Redirect authenticated users away from auth pages
+  const pathname = request.nextUrl.pathname;
+
+  if (pathname.includes('/auth/verifyEmail')) {
+    return NextResponse.next();
+  }
+
   if (token) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }

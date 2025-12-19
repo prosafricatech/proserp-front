@@ -12,6 +12,7 @@ import CurrencySelectProvider from '@/components/masters/Currencies/CurrencySele
 
 const AttachmentForm = lazy(() => import('@/components/filesShelf/attachments/AttachmentForm'));
 const Subcontracts = lazy(() => import('./subcontracts/Subcontracts'));
+const ProjectUsers = lazy(() => import('./projectUsers/ProjectUsers'));
 const TimelineActivitiesListItem = lazy(() => import('./wbs/WBSListItem'));
 const Deliverables = lazy(() => import('./deliverables/DeliverableGroupsListItem'));
 const Budgets = lazy(() => import('./budgets/BudgetsListItem'));
@@ -40,7 +41,7 @@ function ProfileContent() {
     data: budgetsData, 
     isLoading: isBudgetLoading 
   } = useQuery({
-    queryKey: ['projectBudgets', { id: project.id, cost_center: project.cost_center.id }],
+    queryKey: ['projectBudgets', { id: project.id, cost_center: project?.cost_center?.id }],
     queryFn: projectsServices.showProjectBudgets,
     enabled: activeTab === 4,
   });
@@ -52,15 +53,6 @@ function ProfileContent() {
     queryKey: ['projectTimelineActivities', { id: project.id }],
     queryFn: () => projectsServices.showProjectTimelineActivities(project.id),
     enabled: activeTab === 1 || fetchTimelineActivities,
-  });
-
-  const { 
-    data: updatesData, 
-    isLoading: isUpdatesLoading 
-  } = useQuery({
-    queryKey: ['projectUpdates', { id: project.id }],
-    queryFn: () => projectsServices.projectUpdatesList(project.id),
-    enabled: activeTab === 2,
   });
 
   // Use useEffect to handle side effects when data changes
@@ -83,12 +75,6 @@ function ProfileContent() {
   }, [timelineActivitiesData, updateProjectProfile]);
 
   useEffect(() => {
-    if (updatesData) {
-      updateProjectProfile({ projectUpdates: updatesData });
-    }
-  }, [updatesData, updateProjectProfile]);
-
-  useEffect(() => {
     setIsDashboardTab(activeTab === 0);
   }, [activeTab, setIsDashboardTab]);
   
@@ -99,7 +85,6 @@ function ProfileContent() {
         deliverablesLoading: isDeliverablesLoading,
         budgetsLoading: isBudgetLoading,
         timelineLoading: isTimelineActivitiesLoading,
-        updatesLoading: isUpdatesLoading,
       });
     }
   }, [
@@ -107,7 +92,6 @@ function ProfileContent() {
     isDeliverablesLoading, 
     isBudgetLoading, 
     isTimelineActivitiesLoading, 
-    isUpdatesLoading, 
     fetchDeliverables, 
     fetchTimelineActivities, 
     updateProjectProfile
@@ -125,7 +109,6 @@ function ProfileContent() {
     deliverables: isDeliverablesLoading,
     budgets: isBudgetLoading,
     timeline: isTimelineActivitiesLoading,
-    updates: isUpdatesLoading,
   }).some(Boolean);
 
   const renderTabContent = () => {
@@ -147,6 +130,8 @@ function ProfileContent() {
       case 5:
         return <Subcontracts />;
       case 6:
+        return <ProjectUsers />;
+      case 7:
         return (
           <AttachmentForm
             hideFeatures
@@ -184,6 +169,7 @@ function ProfileContent() {
             <Tab label="Deliverables" />
             <Tab label="Budgets" />
             <Tab label="Subcontracts" />
+            <Tab label="Users" />
             <Tab label="Attachments" />
           </Tabs>
           {!fetchDeliverables && !fetchTimelineActivities && isLoading ? (

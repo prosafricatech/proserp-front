@@ -58,7 +58,7 @@ function StockAdjustmentOnScreen({ stockAdjustment, authObject }) {
           >
             <Typography 
               variant="h4" 
-              sx={{ color: headerColor, fontWeight: 'bold' }} 
+              sx={{ color: headerColor }} 
               gutterBottom
             >
               STOCK ADJUSTMENT
@@ -78,7 +78,7 @@ function StockAdjustmentOnScreen({ stockAdjustment, authObject }) {
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid size={{xs: 12, sm: 6, md: 4}}>
           <Box>
-            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+            <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
               Adjustment Date
             </Typography>
             <Typography variant="body1">
@@ -88,7 +88,7 @@ function StockAdjustmentOnScreen({ stockAdjustment, authObject }) {
         </Grid>
         <Grid size={{xs: 12, sm: 6, md: 4}}>
           <Box>
-            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+            <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
               Store
             </Typography>
             <Typography variant="body1">{stockAdjustment.store.name}</Typography>
@@ -96,7 +96,7 @@ function StockAdjustmentOnScreen({ stockAdjustment, authObject }) {
         </Grid>
         <Grid size={{xs: 12, sm: 6, md: 4}}>
           <Box>
-            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+            <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
               Cost Center
             </Typography>
             <Typography variant="body1">{stockAdjustment.cost_center.name}</Typography>
@@ -118,7 +118,7 @@ function StockAdjustmentOnScreen({ stockAdjustment, authObject }) {
           <TableHead>
             <TableRow>
               <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
-                #
+                S/N
               </TableCell>
               <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
                 Product
@@ -158,33 +158,31 @@ function StockAdjustmentOnScreen({ stockAdjustment, authObject }) {
                     }
                   }}
                 >
-                  <TableCell sx={{ fontWeight: 'medium' }}>{index + 1}</TableCell>
-                  <TableCell sx={{ fontWeight: 'medium' }}>{movement.product.name}</TableCell>
+                  <TableCell>{index + 1}</TableCell>
+                  <TableCell>{movement.product.name}</TableCell>
                   <TableCell>{movement.product.measurement_unit.symbol}</TableCell>
-                  <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                  <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                     {formatQuantity(movement.balance_before)}
                   </TableCell>
-                  <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                  <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                     {formatQuantity(movement.actual_stock)}
                   </TableCell>
                   <TableCell 
                     align="right" 
                     sx={{ 
                       fontFamily: 'monospace', 
-                      fontWeight: 'bold',
                       color: isPositiveChange ? 'success.main' : 'error.main'
                     }}
                   >
                     {formatQuantity(movement.stock_change)}
                   </TableCell>
-                  <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                  <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                     {formatNumber(movement.rate)}
                   </TableCell>
                   <TableCell 
                     align="right" 
                     sx={{ 
                       fontFamily: 'monospace', 
-                      fontWeight: 'bold',
                       color: valueChange > 0 ? 'success.main' : 'error.main'
                     }}
                   >
@@ -212,7 +210,6 @@ function StockAdjustmentOnScreen({ stockAdjustment, authObject }) {
                   colSpan={7} 
                   align="right" 
                   sx={{ 
-                    fontWeight: 'bold',
                     borderBottom: 'none'
                   }}
                 >
@@ -222,7 +219,6 @@ function StockAdjustmentOnScreen({ stockAdjustment, authObject }) {
                   align="right" 
                   sx={{ 
                     fontFamily: 'monospace',
-                    fontWeight: 'bold',
                     borderBottom: 'none',
                     color: totalValueChange > 0 ? 'success.main' : 'error.main'
                   }}
@@ -243,7 +239,7 @@ function StockAdjustmentOnScreen({ stockAdjustment, authObject }) {
         <Grid container spacing={2}>
           <Grid size={{xs: 12, md: 6}}>
             <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+              <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
                 Adjustment Reason
               </Typography>
               <Typography variant="body1">{stockAdjustment.reason}</Typography>
@@ -251,7 +247,7 @@ function StockAdjustmentOnScreen({ stockAdjustment, authObject }) {
           </Grid>
           <Grid size={{xs: 12, md: 6}}>
             <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+              <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
                 Posted By
               </Typography>
               <Typography variant="body1">{stockAdjustment.creator.name}</Typography>
@@ -260,7 +256,7 @@ function StockAdjustmentOnScreen({ stockAdjustment, authObject }) {
           {stockAdjustment.narration && (
             <Grid size={12}>
               <Box>
-                <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
                   Narration
                 </Typography>
                 <Typography variant="body1" sx={{ lineHeight: 1.5 }}>

@@ -129,7 +129,7 @@ import { Ledger } from '@/components/accounts/ledgers/LedgerType';
         mutationFn: outletServices.add,
         onSuccess: (data) => {
         enqueueSnackbar(data.message, { variant: 'success' });
-        queryClient.invalidateQueries({ queryKey: ['Outlet'] });
+        queryClient.invalidateQueries({ queryKey: ['Outlets'] });
         setOpenDialog(false);
         },
         onError: (error: unknown) => {
@@ -154,7 +154,7 @@ import { Ledger } from '@/components/accounts/ledgers/LedgerType';
         mutationFn: outletServices.update,
         onSuccess: (data) => {
           enqueueSnackbar(data.message, { variant: 'success' });
-          queryClient.invalidateQueries({ queryKey: ['Outlet'] });
+          queryClient.invalidateQueries({ queryKey: ['Outlets'] });
           setOpenDialog(false);
         },
         onError: (error: unknown) => {

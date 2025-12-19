@@ -1,5 +1,6 @@
+'use client'
 import { LoadingButton } from '@mui/lab';
-import { Button, DialogActions, DialogContent, DialogTitle, Grid, Alert, Dialog, Tooltip, IconButton} from '@mui/material'
+import { Button, DialogActions, DialogContent, DialogTitle, Grid, Alert, Dialog, Tooltip, IconButton, Box, useMediaQuery} from '@mui/material'
 import React, { useEffect, useState } from 'react'
 import { useSnackbar } from 'notistack';
 import { FormProvider, useForm } from 'react-hook-form'
@@ -12,12 +13,14 @@ import { useCounter } from '../CounterProvider';
 import SaleItemRow from './SaleItemRow';
 import ProductsSaleSummary from './ProductsSaleSummary';
 import SaleTopInformation from './SaleTopInformation';
-import { HighlightOff } from '@mui/icons-material';
+import { HighlightOff, Link, LinkOff } from '@mui/icons-material';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { MODULE_SETTINGS } from '@/utilities/constants/moduleSettings';
 import stakeholderServices from '@/components/masters/stakeholders/stakeholder-services';
+import { useVFD } from "@/components/vfd/VFDProvider";
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 
 function SaleDialogForm({toggleOpen,sale = null}) {
     const [items, setItems] = useState([]);
@@ -32,6 +35,11 @@ function SaleDialogForm({toggleOpen,sale = null}) {
     const [stakeholderQuickAddDisplay, setStakeholderQuickAddDisplay] = useState(false);
     const [addedStakeholder, setAddedStakeholder] = useState(null);
     const [checkedForInstantSale, setCheckedForInstantSale] = useState(sale ? (!sale.is_instant_sale ? false : true) : true);
+
+    const { connected, connect, disconnect, sendZero } = useVFD();
+    
+    const { theme } = useJumboTheme();
+    const isBelowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
     const [showWarning, setShowWarning] = useState(false);
     const [isDirty, setIsDirty] = useState(false);
@@ -82,6 +90,7 @@ function SaleDialogForm({toggleOpen,sale = null}) {
         defaultValues: {
             transaction_date : transaction_date.toISOString(),
             currency_id: sale?.currency_id ? sale.currency_id : 1,
+            currency: sale?.currency ? sale.currency : null,
             exchange_rate: sale?.exchange_rate ? sale.exchange_rate : 1,
             vat_registered: !!organization.settings?.vat_registered,
             vat_percentage: sale ? sale.vat_percentage : !!moduleSetting(MODULE_SETTINGS.POS_DEFAULT_VAT_INCLUSIVE) ? (!!organization.settings?.vat_registered && organization.settings.vat_percentage) : 0,
@@ -295,42 +304,68 @@ function SaleDialogForm({toggleOpen,sale = null}) {
                 </Dialog>
             </DialogContent>
         }
-        <DialogActions>
-            <Button size='small' onClick={() => toggleOpen(false)}>
-                Cancel
-            </Button>
-            {
-                !stakeholderQuickAddDisplay &&
-            <>
-                {
-                    !majorInfoOnly &&
-                    <LoadingButton
-                        loading={addSale.isPending || updateSale.isPending}
-                        size='small'
-                        variant='contained'
-                        onClick={(e) => {
-                            setValue('submitType','pending');
-                            handleSubmit(onSubmit)(e)
-                        }}
+        
+        <DialogActions sx={{ display: "flex", width: "100%", alignItems: "center", justifyContent: "space-between" }}>
+            <Box>
+                {!isBelowLargeScreen && (
+                    <Tooltip
+                        title={
+                            connected 
+                                ? "Connected - Click to disconnect"
+                                : "Serial Display Not Connected - Click to connect"
+                        }
                     >
-                        Suspend
-                    </LoadingButton>
-                }
-                {
-                    checkOrganizationPermission(PERMISSIONS.SALES_COMPLETE) &&
-                    <LoadingButton
-                        loading={addSale.isPending || updateSale.isPending}
-                        size='small'
-                        type='submit'
-                        color='success'
-                        variant='contained'
-                        onClick={handleSubmit(onSubmit)}
-                    >
-                        Checkout
-                    </LoadingButton>
-                }
-            </>
-            }
+                        {connected ? (
+                            <Link
+                                sx={{ color: 'green', cursor: 'pointer' }} 
+                                onClick={() => sendZero().then(() => disconnect())} 
+                            />
+                        ) : (
+                            <LinkOff
+                                sx={{ color: 'gray', cursor: 'pointer' }} 
+                                onClick={connect} 
+                            />
+                        )}
+                    </Tooltip>
+                )}
+            </Box>
+            <Box sx={{ display: "flex", gap: 1, marginLeft: "auto" }}>
+                <Button size='small' onClick={() => toggleOpen(false)}>
+                    Cancel
+                </Button>
+
+                {!stakeholderQuickAddDisplay && (
+                    <>
+                        {!majorInfoOnly && (
+                            <LoadingButton
+                                loading={addSale.isPending || updateSale.isPending}
+                                size='small'
+                                variant='contained'
+                                onClick={(e) => {
+                                    setValue('submitType','pending');
+                                    handleSubmit(onSubmit)(e);
+                                }}
+                            >
+                                Suspend
+                            </LoadingButton>
+                        )}
+
+                        {checkOrganizationPermission(PERMISSIONS.SALES_COMPLETE) && (
+                            <LoadingButton
+                                loading={addSale.isPending || updateSale.isPending}
+                                size='small'
+                                type='submit'
+                                color='success'
+                                variant='contained'
+                                onClick={handleSubmit(onSubmit)}
+                            >
+                                Checkout
+                            </LoadingButton>
+                        )}
+                    </>
+                )}
+            </Box>
+
         </DialogActions>
     </FormProvider>
 

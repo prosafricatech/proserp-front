@@ -152,7 +152,6 @@ const DispatchReportOnScreen: React.FC<DispatchReportOnScreenProps> = ({
                 backgroundColor: mainColor, 
                 color: contrastText, 
                 borderRight: `1px solid ${theme.palette.divider}`,
-                fontWeight: 'bold',
                 fontSize: '0.875rem',
                 width: '5%'
               }}>#</TableCell>
@@ -161,7 +160,6 @@ const DispatchReportOnScreen: React.FC<DispatchReportOnScreenProps> = ({
                 backgroundColor: mainColor, 
                 color: contrastText, 
                 borderRight: `1px solid ${theme.palette.divider}`,
-                fontWeight: 'bold',
                 fontSize: '0.875rem',
                 width: '25%'
               }}>Products</TableCell>
@@ -170,7 +168,6 @@ const DispatchReportOnScreen: React.FC<DispatchReportOnScreenProps> = ({
                 backgroundColor: mainColor, 
                 color: contrastText, 
                 borderRight: `1px solid ${theme.palette.divider}`,
-                fontWeight: 'bold',
                 fontSize: '0.875rem',
                 width: '8%'
               }}>Unit</TableCell>
@@ -179,7 +176,6 @@ const DispatchReportOnScreen: React.FC<DispatchReportOnScreenProps> = ({
                 backgroundColor: mainColor, 
                 color: contrastText, 
                 borderRight: `1px solid ${theme.palette.divider}`,
-                fontWeight: 'bold',
                 fontSize: '0.875rem',
                 width: '8%'
               }}>Ordered</TableCell>
@@ -190,7 +186,6 @@ const DispatchReportOnScreen: React.FC<DispatchReportOnScreenProps> = ({
                     backgroundColor: mainColor, 
                     color: contrastText, 
                     borderRight: `1px solid ${theme.palette.divider}`,
-                    fontWeight: 'bold',
                     fontSize: '0.875rem',
                     minWidth: '120px'
                   }} 
@@ -211,7 +206,6 @@ const DispatchReportOnScreen: React.FC<DispatchReportOnScreenProps> = ({
               <TableCell sx={{
                 backgroundColor: mainColor, 
                 color: contrastText,
-                fontWeight: 'bold',
                 fontSize: '0.875rem',
                 width: '10%'
               }} align="center">
@@ -245,10 +239,10 @@ const DispatchReportOnScreen: React.FC<DispatchReportOnScreenProps> = ({
                     }
                   }}
                 >
-                  <TableCell sx={{ fontWeight: 'medium' }}>{index + 1}</TableCell>
-                  <TableCell sx={{ fontWeight: 'medium' }}>{item.product.name}</TableCell>
+                  <TableCell>{index + 1}</TableCell>
+                  <TableCell>{item.product.name}</TableCell>
                   <TableCell>{item.measurement_unit.symbol}</TableCell>
-                  <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                  <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                     {item.quantity.toLocaleString()}
                   </TableCell>
                   
@@ -258,7 +252,7 @@ const DispatchReportOnScreen: React.FC<DispatchReportOnScreenProps> = ({
                       <TableCell 
                         key={dispatchedItem.deliveryNo} 
                         align="right"
-                        sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}
+                        sx={{ fontFamily: 'monospace' }}
                       >
                         {product ? Math.floor(product.quantity).toLocaleString() : '0'}
                       </TableCell>
@@ -269,7 +263,6 @@ const DispatchReportOnScreen: React.FC<DispatchReportOnScreenProps> = ({
                     align="right"
                     sx={{ 
                       fontFamily: 'monospace', 
-                      fontWeight: 'bold',
                       color: undispatchedQuantity > 0 ? 'warning.main' : 'success.main'
                     }}
                   >

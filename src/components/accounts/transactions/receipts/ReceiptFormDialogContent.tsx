@@ -390,7 +390,7 @@ function ReceiptFormDialogContent({ setOpen, receipt = null }: ReceiptFormDialog
                             justifyContent: 'flex-end'
                         }}>
                             <Typography variant={"h5"}>
-                                {totalAmount.toLocaleString()}
+                                {totalAmount?.toLocaleString()}
                             </Typography>
                         </Grid>
                         <Grid size={12}>

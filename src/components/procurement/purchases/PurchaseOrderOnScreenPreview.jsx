@@ -33,7 +33,7 @@ function PurchaseOrderOnScreenPreview({ order }) {
     const grandTotal = order.amount + vatAmount;
 
     const formatCurrency = (amount) => {
-        return amount.toLocaleString("en-US", { 
+        return amount?.toLocaleString("en-US", { 
             style: "currency", 
             currency: currencyCode,
             minimumFractionDigits: 2,
@@ -65,7 +65,7 @@ function PurchaseOrderOnScreenPreview({ order }) {
                     >
                         <Typography 
                             variant="h4" 
-                            sx={{ color: headerColor, fontWeight: 'bold' }} 
+                            sx={{ color: headerColor }} 
                             gutterBottom
                         >
                             PURCHASE ORDER
@@ -85,7 +85,7 @@ function PurchaseOrderOnScreenPreview({ order }) {
             <Grid container spacing={2} sx={{ mb: 3 }}>
                 <Grid size={{xs: 12, sm: 6, md: 4}}>
                     <Box>
-                        <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                        <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
                             Order Date
                         </Typography>
                         <Typography variant="body1">
@@ -96,7 +96,7 @@ function PurchaseOrderOnScreenPreview({ order }) {
                 {order?.date_required && (
                     <Grid size={{xs: 12, sm: 6, md: 4}}>
                         <Box>
-                            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                            <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
                                 Date Required
                             </Typography>
                             <Typography variant="body1">
@@ -108,7 +108,7 @@ function PurchaseOrderOnScreenPreview({ order }) {
                 {order?.cost_centers && (
                     <Grid size={{xs: 12, sm: 6, md: 4}}>
                         <Box>
-                            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                            <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
                                 Purchase For
                             </Typography>
                             <Typography variant="body1">
@@ -119,7 +119,7 @@ function PurchaseOrderOnScreenPreview({ order }) {
                 )}
                 <Grid size={{xs: 12, sm: 6, md: 4}}>
                     <Box>
-                        <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                        <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
                             Created By
                         </Typography>
                         <Typography variant="body1">{order?.creator.name}</Typography>
@@ -128,7 +128,7 @@ function PurchaseOrderOnScreenPreview({ order }) {
                 {(order?.reference || order?.requisitionNo) && (
                     <Grid size={{xs: 12, sm: 6, md: 4}}>
                         <Box>
-                            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                            <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
                                 Reference
                             </Typography>
                             <Typography variant="body1">
@@ -140,7 +140,7 @@ function PurchaseOrderOnScreenPreview({ order }) {
                 {order?.currency_id > 1 && (
                     <Grid size={{xs: 12, sm: 6, md: 4}}>
                         <Box>
-                            <Typography variant="subtitle2" sx={{ color: headerColor, fontWeight: 'bold' }} gutterBottom>
+                            <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
                                 Exchange Rate
                             </Typography>
                             <Typography variant="body1">{order.exchange_rate}</Typography>
@@ -162,7 +162,7 @@ function PurchaseOrderOnScreenPreview({ order }) {
                     >
                         <Typography 
                             variant="subtitle1" 
-                            sx={{ color: headerColor, fontWeight: 'bold', textAlign: 'center' }} 
+                            sx={{ color: headerColor, textAlign: 'center' }} 
                             gutterBottom
                         >
                             SUPPLIER
@@ -219,7 +219,6 @@ function PurchaseOrderOnScreenPreview({ order }) {
                     sx={{ 
                         color: headerColor, 
                         textAlign: 'center', 
-                        fontWeight: 'bold',
                         mb: 2
                     }}
                 >
@@ -238,29 +237,29 @@ function PurchaseOrderOnScreenPreview({ order }) {
                     <Table>
                         <TableHead>
                             <TableRow>
-                                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
-                                    #
+                                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
+                                    S/N
                                 </TableCell>
-                                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
+                                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
                                     Product/Service
                                 </TableCell>
-                                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }}>
+                                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
                                     Unit
                                 </TableCell>
-                                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
                                     Quantity
                                 </TableCell>
                                 {withPrices && (
                                     <>
-                                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
                                             Price {vatAmount > 0 ? '(Excl.)' : ''}
                                         </TableCell>
                                         {vatAmount > 0 && (
-                                            <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                                            <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
                                                 VAT
                                             </TableCell>
                                         )}
-                                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', fontSize: '0.875rem' }} align="right">
+                                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
                                             Amount {vatAmount > 0 ? '(Incl.)' : ''}
                                         </TableCell>
                                     </>
@@ -278,23 +277,23 @@ function PurchaseOrderOnScreenPreview({ order }) {
                                         }
                                     }}
                                 >
-                                    <TableCell sx={{ fontWeight: 'medium' }}>{index + 1}</TableCell>
-                                    <TableCell sx={{ fontWeight: 'medium' }}>{orderItem.product.name}</TableCell>
+                                    <TableCell>{index + 1}</TableCell>
+                                    <TableCell>{orderItem.product.name}</TableCell>
                                     <TableCell>{orderItem.measurement_unit.symbol}</TableCell>
-                                    <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                                    <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                                         {orderItem.quantity.toLocaleString()}
                                     </TableCell>
                                     {withPrices && (
                                         <>
-                                            <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                                            <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                                                 {formatNumber(orderItem.rate)}
                                             </TableCell>
                                             {vatAmount > 0 && (
-                                                <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'medium' }}>
+                                                <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                                                     {formatNumber(orderItem.rate * orderItem.vat_percentage * 0.01)}
                                                 </TableCell>
                                             )}
-                                            <TableCell align="right" sx={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
+                                            <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                                                 {formatNumber(orderItem.rate * orderItem.quantity * (1 + orderItem.vat_percentage * 0.01))}
                                             </TableCell>
                                         </>

@@ -65,7 +65,7 @@ export const mainTheme: ThemeOptions = {
     info: {
       main: '#2EB5C9',
       light: '#6FE7FC',
-      dark: '#008598',
+      dark: '#b5edf5ff',
       contrastText: '#FFF',
     },
     success: {
@@ -76,10 +76,10 @@ export const mainTheme: ThemeOptions = {
     },
     text: {
       primary: '#C5CDE6',
-      secondary: '#8595A6',
+      secondary: '#9da9b7ff',
       disabled: '#A2B2C3',
     },
-    divider: alpha('#FFFFFF', 0.1),
+    divider: alpha('#FFFFFF', 0.3),
     background: {
       paper: '#26324D',
       default: '#19243B',
@@ -171,6 +171,68 @@ export const mainTheme: ThemeOptions = {
         },
       },
     },
+    MuiAlert: {
+      styleOverrides: {
+        root: {
+          display: 'flex',
+          alignItems: 'center',
+          '& .MuiAlert-icon': {
+            marginRight: 12,
+            opacity: 0.9,
+          },
+          '& .MuiAlert-message': {
+            lineHeight: 1.5,
+          },
+        },
+        standardInfo: {
+          backgroundColor: '#2EB5C9',
+          color: '#fff',
+          '& .MuiAlert-icon': { color: '#fff' },
+          '& .MuiAlert-message': { color: '#fff' },
+        },
+        standardSuccess: {
+          backgroundColor: '#3BD2A2',
+          color: '#fff',
+          '& .MuiAlert-icon': { color: '#fff' },
+          '& .MuiAlert-message': { color: '#fff' },
+        },
+        standardWarning: {
+          backgroundColor: '#fff7e6',
+          color: '#5a3d00',
+          '& .MuiAlert-icon': { color: '#b56b00' },
+        },
+        standardError: {
+          backgroundColor: '#E73145',
+          color: '#fff',
+          '& .MuiAlert-icon': { color: '#fff' },
+          '& .MuiAlert-message': { color: '#fff' },
+        },
+        filledInfo: {
+          backgroundColor: '#2EB5C9',
+          color: '#fff',
+          '& .MuiAlert-icon': { color: '#fff' },
+        },
+        filledSuccess: {
+          backgroundColor: '#3BD2A2',
+          color: '#fff',
+          '& .MuiAlert-icon': { color: '#fff' },
+        },
+        filledWarning: {
+          backgroundColor: '#fff7e6',
+          color: '#5a3d00',
+          '& .MuiAlert-icon': { color: '#b56b00' },
+        },
+        filledError: {
+          backgroundColor: '#E73145',
+          color: '#fff',
+          '& .MuiAlert-icon': { color: '#fff' },
+        },
+        outlinedInfo: {
+          border: '1px solid #2EB5C9',
+          color: '#2EB5C9',
+        },
+      },
+    },
     MuiCardContent: {
       styleOverrides: {
         root: {
@@ -254,6 +316,7 @@ export const mainTheme: ThemeOptions = {
     MuiButton: {
       styleOverrides: {
         root: {
+          textTransform: 'capitalize',
           fontWeight: 400,
           letterSpacing: 1,
         },

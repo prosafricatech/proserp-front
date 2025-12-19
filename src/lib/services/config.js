@@ -18,7 +18,7 @@ const axios = baseAxios.create({
     'X-Timezone': getTimezoneOffset(),
   },
   withCredentials: true,
-  timeout: 10000,
+  timeout: 60000,
 });
 
 // Interceptor (server-only cookie injection if needed)

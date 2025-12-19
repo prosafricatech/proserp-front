@@ -339,7 +339,7 @@ function JournalFormDialogContent({ isDuplicate = false, isEdit = false, setOpen
                         }}>
                             <Tooltip title={'Total Amount'}>
                                 <Typography variant={"h5"}>
-                                    {totalAmount.toLocaleString()}
+                                    {totalAmount?.toLocaleString()}
                                 </Typography>
                             </Tooltip>
                         </Grid>

@@ -332,7 +332,7 @@ function OtherExpenses({productionDates, setClearFormKey, clearFormKey, submitMa
                               <Grid size={{xs: 6, md: 2}} textAlign={{xs:'end', md:'start'}}>
                                   <Tooltip title={'Amount'}>
                                       <Typography variant="h5" fontSize={14} lineHeight={1.25} mb={0} noWrap>
-                                          {expensemanifest.amount.toLocaleString("en-US", { 
+                                          {expensemanifest.amount?.toLocaleString("en-US", { 
                                               style: "currency", 
                                               currency: expensemanifest.journalable.currency?.code 
                                           })}
@@ -344,7 +344,7 @@ function OtherExpenses({productionDates, setClearFormKey, clearFormKey, submitMa
                   })}
                 </>
               ) : (
-                isFetchedAtLeastOnce && <Alert sx={{marginTop: 1, marginBottom: 1}} variant='outlined' color='primary' severity='info'>No Expense to Add</Alert>
+                isFetchedAtLeastOnce && <Alert sx={{marginTop: 1, marginBottom: 1}} variant='outlined' severity='info'>No Expense to Add</Alert>
               )
               :
               <LinearProgress sx={{marginTop: 2}}/>

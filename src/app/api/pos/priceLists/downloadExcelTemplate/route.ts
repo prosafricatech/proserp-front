@@ -1,27 +1,54 @@
-import { getAuthHeaders } from '@/lib/utils/apiUtils';
 import { NextRequest } from 'next/server';
+import { getAuthHeaders } from '@/lib/utils/apiUtils';
 
-const API_BASE = process.env.API_BASE_URL;
+const API_BASE = process.env.API_BASE_URL!;
 
 export async function POST(req: NextRequest) {
-  const { headers, response } = await getAuthHeaders(req);
-  if (response) return response;
+  try {
+    const { headers, response } = await getAuthHeaders(req);
+    if (response) return response;
 
-  const body = await req.json();
-  const res = await fetch(`${API_BASE}/pricelist-excel-template`, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify(body),
-  });
+    let body: any = {};
 
-  // If backend returns Excel, forward it as a Blob
-  const arrayBuffer = await res.arrayBuffer();
+    // Determine how body should be read
+    const contentType = req.headers.get('content-type') || '';
 
-  return new Response(arrayBuffer, {
-    status: res.status,
-    headers: {
-      'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'Content-Disposition': 'attachment; filename="stock_list.xlsx"', // optional
-    },
-  });
+    if (contentType.includes('application/json')) {
+      body = await req.json();
+    } else if (contentType.includes('multipart/form-data')) {
+      const formData = await req.formData();
+      formData.forEach((val, key) => (body[key] = val));
+    } else {
+      // fallback to text for safety
+      const text = await req.text();
+      body = text ? JSON.parse(text) : {};
+    }
+
+    // Forward to backend
+    const backendRes = await fetch(`${API_BASE}/pricelist-excel-template`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+    });
+
+    if (!backendRes.ok) {
+      return new Response(JSON.stringify({ error: true }), { status: backendRes.status });
+    }
+
+    const arrayBuffer = await backendRes.arrayBuffer();
+
+    return new Response(arrayBuffer, {
+      status: backendRes.status,
+      headers: {
+        'Content-Type':
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'Content-Disposition': 'attachment; filename="PriceListTemplate.xlsx"',
+      },
+    });
+  } catch (error: any) {
+    return new Response(
+      JSON.stringify({ message: "Failed to generate Excel template." }),
+      { status: 500 }
+    );
+  }
 }
