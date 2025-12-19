@@ -18,7 +18,7 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "incremental": true,
     "plugins": [
       {
@@ -349,7 +349,8 @@
     "src/components/fuelStation/dippings/DippingsPDF.tsx",
     "src/components/fuelStation/dippings/DippingsOnScreen.tsx",
     "src/components/fuelStation/dippings/DippingsListItem.tsx",
-    "src/components/fuelStation/dippings/DippingsItemAction.tsx"
+    "src/components/fuelStation/dippings/DippingsItemAction.tsx",
+    ".next/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

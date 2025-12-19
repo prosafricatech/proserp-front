@@ -54,7 +54,7 @@ export const UsersList: React.FC = () => {
             service={organizationServices.getUsers}
             primaryKey={"id"}
             queryOptions={queryOptions}
-            itemsPerPage={5}
+            itemsPerPage={10}
             itemsPerPageOptions={[5, 8, 15, 20]}
             renderItem={renderUser}
             componentElement={"div"}

@@ -574,9 +574,10 @@ const SalesManifest: React.FC<SalesManifestProps> = ({ setOpenSalesManifest }) =
         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       });
 
+      const dateRange = `${readableDate(filters.from, true)}-${readableDate(filters.to, true)}`;
       const link = document.createElement('a');
       link.href = window.URL.createObjectURL(blob);
-      link.download = `Sales Manifest.xlsx`;
+      link.download = `Sales Manifest ${dateRange}.xlsx`;
       link.click();
       setIsDownloadingTemplate(false);
     } catch (error) {
@@ -830,7 +831,6 @@ const SalesManifest: React.FC<SalesManifestProps> = ({ setOpenSalesManifest }) =
                       size="small"
                       onClick={downloadExcelTemplate}
                       loading={isDownloadingTemplate}
-                      disabled
                       variant="contained"
                       color="success"
                     >

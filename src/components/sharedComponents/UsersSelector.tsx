@@ -1,19 +1,23 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { Autocomplete, Checkbox, Chip, LinearProgress, TextField } from '@mui/material';
-import CheckBoxOutlineBlank from '@mui/icons-material/CheckBoxOutlineBlank';
-import CheckBox from '@mui/icons-material/CheckBox';
-import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
-import organizationServices from '../Organizations/organizationServices';
-import { useQuery } from '@tanstack/react-query';
+"use client";
+
+import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
+import {
+  Autocomplete,
+  Checkbox,
+  Chip,
+  LinearProgress,
+  TextField,
+} from "@mui/material";
+import CheckBoxOutlineBlank from "@mui/icons-material/CheckBoxOutlineBlank";
+import CheckBox from "@mui/icons-material/CheckBox";
+import { useJumboAuth } from "@/app/providers/JumboAuthProvider";
+import organizationServices from "../Organizations/organizationServices";
+import { useQuery } from "@tanstack/react-query";
 
 interface User {
   id: number;
   name: string;
   [key: string]: any;
-}
-
-interface ApiResponse {
-  data: User[];
 }
 
 interface UsersSelectorProps {
@@ -22,15 +26,13 @@ interface UsersSelectorProps {
   label?: string;
   defaultValue?: User | User[] | null;
   frontError?: { message?: string } | null;
-
-  /** NEW: list of users to exclude */
   excludeUsers?: User[];
 }
 
 const UsersSelector: React.FC<UsersSelectorProps> = ({
   onChange,
   multiple = false,
-  label = 'Users',
+  label = "Users",
   defaultValue = null,
   frontError = null,
   excludeUsers = [],
@@ -38,64 +40,75 @@ const UsersSelector: React.FC<UsersSelectorProps> = ({
   const { authOrganization } = useJumboAuth();
   const organization = authOrganization?.organization;
 
-  /** fetch users */
-  const { data: response = { data: [] }, isLoading, error } = useQuery<ApiResponse>({
-    queryKey: ['users', organization?.id],
+  const { data: rawUsers = [], isFetching, error } = useQuery<User[]>({
+    queryKey: ["users", organization?.id],
     queryFn: () =>
-      organizationServices.getUsers({ organizationId: organization?.id }),
+      organizationServices.getOrganizationUsers({
+        organizationId: organization?.id,
+      }),
     enabled: !!organization?.id,
   });
 
-  const rawUsers = response.data || [];
+  const users = useMemo(() => {
+    const excludedIds = new Set(excludeUsers.map((u) => u.id));
+    const map = new Map<number, User>();
 
-  /** NEW: automatic filtering */
-  const excludedIds = new Set(excludeUsers.map((u) => u.id));
-  const users = rawUsers.filter((u) => !excludedIds.has(u.id));
+    rawUsers.forEach((user) => {
+      if (!excludedIds.has(user.id) && !map.has(user.id)) {
+        map.set(user.id, user);
+      }
+    });
 
-  const [selectedUsers, setSelectedUsers] = useState<User | User[] | null>(() => {
-    if (!defaultValue) return multiple ? [] : null;
+    return Array.from(map.values());
+  }, [rawUsers, excludeUsers]);
 
-    return multiple
-      ? Array.isArray(defaultValue)
-        ? defaultValue
-        : [defaultValue]
-      : Array.isArray(defaultValue)
-      ? defaultValue[0]
-      : defaultValue;
-  });
+  const [value, setValue] = useState<User | User[] | null>(
+    multiple ? [] : null
+  );
 
-  /** update when defaults change */
+  const syncedRef = useRef(false);
+
   useEffect(() => {
-    if (!defaultValue || users.length === 0) return;
+    if (!defaultValue || users.length === 0 || syncedRef.current) return;
+
+    syncedRef.current = true;
 
     if (multiple) {
-      const defIds = Array.isArray(defaultValue)
-        ? defaultValue.map((u) => u.id)
-        : [defaultValue.id];
-
-      setSelectedUsers(users.filter((u) => defIds.includes(u.id)));
+      const ids = new Set(
+        (Array.isArray(defaultValue) ? defaultValue : [defaultValue]).map(
+          (u) => u.id
+        )
+      );
+      setValue(users.filter((u) => ids.has(u.id)));
     } else {
-      const id = Array.isArray(defaultValue) ? defaultValue[0]?.id : defaultValue?.id;
-      setSelectedUsers(users.find((u) => u.id === id) || null);
+      const id = Array.isArray(defaultValue)
+        ? defaultValue[0]?.id
+        : defaultValue.id;
+
+      setValue(users.find((u) => u.id === id) || null);
     }
-  }, [defaultValue, rawUsers, multiple]);
+  }, [defaultValue, users, multiple]);
 
-  const handleChange = useCallback((_: any, newValue: User | User[] | null) => {
-    onChange(newValue);
-    setSelectedUsers(newValue);
-  }, [onChange]);
+  const handleChange = useCallback(
+    (_: any, newValue: User | User[] | null) => {
+      setValue(newValue);
+      onChange(newValue);
+    },
+    [onChange]
+  );
 
-  if (isLoading) return <LinearProgress />;
+  if (isFetching) return <LinearProgress />;
 
   return (
     <Autocomplete
       multiple={multiple}
       size="small"
-      isOptionEqualToValue={(option: User, value: User) => option.id === value.id}
       options={users}
-      value={selectedUsers}
+      value={value}
+      onChange={handleChange}
       disableCloseOnSelect={multiple}
-      getOptionLabel={(option: User) => option.name}
+      isOptionEqualToValue={(o, v) => o.id === v.id}
+      getOptionLabel={(option) => option.name}
       renderInput={(params) => (
         <TextField
           {...params}
@@ -103,41 +116,34 @@ const UsersSelector: React.FC<UsersSelectorProps> = ({
           helperText={frontError?.message}
           fullWidth
           label={label}
-          size="small"
           placeholder={label}
         />
       )}
-      renderTags={(tagValue: User[], getTagProps) => 
-        tagValue.map((option: User, index: number) => (
+      renderTags={(value: User[], getTagProps) =>
+        value.map((option, index) => (
           <Chip
             {...getTagProps({ index })}
-            key={option.id}
             label={option.name}
           />
         ))
       }
-      {...(multiple && { 
-        renderOption: (
-          props: React.HTMLAttributes<HTMLLIElement> & { key?: React.Key },
-          option: User,
-          { selected }
-        ) => {
-          const { key, ...otherProps } = props;
+      {...(multiple && {
+        renderOption: (props, option: any, { selected }) => {
+          const { key, ...rest } = props;
 
           return (
-            <li key={option.id} {...otherProps}>
+            <li key={key} {...rest}>
               <Checkbox
                 icon={<CheckBoxOutlineBlank fontSize="small" />}
                 checkedIcon={<CheckBox fontSize="small" />}
-                style={{ marginRight: 8 }}
                 checked={selected}
+                sx={{ mr: 1 }}
               />
               {option.name}
             </li>
           );
-        }
+        },
       })}
-      onChange={handleChange}
     />
   );
 };
