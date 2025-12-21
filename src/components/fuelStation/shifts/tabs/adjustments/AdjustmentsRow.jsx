@@ -1,33 +1,19 @@
 import { DisabledByDefault, EditOutlined } from '@mui/icons-material';
 import { Divider, Grid, IconButton, Tooltip, Typography } from '@mui/material';
 import React, { useState } from 'react';
+import { useFormContext } from 'react-hook-form';
 import Adjustments from './Adjustments';
 
-import { Adjustment } from '../../SalesShiftTypes';
-import { Product } from '@/components/productAndServices/products/ProductType';
-import { FuelPump } from '@/components/fuelStation/Stations/StationType';
-import { Tank } from '@/components/fuelStation/dippings/DippingsTypes';
-
-interface AdjustmentsRowProps {
-  adjustment: Adjustment;
-  index: number;
-  adjustments: Adjustment[];
-  setAdjustments: (adjustments: Adjustment[] | ((prev: Adjustment[]) => Adjustment[])) => void;
-  products: Product[];
-  tanks: Tank[];
-  fuel_pumps: FuelPump[];
-}
-
-const AdjustmentsRow: React.FC<AdjustmentsRowProps> = ({
-  adjustment,
-  index,
-  adjustments,
-  setAdjustments,
-  products,
-  tanks,
-  fuel_pumps,
-}) => {
+function AdjustmentsRow({ adjustment, index }) {
   const [showForm, setShowForm] = useState(false);
+
+  const {
+    adjustments = [],
+    setAdjustments,
+    products = [],
+    tanks = [],
+    fuel_pumps = [], // may be needed in the edit form
+  } = useFormContext();
 
   const product = products.find((p) => p.id === adjustment.product_id);
   const tank = tanks.find((t) => t.id === adjustment.tank_id);
@@ -53,22 +39,26 @@ const AdjustmentsRow: React.FC<AdjustmentsRowProps> = ({
             },
           }}
         >
+          {/* Index */}
           <Grid size={{ xs: 1, md: 0.5 }}>
             {index + 1}.
           </Grid>
 
+          {/* Product */}
           <Grid size={{ xs: 5.5, md: 2.5, lg: 2.5 }}>
             <Tooltip title="Product">
               <Typography>{product?.name ?? '-'}</Typography>
             </Tooltip>
           </Grid>
 
+          {/* Tank */}
           <Grid size={{ xs: 5.5, md: 2.5 }}>
             <Tooltip title="Tank">
               <Typography>{tank?.name ?? '-'}</Typography>
             </Tooltip>
           </Grid>
 
+          {/* Operator */}
           <Grid size={{ xs: 6, md: 1.5 }}>
             <Tooltip title="Operator">
               <Typography>
@@ -77,18 +67,21 @@ const AdjustmentsRow: React.FC<AdjustmentsRowProps> = ({
             </Tooltip>
           </Grid>
 
+          {/* Quantity */}
           <Grid size={{ xs: 6, md: 2 }}>
             <Tooltip title="Quantity">
               <Typography>{adjustment.quantity.toLocaleString()}</Typography>
             </Tooltip>
           </Grid>
 
+          {/* Description */}
           <Grid size={{ xs: 6, md: 2, lg: 2 }}>
             <Tooltip title="Description">
               <Typography>{adjustment.description ?? '-'}</Typography>
             </Tooltip>
           </Grid>
 
+          {/* Actions */}
           <Grid size={{ xs: 6, md: 1, lg: 1 }} textAlign="end">
             <Tooltip title="Edit Adjustment">
               <IconButton size="small" onClick={() => setShowForm(true)}>
@@ -117,6 +110,6 @@ const AdjustmentsRow: React.FC<AdjustmentsRowProps> = ({
       )}
     </React.Fragment>
   );
-};
+}
 
 export default AdjustmentsRow;
