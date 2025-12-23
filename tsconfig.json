@@ -330,7 +330,7 @@
     "src/components/fuelStation/shifts/tabs/fuelVouchers/FuelVouchers.tsx",
     "src/components/fuelStation/shifts/tabs/fuelVouchers/FuelVouchersItemRow.tsx",
     "src/components/fuelStation/shifts/tabs/CashReconciliation.tsx",
-    "src/components/fuelStation/shifts/tabs/Dipping.tsx",
+    "src/components/fuelStation/shifts/tabs/Dipping.jsx",
     "src/components/fuelStation/shifts/tabs/PumpReadings.tsx",
     "src/components/fuelStation/shifts/SaleShiftForm.jsx",
     "src/components/fuelStation/shifts/SalesShiftPDF.tsx",
