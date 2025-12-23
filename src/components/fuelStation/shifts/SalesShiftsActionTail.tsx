@@ -1,4 +1,3 @@
-'use client'
 import React, { useState } from 'react';
 import { AddOutlined } from '@mui/icons-material';
 import { ButtonGroup, Tooltip, IconButton, Dialog, useMediaQuery} from '@mui/material';
@@ -6,14 +5,14 @@ import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import SaleShiftForm from './SaleShiftForm';
+import { SalesShift } from './SalesShiftTypes';
 
+interface SaleShiftFormProps {
+  SalesShift?: SalesShift | null;     // Make it optional + allow null
+  setOpenDialog: React.Dispatch<React.SetStateAction<boolean>>;
+}
 
-const SalesShiftsActionTail = () => {
-
-
-
-
-
+const SalesShiftsActionTail: React.FC = () => {
   const { checkOrganizationPermission } = useJumboAuth();
   const [openDialog, setOpenDialog] = useState(false);
 
@@ -24,10 +23,10 @@ const SalesShiftsActionTail = () => {
   return (
     <React.Fragment>
       <Dialog maxWidth="lg" scroll={belowLargeScreen ? 'body' : 'paper'} fullWidth fullScreen={belowLargeScreen} open={openDialog}>
-        <SaleShiftForm setOpenDialog={setOpenDialog} />
-
-
-
+        <SaleShiftForm
+          SalesShift={null}                     // This tells the form: "create mode"
+          setOpenDialog={setOpenDialog}
+        />
       </Dialog>
 
       <ButtonGroup variant="outlined" size="small" disableElevation sx={{ '& .MuiButton-root': { px: 1 } }}>

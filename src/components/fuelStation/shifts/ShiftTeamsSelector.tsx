@@ -1,13 +1,25 @@
 import React, { useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { StationFormContext } from './SalesShifts';
-import { Box, FormControl, InputLabel, MenuItem, Select } from '@mui/material';
+import { Box, FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material';
+import { StationContextType } from './SalesShiftTypes';
 
-function ShiftTeamsSelector({ onChange, value }) {
-  const { activeStation } = useContext(StationFormContext);
-  const { shift_teams = [] } = activeStation || {};
+interface ShiftTeamsSelectorProps {
+  value?: string | number | 'null';
+  onChange: (value: string | number | 'null') => void;
+}
+
+const ShiftTeamsSelector: React.FC<ShiftTeamsSelectorProps> = ({
+  value = 'null',
+  onChange,
+}) => {
+  const { activeStation } = useContext<StationContextType>(StationFormContext);
+  const { shift_teams = [] } = activeStation ?? {};
   
   const [shift_team_id, setShift_team_id] = useState(value || 'null');
-  const timeoutRef = useRef(null);
+  const [localValue, setLocalValue] = useState<string | number | 'null'>(value);
+
+  // Ref to store timeout ID properly
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Update local state when value prop changes (for external updates)
   useEffect(() => {
@@ -17,21 +29,21 @@ function ShiftTeamsSelector({ onChange, value }) {
   }, [value]);
 
   // Debounce the onChange callback
-  const debouncedOnChange = useCallback((newValue) => {
+  const debouncedOnChange = useCallback((newValue: string | number | 'null') => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
-    
+
     timeoutRef.current = setTimeout(() => {
       onChange(newValue);
     }, 300);
   }, [onChange]);
 
-  const handleChange = useCallback((event) => {
-    const newValue = event.target.value;
-    setShift_team_id(newValue);
+  const handleChange = (event: SelectChangeEvent<string | number | 'null'>) => {
+    const newValue = event.target.value as string | number | 'null';
+    setLocalValue(newValue);
     debouncedOnChange(newValue);
-  }, [debouncedOnChange]);
+  };
 
   // Cleanup on unmount
   useEffect(() => {
