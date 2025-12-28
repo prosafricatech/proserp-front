@@ -13,8 +13,9 @@ import {
   useTheme
 } from '@mui/material';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
+import { MODULES } from '@/utilities/constants/modules';
 
-const StockMovementOnScreen = ({ movementsData, authOrganization, checkOrganizationPermission }) => {
+const StockMovementOnScreen = ({ movementsData, authOrganization, organizationHasSubscribed, checkOrganizationPermission }) => {
     const theme = useTheme();
     const mainColor = authOrganization.organization.settings?.main_color || "#2113AD";
     const headerColor = theme.type === 'dark' ? '#29f096' : (authOrganization.organization.settings?.main_color || "#2113AD");
@@ -54,7 +55,8 @@ const StockMovementOnScreen = ({ movementsData, authOrganization, checkOrganizat
                         {movementsData.movements.reduce((total, movement) => {
                             const closingBalance = (
                                 parseFloat(movement.opening_balance) +
-                                parseFloat(movement.quantity_received) -
+                                parseFloat(movement.quantity_received)+
+                                parseFloat(movement.quantity_produced) -
                                 parseFloat(movement.quantity_sold) -
                                 parseFloat(movement.quantity_consumed) -
                                 parseFloat(movement.quantity_transferred_out) +
@@ -101,6 +103,11 @@ const StockMovementOnScreen = ({ movementsData, authOrganization, checkOrganizat
                         <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
                             Purchased
                         </TableCell>
+                        {organizationHasSubscribed(MODULES.MANUFACTURING_AND_PROCESSING) &&
+                            <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
+                                Produced
+                            </TableCell>
+                        }
                         <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
                             Trans In
                         </TableCell>
@@ -138,7 +145,8 @@ const StockMovementOnScreen = ({ movementsData, authOrganization, checkOrganizat
                     {movementsData.movements.map((movement, index) => {
                         const closing_balance = Math.round((
                             parseFloat(movement.opening_balance) +
-                            parseFloat(movement.quantity_received) -
+                            parseFloat(movement.quantity_received)+
+                            parseFloat(movement.quantity_produced) -
                             parseFloat(movement.quantity_sold) -
                             parseFloat(movement.quantity_consumed) -
                             parseFloat(movement.quantity_transferred_out) +
@@ -168,6 +176,11 @@ const StockMovementOnScreen = ({ movementsData, authOrganization, checkOrganizat
                                 <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                                     {formatQuantity(parseFloat(movement.quantity_received))}
                                 </TableCell>
+                                {organizationHasSubscribed(MODULES.MANUFACTURING_AND_PROCESSING) &&
+                                    <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
+                                        {formatQuantity(parseFloat(movement.quantity_produced))}
+                                    </TableCell>
+                                }
                                 <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                                     {formatQuantity(parseFloat(movement.quantity_transferred_in))}
                                 </TableCell>

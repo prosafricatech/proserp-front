@@ -18,8 +18,8 @@ export async function GET(
 
   const url = new URL(`${API_BASE}/stores/${id}/${type}`);
 
-  Object.entries(Object.fromEntries(searchParams)).forEach(([key, value]) => {
-    url.searchParams.set(key, value);
+  searchParams.forEach((value, key) => {
+    url.searchParams.append(key, value);
   });
 
   const res = await fetch(url.toString(), {

@@ -90,9 +90,9 @@ const SignupForm = () => {
       >
 
           <img
-            src={`${ASSET_IMAGES}/logos/proserp-4160logo.png`}
+            src={`${ASSET_IMAGES}/logos/proserp-white.png`}
             alt="Proserp"
-            width={200}
+            width={140}
           />
 
           <Typography variant="h4" fontWeight={700} mt={4}>

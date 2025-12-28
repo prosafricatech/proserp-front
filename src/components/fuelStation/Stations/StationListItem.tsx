@@ -79,7 +79,7 @@ const StationListItem = React.memo(({ station, onClick }: StationListItemProps) 
         onClick={() => onClick?.(station)}
       >
         {/* Station Name */}
-        <Grid size={{ xs: 5, md: 2.5 }}>
+        <Grid size={{ xs: 2.5, md: 2.5 }}>
           <Tooltip title="Station Name">
             <Typography variant="subtitle1" noWrap>
               {station.name}
@@ -88,7 +88,7 @@ const StationListItem = React.memo(({ station, onClick }: StationListItemProps) 
         </Grid>
 
         {/* Fuel Pump Badge */}
-        <Grid size={{ xs: 1, md: 1.5 }} container justifyContent="center">
+        <Grid size={{ xs: 1.5, md: 1.5 }} container justifyContent="center">
           <Tooltip title="Fuel Pumps">
             <StyledCountBadge
               badgeContent={fuelPumpCount}
@@ -100,7 +100,7 @@ const StationListItem = React.memo(({ station, onClick }: StationListItemProps) 
         </Grid>
 
         {/* Tanks Badge */}
-        <Grid size={{ xs: 1, md: 1.5 }} container justifyContent="center">
+        <Grid size={{ xs: 1.5, md: 1.5 }} container justifyContent="center">
           <Tooltip title="Tanks">
             <StyledCountBadge
               badgeContent={uniqueTankCount}
@@ -112,7 +112,7 @@ const StationListItem = React.memo(({ station, onClick }: StationListItemProps) 
         </Grid>
 
         {/* Users Badge */}
-        <Grid size={{ xs: 1, md: 1.5 }} container justifyContent="center">
+        <Grid size={{ xs: 1.5, md: 1.5 }} container justifyContent="center">
           <Tooltip title="Users">
             <StyledCountBadge
               badgeContent={userCount}
@@ -124,7 +124,7 @@ const StationListItem = React.memo(({ station, onClick }: StationListItemProps) 
         </Grid>
 
         {/* Address */}
-        <Grid size={{ xs: 2, md: 3 }} textAlign="end">
+        <Grid size={{ xs: 3, md: 3 }} textAlign="end">
           <Tooltip title="Address">
             <Typography variant="body2" noWrap>
               {station.address || ''}

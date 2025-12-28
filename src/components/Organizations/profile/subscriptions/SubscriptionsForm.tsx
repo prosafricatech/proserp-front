@@ -400,7 +400,7 @@ function SubscriptionsForm({ setOpenDialog, isFromProsAfricanSubscriptions = fal
             {isFromProsAfricanSubscriptions &&
               <Grid size={{xs: 12, md: 4}}>
                 <OrganizationsSelector
-                  label={subDictForm.labels.months}
+                  label={subDictForm.labels.organization}
                   frontError={errors && errors?.organization_id}
                   defaultValue={subscription?.organization_id}
                   onChange={(newValue: any) => {

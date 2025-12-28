@@ -26,8 +26,9 @@ import PDFContent from '@/components/pdf/PDFContent';
 import { useSnackbar } from 'notistack';
 import productCategoryServices from '@/components/productAndServices/productCategories/productCategoryServices';
 import { useQuery } from '@tanstack/react-query';
+import { MODULES } from '@/utilities/constants/modules';
 
-const ReportDocument = ({productCategories, movementsData,authOrganization,user,checkOrganizationPermission,store,reportTitle}) => {
+const ReportDocument = ({productCategories, organizationHasSubscribed, movementsData,authOrganization,user,checkOrganizationPermission,store,reportTitle}) => {
     const mainColor = authOrganization.organization.settings?.main_color || "#2113AD";
     const lightColor = authOrganization.organization.settings?.light_color || "#bec5da";
     const contrastText = authOrganization.organization.settings?.contrast_text || "#FFFFFF";
@@ -40,7 +41,7 @@ const ReportDocument = ({productCategories, movementsData,authOrganization,user,
             producer='ProsERP'
             title={`${store.name} ${reportTitle} ${readableDate(movementsData.filters.from,true)} to ${readableDate(movementsData.filters.to,true)}`}
         >
-            <Page size="A3" orientation={'portrait'} style={pdfStyles.page}>
+            <Page size="A3" orientation={'landscape'} style={pdfStyles.page}>
                 <View style={pdfStyles.table}>
                     <View style={{ ...pdfStyles.tableRow, marginBottom: 20 }}>
                         <View style={{ flex: 1, maxWidth: 120}}>
@@ -93,6 +94,9 @@ const ReportDocument = ({productCategories, movementsData,authOrganization,user,
                         <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.5 }}>Unit</Text>
                         <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.25 }}>Opening Balance</Text>
                         <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.5 }}>Purchase Received</Text>
+                        {organizationHasSubscribed(MODULES.MANUFACTURING_AND_PROCESSING) &&
+                            <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.5 }}>Produced Quantity</Text>
+                        }
                         <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.25 }}>Transfer In</Text>
                         <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.25 }}>Transfer Out</Text>
                         <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1 }}>Stock Gain</Text>
@@ -104,13 +108,13 @@ const ReportDocument = ({productCategories, movementsData,authOrganization,user,
                             checkOrganizationPermission(PERMISSIONS.ACCOUNTS_REPORTS) &&
                             <React.Fragment>
                                 <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.5 }}>Latest Rate</Text>
-                                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.5 }}>Estimated Closing Value</Text>
+                                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.5 }}>Est. Closing Value</Text>
                             </React.Fragment>
                         }
                     </View>
                     {
                         movementsData.movements.map((movement,index) => {
-                            const closing_balance = Math.round((parseFloat(movement.opening_balance)+parseFloat(movement.quantity_received)-parseFloat(movement.quantity_sold)-parseFloat(movement.quantity_consumed)-parseFloat(movement.quantity_transferred_out)+parseFloat(movement.quantity_transferred_in)+parseFloat(movement.stock_gain)-parseFloat(movement.stock_loss))*10000)/10000;
+                            const closing_balance = Math.round((parseFloat(movement.opening_balance)+parseFloat(movement.quantity_received)+parseFloat(movement.quantity_produced)-parseFloat(movement.quantity_sold)-parseFloat(movement.quantity_consumed)-parseFloat(movement.quantity_transferred_out)+parseFloat(movement.quantity_transferred_in)+parseFloat(movement.stock_gain)-parseFloat(movement.stock_loss))*10000)/10000;
                         return (
                                 <View key={index} style={pdfStyles.tableRow}>
                                     <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 0.5 }}>{index+1}</Text>
@@ -118,6 +122,9 @@ const ReportDocument = ({productCategories, movementsData,authOrganization,user,
                                     <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 0.5 }}>{movement.unit_symbol}</Text>
                                     <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1.25, textAlign: 'right' }}>{movement.opening_balance}</Text>
                                     <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1.5, textAlign: 'right' }}>{movement.quantity_received}</Text>
+                                    {organizationHasSubscribed(MODULES.MANUFACTURING_AND_PROCESSING) &&
+                                        <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1.5, textAlign: 'right' }}>{movement.quantity_produced}</Text>
+                                    }
                                     <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1.25, textAlign: 'right' }}>{movement.quantity_transferred_in}</Text>
                                     <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1.25, textAlign: 'right' }}>{movement.quantity_transferred_out}</Text>
                                     <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1, textAlign: 'right' }}>{movement.stock_gain}</Text>
@@ -143,7 +150,7 @@ const ReportDocument = ({productCategories, movementsData,authOrganization,user,
 
 function StockMovement({ toggleOpen, dormantStock = false, isFromDashboard }) {
     const classes = useProsERPStyles();
-    const { authOrganization, authUser: { user }, checkOrganizationPermission } = useJumboAuth();
+    const { authOrganization, authUser: { user }, checkOrganizationPermission, organizationHasSubscribed} = useJumboAuth();
     const { activeStore } = useStoreProfile();
     const [selectedTab, setSelectedTab] = useState(0);
     const { enqueueSnackbar } = useSnackbar();
@@ -432,12 +439,13 @@ function StockMovement({ toggleOpen, dormantStock = false, isFromDashboard }) {
                                 user={user}
                                 productCategories={watch('product_categories')}
                                 checkOrganizationPermission={checkOrganizationPermission}
+                                organizationHasSubscribed={organizationHasSubscribed}
                                 store={isFromDashboard ? watch('store') : activeStore}
                                 reportTitle={reportTitle}
                             />
                             :
                             <PDFContent
-                                document={<ReportDocument productCategories={watch('product_categories')} movementsData={movements} authOrganization={authOrganization} user={user} checkOrganizationPermission={checkOrganizationPermission} store={isFromDashboard ? watch('store') : activeStore} reportTitle={reportTitle} />}
+                                document={<ReportDocument organizationHasSubscribed={organizationHasSubscribed} productCategories={watch('product_categories')} movementsData={movements} authOrganization={authOrganization} user={user} checkOrganizationPermission={checkOrganizationPermission} store={isFromDashboard ? watch('store') : activeStore} reportTitle={reportTitle} />}
                                 fileName={
                                     isFromDashboard
                                         ? watch('store')?.name

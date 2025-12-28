@@ -94,7 +94,7 @@ function PurchaseOrderDialogForm({toggleOpen, order = null}) {
       ),
   });
 
-  const {register,setValue, setError, handleSubmit, clearErrors, watch, formState : {errors}} = useForm({
+  const {register,setValue, setError, getValues, handleSubmit, clearErrors, watch, formState : {errors}} = useForm({
     resolver: yupResolver(validationSchema),
     defaultValues: {
       id: order && order.id,
@@ -179,33 +179,42 @@ function PurchaseOrderDialogForm({toggleOpen, order = null}) {
   const watchInstantReceive = watch('instant_receive');
 
   useEffect(() => {
-    const shouldRequireLedger = watchInstantPay && stakeholder_id && !watchInstantReceive;
-
-    if (!shouldRequireLedger) {
-      setValue('stakeholder_ledger_id', null, { 
-        shouldValidate: true, 
-        shouldDirty: true 
-      });
+    // 1. No stakeholder → no ledger
+    if (!stakeholder_id) {
+      const current = getValues('stakeholder_ledger_id');
+      if (current !== null) {
+        setValue('stakeholder_ledger_id', null, {
+          shouldValidate: true,
+          shouldDirty: true,
+        });
+      }
       return;
     }
 
-    if (stakeholderPayableLedgers.length > 0) {
-      const firstLedgerId = stakeholderPayableLedgers[0].id;
-
-      const currentValue = watch('stakeholder_ledger_id');
-      if (currentValue !== firstLedgerId) {
-        setValue('stakeholder_ledger_id', firstLedgerId, {
+    // 2. Stakeholder exists but no ledgers
+    if (stakeholderPayableLedgers.length === 0) {
+      const current = getValues('stakeholder_ledger_id');
+      if (current !== null) {
+        setValue('stakeholder_ledger_id', null, {
           shouldValidate: true,
           shouldDirty: true,
-          shouldTouch: true,
         });
       }
-    } else {
-      setValue('stakeholder_ledger_id', null, { 
-        shouldValidate: true, 
-        shouldDirty: true 
+      return;
+    }
+
+    // 3. Ledgers fetched → always set default ledger
+    const firstLedgerId = stakeholderPayableLedgers[0].id;
+    const current = getValues('stakeholder_ledger_id');
+
+    if (current !== firstLedgerId) {
+      setValue('stakeholder_ledger_id', firstLedgerId, {
+        shouldValidate: true,
+        shouldDirty: true,
+        shouldTouch: true,
       });
     }
+
   }, [
     watchInstantPay,
     watchInstantReceive,

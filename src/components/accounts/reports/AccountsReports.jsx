@@ -56,7 +56,7 @@ function AccountsReports() {
             <Dialog 
                 scroll={belowLargeScreen ? 'body' : 'paper'} 
                 fullWidth
-                maxWidth={(openCashierReport || openTrialBalance) ? 'lg' : 'md'}
+                maxWidth={(openCashierReport) ? 'lg' : 'md'}
                 fullScreen={(openBalanceSheet || openCashierReport || IncomeStatement) && belowLargeScreen} 
                 open={openDialog || openReceiptDialog || openBalanceSheet || openCashierReport || openTrialBalance}
             >

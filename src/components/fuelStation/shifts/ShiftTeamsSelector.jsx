@@ -1,25 +1,13 @@
 import React, { useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { StationFormContext } from './SalesShifts';
-import { Box, FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material';
-import { StationContextType } from './SalesShiftTypes';
+import { Box, FormControl, InputLabel, MenuItem, Select } from '@mui/material';
 
-interface ShiftTeamsSelectorProps {
-  value?: string | number | 'null';
-  onChange: (value: string | number | 'null') => void;
-}
-
-const ShiftTeamsSelector: React.FC<ShiftTeamsSelectorProps> = ({
-  value = 'null',
-  onChange,
-}) => {
-  const { activeStation } = useContext<StationContextType>(StationFormContext);
-  const { shift_teams = [] } = activeStation ?? {};
+function ShiftTeamsSelector({ onChange, value }) {
+  const { activeStation } = useContext(StationFormContext);
+  const { shift_teams = [] } = activeStation || {};
   
   const [shift_team_id, setShift_team_id] = useState(value || 'null');
-  const [localValue, setLocalValue] = useState<string | number | 'null'>(value);
-
-  // Ref to store timeout ID properly
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef(null);
 
   // Update local state when value prop changes (for external updates)
   useEffect(() => {
@@ -29,21 +17,21 @@ const ShiftTeamsSelector: React.FC<ShiftTeamsSelectorProps> = ({
   }, [value]);
 
   // Debounce the onChange callback
-  const debouncedOnChange = useCallback((newValue: string | number | 'null') => {
+  const debouncedOnChange = useCallback((newValue) => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
-
+    
     timeoutRef.current = setTimeout(() => {
       onChange(newValue);
     }, 300);
   }, [onChange]);
 
-  const handleChange = (event: SelectChangeEvent<string | number | 'null'>) => {
-    const newValue = event.target.value as string | number | 'null';
-    setLocalValue(newValue);
+  const handleChange = useCallback((event) => {
+    const newValue = event.target.value;
+    setShift_team_id(newValue);
     debouncedOnChange(newValue);
-  };
+  }, [debouncedOnChange]);
 
   // Cleanup on unmount
   useEffect(() => {

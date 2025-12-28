@@ -10,7 +10,7 @@ import ProductsSelectProvider from '../../productAndServices/products/ProductsSe
 import StakeholderSelectProvider from '../../masters/stakeholders/StakeholderSelectProvider';
 import LedgerSelectProvider from '../../accounts/ledgers/forms/LedgerSelectProvider';
 import { DateTimePicker } from '@mui/x-date-pickers';
-import dayjs, { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
 import { EventAvailableOutlined, FilterAltOffOutlined, FilterAltOutlined } from '@mui/icons-material';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { useParams } from 'next/navigation';
@@ -18,24 +18,19 @@ import SalesShiftsActionTail from './SalesShiftsActionTail';
 import SalesShiftsListItem from './SalesShiftsListItem';
 import StationShiftsStatusSelector from './StationShiftsStatusSelector';
 import ShiftTeamsSelector from './ShiftTeamsSelector';
-import { SalesShift } from './SalesShiftTypes';
-
-interface SalesShiftsProps {
-  activeStation?: any;
-}
 
 export const StationFormContext = createContext({});
 
-const SalesShifts: React.FC<SalesShiftsProps> = ({ activeStation }) => {
+const SalesShifts = ({activeStation}) => {
   const [openFilters, setOpenFilters] = useState(false)
   const params = useParams();
-  const listRef = React.useRef<any>(null);
+  const listRef = React.useRef();
   const {authOrganization} = useJumboAuth();
-  const [filterDate, setFilterDate] = useState<{from?: string | null; to?: string | null}>({})
+  const [filterDate, setFilterDate] = useState({})
 
   const [queryOptions, setQueryOptions] = React.useState({
     queryKey: 'closedShifts',
-    queryParams: { id: params.id, shift_team_id: 'null', status: 'All' as any, keyword: '', stationId: !!activeStation?.id && activeStation?.id},
+    queryParams: { id: params.id, shift_team_id: 'null', status: 'All', keyword: '', stationId: !!activeStation?.id && activeStation?.id},
     countKey: 'total',
     dataKey: 'data',
   });
@@ -48,11 +43,11 @@ const SalesShifts: React.FC<SalesShiftsProps> = ({ activeStation }) => {
     }));
   }, [activeStation]);
 
-  const salesShifts  = React.useCallback((shift: SalesShift) => {
-    return <SalesShiftsListItem ClosedShift={shift}/>;
+  const salesShifts  = React.useCallback((ClosedShift) => {
+    return <SalesShiftsListItem ClosedShift={ClosedShift}/>;
   }, []);
 
-  const handleOnTeamChange = React.useCallback((shift_team_id: any) => {
+  const handleOnTeamChange = React.useCallback((shift_team_id) => {
     setQueryOptions(state => ({
       ...state,
       queryParams: {
@@ -62,7 +57,7 @@ const SalesShifts: React.FC<SalesShiftsProps> = ({ activeStation }) => {
     }));
   }, [queryOptions.queryParams.shift_team_id]);
 
-  const handleOnStatusChange = React.useCallback((status: string) => {
+  const handleOnStatusChange = React.useCallback((status) => {
     setQueryOptions(state => ({
       ...state,
       queryParams: {
@@ -73,7 +68,7 @@ const SalesShifts: React.FC<SalesShiftsProps> = ({ activeStation }) => {
   }, [queryOptions.queryParams.status]);
 
   const handleOnChange = React.useCallback(
-    (keyword: string) => {
+    (keyword) => {
       setQueryOptions((state) => ({
         ...state,
         queryParams: {
@@ -102,7 +97,7 @@ const SalesShifts: React.FC<SalesShiftsProps> = ({ activeStation }) => {
                   itemsPerPageOptions={[5,8,10,15,20,30,50]}
                   renderItem={salesShifts}
                   componentElement="div"
-
+                  bulkActions={null}
                   wrapperSx={{
                     flex: 1,
                     display: 'flex',
@@ -127,12 +122,9 @@ const SalesShifts: React.FC<SalesShiftsProps> = ({ activeStation }) => {
                                       fullWidth: true,
                                     }
                                   }}
-                                  onChange={(value: Dayjs | null) => {
-                                  setFilterDate((f) => ({
-                                    ...f,
-                                    from: value ? value.toISOString() : null,
-                                  }));
-                                }}
+                                  onChange={(value) => {
+                                    setFilterDate((filters) => { return {...filters,from: value.toISOString()}; });
+                                  }}
                                 />
                               </Grid>
                              <Grid size={{xs: 10.5, md: 5.5 , lg: 3}}>
@@ -146,12 +138,9 @@ const SalesShifts: React.FC<SalesShiftsProps> = ({ activeStation }) => {
                                       fullWidth: true,
                                     }
                                   }}
-                                  onChange={(value: Dayjs | null) => {
-                                  setFilterDate((f) => ({
-                                    ...f,
-                                    to: value ? value.toISOString() : null,
-                                  }));
-                                }}
+                                  onChange={(value) => {
+                                    setFilterDate((filters) => { return {...filters,to: value.toISOString()}; });
+                                  }}
                                 />
                               </Grid>
                               <Grid size={{xs: 1.5, md: 1, lg: 0.5}} alignContent={'end'}>
@@ -172,9 +161,9 @@ const SalesShifts: React.FC<SalesShiftsProps> = ({ activeStation }) => {
                               </Grid>
                             </>
                         }
-                        <Grid size={{ xs: 12, md: 12, lg: openFilters ? 2.5 : 3 }} alignItems="center">
+                         <Grid size={{ xs: 12, md: 12, lg: openFilters ? 2.5 : 3 }} alignItems="center">
                           <StationShiftsStatusSelector
-                            value={queryOptions.queryParams.status as any}
+                            value={queryOptions.queryParams.status}
                             onChange={handleOnStatusChange}
                           />
                         </Grid>

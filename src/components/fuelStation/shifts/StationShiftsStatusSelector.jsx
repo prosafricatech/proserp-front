@@ -1,22 +1,9 @@
-import { Box, FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material'
+import { Box, FormControl, InputLabel, MenuItem, Select } from '@mui/material'
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 
-type ShiftStatus = 'All' | 'Pending' | 'Closed';
-
-interface StationShiftsStatusSelectorProps {
-  /** Current value from parent (controlled component) */
-  value?: ShiftStatus;
-  /** Callback when user selects a status */
-  onChange: (value: ShiftStatus) => void;
-}
-
-  const StationShiftsStatusSelector: React.FC<StationShiftsStatusSelectorProps> = ({
-    value = 'All',
-    onChange,
-  }) =>{
+function StationShiftsStatusSelector({ onChange, value }) {
   const [status, setStatus] = useState(value || 'All');
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const [localValue, setLocalValue] = useState<ShiftStatus>(value);
+  const timeoutRef = useRef(null);
 
   // Update local state when value prop changes (for external updates)
   useEffect(() => {
@@ -26,21 +13,21 @@ interface StationShiftsStatusSelectorProps {
   }, [value]);
 
   // Debounce the onChange callback
-  const debouncedOnChange = useCallback((newValue: ShiftStatus)=> {
+  const debouncedOnChange = useCallback((newValue) => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
-
+    
     timeoutRef.current = setTimeout(() => {
       onChange(newValue);
     }, 300);
   }, [onChange]);
 
-  const handleChange = (event: SelectChangeEvent<ShiftStatus>) => {
-    const newValue = event.target.value as ShiftStatus;
-    setLocalValue(newValue);
+  const handleChange = useCallback((event) => {
+    const newValue = event.target.value;
+    setStatus(newValue);
     debouncedOnChange(newValue);
-  };
+  }, [debouncedOnChange]);
 
   // Cleanup on unmount
   useEffect(() => {

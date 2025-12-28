@@ -1,3 +1,4 @@
+'use client'
 import { DeleteOutlined, DownloadOutlined, EditOutlined, MoreHorizOutlined, VisibilityOutlined } from '@mui/icons-material';
 import { Checkbox, Dialog,DialogContent,DialogTitle,LinearProgress,Stack,Tooltip, Typography, useMediaQuery } from '@mui/material';
 import { useSnackbar } from 'notistack';
@@ -13,26 +14,8 @@ import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { JumboDdMenu } from '@jumbo/components';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { SalesShift } from './SalesShiftTypes';
-import { Organization } from '@/types/auth-types';
-import { Station } from '../Stations/StationType';
-import { MenuItemProps } from '@jumbo/types';
 
-interface EditShiftProps {
-  ClosedShift: SalesShift;
-  setOpenEditDialog: React.Dispatch<React.SetStateAction<boolean>>;
-}
-
-interface DocumentDialogProps {
-  organization: Organization;
-  ClosedShift: SalesShift;
-}
-
-interface SalesShiftsItemActionProps {
-  ClosedShift: SalesShift;
-}
-
-const EditShift: React.FC<EditShiftProps> = ({ ClosedShift, setOpenEditDialog }) => {
+const EditShift = ({ClosedShift, setOpenEditDialog}) => {
   const { data: shiftData, isFetching } = useQuery({
     queryKey: ['showshiftDetails', { id: ClosedShift.id }],
     queryFn: () => fuelStationServices.showShiftDetails(ClosedShift.id)
@@ -47,9 +30,9 @@ const EditShift: React.FC<EditShiftProps> = ({ ClosedShift, setOpenEditDialog })
   )
 }
 
-const DocumentDialog: React.FC<DocumentDialogProps> = ({ organization, ClosedShift }) => {
-  const { activeStation } = useContext<{ activeStation?: Station }>(StationFormContext);
-  const { shift_teams = [], fuel_pumps = [], tanks = [] } = activeStation ?? {};
+const DocumentDialog = ({organization, ClosedShift}) => {
+  const {activeStation} = useContext(StationFormContext);
+  const { shift_teams, fuel_pumps, tanks } = activeStation;
   const { productOptions } = useProductsSelect();
   const [includeFuelVouchers, setIncludeFuelVouchers] = useState(false);
 
@@ -61,11 +44,6 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({ organization, ClosedShi
   if(isFetching){
     return <LinearProgress/>;
   }
-
-  const normalizedShiftTeams = shift_teams.map(team => ({
-    ...team,
-    id: typeof team.id === 'string' ? parseInt(team.id, 10) : team.id
-  }));
 
   return (
     <>
@@ -82,17 +60,16 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({ organization, ClosedShi
         </Stack>
       </DialogTitle>
       <DialogContent>
-        <PDFContent fileName={shiftData.shiftNo} document={<SalesShiftPDF includeFuelVouchers={includeFuelVouchers} productOptions={productOptions} shiftData={shiftData} tanks={tanks} fuel_pumps={fuel_pumps} shift_teams={normalizedShiftTeams} organization={organization}/>}/>
+        <PDFContent fileName={shiftData.shiftNo} document={<SalesShiftPDF includeFuelVouchers={includeFuelVouchers} productOptions={productOptions} shiftData={shiftData} tanks={tanks} fuel_pumps={fuel_pumps} shift_teams={shift_teams} organization={organization}/>}/>
       </DialogContent>
     </>
   )
 }
 
-const SalesShiftsItemAction: React.FC<SalesShiftsItemActionProps> = ({ ClosedShift }) => {
+const SalesShiftsItemAction = ({ ClosedShift}) => {
   const [openEditDialog,setOpenEditDialog] = useState(false);
   const [openDocumentDialog, setOpenDocumentDialog] = useState(false);
-  const { authOrganization } = useJumboAuth();
-  const organization = authOrganization?.organization as Organization;
+  const {authOrganization : {organization}} = useJumboAuth();
   const {showDialog,hideDialog} = useJumboDialog();
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
@@ -109,21 +86,21 @@ const SalesShiftsItemAction: React.FC<SalesShiftsItemActionProps> = ({ ClosedShi
       variant: 'success',
     });
   },
-   onError: (error: any) => {
+   onError: (error) => {
       enqueueSnackbar(
-        error?.response?.data?.message || 'Failed to delete shift',
+        error?.response?.data?.message || 'Failed to delete outlet',
         { variant: 'error' }
       );
     },
-  });
+    });
 
-  const menuItems: (MenuItemProps & { action: string })[]  = [
+  const menuItems = [
     {icon: belowLargeScreen ? <DownloadOutlined/> : <VisibilityOutlined/> , title: belowLargeScreen ? "Download" : "View", action: "open"},
     {icon: <EditOutlined/>, title: 'Edit', action: 'edit'},
     {icon: <DeleteOutlined color='error'/>, title: 'Delete', action: 'delete'}
   ];
 
-  const handleItemAction = (menuItem: MenuItemProps & { action: string }) => {
+  const handleItemAction = (menuItem) => {
     switch (menuItem.action) {
       case 'open':
         setOpenDocumentDialog(true);
@@ -170,7 +147,7 @@ const SalesShiftsItemAction: React.FC<SalesShiftsItemActionProps> = ({ ClosedShi
           </Tooltip>
         }
         menuItems={menuItems}
-        onClickCallback={(option) => handleItemAction(option as MenuItemProps & { action: string })}
+        onClickCallback={handleItemAction}
       />
     </>
   );

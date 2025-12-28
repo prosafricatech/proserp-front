@@ -7,11 +7,10 @@ import { Autocomplete, Divider, Grid, LinearProgress, Stack, TextField } from '@
 import JumboCardQuick from '@jumbo/components/JumboCardQuick';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { useQuery } from '@tanstack/react-query';
-import { Station } from '../Stations/StationType';
 
-const StationShiftsSelector: React.FC = () => {
-  const [activeStation, setActiveStation] = useState<Station | null>(null);
-    const [isClient, setIsClient] = useState(false); 
+function StationShiftsSelector() {
+    const [activeStation, setActiveStation] = useState(null);
+    const [isClient, setIsClient] = useState(false); // ← Add this
     const { authUser } = useJumboAuth();
     const { data: stations, isFetching } = useQuery({
         queryKey: ['userStations', { userId: authUser?.user?.id }],

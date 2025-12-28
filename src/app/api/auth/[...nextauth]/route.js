@@ -49,29 +49,26 @@ const authOptions = {
 
 callbacks: {
   async jwt({ token, user }) {
-    // Wakati user ana-login tu (user exists)
     if (user) {
       token.accessToken = user.token;
       token.organization_id = user.organization_id;
       token.organization_name = user.organization_name;
       token.permissions = user.permissions;
 
-      // Weka direct kwenye token (sio nested ndani ya token.user)
       token.id = user.id;
       token.name = user.name;
       token.email = user.email;
-      token.email_verified_at = user.email_verified_at;  // ← HAPA MUHIMU!
+      token.email_verified_at = user.email_verified_at;
     }
     return token;
   },
 
   async session({ session, token }) {
-    // Rudisha data kwenye session kutoka token
     session.user = {
       id: token.id,
       name: token.name,
       email: token.email,
-      email_verified_at: token.email_verified_at | null,  // ← HAPA PIA!
+      email_verified_at: token.email_verified_at | null,
     };
     session.accessToken = token.accessToken;
     session.organization_id = token.organization_id;
