@@ -31,6 +31,8 @@ import PDFContent from '@/components/pdf/PDFContent';
 import ProjectClaimsForm from './form/ProjectClaimsForm';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { MenuItemProps } from '@jumbo/types';
+import ClaimPDF from './ClaimPDF';
+import ClaimOnscreen from './ClaimOnscreen';
 
 interface DocumentDialogProps {
   open: boolean;
@@ -100,10 +102,14 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
           </Grid>
         )}
 
-        {/* <PDFContent
-          document={<ClaimPDF claim={claimDetails} organization={organization} />}
-          fileName={claimDetails?.claimNo}
-        /> */}
+        {belowLargeScreen && activeTab === 0 ? (
+          <ClaimOnscreen claim={claimDetails} organization={organization} />
+        ) : (
+          <PDFContent
+            document={<ClaimPDF claim={claimDetails} organization={organization} />}
+            fileName={claimDetails?.claimNo}
+          />
+        )}
 
         {belowLargeScreen && (
           <Box textAlign="right" mt={5}>

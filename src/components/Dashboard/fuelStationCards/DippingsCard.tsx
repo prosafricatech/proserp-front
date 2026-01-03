@@ -66,7 +66,6 @@ function DippingsCard() {
         queryKey: ['dippingsReport', params],
         queryFn: async () => {
             return await fuelStationServices.dippingReport(params);
-            return null;
         }
     });
 
@@ -83,7 +82,7 @@ function DippingsCard() {
                             <Grid size={{ xs: 12, md: 2 }}>
                                 <Typography variant='h4'>Dippings</Typography>
                             </Grid>
-                            <Grid size={{ xs: 6, md: 5, lg: 3 }}> 
+                            <Grid size={{ xs: 6, md: 10, lg: 10 }} textAlign={'end'}> 
                                 <ButtonGroup
                                     variant="outlined"
                                     size='small'
@@ -106,46 +105,6 @@ function DippingsCard() {
                                     </Tooltip>
                                 </ButtonGroup>
                             </Grid>
-                            <Grid size={{ xs: 6, md: 5, lg: 7 }}>
-                                <Autocomplete
-                                    multiple
-                                    options={fuelStationCostCenters || []}
-                                    value={selectedStations}
-                                    getOptionLabel={(option) => option.name}
-                                    size='small'
-                                    onChange={(event, newValue) => {
-                                        setSelectedStations(newValue || []);
-                                    }}
-                                    renderInput={(params) => (
-                                        <TextField
-                                            {...params}
-                                            variant="outlined"
-                                            label="Fuel Stations"
-                                            placeholder="Fuel Stations"
-                                        />
-                                    )}
-                                    renderTags={(tagValue, getTagProps) => {
-                                        return tagValue.map((option, index) => {
-                                            const { key, ...restProps } = getTagProps({ index });
-                                            return <Chip {...restProps} key={option.id + "-" + key} label={option.name} />;
-                                        });
-                                    }}
-                                    renderOption={(props, option, { selected }) => {
-                                        const { key, ...restProps } = props;
-                                        return (
-                                            <li {...restProps} key={option.id + "-" + key}>
-                                                <Checkbox
-                                                    icon={<CheckBoxOutlineBlank fontSize="small" />}
-                                                    checkedIcon={<CheckBox fontSize="small" />}
-                                                    style={{ marginRight: 8 }}
-                                                    checked={selected}
-                                                />
-                                                {option.name}
-                                            </li>
-                                        );
-                                    }}
-                                />
-                            </Grid>
                         </Grid>
                         <Grid container spacing={5}>
                             <Grid size={{ xs: 12, md: 6 }}>
@@ -160,10 +119,10 @@ function DippingsCard() {
                     <Grid container spacing={1} columnSpacing={3}>
                         <Grid size={{ xs: 12 }} mb={1}>
                             <Grid container spacing={1} borderBottom={1} borderColor={'divider'}>
-                                <Grid size={{ xs: 4, md: 1.5, lg: 2.5 }}>
+                                <Grid size={{ xs: 8, md: 1.5, lg: 2.5 }}>
                                     <Typography variant='h4'>Dippings</Typography>
                                 </Grid>
-                                <Grid size={{ xs: 8, md: 4, lg: 3 }}>
+                                <Grid size={{ xs: 4, md: 4, lg: 11.5 }} textAlign={'end'}>
                                     <Div>
                                         <FormControl fullWidth size='small'>
                                             <InputLabel id="selected-display-trend-group-by-input-label">Display</InputLabel>
@@ -182,46 +141,6 @@ function DippingsCard() {
                                             </Select>
                                         </FormControl>
                                     </Div>
-                                </Grid>
-                                <Grid size={{ xs: 12, md: 6.5 }} paddingBottom={1}>
-                                    <Autocomplete
-                                        multiple
-                                        options={fuelStationCostCenters || []}
-                                        value={selectedStations}
-                                        getOptionLabel={(option) => option.name}
-                                        size='small'
-                                        onChange={(event, newValue) => {
-                                            setSelectedStations(newValue || []);
-                                        }}
-                                        renderInput={(params) => (
-                                            <TextField
-                                                {...params}
-                                                variant="outlined"
-                                                label="Fuel Stations"
-                                                placeholder="Fuel Stations"
-                                            />
-                                        )}
-                                        renderTags={(tagValue, getTagProps) => {
-                                            return tagValue.map((option, index) => {
-                                                const { key, ...restProps } = getTagProps({ index });
-                                                return <Chip {...restProps} key={option.id + "-" + key} label={option.name} />;
-                                            });
-                                        }}
-                                        renderOption={(props, option, { selected }) => {
-                                            const { key, ...restProps } = props;
-                                            return (
-                                                <li {...restProps} key={option.id + "-" + key}>
-                                                    <Checkbox
-                                                        icon={<CheckBoxOutlineBlank fontSize="small" />}
-                                                        checkedIcon={<CheckBox fontSize="small" />}
-                                                        style={{ marginRight: 8 }}
-                                                        checked={selected}
-                                                    />
-                                                    {option.name}
-                                                </li>
-                                            );
-                                        }}
-                                    />
                                 </Grid>
                             </Grid>
                         </Grid>
