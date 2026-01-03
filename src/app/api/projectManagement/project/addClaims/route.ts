@@ -1,24 +1,17 @@
 import { getAuthHeaders, handleJsonResponse } from '@/lib/utils/apiUtils';
 import { NextRequest } from 'next/server';
 
-const API_BASE = process.env.API_BASE_URL!;
+const API_BASE = process.env.API_BASE_URL
 
 export async function POST(req: NextRequest) {
   const { headers, response } = await getAuthHeaders(req);
-
   if (response) return response;
 
-  // ❗ Remove Content-Type for FormData
-  if (headers) {
-    delete headers['Content-Type'];
-  }
-
-  const formData = await req.formData();
-
-  const res = await fetch(`${API_BASE}/attachments`, {
+  const body = await req.json();
+  const res = await fetch(`${API_BASE}/project-payment-claims`, {
     method: 'POST',
-    headers: headers!,
-    body: formData,
+    headers,
+    body: JSON.stringify(body),
   });
 
   return handleJsonResponse(res);

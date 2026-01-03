@@ -86,7 +86,7 @@ function QuickLinks() {
                                 bgcolor: 'action.hover',
                             }
                         }}
-                        // onClick={() => handleNavigation('/fuel-station/sales-shifts')} // Uncomment and adjust path if needed
+                        onClick={() => handleNavigation('/fuelStations/salesShifts')} 
                     >
                         <LocalGasStation sx={{ fontSize: '40px' }} />
                         <Typography>Sales Shift</Typography>

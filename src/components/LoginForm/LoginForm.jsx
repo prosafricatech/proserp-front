@@ -57,7 +57,7 @@ const LoginForm = () => {
         throw new Error(signInResponse.error);
       }
 
-      await update(); // Session update
+      await update();
 
       const session = await getSession();
       if (!session || !session.user) {
@@ -70,7 +70,7 @@ const LoginForm = () => {
         targetUrl = `/${lang}/organizations`;
         setAuthValues(
           {
-            authUser: { user: session.user, permissions: [] },
+            authUser: { user: session.user, permissions: session.permissions || [] },
             authOrganization: { permissions: [] },
             isAuthenticated: true,
             isLoading: false,

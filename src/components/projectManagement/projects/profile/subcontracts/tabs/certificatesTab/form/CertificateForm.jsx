@@ -2,7 +2,8 @@ import { LoadingButton } from '@mui/lab';
 import {
   Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle,
   Grid, IconButton, TextField, Tooltip, Typography, Box, Tabs, Tab, Paper,
-  Divider
+  Divider,
+  Checkbox
 } from '@mui/material';
 import { DateTimePicker } from '@mui/x-date-pickers';
 import dayjs from 'dayjs';
@@ -18,10 +19,12 @@ import CertifiedTasksItemForm from './tab/certifiedTasks/CertifiedTasksItemForm'
 import CertifiedTasksItemRow from './tab/certifiedTasks/CertifiedTasksItemRow';
 import CertifiedAdjustments from './tab/adjustments/CertifiedAdjustments';
 import CertifiedAdjustmentsRow from './tab/adjustments/CertifiedAdjustmentsRow';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 
 const CertificateForm = ({ setOpenDialog, certificate, subContract }) => {
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
+  const { authOrganization } = useJumboAuth();
   const [tasksItems, setTasksItems] = useState(certificate?.items || []);
   const [adjustments, setAdjustments] = useState(certificate?.adjustments  ? certificate.adjustments : []);
   const [showWarning, setShowWarning] = useState(false);
@@ -29,6 +32,7 @@ const CertificateForm = ({ setOpenDialog, certificate, subContract }) => {
   const [clearFormKey, setClearFormKey] = useState(0);
   const [submitItemForm, setSubmitItemForm] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
+  const [vatChecked, setVatChecked] = useState(certificate?.vat_percentage ? certificate.vat_percentage > 0 : false);
 
   const addCertificate = useMutation({
     mutationFn: projectsServices.addCertificates,
@@ -65,6 +69,7 @@ const CertificateForm = ({ setOpenDialog, certificate, subContract }) => {
     resolver: yupResolver(validationSchema),
     defaultValues: {
       remarks: certificate?.remarks || '',
+      vat_percentage: certificate?.vat_percentage,
       project_subcontract_id: certificate ? certificate.project_subcontract_id : subContract?.id,
       certificate_date: certificate?.certificate_date
         ? dayjs(certificate.certificate_date).toISOString()
@@ -72,6 +77,13 @@ const CertificateForm = ({ setOpenDialog, certificate, subContract }) => {
       id: certificate?.id
     }
   });
+
+  const vat_percentage = watch('vat_percentage') || 0;
+
+  useEffect(() => {
+    setValue('vat_percentage', vat_percentage);
+    setVatChecked(vatChecked);
+  }, [certificate]);
 
   useEffect(() => {
     setValue('adjustments', adjustments?.map(adjustment => ({
@@ -109,6 +121,7 @@ const CertificateForm = ({ setOpenDialog, certificate, subContract }) => {
       })),
       adjustments: adjustments.map((item) => ({
         description: item.description,
+        complement_ledger_id: item.complement_ledger_id || item?.complement_ledger?.id,
         type: item.type === '-' ? 'deduction' : 'addition',
         amount: item.amount,
       })),
@@ -164,6 +177,23 @@ const CertificateForm = ({ setOpenDialog, certificate, subContract }) => {
                 error={!!errors.remarks}
                 helperText={errors.remarks?.message}
               />
+            </Grid>
+            <Grid size={{xs: 12, md: 12}}>
+              <Typography align='left' variant='body2'>
+                VAT
+                <Checkbox
+                  size='small'
+                  checked={vatChecked}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setVatChecked(checked);
+                    setValue('vat_percentage', checked ? authOrganization?.organization?.settings?.vat_percentage ?? 0 : 0, {
+                      shouldDirty: true,
+                      shouldValidate: true,
+                    });
+                  }}
+                />
+              </Typography>
             </Grid>
           </Grid>
 

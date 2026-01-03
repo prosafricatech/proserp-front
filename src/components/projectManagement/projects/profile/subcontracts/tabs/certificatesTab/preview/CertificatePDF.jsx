@@ -11,63 +11,87 @@ function CertificatePDF({ certificate, organization }) {
   const contrastText = organization.settings?.contrast_text || '#FFFFFF';
   const currencyCode = certificate.currency?.code || 'TZS';
 
-  // Summary Items
-  const grossItem = { id: 'gross', particular: 'Gross Amount Certified', amount: certificate.amount };
+  const vatPercentage = certificate.vat_percentage || 0;
+  const grossAmount = Number(certificate.amount) || 0;
+  const vatAmount = (grossAmount * vatPercentage) / 100;
+
+  const grossItem = {
+    id: 'gross',
+    particular: 'Gross Amount Certified',
+    amount: grossAmount,
+  };
+
+  const vatItem = vatPercentage
+    ? {
+        id: 'vat',
+        particular: `VAT (${vatPercentage}%)`,
+        amount: vatAmount,
+      }
+    : null;
+
   const adjustmentItems = (certificate.adjustments || []).map((adj) => ({
     id: adj.id,
     particular: adj.description,
-    amount: adj.type === 'deduction' ? -adj.amount : adj.amount,
+    complement_ledger: adj.complement_ledger,
+    type: adj.type,
+    amount: adj.amount,
   }));
-  const summaryItems = [grossItem, ...adjustmentItems];
-  const grandTotal = summaryItems.reduce((sum, item) => sum + Number(item.amount), 0);
 
-  // Transform certified items
-  const transformCertifiedItems = (certificate) => {
-    return certificate.items.map((it) => {
-      const previousQty = it.previous_certified_quantity || 0;
-      const presentQty = it.certified_quantity || 0;
-      const cumulativeQty = previousQty + presentQty;
-      const rate = it.rate || 0;
+  const summaryItems = [
+    grossItem,
+    ...(vatItem ? [vatItem] : []),
+    ...adjustmentItems,
+  ];
 
-      return {
-        id: `T${it.task?.id}`,
-        description: it.task?.name,
-        unit: it.measurement_unit?.symbol,
-        contractQty: it.task?.quantity,
-        unitRate: rate,
-        contractAmount: (it.task?.quantity || 0) * rate,
-        previousQty,
-        presentQty,
-        cumulativeQty,
-        previousAmount: previousQty * rate,
-        presentAmount: presentQty * rate,
-        cumulativeAmount: cumulativeQty * rate,
-      };
-    });
-  };
+  const grandTotal = summaryItems.reduce((sum, item) => sum + Number(item.amount),0);
 
-  const certifiedItems = transformCertifiedItems(certificate);
+  const certifiedItems = certificate.items.map((it) => {
+    const previousQty = it.previous_certified_quantity || 0;
+    const presentQty = it.certified_quantity || 0;
+    const cumulativeQty = previousQty + presentQty;
+    const rate = it.rate || 0;
+
+    return {
+      id: `T${it.task?.id}`,
+      description: it.task?.name,
+      unit: it.measurement_unit?.symbol,
+      contractQty: it.task?.quantity,
+      unitRate: rate,
+      contractAmount: (it.task?.quantity || 0) * rate,
+      previousQty,
+      presentQty,
+      cumulativeQty,
+      previousAmount: previousQty * rate,
+      presentAmount: presentQty * rate,
+      cumulativeAmount: cumulativeQty * rate,
+    };
+  });
 
   return (
-    <Document title={`${certificate.certificateNo}`} author={certificate.creator?.name}>
+    <Document title={certificate.certificateNo} author={certificate.creator?.name}>
       <Page size="A3" orientation="portrait" style={pdfStyles.page}>
-        {/* HEADER */}
+
+        {/* ================= HEADER ================= */}
         <View style={{ ...pdfStyles.tableRow, marginBottom: 20, justifyContent: 'space-between' }}>
           <View style={{ maxWidth: organization?.logo_path ? 130 : 250 }}>
             <PdfLogo organization={organization} />
           </View>
+
           <View style={{ textAlign: 'right' }}>
             <Text style={{ ...pdfStyles.majorInfo, color: mainColor }}>Certificate</Text>
-            <Text style={pdfStyles.minInfo}>{certificate?.certificateNo}</Text>
+            <Text style={pdfStyles.minInfo}>{certificate.certificateNo}</Text>
           </View>
         </View>
 
-        {/* INFO ROW */}
+        {/* ================= INFO ================= */}
         <View style={{ ...pdfStyles.tableRow, marginBottom: 20, gap: 20 }}>
           <View style={{ flex: 1 }}>
             <Text style={{ ...pdfStyles.minInfo, color: mainColor }}>Certificate Date</Text>
-            <Text style={pdfStyles.minInfo}>{readableDate(certificate.certificate_date, false)}</Text>
+            <Text style={pdfStyles.minInfo}>
+              {readableDate(certificate.certificate_date, false)}
+            </Text>
           </View>
+
           {certificate.remarks && (
             <View style={{ flex: 1 }}>
               <Text style={{ ...pdfStyles.minInfo, color: mainColor }}>Remarks</Text>
@@ -76,45 +100,68 @@ function CertificatePDF({ certificate, organization }) {
           )}
         </View>
 
-        {/* ==================== SUMMARY SECTION ==================== */}
+        {/* ================= SUMMARY ================= */}
         <View style={{ marginBottom: 30, alignItems: 'flex-end' }}>
-          <Text style={{ fontSize: 12, color: mainColor, marginBottom: 8, marginLeft: 40 }}>
+          <Text style={{ fontSize: 12, color: mainColor, marginBottom: 8 }}>
             Summary
           </Text>
 
           <View style={{ width: '50%', minWidth: 380 }}>
             <View style={pdfStyles.table}>
               <View style={pdfStyles.tableRow}>
-                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.38, textAlign: 'left' }}>S/N</Text>
-                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2.6, textAlign: 'left' }}>Particulars</Text>
-                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1, textAlign: 'right' }}>Amount ({currencyCode})</Text>
+                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.4 }}>S/N</Text>
+                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2.6 }}>Particulars</Text>
+                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1, textAlign: 'right' }}>
+                  Amount ({currencyCode})
+                </Text>
               </View>
 
               {summaryItems.map((item, index) => (
                 <View key={item.id} style={pdfStyles.tableRow}>
-                  <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFF' : lightColor, flex: 0.4 }}>{index + 1}.</Text>
-                  <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFF' : lightColor, flex: 2.6 }}>{item.particular}</Text>
-                  <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFF' : lightColor, flex: 1, textAlign: 'right', fontSize: 7.5 }}>
+                  <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 ? lightColor : '#FFF', flex: 0.4 }}>
+                    {index + 1}.
+                  </Text>
+
+                <View
+                  style={{
+                    ...pdfStyles.tableCell,
+                    backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
+                    flex: 2.6,
+                    flexDirection: 'column',
+                  }}
+                >
+                  <Text style={{ fontSize: 8 }}>
+                    {item.particular}
+                  </Text>
+
+                  {item.complement_ledger?.name && (
+                    <Text style={{ fontSize: 6.5, color: '#555' }}>
+                      ({item.complement_ledger.name})
+                    </Text>
+                  )}
+                </View>
+
+                  <Text
+                    style={{
+                      ...pdfStyles.tableCell,
+                      backgroundColor: index % 2 ? lightColor : '#FFF',
+                      flex: 1,
+                      textAlign: 'right',
+                      fontSize: 7.5,
+                      color: item.type === 'deduction' ? '#B00020' : '#000',
+                    }}
+                  >
                     {Number(item.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                   </Text>
                 </View>
               ))}
 
-              <View style={{ ...pdfStyles.tableRow, marginTop: 8 }}>
-                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 3.2, textAlign: 'center', fontSize: 9 }}>
+              <View style={{ ...pdfStyles.tableRow, marginTop: 6 }}>
+                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 3.2, textAlign: 'center' }}>
                   Grand Total ({currencyCode})
                 </Text>
-                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1, textAlign: 'right', fontSize: 9 }}>
+                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1, textAlign: 'right' }}>
                   {grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                </Text>
-              </View>
-
-              <View style={{ ...pdfStyles.tableRow, marginTop: 1 }}>
-                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 3.2, textAlign: 'center', fontSize: 9 }}>
-                  Total Amount Payable to this Certificate
-                </Text>
-                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1, textAlign: 'right', fontSize: 9 }}>
-                  {grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })} {currencyCode}
                 </Text>
               </View>
             </View>
@@ -206,10 +253,12 @@ function CertificatePDF({ certificate, organization }) {
           })()}
         </View>
 
-        {/* SIGNATURE */}
+        {/* ================= SIGNATURE ================= */}
         <View style={{ marginTop: 40, flexDirection: 'row', justifyContent: 'flex-end' }}>
           <View style={{ width: 300 }}>
-            <Text style={{ ...pdfStyles.minInfo, color: mainColor, marginBottom: 10 }}>Prepared By:</Text>
+            <Text style={{ ...pdfStyles.minInfo, color: mainColor, marginBottom: 10 }}>
+              Prepared By:
+            </Text>
             <Text style={{ ...pdfStyles.minInfo, borderTop: '1pt solid #000', paddingTop: 30 }}>
               {certificate.creator?.name}
             </Text>

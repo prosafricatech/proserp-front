@@ -385,7 +385,7 @@ const SaleReceiptPDF: React.FC<SaleReceiptPDFProps> = ({ user, organization, sal
         </View>
         <View style={{ ...pdfStyles.tableRow, textAlign: 'center', marginBottom: 15 }}>
           <View style={{ flex: 1 }}>
-            <Text style={pdfStyles.microInfo}>Powered by: proserp.co.tz</Text>
+            <Text style={{...pdfStyles.microInfo, fontSize: 7}}>Powered by: proserp.co.tz</Text>
           </View>
         </View>
 

@@ -100,7 +100,7 @@ function SaleItemForm({ setClearFormKey, submitMainForm, submitItemForm, setSubm
             available_balance: 'N/A',
             store_id: item ? item?.store_id : (stores.length > 0 && stores[0]?.id),
             description: item && item.description,
-            quantity: item ? item.quantity : null,
+            quantity: item ? item.quantity : '',
             rate: item && item.rate,
             conversion_factor: item ? item.conversion_factor : 1,
             measurement_unit_id: item && item.measurement_unit_id,

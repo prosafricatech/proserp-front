@@ -70,7 +70,6 @@ callbacks: {
       email: token.email,
       email_verified_at: token.email_verified_at | null,
     };
-    session.accessToken = token.accessToken;
     session.organization_id = token.organization_id;
     session.organization_name = token.organization_name;
     session.permissions = token.permissions;

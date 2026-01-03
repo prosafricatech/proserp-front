@@ -1,6 +1,6 @@
-'use client'
+'use client';
 
-import React, { lazy, useEffect, useState, useCallback } from 'react';
+import { lazy, useEffect, useState, useCallback } from 'react';
 import { Card, LinearProgress, Stack, Tab, Tabs, Typography } from '@mui/material';
 import JumboContentLayout from '@jumbo/components/JumboContentLayout';
 import ProjectDashboard from './dashboard/ProjectDashboard';
@@ -9,6 +9,7 @@ import { useQuery } from '@tanstack/react-query';
 import projectsServices from '../project-services';
 import StakeholderSelectProvider from '@/components/masters/stakeholders/StakeholderSelectProvider';
 import CurrencySelectProvider from '@/components/masters/Currencies/CurrencySelectProvider';
+import ProjectClaims from './claims/ProjectClaims';
 
 const AttachmentForm = lazy(() => import('@/components/filesShelf/attachments/AttachmentForm'));
 const Subcontracts = lazy(() => import('./subcontracts/Subcontracts'));
@@ -18,44 +19,58 @@ const Deliverables = lazy(() => import('./deliverables/DeliverableGroupsListItem
 const Budgets = lazy(() => import('./budgets/BudgetsListItem'));
 const Updates = lazy(() => import('./updates/Updates'));
 
+type TabKey =
+  | 'dashboard'
+  | 'deliverables'
+  | 'wbs'
+  | 'updates'
+  | 'budgets'
+  | 'subcontracts'
+  | 'claims'
+  | 'users'
+  | 'attachments';
+
 function ProfileContent() {
-  const { project, updateProjectProfile, setIsDashboardTab } = useProjectProfile();
-  const [activeTab, setActiveTab] = useState(0);
+  const { project, updateProjectProfile, setIsDashboardTab }: any = useProjectProfile();
+
+  const [activeTab, setActiveTab] = useState<TabKey>('dashboard');
   const [fetchDeliverables, setFetchDeliverables] = useState(false);
   const [fetchTimelineActivities, setFetchTimelineActivities] = useState(false);
 
-  // Memoize the setter functions to prevent unnecessary re-renders
   const stableSetFetchDeliverables = useCallback(setFetchDeliverables, []);
   const stableSetFetchTimelineActivities = useCallback(setFetchTimelineActivities, []);
 
-  const { 
-    data: deliverablesData, 
-    isLoading: isDeliverablesLoading 
+  /* ---------------- Deliverables ---------------- */
+  const {
+    data: deliverablesData,
+    isLoading: isDeliverablesLoading,
   } = useQuery({
-    queryKey: ['projectDeliverableGroups', { id: project.id }],
+    queryKey: ['projectDeliverableGroups', project?.id],
     queryFn: () => projectsServices.showDeliverablesAndGroups(project.id),
-    enabled: activeTab === 3 || fetchDeliverables,
+    enabled: activeTab === 'deliverables' || fetchDeliverables,
   });
 
-  const { 
-    data: budgetsData, 
-    isLoading: isBudgetLoading 
+  /* ---------------- Budgets ---------------- */
+  const {
+    data: budgetsData,
+    isLoading: isBudgetLoading,
   } = useQuery({
-    queryKey: ['projectBudgets', { id: project.id, cost_center: project?.cost_center?.id }],
+    queryKey: ['projectBudgets', project?.id, project?.cost_center?.id],
     queryFn: projectsServices.showProjectBudgets,
-    enabled: activeTab === 4,
+    enabled: activeTab === 'budgets',
   });
 
-  const { 
-    data: timelineActivitiesData, 
-    isLoading: isTimelineActivitiesLoading 
+  /* ---------------- Timeline ---------------- */
+  const {
+    data: timelineActivitiesData,
+    isLoading: isTimelineActivitiesLoading,
   } = useQuery({
-    queryKey: ['projectTimelineActivities', { id: project.id }],
+    queryKey: ['projectTimelineActivities', project?.id],
     queryFn: () => projectsServices.showProjectTimelineActivities(project.id),
-    enabled: activeTab === 1 || fetchTimelineActivities,
+    enabled: activeTab === 'wbs' || fetchTimelineActivities,
   });
 
-  // Use useEffect to handle side effects when data changes
+  /* ---------------- Profile Updates ---------------- */
   useEffect(() => {
     if (deliverablesData) {
       updateProjectProfile({ deliverable_groups: deliverablesData });
@@ -75,29 +90,22 @@ function ProfileContent() {
   }, [timelineActivitiesData, updateProjectProfile]);
 
   useEffect(() => {
-    setIsDashboardTab(activeTab === 0);
+    setIsDashboardTab(activeTab === 'dashboard');
   }, [activeTab, setIsDashboardTab]);
-  
-  // Only update when these specific values change
+
   useEffect(() => {
-    if (fetchDeliverables || fetchTimelineActivities || activeTab !== 0) {
-      updateProjectProfile({
-        deliverablesLoading: isDeliverablesLoading,
-        budgetsLoading: isBudgetLoading,
-        timelineLoading: isTimelineActivitiesLoading,
-      });
-    }
+    updateProjectProfile({
+      deliverablesLoading: isDeliverablesLoading,
+      budgetsLoading: isBudgetLoading,
+      timelineLoading: isTimelineActivitiesLoading,
+    });
   }, [
-    activeTab, 
-    isDeliverablesLoading, 
-    isBudgetLoading, 
-    isTimelineActivitiesLoading, 
-    fetchDeliverables, 
-    fetchTimelineActivities, 
-    updateProjectProfile
+    isDeliverablesLoading,
+    isBudgetLoading,
+    isTimelineActivitiesLoading,
+    updateProjectProfile,
   ]);
 
-  // Separate useEffect for setting the functions (only once)
   useEffect(() => {
     updateProjectProfile({
       setFetchDeliverables: stableSetFetchDeliverables,
@@ -105,33 +113,33 @@ function ProfileContent() {
     });
   }, [stableSetFetchDeliverables, stableSetFetchTimelineActivities, updateProjectProfile]);
 
-  const isLoading = !fetchDeliverables && !fetchTimelineActivities && Object.values({
-    deliverables: isDeliverablesLoading,
-    budgets: isBudgetLoading,
-    timeline: isTimelineActivitiesLoading,
-  }).some(Boolean);
+  const isLoading =
+    isDeliverablesLoading || isBudgetLoading || isTimelineActivitiesLoading;
 
+  /* ---------------- Render Content ---------------- */
   const renderTabContent = () => {
     switch (activeTab) {
-      case 0:
+      case 'dashboard':
         return (
           <StakeholderSelectProvider>
             <ProjectDashboard />
           </StakeholderSelectProvider>
         );
-      case 1:
-        return <TimelineActivitiesListItem />;
-      case 2:
-        return <Updates />;
-      case 3:
+      case 'deliverables':
         return <Deliverables />;
-      case 4:
+      case 'wbs':
+        return <TimelineActivitiesListItem />;
+      case 'updates':
+        return <Updates />;
+      case 'budgets':
         return <Budgets />;
-      case 5:
+      case 'subcontracts':
         return <Subcontracts />;
-      case 6:
+      case 'claims':
+        return <ProjectClaims />;
+      case 'users':
         return <ProjectUsers />;
-      case 7:
+      case 'attachments':
         return (
           <AttachmentForm
             hideFeatures
@@ -154,36 +162,38 @@ function ProfileContent() {
         </>
       }
     >
-      <Card sx={{ height: '100%', padding: 1 }}>
-        <Stack spacing={1} direction="column">
+      <Card sx={{ height: '100%', p: 1 }}>
+        <Stack spacing={1}>
           <Tabs
             value={activeTab}
-            onChange={(e, newValue) => setActiveTab(newValue)}
+            onChange={(_, newValue) => setActiveTab(newValue)}
             variant="scrollable"
             scrollButtons="auto"
             allowScrollButtonsMobile
           >
-            <Tab label="Dashboard" />
-            <Tab label="WBS" />
-            <Tab label="Updates" />
-            <Tab label="Deliverables" />
-            <Tab label="Budgets" />
-            <Tab label="Subcontracts" />
-            <Tab label="Users" />
-            <Tab label="Attachments" />
+            <Tab label="Dashboard" value="dashboard" />
+            <Tab label="Deliverables" value="deliverables" />
+            <Tab label="WBS" value="wbs" />
+            <Tab label="Updates" value="updates" />
+            <Tab label="Budgets" value="budgets" />
+            <Tab label="Subcontracts" value="subcontracts" />
+
+            {project?.client_id && (
+              <Tab label="Claims" value="claims" />
+            )}
+
+            <Tab label="Users" value="users" />
+            <Tab label="Attachments" value="attachments" />
           </Tabs>
-          {!fetchDeliverables && !fetchTimelineActivities && isLoading ? (
-            <LinearProgress />
-          ) : (
-            renderTabContent()
-          )}
+
+          {isLoading ? <LinearProgress /> : renderTabContent()}
         </Stack>
       </Card>
     </JumboContentLayout>
-  );  
+  );
 }
 
-function ProjectProfile() {
+export default function ProjectProfile() {
   return (
     <ProjectProfileProvider>
       <CurrencySelectProvider>
@@ -192,5 +202,3 @@ function ProjectProfile() {
     </ProjectProfileProvider>
   );
 }
-
-export default ProjectProfile;

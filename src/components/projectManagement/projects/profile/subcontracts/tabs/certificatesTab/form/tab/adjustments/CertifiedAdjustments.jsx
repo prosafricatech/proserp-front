@@ -9,9 +9,12 @@ import OperationSelector from '@/components/sharedComponents/OperationSelector';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import { Div } from '@jumbo/shared';
+import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
+import { useLedgerSelect } from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
 
 function CertifiedAdjustments({  setClearFormKey, submitMainForm, submitItemForm, setSubmitItemForm, setIsDirty, index = -1, setShowForm = null, adjustment, adjustments, setAdjustments}) {
   const [isAdding, setIsAdding] = useState(false);
+  const { ungroupedLedgerOptions } = useLedgerSelect();
 
   const normalizeType = (type) => {
     if (!type) return '-';
@@ -22,6 +25,7 @@ function CertifiedAdjustments({  setClearFormKey, submitMainForm, submitItemForm
     type: yup.string().required("Type is required").typeError('Type is required'),
     description: yup.string().required("Description is required").typeError('Description is required'),
     amount: yup.number().required("Amount is required").positive("Amount is required").typeError('Amount is required'),
+    complement_ledger_id: yup.number().required("Complement Ledger is required").typeError('Complement Ledger is required'),
   });
 
   const {setValue, handleSubmit, watch, reset, formState: { errors, dirtyFields }} = useForm({
@@ -29,6 +33,7 @@ function CertifiedAdjustments({  setClearFormKey, submitMainForm, submitItemForm
     defaultValues: {
       amount: adjustment && adjustment.amount, 
       description: adjustment && adjustment.description,
+      complement_ledger_id: adjustment && adjustment?.complement_ledger_id || adjustment?.complement_ledger?.id,
       type: normalizeType(adjustment?.type),
       type_name: adjustment && adjustment.type_name
     }
@@ -65,7 +70,7 @@ function CertifiedAdjustments({  setClearFormKey, submitMainForm, submitItemForm
   return (
     <Grid container spacing={1} marginTop={0.5} width={'100%'}>
       <Grid size={{xs: 12, md: 4, lg: 4}}>
-        <Div sx={{ mt: 1 }}>
+        <Div sx={{ mt: 0.3 }}>
           <OperationSelector
             label='Type'
             frontError={errors?.type}
@@ -80,8 +85,25 @@ function CertifiedAdjustments({  setClearFormKey, submitMainForm, submitItemForm
           />
         </Div>
       </Grid>
+      <Grid size={{xs: 12, md: 4}}>
+        <Div sx={{ mt: 0.3 }}>
+          <LedgerSelect
+            multiple={false}
+            label="Complement Ledger"
+            defaultValue={ungroupedLedgerOptions?.find(ledger => ledger.id === watch('complement_ledger_id'))}
+            allowedGroups={['Expenses', 'Fixed Assets', 'Liabilities']}
+            frontError={errors?.complement_ledger_id}
+            onChange={(newValue) => {
+              setValue(`complement_ledger_id`, newValue ? newValue.id : null,{
+                shouldValidate: true,
+                shouldDirty: true
+              })
+            }}
+          />
+        </Div>
+      </Grid>
       <Grid size={{xs: 12, md: 4, lg: 4}}>
-        <Div sx={{ mt: 1}}>
+        <Div sx={{ mt: 0.3}}>
           <TextField
             size="small"
             fullWidth
@@ -101,8 +123,8 @@ function CertifiedAdjustments({  setClearFormKey, submitMainForm, submitItemForm
           />
         </Div>
       </Grid>
-      <Grid size={{xs: 12, md: 4, lg: 4}}>
-        <Div sx={{ mt: 1}}>
+      <Grid size={{xs: 12, md: 12}}>
+        <Div sx={{ mt: 0.3}}>
           <TextField
             size="small"
             fullWidth

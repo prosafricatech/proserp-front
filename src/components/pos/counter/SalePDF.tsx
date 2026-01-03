@@ -224,10 +224,8 @@ const SalePDF: React.FC<SalePDFProps> = ({ sale, organization, thermalPrinter = 
                         <Text style={{...pdfStyles.minInfo, color: mainColor }}>{`Date`}</Text>
                     </View>
                 </View>
-                <View style={{ ...pdfStyles.tableRow, marginTop: 50, textAlign: 'center'}}>
-                    <View style={{ flex: 1, padding: 2}}>
-                        <Text style={{...pdfStyles.minInfo }}>Powered by: proserp.co.tz</Text>
-                    </View>
+                <View style={{ ...pdfStyles.tableRow, marginTop: 300, textAlign: 'center'}}>
+                    <PageFooter/>
                 </View>
             </View>
         </Page> 

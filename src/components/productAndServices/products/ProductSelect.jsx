@@ -12,67 +12,67 @@ import {
 import { CheckBox, CheckBoxOutlineBlank } from "@mui/icons-material";
 import { useProductsSelect } from "./ProductsSelectProvider";
 
-const ProductThumbnail = ({ name, imageUrl, size = 64 }) => {
-  const theme = useTheme();
-  const letter = name?.charAt(0)?.toUpperCase() || "?";
-  const [hovered, setHovered] = useState(false);
+// const ProductThumbnail = ({ name, imageUrl, size = 64 }) => {
+//   const theme = useTheme();
+//   const letter = name?.charAt(0)?.toUpperCase() || "?";
+//   const [hovered, setHovered] = useState(false);
 
-  const canHover = Boolean(imageUrl);
+//   const canHover = Boolean(imageUrl);
 
-  return (
-    <Box
-      sx={{
-        width: hovered && canHover ? size + 50 : size,
-        height: hovered && canHover ? size + 50 : size,
-        mr: 2,
-        transition: "all 0.25s ease",
-        flexShrink: 0,
-      }}
-    >
-      <Avatar
-        variant="square"
-        alt={name}
-        src={imageUrl || undefined}
-        onMouseEnter={() => canHover && setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-        sx={{
-          width: "100%",
-          height: "100%",
-          overflow: "hidden",
+//   return (
+//     <Box
+//       sx={{
+//         width: hovered && canHover ? size + 50 : size,
+//         height: hovered && canHover ? size + 50 : size,
+//         mr: 2,
+//         transition: "all 0.25s ease",
+//         flexShrink: 0,
+//       }}
+//     >
+//       <Avatar
+//         variant="square"
+//         alt={name}
+//         src={imageUrl || undefined}
+//         onMouseEnter={() => canHover && setHovered(true)}
+//         onMouseLeave={() => setHovered(false)}
+//         sx={{
+//           width: "100%",
+//           height: "100%",
+//           overflow: "hidden",
 
-          cursor: canHover ? "pointer" : "default",
+//           cursor: canHover ? "pointer" : "default",
 
-          bgcolor:
-            theme.type === "dark"
-              ? theme.palette.grey[800]
-              : theme.palette.grey[200],
+//           bgcolor:
+//             theme.type === "dark"
+//               ? theme.palette.grey[800]
+//               : theme.palette.grey[200],
 
-          color:
-            theme.type === "dark"
-              ? theme.palette.grey[100]
-              : theme.palette.grey[800],
+//           color:
+//             theme.type === "dark"
+//               ? theme.palette.grey[100]
+//               : theme.palette.grey[800],
 
-          border: "1px solid",
-          borderColor: theme.palette.divider,
-          fontSize: size * 0.45,
+//           border: "1px solid",
+//           borderColor: theme.palette.divider,
+//           fontSize: size * 0.45,
 
-          "& img": {
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-          },
-        }}
-        imgProps={{
-          onError: (e) => {
-            e.currentTarget.style.display = "none";
-          },
-        }}
-      >
-        {!imageUrl && letter}
-      </Avatar>
-    </Box>
-  );
-};
+//           "& img": {
+//             width: "100%",
+//             height: "100%",
+//             objectFit: "cover",
+//           },
+//         }}
+//         imgProps={{
+//           onError: (e) => {
+//             e.currentTarget.style.display = "none";
+//           },
+//         }}
+//       >
+//         {!imageUrl && letter}
+//       </Avatar>
+//     </Box>
+//   );
+// };
 
 function ProductSelect(props) {
   const {
@@ -153,7 +153,7 @@ function ProductSelect(props) {
               sx={{
                 display: "flex",
                 alignItems: "center",
-                minHeight: 80,
+                // minHeight: 80,
                 py: 1,
               }}
             >
@@ -166,25 +166,28 @@ function ProductSelect(props) {
                 />
               )}
 
-              <ProductThumbnail
+              {/* <ProductThumbnail
                 name={option.name}
                 imageUrl={option.image_url}
                 size={64}
-              />
+              /> */}
 
               <Box>
-                <Typography variant="body1" fontWeight={500}>
+                <Typography 
+                  variant="body1" 
+                  // fontWeight={500}
+                >
                   {option.name}
                 </Typography>
 
-                {option.type && (
+                {/* {option.type && (
                   <Typography
                     variant="caption"
                     color="text.secondary"
                   >
                     {option.type}
                   </Typography>
-                )}
+                )} */}
               </Box>
             </Box>
           </li>
@@ -200,11 +203,11 @@ function ProductSelect(props) {
               key={`${option.id}-${key}`}
               label={
                 <Box sx={{ display: "flex", alignItems: "center" }}>
-                  <ProductThumbnail
+                  {/* <ProductThumbnail
                     name={option.name}
                     imageUrl={option.image_url}
                     size={36}
-                  />
+                  /> */}
                   {option.name}
                 </Box>
               }

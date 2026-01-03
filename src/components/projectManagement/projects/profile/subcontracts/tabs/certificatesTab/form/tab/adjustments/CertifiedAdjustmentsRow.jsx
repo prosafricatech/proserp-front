@@ -2,9 +2,13 @@ import { DisabledByDefault, EditOutlined } from '@mui/icons-material'
 import { Divider, Grid, IconButton, Tooltip, Typography } from '@mui/material'
 import React, { useState } from 'react'
 import CertifiedAdjustments from './CertifiedAdjustments';
+import { useLedgerSelect } from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
 
 function CertifiedAdjustmentsRow({ adjustment, adjustments = [], setAdjustments, index,   setClearFormKey, submitMainForm, setSubmitItemForm, submitItemForm, setIsDirty,}) {
     const [showForm, setShowForm] = useState(false);
+    const { ungroupedLedgerOptions } = useLedgerSelect();
+
+    const complement_ledger = ungroupedLedgerOptions?.find(ledger => ledger.id === (adjustment?.complement_ledger_id || adjustment?.complement_ledger?.id))
 
   return (
          <React.Fragment>
@@ -21,17 +25,22 @@ function CertifiedAdjustmentsRow({ adjustment, adjustments = [], setAdjustments,
                         <Grid size={{xs: 1, md: 0.5}}>
                             {index+1}.
                         </Grid>
-                        <Grid size={{xs: 6, md: 4}}>
+                        <Grid size={{xs: 6, md: 3}}>
                             <Tooltip title="Type">
                                 <Typography>{adjustment.type === '-' ? 'Deduction (-)' : 'Addition (+)'}</Typography>
                             </Tooltip>
                         </Grid>
                         <Grid size={{xs: 6, md: 3.5}}>
+                            <Tooltip title="Complement Ledger">
+                                <Typography>{complement_ledger?.name}</Typography>
+                            </Tooltip>
+                        </Grid>
+                        <Grid size={{xs: 6, md: 2}} textAlign={'end'} paddingRight={1}>
                             <Tooltip title="Amount">
                                 <Typography>{adjustment.amount?.toLocaleString()}</Typography>
                             </Tooltip>
                         </Grid>
-                        <Grid size={{xs: 6, md: 3}}>
+                        <Grid size={{xs: 6, md: 2}}>
                             <Tooltip title="Description">
                                 <Typography>{adjustment.description}</Typography>
                             </Tooltip>

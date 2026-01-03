@@ -255,7 +255,7 @@ function ProductSalesCard() {
                     </Grid>
                 }
                 sx={{
-                    height: !isLoading && popularProducts.length < 1 ? 300 : (smallScreen ? 500 : null)
+                    height: !isLoading && popularProducts.length < 1 ? (smallScreen ? 400 : 300) : (smallScreen ? 500 : null)
                 }}
                 action={
                     !smallScreen && <Actions />
@@ -291,7 +291,7 @@ function ProductSalesCard() {
                 </Grid>
                 <JumboScrollbar
                     autoHeight
-                    autoHeightMin={!isLoading && popularProducts.length < 1 ? 250 : (smallScreen ? 0 : 173)}
+                    autoHeightMin={!isLoading && popularProducts.length < 1 ? (smallScreen ? 400 : 300) : (smallScreen ? 0 : 173)}
                     autoHide
                     autoHideDuration={200}
                     autoHideTimeout={500}
