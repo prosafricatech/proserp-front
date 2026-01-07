@@ -314,6 +314,18 @@ projectsServices.showSubcontractTaskDetails = async (taskId, certificateDate) =>
     return data;
 };
 
+projectsServices.showDelUncertifiedQTY = async (delId, claimDate) => {
+    const { data } = await axios.get(
+        `/api/projectManagement/project/${delId}/showDelUncertifiedQTY`,
+        {
+            params: {
+                as_at: claimDate
+            }
+        }
+    );
+    return data;
+};
+
 projectsServices.showDeliverableDetails = async (id) => {
     const {data} = await axios.get(`/api/projectManagement/project/${id}/showDeliverableDetails`);
     return data;

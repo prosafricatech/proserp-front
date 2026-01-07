@@ -236,7 +236,7 @@ const ProjectClaims: React.FC = () => {
                   />
                 </Grid>
 
-                <Grid size={{ xs: 1, md: 1 }}>
+                <Grid size={{ xs: 1, md: 1 }} textAlign={'end'}>
                   <ProjectClaimsActionTail />
                 </Grid>
               </Grid>

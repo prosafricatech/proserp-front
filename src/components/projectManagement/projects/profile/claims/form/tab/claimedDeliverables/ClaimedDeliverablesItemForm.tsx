@@ -1,90 +1,148 @@
+'use client';
+
 import React, { useEffect, useState } from 'react';
 import {
   Autocomplete,
   Grid,
   IconButton,
   InputAdornment,
+  LinearProgress,
   TextField,
   Tooltip,
-  LinearProgress,
+  Typography,
 } from '@mui/material';
 import { useForm } from 'react-hook-form';
-import { AddOutlined, CheckOutlined, DisabledByDefaultOutlined } from '@mui/icons-material';
-import { Button, CircularProgress } from '@mui/material';
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { AddOutlined, CheckOutlined, DisabledByDefaultOutlined } from '@mui/icons-material';
+import { Button, CircularProgress } from '@mui/material';
+import { Div } from '@jumbo/shared';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { useProjectProfile } from '@/components/projectManagement/projects/profile/ProjectProfileProvider';
 import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
 import { useLedgerSelect } from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
+import projectsServices from '@/components/projectManagement/projects/project-services';
 
-interface DeliverableOption {
+interface Deliverable {
   id: number;
   description: string;
   currency_id: number;
-  response_uncertified_quantity?: number;
-  response_executed_quantity?: number;
+  contract_rate: number;
   unit_symbol?: string;
+  measurement_unit?: {
+    symbol: string;
+  };
 }
 
-const ClaimedDeliverablesItemForm = ({
+interface ProjectDeliverableGroup {
+  deliverables?: Deliverable[];
+  children?: ProjectDeliverableGroup[];
+}
+
+interface ClaimedDeliverableItem {
+  id?: number | string;
+  project_deliverable_id?: number;
+  project_deliverable?: Deliverable;
+  revenue_ledger?: { id: number; name: string };
+  revenue_ledger_id?: number;
+  rate?: number;
+  certified_quantity?: number | string;
+  remarks?: string;
+  unit_symbol?: string
+  measurement_unit?: {
+    symbol: string;
+  };
+  response_uncertified_quantity?: number;
+}
+
+interface ClaimedDeliverablesItemFormProps {
+  setClearFormKey: React.Dispatch<React.SetStateAction<number>>;
+  submitMainForm: () => void;
+  submitItemForm: boolean;
+  setSubmitItemForm: (value: boolean) => void;
+  setIsDirty: (value: boolean) => void;
+  index?: number;
+  setShowForm?: (value: boolean) => void;
+  deliverableItem?: ClaimedDeliverableItem;
+  deliverableItems: ClaimedDeliverableItem[];
+  claimDate: string;
+  setDeliverablesItems: React.Dispatch<React.SetStateAction<ClaimedDeliverableItem[]>>;
+  selectedCurrencyId?: number;
+}
+
+interface FormValues {
+  project_deliverable_id?: number;
+  revenue_ledger_id?: number;
+  certified_quantity?: number | string;
+  rate?: number;
+  remarks?: string;
+  response_uncertified_quantity?: number;
+}
+
+const validationSchema = yup.object({
+  project_deliverable_id: yup
+    .number()
+    .required('Deliverable is required')
+    .typeError('Deliverable is required'),
+
+  revenue_ledger_id: yup
+    .number()
+    .required('Revenue Ledger is required')
+    .typeError('Revenue Ledger is required'),
+
+  certified_quantity: yup
+    .number()
+    .required('Quantity is required')
+    .positive('Quantity must be positive')
+    .typeError('Valid quantity is required')
+    .test('max-uncertified', function (value) {
+      if (!value) return true;
+
+      const deliverableId = this.parent.project_deliverable_id;
+      const uncertified = this.parent.response_uncertified_quantity ?? 0;
+
+      const alreadyClaimed = this.options.context?.deliverableItems
+        .filter((item: ClaimedDeliverableItem, idx: number) => {
+          const isSameDeliverable =
+            (item.project_deliverable_id || item.project_deliverable?.id) === deliverableId;
+          const isNotCurrentItem = idx !== this.options.context?.index;
+          return isSameDeliverable && isNotCurrentItem;
+        })
+        .reduce((sum: number, item: ClaimedDeliverableItem) => sum + (Number(item.certified_quantity) || 0), 0);
+
+      const remaining = uncertified - alreadyClaimed;
+
+      if (value > remaining) {
+        return this.createError({
+          message: `Max allowable: ${remaining} (Uncertified: ${uncertified}, Already claimed: ${alreadyClaimed})`,
+        });
+      }
+      return true;
+    }),
+});
+
+const ClaimedDeliverablesItemForm: React.FC<ClaimedDeliverablesItemFormProps> = ({
   setClearFormKey,
   submitMainForm,
   submitItemForm,
   setSubmitItemForm,
   setIsDirty,
   index = -1,
-  setShowForm = null,
+  setShowForm,
   deliverableItem,
   deliverableItems = [],
+  claimDate,
   setDeliverablesItems,
   selectedCurrencyId,
-}: any) => {
-  const { deliverable_groups, setFetchDeliverables }: any = useProjectProfile();
+}) => {
+  const { deliverable_groups }: { deliverable_groups: ProjectDeliverableGroup[] } = useProjectProfile() as any;
   const { ungroupedLedgerOptions } = useLedgerSelect();
   const [isAdding, setIsAdding] = useState(false);
-
-  useEffect(() => {
-    if (!deliverable_groups) {
-      setFetchDeliverables(true);
-    }
-  }, [deliverable_groups, setFetchDeliverables]);
-
-  const validationSchema = yup.object({
-    project_deliverable_id: yup
-      .number()
-      .required('Deliverable is required')
-      .typeError('Deliverable is required'),
-    revenue_ledger_id: yup
-      .number()
-      .required('Revenue Ledger is required')
-      .typeError('Revenue Ledger is required'),
-    certified_quantity: yup
-      .number()
-      .required('Quantity is required')
-      .positive('Quantity must be positive')
-      .typeError('Quantity is required')
-      .test('max-uncertified', function (value) {
-        const { response_uncertified_quantity } = this.parent;
-        if (response_uncertified_quantity != null && value! > response_uncertified_quantity) {
-          return this.createError({
-            message: `Cannot exceed un-certified quantity (${response_uncertified_quantity})`,
-          });
-        }
-        return true;
-      })
-      .test('max-executed', function (value) {
-        const { response_executed_quantity } = this.parent;
-        if (response_executed_quantity != null && value! > response_executed_quantity) {
-          return this.createError({
-            message: `Cannot exceed executed quantity (${response_executed_quantity})`,
-          });
-        }
-        return true;
-      }),
-    remarks: yup.string().optional(),
-  });
+  const [isRetrievingDetails, setIsRetrievingDetails] = useState(false);
+  const [unitToDisplay, setUnitToDisplay] = useState<string | undefined>(
+    deliverableItem?.unit_symbol || deliverableItem?.measurement_unit?.symbol
+  );
 
   const {
     handleSubmit,
@@ -93,13 +151,16 @@ const ClaimedDeliverablesItemForm = ({
     formState: { errors, dirtyFields },
     reset,
     trigger,
-  } = useForm({
+  } = useForm<FormValues>({
     resolver: yupResolver(validationSchema) as any,
+    context: { deliverableItems, index },
     defaultValues: {
-      project_deliverable_id: deliverableItem?.project_deliverable_id || null,
-      revenue_ledger_id: deliverableItem?.revenue_ledger_id || null,
+      project_deliverable_id: deliverableItem?.project_deliverable_id || deliverableItem?.project_deliverable?.id,
+      revenue_ledger_id: deliverableItem?.revenue_ledger_id || deliverableItem?.revenue_ledger?.id,
       certified_quantity: deliverableItem?.certified_quantity || '',
+      rate: deliverableItem?.project_deliverable?.contract_rate || deliverableItem?.rate,
       remarks: deliverableItem?.remarks || '',
+      response_uncertified_quantity: deliverableItem?.response_uncertified_quantity,
     },
   });
 
@@ -107,7 +168,6 @@ const ClaimedDeliverablesItemForm = ({
     setIsDirty(Object.keys(dirtyFields).length > 0);
   }, [dirtyFields, setIsDirty]);
 
-  // Trigger submit from parent
   useEffect(() => {
     if (submitItemForm) {
       trigger().then((valid) => {
@@ -119,68 +179,112 @@ const ClaimedDeliverablesItemForm = ({
     }
   }, [submitItemForm, trigger, handleSubmit, setSubmitItemForm]);
 
-  const updateItems = async (formData: any) => {
+  const amount = () => {
+    const quantity = Number(watch('certified_quantity')) || 0;
+    const rate = Number(watch('rate')) || 0;
+    return quantity * rate;
+  };
+
+  const updateItems = async (formData: FormValues) => {
     setIsAdding(true);
+
+    const selectedDeliverable = deliverables.find((d) => d.id === formData.project_deliverable_id);
 
     const itemToAdd = {
       ...formData,
-      description: deliverables.find((d) => d.id === formData.project_deliverable_id)?.description,
+      project_deliverable: selectedDeliverable,
     };
 
     if (index > -1) {
-      // Edit existing
       const updated = [...deliverableItems];
       updated[index] = { ...updated[index], ...itemToAdd };
       setDeliverablesItems(updated);
     } else {
-      // Add new
-      setDeliverablesItems((prev: any[]) => [...prev, itemToAdd]);
+      setDeliverablesItems((prev) => [...prev, itemToAdd]);
       if (submitItemForm) submitMainForm();
     }
 
     reset();
-    setClearFormKey((prev: number) => prev + 1);
+    setClearFormKey((prev) => prev + 1);
     setIsAdding(false);
     setShowForm?.(false);
   };
 
-  const getDeliverablesOptions = (groups: any[], depth = 0): DeliverableOption[] => {
+  const retrieveTaskDetails = async (delId?: number) => {
+    if (!delId) return;
+    setIsRetrievingDetails(true);
+    try {
+      const details = await projectsServices.showDelUncertifiedQTY(delId, claimDate);
+      setValue('response_uncertified_quantity', details?.uncertified_quantity ?? 0);
+    } catch (error) {
+      console.error('Failed to retrieve uncertified quantity', error);
+    } finally {
+      setIsRetrievingDetails(false);
+    }
+  };
+
+  useEffect(() => {
+    const delId = deliverableItem?.project_deliverable_id || deliverableItem?.project_deliverable?.id;
+    if (delId) {
+      retrieveTaskDetails(delId);
+    }
+  }, [deliverableItem]);
+
+  const getDeliverablesOptions = (groups: ProjectDeliverableGroup[] = []): Deliverable[] => {
     if (!Array.isArray(groups)) return [];
 
     return groups.flatMap((group) => {
-      const deliverableOptions = (group.deliverables || []).map((del: any) => ({
+      const deliverableOptions = (group.deliverables || []).map((del) => ({
         id: del.id,
         description: del.description,
         currency_id: del.currency_id,
-        response_uncertified_quantity: del.response_uncertified_quantity,
-        response_executed_quantity: del.response_executed_quantity,
-        unit_symbol: del.unit_symbol,
+        contract_rate: del.contract_rate,
+        unit_symbol: del.measurement_unit?.symbol,
       }));
 
-      const childrenOptions = getDeliverablesOptions(group.children || [], depth + 1);
+      const childrenOptions = getDeliverablesOptions(group.children || []);
 
       return [...deliverableOptions, ...childrenOptions];
     });
   };
 
-  const deliverables = getDeliverablesOptions(deliverable_groups || []);
+  const deliverables = getDeliverablesOptions(deliverable_groups);
+  const watchedDeliverableId = watch('project_deliverable_id');
+  const filteredDeliverables = deliverables.filter((del) => del.currency_id === selectedCurrencyId);
+  const selectedDeliverable = filteredDeliverables.find(
+    (d) => d.id === watchedDeliverableId
+  );
 
   if (isAdding) return <LinearProgress />;
 
   return (
     <Grid container spacing={1} mt={0.5}>
+      {/* Deliverable Selection */}
       <Grid size={{ xs: 12, md: 4 }}>
-        <Autocomplete
-          options={deliverables.filter((del) => del.currency_id === selectedCurrencyId)}
+        <Autocomplete<Deliverable>
+          options={filteredDeliverables}
           getOptionLabel={(option) => option.description || ''}
           isOptionEqualToValue={(option, value) => option.id === value?.id}
-          value={deliverables.find((d) => d.id === watch('project_deliverable_id')) || null}
+          value={selectedDeliverable || null}
           onChange={(_, newValue) => {
-            setValue(`deliverable` as any, newValue)
-            setValue('project_deliverable_id', newValue?.id || null, {
-              shouldDirty: true,
-              shouldValidate: true,
-            });
+            if (newValue) {
+              setUnitToDisplay(newValue.unit_symbol);
+              setValue('unit_symbol' as any, newValue.unit_symbol);
+              setValue('rate', newValue.contract_rate);
+              setValue('project_deliverable_id', newValue.id, {
+                shouldDirty: true,
+                shouldValidate: true,
+              });
+              retrieveTaskDetails(newValue.id);
+            } else {
+              setUnitToDisplay(undefined);
+              setValue('rate', undefined);
+              setValue('unit_symbol' as any, undefined);
+              setValue('project_deliverable_id', undefined, {
+                shouldDirty: true,
+                shouldValidate: true,
+              });
+            }
           }}
           renderInput={(params) => (
             <TextField
@@ -189,12 +293,13 @@ const ClaimedDeliverablesItemForm = ({
               size="small"
               fullWidth
               error={!!errors.project_deliverable_id}
-              helperText={errors.project_deliverable_id?.message as any}
+              helperText={errors.project_deliverable_id?.message}
             />
           )}
         />
       </Grid>
 
+      {/* Revenue Ledger */}
       <Grid size={{ xs: 12, md: 4 }}>
         <LedgerSelect
           multiple={false}
@@ -203,7 +308,7 @@ const ClaimedDeliverablesItemForm = ({
           allowedGroups={['Revenue']}
           frontError={errors.revenue_ledger_id}
           onChange={(newValue: any) => {
-            setValue('revenue_ledger_id', newValue?.id || null, {
+            setValue('revenue_ledger_id', newValue?.id || undefined, {
               shouldDirty: true,
               shouldValidate: true,
             });
@@ -211,36 +316,70 @@ const ClaimedDeliverablesItemForm = ({
         />
       </Grid>
 
-      <Grid size={{ xs: 12, md: 4 }}>
+      {/* Certified Quantity with Unit Symbol */}
+      <Grid size={{ xs: 12, md: 2 }}>
+        {isRetrievingDetails ? (
+          <LinearProgress />
+        ) : (
+          <TextField
+            label="Certified Quantity"
+            fullWidth
+            size="small"
+            value={watch('certified_quantity') ?? ''}
+            InputProps={{
+              inputComponent: CommaSeparatedField as any,
+              endAdornment: unitToDisplay ? (
+                <InputAdornment position="end">
+                  <Typography variant="caption" color="text.secondary">
+                    {unitToDisplay}
+                  </Typography>
+                </InputAdornment>
+              ) : null,
+            }}
+            error={!!errors.certified_quantity}
+            helperText={errors.certified_quantity?.message}
+            onChange={(e) => {
+              const num = e.target.value ? sanitizedNumber(e.target.value) : '';
+              setValue('certified_quantity', num, {
+                shouldDirty: true,
+                shouldValidate: true,
+              });
+            }}
+          />
+        )}
+      </Grid>
+
+      {/* Amount (Read-only) */}
+      <Grid size={{ xs: 12, md: 2 }}>
         <TextField
-          label="Certified Quantity"
+          label="Amount"
           fullWidth
           size="small"
-          value={watch('certified_quantity')}
+          value={amount().toLocaleString(undefined, { minimumFractionDigits: 2 })}
           InputProps={{
-            inputComponent: CommaSeparatedField as any
-          }}
-          error={!!errors.certified_quantity}
-          helperText={errors.certified_quantity?.message as any}
-          onChange={(e) => {
-            const num = e.target.value ? sanitizedNumber(e.target.value) : '';
-            setValue('certified_quantity', num, { shouldDirty: true, shouldValidate: true });
+            readOnly: true,
+            inputComponent: CommaSeparatedField as any,
           }}
         />
       </Grid>
 
+      {/* Remarks */}
       <Grid size={12}>
         <TextField
           size="small"
           fullWidth
           label="Remarks"
-          value={watch('remarks')}
+          value={watch('remarks') ?? ''}
           onChange={(e) =>
-            setValue('remarks', e.target.value, { shouldDirty: true, shouldValidate: true })
+            setValue('remarks', e.target.value, {
+              shouldDirty: true,
+              shouldValidate: true,
+            })
           }
         />
       </Grid>
 
+      {/* Action Buttons */}
       <Grid size={12} textAlign="end">
         <Button
           variant="contained"

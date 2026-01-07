@@ -19,98 +19,100 @@ import {
 } from '@mui/material';
 import { DateTimePicker } from '@mui/x-date-pickers';
 import dayjs from 'dayjs';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useSnackbar } from 'notistack';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import projectsServices from '@/components/projectManagement/projects/project-services';
-import ProjectClaimsAdjustments from './tab/adjustments/ProjectClaimsAdjustments';
-import ProjectClaimsAdjustmentsRow from './tab/adjustments/ProjectClaimsAdjustmentsRow';
-import ClaimedDeliverablesItemForm from './tab/claimedDeliverables/ClaimedDeliverablesItemForm';
-import ClaimedDeliverablesItemRow from './tab/claimedDeliverables/ClaimedDeliverablesItemRow';
-import { useProjectProfile } from '../../ProjectProfileProvider';
-import CurrencySelector from '@/components/masters/Currencies/CurrencySelector';
+import CertifiedTasksItemForm from './tab/certifiedTasks/CertifiedTasksItemForm';
+import CertifiedTasksItemRow from './tab/certifiedTasks/CertifiedTasksItemRow';
+import CertifiedAdjustments from './tab/adjustments/CertifiedAdjustments';
+import CertifiedAdjustmentsRow from './tab/adjustments/CertifiedAdjustmentsRow';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { Div } from '@jumbo/shared';
 
-interface ProjectDeliverable {
-  id: number;
-  contract_rate?: number;
+interface Task {
+  id?: number | string;
+  rate?: number;
+}
+
+interface CertifiedTaskItem {
+  id?: number | string;
+  task?: Task;
+  project_subcontract_task_id?: number | string;
+  remarks?: string;
+  certified_quantity?: number | string;
   rate?: number;
 }
 
 interface Adjustment {
-  id?: number;
-  type?: 'addition' | 'deduction' | '+ ' | '-' | string;
-  type_name?: string;
+  id?: number | string;
   description?: string;
+  type?: string;
+  type_name?: string;
   amount?: number | string;
   complement_ledger_id?: number;
   complement_ledger?: { id: number; name: string };
 }
 
-interface ClaimedDeliverable {
-  id?: number;
-  project_deliverable_id: number;
-  project_deliverable?: ProjectDeliverable;
-  deliverable?: ProjectDeliverable;
-  remarks?: string | null;
-  certified_quantity: number | string;
-  revenue_ledger_id?: number;
-  revenue_ledger?: { id: number };
-}
-
-interface Claim {
-  id?: number;
-  project_id?: number;
-  claimNo?: string;
+interface CertificateData {
+  id?: number | string;
+  certificateNo?: string;
+  certificate_date?: string;
   remarks?: string;
-  claim_date?: string;
-  currency_id?: number;
   vat_percentage?: number;
-  claim_items?: ClaimedDeliverable[];
-  claimed_deliverables?: ClaimedDeliverable[]
+  project_subcontract_id?: number | string;
+  items?: CertifiedTaskItem[];
   adjustments?: Adjustment[];
 }
 
-interface ProjectClaimsFormProps {
+interface SubContract {
+  id?: number | string;
+}
+
+interface Organization {
+  settings?: {
+    vat_registered?: boolean;
+    vat_percentage?: number;
+  };
+}
+
+interface CertificateFormProps {
   setOpenDialog: (open: boolean) => void;
-  claim?: Claim;
-  subContract?: any;
+  certificate?: CertificateData;
+  subContract?: SubContract;
 }
 
 interface FormValues {
-  id?: number;
-  project_id: number;
+  id?: number | string;
+  project_subcontract_id?: number | string;
   remarks: string;
-  claim_date: string;
-  currency_id: number;
+  certificate_date: string;
   vat_percentage?: number;
 }
 
 const validationSchema = yup.object({
   remarks: yup.string().required('Remarks is required'),
-  claim_date: yup.string().required('Claim date is required'),
-  currency_id: yup.number().required('Currency is required').positive('Invalid currency'),
+  certificate_date: yup.string().required('Certificate date is required'),
 });
 
-const ProjectClaimsForm: React.FC<ProjectClaimsFormProps> = ({
+const CertificateForm: React.FC<CertificateFormProps> = ({
   setOpenDialog,
-  claim,
+  certificate,
   subContract,
 }) => {
-  const { authOrganization } = useJumboAuth();
-  const organization = authOrganization?.organization;
   const queryClient = useQueryClient();
-  const { project } = useProjectProfile() as any;
   const { enqueueSnackbar } = useSnackbar();
-  const [deliverableItems, setDeliverablesItems] = useState<ClaimedDeliverable[]>(
-    claim?.claim_items || []
+  const { authOrganization } = useJumboAuth();
+  const organization = authOrganization?.organization as Organization | undefined;
+
+  const [tasksItems, setTasksItems] = useState<CertifiedTaskItem[]>(
+    certificate?.items || []
   );
   const [adjustments, setAdjustments] = useState<Adjustment[]>(
-    claim?.adjustments || []
+    certificate?.adjustments || []
   );
   const [showWarning, setShowWarning] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
@@ -118,27 +120,33 @@ const ProjectClaimsForm: React.FC<ProjectClaimsFormProps> = ({
   const [submitItemForm, setSubmitItemForm] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
 
-  const addClaim = useMutation({
-    mutationFn: projectsServices.addClaim,
-    onSuccess: () => {
-      enqueueSnackbar('Claim created successfully', { variant: 'success' });
-      queryClient.invalidateQueries({ queryKey: ['projectProjectClaims'] });
+  const addCertificate = useMutation({
+    mutationFn: projectsServices.addCertificates,
+    onSuccess: (data: any) => {
+      enqueueSnackbar(data?.message || 'Certificate created', { variant: 'success' });
+      queryClient.invalidateQueries({ queryKey: ['Certificates'] });
       setOpenDialog(false);
     },
     onError: (error: any) => {
-      enqueueSnackbar(error?.response?.data?.message || 'Error saving claim', { variant: 'error' });
+      enqueueSnackbar(
+        error?.response?.data?.message || 'Error saving certificate',
+        { variant: 'error' }
+      );
     },
   });
 
-  const updateClaim = useMutation({
-    mutationFn: projectsServices.updateClaim,
-    onSuccess: () => {
-      enqueueSnackbar('Claim updated successfully', { variant: 'success' });
-      queryClient.invalidateQueries({ queryKey: ['projectProjectClaims'] });
+  const updateCertificate = useMutation({
+    mutationFn: projectsServices.updateCertificates,
+    onSuccess: (data: any) => {
+      enqueueSnackbar(data?.message || 'Certificate updated', { variant: 'success' });
+      queryClient.invalidateQueries({ queryKey: ['Certificates'] });
       setOpenDialog(false);
     },
     onError: (error: any) => {
-      enqueueSnackbar(error?.response?.data?.message || 'Error updating claim', { variant: 'error' });
+      enqueueSnackbar(
+        error?.response?.data?.message || 'Error updating certificate',
+        { variant: 'error' }
+      );
     },
   });
 
@@ -150,38 +158,45 @@ const ProjectClaimsForm: React.FC<ProjectClaimsFormProps> = ({
     watch,
     formState: { errors },
   } = useForm<FormValues>({
-    resolver: yupResolver(validationSchema) as any,
+    resolver: yupResolver(validationSchema),
     defaultValues: {
-      id: claim?.id,
-      project_id: claim?.project_id || project?.id,
-      remarks: claim?.remarks || '',
-      currency_id: claim?.currency_id || 1,
-      vat_percentage: claim ?  claim.vat_percentage : (organization?.settings?.vat_registered
-        ? organization.settings.vat_percentage || 0
-        : 0),
-      claim_date: claim?.claim_date ? dayjs(claim.claim_date).toISOString() : dayjs().toISOString(),
+      id: certificate?.id,
+      project_subcontract_id: subContract?.id || certificate?.project_subcontract_id,
+      remarks: certificate?.remarks || '',
+      vat_percentage:
+        certificate?.vat_percentage ??
+        (organization?.settings?.vat_registered
+          ? organization.settings.vat_percentage || 0
+          : 0),
+      certificate_date: certificate?.certificate_date
+        ? dayjs(certificate.certificate_date).toISOString()
+        : dayjs().toISOString(),
     },
   });
 
-  const watchVatPercentage = watch('vat_percentage') || 0;
+  const vatPercentage = watch('vat_percentage') || 0;
+  const certificateDate = watch('certificate_date');
 
-  const saveClaim = useMemo(() => (claim ? updateClaim : addClaim), [claim, updateClaim, addClaim]);
+  const saveCertificate = useMemo(
+    () => (certificate ? updateCertificate : addCertificate),
+    [certificate, updateCertificate, addCertificate]
+  );
 
-  // ==================== ACCURATE AMOUNT CALCULATION ====================
+  // ==================== REAL-TIME CALCULATIONS ====================
   const { grossAmount, netAdjustments, subtotal, vatAmount, grandTotal } = useMemo(() => {
-    const gross = deliverableItems.reduce((sum, item) => {
-      const rate = item.project_deliverable?.contract_rate || 0 || item.deliverable?.rate;
+    const gross = tasksItems.reduce((sum, item) => {
+      const rate = item.rate ?? item.task?.rate ?? 0;
       const qty = Number(item.certified_quantity) || 0;
-      return sum + (rate || 0) * qty;
+      return sum + rate * qty;
     }, 0);
 
-  const netAdj = adjustments.reduce((sum, adj) => {
-    const amount = Number(adj.amount) || 0;
-    return adj.type === 'deduction' || adj.type === '-' ? sum - amount : sum + amount;
-  }, 0);
+    const netAdj = adjustments.reduce((sum, adj) => {
+      const amount = Number(adj.amount) || 0;
+      return adj.type === 'deduction' || adj.type === '-' ? sum - amount : sum + amount;
+    }, 0);
 
     const sub = gross + netAdj;
-    const vat = (sub * Number(watchVatPercentage)) / 100;
+    const vat = (sub * vatPercentage) / 100;
 
     return {
       grossAmount: gross,
@@ -190,13 +205,13 @@ const ProjectClaimsForm: React.FC<ProjectClaimsFormProps> = ({
       vatAmount: vat,
       grandTotal: sub + vat,
     };
-  }, [deliverableItems, adjustments, watchVatPercentage]);
+  }, [tasksItems, adjustments, vatPercentage]);
 
   const onSubmit = (data: FormValues) => {
-    if (deliverableItems.length === 0) {
-      setError('claimed_deliverables' as any, {
+    if (tasksItems.length === 0) {
+      setError('certified_tasks' as any, {
         type: 'manual',
-        message: 'You must add at least one certified deliverable',
+        message: 'You must add at least one Certified Task',
       });
       return;
     }
@@ -211,11 +226,10 @@ const ProjectClaimsForm: React.FC<ProjectClaimsFormProps> = ({
   const submitForm = (data: FormValues) => {
     const payload = {
       ...data,
-      claimed_deliverables: deliverableItems.map((item) => ({
-        project_deliverable_id: item.project_deliverable_id || item.project_deliverable?.id,
+      certified_tasks: tasksItems.map((item) => ({
+        project_subcontract_task_id: item.project_subcontract_task_id ?? item.task?.id,
+        remarks: item.remarks,
         certified_quantity: Number(item.certified_quantity),
-        revenue_ledger_id: item.revenue_ledger_id || item.revenue_ledger?.id,
-        remarks: item.remarks || null,
       })),
       adjustments: adjustments.map((adj) => ({
         description: adj.description,
@@ -225,7 +239,7 @@ const ProjectClaimsForm: React.FC<ProjectClaimsFormProps> = ({
       })),
     };
 
-    saveClaim.mutate(payload as any);
+    saveCertificate.mutate(payload);
   };
 
   const handleConfirmSubmitWithoutAdd = () => {
@@ -237,49 +251,35 @@ const ProjectClaimsForm: React.FC<ProjectClaimsFormProps> = ({
 
   return (
     <>
-      <DialogTitle textAlign="center">{claim ? `Edit ${claim?.claimNo}` : 'New Claim'}</DialogTitle>
+      <DialogTitle textAlign="center">
+        {certificate ? `Edit ${certificate.certificateNo}` : 'New Certificate Form'}
+      </DialogTitle>
 
       <DialogContent dividers>
         <Grid container spacing={3}>
           <Grid size={{ xs: 12, md: 9 }}>
             <form autoComplete="off" onSubmit={handleSubmit(onSubmit)}>
               <Grid container spacing={2} mb={3}>
-                <Grid size={{ xs: 12, md: 6 }}>
+                <Grid size={{ xs: 12, md: 4 }}>
                   <DateTimePicker
-                    label="Claim Date"
-                    value={dayjs(watch('claim_date'))}
-                    maxDate={dayjs()}
+                    label="Certificate Date"
+                    value={dayjs(certificateDate)}
                     slotProps={{
                       textField: {
                         size: 'small',
                         fullWidth: true,
-                        error: !!errors.claim_date,
-                        helperText: errors.claim_date?.message,
+                        error: !!errors.certificate_date,
+                        helperText: errors.certificate_date?.message,
                       },
                     }}
-                    onChange={(newValue) =>
-                      setValue('claim_date', newValue?.toISOString() || '', {
-                        shouldValidate: true,
-                        shouldDirty: true,
-                      })
-                    }
-                  />
-                </Grid>
-
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <CurrencySelector
-                    frontError={errors.currency_id as any}
-                    defaultValue={watch('currency_id')}
-                    onChange={(newValue: any) =>
-                      setValue('currency_id', newValue?.id ?? null, {
-                        shouldDirty: true,
+                    onChange={(v) =>
+                      setValue('certificate_date', v?.toISOString() || '', {
                         shouldValidate: true,
                       })
                     }
                   />
                 </Grid>
-
-                <Grid size={12}>
+                <Grid size={{ xs: 12, md: 8 }}>
                   <TextField
                     size="small"
                     label="Remarks"
@@ -295,7 +295,7 @@ const ProjectClaimsForm: React.FC<ProjectClaimsFormProps> = ({
             </form>
           </Grid>
 
-          <Grid size={{xs: 12, md: 3}}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <Div
               sx={{
                 position: 'sticky',
@@ -303,15 +303,14 @@ const ProjectClaimsForm: React.FC<ProjectClaimsFormProps> = ({
                 bgcolor: 'background.paper',
                 borderRadius: 2,
                 boxShadow: 3,
-                p: 2,
+                p: 3,
                 height: 'fit-content',
               }}
             >
-              <Typography variant="h6" align="center" gutterBottom sx={{ fontWeight: 'bold' }}>
+              <Typography variant="h6" align="center" gutterBottom fontWeight="bold">
                 Summary
               </Typography>
               <Divider sx={{ my: 2 }} />
-
               <Grid container spacing={1.5}>
                 <Grid size={7}>
                   <Typography variant="body2">Gross Amount:</Typography>
@@ -346,20 +345,26 @@ const ProjectClaimsForm: React.FC<ProjectClaimsFormProps> = ({
                   <Typography variant="body2" fontWeight="bold">Subtotal:</Typography>
                 </Grid>
                 <Grid size={5}>
-                  <Typography variant="body1" align="right" fontWeight="bold" sx={{ fontFamily: 'monospace' }}>
+                  <Typography
+                    variant="body1"
+                    align="right"
+                    fontWeight="bold"
+                    sx={{ fontFamily: 'monospace' }}
+                  >
                     {subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                   </Typography>
                 </Grid>
 
                 <Grid size={7}>
                   <Typography variant="body2">
-                    VAT ({watchVatPercentage}%):
+                    VAT ({organization?.settings?.vat_percentage ?? 0}%):
                     <Checkbox
                       size="small"
-                      checked={watchVatPercentage > 0}
+                      checked={vatPercentage > 0}
                       onChange={(e) => {
-                        const checked = e.target.checked;
-                        const rate = checked ? (organization?.settings?.vat_percentage ?? 18) : 0;
+                        const rate = e.target.checked
+                          ? organization?.settings?.vat_percentage ?? 0
+                          : 0;
                         setValue('vat_percentage', rate, { shouldDirty: true });
                       }}
                     />
@@ -378,7 +383,11 @@ const ProjectClaimsForm: React.FC<ProjectClaimsFormProps> = ({
                   <Typography
                     variant="h6"
                     align="right"
-                    sx={{ fontFamily: 'monospace', color: 'primary.main', fontWeight: 'bold' }}
+                    sx={{
+                      fontFamily: 'monospace',
+                      color: 'primary.main',
+                      fontWeight: 'bold',
+                    }}
                   >
                     {grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                   </Typography>
@@ -388,45 +397,46 @@ const ProjectClaimsForm: React.FC<ProjectClaimsFormProps> = ({
           </Grid>
         </Grid>
 
-        <Divider sx={{paddingTop: 1}}/>
+        <Divider sx={{ my: 3 }} />
 
-        <Box mt={2}>
-          <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)} variant="fullWidth" sx={{ mb: 3 }}>
-            <Tab label="Claimed Deliverables" />
-            <Tab label="Adjustments" />
-          </Tabs>
+        <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)} variant="fullWidth" sx={{ mb: 3 }}>
+          <Tab label="Certified Tasks" />
+          <Tab label="Adjustments" />
+        </Tabs>
+
+        <Box>
           {activeTab === 0 && (
             <>
-              <ClaimedDeliverablesItemForm
-                key={`deliverable-form-${clearFormKey}`}
+              <CertifiedTasksItemForm
+                key={`tasks-form-${clearFormKey}`}
                 setClearFormKey={setClearFormKey}
                 submitMainForm={handleSubmit(submitForm)}
                 submitItemForm={submitItemForm}
                 setSubmitItemForm={setSubmitItemForm}
                 setIsDirty={setIsDirty}
-                deliverableItems={deliverableItems as any}
-                setDeliverablesItems={setDeliverablesItems as any}
-                claimDate={watch('claim_date')}
-                selectedCurrencyId={watch('currency_id')}
+                tasksItems={tasksItems}
+                setTasksItems={setTasksItems}
+                subContract={subContract}
+                certificate={certificate}
+                CertificateDate={certificateDate}
               />
 
-              {deliverableItems.map((item, index) => (
-                <ClaimedDeliverablesItemRow
-                  key={item.id || index}
+              {tasksItems.map((item, index) => (
+                <CertifiedTasksItemRow
+                  key={item.id ?? index}
                   index={index}
-                  deliverableItem={item}
-                  deliverableItems={deliverableItems}
-                  setDeliverablesItems={setDeliverablesItems}
+                  taskItem={item}
+                  tasksItems={tasksItems}
+                  setTasksItems={setTasksItems}
                   setIsDirty={setIsDirty}
                   setClearFormKey={setClearFormKey}
-                  vat_percentage={watchVatPercentage}
                   submitItemForm={submitItemForm}
+                  vat_percentage={vatPercentage}
                   setSubmitItemForm={setSubmitItemForm}
                   submitMainForm={handleSubmit(submitForm)}
-                  selectedCurrencyId={watch('currency_id')}
-                  claimDate={watch('claim_date')}
                   subContract={subContract}
-                  claim={claim}
+                  certificate={certificate}
+                  CertificateDate={certificateDate}
                 />
               ))}
             </>
@@ -434,22 +444,20 @@ const ProjectClaimsForm: React.FC<ProjectClaimsFormProps> = ({
 
           {activeTab === 1 && (
             <>
-              <ProjectClaimsAdjustments
+              <CertifiedAdjustments
                 key={clearFormKey}
                 setClearFormKey={setClearFormKey}
-                submitMainForm={handleSubmit(() =>
-                  saveClaim.mutate(watch() as any)
-                )}
+                submitMainForm={handleSubmit(submitForm)}
                 submitItemForm={submitItemForm}
                 setSubmitItemForm={setSubmitItemForm}
                 setIsDirty={setIsDirty}
-                adjustments={adjustments as any}
-                setAdjustments={setAdjustments as any}
+                adjustments={adjustments}
+                setAdjustments={setAdjustments}
               />
 
               {adjustments.map((adjustment, index) => (
-                <ProjectClaimsAdjustmentsRow
-                  key={index}
+                <CertifiedAdjustmentsRow
+                  key={adjustment.id ?? index}
                   index={index}
                   adjustment={adjustment}
                   adjustments={adjustments}
@@ -458,17 +466,15 @@ const ProjectClaimsForm: React.FC<ProjectClaimsFormProps> = ({
                   setClearFormKey={setClearFormKey}
                   submitItemForm={submitItemForm}
                   setSubmitItemForm={setSubmitItemForm}
-                  submitMainForm={handleSubmit(() =>
-                    saveClaim.mutate(watch() as any)
-                  )}
+                  submitMainForm={handleSubmit(submitForm)}
                 />
               ))}
             </>
           )}
 
-          {'claimed_deliverables' in errors && deliverableItems.length === 0 && (
+          {(errors as any).certified_tasks && tasksItems.length === 0 && (
             <Alert severity="error" sx={{ mt: 2 }}>
-              {(errors as any).claimed_deliverables?.message}
+              {(errors as any).certified_tasks.message}
             </Alert>
           )}
         </Box>
@@ -476,7 +482,7 @@ const ProjectClaimsForm: React.FC<ProjectClaimsFormProps> = ({
         <Dialog open={showWarning} onClose={() => setShowWarning(false)}>
           <DialogTitle>Unsaved Changes</DialogTitle>
           <DialogContent>
-            <Typography>The last added item has not been saved to the list yet.</Typography>
+            <Typography>The last item has not been added to the list.</Typography>
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setShowWarning(false)}>Cancel</Button>
@@ -486,7 +492,7 @@ const ProjectClaimsForm: React.FC<ProjectClaimsFormProps> = ({
                 setShowWarning(false);
               }}
             >
-              Add Item & Submit
+              Add & Submit
             </Button>
             <Button onClick={handleConfirmSubmitWithoutAdd} color="primary">
               Submit Without Adding
@@ -497,25 +503,31 @@ const ProjectClaimsForm: React.FC<ProjectClaimsFormProps> = ({
 
       <DialogActions>
         <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
-
-        {activeTab === 0 && (
-          <Button variant="outlined" onClick={() => setActiveTab(1)}>
-            Next
-          </Button>
-        )}
-
-        {activeTab === 1 && (
-          <LoadingButton
-            loading={addClaim.isPending || updateClaim.isPending}
-            variant="contained"
-            onClick={handleSubmit(onSubmit)}
-          >
-            {claim ? 'Update Claim' : 'Create Claim'}
-          </LoadingButton>
-        )}
+        <Box display="flex" gap={1}>
+          {activeTab === 1 && (
+            <Button variant="outlined" onClick={() => setActiveTab(0)}>
+              Previous
+            </Button>
+          )}
+          {activeTab === 0 && (
+            <Button variant="outlined" onClick={() => setActiveTab(1)}>
+              Next
+            </Button>
+          )}
+          {activeTab === 1 && (
+            <LoadingButton
+              loading={addCertificate.isPending || updateCertificate.isPending}
+              variant="contained"
+              color="success"
+              onClick={handleSubmit(onSubmit)}
+            >
+              {certificate ? 'Update' : 'Submit'} Certificate
+            </LoadingButton>
+          )}
+        </Box>
       </DialogActions>
     </>
   );
 };
 
-export default ProjectClaimsForm;
+export default CertificateForm;

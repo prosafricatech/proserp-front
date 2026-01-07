@@ -1,4 +1,5 @@
-'use client'
+'use client';
+
 import {
   DeleteOutlined,
   EditOutlined,
@@ -31,8 +32,25 @@ import CertificatePDF from './preview/CertificatePDF';
 import CertificateOnScreen from './preview/CertificateOnScreen';
 import PDFContent from '@/components/pdf/PDFContent';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { Organization } from '@/types/auth-types';
+import { MenuItemProps } from '@jumbo/types';
+import { Currency } from '@/components/masters/Currencies/CurrencyType';
 
-const DocumentDialog = ({ open, onClose, certificateId, organization }) => {
+interface Certificate {
+  id?: number | string;
+  certificateNo?: string;
+  certificate_date?: string | null;
+  remarks?: string | null;
+  total_amount?: number | null;
+  currency?: Currency | null;
+}
+
+const DocumentDialog: React.FC<{
+  open: boolean;
+  onClose: () => void;
+  certificateId: number | string;
+  organization?: Organization;
+}> = ({ open, onClose, certificateId, organization }) => {
   const { data: certificateDetails, isFetching } = useQuery({
     queryKey: ['CertificateDetails', { id: certificateId }],
     queryFn: () => projectsServices.getCertificateDetails(certificateId),
@@ -43,15 +61,18 @@ const DocumentDialog = ({ open, onClose, certificateId, organization }) => {
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
-  if (isFetching)
-  return (
-    <Dialog open fullWidth fullScreen={belowLargeScreen} maxWidth="sm">
-        <LinearProgress/>
-    </Dialog>
-  );
+  if (isFetching) {
+    return (
+      <Dialog open fullWidth fullScreen={belowLargeScreen} maxWidth="md">
+        <DialogContent>
+          <LinearProgress />
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
-    <Dialog open={open} onClose={onClose} fullScreen={belowLargeScreen} maxWidth="lg" fullWidth>
+    <Dialog open={open} onClose={onClose} fullScreen={belowLargeScreen} maxWidth="md" fullWidth>
       <DialogContent>
         {belowLargeScreen && (
           <Grid container alignItems="center" justifyContent="space-between" mb={2}>
@@ -61,7 +82,6 @@ const DocumentDialog = ({ open, onClose, certificateId, organization }) => {
                 <Tab label="PDF" />
               </Tabs>
             </Grid>
-
             <Grid size={1} textAlign="right">
               <Tooltip title="Close">
                 <IconButton size="small" onClick={onClose}>
@@ -73,11 +93,11 @@ const DocumentDialog = ({ open, onClose, certificateId, organization }) => {
         )}
 
         {belowLargeScreen && activeTab === 0 ? (
-          <CertificateOnScreen certificate={certificateDetails} organization={organization} />
+          <CertificateOnScreen certificate={certificateDetails} organization={organization as Organization} />
         ) : (
           <PDFContent
-            document={<CertificatePDF certificate={certificateDetails} organization={organization} />}
-            fileName={certificateDetails?.certificateNo}
+            document={<CertificatePDF certificate={certificateDetails} organization={organization as Organization} />}
+            fileName={certificateDetails?.certificateNo || 'Certificate'}
           />
         )}
 
@@ -93,23 +113,21 @@ const DocumentDialog = ({ open, onClose, certificateId, organization }) => {
   );
 };
 
-const EditCertificate = ({ certificate, setOpenDialog }) => {
-  const { data: CertificateDetails, isFetching } = useQuery({
+const EditCertificate: React.FC<{
+  certificate: Certificate;
+  setOpenDialog: (open: boolean) => void;
+}> = ({ certificate, setOpenDialog }) => {
+  const { data: certificateDetails, isFetching } = useQuery({
     queryKey: ['CertificateDetails', { id: certificate.id }],
     queryFn: () => projectsServices.getCertificateDetails(certificate.id),
   });
 
   if (isFetching) return <LinearProgress />;
 
-  return (
-    <CertificateForm
-      setOpenDialog={setOpenDialog}
-      certificate={CertificateDetails}
-    />
-  );
+  return <CertificateForm setOpenDialog={setOpenDialog} certificate={certificateDetails} />;
 };
 
-const CertificateItemAction = ({ certificate }) => {
+const CertificateItemAction: React.FC<{ certificate: Certificate }> = ({ certificate }) => {
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [openPreviewDialog, setOpenPreviewDialog] = useState(false);
   const { showDialog, hideDialog } = useJumboDialog();
@@ -122,45 +140,42 @@ const CertificateItemAction = ({ certificate }) => {
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
   const { mutate: deleteCertificate } = useMutation({
-    mutationFn: projectsServices.deleteCertificate,
-    onSuccess: (data) => {
+    mutationFn: () => projectsServices.deleteCertificate(certificate.id),
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['Certificates'] });
-      enqueueSnackbar(data.message, { variant: 'success' });
+      enqueueSnackbar('Certificate deleted successfully', { variant: 'success' });
     },
-    onError: (error) => {
-      enqueueSnackbar(error?.response?.data.message, { variant: 'error' });
+    onError: (error: any) => {
+      enqueueSnackbar(error?.response?.data?.message || 'Failed to delete certificate', { variant: 'error' });
     },
   });
 
   const menuItems = [
-    { icon: <VisibilityOutlined />, title: 'View', action: 'view' },
-    { icon: <EditOutlined />, title: 'Edit', action: 'edit' },
-    { icon: <DeleteOutlined color="error" />, title: 'Delete', action: 'delete' },
+    { icon: <VisibilityOutlined fontSize="small" />, title: 'View', action: 'view' },
+    { icon: <EditOutlined fontSize="small" />, title: 'Edit', action: 'edit' },
+    { icon: <DeleteOutlined fontSize="small" color="error" />, title: 'Delete', action: 'delete' },
   ];
 
-  const handleItemAction = (menu) => {
+  const handleItemAction = (menu: MenuItemProps) => {
     switch (menu.action) {
       case 'view':
         setOpenPreviewDialog(true);
         break;
-
       case 'edit':
         setOpenEditDialog(true);
         break;
-
       case 'delete':
         showDialog({
           title: 'Confirm Delete',
-          content: 'Are you sure you want to delete this Certificate?',
+          content: 'Are you sure you want to delete this certificate?',
           onYes: () => {
+            deleteCertificate();
             hideDialog();
-            deleteCertificate(certificate.id);
           },
-          onNo: () => hideDialog(),
+          onNo: hideDialog,
           variant: 'confirm',
         });
         break;
-
       default:
         break;
     }
@@ -170,30 +185,26 @@ const CertificateItemAction = ({ certificate }) => {
     <>
       <Dialog
         open={openEditDialog}
+        onClose={() => setOpenEditDialog(false)}
         fullWidth
         fullScreen={belowLargeScreen}
-        maxWidth="md"
+        maxWidth="lg"
         scroll={belowLargeScreen ? 'body' : 'paper'}
       >
-        {openEditDialog && (
-          <EditCertificate
-            certificate={certificate}
-            setOpenDialog={setOpenEditDialog}
-          />
-        )}
+        <EditCertificate certificate={certificate} setOpenDialog={setOpenEditDialog} />
       </Dialog>
 
       <DocumentDialog
         open={openPreviewDialog}
         onClose={() => setOpenPreviewDialog(false)}
-        certificateId={certificate.id}
+        certificateId={certificate.id as number}
         organization={organization}
       />
 
       <JumboDdMenu
         icon={
           <Tooltip title="Actions">
-            <MoreHorizOutlined />
+            <MoreHorizOutlined fontSize="small" />
           </Tooltip>
         }
         menuItems={menuItems}

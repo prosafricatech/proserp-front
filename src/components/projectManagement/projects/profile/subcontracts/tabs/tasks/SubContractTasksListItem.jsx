@@ -13,8 +13,9 @@ import {
 import SubContractTaskItemAction from './SubContractTaskItemAction';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 
-// Progress bar with label component
 function LinearProgressWithLabel({ value, label, color }) {
+  const safeValue = Math.min(Number(value) || 0, 100);
+
   return (
     <Box sx={{ width: '100%' }}>
       <Stack direction="row" alignItems="center" spacing={1}>
@@ -24,20 +25,24 @@ function LinearProgressWithLabel({ value, label, color }) {
         <Box sx={{ flexGrow: 1 }}>
           <LinearProgress
             variant="determinate"
-            value={Math.min(Number(value) || 0, 100)}
+            value={safeValue}
             color={color}
             sx={{ height: 8, borderRadius: 2 }}
           />
         </Box>
         <Typography variant="caption" color="text.secondary">
-          {`${Math.min(Number(value) || 0, 100)}%`}
+          {safeValue}%
         </Typography>
       </Stack>
     </Box>
   );
 }
 
-function SubContractTasksListItem({ subContract, subContractTasks = [], isLoading }) {
+function SubContractTasksListItem({
+  subContract,
+  subContractTasks = [],
+  isLoading,
+}) {
   const baseCurrency = subContract?.currency?.code ?? 'USD';
 
   return (
@@ -55,7 +60,8 @@ function SubContractTasksListItem({ subContract, subContractTasks = [], isLoadin
           const execPercent = task.executed_percentage ?? 0;
           const timePercent = task.percentage_time_elapsed ?? 0;
 
-          // --- Color Logic ---
+          const hasTimeDates = Boolean(task.start_date && task.end_date);
+
           let execColor = 'primary';
           if (execPercent >= 100) execColor = 'success';
           else if (execPercent >= 70) execColor = 'warning';
@@ -80,145 +86,107 @@ function SubContractTasksListItem({ subContract, subContractTasks = [], isLoadin
                 p: 1.5,
               }}
             >
-              {/* Task Info */}
               <Grid size={{ xs: 12, md: 6, lg: 5 }} mb={1}>
                 <Grid container spacing={1}>
                   <Grid size={{ xs: 12 }}>
                     <Stack direction="row" alignItems="center" spacing={1.5}>
-                      <Tooltip title="Project Task">
-                        <Typography variant="h6">
-                          {task.project_task?.name ?? '—'}
-                        </Typography>
-                      </Tooltip>
+                      <Typography variant="h6">
+                        {task.project_task?.name ?? '—'}
+                      </Typography>
+
                       {task.remarks && (
-                        <Tooltip title="Remarks">
-                          <Chip
-                            size="small"
-                            label={task.remarks}
-                            variant="outlined"
-                            color="default"
-                          />
-                        </Tooltip>
+                        <Chip
+                          size="small"
+                          label={task.remarks}
+                          variant="outlined"
+                        />
                       )}
                     </Stack>
                   </Grid>
 
-                  {/* Quantity info */}
                   <Grid size={{ xs: 12, md: 6, lg: 5 }}>
-                    <Tooltip title="Quantity">
-                      <Typography variant="body2">
-                        Quantity: {qty.toLocaleString()} {task.project_task?.measurement_unit?.symbol ?? ''}
-                      </Typography>
-                    </Tooltip>
+                    <Typography variant="body2">
+                      Quantity: {qty.toLocaleString()}{' '}
+                      {task.project_task?.measurement_unit?.symbol ?? ''}
+                    </Typography>
                   </Grid>
 
                   <Grid size={{ xs: 12, md: 6, lg: 3.5 }}>
-                    <Tooltip title="Executed Quantity">
-                      <Typography variant="body2">
-                        Executed: {execQty.toLocaleString()} {task.project_task?.measurement_unit?.symbol ?? ''}
-                      </Typography>
-                    </Tooltip>
+                    <Typography variant="body2">
+                      Executed: {execQty.toLocaleString()}{' '}
+                      {task.project_task?.measurement_unit?.symbol ?? ''}
+                    </Typography>
                   </Grid>
 
                   <Grid size={{ xs: 12, md: 6, lg: 3.5 }}>
-                    <Tooltip title="Remaining Quantity">
-                      <Typography variant="body2">
-                        Remaining: {remainingQty.toLocaleString()} {task.project_task?.measurement_unit?.symbol ?? ''}
-                      </Typography>
-                    </Tooltip>
+                    <Typography variant="body2">
+                      Remaining: {remainingQty.toLocaleString()}{' '}
+                      {task.project_task?.measurement_unit?.symbol ?? ''}
+                    </Typography>
                   </Grid>
 
-                  {/* Rate and amount */}
                   <Grid size={{ xs: 12, md: 6, lg: 5 }}>
-                    <Tooltip title="Rate">
-                      <Typography variant="body2">
-                        Rate:{' '}
-                        {rate.toLocaleString('en-US', {
-                          style: 'currency',
-                          currency: baseCurrency,
-                        })}
-                      </Typography>
-                    </Tooltip>
+                    <Typography variant="body2">
+                      Rate:{' '}
+                      {rate.toLocaleString('en-US', {
+                        style: 'currency',
+                        currency: baseCurrency,
+                      })}
+                    </Typography>
                   </Grid>
 
                   <Grid size={{ xs: 12, md: 6, lg: 3.5 }}>
-                    <Tooltip title="Amount">
-                      <Typography variant="body2">
-                        Amount:{' '}
-                        {amount?.toLocaleString('en-US', {
-                          style: 'currency',
-                          currency: baseCurrency,
-                        })}
-                      </Typography>
-                    </Tooltip>
+                    <Typography variant="body2">
+                      Amount:{' '}
+                      {amount.toLocaleString('en-US', {
+                        style: 'currency',
+                        currency: baseCurrency,
+                      })}
+                    </Typography>
                   </Grid>
 
-                  {/* Date & Duration */}
-                  <Grid size={{ xs: 12, md: 6, lg: 5 }}>
-                    <Tooltip title="Start → End Date">
-                      <Typography variant="body2" noWrap>
-                        {task.start_date || task.end_date
-                          ? `${task.start_date ? readableDate(task.start_date, false) : 'Not Set'} → ${
-                              task.end_date ? readableDate(task.end_date, false) : 'Not Set'
-                            }`
-                          : 'Not Set'}
-                      </Typography>
-                    </Tooltip>
-                  </Grid>
-
-                  <Grid size={{ xs: 12, md: 6, lg: 3.5 }}>
-                    <Tooltip title="Duration">
-                      <Typography variant="body2" color="text.secondary">
-                        <strong>Duration:</strong> {task.number_of_days ?? '—'} days
-                      </Typography>
-                    </Tooltip>
-                  </Grid>
-
-                  <Grid size={{ xs: 12, md: 6, lg: 3.5 }}>
-                    <Tooltip title="Remaining Days">
-                      <Typography
-                        variant="caption"
-                        color={task.days_remaining < 0 ? 'error.main' : 'text.secondary'}
-                      >
-                        <strong>Remaining:</strong> {task.days_remaining ?? '—'} days
-                      </Typography>
-                    </Tooltip>
+                  <Grid size={{ xs: 12 }}>
+                    <Typography variant="body2" noWrap>
+                      {hasTimeDates
+                        ? `${readableDate(task.start_date, false)} → ${readableDate(
+                            task.end_date,
+                            false
+                          )}`
+                        : 'Not Set'}
+                    </Typography>
                   </Grid>
                 </Grid>
               </Grid>
 
-              {/* Progress Bars */}
               <Grid size={{ xs: 12, md: 6, lg: 5 }} mb={1}>
-                <Stack spacing={2.5} direction="column">
+                <Stack spacing={2.5}>
                   <LinearProgressWithLabel
                     value={execPercent}
                     label="Execution"
                     color={execColor}
                   />
-                  <LinearProgressWithLabel
-                    value={timePercent}
-                    label="Time"
-                    color={timeColor}
-                  />
+
+                  {hasTimeDates && (
+                    <LinearProgressWithLabel
+                      value={timePercent}
+                      label="Time"
+                      color={timeColor}
+                    />
+                  )}
                 </Stack>
               </Grid>
 
-              {/* Weighted % + Actions */}
               <Grid
-                size={{ xs: 12, md: 12, lg: 2 }}
-                mb={1}
+                size={{ xs: 12, lg: 2 }}
                 display="flex"
                 justifyContent="flex-end"
                 alignItems="center"
               >
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <Tooltip title="Weighted Percentage">
-                    <Chip
-                      size="small"
-                      color="default"
-                      label={`${task.weighted_percentage?.toLocaleString() ?? 0}% Weight`}
-                    />
-                  </Tooltip>
+                <Stack direction="row" spacing={1}>
+                  <Chip
+                    size="small"
+                    label={`${task.weighted_percentage ?? 0}% Weight`}
+                  />
                   <SubContractTaskItemAction
                     subContract={subContract}
                     subContractTasks={subContractTasks}

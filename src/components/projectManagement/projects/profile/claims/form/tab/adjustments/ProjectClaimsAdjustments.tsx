@@ -23,7 +23,7 @@ import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
 import { useLedgerSelect } from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
 
 interface Adjustment {
-  type?: string;
+  type?: 'addition' | 'deduction' | '+ ' | '-' | string;
   type_name?: string;
   description?: string;
   amount?: number;
@@ -111,7 +111,6 @@ const ProjectClaimsAdjustments: React.FC<ProjectClaimsAdjustmentsProps> = ({
     setIsDirty(Object.keys(dirtyFields).length > 0);
   }, [dirtyFields, setIsDirty]);
 
-  // Handle external submit (from warning dialog)
   useEffect(() => {
     if (submitItemForm) {
       trigger().then((isValid) => {
@@ -138,12 +137,10 @@ const ProjectClaimsAdjustments: React.FC<ProjectClaimsAdjustmentsProps> = ({
     };
 
     if (index > -1) {
-      // Edit mode
       const updated = [...adjustments];
       updated[index] = { ...updated[index], ...itemToSave };
       setAdjustments(updated as any);
     } else {
-      // Add new
       setAdjustments((prev) => [...prev, itemToSave]);
       if (submitItemForm) {
         submitMainForm();
@@ -162,16 +159,12 @@ const ProjectClaimsAdjustments: React.FC<ProjectClaimsAdjustmentsProps> = ({
 
   return (
     <Grid container spacing={1} mt={0.5} width="100%">
-      {/* Type Selector */}
       <Grid size={{ xs: 12, md: 3 }}>
         <Div sx={{ mt: 0.3 }}>
           <OperationSelector
             label="Type"
             frontError={errors.type}
-            defaultValue={{
-              value: watchedType || '-',
-              label: watchedType === '+' ? 'Addition' : 'Deduction',
-            }}
+            defaultValue={adjustment && normalizeType(adjustment?.type)}
             onChange={(newValue: any) => {
               setValue('type', newValue?.value || '-', {
                 shouldDirty: true,

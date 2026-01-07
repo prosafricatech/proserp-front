@@ -60,7 +60,7 @@ const UpdatesAccordion = ({ expanded, handleChange, update }) => {
           <Grid size={11}>
             <Tooltip title='Start Date'>
               <Typography variant="h5" fontSize={14} lineHeight={1.25} mb={0} noWrap>
-                {readableDate(update.update_date, false)}
+                {readableDate(update.update_date, true)}
               </Typography>
             </Tooltip>
           </Grid>

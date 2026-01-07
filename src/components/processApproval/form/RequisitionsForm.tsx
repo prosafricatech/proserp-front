@@ -63,8 +63,8 @@ function RequisitionsForm({ toggleOpen, requisition }: RequisitionsFormProps) {
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
   const { currencies } = useCurrencySelect();
-  const [totalAmount, settotalAmount] = useState(0);
-  const [vatableAmount, setvatableAmount] = useState(0);
+  const [totalAmount, setTotalAmount] = useState(0);
+  const [vatableAmount, setVatableAmount] = useState(0);
   const { authOrganization, checkOrganizationPermission } = useJumboAuth();
 
   const [showWarning, setShowWarning] = useState(false);
@@ -167,14 +167,14 @@ function RequisitionsForm({ toggleOpen, requisition }: RequisitionsFormProps) {
       requisition_product_items.forEach((item) => {
         vatableAmount += (Number(item.quantity) * Number(item.rate) * (item.vat_percentage || 0) * 0.01);
       });
-      setvatableAmount(vatableAmount);
-      settotalAmount(total || 0);
+      setVatableAmount(vatableAmount);
+      setTotalAmount(total || 0);
     } else if (selectedProcessType === 'PAYMENT') {
       setValue('ledger_items', requisition_ledger_items);
-      settotalAmount(total || 0);
+      setTotalAmount(total || 0);
     } else {
-      settotalAmount(0);
-      setvatableAmount(0);
+      setTotalAmount(0);
+      setVatableAmount(0);
     }
   }, [selectedProcessType, requisition, requisition_ledger_items, requisition_product_items, setValue]);
 

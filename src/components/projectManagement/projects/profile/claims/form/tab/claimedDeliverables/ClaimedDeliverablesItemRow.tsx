@@ -20,10 +20,11 @@ interface ClaimedDeliverablesItemRowProps {
   deliverableItem: any;
   index: number;
   deliverableItems?: any[];
-  ClaimDate: string;
+  claimDate: string;
   setDeliverablesItems: React.Dispatch<React.SetStateAction<any[]>>;
   subContract?: any;
   claim?: any;
+  vat_percentage: number
 }
 
 const ClaimedDeliverablesItemRow: React.FC<ClaimedDeliverablesItemRowProps> = ({
@@ -36,13 +37,13 @@ const ClaimedDeliverablesItemRow: React.FC<ClaimedDeliverablesItemRowProps> = ({
   deliverableItem,
   index,
   deliverableItems = [],
-  ClaimDate,
+  claimDate,
   setDeliverablesItems,
-  subContract,
-  claim,
+  vat_percentage = 0
 }) => {
   const [showForm, setShowForm] = useState<boolean>(false);
   const { ungroupedLedgerOptions } = useLedgerSelect();
+  const vat_factor = vat_percentage*0.01;
 
   const revenueLedger = ungroupedLedgerOptions?.find(
     (ledger: any) =>
@@ -65,8 +66,10 @@ const ClaimedDeliverablesItemRow: React.FC<ClaimedDeliverablesItemRowProps> = ({
     '-';
 
   const quantity = `${deliverableItem?.certified_quantity ?? 0} ${
-    deliverableItem?.task?.measurement_unit?.symbol || ''
+    deliverableItem?.unit_symbol || deliverableItem.measurement_unit.symbol
   }`;
+
+  const rate = deliverableItem.rate || deliverableItem.project_deliverable.contract_rate
 
   const remarks = deliverableItem?.remarks;
 
@@ -84,7 +87,7 @@ const ClaimedDeliverablesItemRow: React.FC<ClaimedDeliverablesItemRowProps> = ({
             <Typography variant="body2">{index + 1}.</Typography>
           </Grid>
 
-          <Grid size={{ xs: 11, md: 4.5 }}>
+          <Grid size={{ xs: 11, md: vat_factor ? 2.5 : 3.5 }}>
             <Tooltip title="Project Deliverable" arrow placement="top-start">
               <Typography variant="body2" noWrap>
                 {deliverableName}
@@ -102,7 +105,7 @@ const ClaimedDeliverablesItemRow: React.FC<ClaimedDeliverablesItemRowProps> = ({
             )}
           </Grid>
 
-          <Grid size={{ xs: 6, md: 4 }}>
+          <Grid size={{ xs: 6, md: vat_factor ? 2.5 : 3 }}>
             <Tooltip title="Revenue Ledger">
               <Typography variant="body2">
                 {revenueLedger?.name || '-'}
@@ -110,13 +113,27 @@ const ClaimedDeliverablesItemRow: React.FC<ClaimedDeliverablesItemRowProps> = ({
             </Tooltip>
           </Grid>
 
-          <Grid size={{ xs: 6, md: 2 }} paddingLeft={{ xs: 3, md: 0 }}>
+          <Grid size={{ xs: 6, md: 2 }} textAlign={'end'} paddingLeft={{ xs: 3, md: 0 }}>
             <Tooltip title="Quantity" arrow>
               <Typography variant="body2">{quantity}</Typography>
             </Tooltip>
           </Grid>
 
-          <Grid textAlign="end" size={{ xs: 12, md: 1 }}>
+          {
+            !!vat_factor &&
+            <Grid textAlign={'end'} size={{xs: 6, md: vat_factor ? 1.5 : 2}}>
+              <Tooltip title="VAT">
+                <Typography>{(rate*vat_factor).toLocaleString()}</Typography>
+              </Tooltip>
+            </Grid>
+          }
+          <Grid textAlign={'end'} size={{xs: 6, md: 2, lg: 2}}>
+              <Tooltip title="Line Total">
+                  <Typography>{(deliverableItem?.certified_quantity*rate*((1+vat_factor))).toLocaleString()}</Typography>
+              </Tooltip>
+          </Grid>
+
+          <Grid textAlign="end" size={{ xs: vat_factor ? 12 : 6, md: 1 }}>
             <Tooltip title="Edit Task" arrow>
               <IconButton size="small" onClick={() => setShowForm(true)}>
                 <EditOutlined fontSize="small" />
@@ -136,15 +153,13 @@ const ClaimedDeliverablesItemRow: React.FC<ClaimedDeliverablesItemRowProps> = ({
           submitMainForm={submitMainForm}
           setSubmitItemForm={setSubmitItemForm}
           submitItemForm={submitItemForm}
-          selectedCurrencyId={selectedCurrencyId}
+          selectedCurrencyId={selectedCurrencyId as any}
           setIsDirty={setIsDirty}
           deliverableItem={deliverableItem}
           setShowForm={setShowForm}
           index={index}
-          subContract={subContract}
-          claim={claim}
           deliverableItems={deliverableItems}
-          ClaimDate={ClaimDate}
+          claimDate={claimDate}
           setDeliverablesItems={setDeliverablesItems}
         />
       )}

@@ -119,10 +119,10 @@ function DippingsCard() {
                     <Grid container spacing={1} columnSpacing={3}>
                         <Grid size={{ xs: 12 }} mb={1}>
                             <Grid container spacing={1} borderBottom={1} borderColor={'divider'}>
-                                <Grid size={{ xs: 8, md: 1.5, lg: 2.5 }}>
+                                <Grid size={{ xs: 6, md: 6, lg: 2.5 }}>
                                     <Typography variant='h4'>Dippings</Typography>
                                 </Grid>
-                                <Grid size={{ xs: 4, md: 4, lg: 11.5 }} textAlign={'end'}>
+                                <Grid size={{ xs: 6, md: 6, lg: 11.5 }} mb={1} textAlign={'end'}>
                                     <Div>
                                         <FormControl fullWidth size='small'>
                                             <InputLabel id="selected-display-trend-group-by-input-label">Display</InputLabel>

@@ -49,7 +49,7 @@ function ProformaForm({ toggleOpen, proforma = null }: ProformaFormProps) {
   const [expiry_date] = useState(proforma?.expiry_date ? dayjs(proforma.expiry_date) : null);
   const { activeOutlet } = useSalesOutlet();
   const [totalAmount, settotalAmount] = useState(0);
-  const [vatableAmount, setvatableAmount] = useState(0);
+  const [vatableAmount, setVatableAmount] = useState(0);
   const [items, setItems] = useState<ProformaItem[]>(proforma?.items || []);
   const [stakeholderQuickAddDisplay, setStakeholderQuickAddDisplay] = useState(false);
   const [addedStakeholder, setAddedStakeholder] = useState<Stakeholder | null>(null);
@@ -95,7 +95,7 @@ function ProformaForm({ toggleOpen, proforma = null }: ProformaFormProps) {
     }
   });
 
-  const ordertotalAmount = () => {
+  const orderTotalAmount = () => {
     let total = 0;
     let vatableTotal = 0;
 
@@ -123,7 +123,7 @@ function ProformaForm({ toggleOpen, proforma = null }: ProformaFormProps) {
       items.filter((item) => item.product?.vat_exempted !== true).forEach((item) => {
         vatableTotal += item.rate * item.quantity;
       });
-      setvatableAmount(vatableTotal);
+      setVatableAmount(vatableTotal);
     }
 
     loopItems();
@@ -134,7 +134,7 @@ function ProformaForm({ toggleOpen, proforma = null }: ProformaFormProps) {
   const vatAmount = vatableAmount * Number(vat_percentage) / 100;
 
   React.useEffect(() => {
-    ordertotalAmount();
+    orderTotalAmount();
   }, [items]);
 
   useEffect(() => {

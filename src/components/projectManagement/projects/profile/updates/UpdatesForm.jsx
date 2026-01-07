@@ -28,7 +28,6 @@ function UpdatesForm({ setOpenDialog, update }) {
         project_task_id: task_execution.task?.id, 
     })) : []);
 
-    // React Query v5 syntax for useMutation
     const { mutate: addProjectUpdates, isPending } = useMutation({
         mutationFn: projectsServices.addProjectUpdates,
         onSuccess: (data) => {

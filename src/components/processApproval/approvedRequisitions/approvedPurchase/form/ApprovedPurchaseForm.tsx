@@ -100,8 +100,8 @@ const ApprovedPurchaseForm: React.FC<ApprovedPurchaseFormProps> = ({
 }) => {
   const { authOrganization } = useJumboAuth();
   const costCenters = authOrganization;
-  const [totalAmount, settotalAmount] = useState(0);
-  const [vatableAmount, setvatableAmount] = useState(0);
+  const [totalAmount, setTotalAmount] = useState(0);
+  const [vatableAmount, setVatableAmount] = useState(0);
   const [order_date] = useState(order?.order_date ? dayjs(order.order_date) : dayjs());
   const [checked, setChecked] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
@@ -185,7 +185,7 @@ const ApprovedPurchaseForm: React.FC<ApprovedPurchaseFormProps> = ({
 
   const { setValue, handleSubmit, watch, formState: { errors } } = formMethods;
 
-  const ordertotalAmount = () => {
+  const orderTotalAmount = () => {
     let total = 0;
     let vatableAmount = 0;
 
@@ -202,7 +202,7 @@ const ApprovedPurchaseForm: React.FC<ApprovedPurchaseFormProps> = ({
           setValue(`items.${index}.rate`, item.rate);
           setValue(`items.${index}.vat_percentage`, item.vat_percentage);
         });
-      settotalAmount(total);
+      setTotalAmount(total);
     };
 
     const calculateVAT = () => {
@@ -211,7 +211,7 @@ const ApprovedPurchaseForm: React.FC<ApprovedPurchaseFormProps> = ({
         .forEach((item: OrderItem) => {
           vatableAmount += item.quantity * item.rate * ((item.vat_percentage ?? 0) * 0.01);
         });
-      setvatableAmount(vatableAmount);
+      setVatableAmount(vatableAmount);
     };
 
     calculateTotals();
@@ -219,7 +219,7 @@ const ApprovedPurchaseForm: React.FC<ApprovedPurchaseFormProps> = ({
   };
 
   React.useEffect(() => {
-    ordertotalAmount();
+    orderTotalAmount();
   },[items]);
   
   const stakeholder_id = watch('stakeholder_id');

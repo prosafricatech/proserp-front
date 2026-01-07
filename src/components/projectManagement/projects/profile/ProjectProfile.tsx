@@ -1,6 +1,6 @@
 'use client';
 
-import { lazy, useEffect, useState, useCallback } from 'react';
+import { lazy, useEffect, useMemo, useState } from 'react';
 import { Card, LinearProgress, Stack, Tab, Tabs, Typography } from '@mui/material';
 import JumboContentLayout from '@jumbo/components/JumboContentLayout';
 import ProjectDashboard from './dashboard/ProjectDashboard';
@@ -30,68 +30,63 @@ type TabKey =
   | 'users'
   | 'attachments';
 
+const TABS_NEEDING_DELIVERABLES: TabKey[] = [
+  'deliverables',
+  'budgets',
+  'claims',
+  'wbs',
+  'subcontracts',
+  'updates',
+];
+
+const TABS_NEEDING_TIMELINE: TabKey[] = [
+  'deliverables',
+  'budgets',
+  'claims',
+  'wbs',
+  'subcontracts',
+  'updates',
+];
+
 function ProfileContent() {
   const { project, updateProjectProfile, setIsDashboardTab }: any = useProjectProfile();
-
   const [activeTab, setActiveTab] = useState<TabKey>('dashboard');
-  const [fetchDeliverables, setFetchDeliverables] = useState(false);
-  const [fetchTimelineActivities, setFetchTimelineActivities] = useState(false);
 
-  const stableSetFetchDeliverables = useCallback(setFetchDeliverables, []);
-  const stableSetFetchTimelineActivities = useCallback(setFetchTimelineActivities, []);
-
-  /* ---------------- Deliverables ---------------- */
-  const {
-    data: deliverablesData,
-    isLoading: isDeliverablesLoading,
-  } = useQuery({
+  //Deliverables & Groups
+  const { data: deliverablesData, isLoading: isDeliverablesLoading } = useQuery({
     queryKey: ['projectDeliverableGroups', project?.id],
     queryFn: () => projectsServices.showDeliverablesAndGroups(project.id),
-    enabled: activeTab === 'deliverables' || fetchDeliverables,
+    enabled: !!project?.id && TABS_NEEDING_DELIVERABLES.includes(activeTab),
   });
 
-  /* ---------------- Budgets ---------------- */
-  const {
-    data: budgetsData,
-    isLoading: isBudgetLoading,
-  } = useQuery({
+  //Budgets
+  const { data: budgetsData, isLoading: isBudgetLoading } = useQuery({
     queryKey: ['projectBudgets', project?.id, project?.cost_center?.id],
     queryFn: projectsServices.showProjectBudgets,
-    enabled: activeTab === 'budgets',
+    enabled: !!project?.id && activeTab === 'budgets',
   });
 
-  /* ---------------- Timeline ---------------- */
-  const {
-    data: timelineActivitiesData,
-    isLoading: isTimelineActivitiesLoading,
-  } = useQuery({
+  //Timeline Activities
+  const { data: timelineActivitiesData, isLoading: isTimelineActivitiesLoading } = useQuery({
     queryKey: ['projectTimelineActivities', project?.id],
     queryFn: () => projectsServices.showProjectTimelineActivities(project.id),
-    enabled: activeTab === 'wbs' || fetchTimelineActivities,
+    enabled: !!project?.id && TABS_NEEDING_TIMELINE.includes(activeTab),
   });
 
-  /* ---------------- Profile Updates ---------------- */
+  // Update profile context with fetched data
   useEffect(() => {
-    if (deliverablesData) {
-      updateProjectProfile({ deliverable_groups: deliverablesData });
-    }
+    if (deliverablesData) updateProjectProfile({ deliverable_groups: deliverablesData });
   }, [deliverablesData, updateProjectProfile]);
 
   useEffect(() => {
-    if (budgetsData) {
-      updateProjectProfile({ projectBudgets: budgetsData.data });
-    }
+    if (budgetsData) updateProjectProfile({ projectBudgets: budgetsData.data });
   }, [budgetsData, updateProjectProfile]);
 
   useEffect(() => {
-    if (timelineActivitiesData) {
-      updateProjectProfile({ projectTimelineActivities: timelineActivitiesData });
-    }
+    if (timelineActivitiesData) updateProjectProfile({ projectTimelineActivities: timelineActivitiesData });
   }, [timelineActivitiesData, updateProjectProfile]);
 
-  useEffect(() => {
-    setIsDashboardTab(activeTab === 'dashboard');
-  }, [activeTab, setIsDashboardTab]);
+  const isLoading = isDeliverablesLoading || isBudgetLoading || isTimelineActivitiesLoading;
 
   useEffect(() => {
     updateProjectProfile({
@@ -99,25 +94,13 @@ function ProfileContent() {
       budgetsLoading: isBudgetLoading,
       timelineLoading: isTimelineActivitiesLoading,
     });
-  }, [
-    isDeliverablesLoading,
-    isBudgetLoading,
-    isTimelineActivitiesLoading,
-    updateProjectProfile,
-  ]);
+  }, [isDeliverablesLoading, isBudgetLoading, isTimelineActivitiesLoading, updateProjectProfile]);
 
   useEffect(() => {
-    updateProjectProfile({
-      setFetchDeliverables: stableSetFetchDeliverables,
-      setFetchTimelineActivities: stableSetFetchTimelineActivities,
-    });
-  }, [stableSetFetchDeliverables, stableSetFetchTimelineActivities, updateProjectProfile]);
+    setIsDashboardTab(activeTab === 'dashboard');
+  }, [activeTab, setIsDashboardTab]);
 
-  const isLoading =
-    isDeliverablesLoading || isBudgetLoading || isTimelineActivitiesLoading;
-
-  /* ---------------- Render Content ---------------- */
-  const renderTabContent = () => {
+  const renderTabContent = useMemo(() => {
     switch (activeTab) {
       case 'dashboard':
         return (
@@ -143,22 +126,22 @@ function ProfileContent() {
         return (
           <AttachmentForm
             hideFeatures
-            attachment_sourceNo={project.projectNo}
+            attachment_sourceNo={project?.projectNo}
             attachmentable_type="project"
-            attachmentable_id={project.id}
+            attachmentable_id={project?.id}
           />
         );
       default:
         return null;
     }
-  };
+  }, [activeTab, project]);
 
   return (
     <JumboContentLayout
       header={
         <>
-          <Typography variant="h4">{project.name}</Typography>
-          <Typography variant="body1">{project.reference}</Typography>
+          <Typography variant="h4">{project?.name}</Typography>
+          <Typography variant="body1">{project?.reference}</Typography>
         </>
       }
     >
@@ -174,19 +157,15 @@ function ProfileContent() {
             <Tab label="Dashboard" value="dashboard" />
             <Tab label="Deliverables" value="deliverables" />
             <Tab label="WBS" value="wbs" />
-            <Tab label="Updates" value="updates" />
             <Tab label="Budgets" value="budgets" />
+            <Tab label="Updates" value="updates" />
             <Tab label="Subcontracts" value="subcontracts" />
-
-            {project?.client_id && (
-              <Tab label="Claims" value="claims" />
-            )}
-
+            {project?.client_id && <Tab label="Claims" value="claims" />}
             <Tab label="Users" value="users" />
             <Tab label="Attachments" value="attachments" />
           </Tabs>
 
-          {isLoading ? <LinearProgress /> : renderTabContent()}
+          {isLoading ? <LinearProgress /> : renderTabContent}
         </Stack>
       </Card>
     </JumboContentLayout>

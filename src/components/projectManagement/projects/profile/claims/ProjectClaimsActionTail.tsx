@@ -12,12 +12,12 @@ const ProjectClaimsActionTail = () => {
   
   return (
     <React.Fragment>
-      <Dialog maxWidth="md" fullWidth fullScreen={belowLargeScreen} open={openDialog}>
+      <Dialog maxWidth="lg" fullWidth fullScreen={belowLargeScreen} open={openDialog}>
         <ProjectClaimsForm setOpenDialog={setOpenDialog}/>
       </Dialog>
 
       <ButtonGroup variant="outlined" size="small" disableElevation sx={{ '& .MuiButton-root': { px: 1 } }}>
-        <Tooltip title={"Add Claim"}>
+        <Tooltip title={"Add Payment Claim"}>
           <IconButton onClick={() => setOpenDialog(true)}>
             <AddOutlined />
           </IconButton>

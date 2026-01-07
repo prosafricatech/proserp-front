@@ -150,7 +150,7 @@ function SubcontractListItem({ subContract }) {
                         >
                             <Tab label="Tasks" />
                             <Tab label="Certificates" />
-                            <Tab label="Material Issued" />
+                            <Tab label="material Used" />
                             <Tab label="Attachments" />
                         </Tabs>
                     </Grid>
