@@ -1,6 +1,6 @@
 'use client'
 import JumboCardQuick from '@jumbo/components/JumboCardQuick';
-import { Autocomplete, Grid, LinearProgress, Typography, TextField, Checkbox, Chip, useMediaQuery, FormControl, InputLabel, Select, MenuItem, ButtonGroup, Tooltip, Button } from '@mui/material';
+import { Autocomplete, Grid, LinearProgress, Typography, TextField, Checkbox, Chip, useMediaQuery, FormControl, InputLabel, Select, MenuItem, ButtonGroup, Tooltip, Button, Box } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { useDashboardSettings } from '../Dashboard';
 import DippingTrend from './DippingTrend';
@@ -29,7 +29,6 @@ function DippingsCard() {
         [costCenters]
     );
 
-    // Screen handling constants
     const { theme } = useJumboTheme();
     const smallScreen = useMediaQuery(theme.breakpoints.down('md')) || isMobile;
     const midScreen = useMediaQuery('(min-width: 960.1px) and (max-width: 1279.9px)');
@@ -118,29 +117,37 @@ function DippingsCard() {
                     :
                     <Grid container spacing={1} columnSpacing={3}>
                         <Grid size={{ xs: 12 }} mb={1}>
-                            <Grid container spacing={1} borderBottom={1} borderColor={'divider'}>
+                            <Grid container spacing={1} borderBottom={1} borderColor={'divider'} pb={1}>
                                 <Grid size={{ xs: 6, md: 6, lg: 2.5 }}>
                                     <Typography variant='h4'>Dippings</Typography>
                                 </Grid>
-                                <Grid size={{ xs: 6, md: 6, lg: 11.5 }} mb={1} textAlign={'end'}>
-                                    <Div>
-                                        <FormControl fullWidth size='small'>
-                                            <InputLabel id="selected-display-trend-group-by-input-label">Display</InputLabel>
-                                            <Select
-                                                labelId="selected-display-group-by-label"
-                                                id="selected-display-group-by"
-                                                value={selectedType}
-                                                label={'Display'}
-                                                onChange={(e) => {
-                                                    setSelectedType(e.target.value as 'closing' | 'deviation' | 'calculated stock');
-                                                }}
-                                            >
-                                                <MenuItem value='closing'>Closing</MenuItem>
-                                                <MenuItem value='deviation'>Deviation</MenuItem>
-                                                <MenuItem value='calculated stock'>Stock</MenuItem>
-                                            </Select>
-                                        </FormControl>
-                                    </Div>
+                                <Grid size={{ xs: 6, md: 6, lg: 9.5 }} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+                                    <FormControl 
+                                        size='small' 
+                                        sx={{ 
+                                            minWidth: 120,
+                                            width: '100%',
+                                            maxWidth: 200 
+                                        }}
+                                    >
+                                        <InputLabel id="selected-display-trend-group-by-input-label">Display</InputLabel>
+                                        <Select
+                                            labelId="selected-display-group-by-label"
+                                            id="selected-display-group-by"
+                                            value={selectedType}
+                                            label={'Display'}
+                                            onChange={(e) => {
+                                                setSelectedType(e.target.value as 'closing' | 'deviation' | 'calculated stock');
+                                            }}
+                                            sx={{
+                                                width: '100%',
+                                            }}
+                                        >
+                                            <MenuItem value='closing'>Closing</MenuItem>
+                                            <MenuItem value='deviation'>Deviation</MenuItem>
+                                            <MenuItem value='calculated stock'>Stock</MenuItem>
+                                        </Select>
+                                    </FormControl>
                                 </Grid>
                             </Grid>
                         </Grid>

@@ -43,7 +43,7 @@ const ClaimedDeliverablesItemRow: React.FC<ClaimedDeliverablesItemRowProps> = ({
 }) => {
   const [showForm, setShowForm] = useState<boolean>(false);
   const { ungroupedLedgerOptions } = useLedgerSelect();
-  const vat_factor = vat_percentage*0.01;
+  const vat_factor = vat_percentage * 0.01;
 
   const revenueLedger = ungroupedLedgerOptions?.find(
     (ledger: any) =>
@@ -65,13 +65,26 @@ const ClaimedDeliverablesItemRow: React.FC<ClaimedDeliverablesItemRowProps> = ({
     deliverableItem?.project_deliverable.description ||
     '-';
 
-  const quantity = `${deliverableItem?.certified_quantity ?? 0} ${
-    deliverableItem?.unit_symbol || deliverableItem.measurement_unit.symbol
-  }`;
-
-  const rate = deliverableItem.rate || deliverableItem.project_deliverable.contract_rate
-
+  const quantity = deliverableItem?.certified_quantity ?? 0;
+  const unitSymbol = deliverableItem?.unit_symbol || deliverableItem?.measurement_unit?.symbol || '';
+  
+  const rate = deliverableItem.rate || deliverableItem.project_deliverable.contract_rate;
   const remarks = deliverableItem?.remarks;
+
+  // Format currency values
+  const formatCurrency = (value: number) => {
+    return value.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  };
+
+  const formatQuantity = (qty: number) => {
+    return qty.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  };
 
   return (
     <React.Fragment>
@@ -114,23 +127,40 @@ const ClaimedDeliverablesItemRow: React.FC<ClaimedDeliverablesItemRowProps> = ({
           </Grid>
 
           <Grid size={{ xs: 6, md: 2 }} textAlign={'end'} paddingLeft={{ xs: 3, md: 0 }}>
-            <Tooltip title="Quantity" arrow>
-              <Typography variant="body2">{quantity}</Typography>
+            <Tooltip title={`Quantity: ${formatQuantity(quantity)} ${unitSymbol}\nRate: ${formatCurrency(rate)}`} arrow>
+              <Typography variant="body2">
+                <span >
+                  {formatQuantity(quantity)} {unitSymbol}
+                </span>
+                <Typography 
+                  component="span" 
+                  variant="caption" 
+                  color="text.secondary"
+                  sx={{ ml: 0.5 }}
+                >
+                  @ {formatCurrency(rate)}
+                </Typography>
+              </Typography>
             </Tooltip>
           </Grid>
 
           {
             !!vat_factor &&
             <Grid textAlign={'end'} size={{xs: 6, md: vat_factor ? 1.5 : 2}}>
-              <Tooltip title="VAT">
-                <Typography>{(rate*vat_factor).toLocaleString()}</Typography>
+              <Tooltip title="VAT Amount">
+                <Typography>
+                  {formatCurrency(rate * vat_factor)}
+                </Typography>
               </Tooltip>
             </Grid>
           }
+          
           <Grid textAlign={'end'} size={{xs: 6, md: 2, lg: 2}}>
-              <Tooltip title="Line Total">
-                  <Typography>{(deliverableItem?.certified_quantity*rate*((1+vat_factor))).toLocaleString()}</Typography>
-              </Tooltip>
+            <Tooltip title={`Line Total (${formatQuantity(quantity)} × ${formatCurrency(rate)}${vat_factor ? ` × ${vat_percentage}% VAT` : ''})`}>
+              <Typography>
+                {formatCurrency(quantity * rate * (1 + vat_factor))}
+              </Typography>
+            </Tooltip>
           </Grid>
 
           <Grid textAlign="end" size={{ xs: vat_factor ? 12 : 6, md: 1 }}>

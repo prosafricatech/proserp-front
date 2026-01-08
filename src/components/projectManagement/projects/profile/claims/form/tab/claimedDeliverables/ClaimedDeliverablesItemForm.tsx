@@ -16,7 +16,6 @@ import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { AddOutlined, CheckOutlined, DisabledByDefaultOutlined } from '@mui/icons-material';
 import { Button, CircularProgress } from '@mui/material';
-import { Div } from '@jumbo/shared';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { useProjectProfile } from '@/components/projectManagement/projects/profile/ProjectProfileProvider';
@@ -178,12 +177,6 @@ const ClaimedDeliverablesItemForm: React.FC<ClaimedDeliverablesItemFormProps> = 
       });
     }
   }, [submitItemForm, trigger, handleSubmit, setSubmitItemForm]);
-
-  const amount = () => {
-    const quantity = Number(watch('certified_quantity')) || 0;
-    const rate = Number(watch('rate')) || 0;
-    return quantity * rate;
-  };
 
   const updateItems = async (formData: FormValues) => {
     setIsAdding(true);
@@ -349,13 +342,12 @@ const ClaimedDeliverablesItemForm: React.FC<ClaimedDeliverablesItemFormProps> = 
         )}
       </Grid>
 
-      {/* Amount (Read-only) */}
       <Grid size={{ xs: 12, md: 2 }}>
         <TextField
-          label="Amount"
+          label="Rate"
           fullWidth
           size="small"
-          value={amount().toLocaleString(undefined, { minimumFractionDigits: 2 })}
+          value={watch('rate')?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
           InputProps={{
             readOnly: true,
             inputComponent: CommaSeparatedField as any,

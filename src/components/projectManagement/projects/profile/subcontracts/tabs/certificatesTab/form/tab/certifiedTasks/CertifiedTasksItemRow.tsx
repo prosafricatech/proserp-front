@@ -129,14 +129,12 @@ const CertifiedTasksItemRow: React.FC<CertifiedTasksItemRowProps> = ({
             '&:hover': { bgcolor: 'action.hover' },
           }}
         >
-          {/* Index */}
           <Grid size={{ xs: 1, md: 0.5 }}>
             <Typography variant="body2">
               {index + 1}.
             </Typography>
           </Grid>
 
-          {/* Task & Remarks */}
           <Grid size={{ xs: 11, md: 4 }}>
             <Tooltip title="Project Task" arrow>
               <Typography variant="body2" noWrap>
@@ -155,9 +153,8 @@ const CertifiedTasksItemRow: React.FC<CertifiedTasksItemRowProps> = ({
             )}
           </Grid>
 
-          {/* Quantity */}
           <Grid
-            size={{ xs: 6, md: vatFactor ? 3 : 3.5 }}
+            size={{ xs: 6, md: 1.5 }}
             sx={{ pl: { xs: 3, md: 0 } }}
           >
             <Tooltip title="Quantity" arrow>
@@ -167,7 +164,18 @@ const CertifiedTasksItemRow: React.FC<CertifiedTasksItemRowProps> = ({
             </Tooltip>
           </Grid>
 
-          {/* VAT */}
+          <Grid
+            size={{ xs: 6, md: vatFactor ? 1.5 : 2 }}
+            sx={{ pl: { xs: 3, md: 0 } }}
+            textAlign={{xs: 'end', md: 'end'}}
+          >
+            <Tooltip title="Rate" arrow>
+              <Typography variant="body2">
+                {rate?.toLocaleString() || '0'}
+              </Typography>
+            </Tooltip>
+          </Grid>
+
           {!!vatFactor && (
             <Grid
               size={{ xs: 6, md: 1.5 }}
@@ -187,7 +195,7 @@ const CertifiedTasksItemRow: React.FC<CertifiedTasksItemRowProps> = ({
           {/* Line Total */}
           <Grid
             size={{ xs: 6, md: vatFactor ? 2 : 3 }}
-            textAlign={{ xs: vatFactor ? 'start' : 'end', md: 'end' }}
+            textAlign={{ xs: 'end', md: 'end' }}
           >
             <Tooltip title="Line Total" arrow>
               <Typography>
@@ -201,7 +209,7 @@ const CertifiedTasksItemRow: React.FC<CertifiedTasksItemRowProps> = ({
 
           {/* Actions */}
           <Grid
-            size={{ xs: vatFactor ? 6 : 12, md: 1 }}
+            size={{ xs: vatFactor ? 12 : 6, md: 1 }}
             textAlign="end"
           >
             <Tooltip title="Edit Task">

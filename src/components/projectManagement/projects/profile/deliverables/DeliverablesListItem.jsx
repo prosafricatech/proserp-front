@@ -18,6 +18,7 @@ import { useProjectProfile } from '../ProjectProfileProvider';
 import DeliverableTasks from './tab/DeliverableTasks';
 import { useQuery } from '@tanstack/react-query';
 import projectsServices from '../../project-services';
+import DeliverableSummary from './tab/DeliverableSummary';
 
 function DeliverablesListItem({ filteredDeliverables }) {
   const { activeTab } = useProjectProfile();
@@ -155,7 +156,7 @@ function DeliverablesListItem({ filteredDeliverables }) {
               ) : (
                 <>
                   {tabIndex === 0 && (
-                    <Typography variant="body2">Summary content goes here.</Typography>
+                    <DeliverableSummary deliverableDetails={deliverableDetails}/>
                   )}
                   {tabIndex === 1 && (
                     <DeliverableTasks deliverableDetails={deliverableDetails} />

@@ -234,7 +234,6 @@ function SubscriptionItem({ subscription, isFromProsAfricanSubscriptions }: { su
                   label={subsDict.status[subscription.status.toLowerCase()] || subscription.status}
                   sx={{
                     color: isDarkMode ? 'white' : 'inherit',
-                    fontWeight: 'bold',
                   }}
                 />
               </Stack>

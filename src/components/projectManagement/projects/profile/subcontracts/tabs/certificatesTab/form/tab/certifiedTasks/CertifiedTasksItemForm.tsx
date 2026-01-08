@@ -172,12 +172,6 @@ const CertifiedTasksItemForm: React.FC<CertifiedTasksItemFormProps> = ({
   const watchedQuantity = watch('certified_quantity');
   const watchedRate = watch('rate');
 
-  const calculatedAmount = useMemo(() => {
-    const qty = Number(watchedQuantity) || 0;
-    const rate = Number(watchedRate) || 0;
-    return qty * rate;
-  }, [watchedQuantity, watchedRate]);
-
   const updateItems = async (formData: FormValues) => {
     setIsAdding(true);
 
@@ -323,14 +317,13 @@ const CertifiedTasksItemForm: React.FC<CertifiedTasksItemFormProps> = ({
         </Div>
       </Grid>
 
-      {/* Amount */}
       <Grid size={{ xs: 12, md: 3 }}>
         <Div sx={{ mt: 0.3 }}>
           <TextField
-            label="Amount"
+            label="Rate"
             size="small"
             fullWidth
-            value={calculatedAmount.toLocaleString(undefined, {
+            value={watchedRate?.toLocaleString(undefined, {
               minimumFractionDigits: 2,
             })}
             InputProps={{
