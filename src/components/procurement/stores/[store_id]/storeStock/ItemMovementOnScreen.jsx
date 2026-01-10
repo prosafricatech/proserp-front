@@ -13,10 +13,12 @@ import {
   TableContainer
 } from '@mui/material';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
 
-function ItemMovementOnScreen({ movementsData, authObject }) {
+function ItemMovementOnScreen({ movementsData, authObject, baseCurrency }) {
   const theme = useTheme();
-  const { authOrganization } = authObject;
+  const { authOrganization, checkOrganizationPermission } = authObject;
+  const financePersonnel = checkOrganizationPermission([PERMISSIONS.ACCOUNTS_REPORTS]);
   
   const mainColor = authOrganization.organization.settings?.main_color || "#2113AD";
   const headerColor = theme.type === 'dark' ? '#29f096' : (authOrganization.organization.settings?.main_color || "#2113AD");
@@ -29,7 +31,7 @@ function ItemMovementOnScreen({ movementsData, authObject }) {
   const getBalanceStyle = (balance) => {
     if (balance < 0) {
       return {
-        backgroundColor: theme.palette.mode === 'dark' 
+        backgroundColor: theme.type === 'dark' 
           ? 'rgba(244, 67, 54, 0.1)' 
           : 'rgba(244, 67, 54, 0.05)'
       };
@@ -85,18 +87,28 @@ function ItemMovementOnScreen({ movementsData, authObject }) {
         </Grid>
       </Grid>
 
-      {/* Movement Items Section */}
       <Box sx={{ mb: 3 }}>
         <Typography 
           variant="h6" 
           sx={{ 
             color: headerColor, 
-            textAlign: 'center', 
-            mb: 2
+            textAlign: 'center'
           }}
         >
           MOVEMENT DETAILS
         </Typography>
+
+        { financePersonnel &&
+          <Typography 
+            variant="h6" 
+            sx={{
+              textAlign: 'center', 
+              mb: 2
+            }}
+          >
+            {baseCurrency?.code}
+          </Typography>
+        }
         
         <TableContainer 
           component={Paper}
@@ -131,6 +143,16 @@ function ItemMovementOnScreen({ movementsData, authObject }) {
                 <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
                   Balance
                 </TableCell>
+                {financePersonnel &&
+                  <>
+                    <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
+                      Avg Cost
+                    </TableCell>
+                    <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
+                      Selling Price
+                    </TableCell>
+                  </>
+                }
               </TableRow>
             </TableHead>
             <TableBody>
@@ -171,6 +193,26 @@ function ItemMovementOnScreen({ movementsData, authObject }) {
                     >
                       {formatQuantity(cumulativeBalance)}
                     </TableCell>
+                    {financePersonnel &&
+                      <>
+                      <TableCell
+                        align="right" 
+                        sx={{ 
+                          fontFamily: 'monospace',
+                          ...balanceStyle,
+                          position: 'relative'
+                        }}
+                      >{movement.average_cost?.toLocaleString()}</TableCell>
+                      <TableCell
+                        align="right" 
+                        sx={{ 
+                          fontFamily: 'monospace',
+                          ...balanceStyle,
+                          position: 'relative'
+                        }}
+                      >{movement.selling_price?.toLocaleString()}</TableCell>
+                      </>
+                    }
                   </TableRow>
                 );
               })}

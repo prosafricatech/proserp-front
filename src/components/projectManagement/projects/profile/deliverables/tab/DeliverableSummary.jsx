@@ -15,7 +15,7 @@ function CustomBarWithBackground(props) {
     <React.Fragment>
       <rect
         {...other}
-        fill={theme.type === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}
+        fill={theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}
         x={0}
         width={width}
         height={other.height}
@@ -55,12 +55,7 @@ function BarLabelAtEnd(props) {
   );
 }
 
-const getBarColor = (value) => {
-  if (value >= 80) return '#2e7d32';
-  if (value >= 60) return '#1976d2';
-  if (value >= 40) return '#ed6c02';
-  return '#d32f2f';
-};
+const getBarColor = () => '#1976d2';
 
 function DeliverableSummary({ deliverableDetails }) {
   const theme = useTheme();
@@ -82,21 +77,20 @@ function DeliverableSummary({ deliverableDetails }) {
     { 
       label: isXs ? 'Cert.' : 'Certification', 
       value: certified,
-      color: getBarColor(certified),
+      color: getBarColor(),
     },
     { 
       label: isXs ? 'Exec.' : 'Execution', 
       value: executed,
-      color: getBarColor(executed),
+      color: getBarColor(),
     },
   ];
 
-  const overallProgress = ((certified + executed) / 2).toFixed(1);
-
-  const chartHeight = isXs ? 160 : isSm ? 180 : 220;
-  const yAxisWidth = isXs ? 60 : isSm ? 80 : 100;
-  const barLabelFontSize = isXs ? 11 : 13;
-  const marginRight = isXs ? 60 : isSm ? 70 : 80;
+  const chartHeight = isXs ? 120 : isSm ? 140 : 160;
+  const yAxisWidth = isXs ? 60 : isSm ? 70 : 80;
+  const barLabelFontSize = isXs ? 10 : 12;
+  const marginRight = isXs ? 50 : isSm ? 60 : 70;
+  const barThickness = isXs ? 20 : isSm ? 25 : 30;
 
   return (
     <Box sx={{ 
@@ -104,65 +98,10 @@ function DeliverableSummary({ deliverableDetails }) {
       px: isXs ? 0.5 : 2,
     }}>
       <Box sx={{ 
-        display: 'flex', 
-        flexDirection: isXs ? 'column' : 'row',
-        alignItems: isXs ? 'flex-start' : 'center',
-        mb: isXs ? 2 : 3,
-        p: isXs ? 1.5 : 2,
-        borderRadius: 1,
-        bgcolor: theme.type === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)'
-      }}>
-        <Box sx={{ 
-          flex: 1, 
-          width: isXs ? '100%' : 'auto',
-          mb: isXs ? 1 : 0 
-        }}>
-          <Typography 
-            variant="body2" 
-            color="text.secondary" 
-            sx={{ 
-              mb: 0.5,
-              fontSize: isXs ? '0.875rem' : 'inherit'
-            }}
-          >
-            Overall Progress
-          </Typography>
-          <Box sx={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: isXs ? 1 : 2 
-          }}>
-            <Box sx={{ flex: 1 }}>
-              <Box sx={{ 
-                height: isXs ? 6 : 8,
-                bgcolor: theme.type === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
-                borderRadius: 4,
-                overflow: 'hidden'
-              }}>
-                <Box sx={{ 
-                  width: `${overallProgress}%`,
-                  height: '100%',
-                  bgcolor: getBarColor(overallProgress),
-                  borderRadius: 4
-                }} />
-              </Box>
-            </Box>
-            <Typography 
-              variant={isXs ? "body1" : "h6"}
-              fontWeight={isXs ? 600 : 400}
-              sx={{ minWidth: isXs ? '45px' : 'auto' }}
-            >
-              {overallProgress}%
-            </Typography>
-          </Box>
-        </Box>
-      </Box>
-
-      <Box sx={{ 
         overflowX: isXs ? 'auto' : 'visible',
         overflowY: 'hidden',
         '& .MuiBarChart-root': {
-          minWidth: isXs ? '300px' : 'auto'
+          minWidth: isXs ? '250px' : 'auto'
         }
       }}>
         <BarChart
@@ -170,10 +109,10 @@ function DeliverableSummary({ deliverableDetails }) {
           height={chartHeight}
           dataset={dataset}
           margin={{ 
-            top: isXs ? 15 : 20, 
+            top: isXs ? 10 : 15,
             right: marginRight, 
-            left: isXs ? 5 : 10, 
-            bottom: isXs ? 15 : 20 
+            left: isXs ? 5 : 8,
+            bottom: isXs ? 10 : 15
           }}
           
           series={[
@@ -191,7 +130,7 @@ function DeliverableSummary({ deliverableDetails }) {
               tickInterval: isXs ? [0, 50, 100] : [0, 25, 50, 75, 100],
               valueFormatter: (v) => `${v}%`,
               tickLabelStyle: {
-                fontSize: isXs ? 11 : 12,
+                fontSize: isXs ? 10 : 11,
               },
             },
           ]}
@@ -202,12 +141,12 @@ function DeliverableSummary({ deliverableDetails }) {
               dataKey: 'label',
               width: yAxisWidth,
               tickLabelStyle: {
-                fontSize: isXs ? 12 : 14,
+                fontSize: isXs ? 11 : 13,
               },
             },
           ]}
           
-          colors={dataset.map(item => item.color)}
+          colors={['#1976d2']}
           
           slots={{
             bar: CustomBarWithBackground,
@@ -217,6 +156,7 @@ function DeliverableSummary({ deliverableDetails }) {
           slotProps={{
             bar: {
               rx: 4,
+              barSize: barThickness,
             },
             barLabel: {
               style: {
@@ -225,51 +165,10 @@ function DeliverableSummary({ deliverableDetails }) {
             },
           }}
           
-          grid={{ horizontal: true }}
+          grid={{ horizontal: false }}
           
           tooltip={{ trigger: 'item' }}
         />
-      </Box>
-
-      <Box sx={{ 
-        display: 'flex', 
-        flexWrap: isXs ? 'wrap' : 'nowrap',
-        justifyContent: isXs ? 'flex-start' : 'center',
-        gap: isXs ? 1.5 : 3,
-        mt: isXs ? 1.5 : 2,
-        pt: isXs ? 1.5 : 2,
-        borderTop: `1px solid ${theme.palette.divider}`
-      }}>
-        {[
-          { color: '#d32f2f', label: isXs ? 'Low' : 'Low (<40%)' },
-          { color: '#ed6c02', label: isXs ? 'Medium' : 'Medium (40-60%)' },
-          { color: '#1976d2', label: isXs ? 'Good' : 'Good (60-80%)' },
-          { color: '#2e7d32', label: isXs ? 'Excellent' : 'Excellent (>80%)' },
-        ].map((item, index) => (
-          <Box 
-            key={index} 
-            sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 0.5,
-              flex: isXs ? '0 0 calc(50% - 8px)' : 'none'
-            }}
-          >
-            <Box sx={{ 
-              width: isXs ? 10 : 12, 
-              height: isXs ? 10 : 12, 
-              borderRadius: '2px',
-              bgcolor: item.color 
-            }} />
-            <Typography 
-              variant="caption" 
-              color="text.secondary"
-              sx={{ fontSize: isXs ? '0.7rem' : '0.75rem' }}
-            >
-              {item.label}
-            </Typography>
-          </Box>
-        ))}
       </Box>
     </Box>
   );

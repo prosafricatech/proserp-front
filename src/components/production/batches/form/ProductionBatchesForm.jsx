@@ -155,14 +155,14 @@ function ProductionBatchesForm({ toggleOpen, production, setIsConsumptionDeleted
     },[production, addProduction, updateProduction]);
 
     useEffect(() => {
-        setValue(`inventory_inputs`, inventoryInputs);
+        setValue(`inventory_inputs`, combinedInputsConsumptions);
         setValue(`by_products`, by_products);
         setValue(`outputs`, outputs,{
             shouldValidate: true,
             shouldDirty: true
         });
         setValue(`ledger_expenses`, otherExpenses);
-    }, [production, inventoryInputs, by_products, outputs, otherExpenses])
+    }, [production, combinedInputsConsumptions, by_products, outputs, otherExpenses])
 
     const submitType = watch(`submit_type`);
 

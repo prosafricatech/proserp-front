@@ -129,13 +129,13 @@ function BatchPDF({ batch, organization }) {
                 }
             </View>
 
-            {batch.inventory_consumptions.length > 0 &&
+            {batch.inventory_consumptions?.length > 0 &&
                 <>
                     <View style={{ ...pdfStyles.tableRow, marginTop: 20}}>
                         <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, ...pdfStyles.midInfo, flex: 1, textAlign: 'center' }}>Inventory Consumptions</Text>
                     </View>
                     {
-                        batch.inventory_consumptions.map((item,index) => {
+                        batch.inventory_consumptions?.map((item,index) => {
 
                             return (
                             <React.Fragment key={index}>

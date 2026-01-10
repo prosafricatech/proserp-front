@@ -21,38 +21,45 @@ function MaterialIssuedForm({projectTaskIndex, taskProgressItem, material = null
   const { taskProgressItems, setTaskProgressItems} = useUpdateFormContext();
   const nonInventoryIds = productOptions.filter(product => product.type !== 'Inventory').map(product => product.id);
 
+  // FIXED: Use proper when() syntax with functions
   const validationSchema = yup.object({
     product: yup.object().required("Product is required").typeError('Product is required'),
     quantity: yup
-    .number()
-    .when(['product'], {
-      is: (product) =>
-        !!product && product.type === 'Inventory',
-      then: yup
-        .number()
-        .required("Quantity is required")
-        .positive("Quantity must be a positive number")
-        .typeError('Quantity is required')
-        .when(['current_balance', 'available_balance'], {
-          is: (currentBalance, availableBalance) => currentBalance < availableBalance,
-          then: yup.number()
-            .test('currentBalanceCheck', 'This quantity will lead to negative balance', function (value) {
-              const currentBalance = parseFloat(watch('current_balance'));
-              return value <= currentBalance;
-            }
-          ),
-          otherwise: yup.number().positive("Quantity must be a positive number").typeError('Quantity is required'),
+      .number()
+      .transform((value) => (isNaN(value) ? undefined : value))
+      .when('product', (product, schema) => {
+        if (product && product.type === 'Inventory') {
+          return schema
+            .required("Quantity is required")
+            .positive("Quantity must be a positive number")
+            .typeError('Quantity is required')
+            .test('quantity-balance', 'This quantity will lead to negative balance', function(value) {
+              const currentBalance = parseFloat(this.parent.current_balance);
+              const availableBalance = parseFloat(this.parent.available_balance);
+              
+              if (isNaN(currentBalance) || isNaN(availableBalance)) {
+                return true; // Skip validation if balances aren't available
+              }
+              
+              return !isNaN(value) && value <= currentBalance;
+            })
+            .test('quantity-exceeded', 'The quantity exceeds the balance', function(value) {
+              const availableBalance = parseFloat(this.parent.available_balance);
+              
+              if (availableBalance === 'N/A' || isNaN(availableBalance)) {
+                return true; // Skip validation if balance is not available
+              }
+              
+              return !isNaN(value) && value <= availableBalance;
+            });
         }
-      )        
-      .test('quantity Exceeded', 'The quantity exceeds the balance', function (value) {
-        const availableBalance = parseFloat(watch('available_balance'));
-        return availableBalance === 'N/A' || !value || value <= availableBalance;
+        return schema
+          .positive("Quantity must be a positive number")
+          .typeError('Quantity is required');
       }),
-      otherwise: yup.number().positive("Quantity must be a positive number").typeError('Quantity is required'),
-    }),
   });
 
-  const {setValue, handleSubmit,register,  watch, clearErrors, reset, formState: {errors}} = useForm({
+  const {setValue, handleSubmit, register, watch, clearErrors, reset, formState: {errors}} = useForm({
     resolver: yupResolver(validationSchema),
     defaultValues: {
       product: material && productOptions.find(product => product.id === material.product?.id),
@@ -72,6 +79,7 @@ function MaterialIssuedForm({projectTaskIndex, taskProgressItem, material = null
   const store_id = watch('store_id');
 
   const [isAdding, setIsAdding] = useState(false);
+  
   const updateItems = async (item) => {
     setIsAdding(true);
     
@@ -116,7 +124,7 @@ function MaterialIssuedForm({projectTaskIndex, taskProgressItem, material = null
   
         if (balances) {
           const pickedUnit = combinedUnits?.find(unit => unit.id === measurement_unit_id);
-          const allMaterialIssued = taskProgressItems?.flatMap(task => task.material_used) || []; //from all task executions
+          const allMaterialIssued = taskProgressItems?.flatMap(task => task.material_used) || [];
 
           const existingItems = allMaterialIssued?.filter((existingItem, itemIndex) => {
             return existingItem?.store?.id === storeId 
@@ -131,8 +139,8 @@ function MaterialIssuedForm({projectTaskIndex, taskProgressItem, material = null
             const primaryUnitId = product?.primary_unit?.id;
   
             const conversionFactor = pickedUnit?.id === primaryUnitId
-              ? (existingItem?.measurement_unit_id !== primaryUnitId ? 1 / itemUnitFactor : 1) // Primary to secondary or same unit
-              : (existingItem?.measurement_unit_id === primaryUnitId ? pickedUnitFactor : pickedUnitFactor / itemUnitFactor); // Secondary to primary or another secondary
+              ? (existingItem?.measurement_unit_id !== primaryUnitId ? 1 / itemUnitFactor : 1)
+              : (existingItem?.measurement_unit_id === primaryUnitId ? pickedUnitFactor : pickedUnitFactor / itemUnitFactor);
   
             return total + (existingItem.quantity * conversionFactor);
           }, 0);
@@ -240,7 +248,7 @@ function MaterialIssuedForm({projectTaskIndex, taskProgressItem, material = null
             error={!!errors?.quantity}
             helperText={errors?.quantity?.message}
             onChange={(e)=> {
-              setValue(`quantity`,e.target.value ? sanitizedNumber(e.target.value ) : 0,{
+              setValue(`quantity`, e.target.value ? sanitizedNumber(e.target.value) : null, {
                 shouldValidate: true,
                 shouldDirty: true
               });

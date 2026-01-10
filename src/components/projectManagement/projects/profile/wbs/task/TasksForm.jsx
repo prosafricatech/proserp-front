@@ -15,7 +15,6 @@ import {
   Tooltip,
   Divider,
   IconButton,
-  LinearProgress,
   Typography,
 } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
@@ -35,17 +34,16 @@ const TasksForm = ({ setOpenDialog, task, activity }) => {
     const queryClient = useQueryClient();
     const { enqueueSnackbar } = useSnackbar();
     const {authOrganization : {organization}} = useJumboAuth();
-    const { deliverable_groups, projectTimelineActivities} = useProjectProfile();
+    const { deliverable_groups, projectTimelineActivities, project} = useProjectProfile();
     const [is_milestone, setIs_milestone] = useState(task?.is_milestone === 1 ?  true : false);
     const [serverError, setServerError] = useState(null);
 
-    // React Query v5 syntax for useMutation
     const { mutate: addTask, isPending } = useMutation({
         mutationFn: projectsServices.addTask,
         onSuccess: (data) => {
             setOpenDialog(false);
             enqueueSnackbar(data.message, { variant: 'success' });
-            queryClient.invalidateQueries({queryKey: ['projectTimelineActivities']});
+            queryClient.invalidateQueries({queryKey: ['projectTimelineActivities', project.id],});
         },
         onError: (error) => {
             if (error.response) {
@@ -63,7 +61,7 @@ const TasksForm = ({ setOpenDialog, task, activity }) => {
         onSuccess: (data) => {
             setOpenDialog(false);
             enqueueSnackbar(data.message, { variant: 'success' });
-            queryClient.invalidateQueries({queryKey: ['projectTimelineActivities']});
+            queryClient.invalidateQueries({queryKey: ['projectTimelineActivities', project.id],});
         },
         onError: (error) => {
             if (error.response) {
@@ -239,6 +237,9 @@ const TasksForm = ({ setOpenDialog, task, activity }) => {
         name: 'deliverable_contributions',
     });
 
+    const startDate = watch('start_date');
+    const endDate = watch('end_date');
+
     return (
         <>
             <DialogTitle textAlign={'center'}>{task ? `Edit ${task?.name} Task` : `New ${activity?.name} Task`}</DialogTitle>
@@ -286,9 +287,9 @@ const TasksForm = ({ setOpenDialog, task, activity }) => {
                                                     shouldValidate: true,
                                                     shouldDirty: true,
                                                 });
-                                                const startDate = watch('start_date');
-                                                if (startDate) {
-                                                    setValue('end_date', dayjs(startDate).endOf('day').toISOString(), {
+                                                const currentStartDate = watch('start_date');
+                                                if (currentStartDate) {
+                                                    setValue('end_date', dayjs(currentStartDate).endOf('day').toISOString(), {
                                                         shouldValidate: true,
                                                         shouldDirty: true,
                                                     });
@@ -391,7 +392,7 @@ const TasksForm = ({ setOpenDialog, task, activity }) => {
                                         label='Start Date'
                                         fullWidth
                                         minDate={dayjs(organization.recording_start_date)}
-                                        value={task ? dayjs(task.start_date) : null}
+                                        value={startDate ? dayjs(startDate) : null}
                                         slotProps={{
                                             textField: {
                                                 size: 'small',
@@ -402,8 +403,8 @@ const TasksForm = ({ setOpenDialog, task, activity }) => {
                                             },
                                         }}
                                         onChange={(newValue) => {
-                                            const startDate = newValue ? newValue.toISOString() : null;
-                                            setValue('start_date', startDate, {
+                                            const newStartDate = newValue ? newValue.toISOString() : null;
+                                            setValue('start_date', newStartDate, {
                                                 shouldValidate: true,
                                                 shouldDirty: true,
                                             });
@@ -423,8 +424,8 @@ const TasksForm = ({ setOpenDialog, task, activity }) => {
                                     <DateTimePicker
                                         label='End Date'
                                         fullWidth
-                                        minDate={dayjs(watch('start_date'))}
-                                        value={task ? dayjs(task.end_date) : !!is_milestone ? dayjs(watch(`end_date`)) :  null}
+                                        minDate={startDate ? dayjs(startDate) : dayjs(organization.recording_start_date)}
+                                        value={endDate ? dayjs(endDate) : null}
                                         slotProps={{
                                             textField: {
                                                 size: 'small',
@@ -440,7 +441,7 @@ const TasksForm = ({ setOpenDialog, task, activity }) => {
                                                 shouldDirty: true,
                                             });
                                         }}
-                                        disabled={!!is_milestone} 
+                                        disabled={is_milestone}
                                     />
                                 </Div>
                             </Grid>

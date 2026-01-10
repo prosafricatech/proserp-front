@@ -86,7 +86,7 @@ function InventoryTransferPDF({transfer,organization}) {
                 </View>
                 <View style={{ flex: 0.4}}>
                     <Text style={{...pdfStyles.minInfo, color: mainColor }}>Transfered By</Text>
-                    <Text style={{...pdfStyles.minInfo }}>{`${transfer.creator.name}`}</Text>
+                    <Text style={{...pdfStyles.minInfo }}>{`${transfer?.creator?.name}`}</Text>
                 </View>
             </View>
             <PageFooter/>
