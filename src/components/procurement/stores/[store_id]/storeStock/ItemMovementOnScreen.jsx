@@ -54,6 +54,52 @@ function ItemMovementOnScreen({ movementsData, authObject, baseCurrency }) {
     });
   };
 
+  // Column width styles
+  const columnStyles = {
+    header: {
+      backgroundColor: mainColor, 
+      color: contrastText, 
+      fontSize: '0.875rem',
+      fontWeight: 600,
+      py: 1.5
+    },
+    serial: {
+      width: '60px',
+      minWidth: '60px',
+      maxWidth: '60px'
+    },
+    date: {
+      width: '130px',
+      minWidth: '130px',
+      maxWidth: '130px'
+    },
+    description: {
+      minWidth: '200px',
+      maxWidth: '250px',
+      whiteSpace: 'normal',
+      wordWrap: 'break-word',
+      overflowWrap: 'break-word',
+      lineHeight: 1.3
+    },
+    reference: {
+      width: '140px',
+      minWidth: '140px',
+      maxWidth: '140px'
+    },
+    quantity: {
+      width: '110px',
+      minWidth: '110px',
+      maxWidth: '110px',
+      textAlign: 'right'
+    },
+    finance: {
+      width: '120px',
+      minWidth: '120px',
+      maxWidth: '120px',
+      textAlign: 'right'
+    }
+  };
+
   return (
     <>
       {/* Header Section */}
@@ -92,13 +138,14 @@ function ItemMovementOnScreen({ movementsData, authObject, baseCurrency }) {
           variant="h6" 
           sx={{ 
             color: headerColor, 
-            textAlign: 'center'
+            textAlign: 'center',
+            mb: 2
           }}
         >
           MOVEMENT DETAILS
         </Typography>
 
-        { financePersonnel &&
+        {financePersonnel && (
           <Typography 
             variant="h6" 
             sx={{
@@ -108,12 +155,17 @@ function ItemMovementOnScreen({ movementsData, authObject, baseCurrency }) {
           >
             {baseCurrency?.code}
           </Typography>
-        }
+        )}
         
         <TableContainer 
           component={Paper}
           sx={{
             boxShadow: theme.shadows[2],
+            overflowX: 'auto',
+            '& .MuiTable-root': {
+              minWidth: financePersonnel ? '1100px' : '900px',
+              tableLayout: 'fixed'
+            },
             '& .MuiTableRow-root:hover': {
               backgroundColor: theme.palette.action.hover,
             }
@@ -122,39 +174,82 @@ function ItemMovementOnScreen({ movementsData, authObject, baseCurrency }) {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
-                  #
+                {/* Serial Number */}
+                <TableCell sx={{ 
+                  ...columnStyles.header,
+                  ...columnStyles.serial
+                }}>
+                  S/N
                 </TableCell>
-                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
+                
+                {/* Date */}
+                <TableCell sx={{ 
+                  ...columnStyles.header,
+                  ...columnStyles.date
+                }}>
                   Date
                 </TableCell>
-                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
+                
+                {/* Description */}
+                <TableCell sx={{ 
+                  ...columnStyles.header,
+                  ...columnStyles.description
+                }}>
                   Description
                 </TableCell>
-                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
+                
+                {/* Reference */}
+                <TableCell sx={{ 
+                  ...columnStyles.header,
+                  ...columnStyles.reference
+                }}>
                   Reference
                 </TableCell>
-                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
+                
+                {/* Quantity In */}
+                <TableCell sx={{ 
+                  ...columnStyles.header,
+                  ...columnStyles.quantity
+                }}>
                   Quantity In
                 </TableCell>
-                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
+                
+                {/* Quantity Out */}
+                <TableCell sx={{ 
+                  ...columnStyles.header,
+                  ...columnStyles.quantity
+                }}>
                   Quantity Out
                 </TableCell>
-                <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
+                
+                {/* Balance */}
+                <TableCell sx={{ 
+                  ...columnStyles.header,
+                  ...columnStyles.quantity
+                }}>
                   Balance
                 </TableCell>
-                {financePersonnel &&
+                
+                {/* Finance Columns */}
+                {financePersonnel && (
                   <>
-                    <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
+                    <TableCell sx={{ 
+                      ...columnStyles.header,
+                      ...columnStyles.finance
+                    }}>
                       Avg Cost
                     </TableCell>
-                    <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
+                    <TableCell sx={{ 
+                      ...columnStyles.header,
+                      ...columnStyles.finance
+                    }}>
                       Selling Price
                     </TableCell>
                   </>
-                }
+                )}
               </TableRow>
             </TableHead>
+            
             <TableBody>
               {movements.map((movement, index) => {
                 const balance = movement.quantity_in - movement.quantity_out;
@@ -171,48 +266,64 @@ function ItemMovementOnScreen({ movementsData, authObject, baseCurrency }) {
                       }
                     }}
                   >
-                    <TableCell>{index + 1}</TableCell>
-                    <TableCell>
+                    {/* Serial Number */}
+                    <TableCell sx={columnStyles.serial}>
+                      {index + 1}
+                    </TableCell>
+                    
+                    {/* Date */}
+                    <TableCell sx={columnStyles.date}>
                       {readableDate(movement.movement_date)}
                     </TableCell>
-                    <TableCell>{movement.description}</TableCell>
-                    <TableCell>{movement.reference}</TableCell>
-                    <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
+                    
+                    {/* Description - WITH PROPER WRAPPING */}
+                    <TableCell sx={columnStyles.description}>
+                      {movement.description}
+                    </TableCell>
+                    
+                    {/* Reference */}
+                    <TableCell sx={columnStyles.reference}>
+                      {movement.reference}
+                    </TableCell>
+                    
+                    {/* Quantity In */}
+                    <TableCell sx={columnStyles.quantity}>
                       {movement.quantity_in !== 0 && formatQuantity(movement.quantity_in)}
                     </TableCell>
-                    <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
+                    
+                    {/* Quantity Out */}
+                    <TableCell sx={columnStyles.quantity}>
                       {movement.quantity_out !== 0 && formatQuantity(movement.quantity_out)}
                     </TableCell>
+                    
+                    {/* Balance */}
                     <TableCell 
-                      align="right" 
                       sx={{ 
-                        fontFamily: 'monospace',
+                        ...columnStyles.quantity,
                         ...balanceStyle,
-                        position: 'relative'
+                        fontFamily: 'monospace'
                       }}
                     >
                       {formatQuantity(cumulativeBalance)}
                     </TableCell>
-                    {financePersonnel &&
+                    
+                    {/* Finance Columns */}
+                    {financePersonnel && (
                       <>
-                      <TableCell
-                        align="right" 
-                        sx={{ 
-                          fontFamily: 'monospace',
-                          ...balanceStyle,
-                          position: 'relative'
-                        }}
-                      >{movement.average_cost?.toLocaleString()}</TableCell>
-                      <TableCell
-                        align="right" 
-                        sx={{ 
-                          fontFamily: 'monospace',
-                          ...balanceStyle,
-                          position: 'relative'
-                        }}
-                      >{movement.selling_price?.toLocaleString()}</TableCell>
+                        <TableCell sx={{ 
+                          ...columnStyles.finance,
+                          fontFamily: 'monospace'
+                        }}>
+                          {movement.average_cost?.toLocaleString()}
+                        </TableCell>
+                        <TableCell sx={{ 
+                          ...columnStyles.finance,
+                          fontFamily: 'monospace'
+                        }}>
+                          {movement.selling_price?.toLocaleString()}
+                        </TableCell>
                       </>
-                    }
+                    )}
                   </TableRow>
                 );
               })}
@@ -220,7 +331,14 @@ function ItemMovementOnScreen({ movementsData, authObject, baseCurrency }) {
               {/* Empty State */}
               {movements.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} sx={{ textAlign: 'center', py: 4 }}>
+                  <TableCell 
+                    colSpan={financePersonnel ? 9 : 7} 
+                    sx={{ 
+                      textAlign: 'center', 
+                      py: 4,
+                      borderBottom: 'none'
+                    }}
+                  >
                     <Typography variant="body1" color="text.secondary">
                       No movement data available
                     </Typography>
@@ -234,47 +352,68 @@ function ItemMovementOnScreen({ movementsData, authObject, baseCurrency }) {
                   backgroundColor: theme.palette.background.default,
                   '& td': {
                     borderBottom: 'none',
+                    fontWeight: 600,
+                    fontSize: '0.9rem'
                   }
                 }}>
                   <TableCell 
                     colSpan={4} 
                     align="right" 
                     sx={{ 
+                      py: 2
                     }}
                   >
                     Final Balance
                   </TableCell>
-                  <TableCell 
-                    align="right" 
-                    sx={{ 
-                      fontFamily: 'monospace',
-                    }}
-                  >
+                  
+                  <TableCell sx={{ 
+                    ...columnStyles.quantity,
+                    fontFamily: 'monospace'
+                  }}>
                     {formatQuantity(movements.reduce((sum, m) => sum + m.quantity_in, 0))}
                   </TableCell>
-                  <TableCell 
-                    align="right" 
-                    sx={{ 
-                      fontFamily: 'monospace',
-                    }}
-                  >
+                  
+                  <TableCell sx={{ 
+                    ...columnStyles.quantity,
+                    fontFamily: 'monospace'
+                  }}>
                     {formatQuantity(movements.reduce((sum, m) => sum + m.quantity_out, 0))}
                   </TableCell>
+                  
                   <TableCell 
-                    align="right" 
                     sx={{ 
-                      fontFamily: 'monospace',
+                      ...columnStyles.quantity,
                       ...getBalanceStyle(cumulativeBalance),
+                      fontFamily: 'monospace',
                       fontSize: '1rem'
                     }}
                   >
                     {formatQuantity(cumulativeBalance)}
                   </TableCell>
+                  
+                  {/* Empty cells for finance columns if needed */}
+                  {financePersonnel && (
+                    <>
+                      <TableCell sx={columnStyles.finance}></TableCell>
+                      <TableCell sx={columnStyles.finance}></TableCell>
+                    </>
+                  )}
                 </TableRow>
               )}
             </TableBody>
           </Table>
         </TableContainer>
+        
+        {/* Mobile warning for horizontal scroll */}
+        <Box sx={{ 
+          display: { xs: 'block', md: 'none' },
+          mt: 1,
+          textAlign: 'center'
+        }}>
+          <Typography variant="caption" color="text.secondary">
+            ← Scroll horizontally to view all columns →
+          </Typography>
+        </Box>
       </Box>
     </>
   );

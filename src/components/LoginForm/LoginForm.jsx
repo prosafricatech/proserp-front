@@ -102,20 +102,19 @@ const LoginForm = () => {
         );
       }
 
-      // Navigate na useTransition ili loading iendelee hadi page i-load
       startTransition(() => {
         router.push(targetUrl);
       });
 
     } catch (error) {
+      setLoading(false);
       enqueueSnackbar(
         dictionary.signin.form.messages.loginError || 'Login failed. Please try again.',
         { variant: 'error' }
       );
       console.error('Login error:', error);
     } finally {
-      //  transition
-      // useTransition ina-handle isPending automatically
+      setLoading(false);
     }
   };
 
