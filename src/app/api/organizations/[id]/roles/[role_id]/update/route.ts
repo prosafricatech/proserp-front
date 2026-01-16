@@ -3,23 +3,27 @@ import { NextRequest } from 'next/server';
 
 const API_BASE = process.env.API_BASE_URL!;
 
-export async function POST(
+export async function PUT(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string; role_id: string }> }
 ) {
   const { id } = await params;
+  const { role_id } = await params;
 
   const { headers, response } = await getAuthHeaders(req);
+
   if (response) return response;
 
-  const roleData = await req.json();
+  const body = await req.json();
 
-  const res = await fetch(`${API_BASE}/organizations/${id}/new-role`, {
-    method: 'POST',
-    headers,
-    credentials: 'include',
-    body: JSON.stringify(roleData),
-  });
+  const res = await fetch(
+    `${API_BASE}/organizations/${id}/roles/${role_id}/update`,
+    {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify(body),
+    }
+  );
 
   return handleJsonResponse(res);
 }

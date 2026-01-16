@@ -1,38 +1,55 @@
-'use client'
+'use client';
 
-import { LoadingButton } from '@mui/lab';
-import * as yup from 'yup';
-import React from 'react';
-import { Grid, TextField } from '@mui/material';
-import { useOrganizationProfile } from '../OrganizationProfileProvider';
-import { useSnackbar } from 'notistack';
-import { useForm } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
-import { AxiosError } from 'axios';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
-import organizationServices from '../../organizationServices';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { LoadingButton } from '@mui/lab';
+import { Button, Grid, TextField } from '@mui/material';
+import { Stack } from '@mui/system';
+import { useQueryClient } from '@tanstack/react-query';
+import { useSnackbar } from 'notistack';
+import { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import * as yup from 'yup';
+import { useOrganizationProfile } from '../OrganizationProfileProvider';
 
 interface FormValues {
   name: string;
   description?: string;
   organization_id: string;
+  role_id?: number | null;
 }
 
 interface ValidationErrors {
   [key: string]: string[];
 }
 
-interface ApiErrorResponse {
-  message?: string;
-  validation_errors?: ValidationErrors;
+interface Permission {
+  id: number;
+  name: string;
 }
 
-interface AddRoleResponse {
-  message: string;
+interface Role {
+  id: number;
+  name: string;
+  description?: string;
+  permissions: Permission[];
 }
 
-export const NewRoleForm = () => {
+interface RoleFormProp {
+  isEditMode: boolean;
+  isLoading: boolean;
+  role: Role | null;
+  handleCancelEdit?: () => void;
+  handleFormSubmit: (data: FormValues) => void;
+}
+
+export const NewRoleForm = ({
+  isEditMode,
+  isLoading,
+  role = null,
+  handleCancelEdit,
+  handleFormSubmit,
+}: RoleFormProp) => {
   const { organization } = useOrganizationProfile();
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
@@ -58,74 +75,72 @@ export const NewRoleForm = () => {
     },
   });
 
-  const addRole = useMutation<AddRoleResponse, AxiosError<ApiErrorResponse>, FormValues>({
-    mutationFn: (data: FormValues) => organizationServices.addRole(data),
-    onSuccess: (data) => {
-      enqueueSnackbar(newRoleDict.messages.success, {
-        variant: 'success',
+  useEffect(() => {
+    if (isEditMode && role) {
+      reset({
+        organization_id: organization?.id,
+        name: role.name,
+        description: role.description,
+        role_id: role.id,
       });
-      queryClient.invalidateQueries({ 
-        queryKey: [`organizationRoles`] 
+    } else {
+      reset({
+        organization_id: organization?.id,
+        name: '',
+        description: '',
+        role_id: null,
       });
-      reset();
-    },
-    onError: (error) => {
-      if (
-        error?.response?.data &&
-        error?.response?.status === 400 &&
-        error?.response?.data?.validation_errors
-      ) {
-        const validationErrors = error.response.data.validation_errors;
-        Object.keys(validationErrors).forEach((fieldName) => {
-          const errorMessages = validationErrors[fieldName];
-          setError(fieldName as keyof FormValues, {
-            type: 'manual',
-            message: errorMessages.join('<br/>'),
-          });
-        });
-      } else {
-        enqueueSnackbar(
-          newRoleDict.messages.error, 
-          { variant: 'error' }
-        );
-      }
-    },
-  });
+    }
+  }, [isEditMode, role, organization, reset]);
 
   return (
-    <form onSubmit={handleSubmit((data) => addRole.mutate(data))} autoComplete="off">
+    <form onSubmit={handleSubmit(handleFormSubmit)} autoComplete='off'>
       <Grid container columnSpacing={1} rowSpacing={1}>
-        <Grid size={{xs: 12, md: 4}}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <TextField
             fullWidth
             label={newRoleDict.labels.name}
-            size="small"
+            size='small'
             error={!!errors?.name}
             helperText={errors?.name?.message}
             {...register('name')}
           />
         </Grid>
-        <Grid size={{xs: 12, md: 6, lg: 7}}>
+        <Grid size={{ xs: 12, md: 6, lg: 7 }}>
           <TextField
             fullWidth
             label={newRoleDict.labels.description}
-            size="small"
+            size='small'
             error={!!errors?.description}
             helperText={errors?.description?.message}
             {...register('description')}
           />
         </Grid>
-        <Grid size={{xs: 12, md: 2, lg: 1}}>
-          <LoadingButton
-            type="submit"
-            variant="contained"
-            size="small"
-            fullWidth
-            sx={{ mb: 2, display: 'flex' }}
-            loading={addRole.isPending}
-          >
-            {newRoleDict.buttons.add}
-          </LoadingButton>
+        <Grid size={{ xs: 12, md: 2, lg: 1 }}>
+          <Stack direction={{ xs: 'row', md: 'column' }} spacing={1}>
+            <LoadingButton
+              type='submit'
+              variant='contained'
+              size='small'
+              fullWidth
+              sx={{ display: 'flex' }}
+              loading={isLoading}
+            >
+              {!isEditMode ? newRoleDict.buttons.add : 'Update'}
+            </LoadingButton>
+            {isEditMode && (
+              <Button
+                variant='contained'
+                color='error'
+                size='small'
+                fullWidth
+                sx={{ mb: 2 }}
+                onClick={handleCancelEdit}
+              >
+                Cancel
+              </Button>
+            )}
+          </Stack>
         </Grid>
       </Grid>
     </form>
