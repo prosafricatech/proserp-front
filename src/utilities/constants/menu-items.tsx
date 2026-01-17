@@ -7,6 +7,8 @@ export async function getMenus(locale: string) {
 
   const icon = (name: IconName): IconName => name;
 
+  console.log('locale: ', locale);
+
   return [
     {
       label: sidebar.menu.home,
@@ -179,6 +181,40 @@ export async function getMenus(locale: string) {
             {
               uri: `/${locale}/projectManagement/projectCategories`,
               label: sidebar.menuItem.projectCategories,
+              type: 'nav-item',
+            },
+          ],
+        },
+      ],
+    },
+    {
+      label: sidebar.menu.humanResources,
+      type: 'section',
+      children: [
+        {
+          uri: `/${locale}/humanResources/employees`,
+          label: sidebar.menuItem.employees,
+          type: 'nav-item',
+          icon: icon('employees'),
+        },
+        {
+          label: sidebar.menuItem.masters,
+          type: 'collapsible',
+          icon: icon('businessCenter'),
+          children: [
+            {
+              uri: `/${locale}/humanResources/departments`,
+              label: sidebar.menuItem.departments,
+              type: 'nav-item',
+            },
+            {
+              uri: `/${locale}/humanResources/leaves`,
+              label: sidebar.menuItem.leaves,
+              type: 'nav-item',
+            },
+            {
+              uri: `/${locale}/humanResources/resignation`,
+              label: sidebar.menuItem.resignation,
               type: 'nav-item',
             },
           ],
