@@ -255,7 +255,10 @@
           "nameRequired": "Jina la jukumu linahitajika"
         },
         "buttons": {
-          "add": "Ongeza"
+          "add": "Ongeza",
+          "edit": "Hariri Jukumu",
+          "update": "Sasisha",
+          "cancel": "Ghairi"
         },
         "messages": {
           "success": "Jukumu limeongezwa kikamilifu",

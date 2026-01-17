@@ -126,7 +126,9 @@ export const NewRoleForm = ({
               sx={{ display: 'flex' }}
               loading={isLoading}
             >
-              {!isEditMode ? newRoleDict.buttons.add : 'Update'}
+              {!isEditMode
+                ? newRoleDict.buttons.add
+                : newRoleDict.buttons.update}
             </LoadingButton>
             {isEditMode && (
               <Button
@@ -137,7 +139,7 @@ export const NewRoleForm = ({
                 sx={{ mb: 2 }}
                 onClick={handleCancelEdit}
               >
-                Cancel
+                {newRoleDict.buttons.cancel}
               </Button>
             )}
           </Stack>

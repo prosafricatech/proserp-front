@@ -76,6 +76,7 @@ const OrganizationRoles = () => {
   const roleManagementDict =
     dictionary.organizations.profile.rolesTab.roleManagement;
   const newRoleDict = dictionary.organizations.profile.rolesTab.newRoleForm;
+  // const
 
   // state to track edit mode
   const [isEditMode, setIsEditMode] = useState(false);
@@ -370,7 +371,7 @@ const OrganizationRoles = () => {
                           Cancel
                         </Button>
                       ) : (
-                        <Tooltip title='Update Role'>
+                        <Tooltip title={newRoleDict.buttons.edit}>
                           <IconButton
                             size='small'
                             sx={{
