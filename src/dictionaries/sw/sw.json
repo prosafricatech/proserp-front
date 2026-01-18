@@ -16,7 +16,8 @@
       "masters": "Mastaazi",
       "switchOrganization": "Badilisha Shirika",
       "manufacturing": "viwanda",
-      "measurement_units": "Vipimo"
+      "measurement_units": "Vipimo",
+      "humanResources": "Rasilimali Watu"
     },
     "menuItem": {
       "masters": "Wakuu",
@@ -61,7 +62,12 @@
       "troubleshooting": "Kutatua Matatizo",
       "prosAfricans": "ProsAfricans",
       "invitations": "Mialiko",
-      "organizations": "Mashirika"
+      "organizations": "Mashirika",
+      
+      "employees": "Waajiriwa",
+      "departments": "Idara",
+      "leaves": "Likizo",
+      "designations": "Vyeo"
     }
   },
   

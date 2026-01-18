@@ -15,7 +15,8 @@
       "prosControl": "Pros Control",
       "organizations": "Organizations",
       "manufacturing": "Manufacturing",
-      "measurement_units": "Measurement Units"
+      "measurement_units": "Measurement Units",
+      "humanResources": "Human Resources"
     },
     "menuItem": {
       "masters": "Masters",
@@ -59,7 +60,12 @@
       "troubleshooting": "Troubleshooting",
       "prosAfricans": "ProsAfricans",
       "invitations": "Invitations",
-      "organizations": "Organizations"
+      "organizations": "Organizations",
+
+      "employees": "Employees",
+      "departments": "Departments",
+      "leaves": "Leaves",
+      "designations": "Designations"
     }
   },
 

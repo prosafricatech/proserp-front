@@ -255,7 +255,10 @@
           "nameRequired": "Role name required"
         },
         "buttons": {
-          "add": "Add"
+          "add": "Add",
+          "edit": "Edit Role",
+          "update": "Update",
+          "cancel": "Cancel"
         },
         "messages": {
           "success": "Role added successfully",
