@@ -8,12 +8,12 @@ export async function GET(req: NextRequest) {
   if (response) return response;
 
   const { searchParams } = new URL(req.url);
-  const keyWord = searchParams.get('keyword') || '';
+  const keyword = searchParams.get('keyword') || '';
   const page = searchParams.get('page') || '1';
   const limit = searchParams.get('limit') || '10';
-  const query = new URLSearchParams({ keyWord, page, limit }).toString();
+  const query = new URLSearchParams({ keyword, page, limit }).toString();
 
-  const res = await fetch(`${API_BASE}/employees/${query}`, {
+  const res = await fetch(`${API_BASE}/employees?${query}`, {
     headers,
     credentials: 'include',
   });

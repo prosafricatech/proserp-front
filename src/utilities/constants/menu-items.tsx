@@ -213,8 +213,8 @@ export async function getMenus(locale: string) {
               type: 'nav-item',
             },
             {
-              uri: `/${locale}/humanResources/resignation`,
-              label: sidebar.menuItem.resignation,
+              uri: `/${locale}/humanResources/designations`,
+              label: sidebar.menuItem.designations,
               type: 'nav-item',
             },
           ],

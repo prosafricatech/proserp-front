@@ -1,5 +1,7 @@
+import Employees from '@/components/humanResources/employees/Employees';
+
 const page = () => {
-  return <div>Employees Page</div>;
+  return <Employees />;
 };
 
 export default page;
