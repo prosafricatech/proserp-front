@@ -1,3 +1,5 @@
+'use client';
+
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Div } from '@jumbo/shared';
 import { LoadingButton } from '@mui/lab';
@@ -13,9 +15,11 @@ import {
   SelectChangeEvent,
   TextField,
 } from '@mui/material';
+import { DateTimePicker } from '@mui/x-date-pickers';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import dayjs, { Dayjs } from 'dayjs';
 import { useSnackbar } from 'notistack';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import humanResourcesServices from '../humanResourcesServices';
@@ -45,7 +49,19 @@ const EmployeeForm = ({
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
 
-  const [employeeGender, setEmployeeGender] = React.useState('');
+  useEffect(() => {
+    const date = new Date();
+    const dayjsDate = dayjs(date).toISOString();
+    setEmployeeDoB(dayjsDate);
+  }, []);
+
+  const [employeeGender, setEmployeeGender] = React.useState('male');
+  const [employeeDoB, setEmployeeDoB] = useState<string | undefined>('');
+
+  const date = new Date();
+  const dayjsDate = dayjs(date).toISOString();
+  console.log('date: ', date);
+  console.log('dayjsDate: ', dayjsDate);
 
   const handleChange = (event: SelectChangeEvent) => {
     setEmployeeGender(event.target.value as string);
@@ -116,11 +132,12 @@ const EmployeeForm = ({
       first_name: employee?.first_name || '',
       middle_name: employee?.middle_name || '',
       last_name: employee?.last_name || '',
-      gender: employee?.gender || '',
+      gender: employee?.gender || employeeGender,
       email: employee?.email || '',
       phone_number: employee?.phone_number || '',
       address: employee?.address || '',
-      date_of_birth: employee?.date_of_birth || '',
+      date_of_birth:
+        employee?.date_of_birth || employeeDoB ? employeeDoB : dayjsDate,
     },
   });
 
@@ -212,11 +229,11 @@ const EmployeeForm = ({
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, md: 4 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
-                <InputLabel id='gende-select-label'>Gender</InputLabel>
+                <InputLabel id='gender-select-label'>Gender</InputLabel>
                 <Select
                   fullWidth
-                  labelId='gende-select-label'
-                  id='gende-select'
+                  labelId='gender-select-label'
+                  id='gender-select'
                   value={employeeGender}
                   label='Gender'
                   onChange={handleChange}
@@ -294,7 +311,7 @@ const EmployeeForm = ({
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
-                <TextField
+                {/* <TextField
                   label='Date Of Birth'
                   placeholder='18 Jan 1989'
                   size='small'
@@ -312,6 +329,19 @@ const EmployeeForm = ({
                       ?.date_of_birth
                   }
                   {...register('date_of_birth')}
+                /> */}
+                <DateTimePicker
+                  label='Date Of Birth'
+                  value={dayjs(employeeDoB)}
+                  slotProps={{
+                    textField: {
+                      size: 'small',
+                      fullWidth: true,
+                    },
+                  }}
+                  onChange={(value: Dayjs | null) => {
+                    setEmployeeDoB(value?.toISOString());
+                  }}
                 />
               </Div>
             </Grid>

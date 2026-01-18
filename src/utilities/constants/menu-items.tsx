@@ -7,8 +7,6 @@ export async function getMenus(locale: string) {
 
   const icon = (name: IconName): IconName => name;
 
-  console.log('locale: ', locale);
-
   return [
     {
       label: sidebar.menu.home,

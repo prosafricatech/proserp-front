@@ -27,16 +27,6 @@ const Employees = () => {
     return <EmployeesList employee={employee} />;
   }, []);
 
-  //   const {
-  //     data: employees = [],
-  //     isLoading: isLoadingRoles,
-  //     isFetching: isFetchingRoles,
-  //   } = useQuery<Employee[]>({
-  //     queryKey: ['employees', organization?.id],
-  //     queryFn: () => humanResourcesServices.getAllEmployees(),
-  //     enabled: !!organization?.id,
-  //   });
-
   return (
     <>
       <Typography variant={'h4'} mb={2}>
@@ -45,7 +35,7 @@ const Employees = () => {
       <JumboRqList
         ref={listRef}
         wrapperComponent={Card}
-        service={humanResourcesServices.getList}
+        service={humanResourcesServices.getAllEmployees}
         primaryKey='id'
         queryOptions={queryOptions}
         itemsPerPage={10}
