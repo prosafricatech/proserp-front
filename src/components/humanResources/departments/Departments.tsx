@@ -5,33 +5,33 @@ import JumboRqList from '@jumbo/components/JumboReactQuery/JumboRqList';
 import { Card, Stack, Typography } from '@mui/material';
 import React, { useRef } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
-import EmployeeActionTail from './EmployeeActionTail';
-import EmployeesListItem from './EmployeesListItem';
-import { Employee } from './EmployeesType';
+import DepartmentActionTail from './DepartmentActionTail';
+import DepartmentsListItem from './DepartmentsListItem';
+import { Department } from './DepertmentsType';
 
-const Employees = () => {
+const Departments = () => {
   const listRef = useRef<any>(null);
 
   const [queryOptions, setQueryOptions] = React.useState({
-    queryKey: 'employees',
+    queryKey: 'departments',
     queryParams: {},
     countKey: 'total',
     dataKey: 'data',
   });
 
-  const renderEmployees = React.useCallback((employee: Employee) => {
-    return <EmployeesListItem employee={employee} />;
+  const renderEmployees = React.useCallback((department: Department) => {
+    return <DepartmentsListItem department={department} />;
   }, []);
 
   return (
     <>
       <Typography variant={'h4'} mb={2}>
-        Employees
+        Departments
       </Typography>
       <JumboRqList
         ref={listRef}
         wrapperComponent={Card}
-        service={humanResourcesServices.getAllEmployees}
+        service={humanResourcesServices.getAllDepartments}
         primaryKey='id'
         queryOptions={queryOptions}
         itemsPerPage={10}
@@ -49,10 +49,10 @@ const Employees = () => {
             actionTail={
               <Stack direction='row'>
                 {/* <JumboSearch
-                  onChange={handleOnChange}
-                  value={queryOptions.queryParams.keyword}
-                /> */}
-                <EmployeeActionTail />
+                    onChange={handleOnChange}
+                    value={queryOptions.queryParams.keyword}
+                  /> */}
+                <DepartmentActionTail />
               </Stack>
             }
           ></JumboListToolbar>
@@ -62,4 +62,4 @@ const Employees = () => {
   );
 };
 
-export default Employees;
+export default Departments;

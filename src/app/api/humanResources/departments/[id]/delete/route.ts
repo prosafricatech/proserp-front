@@ -3,16 +3,18 @@ import { NextRequest } from 'next/server';
 
 const API_BASE = process.env.API_BASE_URL!;
 
-export async function POST(req: NextRequest) {
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+
   const { headers, response } = await getAuthHeaders(req);
   if (response) return response;
 
-  const body = await req.json();
-  const res = await fetch(`${API_BASE}/employees`, {
-    method: 'POST',
+  const res = await fetch(`${API_BASE}/departments/${id}`, {
+    method: 'DELETE',
     headers,
-    credentials: 'include',
-    body: JSON.stringify(body),
   });
 
   return handleJsonResponse(res);

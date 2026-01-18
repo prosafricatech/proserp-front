@@ -1,5 +1,7 @@
+import Departments from '@/components/humanResources/departments/Departments';
+
 const page = () => {
-  return <div>departments page</div>;
+  return <Departments />;
 };
 
 export default page;

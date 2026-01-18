@@ -58,11 +58,6 @@ const EmployeeForm = ({
   const [employeeGender, setEmployeeGender] = React.useState('male');
   const [employeeDoB, setEmployeeDoB] = useState<string | undefined>('');
 
-  const date = new Date();
-  const dayjsDate = dayjs(date).toISOString();
-  console.log('date: ', date);
-  console.log('dayjsDate: ', dayjsDate);
-
   const handleChange = (event: SelectChangeEvent) => {
     setEmployeeGender(event.target.value as string);
   };
@@ -72,7 +67,7 @@ const EmployeeForm = ({
     isPending,
     error,
   } = useMutation<ApiResponse, any, FormData>({
-    mutationFn: humanResourcesServices.add,
+    mutationFn: humanResourcesServices.addEmployee,
     onSuccess: (data) => {
       setOpenDialog(false);
       enqueueSnackbar('Suces Adding Employee', {
@@ -92,7 +87,7 @@ const EmployeeForm = ({
     isPending: updateIsLoading,
     error: updateError,
   } = useMutation<ApiResponse, any, FormData>({
-    mutationFn: humanResourcesServices.update,
+    mutationFn: humanResourcesServices.updateEmployee,
     onSuccess: (data) => {
       setOpenDialog(false);
       enqueueSnackbar('Employee update success', {
@@ -101,7 +96,7 @@ const EmployeeForm = ({
       queryClient.invalidateQueries({ queryKey: ['employees'] });
     },
     onError: (error) => {
-      enqueueSnackbar('Error Updating EMployee', {
+      enqueueSnackbar('Error Updating Employee', {
         variant: 'error',
       });
     },
@@ -137,12 +132,12 @@ const EmployeeForm = ({
       phone_number: employee?.phone_number || '',
       address: employee?.address || '',
       date_of_birth:
-        employee?.date_of_birth || employeeDoB ? employeeDoB : dayjsDate,
+        employee?.date_of_birth || employeeDoB ? employeeDoB : employeeDoB,
     },
   });
 
   const saveMutation = React.useMemo(() => {
-    return employee?.user_id ? updateEmployee : addEmployee;
+    return employee?.id ? updateEmployee : addEmployee;
   }, [employee, updateEmployee, addEmployee]);
 
   const onSubmit = (data: FormData) => {
@@ -153,7 +148,7 @@ const EmployeeForm = ({
     <>
       <DialogTitle>
         <Grid size={12} textAlign={'center'}>
-          {!employee?.user_id
+          {!employee?.id
             ? 'Add Employee'
             : `Edit Employee ${employee.first_name} ${employee.middle_name} ${employee.last_name}`}
         </Grid>
@@ -171,12 +166,12 @@ const EmployeeForm = ({
                   error={
                     !!errors?.first_name ||
                     !!error?.response?.data?.validation_errors?.first_name ||
-                    !!updateError?.response?.data?.validation_errors?.name
+                    !!updateError?.response?.data?.validation_errors?.first_name
                   }
                   helperText={
                     errors.first_name?.message ||
-                    error?.response?.data?.validation_errors?.name ||
-                    updateError?.response?.data?.validation_errors?.name
+                    error?.response?.data?.validation_errors?.first_name ||
+                    updateError?.response?.data?.validation_errors?.first_name
                   }
                   {...register('first_name')}
                 />
@@ -311,25 +306,6 @@ const EmployeeForm = ({
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
-                {/* <TextField
-                  label='Date Of Birth'
-                  placeholder='18 Jan 1989'
-                  size='small'
-                  fullWidth
-                  error={
-                    !!errors?.date_of_birth ||
-                    !!error?.response?.data?.validation_errors?.date_of_birth ||
-                    !!updateError?.response?.data?.validation_errors
-                      ?.date_of_birth
-                  }
-                  helperText={
-                    errors.date_of_birth?.message ||
-                    error?.response?.data?.validation_errors?.date_of_birth ||
-                    updateError?.response?.data?.validation_errors
-                      ?.date_of_birth
-                  }
-                  {...register('date_of_birth')}
-                /> */}
                 <DateTimePicker
                   label='Date Of Birth'
                   value={dayjs(employeeDoB)}

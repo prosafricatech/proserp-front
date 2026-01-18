@@ -3,7 +3,7 @@
 import { Divider, Grid, Tooltip, Typography } from '@mui/material';
 import { Employee } from './EmployeesType';
 
-const EmployeesList = ({ employee }: { employee: Employee }) => {
+const EmployeesListItem = ({ employee }: { employee: Employee }) => {
   return (
     <>
       <Divider />
@@ -52,4 +52,4 @@ const EmployeesList = ({ employee }: { employee: Employee }) => {
   );
 };
 
-export default EmployeesList;
+export default EmployeesListItem;
