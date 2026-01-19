@@ -1,42 +1,42 @@
 'use client';
 
+import humanResourcesServices from '@/components/humanResources/humanResourcesServices';
 import JumboListToolbar from '@jumbo/components/JumboList/components/JumboListToolbar';
 import JumboRqList from '@jumbo/components/JumboReactQuery/JumboRqList';
 import { Card, Stack, Typography } from '@mui/material';
 import React, { useRef } from 'react';
-import humanResourcesServices from '../humanResourcesServices';
-import DepartmentActionTail from './DepartmentActionTail';
-import DepartmentsListItem from './DepartmentsListItem';
-import { Department } from './DepartmentsType';
+import DesignationActionTail from './DesignationActionTail';
+import DesignationsListItem from './DesignationsListItem';
+import { Designation } from './DesignationsType';
 
-const Departments = () => {
+const Designations = () => {
   const listRef = useRef<any>(null);
 
   const [queryOptions, setQueryOptions] = React.useState({
-    queryKey: 'departments',
+    queryKey: 'designations',
     queryParams: {},
     countKey: 'total',
     dataKey: 'data',
   });
 
-  const renderDepartments = React.useCallback((department: Department) => {
-    return <DepartmentsListItem department={department} />;
+  const renderDesignations = React.useCallback((designation: Designation) => {
+    return <DesignationsListItem designation={designation} />;
   }, []);
 
   return (
     <>
       <Typography variant={'h4'} mb={2}>
-        Departments
+        Designations
       </Typography>
       <JumboRqList
         ref={listRef}
         wrapperComponent={Card}
-        service={humanResourcesServices.getAllDepartments}
+        service={humanResourcesServices.getAllDesignations}
         primaryKey='id'
         queryOptions={queryOptions}
         itemsPerPage={10}
         itemsPerPageOptions={[5, 8, 10, 15, 20]}
-        renderItem={renderDepartments}
+        renderItem={renderDesignations}
         componentElement='div'
         wrapperSx={{
           flex: 1,
@@ -49,10 +49,10 @@ const Departments = () => {
             actionTail={
               <Stack direction='row'>
                 {/* <JumboSearch
-                    onChange={handleOnChange}
-                    value={queryOptions.queryParams.keyword}
-                  /> */}
-                <DepartmentActionTail />
+                      onChange={handleOnChange}
+                      value={queryOptions.queryParams.keyword}
+                    /> */}
+                <DesignationActionTail />
               </Stack>
             }
           ></JumboListToolbar>
@@ -62,4 +62,4 @@ const Departments = () => {
   );
 };
 
-export default Departments;
+export default Designations;

@@ -1,4 +1,4 @@
-import { Department } from './DepertmentsType';
+import { Department } from './DepartmentsType';
 
 const DepartmentsListItem = ({ department }: { department: Department }) => {
   return <div>DepartmentsListItem</div>;

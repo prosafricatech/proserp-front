@@ -1,5 +1,7 @@
+import Designations from '@/components/humanResources/designations/Designations';
+
 const page = () => {
-  return <div>Designations Page</div>;
+  return <Designations />;
 };
 
 export default page;

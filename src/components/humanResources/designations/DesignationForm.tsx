@@ -17,75 +17,75 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import humanResourcesServices from '../humanResourcesServices';
-import { Department } from './DepartmentsType';
+import { Designation } from './DesignationsType';
 
-interface DepartmentFormProp {
+interface DesignationFormProp {
   setOpenDialog: (open: boolean) => void;
-  department?: Department | null;
+  designation?: Designation | null;
 }
 
-interface FormData extends Omit<Department, 'id'> {
+interface FormData extends Omit<Designation, 'id'> {
   id?: number;
 }
 
 interface ApiResponse {
   message: string;
   validation_errors?: {
-    name?: string;
+    title?: string;
   };
 }
 
-const DepartmentForm = ({
+const DesignationForm = ({
   setOpenDialog,
-  department = null,
-}: DepartmentFormProp) => {
+  designation = null,
+}: DesignationFormProp) => {
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
 
   const {
-    mutate: addDepartment,
+    mutate: addDesignation,
     isPending,
     error,
   } = useMutation<ApiResponse, any, FormData>({
-    mutationFn: humanResourcesServices.addDepartment,
+    mutationFn: humanResourcesServices.addDesignation,
     onSuccess: (data) => {
       setOpenDialog(false);
-      enqueueSnackbar('Suces Adding Department', {
+      enqueueSnackbar('Suces Adding Designation', {
         variant: 'success',
       });
-      queryClient.invalidateQueries({ queryKey: ['departments'] });
+      queryClient.invalidateQueries({ queryKey: ['designations'] });
     },
     onError: (error) => {
-      enqueueSnackbar('Error Adding Department', {
+      enqueueSnackbar('Error Adding Designation', {
         variant: 'error',
       });
-      console.log('error adding department: ', error);
+      console.log('error adding designation: ', error);
     },
   });
 
   const {
-    mutate: updateDepartment,
+    mutate: updateDesignation,
     isPending: updateIsLoading,
     error: updateError,
   } = useMutation<ApiResponse, any, FormData>({
-    mutationFn: humanResourcesServices.updateDepartment,
+    mutationFn: humanResourcesServices.updateDesignation,
     onSuccess: (data) => {
       setOpenDialog(false);
-      enqueueSnackbar('Department update success', {
+      enqueueSnackbar('Designation update success', {
         variant: 'success',
       });
-      queryClient.invalidateQueries({ queryKey: ['departments'] });
+      queryClient.invalidateQueries({ queryKey: ['designations'] });
     },
     onError: (error) => {
-      enqueueSnackbar('Error Updating Department', {
+      enqueueSnackbar('Error Updating Designation', {
         variant: 'error',
       });
-      console.log('error updating department: ', error);
+      console.log('error updating designation: ', error);
     },
   });
 
   const validationSchema = yup.object({
-    name: yup.string().required('name is required'),
+    title: yup.string().required('title is required'),
     code: yup.string(),
     description: yup.string(),
   });
@@ -97,15 +97,15 @@ const DepartmentForm = ({
   } = useForm<FormData>({
     resolver: yupResolver(validationSchema) as any,
     defaultValues: {
-      name: department?.name || '',
-      code: department?.code || '',
-      description: department?.description || '',
+      title: designation?.title || '',
+      code: designation?.code || '',
+      description: designation?.description || '',
     },
   });
 
   const saveMutation = React.useMemo(() => {
-    return department?.id ? updateDepartment : addDepartment;
-  }, [department, updateDepartment, addDepartment]);
+    return designation?.id ? updateDesignation : addDesignation;
+  }, [designation, updateDesignation, addDesignation]);
 
   const onSubmit = (data: FormData) => {
     saveMutation(data);
@@ -115,9 +115,9 @@ const DepartmentForm = ({
     <>
       <DialogTitle>
         <Grid size={12} textAlign={'center'}>
-          {!department?.id
-            ? 'Add Department'
-            : `Edit Department ${department.name}`}
+          {!designation?.id
+            ? 'Add Designation'
+            : `Edit Designation ${designation.title}`}
         </Grid>
       </DialogTitle>
       <DialogContent>
@@ -126,21 +126,21 @@ const DepartmentForm = ({
             <Grid size={{ xs: 12, md: 6 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
-                  label='Namr'
-                  placeholder='Department Name'
+                  label='Title'
+                  placeholder='Designation Title'
                   size='small'
                   fullWidth
                   error={
-                    !!errors?.name ||
-                    !!error?.response?.data?.validation_errors?.name ||
-                    !!updateError?.response?.data?.validation_errors?.name
+                    !!errors?.title ||
+                    !!error?.response?.data?.validation_errors?.title ||
+                    !!updateError?.response?.data?.validation_errors?.title
                   }
                   helperText={
-                    errors.name?.message ||
-                    error?.response?.data?.validation_errors?.name ||
-                    updateError?.response?.data?.validation_errors?.name
+                    errors.title?.message ||
+                    error?.response?.data?.validation_errors?.title ||
+                    updateError?.response?.data?.validation_errors?.title
                   }
-                  {...register('name')}
+                  {...register('title')}
                 />
               </Div>
             </Grid>
@@ -210,4 +210,4 @@ const DepartmentForm = ({
   );
 };
 
-export default DepartmentForm;
+export default DesignationForm;
