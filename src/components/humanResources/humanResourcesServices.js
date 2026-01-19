@@ -1,4 +1,4 @@
-import axios from "@/lib/services/config";
+import axios from '@/lib/services/config';
 
 const humanResourcesServices = {};
 
@@ -61,6 +61,33 @@ humanResourcesServices.updateDepartment = async (department) => {
 humanResourcesServices.deleteDepartment = async (id) => {
     return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
         const { data } = await axios.delete(`/api/humanResources/departments/${id}/delete`);
+        return data;
+    })
+}
+
+// designations methods
+humanResourcesServices.getAllDesignations = async () => {
+    const { data } = await axios.get('/api/humanResources/designations/all_designations');
+    return data;
+};
+
+humanResourcesServices.addDesignation = async (designation) => {
+    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
+        const { data } = await axios.post(`/api/humanResources/designations/add`, designation)
+        return data;
+    })
+}
+
+humanResourcesServices.updateDesignation = async (designation) => {
+    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
+        const { data } = await axios.put(`/api/humanResources/designations/${designation.id}/update`, designation)
+        return data;
+    })
+}
+
+humanResourcesServices.deleteDesignation = async (id) => {
+    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
+        const { data } = await axios.delete(`/api/humanResources/designations/${id}/delete`);
         return data;
     })
 }

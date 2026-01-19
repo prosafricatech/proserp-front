@@ -322,28 +322,6 @@
     "src/components/production/boms/preview/BillOfMaterialPDF.jsx",
     "src/components/pos/counter/salesListItem/invoice/saleAdjustment/form/SaleAdjustmentItemRow.tsx",
     "src/components/pos/counter/salesListItem/invoice/saleAdjustment/form/SaleAdjustmentItemForm.tsx",
-<<<<<<< HEAD
-    "src/components/fuelStations/Stations/station-services.js",
-    "src/components/projectManagement/projects/profile/subcontracts/tabs/materialIssued/SubContractMaterialIssuedItemAction.jsx",
-    "src/components/projectManagement/projects/profile/subcontracts/tabs/materialIssued/MaterialIssuedSelector.jsx",
-    "src/components/projectManagement/projects/profile/updates/tab/taskProgress/taskProgressTab/materialUsed/MaterialIssuedRow.jsx",
-    "src/components/projectManagement/projects/profile/updates/tab/taskProgress/taskProgressTab/materialUsed/MaterialIssuedForm.jsx",
-    "src/components/projectManagement/projects/profile/subcontracts/tabs/certificatesTab/form/CertificateForm.tsx",
-    "src/components/projectManagement/projects/profile/subcontracts/tabs/certificatesTab/form/tab/certifiedTasks/CertifiedTasksItemForm.tsx",
-    "src/components/projectManagement/projects/profile/subcontracts/tabs/certificatesTab/form/tab/certifiedTasks/CertifiedTasksItemRow.tsx",
-    "src/components/projectManagement/projects/profile/subcontracts/tabs/certificatesTab/CertificatesActionTail.tsx",
-    "src/components/projectManagement/projects/profile/subcontracts/tabs/certificatesTab/CertificatesListItem.tsx",
-    "src/components/projectManagement/projects/profile/subcontracts/tabs/certificatesTab/CertificatesTab.tsx",
-    "src/components/vfd/UseVFD.jsx",
-    "src/components/vfd/VFDProvider.jsx",
-    "src/components/projectManagement/projects/profile/subcontracts/tabs/certificatesTab/form/tab/adjustments/CertifiedAdjustments.tsx",
-    "src/components/projectManagement/projects/profile/subcontracts/tabs/certificatesTab/form/tab/adjustments/CertifiedAdjustmentsRow.tsx",
-    "src/components/projectManagement/projects/profile/subcontracts/tabs/certificatesTab/CertificateItemAction.tsx",
-    "src/components/projectManagement/projects/profile/subcontracts/tabs/certificatesTab/preview/CertificatePDF.tsx",
-    "src/components/projectManagement/projects/profile/subcontracts/tabs/certificatesTab/preview/CertificateOnScreen.jsx",
-    ".next/dev/types/**/*.ts"
-, "src/components/projectManagement/projects/profile/claims/form/tab/adjustments/ProjectClaimsAdjustments.tsx", "src/components/projectManagement/projects/profile/deliverables/tab/DeliverableSummary.jsx"  ],
-=======
     "src/components/fuelStation/Stations/station-services.js",
     "src/components/projectManagement/projects/profile/subcontracts/tabs/materialUsed/SubContractMaterialUsedItemAction.jsx",
     "src/components/projectManagement/projects/profile/subcontracts/tabs/materialUsed/MaterialUsedSelector.jsx",
@@ -374,7 +352,6 @@
     "src/components/fuelStation/dippings/DippingsItemAction.tsx",
     ".next/dev/types/**/*.ts"
   ],
->>>>>>> f1cb15ed42f03b21ee65751cb26f945b5c29e12f
   "exclude": [
     "node_modules"
   ]

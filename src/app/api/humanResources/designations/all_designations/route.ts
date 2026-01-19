@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
   const { headers, response } = await getAuthHeaders(req);
   if (response) return response;
 
-  const res = await fetch(`${API_BASE}/employees`, {
+  const res = await fetch(`${API_BASE}/designations`, {
     headers,
     credentials: 'include',
   });

@@ -91,19 +91,8 @@ function Dashboard() {
   const [chartFilters, setChartFilters] = useState<ChartFilters>({
     from: dayjs().startOf('month').toISOString(),
     to: dayjs().endOf('day').toISOString(),
-<<<<<<< HEAD
     cost_center_ids: ((authUser as AuthUser | null)?.user?.is_admin || checkOrganizationPermission('CostCenters:All')) ? 'all' : (authOrganization?.costCenters ? authOrganization.costCenters.map((cost_center: CostCenter) => cost_center.id) : []),
     costCenters: authOrganization?.costCenters && authOrganization.costCenters
-=======
-    cost_center_ids: (authUser as AuthUser | null)?.user?.is_admin
-      ? 'all'
-      : authOrganization?.costCenters
-        ? authOrganization.costCenters.map(
-            (cost_center: CostCenter) => cost_center.id
-          )
-        : [],
-    costCenters: authOrganization?.costCenters && authOrganization.costCenters,
->>>>>>> dfa0eb0bdaf7516b7e555f89abdd963003d3dca9
   });
 
   const alertingSubscriptions = active_subscriptions.filter(
