@@ -132,7 +132,7 @@ const DesignationForm = ({
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='Title'
-                  placeholder='Designation Title'
+                  placeholder=''
                   size='small'
                   fullWidth
                   error={
@@ -153,7 +153,7 @@ const DesignationForm = ({
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='Code'
-                  placeholder='Designation Code'
+                  placeholder=''
                   size='small'
                   fullWidth
                   error={
@@ -174,7 +174,7 @@ const DesignationForm = ({
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='Description'
-                  placeholder='Designation Description'
+                  placeholder=''
                   size='small'
                   multiline
                   minRows={2}

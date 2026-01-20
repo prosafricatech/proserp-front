@@ -86,7 +86,7 @@ const DepartmentForm = ({
 
   const validationSchema = yup.object({
     id: yup.number().optional(),
-    name: yup.string().required('name is required'),
+    name: yup.string().required('Name is required'),
     code: yup.string(),
     description: yup.string(),
   });
@@ -129,7 +129,7 @@ const DepartmentForm = ({
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='Name'
-                  placeholder='Department Name'
+                  placeholder=''
                   size='small'
                   fullWidth
                   error={
@@ -150,7 +150,7 @@ const DepartmentForm = ({
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='Code'
-                  placeholder='Department Code'
+                  placeholder=''
                   size='small'
                   fullWidth
                   error={
@@ -171,7 +171,7 @@ const DepartmentForm = ({
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='Description'
-                  placeholder='Department Description'
+                  placeholder=''
                   size='small'
                   multiline
                   minRows={2}
