@@ -75,7 +75,7 @@ const StationItemAction = ({ station }: StationItemActionProps) => {
         maxWidth="md"
         fullScreen={belowLargeScreen}
       >
-        <StationForm station={station} setOpenDialog={setOpenEditDialog} />
+        <StationForm station={station as any} setOpenDialog={setOpenEditDialog} />
       </Dialog>
       <JumboDdMenu
         icon={

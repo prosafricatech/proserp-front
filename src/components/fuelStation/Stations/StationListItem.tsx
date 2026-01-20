@@ -9,12 +9,12 @@ import {
   Badge,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { Station } from './StationType';
 import StationItemAction from './StationItemAction';
 import LocalGasStationIcon from '@mui/icons-material/LocalGasStation';
 import PropaneTankIcon from '@mui/icons-material/PropaneTank';
 import PeopleIcon from '@mui/icons-material/People';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
+import { Station } from './StationType';
 
 interface StationListItemProps {
   station: Station;
