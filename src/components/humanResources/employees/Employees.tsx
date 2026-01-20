@@ -2,8 +2,10 @@
 
 import JumboListToolbar from '@jumbo/components/JumboList/components/JumboListToolbar';
 import JumboRqList from '@jumbo/components/JumboReactQuery/JumboRqList';
+import JumboSearch from '@jumbo/components/JumboSearch';
 import { Card, Stack, Typography } from '@mui/material';
-import React, { useRef } from 'react';
+import { useParams } from 'next/navigation';
+import React, { useEffect, useRef, useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
 import EmployeeActionTail from './EmployeeActionTail';
 import EmployeesListItem from './EmployeesListItem';
@@ -11,10 +13,12 @@ import { Employee } from './EmployeesType';
 
 const Employees = () => {
   const listRef = useRef<any>(null);
+  const params = useParams<{ id?: string; keyword?: string }>();
+  const [mounted, setMounted] = useState(false);
 
   const [queryOptions, setQueryOptions] = React.useState({
     queryKey: 'employees',
-    queryParams: {},
+    queryParams: { id: params.id, keyword: params.keyword || '' },
     countKey: 'total',
     dataKey: 'data',
   });
@@ -22,6 +26,22 @@ const Employees = () => {
   const renderEmployees = React.useCallback((employee: Employee) => {
     return <EmployeesListItem employee={employee} />;
   }, []);
+
+  const handleOnChange = React.useCallback((keyword: string) => {
+    setQueryOptions((state) => ({
+      ...state,
+      queryParams: {
+        ...state.queryParams,
+        keyword: keyword,
+      },
+    }));
+  }, []);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null; // ⛔ Prevent mismatch during hydration
 
   return (
     <>
@@ -31,7 +51,7 @@ const Employees = () => {
       <JumboRqList
         ref={listRef}
         wrapperComponent={Card}
-        service={humanResourcesServices.getAllEmployees}
+        service={humanResourcesServices.getEmployeesList}
         primaryKey='id'
         queryOptions={queryOptions}
         itemsPerPage={10}
@@ -48,10 +68,10 @@ const Employees = () => {
             hideItemsPerPage={true}
             actionTail={
               <Stack direction='row'>
-                {/* <JumboSearch
+                <JumboSearch
                   onChange={handleOnChange}
                   value={queryOptions.queryParams.keyword}
-                /> */}
+                />
                 <EmployeeActionTail />
               </Stack>
             }

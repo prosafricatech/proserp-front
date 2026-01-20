@@ -50,7 +50,7 @@ const DepartmentForm = ({
     mutationFn: humanResourcesServices.addDepartment,
     onSuccess: (data) => {
       setOpenDialog(false);
-      enqueueSnackbar('Suces Adding Department', {
+      enqueueSnackbar('Success Adding Department', {
         variant: 'success',
       });
       queryClient.invalidateQueries({ queryKey: ['departments'] });
@@ -85,6 +85,7 @@ const DepartmentForm = ({
   });
 
   const validationSchema = yup.object({
+    id: yup.number().optional(),
     name: yup.string().required('name is required'),
     code: yup.string(),
     description: yup.string(),
@@ -97,6 +98,7 @@ const DepartmentForm = ({
   } = useForm<FormData>({
     resolver: yupResolver(validationSchema) as any,
     defaultValues: {
+      id: department?.id,
       name: department?.name || '',
       code: department?.code || '',
       description: department?.description || '',
@@ -122,11 +124,11 @@ const DepartmentForm = ({
       </DialogTitle>
       <DialogContent>
         <form autoComplete='off' onSubmit={handleSubmit(onSubmit)}>
-          <Grid container spacing={2}>
+          <Grid container rowSpacing={{ xs: 1, md: 2 }} spacing={2}>
             <Grid size={{ xs: 12, md: 6 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
-                  label='Namr'
+                  label='Name'
                   placeholder='Department Name'
                   size='small'
                   fullWidth
@@ -148,7 +150,7 @@ const DepartmentForm = ({
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='Code'
-                  placeholder='e.g. HR'
+                  placeholder='Department Code'
                   size='small'
                   fullWidth
                   error={
@@ -165,14 +167,14 @@ const DepartmentForm = ({
                 />
               </Div>
             </Grid>
-          </Grid>
-          <Grid container spacing={2}>
             <Grid size={{ xs: 12 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='Description'
-                  placeholder='e.g. HR'
+                  placeholder='Department Description'
                   size='small'
+                  multiline
+                  minRows={2}
                   fullWidth
                   error={
                     !!errors?.description ||

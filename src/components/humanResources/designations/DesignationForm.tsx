@@ -24,7 +24,10 @@ interface DesignationFormProp {
   designation?: Designation | null;
 }
 
-interface FormData extends Omit<Designation, 'id'> {
+interface FormData extends Omit<
+  Designation,
+  'id' | 'created_at' | 'updated_at'
+> {
   id?: number;
 }
 
@@ -50,7 +53,7 @@ const DesignationForm = ({
     mutationFn: humanResourcesServices.addDesignation,
     onSuccess: (data) => {
       setOpenDialog(false);
-      enqueueSnackbar('Suces Adding Designation', {
+      enqueueSnackbar('Success Adding Designation', {
         variant: 'success',
       });
       queryClient.invalidateQueries({ queryKey: ['designations'] });
@@ -71,7 +74,7 @@ const DesignationForm = ({
     mutationFn: humanResourcesServices.updateDesignation,
     onSuccess: (data) => {
       setOpenDialog(false);
-      enqueueSnackbar('Designation update success', {
+      enqueueSnackbar('Success Updating Designation', {
         variant: 'success',
       });
       queryClient.invalidateQueries({ queryKey: ['designations'] });
@@ -85,7 +88,8 @@ const DesignationForm = ({
   });
 
   const validationSchema = yup.object({
-    title: yup.string().required('title is required'),
+    id: yup.number().optional(),
+    title: yup.string().required('Title is required'),
     code: yup.string(),
     description: yup.string(),
   });
@@ -97,6 +101,7 @@ const DesignationForm = ({
   } = useForm<FormData>({
     resolver: yupResolver(validationSchema) as any,
     defaultValues: {
+      id: designation?.id,
       title: designation?.title || '',
       code: designation?.code || '',
       description: designation?.description || '',
@@ -122,7 +127,7 @@ const DesignationForm = ({
       </DialogTitle>
       <DialogContent>
         <form autoComplete='off' onSubmit={handleSubmit(onSubmit)}>
-          <Grid container spacing={2}>
+          <Grid container rowSpacing={{ xs: 1, md: 2 }} spacing={2}>
             <Grid size={{ xs: 12, md: 6 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
@@ -148,7 +153,7 @@ const DesignationForm = ({
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='Code'
-                  placeholder='e.g. HR'
+                  placeholder='Designation Code'
                   size='small'
                   fullWidth
                   error={
@@ -165,14 +170,14 @@ const DesignationForm = ({
                 />
               </Div>
             </Grid>
-          </Grid>
-          <Grid container spacing={2}>
             <Grid size={{ xs: 12 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='Description'
-                  placeholder='e.g. HR'
+                  placeholder='Designation Description'
                   size='small'
+                  multiline
+                  minRows={2}
                   fullWidth
                   error={
                     !!errors?.description ||
