@@ -1,4 +1,3 @@
-import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { AddOutlined } from '@mui/icons-material';
 import {
@@ -12,7 +11,6 @@ import { useState } from 'react';
 import EmployeeForm from './EmployeeForm';
 
 const EmployeeActionTail = () => {
-  const { checkOrganizationPermission } = useJumboAuth();
   const [openDialog, setOpenDialog] = useState(false);
 
   //Screen handling constants
@@ -30,7 +28,7 @@ const EmployeeActionTail = () => {
         sx={{ '& .MuiButton-root': { px: 1 } }}
       >
         {/* {checkOrganizationPermission(PERMISSIONS.USERS_INVITE) && ( */}
-        <Tooltip title='Add EMployee'>
+        <Tooltip title='Add Employee'>
           <IconButton onClick={() => setOpenDialog(true)}>
             <AddOutlined />
           </IconButton>

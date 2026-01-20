@@ -4,18 +4,16 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { Div } from '@jumbo/shared';
 import { LoadingButton } from '@mui/lab';
 import {
+  Autocomplete,
   Button,
   DialogActions,
   DialogContent,
   DialogTitle,
   Grid,
-  InputLabel,
-  MenuItem,
-  Select,
   SelectChangeEvent,
   TextField,
 } from '@mui/material';
-import { DateTimePicker } from '@mui/x-date-pickers';
+import { DatePicker } from '@mui/x-date-pickers';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import dayjs, { Dayjs } from 'dayjs';
 import { useSnackbar } from 'notistack';
@@ -49,18 +47,28 @@ const EmployeeForm = ({
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
 
+  const genderOptions = [
+    { label: 'Male', value: 'male' },
+    { label: 'Female', value: 'female' },
+  ];
+
   useEffect(() => {
     const date = new Date();
-    const dayjsDate = dayjs(date).toISOString();
+    const dayjsDate = dayjs(date).toISOString().split('T')[0];
     setEmployeeDoB(dayjsDate);
   }, []);
 
-  const [employeeGender, setEmployeeGender] = React.useState('male');
   const [employeeDoB, setEmployeeDoB] = useState<string | undefined>('');
+  const [employeeGender, setEmployeeGender] = useState(genderOptions[0].value);
 
   const handleChange = (event: SelectChangeEvent) => {
     setEmployeeGender(event.target.value as string);
   };
+
+  useEffect(() => {
+    setValue('date_of_birth', new Date().toISOString().split('T')[0]);
+    setValue('gender', employeeGender);
+  }, [employeeDoB, employeeGender]);
 
   const {
     mutate: addEmployee,
@@ -70,7 +78,7 @@ const EmployeeForm = ({
     mutationFn: humanResourcesServices.addEmployee,
     onSuccess: (data) => {
       setOpenDialog(false);
-      enqueueSnackbar('Suces Adding Employee', {
+      enqueueSnackbar('Success Adding Employee', {
         variant: 'success',
       });
       queryClient.invalidateQueries({ queryKey: ['employees'] });
@@ -79,6 +87,7 @@ const EmployeeForm = ({
       enqueueSnackbar('Error Adding Employee', {
         variant: 'error',
       });
+      console.log('error adding employee: ', error);
     },
   });
 
@@ -110,10 +119,7 @@ const EmployeeForm = ({
     email: yup.string().email().required('email is required'),
     phone_number: yup.string().required('Phone number is required'),
     address: yup.string().required('Address is required'),
-    date_of_birth: yup
-      .string()
-      .datetime()
-      .required('Date of birth is required'),
+    date_of_birth: yup.date().required('Date of birth is required'),
   });
 
   const {
@@ -131,8 +137,7 @@ const EmployeeForm = ({
       email: employee?.email || '',
       phone_number: employee?.phone_number || '',
       address: employee?.address || '',
-      date_of_birth:
-        employee?.date_of_birth || employeeDoB ? employeeDoB : employeeDoB,
+      date_of_birth: employee?.date_of_birth || employeeDoB,
     },
   });
 
@@ -155,7 +160,7 @@ const EmployeeForm = ({
       </DialogTitle>
       <DialogContent>
         <form autoComplete='off' onSubmit={handleSubmit(onSubmit)}>
-          <Grid container spacing={2}>
+          <Grid container rowSpacing={{ xs: 1, md: 2 }} spacing={2}>
             <Grid size={{ xs: 12, md: 4 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
@@ -220,22 +225,26 @@ const EmployeeForm = ({
                 />
               </Div>
             </Grid>
-          </Grid>
-          <Grid container spacing={2}>
+
             <Grid size={{ xs: 12, md: 4 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
-                <InputLabel id='gender-select-label'>Gender</InputLabel>
-                <Select
-                  fullWidth
-                  labelId='gender-select-label'
-                  id='gender-select'
-                  value={employeeGender}
-                  label='Gender'
-                  onChange={handleChange}
-                >
-                  <MenuItem value='male'>Male</MenuItem>
-                  <MenuItem value='female'>Female</MenuItem>
-                </Select>
+                <Autocomplete
+                  size='small'
+                  options={genderOptions}
+                  isOptionEqualToValue={(option, value) =>
+                    option.label === value.label
+                  }
+                  getOptionLabel={(option) => option.label}
+                  value={genderOptions[0]}
+                  onChange={(event, newValue) => {
+                    if (newValue) {
+                      setEmployeeGender(newValue.value);
+                    }
+                  }}
+                  renderInput={(params) => (
+                    <TextField {...params} label='Gender' />
+                  )}
+                />
               </Div>
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
@@ -281,9 +290,27 @@ const EmployeeForm = ({
                 />
               </Div>
             </Grid>
-          </Grid>
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 12, md: 6 }}>
+
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Div sx={{ mt: 1, mb: 1 }}>
+                <DatePicker
+                  label='Date of Birth'
+                  value={dayjs(employeeDoB)}
+                  onChange={(value: Dayjs | null) => {
+                    if (value) {
+                      setEmployeeDoB(value.toISOString().split('T')[0]);
+                    }
+                  }}
+                  slotProps={{
+                    textField: {
+                      size: 'small',
+                      fullWidth: true,
+                    },
+                  }}
+                />
+              </Div>
+            </Grid>
+            <Grid size={{ xs: 12, md: 8 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='Adress'
@@ -301,23 +328,6 @@ const EmployeeForm = ({
                     updateError?.response?.data?.validation_errors?.address
                   }
                   {...register('address')}
-                />
-              </Div>
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
-                <DateTimePicker
-                  label='Date Of Birth'
-                  value={dayjs(employeeDoB)}
-                  slotProps={{
-                    textField: {
-                      size: 'small',
-                      fullWidth: true,
-                    },
-                  }}
-                  onChange={(value: Dayjs | null) => {
-                    setEmployeeDoB(value?.toISOString());
-                  }}
                 />
               </Div>
             </Grid>

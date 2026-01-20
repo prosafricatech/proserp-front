@@ -2,19 +2,23 @@
 
 import JumboListToolbar from '@jumbo/components/JumboList/components/JumboListToolbar';
 import JumboRqList from '@jumbo/components/JumboReactQuery/JumboRqList';
+import JumboSearch from '@jumbo/components/JumboSearch';
 import { Card, Stack, Typography } from '@mui/material';
-import React, { useRef } from 'react';
+import { useParams } from 'next/navigation';
+import React, { useEffect, useRef, useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
 import DepartmentActionTail from './DepartmentActionTail';
 import DepartmentsListItem from './DepartmentsListItem';
 import { Department } from './DepartmentsType';
 
 const Departments = () => {
+  const params = useParams<{ id?: string; keyword?: string }>();
   const listRef = useRef<any>(null);
+  const [mounted, setMounted] = useState(false);
 
   const [queryOptions, setQueryOptions] = React.useState({
     queryKey: 'departments',
-    queryParams: {},
+    queryParams: { id: params.id, keyword: params.keyword || '' },
     countKey: 'total',
     dataKey: 'data',
   });
@@ -22,6 +26,22 @@ const Departments = () => {
   const renderDepartments = React.useCallback((department: Department) => {
     return <DepartmentsListItem department={department} />;
   }, []);
+
+  const handleOnChange = React.useCallback((keyword: string) => {
+    setQueryOptions((state) => ({
+      ...state,
+      queryParams: {
+        ...state.queryParams,
+        keyword: keyword,
+      },
+    }));
+  }, []);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null; // ⛔ Prevent mismatch during hydration
 
   return (
     <>
@@ -31,7 +51,7 @@ const Departments = () => {
       <JumboRqList
         ref={listRef}
         wrapperComponent={Card}
-        service={humanResourcesServices.getAllDepartments}
+        service={humanResourcesServices.getDepartmentsList}
         primaryKey='id'
         queryOptions={queryOptions}
         itemsPerPage={10}
@@ -48,10 +68,10 @@ const Departments = () => {
             hideItemsPerPage={true}
             actionTail={
               <Stack direction='row'>
-                {/* <JumboSearch
-                    onChange={handleOnChange}
-                    value={queryOptions.queryParams.keyword}
-                  /> */}
+                <JumboSearch
+                  onChange={handleOnChange}
+                  value={queryOptions.queryParams.keyword}
+                />
                 <DepartmentActionTail />
               </Stack>
             }

@@ -3,18 +3,22 @@
 import humanResourcesServices from '@/components/humanResources/humanResourcesServices';
 import JumboListToolbar from '@jumbo/components/JumboList/components/JumboListToolbar';
 import JumboRqList from '@jumbo/components/JumboReactQuery/JumboRqList';
+import JumboSearch from '@jumbo/components/JumboSearch';
 import { Card, Stack, Typography } from '@mui/material';
-import React, { useRef } from 'react';
+import { useParams } from 'next/navigation';
+import React, { useEffect, useRef, useState } from 'react';
 import DesignationActionTail from './DesignationActionTail';
 import DesignationsListItem from './DesignationsListItem';
 import { Designation } from './DesignationsType';
 
 const Designations = () => {
+  const params = useParams<{ id?: string; keyword?: string }>();
   const listRef = useRef<any>(null);
+  const [mounted, setMounted] = useState(false);
 
   const [queryOptions, setQueryOptions] = React.useState({
     queryKey: 'designations',
-    queryParams: {},
+    queryParams: { id: params.id, keyword: params.keyword || '' },
     countKey: 'total',
     dataKey: 'data',
   });
@@ -22,6 +26,29 @@ const Designations = () => {
   const renderDesignations = React.useCallback((designation: Designation) => {
     return <DesignationsListItem designation={designation} />;
   }, []);
+
+  useEffect(() => {
+    const fetchDesignations = async () => {
+      const response = await humanResourcesServices.getDesignationsList();
+    };
+    fetchDesignations();
+  }, []);
+
+  const handleOnChange = React.useCallback((keyword: string) => {
+    setQueryOptions((state) => ({
+      ...state,
+      queryParams: {
+        ...state.queryParams,
+        keyword: keyword,
+      },
+    }));
+  }, []);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null; // ⛔ Prevent mismatch during hydration
 
   return (
     <>
@@ -31,7 +58,7 @@ const Designations = () => {
       <JumboRqList
         ref={listRef}
         wrapperComponent={Card}
-        service={humanResourcesServices.getAllDesignations}
+        service={humanResourcesServices.getDesignationsList}
         primaryKey='id'
         queryOptions={queryOptions}
         itemsPerPage={10}
@@ -48,10 +75,10 @@ const Designations = () => {
             hideItemsPerPage={true}
             actionTail={
               <Stack direction='row'>
-                {/* <JumboSearch
-                      onChange={handleOnChange}
-                      value={queryOptions.queryParams.keyword}
-                    /> */}
+                <JumboSearch
+                  onChange={handleOnChange}
+                  value={queryOptions.queryParams.keyword}
+                />
                 <DesignationActionTail />
               </Stack>
             }

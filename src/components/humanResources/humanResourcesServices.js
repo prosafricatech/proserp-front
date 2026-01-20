@@ -39,6 +39,14 @@ humanResourcesServices.deleteEmployee = async (id) => {
 
 
 // departments methods
+humanResourcesServices.getDepartmentsList = async (params = {}) => {
+    const { page = 1, limit = 10, ...queryParams } = params;
+    const { data } = await axios.get('/api/humanResources/departments', {
+        params: { page, limit, ...queryParams }
+    });
+    return data;
+};
+
 humanResourcesServices.getAllDepartments = async () => {
     const { data } = await axios.get('/api/humanResources/departments/all_departments');
     return data;
@@ -66,6 +74,19 @@ humanResourcesServices.deleteDepartment = async (id) => {
 }
 
 // designations methods
+humanResourcesServices.getDesignationsList = async (params = {}) => {
+    const { page = 1, limit = 10, ...queryParams } = params;
+    const { data } = await axios.get('/api/humanResources/designations', {
+        params: { page, limit, ...queryParams }
+    });
+    return data;
+};
+
+humanResourcesServices.getAllDesignations = async () => {
+    const { data } = await axios.get('/api/humanResources/designations/all_designations');
+    return data;
+};
+
 humanResourcesServices.getAllDesignations = async () => {
     const { data } = await axios.get('/api/humanResources/designations/all_designations');
     return data;
