@@ -77,7 +77,12 @@ function ProfileContent() {
   //Budgets
   const { data: budgetsData, isLoading: isBudgetLoading, refetch: refetchBudgets } = useQuery({
     queryKey: ['projectBudgets', project?.id, project?.cost_center?.id],
-    queryFn: projectsServices.showProjectBudgets,
+    queryFn: () => 
+      projectsServices.showProjectBudgets({ 
+        id: project!.id,
+        cost_center_id: project?.cost_center?.id 
+      }),
+    enabled: !!project?.id,
   });
 
   //Timeline Activities
