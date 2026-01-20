@@ -64,7 +64,7 @@
 
       "employees": "Employees",
       "departments": "Departments",
-      "leaves": "Leaves",
+      "leave_types": "Leave Types",
       "designations": "Designations"
     }
   },

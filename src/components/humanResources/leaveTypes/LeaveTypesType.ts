@@ -1,8 +1,7 @@
-export interface Department {
-  id: 1;
+export interface LeaveType {
+  id: number;
   name: string;
-  code: string;
-  description: string;
+  days_per_year: number;
   created_by: number;
   created_at?: string;
   updated_at?: string;

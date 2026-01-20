@@ -113,4 +113,39 @@ humanResourcesServices.deleteDesignation = async (id) => {
     })
 }
 
+// leave types methods
+humanResourcesServices.getLeaveTypesList = async (params = {}) => {
+    const { page = 1, limit = 10, ...queryParams } = params;
+    const { data } = await axios.get('/api/humanResources/leave_types', {
+        params: { page, limit, ...queryParams }
+    });
+    return data;
+};
+
+humanResourcesServices.getAllLeaveTypes = async () => {
+    const { data } = await axios.get('/api/humanResources/leave_types/all_leave_types');
+    return data;
+};
+
+humanResourcesServices.addLeaveType = async (leaveType) => {
+    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
+        const { data } = await axios.post(`/api/humanResources/leave_types/add`, leaveType)
+        return data;
+    })
+}
+
+humanResourcesServices.updateLeaveType = async (leaveType) => {
+    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
+        const { data } = await axios.put(`/api/humanResources/leave_types/${leaveType.id}/update`, leaveType)
+        return data;
+    })
+}
+
+humanResourcesServices.deleteLeaveType = async (id) => {
+    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
+        const { data } = await axios.delete(`/api/humanResources/leave_types/${id}/delete`);
+        return data;
+    })
+}
+
 export default humanResourcesServices;

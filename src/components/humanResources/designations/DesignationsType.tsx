@@ -3,7 +3,7 @@ export interface Designation {
   title: string;
   code: string;
   description: string;
-  created_by: 1;
+  created_by: number;
   created_at?: string;
   updated_at?: string;
 }
