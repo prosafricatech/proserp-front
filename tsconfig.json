@@ -351,7 +351,7 @@
     "src/components/fuelStation/dippings/DippingsListItem.tsx",
     "src/components/fuelStation/dippings/DippingsItemAction.tsx",
     ".next/dev/types/**/*.ts"
-  ],
+, "src/components/fuelStation/Stations/StationForm.tsx"  ],
   "exclude": [
     "node_modules"
   ]
