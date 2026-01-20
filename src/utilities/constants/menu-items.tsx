@@ -206,8 +206,8 @@ export async function getMenus(locale: string) {
               type: 'nav-item',
             },
             {
-              uri: `/${locale}/humanResources/leaves`,
-              label: sidebar.menuItem.leaves,
+              uri: `/${locale}/humanResources/leave_types`,
+              label: sidebar.menuItem.leave_types,
               type: 'nav-item',
             },
             {
