@@ -89,11 +89,11 @@ const PriceListItemForm: React.FC<PriceListItemFormProps> = ({
   });
 
   useEffect(() => {
-      const subscription = watch(() => {
-          const hasDirtyFields = Object.keys(dirtyFields).length > 0;
-          setIsDirty(hasDirtyFields);
-      });
-      return () => subscription.unsubscribe();
+    const subscription = watch(() => {
+      const hasDirtyFields = Object.keys(dirtyFields).length > 0;
+      setIsDirty(hasDirtyFields);
+    });
+    return () => subscription.unsubscribe();
   }, [watch, dirtyFields, setIsDirty]);
 
   const updateItems = async (itemData: FormValues) => {
@@ -108,14 +108,11 @@ const PriceListItemForm: React.FC<PriceListItemFormProps> = ({
         await setItems(prevItems => [...prevItems, itemData]);
       }
 
-      // Reset form only if not in submitItemForm mode
-      if (!submitItemForm) {
-        reset();
-        setProductUnits([]);
-        setCostAverage(0);
-      }
+      reset();
+      setProductUnits([]);
+      setCostAverage(0);
+      setIsDirty(false);
       
-      // If this was triggered by the main form's "Add and Submit"
       if (submitItemForm) {
         setSubmitItemForm(false);
         return true;
@@ -130,8 +127,9 @@ const PriceListItemForm: React.FC<PriceListItemFormProps> = ({
 
   useEffect(() => {
     if (submitItemForm) {
-      handleSubmit(updateItems, () => {
-        setSubmitItemForm(false); // Reset submitItemForm if there are errors
+      handleSubmit(updateItems, (errors) => {
+        setSubmitItemForm(false);
+        setIsDirty(false);
       })();
     }
   }, [submitItemForm]);

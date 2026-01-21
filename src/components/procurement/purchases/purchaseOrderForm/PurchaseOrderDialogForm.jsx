@@ -1,7 +1,7 @@
 import { LoadingButton } from '@mui/lab'
 import { Button, DialogActions, DialogContent, DialogTitle, Divider, Grid, Alert, Dialog, Tooltip, IconButton } from '@mui/material'
 import dayjs from 'dayjs'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
 import * as yup  from "yup";
 import {yupResolver} from '@hookform/resolvers/yup'
@@ -20,8 +20,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 function PurchaseOrderDialogForm({toggleOpen, order = null}) {
   const {authOrganization} = useJumboAuth();
   const {costCenters} = authOrganization;
-  const [totalAmount, settotalAmount] = useState(0);
-  const [vatableAmount, setvatableAmount] = useState(0);
+  const [totalAmount, setTotalAmount] = useState(0);
+  const [vatableAmount, setVatableAmount] = useState(0);
   const itemTemplate = {product_id: null, quantity: null, rate: null};
   const [order_date] = useState(order ? dayjs(order.order_date) : dayjs());
   const [displayStoreSelector, setDisplayStoreSelector] = useState(false);
@@ -42,7 +42,11 @@ function PurchaseOrderDialogForm({toggleOpen, order = null}) {
     currency_id: yup.number().positive('Currency is required').required('Currency is required').typeError('Currency is required'),
     cost_centers: yup.array().min(1, 'At least one cost center must be selected').required('Cost Center is required').typeError('At least one cost center must be selected'),
     exchange_rate: yup.number().positive('Exchange rate is required').required('Exchange rate is required').typeError('Exchange rate is required'),
-    stakeholder_id: yup.number().positive().nullable(),
+    stakeholder_id: yup
+      .number()
+      .positive()
+      .nullable()
+      .notRequired(),
     instant_pay: yup.boolean(),
     instant_receive: yup.boolean(),
     credit_ledger_id: yup.number()
@@ -61,14 +65,24 @@ function PurchaseOrderDialogForm({toggleOpen, order = null}) {
           .typeError('Receiving store is required'),
         otherwise: (schema) => schema.nullable()
       }),
-    stakeholder_ledger_id: yup.number()
+    stakeholder_ledger_id: yup
+      .number()
       .when(['instant_pay', 'stakeholder_id', 'instant_receive'], {
-        is: (instant_pay, stakeholder_id, instant_receive) => instant_pay && stakeholder_id && !instant_receive,
-        then: (schema) => schema.positive(`Selected supplier doesn't have any account`)
-          .required(`Selected supplier doesn't have any account`)
-          .typeError(`Selected supplier doesn't have any account`),
-        otherwise: (schema) => schema.nullable()
+        is: (instant_pay, stakeholder_id, instant_receive) =>
+          instant_pay === true &&
+          typeof stakeholder_id === 'number' &&
+          stakeholder_id > 0 &&
+          instant_receive === false,
+
+        then: (schema) =>
+          schema
+            .required('Supplier account is required')
+            .positive('Supplier account is required'),
+
+        otherwise: (schema) =>
+          schema.notRequired().nullable(),
       }),
+
     items: yup.array().min(1, "You must add at least one item")
       .typeError('You must add at least one item')
       .of(
@@ -80,7 +94,7 @@ function PurchaseOrderDialogForm({toggleOpen, order = null}) {
       ),
   });
 
-  const {register,setValue, setError, handleSubmit, clearErrors, watch, formState : {errors}} = useForm({
+  const {register,setValue, setError, getValues, handleSubmit, clearErrors, watch, formState : {errors}} = useForm({
     resolver: yupResolver(validationSchema),
     defaultValues: {
       id: order && order.id,
@@ -90,6 +104,7 @@ function PurchaseOrderDialogForm({toggleOpen, order = null}) {
       exchange_rate: order?.exchange_rate ? order.exchange_rate : 1,
       vat_registered: !!authOrganization.organization.settings?.vat_registered,
       reference: order && order.reference,
+      stakeholder_ledger_id: null,
       date_required: order && order.date_required,
       instant_pay: order ? !!order.instant_pay : true,
       instant_receive: order ? !!order.instant_receive : false,
@@ -109,7 +124,7 @@ function PurchaseOrderDialogForm({toggleOpen, order = null}) {
   }
 
   //Set Item values and calculate total amount
-  const ordertotalAmount = () => {
+  const orderTotalAmount = () => {
     let total = 0;
     let vatableAmount = 0;
 
@@ -127,7 +142,7 @@ function PurchaseOrderDialogForm({toggleOpen, order = null}) {
           setValue(`items.${index}.amount`, item.amount);
           setValue(`items.${index}.item_vat`, item.item_vat);
         });
-        settotalAmount(total);
+        setTotalAmount(total);
       }
 
       //Total For only Items require VAT Inclusive
@@ -136,34 +151,77 @@ function PurchaseOrderDialogForm({toggleOpen, order = null}) {
         await items.forEach((item) => {
           vatableAmount += (item.quantity*item.rate*item.vat_percentage*0.01)
         });
-        setvatableAmount(vatableAmount);
+        setVatableAmount(vatableAmount);
       }
     loopItems();
     loopItemsForVAT();
   }
 
   React.useEffect(() => {
-    ordertotalAmount();
+    orderTotalAmount();
   },[items]);
 
-  //Load Stakeholder credit ledgers
   const stakeholder_id = watch('stakeholder_id');
-  const { data: stakeholderPayableLedgers } = useQuery({
-    queryKey: ['stakeholderPayableLedgers', { stakeholderId: stakeholder_id }],
+  const { data: stakeholderPayableLedgers = [] } = useQuery({
+    queryKey: ['stakeholderPayableLedgers', stakeholder_id],
     queryFn: async () => {
       if (!stakeholder_id) return [];
-      return stakeholderServices.getLedgers({ stakeholder_id, type: 'all' });
+      const response = await stakeholderServices.getLedgers({
+        stakeholder_id,
+        type: 'all',
+      });
+      return response.data || response || []; 
     },
-    enabled: !!stakeholder_id, // avoid unnecessary fetches
-    onSuccess: (data) => {
-      if (data.length > 0) {
-        setValue('stakeholder_ledger_id', data[0].id);
-      } else {
-        setValue('stakeholder_ledger_id', null);
-      }
-    },
+    enabled: !!stakeholder_id,
   });
-  
+
+  const watchInstantPay = watch('instant_pay');
+  const watchInstantReceive = watch('instant_receive');
+
+  useEffect(() => {
+    // 1. No stakeholder → no ledger
+    if (!stakeholder_id) {
+      const current = getValues('stakeholder_ledger_id');
+      if (current !== null) {
+        setValue('stakeholder_ledger_id', null, {
+          shouldValidate: true,
+          shouldDirty: true,
+        });
+      }
+      return;
+    }
+
+    // 2. Stakeholder exists but no ledgers
+    if (stakeholderPayableLedgers.length === 0) {
+      const current = getValues('stakeholder_ledger_id');
+      if (current !== null) {
+        setValue('stakeholder_ledger_id', null, {
+          shouldValidate: true,
+          shouldDirty: true,
+        });
+      }
+      return;
+    }
+
+    // 3. Ledgers fetched → always set default ledger
+    const firstLedgerId = stakeholderPayableLedgers[0].id;
+    const current = getValues('stakeholder_ledger_id');
+
+    if (current !== firstLedgerId) {
+      setValue('stakeholder_ledger_id', firstLedgerId, {
+        shouldValidate: true,
+        shouldDirty: true,
+        shouldTouch: true,
+      });
+    }
+
+  }, [
+    watchInstantPay,
+    watchInstantReceive,
+    stakeholder_id,
+    stakeholderPayableLedgers,
+  ]);
+
   const addPurchaseOrder = useMutation({
     mutationFn: purchaseServices.add,
     onSuccess: (data) => {

@@ -2,7 +2,6 @@ import axios from "@/lib/services/config";
 
 const stationServices = {};
 
-// Get all stations (for admin or general listing)
 stationServices.getList = async (params = {}) => {
     const { page = 1, limit = 10, ...queryParams } = params;
     const { data } = await axios.get("/api/fuelStations/stations", {
@@ -11,7 +10,6 @@ stationServices.getList = async (params = {}) => {
     return data;
 };
 
-// Get user-specific stations - MUST PASS USER ID
 stationServices.getUserStations = async (params) => {
     if (!params.userId) {
         throw new Error('User ID is required to fetch user stations');
@@ -32,7 +30,7 @@ stationServices.add = async(station) => {
 
 stationServices.update = async(station) => {
     return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.put(`/api/fuelStations/stations/${station.id}/update`,station)
+        const { data } = await axios.put(`/api/fuelStations/stations/${station.id}/update`, station);
         return data;
     })
 };

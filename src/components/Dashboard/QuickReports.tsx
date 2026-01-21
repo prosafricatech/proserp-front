@@ -14,6 +14,7 @@ import ItemMovement from '../procurement/stores/[store_id]/storeStock/ItemMoveme
 import StockMovement from '../procurement/stores/[store_id]/reports/stockMovement/StockMovement'
 import { MODULES } from '@/utilities/constants/modules'
 import { PERMISSIONS } from '@/utilities/constants/permissions'
+import DippingReport from '../fuelStation/reports/dippingReport/DippingReport'
 
 const DebtorCreditorReport = lazy(() => import('../accounts/reports/debtorCreditor/DebtorCreditorReport'));
 const CashierReport = lazy(() => import('../accounts/reports/cashierReport/CashierReport'));
@@ -24,7 +25,6 @@ const SalesManifest = lazy(() => import('../pos/reports/salesManifest/SalesManif
 const LedgerSelectProvider = lazy(() => import('../accounts/ledgers/forms/LedgerSelectProvider'));
 
 function QuickReports() {
-    // Screen handling constants
     const { theme } = useJumboTheme();
     const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
@@ -72,6 +72,7 @@ function QuickReports() {
                 {stockReportDialogOpen && <StockReport setOpenDialog={setStockReportDialogOpen} isFromDashboard={true} />}
                 {itemMovementDialogOpen && <ProductsSelectProvider><ItemMovement toggleOpen={setItemMovementDialogOpen} isFromDashboard={true} /></ProductsSelectProvider>}
                 {stockMovementDialogOpen && <StockMovement toggleOpen={setStockMovementDialogOpen} isFromDashboard={true} />}
+                {openDippingReport && <DippingReport/>}
                 {openSalesManifest && <StakeholderSelectProvider><SalesManifest setOpenSalesManifest={setOpenSalesManifest} /></StakeholderSelectProvider>}
 
                 {(debtorsCreditorsDialogOpen || openDippingReport) &&

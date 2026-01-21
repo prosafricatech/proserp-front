@@ -14,6 +14,7 @@ interface StakeholderQuickAddProps {
   setStakeholderQuickAddDisplay: (display: boolean) => void;
   create_receivable?: boolean;
   create_payable?: boolean;
+  displayTitle?: string;
   setAddedStakeholder: (stakeholder: Stakeholder) => void;
 }
 
@@ -49,6 +50,7 @@ const StakeholderQuickAdd: React.FC<StakeholderQuickAddProps> = ({
   setStakeholderQuickAddDisplay,
   create_receivable = false,
   create_payable = false,
+  displayTitle=null,
   setAddedStakeholder
 }) => {
   const validationSchema = yup.object({
@@ -111,7 +113,7 @@ const StakeholderQuickAdd: React.FC<StakeholderQuickAddProps> = ({
   return (
     <Grid container rowSpacing={1} columnSpacing={1} paddingTop={1}>
       <Grid size={12} textAlign={'center'}>
-        <Typography variant='h4'>Quick Add Client</Typography>
+        <Typography variant='h4'>{displayTitle ? displayTitle : `Quick Add Client`}</Typography>
       </Grid>
       <Grid size={{xs: 12, md: 6, lg: 4}}>
         <Div sx={{ mt: 0.3 }}>

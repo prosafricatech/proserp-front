@@ -27,7 +27,7 @@ function ProformaSaleForm({ proforma, toggleOpen }) {
     const { authOrganization } = useJumboAuth();
     const organization = authOrganization?.organization;
     const [transaction_date] = useState(dayjs());
-    const [totalAmount, settotalAmount] = useState(0);
+    const [totalAmount, setTotalAmount] = useState(0);
     const [debitLedger, setDebitLedger] = useState(null);
     const [checkedForInstantSale, setCheckedForInstantSale] = useState(true);
     const { items } = proforma;
@@ -141,7 +141,7 @@ function ProformaSaleForm({ proforma, toggleOpen }) {
                 setValue(`items.${index}.quantity`, item.quantity);
                 setValue(`items.${index}.rate`, item.rate);
             });
-            settotalAmount(total);
+            setTotalAmount(total);
         }
         loopItems();
     }, [items]);

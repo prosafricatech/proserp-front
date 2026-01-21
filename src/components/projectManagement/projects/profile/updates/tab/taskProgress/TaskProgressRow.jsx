@@ -168,7 +168,7 @@ function TaskProgressRow({ taskProgressItem, index }) {
           onChange={handleTabChange}
           aria-label="task progress tabs"
         >
-          <Tab label="Material Issued" />
+          <Tab label="material Used" />
         </Tabs>
 
         {tabValue === 0 && (

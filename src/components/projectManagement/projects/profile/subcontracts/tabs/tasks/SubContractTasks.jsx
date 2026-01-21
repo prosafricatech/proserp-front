@@ -23,23 +23,8 @@ function SubContractTasks({setOpenDialog, subContract = null, subContractTask = 
   const { ungroupedLedgerOptions } = useLedgerSelect();
   const {authOrganization: {organization}} = useJumboAuth();
   const [isRetrievingDetails, setIsRetrievingDetails] = useState(false);
-  const { deliverable_groups, setFetchDeliverables, projectTimelineActivities, setFetchTimelineActivities} = useProjectProfile();
+  const { projectTimelineActivities} = useProjectProfile();
   const [unitToDisplay, setUnitToDisplay] = useState(subContractTask ? subContractTask.project_task?.measurement_unit?.symbol : null);
-
-  useEffect(() => {
-    if (!deliverable_groups) {
-      setFetchDeliverables(true);
-    } else {
-      setFetchDeliverables(false)
-    }
-
-    if (!projectTimelineActivities) {
-      setFetchTimelineActivities(true);
-    } else {
-      setFetchTimelineActivities(false)
-    }
-
-  }, [projectTimelineActivities, deliverable_groups, setFetchDeliverables, setFetchTimelineActivities]);
 
   // React Query v5 syntax for useMutation
   const { mutate: addSubContractTask, isPending: isAdding } = useMutation({

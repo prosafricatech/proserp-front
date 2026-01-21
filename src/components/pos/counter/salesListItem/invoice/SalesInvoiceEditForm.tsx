@@ -67,8 +67,8 @@ const SalesInvoiceEditForm: React.FC<SalesInvoiceEditFormProps> = ({ invoiceData
     const queryClient = useQueryClient(); 
     const { authOrganization } = useJumboAuth();
     const organization = authOrganization?.organization;
-    const [totalAmount, settotalAmount] = useState<number>(0);
-    const [vatableAmount, setvatableAmount] = useState<number>(0);
+    const [totalAmount, setTotalAmount] = useState<number>(0);
+    const [vatableAmount, setVatableAmount] = useState<number>(0);
     const [sale_items, setSale_items] = useState<InvoiceItem[]>(invoiceData ? invoiceData.items : []);
     const currencyCode = invoiceData.currency.code;
 
@@ -124,8 +124,8 @@ const SalesInvoiceEditForm: React.FC<SalesInvoiceEditFormProps> = ({ invoiceData
                 vatable += item.vat_amount;
             }
         });
-        settotalAmount(total);
-        setvatableAmount(vatable);
+        setTotalAmount(total);
+        setVatableAmount(vatable);
     }, [sale_items]);
 
     const { data: suggestions, isLoading: isFetching } = useQuery({

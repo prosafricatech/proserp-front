@@ -8,6 +8,8 @@ export async function POST(req: NextRequest) {
   if (response) return response;
 
   const body = await req.json();
+      console.log('employee', body);
+  
   const res = await fetch(`${API_BASE}/employees`, {
     method: 'POST',
     headers,

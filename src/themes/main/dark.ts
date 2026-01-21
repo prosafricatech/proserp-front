@@ -240,6 +240,25 @@ export const mainTheme: ThemeOptions = {
         },
       },
     },
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: {
+          '& .MuiOutlinedInput-notchedOutline': {
+            borderColor: '#9da9b7',
+          },
+          '&:hover:not(.Mui-focused) .MuiOutlinedInput-notchedOutline': {
+            borderColor: '#9da9b7',
+          },
+        },
+      },
+    },
+    MuiInputLabel: {
+      styleOverrides: {
+        root: {
+          color: '#9da9b7',
+        },
+      },
+    },
     MuiAccordion: {
       styleOverrides: {
         root: {

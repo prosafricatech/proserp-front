@@ -95,7 +95,7 @@ function InventoryTransferOnScreen({ transfer, organization }) {
             <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
               Transferred By
             </Typography>
-            <Typography variant="body1">{transfer.creator.name}</Typography>
+            <Typography variant="body1">{transfer?.creator?.name}</Typography>
           </Box>
         </Grid>
       </Grid>

@@ -9,12 +9,14 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import projectsServices from '../../../project-services';
 import { JumboDdMenu } from '@jumbo/components';
+import { useProjectProfile } from '../../ProjectProfileProvider';
 
 const TasksItemAction = ({ task, activity}) => {
     const [openEditDialog,setOpenEditDialog] = useState(false);
     const {showDialog,hideDialog} = useJumboDialog();
     const { enqueueSnackbar } = useSnackbar();
     const queryClient = useQueryClient();
+    const {project} = useProjectProfile();
 
     //Screen handling constants
     const {theme} = useJumboTheme();
@@ -24,7 +26,7 @@ const TasksItemAction = ({ task, activity}) => {
     const { mutate: deleteTask } = useMutation({
         mutationFn: projectsServices.deleteTask,
         onSuccess: (data) => {
-            queryClient.invalidateQueries({queryKey: ['projectTimelineActivities']});
+            queryClient.invalidateQueries({queryKey: ['projectTimelineActivities', project?.id]});
             enqueueSnackbar(data.message, {
                 variant: 'success',
             });

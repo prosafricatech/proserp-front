@@ -24,7 +24,7 @@ function SubContractMaterialIssuedPDF({SubContractMaterialIssuedDetails,organiza
                         <PdfLogo organization={organization}/>
                     </View>
                     <View style={{ flex: 1, textAlign: 'right' }}>
-                        <Text style={{...pdfStyles.majorInfo, color: mainColor }}>Subcontract Material Issued</Text>
+                        <Text style={{...pdfStyles.majorInfo, color: mainColor }}>Subcontract material Used</Text>
                         <Text style={{ ...pdfStyles.minInfo, }}>{SubContractMaterialIssuedDetails.issueNo}</Text>
                     </View>
                 </View>

@@ -41,13 +41,13 @@ function BudgetsListItem() {
       <ProductsSelectProvider>
         <ProductsProvider>
           <Grid container columnSpacing={1} width={'100%'} justifyContent="flex-end" alignItems="center">
-            <Grid>
+            <Grid size={{xs: 11, md: 4}}>
               <JumboSearch
                 value={searchQuery}
                 onChange={(value) => setSearchQuery(value)}
               />
             </Grid>
-            <Grid>
+            <Grid size={1}>
               <BudgetsActionTail />
             </Grid>
           </Grid>

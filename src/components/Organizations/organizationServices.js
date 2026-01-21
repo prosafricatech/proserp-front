@@ -18,6 +18,18 @@ const organizationServices = {
     return data;
   },
 
+  getOrganizationUsers: async (params = {}) => {
+    const { organizationId, keyword = '', ...rest } = params;
+    const { data } = await axios.get(`/api/organizations/${organizationId}/getOrganizationUsers`, {
+      params: {
+        keyword,
+        ...rest,
+      },
+    });
+
+    return data;
+  },
+
   getOptions: async () => {
     const { data } = await axios.get("/api/organizations/get_options");
     return data;

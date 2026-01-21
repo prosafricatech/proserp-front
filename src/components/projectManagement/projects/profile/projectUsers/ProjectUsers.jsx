@@ -71,7 +71,7 @@ const ProjectUsers = () => {
           hideItemsPerPage
           actionTail={
             <Grid container columnSpacing={1} rowSpacing={1} justifyContent={'end'}>
-              <Grid size={{xs: 10, md: 11}}>
+              <Grid size={{xs: 11, md: 11}}>
                 <JumboSearch
                   onChange={handleOnChange}
                   value={queryOptions.queryParams.keyword}

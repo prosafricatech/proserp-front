@@ -1,5 +1,5 @@
 'use client'
-import { Button, DialogActions, DialogContent, DialogTitle, Grid, IconButton, LinearProgress, Stack, Tab, Tabs, Tooltip, Typography, useMediaQuery} from '@mui/material';
+import { Autocomplete, Box, Button, Checkbox, Chip, DialogActions, DialogContent, DialogTitle, Grid, IconButton, LinearProgress, Stack, Tab, Tabs, TextField, Tooltip, Typography, useMediaQuery} from '@mui/material';
 import { DateTimePicker } from '@mui/x-date-pickers';
 import dayjs from 'dayjs';
 import * as yup from 'yup';
@@ -12,7 +12,7 @@ import { Document, Page, Text, View } from '@react-pdf/renderer';
 import { yupResolver } from '@hookform/resolvers/yup';
 import StoreSelector from '../../../StoreSelector';
 import StockMovementOnScreen from './StockMovementOnScreen';
-import { HighlightOff } from '@mui/icons-material';
+import { CheckBox, CheckBoxOutlineBlank, HighlightOff } from '@mui/icons-material';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import pdfStyles from '@/components/pdf/pdf-styles';
 import PdfLogo from '@/components/pdf/PdfLogo';
@@ -24,8 +24,11 @@ import { Div, Span } from '@jumbo/shared';
 import CostCenterSelector from '@/components/masters/costCenters/CostCenterSelector';
 import PDFContent from '@/components/pdf/PDFContent';
 import { useSnackbar } from 'notistack';
+import productCategoryServices from '@/components/productAndServices/productCategories/productCategoryServices';
+import { useQuery } from '@tanstack/react-query';
+import { MODULES } from '@/utilities/constants/modules';
 
-const ReportDocument = ({movementsData,authOrganization,user,checkOrganizationPermission,store,reportTitle}) => {
+const ReportDocument = ({productCategories, organizationHasSubscribed, movementsData,authOrganization,user,checkOrganizationPermission,store,reportTitle}) => {
     const mainColor = authOrganization.organization.settings?.main_color || "#2113AD";
     const lightColor = authOrganization.organization.settings?.light_color || "#bec5da";
     const contrastText = authOrganization.organization.settings?.contrast_text || "#FFFFFF";
@@ -38,7 +41,7 @@ const ReportDocument = ({movementsData,authOrganization,user,checkOrganizationPe
             producer='ProsERP'
             title={`${store.name} ${reportTitle} ${readableDate(movementsData.filters.from,true)} to ${readableDate(movementsData.filters.to,true)}`}
         >
-            <Page size="A3" orientation={'portrait'} style={pdfStyles.page}>
+            <Page size="A3" orientation={'landscape'} style={pdfStyles.page}>
                 <View style={pdfStyles.table}>
                     <View style={{ ...pdfStyles.tableRow, marginBottom: 20 }}>
                         <View style={{ flex: 1, maxWidth: 120}}>
@@ -57,6 +60,13 @@ const ReportDocument = ({movementsData,authOrganization,user,checkOrganizationPe
                         <View style={{ flex: 2, padding: 2}}>
                             <Text style={{...pdfStyles.minInfo, color: mainColor }}>Cost Centers</Text>
                             <Text style={{...pdfStyles.minInfo }}>{costCenters.map((cost_centers) => cost_centers.name).join(', ')}</Text>
+                        </View>
+                    }
+                    {
+                        productCategories?.length > 0 &&
+                        <View style={{ flex: 1, padding: 2}}>
+                            <Text style={{...pdfStyles.minInfo, color: mainColor }}>Categories</Text>
+                            <Text style={{...pdfStyles.minInfo }}>{productCategories.map((category) => category.name).join(', ')}</Text>
                         </View>
                     }
                     {
@@ -84,6 +94,9 @@ const ReportDocument = ({movementsData,authOrganization,user,checkOrganizationPe
                         <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.5 }}>Unit</Text>
                         <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.25 }}>Opening Balance</Text>
                         <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.5 }}>Purchase Received</Text>
+                        {organizationHasSubscribed(MODULES.MANUFACTURING_AND_PROCESSING) &&
+                            <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.5 }}>Produced Quantity</Text>
+                        }
                         <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.25 }}>Transfer In</Text>
                         <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.25 }}>Transfer Out</Text>
                         <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1 }}>Stock Gain</Text>
@@ -95,13 +108,13 @@ const ReportDocument = ({movementsData,authOrganization,user,checkOrganizationPe
                             checkOrganizationPermission(PERMISSIONS.ACCOUNTS_REPORTS) &&
                             <React.Fragment>
                                 <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.5 }}>Latest Rate</Text>
-                                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.5 }}>Estimated Closing Value</Text>
+                                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.5 }}>Est. Closing Value</Text>
                             </React.Fragment>
                         }
                     </View>
                     {
                         movementsData.movements.map((movement,index) => {
-                            const closing_balance = Math.round((parseFloat(movement.opening_balance)+parseFloat(movement.quantity_received)-parseFloat(movement.quantity_sold)-parseFloat(movement.quantity_consumed)-parseFloat(movement.quantity_transferred_out)+parseFloat(movement.quantity_transferred_in)+parseFloat(movement.stock_gain)-parseFloat(movement.stock_loss))*10000)/10000;
+                            const closing_balance = Math.round((parseFloat(movement.opening_balance)+parseFloat(movement.quantity_received)+parseFloat(movement.quantity_produced)-parseFloat(movement.quantity_sold)-parseFloat(movement.quantity_consumed)-parseFloat(movement.quantity_transferred_out)+parseFloat(movement.quantity_transferred_in)+parseFloat(movement.stock_gain)-parseFloat(movement.stock_loss))*10000)/10000;
                         return (
                                 <View key={index} style={pdfStyles.tableRow}>
                                     <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 0.5 }}>{index+1}</Text>
@@ -109,6 +122,9 @@ const ReportDocument = ({movementsData,authOrganization,user,checkOrganizationPe
                                     <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 0.5 }}>{movement.unit_symbol}</Text>
                                     <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1.25, textAlign: 'right' }}>{movement.opening_balance}</Text>
                                     <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1.5, textAlign: 'right' }}>{movement.quantity_received}</Text>
+                                    {organizationHasSubscribed(MODULES.MANUFACTURING_AND_PROCESSING) &&
+                                        <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1.5, textAlign: 'right' }}>{movement.quantity_produced}</Text>
+                                    }
                                     <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1.25, textAlign: 'right' }}>{movement.quantity_transferred_in}</Text>
                                     <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1.25, textAlign: 'right' }}>{movement.quantity_transferred_out}</Text>
                                     <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1, textAlign: 'right' }}>{movement.stock_gain}</Text>
@@ -134,7 +150,7 @@ const ReportDocument = ({movementsData,authOrganization,user,checkOrganizationPe
 
 function StockMovement({ toggleOpen, dormantStock = false, isFromDashboard }) {
     const classes = useProsERPStyles();
-    const { authOrganization, authUser: { user }, checkOrganizationPermission } = useJumboAuth();
+    const { authOrganization, authUser: { user }, checkOrganizationPermission, organizationHasSubscribed} = useJumboAuth();
     const { activeStore } = useStoreProfile();
     const [selectedTab, setSelectedTab] = useState(0);
     const { enqueueSnackbar } = useSnackbar();
@@ -170,14 +186,13 @@ function StockMovement({ toggleOpen, dormantStock = false, isFromDashboard }) {
     const [movements, setMovements] = useState(null);
 
     const getMovements = async (filters) => {
+        if (!filters?.store_id) {
+            enqueueSnackbar('Please select a store first', { variant: 'warning' });
+            return;
+        }
+
         setisFetching(true);
-
-        const serializedFilters = {
-            ...filters,
-            cost_center_ids: filters.cost_center_ids?.join(','),
-        };
-
-        const data = await storeServices.getStockMovement(serializedFilters, dormantStock);
+        const data = await storeServices.getStockMovement(filters, dormantStock);
         setMovements(data);
         setisFetching(false);
     };
@@ -192,7 +207,8 @@ function StockMovement({ toggleOpen, dormantStock = false, isFromDashboard }) {
             from: watch(`from`),
             to: watch(`to`),
             store_id: watch(`store_id`),
-            cost_center_ids: watch(`cost_center_ids`)
+            cost_center_ids: watch(`cost_center_ids`),
+            product_category_ids: watch('product_category_ids')
         };
 
         // Pass all filters to the service
@@ -219,6 +235,15 @@ function StockMovement({ toggleOpen, dormantStock = false, isFromDashboard }) {
 
     const reportTitle = dormantStock ? 'Dormant Stock' : 'Stock Movement';
     document.title = `${isFromDashboard ? 'Store' : activeStore?.name} - ${reportTitle} Report`;
+
+    const { data: productCategories, isLoading: isLoadingProductCategories } = useQuery({
+        queryKey: ['productCategoryOptions'],
+        queryFn: productCategoryServices.getCategoryOptions,
+    });
+
+    if (isLoadingProductCategories) {
+        return <LinearProgress/>;
+    }
 
     return (
         <React.Fragment>
@@ -248,7 +273,7 @@ function StockMovement({ toggleOpen, dormantStock = false, isFromDashboard }) {
                             </Grid>
                             {isFromDashboard &&
                                 <Grid size={{xs: 12, md: 6, lg: 6}}>
-                                    <Div sx={{ mt: 1, mb: 1 }}>
+                                    <Div sx={{ mt: 0.3 }}>
                                         <StoreSelector
                                             allowSubStores={true}
                                             label="Store"
@@ -265,8 +290,8 @@ function StockMovement({ toggleOpen, dormantStock = false, isFromDashboard }) {
                                     </Div>
                                 </Grid>
                             }
-                            <Grid size={{xs: 12, md: isFromDashboard ? 6 : 12}}>
-                                <Div sx={{ mt: 1, mb: 1 }}>
+                            <Grid size={{xs: 12, md: 6}}>
+                                <Div sx={{ mt: 0.3 }}>
                                     <CostCenterSelector
                                         label="Cost and Profit Centers"
                                         multiple={true}
@@ -277,8 +302,59 @@ function StockMovement({ toggleOpen, dormantStock = false, isFromDashboard }) {
                                     />
                                 </Div>
                             </Grid>
-                            <Grid size={{ xs: 12, md: 6}}>
-                                <Div sx={{ mt: 1, mb: 1 }}>
+                            <Grid size={{xs: 12, md: 6}}>
+                                <Div sx={{ mt: 0.3 }}>
+                                    <Autocomplete
+                                        multiple
+                                        id="product-categories-select"
+                                        options={productCategories}
+                                        disableCloseOnSelect
+                                        getOptionLabel={(option) => option.name}
+                                        isOptionEqualToValue={(option, value) => option.id === value.id}
+                                        renderOption={(props, option, { selected }) => (
+                                            <li {...props} key={`${option.id}-${props.id}`}>
+                                                <Checkbox
+                                                    icon={<CheckBoxOutlineBlank fontSize="small" />}
+                                                    checkedIcon={<CheckBox fontSize="small" />}
+                                                    style={{ marginRight: 8 }}
+                                                    checked={selected}
+                                                    size="small"
+                                                />
+                                                <Typography variant="body2">{option.name}</Typography>
+                                            </li>
+                                        )}
+                                        renderTags={(value, getTagProps) => (
+                                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                                {value.map((option, index) => (
+                                                    <Chip
+                                                        {...getTagProps({ index })}
+                                                        key={option.id}
+                                                        label={option.name}
+                                                        size="small"
+                                                        sx={{ maxWidth: 200 }}
+                                                    />
+                                                ))}
+                                            </Box>
+                                        )}
+                                        renderInput={(params) => (
+                                            <TextField
+                                                {...params}
+                                                label="Product Categories"
+                                                size="small"
+                                                fullWidth
+                                            />
+                                        )}
+                                        onChange={(event, newValue) => {
+                                            const categoryIds = newValue.map(category => category.id);
+                                            const categories = newValue.map(category => category);
+                                            setValue('product_category_ids', categoryIds);
+                                            setValue('product_categories', categories);
+                                        }}
+                                    />
+                                </Div>
+                            </Grid>
+                            <Grid size={{ xs: 12, md: isFromDashboard ? 3 : 6}}>
+                                <Div sx={{ mt: 0.3 }}>
                                     <DateTimePicker
                                         label="From (MM/DD/YYYY)"
                                         fullWidth
@@ -300,8 +376,8 @@ function StockMovement({ toggleOpen, dormantStock = false, isFromDashboard }) {
                                     />
                                 </Div>
                             </Grid>
-                            <Grid size={{ xs: 12, md: 6}}>
-                                <Div sx={{ mt: 1, mb: 1 }}>
+                            <Grid size={{ xs: 12, md: isFromDashboard ? 3 : 6}}>
+                                <Div sx={{ mt: 0.3 }}>
                                     <DateTimePicker
                                         label="To (MM/DD/YYYY)"
                                         fullWidth
@@ -361,13 +437,15 @@ function StockMovement({ toggleOpen, dormantStock = false, isFromDashboard }) {
                                 movementsData={movements}
                                 authOrganization={authOrganization}
                                 user={user}
+                                productCategories={watch('product_categories')}
                                 checkOrganizationPermission={checkOrganizationPermission}
+                                organizationHasSubscribed={organizationHasSubscribed}
                                 store={isFromDashboard ? watch('store') : activeStore}
                                 reportTitle={reportTitle}
                             />
                             :
                             <PDFContent
-                                document={<ReportDocument movementsData={movements} authOrganization={authOrganization} user={user} checkOrganizationPermission={checkOrganizationPermission} store={isFromDashboard ? watch('store') : activeStore} reportTitle={reportTitle} />}
+                                document={<ReportDocument organizationHasSubscribed={organizationHasSubscribed} productCategories={watch('product_categories')} movementsData={movements} authOrganization={authOrganization} user={user} checkOrganizationPermission={checkOrganizationPermission} store={isFromDashboard ? watch('store') : activeStore} reportTitle={reportTitle} />}
                                 fileName={
                                     isFromDashboard
                                         ? watch('store')?.name
