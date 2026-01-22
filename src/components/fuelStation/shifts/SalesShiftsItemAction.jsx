@@ -1,19 +1,21 @@
 'use client'
-import { DeleteOutlined, DownloadOutlined, EditOutlined, MoreHorizOutlined, VisibilityOutlined } from '@mui/icons-material';
-import { Checkbox, Dialog,DialogContent,DialogTitle,LinearProgress,Stack,Tooltip, Typography, useMediaQuery } from '@mui/material';
+import { DeleteOutlined, DownloadOutlined, EditOutlined, HighlightOff, MoreHorizOutlined, VisibilityOutlined } from '@mui/icons-material';
+import { Button, Checkbox, Dialog,DialogContent,DialogTitle,IconButton,LinearProgress,Stack,Tab,Tabs,Tooltip, Typography, useMediaQuery } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import React, { useContext, useState } from 'react';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
 import fuelStationServices from '../fuelStationServices';
 import SaleShiftForm from './SaleShiftForm';
 import PDFContent from '../../pdf/PDFContent';
-import SalesShiftPDF from './SalesShiftPDF';
 import { StationFormContext } from './SalesShifts';
 import { useProductsSelect } from '../../productAndServices/products/ProductsSelectProvider';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { JumboDdMenu } from '@jumbo/components';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import SalesShiftOnScreen from './preview/SalesShiftOnScreen';
+import SalesShiftPDF from './preview/SalesShiftPDF';
+import { Box, Grid } from '@mui/system';
 
 const EditShift = ({ClosedShift, setOpenEditDialog}) => {
   const { data: shiftData, isFetching } = useQuery({
@@ -30,16 +32,20 @@ const EditShift = ({ClosedShift, setOpenEditDialog}) => {
   )
 }
 
-const DocumentDialog = ({organization, ClosedShift}) => {
+const DocumentDialog = ({organization, ClosedShift, setOpenDocumentDialog}) => {
   const {activeStation} = useContext(StationFormContext);
   const { shift_teams, fuel_pumps, tanks } = activeStation;
   const { productOptions } = useProductsSelect();
   const [includeFuelVouchers, setIncludeFuelVouchers] = useState(false);
 
- const { data: shiftData, isFetching } = useQuery({
-  queryKey: ['showshiftDetails', { id: ClosedShift.id }],
-  queryFn: () => fuelStationServices.showShiftDetails(ClosedShift.id)
-});
+  const { data: shiftData, isFetching } = useQuery({
+    queryKey: ['showshiftDetails', { id: ClosedShift.id }],
+    queryFn: () => fuelStationServices.showShiftDetails(ClosedShift.id)
+  });
+
+  const [activeTab, setActiveTab] = useState(0);
+  const { theme } = useJumboTheme();
+  const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
   if(isFetching){
     return <LinearProgress/>;
@@ -60,7 +66,36 @@ const DocumentDialog = ({organization, ClosedShift}) => {
         </Stack>
       </DialogTitle>
       <DialogContent>
-        <PDFContent fileName={shiftData.shiftNo} document={<SalesShiftPDF includeFuelVouchers={includeFuelVouchers} productOptions={productOptions} shiftData={shiftData} tanks={tanks} fuel_pumps={fuel_pumps} shift_teams={shift_teams} organization={organization}/>}/>
+        {belowLargeScreen && (
+          <Grid container alignItems="center" justifyContent="space-between" mb={2}>
+            <Grid size={11}>
+              <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)}>
+                <Tab label="ONSCREEN" />
+                <Tab label="PDF" />
+              </Tabs>
+            </Grid>
+            <Grid size={1} textAlign="right">
+              <Tooltip title="Close">
+                <IconButton size="small" onClick={() => setOpenDocumentDialog(false)}>
+                  <HighlightOff color="primary" />
+                </IconButton>
+              </Tooltip>
+            </Grid>
+          </Grid>
+        )}
+        {belowLargeScreen && activeTab === 0 ? (
+          <SalesShiftOnScreen stationName={activeStation?.name} includeFuelVouchers={includeFuelVouchers} productOptions={productOptions} shiftData={shiftData} tanks={tanks} fuel_pumps={fuel_pumps} shift_teams={shift_teams} organization={organization}/>
+        ) : (
+          <PDFContent fileName={shiftData.shiftNo} document={<SalesShiftPDF stationName={activeStation?.name} includeFuelVouchers={includeFuelVouchers} productOptions={productOptions} shiftData={shiftData} tanks={tanks} fuel_pumps={fuel_pumps} shift_teams={shift_teams} organization={organization}/>}/>
+        )}
+        {
+          belowLargeScreen &&
+          <Box textAlign="right" mt={5}>
+            <Button variant="outlined" size="small" color="primary" onClick={() => setOpenDocumentDialog(false)}>
+              Close
+            </Button>
+          </Box>
+        }
       </DialogContent>
     </>
   )
@@ -81,7 +116,7 @@ const SalesShiftsItemAction = ({ ClosedShift}) => {
  const { mutate: deleteShift } = useMutation({
   mutationFn: fuelStationServices.deleteSalesShift,
   onSuccess: (data) => {
-    queryClient.invalidateQueries({ queryKey: ['closedShifts'] });
+    queryClient.invalidateQueries({ queryKey: ['salesShifts'] });
     enqueueSnackbar(data.message, {
       variant: 'success',
     });
@@ -95,7 +130,7 @@ const SalesShiftsItemAction = ({ ClosedShift}) => {
     });
 
   const menuItems = [
-    {icon: belowLargeScreen ? <DownloadOutlined/> : <VisibilityOutlined/> , title: belowLargeScreen ? "Download" : "View", action: "open"},
+    {icon: <VisibilityOutlined/> , title: "View", action: "open"},
     {icon: <EditOutlined/>, title: 'Edit', action: 'edit'},
     {icon: <DeleteOutlined color='error'/>, title: 'Delete', action: 'delete'}
   ];
@@ -130,7 +165,7 @@ const SalesShiftsItemAction = ({ ClosedShift}) => {
       <Dialog
         open={openEditDialog || openDocumentDialog}
         fullWidth  
-        fullScreen={belowLargeScreen && openEditDialog}
+        fullScreen={belowLargeScreen}
         maxWidth={openDocumentDialog ? 'md' : 'lg'} 
         scroll={belowLargeScreen ? 'body' : 'paper'}
         onClose={() => {
@@ -138,7 +173,7 @@ const SalesShiftsItemAction = ({ ClosedShift}) => {
         }}
       >
         {openEditDialog && <EditShift ClosedShift={ClosedShift} setOpenEditDialog={setOpenEditDialog} />}
-        {openDocumentDialog && <DocumentDialog ClosedShift={ClosedShift} organization={organization} />}
+        {openDocumentDialog && <DocumentDialog ClosedShift={ClosedShift} organization={organization} setOpenDocumentDialog={setOpenDocumentDialog}/>}
       </Dialog>
       <JumboDdMenu
         icon={

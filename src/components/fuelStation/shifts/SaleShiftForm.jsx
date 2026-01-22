@@ -216,13 +216,11 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
     },
   });
 
-  console.log(errors)
-
   const { fields: cashReconciliationFields, append: cashReconciliationAppend, remove: cashReconciliationRemove} = useFieldArray({
     control,
     name: 'other_ledgers',
   });
-  
+
   useEffect(() => {
     if (SalesShift) {
       setShiftLedgers(shift_teams?.find(team => team.id === SalesShift?.shift_team_id).ledgers)
@@ -259,7 +257,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
 
     lastReadings?.pump_readings && setLastPumpReadings(lastReadings.pump_readings)
   }
-  
+
   useEffect(() => {
     if(!!lastPumpReadings){
 
@@ -283,71 +281,71 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
     }, []);
     return uniqueEntries.reverse();
   };
-  
+
   const handleSubmitForm = async (data) => {
     const updatedData = { 
       ...data, 
       fuel_vouchers: watch('fuel_vouchers'), 
       adjustments: watch('adjustments') 
     };
-  
+
     const cleanedData = {
       ...updatedData,
       pump_readings: getUniqueEntries(updatedData.pump_readings, 'fuel_pump_id'),
       product_prices: getUniqueEntries(updatedData.product_prices, 'product_id')
     };
-  
+
     const pumpReadings = cleanedData.pump_readings;
     const fuelVouchers = cleanedData.fuel_vouchers;
-  
+
     if (!checkShiftBalanced && data.submit_type === 'close') {
       enqueueSnackbar('Shift is not balanced. Please review and balance the shift.', {
         variant: 'error',
       });
       return; 
     }
-  
+
     if (data.submit_type === 'close') {
       // Calculate total sold and vouchers for each product
       const totalSold = pumpReadings.reduce((acc, reading) => {
         const soldQuantity = reading.closing - reading.opening;
         const productId = reading.product_id;
-  
+
         acc[productId] = (acc[productId] || 0) + soldQuantity;
         return acc;
       }, {});
-  
+
       const totalVouchers = fuelVouchers.reduce((acc, voucher) => {
         const productId = voucher.product_id;
         const quantity = voucher.quantity;
-  
+
         acc[productId] = (acc[productId] || 0) + quantity;
         return acc;
       }, {});
-  
+
       let hasError = false;
-  
+
       for (const productId in totalSold) {
         const soldQuantity = totalSold[productId] || 0;
         const voucherQuantity = totalVouchers[productId] || 0;
-  
+
         if (soldQuantity < voucherQuantity) {
           const checkedProduct = productOptions.find(prd => prd.id === parseInt(productId));
-          
+
           enqueueSnackbar(
             `Fuel Voucher ${checkedProduct.name} quantity (${voucherQuantity}) exceeds total ${checkedProduct.name} Sold (${soldQuantity})`, 
             { variant: 'error' }
           );
-          
+
           hasError = true;
         }
       }
-  
+
       if (hasError) {
         return; 
       }
     }
-  
+
     await saveMutation(cleanedData);
   };      
 
