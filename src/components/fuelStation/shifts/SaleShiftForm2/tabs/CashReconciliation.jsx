@@ -25,7 +25,7 @@ function CashReconciliation({
     errors 
   } = useFormContext();
  
-  const productPrices = watch(`cashiers.${cashierIndex}.product_prices`) || [];
+  const productPrices = watch(`product_prices`) || [];
   const mainLedgerId = watch(`cashiers.${cashierIndex}.main_ledger_id`);
   const otherLedgers = watch(`cashiers.${cashierIndex}.other_ledgers`) || [];
   const mainLedger = watch(`cashiers.${cashierIndex}.main_ledger`) || {};

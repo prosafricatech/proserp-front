@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { 
   Typography,
   Box,
@@ -16,13 +16,13 @@ function FuelVouchersTab({
   setValue 
 }) {
     const { watch } = useFormContext();
-    const productPrices = watch(`cashiers.${cashierIndex}.product_prices`) || [];
+    const productPrices = watch(`product_prices`) || [];
 
     useEffect(() => {
-        setValue(`cashiers.${cashierIndex}.fuel_vouchers`, localFuelVouchers, {
-            shouldValidate: true,
-            shouldDirty: true
-        });
+      setValue(`cashiers.${cashierIndex}.fuel_vouchers`, localFuelVouchers, {
+          shouldValidate: true,
+          shouldDirty: true
+      });
     }, [localFuelVouchers, cashierIndex, setValue]);
 
   return (
@@ -34,13 +34,13 @@ function FuelVouchersTab({
         />
 
         {localFuelVouchers.map((fuelVoucher, index) => (
-            <FuelVouchersItemRow
-                fuelVoucher={fuelVoucher}
-                index={index}
-                productPrices={productPrices}
-                fuelVouchers={localFuelVouchers}
-                setFuelVouchers={setLocalFuelVouchers}
-            />
+          <FuelVouchersItemRow
+            fuelVoucher={fuelVoucher}
+            index={index}
+            productPrices={productPrices}
+            fuelVouchers={localFuelVouchers}
+            setFuelVouchers={setLocalFuelVouchers}
+          />
         ))}
       
       {localFuelVouchers.length === 0 && (

@@ -31,6 +31,9 @@ import CashierAccordion from './CashierAccordion';
 import Dipping from './tabs/Dipping';
 import { StationFormContext } from '../SalesShifts';
 import fuelStationServices from '../../fuelStationServices';
+import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
+import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
+import FuelPrices from './FuelPrices';
 
 function SaleShiftForm({ SalesShift, setOpenDialog }) {
   const queryClient = useQueryClient();
@@ -508,7 +511,11 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
                 />
               </Div>
             </Grid>
-            
+
+            <Grid size={{ xs: 12 }}>
+              <FuelPrices />
+            </Grid>
+
             {/* Cashiers Selection - Multiple with Checkbox */}
             <Grid size={{ xs: 12, md: 4 }}>
               <Typography sx={{ mt: 2, mb: 1 }}>
@@ -573,8 +580,8 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
           sx={{ mt: 2 }}
         >
           <Tab label="Cashiers Records" />
-          {/* <Tab label="Dipping" />
-          <Tab label="Shift Summary" /> */}
+          <Tab label="Dipping" />
+          <Tab label="Shift Summary" />
         </Tabs>
       </DialogTitle>
       
@@ -608,7 +615,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
         {activeTab === 2 && (
           <div>
             <Typography variant="h6" gutterBottom>
-              Shift Summary
+              Shift Summary will be here
             </Typography>
             {/* You can add shift summary calculations here */}
           </div>

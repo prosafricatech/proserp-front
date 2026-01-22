@@ -5,8 +5,8 @@ import {
   Typography,
   Box,
 } from '@mui/material';
-import Adjustments from '../adjustments/Adjustments';
-import AdjustmentsRow from '../adjustments/AdjustmentsRow';
+import Adjustments from './Adjustments';
+import AdjustmentsRow from './AdjustmentsRow';
 
 function AdjustmentsTab({  cashierIndex, localAdjustments, setLocalAdjustments, setValue }) {
 
