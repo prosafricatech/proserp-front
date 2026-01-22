@@ -134,7 +134,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
         amount: yup.string().required("Amount is required").typeError('Amount is required'),
       })
     ),
-    submit_type: yup.string().oneOf(['pending', 'close']).required(),
+    submit_type: yup.string().oneOf(['suspend', 'close']).required(),
     main_ledger_id: yup.number().when('submit_type', {
       is: 'close',
       then: (schema) => schema.required('Main Ledger is required').typeError('Main Ledger is required'),
