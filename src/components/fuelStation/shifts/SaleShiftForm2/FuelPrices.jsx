@@ -11,7 +11,7 @@ function FuelPrices() {
   return (
     <>
       <Typography variant="h6" gutterBottom padding={1}>
-        Fuel Prices for this Shift
+        Fuel Prices
       </Typography>
       
       <Grid container spacing={2}>
