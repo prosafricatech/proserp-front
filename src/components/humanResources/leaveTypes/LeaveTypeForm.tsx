@@ -84,10 +84,10 @@ const LeaveTypeForm = ({ setOpenDialog, leaveType }: LeaveTypeFormProp) => {
 
   const validationSchema = yup.object({
     id: yup.number().optional(),
-    name: yup.string().required('name is required'),
+    name: yup.string().required('Name is required'),
     days_per_year: yup
       .number()
-      .required('days per year is required')
+      .required('Days per year is required')
       .min(1, 'Days per year must be greater than 0'),
   });
 
@@ -128,7 +128,7 @@ const LeaveTypeForm = ({ setOpenDialog, leaveType }: LeaveTypeFormProp) => {
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='Name'
-                  placeholder='Leave Type Name'
+                  placeholder=''
                   size='small'
                   fullWidth
                   error={
@@ -149,7 +149,7 @@ const LeaveTypeForm = ({ setOpenDialog, leaveType }: LeaveTypeFormProp) => {
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='Days Per Year'
-                  placeholder='Days Per Year'
+                  placeholder=''
                   size='small'
                   fullWidth
                   error={
