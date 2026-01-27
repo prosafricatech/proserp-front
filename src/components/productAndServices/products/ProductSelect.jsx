@@ -81,6 +81,7 @@ function ProductSelect(props) {
     excludeIds = [],
     multiple = false,
     startAdornment,
+    excludeFuelProducts = false,
     requiredProducts,
     addedProduct = null,
     defaultValue = null,
@@ -115,6 +116,11 @@ function ProductSelect(props) {
         p.id !== addedProduct?.id
     );
 
+    // 👇 REMOVE fuel products when flag is true
+    if (excludeFuelProducts) {
+      opts = opts.filter((p) => !p.is_fuel);
+    }
+
     if (addedProduct?.id) {
       opts = [...opts, addedProduct];
     }
@@ -126,7 +132,13 @@ function ProductSelect(props) {
     }
 
     return opts;
-  }, [productOptions, excludeIds, addedProduct, requiredProducts]);
+  }, [
+    productOptions,
+    excludeIds,
+    addedProduct,
+    requiredProducts,
+    excludeFuelProducts
+  ]);
 
   const handleOnChange = (_, newValue) => {
     setSelectedItems(newValue);

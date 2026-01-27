@@ -161,7 +161,7 @@ const ReportDocument: React.FC<ReportDocumentProps> = ({ reportData, authOrganiz
             </View>
             <View style={pdfStyles.tableRow}>
               <Text style={{...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex : 0.1 }}>S/N</Text>
-              <Text style={{...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex : 0.3 }}>Paid</Text>
+              <Text style={{...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex : 0.3 }}>Client</Text>
               <Text style={{...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex : 0.2, textAlign: 'right' }}>Purchase</Text>
               <Text style={{...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex : 0.2, textAlign: 'right' }}>Payment</Text>
               <Text style={{...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex : 0.2, textAlign: 'right' }}>Balance</Text>

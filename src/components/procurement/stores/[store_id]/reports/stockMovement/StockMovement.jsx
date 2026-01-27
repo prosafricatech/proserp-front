@@ -155,7 +155,6 @@ function StockMovement({ toggleOpen, dormantStock = false, isFromDashboard }) {
     const [selectedTab, setSelectedTab] = useState(0);
     const { enqueueSnackbar } = useSnackbar();
     const [isDownloadingTemplate, setIsDownloadingTemplate] = React.useState(false);
-    const [uploadFieldsKey, setUploadFieldsKey] = useState(0)
 
     //Screen handling constants
     const {theme} = useJumboTheme();
@@ -200,7 +199,6 @@ function StockMovement({ toggleOpen, dormantStock = false, isFromDashboard }) {
     const downloadExcelTemplate = async () => {
         try {
             setIsDownloadingTemplate(true);
-            setUploadFieldsKey((prevKey) => prevKey + 1);
             
         // Get all current filter parameters
         const filters = {
@@ -212,7 +210,7 @@ function StockMovement({ toggleOpen, dormantStock = false, isFromDashboard }) {
         };
 
         // Pass all filters to the service
-        const responseData = await storeServices.downloadExcelTemplate(filters);
+        const responseData = await storeServices.getStockMovementExcel(filters);
         
         const blob = new Blob([responseData], {
             type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -250,7 +248,7 @@ function StockMovement({ toggleOpen, dormantStock = false, isFromDashboard }) {
             <DialogTitle textAlign={'center'}>
                 <Span className={classes.hiddenOnPrint}>
                     <form autoComplete='off' onSubmit={handleSubmit(getMovements)} >
-                        <Grid container columnSpacing={1} key={uploadFieldsKey} paddingTop={2} rowSpacing={1} alignItems={'center'} justifyContent={'center'}>
+                        <Grid container columnSpacing={1} paddingTop={2} rowSpacing={1} alignItems={'center'} justifyContent={'center'}>
                             <Grid container size={12}>
                                 <Grid size={belowLargeScreen ? 11 : 12}>
                                     <Typography variant="h3">
@@ -406,7 +404,6 @@ function StockMovement({ toggleOpen, dormantStock = false, isFromDashboard }) {
                                             size="small"
                                             onClick={downloadExcelTemplate}
                                             loading={isDownloadingTemplate}
-                                            disabled
                                             variant="contained"
                                             color="success"
                                         >

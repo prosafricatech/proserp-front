@@ -54,7 +54,6 @@ function ProfileContent() {
   
   // Store active tab in sessionStorage for persistence
   const [activeTab, setActiveTab] = useState<TabKey>(() => {
-    // Get saved tab from sessionStorage or default to 'dashboard'
     if (typeof window !== 'undefined') {
       const savedTab = sessionStorage.getItem('projectProfileActiveTab') as TabKey;
       const validTabs: TabKey[] = ['dashboard', 'deliverables', 'wbs', 'updates', 'budgets', 'subcontracts', 'claims', 'users', 'attachments'];

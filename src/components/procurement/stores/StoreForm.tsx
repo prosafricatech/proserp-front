@@ -12,6 +12,7 @@ import { Div } from '@jumbo/shared';
 import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
 import { Store, StoreOption, StoreFormData } from './storeTypes';
 import type {User} from '@/components/prosControl/userManagement/UserManagementType';
+import StoreSelector from './StoreSelector';
 
 interface StoreFormProps {
   store?: Store | null;
@@ -146,22 +147,12 @@ const StoreForm: React.FC<StoreFormProps> = ({ store = null, parentOptions = nul
             {Array.isArray(parentOptions) && (
               <Grid size={12}>
                 <Div sx={{ mt: 1, mb: 1 }}>
-                  <Autocomplete
-                    options={parentOptions}
-                    getOptionLabel={(option: StoreOption) => option.name}
-                    isOptionEqualToValue={(option: StoreOption, value: StoreOption) => option.id === value.id}
+                  <StoreSelector
+                    allowSubStores={true}
+                    includeStores={parentOptions as any}
+                    frontError={errors.parent_id as any}
                     defaultValue={parentOptions.find((parent: StoreOption) => parent.id === store?.parent_id) || null}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        size="small"
-                        fullWidth
-                        label="Under"
-                        error={!!errors?.parent_id}
-                        helperText={errors?.parent_id?.message}
-                      />
-                    )}
-                    onChange={(event, newValue: StoreOption | null) => {
+                    onChange={(newValue: StoreOption | null) => {
                       if (store && store?.id === newValue?.id) {
                         setValue('parent_id', 0);
                         setError('parent_id', { message: 'Cannot be a parent of its own' });

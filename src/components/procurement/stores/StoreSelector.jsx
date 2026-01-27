@@ -88,17 +88,26 @@ function StoreSelector({onChange, frontError = null, multiple = false, label = '
         const parts = parse(option.name, matches);
 
         return (
-          <li {...restProps} key={option.id + "-" + key}>
+          <li
+            {...restProps}
+            key={option.id + "-" + key}
+            style={{
+              paddingLeft: allowSubStores ? option.depth * 20 : 8,
+              display: 'flex',
+              alignItems: 'center',
+            }}
+          >
             {multiple && (
               <Checkbox
                 size="small"
-                sx={allowSubStores ? { ml: 2 * option.depth } : {}}
                 icon={<CheckBoxOutlineBlank fontSize="small" />}
                 checkedIcon={<CheckBox fontSize="small" />}
                 checked={selected}
+                sx={{ mr: 1 }}
               />
             )}
-            <div>
+
+            <div style={{ marginLeft: multiple ? 0 : 10 }}>
               {parts.map((part, index) => (
                 <span
                   key={index}

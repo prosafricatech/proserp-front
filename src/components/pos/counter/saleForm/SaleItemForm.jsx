@@ -319,6 +319,7 @@ function SaleItemForm({ setClearFormKey, submitMainForm, submitItemForm, setSubm
                     <ProductSelect
                         frontError={errors.product}
                         defaultValue={item && item.product}
+                        excludeFuelProducts={true}
                         onChange={async(newValue) => {
                             clearErrors('quantity');
                             if(newValue) {

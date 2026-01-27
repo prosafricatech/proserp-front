@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authMiddleware, anonymousMiddleware } from '@/middleware/auth';
+import { isPublicPath, isAnonymousPath } from '@/utilities/helpers/path';
 import { match } from '@formatjs/intl-localematcher';
 import Negotiator from 'negotiator';
 import { prefixLocale } from './middleware/locale';
-import { isAnonymousPath, isPublicPath } from './utilities/helpers/path';
 
 // Locale configuration
 const headers = { 'accept-language': 'en-US,en;q=0.5' };

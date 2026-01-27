@@ -202,7 +202,7 @@ const StationsForm = ({ setOpenDialog, station }: Props) => {
 
       <DialogContent>
         <form onSubmit={handleSubmit(onSubmit)} autoComplete="off">
-          <Grid container columnSpacing={2} rowSpacing={1}>
+          <Grid container columnSpacing={2} rowSpacing={1} paddingTop={1}>
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 size="small"
@@ -444,7 +444,7 @@ const StationsForm = ({ setOpenDialog, station }: Props) => {
               loading={isLoading}
               onClick={handleSubmit(onSubmit)}
             >
-              {station ? 'Update Station' : 'Create Station'}
+              {station ? 'Update' : 'Create'}
             </LoadingButton>
           )}
         </Stack>

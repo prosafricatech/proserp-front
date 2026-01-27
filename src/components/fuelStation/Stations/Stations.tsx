@@ -26,7 +26,7 @@ const Stations = () => {
   const [mounted, setMounted] = useState(false);
 
   const [queryOptions, setQueryOptions] = useState({
-    queryKey: 'station',
+    queryKey: 'stations',
     queryParams: { id: params.id, keyword: '' },
     countKey: 'total',
     dataKey: 'data',

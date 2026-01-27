@@ -50,22 +50,22 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
     setOpenDialog(false);
   },
   onError: (error) => {
-          let message = 'Something went wrong';
+      let message = 'Something went wrong';
 
-          if (
-            typeof error === 'object' &&
-            error !== null &&
-            'response' in error &&
-            typeof (error).response?.data?.message === 'string'
-          ) {
-            message = (error).response.data.message;
-          } else if (error instanceof Error) {
-            message = error.message;
-          }
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error).response?.data?.message === 'string'
+      ) {
+        message = (error).response.data.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
 
-          enqueueSnackbar(message, { variant: 'error' });
-        },
-      });
+      enqueueSnackbar(message, { variant: 'error' });
+    },
+  });
 
   const { mutate: updateSalesShifts, isPending: updateLoading } = useMutation({
     mutationFn: fuelStationServices.updateSalesShifts,
@@ -76,21 +76,21 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
       setOpenDialog(false);
     },
     onError: (error) => {
-            let message = 'Something went wrong';
+      let message = 'Something went wrong';
 
-            if (
-              typeof error === 'object' &&
-              error !== null &&
-              'response' in error &&
-              typeof (error).response?.data?.message === 'string'
-            ) {
-              message = (error).response.data.message;
-            } else if (error instanceof Error) {
-              message = error.message;
-            }
-              enqueueSnackbar(message, { variant: 'error' });
-            },
-          });
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error).response?.data?.message === 'string'
+      ) {
+        message = (error).response.data.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+        enqueueSnackbar(message, { variant: 'error' });
+    },
+  });
 
   const saveMutation = React.useMemo(() => {
     return SalesShift?.id ? updateSalesShifts : addSalesShifts;

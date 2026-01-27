@@ -24,18 +24,15 @@ export default function CashierAccordion({
 }) {
   const [tab, setTab] = useState(0);
   
-  // Read initial values from form
   const formFuelVouchers = watch(`cashiers.${index}.fuel_vouchers`) || [];
   const formAdjustments = watch(`cashiers.${index}.adjustments`) || [];
   const formPumpReadings = watch(`cashiers.${index}.pump_readings`) || [];
   const formSelectedPumps = watch(`cashiers.${index}.selected_pumps`) || [];
   
-  // Local state for UI, initialized from form
   const [localFuelVouchers, setLocalFuelVouchers] = useState(formFuelVouchers);
   const [localAdjustments, setLocalAdjustments] = useState(formAdjustments);
   const [localPumpReadings, setLocalPumpReadings] = useState(formPumpReadings);
   
-  // Sync form to local state when form values change externally
   useEffect(() => {
     const currentFuelVouchers = watch(`cashiers.${index}.fuel_vouchers`) || [];
     const currentAdjustments = watch(`cashiers.${index}.adjustments`) || [];
@@ -46,7 +43,6 @@ export default function CashierAccordion({
     setLocalPumpReadings(currentPumpReadings);
   }, [watch, index]);
 
-  // Update functions that sync to form immediately
   const updateFuelVouchers = (newVouchers) => {
     setLocalFuelVouchers(newVouchers);
     setValue(`cashiers.${index}.fuel_vouchers`, newVouchers, {

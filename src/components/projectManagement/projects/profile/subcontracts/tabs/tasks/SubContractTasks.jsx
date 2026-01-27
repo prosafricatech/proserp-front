@@ -32,6 +32,7 @@ function SubContractTasks({setOpenDialog, subContract = null, subContractTask = 
     onSuccess: (data) => {
       data?.message && enqueueSnackbar(data.message,{variant:'success'});
       queryClient.invalidateQueries({queryKey: ['subContractTasks']});
+      queryClient.invalidateQueries({queryKey: ['subcontracts']});
       setOpenDialog(false);
     },
     onError: (error) => {
@@ -44,6 +45,7 @@ function SubContractTasks({setOpenDialog, subContract = null, subContractTask = 
     onSuccess: (data) => {
       data?.message && enqueueSnackbar(data.message,{variant:'success'});
       queryClient.invalidateQueries({queryKey: ['subContractTasks']});
+      queryClient.invalidateQueries({queryKey: ['subcontracts']});
       setOpenDialog(false);
     },
     onError: (error) => {
@@ -77,7 +79,7 @@ function SubContractTasks({setOpenDialog, subContract = null, subContractTask = 
   
         return !isTaskExist; 
       }
-    ),  
+    ),
     quantity: yup
       .number()
       .required("Quantity is required")

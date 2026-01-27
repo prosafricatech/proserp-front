@@ -1,4 +1,6 @@
 import { Shadows, ThemeOptions, alpha } from '@mui/material';
+import '@mui/lab/themeAugmentation';
+
 const shadows: Shadows = [
   'none',
   '0px 2px 1px -1px rgba(0,0,0,0.2),0px 1px 1px 0px rgba(0,0,0,0.14),0px 1px 3px 0px rgba(0,0,0,0.12)',
@@ -335,23 +337,37 @@ export const mainTheme: ThemeOptions = {
     MuiButton: {
       styleOverrides: {
         root: {
-          textTransform: 'capitalize',
-          fontWeight: 400,
-          letterSpacing: 1,
-        },
-        sizeSmall: {
-          fontSize: '12px',
-        },
-        colorInherit: {
-          backgroundColor: '#3C475F',
+          textTransform: 'none',
+          '&.MuiButton-loading': {
+            backgroundColor: '#3C475F',
+            color: '#8595A6',
+            opacity: 0.7,
+            pointerEvents: 'none',
 
-          '&:hover': {
-            backgroundColor: '#323b4f',
+            '& .MuiCircularProgress-root': {
+              color: '#A67FFB',
+            },
           },
         },
-        contained: {
-          '&.Mui-disabled': {
-            color: '#FFF',
+      },
+    },
+    MuiLoadingButton: {
+      styleOverrides: {
+        root: {
+          '&.MuiLoadingButton-loading': {
+            backgroundColor: '#3C475F',
+            color: '#8595A6',
+            boxShadow: 'none',
+            opacity: 0.7,
+            pointerEvents: 'none',
+
+            '& .MuiLoadingButton-loadingIndicator': {
+              color: '#A67FFB',
+            },
+          },
+
+          '&.MuiLoadingButton-loading:hover': {
+            backgroundColor: '#3C475F',
           },
         },
       },

@@ -31,9 +31,8 @@ import CashierAccordion from './CashierAccordion';
 import Dipping from './tabs/Dipping';
 import { StationFormContext } from '../SalesShifts';
 import fuelStationServices from '../../fuelStationServices';
-import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
-import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import FuelPrices from './FuelPrices';
+import ShiftSummary from './ShiftSummary';
 
 function SaleShiftForm({ SalesShift, setOpenDialog }) {
   const queryClient = useQueryClient();
@@ -613,12 +612,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
 
         {/* Tab 3: Shift Summary */}
         {activeTab === 2 && (
-          <div>
-            <Typography variant="h6" gutterBottom>
-              Shift Summary will be here
-            </Typography>
-            {/* You can add shift summary calculations here */}
-          </div>
+          <ShiftSummary />
         )}
       </DialogContent>
 
