@@ -1,9 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { readableDate } from '@/app/helpers/input-sanitization-helpers';
+import { KeyboardArrowDown, KeyboardArrowRight } from '@mui/icons-material';
 import {
   Box,
   Grid,
+  IconButton,
   Paper,
   Table,
   TableBody,
@@ -12,14 +14,9 @@ import {
   TableHead,
   TableRow,
   Typography,
-  IconButton,
   useTheme,
 } from '@mui/material';
-import {
-  KeyboardArrowDown,
-  KeyboardArrowRight,
-} from '@mui/icons-material';
-import { readableDate } from '@/app/helpers/input-sanitization-helpers';
+import { useState } from 'react';
 
 const SalesShiftOnScreen = ({
   shiftData,
@@ -57,30 +54,50 @@ const SalesShiftOnScreen = ({
   ].filter(Boolean);
 
   // Fuel Vouchers Total
-  const totalFuelVouchersAmount = (shiftData.fuel_vouchers || []).reduce((total, voucher) => {
-    const price = shiftData.fuel_prices?.find(p => p.product_id === voucher.product_id)?.price || 0;
-    return total + (voucher.quantity * price);
-  }, 0);
+  const totalFuelVouchersAmount = (shiftData.fuel_vouchers || []).reduce(
+    (total, voucher) => {
+      const price =
+        shiftData.fuel_prices?.find((p) => p.product_id === voucher.product_id)
+          ?.price || 0;
+      return total + voucher.quantity * price;
+    },
+    0
+  );
 
-  const totalCash = cashAccounts.reduce((sum, acc) => sum + (acc.amount || 0), 0) + totalFuelVouchersAmount;
+  const totalCash =
+    cashAccounts.reduce((sum, acc) => sum + (acc.amount || 0), 0) +
+    totalFuelVouchersAmount;
 
   // Products Sold Calculations (with adjustments)
-  const mergedPumpReadings = (shiftData.pump_readings || []).reduce((acc, pump) => {
-    if (!acc[pump.product_id]) {
-      acc[pump.product_id] = { ...pump, quantity: pump.closing - pump.opening };
-    } else {
-      acc[pump.product_id].quantity += pump.closing - pump.opening;
-    }
-    return acc;
-  }, {});
+  const mergedPumpReadings = (shiftData.pump_readings || []).reduce(
+    (acc, pump) => {
+      if (!acc[pump.product_id]) {
+        acc[pump.product_id] = {
+          ...pump,
+          quantity: pump.closing - pump.opening,
+        };
+      } else {
+        acc[pump.product_id].quantity += pump.closing - pump.opening;
+      }
+      return acc;
+    },
+    {}
+  );
 
   const mergedProducts = Object.values(mergedPumpReadings);
 
   const productsTotals = mergedProducts.reduce(
     (acc, product) => {
-      const price = shiftData.fuel_prices?.find(p => p.product_id === product.product_id)?.price || 0;
-      const adjustments = (shiftData.adjustments || []).filter(a => a.product_id === product.product_id);
-      const adjTotal = adjustments.reduce((sum, a) => sum + (a.operator === '+' ? -a.quantity : a.quantity), 0);
+      const price =
+        shiftData.fuel_prices?.find((p) => p.product_id === product.product_id)
+          ?.price || 0;
+      const adjustments = (shiftData.adjustments || []).filter(
+        (a) => a.product_id === product.product_id
+      );
+      const adjTotal = adjustments.reduce(
+        (sum, a) => sum + (a.operator === '+' ? -a.quantity : a.quantity),
+        0
+      );
       const finalQty = product.quantity + adjTotal;
       const amount = finalQty * price;
 
@@ -106,10 +123,14 @@ const SalesShiftOnScreen = ({
         }}
         onClick={() => toggleSection(sectionKey)}
       >
-        <IconButton size="small" sx={{ mr: 1 }}>
-          {openSections[sectionKey] ? <KeyboardArrowDown /> : <KeyboardArrowRight />}
+        <IconButton size='small' sx={{ mr: 1 }}>
+          {openSections[sectionKey] ? (
+            <KeyboardArrowDown />
+          ) : (
+            <KeyboardArrowRight />
+          )}
         </IconButton>
-        <Typography variant="h6" sx={{ color: headerColor }}>
+        <Typography variant='h6' sx={{ color: headerColor }}>
           {title}
         </Typography>
       </Box>
@@ -117,7 +138,7 @@ const SalesShiftOnScreen = ({
 
   const NumberCell = ({ value, bold = false, color = 'text.primary' }) => (
     <TableCell
-      align="right"
+      align='right'
       sx={{
         fontFamily: 'monospace',
         fontWeight: bold ? 'bold' : 'regular',
@@ -132,7 +153,7 @@ const SalesShiftOnScreen = ({
   );
 
   const QuantityCell = ({ value }) => (
-    <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
+    <TableCell align='right' sx={{ fontFamily: 'monospace' }}>
       {value?.toLocaleString('en-US', {
         minimumFractionDigits: 3,
         maximumFractionDigits: 3,
@@ -154,7 +175,10 @@ const SalesShiftOnScreen = ({
       {/* Header */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid size={{ xs: 12, md: 8 }}>
-          <Typography variant="h4" sx={{ color: headerColor, fontWeight: 'bold', textAlign: 'center' }}>
+          <Typography
+            variant='h4'
+            sx={{ color: headerColor, fontWeight: 'bold', textAlign: 'center' }}
+          >
             {shiftData.shiftNo}
           </Typography>
         </Grid>
@@ -163,47 +187,64 @@ const SalesShiftOnScreen = ({
       {/* Metadata */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid size={{ xs: 6, sm: 3 }}>
-          <Typography variant="subtitle2" sx={{ color: headerColor }}>
+          <Typography variant='subtitle2' sx={{ color: headerColor }}>
             Team
           </Typography>
-          <Typography variant="body1">
-            {shift_teams?.find(t => t.id === shiftData.shift_team_id)?.name || '—'}
+          <Typography variant='body1'>
+            {shift_teams?.find((t) => t.id === shiftData.shift_team_id)?.name ||
+              '—'}
           </Typography>
         </Grid>
         <Grid size={{ xs: 6, sm: 3 }}>
-          <Typography variant="subtitle2" sx={{ color: headerColor }}>
+          <Typography variant='subtitle2' sx={{ color: headerColor }}>
             Start Time
           </Typography>
-          <Typography variant="body1">{readableDate(shiftData.shift_start, true)}</Typography>
+          <Typography variant='body1'>
+            {readableDate(shiftData.shift_start, true)}
+          </Typography>
         </Grid>
         <Grid size={{ xs: 6, sm: 3 }}>
-          <Typography variant="subtitle2" sx={{ color: headerColor }}>
+          <Typography variant='subtitle2' sx={{ color: headerColor }}>
             End Time
           </Typography>
-          <Typography variant="body1">{readableDate(shiftData.shift_end, true)}</Typography>
+          <Typography variant='body1'>
+            {readableDate(shiftData.shift_end, true)}
+          </Typography>
         </Grid>
       </Grid>
 
       <Paper elevation={3} sx={{ overflow: 'hidden' }}>
         {/* Pump Readings */}
-        <SectionHeader title="Pump Readings" sectionKey="pumpReadings" />
+        <SectionHeader title='Pump Readings' sectionKey='pumpReadings' />
         {openSections.pumpReadings && (
           <TableContainer sx={{ px: 2, pb: 2 }}>
-            <Table size="small">
+            <Table size='small'>
               <TableHead>
                 <TableRow sx={{ bgcolor: mainColor }}>
                   <TableCell sx={{ color: contrastText }}>Pump</TableCell>
                   <TableCell sx={{ color: contrastText }}>Product</TableCell>
-                  <TableCell align="right" sx={{ color: contrastText }}>Opening</TableCell>
-                  <TableCell align="right" sx={{ color: contrastText }}>Closing</TableCell>
-                  <TableCell align="right" sx={{ color: contrastText }}>Difference</TableCell>
+                  <TableCell align='right' sx={{ color: contrastText }}>
+                    Opening
+                  </TableCell>
+                  <TableCell align='right' sx={{ color: contrastText }}>
+                    Closing
+                  </TableCell>
+                  <TableCell align='right' sx={{ color: contrastText }}>
+                    Difference
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {(shiftData.pump_readings || []).map((pump, idx) => (
                   <TableRow key={idx} hover>
-                    <TableCell>{fuel_pumps?.find(p => p.id === pump.fuel_pump_id)?.name || '—'}</TableCell>
-                    <TableCell>{productOptions?.find(p => p.id === pump.product_id)?.name || '—'}</TableCell>
+                    <TableCell>
+                      {fuel_pumps?.find((p) => p.id === pump.fuel_pump_id)
+                        ?.name || '—'}
+                    </TableCell>
+                    <TableCell>
+                      {productOptions?.find((p) => p.id === pump.product_id)
+                        ?.name || '—'}
+                    </TableCell>
                     <QuantityCell value={pump.opening} />
                     <QuantityCell value={pump.closing} />
                     <QuantityCell value={pump.closing - pump.opening} />
@@ -213,37 +254,50 @@ const SalesShiftOnScreen = ({
             </Table>
           </TableContainer>
         )}
-        
+
         {/* Products Sold */}
-        <SectionHeader title="Products Sold" sectionKey="products" />
+        <SectionHeader title='Products Sold' sectionKey='products' />
         {openSections.products && (
           <TableContainer sx={{ px: 2, pb: 2 }}>
-            <Table size="small">
+            <Table size='small'>
               <TableHead>
                 <TableRow sx={{ bgcolor: mainColor }}>
                   <TableCell sx={{ color: contrastText }}>Product</TableCell>
-                  <TableCell align="right" sx={{ color: contrastText }}>
+                  <TableCell align='right' sx={{ color: contrastText }}>
                     Quantity (L)
                   </TableCell>
-                  <TableCell align="right" sx={{ color: contrastText }}>
+                  <TableCell align='right' sx={{ color: contrastText }}>
                     Price
                   </TableCell>
-                  <TableCell align="right" sx={{ color: contrastText }}>
+                  <TableCell align='right' sx={{ color: contrastText }}>
                     Amount
                   </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {mergedProducts.map((product, idx) => {
-                  const price = shiftData.fuel_prices?.find(p => p.product_id === product.product_id)?.price || 0;
-                  const adjustments = (shiftData.adjustments || []).filter(a => a.product_id === product.product_id);
-                  const adjTotal = adjustments.reduce((sum, a) => sum + (a.operator === '+' ? -a.quantity : a.quantity), 0);
+                  const price =
+                    shiftData.fuel_prices?.find(
+                      (p) => p.product_id === product.product_id
+                    )?.price || 0;
+                  const adjustments = (shiftData.adjustments || []).filter(
+                    (a) => a.product_id === product.product_id
+                  );
+                  const adjTotal = adjustments.reduce(
+                    (sum, a) =>
+                      sum + (a.operator === '+' ? -a.quantity : a.quantity),
+                    0
+                  );
                   const finalQty = product.quantity + adjTotal;
                   const amount = finalQty * price;
 
                   return (
                     <TableRow key={idx} hover>
-                      <TableCell>{productOptions?.find(p => p.id === product.product_id)?.name || 'Unknown'}</TableCell>
+                      <TableCell>
+                        {productOptions?.find(
+                          (p) => p.id === product.product_id
+                        )?.name || 'Unknown'}
+                      </TableCell>
                       <QuantityCell value={finalQty} />
                       <NumberCell value={price} />
                       <NumberCell value={amount} bold />
@@ -251,7 +305,7 @@ const SalesShiftOnScreen = ({
                   );
                 })}
                 <TotalRow
-                  label="Total Products"
+                  label='Total Products'
                   quantity={productsTotals.totalQuantity}
                   amount={productsTotals.totalAmount}
                 />
@@ -261,14 +315,17 @@ const SalesShiftOnScreen = ({
         )}
 
         {/* Cash Distribution */}
-        <SectionHeader title="Cash Distribution" sectionKey="cashDistribution" />
+        <SectionHeader
+          title='Cash Distribution'
+          sectionKey='cashDistribution'
+        />
         {openSections.cashDistribution && (
           <TableContainer sx={{ px: 2, pb: 2 }}>
-            <Table size="small">
+            <Table size='small'>
               <TableHead>
                 <TableRow sx={{ bgcolor: mainColor }}>
                   <TableCell sx={{ color: contrastText }}>Account</TableCell>
-                  <TableCell align="right" sx={{ color: contrastText }}>
+                  <TableCell align='right' sx={{ color: contrastText }}>
                     Amount
                   </TableCell>
                 </TableRow>
@@ -298,16 +355,23 @@ const SalesShiftOnScreen = ({
         {/* Tank Adjustments */}
         {!!shiftData?.adjustments?.length && (
           <>
-            <SectionHeader title="Tank Adjustments" sectionKey="tankAdjustments" />
+            <SectionHeader
+              title='Tank Adjustments'
+              sectionKey='tankAdjustments'
+            />
             {openSections.tankAdjustments && (
               <TableContainer sx={{ px: 2, pb: 2 }}>
-                <Table size="small">
+                <Table size='small'>
                   <TableHead>
                     <TableRow sx={{ bgcolor: mainColor }}>
-                      <TableCell sx={{ color: contrastText }}>Product</TableCell>
+                      <TableCell sx={{ color: contrastText }}>
+                        Product
+                      </TableCell>
                       <TableCell sx={{ color: contrastText }}>Tank</TableCell>
-                      <TableCell sx={{ color: contrastText }}>Description</TableCell>
-                      <TableCell align="right" sx={{ color: contrastText }}>
+                      <TableCell sx={{ color: contrastText }}>
+                        Description
+                      </TableCell>
+                      <TableCell align='right' sx={{ color: contrastText }}>
                         Quantity
                       </TableCell>
                     </TableRow>
@@ -315,14 +379,26 @@ const SalesShiftOnScreen = ({
                   <TableBody>
                     {(shiftData.adjustments || []).map((adj, idx) => (
                       <TableRow key={idx} hover>
-                        <TableCell>{productOptions?.find(p => p.id === adj.product_id)?.name || '—'}</TableCell>
-                        <TableCell>{tanks?.find(t => t.id === adj.tank_id)?.name || '—'}</TableCell>
+                        <TableCell>
+                          {productOptions?.find((p) => p.id === adj.product_id)
+                            ?.name || '—'}
+                        </TableCell>
+                        <TableCell>
+                          {tanks?.find((t) => t.id === adj.tank_id)?.name ||
+                            '—'}
+                        </TableCell>
                         <TableCell>{adj.description || '—'}</TableCell>
-                        <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
-                          {`(${adj.operator})${adj.quantity.toLocaleString('en-US', {
-                            minimumFractionDigits: 3,
-                            maximumFractionDigits: 3,
-                          })}`}
+                        <TableCell
+                          align='right'
+                          sx={{ fontFamily: 'monospace' }}
+                        >
+                          {`(${adj.operator})${adj.quantity.toLocaleString(
+                            'en-US',
+                            {
+                              minimumFractionDigits: 3,
+                              maximumFractionDigits: 3,
+                            }
+                          )}`}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -336,27 +412,41 @@ const SalesShiftOnScreen = ({
         {/* Opening Dipping */}
         {shiftData?.opening_dipping?.readings?.length > 0 && (
           <>
-            <SectionHeader title="Opening Dipping" sectionKey="openingDipping" />
+            <SectionHeader
+              title='Opening Dipping'
+              sectionKey='openingDipping'
+            />
             {openSections.openingDipping && (
               <TableContainer sx={{ px: 2, pb: 2 }}>
-                <Table size="small">
+                <Table size='small'>
                   <TableHead>
                     <TableRow sx={{ bgcolor: mainColor }}>
                       <TableCell sx={{ color: contrastText }}>Tank</TableCell>
-                      <TableCell sx={{ color: contrastText }}>Product</TableCell>
-                      <TableCell align="right" sx={{ color: contrastText }}>Reading</TableCell>
-                      <TableCell align="right" sx={{ color: contrastText }}>Cumulative Deviation</TableCell>
+                      <TableCell sx={{ color: contrastText }}>
+                        Product
+                      </TableCell>
+                      <TableCell align='right' sx={{ color: contrastText }}>
+                        Reading
+                      </TableCell>
+                      <TableCell align='right' sx={{ color: contrastText }}>
+                        Cumulative Deviation
+                      </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {(shiftData.opening_dipping.readings || []).map((d, idx) => (
-                      <TableRow key={idx} hover>
-                        <TableCell>{d.tank?.name || '—'}</TableCell>
-                        <TableCell>{productOptions?.find(p => p.id === d.product_id)?.name || '—'}</TableCell>
-                        <QuantityCell value={d.reading} />
-                        <QuantityCell value={d.deviation} />
-                      </TableRow>
-                    ))}
+                    {(shiftData.opening_dipping.readings || []).map(
+                      (d, idx) => (
+                        <TableRow key={idx} hover>
+                          <TableCell>{d.tank?.name || '—'}</TableCell>
+                          <TableCell>
+                            {productOptions?.find((p) => p.id === d.product_id)
+                              ?.name || '—'}
+                          </TableCell>
+                          <QuantityCell value={d.reading} />
+                          <QuantityCell value={d.deviation} />
+                        </TableRow>
+                      )
+                    )}
                   </TableBody>
                 </Table>
               </TableContainer>
@@ -367,27 +457,41 @@ const SalesShiftOnScreen = ({
         {/* Closing Dipping */}
         {shiftData?.closing_dipping?.readings?.length > 0 && (
           <>
-            <SectionHeader title="Closing Dipping" sectionKey="closingDipping" />
+            <SectionHeader
+              title='Closing Dipping'
+              sectionKey='closingDipping'
+            />
             {openSections.closingDipping && (
               <TableContainer sx={{ px: 2, pb: 2 }}>
-                <Table size="small">
+                <Table size='small'>
                   <TableHead>
                     <TableRow sx={{ bgcolor: mainColor }}>
                       <TableCell sx={{ color: contrastText }}>Tank</TableCell>
-                      <TableCell sx={{ color: contrastText }}>Product</TableCell>
-                      <TableCell align="right" sx={{ color: contrastText }}>Reading</TableCell>
-                      <TableCell align="right" sx={{ color: contrastText }}>Cumulative Deviation</TableCell>
+                      <TableCell sx={{ color: contrastText }}>
+                        Product
+                      </TableCell>
+                      <TableCell align='right' sx={{ color: contrastText }}>
+                        Reading
+                      </TableCell>
+                      <TableCell align='right' sx={{ color: contrastText }}>
+                        Cumulative Deviation
+                      </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {(shiftData.closing_dipping.readings || []).map((d, idx) => (
-                      <TableRow key={idx} hover>
-                        <TableCell>{d.tank?.name || '—'}</TableCell>
-                        <TableCell>{productOptions?.find(p => p.id === d.product_id)?.name || '—'}</TableCell>
-                        <QuantityCell value={d.reading} />
-                        <QuantityCell value={d.deviation} />
-                      </TableRow>
-                    ))}
+                    {(shiftData.closing_dipping.readings || []).map(
+                      (d, idx) => (
+                        <TableRow key={idx} hover>
+                          <TableCell>{d.tank?.name || '—'}</TableCell>
+                          <TableCell>
+                            {productOptions?.find((p) => p.id === d.product_id)
+                              ?.name || '—'}
+                          </TableCell>
+                          <QuantityCell value={d.reading} />
+                          <QuantityCell value={d.deviation} />
+                        </TableRow>
+                      )
+                    )}
                   </TableBody>
                 </Table>
               </TableContainer>
@@ -398,34 +502,57 @@ const SalesShiftOnScreen = ({
         {/* Fuel Vouchers */}
         {includeFuelVouchers && shiftData?.fuel_vouchers?.length > 0 && (
           <>
-            <SectionHeader title="Fuel Vouchers" sectionKey="fuelVouchers" />
+            <SectionHeader title='Fuel Vouchers' sectionKey='fuelVouchers' />
             {openSections.fuelVouchers && (
               <TableContainer sx={{ px: 2, pb: 2 }}>
-                <Table size="small">
+                <Table size='small'>
                   <TableHead>
                     <TableRow sx={{ bgcolor: mainColor }}>
-                      <TableCell sx={{ color: contrastText }}>Voucher No</TableCell>
+                      <TableCell sx={{ color: contrastText }}>
+                        Voucher No
+                      </TableCell>
                       <TableCell sx={{ color: contrastText }}>Client</TableCell>
-                      <TableCell sx={{ color: contrastText }}>Reference</TableCell>
-                      <TableCell sx={{ color: contrastText }}>Narration</TableCell>
-                      <TableCell sx={{ color: contrastText }}>Product</TableCell>
-                      <TableCell align="right" sx={{ color: contrastText }}>Quantity</TableCell>
-                      <TableCell align="right" sx={{ color: contrastText }}>Price</TableCell>
-                      <TableCell align="right" sx={{ color: contrastText }}>Amount</TableCell>
+                      <TableCell sx={{ color: contrastText }}>
+                        Reference
+                      </TableCell>
+                      <TableCell sx={{ color: contrastText }}>
+                        Narration
+                      </TableCell>
+                      <TableCell sx={{ color: contrastText }}>
+                        Product
+                      </TableCell>
+                      <TableCell align='right' sx={{ color: contrastText }}>
+                        Quantity
+                      </TableCell>
+                      <TableCell align='right' sx={{ color: contrastText }}>
+                        Price
+                      </TableCell>
+                      <TableCell align='right' sx={{ color: contrastText }}>
+                        Amount
+                      </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {(shiftData.fuel_vouchers || []).map((voucher, idx) => {
-                      const price = shiftData.fuel_prices?.find(p => p.product_id === voucher.product_id)?.price || 0;
+                      const price =
+                        shiftData.fuel_prices?.find(
+                          (p) => p.product_id === voucher.product_id
+                        )?.price || 0;
                       const amount = voucher.quantity * price;
 
                       return (
                         <TableRow key={idx} hover>
                           <TableCell>{voucher.voucherNo}</TableCell>
-                          <TableCell>{voucher.stakeholder?.name || '—'}</TableCell>
+                          <TableCell>
+                            {voucher.stakeholder?.name || '—'}
+                          </TableCell>
                           <TableCell>{voucher.reference || '—'}</TableCell>
                           <TableCell>{voucher.narration || '—'}</TableCell>
-                          <TableCell>{productOptions?.find(p => p.id === voucher.product_id)?.name || '—'}</TableCell>
+                          <TableCell>
+                            {productOptions?.find(
+                              (p) => p.id === voucher.product_id
+                            )?.name || '—'}
+                          </TableCell>
                           <QuantityCell value={voucher.quantity} />
                           <NumberCell value={price} />
                           <NumberCell value={amount} bold />
