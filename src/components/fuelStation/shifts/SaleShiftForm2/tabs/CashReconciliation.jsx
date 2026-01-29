@@ -352,11 +352,11 @@ function CashReconciliation({
                 <Table size="small">
                   <TableBody>
                     <TableRow>
-                      <TableCell>Total Sales Amount</TableCell>
+                      <TableCell>Sales Amount</TableCell>
                       <TableCell align="right">{grandProductsTotal.toLocaleString()}</TableCell>
                     </TableRow>
                     <TableRow>
-                      <TableCell>Fuel Vouchers Total</TableCell>
+                      <TableCell>Fuel Vouchers</TableCell>
                       <TableCell align="right">{grandFuelVoucherTotal.toLocaleString()}</TableCell>
                     </TableRow>
                     <TableRow>
@@ -366,15 +366,9 @@ function CashReconciliation({
                       </TableCell>
                     </TableRow>
                     <TableRow>
-                      <TableCell>Other Ledger Transactions Total</TableCell>
+                      <TableCell>Other Ledger Transactions</TableCell>
                       <TableCell align="right">{totalNonMainLedgerTransactionsAmount.toLocaleString()}</TableCell>
                     </TableRow>
-                    {mainLedgerTransactionsSum > 0 && (
-                      <TableRow>
-                        <TableCell>Main Ledger Transactions (included in total)</TableCell>
-                        <TableCell align="right">{mainLedgerTransactionsSum.toLocaleString()}</TableCell>
-                      </TableRow>
-                    )}
                   </TableBody>
                 </Table>
               </TableContainer>
