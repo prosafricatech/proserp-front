@@ -259,8 +259,8 @@ function CashReconciliation({
                     <TableRow>
                       <TableCell>Product Name</TableCell>
                       <TableCell align="right">Quantity (L)</TableCell>
-                      <TableCell align="right">Price (TZS)</TableCell>
-                      <TableCell align="right">Amount (TZS)</TableCell>
+                      <TableCell align="right">Price</TableCell>
+                      <TableCell align="right">Amount</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -305,8 +305,8 @@ function CashReconciliation({
                     <TableRow>
                       <TableCell>Product Name</TableCell>
                       <TableCell align="right">Quantity (L)</TableCell>
-                      <TableCell align="right">Price (TZS)</TableCell>
-                      <TableCell align="right">Amount (TZS)</TableCell>
+                      <TableCell align="right">Price</TableCell>
+                      <TableCell align="right">Amount</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
