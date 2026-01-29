@@ -39,7 +39,8 @@ function Dipping({SalesShift}) {
     }, [SalesShift, setValue]);
 
     const renderFields = (type) => {
-        const existingReadings = watch(`dipping_${type}`) || [];
+        const fieldName = `dipping_${type}`;
+        const existingReadings = watch(fieldName) || [];
         
         return Object.values(fuel_pumps.reduce((acc, item) => {
             if (!acc[item.tank_id]) {
@@ -53,6 +54,9 @@ function Dipping({SalesShift}) {
             const existingReadingIndex = existingReadings.findIndex(r => r?.tank_id === tankInfo.id);
             const fieldIndex = existingReadingIndex !== -1 ? existingReadingIndex : tankIndex;
             
+            const currentValue = watch(`${fieldName}.${fieldIndex}`);
+            const readingValue = currentValue?.reading || '';
+            
             return (
                 <Grid size={{xs: 12, md: 4, lg: 3}} key={tankInfo.id}>
                     <Card variant="outlined">
@@ -62,25 +66,25 @@ function Dipping({SalesShift}) {
                                     fullWidth
                                     label={`${tankInfo.name}`}
                                     size="small"
-                                    value={watch(`dipping_${type}.${fieldIndex}.reading`) || ''}
-                                    error={!!errors[`dipping_${type}`]?.[fieldIndex]?.reading}
-                                    helperText={errors[`dipping_${type}`]?.[fieldIndex]?.reading?.message}
+                                    value={readingValue}
+                                    error={!!errors[fieldName]?.[fieldIndex]?.reading}
+                                    helperText={errors[fieldName]?.[fieldIndex]?.reading?.message}
                                     InputProps={{
                                         inputComponent: CommaSeparatedField,
                                     }}
                                     onChange={(e) => {
                                         const newValue = e.target.value;
                                         if (!newValue) {
-                                            setValue(`dipping_${type}.${fieldIndex}`, null);
+                                            setValue(`${fieldName}.${fieldIndex}`, null);
                                         } else {
                                             const product_id = fuel_pumps.find(pump => pump.tank_id === tankInfo.id)?.product_id;
                                             const updatedReading = {
-                                                id: watch(`dipping_${type}.${fieldIndex}.id`),
+                                                id: watch(`${fieldName}.${fieldIndex}.id`),
                                                 tank_id: tankInfo.id,
                                                 reading: sanitizedNumber(newValue),
                                                 product_id: product_id,
                                             };
-                                            setValue(`dipping_${type}.${fieldIndex}`, updatedReading, {
+                                            setValue(`${fieldName}.${fieldIndex}`, updatedReading, {
                                                 shouldValidate: true,
                                                 shouldDirty: true,
                                             });

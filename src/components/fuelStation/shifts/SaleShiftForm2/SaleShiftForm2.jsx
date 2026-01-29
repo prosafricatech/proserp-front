@@ -111,7 +111,7 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
       ),
     cashiers: yup.array().of(
       yup.object().shape({
-        cashier_id: yup.number().required('Cashier ID is required'),
+        id: yup.number().required('Cashier ID is required'),
         name: yup.string(),
         selected_pumps: yup.array().of(yup.number()),
         pump_readings: yup.array().of(
@@ -132,11 +132,11 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
               .required("Closing Reading is required")
               .typeError('Closing Reading is required')
               .min(0, 'Closing reading cannot be negative')
-              .test('closing-greater-than-opening', 'Closing Reading should exceed the Opening Reading', 
+              .test('closing-greater-than-or-equal-to-opening', 'Closing Reading should be greater than or equal to the Opening Reading', 
                 function(value) {
                   const { opening } = this.parent;
                   if (value == null || opening == null) return true;
-                  return Number(value) > Number(opening);
+                  return Number(value) >= Number(opening);
                 }
               ),
             product_id: yup.number().required('Product is required'),
@@ -218,7 +218,7 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
         })) || [];
         
         return {
-          cashier_id: cashier.id,
+          id: cashier.id,
           name: cashier.name,
           selected_pumps: selectedPumps,
           pump_readings: pumpReadings,
@@ -399,7 +399,7 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
   // Update cashier ledgers when cashiers are selected
   useEffect(() => {
     selectedCashiers.forEach((cashier, index) => {
-      const cashierData = cashiers?.find(c => c.id === cashier.cashier_id);
+      const cashierData = cashiers?.find(c => c.id === cashier.id);
       if (cashierData && cashierData.ledgers && !cashierLedgers[index]) {
         setCashierLedgers(prev => ({
           ...prev,
@@ -423,12 +423,12 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
         const cashier = cashiers.find(c => c.id === cashierId);
         if (!cashier) return null;
         
-        if (selectedCashiers.some(sc => sc.cashier_id === cashierId)) {
+        if (selectedCashiers.some(sc => sc.id === cashierId)) {
           return null;
         }
         
         return {
-          cashier_id: cashierId,
+          id: cashierId,
           name: cashier.name,
           selected_pumps: [],
           pump_readings: [],
@@ -450,7 +450,7 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
         [cashierIndex]: []
       }));
       
-      const cashierData = cashiers.find(c => c.id === cashier.cashier_id);
+      const cashierData = cashiers.find(c => c.id === cashier.id);
       if (cashierData && cashierData.ledgers) {
         setCashierLedgers(prev => ({
           ...prev,
@@ -461,9 +461,9 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
   };
 
   const removeCashier = (cashierId) => {
-    const cashierIndex = selectedCashiers.findIndex(c => c.cashier_id === cashierId);
+    const cashierIndex = selectedCashiers.findIndex(c => c.id === cashierId);
     if (cashierIndex !== -1) {
-      const updatedCashiers = selectedCashiers.filter(c => c.cashier_id !== cashierId);
+      const updatedCashiers = selectedCashiers.filter(c => c.id !== cashierId);
       setValue('cashiers', updatedCashiers, { shouldValidate: true, shouldDirty: true });
       
       setCashierFuelVouchers(prev => {
@@ -674,7 +674,7 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
                 )}
                 onChange={(e, selectedValues) => {
                   const selectedIds = selectedValues.map(v => v.id);
-                  const currentCashierIds = selectedCashiers.map(c => c.cashier_id);
+                  const currentCashierIds = selectedCashiers.map(c => c.id);
                   const toRemove = currentCashierIds.filter(id => !selectedIds.includes(id));
                   const toAdd = selectedIds.filter(id => !currentCashierIds.includes(id));
                   toRemove.forEach(cashierId => removeCashier(cashierId));
@@ -684,7 +684,7 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
                   }
                 }}
                 value={cashiers.filter(c => 
-                  selectedCashiers.some(sc => sc.cashier_id === c.id)
+                  selectedCashiers.some(sc => sc.id === c.id)
                 )}
               />
             </Grid>
@@ -723,7 +723,7 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
             ) : (
               selectedCashiers.map((cashier, index) => (
                 <CashierAccordion
-                  key={cashier.cashier_id}
+                  key={cashier.id}
                   cashier={cashier}
                   index={index}
                   control={control}
