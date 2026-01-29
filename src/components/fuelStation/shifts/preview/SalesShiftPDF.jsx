@@ -327,7 +327,7 @@ function SalesShiftPDF({ includeFuelVouchers, shiftData, stationName, organizati
 
               {/* ================= CASHIER CASH DISTRIBUTION ================= */}
               {(cashier.main_ledger || cashier.cash_transactions?.length > 0) && (
-                <View style={{ marginBottom: 20 }}>
+                <View style={{ marginBottom: 35 }}>
                   <Text style={{ fontSize: 12, color: mainColor, marginBottom: 4, textAlign: 'center' }}>
                     Cash Distribution
                   </Text>
@@ -341,7 +341,7 @@ function SalesShiftPDF({ includeFuelVouchers, shiftData, stationName, organizati
                     {/* Main Ledger */}
                     {cashier.main_ledger && (
                       <View style={pdfStyles.tableRow}>
-                        <Text style={{ ...pdfStyles.tableCell, backgroundColor: '#FFFFFF', flex: 2.5, fontWeight: 'bold' }}>
+                        <Text style={{ ...pdfStyles.tableCell, backgroundColor: '#FFFFFF', flex: 2.5 }}>
                           {cashier.main_ledger.name || `Ledger ${cashier.main_ledger.id}`}
                         </Text>
                         <Text style={{ ...pdfStyles.tableCell, backgroundColor: '#FFFFFF', flex: 2, fontStyle: 'italic' }}>
@@ -353,42 +353,66 @@ function SalesShiftPDF({ includeFuelVouchers, shiftData, stationName, organizati
                       </View>
                     )}
                     
-                    {/* Cash Transactions */}
-                    {cashier.cash_transactions?.map((transaction, index) => {
-                      const ledger = cashier.ledgers?.find(l => l.id === transaction.id) || 
-                                   (transaction.debit_ledger ? { name: transaction.debit_ledger.name } : { name: `Transaction ${index + 1}` });
-                      
-                      return (
-                        <View key={index} style={pdfStyles.tableRow}>
-                          <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? lightColor : '#FFFFFF', flex: 2.5 }}>
-                            {ledger.name}
-                          </Text>
-                          <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? lightColor : '#FFFFFF', flex: 2, fontStyle: 'italic' }}>
-                            {transaction.narration || '-'}
-                          </Text>
-                          <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? lightColor : '#FFFFFF', flex: 1, textAlign: 'right' }}>
-                            {(transaction.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          </Text>
-                        </View>
-                      );
-                    })}
+                    {cashier.cash_transactions
+                      ?.filter(transaction => {
+                        if (!transaction.debit_ledger || !cashier.main_ledger) return true;
+                        
+                        return transaction.debit_ledger.id !== cashier.main_ledger.id;
+                      })
+                      ?.map((transaction, index) => {
+                        const ledger = cashier.ledgers?.find(l => l.id === transaction.id) || 
+                                    (transaction.debit_ledger ? { name: transaction.debit_ledger.name } : { name: `Transaction ${index + 1}` });
+                        
+                        return (
+                          <View key={index} style={pdfStyles.tableRow}>
+                            <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? lightColor : '#FFFFFF', flex: 2.5 }}>
+                              {ledger.name}
+                            </Text>
+                            <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? lightColor : '#FFFFFF', flex: 2, fontStyle: 'italic' }}>
+                              {transaction.narration || '-'}
+                            </Text>
+                            <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? lightColor : '#FFFFFF', flex: 1, textAlign: 'right' }}>
+                              {(transaction.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </Text>
+                          </View>
+                        );
+                      })}
                     
-                    {/* Total */}
-                    <View style={pdfStyles.tableRow}>
-                      <Text style={{ ...pdfStyles.tableHeader, ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, flex: 4.5, fontWeight: 'bold' }}>
-                        Total
-                      </Text>
-                      <Text style={{ ...pdfStyles.tableHeader, ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, flex: 1, textAlign: 'right', fontWeight: 'bold' }}>
-                        {(cashierTotals.cashTransactionsTotal + (cashier.main_ledger?.amount || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </Text>
-                    </View>
+                    {/* Total - only show if there are items to display */}
+                    {(cashier.main_ledger || cashier.cash_transactions?.filter(t => {
+                      if (!t.debit_ledger || !cashier.main_ledger) return true;
+                      return t.debit_ledger.id !== cashier.main_ledger.id;
+                    })?.length > 0) && (
+                      <View style={pdfStyles.tableRow}>
+                        <Text style={{ ...pdfStyles.tableHeader, ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, flex: 4.5, fontWeight: 'bold' }}>
+                          Total
+                        </Text>
+                        <Text style={{ ...pdfStyles.tableHeader, ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, flex: 1, textAlign: 'right', fontWeight: 'bold' }}>
+                          {(() => {
+                            // Calculate total including main ledger and filtered cash transactions
+                            const mainLedgerAmount = cashier.main_ledger?.amount || 0;
+                            const filteredCashTransactionsTotal = cashier.cash_transactions
+                              ?.filter(transaction => {
+                                if (!transaction.debit_ledger || !cashier.main_ledger) return true;
+                                return transaction.debit_ledger.id !== cashier.main_ledger.id;
+                              })
+                              ?.reduce((sum, transaction) => sum + (transaction.amount || 0), 0) || 0;
+                            
+                            return (mainLedgerAmount + filteredCashTransactionsTotal).toLocaleString('en-US', { 
+                              minimumFractionDigits: 2, 
+                              maximumFractionDigits: 2 
+                            });
+                          })()}
+                        </Text>
+                      </View>
+                    )}
                   </View>
                 </View>
               )}
 
               {/* ================= CASHIER FUEL VOUCHERS ================= */}
               {includeFuelVouchers && cashier.fuel_vouchers?.length > 0 && (
-                <View style={{ marginBottom: 12, marginTop: 15 }}>
+                <View style={{ marginBottom: 12, marginTop: 30 }}>
                   <Text style={{ fontSize: 12, color: mainColor, marginBottom: 4, textAlign: 'center' }}>
                     Fuel Vouchers
                   </Text>
