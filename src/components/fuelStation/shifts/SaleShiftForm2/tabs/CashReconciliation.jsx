@@ -1,5 +1,5 @@
 "use client";
-import React, { useMemo, useCallback, useState, useEffect } from 'react';
+import React, { useMemo, useCallback, useState, useEffect, useContext } from 'react';
 import {
   TableContainer,
   Table,
@@ -26,6 +26,7 @@ import {
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import { useFormContext, useWatch } from 'react-hook-form';
+import { StationFormContext } from '../../SalesShifts';
 
 function CashReconciliation({
   cashierIndex,
@@ -36,12 +37,12 @@ function CashReconciliation({
   const {
     setValue,
     setCheckShiftBalanced,
-    products,
-    fuel_pumps,
     errors,
     watch,
     getCashierLedgers,
   } = useFormContext();
+  const {activeStation} = useContext(StationFormContext);
+  const {fuel_pumps, products } = activeStation;
 
   const productPrices = useWatch({
     name: 'product_prices',

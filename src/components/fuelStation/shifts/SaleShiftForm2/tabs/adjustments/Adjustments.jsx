@@ -1,5 +1,5 @@
 import { Grid, IconButton, LinearProgress, TextField, Tooltip} from '@mui/material';
-import { useState } from 'react'
+import { useContext, useState } from 'react'
 import * as yup  from "yup";
 import { useForm, useFormContext } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -12,10 +12,12 @@ import { useProductsSelect } from '@/components/productAndServices/products/Prod
 import StoreSelector from '@/components/procurement/stores/StoreSelector';
 import OperationSelector from '@/components/sharedComponents/OperationSelector';
 import { Div } from '@jumbo/shared';
+import { StationFormContext } from '../../../SalesShifts';
 
 function Adjustments({index = -1, setShowForm = null, adjustment, adjustments = [], setAdjustments}) {
   const [isAdding, setIsAdding] = useState(false);
-  const { products, fuel_pumps, tanks} = useFormContext();
+  const {activeStation} = useContext(StationFormContext);
+  const { fuel_pumps, tanks, products } = activeStation;
   const { productOptions } = useProductsSelect();
   const [productTanks, setProductTanks] = useState([])
   const [tanksKey, setTanksKeyKey] = useState(0);

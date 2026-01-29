@@ -1,13 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Box, Card, CardContent, Grid, TextField, Switch, Typography } from '@mui/material';
 import { useFormContext } from 'react-hook-form';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
+import { StationFormContext } from '../../SalesShifts';
 
 function Dipping() {
-    const { setValue, watch, errors, fuel_pumps, tanks, SalesShift } = useFormContext();
+    const { setValue, watch, errors, SalesShift } = useFormContext();
     const [openSwitch, setOpenSwitch] = useState(!!watch('isOpenSwitchON') || !!SalesShift?.opening_dipping);
     const [closingSwitch, setClosingSwitch] = useState(!!watch('isCloseSwitchON') || !!SalesShift?.closing_dipping);
+    const {activeStation} = useContext(StationFormContext);
+    const { fuel_pumps, tanks } = activeStation;
     
     useEffect(() => {
         if (SalesShift?.closing_dipping) {

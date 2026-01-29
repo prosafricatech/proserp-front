@@ -14,7 +14,8 @@ import {
   Divider
 } from '@mui/material';
 import { useFormContext } from 'react-hook-form';
-import { useEffect } from 'react';
+import { useContext, useEffect } from 'react';
+import { StationFormContext } from '../../SalesShifts';
 
 function PumpReadings({ 
   name, 
@@ -25,13 +26,12 @@ function PumpReadings({
 }) {
   const { 
     setValue: formSetValue, 
-    errors, 
-    fuel_pumps, 
-    tanks, 
+    errors,
     watch,
-    products, 
     getAvailablePumpsForCashier 
   } = useFormContext();
+  const {activeStation} = useContext(StationFormContext);
+  const {fuel_pumps, tanks, products } = activeStation;
 
   const handlePumpReadingChange = (pumpId, field, value) => {
     const updatedReadings = [...localPumpReadings];

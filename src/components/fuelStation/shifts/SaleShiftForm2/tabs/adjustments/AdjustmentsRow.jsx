@@ -1,12 +1,14 @@
 import { DisabledByDefault, EditOutlined } from '@mui/icons-material'
 import { Divider, Grid, IconButton, Tooltip, Typography } from '@mui/material'
-import React, { useState } from 'react'
+import React, { useContext, useState } from 'react'
 import { useFormContext } from 'react-hook-form';
 import Adjustments from './Adjustments';
+import { StationFormContext } from '../../../SalesShifts';
 
 function AdjustmentsRow({ adjustment, index, adjustments, setAdjustments}) {
     const [showForm, setShowForm] = useState(false);
-    const { products, tanks } = useFormContext();
+    const {activeStation} = useContext(StationFormContext);
+    const { tanks, products } = activeStation;
     const product = products.find(product => product.id === adjustment.product_id);
     const tank = tanks.find(tank => tank.id === adjustment.tank_id);
 

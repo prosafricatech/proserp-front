@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from 'react';
+import React, { useContext, useMemo } from 'react';
 import {
   TableContainer,
   Table,
@@ -19,13 +19,12 @@ import {
   Alert,
 } from '@mui/material';
 import { TrendingUp, TrendingDown, AttachMoney, LocalGasStation } from '@mui/icons-material';
-import { useFormContext, useWatch } from 'react-hook-form';
+import { useWatch } from 'react-hook-form';
+import { StationFormContext } from '../SalesShifts';
 
 function ShiftSummary() {
-  const { 
-    products, 
-    fuel_pumps, 
-  } = useFormContext();
+  const {activeStation} = useContext(StationFormContext);
+  const {fuel_pumps, products } = activeStation;
 
   // Watch all cashiers data
   const allCashiers = useWatch({

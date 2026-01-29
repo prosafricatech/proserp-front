@@ -4,9 +4,13 @@ import { Grid, TextField, Typography, Card, CardContent } from '@mui/material';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import { useFormContext } from 'react-hook-form';
+import { StationFormContext } from '../SalesShifts';
+import { useContext } from 'react';
 
 function FuelPrices() {
-  const { setValue, watch, products } = useFormContext();
+  const { setValue, watch } = useFormContext();
+  const {activeStation} = useContext(StationFormContext);
+  const { products } = activeStation;
 
   return (
     <>
