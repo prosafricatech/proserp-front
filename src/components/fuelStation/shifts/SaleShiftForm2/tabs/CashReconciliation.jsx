@@ -141,24 +141,19 @@ function CashReconciliation({
   // Filter out transactions where debit_ledger equals main_ledger
   const filteredCashTransactions = useMemo(() => {
     return cashTransactions.filter(transaction => {
-      // If there's no main ledger id, keep all transactions
       if (!mainLedgerId) return true;
       
-      // Get the transaction ledger id
       const transactionLedgerId = transaction.debit_ledger?.id || transaction.id;
       
-      // Exclude transactions where debit_ledger equals main_ledger
       return transactionLedgerId !== mainLedgerId;
     });
   }, [cashTransactions, mainLedgerId]);
 
-  // Calculate sum of filtered transactions (excluding main ledger transactions)
   const filteredTransactionsSum = useMemo(() => {
     return filteredCashTransactions.reduce((sum, transaction) => 
       sum + sanitizedNumber(transaction?.amount || 0), 0) || 0;
   }, [filteredCashTransactions]);
 
-  // Calculate main ledger amount: Cash remaining minus sum of other ledger transactions
   const calculatedMainLedgerAmount = cashRemaining - filteredTransactionsSum;
 
   useEffect(() => {
