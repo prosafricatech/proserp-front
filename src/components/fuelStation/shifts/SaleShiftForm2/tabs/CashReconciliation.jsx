@@ -426,17 +426,24 @@ function CashReconciliation({
                   />
                 </Grid>
 
-                {nonMainLedgerTransactions.map((transaction, idx) => {
-                  const originalIdx = cashTransactions.findIndex(t => 
-                    (t.id === transaction.id && t.id) || 
-                    (t.debit_ledger?.id === transaction.debit_ledger?.id && t.debit_ledger?.id)
-                  );
+                {nonMainLedgerTransactions.map((transaction, nonMainIdx) => {
+                  // Find the original index in cashTransactions array
+                  const originalIdx = cashTransactions.findIndex(t => {
+                    if (t.id && transaction.id) return t.id === transaction.id;
+                    if (t.debit_ledger?.id && transaction.debit_ledger?.id) {
+                      return t.debit_ledger.id === transaction.debit_ledger.id;
+                    }
+                    return false;
+                  });
+                  
+                  // Create a stable key using the index from nonMainLedgerTransactions
+                  const stableKey = `cash-transaction-${cashierIndex}-${nonMainIdx}`;
                   
                   const ledgerId = transaction.debit_ledger?.id || transaction.id;
                   const ledgerObj = availableLedgers.find(l => l.id === ledgerId);
                   
                   return (
-                    <React.Fragment key={originalIdx}>
+                    <React.Fragment key={stableKey}>
                       <Grid size={{ xs: 12, md: 4 }}>
                         <Autocomplete
                           size="small"
@@ -444,7 +451,8 @@ function CashReconciliation({
                           getOptionLabel={(opt) => opt.name}
                           value={ledgerObj}
                           onChange={(_, newValue) => {
-                            updateCashTransaction(originalIdx, 'id', newValue?.id ?? null);
+                            const updateIdx = originalIdx !== -1 ? originalIdx : cashTransactions.length;
+                            updateCashTransaction(updateIdx, 'id', newValue?.id ?? null);
                           }}
                           renderInput={(params) => (
                             <TextField
@@ -466,7 +474,10 @@ function CashReconciliation({
                           error={!!errors?.cashiers?.[cashierIndex]?.cash_transactions?.[originalIdx]?.amount}
                           helperText={errors?.cashiers?.[cashierIndex]?.cash_transactions?.[originalIdx]?.amount?.message}
                           InputProps={{ inputComponent: CommaSeparatedField }}
-                          onChange={(e) => updateCashTransaction(originalIdx, 'amount', e.target.value)}
+                          onChange={(e) => {
+                            const updateIdx = originalIdx !== -1 ? originalIdx : cashTransactions.length;
+                            updateCashTransaction(updateIdx, 'amount', e.target.value);
+                          }}
                         />
                       </Grid>
 
@@ -479,7 +490,10 @@ function CashReconciliation({
                           placeholder="Enter transaction description"
                           error={!!errors?.cashiers?.[cashierIndex]?.cash_transactions?.[originalIdx]?.narration}
                           helperText={errors?.cashiers?.[cashierIndex]?.cash_transactions?.[originalIdx]?.narration?.message}
-                          onChange={(e) => updateCashTransaction(originalIdx, 'narration', e.target.value)}
+                          onChange={(e) => {
+                            const updateIdx = originalIdx !== -1 ? originalIdx : cashTransactions.length;
+                            updateCashTransaction(updateIdx, 'narration', e.target.value);
+                          }}
                         />
                       </Grid>
 
@@ -488,7 +502,10 @@ function CashReconciliation({
                           <IconButton
                             size="small"
                             color="error"
-                            onClick={() => removeCashTransaction(originalIdx)}
+                            onClick={() => {
+                              const removeIdx = originalIdx !== -1 ? originalIdx : cashTransactions.length;
+                              removeCashTransaction(removeIdx);
+                            }}
                           >
                             <DisabledByDefault fontSize="small" />
                           </IconButton>
