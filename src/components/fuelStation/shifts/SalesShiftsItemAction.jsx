@@ -40,18 +40,10 @@ import { StationFormContext } from './SalesShifts';
 const EditShift = ({ ClosedShift, setOpenEditDialog }) => {
   const { data: shiftData, isFetching } = useQuery({
     queryKey: ['showshiftDetails', { id: ClosedShift.id }],
-    // queryFn: () => {
-    //   const data = fuelStationServices.showShiftDetails(ClosedShift.id);
-    //   return data;
-    //   // fuelStationServices.showShiftDetails(ClosedShift.id);
-    // },
-
     queryFn: async () => {
-      return fuelStationServices.showShiftDetails(ClosedShift.id);
+      return await fuelStationServices.showShiftDetails(ClosedShift.id);
     },
   });
-
-  console.log('shiftData: ', shiftData);
 
   if (isFetching) {
     return <LinearProgress />;
@@ -74,18 +66,8 @@ const DocumentDialog = ({
 
   const { data: shiftData, isFetching } = useQuery({
     queryKey: ['showshiftDetails', { id: ClosedShift.id }],
-    // queryFn: () => fuelStationServices.showShiftDetails(ClosedShift.id),
-    // queryFn: () => {
-    //   const data = fuelStationServices.showShiftDetails(ClosedShift.id);
-    //   return data;
-    //   // fuelStationServices.showShiftDetails(ClosedShift.id);
-    // },
-    queryFn: async () => {
-      return fuelStationServices.showShiftDetails(ClosedShift.id);
-    },
+    queryFn: () => fuelStationServices.showShiftDetails(ClosedShift.id),
   });
-
-  console.log('shiftData: ', shiftData);
 
   const [activeTab, setActiveTab] = useState(0);
   const { theme } = useJumboTheme();
