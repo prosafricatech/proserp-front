@@ -138,33 +138,28 @@ function CashReconciliation({
     };
   }, [fuelVoucherTotals, productTotals, products, productPrices]);
 
-  const mainLedgerTransactions = useMemo(() => {
+  // Filter out transactions where debit_ledger equals main_ledger
+  const filteredCashTransactions = useMemo(() => {
     return cashTransactions.filter(transaction => {
+      // If there's no main ledger id, keep all transactions
+      if (!mainLedgerId) return true;
+      
+      // Get the transaction ledger id
       const transactionLedgerId = transaction.debit_ledger?.id || transaction.id;
-      return transactionLedgerId === mainLedgerId;
-    });
-  }, [cashTransactions, mainLedgerId]);
-
-  const otherLedgerTransactions = useMemo(() => {
-    return cashTransactions.filter(transaction => {
-      const transactionLedgerId = transaction.debit_ledger?.id || transaction.id;
+      
+      // Exclude transactions where debit_ledger equals main_ledger
       return transactionLedgerId !== mainLedgerId;
     });
   }, [cashTransactions, mainLedgerId]);
 
-  const mainLedgerTransactionsSum = useMemo(() => {
-    return mainLedgerTransactions.reduce((sum, transaction) => {
-      const amount = sanitizedNumber(transaction?.amount || 0);
-      return sum + amount;
-    }, 0);
-  }, [mainLedgerTransactions]);
-
-  const otherLedgerTransactionsSum = useMemo(() => {
-    return otherLedgerTransactions.reduce((sum, transaction) => 
+  // Calculate sum of filtered transactions (excluding main ledger transactions)
+  const filteredTransactionsSum = useMemo(() => {
+    return filteredCashTransactions.reduce((sum, transaction) => 
       sum + sanitizedNumber(transaction?.amount || 0), 0) || 0;
-  }, [otherLedgerTransactions]);
+  }, [filteredCashTransactions]);
 
-  const calculatedMainLedgerAmount = cashRemaining - otherLedgerTransactionsSum + mainLedgerTransactionsSum;
+  // Calculate main ledger amount: Cash remaining minus sum of other ledger transactions
+  const calculatedMainLedgerAmount = cashRemaining - filteredTransactionsSum;
 
   useEffect(() => {
     if (mainLedgerId && calculatedMainLedgerAmount !== null && calculatedMainLedgerAmount !== undefined) {
@@ -355,20 +350,6 @@ function CashReconciliation({
                         {cashRemaining.toLocaleString()}
                       </TableCell>
                     </TableRow>
-                    <TableRow>
-                      <TableCell>Other Ledger Transactions</TableCell>
-                      <TableCell align="right">- {otherLedgerTransactionsSum.toLocaleString()}</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>Main Ledger Transactions</TableCell>
-                      <TableCell align="right">+ {mainLedgerTransactionsSum.toLocaleString()}</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: 'bold' }}>Calculated Main Ledger Amount</TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 'bold' }}>
-                        {calculatedMainLedgerAmount.toLocaleString()}
-                      </TableCell>
-                    </TableRow>
                   </TableBody>
                 </Table>
               </TableContainer>
@@ -426,7 +407,9 @@ function CashReconciliation({
                   />
                 </Grid>
 
-                {otherLedgerTransactions.map((transaction, idx) => {
+                {/* Render only filtered transactions (excluding main ledger transactions) */}
+                {filteredCashTransactions.map((transaction, idx) => {
+                  // Find the original index in the full cashTransactions array
                   const originalIdx = cashTransactions.findIndex(t => {
                     if (t.id && transaction.id) return t.id === transaction.id;
                     if (t.debit_ledger?.id && transaction.debit_ledger?.id) {
