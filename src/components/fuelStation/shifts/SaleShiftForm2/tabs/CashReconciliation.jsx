@@ -63,15 +63,32 @@ function CashReconciliation({
   // State for loading existing cash_transactions data
   const [initialized, setInitialized] = useState(false);
 
-  // Load existing cash_transactions data on component mount
+  // Get the cashier data to check if they already have a main ledger
+  const cashierData = useWatch({
+    name: `cashiers.${cashierIndex}`,
+  }) || {};
+
+  // Check if cashier already has a main ledger in their data
+  const cashierMainLedger = cashierData?.main_ledger;
+
+  // Load existing cash_transactions data on component mount AND set default main ledger
   useEffect(() => {
     if (!initialized) {
       const existingCashTransactions = watch(`cashiers.${cashierIndex}.cash_transactions`) || [];
+      
+      // Set default main ledger from cashier's data if available and not already set
+      if (cashierMainLedger?.id && !mainLedgerId) {
+        setValue(`cashiers.${cashierIndex}.main_ledger_id`, cashierMainLedger.id, {
+          shouldValidate: true,
+          shouldDirty: true,
+        });
+      }
+      
       if (existingCashTransactions.length > 0) {
         setInitialized(true);
       }
     }
-  }, [cashierIndex, watch, initialized]);
+  }, [cashierIndex, watch, initialized, cashierMainLedger, mainLedgerId, setValue]);
 
   // ──────────────────────────────────────────────────────────────
   // Fuel Voucher Totals per product FOR THIS CASHIER
@@ -432,7 +449,14 @@ function CashReconciliation({
                         helperText={errors?.cashiers?.[cashierIndex]?.main_ledger_id?.message}
                       />
                     )}
+                    // Show a helper text if the main ledger was automatically selected
+                    isOptionEqualToValue={(option, value) => option.id === value.id}
                   />
+                  {cashierMainLedger?.id && cashierMainLedger.id === mainLedgerId && (
+                    <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                      Automatically selected from cashier data
+                    </Typography>
+                  )}
                 </Grid>
 
                 <Grid size={{ xs: 12, md: 6 }}>
