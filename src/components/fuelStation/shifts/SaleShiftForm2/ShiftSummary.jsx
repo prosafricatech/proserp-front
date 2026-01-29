@@ -18,7 +18,7 @@ import {
   Paper,
   Alert,
 } from '@mui/material';
-import { TrendingUp, TrendingDown, AttachMoney, LocalGasStation } from '@mui/icons-material';
+import { TrendingUp, TrendingDown, LocalGasStation, ReceiptOutlined } from '@mui/icons-material';
 import { useWatch } from 'react-hook-form';
 import { StationFormContext } from '../SalesShifts';
 
@@ -286,7 +286,7 @@ function ShiftSummary() {
     <Card variant="outlined" sx={{ mb: 3 }}>
       <CardContent>
         <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <AttachMoney color="secondary" />
+          <ReceiptOutlined color="secondary" />
           Fuel Vouchers Summary
         </Typography>
         <Divider sx={{ mb: 2 }} />

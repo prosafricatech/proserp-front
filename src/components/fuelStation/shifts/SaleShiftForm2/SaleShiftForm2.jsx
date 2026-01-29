@@ -207,10 +207,8 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
       
       // Map cashiers from SalesShift response
       const cashiersData = SalesShift.cashiers?.map(cashier => {
-        // Get selected pumps from pump_readings array
         const selectedPumps = cashier.pump_readings?.map(pr => pr.fuel_pump_id) || [];
         
-        // Create pump readings array directly from cashier.pump_readings
         const pumpReadings = cashier.pump_readings?.map(pr => ({
           fuel_pump_id: pr.fuel_pump_id,
           product_id: pr.product_id,
@@ -240,7 +238,7 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
             product_id: adj.product_id,
           })) || [],
           cash_transactions: cashier.cash_transactions?.map(ct => ({
-            id: ct.debit_ledger?.id || ct.id,
+            ledger_id: ct.debit_ledger?.id || ct.id,
             amount: ct.amount,
             narration: ct.narration,
           })) || [],

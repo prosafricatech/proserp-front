@@ -17,7 +17,6 @@ import {
   Tooltip,
   Typography,
   Autocomplete,
-  Box,
 } from '@mui/material';
 import { 
   AddOutlined, 
@@ -59,12 +58,42 @@ function CashReconciliation({
   const cashierLedgers = getCashierLedgers ? getCashierLedgers(cashierIndex) : [];
 
   const [initialized, setInitialized] = useState(false);
+  const [hasLoadedSavedTransactions, setHasLoadedSavedTransactions] = useState(false);
 
   const cashierData = useWatch({
     name: `cashiers.${cashierIndex}`,
   }) || {};
 
   const cashierMainLedger = cashierData?.main_ledger;
+
+  // AUTOFILL SAVED OTHER LEDGER TRANSACTIONS
+  useEffect(() => {
+    if (cashierData?.cash_transactions?.length > 0 && !hasLoadedSavedTransactions && !initialized) {
+      // Filter out transactions that are NOT main ledger
+      const otherTransactions = cashierData.cash_transactions.filter(transaction => {
+        const transactionLedgerId = transaction.ledger_id || transaction.debit_ledger?.id || transaction.id;
+        return transactionLedgerId !== mainLedgerId;
+      });
+      
+      if (otherTransactions.length > 0) {
+        // Format transactions to use ledger_id field
+        const formattedTransactions = otherTransactions.map(transaction => ({
+          ledger_id: transaction.ledger_id || transaction.debit_ledger?.id || transaction.id,
+          amount: transaction.amount || 0,
+          narration: transaction.narration || '',
+        }));
+        
+        // Set the transactions in the form
+        setValue(`cashiers.${cashierIndex}.cash_transactions`, formattedTransactions, {
+          shouldValidate: true,
+          shouldDirty: true,
+        });
+        
+        setHasLoadedSavedTransactions(true);
+        setInitialized(true);
+      }
+    }
+  }, [cashierData, cashierIndex, mainLedgerId, setValue, hasLoadedSavedTransactions, initialized]);
 
   useEffect(() => {
     if (!initialized) {
@@ -403,21 +432,10 @@ function CashReconciliation({
                 </Grid>
 
                 {filteredCashTransactions.map((transaction, idx) => {
-                  // Find the original index using ledger_id
-                  const originalIdx = cashTransactions.findIndex(t => {
-                    // For new transactions, use position
-                    if (!t.ledger_id && !transaction.ledger_id) {
-                      return idx === cashTransactions.indexOf(t);
-                    }
-                    // For existing transactions, match by ledger_id
-                    return t.ledger_id === transaction.ledger_id;
-                  });
-                  
-                  const stableKey = `other-transaction-${cashierIndex}-${idx}-${transaction.ledger_id || 'new'}`;
-                  
-                  // Get the ledger object for display
                   const ledgerId = transaction.ledger_id;
                   const ledgerObj = availableLedgers.find(l => l.id === ledgerId);
+                  
+                  const stableKey = `other-transaction-${cashierIndex}-${idx}-${ledgerId || 'new'}`;
                   
                   return (
                     <React.Fragment key={stableKey}>
@@ -428,16 +446,14 @@ function CashReconciliation({
                           getOptionLabel={(opt) => opt.name}
                           value={ledgerObj}
                           onChange={(_, newValue) => {
-                            const updateIdx = originalIdx !== -1 ? originalIdx : cashTransactions.length;
-                            // Update the ledger_id field for other ledger transaction
-                            updateCashTransaction(updateIdx, 'ledger_id', newValue?.id ?? null);
+                            updateCashTransaction(idx, 'ledger_id', newValue?.id ?? null);
                           }}
                           renderInput={(params) => (
                             <TextField
                               {...params}
                               label="Other Ledger"
-                              error={!!errors?.cashiers?.[cashierIndex]?.cash_transactions?.[originalIdx]?.ledger_id}
-                              helperText={errors?.cashiers?.[cashierIndex]?.cash_transactions?.[originalIdx]?.ledger_id?.message}
+                              error={!!errors?.cashiers?.[cashierIndex]?.cash_transactions?.[idx]?.ledger_id}
+                              helperText={errors?.cashiers?.[cashierIndex]?.cash_transactions?.[idx]?.ledger_id?.message}
                             />
                           )}
                           isOptionEqualToValue={(option, value) => option.id === value.id}
@@ -450,12 +466,11 @@ function CashReconciliation({
                           fullWidth
                           label="Amount"
                           value={transaction?.amount ?? ''}
-                          error={!!errors?.cashiers?.[cashierIndex]?.cash_transactions?.[originalIdx]?.amount}
-                          helperText={errors?.cashiers?.[cashierIndex]?.cash_transactions?.[originalIdx]?.amount?.message}
+                          error={!!errors?.cashiers?.[cashierIndex]?.cash_transactions?.[idx]?.amount}
+                          helperText={errors?.cashiers?.[cashierIndex]?.cash_transactions?.[idx]?.amount?.message}
                           InputProps={{ inputComponent: CommaSeparatedField }}
                           onChange={(e) => {
-                            const updateIdx = originalIdx !== -1 ? originalIdx : cashTransactions.length;
-                            updateCashTransaction(updateIdx, 'amount', e.target.value);
+                            updateCashTransaction(idx, 'amount', e.target.value);
                           }}
                         />
                       </Grid>
@@ -467,11 +482,10 @@ function CashReconciliation({
                           label="Narration"
                           value={transaction?.narration ?? ''}
                           placeholder="Enter transaction description"
-                          error={!!errors?.cashiers?.[cashierIndex]?.cash_transactions?.[originalIdx]?.narration}
-                          helperText={errors?.cashiers?.[cashierIndex]?.cash_transactions?.[originalIdx]?.narration?.message}
+                          error={!!errors?.cashiers?.[cashierIndex]?.cash_transactions?.[idx]?.narration}
+                          helperText={errors?.cashiers?.[cashierIndex]?.cash_transactions?.[idx]?.narration?.message}
                           onChange={(e) => {
-                            const updateIdx = originalIdx !== -1 ? originalIdx : cashTransactions.length;
-                            updateCashTransaction(updateIdx, 'narration', e.target.value);
+                            updateCashTransaction(idx, 'narration', e.target.value);
                           }}
                         />
                       </Grid>
@@ -482,8 +496,7 @@ function CashReconciliation({
                             size="small"
                             color="error"
                             onClick={() => {
-                              const removeIdx = originalIdx !== -1 ? originalIdx : idx;
-                              removeCashTransaction(removeIdx);
+                              removeCashTransaction(idx);
                             }}
                           >
                             <DisabledByDefault fontSize="small" />
