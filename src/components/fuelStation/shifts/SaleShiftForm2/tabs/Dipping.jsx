@@ -67,8 +67,8 @@ function Dipping({SalesShift}) {
                                     label={`${tankInfo.name}`}
                                     size="small"
                                     value={readingValue}
-                                    error={!!errors[fieldName]?.[fieldIndex]?.reading}
-                                    helperText={errors[fieldName]?.[fieldIndex]?.reading?.message}
+                                    // error={!!errors[fieldName]?.[fieldIndex]?.reading}
+                                    // helperText={errors[fieldName]?.[fieldIndex]?.reading?.message}
                                     InputProps={{
                                         inputComponent: CommaSeparatedField,
                                     }}
