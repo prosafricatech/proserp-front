@@ -411,11 +411,6 @@ function CashReconciliation({
                     )}
                     isOptionEqualToValue={(option, value) => option.id === value.id}
                   />
-                  {cashierMainLedger?.id && cashierMainLedger.id === mainLedgerId && (
-                    <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-                      Automatically selected from cashier data
-                    </Typography>
-                  )}
                 </Grid>
 
                 <Grid size={{ xs: 12, md: 6 }}>
