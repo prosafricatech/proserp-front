@@ -402,9 +402,7 @@ function CashReconciliation({
                   />
                 </Grid>
 
-                {/* Render only filtered transactions (excluding main ledger transactions) */}
                 {filteredCashTransactions.map((transaction, idx) => {
-                  // Find the original index in the full cashTransactions array
                   const originalIdx = cashTransactions.findIndex(t => {
                     if (t.id && transaction.id) return t.id === transaction.id;
                     if (t.debit_ledger?.id && transaction.debit_ledger?.id) {
