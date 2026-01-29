@@ -473,7 +473,7 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
                   renderInput={(params) => (
                     <TextField
                       {...params} 
-                      label="Sales Outlet Shift *"
+                      label="Sales Outlet Shift"
                       error={!!errors?.sales_outlet_shift_id}
                       helperText={errors?.sales_outlet_shift_id?.message}
                     />
@@ -497,7 +497,7 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
             <Grid size={{xs: 12, md: 4, lg: 4}}>
               <Div sx={{mt: 0.3}}>
                 <DateTimePicker
-                  label='Shift Start *'
+                  label='Shift Start'
                   fullWidth
                   value={watch('shift_start') ? dayjs(watch('shift_start')) : null}
                   minDate={dayjs(organization.recording_start_date)}
@@ -522,7 +522,7 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
             <Grid size={{xs: 12, md: 4, lg: 4}}>
               <Div sx={{mt: 0.3}}>
                 <DateTimePicker
-                  label='Shift End *'
+                  label='Shift End'
                   fullWidth
                   value={watch('shift_end') ? dayjs(watch('shift_end')) : null}
                   minDate={dayjs(organization.recording_start_date)}
