@@ -138,35 +138,35 @@ function CashReconciliation({
     };
   }, [fuelVoucherTotals, productTotals, products, productPrices]);
 
-  const nonMainLedgerTransactions = useMemo(() => {
+  // Separate transactions by ledger type
+  const mainLedgerTransactions = useMemo(() => {
     return cashTransactions.filter(transaction => {
-      if (transaction.debit_ledger?.id && mainLedgerId) {
-        return transaction.debit_ledger.id !== mainLedgerId;
-      }
-      return transaction.id !== mainLedgerId;
+      const transactionLedgerId = transaction.debit_ledger?.id || transaction.id;
+      return transactionLedgerId === mainLedgerId;
+    });
+  }, [cashTransactions, mainLedgerId]);
+
+  const otherLedgerTransactions = useMemo(() => {
+    return cashTransactions.filter(transaction => {
+      const transactionLedgerId = transaction.debit_ledger?.id || transaction.id;
+      return transactionLedgerId !== mainLedgerId;
     });
   }, [cashTransactions, mainLedgerId]);
 
   const mainLedgerTransactionsSum = useMemo(() => {
-    return cashTransactions.reduce((sum, transaction) => {
-      const isMainLedger = 
-        (transaction.debit_ledger?.id && transaction.debit_ledger.id === mainLedgerId) ||
-        transaction.id === mainLedgerId;
-      
-      if (isMainLedger) {
-        const amount = sanitizedNumber(transaction?.amount || 0);
-        return sum + amount;
-      }
-      return sum;
+    return mainLedgerTransactions.reduce((sum, transaction) => {
+      const amount = sanitizedNumber(transaction?.amount || 0);
+      return sum + amount;
     }, 0);
-  }, [cashTransactions, mainLedgerId]);
+  }, [mainLedgerTransactions]);
 
-  const totalNonMainLedgerTransactionsAmount = useMemo(() => {
-    return nonMainLedgerTransactions.reduce((sum, transaction) => 
+  const otherLedgerTransactionsSum = useMemo(() => {
+    return otherLedgerTransactions.reduce((sum, transaction) => 
       sum + sanitizedNumber(transaction?.amount || 0), 0) || 0;
-  }, [nonMainLedgerTransactions]);
+  }, [otherLedgerTransactions]);
 
-  const calculatedMainLedgerAmount = cashRemaining - totalNonMainLedgerTransactionsAmount;
+  // CORRECTED: Main ledger amount = Cash Remaining - Other Ledger Transactions + Main Ledger Transactions
+  const calculatedMainLedgerAmount = cashRemaining - otherLedgerTransactionsSum + mainLedgerTransactionsSum;
 
   useEffect(() => {
     if (mainLedgerId && calculatedMainLedgerAmount !== null && calculatedMainLedgerAmount !== undefined) {
@@ -367,7 +367,17 @@ function CashReconciliation({
                     </TableRow>
                     <TableRow>
                       <TableCell>Other Ledger Transactions</TableCell>
-                      <TableCell align="right">{totalNonMainLedgerTransactionsAmount.toLocaleString()}</TableCell>
+                      <TableCell align="right">- {otherLedgerTransactionsSum.toLocaleString()}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>Main Ledger Transactions</TableCell>
+                      <TableCell align="right">+ {mainLedgerTransactionsSum.toLocaleString()}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Calculated Main Ledger Amount</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 'bold' }}>
+                        {calculatedMainLedgerAmount.toLocaleString()}
+                      </TableCell>
                     </TableRow>
                   </TableBody>
                 </Table>
@@ -426,7 +436,8 @@ function CashReconciliation({
                   />
                 </Grid>
 
-                {nonMainLedgerTransactions.map((transaction, nonMainIdx) => {
+                {/* Display only OTHER ledger transactions (not main ledger) */}
+                {otherLedgerTransactions.map((transaction, idx) => {
                   // Find the original index in cashTransactions array
                   const originalIdx = cashTransactions.findIndex(t => {
                     if (t.id && transaction.id) return t.id === transaction.id;
@@ -436,8 +447,8 @@ function CashReconciliation({
                     return false;
                   });
                   
-                  // Create a stable key using the index from nonMainLedgerTransactions
-                  const stableKey = `cash-transaction-${cashierIndex}-${nonMainIdx}`;
+                  // Create a stable key
+                  const stableKey = `other-transaction-${cashierIndex}-${idx}`;
                   
                   const ledgerId = transaction.debit_ledger?.id || transaction.id;
                   const ledgerObj = availableLedgers.find(l => l.id === ledgerId);
@@ -457,7 +468,7 @@ function CashReconciliation({
                           renderInput={(params) => (
                             <TextField
                               {...params}
-                              label="Ledger"
+                              label="Other Ledger"
                               error={!!errors?.cashiers?.[cashierIndex]?.cash_transactions?.[originalIdx]?.id}
                               helperText={errors?.cashiers?.[cashierIndex]?.cash_transactions?.[originalIdx]?.id?.message}
                             />
