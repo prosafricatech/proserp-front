@@ -226,7 +226,7 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
             stakeholder_id: fv.stakeholder_id,
             quantity: fv.quantity,
             product_id: fv.product_id,
-            expense_ledger_id: fv.expense_ledger_id,
+            expense_ledger_id: fv.expense_ledger_id || fuelVoucher.expense_ledger?.id,
             reference: fv.reference,
             narration: fv.narration,
           })) || [],
