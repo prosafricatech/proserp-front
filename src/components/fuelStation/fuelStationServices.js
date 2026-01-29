@@ -39,7 +39,6 @@ fuelStationServices.retrieveLastReadings = async (params) => {
 }
 
 fuelStationServices.showShiftDetails = async (id) => {
-    // const {data} = await axios.get(`/api/fuelStations/salesShifts/${id}/showShiftDetails`);
     const { data } = await axios.get(`/api/fuelStations/salesShifts/${id}/showshiftDetails`);
     return data;
 }
