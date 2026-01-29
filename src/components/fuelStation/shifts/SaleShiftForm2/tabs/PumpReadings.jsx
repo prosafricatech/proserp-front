@@ -214,8 +214,8 @@ function PumpReadings({
                             fullWidth
                             size="small"
                             value={currentReading?.opening || 0}
-                            error={errors.cashiers?.[cashierIndex]?.pump_readings?.[readingIndex]?.opening}
-                            helperText={errors.cashiers?.[cashierIndex]?.pump_readings?.[readingIndex]?.opening?.message}
+                            error={errors?.cashiers?.[cashierIndex]?.pump_readings?.[readingIndex]?.opening}
+                            helperText={errors?.cashiers?.[cashierIndex]?.pump_readings?.[readingIndex]?.opening?.message}
                             onChange={(e) => {
                               const value = e.target.value ? sanitizedNumber(e.target.value) : 0;
                               handlePumpReadingChange(pump.id, 'opening', value);
@@ -232,8 +232,8 @@ function PumpReadings({
                             fullWidth
                             size="small"
                             value={currentReading?.closing || 0}
-                            error={errors.cashiers?.[cashierIndex]?.pump_readings?.[readingIndex]?.closing}
-                            helperText={errors.cashiers?.[cashierIndex]?.pump_readings?.[readingIndex]?.closing?.message}
+                            error={errors?.cashiers?.[cashierIndex]?.pump_readings?.[readingIndex]?.closing}
+                            helperText={errors?.cashiers?.[cashierIndex]?.pump_readings?.[readingIndex]?.closing?.message}
                             onChange={(e) => {
                               const value = e.target.value ? sanitizedNumber(e.target.value) : 0;
                               handlePumpReadingChange(pump.id, 'closing', value);
