@@ -47,6 +47,9 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
 
   const [cashierFuelVouchers, setCashierFuelVouchers] = useState({});
   const [cashierLedgers, setCashierLedgers] = useState({});
+  
+  // Store last closing readings for all pumps (for new shifts only)
+  const [lastClosingReadings, setLastClosingReadings] = useState({}); // {pumpId: closingReading}
 
   const { mutate: addSalesShifts, isPending } = useMutation({
     mutationFn: fuelStationServices.addSalesShifts,
@@ -202,24 +205,25 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
         price: fp.price,
       })) || [];
       
-      return {
-        id: SalesShift.id,
-        submit_type: SalesShift.status === 'closed' ? 'close' : 'suspend',
-        sales_outlet_shift_id: SalesShift.sales_outlet_shift_id,
-        shift_start: dayjs(SalesShift.shift_start).toISOString(),
-        shift_end: dayjs(SalesShift.shift_end).toISOString(),
-        product_prices: initialProductPrices,
-        cashiers: SalesShift.cashiers?.map(cashier => ({
+      // Map cashiers from SalesShift response
+      const cashiersData = SalesShift.cashiers?.map(cashier => {
+        // Get selected pumps from pump_readings array
+        const selectedPumps = cashier.pump_readings?.map(pr => pr.fuel_pump_id) || [];
+        
+        // Create pump readings array directly from cashier.pump_readings
+        const pumpReadings = cashier.pump_readings?.map(pr => ({
+          fuel_pump_id: pr.fuel_pump_id,
+          product_id: pr.product_id,
+          tank_id: pr.tank_id,
+          opening: pr.opening,
+          closing: pr.closing,
+        })) || [];
+        
+        return {
           cashier_id: cashier.id,
           name: cashier.name,
-          selected_pumps: cashier.pump_readings?.map(pr => pr.fuel_pump_id) || [],
-          pump_readings: cashier.pump_readings?.map(pr => ({
-            fuel_pump_id: pr.fuel_pump_id,
-            product_id: pr.product_id,
-            tank_id: pr.tank_id,
-            opening: pr.opening,
-            closing: pr.closing,
-          })) || [],
+          selected_pumps: selectedPumps,
+          pump_readings: pumpReadings,
           fuel_vouchers: cashier.fuel_vouchers?.map(fv => ({
             stakeholder_id: fv.stakeholder_id,
             quantity: fv.quantity,
@@ -238,12 +242,24 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
           cash_transactions: cashier.cash_transactions?.map(ct => ({
             id: ct.debit_ledger?.id || ct.id,
             amount: ct.amount,
+            narration: ct.narration,
           })) || [],
           main_ledger: cashier.main_ledger ? {
             id: cashier.main_ledger.id,
+            name: cashier.main_ledger.name,
             amount: cashier.main_ledger.amount,
           } : null,
-        })) || [],
+        };
+      }) || [];
+      
+      return {
+        id: SalesShift.id,
+        submit_type: SalesShift.status === 'closed' ? 'close' : 'suspend',
+        sales_outlet_shift_id: SalesShift.sales_outlet_shift_id,
+        shift_start: dayjs(SalesShift.shift_start).toISOString(),
+        shift_end: dayjs(SalesShift.shift_end).toISOString(),
+        product_prices: initialProductPrices,
+        cashiers: cashiersData,
         
         dipping_before: SalesShift.opening_dipping?.readings.map(od => ({
           id: od.id,
@@ -277,28 +293,131 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
 
   const selectedCashiers = watch('cashiers') || [];
 
-  useEffect(() => {
-    selectedCashiers.forEach((cashier, index) => {
-      if (cashier.fuel_vouchers && cashier.fuel_vouchers.length > 0) {
-        setCashierFuelVouchers(prev => ({
-          ...prev,
-          [index]: cashier.fuel_vouchers
-        }));
+  // Function to retrieve last shift readings for NEW shifts only
+  const retrieveLastShiftReadings = useCallback(async () => {
+    try {
+      const shiftStart = watch('shift_start');
+      if (!shiftStart || SalesShift?.id) return;
+      
+      const lastReadings = await fuelStationServices.retrieveLastReadings({
+        stationId: activeStation.id,
+        shift_start: shiftStart,
+      });
+
+      const readingsMap = {};
+        lastReadings.cashiers.flatMap(cashier => 
+          cashier.pump_readings || []
+        ).forEach(reading => {
+          readingsMap[reading.fuel_pump_id] = reading.closing;
+        });
+
+      setLastClosingReadings(readingsMap);
+    } catch (error) {
+    }
+  }, [activeStation.id, watch, enqueueSnackbar, SalesShift]);
+
+  // Function to get appropriate opening value based on context
+  const getPumpOpeningValue = useCallback((pumpId, cashierIndex) => {
+    // For existing shifts: get from saved cashier data
+    if (SalesShift?.id) {
+      const cashier = selectedCashiers[cashierIndex];
+      if (cashier?.pump_readings) {
+        const savedReading = cashier.pump_readings.find(pr => pr.fuel_pump_id === pumpId);
+        return savedReading?.opening || 0;
+      }
+    }
+    
+    // For new shifts: get from last closing readings
+    return lastClosingReadings[pumpId] || 0;
+  }, [SalesShift, selectedCashiers, lastClosingReadings]);
+
+  // Function to handle pump selection with appropriate initialization
+  const handlePumpSelection = useCallback((cashierIndex, selectedPumpIds) => {
+    const currentCashier = selectedCashiers[cashierIndex];
+    if (!currentCashier) return;
+    
+    // Update selected pumps
+    setValue(`cashiers.${cashierIndex}.selected_pumps`, selectedPumpIds, {
+      shouldValidate: true,
+      shouldDirty: true
+    });
+    
+    // Get current readings
+    const currentReadings = currentCashier.pump_readings || [];
+    
+    // Filter out readings for deselected pumps
+    let updatedReadings = currentReadings.filter(reading => 
+      selectedPumpIds.includes(reading.fuel_pump_id)
+    );
+    
+    // For new pumps that don't have readings yet
+    selectedPumpIds.forEach(pumpId => {
+      if (!updatedReadings.some(r => r.fuel_pump_id === pumpId)) {
+        const pump = fuel_pumps?.find(p => p.id === pumpId);
+        if (pump) {
+          const openingValue = getPumpOpeningValue(pumpId, cashierIndex);
+          updatedReadings.push({
+            fuel_pump_id: pumpId,
+            product_id: pump.product_id,
+            tank_id: pump.tank_id,
+            opening: openingValue,
+            closing: openingValue, // Initialize with same value
+          });
+        }
       }
     });
-  }, [selectedCashiers]);
+    
+    // Update the readings
+    setValue(`cashiers.${cashierIndex}.pump_readings`, updatedReadings, {
+      shouldValidate: true,
+      shouldDirty: true
+    });
+  }, [selectedCashiers, setValue, fuel_pumps, getPumpOpeningValue]);
 
+  // Initialize cashier data from API response
+  useEffect(() => {
+    if (SalesShift?.cashiers) {
+      // Initialize cashier fuel vouchers
+      SalesShift.cashiers.forEach((cashier, index) => {
+        if (cashier.fuel_vouchers && cashier.fuel_vouchers.length > 0) {
+          setCashierFuelVouchers(prev => ({
+            ...prev,
+            [index]: cashier.fuel_vouchers
+          }));
+        }
+        
+        // Initialize cashier ledgers from cashiers prop
+        const cashierData = cashiers?.find(c => c.id === cashier.id);
+        if (cashierData && cashierData.ledgers) {
+          setCashierLedgers(prev => ({
+            ...prev,
+            [index]: cashierData.ledgers
+          }));
+        }
+      });
+    }
+  }, [SalesShift, cashiers]);
+
+  // Update cashier ledgers when cashiers are selected
   useEffect(() => {
     selectedCashiers.forEach((cashier, index) => {
       const cashierData = cashiers?.find(c => c.id === cashier.cashier_id);
-      if (cashierData && cashierData.ledgers) {
+      if (cashierData && cashierData.ledgers && !cashierLedgers[index]) {
         setCashierLedgers(prev => ({
           ...prev,
           [index]: cashierData.ledgers
         }));
       }
     });
-  }, [selectedCashiers, cashiers]);
+  }, [selectedCashiers, cashiers, cashierLedgers]);
+
+  // Auto-fetch last readings when shift start date changes (for NEW shifts only)
+  useEffect(() => {
+    const shiftStart = watch('shift_start');
+    if (shiftStart && !SalesShift?.id) {
+      retrieveLastShiftReadings();
+    }
+  }, [watch('shift_start'), SalesShift?.id, retrieveLastShiftReadings]);
 
   const addCashiers = (selectedCashierIds) => {
     const newCashiers = selectedCashierIds
@@ -371,18 +490,6 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
     }
   };
 
-  const updateCashierFuelVouchers = (cashierIndex, newVouchers) => {
-    setCashierFuelVouchers(prev => ({
-      ...prev,
-      [cashierIndex]: newVouchers
-    }));
-    
-    setValue(`cashiers.${cashierIndex}.fuel_vouchers`, newVouchers, {
-      shouldValidate: true,
-      shouldDirty: true
-    });
-  };
-
   const getAvailablePumpsForCashier = (cashierIndex) => {
     const allPumps = fuel_pumps || [];
     const currentCashierPumps = selectedCashiers[cashierIndex]?.selected_pumps || [];
@@ -443,7 +550,7 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
       setValue, 
       watch, 
       errors,
-      control
+      control,
     }}>
       <DialogTitle>
         <form autoComplete='off'>    
@@ -583,6 +690,14 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
                 )}
               />
             </Grid>
+            
+            {Object.keys(lastClosingReadings).length > 0 && !SalesShift?.id && (
+              <Grid size={12}>
+                <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+                  ✓ Last shift readings loaded for {Object.keys(lastClosingReadings).length} pump(s)
+                </Typography>
+              </Grid>
+            )}
           </Grid>
         </form>
 
@@ -605,7 +720,7 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
           <div>
             {selectedCashiers.length === 0 ? (
               <Typography color="textSecondary" textAlign="center" py={4}>
-                Please select shift teams using the selector above
+                Please select cashiers using the selector above
               </Typography>
             ) : (
               selectedCashiers.map((cashier, index) => (
@@ -614,7 +729,9 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
                   cashier={cashier}
                   index={index}
                   control={control}
-                  watch={watch}
+                  watch={watch}    
+                  lastClosingReadings={lastClosingReadings}
+                  handlePumpSelection={handlePumpSelection}
                   getCashierLedgers={getCashierLedgers}
                   getAvailablePumpsForCashier={getAvailablePumpsForCashier}
                   setCheckShiftBalanced={setCheckShiftBalanced}

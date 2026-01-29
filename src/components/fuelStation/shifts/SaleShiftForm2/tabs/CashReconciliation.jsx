@@ -426,7 +426,7 @@ function CashReconciliation({
                           value={ledgerObj}
                           onChange={(_, newValue) => {
                             const updateIdx = originalIdx !== -1 ? originalIdx : cashTransactions.length;
-                            updateCashTransaction(updateIdx, 'id', newValue?.id ?? null);
+                            updateCashTransaction(updateIdx, 'ledger_id', newValue?.id ?? null);
                           }}
                           renderInput={(params) => (
                             <TextField

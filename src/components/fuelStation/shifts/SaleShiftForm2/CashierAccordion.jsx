@@ -24,6 +24,8 @@ export default function CashierAccordion({
   setCheckShiftBalanced,
   getCashierLedgers,
   getAvailablePumpsForCashier,
+  lastClosingReadings,
+  handleCashierPumpSelection
 }) {
   const [tab, setTab] = useState(0);
   
@@ -98,6 +100,8 @@ export default function CashierAccordion({
             cashierIndex={index}
             selectedPumps={formSelectedPumps}
             localPumpReadings={localPumpReadings}
+            lastClosingReadings={lastClosingReadings}
+            handleCashierPumpSelection={handleCashierPumpSelection}
             getAvailablePumpsForCashier={getAvailablePumpsForCashier}
             setLocalPumpReadings={updatePumpReadings}
           />
