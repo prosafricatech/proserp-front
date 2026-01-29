@@ -255,7 +255,7 @@ function SalesShiftPDF({ includeFuelVouchers, shiftData, stationName, organizati
                   <View style={pdfStyles.table}>
                     <View style={pdfStyles.tableRow}>
                       <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.5 }}>Product</Text>
-                      <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1 }}>Quantity (L)</Text>
+                      <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1 }}>Quantity</Text>
                       <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1 }}>Price</Text>
                       <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1 }}>Amount</Text>
                     </View>
