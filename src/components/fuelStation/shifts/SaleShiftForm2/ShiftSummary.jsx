@@ -24,9 +24,8 @@ import { StationFormContext } from '../SalesShifts';
 
 function ShiftSummary() {
   const {activeStation} = useContext(StationFormContext);
-  const {fuel_pumps, products } = activeStation;
+  const {fuel_pumps, products} = activeStation;
 
-  // Watch all cashiers data
   const allCashiers = useWatch({
     name: 'cashiers',
   }) || [];
@@ -35,11 +34,6 @@ function ShiftSummary() {
     name: 'product_prices',
   }) || [];
 
-  // ──────────────────────────────────────────────────────────────
-  // CALCULATE TOTALS FOR ALL CASHIERS
-  // ──────────────────────────────────────────────────────────────
-
-  // 1. Total Pump Readings for all cashiers
   const totalPumpReadings = useMemo(() => {
     const totals = {};
     
@@ -64,7 +58,6 @@ function ShiftSummary() {
     return totals;
   }, [allCashiers, fuel_pumps]);
 
-  // 2. Total Adjustments for all cashiers
   const totalAdjustments = useMemo(() => {
     const totals = {};
     const adjustmentsByOperator = { '+': 0, '-': 0 };
@@ -78,10 +71,10 @@ function ShiftSummary() {
         
         if (adj.operator === '+') {
           adjustmentsByOperator['+'] += qty;
-          totals[productId] = (totals[productId] || 0) - qty; // Subtract (increase cash)
+          totals[productId] = (totals[productId] || 0) - qty;
         } else if (adj.operator === '-') {
           adjustmentsByOperator['-'] += qty;
-          totals[productId] = (totals[productId] || 0) + qty; // Add (reduce cash)
+          totals[productId] = (totals[productId] || 0) + qty;
         }
       });
     });
@@ -89,7 +82,6 @@ function ShiftSummary() {
     return { totals, adjustmentsByOperator };
   }, [allCashiers]);
 
-  // 3. Total Fuel Vouchers for all cashiers
   const totalFuelVouchers = useMemo(() => {
     const totals = {};
     let totalAmount = 0;
@@ -113,7 +105,6 @@ function ShiftSummary() {
     return { totals, totalAmount };
   }, [allCashiers, productPrices]);
 
-  // 4. Total Other Ledgers for all cashiers
   const totalOtherLedgers = useMemo(() => {
     const ledgerTotals = {};
     let totalAmount = 0;
@@ -125,7 +116,6 @@ function ShiftSummary() {
         const amount = ledger.amount || 0;
         totalAmount += amount;
         
-        // Group by ledger
         if (ledger.id) {
           ledgerTotals[ledger.id] = (ledgerTotals[ledger.id] || 0) + amount;
         }
@@ -135,16 +125,13 @@ function ShiftSummary() {
     return { ledgerTotals, totalAmount };
   }, [allCashiers]);
 
-  // 5. Combined product totals (Pump readings + Adjustments)
   const combinedProductTotals = useMemo(() => {
     const totals = {};
     
-    // Start with pump readings
     Object.keys(totalPumpReadings).forEach(productId => {
       totals[productId] = totalPumpReadings[productId] || 0;
     });
     
-    // Add adjustments
     Object.keys(totalAdjustments.totals).forEach(productId => {
       totals[productId] = (totals[productId] || 0) + totalAdjustments.totals[productId];
     });
@@ -152,39 +139,32 @@ function ShiftSummary() {
     return totals;
   }, [totalPumpReadings, totalAdjustments.totals]);
 
-  // 6. Financial Summary
   const financialSummary = useMemo(() => {
     let totalProductsAmount = 0;
     let totalVouchersAmount = totalFuelVouchers.totalAmount;
     let totalOtherLedgersAmount = totalOtherLedgers.totalAmount;
     
-    // Calculate total products amount
     products?.forEach(product => {
       const qty = combinedProductTotals[product.id] || 0;
       const price = productPrices.find(p => p?.product_id === product.id)?.price || 0;
       totalProductsAmount += qty * price;
     });
     
-    // Calculate cash remaining (total sales - vouchers)
     const cashRemaining = totalProductsAmount - totalVouchersAmount;
     
-    // Calculate main ledger amount (should be)
     const mainLedgerAmount = cashRemaining - totalOtherLedgersAmount;
     
-    // Count cashiers and pumps
     const totalCashiers = allCashiers.length;
     const totalPumpsAssigned = allCashiers.reduce(
       (sum, cashier) => sum + (cashier.selected_pumps?.length || 0), 
       0
     );
     
-    // Count fuel vouchers
     const totalFuelVoucherItems = allCashiers.reduce(
       (sum, cashier) => sum + (cashier.fuel_vouchers?.length || 0), 
       0
     );
     
-    // Count adjustments
     const totalAdjustmentItems = allCashiers.reduce(
       (sum, cashier) => sum + (cashier.adjustments?.length || 0), 
       0
@@ -268,7 +248,6 @@ function ShiftSummary() {
                 );
               })}
               
-              {/* Totals row */}
               <TableRow sx={{ '& td': { borderTop: '2px solid', borderColor: 'divider', fontWeight: 'bold' } }}>
                 <TableCell>TOTAL</TableCell>
                 <TableCell align="right">
@@ -291,7 +270,6 @@ function ShiftSummary() {
           </Table>
         </TableContainer>
         
-        {/* Adjustments summary */}
         {Object.keys(totalAdjustments.totals).length > 0 && (
           <Box sx={{ mt: 2, p: 1, bgcolor: 'action.hover', borderRadius: 1 }}>
             <Typography variant="caption" display="block">

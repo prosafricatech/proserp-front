@@ -39,7 +39,7 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
   const { enqueueSnackbar } = useSnackbar();
   const [activeTab, setActiveTab] = useState(0);
   const {activeStation} = useContext(StationFormContext);
-  const {fuel_pumps, tanks, products, cashiers, shifts} = activeStation;
+  const {fuel_pumps, cashiers, shifts} = activeStation;
   const {authOrganization : {organization}} = useJumboAuth();
   const [shiftLedgers, setShiftLedgers] = useState([]);
   const [checkShiftBalanced, setCheckShiftBalanced] = useState(true);
@@ -436,11 +436,6 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
 
   return (
     <FormProvider {...{
-      setCheckShiftBalanced, 
-      shiftLedgers, 
-      fuel_pumps, 
-      tanks, 
-      products, 
       register, 
       handleSubmit, 
       setError, 
@@ -448,12 +443,7 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
       setValue, 
       watch, 
       errors,
-      control,
-      getAvailablePumpsForCashier,
-      cashierFuelVouchers,
-      updateCashierFuelVouchers,
-      getCashierLedgers,
-      SalesShift
+      control
     }}>
       <DialogTitle>
         <form autoComplete='off'>    
@@ -625,6 +615,9 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
                   index={index}
                   control={control}
                   watch={watch}
+                  getCashierLedgers={getCashierLedgers}
+                  getAvailablePumpsForCashier={getAvailablePumpsForCashier}
+                  setCheckShiftBalanced={setCheckShiftBalanced}
                   setValue={setValue}
                 />
               ))
@@ -632,7 +625,7 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
           </div>
         )}
 
-        {activeTab === 1 && <Dipping />}
+        {activeTab === 1 && <Dipping SalesShift={SalesShift} />}
 
         {activeTab === 2 && (
           <ShiftSummary />

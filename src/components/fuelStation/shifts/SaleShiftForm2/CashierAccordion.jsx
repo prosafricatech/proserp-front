@@ -21,6 +21,9 @@ export default function CashierAccordion({
   control,
   watch,
   setValue,
+  setCheckShiftBalanced,
+  getCashierLedgers,
+  getAvailablePumpsForCashier,
 }) {
   const [tab, setTab] = useState(0);
   
@@ -95,6 +98,7 @@ export default function CashierAccordion({
             cashierIndex={index}
             selectedPumps={formSelectedPumps}
             localPumpReadings={localPumpReadings}
+            getAvailablePumpsForCashier={getAvailablePumpsForCashier}
             setLocalPumpReadings={updatePumpReadings}
           />
         )}
@@ -120,9 +124,11 @@ export default function CashierAccordion({
         {tab === 3 && (
           <CashReconciliation
             cashierIndex={index}
+            setCheckShiftBalanced={setCheckShiftBalanced}
             localFuelVouchers={localFuelVouchers}
             localAdjustments={localAdjustments}
             localPumpReadings={localPumpReadings}
+            getCashierLedgers={getCashierLedgers}
             watch={watch}
             setValue={setValue}
           />

@@ -22,13 +22,13 @@ function PumpReadings({
   cashierIndex, 
   selectedPumps, 
   localPumpReadings, 
-  setLocalPumpReadings 
+  setLocalPumpReadings,
+  getAvailablePumpsForCashier
 }) {
   const { 
     setValue: formSetValue, 
     errors,
-    watch,
-    getAvailablePumpsForCashier 
+    watch, 
   } = useFormContext();
   const {activeStation} = useContext(StationFormContext);
   const {fuel_pumps, tanks, products } = activeStation;

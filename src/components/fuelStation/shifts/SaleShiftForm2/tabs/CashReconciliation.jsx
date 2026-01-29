@@ -33,16 +33,16 @@ function CashReconciliation({
   localFuelVouchers = [],
   localAdjustments = [],
   localPumpReadings = [],
+  getCashierLedgers,
+  setCheckShiftBalanced,
 }) {
   const {
     setValue,
-    setCheckShiftBalanced,
     errors,
-    watch,
-    getCashierLedgers,
+    watch
   } = useFormContext();
   const {activeStation} = useContext(StationFormContext);
-  const {fuel_pumps, products } = activeStation;
+  const {fuel_pumps, products} = activeStation;
 
   const productPrices = useWatch({
     name: 'product_prices',
@@ -232,14 +232,6 @@ function CashReconciliation({
   };
 
   const actualMainLedgerAmount = watch(`cashiers.${cashierIndex}.main_ledger_amount`) || 0;
-
-  const getLedgerName = useCallback((transaction) => {
-    if (transaction.debit_ledger) {
-      return transaction.debit_ledger.name;
-    }
-    const ledger = cashierLedgers.find(l => l.id === transaction.id);
-    return ledger?.name || '-';
-  }, [cashierLedgers]);
 
   return (
     <>

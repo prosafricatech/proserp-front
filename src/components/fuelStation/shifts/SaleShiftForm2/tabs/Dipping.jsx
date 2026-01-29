@@ -5,8 +5,8 @@ import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import { StationFormContext } from '../../SalesShifts';
 
-function Dipping() {
-    const { setValue, watch, errors, SalesShift } = useFormContext();
+function Dipping({SalesShift}) {
+    const { setValue, watch, errors } = useFormContext();
     const [openSwitch, setOpenSwitch] = useState(!!watch('isOpenSwitchON') || !!SalesShift?.opening_dipping);
     const [closingSwitch, setClosingSwitch] = useState(!!watch('isCloseSwitchON') || !!SalesShift?.closing_dipping);
     const {activeStation} = useContext(StationFormContext);
