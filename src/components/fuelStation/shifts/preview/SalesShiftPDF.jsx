@@ -421,7 +421,7 @@ function SalesShiftPDF({ includeFuelVouchers, shiftData, stationName, organizati
                     })}
                     <View style={pdfStyles.tableRow}>
                       <Text style={{ ...pdfStyles.tableHeader, ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, flex: 7, fontWeight: 'bold' }}>
-                        Total Fuel Vouchers
+                        Total Vouchers Amount
                       </Text>
                       <Text style={{ ...pdfStyles.tableHeader, ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, flex: 1, textAlign: 'right', fontWeight: 'bold' }}>
                         {cashierTotals.totalFuelVouchersAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
