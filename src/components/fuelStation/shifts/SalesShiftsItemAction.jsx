@@ -34,8 +34,7 @@ import { useProductsSelect } from '../../productAndServices/products/ProductsSel
 import fuelStationServices from '../fuelStationServices';
 import SalesShiftOnScreen from './preview/SalesShiftOnScreen';
 import SalesShiftPDF from './preview/SalesShiftPDF';
-import SaleShiftForm from './SaleShiftForm';
-import { StationFormContext } from './SalesShifts';
+import SaleShiftForm2 from './SaleShiftForm2/SaleShiftForm2';
 
 const EditShift = ({ ClosedShift, setOpenEditDialog }) => {
   const { data: shiftData, isFetching } = useQuery({
@@ -48,7 +47,7 @@ const EditShift = ({ ClosedShift, setOpenEditDialog }) => {
   }
 
   return (
-    <SaleShiftForm SalesShift={shiftData} setOpenDialog={setOpenEditDialog} />
+    <SaleShiftForm2 SalesShift={shiftData} setOpenDialog={setOpenEditDialog} />
   );
 };
 

@@ -336,7 +336,7 @@
     "src/components/fuelStation/shifts/SalesShiftPDF.tsx",
     "src/components/fuelStation/shifts/SalesShifts.tsx",
     "src/components/fuelStation/shifts/SalesShiftsActionTail.jsx",
-    "src/components/fuelStation/shifts/SalesShiftsItemAction.tsx",
+    "src/components/fuelStation/shifts/SalesShiftsItemAction.jsx",
     "src/components/fuelStation/shifts/SalesShiftsListItem.tsx",
     "src/components/fuelStation/shifts/SalesShiftTypes.tsx",
     "src/components/fuelStation/shifts/ShiftTeamsSelector.tsx",

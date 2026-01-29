@@ -1,56 +1,96 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Card, CardContent, Grid, TextField, Switch, Typography } from '@mui/material';
 import { useFormContext } from 'react-hook-form';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 
 function Dipping() {
-    const { setValue, watch, errors, fuel_pumps, tanks } = useFormContext();
-    const [openSwitch, setOpenSwitch] = useState(!!watch('isOpenSwitchON'));
-    const [closingSwitch, setClosingSwitch] = useState(!!watch('isCloseSwitchON'));
+    const { setValue, watch, errors, fuel_pumps, tanks, SalesShift } = useFormContext();
+    const [openSwitch, setOpenSwitch] = useState(!!watch('isOpenSwitchON') || !!SalesShift?.opening_dipping);
+    const [closingSwitch, setClosingSwitch] = useState(!!watch('isCloseSwitchON') || !!SalesShift?.closing_dipping);
     
-    const renderFields = (type) => (
-        Object.values(fuel_pumps.reduce((acc, item) => {
+    useEffect(() => {
+        if (SalesShift?.closing_dipping) {
+            setClosingSwitch(true);
+            SalesShift.closing_dipping.readings.forEach((reading, index) => {
+                setValue(`dipping_after.${index}`, {
+                    id: reading.id,
+                    tank_id: reading.tank_id,
+                    reading: reading.reading,
+                    product_id: reading.product_id,
+                }, { shouldValidate: true, shouldDirty: true });
+            });
+        }
+        
+        if (SalesShift?.opening_dipping) {
+            setOpenSwitch(true);
+            SalesShift.opening_dipping.readings.forEach((reading, index) => {
+                setValue(`dipping_before.${index}`, {
+                    id: reading.id,
+                    tank_id: reading.tank_id,
+                    reading: reading.reading,
+                    product_id: reading.product_id,
+                }, { shouldValidate: true, shouldDirty: true });
+            });
+        }
+    }, [SalesShift, setValue]);
+
+    const renderFields = (type) => {
+        const existingReadings = watch(`dipping_${type}`) || [];
+        
+        return Object.values(fuel_pumps.reduce((acc, item) => {
             if (!acc[item.tank_id]) {
                 acc[item.tank_id] = {
-                    name: tanks.find(t => t.id === item.tank_id).name,
+                    name: tanks.find(t => t.id === item.tank_id)?.name || `Tank ${item.tank_id}`,
                     id: item.tank_id,
                 };
             }
             return acc;
-        }, {})).map((tankInfo, tankIndex) => (
-             <Grid size={{xs: 12, md: 4, lg: 3}} key={tankIndex}>
-                <Card variant="outlined">
-                    <CardContent>
-                        <Grid container columnSpacing={1} marginTop={1}>
-                            <TextField
-                                fullWidth
-                                label={`${tankInfo.name}`}
-                                size="small"
-                                defaultValue={watch(`dipping_${type}.${tankIndex}.reading`)}
-                                error={!!errors[`dipping_${type}`]?.[tankIndex]?.reading}
-                                helperText={errors[`dipping_${type}`]?.[tankIndex]?.reading?.message}
-                                InputProps={{
-                                    inputComponent: CommaSeparatedField,
-                                }}
-                                onChange={(e) => {
-                                    const newValue = e.target.value;
-                                    if(!newValue){
-                                        setValue(`dipping_${type}.${tankIndex}`,null);
-                                    } else {
-                                        const product_id = fuel_pumps.find(pump => pump.tank_id === tankInfo.id)?.product_id;
-                                        setValue(`dipping_${type}.${tankIndex}.tank_id`, tankInfo.id);
-                                        setValue(`dipping_${type}.${tankIndex}.reading`, sanitizedNumber(newValue));
-                                        setValue(`dipping_${type}.${tankIndex}.product_id`, product_id);
-                                    }
-                                }}
-                            />
-                        </Grid>
-                    </CardContent>
-                </Card>
-            </Grid>
-        ))
-    );
+        }, {})).map((tankInfo, tankIndex) => {
+            const existingReadingIndex = existingReadings.findIndex(r => r?.tank_id === tankInfo.id);
+            const fieldIndex = existingReadingIndex !== -1 ? existingReadingIndex : tankIndex;
+            
+            return (
+                <Grid size={{xs: 12, md: 4, lg: 3}} key={tankInfo.id}>
+                    <Card variant="outlined">
+                        <CardContent>
+                            <Grid container columnSpacing={1} marginTop={1}>
+                                <TextField
+                                    fullWidth
+                                    label={`${tankInfo.name}`}
+                                    size="small"
+                                    value={watch(`dipping_${type}.${fieldIndex}.reading`) || ''}
+                                    error={!!errors[`dipping_${type}`]?.[fieldIndex]?.reading}
+                                    helperText={errors[`dipping_${type}`]?.[fieldIndex]?.reading?.message}
+                                    InputProps={{
+                                        inputComponent: CommaSeparatedField,
+                                    }}
+                                    onChange={(e) => {
+                                        const newValue = e.target.value;
+                                        if (!newValue) {
+                                            setValue(`dipping_${type}.${fieldIndex}`, null);
+                                        } else {
+                                            const product_id = fuel_pumps.find(pump => pump.tank_id === tankInfo.id)?.product_id;
+                                            const updatedReading = {
+                                                id: watch(`dipping_${type}.${fieldIndex}.id`),
+                                                tank_id: tankInfo.id,
+                                                reading: sanitizedNumber(newValue),
+                                                product_id: product_id,
+                                            };
+                                            setValue(`dipping_${type}.${fieldIndex}`, updatedReading, {
+                                                shouldValidate: true,
+                                                shouldDirty: true,
+                                            });
+                                        }
+                                    }}
+                                />
+                            </Grid>
+                        </CardContent>
+                    </Card>
+                </Grid>
+            );
+        });
+    };
 
     return (
         <Grid container columnSpacing={2} rowSpacing={1} marginTop={2}>
@@ -63,18 +103,20 @@ function Dipping() {
                             const checked = e.target.checked;
                             setClosingSwitch(checked);
                             setValue('isCloseSwitchON', checked);
-                            setValue('dipping_after',null);
+                            if (!checked) {
+                                setValue('dipping_after', []);
+                            }
                         }}
                     />
                     <Typography variant="body1" style={{ marginLeft: 8 }}>
-                        Closing
+                        Closing Dipping
                     </Typography>
                 </Box>
             </Grid>
 
             {closingSwitch && renderFields('after')}
             
-            <Grid size={12}>
+            <Grid size={12} sx={{ mt: 3 }}>
                 <Box display="flex" alignItems="center">
                     <Switch
                         checked={openSwitch}
@@ -83,11 +125,13 @@ function Dipping() {
                             const checked = e.target.checked;
                             setOpenSwitch(checked);
                             setValue('isOpenSwitchON', checked);
-                            setValue('dipping_before',null);
+                            if (!checked) {
+                                setValue('dipping_before', []);
+                            }
                         }}
                     />
                     <Typography variant="body1" style={{ marginLeft: 8 }}>
-                        Opening
+                        Opening Dipping
                     </Typography>
                 </Box>
             </Grid>

@@ -1,5 +1,5 @@
 "use client";
-import React, { useMemo, useCallback, useState } from 'react';
+import React, { useMemo, useCallback, useState, useEffect } from 'react';
 import {
   TableContainer,
   Table,
@@ -18,343 +18,14 @@ import {
   Typography,
   Autocomplete,
   Box,
-  Alert,
-  Chip,
 } from '@mui/material';
 import { 
   AddOutlined, 
-  DisabledByDefault, 
-  DescriptionOutlined,
-  ExpandMore,
-  ExpandLess,
-  Edit,
-  Delete,
-  Save,
-  Cancel
+  DisabledByDefault,
 } from '@mui/icons-material';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
-import { useLedgerSelect } from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
 import { useFormContext, useWatch } from 'react-hook-form';
-
-// Breakdown row component for inline editing
-function BreakdownRow({ 
-  breakdown, 
-  index, 
-  onUpdate, 
-  onDelete, 
-  isEditing,
-  onEdit,
-  onSaveEdit,
-  onCancelEdit,
-  remainingAmount,
-  ledgerAmount,
-  totalAllocated
-}) {
-  const [editDescription, setEditDescription] = useState(breakdown.description);
-  const [editAmount, setEditAmount] = useState(breakdown.amount?.toString() || '');
-
-  const handleSave = () => {
-    const amount = sanitizedNumber(editAmount);
-    if (!editDescription.trim() || !amount || amount <= 0) {
-      return;
-    }
-    
-    // Check if amount exceeds remaining (considering current allocation)
-    const currentAllocationExcludingThis = totalAllocated - breakdown.amount;
-    const newRemaining = ledgerAmount - (currentAllocationExcludingThis + amount);
-    
-    if (newRemaining < -0.01) { // Allow small rounding differences
-      alert(`Amount exceeds remaining allocation by ${Math.abs(newRemaining).toLocaleString()}`);
-      return;
-    }
-    
-    onSaveEdit({
-      description: editDescription.trim(),
-      amount: amount,
-    });
-  };
-
-  if (isEditing) {
-    return (
-      <TableRow>
-        <TableCell>
-          <TextField
-            fullWidth
-            size="small"
-            value={editDescription}
-            onChange={(e) => setEditDescription(e.target.value)}
-            placeholder="Description"
-          />
-        </TableCell>
-        <TableCell align="right">
-          <TextField
-            size="small"
-            value={editAmount}
-            InputProps={{
-              inputComponent: CommaSeparatedField,
-            }}
-            onChange={(e) => setEditAmount(e.target.value)}
-            placeholder="Amount"
-            sx={{ maxWidth: 120 }}
-          />
-        </TableCell>
-        <TableCell width={100}>
-          <Box sx={{ display: 'flex', gap: 0.5 }}>
-            <IconButton size="small" onClick={handleSave} color="primary">
-              <Save fontSize="small" />
-            </IconButton>
-            <IconButton size="small" onClick={onCancelEdit} color="error">
-              <Cancel fontSize="small" />
-            </IconButton>
-          </Box>
-        </TableCell>
-      </TableRow>
-    );
-  }
-
-  return (
-    <TableRow>
-      <TableCell>{breakdown.description}</TableCell>
-      <TableCell align="right">{breakdown.amount.toLocaleString()}</TableCell>
-      <TableCell>
-        <Box sx={{ display: 'flex', gap: 0.5 }}>
-          <IconButton size="small" onClick={() => onEdit(index)} color="primary">
-            <Edit fontSize="small" />
-          </IconButton>
-          <IconButton size="small" onClick={() => onDelete(index)} color="error">
-            <Delete fontSize="small" />
-          </IconButton>
-        </Box>
-      </TableCell>
-    </TableRow>
-  );
-}
-
-// Breakdown section for each ledger
-function LedgerBreakdownSection({ 
-  ledgerIndex, 
-  ledgerObj, 
-  breakdowns = [], 
-  onUpdateBreakdowns,
-  ledgerAmount
-}) {
-  const [newDescription, setNewDescription] = useState('');
-  const [newAmount, setNewAmount] = useState('');
-  const [editingIndex, setEditingIndex] = useState(null);
-  const [editData, setEditData] = useState(null);
-  const [expanded, setExpanded] = useState(false);
-
-  const totalAllocated = breakdowns.reduce((sum, b) => sum + (b.amount || 0), 0);
-  const remainingAmount = ledgerAmount - totalAllocated;
-  const isFullyAllocated = Math.abs(remainingAmount) < 0.01;
-
-  const handleAddBreakdown = () => {
-    if (!newDescription.trim()) {
-      alert('Description is required');
-      return;
-    }
-
-    const amount = sanitizedNumber(newAmount);
-    if (!amount || amount <= 0) {
-      alert('Amount must be positive');
-      return;
-    }
-
-    if (amount > remainingAmount) {
-      alert(`Amount exceeds remaining ${remainingAmount.toLocaleString()}`);
-      return;
-    }
-
-    const updatedBreakdowns = [
-      ...breakdowns,
-      {
-        description: newDescription.trim(),
-        amount: amount,
-      }
-    ];
-
-    onUpdateBreakdowns(ledgerIndex, updatedBreakdowns);
-    setNewDescription('');
-    setNewAmount('');
-  };
-
-  const handleDeleteBreakdown = (index) => {
-    const updatedBreakdowns = breakdowns.filter((_, i) => i !== index);
-    onUpdateBreakdowns(ledgerIndex, updatedBreakdowns);
-    
-    // If editing the deleted item, cancel edit
-    if (editingIndex === index) {
-      setEditingIndex(null);
-      setEditData(null);
-    }
-  };
-
-  const handleEditBreakdown = (index) => {
-    setEditingIndex(index);
-    setEditData({ ...breakdowns[index] });
-  };
-
-  const handleSaveEdit = (index, updatedBreakdown) => {
-    const updatedBreakdowns = [...breakdowns];
-    updatedBreakdowns[index] = updatedBreakdown;
-    onUpdateBreakdowns(ledgerIndex, updatedBreakdowns);
-    setEditingIndex(null);
-    setEditData(null);
-  };
-
-  const handleCancelEdit = () => {
-    setEditingIndex(null);
-    setEditData(null);
-  };
-
-  return (
-    <Box sx={{ 
-      mt: 2, 
-      mb: 2, 
-      p: 2, 
-      border: '1px solid', 
-      borderColor: isFullyAllocated ? 'success.light' : 'warning.light',
-      borderRadius: 1,
-      backgroundColor: 'background.paper'
-    }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-        <Typography variant="subtitle2" fontWeight="bold">
-          Breakdown for {ledgerObj?.name || 'Ledger'} 
-          <Typography component="span" variant="caption" sx={{ ml: 1 }}>
-            ({totalAllocated.toLocaleString()} / {ledgerAmount.toLocaleString()})
-            {!isFullyAllocated && (
-              <Typography component="span" variant="caption" color="warning.main" sx={{ ml: 1 }}>
-                (Remaining: {remainingAmount.toLocaleString()})
-              </Typography>
-            )}
-          </Typography>
-        </Typography>
-        
-        <IconButton
-          size="small"
-          onClick={() => setExpanded(!expanded)}
-        >
-          {expanded ? <ExpandLess /> : <ExpandMore />}
-        </IconButton>
-      </Box>
-
-      {expanded && (
-        <>
-          {/* Add new breakdown form */}
-          <Box sx={{ mb: 3, p: 2, border: '1px dashed #ddd', borderRadius: 1 }}>
-            <Typography variant="caption" fontWeight="bold" display="block" gutterBottom>
-              Add Breakdown Item
-            </Typography>
-            <Grid container spacing={1} alignItems="center">
-              <Grid size={{ xs: 12, md: 7 }}>
-                <TextField
-                  fullWidth
-                  size="small"
-                  label="Description"
-                  value={newDescription}
-                  onChange={(e) => setNewDescription(e.target.value)}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <TextField
-                  fullWidth
-                  size="small"
-                  label="Amount"
-                  value={newAmount}
-                  InputProps={{
-                    inputComponent: CommaSeparatedField,
-                  }}
-                  onChange={(e) => setNewAmount(e.target.value)}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, md: 1 }} sx={{ textAlign: { md: 'right' } }}>
-                <Button
-                  variant="contained"
-                  size="small"
-                  onClick={handleAddBreakdown}
-                  disabled={!newDescription.trim() || !newAmount}
-                  startIcon={<AddOutlined />}
-                >
-                  Add
-                </Button>
-              </Grid>
-            </Grid>
-          </Box>
-
-          {/* Existing breakdowns table */}
-          {breakdowns.length > 0 && (
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="caption" fontWeight="bold" display="block" gutterBottom>
-                Breakdown Items:
-              </Typography>
-              <TableContainer>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Description</TableCell>
-                      <TableCell align="right">Amount</TableCell>
-                      <TableCell width={100}>Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {breakdowns.map((breakdown, index) => {
-                      if (editingIndex === index) {
-                        return (
-                          <BreakdownRow
-                            key={index}
-                            breakdown={editData}
-                            index={index}
-                            onSaveEdit={(updated) => handleSaveEdit(index, updated)}
-                            onCancelEdit={handleCancelEdit}
-                            isEditing={true}
-                            remainingAmount={remainingAmount}
-                            ledgerAmount={ledgerAmount}
-                            totalAllocated={totalAllocated}
-                          />
-                        );
-                      }
-                      
-                      return (
-                        <BreakdownRow
-                          key={index}
-                          breakdown={breakdown}
-                          index={index}
-                          onDelete={handleDeleteBreakdown}
-                          onEdit={handleEditBreakdown}
-                          isEditing={false}
-                          remainingAmount={remainingAmount}
-                          ledgerAmount={ledgerAmount}
-                          totalAllocated={totalAllocated}
-                        />
-                      );
-                    })}
-                    
-                    {/* Summary row */}
-                    <TableRow sx={{ '& td': { borderTop: '2px solid', borderColor: 'divider' } }}>
-                      <TableCell sx={{ fontWeight: 'bold' }}>Total Allocated</TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 'bold' }}>
-                        {totalAllocated.toLocaleString()}
-                      </TableCell>
-                      <TableCell></TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Box>
-          )}
-
-          {/* Validation message */}
-          {!isFullyAllocated && (
-            <Alert severity="warning" sx={{ mt: 1 }}>
-              Breakdown not fully allocated. Please allocate remaining {remainingAmount.toLocaleString()}
-            </Alert>
-          )}
-        </>
-      )}
-    </Box>
-  );
-}
 
 function CashReconciliation({
   cashierIndex,
@@ -367,27 +38,50 @@ function CashReconciliation({
     setCheckShiftBalanced,
     products,
     fuel_pumps,
-    shiftLedgers,
     errors,
+    watch,
+    getCashierLedgers,
   } = useFormContext();
-
-  const { ungroupedLedgerOptions } = useLedgerSelect();
 
   const productPrices = useWatch({
     name: 'product_prices',
   }) || [];
 
-  const otherLedgers = useWatch({
-    name: `cashiers.${cashierIndex}.other_ledgers`,
+  const cashTransactions = useWatch({
+    name: `cashiers.${cashierIndex}.cash_transactions`,
   }) || [];
 
   const mainLedgerId = useWatch({
     name: `cashiers.${cashierIndex}.main_ledger_id`,
   });
 
-  // ──────────────────────────────────────────────────────────────
-  // Fuel Voucher Totals per product
-  // ──────────────────────────────────────────────────────────────
+  const cashierLedgers = getCashierLedgers ? getCashierLedgers(cashierIndex) : [];
+
+  const [initialized, setInitialized] = useState(false);
+
+  const cashierData = useWatch({
+    name: `cashiers.${cashierIndex}`,
+  }) || {};
+
+  const cashierMainLedger = cashierData?.main_ledger;
+
+  useEffect(() => {
+    if (!initialized) {
+      const existingCashTransactions = watch(`cashiers.${cashierIndex}.cash_transactions`) || [];
+      
+      if (cashierMainLedger?.id && !mainLedgerId) {
+        setValue(`cashiers.${cashierIndex}.main_ledger_id`, cashierMainLedger.id, {
+          shouldValidate: true,
+          shouldDirty: true,
+        });
+      }
+      
+      if (existingCashTransactions.length > 0) {
+        setInitialized(true);
+      }
+    }
+  }, [cashierIndex, watch, initialized, cashierMainLedger, mainLedgerId, setValue]);
+
   const fuelVoucherTotals = useMemo(() => {
     if (!localFuelVouchers?.length || !productPrices?.length) return {};
 
@@ -402,13 +96,9 @@ function CashReconciliation({
     return totals;
   }, [localFuelVouchers, productPrices]);
 
-  // ──────────────────────────────────────────────────────────────
-  // Product sales totals (pump readings + adjustments)
-  // ──────────────────────────────────────────────────────────────
   const productTotals = useMemo(() => {
     const totals = {};
 
-    // Pump sales
     fuel_pumps?.forEach((pump) => {
       const productId = pump?.product_id;
       if (!productId) return;
@@ -417,24 +107,20 @@ function CashReconciliation({
       totals[productId] = (totals[productId] || 0) + sold;
     });
 
-    // Adjustments
     localAdjustments?.forEach((adj) => {
       const productId = adj?.product_id;
       if (!productId) return;
       const qty = adj?.quantity || 0;
       if (adj.operator === '-') {
-        totals[productId] = (totals[productId] || 0) + qty;     // add to sold (reduce cash)
+        totals[productId] = (totals[productId] || 0) + qty;
       } else if (adj.operator === '+') {
-        totals[productId] = (totals[productId] || 0) - qty;     // subtract from sold (increase cash)
+        totals[productId] = (totals[productId] || 0) - qty;
       }
     });
 
     return totals;
   }, [fuel_pumps, localPumpReadings, localAdjustments]);
 
-  // ──────────────────────────────────────────────────────────────
-  // Grand totals & derived values
-  // ──────────────────────────────────────────────────────────────
   const { grandFuelVoucherTotal, grandProductsTotal, cashRemaining } = useMemo(() => {
     const voucherTotal = Object.values(fuelVoucherTotals).reduce((sum, v) => sum + (v || 0), 0);
 
@@ -451,104 +137,112 @@ function CashReconciliation({
     };
   }, [fuelVoucherTotals, productTotals, products, productPrices]);
 
-  const totalOtherLedgersAmount = useMemo(() => {
-    return otherLedgers?.reduce((sum, ledger) => sum + sanitizedNumber(ledger?.amount || 0), 0) || 0;
-  }, [otherLedgers]);
-
-  // Calculate breakdown totals for each ledger
-  const breakdownTotals = useMemo(() => {
-    return otherLedgers.map(ledger => {
-      const breakdowns = ledger.breakdowns || [];
-      return breakdowns.reduce((sum, b) => sum + (b.amount || 0), 0);
+  const mainLedgerTransactions = useMemo(() => {
+    return cashTransactions.filter(transaction => {
+      const transactionLedgerId = transaction.debit_ledger?.id || transaction.id;
+      return transactionLedgerId === mainLedgerId;
     });
-  }, [otherLedgers]);
+  }, [cashTransactions, mainLedgerId]);
 
-  // Derived main ledger amount (what should be there)
-  const calculatedMainLedgerAmount = cashRemaining - totalOtherLedgersAmount;
-
-  // Balance check - now also validates breakdowns
-  const isBreakdownValid = useMemo(() => {
-    return otherLedgers.every((ledger, index) => {
-      const ledgerAmount = sanitizedNumber(ledger?.amount || 0);
-      if (ledgerAmount === 0) return true; // Empty ledger is valid
-      
-      const breakdownTotal = breakdownTotals[index] || 0;
-      return Math.abs(breakdownTotal - ledgerAmount) < 0.01;
+  const otherLedgerTransactions = useMemo(() => {
+    return cashTransactions.filter(transaction => {
+      const transactionLedgerId = transaction.debit_ledger?.id || transaction.id;
+      return transactionLedgerId !== mainLedgerId;
     });
-  }, [otherLedgers, breakdownTotals]);
+  }, [cashTransactions, mainLedgerId]);
 
-  const isBalanced = Math.abs(cashRemaining - (calculatedMainLedgerAmount + totalOtherLedgersAmount)) < 0.01 
-    && isBreakdownValid;
+  const mainLedgerTransactionsSum = useMemo(() => {
+    return mainLedgerTransactions.reduce((sum, transaction) => {
+      const amount = sanitizedNumber(transaction?.amount || 0);
+      return sum + amount;
+    }, 0);
+  }, [mainLedgerTransactions]);
 
-  // Update balance status only when meaningful values change
-  React.useEffect(() => {
-    setCheckShiftBalanced(isBalanced && cashRemaining >= 0);
-  }, [isBalanced, cashRemaining, setCheckShiftBalanced]);
+  const otherLedgerTransactionsSum = useMemo(() => {
+    return otherLedgerTransactions.reduce((sum, transaction) => 
+      sum + sanitizedNumber(transaction?.amount || 0), 0) || 0;
+  }, [otherLedgerTransactions]);
 
-  // ──────────────────────────────────────────────────────────────
-  // Helpers
-  // ──────────────────────────────────────────────────────────────
+  const calculatedMainLedgerAmount = cashRemaining - otherLedgerTransactionsSum + mainLedgerTransactionsSum;
+
+  useEffect(() => {
+    if (mainLedgerId && calculatedMainLedgerAmount !== null && calculatedMainLedgerAmount !== undefined) {
+      setValue(`cashiers.${cashierIndex}.main_ledger_amount`, calculatedMainLedgerAmount, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    }
+  }, [calculatedMainLedgerAmount, mainLedgerId, cashierIndex, setValue]);
+
+  const isCashierBalanced = useMemo(() => {
+    if (!mainLedgerId) return false;
+    
+    const actualAmount = watch(`cashiers.${cashierIndex}.main_ledger_amount`) || 0;
+    
+    return Math.abs(actualAmount - calculatedMainLedgerAmount) < 0.01;
+  }, [mainLedgerId, cashierIndex, watch, calculatedMainLedgerAmount]);
+
+  useEffect(() => {
+    setCheckShiftBalanced(prev => {
+      return isCashierBalanced && cashRemaining >= 0;
+    });
+  }, [isCashierBalanced, cashRemaining, setCheckShiftBalanced]);
+
   const getProductPrice = useCallback(
     (productId) => productPrices.find(p => p?.product_id === productId)?.price || 0,
     [productPrices]
   );
 
   const availableLedgers = useMemo(() => {
-    return shiftLedgers?.filter(
-      (ledger) => !otherLedgers.some((other) => other?.id === ledger.id)
-    ) || [];
-  }, [shiftLedgers, otherLedgers]);
+    return (cashierLedgers || []).filter(ledger => ledger.id !== mainLedgerId);
+  }, [cashierLedgers, mainLedgerId]);
 
-  const cashReconciliationAppend = () => {
-    const newLedgers = [...otherLedgers, { 
+  const addCashTransaction = () => {
+    const newTransactions = [...cashTransactions, { 
       id: '', 
+      description: '',
       amount: '',
-      breakdowns: [] 
+      narration: ''
     }];
-    setValue(`cashiers.${cashierIndex}.other_ledgers`, newLedgers, {
+    setValue(`cashiers.${cashierIndex}.cash_transactions`, newTransactions, {
       shouldValidate: true,
       shouldDirty: true,
     });
   };
 
-  const cashReconciliationRemove = (idx) => {
-    const newLedgers = otherLedgers.filter((_, i) => i !== idx);
-    setValue(`cashiers.${cashierIndex}.other_ledgers`, newLedgers, {
+  const removeCashTransaction = (idx) => {
+    const newTransactions = cashTransactions.filter((_, i) => i !== idx);
+    setValue(`cashiers.${cashierIndex}.cash_transactions`, newTransactions, {
       shouldValidate: true,
       shouldDirty: true,
     });
   };
 
-  const updateOtherLedger = (idx, field, value) => {
-    const newLedgers = [...otherLedgers];
-    newLedgers[idx] = {
-      ...newLedgers[idx],
+  const updateCashTransaction = (idx, field, value) => {
+    const newTransactions = [...cashTransactions];
+    newTransactions[idx] = {
+      ...newTransactions[idx],
       [field]: field === 'amount' ? sanitizedNumber(value) : value,
-      // Clear breakdowns if amount changes to 0 or empty
-      ...(field === 'amount' && (!value || sanitizedNumber(value) === 0) && { breakdowns: [] })
     };
-    setValue(`cashiers.${cashierIndex}.other_ledgers`, newLedgers, {
+    setValue(`cashiers.${cashierIndex}.cash_transactions`, newTransactions, {
       shouldValidate: true,
       shouldDirty: true,
     });
   };
 
-  const updateBreakdowns = (ledgerIndex, newBreakdowns) => {
-    const newLedgers = [...otherLedgers];
-    newLedgers[ledgerIndex] = {
-      ...newLedgers[ledgerIndex],
-      breakdowns: newBreakdowns
-    };
-    setValue(`cashiers.${cashierIndex}.other_ledgers`, newLedgers, {
-      shouldValidate: true,
-      shouldDirty: true,
-    });
-  };
+  const actualMainLedgerAmount = watch(`cashiers.${cashierIndex}.main_ledger_amount`) || 0;
+
+  const getLedgerName = useCallback((transaction) => {
+    if (transaction.debit_ledger) {
+      return transaction.debit_ledger.name;
+    }
+    const ledger = cashierLedgers.find(l => l.id === transaction.id);
+    return ledger?.name || '-';
+  }, [cashierLedgers]);
 
   return (
     <>
       <Grid container columnSpacing={2} rowSpacing={2}>
-        {/* Total Products Amount */}
         <Grid size={{ xs: 12, md: 6, lg: 6 }}>
           <Card variant="outlined">
             <CardContent>
@@ -561,7 +255,7 @@ function CashReconciliation({
                   <TableHead>
                     <TableRow>
                       <TableCell>Product Name</TableCell>
-                      <TableCell align="right">Quantity</TableCell>
+                      <TableCell align="right">Quantity (L)</TableCell>
                       <TableCell align="right">Price</TableCell>
                       <TableCell align="right">Amount</TableCell>
                     </TableRow>
@@ -582,7 +276,7 @@ function CashReconciliation({
                     })}
                     <TableRow>
                       <TableCell colSpan={3} align="right" sx={{ fontWeight: 'bold' }}>
-                        Grand Total:
+                        Cashier Total:
                       </TableCell>
                       <TableCell align="right" sx={{ fontWeight: 'bold' }}>
                         {grandProductsTotal.toLocaleString()}
@@ -595,7 +289,6 @@ function CashReconciliation({
           </Card>
         </Grid>
 
-        {/* Fuel Vouchers */}
         <Grid size={{ xs: 12, md: 6, lg: 6 }}>
           <Card variant="outlined">
             <CardContent>
@@ -608,7 +301,7 @@ function CashReconciliation({
                   <TableHead>
                     <TableRow>
                       <TableCell>Product Name</TableCell>
-                      <TableCell align="right">Quantity</TableCell>
+                      <TableCell align="right">Quantity (L)</TableCell>
                       <TableCell align="right">Price</TableCell>
                       <TableCell align="right">Amount</TableCell>
                     </TableRow>
@@ -632,7 +325,7 @@ function CashReconciliation({
                     })}
                     <TableRow>
                       <TableCell colSpan={3} align="right" sx={{ fontWeight: 'bold' }}>
-                        Grand Total:
+                        Cashier Total:
                       </TableCell>
                       <TableCell align="right" sx={{ fontWeight: 'bold' }}>
                         {grandFuelVoucherTotal.toLocaleString()}
@@ -645,29 +338,42 @@ function CashReconciliation({
           </Card>
         </Grid>
 
-        {/* Final Summary */}
         <Grid size={{ xs: 12, md: 12, lg: 6 }}>
           <Card variant="outlined">
             <CardContent>
               <Typography variant="subtitle1" align="center" fontWeight="bold" gutterBottom>
-                Final Summary
+                Cashier Summary
               </Typography>
               <Divider />
               <TableContainer>
                 <Table size="small">
                   <TableBody>
                     <TableRow>
-                      <TableCell>Total Amount</TableCell>
+                      <TableCell>Sales Amount</TableCell>
                       <TableCell align="right">{grandProductsTotal.toLocaleString()}</TableCell>
                     </TableRow>
                     <TableRow>
-                      <TableCell>Fuel Vouchers total</TableCell>
+                      <TableCell>Fuel Vouchers</TableCell>
                       <TableCell align="right">{grandFuelVoucherTotal.toLocaleString()}</TableCell>
                     </TableRow>
                     <TableRow>
                       <TableCell sx={{ fontWeight: 'bold' }}>Cash Remaining</TableCell>
                       <TableCell align="right" sx={{ fontWeight: 'bold', color: cashRemaining < 0 ? 'error.main' : 'success.main' }}>
                         {cashRemaining.toLocaleString()}
+                      </TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>Other Ledger Transactions</TableCell>
+                      <TableCell align="right">- {otherLedgerTransactionsSum.toLocaleString()}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>Main Ledger Transactions</TableCell>
+                      <TableCell align="right">+ {mainLedgerTransactionsSum.toLocaleString()}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Calculated Main Ledger Amount</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 'bold' }}>
+                        {calculatedMainLedgerAmount.toLocaleString()}
                       </TableCell>
                     </TableRow>
                   </TableBody>
@@ -677,7 +383,6 @@ function CashReconciliation({
           </Card>
         </Grid>
 
-        {/* Cash Distribution */}
         <Grid size={{ xs: 12, md: 12, lg: 12 }}>
           <Card variant="outlined">
             <CardContent>
@@ -687,17 +392,15 @@ function CashReconciliation({
               <Divider sx={{ mb: 2 }} />
 
               <Grid container spacing={2}>
-                {/* Main Ledger */}
-                <Grid size={{ xs: 12, md: 7 }}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <Autocomplete
                     size="small"
-                    options={availableLedgers}
+                    options={cashierLedgers || []}
                     getOptionLabel={(opt) => opt.name}
-                    value={mainLedgerId ? ungroupedLedgerOptions?.find(l => l.id === mainLedgerId) : null}
+                    value={mainLedgerId ? cashierLedgers.find(l => l.id === mainLedgerId) : null}
                     onChange={(_, newValue) => {
                       const id = newValue?.id ?? null;
                       setValue(`cashiers.${cashierIndex}.main_ledger_id`, id, { shouldValidate: true });
-                      setValue(`cashiers.${cashierIndex}.main_ledger`, { id }, { shouldValidate: true });
                     }}
                     renderInput={(params) => (
                       <TextField
@@ -707,15 +410,16 @@ function CashReconciliation({
                         helperText={errors?.cashiers?.[cashierIndex]?.main_ledger_id?.message}
                       />
                     )}
+                    isOptionEqualToValue={(option, value) => option.id === value.id}
                   />
                 </Grid>
 
-                <Grid size={{ xs: 12, md: 5 }}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <TextField
                     size="small"
                     fullWidth
-                    label="Calculated Amount"
-                    value={calculatedMainLedgerAmount.toLocaleString()}
+                    label="Main Ledger Amount"
+                    value={actualMainLedgerAmount.toLocaleString()}
                     InputProps={{
                       readOnly: true,
                       inputComponent: CommaSeparatedField,
@@ -729,74 +433,89 @@ function CashReconciliation({
                   />
                 </Grid>
 
-                {/* Other Ledgers */}
-                {otherLedgers.map((ledger, idx) => {
-                  const ledgerObj = ungroupedLedgerOptions?.find(l => l.id === ledger.id);
-                  const ledgerAmount = sanitizedNumber(ledger.amount || 0);
+                {otherLedgerTransactions.map((transaction, idx) => {
+                  const originalIdx = cashTransactions.findIndex(t => {
+                    if (t.id && transaction.id) return t.id === transaction.id;
+                    if (t.debit_ledger?.id && transaction.debit_ledger?.id) {
+                      return t.debit_ledger.id === transaction.debit_ledger.id;
+                    }
+                    return false;
+                  });
+                  
+                  const stableKey = `other-transaction-${cashierIndex}-${idx}`;
+                  
+                  const ledgerId = transaction.debit_ledger?.id || transaction.id;
+                  const ledgerObj = availableLedgers.find(l => l.id === ledgerId);
                   
                   return (
-                    <React.Fragment key={idx}>
-                      <Grid size={12}>
-                        <Divider/>
-                      </Grid>
-                      <Grid size={{ xs: 12, md: 7 }}>
+                    <React.Fragment key={stableKey}>
+                      <Grid size={{ xs: 12, md: 4 }}>
                         <Autocomplete
                           size="small"
-                          options={availableLedgers.filter(l => l.id !== mainLedgerId)}
+                          options={availableLedgers}
                           getOptionLabel={(opt) => opt.name}
                           value={ledgerObj}
                           onChange={(_, newValue) => {
-                            updateOtherLedger(idx, 'id', newValue?.id ?? null);
+                            const updateIdx = originalIdx !== -1 ? originalIdx : cashTransactions.length;
+                            updateCashTransaction(updateIdx, 'id', newValue?.id ?? null);
                           }}
                           renderInput={(params) => (
                             <TextField
                               {...params}
                               label="Other Ledger"
-                              error={!!errors?.cashiers?.[cashierIndex]?.other_ledgers?.[idx]?.id}
-                              helperText={errors?.cashiers?.[cashierIndex]?.other_ledgers?.[idx]?.id?.message}
+                              error={!!errors?.cashiers?.[cashierIndex]?.cash_transactions?.[originalIdx]?.id}
+                              helperText={errors?.cashiers?.[cashierIndex]?.cash_transactions?.[originalIdx]?.id?.message}
                             />
                           )}
                         />
                       </Grid>
 
-                      <Grid size={{ xs: 10, md: 4.5 }}>
+                      <Grid size={{ xs: 6, md: 2 }}>
                         <TextField
                           size="small"
                           fullWidth
                           label="Amount"
-                          value={ledger?.amount ?? ''}
-                          error={!!errors?.cashiers?.[cashierIndex]?.other_ledgers?.[idx]?.amount}
-                          helperText={errors?.cashiers?.[cashierIndex]?.other_ledgers?.[idx]?.amount?.message}
+                          value={transaction?.amount ?? ''}
+                          error={!!errors?.cashiers?.[cashierIndex]?.cash_transactions?.[originalIdx]?.amount}
+                          helperText={errors?.cashiers?.[cashierIndex]?.cash_transactions?.[originalIdx]?.amount?.message}
                           InputProps={{ inputComponent: CommaSeparatedField }}
-                          onChange={(e) => updateOtherLedger(idx, 'amount', e.target.value)}
+                          onChange={(e) => {
+                            const updateIdx = originalIdx !== -1 ? originalIdx : cashTransactions.length;
+                            updateCashTransaction(updateIdx, 'amount', e.target.value);
+                          }}
                         />
                       </Grid>
 
-                      <Grid size={{ xs: 2, md: 0.5 }} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Tooltip title="Delete this ledger">
+                      <Grid size={{ xs: 10, md: 5 }}>
+                        <TextField
+                          size="small"
+                          fullWidth
+                          label="Narration"
+                          value={transaction?.narration ?? ''}
+                          placeholder="Enter transaction description"
+                          error={!!errors?.cashiers?.[cashierIndex]?.cash_transactions?.[originalIdx]?.narration}
+                          helperText={errors?.cashiers?.[cashierIndex]?.cash_transactions?.[originalIdx]?.narration?.message}
+                          onChange={(e) => {
+                            const updateIdx = originalIdx !== -1 ? originalIdx : cashTransactions.length;
+                            updateCashTransaction(updateIdx, 'narration', e.target.value);
+                          }}
+                        />
+                      </Grid>
+
+                      <Grid size={{ xs: 2, md: 1 }} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Tooltip title="Remove this transaction">
                           <IconButton
                             size="small"
                             color="error"
-                            onClick={() => cashReconciliationRemove(idx)}
+                            onClick={() => {
+                              const removeIdx = originalIdx !== -1 ? originalIdx : cashTransactions.length;
+                              removeCashTransaction(removeIdx);
+                            }}
                           >
                             <DisabledByDefault fontSize="small" />
                           </IconButton>
                         </Tooltip>
                       </Grid>
-
-                      {/* Breakdown Section - Always shown but collapsed by default */}
-                      {ledgerAmount > 0 && (
-                        <Grid size={{ xs: 12 }}>
-                          <LedgerBreakdownSection
-                            ledgerIndex={idx}
-                            ledger={ledger}
-                            ledgerObj={ledgerObj}
-                            breakdowns={ledger.breakdowns || []}
-                            onUpdateBreakdowns={updateBreakdowns}
-                            ledgerAmount={ledgerAmount}
-                          />
-                        </Grid>
-                      )}
                     </React.Fragment>
                   );
                 })}
@@ -806,10 +525,10 @@ function CashReconciliation({
                     size="small"
                     variant="outlined"
                     startIcon={<AddOutlined />}
-                    onClick={cashReconciliationAppend}
+                    onClick={addCashTransaction}
                     disabled={availableLedgers.length === 0}
                   >
-                    Add Other Ledger
+                    Add Other Ledger Transaction
                   </Button>
                 </Grid>
               </Grid>
