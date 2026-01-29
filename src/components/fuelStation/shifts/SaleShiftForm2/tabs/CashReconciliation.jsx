@@ -47,31 +47,24 @@ function CashReconciliation({
     name: 'product_prices',
   }) || [];
 
-  // CASH TRANSACTIONS for this cashier
   const cashTransactions = useWatch({
     name: `cashiers.${cashierIndex}.cash_transactions`,
   }) || [];
 
-  // MAIN LEDGER PER CASHIER
   const mainLedgerId = useWatch({
     name: `cashiers.${cashierIndex}.main_ledger_id`,
   });
 
-  // Get cashier-specific ledgers
   const cashierLedgers = getCashierLedgers ? getCashierLedgers(cashierIndex) : [];
 
-  // State for loading existing cash_transactions data
   const [initialized, setInitialized] = useState(false);
 
-  // Get the cashier data to check if they already have a main ledger
   const cashierData = useWatch({
     name: `cashiers.${cashierIndex}`,
   }) || {};
 
-  // Check if cashier already has a main ledger in their data
   const cashierMainLedger = cashierData?.main_ledger;
 
-  // Load existing cash_transactions data on component mount AND set default main ledger
   useEffect(() => {
     if (!initialized) {
       const existingCashTransactions = watch(`cashiers.${cashierIndex}.cash_transactions`) || [];
@@ -90,9 +83,6 @@ function CashReconciliation({
     }
   }, [cashierIndex, watch, initialized, cashierMainLedger, mainLedgerId, setValue]);
 
-  // ──────────────────────────────────────────────────────────────
-  // Fuel Voucher Totals per product FOR THIS CASHIER
-  // ──────────────────────────────────────────────────────────────
   const fuelVoucherTotals = useMemo(() => {
     if (!localFuelVouchers?.length || !productPrices?.length) return {};
 
@@ -107,13 +97,9 @@ function CashReconciliation({
     return totals;
   }, [localFuelVouchers, productPrices]);
 
-  // ──────────────────────────────────────────────────────────────
-  // Product sales totals (pump readings + adjustments) FOR THIS CASHIER
-  // ──────────────────────────────────────────────────────────────
   const productTotals = useMemo(() => {
     const totals = {};
 
-    // Pump sales for THIS cashier
     fuel_pumps?.forEach((pump) => {
       const productId = pump?.product_id;
       if (!productId) return;
@@ -122,24 +108,20 @@ function CashReconciliation({
       totals[productId] = (totals[productId] || 0) + sold;
     });
 
-    // Adjustments for THIS cashier
     localAdjustments?.forEach((adj) => {
       const productId = adj?.product_id;
       if (!productId) return;
       const qty = adj?.quantity || 0;
       if (adj.operator === '-') {
-        totals[productId] = (totals[productId] || 0) + qty;     // add to sold (reduce cash)
+        totals[productId] = (totals[productId] || 0) + qty;
       } else if (adj.operator === '+') {
-        totals[productId] = (totals[productId] || 0) - qty;     // subtract from sold (increase cash)
+        totals[productId] = (totals[productId] || 0) - qty;
       }
     });
 
     return totals;
   }, [fuel_pumps, localPumpReadings, localAdjustments]);
 
-  // ──────────────────────────────────────────────────────────────
-  // Grand totals & derived values FOR THIS CASHIER
-  // ──────────────────────────────────────────────────────────────
   const { grandFuelVoucherTotal, grandProductsTotal, cashRemaining } = useMemo(() => {
     const voucherTotal = Object.values(fuelVoucherTotals).reduce((sum, v) => sum + (v || 0), 0);
 
@@ -156,22 +138,17 @@ function CashReconciliation({
     };
   }, [fuelVoucherTotals, productTotals, products, productPrices]);
 
-  // Filter out transactions that have the same ledger as main ledger
   const nonMainLedgerTransactions = useMemo(() => {
     return cashTransactions.filter(transaction => {
-      // If transaction has debit_ledger property (from API), check if it's same as main ledger
       if (transaction.debit_ledger?.id && mainLedgerId) {
         return transaction.debit_ledger.id !== mainLedgerId;
       }
-      // If transaction has id property (from form), check if it's same as main ledger
       return transaction.id !== mainLedgerId;
     });
   }, [cashTransactions, mainLedgerId]);
 
-  // Sum of transactions that have the same ledger as main ledger
   const mainLedgerTransactionsSum = useMemo(() => {
     return cashTransactions.reduce((sum, transaction) => {
-      // Check if transaction belongs to main ledger
       const isMainLedger = 
         (transaction.debit_ledger?.id && transaction.debit_ledger.id === mainLedgerId) ||
         transaction.id === mainLedgerId;
@@ -184,17 +161,13 @@ function CashReconciliation({
     }, 0);
   }, [cashTransactions, mainLedgerId]);
 
-  // Total of non-main ledger cash transactions
   const totalNonMainLedgerTransactionsAmount = useMemo(() => {
     return nonMainLedgerTransactions.reduce((sum, transaction) => 
       sum + sanitizedNumber(transaction?.amount || 0), 0) || 0;
   }, [nonMainLedgerTransactions]);
 
-  // AUTOMATICALLY CALCULATED Main Ledger Amount
-  // This now includes cashRemaining PLUS any transactions that were already in the main ledger
   const calculatedMainLedgerAmount = cashRemaining - totalNonMainLedgerTransactionsAmount;
 
-  // Automatically set the main ledger amount when it changes
   useEffect(() => {
     if (mainLedgerId && calculatedMainLedgerAmount !== null && calculatedMainLedgerAmount !== undefined) {
       setValue(`cashiers.${cashierIndex}.main_ledger_amount`, calculatedMainLedgerAmount, {
@@ -204,33 +177,25 @@ function CashReconciliation({
     }
   }, [calculatedMainLedgerAmount, mainLedgerId, cashierIndex, setValue]);
 
-  // Update balance status - cashier is balanced when main ledger amount matches calculated
   const isCashierBalanced = useMemo(() => {
     if (!mainLedgerId) return false;
     
-    // Get the actual value from form (which should be the calculated one)
     const actualAmount = watch(`cashiers.${cashierIndex}.main_ledger_amount`) || 0;
     
-    // Compare with calculated amount (allow small rounding differences)
     return Math.abs(actualAmount - calculatedMainLedgerAmount) < 0.01;
   }, [mainLedgerId, cashierIndex, watch, calculatedMainLedgerAmount]);
 
-  // Update balance status only when meaningful values change
   useEffect(() => {
     setCheckShiftBalanced(prev => {
       return isCashierBalanced && cashRemaining >= 0;
     });
   }, [isCashierBalanced, cashRemaining, setCheckShiftBalanced]);
 
-  // ──────────────────────────────────────────────────────────────
-  // Helpers
-  // ──────────────────────────────────────────────────────────────
   const getProductPrice = useCallback(
     (productId) => productPrices.find(p => p?.product_id === productId)?.price || 0,
     [productPrices]
   );
 
-  // All cashier ledgers are available for cash transactions (except main ledger)
   const availableLedgers = useMemo(() => {
     return (cashierLedgers || []).filter(ledger => ledger.id !== mainLedgerId);
   }, [cashierLedgers, mainLedgerId]);
@@ -268,10 +233,8 @@ function CashReconciliation({
     });
   };
 
-  // Get the actual main ledger amount from form
   const actualMainLedgerAmount = watch(`cashiers.${cashierIndex}.main_ledger_amount`) || 0;
 
-  // Helper to get ledger name for display
   const getLedgerName = useCallback((transaction) => {
     if (transaction.debit_ledger) {
       return transaction.debit_ledger.name;
@@ -283,7 +246,6 @@ function CashReconciliation({
   return (
     <>
       <Grid container columnSpacing={2} rowSpacing={2}>
-        {/* Total Products Amount FOR THIS CASHIER */}
         <Grid size={{ xs: 12, md: 6, lg: 6 }}>
           <Card variant="outlined">
             <CardContent>
@@ -330,7 +292,6 @@ function CashReconciliation({
           </Card>
         </Grid>
 
-        {/* Fuel Vouchers FOR THIS CASHIER */}
         <Grid size={{ xs: 12, md: 6, lg: 6 }}>
           <Card variant="outlined">
             <CardContent>
@@ -380,7 +341,6 @@ function CashReconciliation({
           </Card>
         </Grid>
 
-        {/* Final Summary FOR THIS CASHIER */}
         <Grid size={{ xs: 12, md: 12, lg: 6 }}>
           <Card variant="outlined">
             <CardContent>
@@ -449,7 +409,6 @@ function CashReconciliation({
                         helperText={errors?.cashiers?.[cashierIndex]?.main_ledger_id?.message}
                       />
                     )}
-                    // Show a helper text if the main ledger was automatically selected
                     isOptionEqualToValue={(option, value) => option.id === value.id}
                   />
                   {cashierMainLedger?.id && cashierMainLedger.id === mainLedgerId && (
