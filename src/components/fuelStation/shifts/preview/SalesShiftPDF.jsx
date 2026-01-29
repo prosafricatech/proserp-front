@@ -4,7 +4,7 @@ import PdfLogo from '@/components/pdf/PdfLogo';
 import pdfStyles from '@/components/pdf/pdf-styles';
 import PageFooter from '@/components/pdf/PageFooter';
 
-function SalesShiftPDF({ includeFuelVouchers, shiftData, stationName, organization, cashiers, fuel_pumps, tanks, productOptions }) {
+function SalesShiftPDF({ includeFuelVouchers, shiftData, stationName, organization, cashiers, fuel_pumps, tanks, productOptions, shifts }) {
   const mainColor = organization.settings?.main_color || "#2113AD";
   const lightColor = organization.settings?.light_color || "#bec5da";
   const contrastText = organization.settings?.contrast_text || "#FFFFFF";
@@ -116,12 +116,22 @@ function SalesShiftPDF({ includeFuelVouchers, shiftData, stationName, organizati
         {/* ================= SHIFT INFO ================= */}
         <View style={{ ...pdfStyles.tableRow, marginBottom: 12 }}>
           <View style={{ flex: 1, padding: 2 }}>
+            <Text style={{ ...pdfStyles.midInfo, color: mainColor }}>Sales Outlet Shift</Text>
+            <Text style={{ ...pdfStyles.midInfo }}>
+              {shifts?.find(s => s.id === shiftData.sales_outlet_shift_id)?.name}
+            </Text>
+          </View>
+          <View style={{ flex: 1, padding: 2 }}>
             <Text style={{ ...pdfStyles.midInfo, color: mainColor }}>Shift Start</Text>
             <Text style={{ ...pdfStyles.midInfo }}>{readableDate(shiftData.shift_start, true)}</Text>
           </View>
           <View style={{ flex: 1, padding: 2 }}>
             <Text style={{ ...pdfStyles.midInfo, color: mainColor }}>Shift End</Text>
             <Text style={{ ...pdfStyles.midInfo }}>{readableDate(shiftData.shift_end, true)}</Text>
+          </View>
+          <View style={{ flex: 1, padding: 2 }}>
+            <Text style={{ ...pdfStyles.midInfo, color: mainColor }}>Recorded By:</Text>
+            <Text style={{ ...pdfStyles.midInfo }}>{shiftData.creator?.name}</Text>
           </View>
         </View>
 
