@@ -13,8 +13,8 @@ import {
   Checkbox,
   Divider
 } from '@mui/material';
-import { useFormContext, useFieldArray } from 'react-hook-form';
-import { useEffect, useState } from 'react';
+import { useFormContext } from 'react-hook-form';
+import { useEffect } from 'react';
 
 function PumpReadings({ 
   name, 
@@ -28,6 +28,7 @@ function PumpReadings({
     errors, 
     fuel_pumps, 
     tanks, 
+    watch,
     products, 
     getAvailablePumpsForCashier 
   } = useFormContext();
@@ -117,6 +118,22 @@ function PumpReadings({
       productName: product?.name || 'Unknown Product',
     };
   }).filter(Boolean);
+
+  useEffect(() => {
+    const existingReadings = watch(`cashiers.${cashierIndex}.pump_readings`) || [];
+    const existingPumps = watch(`cashiers.${cashierIndex}.selected_pumps`) || [];
+    
+    if (existingReadings.length > 0 && localPumpReadings.length === 0) {
+      setLocalPumpReadings(existingReadings);
+    }
+    
+    if (existingPumps.length > 0 && selectedPumps.length === 0) {
+      formSetValue(`cashiers.${cashierIndex}.selected_pumps`, existingPumps, {
+        shouldValidate: true,
+        shouldDirty: true
+      });
+    }
+  }, [cashierIndex, localPumpReadings.length, selectedPumps.length]);
 
   return (
     <>

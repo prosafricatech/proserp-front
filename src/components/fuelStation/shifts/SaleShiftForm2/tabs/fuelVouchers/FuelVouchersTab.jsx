@@ -19,37 +19,45 @@ function FuelVouchersTab({
     const productPrices = watch(`product_prices`) || [];
 
     useEffect(() => {
+      const existingVouchers = watch(`cashiers.${cashierIndex}.fuel_vouchers`) || [];
+      if (existingVouchers.length > 0 && localFuelVouchers.length === 0) {
+        setLocalFuelVouchers(existingVouchers);
+      }
+    }, [cashierIndex, localFuelVouchers.length]);
+
+    useEffect(() => {
       setValue(`cashiers.${cashierIndex}.fuel_vouchers`, localFuelVouchers, {
           shouldValidate: true,
           shouldDirty: true
       });
-    }, [localFuelVouchers, cashierIndex, setValue]);
+    }, [localFuelVouchers, cashierIndex]);
 
-  return (
-    <Box>
-        <FuelVouchers
-          productPrices={productPrices}
-          fuelVouchers={localFuelVouchers}
-          setFuelVouchers={setLocalFuelVouchers}
-        />
-
-        {localFuelVouchers.map((fuelVoucher, index) => (
-          <FuelVouchersItemRow
-            fuelVoucher={fuelVoucher}
-            index={index}
+    return (
+      <Box>
+          <FuelVouchers
             productPrices={productPrices}
             fuelVouchers={localFuelVouchers}
             setFuelVouchers={setLocalFuelVouchers}
           />
-        ))}
-      
-      {localFuelVouchers.length === 0 && (
-        <Typography color="textSecondary" textAlign="center" py={4}>
-          No fuel vouchers added for this cashier yet. Add one using the form above.
-        </Typography>
-      )}
-    </Box>
-  );
+
+          {localFuelVouchers.map((fuelVoucher, index) => (
+            <FuelVouchersItemRow
+              key={index}
+              fuelVoucher={fuelVoucher}
+              index={index}
+              productPrices={productPrices}
+              fuelVouchers={localFuelVouchers}
+              setFuelVouchers={setLocalFuelVouchers}
+            />
+          ))}
+        
+        {localFuelVouchers.length === 0 && (
+          <Typography color="textSecondary" textAlign="center" py={4}>
+            No fuel vouchers added for this cashier yet. Add one using the form above.
+          </Typography>
+        )}
+      </Box>
+    );
 }
 
 export default FuelVouchersTab;

@@ -16,6 +16,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import SalesShiftOnScreen from './preview/SalesShiftOnScreen';
 import SalesShiftPDF from './preview/SalesShiftPDF';
 import { Box, Grid } from '@mui/system';
+import SaleShiftForm2 from './SaleShiftForm2/SaleShiftForm2';
 
 const EditShift = ({ClosedShift, setOpenEditDialog}) => {
   const { data: shiftData, isFetching } = useQuery({
@@ -28,7 +29,7 @@ const EditShift = ({ClosedShift, setOpenEditDialog}) => {
   }
 
   return (
-    <SaleShiftForm SalesShift={shiftData} setOpenDialog={setOpenEditDialog}/>
+    <SaleShiftForm2 SalesShift={shiftData} setOpenDialog={setOpenEditDialog}/>
   )
 }
 

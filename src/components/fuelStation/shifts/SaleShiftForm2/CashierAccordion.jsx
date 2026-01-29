@@ -71,7 +71,7 @@ export default function CashierAccordion({
     <Accordion sx={{ mb: 2 }}>
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
         <Typography fontWeight="bold">
-          {cashier.cashier_name || `Cashier ${cashier.cashier_id}`}
+          {cashier.name}
         </Typography>
       </AccordionSummary>
 

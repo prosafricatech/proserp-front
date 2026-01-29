@@ -1,21 +1,35 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { 
   Typography,
   Box,
 } from '@mui/material';
+import { useFormContext } from 'react-hook-form';
 import Adjustments from './Adjustments';
 import AdjustmentsRow from './AdjustmentsRow';
 
-function AdjustmentsTab({  cashierIndex, localAdjustments, setLocalAdjustments, setValue }) {
+function AdjustmentsTab({  
+  cashierIndex, 
+  localAdjustments, 
+  setLocalAdjustments, 
+  setValue }) {
+
+  const { watch } = useFormContext();
+
+  useEffect(() => {
+    const existingAdjustments = watch(`cashiers.${cashierIndex}.adjustments`) || [];
+    if (existingAdjustments.length > 0 && localAdjustments.length === 0) {
+      setLocalAdjustments(existingAdjustments);
+    }
+  }, [cashierIndex, localAdjustments.length]);
 
   useEffect(() => {
     setValue(`cashiers.${cashierIndex}.adjustments`, localAdjustments, {
       shouldValidate: true,
       shouldDirty: true
     });
-  }, [localAdjustments, cashierIndex, setValue]);
+  }, [localAdjustments, cashierIndex]);
 
   return (
     <Box>
@@ -26,6 +40,7 @@ function AdjustmentsTab({  cashierIndex, localAdjustments, setLocalAdjustments, 
 
         {localAdjustments.map((adjustment, index) => (
             <AdjustmentsRow
+                key={index}
                 adjustment={adjustment}
                 index={index}
                 adjustments={localAdjustments}
