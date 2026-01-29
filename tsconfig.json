@@ -61,7 +61,7 @@
     "src/app/helpers/init-firebase.ts",
     "src/app/helpers/input-sanitization-helpers.js",
     "src/app/helpers/style-helpers.js",
-    "src/components/AuthInitializer/AuthInitializer.jsx",
+    "src/components/authInitializer/AuthInitializer.jsx",
     "src/components/AuthUserPopover/AuthUserPopover.tsx",
     "src/components/LoginForm/LoginForm.jsx",
     "src/components/Organizations/list/OrganizationsList.tsx",
