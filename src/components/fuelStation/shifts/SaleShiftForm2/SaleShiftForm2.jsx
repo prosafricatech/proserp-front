@@ -45,8 +45,6 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
   const [checkShiftBalanced, setCheckShiftBalanced] = useState(true);
   const {checkOrganizationPermission} = useJumboAuth();
 
-  console.log("Available cashiers (shift teams):", cashiers);
-
   const [cashierFuelVouchers, setCashierFuelVouchers] = useState({});
   const [cashierLedgers, setCashierLedgers] = useState({});
 
@@ -435,8 +433,6 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
 
     await saveMutation(data);
   };
-
-  console.log("Form Errors:", errors);
 
   return (
     <FormProvider {...{
