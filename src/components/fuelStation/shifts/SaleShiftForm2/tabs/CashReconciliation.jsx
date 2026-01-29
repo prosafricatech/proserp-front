@@ -69,7 +69,6 @@ function CashReconciliation({
     if (!initialized) {
       const existingCashTransactions = watch(`cashiers.${cashierIndex}.cash_transactions`) || [];
       
-      // Set default main ledger from cashier's data if available and not already set
       if (cashierMainLedger?.id && !mainLedgerId) {
         setValue(`cashiers.${cashierIndex}.main_ledger_id`, cashierMainLedger.id, {
           shouldValidate: true,
@@ -138,7 +137,6 @@ function CashReconciliation({
     };
   }, [fuelVoucherTotals, productTotals, products, productPrices]);
 
-  // Separate transactions by ledger type
   const mainLedgerTransactions = useMemo(() => {
     return cashTransactions.filter(transaction => {
       const transactionLedgerId = transaction.debit_ledger?.id || transaction.id;
@@ -165,7 +163,6 @@ function CashReconciliation({
       sum + sanitizedNumber(transaction?.amount || 0), 0) || 0;
   }, [otherLedgerTransactions]);
 
-  // CORRECTED: Main ledger amount = Cash Remaining - Other Ledger Transactions + Main Ledger Transactions
   const calculatedMainLedgerAmount = cashRemaining - otherLedgerTransactionsSum + mainLedgerTransactionsSum;
 
   useEffect(() => {
@@ -436,9 +433,7 @@ function CashReconciliation({
                   />
                 </Grid>
 
-                {/* Display only OTHER ledger transactions (not main ledger) */}
                 {otherLedgerTransactions.map((transaction, idx) => {
-                  // Find the original index in cashTransactions array
                   const originalIdx = cashTransactions.findIndex(t => {
                     if (t.id && transaction.id) return t.id === transaction.id;
                     if (t.debit_ledger?.id && transaction.debit_ledger?.id) {
@@ -447,7 +442,6 @@ function CashReconciliation({
                     return false;
                   });
                   
-                  // Create a stable key
                   const stableKey = `other-transaction-${cashierIndex}-${idx}`;
                   
                   const ledgerId = transaction.debit_ledger?.id || transaction.id;
