@@ -143,7 +143,7 @@ function SalesShiftPDF({ includeFuelVouchers, shiftData, stationName, organizati
           <View style={pdfStyles.table}>
             <View style={pdfStyles.tableRow}>
               <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 3 }}>Product</Text>
-              <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1 }}>Price (TZS)</Text>
+              <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1 }}>Price</Text>
             </View>
             {shiftData.fuel_prices?.map((price, index) => {
               const product = productOptions?.find(p => p.id === price.product_id);
@@ -180,7 +180,7 @@ function SalesShiftPDF({ includeFuelVouchers, shiftData, stationName, organizati
                 <View style={pdfStyles.table}>
                   <View style={pdfStyles.tableRow}>
                     <Text style={{ ...pdfStyles.tableHeader, backgroundColor: lightColor, color: mainColor, flex: 2 }}>Item</Text>
-                    <Text style={{ ...pdfStyles.tableHeader, backgroundColor: lightColor, color: mainColor, flex: 1, textAlign: 'right' }}>Amount (TZS)</Text>
+                    <Text style={{ ...pdfStyles.tableHeader, backgroundColor: lightColor, color: mainColor, flex: 1, textAlign: 'right' }}>Amount</Text>
                   </View>
                   <View style={pdfStyles.tableRow}>
                     <Text style={{ ...pdfStyles.tableCell, flex: 2 }}>Total Sales Amount</Text>
@@ -256,8 +256,8 @@ function SalesShiftPDF({ includeFuelVouchers, shiftData, stationName, organizati
                     <View style={pdfStyles.tableRow}>
                       <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.5 }}>Product</Text>
                       <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1 }}>Quantity (L)</Text>
-                      <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1 }}>Price (TZS)</Text>
-                      <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1 }}>Amount (TZS)</Text>
+                      <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1 }}>Price</Text>
+                      <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1 }}>Amount</Text>
                     </View>
                     {mergedReadings.map((productSales, index) => {
                       const product = productOptions?.find(p => p.id === productSales.product_id);
@@ -316,7 +316,7 @@ function SalesShiftPDF({ includeFuelVouchers, shiftData, stationName, organizati
                   <View style={pdfStyles.table}>
                     <View style={pdfStyles.tableRow}>
                       <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 3 }}>Account</Text>
-                      <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.5, textAlign: 'right' }}>Amount (TZS)</Text>
+                      <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.5, textAlign: 'right' }}>Amount</Text>
                     </View>
                     
                     {/* Main Ledger */}
@@ -473,7 +473,7 @@ function SalesShiftPDF({ includeFuelVouchers, shiftData, stationName, organizati
             <View style={pdfStyles.table}>
               <View style={pdfStyles.tableRow}>
                 <Text style={{ ...pdfStyles.tableHeader, backgroundColor: lightColor, color: mainColor, flex: 2 }}>Item</Text>
-                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: lightColor, color: mainColor, flex: 1, textAlign: 'right' }}>Amount (TZS)</Text>
+                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: lightColor, color: mainColor, flex: 1, textAlign: 'right' }}>Amount</Text>
               </View>
               <View style={pdfStyles.tableRow}>
                 <Text style={{ ...pdfStyles.tableCell, flex: 2 }}>Total Net Sales</Text>
