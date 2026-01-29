@@ -40,7 +40,7 @@ function CashReconciliation({
     fuel_pumps,
     errors,
     watch,
-    getCashierLedgers, // Get ledgers specific to this cashier
+    getCashierLedgers,
   } = useFormContext();
 
   const productPrices = useWatch({
@@ -139,14 +139,43 @@ function CashReconciliation({
     };
   }, [fuelVoucherTotals, productTotals, products, productPrices]);
 
-  // Total of Cash Transactions
-  const totalCashTransactionsAmount = useMemo(() => {
-    return cashTransactions?.reduce((sum, transaction) => 
+  // Filter out transactions that have the same ledger as main ledger
+  const nonMainLedgerTransactions = useMemo(() => {
+    return cashTransactions.filter(transaction => {
+      // If transaction has debit_ledger property (from API), check if it's same as main ledger
+      if (transaction.debit_ledger?.id && mainLedgerId) {
+        return transaction.debit_ledger.id !== mainLedgerId;
+      }
+      // If transaction has id property (from form), check if it's same as main ledger
+      return transaction.id !== mainLedgerId;
+    });
+  }, [cashTransactions, mainLedgerId]);
+
+  // Sum of transactions that have the same ledger as main ledger
+  const mainLedgerTransactionsSum = useMemo(() => {
+    return cashTransactions.reduce((sum, transaction) => {
+      // Check if transaction belongs to main ledger
+      const isMainLedger = 
+        (transaction.debit_ledger?.id && transaction.debit_ledger.id === mainLedgerId) ||
+        transaction.id === mainLedgerId;
+      
+      if (isMainLedger) {
+        const amount = sanitizedNumber(transaction?.amount || 0);
+        return sum + amount;
+      }
+      return sum;
+    }, 0);
+  }, [cashTransactions, mainLedgerId]);
+
+  // Total of non-main ledger cash transactions
+  const totalNonMainLedgerTransactionsAmount = useMemo(() => {
+    return nonMainLedgerTransactions.reduce((sum, transaction) => 
       sum + sanitizedNumber(transaction?.amount || 0), 0) || 0;
-  }, [cashTransactions]);
+  }, [nonMainLedgerTransactions]);
 
   // AUTOMATICALLY CALCULATED Main Ledger Amount
-  const calculatedMainLedgerAmount = cashRemaining - totalCashTransactionsAmount;
+  // This now includes cashRemaining PLUS any transactions that were already in the main ledger
+  const calculatedMainLedgerAmount = cashRemaining - totalNonMainLedgerTransactionsAmount;
 
   // Automatically set the main ledger amount when it changes
   useEffect(() => {
@@ -184,14 +213,17 @@ function CashReconciliation({
     [productPrices]
   );
 
-  // All cashier ledgers are available for cash transactions
-  const availableLedgers = cashierLedgers || [];
+  // All cashier ledgers are available for cash transactions (except main ledger)
+  const availableLedgers = useMemo(() => {
+    return (cashierLedgers || []).filter(ledger => ledger.id !== mainLedgerId);
+  }, [cashierLedgers, mainLedgerId]);
 
   const addCashTransaction = () => {
     const newTransactions = [...cashTransactions, { 
       id: '', 
       description: '',
-      amount: ''
+      amount: '',
+      narration: ''
     }];
     setValue(`cashiers.${cashierIndex}.cash_transactions`, newTransactions, {
       shouldValidate: true,
@@ -222,6 +254,15 @@ function CashReconciliation({
   // Get the actual main ledger amount from form
   const actualMainLedgerAmount = watch(`cashiers.${cashierIndex}.main_ledger_amount`) || 0;
 
+  // Helper to get ledger name for display
+  const getLedgerName = useCallback((transaction) => {
+    if (transaction.debit_ledger) {
+      return transaction.debit_ledger.name;
+    }
+    const ledger = cashierLedgers.find(l => l.id === transaction.id);
+    return ledger?.name || '-';
+  }, [cashierLedgers]);
+
   return (
     <>
       <Grid container columnSpacing={2} rowSpacing={2}>
@@ -230,7 +271,7 @@ function CashReconciliation({
           <Card variant="outlined">
             <CardContent>
               <Typography variant="subtitle1" align="center" fontWeight="bold" gutterBottom>
-                Total Products Amount (Cashier)
+                Total Products Amount
               </Typography>
               <Divider />
               <TableContainer>
@@ -277,7 +318,7 @@ function CashReconciliation({
           <Card variant="outlined">
             <CardContent>
               <Typography variant="subtitle1" align="center" fontWeight="bold" gutterBottom>
-                Fuel Vouchers (Cashier)
+                Fuel Vouchers
               </Typography>
               <Divider />
               <TableContainer>
@@ -348,17 +389,15 @@ function CashReconciliation({
                       </TableCell>
                     </TableRow>
                     <TableRow>
-                      <TableCell>Cash Transactions Total</TableCell>
-                      <TableCell align="right">{totalCashTransactionsAmount.toLocaleString()}</TableCell>
+                      <TableCell>Other Ledger Transactions Total</TableCell>
+                      <TableCell align="right">{totalNonMainLedgerTransactionsAmount.toLocaleString()}</TableCell>
                     </TableRow>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: 'bold', borderTop: '1px solid #ddd' }}>
-                        Main Ledger Amount (AUTOMATIC)
-                      </TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 'bold', borderTop: '1px solid #ddd', color: calculatedMainLedgerAmount < 0 ? 'error.main' : 'primary.main' }}>
-                        {calculatedMainLedgerAmount.toLocaleString()}
-                      </TableCell>
-                    </TableRow>
+                    {mainLedgerTransactionsSum > 0 && (
+                      <TableRow>
+                        <TableCell>Main Ledger Transactions (included in total)</TableCell>
+                        <TableCell align="right">{mainLedgerTransactionsSum.toLocaleString()}</TableCell>
+                      </TableRow>
+                    )}
                   </TableBody>
                 </Table>
               </TableContainer>
@@ -366,12 +405,11 @@ function CashReconciliation({
           </Card>
         </Grid>
 
-        {/* Cash Distribution FOR THIS CASHIER */}
         <Grid size={{ xs: 12, md: 12, lg: 12 }}>
           <Card variant="outlined">
             <CardContent>
               <Typography variant="subtitle1" align="center" fontWeight="bold" gutterBottom>
-                Cash Distribution (Cashier)
+                Cash Distribution
               </Typography>
               <Divider sx={{ mb: 2 }} />
 
@@ -379,9 +417,9 @@ function CashReconciliation({
                 <Grid size={{ xs: 12, md: 6 }}>
                   <Autocomplete
                     size="small"
-                    options={availableLedgers}
+                    options={cashierLedgers || []}
                     getOptionLabel={(opt) => opt.name}
-                    value={mainLedgerId ? availableLedgers.find(l => l.id === mainLedgerId) : null}
+                    value={mainLedgerId ? cashierLedgers.find(l => l.id === mainLedgerId) : null}
                     onChange={(_, newValue) => {
                       const id = newValue?.id ?? null;
                       setValue(`cashiers.${cashierIndex}.main_ledger_id`, id, { shouldValidate: true });
@@ -389,7 +427,7 @@ function CashReconciliation({
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label="Main Ledger (Cashier)"
+                        label="Main Ledger"
                         error={!!errors?.cashiers?.[cashierIndex]?.main_ledger_id}
                         helperText={errors?.cashiers?.[cashierIndex]?.main_ledger_id?.message}
                       />
@@ -416,51 +454,69 @@ function CashReconciliation({
                   />
                 </Grid>
 
-                {/* Cash Transactions (using cashier-specific ledgers) */}
-                {cashTransactions.map((transaction, idx) => {
-                  const ledgerObj = availableLedgers.find(l => l.id === transaction.id);
+                {nonMainLedgerTransactions.map((transaction, idx) => {
+                  const originalIdx = cashTransactions.findIndex(t => 
+                    (t.id === transaction.id && t.id) || 
+                    (t.debit_ledger?.id === transaction.debit_ledger?.id && t.debit_ledger?.id)
+                  );
+                  
+                  const ledgerId = transaction.debit_ledger?.id || transaction.id;
+                  const ledgerObj = availableLedgers.find(l => l.id === ledgerId);
                   
                   return (
-                    <React.Fragment key={idx}>
-                      <Grid size={{ xs: 12, md: 5 }}>
+                    <React.Fragment key={originalIdx}>
+                      <Grid size={{ xs: 12, md: 4 }}>
                         <Autocomplete
                           size="small"
                           options={availableLedgers}
                           getOptionLabel={(opt) => opt.name}
                           value={ledgerObj}
                           onChange={(_, newValue) => {
-                            updateCashTransaction(idx, 'id', newValue?.id ?? null);
+                            updateCashTransaction(originalIdx, 'id', newValue?.id ?? null);
                           }}
                           renderInput={(params) => (
                             <TextField
                               {...params}
                               label="Ledger"
-                              error={!!errors?.cashiers?.[cashierIndex]?.cash_transactions?.[idx]?.id}
-                              helperText={errors?.cashiers?.[cashierIndex]?.cash_transactions?.[idx]?.id?.message}
+                              error={!!errors?.cashiers?.[cashierIndex]?.cash_transactions?.[originalIdx]?.id}
+                              helperText={errors?.cashiers?.[cashierIndex]?.cash_transactions?.[originalIdx]?.id?.message}
                             />
                           )}
                         />
                       </Grid>
 
-                      <Grid size={{ xs: 10, md: 2 }}>
+                      <Grid size={{ xs: 6, md: 2 }}>
                         <TextField
                           size="small"
                           fullWidth
                           label="Amount"
                           value={transaction?.amount ?? ''}
-                          error={!!errors?.cashiers?.[cashierIndex]?.cash_transactions?.[idx]?.amount}
-                          helperText={errors?.cashiers?.[cashierIndex]?.cash_transactions?.[idx]?.amount?.message}
+                          error={!!errors?.cashiers?.[cashierIndex]?.cash_transactions?.[originalIdx]?.amount}
+                          helperText={errors?.cashiers?.[cashierIndex]?.cash_transactions?.[originalIdx]?.amount?.message}
                           InputProps={{ inputComponent: CommaSeparatedField }}
-                          onChange={(e) => updateCashTransaction(idx, 'amount', e.target.value)}
+                          onChange={(e) => updateCashTransaction(originalIdx, 'amount', e.target.value)}
                         />
                       </Grid>
 
-                      <Grid size={{ xs: 2, md: 0 }} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Grid size={{ xs: 10, md: 5 }}>
+                        <TextField
+                          size="small"
+                          fullWidth
+                          label="Narration"
+                          value={transaction?.narration ?? ''}
+                          placeholder="Enter transaction description"
+                          error={!!errors?.cashiers?.[cashierIndex]?.cash_transactions?.[originalIdx]?.narration}
+                          helperText={errors?.cashiers?.[cashierIndex]?.cash_transactions?.[originalIdx]?.narration?.message}
+                          onChange={(e) => updateCashTransaction(originalIdx, 'narration', e.target.value)}
+                        />
+                      </Grid>
+
+                      <Grid size={{ xs: 2, md: 1 }} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <Tooltip title="Remove this transaction">
                           <IconButton
                             size="small"
                             color="error"
-                            onClick={() => removeCashTransaction(idx)}
+                            onClick={() => removeCashTransaction(originalIdx)}
                           >
                             <DisabledByDefault fontSize="small" />
                           </IconButton>
@@ -478,48 +534,10 @@ function CashReconciliation({
                     onClick={addCashTransaction}
                     disabled={availableLedgers.length === 0}
                   >
-                    Add Cash Transaction
+                    Add Other Ledger Transaction
                   </Button>
                 </Grid>
               </Grid>
-
-              {/* Cash Transactions Summary Table */}
-              {cashTransactions.length > 0 && (
-                <Box sx={{ mt: 3 }}>
-                  <Typography variant="subtitle2" gutterBottom>
-                    Cash Transactions Summary
-                  </Typography>
-                  <TableContainer>
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Ledger</TableCell>
-                          <TableCell align="right">Amount (TZS)</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {cashTransactions.map((transaction, idx) => {
-                          const ledgerObj = availableLedgers.find(l => l.id === transaction.id);
-                          return (
-                            <TableRow key={idx}>
-                              <TableCell>{ledgerObj?.name || '-'}</TableCell>
-                              <TableCell align="right">{sanitizedNumber(transaction.amount || 0).toLocaleString()}</TableCell>
-                            </TableRow>
-                          );
-                        })}
-                        <TableRow>
-                          <TableCell align="right" sx={{ fontWeight: 'bold' }}>
-                            Total Cash Transactions:
-                          </TableCell>
-                          <TableCell align="right" sx={{ fontWeight: 'bold' }}>
-                            {totalCashTransactionsAmount.toLocaleString()}
-                          </TableCell>
-                        </TableRow>
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </Box>
-              )}
             </CardContent>
           </Card>
         </Grid>
