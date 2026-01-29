@@ -286,7 +286,7 @@ function ShiftSummary() {
     <Card variant="outlined" sx={{ mb: 3 }}>
       <CardContent>
         <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <ReceiptOutlined color="secondary" />
+          <ReceiptOutlined color="default" />
           Fuel Vouchers Summary
         </Typography>
         <Divider sx={{ mb: 2 }} />
