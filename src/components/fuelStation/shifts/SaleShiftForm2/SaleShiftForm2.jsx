@@ -163,7 +163,7 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
         ),
         cash_transactions: yup.array().of(
           yup.object().shape({
-            id: yup.number().required('Ledger ID is required'),
+            ledger_id: yup.number().required('Ledger ID is required'),
             amount: yup.number().required('Amount is required').positive('Amount must be positive'),
           })
         ),

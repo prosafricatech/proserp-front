@@ -138,12 +138,13 @@ function CashReconciliation({
     };
   }, [fuelVoucherTotals, productTotals, products, productPrices]);
 
-  // Filter out transactions where debit_ledger equals main_ledger
+  // Filter out transactions where ledger equals main_ledger
   const filteredCashTransactions = useMemo(() => {
     return cashTransactions.filter(transaction => {
       if (!mainLedgerId) return true;
       
-      const transactionLedgerId = transaction.debit_ledger?.id || transaction.id;
+      // Use ledger_id for comparison (other transactions use ledger_id)
+      const transactionLedgerId = transaction.ledger_id || transaction.id;
       
       return transactionLedgerId !== mainLedgerId;
     });
@@ -190,8 +191,7 @@ function CashReconciliation({
 
   const addCashTransaction = () => {
     const newTransactions = [...cashTransactions, { 
-      id: '', 
-      description: '',
+      ledger_id: '', 
       amount: '',
       narration: ''
     }];
@@ -403,17 +403,20 @@ function CashReconciliation({
                 </Grid>
 
                 {filteredCashTransactions.map((transaction, idx) => {
+                  // Find the original index using ledger_id
                   const originalIdx = cashTransactions.findIndex(t => {
-                    if (t.id && transaction.id) return t.id === transaction.id;
-                    if (t.debit_ledger?.id && transaction.debit_ledger?.id) {
-                      return t.debit_ledger.id === transaction.debit_ledger.id;
+                    // For new transactions, use position
+                    if (!t.ledger_id && !transaction.ledger_id) {
+                      return idx === cashTransactions.indexOf(t);
                     }
-                    return false;
+                    // For existing transactions, match by ledger_id
+                    return t.ledger_id === transaction.ledger_id;
                   });
                   
-                  const stableKey = `other-transaction-${cashierIndex}-${idx}`;
+                  const stableKey = `other-transaction-${cashierIndex}-${idx}-${transaction.ledger_id || 'new'}`;
                   
-                  const ledgerId = transaction.debit_ledger?.id || transaction.id;
+                  // Get the ledger object for display
+                  const ledgerId = transaction.ledger_id;
                   const ledgerObj = availableLedgers.find(l => l.id === ledgerId);
                   
                   return (
@@ -426,16 +429,18 @@ function CashReconciliation({
                           value={ledgerObj}
                           onChange={(_, newValue) => {
                             const updateIdx = originalIdx !== -1 ? originalIdx : cashTransactions.length;
+                            // Update the ledger_id field for other ledger transaction
                             updateCashTransaction(updateIdx, 'ledger_id', newValue?.id ?? null);
                           }}
                           renderInput={(params) => (
                             <TextField
                               {...params}
                               label="Other Ledger"
-                              error={!!errors?.cashiers?.[cashierIndex]?.cash_transactions?.[originalIdx]?.id}
-                              helperText={errors?.cashiers?.[cashierIndex]?.cash_transactions?.[originalIdx]?.id?.message}
+                              error={!!errors?.cashiers?.[cashierIndex]?.cash_transactions?.[originalIdx]?.ledger_id}
+                              helperText={errors?.cashiers?.[cashierIndex]?.cash_transactions?.[originalIdx]?.ledger_id?.message}
                             />
                           )}
+                          isOptionEqualToValue={(option, value) => option.id === value.id}
                         />
                       </Grid>
 
@@ -477,7 +482,7 @@ function CashReconciliation({
                             size="small"
                             color="error"
                             onClick={() => {
-                              const removeIdx = originalIdx !== -1 ? originalIdx : cashTransactions.length;
+                              const removeIdx = originalIdx !== -1 ? originalIdx : idx;
                               removeCashTransaction(removeIdx);
                             }}
                           >
