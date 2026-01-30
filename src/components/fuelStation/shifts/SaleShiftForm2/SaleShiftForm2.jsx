@@ -865,7 +865,7 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
                 handleSubmit(handleSubmitForm)(e);
               }}
             >
-              Suspend Shift
+              Suspend
             </LoadingButton>
             
             {selectedCashiers.length > 0 && checkShiftBalanced && 
@@ -880,7 +880,7 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
                   handleSubmit(handleSubmitForm)(e);
                 }}
               >
-                Close Shift
+                Close
               </LoadingButton>
             )}
           </>

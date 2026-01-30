@@ -18,13 +18,15 @@ import {
   Paper,
   Alert,
 } from '@mui/material';
-import { TrendingUp, TrendingDown, LocalGasStation, ReceiptOutlined } from '@mui/icons-material';
+import { TrendingUp, TrendingDown, LocalGasStation, ReceiptOutlined, AttachMoney, AccountBalance, Payment } from '@mui/icons-material';
 import { useWatch } from 'react-hook-form';
 import { StationFormContext } from '../SalesShifts';
+import { useLedgerSelect } from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
 
 function ShiftSummary() {
   const {activeStation} = useContext(StationFormContext);
   const {fuel_pumps, products} = activeStation;
+  const {ungroupedLedgerOptions} = useLedgerSelect();
 
   const allCashiers = useWatch({
     name: 'cashiers',
@@ -34,41 +36,236 @@ function ShiftSummary() {
     name: 'product_prices',
   }) || [];
 
-  const totalPumpReadings = useMemo(() => {
-    const totals = {};
+  // Calculate total collected amount from all cashiers
+  const totalCollectedAmount = useMemo(() => {
+    return allCashiers.reduce((sum, cashier) => sum + (cashier.collected_amount || 0), 0);
+  }, [allCashiers]);
+
+  // Calculate main ledgers summary per cashier
+  const mainLedgersSummary = useMemo(() => {
+    const summary = [];
+    let totalMainLedgerAmount = 0;
+
+    allCashiers.forEach((cashier, index) => {
+      const mainLedger = cashier.main_ledger;
+      const mainLedgerAmount = cashier.main_ledger_amount || 0;
+      
+      if (mainLedger) {
+        totalMainLedgerAmount += mainLedgerAmount;
+        
+        summary.push({
+          cashierName: cashier.name,
+          ledgerName: ungroupedLedgerOptions.find(ledger => ledger.id === mainLedger.id)?.name,
+          ledgerId: mainLedger.id,
+          amount: mainLedgerAmount,
+        });
+      }
+    });
+
+    return { summary, totalMainLedgerAmount };
+  }, [allCashiers]);
+
+  //Calculate other ledgers summary (aggregated across all cashiers)
+  const otherLedgersSummary = useMemo(() => {
+    const ledgerMap = new Map();
     
-    allCashiers.forEach(cashier => {
+    allCashiers.forEach((cashier) => {
+      const cashTransactions = cashier.cash_transactions || [];
+      const mainLedgerId = cashier.main_ledger?.id || cashier.main_ledger_id;
+      
+      cashTransactions.forEach(transaction => {
+        const transactionLedgerId = transaction.ledger_id || transaction.id;
+        const ledgerName = ungroupedLedgerOptions.find(ledger => ledger.id === transactionLedgerId)?.name;
+        
+        if (transactionLedgerId !== mainLedgerId) {
+          const amount = transaction.amount || 0;
+          
+          if (ledgerMap.has(transactionLedgerId)) {
+            const existing = ledgerMap.get(transactionLedgerId);
+            ledgerMap.set(transactionLedgerId, {
+              ...existing,
+              amount: existing.amount + amount,
+              cashierCount: existing.cashierCount + 1,
+            });
+          } else {
+            ledgerMap.set(transactionLedgerId, {
+              ledgerId: transactionLedgerId,
+              ledgerName: ledgerName,
+              amount: amount,
+              cashierCount: 1,
+            });
+          }
+        }
+      });
+    });
+
+    const summary = Array.from(ledgerMap.values());
+    const totalOtherLedgerAmount = summary.reduce((sum, ledger) => sum + ledger.amount, 0);
+
+    return { summary, totalOtherLedgerAmount };
+  }, [allCashiers]);
+
+  const fuelVouchersAggregated = useMemo(() => {
+    const voucherMap = new Map();
+    
+    allCashiers.forEach((cashier) => {
+      const vouchers = cashier.fuel_vouchers || [];
+      
+      vouchers.forEach(voucher => {
+        const key = voucher.expense_ledger_id || voucher.stakeholder_id;
+        const name = voucher.expense_ledger?.name || voucher.stakeholder?.name || `Voucher ${key}`;
+        const quantity = voucher.quantity || 0;
+        const productId = voucher.product_id;
+        const product = products?.find(p => p.id === productId);
+        const productName = product?.name;
+        const price = productPrices.find(p => p?.product_id === productId)?.price || 0;
+        const amount = quantity * price;
+        
+        if (voucherMap.has(key)) {
+          const existing = voucherMap.get(key);
+          voucherMap.set(key, {
+            ...existing,
+            quantity: existing.quantity + quantity,
+            amount: existing.amount + amount,
+            cashierCount: existing.cashierCount + 1,
+          });
+        } else {
+          voucherMap.set(key, {
+            key,
+            name,
+            productName,
+            quantity,
+            amount,
+            cashierCount: 1,
+          });
+        }
+      });
+    });
+
+    const summary = Array.from(voucherMap.values());
+    const totalVoucherAmount = summary.reduce((sum, voucher) => sum + voucher.amount, 0);
+    const totalVoucherQuantity = summary.reduce((sum, voucher) => sum + voucher.quantity, 0);
+
+    return { summary, totalVoucherAmount, totalVoucherQuantity };
+  }, [allCashiers, products, productPrices]);
+
+  // Calculate profit/loss per cashier and total
+  const profitLossSummary = useMemo(() => {
+    let totalProfit = 0;
+    let totalLoss = 0;
+    const cashierResults = [];
+
+    allCashiers.forEach((cashier, index) => {
+      let cashierProductsTotal = 0;
+      let cashierVouchersTotal = 0;
+
+      // Calculate products total from pump readings
       const pumpReadings = cashier.pump_readings || [];
       const selectedPumps = cashier.selected_pumps || [];
-      
+
       selectedPumps.forEach(pumpId => {
         const pump = fuel_pumps?.find(p => p.id === pumpId);
         if (!pump) return;
-        
+
         const productId = pump.product_id;
         const reading = pumpReadings.find(r => r?.fuel_pump_id === pumpId);
-        
+
+        if (reading) {
+          const sold = ((reading.closing || 0) - (reading.opening || 0)) || 0;
+          const price = productPrices.find(p => p?.product_id === productId)?.price || 0;
+          cashierProductsTotal += sold * price;
+        }
+      });
+
+      // Calculate adjustments effect
+      const adjustments = cashier.adjustments || [];
+      adjustments.forEach(adj => {
+        const productId = adj.product_id;
+        const qty = adj.quantity || 0;
+        const price = productPrices.find(p => p?.product_id === productId)?.price || 0;
+
+        if (adj.operator === '+') {
+          cashierProductsTotal -= qty * price;
+        } else if (adj.operator === '-') {
+          cashierProductsTotal += qty * price; 
+        }
+      });
+
+      // Calculate fuel vouchers total
+      const vouchers = cashier.fuel_vouchers || [];
+      vouchers.forEach(voucher => {
+        const productId = voucher.product_id;
+        if (!productId) return;
+
+        const qty = voucher.quantity || 0;
+        const price = productPrices.find(p => p?.product_id === productId)?.price || 0;
+        cashierVouchersTotal += qty * price;
+      });
+
+      const expectedCash = cashierProductsTotal - cashierVouchersTotal;
+      const collectedAmount = cashier.collected_amount || 0;
+      const profitLoss = collectedAmount - expectedCash;
+
+      if (profitLoss >= 0) {
+        totalProfit += profitLoss;
+      } else {
+        totalLoss += Math.abs(profitLoss);
+      }
+
+      cashierResults.push({
+        name: cashier.name,
+        expectedCash,
+        collectedAmount,
+        profitLoss,
+        isBalanced: Math.abs(profitLoss) < 0.01,
+      });
+    });
+
+    const netProfitLoss = totalProfit - totalLoss;
+
+    return {
+      totalProfit,
+      totalLoss,
+      netProfitLoss,
+      cashierResults,
+    };
+  }, [allCashiers, fuel_pumps, productPrices]);
+
+  const totalPumpReadings = useMemo(() => {
+    const totals = {};
+
+    allCashiers.forEach(cashier => {
+      const pumpReadings = cashier.pump_readings || [];
+      const selectedPumps = cashier.selected_pumps || [];
+
+      selectedPumps.forEach(pumpId => {
+        const pump = fuel_pumps?.find(p => p.id === pumpId);
+        if (!pump) return;
+
+        const productId = pump.product_id;
+        const reading = pumpReadings.find(r => r?.fuel_pump_id === pumpId);
+
         if (reading) {
           const sold = ((reading.closing || 0) - (reading.opening || 0)) || 0;
           totals[productId] = (totals[productId] || 0) + sold;
         }
       });
     });
-    
+
     return totals;
   }, [allCashiers, fuel_pumps]);
 
   const totalAdjustments = useMemo(() => {
     const totals = {};
     const adjustmentsByOperator = { '+': 0, '-': 0 };
-    
+
     allCashiers.forEach(cashier => {
       const adjustments = cashier.adjustments || [];
-      
+
       adjustments.forEach(adj => {
         const productId = adj.product_id;
         const qty = adj.quantity || 0;
-        
+
         if (adj.operator === '+') {
           adjustmentsByOperator['+'] += qty;
           totals[productId] = (totals[productId] || 0) - qty;
@@ -78,110 +275,361 @@ function ShiftSummary() {
         }
       });
     });
-    
+
     return { totals, adjustmentsByOperator };
   }, [allCashiers]);
 
   const totalFuelVouchers = useMemo(() => {
     const totals = {};
     let totalAmount = 0;
-    
+
     allCashiers.forEach(cashier => {
       const vouchers = cashier.fuel_vouchers || [];
-      
+
       vouchers.forEach(voucher => {
         const productId = voucher.product_id;
         if (!productId) return;
-        
+
         const qty = voucher.quantity || 0;
         const price = productPrices.find(p => p?.product_id === productId)?.price || 0;
         const amount = qty * price;
-        
+
         totals[productId] = (totals[productId] || 0) + qty;
         totalAmount += amount;
       });
     });
-    
+
     return { totals, totalAmount };
   }, [allCashiers, productPrices]);
 
-  const totalOtherLedgers = useMemo(() => {
-    const ledgerTotals = {};
-    let totalAmount = 0;
-    
-    allCashiers.forEach(cashier => {
-      const otherLedgers = cashier.other_ledgers || [];
-      
-      otherLedgers.forEach(ledger => {
-        const amount = ledger.amount || 0;
-        totalAmount += amount;
-        
-        if (ledger.id) {
-          ledgerTotals[ledger.id] = (ledgerTotals[ledger.id] || 0) + amount;
-        }
-      });
-    });
-    
-    return { ledgerTotals, totalAmount };
-  }, [allCashiers]);
-
   const combinedProductTotals = useMemo(() => {
     const totals = {};
-    
+
     Object.keys(totalPumpReadings).forEach(productId => {
       totals[productId] = totalPumpReadings[productId] || 0;
     });
-    
+
     Object.keys(totalAdjustments.totals).forEach(productId => {
       totals[productId] = (totals[productId] || 0) + totalAdjustments.totals[productId];
     });
-    
+
     return totals;
   }, [totalPumpReadings, totalAdjustments.totals]);
 
   const financialSummary = useMemo(() => {
     let totalProductsAmount = 0;
-    let totalVouchersAmount = totalFuelVouchers.totalAmount;
-    let totalOtherLedgersAmount = totalOtherLedgers.totalAmount;
-    
+    let totalVouchersAmount = fuelVouchersAggregated.totalVoucherAmount || totalFuelVouchers.totalAmount;
+    let totalOtherLedgersAmount = otherLedgersSummary.totalOtherLedgerAmount;
+
     products?.forEach(product => {
       const qty = combinedProductTotals[product.id] || 0;
       const price = productPrices.find(p => p?.product_id === product.id)?.price || 0;
       totalProductsAmount += qty * price;
     });
-    
+
     const cashRemaining = totalProductsAmount - totalVouchersAmount;
-    
-    const mainLedgerAmount = cashRemaining - totalOtherLedgersAmount;
-    
+
     const totalCashiers = allCashiers.length;
     const totalPumpsAssigned = allCashiers.reduce(
-      (sum, cashier) => sum + (cashier.selected_pumps?.length || 0), 
+      (sum, cashier) => sum + (cashier.selected_pumps?.length || 0),
       0
     );
-    
+
     const totalFuelVoucherItems = allCashiers.reduce(
-      (sum, cashier) => sum + (cashier.fuel_vouchers?.length || 0), 
+      (sum, cashier) => sum + (cashier.fuel_vouchers?.length || 0),
       0
     );
-    
+
     const totalAdjustmentItems = allCashiers.reduce(
-      (sum, cashier) => sum + (cashier.adjustments?.length || 0), 
+      (sum, cashier) => sum + (cashier.adjustments?.length || 0),
       0
     );
-    
+
     return {
       totalProductsAmount,
       totalVouchersAmount,
       totalOtherLedgersAmount,
+      totalMainLedgersAmount: mainLedgersSummary.totalMainLedgerAmount,
       cashRemaining,
-      mainLedgerAmount,
       totalCashiers,
       totalPumpsAssigned,
       totalFuelVoucherItems,
       totalAdjustmentItems,
     };
-  }, [combinedProductTotals, products, productPrices, allCashiers, totalFuelVouchers.totalAmount, totalOtherLedgers.totalAmount]);
+  }, [combinedProductTotals, products, productPrices, allCashiers, fuelVouchersAggregated, otherLedgersSummary, mainLedgersSummary]);
+
+  // Render Financial Ledgers Summary
+  const renderFinancialLedgersSummary = () => (
+    <Card variant="outlined" sx={{ mb: 3 }}>
+      <CardContent>
+        <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <AccountBalance color="primary" />
+          Financial Ledgers Summary
+        </Typography>
+        <Divider sx={{ mb: 2 }} />
+
+        <Grid container spacing={2}>
+          {/* Main Ledgers Section */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Paper elevation={0} sx={{ p: 2, bgcolor: 'primary.50', borderRadius: 1 }}>
+              <Typography variant="subtitle2" color="primary.dark" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <AttachMoney fontSize="small" />
+                MAIN LEDGERS (PER CASHIER)
+              </Typography>
+              
+              {mainLedgersSummary.summary.length === 0 ? (
+                <Alert severity="info" sx={{ mt: 1 }}>No main ledgers defined</Alert>
+              ) : (
+                <>
+                  <TableContainer sx={{ maxHeight: 200 }}>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Cashier</TableCell>
+                          <TableCell>Ledger</TableCell>
+                          <TableCell align="right">Amount</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {mainLedgersSummary.summary.map((ledger, index) => (
+                          <TableRow key={index}>
+                            <TableCell>
+                              <Typography variant="body2">{ledger.cashierName}</Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography variant="body2">{ledger.ledgerName}</Typography>
+                            </TableCell>
+                            <TableCell align="right">
+                              <Typography fontWeight="medium">{ledger.amount.toLocaleString()}</Typography>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                  
+                  <Box sx={{ mt: 2, pt: 1, borderTop: '1px solid', borderColor: 'divider' }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <Typography variant="body2" fontWeight="bold">Total Main Ledgers:</Typography>
+                      <Typography variant="body1" fontWeight="bold" color="primary.dark">
+                        {mainLedgersSummary.totalMainLedgerAmount.toLocaleString()}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </>
+              )}
+            </Paper>
+          </Grid>
+
+          {/* Other Ledgers Section */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Paper elevation={0} sx={{ p: 2, bgcolor: 'secondary.50', borderRadius: 1 }}>
+              <Typography variant="subtitle2" color="secondary.dark" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Payment fontSize="small" />
+                OTHER TRANSACTIONS
+              </Typography>
+              
+              {otherLedgersSummary.summary.length === 0 ? (
+                <Alert severity="info" sx={{ mt: 1 }}>No other ledger transactions</Alert>
+              ) : (
+                <>
+                  <TableContainer sx={{ maxHeight: 200 }}>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Ledger</TableCell>
+                          <TableCell align="center">Cashiers</TableCell>
+                          <TableCell align="right">Amount</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {otherLedgersSummary.summary.map((ledger, index) => (
+                          <TableRow key={index}>
+                            <TableCell>
+                              <Typography variant="body2">{ledger.ledgerName}</Typography>
+                            </TableCell>
+                            <TableCell align="center">
+                              <Chip
+                                size="small"
+                                label={`${ledger.cashierCount}`}
+                                color="default"
+                                variant="outlined"
+                              />
+                            </TableCell>
+                            <TableCell align="right">
+                              <Typography fontWeight="medium">{ledger.amount.toLocaleString()}</Typography>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                  
+                  <Box sx={{ mt: 2, pt: 1, borderTop: '1px solid', borderColor: 'divider' }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <Typography variant="body2" fontWeight="bold">Total Other Transations:</Typography>
+                      <Typography variant="body1" fontWeight="bold" color="secondary.dark">
+                        {otherLedgersSummary.totalOtherLedgerAmount.toLocaleString()}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </>
+              )}
+            </Paper>
+          </Grid>
+
+          {/* Fuel Vouchers Summary */}
+          <Grid size={{ xs: 12 }}>
+            <Paper elevation={0} sx={{ p: 2, bgcolor: 'info.50', borderRadius: 1, mt: 2 }}>
+              <Typography variant="subtitle2" color="info.dark" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <ReceiptOutlined fontSize="small" />
+                FUEL VOUCHERS SUMMARY
+              </Typography>
+              
+              {fuelVouchersAggregated.summary.length === 0 ? (
+                <Alert severity="info" sx={{ mt: 1 }}>No fuel vouchers recorded</Alert>
+              ) : (
+                <>
+                  <TableContainer sx={{ maxHeight: 200 }}>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Stakeholder/Ledger</TableCell>
+                          <TableCell>Product</TableCell>
+                          <TableCell align="right">Quantity (L)</TableCell>
+                          <TableCell align="center">Cashiers</TableCell>
+                          <TableCell align="right">Amount</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {fuelVouchersAggregated.summary.map((voucher, index) => (
+                          <TableRow key={index}>
+                            <TableCell>
+                              <Typography variant="body2">{voucher.name}</Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Typography variant="body2">{voucher.productName}</Typography>
+                            </TableCell>
+                            <TableCell align="right">
+                              <Typography>{voucher.quantity.toLocaleString()}</Typography>
+                            </TableCell>
+                            <TableCell align="center">
+                              <Chip
+                                size="small"
+                                label={`${voucher.cashierCount}`}
+                                color="info"
+                                variant="outlined"
+                              />
+                            </TableCell>
+                            <TableCell align="right">
+                              <Typography fontWeight="medium" color="info.dark">
+                                {voucher.amount.toLocaleString()}
+                              </Typography>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                  
+                  <Box sx={{ mt: 2, pt: 1, borderTop: '1px solid', borderColor: 'divider' }}>
+                    <Grid container spacing={2}>
+                      <Grid size={{ xs: 6 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <Typography variant="body2">Total Quantity:</Typography>
+                          <Typography variant="body2" fontWeight="bold">
+                            {fuelVouchersAggregated.totalVoucherQuantity.toLocaleString()} L
+                          </Typography>
+                        </Box>
+                      </Grid>
+                      <Grid size={{ xs: 6 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <Typography variant="body2" fontWeight="bold">Total Vouchers Amount:</Typography>
+                          <Typography variant="body1" fontWeight="bold" color="info.dark">
+                            {fuelVouchersAggregated.totalVoucherAmount.toLocaleString()}
+                          </Typography>
+                        </Box>
+                      </Grid>
+                    </Grid>
+                  </Box>
+                </>
+              )}
+            </Paper>
+          </Grid>
+
+          {/* Grand Totals */}
+          <Grid size={{ xs: 12 }}>
+            <Paper
+              elevation={0}
+              sx={{
+                p: 2,
+                bgcolor: 'background.default',
+                borderRadius: 1,
+                border: '2px solid',
+                borderColor: 'primary.main',
+                mt: 2
+              }}
+            >
+              <Typography variant="subtitle1" fontWeight="bold" gutterBottom color="primary.dark">
+                GRAND TOTALS
+              </Typography>
+              
+              <Grid container spacing={2}>
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <Box sx={{ p: 1.5, bgcolor: 'primary.50', borderRadius: 1 }}>
+                    <Typography variant="caption" color="textSecondary" display="block">
+                      Total Main Ledgers
+                    </Typography>
+                    <Typography variant="h6" color="primary.dark">
+                      {mainLedgersSummary.totalMainLedgerAmount.toLocaleString()}
+                    </Typography>
+                  </Box>
+                </Grid>
+                
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <Box sx={{ p: 1.5, bgcolor: 'secondary.50', borderRadius: 1 }}>
+                    <Typography variant="caption" color="textSecondary" display="block">
+                      Total Other Ledgers
+                    </Typography>
+                    <Typography variant="h6" color="secondary.dark">
+                      {otherLedgersSummary.totalOtherLedgerAmount.toLocaleString()}
+                    </Typography>
+                  </Box>
+                </Grid>
+                
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <Box sx={{ p: 1.5, bgcolor: 'info.50', borderRadius: 1 }}>
+                    <Typography variant="caption" color="textSecondary" display="block">
+                      Total Vouchers
+                    </Typography>
+                    <Typography variant="h6" color="info.dark">
+                      {fuelVouchersAggregated.totalVoucherAmount.toLocaleString()}
+                    </Typography>
+                  </Box>
+                </Grid>
+                
+                <Grid size={{ xs: 12 }}>
+                  <Divider sx={{ my: 1 }} />
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
+                    <Typography variant="h6" fontWeight="bold">
+                      TOTAL DISTRIBUTED CASH:
+                    </Typography>
+                    <Typography variant="h5" fontWeight="bold" color="primary.dark">
+                      {(
+                        mainLedgersSummary.totalMainLedgerAmount + 
+                        otherLedgersSummary.totalOtherLedgerAmount + 
+                        fuelVouchersAggregated.totalVoucherAmount
+                      ).toLocaleString()}
+                    </Typography>
+                  </Box>
+                </Grid>
+              </Grid>
+            </Paper>
+          </Grid>
+        </Grid>
+      </CardContent>
+    </Card>
+  );
 
   const renderProductSummary = () => (
     <Card variant="outlined" sx={{ mb: 3 }}>
@@ -191,7 +639,7 @@ function ShiftSummary() {
           Product Sales Summary
         </Typography>
         <Divider sx={{ mb: 2 }} />
-        
+
         <TableContainer>
           <Table size="small">
             <TableHead>
@@ -211,15 +659,15 @@ function ShiftSummary() {
                 const totalQty = combinedProductTotals[product.id] || 0;
                 const price = productPrices.find(p => p?.product_id === product.id)?.price || 0;
                 const amount = totalQty * price;
-                
+
                 return (
                   <TableRow key={product.id}>
                     <TableCell>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <Typography fontWeight="medium">{product.name}</Typography>
                         {adjQty !== 0 && (
-                          <Chip 
-                            size="small" 
+                          <Chip
+                            size="small"
                             label={`${adjQty > 0 ? '+' : ''}${adjQty}`}
                             color={adjQty > 0 ? "error" : "success"}
                             variant="outlined"
@@ -247,7 +695,7 @@ function ShiftSummary() {
                   </TableRow>
                 );
               })}
-              
+
               <TableRow sx={{ '& td': { borderTop: '2px solid', borderColor: 'divider', fontWeight: 'bold' } }}>
                 <TableCell>TOTAL</TableCell>
                 <TableCell align="right">
@@ -269,11 +717,11 @@ function ShiftSummary() {
             </TableBody>
           </Table>
         </TableContainer>
-        
+
         {Object.keys(totalAdjustments.totals).length > 0 && (
           <Box sx={{ mt: 2, p: 1, bgcolor: 'action.hover', borderRadius: 1 }}>
             <Typography variant="caption" display="block">
-              Adjustments: Gain (+){totalAdjustments.adjustmentsByOperator['+'].toLocaleString()}L / 
+              Adjustments: Gain (+){totalAdjustments.adjustmentsByOperator['+'].toLocaleString()}L /
               Loss (-){totalAdjustments.adjustmentsByOperator['-'].toLocaleString()}L
             </Typography>
           </Box>
@@ -290,7 +738,7 @@ function ShiftSummary() {
           Fuel Vouchers Summary
         </Typography>
         <Divider sx={{ mb: 2 }} />
-        
+
         {financialSummary.totalFuelVoucherItems === 0 ? (
           <Alert severity="info">No fuel vouchers recorded</Alert>
         ) : (
@@ -309,10 +757,10 @@ function ShiftSummary() {
                   {products?.map(product => {
                     const qty = totalFuelVouchers.totals[product.id] || 0;
                     if (qty === 0) return null;
-                    
+
                     const price = productPrices.find(p => p?.product_id === product.id)?.price || 0;
                     const amount = qty * price;
-                    
+
                     return (
                       <TableRow key={product.id}>
                         <TableCell>{product.name}</TableCell>
@@ -326,7 +774,7 @@ function ShiftSummary() {
                       </TableRow>
                     );
                   })}
-                  
+
                   <TableRow sx={{ '& td': { borderTop: '2px solid', borderColor: 'divider', fontWeight: 'bold' } }}>
                     <TableCell>TOTAL VOUCHERS</TableCell>
                     <TableCell align="right">
@@ -340,10 +788,10 @@ function ShiftSummary() {
                 </TableBody>
               </Table>
             </TableContainer>
-            
+
             <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Chip 
-                label={`${financialSummary.totalFuelVoucherItems} items`}
+              <Chip
+                label={`${financialSummary.totalFuelVoucherItems} Vouchers`}
                 size="small"
                 color="secondary"
                 variant="outlined"
@@ -358,114 +806,165 @@ function ShiftSummary() {
     </Card>
   );
 
-  const renderFinancialSummary = () => (
+  const renderProfitLossSummary = () => (
     <Card variant="outlined" sx={{ mb: 3 }}>
       <CardContent>
         <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <TrendingUp color="success" />
-          Financial Summary
+          {profitLossSummary.netProfitLoss >= 0 ? (
+            <TrendingUp color="success" />
+          ) : (
+            <TrendingDown color="error" />
+          )}
+          Cash Collection & Profit/Loss Summary
         </Typography>
         <Divider sx={{ mb: 2 }} />
-        
+
         <Grid container spacing={2}>
-          {/* Income Section */}
+          {/* Expected vs Collected Section */}
           <Grid size={{ xs: 12, md: 6 }}>
-            <Paper elevation={0} sx={{ p: 2, bgcolor: 'success.50', borderRadius: 1 }}>
-              <Typography variant="subtitle2" color="success.dark" gutterBottom>
-                INCOME
+            <Paper elevation={0} sx={{ p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
+              <Typography variant="subtitle2" color="textSecondary" gutterBottom>
+                CASH FLOW COMPARISON
               </Typography>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography>Total Sales</Typography>
-                <Typography variant="h6" color="success.dark">
-                  {financialSummary.totalProductsAmount.toLocaleString()}
-                </Typography>
-              </Box>
-            </Paper>
-          </Grid>
-          
-          {/* Deductions Section */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Paper elevation={0} sx={{ p: 2, bgcolor: 'secondary.50', borderRadius: 1 }}>
-              <Typography variant="subtitle2" color="secondary.dark" gutterBottom>
-                DEDUCTIONS
-              </Typography>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                <Typography>Fuel Vouchers</Typography>
-                <Typography color="secondary.dark">
-                  {financialSummary.totalVouchersAmount.toLocaleString()}
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                <Typography>Expected Cash:</Typography>
+                <Typography variant="h6" color="primary.main">
+                  {financialSummary.cashRemaining.toLocaleString()}
                 </Typography>
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                <Typography>Other Ledgers</Typography>
-                <Typography color="secondary.dark">
-                  {financialSummary.totalOtherLedgersAmount.toLocaleString()}
+                <Typography>Actual Collected:</Typography>
+                <Typography variant="h6" color="info.main">
+                  {totalCollectedAmount.toLocaleString()}
                 </Typography>
               </Box>
-            </Paper>
-          </Grid>
-          
-          {/* Net Cash Section */}
-          <Grid size={{ xs: 12 }}>
-            <Paper 
-              elevation={0} 
-              sx={{ 
-                p: 2, 
-                bgcolor: financialSummary.cashRemaining >= 0 ? 'primary.50' : 'error.50',
-                borderRadius: 1,
-                border: '1px solid',
-                borderColor: financialSummary.cashRemaining >= 0 ? 'primary.100' : 'error.100'
-              }}
-            >
-              <Typography variant="subtitle2" gutterBottom>
-                NET CASH AVAILABLE
-              </Typography>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant="h5" fontWeight="bold">
-                  {financialSummary.cashRemaining >= 0 ? 'Remaining Cash' : 'Shortage'}
-                </Typography>
-                <Typography 
-                  variant="h4" 
-                  fontWeight="bold"
-                  color={financialSummary.cashRemaining >= 0 ? "primary.main" : "error.main"}
-                >
-                  {Math.abs(financialSummary.cashRemaining).toLocaleString()}
-                  {financialSummary.cashRemaining >= 0 ? (
-                    <TrendingUp sx={{ ml: 1, verticalAlign: 'middle' }} />
-                  ) : (
-                    <TrendingDown sx={{ ml: 1, verticalAlign: 'middle' }} />
-                  )}
-                </Typography>
-              </Box>
-              
               <Divider sx={{ my: 1 }} />
-              
-              {/* Distribution */}
-              <Box sx={{ mt: 2 }}>
-                <Typography variant="caption" color="textSecondary" display="block" gutterBottom>
-                  Cash Distribution:
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
+                <Typography fontWeight="bold">Difference:</Typography>
+                <Typography
+                  variant="h5"
+                  fontWeight="bold"
+                  color={profitLossSummary.netProfitLoss >= 0 ? "success.main" : "error.main"}
+                >
+                  {profitLossSummary.netProfitLoss >= 0 ? '+' : ''}{profitLossSummary.netProfitLoss.toLocaleString()}
                 </Typography>
-                <Grid container spacing={1}>
-                  <Grid size={{ xs: 6 }}>
-                    <Typography variant="body2">Main Ledger (Expected)</Typography>
-                  </Grid>
-                  <Grid size={{ xs: 6 }} sx={{ textAlign: 'right' }}>
-                    <Typography variant="body2" fontWeight="medium">
-                      {financialSummary.mainLedgerAmount.toLocaleString()}
-                    </Typography>
-                  </Grid>
-                  
-                  <Grid size={{ xs: 6 }}>
-                    <Typography variant="body2">Other Ledgers</Typography>
-                  </Grid>
-                  <Grid size={{ xs: 6 }} sx={{ textAlign: 'right' }}>
-                    <Typography variant="body2">
-                      {financialSummary.totalOtherLedgersAmount.toLocaleString()}
-                    </Typography>
-                  </Grid>
-                </Grid>
               </Box>
             </Paper>
           </Grid>
+
+          {/* Profit/Loss Breakdown */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Paper elevation={0} sx={{ p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
+              <Typography variant="subtitle2" color="textSecondary" gutterBottom>
+                PROFIT/LOSS BREAKDOWN
+              </Typography>
+              <Grid container spacing={1}>
+                <Grid size={{ xs: 6 }}>
+                  <Paper elevation={0} sx={{ p: 1.5, textAlign: 'center', bgcolor: 'success.50', borderRadius: 1 }}>
+                    <Typography variant="h5" color="success.dark">
+                      {profitLossSummary.totalProfit.toLocaleString()}
+                    </Typography>
+                    <Typography variant="caption" color="textSecondary">
+                      Total Profit
+                    </Typography>
+                  </Paper>
+                </Grid>
+
+                <Grid size={{ xs: 6 }}>
+                  <Paper elevation={0} sx={{ p: 1.5, textAlign: 'center', bgcolor: 'error.50', borderRadius: 1 }}>
+                    <Typography variant="h5" color="error">
+                      {profitLossSummary.totalLoss.toLocaleString()}
+                    </Typography>
+                    <Typography variant="caption" color="textSecondary">
+                      Total Loss
+                    </Typography>
+                  </Paper>
+                </Grid>
+              </Grid>
+
+              <Paper
+                elevation={0}
+                sx={{
+                  mt: 2,
+                  p: 2,
+                  textAlign: 'center',
+                  bgcolor: profitLossSummary.netProfitLoss >= 0 ? 'success.100' : 'error.100',
+                  borderRadius: 1,
+                  border: '2px solid',
+                  borderColor: profitLossSummary.netProfitLoss >= 0 ? 'success.200' : 'error.200'
+                }}
+              >
+                <Typography variant="subtitle2" color="textSecondary" gutterBottom>
+                  NET RESULT
+                </Typography>
+                <Typography
+                  variant="h3"
+                  fontWeight="bold"
+                  color={profitLossSummary.netProfitLoss >= 0 ? "success.dark" : "error"}
+                >
+                  {profitLossSummary.netProfitLoss >= 0 ? '+' : ''}{profitLossSummary.netProfitLoss.toLocaleString()}
+                </Typography>
+                <Typography variant="caption" color="textSecondary">
+                  {profitLossSummary.netProfitLoss >= 0 ? 'Overall Profit' : 'Overall Loss'}
+                </Typography>
+              </Paper>
+            </Paper>
+          </Grid>
+
+          {/* Per Cashier Breakdown */}
+          {profitLossSummary.cashierResults.length > 0 && (
+            <Grid size={{ xs: 12 }}>
+              <Paper elevation={0} sx={{ p: 2, bgcolor: 'background.default', borderRadius: 1, mt: 2 }}>
+                <Typography variant="subtitle2" color="textSecondary" gutterBottom>
+                  PER CASHIER BREAKDOWN
+                </Typography>
+                <TableContainer>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Cashier</TableCell>
+                        <TableCell align="right">Expected Cash</TableCell>
+                        <TableCell align="right">Collected Cash</TableCell>
+                        <TableCell align="right">Profit/Loss</TableCell>
+                        <TableCell align="center">Status</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {profitLossSummary.cashierResults.map((cashier, index) => (
+                        <TableRow key={index}>
+                          <TableCell>
+                            <Typography fontWeight="medium">{cashier.name}</Typography>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Typography>{cashier.expectedCash.toLocaleString()}</Typography>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Typography color="info.main">{cashier.collectedAmount.toLocaleString()}</Typography>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Typography
+                              fontWeight="bold"
+                              color={cashier.profitLoss >= 0 ? "success.main" : "error.main"}
+                            >
+                              {cashier.profitLoss >= 0 ? '+' : ''}{cashier.profitLoss.toLocaleString()}
+                            </Typography>
+                          </TableCell>
+                          <TableCell align="center">
+                            <Chip
+                              size="small"
+                              label={cashier.isBalanced ? "BALANCED" : (cashier.profitLoss >= 0 ? "PROFIT" : "LOSS")}
+                              color={cashier.isBalanced ? "success" : (cashier.profitLoss >= 0 ? "success" : "error")}
+                              variant="outlined"
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Paper>
+            </Grid>
+          )}
         </Grid>
       </CardContent>
     </Card>
@@ -478,7 +977,7 @@ function ShiftSummary() {
           Shift Overview
         </Typography>
         <Divider sx={{ mb: 2 }} />
-        
+
         <Grid container spacing={2}>
           <Grid size={{ xs: 6, md: 3 }}>
             <Paper elevation={0} sx={{ p: 2, textAlign: 'center', bgcolor: 'action.hover', borderRadius: 1 }}>
@@ -490,7 +989,7 @@ function ShiftSummary() {
               </Typography>
             </Paper>
           </Grid>
-          
+
           <Grid size={{ xs: 6, md: 3 }}>
             <Paper elevation={0} sx={{ p: 2, textAlign: 'center', bgcolor: 'action.hover', borderRadius: 1 }}>
               <Typography variant="h4" color="primary">
@@ -501,7 +1000,7 @@ function ShiftSummary() {
               </Typography>
             </Paper>
           </Grid>
-          
+
           <Grid size={{ xs: 6, md: 3 }}>
             <Paper elevation={0} sx={{ p: 2, textAlign: 'center', bgcolor: 'action.hover', borderRadius: 1 }}>
               <Typography variant="h4" color="secondary">
@@ -512,7 +1011,7 @@ function ShiftSummary() {
               </Typography>
             </Paper>
           </Grid>
-          
+
           <Grid size={{ xs: 6, md: 3 }}>
             <Paper elevation={0} sx={{ p: 2, textAlign: 'center', bgcolor: 'action.hover', borderRadius: 1 }}>
               <Typography variant="h4" color="warning.dark">
@@ -524,30 +1023,35 @@ function ShiftSummary() {
             </Paper>
           </Grid>
         </Grid>
-        
+
         {/* Balance Status */}
         <Box sx={{ mt: 3, p: 2, borderRadius: 1, bgcolor: 'background.default' }}>
           <Typography variant="subtitle2" gutterBottom>
-            Balance Status
+            Shift Balance Status
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Box 
-                sx={{ 
-                  width: 12, 
-                  height: 12, 
+              <Box
+                sx={{
+                  width: 12,
+                  height: 12,
                   borderRadius: '50%',
-                  bgcolor: financialSummary.cashRemaining >= 0 ? 'success.main' : 'error.main'
-                }} 
+                  bgcolor: profitLossSummary.netProfitLoss === 0 ? 'success.main' :
+                           profitLossSummary.netProfitLoss > 0 ? 'info.main' : 'error.main'
+                }}
               />
               <Typography>
-                {financialSummary.cashRemaining >= 0 ? 'Shift is Balanced' : 'Shift has Shortage'}
+                {profitLossSummary.netProfitLoss === 0 ? 'Perfectly Balanced' :
+                 profitLossSummary.netProfitLoss > 0 ? `Profit: +${profitLossSummary.netProfitLoss.toLocaleString()}` :
+                 `Loss: ${profitLossSummary.netProfitLoss.toLocaleString()}`}
               </Typography>
             </Box>
-            
-            <Chip 
-              label={financialSummary.cashRemaining >= 0 ? "BALANCED" : "UNBALANCED"}
-              color={financialSummary.cashRemaining >= 0 ? "success" : "error"}
+
+            <Chip
+              label={profitLossSummary.netProfitLoss === 0 ? "BALANCED" :
+                     profitLossSummary.netProfitLoss > 0 ? "PROFIT" : "LOSS"}
+              color={profitLossSummary.netProfitLoss === 0 ? "success" :
+                     profitLossSummary.netProfitLoss > 0 ? "info" : "error"}
               size="small"
             />
           </Box>
@@ -556,73 +1060,18 @@ function ShiftSummary() {
     </Card>
   );
 
-  const renderOtherLedgersSummary = () => {
-    if (financialSummary.totalOtherLedgersAmount === 0) return null;
-    
-    return (
-      <Card variant="outlined" sx={{ mb: 3 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            Other Ledgers Distribution
-          </Typography>
-          <Divider sx={{ mb: 2 }} />
-          
-          <TableContainer>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Ledger</TableCell>
-                  <TableCell align="right">Total Amount</TableCell>
-                  <TableCell>Allocation</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {Object.keys(totalOtherLedgers.ledgerTotals).map(ledgerId => {
-                  const amount = totalOtherLedgers.ledgerTotals[ledgerId];
-                  const percentage = (amount / financialSummary.totalOtherLedgersAmount * 100).toFixed(1);
-                  
-                  return (
-                    <TableRow key={ledgerId}>
-                      <TableCell>Ledger #{ledgerId}</TableCell>
-                      <TableCell align="right">{amount.toLocaleString()}</TableCell>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Box sx={{ flexGrow: 1 }}>
-                            <Box 
-                              sx={{ 
-                                height: 8, 
-                                width: `${percentage}%`,
-                                bgcolor: 'primary.main',
-                                borderRadius: 4
-                              }} 
-                            />
-                          </Box>
-                          <Typography variant="caption">{percentage}%</Typography>
-                        </Box>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </CardContent>
-      </Card>
-    );
-  };
-
   return (
     <div>
       {renderShiftOverview()}
-      
+
       {renderProductSummary()}
-      
-      {renderFinancialSummary()}
-      
+
+      {renderFinancialLedgersSummary()}
+
+      {renderProfitLossSummary()}
+
       {renderFuelVouchersSummary()}
-      
-      {renderOtherLedgersSummary()}
-      
+
       {allCashiers.length === 0 && (
         <Alert severity="info" sx={{ mt: 2 }}>
           No cashiers added yet. Please add cashiers in the "Cashiers Records" tab.

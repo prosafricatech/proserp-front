@@ -17,10 +17,15 @@ import {
   Tooltip,
   Typography,
   Autocomplete,
+  Box,
+  Alert,
+  Paper,
 } from '@mui/material';
 import { 
   AddOutlined, 
   DisabledByDefault,
+  TrendingUp,
+  TrendingDown,
 } from '@mui/icons-material';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
@@ -38,7 +43,8 @@ function CashReconciliation({
   const {
     setValue,
     errors,
-    watch
+    watch,
+    trigger
   } = useFormContext();
   const {activeStation} = useContext(StationFormContext);
   const {fuel_pumps, products} = activeStation;
@@ -55,6 +61,11 @@ function CashReconciliation({
     name: `cashiers.${cashierIndex}.main_ledger_id`,
   });
 
+  // Get collected_amount from form
+  const collectedAmount = useWatch({
+    name: `cashiers.${cashierIndex}.collected_amount`,
+  }) || 0;
+
   const cashierLedgers = getCashierLedgers ? getCashierLedgers(cashierIndex) : [];
 
   const [initialized, setInitialized] = useState(false);
@@ -69,21 +80,18 @@ function CashReconciliation({
   // AUTOFILL SAVED OTHER LEDGER TRANSACTIONS
   useEffect(() => {
     if (cashierData?.cash_transactions?.length > 0 && !hasLoadedSavedTransactions && !initialized) {
-      // Filter out transactions that are NOT main ledger
       const otherTransactions = cashierData.cash_transactions.filter(transaction => {
         const transactionLedgerId = transaction.ledger_id || transaction.debit_ledger?.id || transaction.id;
         return transactionLedgerId !== mainLedgerId;
       });
       
       if (otherTransactions.length > 0) {
-        // Format transactions to use ledger_id field
         const formattedTransactions = otherTransactions.map(transaction => ({
           ledger_id: transaction.ledger_id || transaction.debit_ledger?.id || transaction.id,
           amount: transaction.amount || 0,
           narration: transaction.narration || '',
         }));
         
-        // Set the transactions in the form
         setValue(`cashiers.${cashierIndex}.cash_transactions`, formattedTransactions, {
           shouldValidate: true,
           shouldDirty: true,
@@ -172,7 +180,6 @@ function CashReconciliation({
     return cashTransactions.filter(transaction => {
       if (!mainLedgerId) return true;
       
-      // Use ledger_id for comparison (other transactions use ledger_id)
       const transactionLedgerId = transaction.ledger_id || transaction.id;
       
       return transactionLedgerId !== mainLedgerId;
@@ -195,13 +202,23 @@ function CashReconciliation({
     }
   }, [calculatedMainLedgerAmount, mainLedgerId, cashierIndex, setValue]);
 
+  // Calculate profit/loss for this cashier
+  const profitLoss = useMemo(() => {
+    const actualCollected = sanitizedNumber(collectedAmount) || 0;
+    return actualCollected - cashRemaining;
+  }, [collectedAmount, cashRemaining]);
+
+  // Check if cashier is balanced based on collected amount
   const isCashierBalanced = useMemo(() => {
     if (!mainLedgerId) return false;
     
     const actualAmount = watch(`cashiers.${cashierIndex}.main_ledger_amount`) || 0;
     
-    return Math.abs(actualAmount - calculatedMainLedgerAmount) < 0.01;
-  }, [mainLedgerId, cashierIndex, watch, calculatedMainLedgerAmount]);
+    // Check if collected amount matches cash remaining
+    const collectedMatch = Math.abs((sanitizedNumber(collectedAmount) || 0) - cashRemaining) < 0.01;
+    
+    return collectedMatch && Math.abs(actualAmount - calculatedMainLedgerAmount) < 0.01;
+  }, [mainLedgerId, cashierIndex, watch, calculatedMainLedgerAmount, collectedAmount, cashRemaining]);
 
   useEffect(() => {
     setCheckShiftBalanced(prev => {
@@ -252,23 +269,35 @@ function CashReconciliation({
 
   const actualMainLedgerAmount = watch(`cashiers.${cashierIndex}.main_ledger_amount`) || 0;
 
+  // Handle collected amount change
+  const handleCollectedAmountChange = (value) => {
+    const sanitizedValue = sanitizedNumber(value);
+    setValue(`cashiers.${cashierIndex}.collected_amount`, sanitizedValue, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+    
+    // Trigger validation
+    trigger(`cashiers.${cashierIndex}.collected_amount`);
+  };
+
   return (
     <>
       <Grid container columnSpacing={2} rowSpacing={2}>
-        <Grid size={{ xs: 12, md: 6, lg: 6 }}>
+        {/* Product Summary Card */}
+        <Grid size={{ xs: 12, md: 6 }}>
           <Card variant="outlined">
             <CardContent>
               <Typography variant="subtitle1" align="center" fontWeight="bold" gutterBottom>
-                Total Products Amount
+                Products Summary
               </Typography>
               <Divider />
               <TableContainer>
                 <Table size="small">
                   <TableHead>
                     <TableRow>
-                      <TableCell>Product Name</TableCell>
-                      <TableCell align="right">Quantity (L)</TableCell>
-                      <TableCell align="right">Price</TableCell>
+                      <TableCell>Product</TableCell>
+                      <TableCell align="right">Qty (L)</TableCell>
                       <TableCell align="right">Amount</TableCell>
                     </TableRow>
                   </TableHead>
@@ -281,14 +310,13 @@ function CashReconciliation({
                         <TableRow key={product.id}>
                           <TableCell>{product.name}</TableCell>
                           <TableCell align="right">{qty.toLocaleString()}</TableCell>
-                          <TableCell align="right">{price.toLocaleString()}</TableCell>
                           <TableCell align="right">{amount.toLocaleString()}</TableCell>
                         </TableRow>
                       );
                     })}
                     <TableRow>
-                      <TableCell colSpan={3} align="right" sx={{ fontWeight: 'bold' }}>
-                        Cashier Total:
+                      <TableCell colSpan={2} align="right" sx={{ fontWeight: 'bold' }}>
+                        Total Sales:
                       </TableCell>
                       <TableCell align="right" sx={{ fontWeight: 'bold' }}>
                         {grandProductsTotal.toLocaleString()}
@@ -301,7 +329,8 @@ function CashReconciliation({
           </Card>
         </Grid>
 
-        <Grid size={{ xs: 12, md: 6, lg: 6 }}>
+        {/* Fuel Vouchers Card */}
+        <Grid size={{ xs: 12, md: 6 }}>
           <Card variant="outlined">
             <CardContent>
               <Typography variant="subtitle1" align="center" fontWeight="bold" gutterBottom>
@@ -312,9 +341,8 @@ function CashReconciliation({
                 <Table size="small">
                   <TableHead>
                     <TableRow>
-                      <TableCell>Product Name</TableCell>
-                      <TableCell align="right">Quantity (L)</TableCell>
-                      <TableCell align="right">Price</TableCell>
+                      <TableCell>Product</TableCell>
+                      <TableCell align="right">Qty (L)</TableCell>
                       <TableCell align="right">Amount</TableCell>
                     </TableRow>
                   </TableHead>
@@ -330,14 +358,13 @@ function CashReconciliation({
                         <TableRow key={product.id}>
                           <TableCell>{product.name}</TableCell>
                           <TableCell align="right">{qty.toLocaleString()}</TableCell>
-                          <TableCell align="right">{price.toLocaleString()}</TableCell>
                           <TableCell align="right">{amount.toLocaleString()}</TableCell>
                         </TableRow>
                       );
                     })}
                     <TableRow>
-                      <TableCell colSpan={3} align="right" sx={{ fontWeight: 'bold' }}>
-                        Cashier Total:
+                      <TableCell colSpan={2} align="right" sx={{ fontWeight: 'bold' }}>
+                        Total Vouchers:
                       </TableCell>
                       <TableCell align="right" sx={{ fontWeight: 'bold' }}>
                         {grandFuelVoucherTotal.toLocaleString()}
@@ -350,11 +377,12 @@ function CashReconciliation({
           </Card>
         </Grid>
 
-        <Grid size={{ xs: 12, md: 12, lg: 6 }}>
+        {/* Cash Summary Card with Collected Amount */}
+        <Grid size={{ xs: 12, md: 6 }}>
           <Card variant="outlined">
             <CardContent>
               <Typography variant="subtitle1" align="center" fontWeight="bold" gutterBottom>
-                Cashier Summary
+                Cash Summary
               </Typography>
               <Divider />
               <TableContainer>
@@ -368,10 +396,65 @@ function CashReconciliation({
                       <TableCell>Fuel Vouchers</TableCell>
                       <TableCell align="right">{grandFuelVoucherTotal.toLocaleString()}</TableCell>
                     </TableRow>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: 'bold' }}>Cash Remaining</TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 'bold', color: cashRemaining < 0 ? 'error.main' : 'success.main' }}>
+                    <TableRow sx={{ borderTop: '2px solid', borderColor: 'divider' }}>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Expected Cash</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
                         {cashRemaining.toLocaleString()}
+                      </TableCell>
+                    </TableRow>
+                    
+                    {/* Collected Amount Input */}
+                    <TableRow>
+                      <TableCell colSpan={2} sx={{ py: 2 }}>
+                        <Box sx={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'space-between' 
+                        }}>
+                          <Typography variant="body2">
+                            Cash Collected:
+                          </Typography>
+                          <Box sx={{ width: '40%' }}>
+                            <TextField
+                              size="small"
+                              fullWidth
+                              value={collectedAmount || 0}
+                              onChange={(e) => handleCollectedAmountChange(e.target.value)}
+                              error={!!errors?.cashiers?.[cashierIndex]?.collected_amount}
+                              helperText={errors?.cashiers?.[cashierIndex]?.collected_amount?.message}
+                              InputProps={{
+                                inputComponent: CommaSeparatedField,
+                              }}
+                              sx={{
+                                '& .MuiInputBase-input': {
+                                  textAlign: 'right',
+                                }
+                              }}
+                            />
+                          </Box>
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                    
+                    {/* Profit/Loss Display */}
+                    <TableRow sx={{ bgcolor: profitLoss >= 0 ? 'success.50' : 'error.50' }}>
+                      <TableCell sx={{ fontWeight: 'bold' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          {profitLoss >= 0 ? (
+                            <>
+                              <TrendingUp color="success" fontSize="small" />
+                              <Typography color="success.main">Profit</Typography>
+                            </>
+                          ) : (
+                            <>
+                              <TrendingDown color="error" fontSize="small" />
+                              <Typography color="error.main">Loss</Typography>
+                            </>
+                          )}
+                        </Box>
+                      </TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 'bold', color: profitLoss >= 0 ? 'success.main' : 'error.main' }}>
+                        {Math.abs(profitLoss).toLocaleString()}
                       </TableCell>
                     </TableRow>
                   </TableBody>
@@ -381,7 +464,8 @@ function CashReconciliation({
           </Card>
         </Grid>
 
-        <Grid size={{ xs: 12, md: 12, lg: 12 }}>
+        {/* Cash Distribution Section */}
+        <Grid size={{ xs: 12 }}>
           <Card variant="outlined">
             <CardContent>
               <Typography variant="subtitle1" align="center" fontWeight="bold" gutterBottom>
