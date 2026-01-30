@@ -166,7 +166,7 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
             product_id: yup.number().required('Product is required'),
           })
         ),
-        other_transactions: yup.array().of(
+        cash_transactions: yup.array().of(
           yup.object().shape({
             ledger_id: yup.number().required('Ledger ID is required'),
             amount: yup.number().required('Amount is required').positive('Amount must be positive'),
@@ -243,7 +243,7 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
             description: adj.description,
             product_id: adj.product_id,
           })) || [],
-          other_transactions: cashier.other_transactions?.map(ct => ({
+          cash_transactions: cashier.cash_transactions?.map(ct => ({
             ledger_id: ct.debit_ledger?.id || ct.id,
             amount: ct.amount,
             narration: ct.narration,
@@ -290,7 +290,7 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
     };
   }, [SalesShift]);
 
-  const { register, control, handleSubmit, setError, clearErrors, setValue, watch, formState: { errors } } = useForm({
+  const { register, control, handleSubmit, setError, trigger, clearErrors, setValue, watch, formState: { errors } } = useForm({
     resolver: yupResolver(validationSchema),
     defaultValues: getDefaultValues(),
   });
@@ -481,7 +481,7 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
           pump_readings: [],
           fuel_vouchers: [],
           tank_adjustments: [],
-          other_transactions: [],
+          cash_transactions: [],
           main_ledger: null,
         };
       })
@@ -583,6 +583,17 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
       }
     });
 
+    data.cashiers = data.cashiers.map(cashier => {
+      if (cashier.cash_transactions) {
+        return {
+          ...cashier,
+          other_transactions: cashier.cash_transactions,
+          cash_transactions: undefined,
+        };
+      }
+      return cashier;
+    });
+
     await saveMutation(data);
   };
 
@@ -596,6 +607,7 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
       watch, 
       errors,
       control,
+      trigger
     }}>
       <DialogTitle>
         <form autoComplete='off'>    
