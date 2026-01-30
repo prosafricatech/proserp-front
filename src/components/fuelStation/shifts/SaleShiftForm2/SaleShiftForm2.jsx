@@ -29,12 +29,19 @@ import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 import CashierAccordion from './CashierAccordion';
 import Dipping from './tabs/Dipping';
+import PaymentsReceived from './tabs/PaymentsReceived';
 import { StationFormContext } from '../SalesShifts';
 import fuelStationServices from '../../fuelStationServices';
 import FuelPrices from './FuelPrices';
 import ShiftSummary from './ShiftSummary';
+import PaymentsReceivedItemRow from './tabs/PaymentsReceivedItemRow';
 
 function SaleShiftForm2({ SalesShift, setOpenDialog }) {
+  const [showWarning, setShowWarning] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
+  const [clearFormKey, setClearFormKey] = useState(0);
+  const [submitItemForm, setSubmitItemForm] = useState(false);
+  const [paymentItems, setPaymentItems] = useState([]);
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
   const [activeTab, setActiveTab] = useState(0);
@@ -788,6 +795,7 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
           sx={{ mt: 2 }}
         >
           <Tab label="Cashiers Records" />
+          <Tab label="Payments Received" />
           <Tab label="Dipping" />
           <Tab label="Shift Summary" />
         </Tabs>
@@ -820,9 +828,49 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
           </div>
         )}
 
-        {activeTab === 1 && <Dipping SalesShift={SalesShift} />}
+        {activeTab === 1 && (
+          <>
+            <PaymentsReceived
+              paymentItems={paymentItems}
+              setPaymentItems={setPaymentItems}
+              showWarning={showWarning}
+              setShowWarning={setShowWarning}
+              isDirty={isDirty}
+              setIsDirty={setIsDirty}
+              clearFormKey={clearFormKey}
+              setClearFormKey={setClearFormKey}
+              submitItemForm={submitItemForm}
+              setSubmitItemForm={setSubmitItemForm}
+            />
+            {paymentItems.length === 0 ? (
+              <Typography color="textSecondary" textAlign="center" py={4}>
+                No payments received yet.
+              </Typography>
+            ) : (
+              paymentItems.map((paymentItem, idx) => (
+                <PaymentsReceivedItemRow
+                  key={idx}
+                  item={paymentItem}
+                  index={idx}
+                  paymentItems={paymentItems}
+                  setPaymentItems={setPaymentItems}
+                  setClearFormKey={setClearFormKey}
+                  submitMainForm={() => {}}
+                  setSubmitItemForm={setSubmitItemForm}
+                  submitItemForm={submitItemForm}
+                  setIsDirty={setIsDirty}
+                  showWarning={showWarning}
+                  setShowWarning={setShowWarning}
+                  clearFormKey={clearFormKey}
+                />
+              ))
+            )}
+          </>
+        )}
 
-        {activeTab === 2 && (
+        {activeTab === 2 && <Dipping SalesShift={SalesShift} />}
+
+        {activeTab === 3 && (
           <ShiftSummary />
         )}
       </DialogContent>
@@ -843,7 +891,7 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
           </Button>
         )}
         
-        {activeTab < 2 && (
+        {activeTab < 3 && (
           <Button 
             size='small' 
             variant='outlined' 
@@ -854,7 +902,7 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
           </Button>
         )}
         
-        {activeTab === 2 && (
+        {activeTab === 3 && (
           <>
             <LoadingButton
               loading={isPending || updateLoading}
