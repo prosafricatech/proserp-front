@@ -381,7 +381,7 @@ function CashReconciliation({
           </Card>
         </Grid>
 
-        {/* Cash Summary Card with Collected Amount */}
+        {/* Cash Summary Card (without Collected Amount) */}
         <Grid size={{ xs: 12, md: 6 }}>
           <Card variant="outlined">
             <CardContent>
@@ -406,40 +406,6 @@ function CashReconciliation({
                         {actualMainLedgerAmount.toLocaleString()}
                       </TableCell>
                     </TableRow>
-                    
-                    {/* Collected Amount Input */}
-                    <TableRow>
-                      <TableCell colSpan={2} sx={{ py: 2 }}>
-                        <Box sx={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          justifyContent: 'space-between' 
-                        }}>
-                          <Typography variant="body2">
-                            Cash Collected:
-                          </Typography>
-                          <Box sx={{ width: '40%' }}>
-                            <TextField
-                              size="small"
-                              fullWidth
-                              value={collectedAmount || 0}
-                              onChange={(e) => handleCollectedAmountChange(e.target.value)}
-                              error={!!errors?.cashiers?.[cashierIndex]?.collected_amount}
-                              helperText={errors?.cashiers?.[cashierIndex]?.collected_amount?.message}
-                              InputProps={{
-                                inputComponent: CommaSeparatedField,
-                              }}
-                              sx={{
-                                '& .MuiInputBase-input': {
-                                  textAlign: 'right',
-                                }
-                              }}
-                            />
-                          </Box>
-                        </Box>
-                      </TableCell>
-                    </TableRow>
-                    
                     {/* Profit/Loss Display */}
                     <TableRow sx={{ bgcolor: profitLoss >= 0 ? 'success.50' : 'error.50' }}>
                       <TableCell sx={{ fontWeight: 'bold' }}>
@@ -611,6 +577,43 @@ function CashReconciliation({
                   </Button>
                 </Grid>
               </Grid>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Cash Collected Input after Cash Distribution Section */}
+        <Grid size={12}>
+          <Card variant="outlined" sx={{ mt: 2 }}>
+            <CardContent>
+              <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+                Cash Collected
+              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Typography variant="body2">
+                  Enter the actual cash remaining after distribution:
+                </Typography>
+                <Box sx={{ width: '40%' }}>
+                  <TextField
+                    size="small"
+                    fullWidth
+                    value={collectedAmount || 0}
+                    onChange={(e) => handleCollectedAmountChange(e.target.value)}
+                    error={!!errors?.cashiers?.[cashierIndex]?.collected_amount}
+                    helperText={
+                      errors?.cashiers?.[cashierIndex]?.collected_amount?.message ||
+                      `Enter the cash that remains: ${actualMainLedgerAmount.toLocaleString()}`
+                    }
+                    InputProps={{
+                      inputComponent: CommaSeparatedField,
+                    }}
+                    sx={{
+                      '& .MuiInputBase-input': {
+                        textAlign: 'right',
+                      }
+                    }}
+                  />
+                </Box>
+              </Box>
             </CardContent>
           </Card>
         </Grid>
