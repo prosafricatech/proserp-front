@@ -150,6 +150,7 @@ function FuelVouchers({ index = -1, setShowForm = null, fuelVoucher, productPric
                 label={'Expense Ledger'}
                 frontError={errors.expense_ledger_id}
                 defaultValue={ungroupedLedgerOptions.find(ledger => ledger.id === watch(`expense_ledger`)?.id)}
+                allowedGroups={['Expenses']}
                 onChange={(newValue) => {
                   setValue(`expense_ledger`, newValue)
                   setValue('expense_ledger_id', newValue ? newValue.id : null,{

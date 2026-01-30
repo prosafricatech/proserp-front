@@ -47,9 +47,7 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
 
   const [cashierFuelVouchers, setCashierFuelVouchers] = useState({});
   const [cashierLedgers, setCashierLedgers] = useState({});
-  
-  // Store last closing readings for all pumps (for new shifts only)
-  const [lastClosingReadings, setLastClosingReadings] = useState({}); // {pumpId: closingReading}
+  const [lastClosingReadings, setLastClosingReadings] = useState({});
 
   const { mutate: addSalesShifts, isPending } = useMutation({
     mutationFn: fuelStationServices.addSalesShifts,
@@ -205,7 +203,6 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
         price: fp.price,
       })) || [];
       
-      // Map cashiers from SalesShift response
       const cashiersData = SalesShift.cashiers?.map(cashier => {
         const selectedPumps = cashier.pump_readings?.map(pr => pr.fuel_pump_id) || [];
         
@@ -223,10 +220,12 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
           selected_pumps: selectedPumps,
           pump_readings: pumpReadings,
           fuel_vouchers: cashier.fuel_vouchers?.map(fv => ({
-            stakeholder_id: fv.stakeholder_id,
+            stakeholder_id: fv.stakeholder_id || fv.stakeholder?.id,
+            stakeholder: fv.stakeholder || null,
             quantity: fv.quantity,
             product_id: fv.product_id,
-            expense_ledger_id: fv.expense_ledger_id || fuelVoucher.expense_ledger?.id,
+            expense_ledger: fv.expense_ledger || null,
+            expense_ledger_id: fv.expense_ledger_id || fv.expense_ledger?.id,
             reference: fv.reference,
             narration: fv.narration,
           })) || [],
@@ -291,7 +290,6 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
 
   const selectedCashiers = watch('cashiers') || [];
 
-  // Function to retrieve last shift readings for NEW shifts only
   const retrieveLastShiftReadings = useCallback(async () => {
     try {
       const shiftStart = watch('shift_start');
@@ -314,9 +312,7 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
     }
   }, [activeStation.id, watch, enqueueSnackbar, SalesShift]);
 
-  // Function to get appropriate opening value based on context
   const getPumpOpeningValue = useCallback((pumpId, cashierIndex) => {
-    // For existing shifts: get from saved cashier data
     if (SalesShift?.id) {
       const cashier = selectedCashiers[cashierIndex];
       if (cashier?.pump_readings) {
@@ -325,30 +321,24 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
       }
     }
     
-    // For new shifts: get from last closing readings
     return lastClosingReadings[pumpId] || 0;
   }, [SalesShift, selectedCashiers, lastClosingReadings]);
 
-  // Function to handle pump selection with appropriate initialization
   const handlePumpSelection = useCallback((cashierIndex, selectedPumpIds) => {
     const currentCashier = selectedCashiers[cashierIndex];
     if (!currentCashier) return;
     
-    // Update selected pumps
     setValue(`cashiers.${cashierIndex}.selected_pumps`, selectedPumpIds, {
       shouldValidate: true,
       shouldDirty: true
     });
     
-    // Get current readings
     const currentReadings = currentCashier.pump_readings || [];
     
-    // Filter out readings for deselected pumps
     let updatedReadings = currentReadings.filter(reading => 
       selectedPumpIds.includes(reading.fuel_pump_id)
     );
     
-    // For new pumps that don't have readings yet
     selectedPumpIds.forEach(pumpId => {
       if (!updatedReadings.some(r => r.fuel_pump_id === pumpId)) {
         const pump = fuel_pumps?.find(p => p.id === pumpId);
@@ -359,23 +349,76 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
             product_id: pump.product_id,
             tank_id: pump.tank_id,
             opening: openingValue,
-            closing: openingValue, // Initialize with same value
+            closing: openingValue,
           });
         }
       }
     });
     
-    // Update the readings
     setValue(`cashiers.${cashierIndex}.pump_readings`, updatedReadings, {
       shouldValidate: true,
       shouldDirty: true
     });
   }, [selectedCashiers, setValue, fuel_pumps, getPumpOpeningValue]);
 
-  // Initialize cashier data from API response
+  const combineDateTime = useCallback((date, timeString) => {
+    if (!date || !timeString) return date;
+    
+    const time = dayjs(timeString, 'HH:mm:ss');
+    return dayjs(date)
+      .hour(time.hour())
+      .minute(time.minute())
+      .second(time.second())
+      .toISOString();
+  }, []);
+
+  const handleShiftChange = useCallback((newValue) => {
+    const currentShiftStart = watch('shift_start');
+    const currentShiftEnd = watch('shift_end');
+    
+    setShiftLedgers(newValue ? newValue.ledgers : []);
+    setValue('sales_outlet_shift_id', newValue ? newValue.id : '', {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+    
+    if (newValue && (currentShiftStart || currentShiftEnd)) {
+      const selectedDate = currentShiftStart || dayjs().startOf('day');
+      
+      if (newValue.start_time) {
+        const newStartDateTime = combineDateTime(selectedDate, newValue.start_time);
+        setValue('shift_start', newStartDateTime, {
+          shouldValidate: true,
+          shouldDirty: true
+        });
+      }
+      
+      if (newValue.end_time) {
+        const startTime = dayjs(newValue.start_time, 'HH:mm:ss');
+        const endTime = dayjs(newValue.end_time, 'HH:mm:ss');
+        
+        let endDateTime;
+        if (endTime.isBefore(startTime)) {
+          endDateTime = dayjs(selectedDate)
+            .add(1, 'day')
+            .hour(endTime.hour())
+            .minute(endTime.minute())
+            .second(endTime.second())
+            .toISOString();
+        } else {
+          endDateTime = combineDateTime(selectedDate, newValue.end_time);
+        }
+        
+        setValue('shift_end', endDateTime, {
+          shouldValidate: true,
+          shouldDirty: true
+        });
+      }
+    }
+  }, [setValue, watch, combineDateTime]);
+
   useEffect(() => {
     if (SalesShift?.cashiers) {
-      // Initialize cashier fuel vouchers
       SalesShift.cashiers.forEach((cashier, index) => {
         if (cashier.fuel_vouchers && cashier.fuel_vouchers.length > 0) {
           setCashierFuelVouchers(prev => ({
@@ -384,7 +427,6 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
           }));
         }
         
-        // Initialize cashier ledgers from cashiers prop
         const cashierData = cashiers?.find(c => c.id === cashier.id);
         if (cashierData && cashierData.ledgers) {
           setCashierLedgers(prev => ({
@@ -396,7 +438,6 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
     }
   }, [SalesShift, cashiers]);
 
-  // Update cashier ledgers when cashiers are selected
   useEffect(() => {
     selectedCashiers.forEach((cashier, index) => {
       const cashierData = cashiers?.find(c => c.id === cashier.id);
@@ -409,7 +450,6 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
     });
   }, [selectedCashiers, cashiers, cashierLedgers]);
 
-  // Auto-fetch last readings when shift start date changes (for NEW shifts only)
   useEffect(() => {
     const shiftStart = watch('shift_start');
     if (shiftStart && !SalesShift?.id) {
@@ -574,11 +614,7 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
                     />
                   )}
                   onChange={(e, newValue) => {
-                    setShiftLedgers(newValue ? newValue.ledgers : []);
-                    setValue('sales_outlet_shift_id', newValue ? newValue.id : '', {
-                      shouldValidate: true,
-                      shouldDirty: true,
-                    });
+                    handleShiftChange(newValue);
                   }}
                   renderTags={(tagValue, getTagProps) => {
                     return tagValue.map((option, index) => (
@@ -605,10 +641,43 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
                     }
                   }}
                   onChange={(newValue) => {
-                    setValue('shift_start', newValue ? newValue.toISOString() : null, {
-                      shouldValidate: true,
-                      shouldDirty: true
-                    });
+                    const currentShiftId = watch('sales_outlet_shift_id');
+                    const selectedShift = shifts?.find(s => s.id === currentShiftId);
+                    
+                    if (selectedShift && newValue) {
+                      const newStartDateTime = combineDateTime(newValue, selectedShift.start_time);
+                      setValue('shift_start', newStartDateTime, {
+                        shouldValidate: true,
+                        shouldDirty: true
+                      });
+                      
+                      if (selectedShift.end_time) {
+                        const startTime = dayjs(selectedShift.start_time, 'HH:mm:ss');
+                        const endTime = dayjs(selectedShift.end_time, 'HH:mm:ss');
+                        
+                        let endDateTime;
+                        if (endTime.isBefore(startTime)) {
+                          endDateTime = dayjs(newValue)
+                            .add(1, 'day')
+                            .hour(endTime.hour())
+                            .minute(endTime.minute())
+                            .second(endTime.second())
+                            .toISOString();
+                        } else {
+                          endDateTime = combineDateTime(newValue, selectedShift.end_time);
+                        }
+                        
+                        setValue('shift_end', endDateTime, {
+                          shouldValidate: true,
+                          shouldDirty: true
+                        });
+                      }
+                    } else {
+                      setValue('shift_start', newValue ? newValue.toISOString() : null, {
+                        shouldValidate: true,
+                        shouldDirty: true
+                      });
+                    }
                   }}
                 />
               </Div>
@@ -630,10 +699,21 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
                     }
                   }}
                   onChange={(newValue) => {
-                    setValue('shift_end', newValue ? newValue.toISOString() : null, {
-                      shouldValidate: true,
-                      shouldDirty: true
-                    });
+                    const currentShiftId = watch('sales_outlet_shift_id');
+                    const selectedShift = shifts?.find(s => s.id === currentShiftId);
+                    
+                    if (selectedShift && newValue && selectedShift.end_time) {
+                      const endDateTime = combineDateTime(newValue, selectedShift.end_time);
+                      setValue('shift_end', endDateTime, {
+                        shouldValidate: true,
+                        shouldDirty: true
+                      });
+                    } else {
+                      setValue('shift_end', newValue ? newValue.toISOString() : null, {
+                        shouldValidate: true,
+                        shouldDirty: true
+                      });
+                    }
                   }}
                 />
               </Div>
