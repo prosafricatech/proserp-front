@@ -3,8 +3,8 @@
 import { JumboScrollbar } from '@jumbo/components/JumboScrollbar';
 import { Div } from '@jumbo/shared';
 import React, { Suspense } from 'react';
-import { SidebarHeader } from './SidebarHeader';
-import { SidebarSkeleton } from './SidebarSkeleton';
+import { SidebarHeader } from './sidebarHeader';
+import { SidebarSkeleton } from './sidebarSkeleton';
 import { MODULES } from '@/utilities/constants/modules';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { PROS_CONTROL_PERMISSIONS } from '@/utilities/constants/prosControlPermissions';

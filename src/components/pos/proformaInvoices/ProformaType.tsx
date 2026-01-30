@@ -1,5 +1,5 @@
-import { Currency } from "@/components/masters/Currencies/CurrencyType";
-import { Stakeholder } from "@/components/masters/stakeholders/StakeholderType";
+import { Currency } from '@/components/masters/currencies/CurrencyType';
+import { Stakeholder } from '@/components/masters/stakeholders/StakeholderType';
 
 interface Creator {
   id: number;

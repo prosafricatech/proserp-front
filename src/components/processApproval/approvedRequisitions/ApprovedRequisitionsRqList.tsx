@@ -1,28 +1,32 @@
-'use client'
+'use client';
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Card, Grid, IconButton, Tooltip } from '@mui/material';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { CostCenter } from '@/components/masters/costCenters/CostCenterType';
+import UnauthorizedAccess from '@/shared/Information/UnauthorizedAccess';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
 import JumboListToolbar from '@jumbo/components/JumboList/components/JumboListToolbar';
 import JumboRqList from '@jumbo/components/JumboReactQuery/JumboRqList';
 import JumboSearch from '@jumbo/components/JumboSearch';
-import { EventAvailableOutlined, FilterAltOffOutlined, FilterAltOutlined } from '@mui/icons-material';
+import {
+  EventAvailableOutlined,
+  FilterAltOffOutlined,
+  FilterAltOutlined,
+} from '@mui/icons-material';
+import { Card, Grid, IconButton, Tooltip } from '@mui/material';
 import { DateTimePicker } from '@mui/x-date-pickers';
 import dayjs, { Dayjs } from 'dayjs';
+import { useParams } from 'next/navigation';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import LedgerSelectProvider from '../../accounts/ledgers/forms/LedgerSelectProvider';
 import approvalChainsServices from '../../masters/approvalChains/approvalChainsServices';
-import ApprovedRequisitionsListItem from './ApprovedRequisitionsListItem';
-import RequisitionsTypeSelector from '../RequisitionsTypeSelector';
 import CostCenterSelector from '../../masters/costCenters/CostCenterSelector';
+import CurrencySelectProvider from '../../masters/currencies/CurrencySelectProvider';
+import StakeholderSelectProvider from '../../masters/stakeholders/StakeholderSelectProvider';
 import ProductsProvider from '../../productAndServices/products/ProductsProvider';
 import ProductsSelectProvider from '../../productAndServices/products/ProductsSelectProvider';
-import CurrencySelectProvider from '../../masters/Currencies/CurrencySelectProvider';
-import LedgerSelectProvider from '../../accounts/ledgers/forms/LedgerSelectProvider';
-import StakeholderSelectProvider from '../../masters/stakeholders/StakeholderSelectProvider';
-import { useParams } from 'next/navigation';
-import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
-import { PERMISSIONS } from '@/utilities/constants/permissions';
-import UnauthorizedAccess from '@/shared/Information/UnauthorizedAccess';
+import RequisitionsTypeSelector from '../RequisitionsTypeSelector';
 import { ApprovalRequisition } from './ApprovalRequisitionType';
-import { CostCenter } from '@/components/masters/costCenters/CostCenterType';
+import ApprovedRequisitionsListItem from './ApprovedRequisitionsListItem';
 
 interface FilterDate {
   from: string | null;
@@ -49,13 +53,20 @@ interface ApprovedRequisitionsRqListProps {
   processType: 'purchase' | 'payment' | 'all';
 }
 
-const ApprovedRequisitionsRqList: React.FC<ApprovedRequisitionsRqListProps> = ({ processType }) => {
+const ApprovedRequisitionsRqList: React.FC<ApprovedRequisitionsRqListProps> = ({
+  processType,
+}) => {
   const params = useParams();
   const listRef = useRef<any>(null);
   const { checkOrganizationPermission, authOrganization } = useJumboAuth();
   const [openFilters, setOpenFilters] = useState(false);
-  const [filterDate, setFilterDate] = useState<FilterDate>({ from: null, to: null });
-  const [selectedCostCenter, setSelectedCostCenter] = useState<CostCenter[]>([]);
+  const [filterDate, setFilterDate] = useState<FilterDate>({
+    from: null,
+    to: null,
+  });
+  const [selectedCostCenter, setSelectedCostCenter] = useState<CostCenter[]>(
+    []
+  );
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
@@ -64,11 +75,14 @@ const ApprovedRequisitionsRqList: React.FC<ApprovedRequisitionsRqListProps> = ({
 
   const [queryOptions, setQueryOptions] = useState<QueryOptions>({
     queryKey: 'approvedRequisitions',
-    queryParams: { 
+    queryParams: {
       id: params.id as string,
       keyword: '',
       process_type: processType,
-      cost_center_ids: authOrganization?.costCenters?.map((cost_center: CostCenter) => cost_center.id) || []   
+      cost_center_ids:
+        authOrganization?.costCenters?.map(
+          (cost_center: CostCenter) => cost_center.id
+        ) || [],
     },
     countKey: 'total',
     dataKey: 'data',
@@ -81,9 +95,16 @@ const ApprovedRequisitionsRqList: React.FC<ApprovedRequisitionsRqListProps> = ({
     }));
   }, [params]);
 
-  const renderRequisitions = useCallback((approvedRequisition: ApprovalRequisition) => {
-    return <ApprovedRequisitionsListItem approvedRequisition={approvedRequisition} />;
-  }, []);
+  const renderRequisitions = useCallback(
+    (approvedRequisition: ApprovalRequisition) => {
+      return (
+        <ApprovedRequisitionsListItem
+          approvedRequisition={approvedRequisition}
+        />
+      );
+    },
+    []
+  );
 
   const handleOnChange = useCallback((keyword: string) => {
     setQueryOptions((state) => ({
@@ -96,52 +117,58 @@ const ApprovedRequisitionsRqList: React.FC<ApprovedRequisitionsRqListProps> = ({
   }, []);
 
   useEffect(() => {
-    setQueryOptions(state => ({
+    setQueryOptions((state) => ({
       ...state,
       queryParams: {
         ...state.queryParams,
-        cost_center_ids: selectedCostCenter.map(c => c.id)
-      }
+        cost_center_ids: selectedCostCenter.map((c) => c.id),
+      },
     }));
   }, [selectedCostCenter]);
 
   const handleOnTypeChange = useCallback((type: string) => {
-    setQueryOptions(state => ({
+    setQueryOptions((state) => ({
       ...state,
       queryParams: {
         ...state.queryParams,
-        process_type: type
-      }
+        process_type: type,
+      },
     }));
   }, []);
 
   const handleDateFilterApply = useCallback(() => {
-    setQueryOptions(state => ({
+    setQueryOptions((state) => ({
       ...state,
       queryParams: {
         ...state.queryParams,
         from: filterDate.from,
-        to: filterDate.to
-      }
+        to: filterDate.to,
+      },
     }));
   }, [filterDate]);
 
   const handleClearFilters = useCallback(() => {
     setOpenFilters(false);
     setFilterDate({ from: null, to: null });
-    setQueryOptions(state => ({
+    setQueryOptions((state) => ({
       ...state,
       queryParams: {
         ...state.queryParams,
         from: null,
         to: null,
-      }
+      },
     }));
   }, []);
 
   if (!mounted) return null;
 
-  if (!checkOrganizationPermission([PERMISSIONS.REQUISITIONS_CREATE, PERMISSIONS.REQUISITIONS_READ, PERMISSIONS.ACCOUNTS_MASTERS_EDIT])) {
+  if (
+    !checkOrganizationPermission([
+      PERMISSIONS.REQUISITIONS_CREATE,
+      PERMISSIONS.REQUISITIONS_READ,
+      PERMISSIONS.ACCOUNTS_MASTERS_EDIT,
+    ])
+  ) {
     return <UnauthorizedAccess />;
   }
 
@@ -157,12 +184,12 @@ const ApprovedRequisitionsRqList: React.FC<ApprovedRequisitionsRqListProps> = ({
                 ref={listRef}
                 wrapperComponent={Card}
                 service={approvalChainsServices.getApprovalRequisitionsList}
-                primaryKey="id"
+                primaryKey='id'
                 queryOptions={queryOptions}
                 itemsPerPage={10}
                 itemsPerPageOptions={[5, 8, 10, 15, 20]}
                 renderItem={renderRequisitions}
-                componentElement="div"
+                componentElement='div'
                 wrapperSx={{
                   flex: 1,
                   display: 'flex',
@@ -172,50 +199,71 @@ const ApprovedRequisitionsRqList: React.FC<ApprovedRequisitionsRqListProps> = ({
                   <JumboListToolbar
                     hideItemsPerPage={true}
                     action={
-                      <Grid container columnSpacing={1} rowSpacing={1} justifyContent={'end'}>
+                      <Grid
+                        container
+                        columnSpacing={1}
+                        rowSpacing={1}
+                        justifyContent={'end'}
+                      >
                         {openFilters && (
                           <Grid size={{ xs: 12, lg: 12 }}>
                             <Grid container spacing={1}>
                               <Grid size={{ xs: 12, md: 6 }}>
                                 <DateTimePicker
-                                  label="From"
-                                  value={filterDate.from ? dayjs(filterDate.from) : null}
-                                  minDate={dayjs(authOrganization?.organization?.recording_start_date)}
+                                  label='From'
+                                  value={
+                                    filterDate.from
+                                      ? dayjs(filterDate.from)
+                                      : null
+                                  }
+                                  minDate={dayjs(
+                                    authOrganization?.organization
+                                      ?.recording_start_date
+                                  )}
                                   slotProps={{
                                     textField: {
                                       size: 'small',
                                       fullWidth: true,
-                                    }
+                                    },
                                   }}
                                   onChange={(value: Dayjs | null) => {
-                                    setFilterDate((filters) => ({ 
+                                    setFilterDate((filters) => ({
                                       ...filters,
-                                      from: value?.toISOString() || null 
+                                      from: value?.toISOString() || null,
                                     }));
                                   }}
                                 />
                               </Grid>
                               <Grid size={{ xs: 11, md: 5.5 }}>
                                 <DateTimePicker
-                                  label="To"
-                                  value={filterDate.to ? dayjs(filterDate.to) : null}
-                                  minDate={filterDate.from ? dayjs(filterDate.from) : undefined}
+                                  label='To'
+                                  value={
+                                    filterDate.to ? dayjs(filterDate.to) : null
+                                  }
+                                  minDate={
+                                    filterDate.from
+                                      ? dayjs(filterDate.from)
+                                      : undefined
+                                  }
                                   slotProps={{
                                     textField: {
                                       size: 'small',
                                       fullWidth: true,
-                                    }
+                                    },
                                   }}
                                   onChange={(value: Dayjs | null) => {
-                                    setFilterDate((filters) => ({ 
+                                    setFilterDate((filters) => ({
                                       ...filters,
-                                      to: value?.toISOString() || null 
+                                      to: value?.toISOString() || null,
                                     }));
                                   }}
                                 />
                               </Grid>
-                              <Grid size={{ xs: 1, md: 0.5 }} alignContent={'end'}>
-                                <Tooltip title="Filter Dates">
+                              <Grid
+                                size={{ xs: 1, md: 0.5 }}
+                                alignContent={'end'}
+                              >
+                                <Tooltip title='Filter Dates'>
                                   <IconButton onClick={handleDateFilterApply}>
                                     <EventAvailableOutlined />
                                   </IconButton>
@@ -225,7 +273,10 @@ const ApprovedRequisitionsRqList: React.FC<ApprovedRequisitionsRqListProps> = ({
                           </Grid>
                         )}
                         {processType === 'all' && (
-                          <Grid size={{ xs: 12, md: 6, lg: 3 }} alignItems={'center'}>
+                          <Grid
+                            size={{ xs: 12, md: 6, lg: 3 }}
+                            alignItems={'center'}
+                          >
                             <RequisitionsTypeSelector
                               value={queryOptions.queryParams.process_type}
                               onChange={handleOnTypeChange}
@@ -235,19 +286,30 @@ const ApprovedRequisitionsRqList: React.FC<ApprovedRequisitionsRqListProps> = ({
                         {multiCostCenters && (
                           <Grid size={{ xs: 12, md: 6, lg: 3 }}>
                             <CostCenterSelector
-                              label="Cost Centers"
+                              label='Cost Centers'
                               allowSameType={true}
                               defaultValue={selectedCostCenter}
-                              onChange={(newValue: CostCenter | CostCenter[] | null) => {
+                              onChange={(
+                                newValue: CostCenter | CostCenter[] | null
+                              ) => {
                                 setSelectedCostCenter(newValue as any);
                               }}
                             />
                           </Grid>
                         )}
                         <Grid size={{ xs: 1, lg: 0.5 }}>
-                          <Tooltip title={!openFilters ? 'Filter' : 'Clear Filters'}>
-                            <IconButton size='small' onClick={handleClearFilters}>
-                              {!openFilters ? <FilterAltOutlined /> : <FilterAltOffOutlined />}
+                          <Tooltip
+                            title={!openFilters ? 'Filter' : 'Clear Filters'}
+                          >
+                            <IconButton
+                              size='small'
+                              onClick={handleClearFilters}
+                            >
+                              {!openFilters ? (
+                                <FilterAltOutlined />
+                              ) : (
+                                <FilterAltOffOutlined />
+                              )}
                             </IconButton>
                           </Tooltip>
                         </Grid>

@@ -1,12 +1,12 @@
-import React from 'react';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
+import { Currency } from '@/components/masters/currencies/CurrencyType';
+import { MeasurementUnit } from '@/components/masters/measurementUnits/MeasurementUnitType';
 import PageFooter from '@/components/pdf/PageFooter';
 import pdfStyles from '@/components/pdf/pdf-styles';
 import PdfLogo from '@/components/pdf/PdfLogo';
-import { Document, Page, Text, View } from '@react-pdf/renderer';
-import { MeasurementUnit } from '@/components/masters/measurementUnits/MeasurementUnitType';
 import { Organization } from '@/types/auth-types';
-import { Currency } from '@/components/masters/Currencies/CurrencyType';
+import { Document, Page, Text, View } from '@react-pdf/renderer';
+import React from 'react';
 
 interface RevenueLedger {
   name?: string;
@@ -74,7 +74,7 @@ const ClaimPDF: React.FC<{ claim: Claim; organization: Organization }> = ({
   // ==================== Summary Section ====================
   const grossAmount = Number(claim.amount) || 0;
   const vatPercentage = claim.vat_percentage || 0;
-  const vatAmount = grossAmount * vatPercentage / 100;
+  const vatAmount = (grossAmount * vatPercentage) / 100;
 
   const summaryItems = [
     {
@@ -90,23 +90,27 @@ const ClaimPDF: React.FC<{ claim: Claim; organization: Organization }> = ({
       particular: adj.description,
       complement_ledger: adj.complement_ledger ?? null,
       type: adj.type,
-      amount: adj.type === 'deduction' ? -Number(adj.amount) : Number(adj.amount),
+      amount:
+        adj.type === 'deduction' ? -Number(adj.amount) : Number(adj.amount),
     })),
 
     ...(vatPercentage > 0
-    ? [
-        {
-          id: 'vat',
-          particular: `VAT (${vatPercentage}%)`,
-          amount: vatAmount,
-          complement_ledger: null,
-          type: null as 'addition' | 'deduction' | null,
-        },
-      ]
-    : []),
+      ? [
+          {
+            id: 'vat',
+            particular: `VAT (${vatPercentage}%)`,
+            amount: vatAmount,
+            complement_ledger: null,
+            type: null as 'addition' | 'deduction' | null,
+          },
+        ]
+      : []),
   ];
 
-  const grandTotal = summaryItems.reduce((sum, item) => sum + Number(item.amount), 0);
+  const grandTotal = summaryItems.reduce(
+    (sum, item) => sum + Number(item.amount),
+    0
+  );
 
   // ==================== Claim Derivations ====================
   const claimedItems = claim.claim_items.map((item, index) => {
@@ -142,13 +146,21 @@ const ClaimPDF: React.FC<{ claim: Claim; organization: Organization }> = ({
 
   return (
     <Document title={claim.claimNo} author={claim.creator?.name}>
-      <Page size="A3" orientation="portrait" style={pdfStyles.page}>
-        <View style={{ ...pdfStyles.tableRow, marginBottom: 20, justifyContent: 'space-between' }}>
+      <Page size='A3' orientation='portrait' style={pdfStyles.page}>
+        <View
+          style={{
+            ...pdfStyles.tableRow,
+            marginBottom: 20,
+            justifyContent: 'space-between',
+          }}
+        >
           <View style={{ maxWidth: organization?.logo_path ? 130 : 250 }}>
             <PdfLogo organization={organization} />
           </View>
           <View style={{ textAlign: 'right' }}>
-            <Text style={{ ...pdfStyles.majorInfo, color: mainColor }}>Payment Claim</Text>
+            <Text style={{ ...pdfStyles.majorInfo, color: mainColor }}>
+              Payment Claim
+            </Text>
             <Text style={pdfStyles.minInfo}>{claim.claimNo}</Text>
             <Text style={pdfStyles.minInfo}>{claim.project?.name || ''}</Text>
           </View>
@@ -157,12 +169,18 @@ const ClaimPDF: React.FC<{ claim: Claim; organization: Organization }> = ({
         {/* ==================== Claim Info ==================== */}
         <View style={{ ...pdfStyles.tableRow, marginBottom: 20, gap: 20 }}>
           <View style={{ flex: 1 }}>
-            <Text style={{ ...pdfStyles.minInfo, color: mainColor }}>Claim Date</Text>
-            <Text style={pdfStyles.minInfo}>{readableDate(claim.claim_date, false)}</Text>
+            <Text style={{ ...pdfStyles.minInfo, color: mainColor }}>
+              Claim Date
+            </Text>
+            <Text style={pdfStyles.minInfo}>
+              {readableDate(claim.claim_date, false)}
+            </Text>
           </View>
           {claim.remarks && (
             <View style={{ flex: 1 }}>
-              <Text style={{ ...pdfStyles.minInfo, color: mainColor }}>Remarks</Text>
+              <Text style={{ ...pdfStyles.minInfo, color: mainColor }}>
+                Remarks
+              </Text>
               <Text style={pdfStyles.minInfo}>{claim.remarks}</Text>
             </View>
           )}
@@ -170,16 +188,37 @@ const ClaimPDF: React.FC<{ claim: Claim; organization: Organization }> = ({
 
         {/* ==================== Summary Table ==================== */}
         <View style={{ marginBottom: 40, alignItems: 'flex-end' }}>
-          <Text style={{ fontSize: 12, color: mainColor, marginBottom: 8, fontWeight: 'bold' }}>
+          <Text
+            style={{
+              fontSize: 12,
+              color: mainColor,
+              marginBottom: 8,
+              fontWeight: 'bold',
+            }}
+          >
             Summary
           </Text>
           <View style={{ width: '50%', minWidth: 380 }}>
             <View style={pdfStyles.table}>
               <View style={pdfStyles.tableRow}>
-                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.4 }}>
+                <Text
+                  style={{
+                    ...pdfStyles.tableHeader,
+                    backgroundColor: mainColor,
+                    color: contrastText,
+                    flex: 0.4,
+                  }}
+                >
                   S/N
                 </Text>
-                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2.6 }}>
+                <Text
+                  style={{
+                    ...pdfStyles.tableHeader,
+                    backgroundColor: mainColor,
+                    color: contrastText,
+                    flex: 2.6,
+                  }}
+                >
                   Particulars
                 </Text>
                 <Text
@@ -197,7 +236,13 @@ const ClaimPDF: React.FC<{ claim: Claim; organization: Organization }> = ({
 
               {summaryItems.map((item, index) => (
                 <View key={item.id} style={pdfStyles.tableRow}>
-                  <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 ? lightColor : '#FFF', flex: 0.4 }}>
+                  <Text
+                    style={{
+                      ...pdfStyles.tableCell,
+                      backgroundColor: index % 2 ? lightColor : '#FFF',
+                      flex: 0.4,
+                    }}
+                  >
                     {index + 1}.
                   </Text>
                   <View
@@ -256,7 +301,10 @@ const ClaimPDF: React.FC<{ claim: Claim; organization: Organization }> = ({
                     fontWeight: 'bold',
                   }}
                 >
-                  {grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  {grandTotal.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
                 </Text>
               </View>
             </View>
@@ -265,44 +313,197 @@ const ClaimPDF: React.FC<{ claim: Claim; organization: Organization }> = ({
 
         {/* ==================== Claim Derivations Table ==================== */}
         <View style={{ marginBottom: 40 }}>
-          <Text style={{ fontSize: 12, color: mainColor, textAlign: 'center', marginBottom: 12, fontWeight: 'bold' }}>
+          <Text
+            style={{
+              fontSize: 12,
+              color: mainColor,
+              textAlign: 'center',
+              marginBottom: 12,
+              fontWeight: 'bold',
+            }}
+          >
             Claim Derivations
           </Text>
           <View style={pdfStyles.table}>
             {/* Group Headers */}
             <View style={pdfStyles.tableRow}>
-              <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 4.32 }}></Text>
-              <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.97, textAlign: 'center' }}>
+              <Text
+                style={{
+                  ...pdfStyles.tableHeader,
+                  backgroundColor: mainColor,
+                  color: contrastText,
+                  flex: 4.32,
+                }}
+              ></Text>
+              <Text
+                style={{
+                  ...pdfStyles.tableHeader,
+                  backgroundColor: mainColor,
+                  color: contrastText,
+                  flex: 1.97,
+                  textAlign: 'center',
+                }}
+              >
                 Price Schedule
               </Text>
-              <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 3.6, textAlign: 'center' }}>
+              <Text
+                style={{
+                  ...pdfStyles.tableHeader,
+                  backgroundColor: mainColor,
+                  color: contrastText,
+                  flex: 3.6,
+                  textAlign: 'center',
+                }}
+              >
                 Quantity
               </Text>
-              <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 3.6, textAlign: 'center' }}>
+              <Text
+                style={{
+                  ...pdfStyles.tableHeader,
+                  backgroundColor: mainColor,
+                  color: contrastText,
+                  flex: 3.6,
+                  textAlign: 'center',
+                }}
+              >
                 Amount ({currencyCode})
               </Text>
             </View>
 
             {/* Sub Headers */}
             <View style={pdfStyles.tableRow}>
-              <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.5 }}>S/N</Text>
-              <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2 }}>Description</Text>
-              <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.7 }}>Unit</Text>
-              <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1 }}>Qty</Text>
-              <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1 }}>Rate</Text>
-              <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1 }}>Amount</Text>
-              <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.2 }}>Previous</Text>
-              <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.2 }}>Present</Text>
-              <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.2 }}>Cumulative</Text>
-              <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.2 }}>Previous</Text>
-              <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.2 }}>Present</Text>
-              <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.2 }}>Cumulative</Text>
+              <Text
+                style={{
+                  ...pdfStyles.tableHeader,
+                  backgroundColor: mainColor,
+                  color: contrastText,
+                  flex: 0.5,
+                }}
+              >
+                S/N
+              </Text>
+              <Text
+                style={{
+                  ...pdfStyles.tableHeader,
+                  backgroundColor: mainColor,
+                  color: contrastText,
+                  flex: 2,
+                }}
+              >
+                Description
+              </Text>
+              <Text
+                style={{
+                  ...pdfStyles.tableHeader,
+                  backgroundColor: mainColor,
+                  color: contrastText,
+                  flex: 0.7,
+                }}
+              >
+                Unit
+              </Text>
+              <Text
+                style={{
+                  ...pdfStyles.tableHeader,
+                  backgroundColor: mainColor,
+                  color: contrastText,
+                  flex: 1,
+                }}
+              >
+                Qty
+              </Text>
+              <Text
+                style={{
+                  ...pdfStyles.tableHeader,
+                  backgroundColor: mainColor,
+                  color: contrastText,
+                  flex: 1,
+                }}
+              >
+                Rate
+              </Text>
+              <Text
+                style={{
+                  ...pdfStyles.tableHeader,
+                  backgroundColor: mainColor,
+                  color: contrastText,
+                  flex: 1,
+                }}
+              >
+                Amount
+              </Text>
+              <Text
+                style={{
+                  ...pdfStyles.tableHeader,
+                  backgroundColor: mainColor,
+                  color: contrastText,
+                  flex: 1.2,
+                }}
+              >
+                Previous
+              </Text>
+              <Text
+                style={{
+                  ...pdfStyles.tableHeader,
+                  backgroundColor: mainColor,
+                  color: contrastText,
+                  flex: 1.2,
+                }}
+              >
+                Present
+              </Text>
+              <Text
+                style={{
+                  ...pdfStyles.tableHeader,
+                  backgroundColor: mainColor,
+                  color: contrastText,
+                  flex: 1.2,
+                }}
+              >
+                Cumulative
+              </Text>
+              <Text
+                style={{
+                  ...pdfStyles.tableHeader,
+                  backgroundColor: mainColor,
+                  color: contrastText,
+                  flex: 1.2,
+                }}
+              >
+                Previous
+              </Text>
+              <Text
+                style={{
+                  ...pdfStyles.tableHeader,
+                  backgroundColor: mainColor,
+                  color: contrastText,
+                  flex: 1.2,
+                }}
+              >
+                Present
+              </Text>
+              <Text
+                style={{
+                  ...pdfStyles.tableHeader,
+                  backgroundColor: mainColor,
+                  color: contrastText,
+                  flex: 1.2,
+                }}
+              >
+                Cumulative
+              </Text>
             </View>
 
             {/* Rows */}
             {claimedItems.map((item, index) => (
               <View key={item.sn} style={pdfStyles.tableRow}>
-                <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFF' : lightColor, flex: 0.5 }}>
+                <Text
+                  style={{
+                    ...pdfStyles.tableCell,
+                    backgroundColor: index % 2 === 0 ? '#FFF' : lightColor,
+                    flex: 0.5,
+                  }}
+                >
                   {item.sn}.
                 </Text>
                 <View
@@ -315,16 +516,34 @@ const ClaimPDF: React.FC<{ claim: Claim; organization: Organization }> = ({
                 >
                   <Text style={{ fontSize: 8 }}>{item.description}</Text>
                   {item.ledger && (
-                    <Text style={{ fontSize: 6.5, color: '#555' }}>({item.ledger})</Text>
+                    <Text style={{ fontSize: 6.5, color: '#555' }}>
+                      ({item.ledger})
+                    </Text>
                   )}
                   {item.remarks && (
-                    <Text style={{ fontSize: 6.5, color: '#888' }}>({item.remarks})</Text>
+                    <Text style={{ fontSize: 6.5, color: '#888' }}>
+                      ({item.remarks})
+                    </Text>
                   )}
                 </View>
-                <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFF' : lightColor, flex: 0.7, textAlign: 'center' }}>
+                <Text
+                  style={{
+                    ...pdfStyles.tableCell,
+                    backgroundColor: index % 2 === 0 ? '#FFF' : lightColor,
+                    flex: 0.7,
+                    textAlign: 'center',
+                  }}
+                >
                   {item.unit}
                 </Text>
-                <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFF' : lightColor, flex: 1, textAlign: 'right' }}>
+                <Text
+                  style={{
+                    ...pdfStyles.tableCell,
+                    backgroundColor: index % 2 === 0 ? '#FFF' : lightColor,
+                    flex: 1,
+                    textAlign: 'right',
+                  }}
+                >
                   {item.presentQty}
                 </Text>
                 <Text
@@ -347,15 +566,38 @@ const ClaimPDF: React.FC<{ claim: Claim; organization: Organization }> = ({
                     fontSize: 7.5,
                   }}
                 >
-                  {item.presentAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  {item.presentAmount.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                  })}
                 </Text>
-                <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFF' : lightColor, flex: 1.2, textAlign: 'right' }}>
+                <Text
+                  style={{
+                    ...pdfStyles.tableCell,
+                    backgroundColor: index % 2 === 0 ? '#FFF' : lightColor,
+                    flex: 1.2,
+                    textAlign: 'right',
+                  }}
+                >
                   {item.previousQty}
                 </Text>
-                <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFF' : lightColor, flex: 1.2, textAlign: 'right' }}>
+                <Text
+                  style={{
+                    ...pdfStyles.tableCell,
+                    backgroundColor: index % 2 === 0 ? '#FFF' : lightColor,
+                    flex: 1.2,
+                    textAlign: 'right',
+                  }}
+                >
                   {item.presentQty}
                 </Text>
-                <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFF' : lightColor, flex: 1.2, textAlign: 'right' }}>
+                <Text
+                  style={{
+                    ...pdfStyles.tableCell,
+                    backgroundColor: index % 2 === 0 ? '#FFF' : lightColor,
+                    flex: 1.2,
+                    textAlign: 'right',
+                  }}
+                >
                   {item.cumulativeQty}
                 </Text>
                 <Text
@@ -367,7 +609,9 @@ const ClaimPDF: React.FC<{ claim: Claim; organization: Organization }> = ({
                     fontSize: 7.5,
                   }}
                 >
-                  {item.previousAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  {item.previousAmount.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                  })}
                 </Text>
                 <Text
                   style={{
@@ -378,7 +622,9 @@ const ClaimPDF: React.FC<{ claim: Claim; organization: Organization }> = ({
                     fontSize: 7.5,
                   }}
                 >
-                  {item.presentAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  {item.presentAmount.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                  })}
                 </Text>
                 <Text
                   style={{
@@ -389,7 +635,9 @@ const ClaimPDF: React.FC<{ claim: Claim; organization: Organization }> = ({
                     fontSize: 7.5,
                   }}
                 >
-                  {item.cumulativeAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  {item.cumulativeAmount.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                  })}
                 </Text>
               </View>
             ))}
@@ -408,8 +656,23 @@ const ClaimPDF: React.FC<{ claim: Claim; organization: Organization }> = ({
               >
                 GRAND TOTAL ({currencyCode})
               </Text>
-              <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1, textAlign: 'right' }}></Text>
-              <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 3.9 }}></Text>
+              <Text
+                style={{
+                  ...pdfStyles.tableHeader,
+                  backgroundColor: mainColor,
+                  color: contrastText,
+                  flex: 1,
+                  textAlign: 'right',
+                }}
+              ></Text>
+              <Text
+                style={{
+                  ...pdfStyles.tableHeader,
+                  backgroundColor: mainColor,
+                  color: contrastText,
+                  flex: 3.9,
+                }}
+              ></Text>
               <Text
                 style={{
                   ...pdfStyles.tableHeader,
@@ -420,7 +683,9 @@ const ClaimPDF: React.FC<{ claim: Claim; organization: Organization }> = ({
                   fontWeight: 'bold',
                 }}
               >
-                {totals.previousAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                {totals.previousAmount.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                })}
               </Text>
               <Text
                 style={{
@@ -432,7 +697,9 @@ const ClaimPDF: React.FC<{ claim: Claim; organization: Organization }> = ({
                   fontWeight: 'bold',
                 }}
               >
-                {totals.presentAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                {totals.presentAmount.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                })}
               </Text>
               <Text
                 style={{
@@ -444,14 +711,22 @@ const ClaimPDF: React.FC<{ claim: Claim; organization: Organization }> = ({
                   fontWeight: 'bold',
                 }}
               >
-                {totals.cumulativeAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                {totals.cumulativeAmount.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                })}
               </Text>
             </View>
           </View>
         </View>
 
         {/* ==================== Signature ==================== */}
-        <View style={{ marginTop: 50, flexDirection: 'row', justifyContent: 'flex-end' }}>
+        <View
+          style={{
+            marginTop: 50,
+            flexDirection: 'row',
+            justifyContent: 'flex-end',
+          }}
+        >
           <View style={{ width: 300 }}>
             <Text style={{ ...pdfStyles.minInfo, color: mainColor }}>
               Prepared By:

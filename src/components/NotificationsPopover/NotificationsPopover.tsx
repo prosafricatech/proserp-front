@@ -17,15 +17,15 @@ import {
   ThemeProvider,
 } from '@mui/material';
 
-import { NotificationsDataProps, notificationsData } from './data';
-import { NotificationBirthday } from './NotificationBirthday';
-import { NotificationInvitation } from './NotificationInvitation';
-import { NotificationPost } from './NotificationPost';
-import { NotificationSharedPost } from './NotificationSharedPost';
 import dynamic from 'next/dynamic';
+import { NotificationsDataProps, notificationsData } from './data';
+import { NotificationBirthday } from './notificationBirthday';
+import { NotificationInvitation } from './notificationInvitation';
+import { NotificationPost } from './notificationPost';
+import { NotificationSharedPost } from './notificationSharedPost';
 
-const JumboDdPopover = dynamic(() =>
-  import('@jumbo/components').then((mod) => mod.JumboDdPopover),
+const JumboDdPopover = dynamic(
+  () => import('@jumbo/components').then((mod) => mod.JumboDdPopover),
   { ssr: false }
 );
 

@@ -1,10 +1,10 @@
-import { User } from "@/types/auth-types";
-import { Product } from "../productAndServices/products/ProductType";
-import { MeasurementUnit } from "../masters/measurementUnits/MeasurementUnitType";
-import { CostCenter } from "../masters/costCenters/CostCenterType";
-import { Currency } from "../masters/Currencies/CurrencyType";
-import { Ledger } from "../accounts/ledgers/LedgerType";
-import { Stakeholder } from "../masters/stakeholders/StakeholderType";
+import { User } from '@/types/auth-types';
+import { Ledger } from '../accounts/ledgers/LedgerType';
+import { CostCenter } from '../masters/costCenters/CostCenterType';
+import { Currency } from '../masters/currencies/CurrencyType';
+import { MeasurementUnit } from '../masters/measurementUnits/MeasurementUnitType';
+import { Stakeholder } from '../masters/stakeholders/StakeholderType';
+import { Product } from '../productAndServices/products/ProductType';
 
 interface Role {
   id: number;
@@ -50,7 +50,7 @@ export interface Approval {
 
 export interface ApprovalChain {
   id: number;
-  process_type: "PURCHASE" | "PAYMENT";
+  process_type: 'PURCHASE' | 'PAYMENT';
   cost_center_id: number;
 }
 
@@ -140,7 +140,7 @@ export interface BaseRequisition {
   creator: User;
   currency: Currency;
   next_approval_level: ApprovalChainLevel | null;
-  process_type: "PURCHASE" | "PAYMENT";
+  process_type: 'PURCHASE' | 'PAYMENT';
   reference: string | null;
   remarks: string | null;
   status: string;
@@ -148,13 +148,13 @@ export interface BaseRequisition {
 }
 
 export interface PurchaseRequisition extends BaseRequisition {
-  process_type: "PURCHASE";
+  process_type: 'PURCHASE';
   items: PurchaseItem[];
   is_fully_ordered: boolean;
 }
 
 export interface PaymentRequisition extends BaseRequisition {
-  process_type: "PAYMENT";
+  process_type: 'PAYMENT';
   items: PaymentItem[];
   is_fully_paid: boolean;
 }

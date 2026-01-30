@@ -1,9 +1,7 @@
 'use client';
-import { SearchGlobal } from '@/components/SearchGlobal';
 import { useSmallScreen } from '@/hooks/useSmallScreen';
 import { Div } from '@jumbo/shared';
-import CloseIcon from '@mui/icons-material/Close';
-import { IconButton, Slide } from '@mui/material';
+import { Slide } from '@mui/material';
 
 type SearchProps = {
   show: boolean;

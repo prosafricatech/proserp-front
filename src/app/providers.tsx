@@ -1,6 +1,6 @@
 'use client';
 
-import { AppSnackbar } from '@/components/AppSnackbar';
+import { AppSnackbar } from '@/components/appSnackbar';
 import { AuthInitializer } from '@/components/authInitializer/AuthInitializer';
 import { VFDProvider } from '@/components/vfd/VFDProvider';
 import { CONFIG } from '@/config';

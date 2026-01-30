@@ -1,10 +1,7 @@
-import EditOrganization from '@/components/Organizations/form/EditOrganization'
-import React from 'react'
+import EditOrganization from '@/components/organizations/form/EditOrganization';
 
 function page() {
-  return (
-    <EditOrganization/>
-  )
+  return <EditOrganization />;
 }
 
-export default page
+export default page;

@@ -1,11 +1,8 @@
-export const dynamic = "force-dynamic";
-import OrganizationInvitations from '@/components/Invitations/Invitations'
-import React from 'react'
+export const dynamic = 'force-dynamic';
+import OrganizationInvitations from '@/components/invitations/Invitations';
 
 function page() {
-  return (
-    <OrganizationInvitations/>
-  )
+  return <OrganizationInvitations />;
 }
 
-export default page
+export default page;

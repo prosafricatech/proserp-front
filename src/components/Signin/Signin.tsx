@@ -1,21 +1,12 @@
 'use client';
 
-import { LoginForm } from '@/components/LoginForm';
-import { Link } from '@/components/NextLink';
-import { ASSET_IMAGES } from '@/utilities/constants/paths';
-import { Facebook, Google, Twitter } from '@mui/icons-material';
-import {
-  Card,
-  CardContent,
-  IconButton,
-  Typography,
-  Box,
-} from '@mui/material';
-import Stack from '@mui/material/Stack';
-import Image from 'next/image';
-import React from 'react';
 import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
 import { useLanguage } from '@/app/[lang]/contexts/LanguageContext';
+import { LoginForm } from '@/components/loginForm';
+import { Link } from '@/components/nextLink';
+import { ASSET_IMAGES } from '@/utilities/constants/paths';
+import { Box, Card, CardContent, Typography } from '@mui/material';
+import Image from 'next/image';
 
 export const Signin = () => {
   const dictionary = useDictionary();
@@ -24,7 +15,7 @@ export const Signin = () => {
   return (
     <Box
       sx={{
-        width: { xs: '100%'},
+        width: { xs: '100%' },
         minHeight: '100vh',
         margin: '0',
         p: { xs: 2, sm: 3, md: 4 },
@@ -69,96 +60,96 @@ export const Signin = () => {
               background: 'inherit',
               clipPath: {
                 xs: 'polygon(0 0, 100% 0, 100% 100%, 0 70%)',
-                md: 'polygon(0 0, 100% 0, 100% 100%, 0 100%)'
+                md: 'polygon(0 0, 100% 0, 100% 100%, 0 100%)',
               },
               zIndex: 1,
             },
             // Main curve for desktop (right edge)
             clipPath: {
               xs: 'none',
-              md: 'polygon(0 0, 100% 0, 85% 100%, 0 100%)'
+              md: 'polygon(0 0, 100% 0, 85% 100%, 0 100%)',
             },
           }}
         >
           <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            color: 'common.white',
-            position: 'relative',
-            zIndex: 2,
-            height: '100%',
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}
-        >
-          {/* Header Section - Centered at top */}
-          <Box 
-            sx={{ 
-              display: 'flex', 
-              flexDirection: 'column', 
-              alignItems: 'center',
-              textAlign: 'center',
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              color: 'common.white',
+              position: 'relative',
+              zIndex: 2,
+              height: '100%',
               justifyContent: 'center',
-              mb: 3,
+              alignItems: 'center',
             }}
           >
-            <Typography
-              variant={'h4'}
-              color={'inherit'}
-              fontWeight={600}
+            {/* Header Section - Centered at top */}
+            <Box
               sx={{
-                fontSize: { 
-                  xs: '1.75rem',
-                  sm: '2rem', 
-                  md: '2.5rem',
-                  lg: '3rem'
-                },
-                lineHeight: 1.2,
-                textShadow: '2px 2px 8px rgba(0,0,0,0.3)',
-                mb: 2,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                textAlign: 'center',
+                justifyContent: 'center',
+                mb: 3,
               }}
             >
-              {dictionary.signin.header}
-            </Typography>
-          </Box>
+              <Typography
+                variant={'h4'}
+                color={'inherit'}
+                fontWeight={600}
+                sx={{
+                  fontSize: {
+                    xs: '1.75rem',
+                    sm: '2rem',
+                    md: '2.5rem',
+                    lg: '3rem',
+                  },
+                  lineHeight: 1.2,
+                  textShadow: '2px 2px 8px rgba(0,0,0,0.3)',
+                  mb: 2,
+                }}
+              >
+                {dictionary.signin.header}
+              </Typography>
+            </Box>
 
-          {/* Logo Section - Centered below header */}
-          <Box 
-            sx={{ 
-              display: 'flex', 
-              justifyContent: 'center',
-              alignItems: 'center',
-              width: '100%',
-            }}
-          >
-            <Link 
-              underline='none' 
-              href='#' 
-              sx={{ 
+            {/* Logo Section - Centered below header */}
+            <Box
+              sx={{
                 display: 'flex',
                 justifyContent: 'center',
                 alignItems: 'center',
+                width: '100%',
               }}
             >
-              <Image
-                height={50}
-                width={150}
-                src={`${ASSET_IMAGES}/logos/proserp-white.png`}
-                alt='ProsERP'
-                style={{
-                  filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.3))'
+              <Link
+                underline='none'
+                href='#'
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
                 }}
-              />
-            </Link>
+              >
+                <Image
+                  height={50}
+                  width={150}
+                  src={`${ASSET_IMAGES}/logos/proserp-white.png`}
+                  alt='ProsERP'
+                  style={{
+                    filter: 'drop-shadow(2px 2px 4px rgba(0,0,0,0.3))',
+                  }}
+                />
+              </Link>
+            </Box>
           </Box>
-        </Box>
         </CardContent>
 
         {/* Right Form Section with Matching Curves */}
-       <CardContent 
-          sx={{ 
-            flex: 1, 
+        <CardContent
+          sx={{
+            flex: 1,
             p: { xs: 3, md: 4 },
             background: 'white',
             position: 'relative',
@@ -166,7 +157,7 @@ export const Signin = () => {
             // Simplify clipPath or remove it
             clipPath: {
               xs: 'none', // Disable on mobile completely
-              md: 'polygon(10% 0, 100% 0, 100% 100%, 0 100%)' // Less aggressive curve
+              md: 'polygon(10% 0, 100% 0, 100% 100%, 0 100%)', // Less aggressive curve
             },
             // Remove negative margin
             marginLeft: 0,
@@ -178,37 +169,37 @@ export const Signin = () => {
               backgroundColor: 'white',
               padding: { xs: 2, md: 0 },
               borderRadius: '8px',
-            }
+            },
           }}
         >
           <Box sx={{ position: 'relative', zIndex: 3 }}>
             <LoginForm />
-            
+
             {/* Additional Links */}
             <Box sx={{ mt: 3 }}>
               <Typography variant={'body1'} mb={2} align='center'>
-                <Link 
-                  underline='none' 
+                <Link
+                  underline='none'
                   href={`/${lang}/auth/reset-password`}
-                  sx={{ 
+                  sx={{
                     color: '#0267a0',
                   }}
                 >
                   {dictionary.signin.forgotPassword.text}
                 </Link>
               </Typography>
-              
+
               <Typography variant={'body1'} mb={3} align='center'>
-                <Box component="span" sx={{ color: 'text.secondary', mr: 1 }}>
+                <Box component='span' sx={{ color: 'text.secondary', mr: 1 }}>
                   {dictionary.signin.accountPrompt.text}
                 </Box>
-                <Link 
-                  underline='none' 
+                <Link
+                  underline='none'
                   href={`/${lang}/auth/signup`}
-                  sx={{ 
+                  sx={{
                     color: '#0267a0',
                     fontWeight: 600,
-                    '&:hover': { color: '#00a8ff' }
+                    '&:hover': { color: '#00a8ff' },
                   }}
                 >
                   {dictionary.signin.accountPrompt.action}

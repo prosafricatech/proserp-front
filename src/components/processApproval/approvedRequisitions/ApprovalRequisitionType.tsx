@@ -1,6 +1,6 @@
-import { CostCenter } from "@/components/masters/costCenters/CostCenterType";
-import { Currency } from "@/components/masters/Currencies/CurrencyType";
-import { User } from "@/types/auth-types";
+import { CostCenter } from '@/components/masters/costCenters/CostCenterType';
+import { Currency } from '@/components/masters/currencies/CurrencyType';
+import { User } from '@/types/auth-types';
 
 interface Role {
   id: number;
@@ -42,7 +42,7 @@ export interface BaseApprovalRequisition {
   approval_date: string;
   creator: User;
   currency: Currency;
-  process_type: "PURCHASE" | "PAYMENT";
+  process_type: 'PURCHASE' | 'PAYMENT';
   remarks: string | null;
   status_label?: string;
   requisition: RequisitionSummary;
@@ -50,18 +50,20 @@ export interface BaseApprovalRequisition {
 }
 
 export interface PaymentApprovalRequisition extends BaseApprovalRequisition {
-  process_type: "PAYMENT";
+  process_type: 'PAYMENT';
   is_fully_paid: boolean;
   payments_count: number;
 }
 
 export interface PurchaseApprovalRequisition extends BaseApprovalRequisition {
-  process_type: "PURCHASE";
+  process_type: 'PURCHASE';
   is_fully_ordered: boolean;
   purchase_orders_count: number;
 }
 
-export type ApprovalRequisition = PaymentApprovalRequisition | PurchaseApprovalRequisition;
+export type ApprovalRequisition =
+  | PaymentApprovalRequisition
+  | PurchaseApprovalRequisition;
 export type ApprovalRequisitionList = ApprovalRequisition[];
 
 // Corrected utility types
@@ -72,7 +74,9 @@ export type RequisitionAmount = {
 };
 
 // Helper type to extract amount info from a requisition
-export const getRequisitionAmount = (req: ApprovalRequisition): RequisitionAmount => ({
+export const getRequisitionAmount = (
+  req: ApprovalRequisition
+): RequisitionAmount => ({
   amount: req.amount,
-  vat_amount: req.requisition.vat_amount
+  vat_amount: req.requisition.vat_amount,
 });
