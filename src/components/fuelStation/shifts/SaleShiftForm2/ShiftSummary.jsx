@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useContext, useMemo } from 'react';
+import { useCurrencySelect } from '@/components/masters/Currencies/CurrencySelectProvider';
 import {
   TableContainer,
   Table,
@@ -27,6 +28,21 @@ function ShiftSummary() {
   const {activeStation} = useContext(StationFormContext);
   const {fuel_pumps, products} = activeStation;
   const {ungroupedLedgerOptions} = useLedgerSelect();
+  const { currencies } = useCurrencySelect();
+  const baseCurrency = currencies?.find(c => c.is_base === 1);
+  const currencyCode = baseCurrency?.code;
+  
+  const formatMoney = (amount) => {
+    if (currencyCode) {
+      try {
+        return amount.toLocaleString('en-US', { style: 'currency', currency: currencyCode });
+      } catch {
+        // fallback to plain number if currencyCode is invalid
+        return amount.toLocaleString();
+      }
+    }
+    return amount.toLocaleString();
+  };
 
   const allCashiers = useWatch({
     name: 'cashiers',
@@ -431,6 +447,11 @@ function ShiftSummary() {
         <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <AccountBalance color="primary" />
           Financial Ledgers Summary
+          {currencyCode && (
+            <Typography variant="caption" color="textSecondary" sx={{ ml: 1 }}>
+              (Amounts in {currencyCode})
+            </Typography>
+          )}
         </Typography>
         <Divider sx={{ mb: 2 }} />
 
@@ -440,6 +461,11 @@ function ShiftSummary() {
               <Typography variant="subtitle2" color="primary.dark" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <AttachMoney fontSize="small" />
                 MAIN LEDGERS (PER CASHIER)
+                {currencyCode && (
+                  <Typography variant="caption" color="textSecondary" sx={{ ml: 1 }}>
+                    ({currencyCode})
+                  </Typography>
+                )}
               </Typography>
               
               {mainLedgersSummary.summary.length === 0 ? (
@@ -465,7 +491,7 @@ function ShiftSummary() {
                               <Typography variant="body2">{ledger.ledgerName}</Typography>
                             </TableCell>
                             <TableCell align="right">
-                              <Typography fontWeight="medium">{ledger.amount.toLocaleString()}</Typography>
+                              <Typography fontWeight="medium">{formatMoney(ledger.amount)}</Typography>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -477,7 +503,7 @@ function ShiftSummary() {
                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                       <Typography variant="body2" fontWeight="bold">Total Main Ledgers:</Typography>
                       <Typography variant="body1" fontWeight="bold" color="primary.dark">
-                        {mainLedgersSummary.totalMainLedgerAmount.toLocaleString()}
+                        {formatMoney(mainLedgersSummary.totalMainLedgerAmount)}
                       </Typography>
                     </Box>
                   </Box>
@@ -491,6 +517,11 @@ function ShiftSummary() {
               <Typography variant="subtitle2" color="secondary.dark" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Payment fontSize="small" />
                 OTHER TRANSACTIONS
+                {currencyCode && (
+                  <Typography variant="caption" color="textSecondary" sx={{ ml: 1 }}>
+                    ({currencyCode})
+                  </Typography>
+                )}
               </Typography>
               
               {otherLedgersSummary.summary.length === 0 ? (
@@ -502,7 +533,6 @@ function ShiftSummary() {
                       <TableHead>
                         <TableRow>
                           <TableCell>Ledger</TableCell>
-                          <TableCell align="center">Cashiers</TableCell>
                           <TableCell align="right">Amount</TableCell>
                         </TableRow>
                       </TableHead>
@@ -512,16 +542,8 @@ function ShiftSummary() {
                             <TableCell>
                               <Typography variant="body2">{ledger.ledgerName}</Typography>
                             </TableCell>
-                            <TableCell align="center">
-                              <Chip
-                                size="small"
-                                label={`${ledger.cashierCount}`}
-                                color="default"
-                                variant="outlined"
-                              />
-                            </TableCell>
                             <TableCell align="right">
-                              <Typography fontWeight="medium">{ledger.amount.toLocaleString()}</Typography>
+                              <Typography fontWeight="medium">{formatMoney(ledger.amount)}</Typography>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -533,7 +555,7 @@ function ShiftSummary() {
                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                       <Typography variant="body2" fontWeight="bold">Total Other Transactions:</Typography>
                       <Typography variant="body1" fontWeight="bold" color="secondary.dark">
-                        {otherLedgersSummary.totalOtherLedgerAmount.toLocaleString()}
+                        {formatMoney(otherLedgersSummary.totalOtherLedgerAmount)}
                       </Typography>
                     </Box>
                   </Box>
@@ -547,6 +569,11 @@ function ShiftSummary() {
               <Typography variant="subtitle2" color="info.dark" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <ReceiptOutlined fontSize="small" />
                 FUEL VOUCHERS SUMMARY
+                {currencyCode && (
+                  <Typography variant="caption" color="textSecondary" sx={{ ml: 1 }}>
+                    ({currencyCode})
+                  </Typography>
+                )}
               </Typography>
               
               {fuelVouchersAggregated.summary.length === 0 ? (
@@ -560,7 +587,6 @@ function ShiftSummary() {
                           <TableCell>Stakeholder/Ledger</TableCell>
                           <TableCell>Product</TableCell>
                           <TableCell align="right">Quantity (L)</TableCell>
-                          <TableCell align="center">Cashiers</TableCell>
                           <TableCell align="right">Amount</TableCell>
                         </TableRow>
                       </TableHead>
@@ -576,17 +602,9 @@ function ShiftSummary() {
                             <TableCell align="right">
                               <Typography>{voucher.quantity.toLocaleString()}</Typography>
                             </TableCell>
-                            <TableCell align="center">
-                              <Chip
-                                size="small"
-                                label={`${voucher.cashierCount}`}
-                                color="info"
-                                variant="outlined"
-                              />
-                            </TableCell>
                             <TableCell align="right">
                               <Typography fontWeight="medium" color="info.dark">
-                                {voucher.amount.toLocaleString()}
+                                {formatMoney(voucher.amount)}
                               </Typography>
                             </TableCell>
                           </TableRow>
@@ -609,7 +627,7 @@ function ShiftSummary() {
                         <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                           <Typography variant="body2" fontWeight="bold">Total Vouchers Amount:</Typography>
                           <Typography variant="body1" fontWeight="bold" color="info.dark">
-                            {fuelVouchersAggregated.totalVoucherAmount.toLocaleString()}
+                            {formatMoney(fuelVouchersAggregated.totalVoucherAmount)}
                           </Typography>
                         </Box>
                       </Grid>
@@ -635,6 +653,11 @@ function ShiftSummary() {
             >
               <Typography variant="subtitle1" fontWeight="bold" gutterBottom color="primary.dark">
                 GRAND TOTALS
+                {currencyCode && (
+                  <Typography variant="caption" color="textSecondary" sx={{ ml: 1 }}>
+                    (Amounts in {currencyCode})
+                  </Typography>
+                )}
               </Typography>
               
               <Grid container spacing={2}>
@@ -644,7 +667,7 @@ function ShiftSummary() {
                       Total Main Ledgers
                     </Typography>
                     <Typography variant="h6" color="primary.dark">
-                      {mainLedgersSummary.totalMainLedgerAmount.toLocaleString()}
+                      {formatMoney(mainLedgersSummary.totalMainLedgerAmount)}
                     </Typography>
                   </Box>
                 </Grid>
@@ -655,7 +678,7 @@ function ShiftSummary() {
                       Total Other Ledgers
                     </Typography>
                     <Typography variant="h6" color="secondary.dark">
-                      {otherLedgersSummary.totalOtherLedgerAmount.toLocaleString()}
+                      {formatMoney(otherLedgersSummary.totalOtherLedgerAmount)}
                     </Typography>
                   </Box>
                 </Grid>
@@ -666,7 +689,7 @@ function ShiftSummary() {
                       Total Vouchers
                     </Typography>
                     <Typography variant="h6" color="info.dark">
-                      {fuelVouchersAggregated.totalVoucherAmount.toLocaleString()}
+                      {formatMoney(fuelVouchersAggregated.totalVoucherAmount)}
                     </Typography>
                   </Box>
                 </Grid>
@@ -678,11 +701,11 @@ function ShiftSummary() {
                       TOTAL DISTRIBUTED CASH:
                     </Typography>
                     <Typography variant="h5" fontWeight="bold" color="primary.dark">
-                      {(
+                      {formatMoney(
                         mainLedgersSummary.totalMainLedgerAmount + 
                         otherLedgersSummary.totalOtherLedgerAmount + 
                         fuelVouchersAggregated.totalVoucherAmount
-                      ).toLocaleString()}
+                      )}
                     </Typography>
                   </Box>
                 </Grid>
@@ -711,8 +734,8 @@ function ShiftSummary() {
                 <TableCell align="right">Pump Sales (L)</TableCell>
                 <TableCell align="right">Adjustments (+/-)</TableCell>
                 <TableCell align="right">Total Sold (L)</TableCell>
-                <TableCell align="right">Price (TZS)</TableCell>
-                <TableCell align="right">Amount (TZS)</TableCell>
+                <TableCell align="right">Price{currencyCode ? ` (${currencyCode})` : ''}</TableCell>
+                <TableCell align="right">Amount{currencyCode ? ` (${currencyCode})` : ''}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -828,10 +851,10 @@ function ShiftSummary() {
                       <TableRow key={product.id}>
                         <TableCell>{product.name}</TableCell>
                         <TableCell align="right">{qty.toLocaleString()}</TableCell>
-                        <TableCell align="right">{price.toLocaleString()}</TableCell>
+                        <TableCell align="right">{formatMoney(price)}</TableCell>
                         <TableCell align="right">
                           <Typography color="secondary.main" fontWeight="medium">
-                            {amount.toLocaleString()}
+                            {formatMoney(amount)}
                           </Typography>
                         </TableCell>
                       </TableRow>
@@ -845,7 +868,7 @@ function ShiftSummary() {
                     </TableCell>
                     <TableCell align="right">-</TableCell>
                     <TableCell align="right" sx={{ color: 'secondary.main' }}>
-                      {financialSummary.totalVouchersAmount.toLocaleString()}
+                      {formatMoney(financialSummary.totalVouchersAmount)}
                     </TableCell>
                   </TableRow>
                 </TableBody>
@@ -879,6 +902,11 @@ function ShiftSummary() {
             <TrendingDown color="error" />
           )}
           Cash Collection & Profit/Loss Summary
+          {currencyCode && (
+            <Typography variant="caption" color="textSecondary" sx={{ ml: 1 }}>
+              (Amounts in {currencyCode})
+            </Typography>
+          )}
         </Typography>
         <Divider sx={{ mb: 2 }} />
 
@@ -890,26 +918,26 @@ function ShiftSummary() {
                 CASH FLOW COMPARISON
               </Typography>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                <Typography>Expected Cash:</Typography>
+                <Typography>Expected Cash{currencyCode ? ` (${currencyCode})` : ''}:</Typography>
                 <Typography variant="h6" color="primary.main">
-                  {financialSummary.cashRemaining.toLocaleString()}
+                  {formatMoney(financialSummary.cashRemaining)}
                 </Typography>
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                <Typography>Actual Collected:</Typography>
+                <Typography>Actual Collected{currencyCode ? ` (${currencyCode})` : ''}:</Typography>
                 <Typography variant="h6" color="info.main">
-                  {totalCollectedAmount.toLocaleString()}
+                  {formatMoney(totalCollectedAmount)}
                 </Typography>
               </Box>
               <Divider sx={{ my: 1 }} />
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
-                <Typography fontWeight="bold">Difference:</Typography>
+                <Typography fontWeight="bold">Difference{currencyCode ? ` (${currencyCode})` : ''}:</Typography>
                 <Typography
                   variant="h5"
                   fontWeight="bold"
                   color={profitLossSummary.netProfitLoss >= 0 ? "success.main" : "error.main"}
                 >
-                  {profitLossSummary.netProfitLoss >= 0 ? '+' : ''}{profitLossSummary.netProfitLoss.toLocaleString()}
+                  {profitLossSummary.netProfitLoss >= 0 ? '+' : ''}{formatMoney(Math.abs(profitLossSummary.netProfitLoss))}
                 </Typography>
               </Box>
             </Paper>
@@ -925,7 +953,7 @@ function ShiftSummary() {
                 <Grid size={{ xs: 6 }}>
                   <Paper elevation={0} sx={{ p: 1.5, textAlign: 'center', bgcolor: 'success.50', borderRadius: 1 }}>
                     <Typography variant="h5" color="success.dark">
-                      {profitLossSummary.totalProfit.toLocaleString()}
+                      {formatMoney(profitLossSummary.totalProfit)}
                     </Typography>
                     <Typography variant="caption" color="textSecondary">
                       Total Profit
@@ -936,7 +964,7 @@ function ShiftSummary() {
                 <Grid size={{ xs: 6 }}>
                   <Paper elevation={0} sx={{ p: 1.5, textAlign: 'center', bgcolor: 'error.50', borderRadius: 1 }}>
                     <Typography variant="h5" color="error">
-                      {profitLossSummary.totalLoss.toLocaleString()}
+                      {formatMoney(profitLossSummary.totalLoss)}
                     </Typography>
                     <Typography variant="caption" color="textSecondary">
                       Total Loss
@@ -964,7 +992,7 @@ function ShiftSummary() {
                   fontWeight="bold"
                   color={profitLossSummary.netProfitLoss >= 0 ? "success.dark" : "error"}
                 >
-                  {profitLossSummary.netProfitLoss >= 0 ? '+' : ''}{profitLossSummary.netProfitLoss.toLocaleString()}
+                  {profitLossSummary.netProfitLoss >= 0 ? '+' : '-'}{formatMoney(Math.abs(profitLossSummary.netProfitLoss))}
                 </Typography>
                 <Typography variant="caption" color="textSecondary">
                   {profitLossSummary.netProfitLoss >= 0 ? 'Overall Profit' : 'Overall Loss'}
@@ -998,17 +1026,17 @@ function ShiftSummary() {
                             <Typography fontWeight="medium">{cashier.name}</Typography>
                           </TableCell>
                           <TableCell align="right">
-                            <Typography>{cashier.expectedCash.toLocaleString()}</Typography>
+                            <Typography>{formatMoney(cashier.expectedCash)}</Typography>
                           </TableCell>
                           <TableCell align="right">
-                            <Typography color="info.main">{cashier.collectedAmount.toLocaleString()}</Typography>
+                            <Typography color="info.main">{formatMoney(cashier.collectedAmount)}</Typography>
                           </TableCell>
                           <TableCell align="right">
                             <Typography
                               fontWeight="bold"
                               color={cashier.profitLoss >= 0 ? "success.main" : "error.main"}
                             >
-                              {cashier.profitLoss >= 0 ? '+' : ''}{cashier.profitLoss.toLocaleString()}
+                              {cashier.profitLoss >= 0 ? '+' : '-'}{formatMoney(Math.abs(cashier.profitLoss))}
                             </Typography>
                           </TableCell>
                           <TableCell align="center">
