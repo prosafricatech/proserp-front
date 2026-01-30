@@ -36,9 +36,90 @@ function ShiftSummary() {
     name: 'product_prices',
   }) || [];
 
+  // Helper function to sanitize numbers
+  const sanitizedNumber = (value) => {
+    if (value === null || value === undefined || value === '') return 0;
+    const num = Number(value);
+    return isNaN(num) ? 0 : num;
+  };
+
+  // Helper function to get product price
+  const getProductPrice = (productId) => {
+    return productPrices.find(p => p?.product_id === productId)?.price || 0;
+  };
+
+  // Calculate main ledger amount for a cashier (same logic as CashReconciliation)
+  const calculateCashierMainLedgerAmount = (cashier) => {
+    // If main_ledger_amount already exists, use it
+    if (cashier.main_ledger_amount !== undefined && cashier.main_ledger_amount !== null) {
+      return cashier.main_ledger_amount;
+    }
+    
+    const pumpReadings = cashier.pump_readings || [];
+    const fuelVouchers = cashier.fuel_vouchers || [];
+    const adjustments = cashier.adjustments || [];
+    const cashTransactions = cashier.cash_transactions || [];
+    const selectedPumps = cashier.selected_pumps || [];
+    const mainLedgerId = cashier.main_ledger?.id || cashier.main_ledger_id;
+    
+    // Calculate products total from pump readings
+    let productsTotal = 0;
+    
+    selectedPumps.forEach(pumpId => {
+      const pump = fuel_pumps?.find(p => p.id === pumpId);
+      if (!pump) return;
+
+      const productId = pump.product_id;
+      const reading = pumpReadings.find(r => r?.fuel_pump_id === pumpId);
+
+      if (reading) {
+        const sold = (sanitizedNumber(reading.closing) - sanitizedNumber(reading.opening)) || 0;
+        const price = getProductPrice(productId);
+        productsTotal += sold * price;
+      }
+    });
+    
+    // Adjustments effect
+    adjustments.forEach(adj => {
+      const productId = adj.product_id;
+      const qty = sanitizedNumber(adj.quantity);
+      const price = getProductPrice(productId);
+
+      if (adj.operator === '+') {
+        productsTotal -= qty * price;
+      } else if (adj.operator === '-') {
+        productsTotal += qty * price;
+      }
+    });
+    
+    // Fuel vouchers total
+    let voucherTotal = 0;
+    fuelVouchers.forEach(voucher => {
+      const productId = voucher.product_id;
+      if (!productId) return;
+
+      const qty = sanitizedNumber(voucher.quantity);
+      const price = getProductPrice(productId);
+      voucherTotal += qty * price;
+    });
+    
+    const cashRemaining = productsTotal - voucherTotal;
+    
+    // Filter out main ledger transactions
+    const filteredCashTransactions = cashTransactions.filter(transaction => {
+      const transactionLedgerId = transaction.ledger_id || transaction.id;
+      return mainLedgerId ? transactionLedgerId !== mainLedgerId : true;
+    });
+    
+    const filteredTransactionsSum = filteredCashTransactions.reduce((sum, transaction) => 
+      sum + sanitizedNumber(transaction?.amount), 0);
+    
+    return cashRemaining - filteredTransactionsSum;
+  };
+
   // Calculate total collected amount from all cashiers
   const totalCollectedAmount = useMemo(() => {
-    return allCashiers.reduce((sum, cashier) => sum + (cashier.collected_amount || 0), 0);
+    return allCashiers.reduce((sum, cashier) => sum + sanitizedNumber(cashier.collected_amount), 0);
   }, [allCashiers]);
 
   // Calculate main ledgers summary per cashier
@@ -46,26 +127,28 @@ function ShiftSummary() {
     const summary = [];
     let totalMainLedgerAmount = 0;
 
-    allCashiers.forEach((cashier, index) => {
+    allCashiers.forEach((cashier) => {
       const mainLedger = cashier.main_ledger;
-      const mainLedgerAmount = cashier.main_ledger_amount || 0;
       
       if (mainLedger) {
-        totalMainLedgerAmount += mainLedgerAmount;
+        // Calculate main ledger amount if not set
+        const mainLedgerAmount = calculateCashierMainLedgerAmount(cashier);
+        
+        totalMainLedgerAmount += mainLedgerAmount || 0;
         
         summary.push({
           cashierName: cashier.name,
-          ledgerName: ungroupedLedgerOptions.find(ledger => ledger.id === mainLedger.id)?.name,
+          ledgerName: ungroupedLedgerOptions.find(ledger => ledger.id === mainLedger.id)?.name || mainLedger.name,
           ledgerId: mainLedger.id,
-          amount: mainLedgerAmount,
+          amount: mainLedgerAmount || 0,
         });
       }
     });
 
     return { summary, totalMainLedgerAmount };
-  }, [allCashiers]);
+  }, [allCashiers, ungroupedLedgerOptions]);
 
-  //Calculate other ledgers summary (aggregated across all cashiers)
+  // Calculate other ledgers summary (aggregated across all cashiers)
   const otherLedgersSummary = useMemo(() => {
     const ledgerMap = new Map();
     
@@ -78,7 +161,7 @@ function ShiftSummary() {
         const ledgerName = ungroupedLedgerOptions.find(ledger => ledger.id === transactionLedgerId)?.name;
         
         if (transactionLedgerId !== mainLedgerId) {
-          const amount = transaction.amount || 0;
+          const amount = sanitizedNumber(transaction.amount);
           
           if (ledgerMap.has(transactionLedgerId)) {
             const existing = ledgerMap.get(transactionLedgerId);
@@ -103,7 +186,7 @@ function ShiftSummary() {
     const totalOtherLedgerAmount = summary.reduce((sum, ledger) => sum + ledger.amount, 0);
 
     return { summary, totalOtherLedgerAmount };
-  }, [allCashiers]);
+  }, [allCashiers, ungroupedLedgerOptions]);
 
   const fuelVouchersAggregated = useMemo(() => {
     const voucherMap = new Map();
@@ -114,11 +197,11 @@ function ShiftSummary() {
       vouchers.forEach(voucher => {
         const key = voucher.expense_ledger_id || voucher.stakeholder_id;
         const name = voucher.expense_ledger?.name || voucher.stakeholder?.name || `Voucher ${key}`;
-        const quantity = voucher.quantity || 0;
+        const quantity = sanitizedNumber(voucher.quantity);
         const productId = voucher.product_id;
         const product = products?.find(p => p.id === productId);
         const productName = product?.name;
-        const price = productPrices.find(p => p?.product_id === productId)?.price || 0;
+        const price = getProductPrice(productId);
         const amount = quantity * price;
         
         if (voucherMap.has(key)) {
@@ -147,7 +230,7 @@ function ShiftSummary() {
     const totalVoucherQuantity = summary.reduce((sum, voucher) => sum + voucher.quantity, 0);
 
     return { summary, totalVoucherAmount, totalVoucherQuantity };
-  }, [allCashiers, products, productPrices]);
+  }, [allCashiers, products]);
 
   // Calculate profit/loss per cashier and total
   const profitLossSummary = useMemo(() => {
@@ -155,7 +238,7 @@ function ShiftSummary() {
     let totalLoss = 0;
     const cashierResults = [];
 
-    allCashiers.forEach((cashier, index) => {
+    allCashiers.forEach((cashier) => {
       let cashierProductsTotal = 0;
       let cashierVouchersTotal = 0;
 
@@ -171,8 +254,8 @@ function ShiftSummary() {
         const reading = pumpReadings.find(r => r?.fuel_pump_id === pumpId);
 
         if (reading) {
-          const sold = ((reading.closing || 0) - (reading.opening || 0)) || 0;
-          const price = productPrices.find(p => p?.product_id === productId)?.price || 0;
+          const sold = (sanitizedNumber(reading.closing) - sanitizedNumber(reading.opening)) || 0;
+          const price = getProductPrice(productId);
           cashierProductsTotal += sold * price;
         }
       });
@@ -181,8 +264,8 @@ function ShiftSummary() {
       const adjustments = cashier.adjustments || [];
       adjustments.forEach(adj => {
         const productId = adj.product_id;
-        const qty = adj.quantity || 0;
-        const price = productPrices.find(p => p?.product_id === productId)?.price || 0;
+        const qty = sanitizedNumber(adj.quantity);
+        const price = getProductPrice(productId);
 
         if (adj.operator === '+') {
           cashierProductsTotal -= qty * price;
@@ -197,13 +280,13 @@ function ShiftSummary() {
         const productId = voucher.product_id;
         if (!productId) return;
 
-        const qty = voucher.quantity || 0;
-        const price = productPrices.find(p => p?.product_id === productId)?.price || 0;
+        const qty = sanitizedNumber(voucher.quantity);
+        const price = getProductPrice(productId);
         cashierVouchersTotal += qty * price;
       });
 
       const expectedCash = cashierProductsTotal - cashierVouchersTotal;
-      const collectedAmount = cashier.collected_amount || 0;
+      const collectedAmount = sanitizedNumber(cashier.collected_amount);
       const profitLoss = collectedAmount - expectedCash;
 
       if (profitLoss >= 0) {
@@ -229,7 +312,7 @@ function ShiftSummary() {
       netProfitLoss,
       cashierResults,
     };
-  }, [allCashiers, fuel_pumps, productPrices]);
+  }, [allCashiers, fuel_pumps]);
 
   const totalPumpReadings = useMemo(() => {
     const totals = {};
@@ -246,7 +329,7 @@ function ShiftSummary() {
         const reading = pumpReadings.find(r => r?.fuel_pump_id === pumpId);
 
         if (reading) {
-          const sold = ((reading.closing || 0) - (reading.opening || 0)) || 0;
+          const sold = (sanitizedNumber(reading.closing) - sanitizedNumber(reading.opening)) || 0;
           totals[productId] = (totals[productId] || 0) + sold;
         }
       });
@@ -264,7 +347,7 @@ function ShiftSummary() {
 
       adjustments.forEach(adj => {
         const productId = adj.product_id;
-        const qty = adj.quantity || 0;
+        const qty = sanitizedNumber(adj.quantity);
 
         if (adj.operator === '+') {
           adjustmentsByOperator['+'] += qty;
@@ -290,8 +373,8 @@ function ShiftSummary() {
         const productId = voucher.product_id;
         if (!productId) return;
 
-        const qty = voucher.quantity || 0;
-        const price = productPrices.find(p => p?.product_id === productId)?.price || 0;
+        const qty = sanitizedNumber(voucher.quantity);
+        const price = getProductPrice(productId);
         const amount = qty * price;
 
         totals[productId] = (totals[productId] || 0) + qty;
@@ -300,7 +383,7 @@ function ShiftSummary() {
     });
 
     return { totals, totalAmount };
-  }, [allCashiers, productPrices]);
+  }, [allCashiers]);
 
   const combinedProductTotals = useMemo(() => {
     const totals = {};
@@ -323,7 +406,7 @@ function ShiftSummary() {
 
     products?.forEach(product => {
       const qty = combinedProductTotals[product.id] || 0;
-      const price = productPrices.find(p => p?.product_id === product.id)?.price || 0;
+      const price = getProductPrice(product.id);
       totalProductsAmount += qty * price;
     });
 
@@ -356,7 +439,7 @@ function ShiftSummary() {
       totalFuelVoucherItems,
       totalAdjustmentItems,
     };
-  }, [combinedProductTotals, products, productPrices, allCashiers, fuelVouchersAggregated, otherLedgersSummary, mainLedgersSummary]);
+  }, [combinedProductTotals, products, allCashiers, fuelVouchersAggregated, otherLedgersSummary, mainLedgersSummary]);
 
   // Render Financial Ledgers Summary
   const renderFinancialLedgersSummary = () => (
@@ -467,7 +550,7 @@ function ShiftSummary() {
                   
                   <Box sx={{ mt: 2, pt: 1, borderTop: '1px solid', borderColor: 'divider' }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <Typography variant="body2" fontWeight="bold">Total Other Transations:</Typography>
+                      <Typography variant="body2" fontWeight="bold">Total Other Transactions:</Typography>
                       <Typography variant="body1" fontWeight="bold" color="secondary.dark">
                         {otherLedgersSummary.totalOtherLedgerAmount.toLocaleString()}
                       </Typography>
@@ -657,7 +740,7 @@ function ShiftSummary() {
                 const pumpQty = totalPumpReadings[product.id] || 0;
                 const adjQty = totalAdjustments.totals[product.id] || 0;
                 const totalQty = combinedProductTotals[product.id] || 0;
-                const price = productPrices.find(p => p?.product_id === product.id)?.price || 0;
+                const price = getProductPrice(product.id);
                 const amount = totalQty * price;
 
                 return (
@@ -758,7 +841,7 @@ function ShiftSummary() {
                     const qty = totalFuelVouchers.totals[product.id] || 0;
                     if (qty === 0) return null;
 
-                    const price = productPrices.find(p => p?.product_id === product.id)?.price || 0;
+                    const price = getProductPrice(product.id);
                     const amount = qty * price;
 
                     return (
@@ -890,7 +973,6 @@ function ShiftSummary() {
                   textAlign: 'center',
                   bgcolor: profitLossSummary.netProfitLoss >= 0 ? 'success.100' : 'error.100',
                   borderRadius: 1,
-                  border: '2px solid',
                   borderColor: profitLossSummary.netProfitLoss >= 0 ? 'success.200' : 'error.200'
                 }}
               >
@@ -1037,21 +1119,21 @@ function ShiftSummary() {
                   height: 12,
                   borderRadius: '50%',
                   bgcolor: profitLossSummary.netProfitLoss === 0 ? 'success.main' :
-                           profitLossSummary.netProfitLoss > 0 ? 'info.main' : 'error.main'
+                          profitLossSummary.netProfitLoss > 0 ? 'info.main' : 'error.main'
                 }}
               />
               <Typography>
                 {profitLossSummary.netProfitLoss === 0 ? 'Perfectly Balanced' :
-                 profitLossSummary.netProfitLoss > 0 ? `Profit: +${profitLossSummary.netProfitLoss.toLocaleString()}` :
-                 `Loss: ${profitLossSummary.netProfitLoss.toLocaleString()}`}
+                profitLossSummary.netProfitLoss > 0 ? `Profit: +${profitLossSummary.netProfitLoss.toLocaleString()}` :
+                `Loss: ${profitLossSummary.netProfitLoss.toLocaleString()}`}
               </Typography>
             </Box>
 
             <Chip
               label={profitLossSummary.netProfitLoss === 0 ? "BALANCED" :
-                     profitLossSummary.netProfitLoss > 0 ? "PROFIT" : "LOSS"}
+                    profitLossSummary.netProfitLoss > 0 ? "PROFIT" : "LOSS"}
               color={profitLossSummary.netProfitLoss === 0 ? "success" :
-                     profitLossSummary.netProfitLoss > 0 ? "info" : "error"}
+                    profitLossSummary.netProfitLoss > 0 ? "info" : "error"}
               size="small"
             />
           </Box>
