@@ -36,21 +36,17 @@ function ShiftSummary() {
     name: 'product_prices',
   }) || [];
 
-  // Helper function to sanitize numbers
   const sanitizedNumber = (value) => {
     if (value === null || value === undefined || value === '') return 0;
     const num = Number(value);
     return isNaN(num) ? 0 : num;
   };
 
-  // Helper function to get product price
   const getProductPrice = (productId) => {
     return productPrices.find(p => p?.product_id === productId)?.price || 0;
   };
 
-  // Calculate main ledger amount for a cashier (same logic as CashReconciliation)
   const calculateCashierMainLedgerAmount = (cashier) => {
-    // If main_ledger_amount already exists, use it
     if (cashier.main_ledger_amount !== undefined && cashier.main_ledger_amount !== null) {
       return cashier.main_ledger_amount;
     }
@@ -58,11 +54,10 @@ function ShiftSummary() {
     const pumpReadings = cashier.pump_readings || [];
     const fuelVouchers = cashier.fuel_vouchers || [];
     const adjustments = cashier.adjustments || [];
-    const cashTransactions = cashier.cash_transactions || [];
+    const cashTransactions = cashier.other_transactions || [];
     const selectedPumps = cashier.selected_pumps || [];
     const mainLedgerId = cashier.main_ledger?.id || cashier.main_ledger_id;
     
-    // Calculate products total from pump readings
     let productsTotal = 0;
     
     selectedPumps.forEach(pumpId => {
@@ -79,7 +74,6 @@ function ShiftSummary() {
       }
     });
     
-    // Adjustments effect
     adjustments.forEach(adj => {
       const productId = adj.product_id;
       const qty = sanitizedNumber(adj.quantity);
@@ -92,7 +86,6 @@ function ShiftSummary() {
       }
     });
     
-    // Fuel vouchers total
     let voucherTotal = 0;
     fuelVouchers.forEach(voucher => {
       const productId = voucher.product_id;
@@ -105,7 +98,6 @@ function ShiftSummary() {
     
     const cashRemaining = productsTotal - voucherTotal;
     
-    // Filter out main ledger transactions
     const filteredCashTransactions = cashTransactions.filter(transaction => {
       const transactionLedgerId = transaction.ledger_id || transaction.id;
       return mainLedgerId ? transactionLedgerId !== mainLedgerId : true;
@@ -117,12 +109,10 @@ function ShiftSummary() {
     return cashRemaining - filteredTransactionsSum;
   };
 
-  // Calculate total collected amount from all cashiers
   const totalCollectedAmount = useMemo(() => {
     return allCashiers.reduce((sum, cashier) => sum + sanitizedNumber(cashier.collected_amount), 0);
   }, [allCashiers]);
 
-  // Calculate main ledgers summary per cashier
   const mainLedgersSummary = useMemo(() => {
     const summary = [];
     let totalMainLedgerAmount = 0;
@@ -131,7 +121,6 @@ function ShiftSummary() {
       const mainLedger = cashier.main_ledger;
       
       if (mainLedger) {
-        // Calculate main ledger amount if not set
         const mainLedgerAmount = calculateCashierMainLedgerAmount(cashier);
         
         totalMainLedgerAmount += mainLedgerAmount || 0;
@@ -148,12 +137,11 @@ function ShiftSummary() {
     return { summary, totalMainLedgerAmount };
   }, [allCashiers, ungroupedLedgerOptions]);
 
-  // Calculate other ledgers summary (aggregated across all cashiers)
   const otherLedgersSummary = useMemo(() => {
     const ledgerMap = new Map();
     
     allCashiers.forEach((cashier) => {
-      const cashTransactions = cashier.cash_transactions || [];
+      const cashTransactions = cashier.other_transactions || [];
       const mainLedgerId = cashier.main_ledger?.id || cashier.main_ledger_id;
       
       cashTransactions.forEach(transaction => {
@@ -232,7 +220,6 @@ function ShiftSummary() {
     return { summary, totalVoucherAmount, totalVoucherQuantity };
   }, [allCashiers, products]);
 
-  // Calculate profit/loss per cashier and total
   const profitLossSummary = useMemo(() => {
     let totalProfit = 0;
     let totalLoss = 0;
@@ -242,7 +229,6 @@ function ShiftSummary() {
       let cashierProductsTotal = 0;
       let cashierVouchersTotal = 0;
 
-      // Calculate products total from pump readings
       const pumpReadings = cashier.pump_readings || [];
       const selectedPumps = cashier.selected_pumps || [];
 
@@ -260,7 +246,6 @@ function ShiftSummary() {
         }
       });
 
-      // Calculate adjustments effect
       const adjustments = cashier.adjustments || [];
       adjustments.forEach(adj => {
         const productId = adj.product_id;
@@ -274,7 +259,6 @@ function ShiftSummary() {
         }
       });
 
-      // Calculate fuel vouchers total
       const vouchers = cashier.fuel_vouchers || [];
       vouchers.forEach(voucher => {
         const productId = voucher.product_id;
@@ -441,7 +425,6 @@ function ShiftSummary() {
     };
   }, [combinedProductTotals, products, allCashiers, fuelVouchersAggregated, otherLedgersSummary, mainLedgersSummary]);
 
-  // Render Financial Ledgers Summary
   const renderFinancialLedgersSummary = () => (
     <Card variant="outlined" sx={{ mb: 3 }}>
       <CardContent>
@@ -452,7 +435,6 @@ function ShiftSummary() {
         <Divider sx={{ mb: 2 }} />
 
         <Grid container spacing={2}>
-          {/* Main Ledgers Section */}
           <Grid size={{ xs: 12, md: 6 }}>
             <Paper elevation={0} sx={{ p: 2, bgcolor: 'primary.50', borderRadius: 1 }}>
               <Typography variant="subtitle2" color="primary.dark" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -504,7 +486,6 @@ function ShiftSummary() {
             </Paper>
           </Grid>
 
-          {/* Other Ledgers Section */}
           <Grid size={{ xs: 12, md: 6 }}>
             <Paper elevation={0} sx={{ p: 2, bgcolor: 'secondary.50', borderRadius: 1 }}>
               <Typography variant="subtitle2" color="secondary.dark" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -561,7 +542,6 @@ function ShiftSummary() {
             </Paper>
           </Grid>
 
-          {/* Fuel Vouchers Summary */}
           <Grid size={{ xs: 12 }}>
             <Paper elevation={0} sx={{ p: 2, bgcolor: 'info.50', borderRadius: 1, mt: 2 }}>
               <Typography variant="subtitle2" color="info.dark" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

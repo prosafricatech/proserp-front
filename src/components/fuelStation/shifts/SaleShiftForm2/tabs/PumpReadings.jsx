@@ -37,14 +37,9 @@ function PumpReadings({
   
   const {activeStation} = useContext(StationFormContext);
   const {fuel_pumps, tanks, products } = activeStation;
-
-  // Get the cashier data
   const cashierData = watch(`cashiers.${cashierIndex}`) || {};
-
-  // Check if we have last closing readings available
   const hasLastReadings = Object.keys(lastClosingReadings || {}).length > 0;
 
-  // Initialize from saved data
   useEffect(() => {
     const savedReadings = cashierData.pump_readings || [];
     const savedSelectedPumps = cashierData.selected_pumps || [];
@@ -91,27 +86,22 @@ function PumpReadings({
   }, [getAvailablePumpsForCashier, cashierIndex, fuel_pumps]);
 
   const handlePumpSelection = (selectedPumpIds) => {
-    // Call the parent function to handle pump selection
     if (handleCashierPumpSelection) {
       handleCashierPumpSelection(cashierIndex, selectedPumpIds);
     } else {
-      // Fallback to local handling
       formSetValue(`cashiers.${cashierIndex}.selected_pumps`, selectedPumpIds, {
         shouldValidate: true,
         shouldDirty: true
       });
 
-      // Update readings to include only selected pumps
       const updatedReadings = localPumpReadings.filter(reading => 
         selectedPumpIds.includes(reading.fuel_pump_id)
       );
 
-      // Add new readings for newly selected pumps
       selectedPumpIds.forEach(pumpId => {
         if (!updatedReadings.some(r => r.fuel_pump_id === pumpId)) {
           const pump = fuel_pumps?.find(p => p.id === pumpId);
           if (pump) {
-            // Check if we have last closing reading for this pump
             const lastClosing = lastClosingReadings?.[pumpId] || 0;
             updatedReadings.push({
               fuel_pump_id: pumpId,
@@ -129,7 +119,6 @@ function PumpReadings({
     }
   };
 
-  // Create detailed pump information for display
   const selectedPumpsWithDetails = useMemo(() => {
     return selectedPumps.map(pumpId => {
       const pump = fuel_pumps?.find(p => p.id === pumpId);
@@ -156,7 +145,6 @@ function PumpReadings({
 
   return (
     <Box>
-      {/* Pump Selection for this Cashier */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid size={{xs: 12}}>
           {hasLastReadings && (
@@ -234,7 +222,6 @@ function PumpReadings({
 
       <Divider sx={{ my: 2 }} />
 
-      {/* Pump Readings for Selected Pumps */}
       {selectedPumpsWithDetails.length > 0 ? (
         <>
           <Typography variant="subtitle1" gutterBottom>

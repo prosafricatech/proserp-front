@@ -159,7 +159,7 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
             product_id: yup.number().required('Product is required'),
           })
         ),
-        cash_transactions: yup.array().of(
+        other_transactions: yup.array().of(
           yup.object().shape({
             ledger_id: yup.number().required('Ledger ID is required'),
             amount: yup.number().required('Amount is required').positive('Amount must be positive'),
@@ -236,7 +236,7 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
             description: adj.description,
             product_id: adj.product_id,
           })) || [],
-          cash_transactions: cashier.cash_transactions?.map(ct => ({
+          other_transactions: cashier.other_transactions?.map(ct => ({
             ledger_id: ct.debit_ledger?.id || ct.id,
             amount: ct.amount,
             narration: ct.narration,
@@ -474,7 +474,7 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
           pump_readings: [],
           fuel_vouchers: [],
           tank_adjustments: [],
-          cash_transactions: [],
+          other_transactions: [],
           main_ledger: null,
         };
       })
