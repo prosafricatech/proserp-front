@@ -20,6 +20,7 @@ import {
   Box,
   Alert,
   Paper,
+  Checkbox,
 } from '@mui/material';
 import { 
   AddOutlined, 
@@ -47,7 +48,7 @@ function CashReconciliation({
     trigger
   } = useFormContext();
   const {activeStation} = useContext(StationFormContext);
-  const {fuel_pumps, products} = activeStation;
+  const {fuel_pumps, products, collection_ledgers} = activeStation;
 
   const productPrices = useWatch({
     name: 'product_prices',
@@ -585,34 +586,70 @@ function CashReconciliation({
         <Grid size={12}>
           <Card variant="outlined" sx={{ mt: 2 }}>
             <CardContent>
-              <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                Cash Collected
+              <Typography variant="subtitle1" gutterBottom>
+                Collected Amount
               </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Typography variant="body2">
-                  Enter the actual cash remaining after distribution:
-                </Typography>
-                <Box sx={{ width: '40%' }}>
-                  <TextField
-                    size="small"
-                    fullWidth
-                    value={collectedAmount || 0}
-                    onChange={(e) => handleCollectedAmountChange(e.target.value)}
-                    error={!!errors?.cashiers?.[cashierIndex]?.collected_amount}
-                    helperText={
-                      errors?.cashiers?.[cashierIndex]?.collected_amount?.message ||
-                      `Enter the cash that remains: ${actualMainLedgerAmount.toLocaleString()}`
-                    }
-                    InputProps={{
-                      inputComponent: CommaSeparatedField,
-                    }}
-                    sx={{
-                      '& .MuiInputBase-input': {
-                        textAlign: 'right',
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Grid container spacing={2}>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Autocomplete
+                      multiple
+                      options={collection_ledgers || []}
+                      getOptionLabel={(opt) => opt?.name || ''}
+                      value={
+                        (useWatch({ name: `cashiers.${cashierIndex}.collected_ledger_ids` }) || [])
+                          .map(id => (collection_ledgers || []).find(l => l.id === id)).filter(Boolean)
                       }
-                    }}
-                  />
-                </Box>
+                      onChange={(_, newValue) => {
+                        const ids = (newValue || []).map(l => l.id);
+                        setValue(`cashiers.${cashierIndex}.collected_ledger_ids`, ids, { shouldValidate: true, shouldDirty: true });
+                        trigger(`cashiers.${cashierIndex}.collected_ledger_ids`);
+                      }}
+                      renderOption={(props, option, { selected }) => (
+                        <li {...props} key={option.id || option.code || option.name}>
+                          <Checkbox
+                            style={{ marginRight: 8 }}
+                            checked={selected}
+                          />
+                          {option.name}
+                        </li>
+                      )}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Collection Ledgers"
+                          required
+                          error={!!errors?.cashiers?.[cashierIndex]?.collected_ledger_ids}
+                          helperText={errors?.cashiers?.[cashierIndex]?.collected_ledger_ids?.message || 'Select one or more ledgers'}
+                        />
+                      )}
+                      isOptionEqualToValue={(option, value) => option.id === value.id}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <TextField
+                      size="small"
+                      fullWidth
+                      value={collectedAmount || 0}
+                      onChange={(e) => handleCollectedAmountChange(e.target.value)}
+                      error={!!errors?.cashiers?.[cashierIndex]?.collected_amount}
+                      helperText={
+                        errors?.cashiers?.[cashierIndex]?.collected_amount?.message ||
+                        `Enter the cash that remains: ${actualMainLedgerAmount.toLocaleString()}`
+                      }
+                      InputProps={{
+                        inputComponent: CommaSeparatedField,
+                      }}
+                      label="Collected Amount"
+                      required
+                      sx={{
+                        '& .MuiInputBase-input': {
+                          textAlign: 'right',
+                        }
+                      }}
+                    />
+                  </Grid>
+                </Grid>
               </Box>
             </CardContent>
           </Card>
