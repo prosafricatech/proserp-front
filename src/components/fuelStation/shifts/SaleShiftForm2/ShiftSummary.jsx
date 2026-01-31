@@ -236,65 +236,68 @@ function ShiftSummary({ paymentItems = [] }) {
     return { summary, totalVoucherAmount, totalVoucherQuantity };
   }, [allCashiers, products]);
 
+  // Calculate expected cash per cashier using main_ledger_amount or fallback
+  const cashierExpectedCash = (cashier) => {
+    if (cashier.main_ledger_amount !== undefined && cashier.main_ledger_amount !== null) {
+      return sanitizedNumber(cashier.main_ledger_amount);
+    }
+    // fallback to calculation if not present
+    const pumpReadings = cashier.pump_readings || [];
+    const selectedPumps = cashier.selected_pumps || [];
+    let cashierProductsTotal = 0;
+    selectedPumps.forEach(pumpId => {
+      const pump = fuel_pumps?.find(p => p.id === pumpId);
+      if (!pump) return;
+      const productId = pump.product_id;
+      const reading = pumpReadings.find(r => r?.fuel_pump_id === pumpId);
+      if (reading) {
+        const sold = (sanitizedNumber(reading.closing) - sanitizedNumber(reading.opening)) || 0;
+        const price = getProductPrice(productId);
+        cashierProductsTotal += sold * price;
+      }
+    });
+    const adjustments = cashier.adjustments || [];
+    adjustments.forEach(adj => {
+      const productId = adj.product_id;
+      const qty = sanitizedNumber(adj.quantity);
+      const price = getProductPrice(productId);
+      if (adj.operator === '+') {
+        cashierProductsTotal -= qty * price;
+      } else if (adj.operator === '-') {
+        cashierProductsTotal += qty * price;
+      }
+    });
+    let cashierVouchersTotal = 0;
+    const vouchers = cashier.fuel_vouchers || [];
+    vouchers.forEach(voucher => {
+      const productId = voucher.product_id;
+      if (!productId) return;
+      const qty = sanitizedNumber(voucher.quantity);
+      const price = getProductPrice(productId);
+      cashierVouchersTotal += qty * price;
+    });
+    return cashierProductsTotal - cashierVouchersTotal;
+  };
+
+  // Sum of all expected cash for all cashiers
+  const totalExpectedCash = useMemo(() => {
+    return allCashiers.reduce((sum, cashier) => sum + cashierExpectedCash(cashier), 0);
+  }, [allCashiers, fuel_pumps, productPrices]);
+
+  // Profit/Loss summary using new expected cash
   const profitLossSummary = useMemo(() => {
     let totalProfit = 0;
     let totalLoss = 0;
     const cashierResults = [];
-
     allCashiers.forEach((cashier) => {
-      let cashierProductsTotal = 0;
-      let cashierVouchersTotal = 0;
-
-      const pumpReadings = cashier.pump_readings || [];
-      const selectedPumps = cashier.selected_pumps || [];
-
-      selectedPumps.forEach(pumpId => {
-        const pump = fuel_pumps?.find(p => p.id === pumpId);
-        if (!pump) return;
-
-        const productId = pump.product_id;
-        const reading = pumpReadings.find(r => r?.fuel_pump_id === pumpId);
-
-        if (reading) {
-          const sold = (sanitizedNumber(reading.closing) - sanitizedNumber(reading.opening)) || 0;
-          const price = getProductPrice(productId);
-          cashierProductsTotal += sold * price;
-        }
-      });
-
-      const adjustments = cashier.adjustments || [];
-      adjustments.forEach(adj => {
-        const productId = adj.product_id;
-        const qty = sanitizedNumber(adj.quantity);
-        const price = getProductPrice(productId);
-
-        if (adj.operator === '+') {
-          cashierProductsTotal -= qty * price;
-        } else if (adj.operator === '-') {
-          cashierProductsTotal += qty * price; 
-        }
-      });
-
-      const vouchers = cashier.fuel_vouchers || [];
-      vouchers.forEach(voucher => {
-        const productId = voucher.product_id;
-        if (!productId) return;
-
-        const qty = sanitizedNumber(voucher.quantity);
-        const price = getProductPrice(productId);
-        cashierVouchersTotal += qty * price;
-      });
-
-      const expectedCash = cashierProductsTotal - cashierVouchersTotal;
+      const expectedCash = cashierExpectedCash(cashier);
       const collectedAmount = sanitizedNumber(cashier.collected_amount);
       const profitLoss = collectedAmount - expectedCash;
-
       if (profitLoss >= 0) {
         totalProfit += profitLoss;
       } else {
         totalLoss += Math.abs(profitLoss);
       }
-
       cashierResults.push({
         name: cashier.name,
         expectedCash,
@@ -303,16 +306,14 @@ function ShiftSummary({ paymentItems = [] }) {
         isBalanced: Math.abs(profitLoss) < 0.01,
       });
     });
-
     const netProfitLoss = totalProfit - totalLoss;
-
     return {
       totalProfit,
       totalLoss,
       netProfitLoss,
       cashierResults,
     };
-  }, [allCashiers, fuel_pumps]);
+  }, [allCashiers, fuel_pumps, productPrices]);
 
   const totalPumpReadings = useMemo(() => {
     const totals = {};
@@ -1011,7 +1012,7 @@ function ShiftSummary({ paymentItems = [] }) {
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
                 <Typography>Expected Cash{currencyCode ? ` (${currencyCode})` : ''}:</Typography>
                 <Typography variant="h6" color="primary.main">
-                  {formatMoney(financialSummary.cashRemaining)}
+                  {formatMoney(totalExpectedCash)}
                 </Typography>
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
