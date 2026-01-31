@@ -614,15 +614,15 @@ function CashReconciliation({
                       getOptionLabel={(opt) => opt?.name || ''}
                       size='small'
                       value={
-                        (useWatch({ name: `cashiers.${cashierIndex}.collected_ledger_ids` }) || [])
-                          .map(id => (collection_ledgers || []).find(l => l.id === id)).filter(Boolean)
+                        (collection_ledgers || []).find(
+                          l => l.id === useWatch({ name: `cashiers.${cashierIndex}.collected_ledger_id` })
+                        ) || null
                       }
                       onChange={(_, newValue) => {
-                        const ids = (newValue || []).map(l => l.id);
-                        setValue(`cashiers.${cashierIndex}.collected_ledger_ids`, ids, { shouldValidate: true, shouldDirty: true });
-                        trigger(`cashiers.${cashierIndex}.collected_ledger_ids`);
+                        setValue(`cashiers.${cashierIndex}.collected_ledger_id`, newValue?.id ?? null, { shouldValidate: true, shouldDirty: true });
+                        trigger(`cashiers.${cashierIndex}.collected_ledger_id`);
                       }}
-                      renderOption={(props, option, { selected }) => (
+                      renderOption={(props, option) => (
                         <li {...props} key={option.id || option.code || option.name}>
                           {option.name}
                         </li>
@@ -630,9 +630,9 @@ function CashReconciliation({
                       renderInput={(params) => (
                         <TextField
                           {...params}
-                          label="Collection Ledgers"
-                          error={!!errors?.cashiers?.[cashierIndex]?.collected_ledger_ids}
-                          helperText={errors?.cashiers?.[cashierIndex]?.collected_ledger_ids?.message || 'Select one or more ledgers'}
+                          label="Collection Ledger"
+                          error={!!errors?.cashiers?.[cashierIndex]?.collected_ledger_id}
+                          helperText={errors?.cashiers?.[cashierIndex]?.collected_ledger_id?.message}
                         />
                       )}
                       isOptionEqualToValue={(option, value) => option.id === value.id}
