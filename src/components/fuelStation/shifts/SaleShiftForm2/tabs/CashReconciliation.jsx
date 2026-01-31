@@ -36,7 +36,6 @@ function CashReconciliation({
   localAdjustments = [],
   localPumpReadings = [],
   getCashierLedgers,
-  setCheckShiftBalanced,
 }) {
   const {
     setValue,
@@ -218,20 +217,6 @@ function CashReconciliation({
   const profitLossLabel = isShort ? 'Short' : 'Over';
   const profitLossIcon = isShort ? <TrendingDown color="error" fontSize="small" /> : <TrendingUp color="success" fontSize="small" />;
   const profitLossColor = isShort ? 'error.main' : 'success.main';
-
-  // Check if cashier is balanced based on collected amount
-  const isCashierBalanced = useMemo(() => {
-    if (!mainLedgerId) return false;
-    const actualAmount = watch(`cashiers.${cashierIndex}.main_ledger_amount`) || 0;
-    const collectedMatch = Math.abs((sanitizedNumber(collectedAmount) || 0) - cashRemaining) < 0.01;
-    return collectedMatch && Math.abs(actualAmount - calculatedMainLedgerAmount) < 0.01;
-  }, [mainLedgerId, cashierIndex, watch, calculatedMainLedgerAmount, collectedAmount, cashRemaining]);
-
-  useEffect(() => {
-    setCheckShiftBalanced(prev => {
-      return isCashierBalanced && cashRemaining >= 0;
-    });
-  }, [isCashierBalanced, cashRemaining, setCheckShiftBalanced]);
 
   const getProductPrice = useCallback(
     (productId) => productPrices.find(p => p?.product_id === productId)?.price || 0,

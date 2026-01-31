@@ -48,8 +48,6 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
   const {activeStation} = useContext(StationFormContext);
   const {fuel_pumps, cashiers, shifts} = activeStation;
   const {authOrganization : {organization}} = useJumboAuth();
-  const [shiftLedgers, setShiftLedgers] = useState([]);
-  const [checkShiftBalanced, setCheckShiftBalanced] = useState(true);
   const {checkOrganizationPermission} = useJumboAuth();
 
   const [cashierFuelVouchers, setCashierFuelVouchers] = useState({});
@@ -383,16 +381,12 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
   const handleShiftChange = useCallback((newValue) => {
     const currentShiftStart = watch('shift_start');
     const currentShiftEnd = watch('shift_end');
-    
-    setShiftLedgers(newValue ? newValue.ledgers : []);
     setValue('sales_outlet_shift_id', newValue ? newValue.id : '', {
       shouldValidate: true,
       shouldDirty: true,
     });
-    
     if (newValue && (currentShiftStart || currentShiftEnd)) {
       const selectedDate = currentShiftStart || dayjs().startOf('day');
-      
       if (newValue.start_time) {
         const newStartDateTime = combineDateTime(selectedDate, newValue.start_time);
         setValue('shift_start', newStartDateTime, {
@@ -400,11 +394,9 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
           shouldDirty: true
         });
       }
-      
       if (newValue.end_time) {
         const startTime = dayjs(newValue.start_time, 'HH:mm:ss');
         const endTime = dayjs(newValue.end_time, 'HH:mm:ss');
-        
         let endDateTime;
         if (endTime.isBefore(startTime)) {
           endDateTime = dayjs(selectedDate)
@@ -416,7 +408,6 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
         } else {
           endDateTime = combineDateTime(selectedDate, newValue.end_time);
         }
-        
         setValue('shift_end', endDateTime, {
           shouldValidate: true,
           shouldDirty: true
@@ -815,7 +806,7 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
                   handlePumpSelection={handlePumpSelection}
                   getCashierLedgers={getCashierLedgers}
                   getAvailablePumpsForCashier={getAvailablePumpsForCashier}
-                  setCheckShiftBalanced={setCheckShiftBalanced}
+                  // setCheckShiftBalanced removed
                   setValue={setValue}
                 />
               ))
