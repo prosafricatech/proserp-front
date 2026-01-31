@@ -120,12 +120,17 @@ const UsersSelector: React.FC<UsersSelectorProps> = ({
         />
       )}
       renderTags={(value: User[], getTagProps) =>
-        value.map((option, index) => (
-          <Chip
-            {...getTagProps({ index })}
-            label={option.name}
-          />
-        ))
+        value.map((option, index) => {
+          const tagProps = getTagProps({ index });
+          const { key, ...rest } = tagProps;
+          return (
+            <Chip
+              key={key}
+              {...rest}
+              label={option.name}
+            />
+          );
+        })
       }
       {...(multiple && {
         renderOption: (props, option: any, { selected }) => {

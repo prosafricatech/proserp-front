@@ -293,6 +293,9 @@ function CashReconciliation({
     trigger(`cashiers.${cashierIndex}.collected_amount`);
   };
 
+  // Always call useWatch for collected_ledger_id at the top level
+  const collectedLedgerId = useWatch({ name: `cashiers.${cashierIndex}.collected_ledger_id` });
+
   return (
     <>
       <Grid container columnSpacing={2} rowSpacing={2}>
@@ -448,7 +451,7 @@ function CashReconciliation({
                     size="small"
                     options={cashierLedgers || []}
                     getOptionLabel={(opt) => opt.name}
-                    value={mainLedgerId ? cashierLedgers.find(l => l.id === mainLedgerId) : null}
+                    value={mainLedgerId ? cashierLedgers.find(l => l.id === mainLedgerId) || null : null}
                     onChange={(_, newValue) => {
                       const id = newValue?.id ?? null;
                       setValue(`cashiers.${cashierIndex}.main_ledger_id`, id, { shouldValidate: true });
@@ -510,7 +513,7 @@ function CashReconciliation({
                           size="small"
                           options={availableLedgers}
                           getOptionLabel={(opt) => opt.name}
-                          value={ledgerObj}
+                          value={ledgerObj || null}
                           onChange={(_, newValue) => {
                             updateCashTransaction(originalIdx, 'ledger_id', newValue?.id ?? null);
                           }}
@@ -604,9 +607,9 @@ function CashReconciliation({
                       getOptionLabel={(opt) => opt?.name || ''}
                       size='small'
                       value={
-                        (collection_ledgers || []).find(
-                          l => l.id === useWatch({ name: `cashiers.${cashierIndex}.collected_ledger_id` })
-                        ) || null
+                        ((collection_ledgers || []).find(
+                          l => l.id === collectedLedgerId
+                        )) || null
                       }
                       onChange={(_, newValue) => {
                         setValue(`cashiers.${cashierIndex}.collected_ledger_id`, newValue?.id ?? null, { shouldValidate: true, shouldDirty: true });

@@ -93,7 +93,7 @@ export default function CashierAccordion({
           <Tab label="Cash Reconciliation" />
         </Tabs>
 
-        {tab === 0 && (
+        <div style={{ display: tab === 0 ? 'block' : 'none' }}>
           <PumpReadings
             name={`cashiers.${index}.pump_readings`}
             control={control}
@@ -105,27 +105,24 @@ export default function CashierAccordion({
             getAvailablePumpsForCashier={getAvailablePumpsForCashier}
             setLocalPumpReadings={updatePumpReadings}
           />
-        )}
-
-        {tab === 1 && (
+        </div>
+        <div style={{ display: tab === 1 ? 'block' : 'none' }}>
           <FuelVouchersTab
             cashierIndex={index}
             localFuelVouchers={localFuelVouchers}
             setLocalFuelVouchers={updateFuelVouchers}
             setValue={setValue}
           />
-        )}
-
-        {tab === 2 && (
+        </div>
+        <div style={{ display: tab === 2 ? 'block' : 'none' }}>
           <AdjustmentsTab
             cashierIndex={index}
             localAdjustments={localAdjustments}
             setLocalAdjustments={updateAdjustments}
             setValue={setValue}
           />
-        )}
-
-        {tab === 3 && (
+        </div>
+        <div style={{ display: tab === 3 ? 'block' : 'none' }}>
           <CashReconciliation
             cashierIndex={index}
             setCheckShiftBalanced={setCheckShiftBalanced}
@@ -136,7 +133,7 @@ export default function CashierAccordion({
             watch={watch}
             setValue={setValue}
           />
-        )}
+        </div>
       </AccordionDetails>
     </Accordion>
   );
