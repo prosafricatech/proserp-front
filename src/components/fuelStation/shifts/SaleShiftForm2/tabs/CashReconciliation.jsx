@@ -65,6 +65,7 @@ function CashReconciliation({
   }) || 0;
 
   const cashierLedgers = getCashierLedgers ? getCashierLedgers(cashierIndex) : [];
+  const actualMainLedgerAmount = watch(`cashiers.${cashierIndex}.main_ledger_amount`) || 0;
 
   const [initialized, setInitialized] = useState(false);
   const [hasLoadedSavedTransactions, setHasLoadedSavedTransactions] = useState(false);
@@ -103,19 +104,33 @@ function CashReconciliation({
   useEffect(() => {
     if (!initialized) {
       const existingCashTransactions = watch(`cashiers.${cashierIndex}.cash_transactions`) || [];
-      
-      if (cashierMainLedger?.id && !mainLedgerId) {
+      const currentMainLedger = cashierData?.main_ledger;
+      if (mainLedgerId) {
+        const ledgerObj = cashierLedgers.find(l => l.id === mainLedgerId);
+        if (
+          ledgerObj && (
+            !currentMainLedger ||
+            currentMainLedger.id !== ledgerObj.id ||
+            currentMainLedger.amount !== actualMainLedgerAmount
+          )
+        ) {
+          setValue(`cashiers.${cashierIndex}.main_ledger`, {
+            id: ledgerObj.id,
+            name: ledgerObj.name,
+            amount: actualMainLedgerAmount,
+          }, { shouldValidate: true, shouldDirty: true });
+        }
+      } else if (cashierMainLedger?.id && !mainLedgerId) {
         setValue(`cashiers.${cashierIndex}.main_ledger_id`, cashierMainLedger.id, {
           shouldValidate: true,
           shouldDirty: true,
         });
       }
-      
       if (existingCashTransactions.length > 0) {
         setInitialized(true);
       }
     }
-  }, [cashierIndex, watch, initialized, cashierMainLedger, mainLedgerId, setValue]);
+  }, [cashierIndex, watch, initialized, cashierMainLedger, mainLedgerId, setValue, cashierLedgers, actualMainLedgerAmount, cashierData]);
 
   const fuelVoucherTotals = useMemo(() => {
     if (!localFuelVouchers?.length || !productPrices?.length) return {};
@@ -268,8 +283,6 @@ function CashReconciliation({
       shouldDirty: true,
     });
   };
-
-  const actualMainLedgerAmount = watch(`cashiers.${cashierIndex}.main_ledger_amount`) || 0;
 
   const handleCollectedAmountChange = (value) => {
     const sanitizedValue = sanitizedNumber(value);
@@ -449,6 +462,15 @@ function CashReconciliation({
                     onChange={(_, newValue) => {
                       const id = newValue?.id ?? null;
                       setValue(`cashiers.${cashierIndex}.main_ledger_id`, id, { shouldValidate: true });
+                      if (newValue) {
+                        setValue(`cashiers.${cashierIndex}.main_ledger`, {
+                          id: newValue.id,
+                          name: newValue.name,
+                          amount: actualMainLedgerAmount,
+                        }, { shouldValidate: true, shouldDirty: true });
+                      } else {
+                        setValue(`cashiers.${cashierIndex}.main_ledger`, null, { shouldValidate: true, shouldDirty: true });
+                      }
                     }}
                     renderInput={(params) => (
                       <TextField

@@ -97,11 +97,11 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
   }, [SalesShift, addSalesShifts, updateSalesShifts]);
 
   const validationSchema = yup.object({
-    sales_outlet_shift_id: yup.number().required('Sales Outlet Shift is required').typeError('Sales Outlet Shift is required'),
-    shift_start: yup.string().required('Start Date is required').typeError('Start Date is required'),
+    sales_outlet_shift_id: yup.number().required('Sales Outlet Shift is required').typeError('Sales Outlet Shift must be a number'),
+    shift_start: yup.string().required('Start Date is required').typeError('Start Date must be a valid string'),
     shift_end: yup.string()
       .required('End Date is required')
-      .typeError('End Date is required')
+      .typeError('End Date must be a valid string')
       .test(
         'is-greater',
         'Shift End Date must be greater than Start Date by at least 1 minute',
@@ -116,12 +116,12 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
       ),
     cashiers: yup.array().of(
       yup.object().shape({
-        id: yup.number().required('Cashier ID is required'),
+        id: yup.number().required('Cashier is required').typeError('Cashier is required'),
         name: yup.string(),
         selected_pumps: yup.array().of(yup.number()),
         pump_readings: yup.array().of(
           yup.object().shape({
-            fuel_pump_id: yup.number().required('Fuel Pump is required'),
+            fuel_pump_id: yup.number().required('Fuel Pump is required').typeError('Fuel Pump is required'),
             opening: yup.number()
               .required("Opening Reading is required")
               .typeError('Opening Reading is required')
@@ -144,61 +144,62 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
                   return Number(value) >= Number(opening);
                 }
               ),
-            product_id: yup.number().required('Product is required'),
+            product_id: yup.number().required('Product is required').typeError('Product is required'),
           })
         ),
         fuel_vouchers: yup.array().of(
           yup.object().shape({
-            stakeholder_id: yup.number().nullable(),
-            quantity: yup.number().required('Quantity is required').positive('Quantity must be positive'),
-            product_id: yup.number().required('Product is required'),
-            expense_ledger_id: yup.number().nullable(),
+            stakeholder_id: yup.number().nullable().typeError('Stakeholder is Required'),
+            quantity: yup.number().required('Quantity is required').typeError('Quantity is Required').positive('Quantity must be positive'),
+            product_id: yup.number().required('Product is required').typeError('Product is Required'),
+            expense_ledger_id: yup.number().nullable().typeError('Expense Ledger is Required'),
             reference: yup.string().nullable(),
             narration: yup.string().nullable(),
           })
         ),
         tank_adjustments: yup.array().of(
           yup.object().shape({
-            tank_id: yup.number().nullable(),
-            quantity: yup.number().required('Quantity is required'),
+            tank_id: yup.number().nullable().typeError('Tank is Required'),
+            quantity: yup.number().required('Quantity is required').typeError('Quantity is Required'),
             operator: yup.string().required('Operator is required'),
             description: yup.string().nullable(),
-            product_id: yup.number().required('Product is required'),
+            product_id: yup.number().required('Product is required').typeError('Product is Required'),
           })
         ),
         cash_transactions: yup.array().of(
           yup.object().shape({
-            ledger_id: yup.number().required('Ledger ID is required'),
-            amount: yup.number().required('Amount is required').positive('Amount must be positive'),
+            ledger_id: yup.number().required('Ledger is required').typeError('Ledger is Required'),
+            amount: yup.number().required('Amount is required').typeError('Amount is Required').positive('Amount must be positive'),
           })
         ),
         main_ledger: yup.object().shape({
-          id: yup.number().required('Main Ledger ID is required'),
+          id: yup.number().required('Main Ledger is required').typeError('Main Ledger is Required'),
           amount: yup.number()
             .required('Main Ledger Amount is required')
+            .typeError('Main Ledger Amount is Required')
             .positive('Amount must be positive')
         }).nullable(),
       })
     ).required('At least one cashier is required').min(1, 'At least one cashier is required'),
     dipping_before: yup.array().of(
       yup.object().shape({
-        reading: yup.number().required('Reading is required').min(0, 'Reading cannot be negative'),
-        product_id: yup.number().required('Product is required'),
-        tank_id: yup.number().required('Tank is required'),
+        reading: yup.number().required('Reading is required').typeError('Reading must be a number').min(0, 'Reading cannot be negative'),
+        product_id: yup.number().required('Product is required').typeError('Product must be a number'),
+        tank_id: yup.number().required('Tank is required').typeError('Tank must be a number'),
       })
     ),
     dipping_after: yup.array().of(
       yup.object().shape({
-        reading: yup.number().required('Reading is required').min(0, 'Reading cannot be negative'),
-        product_id: yup.number().required('Product is required'),
-        tank_id: yup.number().required('Tank is required'),
+        reading: yup.number().required('Reading is required').typeError('Reading must be a number').min(0, 'Reading cannot be negative'),
+        product_id: yup.number().required('Product is required').typeError('Product must be a number'),
+        tank_id: yup.number().required('Tank is required').typeError('Tank must be a number'),
       })
     ),
     submit_type: yup.string().oneOf(['suspend', 'close']).required(),
     product_prices: yup.array().of(
       yup.object().shape({
-        product_id: yup.number().required('Product is required'),
-        price: yup.number().required('Price is required').positive('Price must be positive'),
+        product_id: yup.number().required('Product is required').typeError('Product is required'),
+        price: yup.number().required('Price is required').typeError('Price is required').positive('Price must be positive'),
       })
     ).required('Product prices are required').min(1, 'At least one product price is required'),
   });
@@ -555,13 +556,6 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
   const handleSubmitForm = async (data) => {
     if (data.cashiers.length === 0) {
       enqueueSnackbar('Please add at least one cashier', { variant: 'error' });
-      return;
-    }
-
-    if (!checkShiftBalanced && data.submit_type === 'close') {
-      enqueueSnackbar('Shift is not balanced. Please review and balance the shift.', {
-        variant: 'error',
-      });
       return;
     }
 
@@ -928,7 +922,7 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
               Suspend
             </LoadingButton>
             
-            {selectedCashiers.length > 0 && checkShiftBalanced && 
+            {
              checkOrganizationPermission([PERMISSIONS.FUEL_SALES_SHIFT_CLOSE]) && (
               <LoadingButton
                 loading={isPending || updateLoading}
