@@ -659,63 +659,73 @@ function ShiftSummary({ paymentItems = [] }) {
               
               {fuelVouchersAggregated.summary.length === 0 ? (
                 <Alert severity="info" sx={{ mt: 1 }}>No fuel vouchers recorded</Alert>
-              ) : (
-                <>
-                  <TableContainer sx={{ maxHeight: 200 }}>
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Stakeholder/Ledger</TableCell>
-                          <TableCell>Product</TableCell>
-                          <TableCell align="right">Quantity (L)</TableCell>
-                          <TableCell align="right">Amount</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {fuelVouchersAggregated.summary.map((voucher, index) => (
-                          <TableRow key={index}>
-                            <TableCell>
-                              <Typography variant="body2">{voucher.name}</Typography>
-                            </TableCell>
-                            <TableCell>
-                              <Typography variant="body2">{voucher.productName}</Typography>
-                            </TableCell>
-                            <TableCell align="right">
-                              <Typography>{voucher.quantity.toLocaleString()}</Typography>
-                            </TableCell>
-                            <TableCell align="right">
-                              <Typography fontWeight="medium" color="info.dark">
-                                {formatMoney(voucher.amount)}
-                              </Typography>
-                            </TableCell>
+                ) : (
+                  <>
+                    <TableContainer sx={{ maxHeight: 200 }}>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Stakeholder/Ledger</TableCell>
+                            <TableCell>Product</TableCell>
+                            <TableCell align="right">Quantity (L)</TableCell>
+                            <TableCell align="center">Counts</TableCell>
+                            <TableCell align="right">Amount</TableCell>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                  
-                  <Box sx={{ mt: 2, pt: 1, borderTop: '1px solid', borderColor: 'divider' }}>
-                    <Grid container spacing={2}>
-                      <Grid size={{ xs: 6 }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <Typography variant="body2">Total Quantity:</Typography>
-                          <Typography variant="body2" fontWeight="bold">
-                            {fuelVouchersAggregated.totalVoucherQuantity.toLocaleString()} L
-                          </Typography>
-                        </Box>
+                        </TableHead>
+                        <TableBody>
+                          {fuelVouchersAggregated.summary.map((voucher, index) => (
+                            <TableRow key={index}>
+                              <TableCell>
+                                <Typography variant="body2">{voucher.name}</Typography>
+                              </TableCell>
+                              <TableCell>
+                                <Typography variant="body2">{voucher.productName}</Typography>
+                              </TableCell>
+                              <TableCell align="right">
+                                <Typography>{voucher.quantity.toLocaleString()}</Typography>
+                              </TableCell>
+                              <TableCell align="center">
+                                <Chip
+                                  size="small"
+                                  label={`${voucher.cashierCount}`}
+                                  color="info"
+                                  variant="outlined"
+                                />
+                              </TableCell>
+                              <TableCell align="right">
+                                <Typography fontWeight="medium" color="info.dark">
+                                  {voucher.amount.toLocaleString()}
+                                </Typography>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                    
+                    <Box sx={{ mt: 2, pt: 1, borderTop: '1px solid', borderColor: 'divider' }}>
+                      <Grid container spacing={2}>
+                        <Grid size={{ xs: 6 }}>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <Typography variant="body2">Total Quantity:</Typography>
+                            <Typography variant="body2" fontWeight="bold">
+                              {fuelVouchersAggregated.totalVoucherQuantity.toLocaleString()} L
+                            </Typography>
+                          </Box>
+                        </Grid>
+                        <Grid size={{ xs: 6 }}>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <Typography variant="body2" fontWeight="bold">Total Vouchers Amount:</Typography>
+                            <Typography variant="body1" fontWeight="bold" color="info.dark">
+                              {fuelVouchersAggregated.totalVoucherAmount.toLocaleString()}
+                            </Typography>
+                          </Box>
+                        </Grid>
                       </Grid>
-                      <Grid size={{ xs: 6 }}>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <Typography variant="body2" fontWeight="bold">Total Vouchers Amount:</Typography>
-                          <Typography variant="body1" fontWeight="bold" color="info.dark">
-                            {formatMoney(fuelVouchersAggregated.totalVoucherAmount)}
-                          </Typography>
-                        </Box>
-                      </Grid>
-                    </Grid>
-                  </Box>
-                </>
-              )}
+                    </Box>
+                  </>
+                )
+              }
             </Paper>
           </Grid>
 
