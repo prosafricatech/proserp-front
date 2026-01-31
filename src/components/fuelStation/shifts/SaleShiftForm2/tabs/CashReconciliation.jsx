@@ -610,9 +610,9 @@ function CashReconciliation({
                 <Grid container spacing={2}>
                   <Grid size={{ xs: 12, md: 6 }}>
                     <Autocomplete
-                      multiple
                       options={collection_ledgers || []}
                       getOptionLabel={(opt) => opt?.name || ''}
+                      size='small'
                       value={
                         (useWatch({ name: `cashiers.${cashierIndex}.collected_ledger_ids` }) || [])
                           .map(id => (collection_ledgers || []).find(l => l.id === id)).filter(Boolean)
@@ -624,10 +624,6 @@ function CashReconciliation({
                       }}
                       renderOption={(props, option, { selected }) => (
                         <li {...props} key={option.id || option.code || option.name}>
-                          <Checkbox
-                            style={{ marginRight: 8 }}
-                            checked={selected}
-                          />
                           {option.name}
                         </li>
                       )}
@@ -635,7 +631,6 @@ function CashReconciliation({
                         <TextField
                           {...params}
                           label="Collection Ledgers"
-                          required
                           error={!!errors?.cashiers?.[cashierIndex]?.collected_ledger_ids}
                           helperText={errors?.cashiers?.[cashierIndex]?.collected_ledger_ids?.message || 'Select one or more ledgers'}
                         />
@@ -654,7 +649,6 @@ function CashReconciliation({
                         inputComponent: CommaSeparatedField,
                       }}
                       label="Collected Amount"
-                      required
                       sx={{
                         '& .MuiInputBase-input': {
                           textAlign: 'right',

@@ -69,13 +69,13 @@ function PaymentsReceivedItemRow({
                     
                     <Grid size={{xs: 6, md: 3}}>
                         <Tooltip title="Paid By">
-                            <Typography>{debit_ledger?.name || item.debitLedgerName}</Typography>
+                            <Typography>{credit_ledger?.name || item.creditLedgerName}</Typography>
                         </Tooltip>
                     </Grid>
                     
                     <Grid size={{xs: 6, md: 3}}>
                         <Tooltip title="Paid To">
-                            <Typography>{credit_ledger?.name || item.creditLedgerName}</Typography>
+                            <Typography>{debit_ledger?.name || item.debitLedgerName}</Typography>
                         </Tooltip>
                     </Grid>
                     
