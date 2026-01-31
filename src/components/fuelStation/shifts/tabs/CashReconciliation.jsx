@@ -8,6 +8,24 @@ import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import { Div } from '@jumbo/shared';
 
 function CashReconciliation() {
+    // Autofill collected_amount and collection_ledger_id for each cashier if present
+    useEffect(() => {
+      const cashiers = watch('cashiers') || [];
+      cashiers.forEach((cashier, idx) => {
+        if (
+          typeof cashier.collected_amount !== 'undefined' &&
+          cashier.collected_amount !== null
+        ) {
+          setValue(`cashiers.${idx}.collected_amount`, cashier.collected_amount, { shouldValidate: true, shouldDirty: true });
+        }
+        if (
+          typeof cashier.collection_ledger_id !== 'undefined' &&
+          cashier.collection_ledger_id !== null
+        ) {
+          setValue(`cashiers.${idx}.collection_ledger_id`, cashier.collection_ledger_id, { shouldValidate: true, shouldDirty: true });
+        }
+      });
+    }, [watch('cashiers')]);
   const [fuelVoucherTotals, setFuelVoucherTotals] = useState({});
   const { ungroupedLedgerOptions } = useLedgerSelect();
   const { adjustments, setCheckShiftBalanced, products, fuel_pumps, fuelVouchers, shiftLedgers, setValue, errors, watch, cashReconciliationFields, cashReconciliationAppend, cashReconciliationRemove } = useFormContext();
@@ -281,143 +299,173 @@ function CashReconciliation() {
             </Typography>
             <Divider />
             <Grid container columnSpacing={1} rowSpacing={1}>
-              <Grid size={{xs: 12, md: 12}}>
-                <Grid container columnSpacing={1} rowSpacing={1}>
-                  <Grid size={{xs: 11, md: 6.4, lg: 6.4}}>
-                    <Div sx={{ mt: 2 }}>
-                      <Autocomplete
-                        size="small"
-                        isOptionEqualToValue={(option, value) => option.id === value.id}
-                        options={availableLedgers}
-                        getOptionLabel={(option) => option.name}
-                        value={mainLedgerId ? ungroupedLedgerOptions.find(ledger => ledger.id === mainLedgerId) : null}
-                        renderInput={(params) => (
-                          <TextField 
-                            {...params} 
-                            label="Main Ledger"
-                            error={!!errors.main_ledger_id}
-                            helperText={errors.main_ledger_id?.message}
-                          />
-                        )}
-                        onChange={(e, newValue) => {
-                          const id = newValue ? newValue.id : null;
-
-                          setValue('main_ledger_id', id, {
-                            shouldValidate: true,
-                            shouldDirty: true,
-                          });
-
-                          setValue('main_ledger', prev => ({
-                            ...prev,
-                            id: id
-                          }), {
-                            shouldValidate: true,
-                            shouldDirty: true,
-                          });
-                        }}
-                      />
-                    </Div>
+              {/* Per-cashier collected amount and ledger fields */}
+              {(watch('cashiers') || []).map((cashier, idx) => (
+                <Grid container key={cashier.id || idx} spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                  <Grid item xs={4} md={3} lg={2}>
+                    <Typography variant="body2" fontWeight="bold">{cashier.name || `Cashier ${idx+1}`}</Typography>
                   </Grid>
-                  <Grid size={{xs: 11.5, md: 4.5}}>
-                    <Div sx={{ mt: { sx: 1, md: 2 } }}>
-                      <TextField
-                        size="small"
-                        fullWidth
-                        label="Amount"
-                        value={main_ledger_amount}
-                        error={!!errors.main_ledger_amount}
-                        helperText={errors.main_ledger_amount?.message}
-                        InputProps={{
-                          inputComponent: CommaSeparatedField,
-                          readOnly: true
-                        }}
-                      />  
-                    </Div>
+                  <Grid item xs={4} md={3} lg={2}>
+                    <TextField
+                      size="small"
+                      fullWidth
+                      label="Collected Amount"
+                      value={cashier.collected_amount || ''}
+                      onChange={e => setValue(`cashiers.${idx}.collected_amount`, sanitizedNumber(e.target.value), { shouldValidate: true, shouldDirty: true })}
+                      InputProps={{ inputComponent: CommaSeparatedField }}
+                    />
                   </Grid>
-                  {cashReconciliationFields.map((field, index) => (
-                    <Grid key={field.id} container columnSpacing={1} paddingLeft={1} width={'100%'}>
-                      <Grid size={11} marginBottom={0.5}>
-                        <Divider />
-                        <Grid container columnSpacing={1}>
-                          <Grid size={{xs: 12, md: 7}}>
-                            <Div sx={{ mt: 1 }}>
-                              <Autocomplete
-                                size="small"
-                                isOptionEqualToValue={(option, value) => option.id === value.id}
-                                options={availableLedgers.filter(ledger => 
-                                  ledger.id !== mainLedgerId
-                                )}
-                                getOptionLabel={(option) => option.name}
-                                value={otherLedgers[index]?.id ? 
-                                  ungroupedLedgerOptions.find(ledger => ledger.id === otherLedgers[index]?.id) : 
-                                  null
-                                }
-                                renderInput={(params) => (
-                                  <TextField 
-                                    {...params} 
-                                    label="Other Ledger"
-                                    error={!!errors?.other_ledgers?.[index]?.id}
-                                    helperText={errors?.other_ledgers?.[index]?.id?.message}
-                                  />
-                                )}
-                                onChange={(e, newValue) => {
-                                  setValue(`other_ledgers.${index}.id`, newValue ? newValue.id : null, {
-                                    shouldValidate: true,
-                                    shouldDirty: true
-                                  });
-                                }}
-                              />
-                            </Div>
-                          </Grid>
-                          <Grid size={{xs: 12, md: 5}}>
-                            <Div sx={{ mt: 1 }}>
-                              <TextField
-                                size="small"
-                                fullWidth
-                                error={!!errors?.other_ledgers?.[index]?.amount}
-                                value={otherLedgers[index]?.amount || ''}
-                                helperText={errors?.other_ledgers?.[index]?.amount?.message}
-                                label="Amount"
-                                InputProps={{
-                                  inputComponent: CommaSeparatedField,
-                                }}
-                                onChange={(e) => {
-                                  const value = e.target.value ? sanitizedNumber(e.target.value) : 0;
-                                  setValue(`other_ledgers.${index}.amount`, value, {
-                                    shouldValidate: true,
-                                    shouldDirty: true
-                                  });
-                                }}
-                              />
-                            </Div>
-                          </Grid>
+                  <Grid item xs={4} md={4} lg={3}>
+                    <Autocomplete
+                      size="small"
+                      isOptionEqualToValue={(option, value) => option.id === value}
+                      options={ungroupedLedgerOptions}
+                      getOptionLabel={option => option.name}
+                      value={cashier.collection_ledger_id ? ungroupedLedgerOptions.find(l => l.id === cashier.collection_ledger_id) : null}
+                      onChange={(e, newValue) => setValue(`cashiers.${idx}.collection_ledger_id`, newValue ? newValue.id : null, { shouldValidate: true, shouldDirty: true })}
+                      renderInput={params => (
+                        <TextField {...params} label="Collection Ledger" />
+                      )}
+                    />
+                  </Grid>
+                </Grid>
+              ))}
+              {/* Existing main/other ledger fields */}
+              <Grid container columnSpacing={1} rowSpacing={1}>
+                <Grid size={{xs: 11, md: 6.4, lg: 6.4}}>
+                  <Div sx={{ mt: 2 }}>
+                    <Autocomplete
+                      size="small"
+                      isOptionEqualToValue={(option, value) => option.id === value.id}
+                      options={availableLedgers}
+                      getOptionLabel={(option) => option.name}
+                      value={mainLedgerId ? ungroupedLedgerOptions.find(ledger => ledger.id === mainLedgerId) : null}
+                      renderInput={(params) => (
+                        <TextField 
+                          {...params} 
+                          label="Main Ledger"
+                          error={!!errors.main_ledger_id}
+                          helperText={errors.main_ledger_id?.message}
+                        />
+                      )}
+                      onChange={(e, newValue) => {
+                        const id = newValue ? newValue.id : null;
+
+                        setValue('main_ledger_id', id, {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                        });
+
+                        setValue('main_ledger', prev => ({
+                          ...prev,
+                          id: id
+                        }), {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                        });
+                      }}
+                    />
+                  </Div>
+                </Grid>
+                <Grid size={{xs: 11.5, md: 4.5}}>
+                  <Div sx={{ mt: { sx: 1, md: 2 } }}>
+                    <TextField
+                      size="small"
+                      fullWidth
+                      label="Amount"
+                      value={main_ledger_amount}
+                      error={!!errors.main_ledger_amount}
+                      helperText={errors.main_ledger_amount?.message}
+                      InputProps={{
+                        inputComponent: CommaSeparatedField,
+                        readOnly: true
+                      }}
+                    />  
+                  </Div>
+                </Grid>
+                {cashReconciliationFields.map((field, index) => (
+                  <Grid key={field.id} container columnSpacing={1} paddingLeft={1} width={'100%'}>
+                    <Grid size={11} marginBottom={0.5}>
+                      <Divider />
+                      <Grid container columnSpacing={1}>
+                        <Grid size={{xs: 12, md: 7}}>
+                          <Div sx={{ mt: 1 }}>
+                            <Autocomplete
+                              size="small"
+                              isOptionEqualToValue={(option, value) => option.id === value.id}
+                              options={availableLedgers.filter(ledger => 
+                                ledger.id !== mainLedgerId
+                              )}
+                              getOptionLabel={(option) => option.name}
+                              value={otherLedgers[index]?.id ? 
+                                ungroupedLedgerOptions.find(ledger => ledger.id === otherLedgers[index]?.id) : 
+                                null
+                              }
+                              renderInput={(params) => (
+                                <TextField 
+                                  {...params} 
+                                  label="Other Ledger"
+                                  error={!!errors?.other_ledgers?.[index]?.id}
+                                  helperText={errors?.other_ledgers?.[index]?.id?.message}
+                                />
+                              )}
+                              onChange={(e, newValue) => {
+                                setValue(`other_ledgers.${index}.id`, newValue ? newValue.id : null, {
+                                  shouldValidate: true,
+                                  shouldDirty: true
+                                });
+                              }}
+                            />
+                          </Div>
+                        </Grid>
+                        <Grid size={{xs: 12, md: 5}}>
+                          <Div sx={{ mt: 1 }}>
+                            <TextField
+                              size="small"
+                              fullWidth
+                              error={!!errors?.other_ledgers?.[index]?.amount}
+                              value={otherLedgers[index]?.amount || ''}
+                              helperText={errors?.other_ledgers?.[index]?.amount?.message}
+                              label="Amount"
+                              InputProps={{
+                                inputComponent: CommaSeparatedField,
+                              }}
+                              onChange={(e) => {
+                                const value = e.target.value ? sanitizedNumber(e.target.value) : 0;
+                                setValue(`other_ledgers.${index}.amount`, value, {
+                                  shouldValidate: true,
+                                  shouldDirty: true
+                                });
+                              }}
+                            />
+                          </Div>
                         </Grid>
                       </Grid>
-                      <Grid size={1}>
-                        <Div sx={{ mt: 1 }}>
-                          <Tooltip title="Remove Other Ledger">
-                            <IconButton size="small" onClick={() => cashReconciliationRemove(index)}>
-                              <DisabledByDefault fontSize="small" color="error" />
-                            </IconButton>
-                          </Tooltip>
-                        </Div>
-                      </Grid>
                     </Grid>
-                  ))}
-                  <Grid size={12} sx={{ display: 'flex', direction: 'row', justifyContent: 'flex-end' }}>
-                    <Div sx={{ mt: 1 }}>
-                      <Tooltip title="Add Other Ledger">
-                        <Button 
-                          size="small" 
-                          variant="outlined" 
-                          onClick={() => cashReconciliationAppend({ id: '', amount: '' })}
-                          disabled={availableLedgers.length === 0}
-                        >
-                          <AddOutlined sx={{ fontSize: 10 }} /> Add
-                        </Button>
-                      </Tooltip>
-                    </Div>
+                    <Grid size={1}>
+                      <Div sx={{ mt: 1 }}>
+                        <Tooltip title="Remove Other Ledger">
+                          <IconButton size="small" onClick={() => cashReconciliationRemove(index)}>
+                            <DisabledByDefault fontSize="small" color="error" />
+                          </IconButton>
+                        </Tooltip>
+                      </Div>
+                    </Grid>
                   </Grid>
+                ))}
+                <Grid size={12} sx={{ display: 'flex', direction: 'row', justifyContent: 'flex-end' }}>
+                  <Div sx={{ mt: 1 }}>
+                    <Tooltip title="Add Other Ledger">
+                      <Button 
+                        size="small" 
+                        variant="outlined" 
+                        onClick={() => cashReconciliationAppend({ id: '', amount: '' })}
+                        disabled={availableLedgers.length === 0}
+                      >
+                        <AddOutlined sx={{ fontSize: 10 }} /> Add
+                      </Button>
+                    </Tooltip>
+                  </Div>
                 </Grid>
               </Grid>
             </Grid>

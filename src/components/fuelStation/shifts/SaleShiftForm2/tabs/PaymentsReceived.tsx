@@ -64,7 +64,6 @@ function PaymentsReceived({
 }: PaymentsReceivedProps) {
   const [isAdding, setIsAdding] = useState(false);
   const { ungroupedLedgerOptions } = useLedgerSelect();
-  // Defensive context extraction for type safety
   const contextValue = useContext(StationFormContext) as { activeStation?: { collection_ledgers?: LedgerOption[] } };
   const collection_ledgers: LedgerOption[] = contextValue?.activeStation?.collection_ledgers || [];
 

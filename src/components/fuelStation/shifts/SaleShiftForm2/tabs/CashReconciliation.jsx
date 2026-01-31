@@ -370,50 +370,6 @@ function CashReconciliation({
           </Card>
         </Grid>
 
-        {/* Cash Summary Card (without Collected Amount) */}
-        <Grid size={{ xs: 12, md: 6 }}>
-          <Card variant="outlined">
-            <CardContent>
-              <Typography variant="subtitle1" align="center" fontWeight="bold" gutterBottom>
-                Cash Summary
-              </Typography>
-              <Divider />
-              <TableContainer>
-                <Table size="small">
-                  <TableBody>
-                    <TableRow>
-                      <TableCell>Sales Amount</TableCell>
-                      <TableCell align="right">{grandProductsTotal.toLocaleString()}</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>Fuel Vouchers</TableCell>
-                      <TableCell align="right">{grandFuelVoucherTotal.toLocaleString()}</TableCell>
-                    </TableRow>
-                    <TableRow sx={{ borderTop: '2px solid', borderColor: 'divider' }}>
-                      <TableCell sx={{ fontWeight: 'bold' }}>Expected Cash</TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
-                        {actualMainLedgerAmount.toLocaleString()}
-                      </TableCell>
-                    </TableRow>
-                    {/* Over/Short Display */}
-                    <TableRow sx={{ bgcolor: isShort ? 'error.50' : 'success.50' }}>
-                      <TableCell sx={{ fontWeight: 'bold' }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                          {profitLossIcon}
-                          <Typography color={profitLossColor}>{profitLossLabel}</Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 'bold', color: profitLossColor }}>
-                        {Math.abs(profitLoss).toLocaleString()}
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </CardContent>
-          </Card>
-        </Grid>
-
         {/* Cash Distribution Section */}
         <Grid size={{ xs: 12 }}>
           <Card variant="outlined">
@@ -629,6 +585,50 @@ function CashReconciliation({
                   </Grid>
                 </Grid>
               </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Cash Summary Card (without Collected Amount) */}
+        <Grid size={{ xs: 12, md: 12 }}>
+          <Card variant="outlined">
+            <CardContent>
+              <Typography variant="subtitle1" align="center" fontWeight="bold" gutterBottom>
+                Cash Summary
+              </Typography>
+              <Divider />
+              <TableContainer>
+                <Table size="small">
+                  <TableBody>
+                    <TableRow>
+                      <TableCell>Sales Amount</TableCell>
+                      <TableCell align="right">{grandProductsTotal.toLocaleString()}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell>Fuel Vouchers</TableCell>
+                      <TableCell align="right">{grandFuelVoucherTotal.toLocaleString()}</TableCell>
+                    </TableRow>
+                    <TableRow sx={{ borderTop: '2px solid', borderColor: 'divider' }}>
+                      <TableCell sx={{ fontWeight: 'bold' }}>Expected Cash</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+                        {actualMainLedgerAmount.toLocaleString()}
+                      </TableCell>
+                    </TableRow>
+                    {/* Over/Short Display */}
+                    <TableRow sx={{ bgcolor: isShort ? 'error.50' : 'success.50' }}>
+                      <TableCell sx={{ fontWeight: 'bold' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          {profitLossIcon}
+                          <Typography color={profitLossColor}>{profitLossLabel}</Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 'bold', color: profitLossColor }}>
+                        {Math.abs(profitLoss).toLocaleString()}
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </TableContainer>
             </CardContent>
           </Card>
         </Grid>

@@ -235,6 +235,8 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
             reference: fv.reference,
             narration: fv.narration,
           })) || [],
+          collected_amount: cashier.collected_amount || 0,
+          collected_ledger_id: cashier.collection_ledger_id || null,
           tank_adjustments: cashier.tank_adjustments?.map(adj => ({
             tank_id: adj.tank_id,
             quantity: adj.quantity,
@@ -567,6 +569,8 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
         data.cashiers[parseInt(index)].fuel_vouchers = cashierFuelVouchers[parseInt(index)] || [];
       }
     });
+
+    data.payments_received = paymentItems;
 
     await saveMutation(data);
   };
