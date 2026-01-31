@@ -988,12 +988,14 @@ function ShiftSummary({ paymentItems = [] }) {
     <Card variant="outlined" sx={{ mb: 3 }}>
       <CardContent>
         <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          {profitLossSummary.netProfitLoss >= 0 ? (
+          {profitLossSummary.netProfitLoss === 0 ? (
             <TrendingUp color="success" />
+          ) : profitLossSummary.netProfitLoss > 0 ? (
+            <TrendingUp color="info" />
           ) : (
             <TrendingDown color="error" />
           )}
-          Cash Collection & Profit/Loss Summary
+          Cash Collection & Over/Short Summary
           {currencyCode && (
             <Typography variant="caption" color="textSecondary" sx={{ ml: 1 }}>
               (Amounts in {currencyCode})
@@ -1027,19 +1029,19 @@ function ShiftSummary({ paymentItems = [] }) {
                 <Typography
                   variant="h5"
                   fontWeight="bold"
-                  color={profitLossSummary.netProfitLoss >= 0 ? "success.main" : "error.main"}
+                  color={profitLossSummary.netProfitLoss === 0 ? "success.main" : profitLossSummary.netProfitLoss > 0 ? "info.main" : "error.main"}
                 >
-                  {profitLossSummary.netProfitLoss >= 0 ? '+' : ''}{formatMoney(Math.abs(profitLossSummary.netProfitLoss))}
+                  {profitLossSummary.netProfitLoss === 0 ? '' : profitLossSummary.netProfitLoss > 0 ? '+' : '-'}{formatMoney(Math.abs(profitLossSummary.netProfitLoss))}
                 </Typography>
               </Box>
             </Paper>
           </Grid>
 
-          {/* Profit/Loss Breakdown */}
+          {/* Over/Short Breakdown */}
           <Grid size={{ xs: 12, md: 6 }}>
             <Paper elevation={0} sx={{ p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
               <Typography variant="subtitle2" color="textSecondary" gutterBottom>
-                PROFIT/LOSS BREAKDOWN
+                OVER/SHORT BREAKDOWN
               </Typography>
               <Grid container spacing={1}>
                 <Grid size={{ xs: 6 }}>
@@ -1048,7 +1050,7 @@ function ShiftSummary({ paymentItems = [] }) {
                       {formatMoney(profitLossSummary.totalProfit)}
                     </Typography>
                     <Typography variant="caption" color="textSecondary">
-                      Total Profit
+                      Total Over
                     </Typography>
                   </Paper>
                 </Grid>
@@ -1059,7 +1061,7 @@ function ShiftSummary({ paymentItems = [] }) {
                       {formatMoney(profitLossSummary.totalLoss)}
                     </Typography>
                     <Typography variant="caption" color="textSecondary">
-                      Total Loss
+                      Total Short
                     </Typography>
                   </Paper>
                 </Grid>
@@ -1071,9 +1073,9 @@ function ShiftSummary({ paymentItems = [] }) {
                   mt: 2,
                   p: 2,
                   textAlign: 'center',
-                  bgcolor: profitLossSummary.netProfitLoss >= 0 ? 'success.100' : 'error.100',
+                  bgcolor: profitLossSummary.netProfitLoss === 0 ? 'success.100' : profitLossSummary.netProfitLoss > 0 ? 'info.100' : 'error.100',
                   borderRadius: 1,
-                  borderColor: profitLossSummary.netProfitLoss >= 0 ? 'success.200' : 'error.200'
+                  borderColor: profitLossSummary.netProfitLoss === 0 ? 'success.200' : profitLossSummary.netProfitLoss > 0 ? 'info.200' : 'error.200'
                 }}
               >
                 <Typography variant="subtitle2" color="textSecondary" gutterBottom>
@@ -1082,12 +1084,12 @@ function ShiftSummary({ paymentItems = [] }) {
                 <Typography
                   variant="h3"
                   fontWeight="bold"
-                  color={profitLossSummary.netProfitLoss >= 0 ? "success.dark" : "error"}
+                  color={profitLossSummary.netProfitLoss === 0 ? "success.dark" : profitLossSummary.netProfitLoss > 0 ? "info.dark" : "error"}
                 >
-                  {profitLossSummary.netProfitLoss >= 0 ? '+' : '-'}{formatMoney(Math.abs(profitLossSummary.netProfitLoss))}
+                  {profitLossSummary.netProfitLoss === 0 ? '' : profitLossSummary.netProfitLoss > 0 ? '+' : '-'}{formatMoney(Math.abs(profitLossSummary.netProfitLoss))}
                 </Typography>
                 <Typography variant="caption" color="textSecondary">
-                  {profitLossSummary.netProfitLoss >= 0 ? 'Overall Profit' : 'Overall Loss'}
+                  {profitLossSummary.netProfitLoss === 0 ? 'Balanced' : profitLossSummary.netProfitLoss > 0 ? 'Overall Over' : 'Overall Short'}
                 </Typography>
               </Paper>
             </Paper>
@@ -1107,7 +1109,7 @@ function ShiftSummary({ paymentItems = [] }) {
                         <TableCell>Cashier</TableCell>
                         <TableCell align="right">Expected Cash</TableCell>
                         <TableCell align="right">Collected Cash</TableCell>
-                        <TableCell align="right">Profit/Loss</TableCell>
+                        <TableCell align="right">Over/Short</TableCell>
                         <TableCell align="center">Status</TableCell>
                       </TableRow>
                     </TableHead>
@@ -1126,16 +1128,16 @@ function ShiftSummary({ paymentItems = [] }) {
                           <TableCell align="right">
                             <Typography
                               fontWeight="bold"
-                              color={cashier.profitLoss >= 0 ? "success.main" : "error.main"}
+                              color={cashier.profitLoss === 0 ? "success.main" : cashier.profitLoss > 0 ? "info.main" : "error.main"}
                             >
-                              {cashier.profitLoss >= 0 ? '+' : '-'}{formatMoney(Math.abs(cashier.profitLoss))}
+                              {cashier.profitLoss === 0 ? '' : cashier.profitLoss > 0 ? '+' : '-'}{formatMoney(Math.abs(cashier.profitLoss))}
                             </Typography>
                           </TableCell>
                           <TableCell align="center">
                             <Chip
                               size="small"
-                              label={cashier.isBalanced ? "BALANCED" : (cashier.profitLoss >= 0 ? "PROFIT" : "LOSS")}
-                              color={cashier.isBalanced ? "success" : (cashier.profitLoss >= 0 ? "success" : "error")}
+                              label={cashier.isBalanced ? "BALANCED" : (cashier.profitLoss > 0 ? "OVER" : "SHORT")}
+                              color={cashier.isBalanced ? "success" : (cashier.profitLoss > 0 ? "info" : "error")}
                               variant="outlined"
                             />
                           </TableCell>
@@ -1224,14 +1226,14 @@ function ShiftSummary({ paymentItems = [] }) {
               />
               <Typography>
                 {profitLossSummary.netProfitLoss === 0 ? 'Perfectly Balanced' :
-                profitLossSummary.netProfitLoss > 0 ? `Profit: +${profitLossSummary.netProfitLoss.toLocaleString()}` :
-                `Loss: ${profitLossSummary.netProfitLoss.toLocaleString()}`}
+                profitLossSummary.netProfitLoss > 0 ? `Over: +${profitLossSummary.netProfitLoss.toLocaleString()}` :
+                `Short: -${Math.abs(profitLossSummary.netProfitLoss).toLocaleString()}`}
               </Typography>
             </Box>
 
             <Chip
               label={profitLossSummary.netProfitLoss === 0 ? "BALANCED" :
-                    profitLossSummary.netProfitLoss > 0 ? "PROFIT" : "LOSS"}
+                    profitLossSummary.netProfitLoss > 0 ? "OVER" : "SHORT"}
               color={profitLossSummary.netProfitLoss === 0 ? "success" :
                     profitLossSummary.netProfitLoss > 0 ? "info" : "error"}
               size="small"

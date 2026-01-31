@@ -18,7 +18,6 @@ import {
   Typography,
   Autocomplete,
   Box,
-  Checkbox,
 } from '@mui/material';
 import { 
   AddOutlined, 
@@ -219,13 +218,13 @@ function CashReconciliation({
     return actualCollected - calculatedMainLedgerAmount;
   }, [collectedAmount, calculatedMainLedgerAmount]);
 
-  // Profit/Loss display logic for UI
+  // Over/Short display logic for UI
   const isZeroCollected = sanitizedNumber(collectedAmount) === 0;
   const expectedCash = calculatedMainLedgerAmount;
-  const isSpecialLoss = isZeroCollected && expectedCash < 0;
-  const isLoss = isSpecialLoss || isZeroCollected || profitLoss < 0;
-  const profitLossSign = isLoss ? '-' : '+';
-  const profitLossColor = isLoss ? 'error.main' : 'success.main';
+  const isShort = (isZeroCollected && expectedCash < 0) || isZeroCollected || profitLoss < 0;
+  const profitLossLabel = isShort ? 'Short' : 'Over';
+  const profitLossIcon = isShort ? <TrendingDown color="error" fontSize="small" /> : <TrendingUp color="success" fontSize="small" />;
+  const profitLossColor = isShort ? 'error.main' : 'success.main';
 
   // Check if cashier is balanced based on collected amount
   const isCashierBalanced = useMemo(() => {
@@ -415,25 +414,16 @@ function CashReconciliation({
                         {actualMainLedgerAmount.toLocaleString()}
                       </TableCell>
                     </TableRow>
-                    {/* Profit/Loss Display */}
-                    <TableRow sx={{ bgcolor: isLoss ? 'error.50' : 'success.50' }}>
+                    {/* Over/Short Display */}
+                    <TableRow sx={{ bgcolor: isShort ? 'error.50' : 'success.50' }}>
                       <TableCell sx={{ fontWeight: 'bold' }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                          {isLoss ? (
-                            <>
-                              <TrendingDown color="error" fontSize="small" />
-                              <Typography color="error.main">Loss</Typography>
-                            </>
-                          ) : (
-                            <>
-                              <TrendingUp color="success" fontSize="small" />
-                              <Typography color="success.main">Profit</Typography>
-                            </>
-                          )}
+                          {profitLossIcon}
+                          <Typography color={profitLossColor}>{profitLossLabel}</Typography>
                         </Box>
                       </TableCell>
                       <TableCell align="right" sx={{ fontWeight: 'bold', color: profitLossColor }}>
-                        {profitLossSign}{Math.abs(profitLoss).toLocaleString()}
+                        {Math.abs(profitLoss).toLocaleString()}
                       </TableCell>
                     </TableRow>
                   </TableBody>
