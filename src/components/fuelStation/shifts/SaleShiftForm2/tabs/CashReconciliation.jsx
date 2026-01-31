@@ -18,8 +18,6 @@ import {
   Typography,
   Autocomplete,
   Box,
-  Alert,
-  Paper,
   Checkbox,
 } from '@mui/material';
 import { 
@@ -62,7 +60,6 @@ function CashReconciliation({
     name: `cashiers.${cashierIndex}.main_ledger_id`,
   });
 
-  // Get collected_amount from form
   const collectedAmount = useWatch({
     name: `cashiers.${cashierIndex}.collected_amount`,
   }) || 0;
@@ -78,7 +75,6 @@ function CashReconciliation({
 
   const cashierMainLedger = cashierData?.main_ledger;
 
-  // AUTOFILL SAVED OTHER LEDGER TRANSACTIONS
   useEffect(() => {
     if (cashierData?.cash_transactions?.length > 0 && !hasLoadedSavedTransactions && !initialized) {
       const otherTransactions = cashierData.cash_transactions.filter(transaction => {
@@ -176,7 +172,6 @@ function CashReconciliation({
     };
   }, [fuelVoucherTotals, productTotals, products, productPrices]);
 
-  // Filter out transactions where ledger equals main_ledger
   const filteredCashTransactions = useMemo(() => {
     return cashTransactions.filter(transaction => {
       if (!mainLedgerId) return true;
@@ -206,18 +201,22 @@ function CashReconciliation({
   // Calculate profit/loss for this cashier
   const profitLoss = useMemo(() => {
     const actualCollected = sanitizedNumber(collectedAmount) || 0;
-    return actualCollected - cashRemaining;
-  }, [collectedAmount, cashRemaining]);
+    return actualCollected - calculatedMainLedgerAmount;
+  }, [collectedAmount, calculatedMainLedgerAmount]);
+
+  // Profit/Loss display logic for UI
+  const isZeroCollected = sanitizedNumber(collectedAmount) === 0;
+  const expectedCash = calculatedMainLedgerAmount;
+  const isSpecialLoss = isZeroCollected && expectedCash < 0;
+  const isLoss = isSpecialLoss || isZeroCollected || profitLoss < 0;
+  const profitLossSign = isLoss ? '-' : '+';
+  const profitLossColor = isLoss ? 'error.main' : 'success.main';
 
   // Check if cashier is balanced based on collected amount
   const isCashierBalanced = useMemo(() => {
     if (!mainLedgerId) return false;
-    
     const actualAmount = watch(`cashiers.${cashierIndex}.main_ledger_amount`) || 0;
-    
-    // Check if collected amount matches cash remaining
     const collectedMatch = Math.abs((sanitizedNumber(collectedAmount) || 0) - cashRemaining) < 0.01;
-    
     return collectedMatch && Math.abs(actualAmount - calculatedMainLedgerAmount) < 0.01;
   }, [mainLedgerId, cashierIndex, watch, calculatedMainLedgerAmount, collectedAmount, cashRemaining]);
 
@@ -237,7 +236,6 @@ function CashReconciliation({
   }, [cashierLedgers, mainLedgerId]);
 
   const addCashTransaction = () => {
-    // Always use a fresh array reference and trigger validation for UI update
     const newTransactions = Array.isArray(cashTransactions)
       ? [...cashTransactions, { ledger_id: '', amount: '', narration: '' }]
       : [{ ledger_id: '', amount: '', narration: '' }];
@@ -249,7 +247,6 @@ function CashReconciliation({
   };
 
   const removeCashTransaction = (idx) => {
-    // Remove transaction by index, update with a fresh array reference and trigger validation
     const newTransactions = Array.isArray(cashTransactions)
       ? cashTransactions.filter((_, i) => i !== idx)
       : [];
@@ -274,7 +271,6 @@ function CashReconciliation({
 
   const actualMainLedgerAmount = watch(`cashiers.${cashierIndex}.main_ledger_amount`) || 0;
 
-  // Handle collected amount change
   const handleCollectedAmountChange = (value) => {
     const sanitizedValue = sanitizedNumber(value);
     setValue(`cashiers.${cashierIndex}.collected_amount`, sanitizedValue, {
@@ -282,7 +278,6 @@ function CashReconciliation({
       shouldDirty: true,
     });
     
-    // Trigger validation
     trigger(`cashiers.${cashierIndex}.collected_amount`);
   };
 
@@ -408,24 +403,24 @@ function CashReconciliation({
                       </TableCell>
                     </TableRow>
                     {/* Profit/Loss Display */}
-                    <TableRow sx={{ bgcolor: profitLoss >= 0 ? 'success.50' : 'error.50' }}>
+                    <TableRow sx={{ bgcolor: isLoss ? 'error.50' : 'success.50' }}>
                       <TableCell sx={{ fontWeight: 'bold' }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                          {profitLoss >= 0 ? (
-                            <>
-                              <TrendingUp color="success" fontSize="small" />
-                              <Typography color="success.main">Profit</Typography>
-                            </>
-                          ) : (
+                          {isLoss ? (
                             <>
                               <TrendingDown color="error" fontSize="small" />
                               <Typography color="error.main">Loss</Typography>
                             </>
+                          ) : (
+                            <>
+                              <TrendingUp color="success" fontSize="small" />
+                              <Typography color="success.main">Profit</Typography>
+                            </>
                           )}
                         </Box>
                       </TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 'bold', color: profitLoss >= 0 ? 'success.main' : 'error.main' }}>
-                        {Math.abs(profitLoss).toLocaleString()}
+                      <TableCell align="right" sx={{ fontWeight: 'bold', color: profitLossColor }}>
+                        {profitLossSign}{Math.abs(profitLoss).toLocaleString()}
                       </TableCell>
                     </TableRow>
                   </TableBody>
@@ -633,10 +628,6 @@ function CashReconciliation({
                       value={collectedAmount || 0}
                       onChange={(e) => handleCollectedAmountChange(e.target.value)}
                       error={!!errors?.cashiers?.[cashierIndex]?.collected_amount}
-                      helperText={
-                        errors?.cashiers?.[cashierIndex]?.collected_amount?.message ||
-                        `Enter the cash that remains: ${actualMainLedgerAmount.toLocaleString()}`
-                      }
                       InputProps={{
                         inputComponent: CommaSeparatedField,
                       }}

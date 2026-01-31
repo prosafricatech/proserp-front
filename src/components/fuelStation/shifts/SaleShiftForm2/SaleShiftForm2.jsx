@@ -883,7 +883,7 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
         {activeTab === 2 && <Dipping SalesShift={SalesShift} />}
 
         {activeTab === 3 && (
-          <ShiftSummary />
+          <ShiftSummary paymentItems={paymentItems} />
         )}
       </DialogContent>
 

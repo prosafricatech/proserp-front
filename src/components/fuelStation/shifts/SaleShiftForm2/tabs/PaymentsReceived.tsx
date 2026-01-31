@@ -142,7 +142,7 @@ function PaymentsReceived({
   useEffect(() => {
     if (submitItemForm) {
       handleSubmit(updateItems, () => {
-        setSubmitItemForm(false); // Reset submitItemForm if there are errors
+        setSubmitItemForm(false);
       })();
     }
   }, [submitItemForm]);

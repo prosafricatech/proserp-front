@@ -24,7 +24,7 @@ import { useWatch } from 'react-hook-form';
 import { StationFormContext } from '../SalesShifts';
 import { useLedgerSelect } from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
 
-function ShiftSummary() {
+function ShiftSummary({ paymentItems = [] }) {
   const {activeStation} = useContext(StationFormContext);
   const {fuel_pumps, products} = activeStation;
   const {ungroupedLedgerOptions} = useLedgerSelect();
@@ -440,6 +440,87 @@ function ShiftSummary() {
       totalAdjustmentItems,
     };
   }, [combinedProductTotals, products, allCashiers, fuelVouchersAggregated, otherLedgersSummary, mainLedgersSummary]);
+
+    // Payments summary card
+  // Enhanced Payments summary: show 'paid to' and 'paid by' breakdowns
+  const renderPaymentsSummary = () => {
+    if (!paymentItems || paymentItems.length === 0) return null;
+
+    // Group by 'paid to' (debit_ledger)
+    const paidToMap = new Map();
+    // Group by 'paid by' (credit_ledger)
+    const paidByMap = new Map();
+
+    paymentItems.forEach(item => {
+      const debitLedger = ungroupedLedgerOptions.find(l => l.id === item.debit_ledger_id);
+      const creditLedger = ungroupedLedgerOptions.find(l => l.id === item.credit_ledger_id);
+      // Paid To
+      if (debitLedger) {
+        if (!paidToMap.has(debitLedger.id)) {
+          paidToMap.set(debitLedger.id, { name: debitLedger.name, total: 0, payers: new Set() });
+        }
+        paidToMap.get(debitLedger.id).total += Number(item.amount) || 0;
+        if (creditLedger) {
+          paidToMap.get(debitLedger.id).payers.add(creditLedger.id);
+        }
+      }
+      // Paid By
+      if (creditLedger) {
+        if (!paidByMap.has(creditLedger.id)) {
+          paidByMap.set(creditLedger.id, { name: creditLedger.name, count: 0, total: 0 });
+        }
+        paidByMap.get(creditLedger.id).count += 1;
+        paidByMap.get(creditLedger.id).total += Number(item.amount) || 0;
+      }
+    });
+
+    const totalPayments = paymentItems.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+
+    return (
+      <Card variant="outlined" sx={{ mb: 3 }}>
+        <CardContent>
+          <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Payment color="primary" />
+            Payments Received Summary
+            {currencyCode && (
+              <Typography variant="caption" color="textSecondary" sx={{ ml: 1 }}>
+                (Amounts in {currencyCode})
+              </Typography>
+            )}
+          </Typography>
+          <Divider sx={{ mb: 2 }} />
+
+          <Typography variant="subtitle2" sx={{ mt: 1, mb: 0.5 }}>Paid To:</Typography>
+          <TableContainer sx={{ mb: 2 }}>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Ledger</TableCell>
+                  <TableCell align="center">Payers Count</TableCell>
+                  <TableCell align="right">Total</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {[...paidToMap.values()].map((row, idx) => (
+                  <TableRow key={idx}>
+                    <TableCell>{row.name}</TableCell>
+                    <TableCell align="center">
+                      <Chip label={row.payers.size} size="small" />
+                    </TableCell>
+                    <TableCell align="right">{formatMoney(row.total)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+              <TableRow sx={{ '& td': { borderTop: '2px solid', borderColor: 'divider', fontWeight: 'bold' } }}>
+                <TableCell colSpan={2}>TOTAL PAYMENTS</TableCell>
+                <TableCell align="right">{formatMoney(totalPayments)}</TableCell>
+              </TableRow>
+            </Table>
+          </TableContainer>
+        </CardContent>
+      </Card>
+    );
+  };
 
   const renderFinancialLedgersSummary = () => (
     <Card variant="outlined" sx={{ mb: 3 }}>
@@ -1157,6 +1238,8 @@ function ShiftSummary() {
       {renderProductSummary()}
 
       {renderFinancialLedgersSummary()}
+
+      {renderPaymentsSummary()}
 
       {renderProfitLossSummary()}
 
