@@ -463,7 +463,7 @@ function CashReconciliation({
                         />
                       </Grid>
 
-                      <Grid size={{ xs: 10, md: 5 }}>
+                      <Grid size={{ xs: 12, md: 5 }}>
                         <TextField
                           size="small"
                           fullWidth
@@ -478,7 +478,7 @@ function CashReconciliation({
                         />
                       </Grid>
 
-                      <Grid size={{ xs: 6, md: 2 }}>
+                      <Grid size={{ xs: 11, md: 2 }}>
                         <TextField
                           size="small"
                           fullWidth
@@ -493,7 +493,7 @@ function CashReconciliation({
                         />
                       </Grid>
 
-                      <Grid size={{ xs: 2, md: 1 }} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Grid size={{ xs: 1 }} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <Tooltip title="Remove this transaction">
                           <IconButton
                             size="small"
