@@ -70,7 +70,7 @@ function ShiftSummary({ paymentItems = [] }) {
     const pumpReadings = cashier.pump_readings || [];
     const fuelVouchers = cashier.fuel_vouchers || [];
     const adjustments = cashier.adjustments || [];
-    const cashTransactions = cashier.cash_transactions || [];
+    const cashTransactions = cashier.other_transactions || [];
     const selectedPumps = cashier.selected_pumps || [];
     const mainLedgerId = cashier.main_ledger?.id || cashier.main_ledger_id;
     
@@ -157,7 +157,7 @@ function ShiftSummary({ paymentItems = [] }) {
     const ledgerMap = new Map();
     
     allCashiers.forEach((cashier) => {
-      const cashTransactions = cashier.cash_transactions || [];
+      const cashTransactions = cashier.other_transactions || [];
       const mainLedgerId = cashier.main_ledger?.id || cashier.main_ledger_id;
       
       cashTransactions.forEach(transaction => {

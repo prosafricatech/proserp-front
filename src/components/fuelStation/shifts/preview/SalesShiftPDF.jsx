@@ -36,7 +36,7 @@ function SalesShiftPDF({ includeFuelVouchers, shiftData, stationName, organizati
     }, 0) || 0;
 
     // Calculate cash transactions total for this cashier
-    const cashTransactionsTotal = cashier.cash_transactions?.reduce((total, ct) => 
+    const cashTransactionsTotal = cashier.other_transactions?.reduce((total, ct) => 
       total + (ct.amount || 0), 0) || 0;
 
     // Calculate cash remaining for this cashier
@@ -326,7 +326,7 @@ function SalesShiftPDF({ includeFuelVouchers, shiftData, stationName, organizati
               )}
 
               {/* ================= CASHIER CASH DISTRIBUTION ================= */}
-              {(cashier.main_ledger || cashier.cash_transactions?.length > 0) && (
+              {(cashier.main_ledger || cashier.other_transactions?.length > 0) && (
                 <View style={{ marginBottom: 35 }}>
                   <Text style={{ fontSize: 12, color: mainColor, marginBottom: 4, textAlign: 'center' }}>
                     Cash Distribution
@@ -353,7 +353,7 @@ function SalesShiftPDF({ includeFuelVouchers, shiftData, stationName, organizati
                       </View>
                     )}
                     
-                    {cashier.cash_transactions
+                    {cashier.other_transactions
                       ?.filter(transaction => {
                         if (!transaction.debit_ledger || !cashier.main_ledger) return true;
                         
@@ -379,7 +379,7 @@ function SalesShiftPDF({ includeFuelVouchers, shiftData, stationName, organizati
                       })}
                     
                     {/* Total - only show if there are items to display */}
-                    {(cashier.main_ledger || cashier.cash_transactions?.filter(t => {
+                    {(cashier.main_ledger || cashier.other_transactions?.filter(t => {
                       if (!t.debit_ledger || !cashier.main_ledger) return true;
                       return t.debit_ledger.id !== cashier.main_ledger.id;
                     })?.length > 0) && (
@@ -391,7 +391,7 @@ function SalesShiftPDF({ includeFuelVouchers, shiftData, stationName, organizati
                           {(() => {
                             // Calculate total including main ledger and filtered cash transactions
                             const mainLedgerAmount = cashier.main_ledger?.amount || 0;
-                            const filteredCashTransactionsTotal = cashier.cash_transactions
+                            const filteredCashTransactionsTotal = cashier.other_transactions
                               ?.filter(transaction => {
                                 if (!transaction.debit_ledger || !cashier.main_ledger) return true;
                                 return transaction.debit_ledger.id !== cashier.main_ledger.id;
