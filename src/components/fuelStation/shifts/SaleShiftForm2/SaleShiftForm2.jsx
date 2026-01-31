@@ -177,6 +177,22 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
             .typeError('Main Ledger Amount is Required')
             .positive('Amount must be positive')
         }).nullable(),
+        collected_amount: yup
+          .number()
+          .typeError('Collected Amount is required')
+          .when(['$submit_type'], {
+            is: (submit_type) => submit_type === 'close',
+            then: (schema) => schema.required('Collected Amount is required on close').typeError('Collected Amount is required on close'),
+            otherwise: (schema) => schema,
+          }),
+        collected_ledger_id: yup
+          .number()
+          .typeError('Collection Ledger is required')
+          .when(['$submit_type'], {
+            is: (submit_type) => submit_type === 'close',
+            then: (schema) => schema.required('Collection Ledger is required on close').typeError('Collection Ledger is required on close'),
+            otherwise: (schema) => schema,
+          }),
       })
     ).required('At least one cashier is required').min(1, 'At least one cashier is required'),
     dipping_before: yup.array().of(
