@@ -271,8 +271,8 @@ function CashReconciliation({
     trigger(`cashiers.${cashierIndex}.collected_amount`);
   };
 
-  // Always call useWatch for collected_ledger_id at the top level
-  const collectedLedgerId = useWatch({ name: `cashiers.${cashierIndex}.collected_ledger_id` });
+  // Always call useWatch for collection_ledger_id at the top level
+  const collectedLedgerId = useWatch({ name: `cashiers.${cashierIndex}.collection_ledger_id` });
 
   return (
     <>
@@ -546,8 +546,8 @@ function CashReconciliation({
                         )) || null
                       }
                       onChange={(_, newValue) => {
-                        setValue(`cashiers.${cashierIndex}.collected_ledger_id`, newValue?.id ?? null, { shouldValidate: true, shouldDirty: true });
-                        trigger(`cashiers.${cashierIndex}.collected_ledger_id`);
+                        setValue(`cashiers.${cashierIndex}.collection_ledger_id`, newValue?.id ?? null, { shouldValidate: true, shouldDirty: true });
+                        trigger(`cashiers.${cashierIndex}.collection_ledger_id`);
                       }}
                       renderOption={(props, option) => (
                         <li {...props} key={option.id || option.code || option.name}>
@@ -558,8 +558,8 @@ function CashReconciliation({
                         <TextField
                           {...params}
                           label="Collection Ledger"
-                          error={!!errors?.cashiers?.[cashierIndex]?.collected_ledger_id}
-                          helperText={errors?.cashiers?.[cashierIndex]?.collected_ledger_id?.message}
+                          error={!!errors?.cashiers?.[cashierIndex]?.collection_ledger_id}
+                          helperText={errors?.cashiers?.[cashierIndex]?.collection_ledger_id?.message}
                         />
                       )}
                       isOptionEqualToValue={(option, value) => option.id === value.id}

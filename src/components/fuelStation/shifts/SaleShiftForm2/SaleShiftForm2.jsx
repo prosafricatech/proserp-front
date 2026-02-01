@@ -184,7 +184,7 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
             then: (schema) => schema.required('Collected Amount is required on close').typeError('Collected Amount is required on close'),
             otherwise: (schema) => schema,
           }),
-        collected_ledger_id: yup
+        collection_ledger_id: yup
           .number()
           .typeError('Collection Ledger is required')
           .when(['$submit_type'], {
@@ -251,7 +251,7 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
             narration: fv.narration,
           })) || [],
           collected_amount: cashier.collected_amount || 0,
-          collected_ledger_id: cashier.collection_ledger_id || null,
+          collection_ledger_id: cashier.collection_ledger_id || null,
           tank_adjustments: cashier.tank_adjustments?.map(adj => ({
             tank_id: adj.tank_id,
             quantity: adj.quantity,
