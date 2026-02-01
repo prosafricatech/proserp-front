@@ -18,7 +18,6 @@ import {
   Chip,
   Paper,
   Alert,
-  TableFooter,
 } from '@mui/material';
 import { TrendingUp, TrendingDown, LocalGasStation, ReceiptOutlined, AttachMoney, AccountBalance, Payment } from '@mui/icons-material';
 import { useWatch } from 'react-hook-form';
@@ -512,11 +511,11 @@ function ShiftSummary({ paymentItems = [] }) {
                     <TableCell align="right">{formatMoney(row.total)}</TableCell>
                   </TableRow>
                 ))}
+                <TableRow sx={{ '& td': { borderTop: '2px solid', borderColor: 'divider', fontWeight: 'bold' } }}>
+                  <TableCell colSpan={2}>TOTAL PAYMENTS</TableCell>
+                  <TableCell align="right">{formatMoney(totalPayments)}</TableCell>
+                </TableRow>
               </TableBody>
-              <TableRow sx={{ '& td': { borderTop: '2px solid', borderColor: 'divider', fontWeight: 'bold' } }}>
-                <TableCell colSpan={2}>TOTAL PAYMENTS</TableCell>
-                <TableCell align="right">{formatMoney(totalPayments)}</TableCell>
-              </TableRow>
             </Table>
           </TableContainer>
         </CardContent>

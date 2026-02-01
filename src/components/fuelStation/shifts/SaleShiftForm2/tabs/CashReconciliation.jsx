@@ -185,10 +185,12 @@ function CashReconciliation({
     };
   }, [fuelVoucherTotals, productTotals, products, productPrices]);
 
-  // No longer filter out transactions matching main ledger; show all as 'other transactions'
-  const filteredCashTransactions = useMemo(() => cashTransactions, [cashTransactions]);
 
-  const filteredTransactionsSum = useMemo(() => {
+  // Memoize filteredCashTransactions for performance
+  const filteredCashTransactions = React.useMemo(() => cashTransactions, [cashTransactions]);
+
+  // Memoize filteredTransactionsSum for performance
+  const filteredTransactionsSum = React.useMemo(() => {
     return filteredCashTransactions.reduce((sum, transaction) => 
       sum + sanitizedNumber(transaction?.amount || 0), 0) || 0;
   }, [filteredCashTransactions]);
@@ -238,18 +240,20 @@ function CashReconciliation({
     trigger(`cashiers.${cashierIndex}.other_transactions`);
   };
 
-  const removeCashTransaction = (idx) => {
-    const newTransactions = Array.isArray(cashTransactions)
-      ? cashTransactions.filter((_, i) => i !== idx)
-      : [];
-    setValue(`cashiers.${cashierIndex}.other_transactions`, newTransactions, {
-      shouldValidate: true,
-      shouldDirty: true,
-    });
-    trigger(`cashiers.${cashierIndex}.other_transactions`);
-  };
 
-  const updateCashTransaction = (idx, field, value) => {
+  // Memoize transaction handlers for performance
+  const removeCashTransaction = React.useCallback((idx) => {
+    setValue(
+      `cashiers.${cashierIndex}.other_transactions`,
+      Array.isArray(cashTransactions)
+        ? cashTransactions.filter((_, i) => i !== idx)
+        : [],
+      { shouldValidate: true, shouldDirty: true }
+    );
+    trigger(`cashiers.${cashierIndex}.other_transactions`);
+  }, [cashTransactions, cashierIndex, setValue, trigger]);
+
+  const updateCashTransaction = React.useCallback((idx, field, value) => {
     const newTransactions = [...cashTransactions];
     newTransactions[idx] = {
       ...newTransactions[idx],
@@ -259,7 +263,7 @@ function CashReconciliation({
       shouldValidate: true,
       shouldDirty: true,
     });
-  };
+  }, [cashTransactions, cashierIndex, setValue]);
 
   const handleCollectedAmountChange = (value) => {
     const sanitizedValue = sanitizedNumber(value);

@@ -5,7 +5,6 @@ import { useSnackbar } from 'notistack';
 import React, { useContext, useState } from 'react';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
 import fuelStationServices from '../fuelStationServices';
-import SaleShiftForm from './SaleShiftForm';
 import PDFContent from '../../pdf/PDFContent';
 import { StationFormContext } from './SalesShifts';
 import { useProductsSelect } from '../../productAndServices/products/ProductsSelectProvider';

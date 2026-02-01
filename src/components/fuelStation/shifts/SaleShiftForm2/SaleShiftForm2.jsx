@@ -719,46 +719,54 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
               <Typography sx={{ mt: 2, mb: 1 }}>
                 Select Cashiers
               </Typography>
-              <Autocomplete
-                multiple
-                size="small"
-                options={cashiers || []}
-                disableCloseOnSelect
-                getOptionLabel={(option) => option.name}
-                renderOption={(props, option, { selected }) => {
-                  const { key, ...optionProps } = props;
-                  return (
-                    <li key={key} {...optionProps}>
-                      <Checkbox
-                        style={{ marginRight: 8 }}
-                        checked={selected}
-                      />
-                      {option.name}
-                    </li>
-                  );
-                }}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Select Cashiers"
-                    placeholder="Choose Cashiers..."
-                  />
-                )}
-                onChange={(e, selectedValues) => {
+              {/** Memoize options and value for performance */}
+              {(() => {
+                const cashierOptions = React.useMemo(() => cashiers || [], [cashiers]);
+                const cashierValue = React.useMemo(() =>
+                  cashierOptions.filter(c => selectedCashiers.some(sc => sc.id === c.id)),
+                  [cashierOptions, selectedCashiers]
+                );
+                const handleCashierChange = React.useCallback((e, selectedValues) => {
                   const selectedIds = selectedValues.map(v => v.id);
                   const currentCashierIds = selectedCashiers.map(c => c.id);
                   const toRemove = currentCashierIds.filter(id => !selectedIds.includes(id));
                   const toAdd = selectedIds.filter(id => !currentCashierIds.includes(id));
                   toRemove.forEach(cashierId => removeCashier(cashierId));
-                  
                   if (toAdd.length > 0) {
                     addCashiers(toAdd);
                   }
-                }}
-                value={cashiers.filter(c => 
-                  selectedCashiers.some(sc => sc.id === c.id)
-                )}
-              />
+                }, [selectedCashiers, addCashiers, removeCashier]);
+                return (
+                  <Autocomplete
+                    multiple
+                    size="small"
+                    options={cashierOptions}
+                    disableCloseOnSelect
+                    getOptionLabel={(option) => option.name}
+                    renderOption={(props, option, { selected }) => {
+                      const { key, ...optionProps } = props;
+                      return (
+                        <li key={key} {...optionProps}>
+                          <Checkbox
+                            style={{ marginRight: 8 }}
+                            checked={selected}
+                          />
+                          {option.name}
+                        </li>
+                      );
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Select Cashiers"
+                        placeholder="Choose Cashiers..."
+                      />
+                    )}
+                    onChange={handleCashierChange}
+                    value={cashierValue}
+                  />
+                );
+              })()}
             </Grid>
             
             {Object.keys(lastClosingReadings).length > 0 && !SalesShift?.id && (
