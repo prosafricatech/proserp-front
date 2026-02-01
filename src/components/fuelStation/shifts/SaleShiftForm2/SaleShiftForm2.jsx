@@ -41,7 +41,7 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
   const [isDirty, setIsDirty] = useState(false);
   const [clearFormKey, setClearFormKey] = useState(0);
   const [submitItemForm, setSubmitItemForm] = useState(false);
-  const [paymentItems, setPaymentItems] = useState([]);
+  const [paymentItems, setPaymentItems] = useState(() => SalesShift?.payments_received ? [...SalesShift.payments_received] : []);
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
   const [activeTab, setActiveTab] = useState(0);
