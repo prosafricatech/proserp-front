@@ -1255,9 +1255,9 @@ function ShiftSummary({ paymentItems = [] }) {
 
       {renderPaymentsSummary()}
 
-      {renderProfitLossSummary()}
-
       {renderFuelVouchersSummary()}
+
+      {renderProfitLossSummary()}
 
       {allCashiers.length === 0 && (
         <Alert severity="info" sx={{ mt: 2 }}>
