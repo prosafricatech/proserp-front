@@ -50,7 +50,6 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
   const {authOrganization : {organization}} = useJumboAuth();
   const {checkOrganizationPermission} = useJumboAuth();
 
-  const [cashierFuelVouchers, setCashierFuelVouchers] = useState({});
   const [cashierLedgers, setCashierLedgers] = useState({});
   const [lastClosingReadings, setLastClosingReadings] = useState({});
 
@@ -437,13 +436,6 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
   useEffect(() => {
     if (SalesShift?.cashiers) {
       SalesShift.cashiers.forEach((cashier, index) => {
-        if (cashier.fuel_vouchers && cashier.fuel_vouchers.length > 0) {
-          setCashierFuelVouchers(prev => ({
-            ...prev,
-            [index]: cashier.fuel_vouchers
-          }));
-        }
-        
         const cashierData = cashiers?.find(c => c.id === cashier.id);
         if (cashierData && cashierData.ledgers) {
           setCashierLedgers(prev => ({
@@ -479,11 +471,9 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
       .map(cashierId => {
         const cashier = cashiers.find(c => c.id === cashierId);
         if (!cashier) return null;
-        
         if (selectedCashiers.some(sc => sc.id === cashierId)) {
           return null;
         }
-        
         return {
           id: cashierId,
           name: cashier.name,
@@ -496,17 +486,10 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
         };
       })
       .filter(c => c !== null);
-    
     const updatedCashiers = [...selectedCashiers, ...newCashiers];
     setValue('cashiers', updatedCashiers, { shouldValidate: true, shouldDirty: true });
-    
     newCashiers.forEach((cashier, offsetIndex) => {
       const cashierIndex = selectedCashiers.length + offsetIndex;
-      setCashierFuelVouchers(prev => ({
-        ...prev,
-        [cashierIndex]: []
-      }));
-      
       const cashierData = cashiers.find(c => c.id === cashier.id);
       if (cashierData && cashierData.ledgers) {
         setCashierLedgers(prev => ({
@@ -522,17 +505,6 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
     if (cashierIndex !== -1) {
       const updatedCashiers = selectedCashiers.filter(c => c.id !== cashierId);
       setValue('cashiers', updatedCashiers, { shouldValidate: true, shouldDirty: true });
-      
-      setCashierFuelVouchers(prev => {
-        const newState = { ...prev };
-        delete newState[cashierIndex];
-        const reindexedState = {};
-        Object.keys(newState).forEach((key, index) => {
-          reindexedState[index] = newState[key];
-        });
-        return reindexedState;
-      });
-      
       setCashierLedgers(prev => {
         const newState = { ...prev };
         delete newState[cashierIndex];
@@ -571,7 +543,6 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
     const cashiersWithoutPumps = data.cashiers.filter(c => 
       !c.selected_pumps || c.selected_pumps.length === 0
     );
-    
     if (cashiersWithoutPumps.length > 0) {
       enqueueSnackbar(
         `Cashier(s) ${cashiersWithoutPumps.map(c => c.name).join(', ')} must have at least one pump selected`,
@@ -580,14 +551,22 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
       return;
     }
 
-    Object.keys(cashierFuelVouchers).forEach(index => {
-      if (data.cashiers[parseInt(index)]) {
-        data.cashiers[parseInt(index)].fuel_vouchers = cashierFuelVouchers[parseInt(index)] || [];
-      }
-    });
-
+    data.cashiers = data.cashiers.map(cashier => ({
+      ...cashier,
+      fuel_vouchers: Array.isArray(cashier.fuel_vouchers)
+        ? cashier.fuel_vouchers.map(fuelVoucher => ({
+            stakeholder_id: fuelVoucher.stakeholder_id ?? (fuelVoucher.stakeholder?.id ?? null),
+            expense_ledger_id: fuelVoucher.expense_ledger_id ?? (fuelVoucher.expense_ledger?.id ?? null),
+            product_id: fuelVoucher.product_id,
+            quantity: fuelVoucher.quantity,
+            amount: fuelVoucher.amount,
+            reference: fuelVoucher.reference,
+            narration: fuelVoucher.narration,
+          })
+        )
+        : [],
+    }));
     data.payments_received = paymentItems;
-
     await saveMutation(data);
   };
 
@@ -821,13 +800,13 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
                   cashier={cashier}
                   index={index}
                   control={control}
-                  watch={watch}    
+                  watch={watch}
                   lastClosingReadings={lastClosingReadings}
                   handlePumpSelection={handlePumpSelection}
                   getCashierLedgers={getCashierLedgers}
                   getAvailablePumpsForCashier={getAvailablePumpsForCashier}
-                  // setCheckShiftBalanced removed
                   setValue={setValue}
+                  onFuelVouchersChange={(vouchers) => setValue(`cashiers.${index}.fuel_vouchers`, vouchers, { shouldValidate: true, shouldDirty: true })}
                 />
               ))
             )}

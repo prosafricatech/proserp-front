@@ -13,7 +13,8 @@ function FuelVouchersTab({
   cashierIndex, 
   localFuelVouchers, 
   setLocalFuelVouchers,
-  setValue 
+  setValue,
+  onFuelVouchersChange
 }) {
     const { watch } = useFormContext();
     const productPrices = watch(`product_prices`) || [];
@@ -26,10 +27,14 @@ function FuelVouchersTab({
     }, [cashierIndex, localFuelVouchers.length]);
 
     useEffect(() => {
-      setValue(`cashiers.${cashierIndex}.fuel_vouchers`, localFuelVouchers, {
-          shouldValidate: true,
-          shouldDirty: true
-      });
+      if (onFuelVouchersChange) {
+        onFuelVouchersChange(localFuelVouchers);
+      } else {
+        setValue(`cashiers.${cashierIndex}.fuel_vouchers`, localFuelVouchers, {
+            shouldValidate: true,
+            shouldDirty: true
+        });
+      }
     }, [localFuelVouchers, cashierIndex]);
 
     return (

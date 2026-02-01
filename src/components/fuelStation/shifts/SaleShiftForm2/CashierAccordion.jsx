@@ -25,7 +25,9 @@ export default function CashierAccordion({
   getCashierLedgers,
   getAvailablePumpsForCashier,
   lastClosingReadings,
-  handleCashierPumpSelection
+  handleCashierPumpSelection,
+  setCashierFuelVouchers,
+  onFuelVouchersChange
 }) {
   const [tab, setTab] = useState(0);
   
@@ -50,10 +52,14 @@ export default function CashierAccordion({
 
   const updateFuelVouchers = (newVouchers) => {
     setLocalFuelVouchers(newVouchers);
-    setValue(`cashiers.${index}.fuel_vouchers`, newVouchers, {
-      shouldValidate: true,
-      shouldDirty: true
-    });
+    if (onFuelVouchersChange) {
+      onFuelVouchersChange(newVouchers);
+    } else {
+      setValue(`cashiers.${index}.fuel_vouchers`, newVouchers, {
+        shouldValidate: true,
+        shouldDirty: true
+      });
+    }
   };
 
   const updateAdjustments = (newAdjustments) => {
@@ -112,6 +118,7 @@ export default function CashierAccordion({
             localFuelVouchers={localFuelVouchers}
             setLocalFuelVouchers={updateFuelVouchers}
             setValue={setValue}
+            onFuelVouchersChange={onFuelVouchersChange}
           />
         </div>
         <div style={{ display: tab === 2 ? 'block' : 'none' }}>
