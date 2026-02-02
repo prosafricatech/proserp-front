@@ -85,7 +85,7 @@ const DocumentDialog = ({
           justifyContent={'center'}
           alignItems={'center'}
         >
-          <Typography>With Fuel Vouchers</Typography>
+          <Typography>With More Details</Typography>
           <Checkbox
             checked={includeFuelVouchers}
             onChange={(e) => {

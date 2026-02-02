@@ -590,6 +590,11 @@ function PurchaseOrderPDF({
             <Text style={{ ...pdfStyles.minInfo }}>{order.creator?.name}</Text>
           </View>
         </View>
+
+        {/* Watermark */}
+        {/* <View style={{ ...pdfStyles.watermark }}>
+          <Text style={{ fontSize: 50, fontWeight: 500, transform: '' }}>CLOSED</Text>
+        </View> */}
         <PageFooter />
       </Page>
     </Document>
