@@ -37,6 +37,11 @@ function PurchaseOrderPDF({
       keywords={order.stakeholder?.name}
     >
       <Page size='A4' style={styles.page}>
+        {order.closures && order.closures.length > 0 && (
+          <View style={styles.watermark} fixed>
+            <Text style={styles.watermarkText}>CLOSED</Text>
+          </View>
+        )}
         <View style={{ ...pdfStyles.tableRow, marginBottom: 20 }}>
           <View
             style={{ flex: 1, maxWidth: organization?.logo_path ? 130 : 250 }}

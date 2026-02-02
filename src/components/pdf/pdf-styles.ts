@@ -26,9 +26,10 @@ const pdfStyles = StyleSheet.create({
       opacity: 0.5,
     },
     watermarkText: {
-      fontSize: 48,
+      fontSize: 80,
       fontWeight: 'bold',
       color: '#CCCCCC',
+      transform: 'rotate(-30deg)',
     },
     table: {
       display: 'table' as any,
