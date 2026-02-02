@@ -549,17 +549,40 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
       return;
     }
 
-    // Prevent submit if any cashier is missing Collected Amount
-    const cashiersMissingCollected = data.cashiers
-      .map((cashier, idx) => ({
-        name: cashier.name,
-        idx,
-        value: cashier.collected_amount
-      }))
-      .filter(c => c.value === undefined || c.value === null || c.value === '' || isNaN(Number(c.value)));
-    if (cashiersMissingCollected.length > 0) {
+    // Prevent submit if any cashier is missing Collected Amount, Collection Ledger, or Main Ledger info
+    const cashiersMissingFields = data.cashiers
+      .map((cashier, idx) => {
+        const missingCollected = cashier.collected_amount === undefined || cashier.collected_amount === null || cashier.collected_amount === '' || isNaN(Number(cashier.collected_amount));
+        const missingLedger = cashier.collection_ledger_id === undefined || cashier.collection_ledger_id === null || cashier.collection_ledger_id === '' || isNaN(Number(cashier.collection_ledger_id));
+        const missingMainLedger = !cashier.main_ledger || cashier.main_ledger.id === undefined || cashier.main_ledger.id === null || cashier.main_ledger.id === '' || isNaN(Number(cashier.main_ledger.id)) || cashier.main_ledger.amount === undefined || cashier.main_ledger.amount === null || cashier.main_ledger.amount === '' || isNaN(Number(cashier.main_ledger.amount));
+        return {
+          name: cashier.name,
+          missingCollected,
+          missingLedger,
+          missingMainLedger
+        };
+      })
+      .filter(c => c.missingCollected || c.missingLedger || c.missingMainLedger);
+    if (cashiersMissingFields.length > 0) {
+      const missingCollected = cashiersMissingFields.filter(c => c.missingCollected).map(c => c.name);
+      const missingLedger = cashiersMissingFields.filter(c => c.missingLedger).map(c => c.name);
+      const missingMainLedger = cashiersMissingFields.filter(c => c.missingMainLedger).map(c => c.name);
+      const messageRows = [];
+      if (missingCollected.length > 0) {
+        messageRows.push(`Please fill Collected Amount for: ${missingCollected.join(', ')}`);
+      }
+      if (missingLedger.length > 0) {
+        messageRows.push(`Please select Collection Ledger for: ${missingLedger.join(', ')}`);
+      }
+      if (missingMainLedger.length > 0) {
+        messageRows.push(`Please fill Main Ledger information for: ${missingMainLedger.join(', ')}`);
+      }
       enqueueSnackbar(
-        `Please fill Collected Amount for: ${cashiersMissingCollected.map(c => c.name).join(', ')}`,
+        <div>
+          {messageRows.map((msg, idx) => (
+            <div key={idx}>{msg}</div>
+          ))}
+        </div>,
         { variant: 'error' }
       );
       return;
