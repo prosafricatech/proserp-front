@@ -176,32 +176,19 @@ function PaymentsReceived({
       </Grid>
       <Grid size={{xs: 12, md: 3}}>
         <Div sx={{ mt: 1 }}>
-          <Autocomplete
-            options={collection_ledgers || []}
-            getOptionLabel={(opt) => opt?.name || ''}
-            size='small'
-            value={collection_ledgers.find((option: LedgerOption) => option.id === watch('debit_ledger_id')) || null}
-            onChange={(_, newValue) => {
+          <LedgerSelect
+            label="Paid to"
+            allowedGroups={['Cash and cash equivalents', 'Banks']}
+            value={ungroupedLedgerOptions.find(option => option.id === watch('debit_ledger_id')) || null}
+            onChange={(newValue: Ledger | null | Ledger[]) => {
               setValue('debit_ledger', newValue as LedgerOption | null);
-              setValue('debit_ledger_id', newValue?.id || null, {
+              setValue('debit_ledger_id', Array.isArray(newValue) ? newValue[0]?.id : newValue?.id || null, {
                 shouldValidate: true,
                 shouldDirty: true
               });
             }}
-            renderOption={(props, option) => (
-              <li {...props} key={option.id || option.name}>
-                {option.name}
-              </li>
-            )}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Paid to"
-                error={!!errors.debit_ledger_id}
-                helperText={errors.debit_ledger_id?.message}
-              />
-            )}
-            isOptionEqualToValue={(option, value) => option.id === value.id}
+            frontError={errors.debit_ledger_id}
+            multiple={false}
           />
         </Div>
       </Grid>

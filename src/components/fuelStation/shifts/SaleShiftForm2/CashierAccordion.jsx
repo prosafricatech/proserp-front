@@ -8,12 +8,13 @@ import {
   Tab,
   Typography,
 } from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useState, useEffect } from 'react';
 import PumpReadings from './tabs/PumpReadings';
 import FuelVouchersTab from './tabs/fuelVouchers/FuelVouchersTab';
 import CashReconciliation from './tabs/CashReconciliation';
 import AdjustmentsTab from './tabs/adjustments/AdjustmentsTab';
+import RemoveIcon from '@mui/icons-material/Remove';
+import AddIcon from '@mui/icons-material/Add'
 
 export default function CashierAccordion({
   cashier,
@@ -26,10 +27,10 @@ export default function CashierAccordion({
   getAvailablePumpsForCashier,
   lastClosingReadings,
   handleCashierPumpSelection,
-  setCashierFuelVouchers,
   onFuelVouchersChange
 }) {
   const [tab, setTab] = useState(0);
+  const [expanded, setExpanded] = useState(false);
   
   const formFuelVouchers = watch(`cashiers.${index}.fuel_vouchers`) || [];
   const formAdjustments = watch(`cashiers.${index}.adjustments`) || [];
@@ -79,14 +80,63 @@ export default function CashierAccordion({
   };
 
   return (
-    <Accordion sx={{ mb: 2 }}>
-      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-        <Typography fontWeight="bold">
-          {cashier.name}
-        </Typography>
+    <Accordion 
+      expanded={expanded}
+      square
+      sx={{ 
+        borderRadius: 2, 
+        borderTop: 2,
+        borderColor: 'divider',
+        mb: 2,
+        '&:hover': {
+          bgcolor: 'action.hover',
+        },
+      }}
+      onChange={()=> setExpanded((prevExpanded) => !prevExpanded)}
+    >
+      <AccordionSummary 
+        expandIcon={expanded ? <RemoveIcon /> : <AddIcon />}
+        sx={{
+          px: 3,
+          flexDirection: 'row-reverse',
+          '.MuiAccordionSummary-content': {
+            alignItems: 'center',
+            width: '100%',
+            display: 'flex',
+            justifyContent: 'center',
+            '&.Mui-expanded': {
+              margin: '12px 0',
+            }},
+          '.MuiAccordionSummary-expandIconWrapper': {
+            borderRadius: 1,
+            border: 1,
+            color: 'text.secondary',  
+            transform: 'none',
+            mr: 1,
+            '&.Mui-expanded': {
+              transform: 'none',
+              color: 'primary.main',
+              borderColor: 'primary.main',
+            },
+            '& svg': {
+              fontSize: '1.25rem',
+            },
+          },
+        }}
+      >
+        <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+          <Typography fontWeight="bold">
+            {cashier.name}
+          </Typography>
+        </div>
       </AccordionSummary>
 
-      <AccordionDetails>
+      <AccordionDetails
+        sx={{ 
+          backgroundColor:'background.paper',
+          marginBottom: 3
+        }}
+      >
         <Tabs
           value={tab}
           onChange={(e, v) => setTab(v)}
