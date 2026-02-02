@@ -565,7 +565,7 @@ function PurchaseOrderPDF({
                     flex: 1,
                   }}
                 >
-                  {readableDate(closure.datetime_closed, false)}
+                  {readableDate(closure.datetime_closed, true)}
                 </Text>
                 <Text
                   style={{
