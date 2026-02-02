@@ -20,7 +20,7 @@ function FuelPrices() {
       
       <Grid container spacing={2}>
         {products?.map((product) => (
-          <Grid size={{ xs: 12, md: 4, lg: 4 }} key={product.id}>
+          <Grid size={{ xs: 12, md: 6, lg: 6 }} key={product.id}>
             <TextField
               label={product.name}
               fullWidth

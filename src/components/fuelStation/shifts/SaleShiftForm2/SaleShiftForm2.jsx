@@ -636,7 +636,7 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
             <Grid size={12} textAlign={'center'} marginBottom={1}>
               {SalesShift ? `Edit ${SalesShift.shiftNo}` : `New Fuel Sales Shift`}
             </Grid>
-            <Grid size={{xs: 12, md: 4}}>
+            <Grid size={{xs: 12, md: 4, lg: 4}}>
               <Div sx={{ mt: 0.3}}>
                 <Autocomplete
                   size="small"
@@ -758,12 +758,8 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
               </Div>
             </Grid>
 
-            <Grid size={{ xs: 12 }}>
-              <FuelPrices />
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Typography sx={{ mt: 2, mb: 1 }}>
+            <Grid size={{ xs: 12, md: 4, lg: 4 }}>
+              <Typography sx={{ mt: 1, mb: 1 }}>
                 Select Cashiers
               </Typography>
               {(() => {
@@ -822,6 +818,10 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
                 </Typography>
               </Grid>
             )}
+
+            <Grid size={{ xs: 12, md: 12, lg: 8 }}>
+              <FuelPrices />
+            </Grid>
           </Grid>
         </form>
 

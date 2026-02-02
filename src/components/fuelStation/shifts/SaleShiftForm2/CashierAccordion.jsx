@@ -87,7 +87,7 @@ export default function CashierAccordion({
         borderRadius: 2, 
         borderTop: 2,
         borderColor: 'divider',
-        mb: 2,
+        mb: 0.5,
         '&:hover': {
           bgcolor: 'action.hover',
         },
