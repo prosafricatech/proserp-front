@@ -137,17 +137,19 @@ export default function CashierAccordion({
           marginBottom: 3
         }}
       >
-        <Tabs
-          value={tab}
-          onChange={(e, v) => setTab(v)}
-          variant="scrollable"
-          sx={{ mb: 2 }}
-        >
-          <Tab label="Pump Readings" />
-          <Tab label="Fuel Vouchers" />
-          <Tab label="Adjustments" />
-          <Tab label="Cash Reconciliation" />
-        </Tabs>
+        <div style={{ position: 'sticky', top: 0, zIndex: 2, background: 'inherit' }}>
+          <Tabs
+            value={tab}
+            onChange={(e, v) => setTab(v)}
+            variant="scrollable"
+            sx={{ mb: 2, backgroundColor: 'background.paper', boxShadow: 1 }}
+          >
+            <Tab label="Pump Readings" />
+            <Tab label="Fuel Vouchers" />
+            <Tab label="Adjustments" />
+            <Tab label="Cash Reconciliation" />
+          </Tabs>
+        </div>
 
         <div style={{ display: tab === 0 ? 'block' : 'none' }}>
           <PumpReadings

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { Box, Card, CardContent, Grid, TextField, Switch, Typography } from '@mui/material';
 import { useFormContext } from 'react-hook-form';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
@@ -6,7 +6,7 @@ import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import { StationFormContext } from '../../SalesShifts';
 
 function Dipping({SalesShift}) {
-    const { setValue, watch, errors } = useFormContext();
+    const { setValue, watch } = useFormContext();
     const [openSwitch, setOpenSwitch] = useState(!!watch('isOpenSwitchON') || !!SalesShift?.opening_dipping);
     const [closingSwitch, setClosingSwitch] = useState(!!watch('isCloseSwitchON') || !!SalesShift?.closing_dipping);
     const {activeStation} = useContext(StationFormContext);
@@ -67,8 +67,6 @@ function Dipping({SalesShift}) {
                                     label={`${tankInfo.name}`}
                                     size="small"
                                     value={readingValue}
-                                    // error={!!errors[fieldName]?.[fieldIndex]?.reading}
-                                    // helperText={errors[fieldName]?.[fieldIndex]?.reading?.message}
                                     InputProps={{
                                         inputComponent: CommaSeparatedField,
                                     }}
