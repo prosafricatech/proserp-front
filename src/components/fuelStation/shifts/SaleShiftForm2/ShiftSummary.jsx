@@ -855,7 +855,7 @@ function ShiftSummary({ paymentItems = [] }) {
                     </TableCell>
                     <TableCell align="right">{pumpQty.toLocaleString()}</TableCell>
                     <TableCell align="right">
-                      <Typography color={adjQty > 0 ? "error.main" : "success.main"}>
+                      <Typography>
                         {adjQty > 0 ? `+${adjQty.toLocaleString()}` : adjQty.toLocaleString()}
                       </Typography>
                     </TableCell>
@@ -866,7 +866,7 @@ function ShiftSummary({ paymentItems = [] }) {
                     </TableCell>
                     <TableCell align="right">{price.toLocaleString()}</TableCell>
                     <TableCell align="right">
-                      <Typography fontWeight="bold" color="primary">
+                      <Typography fontWeight="bold">
                         {amount.toLocaleString()}
                       </Typography>
                     </TableCell>
@@ -880,7 +880,7 @@ function ShiftSummary({ paymentItems = [] }) {
                   {Object.values(totalPumpReadings).reduce((sum, qty) => sum + (qty || 0), 0).toLocaleString()}
                 </TableCell>
                 <TableCell align="right">
-                  <Typography color={totalAdjustments.adjustmentsByOperator['-'] > totalAdjustments.adjustmentsByOperator['+'] ? "error.main" : "success.main"}>
+                  <Typography>
                     {Object.values(totalAdjustments.totals).reduce((sum, qty) => sum + (qty || 0), 0).toLocaleString()}
                   </Typography>
                 </TableCell>
@@ -945,7 +945,7 @@ function ShiftSummary({ paymentItems = [] }) {
                         <TableCell align="right">{qty.toLocaleString()}</TableCell>
                         <TableCell align="right">{formatMoney(price)}</TableCell>
                         <TableCell align="right">
-                          <Typography color="secondary.main" fontWeight="medium">
+                          <Typography fontWeight="medium">
                             {formatMoney(amount)}
                           </Typography>
                         </TableCell>
@@ -959,7 +959,7 @@ function ShiftSummary({ paymentItems = [] }) {
                       {Object.values(totalFuelVouchers.totals).reduce((sum, qty) => sum + (qty || 0), 0).toLocaleString()}
                     </TableCell>
                     <TableCell align="right">-</TableCell>
-                    <TableCell align="right" sx={{ color: 'secondary.main' }}>
+                    <TableCell align="right">
                       {formatMoney(financialSummary.totalVouchersAmount)}
                     </TableCell>
                   </TableRow>
@@ -971,7 +971,6 @@ function ShiftSummary({ paymentItems = [] }) {
               <Chip
                 label={`${financialSummary.totalFuelVoucherItems} Vouchers`}
                 size="small"
-                color="secondary"
                 variant="outlined"
               />
               <Typography variant="caption" color="textSecondary">

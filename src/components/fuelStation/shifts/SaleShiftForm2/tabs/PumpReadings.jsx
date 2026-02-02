@@ -267,11 +267,14 @@ function PumpReadings({
                             error={!!errors?.cashiers?.[cashierIndex]?.pump_readings?.[readingIndex]?.opening}
                             helperText={errors?.cashiers?.[cashierIndex]?.pump_readings?.[readingIndex]?.opening?.message}
                             onChange={(e) => {
-                              const value = e.target.value ? sanitizedNumber(e.target.value) : 0;
-                              handlePumpReadingChange(pump.id, 'opening', value);
+                              if (!hasLastReadings) {
+                                const value = e.target.value ? sanitizedNumber(e.target.value) : 0;
+                                handlePumpReadingChange(pump.id, 'opening', value);
+                              }
                             }}
                             InputProps={{
                               inputComponent: CommaSeparatedField,
+                              readOnly: hasLastReadings
                             }}
                           />
                         </Grid>
