@@ -26,7 +26,7 @@ const SalesShiftsActionTail = () => {
   
   return (
     <>
-      <Dialog maxWidth='lg' fullScreen={belowLargeScreen} open={openDialog}>
+      <Dialog maxWidth='lg' fullWidth fullScreen={belowLargeScreen} open={openDialog}>
         <SaleShiftForm2 setOpenDialog={setOpenDialog} />
       </Dialog>
       <ButtonGroup

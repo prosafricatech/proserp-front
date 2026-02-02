@@ -186,10 +186,8 @@ function CashReconciliation({
   }, [fuelVoucherTotals, productTotals, products, productPrices]);
 
 
-  // Memoize filteredCashTransactions for performance
   const filteredCashTransactions = React.useMemo(() => cashTransactions, [cashTransactions]);
 
-  // Memoize filteredTransactionsSum for performance
   const filteredTransactionsSum = React.useMemo(() => {
     return filteredCashTransactions.reduce((sum, transaction) => 
       sum + sanitizedNumber(transaction?.amount || 0), 0) || 0;
@@ -206,13 +204,11 @@ function CashReconciliation({
     }
   }, [calculatedMainLedgerAmount, mainLedgerId, cashierIndex, setValue]);
 
-  // Calculate profit/loss for this cashier
   const profitLoss = useMemo(() => {
     const actualCollected = sanitizedNumber(collectedAmount) || 0;
     return actualCollected - calculatedMainLedgerAmount;
   }, [collectedAmount, calculatedMainLedgerAmount]);
 
-  // Over/Short display logic for UI
   const isZeroCollected = sanitizedNumber(collectedAmount) === 0;
   const expectedCash = calculatedMainLedgerAmount;
   const isShort = (isZeroCollected && expectedCash < 0) || isZeroCollected || profitLoss < 0;
@@ -241,7 +237,6 @@ function CashReconciliation({
   };
 
 
-  // Memoize transaction handlers for performance
   const removeCashTransaction = React.useCallback((idx) => {
     setValue(
       `cashiers.${cashierIndex}.other_transactions`,
@@ -275,7 +270,6 @@ function CashReconciliation({
     trigger(`cashiers.${cashierIndex}.collected_amount`);
   };
 
-  // Always call useWatch for collection_ledger_id at the top level
   const collectedLedgerId = useWatch({ name: `cashiers.${cashierIndex}.collection_ledger_id` });
 
   return (

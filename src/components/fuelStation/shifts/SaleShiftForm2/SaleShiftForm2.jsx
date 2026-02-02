@@ -13,7 +13,8 @@ import {
   Autocomplete, 
   Chip,
   Typography,
-  Checkbox
+  Checkbox,
+  Alert
 } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 import { useSnackbar } from 'notistack';
@@ -313,6 +314,14 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
 
   const selectedCashiers = watch('cashiers') || [];
 
+  const cashiersMissingCollected = selectedCashiers
+    .map((cashier, idx) => ({
+      name: cashier.name,
+      idx,
+      value: cashier.collected_amount
+    }))
+  .filter(c => c.value === undefined || c.value === null || c.value === '' || isNaN(Number(c.value)));
+
   const retrieveLastShiftReadings = useCallback(async () => {
     try {
       const shiftStart = watch('shift_start');
@@ -540,6 +549,22 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
       return;
     }
 
+    // Prevent submit if any cashier is missing Collected Amount
+    const cashiersMissingCollected = data.cashiers
+      .map((cashier, idx) => ({
+        name: cashier.name,
+        idx,
+        value: cashier.collected_amount
+      }))
+      .filter(c => c.value === undefined || c.value === null || c.value === '' || isNaN(Number(c.value)));
+    if (cashiersMissingCollected.length > 0) {
+      enqueueSnackbar(
+        `Please fill Collected Amount for: ${cashiersMissingCollected.map(c => c.name).join(', ')}`,
+        { variant: 'error' }
+      );
+      return;
+    }
+
     const cashiersWithoutPumps = data.cashiers.filter(c => 
       !c.selected_pumps || c.selected_pumps.length === 0
     );
@@ -588,7 +613,6 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
             <Grid size={12} textAlign={'center'} marginBottom={1}>
               {SalesShift ? `Edit ${SalesShift.shiftNo}` : `New Fuel Sales Shift`}
             </Grid>
-            
             <Grid size={{xs: 12, md: 4}}>
               <Div sx={{ mt: 0.3}}>
                 <Autocomplete
@@ -719,7 +743,6 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
               <Typography sx={{ mt: 2, mb: 1 }}>
                 Select Cashiers
               </Typography>
-              {/** Memoize options and value for performance */}
               {(() => {
                 const cashierOptions = React.useMemo(() => cashiers || [], [cashiers]);
                 const cashierValue = React.useMemo(() =>
