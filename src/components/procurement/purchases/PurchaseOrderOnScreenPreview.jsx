@@ -587,7 +587,7 @@ function PurchaseOrderOnScreenPreview({ order }) {
                     <TableCell>{closure.creator.name}</TableCell>
                     <TableCell>{closure.closing_remarks ?? '-'}</TableCell>
                     <TableCell align='right' sx={{ fontFamily: 'monospace' }}>
-                      {closure.datetime_closed}
+                      {readableDate(closure.datetime_closed, false)}
                     </TableCell>
                   </TableRow>
                 ))}

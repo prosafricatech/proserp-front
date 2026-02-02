@@ -460,118 +460,120 @@ function PurchaseOrderPDF({
         )}
 
         {/* Closures */}
-        <View
-          style={{
-            ...pdfStyles.table,
-            minHeight: 20,
-            marginBottom: 50,
-            marginTop: 20,
-          }}
-        >
-          <View style={pdfStyles.tableRow}>
-            <Text
-              style={{
-                ...styles.tableCell,
-                flex: 1,
-                fontSize: 10,
-                color: 'black',
-              }}
-            >
-              CLOSURES
-            </Text>
-          </View>
-          <View style={styles.tableRow}>
-            <Text
-              style={{
-                ...styles.tableCell,
-                ...styles.tableHeader,
-                ...styles.midInfo,
-                backgroundColor: mainColor,
-                color: contrastText,
-                flex: 0.3,
-              }}
-            >
-              S/N
-            </Text>
-            <Text
-              style={{
-                ...styles.tableCell,
-                ...styles.tableHeader,
-                ...styles.midInfo,
-                backgroundColor: mainColor,
-                color: contrastText,
-                flex: 2,
-              }}
-            >
-              Name
-            </Text>
-            <Text
-              style={{
-                ...styles.tableCell,
-                ...styles.tableHeader,
-                ...styles.midInfo,
-                backgroundColor: mainColor,
-                color: contrastText,
-                flex: 2,
-              }}
-            >
-              Closing Remarks
-            </Text>
-            <Text
-              style={{
-                ...styles.tableCell,
-                ...styles.tableHeader,
-                ...styles.midInfo,
-                backgroundColor: mainColor,
-                color: contrastText,
-                flex: 1,
-              }}
-            >
-              Date
-            </Text>
-          </View>
-          {order.closures.map((closure, index) => (
-            <View key={closure.id} style={styles.tableRow}>
+        {order.closures && order.closures.length > 0 && (
+          <View
+            style={{
+              ...pdfStyles.table,
+              minHeight: 20,
+              marginBottom: 50,
+              marginTop: 20,
+            }}
+          >
+            <View style={pdfStyles.tableRow}>
               <Text
                 style={{
                   ...styles.tableCell,
-                  backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
+                  flex: 1,
+                  fontSize: 10,
+                  color: 'black',
+                }}
+              >
+                CLOSURES
+              </Text>
+            </View>
+            <View style={styles.tableRow}>
+              <Text
+                style={{
+                  ...styles.tableCell,
+                  ...styles.tableHeader,
+                  ...styles.midInfo,
+                  backgroundColor: mainColor,
+                  color: contrastText,
                   flex: 0.3,
                 }}
               >
-                {index + 1}
+                S/N
               </Text>
               <Text
                 style={{
                   ...styles.tableCell,
-                  backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
+                  ...styles.tableHeader,
+                  ...styles.midInfo,
+                  backgroundColor: mainColor,
+                  color: contrastText,
                   flex: 2,
                 }}
               >
-                {closure.creator.name}
+                Name
               </Text>
               <Text
                 style={{
                   ...styles.tableCell,
-                  backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
+                  ...styles.tableHeader,
+                  ...styles.midInfo,
+                  backgroundColor: mainColor,
+                  color: contrastText,
                   flex: 2,
                 }}
               >
-                {closure.closing_remarks ?? '-'}
+                Closing Remarks
               </Text>
               <Text
                 style={{
                   ...styles.tableCell,
-                  backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
+                  ...styles.tableHeader,
+                  ...styles.midInfo,
+                  backgroundColor: mainColor,
+                  color: contrastText,
                   flex: 1,
-                  textAlign: 'right',
                 }}
               >
-                {closure.datetime_closed}
+                Date
               </Text>
             </View>
-          ))}
-        </View>
+            {order.closures.map((closure, index) => (
+              <View key={closure.id} style={styles.tableRow}>
+                <Text
+                  style={{
+                    ...styles.tableCell,
+                    backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
+                    flex: 0.3,
+                  }}
+                >
+                  {index + 1}
+                </Text>
+                <Text
+                  style={{
+                    ...styles.tableCell,
+                    backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
+                    flex: 2,
+                  }}
+                >
+                  {closure.creator.name}
+                </Text>
+                <Text
+                  style={{
+                    ...styles.tableCell,
+                    backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
+                    flex: 2,
+                  }}
+                >
+                  {closure.closing_remarks ?? '-'}
+                </Text>
+                <Text
+                  style={{
+                    ...styles.tableCell,
+                    backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
+                    flex: 1,
+                    textAlign: 'right',
+                  }}
+                >
+                  {readableDate(closure.datetime_closed, false)}
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
 
         <View style={{ ...pdfStyles.tableRow, marginTop: 50 }}>
           <View style={{ flex: 0.8 }}></View>
