@@ -540,7 +540,7 @@ function ShiftSummary({ paymentItems = [] }) {
         <Grid container spacing={2}>
           <Grid size={{ xs: 12, md: 6 }}>
             <Paper elevation={0} sx={{ p: 2, bgcolor: 'primary.50', borderRadius: 1 }}>
-              <Typography variant="subtitle2" color="primary.dark" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography variant="subtitle2" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <AttachMoney fontSize="small" />
                 MAIN LEDGERS (PER CASHIER)
                 {currencyCode && (
@@ -584,7 +584,7 @@ function ShiftSummary({ paymentItems = [] }) {
                   <Box sx={{ mt: 2, pt: 1, borderTop: '1px solid', borderColor: 'divider' }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                       <Typography variant="body2" fontWeight="bold">Total Main Ledgers:</Typography>
-                      <Typography variant="body1" fontWeight="bold" color="primary.dark">
+                      <Typography variant="body1" fontWeight="bold">
                         {formatMoney(mainLedgersSummary.totalMainLedgerAmount)}
                       </Typography>
                     </Box>
@@ -743,7 +743,7 @@ function ShiftSummary({ paymentItems = [] }) {
                 mt: 2
               }}
             >
-              <Typography variant="subtitle1" fontWeight="bold" gutterBottom color="primary.dark">
+              <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
                 GRAND TOTALS
                 {currencyCode && (
                   <Typography variant="caption" color="textSecondary" sx={{ ml: 1 }}>
@@ -758,7 +758,7 @@ function ShiftSummary({ paymentItems = [] }) {
                     <Typography variant="caption" color="textSecondary" display="block">
                       Total Main Ledgers
                     </Typography>
-                    <Typography variant="h6" color="primary.dark">
+                    <Typography variant="h6">
                       {formatMoney(mainLedgersSummary.totalMainLedgerAmount)}
                     </Typography>
                   </Box>
@@ -792,7 +792,7 @@ function ShiftSummary({ paymentItems = [] }) {
                     <Typography variant="h6" fontWeight="bold">
                       TOTAL DISTRIBUTED CASH:
                     </Typography>
-                    <Typography variant="h5" fontWeight="bold" color="primary.dark">
+                    <Typography variant="h5" fontWeight="bold">
                       {formatMoney(
                         mainLedgersSummary.totalMainLedgerAmount + 
                         otherLedgersSummary.totalOtherLedgerAmount + 
