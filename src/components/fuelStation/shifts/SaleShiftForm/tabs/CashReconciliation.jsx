@@ -61,7 +61,7 @@ function CashReconciliation({
 
   const collectedAmount = useWatch({
     name: `cashiers.${cashierIndex}.collected_amount`,
-  }) || 0;
+  });
 
   const cashierLedgers = getCashierLedgers ? getCashierLedgers(cashierIndex) : [];
   const actualMainLedgerAmount = watch(`cashiers.${cashierIndex}.main_ledger_amount`) || 0;
@@ -262,12 +262,25 @@ function CashReconciliation({
   }, [cashTransactions, cashierIndex, setValue]);
 
   const handleCollectedAmountChange = (value) => {
-    const sanitizedValue = sanitizedNumber(value);
+    let sanitizedValue = sanitizedNumber(value);
+    if (typeof sanitizedValue === 'string') {
+      sanitizedValue = sanitizedValue.replace(/^0+(?!$)/, '');
+    } else if (typeof sanitizedValue === 'number') {
+      sanitizedValue = sanitizedValue.toString().replace(/^0+(?!$)/, '');
+    }
+    if (/^0[0-9]+/.test(value)) {
+      setValue(`cashiers.${cashierIndex}.collected_amount`, '', {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+      trigger(`cashiers.${cashierIndex}.collected_amount`);
+      alert('Collected Amount should not start with 0. Please enter the correct amount.');
+      return;
+    }
     setValue(`cashiers.${cashierIndex}.collected_amount`, sanitizedValue, {
       shouldValidate: true,
       shouldDirty: true,
     });
-    
     trigger(`cashiers.${cashierIndex}.collected_amount`);
   };
 
@@ -536,11 +549,11 @@ function CashReconciliation({
                 <Grid container spacing={2}>
                   <Grid size={{ xs: 12, md: 6 }}>
                     <Autocomplete
-                      options={collection_ledgers || []}
+                      options={(collection_ledgers || []).filter(l => l.ledger_group_id === 13)}
                       getOptionLabel={(opt) => opt?.name || ''}
                       size='small'
                       value={
-                        ((collection_ledgers || []).find(
+                        ((collection_ledgers || []).filter(l => l.ledger_group_id === 13).find(
                           l => l.id === collectedLedgerId
                         )) || null
                       }
@@ -568,7 +581,7 @@ function CashReconciliation({
                     <TextField
                       size="small"
                       fullWidth
-                      value={collectedAmount || 0}
+                      value={collectedAmount}
                       onChange={(e) => handleCollectedAmountChange(e.target.value)}
                       error={!!errors?.cashiers?.[cashierIndex]?.collected_amount}
                       InputProps={{

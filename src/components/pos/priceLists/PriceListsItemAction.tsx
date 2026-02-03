@@ -47,7 +47,7 @@ const EditForm: React.FC<EditFormProps & { fuelPriceLists?: boolean }> = ({ fuel
   return <PriceListForm fuelPriceLists={fuelPriceLists} priceList={data} toggleOpen={toggleOpen} />;
 };
 
-const DocumentDialog: React.FC<DocumentDialogProps & { fuelPriceLists?: boolean }> = ({ fuelPriceLists, priceList, authObject }) => {
+const DocumentDialog: React.FC<DocumentDialogProps> = ({ priceList, authObject }) => {
   const { data, isLoading } = useQuery({
     queryKey: ['priceList', { id: priceList.id }],
     queryFn: () => priceListServices.show(priceList.id),
@@ -62,7 +62,7 @@ const DocumentDialog: React.FC<DocumentDialogProps & { fuelPriceLists?: boolean 
       {authObject.checkOrganizationPermission(PERMISSIONS.PRICE_LISTS_READ) ? (
         <PDFContent
           fileName={`PriceList From ${readableDate(priceList.effective_date)}`}
-          document={<PriceListPDF authObject={authObject as any} priceList={data} fuelPriceLists={fuelPriceLists} />}
+          document={<PriceListPDF authObject={authObject as any} priceList={data}/>}
         />
       ) : (
         <UnauthorizedAccess />
@@ -157,7 +157,7 @@ const PriceListsItemAction: React.FC<PriceListsItemActionProps> = ({ fuelPriceLi
           <UnauthorizedAccess />
         ))}
 
-        {openDocumentDialog && <DocumentDialog fuelPriceLists={fuelPriceLists} priceList={priceList} authObject={authObject} />}
+        {openDocumentDialog && <DocumentDialog priceList={priceList} authObject={authObject} />}
       </Dialog>
 
       <JumboDdMenu

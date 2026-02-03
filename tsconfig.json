@@ -351,7 +351,7 @@
     "src/components/fuelStation/dippings/DippingsListItem.tsx",
     "src/components/fuelStation/dippings/DippingsItemAction.tsx",
     ".next/dev/types/**/*.ts"
-, "src/components/fuelStation/Stations/StationForm.tsx", "src/components/fuelStation/shifts/SaleShiftForm/SaleShiftForm.jsx", "src/components/fuelStation/shifts/SaleShiftForm/FuelPrices.jsx", "src/components/fuelStation/shifts/SaleShiftForm/tabs/adjustments/AdjustmentsTab.jsx", "src/components/fuelStation/shifts/SaleShiftForm2/SaleShiftForm.jsx"  ],
+, "src/components/fuelStation/Stations/StationForm.tsx", "src/components/fuelStation/shifts/SaleShiftForm2/SaleShiftForm.jsx", "src/components/fuelStation/shifts/SaleShiftForm2/FuelPrices.jsx", "src/components/fuelStation/shifts/SaleShiftForm2/tabs/adjustments/AdjustmentsTab.jsx", "src/components/fuelStation/shifts/SaleShiftForm2/SaleShiftForm.jsx"  ],
   "exclude": [
     "node_modules"
   ]

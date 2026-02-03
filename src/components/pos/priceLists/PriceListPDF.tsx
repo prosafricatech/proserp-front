@@ -23,12 +23,12 @@ interface PriceItem {
 interface PriceListPDFProps {
   priceList: PriceList & {
     items: PriceItem[];
+    is_fuel_price_list: boolean;
   };
   authObject: AuthObject;
 }
 
-const PriceListPDF: React.FC<PriceListPDFProps & { fuelPriceLists?: boolean }> = ({
-  fuelPriceLists,
+const PriceListPDF: React.FC<PriceListPDFProps> = ({
   priceList,
   authObject: {
     authUser: { user },
@@ -88,7 +88,7 @@ const PriceListPDF: React.FC<PriceListPDFProps & { fuelPriceLists?: boolean }> =
                   <Text style={{ ...pdfStyles.tableCell, ...pdfStyles.tableHeader, ...pdfStyles.midInfo, backgroundColor: mainColor, color: contrastText, flex: 1.2 }}>Price {is_vat_registered ? ' (Incl.)' : ''}</Text>
                 </>
               )}
-              {!fuelPriceLists && (
+              {!priceList?.is_fuel_price_list && (
                 <Text style={{ ...pdfStyles.tableCell, ...pdfStyles.tableHeader, ...pdfStyles.midInfo, backgroundColor: mainColor, color: contrastText, flex: 1.2 }}>Bottom Cap</Text>
               )}
               <Text style={{ ...pdfStyles.tableCell, ...pdfStyles.tableHeader, ...pdfStyles.midInfo, backgroundColor: mainColor, color: contrastText, flex: 2 }}>Applicable Outlets</Text>
@@ -109,7 +109,7 @@ const PriceListPDF: React.FC<PriceListPDFProps & { fuelPriceLists?: boolean }> =
                     </Text>
                   </>
                 )}
-                {!fuelPriceLists && (
+                {!priceList?.is_fuel_price_list && (
                   <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1.2, textAlign: 'right' }}>{priceItem.bottom_cap}</Text>
                 )}
                 <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 2, textAlign: 'right' }}>{priceItem.sales_outlets.map((outlet) => outlet.name).join(', ')}</Text>

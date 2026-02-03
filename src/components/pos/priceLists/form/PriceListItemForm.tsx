@@ -213,6 +213,7 @@ const PriceListItemForm: React.FC<PriceListItemFormProps> = ({
             label='Product/Service'
             frontError={errors.product}
             defaultValue={item?.product}
+            includeOnlyFuelProducts={fuelPriceLists ? true : false}
             onChange={(newValue: Product) => {
               if (newValue) {
                 const allUnits = [

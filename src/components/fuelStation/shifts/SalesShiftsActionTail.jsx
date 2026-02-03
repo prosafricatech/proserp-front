@@ -10,7 +10,7 @@ import {
 import { useState } from 'react';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
-import SaleShiftForm from './SaleShiftForm2/SaleShiftForm';
+import SaleShiftForm from './SaleShiftForm/SaleShiftForm';
 
 const SalesShiftsActionTail = () => {
   const [openDialog, setOpenDialog] = useState(false);

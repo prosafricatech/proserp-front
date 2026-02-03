@@ -314,14 +314,6 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
 
   const selectedCashiers = watch('cashiers') || [];
 
-  const cashiersMissingCollected = selectedCashiers
-    .map((cashier, idx) => ({
-      name: cashier.name,
-      idx,
-      value: cashier.collected_amount
-    }))
-  .filter(c => c.value === undefined || c.value === null || c.value === '' || isNaN(Number(c.value)));
-
   const retrieveLastShiftReadings = useCallback(async () => {
     try {
       const shiftStart = watch('shift_start');
@@ -406,20 +398,19 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
 
   const handleShiftChange = useCallback((newValue) => {
     const currentShiftStart = watch('shift_start');
-    const currentShiftEnd = watch('shift_end');
     setValue('sales_outlet_shift_id', newValue ? newValue.id : '', {
       shouldValidate: true,
       shouldDirty: true,
     });
-    if (newValue && (currentShiftStart || currentShiftEnd)) {
-      const selectedDate = currentShiftStart || dayjs().startOf('day');
-      if (newValue.start_time) {
-        const newStartDateTime = combineDateTime(selectedDate, newValue.start_time);
-        setValue('shift_start', newStartDateTime, {
-          shouldValidate: true,
-          shouldDirty: true
-        });
-      }
+    if (newValue) {
+      // Set shift_start if not set or if shift times change
+      let selectedDate = currentShiftStart ? dayjs(currentShiftStart) : dayjs().startOf('day');
+      let newStartDateTime = newValue.start_time ? combineDateTime(selectedDate, newValue.start_time) : selectedDate.toISOString();
+      setValue('shift_start', newStartDateTime, {
+        shouldValidate: true,
+        shouldDirty: true
+      });
+      // Always set shift_end automatically
       if (newValue.end_time) {
         const startTime = dayjs(newValue.start_time, 'HH:mm:ss');
         const endTime = dayjs(newValue.end_time, 'HH:mm:ss');
@@ -470,10 +461,31 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
 
   useEffect(() => {
     const shiftStart = watch('shift_start');
+    const currentShiftId = watch('sales_outlet_shift_id');
+    const selectedShift = shifts?.find(s => s.id === currentShiftId);
+    if (shiftStart && selectedShift && selectedShift.end_time) {
+      const startTime = dayjs(selectedShift.start_time, 'HH:mm:ss');
+      const endTime = dayjs(selectedShift.end_time, 'HH:mm:ss');
+      let endDateTime;
+      if (endTime.isBefore(startTime)) {
+        endDateTime = dayjs(shiftStart)
+          .add(1, 'day')
+          .hour(endTime.hour())
+          .minute(endTime.minute())
+          .second(endTime.second())
+          .toISOString();
+      } else {
+        endDateTime = combineDateTime(shiftStart, selectedShift.end_time);
+      }
+      setValue('shift_end', endDateTime, {
+        shouldValidate: true,
+        shouldDirty: true
+      });
+    }
     if (shiftStart && !SalesShift?.id) {
       retrieveLastShiftReadings();
     }
-  }, [watch('shift_start'), SalesShift?.id, retrieveLastShiftReadings]);
+  }, [watch('shift_start'), watch('sales_outlet_shift_id'), shifts, SalesShift?.id, retrieveLastShiftReadings, setValue, combineDateTime]);
 
   const addCashiers = (selectedCashierIds) => {
     const newCashiers = selectedCashierIds
@@ -538,6 +550,32 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
       currentCashierPumps.includes(pump.id) || !otherCashiersPumps.includes(pump.id)
     );
   };
+
+    // Retrieve product prices for the station at a specific date/time
+  const retrieveProductPrices = useCallback(async (as_at) => {
+    try {
+      const product_ids = Array.from(new Set((fuel_pumps || []).map(p => p.product_id)));
+      if (!product_ids.length) return;
+      const sales_outlet_id = activeStation.id;
+      const response = await fuelStationServices.getProductsSellingPrices({ product_ids, sales_outlet_id, as_at });
+      let prices = [];
+      // Handle array or object keyed by product_id
+      if (Array.isArray(response)) {
+        prices = response;
+      } else if (response && typeof response === 'object' && !Array.isArray(response)) {
+        prices = Object.values(response);
+      } else if (response && Array.isArray(response.data)) {
+        prices = response.data;
+      }
+      if (prices.length > 0) {
+        setValue('product_prices', prices.map(p => ({ product_id: p.product_id, price: p.price })), { shouldValidate: true, shouldDirty: true });
+      } else {
+        setValue('product_prices', [], { shouldValidate: true, shouldDirty: true });
+      }
+    } catch (error) {
+      setValue('product_prices', [], { shouldValidate: true, shouldDirty: true });
+    }
+  }, [fuel_pumps, activeStation.id, setValue]);
 
   const getCashierLedgers = (cashierIndex) => {
     return cashierLedgers[cashierIndex] || [];
@@ -679,43 +717,36 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
                       helperText: errors?.shift_start?.message
                     }
                   }}
-                  onChange={(newValue) => {
+                  onChange={async (newValue) => {
                     const currentShiftId = watch('sales_outlet_shift_id');
                     const selectedShift = shifts?.find(s => s.id === currentShiftId);
-                    
-                    if (selectedShift && newValue) {
-                      const newStartDateTime = combineDateTime(newValue, selectedShift.start_time);
-                      setValue('shift_start', newStartDateTime, {
-                        shouldValidate: true,
-                        shouldDirty: true
-                      });
-                      
-                      if (selectedShift.end_time) {
-                        const startTime = dayjs(selectedShift.start_time, 'HH:mm:ss');
-                        const endTime = dayjs(selectedShift.end_time, 'HH:mm:ss');
-                        
-                        let endDateTime;
-                        if (endTime.isBefore(startTime)) {
-                          endDateTime = dayjs(newValue)
-                            .add(1, 'day')
-                            .hour(endTime.hour())
-                            .minute(endTime.minute())
-                            .second(endTime.second())
-                            .toISOString();
-                        } else {
-                          endDateTime = combineDateTime(newValue, selectedShift.end_time);
-                        }
-                        
-                        setValue('shift_end', endDateTime, {
-                          shouldValidate: true,
-                          shouldDirty: true
-                        });
+                    let newStartDateTime = newValue ? (selectedShift && selectedShift.start_time ? combineDateTime(newValue, selectedShift.start_time) : newValue.toISOString()) : null;
+                    setValue('shift_start', newStartDateTime, {
+                      shouldValidate: true,
+                      shouldDirty: true
+                    });
+                    // Always recalculate shift_end if possible
+                    if (selectedShift && selectedShift.end_time && newValue) {
+                      const startTime = dayjs(selectedShift.start_time, 'HH:mm:ss');
+                      const endTime = dayjs(selectedShift.end_time, 'HH:mm:ss');
+                      let endDateTime;
+                      if (endTime.isBefore(startTime)) {
+                        endDateTime = dayjs(newValue)
+                          .add(1, 'day')
+                          .hour(endTime.hour())
+                          .minute(endTime.minute())
+                          .second(endTime.second())
+                          .toISOString();
+                      } else {
+                        endDateTime = combineDateTime(newValue, selectedShift.end_time);
                       }
-                    } else {
-                      setValue('shift_start', newValue ? newValue.toISOString() : null, {
+                      setValue('shift_end', endDateTime, {
                         shouldValidate: true,
                         shouldDirty: true
                       });
+                    }
+                    if (newStartDateTime) {
+                      await retrieveProductPrices(newStartDateTime);
                     }
                   }}
                 />
