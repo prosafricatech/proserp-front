@@ -582,6 +582,21 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
   };
 
   const handleSubmitForm = async (data) => {
+      // Prevent if any product is missing a price
+      const allProductIds = (activeStation.products || []).map(p => p.id);
+      const pricedProductIds = (data.product_prices || []).map(p => p.product_id);
+      const missingPriceProducts = allProductIds.filter(pid => !pricedProductIds.includes(pid));
+      if (missingPriceProducts.length > 0) {
+        const missingNames = (activeStation.products || [])
+          .filter(p => missingPriceProducts.includes(p.id))
+          .map(p => p.name)
+          .join(', ');
+        enqueueSnackbar(
+          `Cannot proceed: The following products are missing prices: ${missingNames}`,
+          { variant: 'error' }
+        );
+        return;
+      }
     if (data.cashiers.length === 0) {
       enqueueSnackbar('Please add at least one cashier', { variant: 'error' });
       return;
