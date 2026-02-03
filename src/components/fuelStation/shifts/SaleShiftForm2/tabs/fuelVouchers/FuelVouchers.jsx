@@ -1,8 +1,8 @@
 'use client';
 
-import { useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Grid, IconButton, LinearProgress, TextField, Tooltip } from '@mui/material';
-import { useForm, useFormContext } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { AddOutlined, CheckOutlined, DisabledByDefault } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 import * as yup from 'yup';
@@ -17,13 +17,10 @@ import StakeholderSelector from '@/components/masters/stakeholders/StakeholderSe
 import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
 import ProductSelect from '@/components/productAndServices/products/ProductSelect';
 import StakeholderQuickAdd from '@/components/masters/stakeholders/StakeholderQuickAdd';
-import { StationFormContext } from '../../../SalesShifts';
 
-function FuelVouchers({ index = -1, setShowForm = null, fuelVoucher, productPrices, fuelVouchers=[], setFuelVouchers }) {
+function FuelVouchers({ cashierPumpProducts, index = -1, setShowForm = null, fuelVoucher, productPrices, fuelVouchers=[], setFuelVouchers }) {
   const iu = {id: null, name: 'Calibration/Internal use'};
   const [isAdding, setIsAdding] = useState(false);
-  const {activeStation} = useContext(StationFormContext);
-  const { products } = activeStation;
   const { productOptions } = useProductsSelect();
   const {stakeholders} = useStakeholderSelect();
   const { ungroupedLedgerOptions } = useLedgerSelect();
@@ -168,7 +165,7 @@ function FuelVouchers({ index = -1, setShowForm = null, fuelVoucher, productPric
               label='Fuel'
               frontError={errors.product_id}
               defaultValue={fuelVoucher && productOptions.find(product => product.id === fuelVoucher.product_id)}
-              requiredProducts={products}
+              requiredProducts={cashierPumpProducts}
               onChange={(newValue) => {
                 setValue(`product`, newValue)
                 calculateAndSetValues('amount', 0);

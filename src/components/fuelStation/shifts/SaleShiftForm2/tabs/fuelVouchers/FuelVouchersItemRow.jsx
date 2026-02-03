@@ -4,7 +4,7 @@ import React, { useState } from 'react'
 import FuelVouchers from './FuelVouchers';
 import { useProductsSelect } from '@/components/productAndServices/products/ProductsSelectProvider';
 
-function FuelVouchersItemRow({ fuelVoucher, index, productPrices, fuelVouchers=[], setFuelVouchers}) {
+function FuelVouchersItemRow({ fuelVoucher, index, productPrices, fuelVouchers=[], setFuelVouchers, cashierPumpProducts}) {
     const { productOptions } = useProductsSelect();
 
     const product = productOptions.find(product => product.id === fuelVoucher.product_id);
@@ -85,7 +85,7 @@ function FuelVouchersItemRow({ fuelVoucher, index, productPrices, fuelVouchers=[
                         </Grid>
                     </Grid>
                 ) : (
-                    <FuelVouchers productPrices={productPrices} fuelVoucher={fuelVoucher} setShowForm={setShowForm} index={index} fuelVouchers={fuelVouchers} setFuelVouchers={setFuelVouchers}/>
+                    <FuelVouchers cashierPumpProducts={cashierPumpProducts} productPrices={productPrices} fuelVoucher={fuelVoucher} setShowForm={setShowForm} index={index} fuelVouchers={fuelVouchers} setFuelVouchers={setFuelVouchers}/>
                 )
             }
         </React.Fragment>

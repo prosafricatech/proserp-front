@@ -8,13 +8,14 @@ import {
   Tab,
   Typography,
 } from '@mui/material';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import PumpReadings from './tabs/PumpReadings';
 import FuelVouchersTab from './tabs/fuelVouchers/FuelVouchersTab';
 import CashReconciliation from './tabs/CashReconciliation';
 import AdjustmentsTab from './tabs/adjustments/AdjustmentsTab';
 import RemoveIcon from '@mui/icons-material/Remove';
 import AddIcon from '@mui/icons-material/Add'
+import { StationFormContext } from '../SalesShifts';
 
 export default function CashierAccordion({
   cashier,
@@ -31,6 +32,8 @@ export default function CashierAccordion({
 }) {
   const [tab, setTab] = useState(0);
   const [expanded, setExpanded] = useState(false);
+  const {activeStation} = useContext(StationFormContext);
+  const { fuel_pumps, products } = activeStation;
   
   const formFuelVouchers = watch(`cashiers.${index}.fuel_vouchers`) || [];
   const formAdjustments = watch(`cashiers.${index}.adjustments`) || [];
@@ -50,6 +53,12 @@ export default function CashierAccordion({
     setLocalAdjustments(currentAdjustments);
     setLocalPumpReadings(currentPumpReadings);
   }, [watch, index]);
+
+  const cashierPumpProducts = products?.filter(product =>
+    formSelectedPumps?.some(
+      pumpId => fuel_pumps.find(p => p.id === pumpId && p.product_id === product.id)
+    )
+  );
 
   const updateFuelVouchers = (newVouchers) => {
     setLocalFuelVouchers(newVouchers);
@@ -171,6 +180,7 @@ export default function CashierAccordion({
             setLocalFuelVouchers={updateFuelVouchers}
             setValue={setValue}
             onFuelVouchersChange={onFuelVouchersChange}
+            cashierPumpProducts={cashierPumpProducts}
           />
         </div>
         <div style={{ display: tab === 2 ? 'block' : 'none' }}>
@@ -179,7 +189,8 @@ export default function CashierAccordion({
             localAdjustments={localAdjustments}
             setLocalAdjustments={updateAdjustments}
             setValue={setValue}
-          />
+            cashierPumpProducts={cashierPumpProducts}
+            />
         </div>
         <div style={{ display: tab === 3 ? 'block' : 'none' }}>
           <CashReconciliation
@@ -191,6 +202,7 @@ export default function CashierAccordion({
             getCashierLedgers={getCashierLedgers}
             watch={watch}
             setValue={setValue}
+            cashierPumpProducts={cashierPumpProducts}
           />
         </div>
       </AccordionDetails>

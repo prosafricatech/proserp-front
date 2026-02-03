@@ -13,7 +13,9 @@ function AdjustmentsTab({
   cashierIndex, 
   localAdjustments, 
   setLocalAdjustments, 
-  setValue }) {
+  setValue,
+  cashierPumpProducts
+}) {
 
   const { watch } = useFormContext();
 
@@ -36,6 +38,7 @@ function AdjustmentsTab({
         <Adjustments
           adjustments={localAdjustments}
           setAdjustments={setLocalAdjustments}
+          cashierPumpProducts={cashierPumpProducts}
         />
 
         {localAdjustments.map((adjustment, index) => (
@@ -45,6 +48,7 @@ function AdjustmentsTab({
                 index={index}
                 adjustments={localAdjustments}
                 setAdjustments={setLocalAdjustments}
+                cashierPumpProducts={cashierPumpProducts}
             />
         ))}
       

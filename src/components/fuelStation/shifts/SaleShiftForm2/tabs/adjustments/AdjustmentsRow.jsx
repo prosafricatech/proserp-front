@@ -5,11 +5,11 @@ import { useFormContext } from 'react-hook-form';
 import Adjustments from './Adjustments';
 import { StationFormContext } from '../../../SalesShifts';
 
-function AdjustmentsRow({ adjustment, index, adjustments, setAdjustments}) {
+function AdjustmentsRow({ cashierPumpProducts, adjustment, index, adjustments, setAdjustments}) {
     const [showForm, setShowForm] = useState(false);
     const {activeStation} = useContext(StationFormContext);
-    const { tanks, products } = activeStation;
-    const product = products.find(product => product.id === adjustment.product_id);
+    const { tanks } = activeStation;
+    const product = cashierPumpProducts?.find(product => product.id === adjustment.product_id);
     const tank = tanks.find(tank => tank.id === adjustment.tank_id);
 
   return (
@@ -72,7 +72,7 @@ function AdjustmentsRow({ adjustment, index, adjustments, setAdjustments}) {
                         </Grid>
                     </Grid>
                 ) : (
-                    <Adjustments adjustment={adjustment} setShowForm={setShowForm} index={index} adjustments={adjustments} setAdjustments={setAdjustments}/>
+                    <Adjustments cashierPumpProducts={cashierPumpProducts} adjustment={adjustment} setShowForm={setShowForm} index={index} adjustments={adjustments} setAdjustments={setAdjustments}/>
                 )
             }
         </React.Fragment>

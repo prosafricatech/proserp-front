@@ -14,7 +14,8 @@ function FuelVouchersTab({
   localFuelVouchers, 
   setLocalFuelVouchers,
   setValue,
-  onFuelVouchersChange
+  onFuelVouchersChange,
+  cashierPumpProducts
 }) {
     const { watch } = useFormContext();
     const productPrices = watch(`product_prices`) || [];
@@ -43,6 +44,7 @@ function FuelVouchersTab({
             productPrices={productPrices}
             fuelVouchers={localFuelVouchers}
             setFuelVouchers={setLocalFuelVouchers}
+            cashierPumpProducts={cashierPumpProducts}
           />
 
           {localFuelVouchers.map((fuelVoucher, index) => (
@@ -53,6 +55,7 @@ function FuelVouchersTab({
               productPrices={productPrices}
               fuelVouchers={localFuelVouchers}
               setFuelVouchers={setLocalFuelVouchers}
+              cashierPumpProducts={cashierPumpProducts}
             />
           ))}
         

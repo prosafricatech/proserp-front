@@ -36,6 +36,7 @@ function CashReconciliation({
   localAdjustments = [],
   localPumpReadings = [],
   getCashierLedgers,
+  cashierPumpProducts
 }) {
   const {
     setValue,
@@ -44,7 +45,7 @@ function CashReconciliation({
     trigger
   } = useFormContext();
   const {activeStation} = useContext(StationFormContext);
-  const {fuel_pumps, products, collection_ledgers} = activeStation;
+  const {fuel_pumps, collection_ledgers} = activeStation;
 
   const productPrices = useWatch({
     name: 'product_prices',
@@ -172,7 +173,7 @@ function CashReconciliation({
   const { grandFuelVoucherTotal, grandProductsTotal, cashRemaining } = useMemo(() => {
     const voucherTotal = Object.values(fuelVoucherTotals).reduce((sum, v) => sum + (v || 0), 0);
 
-    const productsTotal = products?.reduce((sum, product) => {
+    const productsTotal = cashierPumpProducts?.reduce((sum, product) => {
       const qty = productTotals[product.id] || 0;
       const price = productPrices.find(p => p?.product_id === product.id)?.price || 0;
       return sum + qty * price;
@@ -183,7 +184,7 @@ function CashReconciliation({
       grandProductsTotal: productsTotal,
       cashRemaining: productsTotal - voucherTotal,
     };
-  }, [fuelVoucherTotals, productTotals, products, productPrices]);
+  }, [fuelVoucherTotals, productTotals, cashierPumpProducts, productPrices]);
 
 
   const filteredCashTransactions = React.useMemo(() => cashTransactions, [cashTransactions]);
@@ -293,7 +294,7 @@ function CashReconciliation({
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {products?.map((product) => {
+                    {cashierPumpProducts?.map((product) => {
                       const qty = productTotals[product.id] || 0;
                       const price = getProductPrice(product.id);
                       const amount = qty * price;
@@ -338,7 +339,7 @@ function CashReconciliation({
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {products?.map((product) => {
+                    {cashierPumpProducts?.map((product) => {
                       const qty = localFuelVouchers.reduce(
                         (sum, v) => (v?.product_id === product.id ? sum + (v.quantity || 0) : sum),
                         0

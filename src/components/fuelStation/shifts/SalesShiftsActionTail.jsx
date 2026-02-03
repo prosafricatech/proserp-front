@@ -8,9 +8,9 @@ import {
   useMediaQuery,
 } from '@mui/material';
 import { useState } from 'react';
-import SaleShiftForm2 from './SaleShiftForm2/SaleShiftForm2';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
+import SaleShiftForm from './SaleShiftForm2/SaleShiftForm';
 
 const SalesShiftsActionTail = () => {
   const [openDialog, setOpenDialog] = useState(false);
@@ -27,7 +27,7 @@ const SalesShiftsActionTail = () => {
   return (
     <>
       <Dialog maxWidth='xl' fullWidth fullScreen={belowLargeScreen} open={openDialog}>
-        <SaleShiftForm2 setOpenDialog={setOpenDialog} />
+        <SaleShiftForm setOpenDialog={setOpenDialog} />
       </Dialog>
       <ButtonGroup
         variant='outlined'

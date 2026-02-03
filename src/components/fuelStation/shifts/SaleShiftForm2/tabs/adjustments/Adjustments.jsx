@@ -14,10 +14,10 @@ import OperationSelector from '@/components/sharedComponents/OperationSelector';
 import { Div } from '@jumbo/shared';
 import { StationFormContext } from '../../../SalesShifts';
 
-function Adjustments({index = -1, setShowForm = null, adjustment, adjustments = [], setAdjustments}) {
+function Adjustments({cashierPumpProducts, index = -1, setShowForm = null, adjustment, adjustments = [], setAdjustments}) {
   const [isAdding, setIsAdding] = useState(false);
   const {activeStation} = useContext(StationFormContext);
-  const { fuel_pumps, tanks, products } = activeStation;
+  const { fuel_pumps, tanks } = activeStation;
   const { productOptions } = useProductsSelect();
   const [productTanks, setProductTanks] = useState([])
   const [tanksKey, setTanksKeyKey] = useState(0);
@@ -74,7 +74,7 @@ function Adjustments({index = -1, setShowForm = null, adjustment, adjustments = 
               label='Fuel'
               frontError={errors.product_id}
               defaultValue={adjustment && productOptions.find(product => product.id === adjustment.product_id)}
-              requiredProducts={products}
+              requiredProducts={cashierPumpProducts}
               onChange={(newValue) => {
                 setTanksKeyKey(prevKey => prevKey + 1);
                 const relatedPumps = fuel_pumps.filter(pump => pump.product_id === newValue?.id);

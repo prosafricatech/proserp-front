@@ -37,7 +37,7 @@ import FuelPrices from './FuelPrices';
 import ShiftSummary from './ShiftSummary';
 import PaymentsReceivedItemRow from './tabs/PaymentsReceivedItemRow';
 
-function SaleShiftForm2({ SalesShift, setOpenDialog }) {
+function SaleShiftForm({ SalesShift, setOpenDialog }) {
   const [showWarning, setShowWarning] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [clearFormKey, setClearFormKey] = useState(0);
@@ -734,26 +734,12 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
                       size: 'small',
                       fullWidth: true,
                       error: !!errors?.shift_end,
-                      helperText: errors?.shift_end?.message
+                      helperText: errors?.shift_end?.message,
+                      readOnly: true,
                     }
                   }}
-                  onChange={(newValue) => {
-                    const currentShiftId = watch('sales_outlet_shift_id');
-                    const selectedShift = shifts?.find(s => s.id === currentShiftId);
-                    
-                    if (selectedShift && newValue && selectedShift.end_time) {
-                      const endDateTime = combineDateTime(newValue, selectedShift.end_time);
-                      setValue('shift_end', endDateTime, {
-                        shouldValidate: true,
-                        shouldDirty: true
-                      });
-                    } else {
-                      setValue('shift_end', newValue ? newValue.toISOString() : null, {
-                        shouldValidate: true,
-                        shouldDirty: true
-                      });
-                    }
-                  }}
+                  readOnly
+                  onChange={() => {}}
                 />
               </Div>
             </Grid>
@@ -809,15 +795,13 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
                   />
                 );
               })()}
-            </Grid>
-            
-            {Object.keys(lastClosingReadings).length > 0 && !SalesShift?.id && (
-              <Grid size={12}>
+
+              {Object.keys(lastClosingReadings).length > 0 && !SalesShift?.id && (
                 <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
                   ✓ Last shift readings loaded for {Object.keys(lastClosingReadings).length} pump(s)
                 </Typography>
-              </Grid>
-            )}
+              )}
+            </Grid>
 
             <Grid size={{ xs: 12, md: 12, lg: 8 }}>
               <FuelPrices />
@@ -977,4 +961,4 @@ function SaleShiftForm2({ SalesShift, setOpenDialog }) {
   );
 }
 
-export default SaleShiftForm2;
+export default SaleShiftForm;
