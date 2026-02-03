@@ -1,5 +1,5 @@
 import { Alert, Button, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle, Divider, Grid, IconButton, Stack, TextField, Tooltip, Typography } from '@mui/material';
-import { DatePicker } from '@mui/x-date-pickers';
+import { DateTimePicker } from '@mui/x-date-pickers';
 import React, { useState } from 'react';
 import * as yup from "yup";
 import PriceListsItemForm from './PriceListItemForm';
@@ -169,8 +169,8 @@ const handleMainFormSubmit = async () => {
           <Grid container spacing={1}>
             <Grid size={{xs: 12, md: 4}}>
               <Div sx={{ mt: 1, mb: 1 }}>
-                <DatePicker
-                  label="Effective Date"
+                <DateTimePicker
+                  label="Effective Date & Time"
                   defaultValue={effective_date}
                   slotProps={{
                     textField: {
