@@ -27,7 +27,8 @@ interface PriceListPDFProps {
   authObject: AuthObject;
 }
 
-const PriceListPDF: React.FC<PriceListPDFProps> = ({
+const PriceListPDF: React.FC<PriceListPDFProps & { fuelPriceLists?: boolean }> = ({
+  fuelPriceLists,
   priceList,
   authObject: {
     authUser: { user },
@@ -76,41 +77,45 @@ const PriceListPDF: React.FC<PriceListPDFProps> = ({
           </View>
         </View>
 
-        <View style={pdfStyles.table}>
-          <View style={pdfStyles.tableRow}>
-            <Text style={{ ...pdfStyles.tableCell, ...pdfStyles.tableHeader, ...pdfStyles.midInfo, backgroundColor: mainColor, color: contrastText, flex: 0.3 }}>S/N</Text>
-            <Text style={{ ...pdfStyles.tableCell, ...pdfStyles.tableHeader, ...pdfStyles.midInfo, backgroundColor: mainColor, color: contrastText, flex: 3 }}>Product/Service</Text>
-            <Text style={{ ...pdfStyles.tableCell, ...pdfStyles.tableHeader, ...pdfStyles.midInfo, backgroundColor: mainColor, color: contrastText, flex: 1.2 }}>Price {is_vat_registered ? ' (Excl.)' : ''}</Text>
-            {is_vat_registered && (
-              <>
-                <Text style={{ ...pdfStyles.tableCell, ...pdfStyles.tableHeader, ...pdfStyles.midInfo, backgroundColor: mainColor, color: contrastText, flex: 1.2 }}>VAT</Text>
-                <Text style={{ ...pdfStyles.tableCell, ...pdfStyles.tableHeader, ...pdfStyles.midInfo, backgroundColor: mainColor, color: contrastText, flex: 1.2 }}>Price {is_vat_registered ? ' (Incl.)' : ''}</Text>
-              </>
-            )}
-            <Text style={{ ...pdfStyles.tableCell, ...pdfStyles.tableHeader, ...pdfStyles.midInfo, backgroundColor: mainColor, color: contrastText, flex: 1.2 }}>Bottom Cap</Text>
-            <Text style={{ ...pdfStyles.tableCell, ...pdfStyles.tableHeader, ...pdfStyles.midInfo, backgroundColor: mainColor, color: contrastText, flex: 2 }}>Applicable Outlets</Text>
-          </View>
-
-          {priceList.items.map((priceItem, index) => (
-            <View key={priceItem.id} style={pdfStyles.tableRow}>
-              <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 0.3 }}>{index + 1}</Text>
-              <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 3 }}>{priceItem.product.name}</Text>
-              <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1.2, textAlign: 'right' }}>{priceItem.price.toLocaleString()}</Text>
+          <View style={pdfStyles.table}>
+            <View style={pdfStyles.tableRow}>
+              <Text style={{ ...pdfStyles.tableCell, ...pdfStyles.tableHeader, ...pdfStyles.midInfo, backgroundColor: mainColor, color: contrastText, flex: 0.3 }}>S/N</Text>
+              <Text style={{ ...pdfStyles.tableCell, ...pdfStyles.tableHeader, ...pdfStyles.midInfo, backgroundColor: mainColor, color: contrastText, flex: 3 }}>Product/Service</Text>
+              <Text style={{ ...pdfStyles.tableCell, ...pdfStyles.tableHeader, ...pdfStyles.midInfo, backgroundColor: mainColor, color: contrastText, flex: 1.2 }}>Price {is_vat_registered ? ' (Excl.)' : ''}</Text>
               {is_vat_registered && (
                 <>
-                  <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1.2, textAlign: 'right' }}>
-                    {(!priceItem.product?.vat_exempted ? vat_percentage * priceItem.price * 0.01 : 0).toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}
-                  </Text>
-                  <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1.2, textAlign: 'right' }}>
-                    {(priceItem.price * (!priceItem.product?.vat_exempted ? (100 + vat_percentage) * 0.01 : 1)).toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}
-                  </Text>
+                  <Text style={{ ...pdfStyles.tableCell, ...pdfStyles.tableHeader, ...pdfStyles.midInfo, backgroundColor: mainColor, color: contrastText, flex: 1.2 }}>VAT</Text>
+                  <Text style={{ ...pdfStyles.tableCell, ...pdfStyles.tableHeader, ...pdfStyles.midInfo, backgroundColor: mainColor, color: contrastText, flex: 1.2 }}>Price {is_vat_registered ? ' (Incl.)' : ''}</Text>
                 </>
               )}
-              <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1.2, textAlign: 'right' }}>{priceItem.bottom_cap}</Text>
-              <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 2, textAlign: 'right' }}>{priceItem.sales_outlets.map((outlet) => outlet.name).join(', ')}</Text>
+              {!fuelPriceLists && (
+                <Text style={{ ...pdfStyles.tableCell, ...pdfStyles.tableHeader, ...pdfStyles.midInfo, backgroundColor: mainColor, color: contrastText, flex: 1.2 }}>Bottom Cap</Text>
+              )}
+              <Text style={{ ...pdfStyles.tableCell, ...pdfStyles.tableHeader, ...pdfStyles.midInfo, backgroundColor: mainColor, color: contrastText, flex: 2 }}>Applicable Outlets</Text>
             </View>
-          ))}
-        </View>
+
+            {priceList.items.map((priceItem, index) => (
+              <View key={priceItem.id} style={pdfStyles.tableRow}>
+                <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 0.3 }}>{index + 1}</Text>
+                <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 3 }}>{priceItem.product.name}</Text>
+                <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1.2, textAlign: 'right' }}>{priceItem.price.toLocaleString()}</Text>
+                {is_vat_registered && (
+                  <>
+                    <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1.2, textAlign: 'right' }}>
+                      {(!priceItem.product?.vat_exempted ? vat_percentage * priceItem.price * 0.01 : 0).toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}
+                    </Text>
+                    <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1.2, textAlign: 'right' }}>
+                      {(priceItem.price * (!priceItem.product?.vat_exempted ? (100 + vat_percentage) * 0.01 : 1)).toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}
+                    </Text>
+                  </>
+                )}
+                {!fuelPriceLists && (
+                  <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1.2, textAlign: 'right' }}>{priceItem.bottom_cap}</Text>
+                )}
+                <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 2, textAlign: 'right' }}>{priceItem.sales_outlets.map((outlet) => outlet.name).join(', ')}</Text>
+              </View>
+            ))}
+          </View>
         <PageFooter />
       </Page>
     </Document>

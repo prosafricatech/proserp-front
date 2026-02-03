@@ -30,10 +30,11 @@ interface DocumentDialogProps {
 }
 
 interface PriceListsItemActionProps {
+  fuelPriceLists?: boolean;
   priceList: PriceList;
 }
 
-const EditForm: React.FC<EditFormProps> = ({ priceList, toggleOpen }) => {
+const EditForm: React.FC<EditFormProps & { fuelPriceLists?: boolean }> = ({ fuelPriceLists, priceList, toggleOpen }) => {
   const { data, isFetching } = useQuery({
     queryKey: ['priceList', { id: priceList.id }],
     queryFn: () => priceListServices.show(priceList.id),
@@ -43,10 +44,10 @@ const EditForm: React.FC<EditFormProps> = ({ priceList, toggleOpen }) => {
     return <LinearProgress />;
   }
 
-  return <PriceListForm priceList={data} toggleOpen={toggleOpen} />;
+  return <PriceListForm fuelPriceLists={fuelPriceLists} priceList={data} toggleOpen={toggleOpen} />;
 };
 
-const DocumentDialog: React.FC<DocumentDialogProps> = ({ priceList, authObject }) => {
+const DocumentDialog: React.FC<DocumentDialogProps & { fuelPriceLists?: boolean }> = ({ fuelPriceLists, priceList, authObject }) => {
   const { data, isLoading } = useQuery({
     queryKey: ['priceList', { id: priceList.id }],
     queryFn: () => priceListServices.show(priceList.id),
@@ -61,7 +62,7 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({ priceList, authObject }
       {authObject.checkOrganizationPermission(PERMISSIONS.PRICE_LISTS_READ) ? (
         <PDFContent
           fileName={`PriceList From ${readableDate(priceList.effective_date)}`}
-          document={<PriceListPDF authObject={authObject as any} priceList={data} />}
+          document={<PriceListPDF authObject={authObject as any} priceList={data} fuelPriceLists={fuelPriceLists} />}
         />
       ) : (
         <UnauthorizedAccess />
@@ -70,7 +71,7 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({ priceList, authObject }
   );
 };
 
-const PriceListsItemAction: React.FC<PriceListsItemActionProps> = ({ priceList }) => {
+const PriceListsItemAction: React.FC<PriceListsItemActionProps> = ({ fuelPriceLists, priceList }) => {
   const [openEditDialog, setOpenEditDialog] = useState<boolean>(false);
   const [openDocumentDialog, setOpenDocumentDialog] = useState<boolean>(false);
   const { showDialog, hideDialog } = useJumboDialog();
@@ -148,15 +149,15 @@ const PriceListsItemAction: React.FC<PriceListsItemActionProps> = ({ priceList }
         fullWidth
         fullScreen={belowLargeScreen}
         onClose={handleCloseDialog}
-        maxWidth={openDocumentDialog ? "md" : "lg"}
+        maxWidth={(openDocumentDialog || fuelPriceLists) ? "md" : "lg"}
       >
         {openEditDialog && (checkOrganizationPermission(PERMISSIONS.PRICE_LISTS_EDIT) ? (
-          <EditForm priceList={priceList} toggleOpen={setOpenEditDialog} />
+          <EditForm fuelPriceLists={fuelPriceLists} priceList={priceList} toggleOpen={setOpenEditDialog} />
         ) : (
           <UnauthorizedAccess />
         ))}
 
-        {openDocumentDialog && <DocumentDialog priceList={priceList} authObject={authObject} />}
+        {openDocumentDialog && <DocumentDialog fuelPriceLists={fuelPriceLists} priceList={priceList} authObject={authObject} />}
       </Dialog>
 
       <JumboDdMenu

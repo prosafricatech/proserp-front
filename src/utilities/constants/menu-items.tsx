@@ -133,6 +133,11 @@ export async function getMenus(locale: string) {
               label: sidebar.menuItem.stations,
               type: 'nav-item',
             },
+            {
+              uri: `/${locale}/fuelStations/price_lists`,
+              label: sidebar.menuItem.priceLists,
+              type: 'nav-item',
+            },
           ],
         },
       ],

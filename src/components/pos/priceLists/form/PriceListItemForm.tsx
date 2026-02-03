@@ -19,6 +19,7 @@ interface PriceListItemFormProps {
   costInsights?: boolean;
   costCenterId?: number;
   storeId?: number;
+  fuelPriceLists?: boolean;
   item?: any;
   index?: number;
   setItems: React.Dispatch<React.SetStateAction<any[]>>;
@@ -42,6 +43,7 @@ interface Unit {
 }
 
 const PriceListItemForm: React.FC<PriceListItemFormProps> = ({ 
+  fuelPriceLists,
   setClearFormKey, 
   submitItemForm, 
   setSubmitItemForm, 
@@ -206,44 +208,51 @@ const PriceListItemForm: React.FC<PriceListItemFormProps> = ({
           </Grid>
         )}
 
-        <Grid size={{xs: 12, md: productUnits?.length > 0 ? 3.5 : 5 }}>
+        <Grid size={{xs: 12, md: productUnits?.length > 0 ? (fuelPriceLists ? 5.5 : 3.5) : (fuelPriceLists ? 7 : 5) }}>
           <ProductSelect
             label='Product/Service'
             frontError={errors.product}
             defaultValue={item?.product}
             onChange={(newValue: Product) => {
-              if (!newValue) return;
+              if (newValue) {
+                const allUnits = [
+                  ...(newValue.secondary_units || []),
+                  ...(newValue.primary_unit ? [newValue.primary_unit] : [])
+                ];
+                const availableUnits = getAvailableUnits(allUnits, newValue.id);
 
-              const allUnits = [
-                ...(newValue.secondary_units || []),
-                ...(newValue.primary_unit ? [newValue.primary_unit] : [])
-              ];
-              const availableUnits = getAvailableUnits(allUnits, newValue.id);
+                if (availableUnits?.length < 1) {
+                  return setError('product', {
+                    type: 'manual',
+                    message: 'No available unit for this product to add price. Please select a different product.',
+                  });
+                } else {
+                  clearErrors('product');
+                }
 
-              if (availableUnits?.length < 1) {
-                return setError('product', {
-                  type: 'manual',
-                  message: 'No available unit for this product to add price. Please select a different product.',
+                setProductUnits(availableUnits);
+                setSelectedUnit(availableUnits?.[0]?.id);
+                
+                setValue('product', newValue, {
+                  shouldDirty: true,
+                  shouldValidate: true
                 });
+                
+                if (costCenterId && storeId) {
+                  retrieveCostInsights();
+                }
+
+                setValue('measurement_unit_id', availableUnits?.[0]?.id);
+                setValue('unit_symbol', availableUnits?.[0]?.unit_symbol);
+                setValue('product_id', newValue.id);
               } else {
-                clearErrors('product');
+                setProductUnits([]);
+                setSelectedUnit(undefined);
+                setValue('measurement_unit_id', undefined);
+                setValue('unit_symbol', undefined);
+                setValue('product', null);
+                setValue('product_id', undefined);
               }
-
-              setProductUnits(availableUnits);
-              setSelectedUnit(availableUnits?.[0]?.id);
-              
-              setValue('product', newValue, {
-                shouldDirty: true,
-                shouldValidate: true
-              });
-              
-              if (costCenterId && storeId) {
-                retrieveCostInsights();
-              }
-
-              setValue('measurement_unit_id', availableUnits?.[0]?.id);
-              setValue('unit_symbol', availableUnits?.[0]?.unit_symbol);
-              setValue('product_id', newValue.id);
             }}
           />
         </Grid>
@@ -283,7 +292,7 @@ const PriceListItemForm: React.FC<PriceListItemFormProps> = ({
           </Grid>
         )}
 
-        <Grid size={{xs: 12, md: 3}}>
+        <Grid size={{xs: 12, md: fuelPriceLists ? 4 : 3}}>
           <TextField
             label="Price"
             fullWidth
@@ -308,25 +317,28 @@ const PriceListItemForm: React.FC<PriceListItemFormProps> = ({
           />
         </Grid>
 
-        <Grid size={{xs: 12, md: 3}}>
-          <TextField
-            label="Bottom Cap"
-            fullWidth
-            size='small'
-            InputProps={{
-              inputComponent: CommaSeparatedField
-            }}
-            error={!!errors?.bottom_cap}
-            helperText={errors?.bottom_cap?.message}
-            value={watch('bottom_cap')}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-              setValue('bottom_cap', e.target.value ? sanitizedNumber(e.target.value) : 0, {
-                shouldValidate: true,
-                shouldDirty: true
-              });
-            }}
-          />
-        </Grid>
+        {
+          !fuelPriceLists && (
+            <Grid size={{xs: 12, md: 3}}>
+              <TextField
+                label="Bottom Cap"
+                fullWidth
+                size='small'
+                InputProps={{
+                inputComponent: CommaSeparatedField
+              }}
+              error={!!errors?.bottom_cap}
+              helperText={errors?.bottom_cap?.message}
+              value={watch('bottom_cap')}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                setValue('bottom_cap', e.target.value ? sanitizedNumber(e.target.value) : 0, {
+                  shouldValidate: true,
+                  shouldDirty: true
+                });
+              }}
+            />
+          </Grid>
+        )}
 
         <Grid size={{xs: 12, md: 1}} textAlign={'end'}>
           <Button

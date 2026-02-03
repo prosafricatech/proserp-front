@@ -12,14 +12,14 @@ import ProductsSelectProvider from '../../productAndServices/products/ProductsSe
 import { useParams } from 'next/navigation';
 import { PriceList } from './PriceListType';
 
-function PriceLists() {
+function PriceLists({fuelPriceLists = false}: {fuelPriceLists?: boolean}) {
     const params = useParams<{ id?: string }>();
     const listRef = React.useRef<any>(null);
     const [mounted, setMounted] = React.useState(false);
 
     const [queryOptions, setQueryOptions] = React.useState({
         queryKey: 'priceLists',
-        queryParams: { id: params?.id, keyword: '' },
+        queryParams: { id: params?.id, keyword: '', fuelPriceLists },
         countKey: 'total',
         dataKey: 'data',
     });
@@ -31,13 +31,13 @@ function PriceLists() {
     React.useEffect(() => {
         setQueryOptions((state) => ({
             ...state,
-            queryParams: { ...state.queryParams, id: params?.id },
+            queryParams: { ...state.queryParams, id: params?.id, fuelPriceLists },
         }));
     }, [params]);
 
     const renderPriceList = React.useCallback((priceList: PriceList) => {
-        return <PriceListsItem priceList={priceList} />;
-    }, []);
+        return <PriceListsItem  priceList={priceList} fuelPriceLists={fuelPriceLists} />;
+    }, [fuelPriceLists]);
 
     const handleOnChange = React.useCallback(
         (keyword: string) => {
@@ -60,7 +60,7 @@ function PriceLists() {
             <JumboRqList
                 ref={listRef}
                 wrapperComponent={Card}
-                service={priceListservices.getList}
+                service={(params) => priceListservices.getList(params, fuelPriceLists)}
                 primaryKey="id"
                 queryOptions={queryOptions}
                 itemsPerPage={10}
@@ -80,7 +80,7 @@ function PriceLists() {
                                     onChange={handleOnChange}
                                     value={queryOptions.queryParams.keyword}
                                 />
-                                <PriceListsActionTail/>
+                                <PriceListsActionTail fuelPriceLists={fuelPriceLists} />
                             </Stack>
                         }
                     />

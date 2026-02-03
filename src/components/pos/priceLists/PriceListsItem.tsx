@@ -6,9 +6,10 @@ import { PriceList } from './PriceListType';
 
 interface PriceListsItemProps {
   priceList: PriceList;
+  fuelPriceLists?: boolean;
 }
 
-const PriceListsItem: React.FC<PriceListsItemProps> = ({ priceList }) => {
+const PriceListsItem: React.FC<PriceListsItemProps> = ({ fuelPriceLists, priceList }) => {
   return (
     <Grid 
       container
@@ -49,7 +50,7 @@ const PriceListsItem: React.FC<PriceListsItemProps> = ({ priceList }) => {
       </Grid>
       <Grid size={1}>
         <Box display={'flex'} flexDirection={'row'} justifyContent={'flex-end'}>
-          <PriceListsItemAction priceList={priceList} />
+          <PriceListsItemAction fuelPriceLists={fuelPriceLists} priceList={priceList} />
         </Box>
       </Grid>
     </Grid>

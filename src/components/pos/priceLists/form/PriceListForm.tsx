@@ -34,7 +34,7 @@ interface FormValues {
   id?: number;
 }
 
-const PriceListForm: React.FC<PriceListFormProps> = ({ toggleOpen, priceList = null }) => {
+const PriceListForm: React.FC<PriceListFormProps & { fuelPriceLists?: boolean }> = ({ fuelPriceLists, toggleOpen, priceList = null }) => {
   const [effective_date] = useState<Dayjs>(priceList ? dayjs(priceList.effective_date) : dayjs());
   const [items, setItems] = useState<PriceListItem[]>(priceList ? priceList.items : []);
   const [applicableOutlets, setApplicableOutlets] = useState<any>(priceList ? priceList.items[0]?.sales_outlets || [] : []);
@@ -274,7 +274,7 @@ const handleMainFormSubmit = async () => {
         <Grid size={12}>
           <Divider />
           <PriceListsItemForm 
-            setClearFormKey={setClearFormKey} submitItemForm={submitItemForm} setSubmitItemForm={setSubmitItemForm} key={clearFormKey} setIsDirty={setIsDirty} costInsights={costInsights} costCenterId={Number(costCenterId)} storeId={Number(storeId)} setItems={setItems} items={items} 
+            fuelPriceLists={fuelPriceLists} setClearFormKey={setClearFormKey} submitItemForm={submitItemForm} setSubmitItemForm={setSubmitItemForm} key={clearFormKey} setIsDirty={setIsDirty} costInsights={costInsights} costCenterId={Number(costCenterId)} storeId={Number(storeId)} setItems={setItems} items={items} 
           />
         </Grid>
       </DialogTitle>
@@ -282,7 +282,7 @@ const handleMainFormSubmit = async () => {
         {errors?.items?.message && items.length < 1 && <Alert severity='error'>{errors.items.message}</Alert>}
         
         {items.map((item, index) => (
-          <PriceListsItemRow setClearFormKey={setClearFormKey} submitItemForm={submitItemForm} setSubmitItemForm={setSubmitItemForm} setIsDirty={setIsDirty} key={index} index={index} setItems={setItems} items={items} item={item} />
+          <PriceListsItemRow fuelPriceLists={fuelPriceLists} setClearFormKey={setClearFormKey} submitItemForm={submitItemForm} setSubmitItemForm={setSubmitItemForm} setIsDirty={setIsDirty} key={index} index={index} setItems={setItems} items={items} item={item} />
         ))}
 
         <Dialog open={showWarning} onClose={() => setShowWarning(false)}>
