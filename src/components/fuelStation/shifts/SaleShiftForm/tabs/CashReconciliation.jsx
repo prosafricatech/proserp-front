@@ -44,6 +44,9 @@ function CashReconciliation({
     watch,
     trigger
   } = useFormContext();
+
+  const [manualCollectedError, setManualCollectedError] = useState('');
+  const [manualLedgerError, setManualLedgerError] = useState('');
   const {activeStation} = useContext(StationFormContext);
   const {fuel_pumps, collection_ledgers} = activeStation;
 
@@ -62,6 +65,23 @@ function CashReconciliation({
   const collectedAmount = useWatch({
     name: `cashiers.${cashierIndex}.collected_amount`,
   });
+
+  useEffect(() => {
+    if (collectedAmount === null || collectedAmount === '' || isNaN(Number(collectedAmount))) {
+      setManualCollectedError('Collected Amount is required');
+    } else {
+      setManualCollectedError('');
+    }
+  }, [collectedAmount]);
+
+  const collectionLedgerId = useWatch({ name: `cashiers.${cashierIndex}.collection_ledger_id` });
+  useEffect(() => {
+    if (!collectionLedgerId) {
+      setManualLedgerError('Collection Ledger is required');
+    } else {
+      setManualLedgerError('');
+    }
+  }, [collectionLedgerId]);
 
   const cashierLedgers = getCashierLedgers ? getCashierLedgers(cashierIndex) : [];
   const actualMainLedgerAmount = watch(`cashiers.${cashierIndex}.main_ledger_amount`) || 0;
@@ -570,8 +590,8 @@ function CashReconciliation({
                         <TextField
                           {...params}
                           label="Collection Ledger"
-                          error={!!errors?.cashiers?.[cashierIndex]?.collection_ledger_id}
-                          helperText={errors?.cashiers?.[cashierIndex]?.collection_ledger_id?.message}
+                          error={!!errors?.cashiers?.[cashierIndex]?.collection_ledger_id || !!manualLedgerError}
+                          helperText={errors?.cashiers?.[cashierIndex]?.collection_ledger_id?.message || manualLedgerError}
                         />
                       )}
                       isOptionEqualToValue={(option, value) => option.id === value.id}
@@ -583,7 +603,8 @@ function CashReconciliation({
                       fullWidth
                       value={collectedAmount}
                       onChange={(e) => handleCollectedAmountChange(e.target.value)}
-                      error={!!errors?.cashiers?.[cashierIndex]?.collected_amount}
+                      error={!!errors?.cashiers?.[cashierIndex]?.collected_amount || !!manualCollectedError}
+                      helperText={errors?.cashiers?.[cashierIndex]?.collected_amount?.message || manualCollectedError}
                       InputProps={{
                         inputComponent: CommaSeparatedField,
                       }}

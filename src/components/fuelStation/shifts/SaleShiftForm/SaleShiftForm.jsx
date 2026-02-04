@@ -177,22 +177,31 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
             .typeError('Main Ledger Amount is Required')
             .positive('Amount must be positive')
         }).nullable(),
-        collected_amount: yup
-          .number()
-          .typeError('Collected Amount is required')
-          .when(['$submit_type'], {
-            is: (submit_type) => submit_type === 'close',
-            then: (schema) => schema.required('Collected Amount is required on close').typeError('Collected Amount is required on close'),
-            otherwise: (schema) => schema,
-          }),
-        collection_ledger_id: yup
-          .number()
-          .typeError('Collection Ledger is required')
-          .when(['$submit_type'], {
-            is: (submit_type) => submit_type === 'close',
-            then: (schema) => schema.required('Collection Ledger is required on close').typeError('Collection Ledger is required on close'),
-            otherwise: (schema) => schema,
-          }),
+          collected_amount: yup
+            .number()
+            .nullable()
+            .transform((v, o) => (o === '' ? null : v))
+            .when('$submit_type', {
+              is: 'close',
+              then: (schema) =>
+                schema
+                  .required('Collected Amount is required on close')
+                  .typeError('Collected Amount is required on close'),
+              otherwise: (schema) => schema.notRequired(),
+            }),
+
+          collection_ledger_id: yup
+            .number()
+            .nullable()
+            .transform((v, o) => (o === '' ? null : v))
+            .when('$submit_type', {
+              is: 'close',
+              then: (schema) =>
+                schema
+                  .required('Collection Ledger is required on close')
+                  .typeError('Collection Ledger is required on close'),
+              otherwise: (schema) => schema.notRequired(),
+            }),
       })
     ).required('At least one cashier is required').min(1, 'At least one cashier is required'),
     dipping_before: yup.array().of(
@@ -309,10 +318,11 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
 
   const { register, control, handleSubmit, setError, trigger, clearErrors, setValue, watch, formState: { errors } } = useForm({
     resolver: yupResolver(validationSchema),
-    defaultValues: getDefaultValues(),
+    defaultValues: getDefaultValues()
   });
 
   const selectedCashiers = watch('cashiers') || [];
+  console.log(errors)
 
   const retrieveLastShiftReadings = useCallback(async () => {
     try {
@@ -411,10 +421,10 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
         shouldDirty: true
       });
       // Always set shift_end automatically
+      let endDateTime;
       if (newValue.end_time) {
         const startTime = dayjs(newValue.start_time, 'HH:mm:ss');
         const endTime = dayjs(newValue.end_time, 'HH:mm:ss');
-        let endDateTime;
         if (endTime.isBefore(startTime)) {
           endDateTime = dayjs(selectedDate)
             .add(1, 'day')
@@ -429,6 +439,12 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
           shouldValidate: true,
           shouldDirty: true
         });
+      } else {
+        endDateTime = null;
+      }
+      // Retrieve product prices after setting shift start and end
+      if (newStartDateTime) {
+        retrieveProductPrices(newStartDateTime);
       }
     }
   }, [setValue, watch, combineDateTime]);
@@ -602,7 +618,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
       return;
     }
 
-    // Prevent submit if any cashier is missing Collected Amount, Collection Ledger, or Main Ledger info
+    // Prevent submit if any cashier is missing Collected Amount, Collection Ledger, or Main Ledger info ONLY if closing
     const cashiersMissingFields = data.cashiers
       .map((cashier, idx) => {
         const missingCollected = cashier.collected_amount === undefined || cashier.collected_amount === null || cashier.collected_amount === '' || isNaN(Number(cashier.collected_amount));
@@ -616,7 +632,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
         };
       })
       .filter(c => c.missingCollected || c.missingLedger || c.missingMainLedger);
-    if (cashiersMissingFields.length > 0) {
+    if (cashiersMissingFields.length > 0 && data.submit_type === 'close') {
       const missingCollected = cashiersMissingFields.filter(c => c.missingCollected).map(c => c.name);
       const missingLedger = cashiersMissingFields.filter(c => c.missingLedger).map(c => c.name);
       const missingMainLedger = cashiersMissingFields.filter(c => c.missingMainLedger).map(c => c.name);
@@ -874,9 +890,17 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
         {activeTab === 0 && (
           <div>
             {selectedCashiers.length === 0 ? (
-              <Typography color="textSecondary" textAlign="center" py={4}>
-                Please select cashiers using the selector above
-              </Typography>
+              <>
+                {errors?.cashiers?.message ? (
+                  <Typography color="error" textAlign="center" py={4}>
+                    {errors.cashiers.message}
+                  </Typography>
+                ) : (
+                  <Typography textAlign="center" py={4}>
+                    Please select cashiers using the selector above
+                  </Typography>
+                )}
+              </>
             ) : (
               selectedCashiers.map((cashier, index) => (
                 <CashierAccordion
@@ -997,7 +1021,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
                   handleSubmit(handleSubmitForm)(e);
                 }}
               >
-                Close
+                Close Shift
               </LoadingButton>
             )}
           </>
