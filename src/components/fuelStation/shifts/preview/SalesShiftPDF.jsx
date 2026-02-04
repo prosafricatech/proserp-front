@@ -19,7 +19,7 @@ function SalesShiftPDF({
   const lightColor = organization.settings?.light_color || '#bec5da';
   const contrastText = organization.settings?.contrast_text || '#FFFFFF';
 
-  console.log('shiftData: ', shiftData);
+  // console.log('shiftData: ', shiftData);
 
   // Calculate totals for each cashier
   const calculateCashierTotals = (cashier) => {
@@ -1290,17 +1290,6 @@ function SalesShiftPDF({
                         >
                           {st.name || `Tank ${st.id}`}
                         </Text>
-                        {/* Product */}
-                        {/* <Text
-                          style={{
-                            ...pdfStyles.tableCell,
-                            backgroundColor:
-                              index % 2 === 0 ? '#FFFFFF' : lightColor,
-                            flex: 1.5,
-                          }}
-                        >
-                          {st.product?.name || `Product ${st.product.id}`}
-                        </Text> */}
                         {/* Opening */}
                         <Text
                           style={{
@@ -1312,7 +1301,8 @@ function SalesShiftPDF({
                           }}
                         >
                           {(st.opening_reading || 0).toLocaleString('en-US', {
-                            minimumFractionDigits: 3,
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
                           })}
                         </Text>
                         {/* Purchase */}
@@ -1326,7 +1316,8 @@ function SalesShiftPDF({
                           }}
                         >
                           {(st.incoming || 0).toLocaleString('en-US', {
-                            minimumFractionDigits: 3,
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
                           })}
                         </Text>
                         {/* Total */}
@@ -1342,7 +1333,8 @@ function SalesShiftPDF({
                           {(
                             (st.opening_reading || 0) + (st.incoming || 0)
                           ).toLocaleString('en-US', {
-                            minimumFractionDigits: 3,
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
                           })}
                         </Text>
                         {/* Closing */}
@@ -1356,7 +1348,8 @@ function SalesShiftPDF({
                           }}
                         >
                           {(st.closing_reading || 0).toLocaleString('en-US', {
-                            minimumFractionDigits: 3,
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
                           })}
                         </Text>
                         {/* Tank Difference */}
@@ -1370,7 +1363,8 @@ function SalesShiftPDF({
                           }}
                         >
                           {(st.tank_difference || 0).toLocaleString('en-US', {
-                            minimumFractionDigits: 3,
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
                           })}
                         </Text>
                         {/* Actual Sold */}
@@ -1384,7 +1378,8 @@ function SalesShiftPDF({
                           }}
                         >
                           {(st.actual_sold || 0).toLocaleString('en-US', {
-                            minimumFractionDigits: 3,
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
                           })}
                         </Text>
                         {/* Pos/Neg */}
@@ -1398,7 +1393,8 @@ function SalesShiftPDF({
                           }}
                         >
                           {(st.deviation || 0).toLocaleString('en-US', {
-                            minimumFractionDigits: 3,
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
                           })}
                         </Text>
                       </View>

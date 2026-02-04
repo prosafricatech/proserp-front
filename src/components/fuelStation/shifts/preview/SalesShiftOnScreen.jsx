@@ -17,6 +17,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { useState } from 'react';
+import CashierListSummaryOnScreen from './CashierListSummaryOnScreen';
 
 const SalesShiftOnScreen = ({
   shiftData,
@@ -33,6 +34,8 @@ const SalesShiftOnScreen = ({
   const mainColor = organization.settings?.main_color || '#2113AD';
   const contrastText = organization.settings?.contrast_text || '#FFFFFF';
   const headerColor = isDark ? '#29f096' : mainColor;
+
+  console.log('on screen shiftData: ', shiftData);
 
   const [openSections, setOpenSections] = useState({
     products: true,
@@ -212,6 +215,16 @@ const SalesShiftOnScreen = ({
           </Typography>
         </Grid>
       </Grid>
+
+      <CashierListSummaryOnScreen
+        shiftData={shiftData}
+        organization={organization}
+        shift_teams={shift_teams}
+        fuel_pumps={fuel_pumps}
+        tanks={tanks}
+        productOptions={productOptions}
+        includeFuelVouchers={includeFuelVouchers}
+      />
 
       <Paper elevation={3} sx={{ overflow: 'hidden' }}>
         {/* Pump Readings */}
