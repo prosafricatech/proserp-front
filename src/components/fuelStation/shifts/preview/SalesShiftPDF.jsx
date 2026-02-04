@@ -19,13 +19,6 @@ function SalesShiftPDF({
   const lightColor = organization.settings?.light_color || '#bec5da';
   const contrastText = organization.settings?.contrast_text || '#FFFFFF';
 
-  // log all props to the console
-  console.log('includeFuelVouchers: ', includeFuelVouchers);
-  console.log('shiftData: ', shiftData);
-  console.log('stationName: ', stationName);
-  console.log('cashiers: ', cashiers);
-  console.log('fuel_pumps: ', fuel_pumps);
-
   // Calculate totals for each cashier
   const calculateCashierTotals = (cashier) => {
     // Calculate total products amount for this cashier
@@ -156,14 +149,13 @@ function SalesShiftPDF({
         </View>
 
         {/* ================= SHIFT INFO ================= */}
-        <View style={{ ...pdfStyles.tableRow, marginBottom: 12 }}>
+        <View style={{ ...pdfStyles.tableRow, marginBottom: 6 }}>
           <View style={{ flex: 1, padding: 2 }}>
             <Text style={{ ...pdfStyles.midInfo, color: mainColor }}>
               Sales Outlet Shift
             </Text>
             <Text style={{ ...pdfStyles.midInfo }}>
-              {cashiers?.find((c) => c.id === shiftData.sales_outlet_shift_id)
-                ?.name || 'N/A'}
+              {shiftData.shift?.name || 'N/A'}
             </Text>
           </View>
           <View style={{ flex: 1, padding: 2 }}>
@@ -190,75 +182,24 @@ function SalesShiftPDF({
               {shiftData.creator?.name}
             </Text>
           </View>
-        </View>
-
-        {/* ================= FUEL PRICES ================= */}
-        <View style={{ marginBottom: 12 }}>
-          <Text
-            style={{
-              fontSize: 12,
-              color: mainColor,
-              marginBottom: 4,
-              textAlign: 'center',
-            }}
-          >
-            Fuel Prices
-          </Text>
-          <View style={pdfStyles.table}>
-            <View style={pdfStyles.tableRow}>
-              <Text
-                style={{
-                  ...pdfStyles.tableHeader,
-                  backgroundColor: mainColor,
-                  color: contrastText,
-                  flex: 3,
-                }}
-              >
-                Product
-              </Text>
-              <Text
-                style={{
-                  ...pdfStyles.tableHeader,
-                  backgroundColor: mainColor,
-                  color: contrastText,
-                  flex: 1,
-                }}
-              >
-                Price
-              </Text>
-            </View>
-            {shiftData.fuel_prices?.map((price, index) => {
-              const product = productOptions?.find(
-                (p) => p.id === price.product_id
-              );
-              return (
-                <View key={index} style={pdfStyles.tableRow}>
-                  <Text
-                    style={{
-                      ...pdfStyles.tableCell,
-                      backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
-                      flex: 3,
-                    }}
-                  >
-                    {product?.name || `Product ${price.product_id}`}
-                  </Text>
-                  <Text
-                    style={{
-                      ...pdfStyles.tableCell,
-                      backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
-                      flex: 1,
-                      textAlign: 'right',
-                    }}
-                  >
-                    {price.price?.toLocaleString('en-US', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                  </Text>
-                </View>
-              );
-            })}
-          </View>
+          {shiftData.fuel_prices?.map((price, index) => {
+            const product = productOptions?.find(
+              (p) => p.id === price.product_id
+            );
+            return (
+              <View key={index} style={{ flex: 1, padding: 2 }}>
+                <Text style={{ ...pdfStyles.midInfo, color: mainColor }}>
+                  {product?.name || `Product ${price.product_id}`}
+                </Text>
+                <Text style={{ ...pdfStyles.midInfo }}>
+                  {price.price?.toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </Text>
+              </View>
+            );
+          })}
         </View>
 
         {/* ================= CASHIERS SECTION ================= */}
@@ -1200,117 +1141,6 @@ function SalesShiftPDF({
           />
         )}
 
-        {/* ================= OVERALL SUMMARY ================= */}
-        {shiftData.cashiers?.length > 1 && (
-          <View style={{ marginTop: 20, pageBreakInside: 'avoid' }}>
-            <View
-              style={{
-                marginBottom: 8,
-                padding: 8,
-                backgroundColor: mainColor,
-                borderRadius: 4,
-              }}
-            >
-              <Text
-                style={{
-                  fontSize: 14,
-                  color: contrastText,
-                  fontWeight: 'bold',
-                  textAlign: 'center',
-                }}
-              >
-                Overall Shift Summary
-              </Text>
-            </View>
-
-            <View style={pdfStyles.table}>
-              <View style={pdfStyles.tableRow}>
-                <Text
-                  style={{
-                    ...pdfStyles.tableHeader,
-                    backgroundColor: lightColor,
-                    color: mainColor,
-                    flex: 2,
-                  }}
-                >
-                  Item
-                </Text>
-                <Text
-                  style={{
-                    ...pdfStyles.tableHeader,
-                    backgroundColor: lightColor,
-                    color: mainColor,
-                    flex: 1,
-                    textAlign: 'right',
-                  }}
-                >
-                  Amount
-                </Text>
-              </View>
-              <View style={pdfStyles.tableRow}>
-                <Text style={{ ...pdfStyles.tableCell, flex: 2 }}>
-                  Total Net Sales
-                </Text>
-                <Text
-                  style={{
-                    ...pdfStyles.tableCell,
-                    flex: 1,
-                    textAlign: 'right',
-                  }}
-                >
-                  {overallTotals.netSales.toLocaleString('en-US', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
-                </Text>
-              </View>
-              <View style={pdfStyles.tableRow}>
-                <Text style={{ ...pdfStyles.tableCell, flex: 2 }}>
-                  Total Fuel Vouchers
-                </Text>
-                <Text
-                  style={{
-                    ...pdfStyles.tableCell,
-                    flex: 1,
-                    textAlign: 'right',
-                  }}
-                >
-                  {overallTotals.totalFuelVouchersAmount.toLocaleString(
-                    'en-US',
-                    { minimumFractionDigits: 2, maximumFractionDigits: 2 }
-                  )}
-                </Text>
-              </View>
-              <View style={pdfStyles.tableRow}>
-                <Text
-                  style={{
-                    ...pdfStyles.tableCell,
-                    flex: 2,
-                    fontWeight: 'bold',
-                  }}
-                >
-                  Total Cash Remaining
-                </Text>
-                <Text
-                  style={{
-                    ...pdfStyles.tableCell,
-                    flex: 1,
-                    textAlign: 'right',
-                    fontWeight: 'bold',
-                    color:
-                      overallTotals.cashRemaining < 0 ? '#FF0000' : '#000000',
-                  }}
-                >
-                  {overallTotals.cashRemaining.toLocaleString('en-US', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
-                </Text>
-              </View>
-            </View>
-          </View>
-        )}
-
         {/* ================= DIPPING SECTION ================= */}
         {(shiftData.opening_dipping?.readings?.length > 0 ||
           shiftData.closing_dipping?.readings?.length > 0) && (
@@ -1335,122 +1165,7 @@ function SalesShiftPDF({
               </Text>
             </View>
 
-            {/* Opening Dipping */}
-            {shiftData.opening_dipping?.readings?.length > 0 && (
-              <View style={{ marginBottom: 12 }}>
-                <Text
-                  style={{
-                    fontSize: 12,
-                    color: mainColor,
-                    marginBottom: 4,
-                    textAlign: 'center',
-                  }}
-                >
-                  Opening Dipping
-                </Text>
-                <View style={pdfStyles.table}>
-                  <View style={pdfStyles.tableRow}>
-                    <Text
-                      style={{
-                        ...pdfStyles.tableHeader,
-                        backgroundColor: mainColor,
-                        color: contrastText,
-                        flex: 1.5,
-                      }}
-                    >
-                      Tank
-                    </Text>
-                    <Text
-                      style={{
-                        ...pdfStyles.tableHeader,
-                        backgroundColor: mainColor,
-                        color: contrastText,
-                        flex: 1.5,
-                      }}
-                    >
-                      Product
-                    </Text>
-                    <Text
-                      style={{
-                        ...pdfStyles.tableHeader,
-                        backgroundColor: mainColor,
-                        color: contrastText,
-                        flex: 1,
-                      }}
-                    >
-                      Reading
-                    </Text>
-                    <Text
-                      style={{
-                        ...pdfStyles.tableHeader,
-                        backgroundColor: mainColor,
-                        color: contrastText,
-                        flex: 1,
-                      }}
-                    >
-                      Deviation
-                    </Text>
-                  </View>
-                  {shiftData.opening_dipping.readings.map((od, index) => {
-                    const product = productOptions?.find(
-                      (p) => p.id === od.product_id
-                    );
-                    return (
-                      <View key={index} style={pdfStyles.tableRow}>
-                        <Text
-                          style={{
-                            ...pdfStyles.tableCell,
-                            backgroundColor:
-                              index % 2 === 0 ? '#FFFFFF' : lightColor,
-                            flex: 1.5,
-                          }}
-                        >
-                          {od.tank?.name || `Tank ${od.tank_id}`}
-                        </Text>
-                        <Text
-                          style={{
-                            ...pdfStyles.tableCell,
-                            backgroundColor:
-                              index % 2 === 0 ? '#FFFFFF' : lightColor,
-                            flex: 1.5,
-                          }}
-                        >
-                          {product?.name || `Product ${od.product_id}`}
-                        </Text>
-                        <Text
-                          style={{
-                            ...pdfStyles.tableCell,
-                            backgroundColor:
-                              index % 2 === 0 ? '#FFFFFF' : lightColor,
-                            flex: 1,
-                            textAlign: 'right',
-                          }}
-                        >
-                          {od.reading.toLocaleString('en-US', {
-                            minimumFractionDigits: 3,
-                          })}
-                        </Text>
-                        <Text
-                          style={{
-                            ...pdfStyles.tableCell,
-                            backgroundColor:
-                              index % 2 === 0 ? '#FFFFFF' : lightColor,
-                            flex: 1,
-                            textAlign: 'right',
-                          }}
-                        >
-                          {(od.deviation || 0).toLocaleString('en-US', {
-                            minimumFractionDigits: 3,
-                          })}
-                        </Text>
-                      </View>
-                    );
-                  })}
-                </View>
-              </View>
-            )}
-
-            {/* Closing Dipping */}
+            {/* Dipping summary */}
             {shiftData.closing_dipping?.readings?.length > 0 && (
               <View style={{ marginBottom: 12 }}>
                 <Text
@@ -1461,7 +1176,7 @@ function SalesShiftPDF({
                     textAlign: 'center',
                   }}
                 >
-                  Closing Dipping
+                  Dipping Summary
                 </Text>
                 <View style={pdfStyles.table}>
                   <View style={pdfStyles.tableRow}>
@@ -1503,13 +1218,70 @@ function SalesShiftPDF({
                         flex: 1,
                       }}
                     >
+                      Opening
+                    </Text>
+                    <Text
+                      style={{
+                        ...pdfStyles.tableHeader,
+                        backgroundColor: mainColor,
+                        color: contrastText,
+                        flex: 1,
+                      }}
+                    >
+                      Closing
+                    </Text>
+                    <Text
+                      style={{
+                        ...pdfStyles.tableHeader,
+                        backgroundColor: mainColor,
+                        color: contrastText,
+                        flex: 1,
+                      }}
+                    >
+                      Purchase
+                    </Text>
+                    <Text
+                      style={{
+                        ...pdfStyles.tableHeader,
+                        backgroundColor: mainColor,
+                        color: contrastText,
+                        flex: 1,
+                      }}
+                    >
+                      Total
+                    </Text>
+                    <Text
+                      style={{
+                        ...pdfStyles.tableHeader,
+                        backgroundColor: mainColor,
+                        color: contrastText,
+                        flex: 1,
+                      }}
+                    >
                       Deviation
                     </Text>
+                    <Text
+                      style={{
+                        ...pdfStyles.tableHeader,
+                        backgroundColor: mainColor,
+                        color: contrastText,
+                        flex: 1,
+                      }}
+                    >
+                      Actual Sold
+                    </Text>
+                    <Text
+                      style={{
+                        ...pdfStyles.tableHeader,
+                        backgroundColor: mainColor,
+                        color: contrastText,
+                        flex: 1,
+                      }}
+                    >
+                      Pos/Neg
+                    </Text>
                   </View>
-                  {shiftData.closing_dipping.readings.map((cd, index) => {
-                    const product = productOptions?.find(
-                      (p) => p.id === cd.product_id
-                    );
+                  {shiftData.shift_tanks.map((st, index) => {
                     return (
                       <View key={index} style={pdfStyles.tableRow}>
                         <Text
@@ -1520,7 +1292,7 @@ function SalesShiftPDF({
                             flex: 1.5,
                           }}
                         >
-                          {cd.tank?.name || `Tank ${cd.tank_id}`}
+                          {st.name || `Tank ${st.id}`}
                         </Text>
                         <Text
                           style={{
@@ -1530,7 +1302,7 @@ function SalesShiftPDF({
                             flex: 1.5,
                           }}
                         >
-                          {product?.name || `Product ${cd.product_id}`}
+                          {st.product?.name || `Product ${st.product.id}`}
                         </Text>
                         <Text
                           style={{
@@ -1541,7 +1313,7 @@ function SalesShiftPDF({
                             textAlign: 'right',
                           }}
                         >
-                          {cd.reading.toLocaleString('en-US', {
+                          {(st.reading || 0).toLocaleString('en-US', {
                             minimumFractionDigits: 3,
                           })}
                         </Text>
@@ -1554,7 +1326,85 @@ function SalesShiftPDF({
                             textAlign: 'right',
                           }}
                         >
-                          {(cd.deviation || 0).toLocaleString('en-US', {
+                          {(st.opening_reading || 0).toLocaleString('en-US', {
+                            minimumFractionDigits: 3,
+                          }) || 0}
+                        </Text>
+                        <Text
+                          style={{
+                            ...pdfStyles.tableCell,
+                            backgroundColor:
+                              index % 2 === 0 ? '#FFFFFF' : lightColor,
+                            flex: 1,
+                            textAlign: 'right',
+                          }}
+                        >
+                          {(st.closing_reading || 0).toLocaleString('en-US', {
+                            minimumFractionDigits: 3,
+                          }) || 0}
+                        </Text>
+                        <Text
+                          style={{
+                            ...pdfStyles.tableCell,
+                            backgroundColor:
+                              index % 2 === 0 ? '#FFFFFF' : lightColor,
+                            flex: 1,
+                            textAlign: 'right',
+                          }}
+                        >
+                          {(st.incoming || 0).toLocaleString('en-US', {
+                            minimumFractionDigits: 3,
+                          })}
+                        </Text>
+                        <Text
+                          style={{
+                            ...pdfStyles.tableCell,
+                            backgroundColor:
+                              index % 2 === 0 ? '#FFFFFF' : lightColor,
+                            flex: 1,
+                            textAlign: 'right',
+                          }}
+                        >
+                          {(st.total || 0).toLocaleString('en-US', {
+                            minimumFractionDigits: 3,
+                          })}
+                        </Text>
+                        <Text
+                          style={{
+                            ...pdfStyles.tableCell,
+                            backgroundColor:
+                              index % 2 === 0 ? '#FFFFFF' : lightColor,
+                            flex: 1,
+                            textAlign: 'right',
+                          }}
+                        >
+                          {(st.deviation || 0).toLocaleString('en-US', {
+                            minimumFractionDigits: 3,
+                          })}
+                        </Text>
+                        <Text
+                          style={{
+                            ...pdfStyles.tableCell,
+                            backgroundColor:
+                              index % 2 === 0 ? '#FFFFFF' : lightColor,
+                            flex: 1,
+                            textAlign: 'right',
+                          }}
+                        >
+                          {(st.actual_sold || 0).toLocaleString('en-US', {
+                            minimumFractionDigits: 3,
+                          })}
+                        </Text>
+                        <Text
+                          style={{
+                            ...pdfStyles.tableCell,
+                            backgroundColor:
+                              index % 2 === 0 ? '#FFFFFF' : lightColor,
+                            flex: 1,
+                            textAlign: 'right',
+                          }}
+                        >
+                          {(st.tank_difference || 0).toLocaleString('en-US', {
                             minimumFractionDigits: 3,
                           })}
                         </Text>
