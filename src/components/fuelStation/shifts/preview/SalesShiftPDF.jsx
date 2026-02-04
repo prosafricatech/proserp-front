@@ -19,6 +19,8 @@ function SalesShiftPDF({
   const lightColor = organization.settings?.light_color || '#bec5da';
   const contrastText = organization.settings?.contrast_text || '#FFFFFF';
 
+  console.log('shiftData: ', shiftData);
+
   // Calculate totals for each cashier
   const calculateCashierTotals = (cashier) => {
     // Calculate total products amount for this cashier
@@ -1378,7 +1380,7 @@ function SalesShiftPDF({
                             textAlign: 'right',
                           }}
                         >
-                          {(st.deviation || 0).toLocaleString('en-US', {
+                          {(st.tank_difference || 0).toLocaleString('en-US', {
                             minimumFractionDigits: 3,
                           })}
                         </Text>
@@ -1404,7 +1406,7 @@ function SalesShiftPDF({
                             textAlign: 'right',
                           }}
                         >
-                          {(st.tank_difference || 0).toLocaleString('en-US', {
+                          {(st.deviation || 0).toLocaleString('en-US', {
                             minimumFractionDigits: 3,
                           })}
                         </Text>
