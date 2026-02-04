@@ -1146,7 +1146,10 @@ function SalesShiftPDF({
         {/* ================= DIPPING SECTION ================= */}
         {(shiftData.opening_dipping?.readings?.length > 0 ||
           shiftData.closing_dipping?.readings?.length > 0) && (
-          <View style={{ marginTop: 20, pageBreakInside: 'avoid' }}>
+          <View
+            wrap={false}
+            style={{ marginTop: 20, pageBreakInside: 'avoid' }}
+          >
             <View
               style={{
                 marginBottom: 8,
@@ -1192,7 +1195,7 @@ function SalesShiftPDF({
                     >
                       Tank
                     </Text>
-                    <Text
+                    {/* <Text
                       style={{
                         ...pdfStyles.tableHeader,
                         backgroundColor: mainColor,
@@ -1201,17 +1204,7 @@ function SalesShiftPDF({
                       }}
                     >
                       Product
-                    </Text>
-                    <Text
-                      style={{
-                        ...pdfStyles.tableHeader,
-                        backgroundColor: mainColor,
-                        color: contrastText,
-                        flex: 1,
-                      }}
-                    >
-                      Reading
-                    </Text>
+                    </Text> */}
                     <Text
                       style={{
                         ...pdfStyles.tableHeader,
@@ -1221,16 +1214,6 @@ function SalesShiftPDF({
                       }}
                     >
                       Opening
-                    </Text>
-                    <Text
-                      style={{
-                        ...pdfStyles.tableHeader,
-                        backgroundColor: mainColor,
-                        color: contrastText,
-                        flex: 1,
-                      }}
-                    >
-                      Closing
                     </Text>
                     <Text
                       style={{
@@ -1260,7 +1243,17 @@ function SalesShiftPDF({
                         flex: 1,
                       }}
                     >
-                      Deviation
+                      Closing
+                    </Text>
+                    <Text
+                      style={{
+                        ...pdfStyles.tableHeader,
+                        backgroundColor: mainColor,
+                        color: contrastText,
+                        flex: 1,
+                      }}
+                    >
+                      Tank Difference
                     </Text>
                     <Text
                       style={{
@@ -1286,6 +1279,7 @@ function SalesShiftPDF({
                   {shiftData.shift_tanks.map((st, index) => {
                     return (
                       <View key={index} style={pdfStyles.tableRow}>
+                        {/* Tank */}
                         <Text
                           style={{
                             ...pdfStyles.tableCell,
@@ -1296,7 +1290,8 @@ function SalesShiftPDF({
                         >
                           {st.name || `Tank ${st.id}`}
                         </Text>
-                        <Text
+                        {/* Product */}
+                        {/* <Text
                           style={{
                             ...pdfStyles.tableCell,
                             backgroundColor:
@@ -1305,20 +1300,8 @@ function SalesShiftPDF({
                           }}
                         >
                           {st.product?.name || `Product ${st.product.id}`}
-                        </Text>
-                        <Text
-                          style={{
-                            ...pdfStyles.tableCell,
-                            backgroundColor:
-                              index % 2 === 0 ? '#FFFFFF' : lightColor,
-                            flex: 1,
-                            textAlign: 'right',
-                          }}
-                        >
-                          {(st.reading || 0).toLocaleString('en-US', {
-                            minimumFractionDigits: 3,
-                          })}
-                        </Text>
+                        </Text> */}
+                        {/* Opening */}
                         <Text
                           style={{
                             ...pdfStyles.tableCell,
@@ -1330,21 +1313,9 @@ function SalesShiftPDF({
                         >
                           {(st.opening_reading || 0).toLocaleString('en-US', {
                             minimumFractionDigits: 3,
-                          }) || 0}
+                          })}
                         </Text>
-                        <Text
-                          style={{
-                            ...pdfStyles.tableCell,
-                            backgroundColor:
-                              index % 2 === 0 ? '#FFFFFF' : lightColor,
-                            flex: 1,
-                            textAlign: 'right',
-                          }}
-                        >
-                          {(st.closing_reading || 0).toLocaleString('en-US', {
-                            minimumFractionDigits: 3,
-                          }) || 0}
-                        </Text>
+                        {/* Purchase */}
                         <Text
                           style={{
                             ...pdfStyles.tableCell,
@@ -1358,6 +1329,7 @@ function SalesShiftPDF({
                             minimumFractionDigits: 3,
                           })}
                         </Text>
+                        {/* Total */}
                         <Text
                           style={{
                             ...pdfStyles.tableCell,
@@ -1367,10 +1339,27 @@ function SalesShiftPDF({
                             textAlign: 'right',
                           }}
                         >
-                          {(st.total || 0).toLocaleString('en-US', {
+                          {(
+                            (st.opening_reading || 0) + (st.incoming || 0)
+                          ).toLocaleString('en-US', {
                             minimumFractionDigits: 3,
                           })}
                         </Text>
+                        {/* Closing */}
+                        <Text
+                          style={{
+                            ...pdfStyles.tableCell,
+                            backgroundColor:
+                              index % 2 === 0 ? '#FFFFFF' : lightColor,
+                            flex: 1,
+                            textAlign: 'right',
+                          }}
+                        >
+                          {(st.closing_reading || 0).toLocaleString('en-US', {
+                            minimumFractionDigits: 3,
+                          })}
+                        </Text>
+                        {/* Tank Difference */}
                         <Text
                           style={{
                             ...pdfStyles.tableCell,
@@ -1384,6 +1373,7 @@ function SalesShiftPDF({
                             minimumFractionDigits: 3,
                           })}
                         </Text>
+                        {/* Actual Sold */}
                         <Text
                           style={{
                             ...pdfStyles.tableCell,
@@ -1397,6 +1387,7 @@ function SalesShiftPDF({
                             minimumFractionDigits: 3,
                           })}
                         </Text>
+                        {/* Pos/Neg */}
                         <Text
                           style={{
                             ...pdfStyles.tableCell,

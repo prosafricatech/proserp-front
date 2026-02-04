@@ -4,7 +4,7 @@ const pdfStyles = StyleSheet.create({
   page: {
     flexDirection: 'column',
     // padding: 50,
-    padding: 20,
+    padding: 30,
     position: 'relative',
   },
   footer: {

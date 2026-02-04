@@ -695,7 +695,7 @@ export default function CashierListSummaryPDF({
                               minimumFractionDigits: 2,
                               maximumFractionDigits: 2,
                             })}`
-                          : `-${shortOrOver.toLocaleString('en-US', {
+                          : `${shortOrOver.toLocaleString('en-US', {
                               minimumFractionDigits: 2,
                               maximumFractionDigits: 2,
                             })}`}
@@ -886,7 +886,7 @@ export default function CashierListSummaryPDF({
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}`
-                      : `-${totalShortOrOver.toLocaleString('en-US', {
+                      : `${totalShortOrOver.toLocaleString('en-US', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}`}
