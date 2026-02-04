@@ -30,20 +30,6 @@ function PurchaseOrderPDF({
   return (
     <Document
       title={order.orderNo}
-<<<<<<< HEAD
-      author={`${order.creator?.name}`}
-      subject='Purchase Order'
-      creator='ProsERP'
-      producer='ProsERP'
-      keywords={order.stakeholder?.name}
-    >
-      <Page size='A4' style={styles.page}>
-        {order.closures && order.closures.length > 0 && (
-          <View style={styles.watermark} fixed>
-            <Text style={styles.watermarkText}>CLOSED</Text>
-          </View>
-        )}
-=======
       author={`${order.creator.name}`}
       subject='Purchase Order'
       creator='ProsERP'
@@ -51,7 +37,11 @@ function PurchaseOrderPDF({
       keywords={order.stakeholder.name}
     >
       <Page size='A4' style={styles.page}>
->>>>>>> 25e80778bafc04937228b8dcf4b3dcf56f0c02a6
+        {order.closures && order.closures.length > 0 && (
+          <View style={styles.watermark} fixed>
+            <Text style={styles.watermarkText}>CLOSED</Text>
+          </View>
+        )}
         <View style={{ ...pdfStyles.tableRow, marginBottom: 20 }}>
           <View
             style={{ flex: 1, maxWidth: organization?.logo_path ? 130 : 250 }}

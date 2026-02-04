@@ -1,7 +1,6 @@
 import { StyleSheet } from '@react-pdf/renderer';
 
 const pdfStyles = StyleSheet.create({
-<<<<<<< HEAD
     page: {
         flexDirection: 'column',
         padding: 50,
@@ -32,7 +31,7 @@ const pdfStyles = StyleSheet.create({
       transform: 'rotate(-30deg)',
     },
     table: {
-      display: 'table' as any,
+      display: 'table',
       width: '100%',
       borderColor: '#000'
     },

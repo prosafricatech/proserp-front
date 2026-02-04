@@ -1,17 +1,4 @@
-<<<<<<< HEAD
-'use client'
-import { DeleteOutlined, DownloadOutlined, EditOutlined, HighlightOff, MoreHorizOutlined, VisibilityOutlined } from '@mui/icons-material';
-import { Button, Checkbox, Dialog,DialogContent,DialogTitle,IconButton,LinearProgress,Stack,Tab,Tabs,Tooltip, Typography, useMediaQuery } from '@mui/material';
-import { useSnackbar } from 'notistack';
-import React, { useContext, useState } from 'react';
-import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
-import fuelStationServices from '../fuelStationServices';
-import PDFContent from '../../pdf/PDFContent';
-import { StationFormContext } from './SalesShifts';
-import { useProductsSelect } from '../../productAndServices/products/ProductsSelectProvider';
-=======
-'use client';
->>>>>>> 25e80778bafc04937228b8dcf4b3dcf56f0c02a6
+"use client";
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { JumboDdMenu } from '@jumbo/components';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
@@ -48,37 +35,13 @@ import fuelStationServices from '../fuelStationServices';
 import SalesShiftOnScreen from './preview/SalesShiftOnScreen';
 import SalesShiftPDF from './preview/SalesShiftPDF';
 <<<<<<< HEAD
-import { Box, Grid } from '@mui/system';
-import SaleShiftForm from './SaleShiftForm/SaleShiftForm';
-=======
 import SaleShiftForm2 from './SaleShiftForm2/SaleShiftForm2';
 import { StationFormContext } from './SalesShifts';
->>>>>>> 25e80778bafc04937228b8dcf4b3dcf56f0c02a6
-
-const EditShift = ({ ClosedShift, setOpenEditDialog }) => {
-  const { data: shiftData, isFetching } = useQuery({
-    queryKey: ['showshiftDetails', { id: ClosedShift.id }],
-    queryFn: async () => {
-      return await fuelStationServices.showShiftDetails(ClosedShift.id);
-    },
-  });
-
-  if (isFetching) {
-    return <LinearProgress />;
-  }
 
   return (
-<<<<<<< HEAD
-    <SaleShiftForm SalesShift={shiftData} setOpenDialog={setOpenEditDialog}/>
-  )
-}
-
-const DocumentDialog = ({organization, ClosedShift, setOpenDocumentDialog}) => {
-  const {activeStation} = useContext(StationFormContext);
-  const { shifts, fuel_pumps, tanks } = activeStation;
-=======
     <SaleShiftForm2 SalesShift={shiftData} setOpenDialog={setOpenEditDialog} />
   );
+}
 };
 
 const DocumentDialog = ({
