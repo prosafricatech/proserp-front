@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 'use client'
 import { DeleteOutlined, DownloadOutlined, EditOutlined, HighlightOff, MoreHorizOutlined, VisibilityOutlined } from '@mui/icons-material';
 import { Button, Checkbox, Dialog,DialogContent,DialogTitle,IconButton,LinearProgress,Stack,Tab,Tabs,Tooltip, Typography, useMediaQuery } from '@mui/material';
@@ -8,28 +9,66 @@ import fuelStationServices from '../fuelStationServices';
 import PDFContent from '../../pdf/PDFContent';
 import { StationFormContext } from './SalesShifts';
 import { useProductsSelect } from '../../productAndServices/products/ProductsSelectProvider';
+=======
+'use client';
+>>>>>>> 25e80778bafc04937228b8dcf4b3dcf56f0c02a6
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
-import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { JumboDdMenu } from '@jumbo/components';
+import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
+import {
+  DeleteOutlined,
+  EditOutlined,
+  HighlightOff,
+  MoreHorizOutlined,
+  VisibilityOutlined,
+} from '@mui/icons-material';
+import {
+  Button,
+  Checkbox,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  LinearProgress,
+  Stack,
+  Tab,
+  Tabs,
+  Tooltip,
+  Typography,
+  useMediaQuery,
+} from '@mui/material';
+import { Box, Grid } from '@mui/system';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useSnackbar } from 'notistack';
+import { useContext, useState } from 'react';
+import PDFContent from '../../pdf/PDFContent';
+import { useProductsSelect } from '../../productAndServices/products/ProductsSelectProvider';
+import fuelStationServices from '../fuelStationServices';
 import SalesShiftOnScreen from './preview/SalesShiftOnScreen';
 import SalesShiftPDF from './preview/SalesShiftPDF';
+<<<<<<< HEAD
 import { Box, Grid } from '@mui/system';
 import SaleShiftForm from './SaleShiftForm/SaleShiftForm';
+=======
+import SaleShiftForm2 from './SaleShiftForm2/SaleShiftForm2';
+import { StationFormContext } from './SalesShifts';
+>>>>>>> 25e80778bafc04937228b8dcf4b3dcf56f0c02a6
 
-const EditShift = ({ClosedShift, setOpenEditDialog}) => {
+const EditShift = ({ ClosedShift, setOpenEditDialog }) => {
   const { data: shiftData, isFetching } = useQuery({
     queryKey: ['showshiftDetails', { id: ClosedShift.id }],
     queryFn: async () => {
       return await fuelStationServices.showShiftDetails(ClosedShift.id);
-    }
+    },
   });
 
-  if(isFetching){
-    return <LinearProgress/>;
+  if (isFetching) {
+    return <LinearProgress />;
   }
 
   return (
+<<<<<<< HEAD
     <SaleShiftForm SalesShift={shiftData} setOpenDialog={setOpenEditDialog}/>
   )
 }
@@ -37,27 +76,44 @@ const EditShift = ({ClosedShift, setOpenEditDialog}) => {
 const DocumentDialog = ({organization, ClosedShift, setOpenDocumentDialog}) => {
   const {activeStation} = useContext(StationFormContext);
   const { shifts, fuel_pumps, tanks } = activeStation;
+=======
+    <SaleShiftForm2 SalesShift={shiftData} setOpenDialog={setOpenEditDialog} />
+  );
+};
+
+const DocumentDialog = ({
+  organization,
+  ClosedShift,
+  setOpenDocumentDialog,
+}) => {
+  const { activeStation } = useContext(StationFormContext);
+  const { shift_teams, fuel_pumps, tanks } = activeStation;
+>>>>>>> 25e80778bafc04937228b8dcf4b3dcf56f0c02a6
   const { productOptions } = useProductsSelect();
   const [includeFuelVouchers, setIncludeFuelVouchers] = useState(false);
 
   const { data: shiftData, isFetching } = useQuery({
     queryKey: ['showshiftDetails', { id: ClosedShift.id }],
-    queryFn: () => fuelStationServices.showShiftDetails(ClosedShift.id)
+    queryFn: () => fuelStationServices.showShiftDetails(ClosedShift.id),
   });
 
   const [activeTab, setActiveTab] = useState(0);
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
-  if(isFetching){
-    return <LinearProgress/>;
+  if (isFetching) {
+    return <LinearProgress />;
   }
 
   return (
     <>
       <DialogTitle>
-        <Stack direction={'row'} justifyContent={'center'} alignItems={'center'}>
-          <Typography>With Fuel Vouchers</Typography> 
+        <Stack
+          direction={'row'}
+          justifyContent={'center'}
+          alignItems={'center'}
+        >
+          <Typography>With More Details</Typography>
           <Checkbox
             checked={includeFuelVouchers}
             onChange={(e) => {
@@ -69,72 +125,119 @@ const DocumentDialog = ({organization, ClosedShift, setOpenDocumentDialog}) => {
       </DialogTitle>
       <DialogContent>
         {belowLargeScreen && (
-          <Grid container alignItems="center" justifyContent="space-between" mb={2}>
+          <Grid
+            container
+            alignItems='center'
+            justifyContent='space-between'
+            mb={2}
+          >
             <Grid size={11}>
               <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)}>
-                <Tab label="ONSCREEN" />
-                <Tab label="PDF" />
+                <Tab label='ONSCREEN' />
+                <Tab label='PDF' />
               </Tabs>
             </Grid>
-            <Grid size={1} textAlign="right">
-              <Tooltip title="Close">
-                <IconButton size="small" onClick={() => setOpenDocumentDialog(false)}>
-                  <HighlightOff color="primary" />
+            <Grid size={1} textAlign='right'>
+              <Tooltip title='Close'>
+                <IconButton
+                  size='small'
+                  onClick={() => setOpenDocumentDialog(false)}
+                >
+                  <HighlightOff color='primary' />
                 </IconButton>
               </Tooltip>
             </Grid>
           </Grid>
         )}
         {belowLargeScreen && activeTab === 0 ? (
+<<<<<<< HEAD
           <SalesShiftOnScreen stationName={activeStation?.name} includeFuelVouchers={includeFuelVouchers} productOptions={productOptions} shiftData={shiftData} tanks={tanks} fuel_pumps={fuel_pumps} shifts={shifts} organization={organization}/>
         ) : (
           <PDFContent fileName={shiftData.shiftNo} document={<SalesShiftPDF stationName={activeStation?.name} includeFuelVouchers={includeFuelVouchers} productOptions={productOptions} shiftData={shiftData} tanks={tanks} fuel_pumps={fuel_pumps} shifts={shifts} organization={organization}/>}/>
+=======
+          <SalesShiftOnScreen
+            stationName={activeStation?.name}
+            includeFuelVouchers={includeFuelVouchers}
+            productOptions={productOptions}
+            shiftData={shiftData}
+            tanks={tanks}
+            fuel_pumps={fuel_pumps}
+            shift_teams={shift_teams}
+            organization={organization}
+          />
+        ) : (
+          <PDFContent
+            fileName={shiftData.shiftNo}
+            document={
+              <SalesShiftPDF
+                stationName={activeStation?.name}
+                includeFuelVouchers={includeFuelVouchers}
+                productOptions={productOptions}
+                shiftData={shiftData}
+                tanks={tanks}
+                fuel_pumps={fuel_pumps}
+                shift_teams={shift_teams}
+                organization={organization}
+              />
+            }
+          />
+>>>>>>> 25e80778bafc04937228b8dcf4b3dcf56f0c02a6
         )}
-        {
-          belowLargeScreen &&
-          <Box textAlign="right" mt={5}>
-            <Button variant="outlined" size="small" color="primary" onClick={() => setOpenDocumentDialog(false)}>
+        {belowLargeScreen && (
+          <Box textAlign='right' mt={5}>
+            <Button
+              variant='outlined'
+              size='small'
+              color='primary'
+              onClick={() => setOpenDocumentDialog(false)}
+            >
               Close
             </Button>
           </Box>
-        }
+        )}
       </DialogContent>
     </>
-  )
-}
+  );
+};
 
-const SalesShiftsItemAction = ({ ClosedShift}) => {
-  const [openEditDialog,setOpenEditDialog] = useState(false);
+const SalesShiftsItemAction = ({ ClosedShift }) => {
+  const [openEditDialog, setOpenEditDialog] = useState(false);
   const [openDocumentDialog, setOpenDocumentDialog] = useState(false);
-  const {authOrganization : {organization}} = useJumboAuth();
-  const {showDialog,hideDialog} = useJumboDialog();
+  const {
+    authOrganization: { organization },
+  } = useJumboAuth();
+  const { showDialog, hideDialog } = useJumboDialog();
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
 
   //Screen handling constants
-  const {theme} = useJumboTheme();
+  const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
- const { mutate: deleteShift } = useMutation({
-  mutationFn: fuelStationServices.deleteSalesShift,
-  onSuccess: (data) => {
-    queryClient.invalidateQueries({ queryKey: ['salesShifts'] });
-    enqueueSnackbar(data.message, {
-      variant: 'success',
-    });
-  },
-   onError: (error) => {
+  const { mutate: deleteShift } = useMutation({
+    mutationFn: fuelStationServices.deleteSalesShift,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['salesShifts'] });
+      enqueueSnackbar(data.message, {
+        variant: 'success',
+      });
+    },
+    onError: (error) => {
       enqueueSnackbar(
         error?.response?.data?.message || 'Failed to delete outlet',
         { variant: 'error' }
       );
     },
-    });
+  });
 
   const menuItems = [
-    {icon: <VisibilityOutlined/> , title: "View", action: "open"},
-    {icon: <EditOutlined/>, title: 'Edit', action: 'edit'},
-    {icon: <DeleteOutlined color='error'/>, title: 'Delete', action: 'delete'}
+    { icon: <VisibilityOutlined />, title: 'View', action: 'open' },
+    { icon: <EditOutlined />, title: 'Edit', action: 'edit' },
+    {
+      icon: <DeleteOutlined color='error' />,
+      title: 'Delete',
+      action: 'delete',
+    },
   ];
 
   const handleItemAction = (menuItem) => {
@@ -149,38 +252,49 @@ const SalesShiftsItemAction = ({ ClosedShift}) => {
         showDialog({
           title: 'Delete',
           content: 'Are you sure you want to delete this Shift?',
-          onYes: () => { 
+          onYes: () => {
             hideDialog();
             deleteShift(ClosedShift.id);
           },
           onNo: () => hideDialog(),
-          variant: 'confirm'
+          variant: 'confirm',
         });
         break;
-        default:
+      default:
         break;
     }
-  }
+  };
 
   return (
     <>
       <Dialog
         open={openEditDialog || openDocumentDialog}
-        fullWidth  
+        fullWidth
         fullScreen={belowLargeScreen}
-        maxWidth={openDocumentDialog ? 'md' : 'lg'} 
+        maxWidth={openDocumentDialog ? 'md' : 'lg'}
         scroll={belowLargeScreen ? 'body' : 'paper'}
         onClose={() => {
           setOpenDocumentDialog(false);
         }}
       >
-        {openEditDialog && <EditShift ClosedShift={ClosedShift} setOpenEditDialog={setOpenEditDialog} />}
-        {openDocumentDialog && <DocumentDialog ClosedShift={ClosedShift} organization={organization} setOpenDocumentDialog={setOpenDocumentDialog}/>}
+        {openEditDialog && (
+          <EditShift
+            ClosedShift={ClosedShift}
+            setOpenEditDialog={setOpenEditDialog}
+          />
+        )}
+        {openDocumentDialog && (
+          <DocumentDialog
+            ClosedShift={ClosedShift}
+            organization={organization}
+            setOpenDocumentDialog={setOpenDocumentDialog}
+          />
+        )}
       </Dialog>
       <JumboDdMenu
         icon={
           <Tooltip title='Actions'>
-            <MoreHorizOutlined/>
+            <MoreHorizOutlined />
           </Tooltip>
         }
         menuItems={menuItems}

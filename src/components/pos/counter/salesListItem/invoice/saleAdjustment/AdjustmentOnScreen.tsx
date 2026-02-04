@@ -1,22 +1,22 @@
-import React from 'react';
+import { readableDate } from '@/app/helpers/input-sanitization-helpers';
+import { CostCenter } from '@/components/masters/costCenters/CostCenterType';
+import { Currency } from '@/components/masters/currencies/CurrencyType';
+import { MeasurementUnit } from '@/components/masters/measurementUnits/MeasurementUnitType';
+import { AuthObject } from '@/types/auth-types';
 import {
+  Box,
   Grid,
-  Typography,
+  Paper,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
-  Box,
+  Typography,
   useTheme,
 } from '@mui/material';
-import { readableDate } from '@/app/helpers/input-sanitization-helpers';
-import { MeasurementUnit } from '@/components/masters/measurementUnits/MeasurementUnitType';
-import { Currency } from '@/components/masters/Currencies/CurrencyType';
-import { CostCenter } from '@/components/masters/costCenters/CostCenterType';
-import { AuthObject } from '@/types/auth-types';
+import React from 'react';
 
 interface AdjustmentItem {
   quantity: number;
@@ -87,7 +87,10 @@ const AdjustmentOnScreen: React.FC<AdjustmentOnScreenProps> = ({
   } = authObject;
 
   const mainColor = organization.settings?.main_color || '#2113AD';
-  const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || '#2113AD');
+  const headerColor =
+    theme.type === 'dark'
+      ? '#29f096'
+      : organization.settings?.main_color || '#2113AD';
   const contrastText = organization.settings?.contrast_text || '#FFFFFF';
 
   const calculatedValues = React.useMemo(() => {
@@ -99,9 +102,12 @@ const AdjustmentOnScreen: React.FC<AdjustmentOnScreenProps> = ({
         return total + vatAmount;
       }, 0);
 
-    const totalAmount = adjustment.items.reduce((total: number, item: AdjustmentItem) => {
-      return total + item.quantity * item.rate;
-    }, 0);
+    const totalAmount = adjustment.items.reduce(
+      (total: number, item: AdjustmentItem) => {
+        return total + item.quantity * item.rate;
+      },
+      0
+    );
 
     const grandTotal = totalAmount + totalAmountForVAT;
 
@@ -113,19 +119,19 @@ const AdjustmentOnScreen: React.FC<AdjustmentOnScreenProps> = ({
     };
   }, [adjustment.items]);
 
-  const { totalAmountForVAT, totalAmount, grandTotal, hasVAT } = calculatedValues;
+  const { totalAmountForVAT, totalAmount, grandTotal, hasVAT } =
+    calculatedValues;
 
   const tableRows = React.useMemo(() => {
     return adjustment.items.map((item: AdjustmentItem, index: number) => {
       const itemAmount = item.quantity * item.rate;
       const vatAmount =
-        item.vat_exempted !== 1
-          ? itemAmount * (item.vat_percentage / 100)
-          : 0;
+        item.vat_exempted !== 1 ? itemAmount * (item.vat_percentage / 100) : 0;
 
-      const unitDisplay = typeof item.measurement_unit === 'string'
-        ? item.measurement_unit
-        : item.measurement_unit?.symbol || '';
+      const unitDisplay =
+        typeof item.measurement_unit === 'string'
+          ? item.measurement_unit
+          : item.measurement_unit?.symbol || '';
 
       return (
         <TableRow
@@ -143,13 +149,13 @@ const AdjustmentOnScreen: React.FC<AdjustmentOnScreenProps> = ({
           <TableCell>{index + 1}</TableCell>
           <TableCell>
             <Box>
-              <Typography variant="body2" component="span" fontWeight="medium">
+              <Typography variant='body2' component='span' fontWeight='medium'>
                 {item.product?.name}
               </Typography>
               {item.description && (
                 <Typography
-                  variant="body2"
-                  component="span"
+                  variant='body2'
+                  component='span'
                   sx={{
                     color: 'text.secondary',
                     fontSize: '0.875rem',
@@ -171,10 +177,7 @@ const AdjustmentOnScreen: React.FC<AdjustmentOnScreenProps> = ({
           </TableCell>
           {hasVAT && (
             <TableCell sx={{ textAlign: 'right', fontFamily: 'monospace' }}>
-              {item.vat_exempted !== 1
-                ? formatNumber(vatAmount)
-                : 'Exempt'
-              }
+              {item.vat_exempted !== 1 ? formatNumber(vatAmount) : 'Exempt'}
             </TableCell>
           )}
           <TableCell sx={{ textAlign: 'right', fontFamily: 'monospace' }}>
@@ -190,7 +193,7 @@ const AdjustmentOnScreen: React.FC<AdjustmentOnScreenProps> = ({
       <Grid size={8} />
       <Grid size={2}>
         <Typography
-          variant="body1"
+          variant='body1'
           sx={{
             textAlign: 'right',
             fontWeight: bold ? 'bold' : 'medium',
@@ -202,7 +205,7 @@ const AdjustmentOnScreen: React.FC<AdjustmentOnScreenProps> = ({
       </Grid>
       <Grid size={2}>
         <Typography
-          variant="body1"
+          variant='body1'
           sx={{
             fontWeight: bold ? 'bold' : 'medium',
             fontFamily: 'monospace',
@@ -222,21 +225,21 @@ const AdjustmentOnScreen: React.FC<AdjustmentOnScreenProps> = ({
         <Grid size={6}>
           <Box>
             <Typography
-              variant="h4"
+              variant='h4'
               sx={{
                 color: headerColor,
               }}
             >
               {adjustment.note_type === 'debit' ? 'DEBIT NOTE' : 'CREDIT NOTE'}
             </Typography>
-            <Typography variant="h6" sx={{ mt: 0.5 }}>
+            <Typography variant='h6' sx={{ mt: 0.5 }}>
               {adjustment.voucherNo}
             </Typography>
           </Box>
         </Grid>
         <Grid size={6} sx={{ textAlign: 'right' }}>
           <Typography
-            variant="body1"
+            variant='body1'
             sx={{
               color: 'text.secondary',
             }}
@@ -249,14 +252,12 @@ const AdjustmentOnScreen: React.FC<AdjustmentOnScreenProps> = ({
       {/* Metadata Section */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
         {adjustment.cost_centers.length > 0 && (
-          <Grid size={{xs: 12, md: 6}}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Box>
-              <Typography
-                variant="subtitle2"
-              >
+              <Typography variant='subtitle2'>
                 Cost Center{adjustment.cost_centers.length > 1 ? 's' : ''}
               </Typography>
-              <Typography variant="body1" color="text.primary">
+              <Typography variant='body1' color='text.primary'>
                 {adjustment.cost_centers
                   .map((cost_center: CostCenter) => cost_center.name)
                   .join(', ')}
@@ -276,10 +277,10 @@ const AdjustmentOnScreen: React.FC<AdjustmentOnScreenProps> = ({
           boxShadow: theme.shadows[2],
           '& .MuiTableRow-root:hover': {
             backgroundColor: theme.palette.action.hover,
-          }
+          },
         }}
       >
-        <Table sx={{ minWidth: 650 }} aria-label="Adjustment items table">
+        <Table sx={{ minWidth: 650 }} aria-label='Adjustment items table'>
           <TableHead>
             <TableRow>
               <TableCell
@@ -371,8 +372,11 @@ const AdjustmentOnScreen: React.FC<AdjustmentOnScreenProps> = ({
             {tableRows}
             {adjustment.items.length === 0 && (
               <TableRow>
-                <TableCell colSpan={hasVAT ? 7 : 6} sx={{ textAlign: 'center', py: 4 }}>
-                  <Typography variant="body1" color="text.secondary">
+                <TableCell
+                  colSpan={hasVAT ? 7 : 6}
+                  sx={{ textAlign: 'center', py: 4 }}
+                >
+                  <Typography variant='body1' color='text.secondary'>
                     No items found
                   </Typography>
                 </TableCell>
@@ -386,39 +390,33 @@ const AdjustmentOnScreen: React.FC<AdjustmentOnScreenProps> = ({
       {adjustment.items.length > 0 && (
         <>
           {renderTotalsRow('Subtotal', totalAmount)}
-          
+
           {hasVAT && (
             <>
               {renderTotalsRow(`VAT`, totalAmountForVAT)}
               {renderTotalsRow('Grand Total', grandTotal, true)}
             </>
           )}
-          
-          {!hasVAT && (
-            renderTotalsRow('Total', totalAmount, true)
-          )}
+
+          {!hasVAT && renderTotalsRow('Total', totalAmount, true)}
         </>
       )}
 
       {/* Footer Section */}
       <Grid container spacing={2} sx={{ mt: 3 }}>
-        <Grid size={{xs: 12, md: 8}}>
+        <Grid size={{ xs: 12, md: 8 }}>
+          <Typography variant='subtitle2'>Narration</Typography>
           <Typography
-            variant="subtitle2"
+            variant='body1'
+            color='text.primary'
+            sx={{ lineHeight: 1.5 }}
           >
-            Narration
-          </Typography>
-          <Typography variant="body1" color="text.primary" sx={{ lineHeight: 1.5 }}>
             {adjustment.narration}
           </Typography>
         </Grid>
-        <Grid size={{xs: 12, md: 4}}>
-          <Typography
-            variant="subtitle2"
-          >
-            Posted By
-          </Typography>
-          <Typography variant="body1" color="text.primary" fontWeight="medium">
+        <Grid size={{ xs: 12, md: 4 }}>
+          <Typography variant='subtitle2'>Posted By</Typography>
+          <Typography variant='body1' color='text.primary' fontWeight='medium'>
             {adjustment.creator?.name}
           </Typography>
         </Grid>

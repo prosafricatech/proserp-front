@@ -1,27 +1,47 @@
-'use client'
+'use client';
 
-import { DeleteOutlined, EditOutlined, HighlightOff, MoreHorizOutlined, VisibilityOutlined } from '@mui/icons-material';
-import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Grid, IconButton, LinearProgress, Tab, Tabs, Tooltip, useMediaQuery } from '@mui/material';
-import React, { useState } from 'react';
-import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
-import { useSnackbar } from 'notistack';
-import ApprovedPurchaseForm from './form/ApprovedPurchaseForm';
-import requisitionsServices from '../../requisitionsServices';
-import dayjs from 'dayjs';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import purchaseServices from '@/components/procurement/purchases/purchase-services';
-import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { Currency } from '@/components/masters/currencies/CurrencyType';
+import { Stakeholder } from '@/components/masters/stakeholders/StakeholderType';
 import PDFContent from '@/components/pdf/PDFContent';
+import purchaseServices from '@/components/procurement/purchases/purchase-services';
 import PurchaseOrderOnScreenPreview from '@/components/procurement/purchases/PurchaseOrderOnScreenPreview';
 import PurchaseOrderPDF from '@/components/procurement/purchases/PurchaseOrderPDF';
-import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { JumboDdMenu } from '@jumbo/components';
-import { PurchaseApprovalRequisition } from '../ApprovalRequisitionType';
+import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { MenuItemProps } from '@jumbo/types';
-import { Stakeholder } from '@/components/masters/stakeholders/StakeholderType';
-import { Currency } from '@/components/masters/Currencies/CurrencyType';
+import {
+  DeleteOutlined,
+  EditOutlined,
+  HighlightOff,
+  MoreHorizOutlined,
+  VisibilityOutlined,
+} from '@mui/icons-material';
+import {
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Grid,
+  IconButton,
+  LinearProgress,
+  Tab,
+  Tabs,
+  Tooltip,
+  useMediaQuery,
+} from '@mui/material';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import dayjs from 'dayjs';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
+import { useSnackbar } from 'notistack';
+import React, { useState } from 'react';
+import requisitionsServices from '../../requisitionsServices';
+import { PurchaseApprovalRequisition } from '../ApprovalRequisitionType';
+import ApprovedPurchaseForm from './form/ApprovedPurchaseForm';
 
 dayjs.extend(isSameOrAfter);
 
@@ -29,7 +49,7 @@ interface Order {
   id: number;
   orderNo: string;
   order_date: string;
-  stakeholder: Stakeholder
+  stakeholder: Stakeholder;
   status: string;
   amount: number;
   vat_amount: number;
@@ -63,15 +83,15 @@ interface ApiError extends Error {
   };
 }
 
-const DocumentDialog: React.FC<DocumentDialogProps> = ({ 
-  order_id, 
+const DocumentDialog: React.FC<DocumentDialogProps> = ({
+  order_id,
   organization,
-  checkOrganizationPermission, 
-  setOpenDocumentDialog 
+  checkOrganizationPermission,
+  setOpenDocumentDialog,
 }) => {
   const { data: order, isFetching } = useQuery({
     queryKey: ['purchaseOrder', { id: order_id }],
-    queryFn: async () => await purchaseServices.orderDetails(order_id)
+    queryFn: async () => await purchaseServices.orderDetails(order_id),
   });
 
   const [activeTab, setActiveTab] = useState(0);
@@ -90,24 +110,24 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
     <>
       <DialogTitle>
         {belowLargeScreen && (
-          <Grid container alignItems="center" justifyContent="space-between">
+          <Grid container alignItems='center' justifyContent='space-between'>
             <Grid size={{ xs: 11 }}>
-              <Tabs 
-                value={activeTab} 
-                onChange={handleTabChange} 
-                aria-label="purchase order tabs"
+              <Tabs
+                value={activeTab}
+                onChange={handleTabChange}
+                aria-label='purchase order tabs'
               >
-                <Tab label="ONSCREEN" />
-                <Tab label="PDF" />
+                <Tab label='ONSCREEN' />
+                <Tab label='PDF' />
               </Tabs>
             </Grid>
             <Grid size={{ xs: 1 }} sx={{ textAlign: 'right' }}>
-              <Tooltip title="Close">
+              <Tooltip title='Close'>
                 <IconButton
-                  size="small"
+                  size='small'
                   onClick={() => setOpenDocumentDialog(false)}
                 >
-                  <HighlightOff color="primary" />
+                  <HighlightOff color='primary' />
                 </IconButton>
               </Tooltip>
             </Grid>
@@ -118,25 +138,25 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
         {belowLargeScreen && activeTab === 0 ? (
           <PurchaseOrderOnScreenPreview order={order} />
         ) : (
-          <PDFContent 
-            fileName={order.orderNo} 
+          <PDFContent
+            fileName={order.orderNo}
             document={
-              <PurchaseOrderPDF 
-                order={order} 
-                organization={organization} 
-                checkOrganizationPermission={checkOrganizationPermission} 
+              <PurchaseOrderPDF
+                order={order}
+                organization={organization}
+                checkOrganizationPermission={checkOrganizationPermission}
               />
-            } 
+            }
           />
         )}
       </DialogContent>
       {belowLargeScreen && (
         <DialogActions>
           <Box sx={{ textAlign: 'right', marginTop: 5 }}>
-            <Button 
-              variant="outlined" 
-              size="small" 
-              color="primary" 
+            <Button
+              variant='outlined'
+              size='small'
+              color='primary'
               onClick={() => setOpenDocumentDialog(false)}
             >
               Close
@@ -148,33 +168,41 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
   );
 };
 
-const EditOrder: React.FC<EditOrderProps> = ({ order, toggleOpen, approvedRequisition }) => {
+const EditOrder: React.FC<EditOrderProps> = ({
+  order,
+  toggleOpen,
+  approvedRequisition,
+}) => {
   const { data: orderData, isFetching } = useQuery({
     queryKey: ['editPurchaseOrder', { id: order.id }],
-    queryFn: async () => await purchaseServices.getEditComplements(order.id)
+    queryFn: async () => await purchaseServices.getEditComplements(order.id),
   });
 
-  const { data: approvedRequisitionDetails, isFetching: fetchDetails } = useQuery({
-    queryKey: ['requisitionDetails', { id: approvedRequisition.id }],
-    queryFn: async () => await requisitionsServices.getApprovedRequisitionDetails(approvedRequisition.id),
-  });
+  const { data: approvedRequisitionDetails, isFetching: fetchDetails } =
+    useQuery({
+      queryKey: ['requisitionDetails', { id: approvedRequisition.id }],
+      queryFn: async () =>
+        await requisitionsServices.getApprovedRequisitionDetails(
+          approvedRequisition.id
+        ),
+    });
 
   if (isFetching || fetchDetails) {
     return <LinearProgress />;
   }
 
   return (
-    <ApprovedPurchaseForm 
-      toggleOpen={toggleOpen} 
-      prevApprovedDetails={approvedRequisitionDetails} 
-      order={orderData} 
+    <ApprovedPurchaseForm
+      toggleOpen={toggleOpen}
+      prevApprovedDetails={approvedRequisitionDetails}
+      order={orderData}
     />
   );
 };
 
-const ApprovedPurchaseItemAction: React.FC<ApprovedPurchaseItemActionProps> = ({ 
-  approvedRequisition, 
-  order 
+const ApprovedPurchaseItemAction: React.FC<ApprovedPurchaseItemActionProps> = ({
+  approvedRequisition,
+  order,
 }) => {
   const { showDialog, hideDialog } = useJumboDialog();
   const queryClient = useQueryClient();
@@ -194,7 +222,9 @@ const ApprovedPurchaseItemAction: React.FC<ApprovedPurchaseItemActionProps> = ({
       enqueueSnackbar(data.message, { variant: 'success' });
     },
     onError: (error: ApiError) => {
-      enqueueSnackbar(error?.response?.data.message || 'An error occurred', { variant: 'error' });
+      enqueueSnackbar(error?.response?.data.message || 'An error occurred', {
+        variant: 'error',
+      });
     },
   });
 
@@ -203,14 +233,11 @@ const ApprovedPurchaseItemAction: React.FC<ApprovedPurchaseItemActionProps> = ({
     dayjs(order.order_date).isSameOrAfter(dayjs().startOf('day'));
 
   const canManagePurchase =
-    checkOrganizationPermission(
-      PERMISSIONS.APPROVED_REQUISITIONS_PURCHASE
-    ) && order.status !== 'Fully Received';
+    checkOrganizationPermission(PERMISSIONS.APPROVED_REQUISITIONS_PURCHASE) &&
+    order.status !== 'Fully Received';
 
   const canDelete =
-    canManagePurchase &&
-    !order.has_payment_requisition &&
-    canBackdate;
+    canManagePurchase && !order.has_payment_requisition && canBackdate;
 
   const canEdit = canManagePurchase && canBackdate;
 
@@ -222,7 +249,7 @@ const ApprovedPurchaseItemAction: React.FC<ApprovedPurchaseItemActionProps> = ({
     ...(canDelete
       ? [
           {
-            icon: <DeleteOutlined color="error" />,
+            icon: <DeleteOutlined color='error' />,
             title: 'Delete',
             action: 'delete',
           },
@@ -242,12 +269,12 @@ const ApprovedPurchaseItemAction: React.FC<ApprovedPurchaseItemActionProps> = ({
         showDialog({
           title: 'Confirm Order',
           content: 'Are you sure you want to delete this Order?',
-          onYes: () => { 
+          onYes: () => {
             hideDialog();
             deleteApprovedPurchaseOrder(order);
           },
           onNo: () => hideDialog(),
-          variant: 'confirm'
+          variant: 'confirm',
         });
         break;
       default:
@@ -266,17 +293,17 @@ const ApprovedPurchaseItemAction: React.FC<ApprovedPurchaseItemActionProps> = ({
         onClose={() => setOpenDocumentDialog(false)}
       >
         {openEditDialog && (
-          <EditOrder 
-            approvedRequisition={approvedRequisition} 
-            order={order} 
-            toggleOpen={setOpenEditDialog} 
+          <EditOrder
+            approvedRequisition={approvedRequisition}
+            order={order}
+            toggleOpen={setOpenEditDialog}
           />
         )}
         {openDocumentDialog && (
-          <DocumentDialog 
-            order_id={order.id} 
-            organization={organization} 
-            checkOrganizationPermission={checkOrganizationPermission} 
+          <DocumentDialog
+            order_id={order.id}
+            organization={organization}
+            checkOrganizationPermission={checkOrganizationPermission}
             setOpenDocumentDialog={setOpenDocumentDialog}
           />
         )}
@@ -284,8 +311,8 @@ const ApprovedPurchaseItemAction: React.FC<ApprovedPurchaseItemActionProps> = ({
 
       <JumboDdMenu
         icon={
-          <Tooltip title="Actions">
-            <MoreHorizOutlined fontSize="small" />
+          <Tooltip title='Actions'>
+            <MoreHorizOutlined fontSize='small' />
           </Tooltip>
         }
         menuItems={menuItems}

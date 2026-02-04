@@ -1,13 +1,13 @@
-import { Document, Image, Page, Text, View } from '@react-pdf/renderer';
-import React, { useMemo } from 'react';
-import pdfStyles from '../../../pdf/pdf-styles';
-import PdfLogo from '../../../pdf/PdfLogo';
-import QRCode from 'qrcode';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
+import { Currency } from '@/components/masters/currencies/CurrencyType';
 import { MeasurementUnit } from '@/components/masters/measurementUnits/MeasurementUnitType';
 import { Stakeholder } from '@/components/masters/stakeholders/StakeholderType';
 import { Organization, User } from '@/types/auth-types';
-import { Currency } from '@/components/masters/Currencies/CurrencyType';
+import { Document, Image, Page, Text, View } from '@react-pdf/renderer';
+import QRCode from 'qrcode';
+import React, { useMemo } from 'react';
+import pdfStyles from '../../../pdf/pdf-styles';
+import PdfLogo from '../../../pdf/PdfLogo';
 
 interface Product {
   name: string;
@@ -53,16 +53,20 @@ interface SaleReceiptPDFProps {
   sale: Sale;
 }
 
-const SaleReceiptPDF: React.FC<SaleReceiptPDFProps> = ({ user, organization, sale }) => {
+const SaleReceiptPDF: React.FC<SaleReceiptPDFProps> = ({
+  user,
+  organization,
+  sale,
+}) => {
   const vatFactor = sale.vat_percentage * 0.01;
 
   // Calculate VAT amounts
   const { totalAmountForVAT, vatAmount } = useMemo(() => {
     const totalForVAT = sale.sale_items
-      .filter(item => item.vat_exempted !== 1)
-      .reduce((total, item) => total + (item.rate * item.quantity), 0);
+      .filter((item) => item.vat_exempted !== 1)
+      .reduce((total, item) => total + item.rate * item.quantity, 0);
 
-    const vat = totalForVAT * sale.vat_percentage / 100;
+    const vat = (totalForVAT * sale.vat_percentage) / 100;
     return { totalAmountForVAT: totalForVAT, vatAmount: vat };
   }, [sale.sale_items, sale.vat_percentage]);
 
@@ -76,33 +80,53 @@ const SaleReceiptPDF: React.FC<SaleReceiptPDFProps> = ({ user, organization, sal
       style: 'currency',
       currency: sale.currency.code,
       minimumFractionDigits: 2,
-      maximumFractionDigits: 2
+      maximumFractionDigits: 2,
     });
   };
 
   const renderOrganizationInfo = () => (
     <>
-      <View style={{ ...pdfStyles.tableRow, alignItems: 'center', justifyContent: 'center' }}>
-        <View style={{ flex: 1, padding: 1, maxWidth: organization?.logo_path ? 130 : 250 }}>
+      <View
+        style={{
+          ...pdfStyles.tableRow,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <View
+          style={{
+            flex: 1,
+            padding: 1,
+            maxWidth: organization?.logo_path ? 130 : 250,
+          }}
+        >
           {!!organization?.logo_path && <PdfLogo organization={organization} />}
         </View>
       </View>
       <View style={{ ...pdfStyles.tableRow, textAlign: 'center' }}>
         <View style={{ flex: 1 }}>
-          <Text style={{ ...pdfStyles.midInfo, fontFamily: 'Helvetica-Bold' }}>{organization.name}</Text>
+          <Text style={{ ...pdfStyles.midInfo, fontFamily: 'Helvetica-Bold' }}>
+            {organization.name}
+          </Text>
         </View>
       </View>
       {organization.address && (
         <View style={{ ...pdfStyles.tableRow, textAlign: 'center' }}>
           <View style={{ flex: 1 }}>
-            <Text style={{ ...pdfStyles.minInfo, textAlign: 'center' }}>{organization.address}</Text>
+            <Text style={{ ...pdfStyles.minInfo, textAlign: 'center' }}>
+              {organization.address}
+            </Text>
           </View>
         </View>
       )}
       {organization.tin && (
         <View style={{ ...pdfStyles.tableRow }}>
           <View style={{ flex: 1, textAlign: 'right' }}>
-            <Text style={{ ...pdfStyles.minInfo, fontFamily: 'Helvetica-Bold' }}>TIN:</Text>
+            <Text
+              style={{ ...pdfStyles.minInfo, fontFamily: 'Helvetica-Bold' }}
+            >
+              TIN:
+            </Text>
           </View>
           <View style={{ flex: 1, textAlign: 'left' }}>
             <Text style={pdfStyles.minInfo}>{organization.tin}</Text>
@@ -112,7 +136,11 @@ const SaleReceiptPDF: React.FC<SaleReceiptPDFProps> = ({ user, organization, sal
       {organization.settings?.vrn && (
         <View style={{ ...pdfStyles.tableRow }}>
           <View style={{ flex: 1, textAlign: 'right' }}>
-            <Text style={{ ...pdfStyles.minInfo, fontFamily: 'Helvetica-Bold' }}>VRN:</Text>
+            <Text
+              style={{ ...pdfStyles.minInfo, fontFamily: 'Helvetica-Bold' }}
+            >
+              VRN:
+            </Text>
           </View>
           <View style={{ flex: 1, textAlign: 'left' }}>
             <Text style={pdfStyles.minInfo}>{organization.settings.vrn}</Text>
@@ -122,7 +150,11 @@ const SaleReceiptPDF: React.FC<SaleReceiptPDFProps> = ({ user, organization, sal
       {organization.phone && (
         <View style={{ ...pdfStyles.tableRow }}>
           <View style={{ flex: 1, textAlign: 'right' }}>
-            <Text style={{ ...pdfStyles.minInfo, fontFamily: 'Helvetica-Bold' }}>Phone:</Text>
+            <Text
+              style={{ ...pdfStyles.minInfo, fontFamily: 'Helvetica-Bold' }}
+            >
+              Phone:
+            </Text>
           </View>
           <View style={{ flex: 1, textAlign: 'left' }}>
             <Text style={pdfStyles.minInfo}>{organization.phone}</Text>
@@ -132,10 +164,16 @@ const SaleReceiptPDF: React.FC<SaleReceiptPDFProps> = ({ user, organization, sal
       {organization.tra_serial_number && (
         <View style={{ ...pdfStyles.tableRow }}>
           <View style={{ flex: 1, textAlign: 'right' }}>
-            <Text style={{ ...pdfStyles.minInfo, fontFamily: 'Helvetica-Bold' }}>Serial Number:</Text>
+            <Text
+              style={{ ...pdfStyles.minInfo, fontFamily: 'Helvetica-Bold' }}
+            >
+              Serial Number:
+            </Text>
           </View>
           <View style={{ flex: 1, textAlign: 'left' }}>
-            <Text style={pdfStyles.minInfo}>{organization.tra_serial_number}</Text>
+            <Text style={pdfStyles.minInfo}>
+              {organization.tra_serial_number}
+            </Text>
           </View>
         </View>
       )}
@@ -148,7 +186,9 @@ const SaleReceiptPDF: React.FC<SaleReceiptPDFProps> = ({ user, organization, sal
       )}
       <View style={{ ...pdfStyles.tableRow, textAlign: 'center' }}>
         <View style={{ flex: 1 }}>
-          <Text style={{ ...pdfStyles.minInfo, fontFamily: 'Helvetica-Bold' }}>{sale.sales_outlet.name}</Text>
+          <Text style={{ ...pdfStyles.minInfo, fontFamily: 'Helvetica-Bold' }}>
+            {sale.sales_outlet.name}
+          </Text>
         </View>
       </View>
       <View style={{ ...pdfStyles.tableRow }}>
@@ -161,7 +201,9 @@ const SaleReceiptPDF: React.FC<SaleReceiptPDFProps> = ({ user, organization, sal
     <>
       <View style={{ ...pdfStyles.tableRow }}>
         <View style={{ flex: 1 }}>
-          <Text style={{ ...pdfStyles.minInfo, fontFamily: 'Helvetica-Bold' }}>Receipt No.</Text>
+          <Text style={{ ...pdfStyles.minInfo, fontFamily: 'Helvetica-Bold' }}>
+            Receipt No.
+          </Text>
         </View>
         <View style={{ flex: 1, textAlign: 'right' }}>
           <Text style={pdfStyles.minInfo}>{sale.saleNo}</Text>
@@ -169,28 +211,44 @@ const SaleReceiptPDF: React.FC<SaleReceiptPDFProps> = ({ user, organization, sal
       </View>
       <View style={{ ...pdfStyles.tableRow }}>
         <View style={{ flex: 1 }}>
-          <Text style={{ ...pdfStyles.minInfo, fontFamily: 'Helvetica-Bold' }}>Date</Text>
+          <Text style={{ ...pdfStyles.minInfo, fontFamily: 'Helvetica-Bold' }}>
+            Date
+          </Text>
         </View>
         <View style={{ flex: 1, textAlign: 'right' }}>
           <Text style={pdfStyles.minInfo}>
-            {readableDate(sale?.vfd_receipt ? sale.vfd_receipt.created_at : sale.transaction_date)}
+            {readableDate(
+              sale?.vfd_receipt
+                ? sale.vfd_receipt.created_at
+                : sale.transaction_date
+            )}
           </Text>
         </View>
       </View>
       {sale?.vfd_receipt && (
         <View style={{ ...pdfStyles.tableRow }}>
           <View style={{ flex: 1 }}>
-            <Text style={{ ...pdfStyles.minInfo, fontFamily: 'Helvetica-Bold' }}>Time</Text>
+            <Text
+              style={{ ...pdfStyles.minInfo, fontFamily: 'Helvetica-Bold' }}
+            >
+              Time
+            </Text>
           </View>
           <View style={{ flex: 1, textAlign: 'right' }}>
-            <Text style={pdfStyles.minInfo}>{sale.vfd_receipt.receipt_time}</Text>
+            <Text style={pdfStyles.minInfo}>
+              {sale.vfd_receipt.receipt_time}
+            </Text>
           </View>
         </View>
       )}
       {sale.reference && (
         <View style={{ ...pdfStyles.tableRow }}>
           <View style={{ flex: 1 }}>
-            <Text style={{ ...pdfStyles.minInfo, fontFamily: 'Helvetica-Bold' }}>Reference</Text>
+            <Text
+              style={{ ...pdfStyles.minInfo, fontFamily: 'Helvetica-Bold' }}
+            >
+              Reference
+            </Text>
           </View>
           <View style={{ flex: 1, textAlign: 'right' }}>
             <Text style={pdfStyles.minInfo}>{sale.reference}</Text>
@@ -207,7 +265,9 @@ const SaleReceiptPDF: React.FC<SaleReceiptPDFProps> = ({ user, organization, sal
     <>
       <View style={{ ...pdfStyles.tableRow }}>
         <View style={{ flex: 1 }}>
-          <Text style={{ ...pdfStyles.minInfo, fontFamily: 'Helvetica-Bold' }}>Customer Name</Text>
+          <Text style={{ ...pdfStyles.minInfo, fontFamily: 'Helvetica-Bold' }}>
+            Customer Name
+          </Text>
         </View>
         <View style={{ flex: 1, textAlign: 'right' }}>
           <Text style={pdfStyles.minInfo}>
@@ -218,7 +278,11 @@ const SaleReceiptPDF: React.FC<SaleReceiptPDFProps> = ({ user, organization, sal
       {(sale?.vfd_receipt?.customer_tin || sale.stakeholder?.tin) && (
         <View style={{ ...pdfStyles.tableRow }}>
           <View style={{ flex: 1 }}>
-            <Text style={{ ...pdfStyles.minInfo, fontFamily: 'Helvetica-Bold' }}>Customer TIN</Text>
+            <Text
+              style={{ ...pdfStyles.minInfo, fontFamily: 'Helvetica-Bold' }}
+            >
+              Customer TIN
+            </Text>
           </View>
           <View style={{ flex: 1, textAlign: 'right' }}>
             <Text style={pdfStyles.minInfo}>
@@ -230,7 +294,11 @@ const SaleReceiptPDF: React.FC<SaleReceiptPDFProps> = ({ user, organization, sal
       {(sale?.vfd_receipt?.customer_vrn || sale.stakeholder?.vrn) && (
         <View style={{ ...pdfStyles.tableRow }}>
           <View style={{ flex: 1 }}>
-            <Text style={{ ...pdfStyles.minInfo, fontFamily: 'Helvetica-Bold' }}>Customer VRN</Text>
+            <Text
+              style={{ ...pdfStyles.minInfo, fontFamily: 'Helvetica-Bold' }}
+            >
+              Customer VRN
+            </Text>
           </View>
           <View style={{ flex: 1, textAlign: 'right' }}>
             <Text style={pdfStyles.minInfo}>
@@ -242,7 +310,11 @@ const SaleReceiptPDF: React.FC<SaleReceiptPDFProps> = ({ user, organization, sal
       {sale.stakeholder?.email && (
         <View style={{ ...pdfStyles.tableRow }}>
           <View style={{ flex: 1 }}>
-            <Text style={{ ...pdfStyles.minInfo, fontFamily: 'Helvetica-Bold' }}>Email</Text>
+            <Text
+              style={{ ...pdfStyles.minInfo, fontFamily: 'Helvetica-Bold' }}
+            >
+              Email
+            </Text>
           </View>
           <View style={{ flex: 1, textAlign: 'right' }}>
             <Text style={pdfStyles.minInfo}>{sale.stakeholder.email}</Text>
@@ -252,7 +324,11 @@ const SaleReceiptPDF: React.FC<SaleReceiptPDFProps> = ({ user, organization, sal
       {sale.stakeholder?.phone && (
         <View style={{ ...pdfStyles.tableRow }}>
           <View style={{ flex: 1 }}>
-            <Text style={{ ...pdfStyles.minInfo, fontFamily: 'Helvetica-Bold' }}>Phone</Text>
+            <Text
+              style={{ ...pdfStyles.minInfo, fontFamily: 'Helvetica-Bold' }}
+            >
+              Phone
+            </Text>
           </View>
           <View style={{ flex: 1, textAlign: 'right' }}>
             <Text style={pdfStyles.minInfo}>{sale.stakeholder.phone}</Text>
@@ -284,8 +360,14 @@ const SaleReceiptPDF: React.FC<SaleReceiptPDFProps> = ({ user, organization, sal
                 </View>
                 <View style={{ flex: 1, textAlign: 'right' }}>
                   <Text style={pdfStyles.minInfo}>
-                    {(item.quantity * item.rate * (1 + (item?.vat_exempted !== 1 ? vatFactor : 0)))
-                      .toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}
+                    {(
+                      item.quantity *
+                      item.rate *
+                      (1 + (item?.vat_exempted !== 1 ? vatFactor : 0))
+                    ).toLocaleString('en-US', {
+                      maximumFractionDigits: 2,
+                      minimumFractionDigits: 2,
+                    })}
                   </Text>
                 </View>
               </View>
@@ -303,7 +385,9 @@ const SaleReceiptPDF: React.FC<SaleReceiptPDFProps> = ({ user, organization, sal
     <>
       <View style={{ ...pdfStyles.tableRow }}>
         <View style={{ flex: 1 }}>
-          <Text style={{ ...pdfStyles.minInfo, fontFamily: 'Helvetica-Bold' }}>TOTAL</Text>
+          <Text style={{ ...pdfStyles.minInfo, fontFamily: 'Helvetica-Bold' }}>
+            TOTAL
+          </Text>
         </View>
         <View style={{ flex: 1, textAlign: 'right' }}>
           <Text style={pdfStyles.minInfo}>{formatCurrency(sale.amount)}</Text>
@@ -313,7 +397,11 @@ const SaleReceiptPDF: React.FC<SaleReceiptPDFProps> = ({ user, organization, sal
         <>
           <View style={{ ...pdfStyles.tableRow }}>
             <View style={{ flex: 1 }}>
-              <Text style={{ ...pdfStyles.minInfo, fontFamily: 'Helvetica-Bold' }}>VAT</Text>
+              <Text
+                style={{ ...pdfStyles.minInfo, fontFamily: 'Helvetica-Bold' }}
+              >
+                VAT
+              </Text>
             </View>
             <View style={{ flex: 1, textAlign: 'right' }}>
               <Text style={pdfStyles.minInfo}>{formatCurrency(vatAmount)}</Text>
@@ -321,10 +409,16 @@ const SaleReceiptPDF: React.FC<SaleReceiptPDFProps> = ({ user, organization, sal
           </View>
           <View style={{ ...pdfStyles.tableRow }}>
             <View style={{ flex: 1 }}>
-              <Text style={{ ...pdfStyles.minInfo, fontFamily: 'Helvetica-Bold' }}>Total (VAT Incl.)</Text>
+              <Text
+                style={{ ...pdfStyles.minInfo, fontFamily: 'Helvetica-Bold' }}
+              >
+                Total (VAT Incl.)
+              </Text>
             </View>
             <View style={{ flex: 1, textAlign: 'right' }}>
-              <Text style={pdfStyles.minInfo}>{formatCurrency(sale.amount + vatAmount)}</Text>
+              <Text style={pdfStyles.minInfo}>
+                {formatCurrency(sale.amount + vatAmount)}
+              </Text>
             </View>
           </View>
         </>
@@ -335,38 +429,62 @@ const SaleReceiptPDF: React.FC<SaleReceiptPDFProps> = ({ user, organization, sal
     </>
   );
 
-  const renderVerification = () => (
+  const renderVerification = () =>
     sale.vfd_receipt && (
       <>
         <View style={{ ...pdfStyles.tableRow, textAlign: 'center' }}>
           <View style={{ flex: 1 }}>
-            <Text style={{ ...pdfStyles.minInfo, fontFamily: 'Helvetica-Bold' }}>Receipt Verification Code</Text>
+            <Text
+              style={{ ...pdfStyles.minInfo, fontFamily: 'Helvetica-Bold' }}
+            >
+              Receipt Verification Code
+            </Text>
           </View>
         </View>
         <View style={{ ...pdfStyles.tableRow, textAlign: 'center' }}>
           <View style={{ flex: 1 }}>
-            <Text style={pdfStyles.minInfo}>{sale.vfd_receipt.verification_code}</Text>
+            <Text style={pdfStyles.minInfo}>
+              {sale.vfd_receipt.verification_code}
+            </Text>
           </View>
         </View>
-        <View style={{ ...pdfStyles.tableRow, justifyContent: 'center', marginBottom: 10 }}>
+        <View
+          style={{
+            ...pdfStyles.tableRow,
+            justifyContent: 'center',
+            marginBottom: 10,
+          }}
+        >
           <View>
-            <Image src={generateQRCodeDataUrl()} style={{ width: 100, height: 100 }} />
+            <Image
+              src={generateQRCodeDataUrl()}
+              style={{ width: 100, height: 100 }}
+            />
           </View>
         </View>
       </>
-    )
-  );
+    );
 
   return (
-    <Document
-      creator={`${user.name} | Powered By ProsERP`}
-      producer="ProsERP"
-    >
-      <Page size={[80 * 2.83465, 297 * 2.83465]} style={{ ...pdfStyles.page, padding: 10 }}>
+    <Document creator={`${user.name} | Powered By ProsERP`} producer='ProsERP'>
+      <Page
+        size={[80 * 2.83465, 297 * 2.83465]}
+        style={{ ...pdfStyles.page, padding: 10 }}
+      >
         {sale.vfd_receipt && (
-          <View style={{ ...pdfStyles.tableRow, textAlign: 'center', marginBottom: 10 }}>
+          <View
+            style={{
+              ...pdfStyles.tableRow,
+              textAlign: 'center',
+              marginBottom: 10,
+            }}
+          >
             <View style={{ flex: 1 }}>
-              <Text style={{ ...pdfStyles.minInfo, fontFamily: 'Helvetica-Bold' }}>*** START OF LEGAL RECEIPT ***</Text>
+              <Text
+                style={{ ...pdfStyles.minInfo, fontFamily: 'Helvetica-Bold' }}
+              >
+                *** START OF LEGAL RECEIPT ***
+              </Text>
             </View>
           </View>
         )}
@@ -378,21 +496,41 @@ const SaleReceiptPDF: React.FC<SaleReceiptPDFProps> = ({ user, organization, sal
         {renderTotals()}
         {renderVerification()}
 
-        <View style={{ ...pdfStyles.tableRow, textAlign: 'center', marginBottom: 10 }}>
+        <View
+          style={{
+            ...pdfStyles.tableRow,
+            textAlign: 'center',
+            marginBottom: 10,
+          }}
+        >
           <View style={{ flex: 1 }}>
-            <Text style={pdfStyles.minInfo}>Served by: {sale.creator.name}</Text>
+            <Text style={pdfStyles.minInfo}>
+              Served by: {sale.creator.name}
+            </Text>
           </View>
         </View>
-        <View style={{ ...pdfStyles.tableRow, textAlign: 'center', marginBottom: 15 }}>
+        <View
+          style={{
+            ...pdfStyles.tableRow,
+            textAlign: 'center',
+            marginBottom: 15,
+          }}
+        >
           <View style={{ flex: 1 }}>
-            <Text style={{...pdfStyles.microInfo, fontSize: 7}}>Powered by: proserp.co.tz</Text>
+            <Text style={{ ...pdfStyles.microInfo, fontSize: 7 }}>
+              Powered by: proserp.co.tz
+            </Text>
           </View>
         </View>
 
         {sale.vfd_receipt && (
           <View style={{ ...pdfStyles.tableRow, textAlign: 'center' }}>
             <View style={{ flex: 1 }}>
-              <Text style={{ ...pdfStyles.minInfo, fontFamily: 'Helvetica-Bold' }}>*** END OF LEGAL RECEIPT ***</Text>
+              <Text
+                style={{ ...pdfStyles.minInfo, fontFamily: 'Helvetica-Bold' }}
+              >
+                *** END OF LEGAL RECEIPT ***
+              </Text>
             </View>
           </View>
         )}

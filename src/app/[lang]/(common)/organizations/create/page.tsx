@@ -1,12 +1,9 @@
-'use client'
+'use client';
 
-import OrganizationForm from '@/components/Organizations/form/OrganizationForm'
-import React from 'react'
+import OrganizationForm from '@/components/organizations/form/OrganizationForm';
 
 function page() {
-  return (
-    <OrganizationForm/>
-  )
+  return <OrganizationForm />;
 }
 
-export default page
+export default page;

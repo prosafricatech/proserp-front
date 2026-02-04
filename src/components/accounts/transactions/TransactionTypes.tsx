@@ -1,7 +1,12 @@
-import { CostCenter } from "@/components/masters/costCenters/CostCenterType";
-import { Currency } from "@/components/masters/Currencies/CurrencyType";
+import { CostCenter } from '@/components/masters/costCenters/CostCenterType';
+import { Currency } from '@/components/masters/currencies/CurrencyType';
 
-export type TransactionTypes = 'payments' | 'receipts' | 'journal_vouchers' | 'transfers' | string;
+export type TransactionTypes =
+  | 'payments'
+  | 'receipts'
+  | 'journal_vouchers'
+  | 'transfers'
+  | string;
 
 type Creator = {
   id: number;
@@ -27,14 +32,14 @@ export type BaseTransaction = {
 };
 
 export type PaymentTransaction = BaseTransaction & {
-  type: "payment";
+  type: 'payment';
   amount: number;
   requisitionNo: string;
   requisition_approval_id: number;
 };
 
 export type ReceiptTransaction = BaseTransaction & {
-  type: "receipt";
+  type: 'receipt';
   amount: number;
   journals_sum_amount: number;
   receiptable_id: number | null;
@@ -43,13 +48,13 @@ export type ReceiptTransaction = BaseTransaction & {
 };
 
 export type JournalVoucherTransaction = BaseTransaction & {
-  type: "journal_voucher";
+  type: 'journal_voucher';
   amount: number;
   journals_sum_amount: number;
 };
 
 export type TransferTransaction = BaseTransaction & {
-  type: "transfer";
+  type: 'transfer';
   amount: number;
   journals_sum_amount: number;
   credit_ledger_id: number;

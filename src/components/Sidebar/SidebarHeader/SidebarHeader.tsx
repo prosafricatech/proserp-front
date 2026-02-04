@@ -1,5 +1,5 @@
 'use client';
-import { Logo } from '@/components/Logo';
+import { Logo } from '@/components/logo';
 import {
   useJumboLayout,
   useSidebarState,
@@ -8,7 +8,7 @@ import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { SIDEBAR_VIEWS } from '@jumbo/utilities/constants';
 import MenuOpenIcon from '@mui/icons-material/MenuOpen';
 import { IconButton, Zoom } from '@mui/material';
-import { SidebarHeaderDiv } from '../SidebarHeaderDiv';
+import { SidebarHeaderDiv } from '../sidebarHeaderDiv';
 
 function SidebarHeader() {
   const { theme } = useJumboTheme();

@@ -1,11 +1,8 @@
-export const dynamic = "force-dynamic";
-import Currencies from '@/components/masters/Currencies/Currencies'
-import React from 'react'
+export const dynamic = 'force-dynamic';
+import Currencies from '@/components/masters/currencies/Currencies';
 
 function page() {
-  return (
-    <Currencies/>
-  )
+  return <Currencies />;
 }
 
-export default page
+export default page;

@@ -1,21 +1,34 @@
 'use client';
 
-import { lazy, useEffect, useMemo, useState } from 'react';
-import { Card, LinearProgress, Stack, Tab, Tabs, Typography } from '@mui/material';
-import JumboContentLayout from '@jumbo/components/JumboContentLayout';
-import ProjectDashboard from './dashboard/ProjectDashboard';
-import ProjectProfileProvider, { useProjectProfile } from './ProjectProfileProvider';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import projectsServices from '../project-services';
+import CurrencySelectProvider from '@/components/masters/currencies/CurrencySelectProvider';
 import StakeholderSelectProvider from '@/components/masters/stakeholders/StakeholderSelectProvider';
-import CurrencySelectProvider from '@/components/masters/Currencies/CurrencySelectProvider';
+import JumboContentLayout from '@jumbo/components/JumboContentLayout';
+import {
+  Card,
+  LinearProgress,
+  Stack,
+  Tab,
+  Tabs,
+  Typography,
+} from '@mui/material';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { lazy, useEffect, useMemo, useState } from 'react';
+import projectsServices from '../project-services';
 import ProjectClaims from './claims/ProjectClaims';
+import ProjectDashboard from './dashboard/ProjectDashboard';
+import ProjectProfileProvider, {
+  useProjectProfile,
+} from './ProjectProfileProvider';
 
-const AttachmentForm = lazy(() => import('@/components/filesShelf/attachments/AttachmentForm'));
+const AttachmentForm = lazy(
+  () => import('@/components/filesShelf/attachments/AttachmentForm')
+);
 const Subcontracts = lazy(() => import('./subcontracts/Subcontracts'));
 const ProjectUsers = lazy(() => import('./projectUsers/ProjectUsers'));
 const TimelineActivitiesListItem = lazy(() => import('./wbs/WBSListItem'));
-const Deliverables = lazy(() => import('./deliverables/DeliverableGroupsListItem'));
+const Deliverables = lazy(
+  () => import('./deliverables/DeliverableGroupsListItem')
+);
 const Budgets = lazy(() => import('./budgets/BudgetsListItem'));
 const Updates = lazy(() => import('./updates/Updates'));
 
@@ -49,14 +62,27 @@ const TABS_NEEDING_TIMELINE: TabKey[] = [
 ];
 
 function ProfileContent() {
-  const { project, updateProjectProfile, setIsDashboardTab }: any = useProjectProfile();
+  const { project, updateProjectProfile, setIsDashboardTab }: any =
+    useProjectProfile();
   const queryClient = useQueryClient();
-  
+
   // Store active tab in sessionStorage for persistence
   const [activeTab, setActiveTab] = useState<TabKey>(() => {
     if (typeof window !== 'undefined') {
-      const savedTab = sessionStorage.getItem('projectProfileActiveTab') as TabKey;
-      const validTabs: TabKey[] = ['dashboard', 'deliverables', 'wbs', 'updates', 'budgets', 'subcontracts', 'claims', 'users', 'attachments'];
+      const savedTab = sessionStorage.getItem(
+        'projectProfileActiveTab'
+      ) as TabKey;
+      const validTabs: TabKey[] = [
+        'dashboard',
+        'deliverables',
+        'wbs',
+        'updates',
+        'budgets',
+        'subcontracts',
+        'claims',
+        'users',
+        'attachments',
+      ];
       return savedTab && validTabs.includes(savedTab) ? savedTab : 'dashboard';
     }
     return 'dashboard';
@@ -68,24 +94,36 @@ function ProfileContent() {
     }
   }, [activeTab]);
 
-  const { data: deliverablesData, isLoading: isDeliverablesLoading, refetch: refetchDeliverables } = useQuery({
+  const {
+    data: deliverablesData,
+    isLoading: isDeliverablesLoading,
+    refetch: refetchDeliverables,
+  } = useQuery({
     queryKey: ['projectDeliverableGroups', project?.id],
     queryFn: () => projectsServices.showDeliverablesAndGroups(project.id),
   });
 
   //Budgets
-  const { data: budgetsData, isLoading: isBudgetLoading, refetch: refetchBudgets } = useQuery({
+  const {
+    data: budgetsData,
+    isLoading: isBudgetLoading,
+    refetch: refetchBudgets,
+  } = useQuery({
     queryKey: ['projectBudgets', project?.id, project?.cost_center?.id],
-    queryFn: () => 
-      projectsServices.showProjectBudgets({ 
+    queryFn: () =>
+      projectsServices.showProjectBudgets({
         id: project!.id,
-        cost_center_id: project?.cost_center?.id 
+        cost_center_id: project?.cost_center?.id,
       }),
     enabled: !!project?.id,
   });
 
   //Timeline Activities
-  const { data: timelineActivitiesData, isLoading: isTimelineActivitiesLoading, refetch: refetchTimelineActivities } = useQuery({
+  const {
+    data: timelineActivitiesData,
+    isLoading: isTimelineActivitiesLoading,
+    refetch: refetchTimelineActivities,
+  } = useQuery({
     queryKey: ['projectTimelineActivities', project?.id],
     queryFn: () => projectsServices.showProjectTimelineActivities(project.id),
   });
@@ -95,9 +133,15 @@ function ProfileContent() {
     if (!project?.id) return;
 
     // Clear existing cache for fresh data
-    queryClient.invalidateQueries({ queryKey: ['projectDeliverableGroups', project.id] });
-    queryClient.invalidateQueries({ queryKey: ['projectBudgets', project.id, project.cost_center?.id] });
-    queryClient.invalidateQueries({ queryKey: ['projectTimelineActivities', project.id] });
+    queryClient.invalidateQueries({
+      queryKey: ['projectDeliverableGroups', project.id],
+    });
+    queryClient.invalidateQueries({
+      queryKey: ['projectBudgets', project.id, project.cost_center?.id],
+    });
+    queryClient.invalidateQueries({
+      queryKey: ['projectTimelineActivities', project.id],
+    });
 
     // Fetch data based on active tab
     const fetchDataForTab = async () => {
@@ -141,7 +185,8 @@ function ProfileContent() {
 
   // Update profile context with fetched data
   useEffect(() => {
-    if (deliverablesData) updateProjectProfile({ deliverable_groups: deliverablesData });
+    if (deliverablesData)
+      updateProjectProfile({ deliverable_groups: deliverablesData });
   }, [deliverablesData, updateProjectProfile]);
 
   useEffect(() => {
@@ -149,7 +194,10 @@ function ProfileContent() {
   }, [budgetsData, updateProjectProfile]);
 
   useEffect(() => {
-    if (timelineActivitiesData) updateProjectProfile({ projectTimelineActivities: timelineActivitiesData });
+    if (timelineActivitiesData)
+      updateProjectProfile({
+        projectTimelineActivities: timelineActivitiesData,
+      });
   }, [timelineActivitiesData, updateProjectProfile]);
 
   // Combine loading states - only show loading for active tab's data
@@ -160,12 +208,20 @@ function ProfileContent() {
       case 'updates':
       case 'subcontracts':
       case 'claims':
-        return (TABS_NEEDING_DELIVERABLES.includes(activeTab) && isDeliverablesLoading) ||
-               (TABS_NEEDING_TIMELINE.includes(activeTab) && isTimelineActivitiesLoading);
+        return (
+          (TABS_NEEDING_DELIVERABLES.includes(activeTab) &&
+            isDeliverablesLoading) ||
+          (TABS_NEEDING_TIMELINE.includes(activeTab) &&
+            isTimelineActivitiesLoading)
+        );
       case 'budgets':
-        return isBudgetLoading || 
-               (TABS_NEEDING_DELIVERABLES.includes(activeTab) && isDeliverablesLoading) ||
-               (TABS_NEEDING_TIMELINE.includes(activeTab) && isTimelineActivitiesLoading);
+        return (
+          isBudgetLoading ||
+          (TABS_NEEDING_DELIVERABLES.includes(activeTab) &&
+            isDeliverablesLoading) ||
+          (TABS_NEEDING_TIMELINE.includes(activeTab) &&
+            isTimelineActivitiesLoading)
+        );
       default:
         return false;
     }
@@ -179,7 +235,12 @@ function ProfileContent() {
       budgetsLoading: isBudgetLoading,
       timelineLoading: isTimelineActivitiesLoading,
     });
-  }, [isDeliverablesLoading, isBudgetLoading, isTimelineActivitiesLoading, updateProjectProfile]);
+  }, [
+    isDeliverablesLoading,
+    isBudgetLoading,
+    isTimelineActivitiesLoading,
+    updateProjectProfile,
+  ]);
 
   useEffect(() => {
     setIsDashboardTab(activeTab === 'dashboard');
@@ -216,7 +277,7 @@ function ProfileContent() {
           <AttachmentForm
             hideFeatures
             attachment_sourceNo={project?.projectNo}
-            attachmentable_type="project"
+            attachmentable_type='project'
             attachmentable_id={project?.id}
           />
         );
@@ -229,8 +290,8 @@ function ProfileContent() {
     <JumboContentLayout
       header={
         <>
-          <Typography variant="h4">{project?.name}</Typography>
-          <Typography variant="body1">{project?.reference}</Typography>
+          <Typography variant='h4'>{project?.name}</Typography>
+          <Typography variant='body1'>{project?.reference}</Typography>
         </>
       }
     >
@@ -239,19 +300,19 @@ function ProfileContent() {
           <Tabs
             value={activeTab}
             onChange={handleTabChange}
-            variant="scrollable"
-            scrollButtons="auto"
+            variant='scrollable'
+            scrollButtons='auto'
             allowScrollButtonsMobile
           >
-            <Tab label="Dashboard" value="dashboard" />
-            <Tab label="Deliverables" value="deliverables" />
-            <Tab label="WBS" value="wbs" />
-            <Tab label="Budgets" value="budgets" />
-            <Tab label="Updates" value="updates" />
-            <Tab label="Subcontracts" value="subcontracts" />
-            {project?.client_id && <Tab label="Claims" value="claims" />}
-            <Tab label="Users" value="users" />
-            <Tab label="Attachments" value="attachments" />
+            <Tab label='Dashboard' value='dashboard' />
+            <Tab label='Deliverables' value='deliverables' />
+            <Tab label='WBS' value='wbs' />
+            <Tab label='Budgets' value='budgets' />
+            <Tab label='Updates' value='updates' />
+            <Tab label='Subcontracts' value='subcontracts' />
+            {project?.client_id && <Tab label='Claims' value='claims' />}
+            <Tab label='Users' value='users' />
+            <Tab label='Attachments' value='attachments' />
           </Tabs>
 
           {isLoading ? <LinearProgress /> : renderTabContent}

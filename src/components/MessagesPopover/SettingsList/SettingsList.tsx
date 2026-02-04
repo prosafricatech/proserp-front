@@ -1,10 +1,10 @@
-import React from 'react';
 import ChatBubbleOutlineOutlinedIcon from '@mui/icons-material/ChatBubbleOutlineOutlined';
 import NotificationImportantOutlinedIcon from '@mui/icons-material/NotificationImportantOutlined';
 import PersonOutlinedIcon from '@mui/icons-material/PersonOutlined';
 import SendOutlinedIcon from '@mui/icons-material/SendOutlined';
 import VolumeUpOutlinedIcon from '@mui/icons-material/VolumeUpOutlined';
 import { Divider, List } from '@mui/material';
+import React from 'react';
 import { SettingItem } from './SettingItem';
 
 const SettingsList = () => {

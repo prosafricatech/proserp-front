@@ -548,6 +548,7 @@ function PurchaseOrderOnScreenPreview({ order }) {
                       color: contrastText,
                       fontSize: '0.875rem',
                     }}
+<<<<<<< HEAD
                     align='right'
                   >
                     Date
@@ -558,6 +559,8 @@ function PurchaseOrderOnScreenPreview({ order }) {
                       color: contrastText,
                       fontSize: '0.875rem',
                     }}
+=======
+>>>>>>> 25e80778bafc04937228b8dcf4b3dcf56f0c02a6
                   >
                     Name
                   </TableCell>
@@ -568,7 +571,21 @@ function PurchaseOrderOnScreenPreview({ order }) {
                       fontSize: '0.875rem',
                     }}
                   >
+<<<<<<< HEAD
                     Remarks
+=======
+                    Closing Remarks
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      backgroundColor: mainColor,
+                      color: contrastText,
+                      fontSize: '0.875rem',
+                    }}
+                    align='right'
+                  >
+                    Date
+>>>>>>> 25e80778bafc04937228b8dcf4b3dcf56f0c02a6
                   </TableCell>
                 </TableRow>
               </TableHead>
@@ -584,11 +601,19 @@ function PurchaseOrderOnScreenPreview({ order }) {
                     }}
                   >
                     <TableCell>{index + 1}</TableCell>
+<<<<<<< HEAD
                     <TableCell align='right' sx={{ fontFamily: 'monospace' }}>
                       {readableDate(closure.datetime_closed, true)}
                     </TableCell>
                     <TableCell>{closure.creator.name}</TableCell>
                     <TableCell>{closure.closing_remarks ?? '-'}</TableCell>
+=======
+                    <TableCell>{closure.creator.name}</TableCell>
+                    <TableCell>{closure.closing_remarks ?? '-'}</TableCell>
+                    <TableCell align='right' sx={{ fontFamily: 'monospace' }}>
+                      {readableDate(closure.datetime_closed, false)}
+                    </TableCell>
+>>>>>>> 25e80778bafc04937228b8dcf4b3dcf56f0c02a6
                   </TableRow>
                 ))}
               </TableBody>

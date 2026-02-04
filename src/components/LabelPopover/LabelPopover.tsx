@@ -19,7 +19,7 @@ import {
   Tooltip,
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
-import { LabelProps } from '../LabelsWithChip/data';
+import { LabelProps } from '../labelsWithChip/data';
 
 const LabelPopover = ({ labels }: { labels: LabelProps[] }) => {
   const [anchorEl, setAnchorEl] = React.useState(null);

@@ -1,9 +1,13 @@
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import CostCenterSelector from '@/components/masters/costCenters/CostCenterSelector';
-import CurrencySelector from '@/components/masters/Currencies/CurrencySelector';
+import { CostCenter } from '@/components/masters/costCenters/CostCenterType';
+import CurrencySelector from '@/components/masters/currencies/CurrencySelector';
+import { MeasurementUnit } from '@/components/masters/measurementUnits/MeasurementUnitType';
 import StakeholderQuickAdd from '@/components/masters/stakeholders/StakeholderQuickAdd';
 import StakeholderSelector from '@/components/masters/stakeholders/StakeholderSelector';
 import { Stakeholder } from '@/components/masters/stakeholders/StakeholderType';
+import { Vendor } from '@/components/processApproval/RequisitionType';
+import { Product } from '@/components/productAndServices/products/ProductType';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { Div } from '@jumbo/shared';
@@ -14,10 +18,6 @@ import dayjs, { Dayjs } from 'dayjs';
 import React, { useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { ApprovalRequisition } from '../../ApprovalRequisitionType';
-import { CostCenter } from '@/components/masters/costCenters/CostCenterType';
-import { Product } from '@/components/productAndServices/products/ProductType';
-import { MeasurementUnit } from '@/components/masters/measurementUnits/MeasurementUnitType';
-import { Vendor } from '@/components/processApproval/RequisitionType';
 
 interface FormValues {
   order_date: string;
@@ -77,13 +77,13 @@ function ApprovedPurchaseTopInformation({
   approvedRequisition,
   order_date,
   stakeholderQuickAddDisplay,
-  approvedDetails
+  approvedDetails,
 }: ApprovedPurchaseTopInformationProps) {
   const {
     setValue,
     watch,
     register,
-    formState: { errors }
+    formState: { errors },
   } = useFormContext<FormValues>();
 
   const { authOrganization, checkOrganizationPermission } = useJumboAuth();
@@ -104,21 +104,21 @@ function ApprovedPurchaseTopInformation({
   const handleDateChange = (newValue: Dayjs | null) => {
     setValue('order_date', newValue ? newValue.toISOString() : '', {
       shouldValidate: true,
-      shouldDirty: true
+      shouldDirty: true,
     });
   };
 
   const handleDateRequiredChange = (newValue: Dayjs | null) => {
     setValue('date_required', newValue ? newValue.toISOString() : null, {
       shouldValidate: true,
-      shouldDirty: true
+      shouldDirty: true,
     });
   };
 
   const handleStakeholderChange = (newValue: any) => {
     setValue('stakeholder_id', newValue?.id ?? null, {
       shouldDirty: true,
-      shouldValidate: true
+      shouldValidate: true,
     });
     setValue('tin', newValue?.tin ?? null, {
       shouldTouch: true,
@@ -126,42 +126,42 @@ function ApprovedPurchaseTopInformation({
     setValue('vrn', newValue?.vrn ?? null);
     setValue('instant_pay', !newValue?.id);
     setValue('instant_receive', !newValue?.id);
-    
+
     if (!newValue?.id) {
       setValue('instant_invoice', false, {
         shouldDirty: true,
-        shouldValidate: true
+        shouldValidate: true,
       });
     }
   };
 
   return (
     <Grid container columnSpacing={1} rowSpacing={2}>
-      <Grid size={{xs: 12, md: 4}}>
+      <Grid size={{ xs: 12, md: 4 }}>
         <Div sx={{ mt: 0.3 }}>
           <DateTimePicker
-            label="Order Date"
+            label='Order Date'
             minDate={
-              checkOrganizationPermission(PERMISSIONS.PURCHASES_BACKDATE) 
-                ? dayjs(authOrganization?.organization.recording_start_date) 
+              checkOrganizationPermission(PERMISSIONS.PURCHASES_BACKDATE)
+                ? dayjs(authOrganization?.organization.recording_start_date)
                 : dayjs().startOf('day')
             }
             maxDate={
-              checkOrganizationPermission(PERMISSIONS.PURCHASES_POSTDATE) 
-                ? dayjs().add(10, 'year').endOf('year') 
+              checkOrganizationPermission(PERMISSIONS.PURCHASES_POSTDATE)
+                ? dayjs().add(10, 'year').endOf('year')
                 : dayjs().endOf('day')
             }
             defaultValue={order_date}
             slotProps={{
-                textField: {
-                    size: 'small',
-                    fullWidth: true,
-                    InputProps: {
-                        readOnly: true
-                    },
-                    error: !!errors?.order_date,
-                    helperText: errors?.order_date?.message
-                }
+              textField: {
+                size: 'small',
+                fullWidth: true,
+                InputProps: {
+                  readOnly: true,
+                },
+                error: !!errors?.order_date,
+                helperText: errors?.order_date?.message,
+              },
             }}
             onChange={handleDateChange}
           />
@@ -169,7 +169,7 @@ function ApprovedPurchaseTopInformation({
       </Grid>
 
       {!stakeholderQuickAddDisplay && (
-        <Grid size={{xs: 12, md: 8}}>
+        <Grid size={{ xs: 12, md: 8 }}>
           <Div sx={{ mt: 0.3 }}>
             <StakeholderSelector
               label='Supplier'
@@ -192,16 +192,16 @@ function ApprovedPurchaseTopInformation({
       )}
 
       {stakeholderQuickAddDisplay && (
-        <StakeholderQuickAdd 
-          setStakeholderQuickAddDisplay={setStakeholderQuickAddDisplay} 
-          create_payable={true} 
+        <StakeholderQuickAdd
+          setStakeholderQuickAddDisplay={setStakeholderQuickAddDisplay}
+          create_payable={true}
           setAddedStakeholder={setAddedStakeholder}
         />
       )}
 
       <Grid size={12}>
         <Grid container rowSpacing={2} columnSpacing={1}>
-          <Grid size={{xs: 12, md: 4}}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Div sx={{ mt: 0.3 }}>
               <TextField
                 size='small'
@@ -214,29 +214,31 @@ function ApprovedPurchaseTopInformation({
             </Div>
           </Grid>
 
-          <Grid size={{xs: 12, md: 4}}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Div sx={{ mt: 0.3 }}>
               <DateTimePicker
-                label="Date required"
-                defaultValue={order?.date_required ? dayjs(order.date_required) : null}
+                label='Date required'
+                defaultValue={
+                  order?.date_required ? dayjs(order.date_required) : null
+                }
                 minDate={dayjs(order_date)}
                 slotProps={{
-                    textField: {
-                        size: 'small',
-                        fullWidth: true,
-                        InputProps: {
-                            readOnly: true
-                        },
-                        error: !!errors?.date_required,
-                        helperText: errors?.date_required?.message
-                    }
+                  textField: {
+                    size: 'small',
+                    fullWidth: true,
+                    InputProps: {
+                      readOnly: true,
+                    },
+                    error: !!errors?.date_required,
+                    helperText: errors?.date_required?.message,
+                  },
                 }}
                 onChange={handleDateRequiredChange}
               />
             </Div>
           </Grid>
 
-          <Grid size={{xs: 12, md: 4}}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Div sx={{ mt: 0.3 }}>
               <CurrencySelector
                 defaultValue={approvedDetails?.currency?.id}
@@ -246,10 +248,10 @@ function ApprovedPurchaseTopInformation({
           </Grid>
 
           {watch('currency_id') > 1 && (
-            <Grid size={{xs: 12, md: 4}}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Div sx={{ mt: 0.3 }}>
                 <TextField
-                  label="Exchange Rate"
+                  label='Exchange Rate'
                   fullWidth
                   size='small'
                   InputProps={{
@@ -262,14 +264,14 @@ function ApprovedPurchaseTopInformation({
             </Grid>
           )}
 
-          <Grid size={{xs: 12, md: watch('currency_id') > 1 ? 8 : 12}}>
+          <Grid size={{ xs: 12, md: watch('currency_id') > 1 ? 8 : 12 }}>
             <Div sx={{ mt: 0.3 }}>
               <CostCenterSelector
                 multiple={true}
                 allowSameType={false}
                 defaultValue={
-                  approvedRequisition 
-                    ? [approvedRequisition.requisition.cost_center] 
+                  approvedRequisition
+                    ? [approvedRequisition.requisition.cost_center]
                     : order?.cost_centers || []
                 }
                 disabled={true}

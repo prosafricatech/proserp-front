@@ -1,18 +1,18 @@
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { Div } from '@jumbo/shared';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import React from 'react';
-import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { Button, CardActions, Divider, ThemeProvider } from '@mui/material';
-import { MessagesHeader } from './MessagesHeader';
-import { MessagesList } from './MessagesList';
-import { MessagesTriggerButton } from './MessagesTriggerButton';
-import { SearchMessages } from './SearchMessages';
-import { SettingHeader } from './SettingHeader';
-import { SettingsList } from './SettingsList';
 import dynamic from 'next/dynamic';
+import React from 'react';
+import { MessagesHeader } from './messagesHeader';
+import { MessagesList } from './messagesList';
+import { MessagesTriggerButton } from './messagesTriggerButton';
+import { SearchMessages } from './searchMessages';
+import { SettingHeader } from './settingHeader';
+import { SettingsList } from './settingsList';
 
-const JumboDdPopover = dynamic(() =>
-  import('@jumbo/components').then((mod) => mod.JumboDdPopover),
+const JumboDdPopover = dynamic(
+  () => import('@jumbo/components').then((mod) => mod.JumboDdPopover),
   { ssr: false }
 );
 

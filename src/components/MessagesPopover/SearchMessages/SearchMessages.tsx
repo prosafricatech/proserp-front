@@ -2,7 +2,7 @@ import {
   Search,
   SearchIconWrapper,
   StyledInputBase,
-} from '@/components/SearchGlobal/style';
+} from '@/components/searchGlobal/style';
 import SearchIcon from '@mui/icons-material/Search';
 
 const SearchMessages = () => {

@@ -1,26 +1,41 @@
-import React, { useEffect, useState } from 'react';
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Grid, Stack, Tab,Tabs, TextField, Typography } from '@mui/material';
-import { LoadingButton } from '@mui/lab';
-import * as yup from 'yup';
-import { yupResolver } from '@hookform/resolvers/yup';
-import { FormProvider, useForm } from 'react-hook-form';
-import { useSnackbar } from 'notistack';
-import dayjs from 'dayjs';
-import { DateTimePicker } from '@mui/x-date-pickers';
-import {  KeyboardArrowLeftOutlined, KeyboardArrowRightOutlined } from '@mui/icons-material';
-import purchaseServices from '../../purchase-services';
-import StoreSelector from '../../../stores/StoreSelector';
-import AdditionalCostsTabRow from './receiveFormTabs/AdditionalCosts/AdditionalCostsTabRow';
-import SummaryTab from './receiveFormTabs/SummaryTab';
-import AdditionalCostsTab from './receiveFormTabs/AdditionalCosts/AdditionalCostsTab';
-import ItemsTab from './receiveFormTabs/ItemsTab';
-import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useCurrencySelect } from '@/components/masters/Currencies/CurrencySelectProvider';
-import { PERMISSIONS } from '@/utilities/constants/permissions';
-import { Div } from '@jumbo/shared';
-import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { useCurrencySelect } from '@/components/masters/currencies/CurrencySelectProvider';
+import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { Div } from '@jumbo/shared';
+import {
+  KeyboardArrowLeftOutlined,
+  KeyboardArrowRightOutlined,
+} from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Grid,
+  Stack,
+  Tab,
+  Tabs,
+  TextField,
+  Typography,
+} from '@mui/material';
+import { DateTimePicker } from '@mui/x-date-pickers';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import dayjs from 'dayjs';
+import { useSnackbar } from 'notistack';
+import React, { useEffect, useState } from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
+import * as yup from 'yup';
+import StoreSelector from '../../../stores/StoreSelector';
+import purchaseServices from '../../purchase-services';
+import AdditionalCostsTab from './receiveFormTabs/AdditionalCosts/AdditionalCostsTab';
+import AdditionalCostsTabRow from './receiveFormTabs/AdditionalCosts/AdditionalCostsTabRow';
+import ItemsTab from './receiveFormTabs/ItemsTab';
+import SummaryTab from './receiveFormTabs/SummaryTab';
 
 function PurchaseOrderReceiveForm({ toggleOpen, order }) {
   const [additionalCosts, setAdditionalCosts] = useState([]);
@@ -28,10 +43,10 @@ function PurchaseOrderReceiveForm({ toggleOpen, order }) {
   const [date_received] = useState(dayjs());
   const [activeTab, setActiveTab] = useState(0);
   const { enqueueSnackbar } = useSnackbar();
-  const queryClient = useQueryClient();  
+  const queryClient = useQueryClient();
   const order_currency_id = order?.currency.id;
-  const {currencies} = useCurrencySelect();
-  const {authOrganization,checkOrganizationPermission} = useJumboAuth();
+  const { currencies } = useCurrencySelect();
+  const { authOrganization, checkOrganizationPermission } = useJumboAuth();
   const [totalReceivedAmount, setTotalReceivedAmount] = useState(0);
   const [totalAmount, setTotalAmount] = useState(0);
 
@@ -39,20 +54,19 @@ function PurchaseOrderReceiveForm({ toggleOpen, order }) {
   const [showWarning, setShowWarning] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
 
-
   const handleTabChange = (event, newTab) => {
     if (isDirty) {
-      setNextTab(newTab); 
-      setShowWarning(true); 
+      setNextTab(newTab);
+      setShowWarning(true);
     } else {
-      setActiveTab(newTab); 
+      setActiveTab(newTab);
     }
   };
 
   const handleDiscardChanges = () => {
     setShowWarning(false);
     setIsDirty(false);
-    setActiveTab(nextTab); 
+    setActiveTab(nextTab);
   };
 
   const receiveOrder = useMutation({
@@ -70,7 +84,7 @@ function PurchaseOrderReceiveForm({ toggleOpen, order }) {
   });
 
   const saveMutation = React.useMemo(() => {
-    return receiveOrder.mutate
+    return receiveOrder.mutate;
   }, [receiveOrder]);
 
   const validationSchema = yup.object({
@@ -134,8 +148,16 @@ function PurchaseOrderReceiveForm({ toggleOpen, order }) {
       })
     ),
   });
-  
-  const {register, getValues, watch, setValue, clearErrors, handleSubmit, formState: { errors } } = useForm({
+
+  const {
+    register,
+    getValues,
+    watch,
+    setValue,
+    clearErrors,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
     resolver: yupResolver(validationSchema),
     defaultValues: {
       id: order?.id,
@@ -143,31 +165,39 @@ function PurchaseOrderReceiveForm({ toggleOpen, order }) {
       cost_factor: '',
       reference: order?.orderNo,
       exchange_rate: order?.exchange_rate ? order.exchange_rate : 1,
-      items: purchase_order_items?.filter(item => item.product.type === 'Inventory' && item.unreceived_quantity > 0).map(item => ({
-        unreceived_quantity : item.unreceived_quantity,
-        quantity : item.unreceived_quantity,
-        purchase_order_item_id: item.id,
-        rate: item.rate,
-      })),
+      items: purchase_order_items
+        ?.filter(
+          (item) =>
+            item.product.type === 'Inventory' && item.unreceived_quantity > 0
+        )
+        .map((item) => ({
+          unreceived_quantity: item.unreceived_quantity,
+          quantity: item.unreceived_quantity,
+          purchase_order_item_id: item.id,
+          rate: item.rate,
+        })),
     },
   });
 
   // Update form state when additional Costs change
   useEffect(() => {
-    setValue('additional_costs', additionalCosts?.map(additionalCost => ({
-      credit_ledger_name: additionalCost.credit_ledger_name,
-      credit_ledger_id : additionalCost.credit_ledger_id,
-      currency_id: additionalCost.currency_id,
-      exchange_rate: additionalCost.exchange_rate,
-      reference: additionalCost.reference,
-      amount: additionalCost.amount,
-    })));
-  }, [additionalCosts, setValue]); 
+    setValue(
+      'additional_costs',
+      additionalCosts?.map((additionalCost) => ({
+        credit_ledger_name: additionalCost.credit_ledger_name,
+        credit_ledger_id: additionalCost.credit_ledger_id,
+        currency_id: additionalCost.currency_id,
+        exchange_rate: additionalCost.exchange_rate,
+        reference: additionalCost.reference,
+        amount: additionalCost.amount,
+      }))
+    );
+  }, [additionalCosts, setValue]);
 
   // Update the quantity field whenever unreceived_quantity changes
   useEffect(() => {
     purchase_order_items
-      .filter(item => item.unreceived_quantity !== 0)
+      .filter((item) => item.unreceived_quantity !== 0)
       .forEach((item, index) => {
         setValue(`items.${index}.quantity`, item.unreceived_quantity);
       });
@@ -178,18 +208,25 @@ function PurchaseOrderReceiveForm({ toggleOpen, order }) {
     let total = 0;
     for (let i = 0; i < purchase_order_items.length; i++) {
       const purchaseItem = purchase_order_items[i];
-      const item = watch(`items`).find(item => item.purchase_order_item_id === purchaseItem.id);
+      const item = watch(`items`).find(
+        (item) => item.purchase_order_item_id === purchaseItem.id
+      );
       const rate = item?.rate;
       const quantity = item?.quantity;
       const exchangeRate = watch('exchange_rate');
-  
-      if (purchaseItem.unreceived_quantity > 0 && rate !== undefined && quantity !== undefined && exchangeRate !== undefined) {
+
+      if (
+        purchaseItem.unreceived_quantity > 0 &&
+        rate !== undefined &&
+        quantity !== undefined &&
+        exchangeRate !== undefined
+      ) {
         const itemValue = rate * quantity * exchangeRate;
         total += itemValue;
       }
     }
     setTotalReceivedAmount(total);
-  }, [watch()]);  
+  }, [watch()]);
 
   //total for Additional Costs
   useEffect(() => {
@@ -204,13 +241,13 @@ function PurchaseOrderReceiveForm({ toggleOpen, order }) {
   }, [watch()]);
 
   useEffect(() => {
-    const CostFactor = 1 + (totalAmount / totalReceivedAmount);
+    const CostFactor = 1 + totalAmount / totalReceivedAmount;
     setValue('cost_factor', CostFactor);
   }, [totalAmount, totalReceivedAmount]);
 
   const getReceivedItemsSummary = () => {
     return purchase_order_items
-      .filter(item => item.unreceived_quantity !== 0)
+      .filter((item) => item.unreceived_quantity !== 0)
       .map((item, index) => ({
         product: item.product.name,
         unit: item.measurement_unit.symbol,
@@ -222,15 +259,19 @@ function PurchaseOrderReceiveForm({ toggleOpen, order }) {
   };
 
   const getAdditionalCostsSummary = () => {
-    return additionalCosts.filter(item => item.amount > 0).map((item, index) => {
-      const itemCurrency = currencies.find((currency) => currency.id === item.currency_id);
-      return {
-        costName: item.credit_ledger_name,
-        itemCurrency: itemCurrency ? itemCurrency.symbol : null,
-        exchangeRate: item.exchange_rate,
-        amount: item.amount,
-      };
-    });
+    return additionalCosts
+      .filter((item) => item.amount > 0)
+      .map((item, index) => {
+        const itemCurrency = currencies.find(
+          (currency) => currency.id === item.currency_id
+        );
+        return {
+          costName: item.credit_ledger_name,
+          itemCurrency: itemCurrency ? itemCurrency.symbol : null,
+          exchangeRate: item.exchange_rate,
+          amount: item.amount,
+        };
+      });
   };
 
   const gettotalAmount = () => {
@@ -242,16 +283,19 @@ function PurchaseOrderReceiveForm({ toggleOpen, order }) {
   // Function to calculate the total amount for additional costs
   const getTotalAdditionalCostsAmount = () => {
     return getAdditionalCostsSummary().reduce((total, item) => {
-      return total + (item.amount * item.exchangeRate);
+      return total + item.amount * item.exchangeRate;
     }, 0);
   };
 
   const getTotalCostAmount = () => {
     return getReceivedItemsSummary().reduce((total, item) => {
-      return total + item.exchangeRate * item.rate * item.costfactor * item.receivedQuantity;
+      return (
+        total +
+        item.exchangeRate * item.rate * item.costfactor * item.receivedQuantity
+      );
     }, 0);
-  }; 
-  
+  };
+
   //Removing items which quantity <=0
   const validateItems = (data) => {
     return data.items.filter((item) => item.quantity > 0);
@@ -259,46 +303,87 @@ function PurchaseOrderReceiveForm({ toggleOpen, order }) {
 
   const handleSubmitForm = async (data) => {
     const validItems = validateItems(data);
-    const validAdditionalItems = data.additional_costs.every(item => item.credit_ledger_id === null) ? [] : data.additional_costs;// Check if additional costs is filled
-    const updatedData = { ...data, items: validItems, additional_costs: validAdditionalItems }
-    
+    const validAdditionalItems = data.additional_costs.every(
+      (item) => item.credit_ledger_id === null
+    )
+      ? []
+      : data.additional_costs; // Check if additional costs is filled
+    const updatedData = {
+      ...data,
+      items: validItems,
+      additional_costs: validAdditionalItems,
+    };
+
     await saveMutation(updatedData);
   };
 
   return (
-    <FormProvider {...{additionalCosts, setAdditionalCosts, purchase_order_items, totalAmount, order, getReceivedItemsSummary, gettotalAmount, getTotalCostAmount, getTotalAdditionalCostsAmount, getAdditionalCostsSummary,errors, register, setValue, watch, clearErrors,authOrganization}}>
+    <FormProvider
+      {...{
+        additionalCosts,
+        setAdditionalCosts,
+        purchase_order_items,
+        totalAmount,
+        order,
+        getReceivedItemsSummary,
+        gettotalAmount,
+        getTotalCostAmount,
+        getTotalAdditionalCostsAmount,
+        getAdditionalCostsSummary,
+        errors,
+        register,
+        setValue,
+        watch,
+        clearErrors,
+        authOrganization,
+      }}
+    >
       <DialogTitle>
         <form autoComplete='off'>
           <Grid container spacing={1}>
-            <Grid size={12} textAlign={"center"} mb={1}> 
+            <Grid size={12} textAlign={'center'} mb={1}>
               {`Receive ${order.orderNo}`}
             </Grid>
-            <Grid size={{xs: 12, md: 6, lg: 4}}>
-              <Div sx={{ mt: 1}}>
+            <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+              <Div sx={{ mt: 1 }}>
                 <DateTimePicker
                   fullWidth
-                  label="Receive Date"
+                  label='Receive Date'
                   defaultValue={date_received}
-                  minDate={checkOrganizationPermission(PERMISSIONS.PURCHASES_BACKDATE) ? dayjs(authOrganization.organization.recording_start_date) : dayjs().startOf('day')}
-                  maxDate={checkOrganizationPermission(PERMISSIONS.PURCHASES_POSTDATE) ? dayjs().add(10,'year').endOf('year') : dayjs().endOf('day')}
+                  minDate={
+                    checkOrganizationPermission(PERMISSIONS.PURCHASES_BACKDATE)
+                      ? dayjs(
+                          authOrganization.organization.recording_start_date
+                        )
+                      : dayjs().startOf('day')
+                  }
+                  maxDate={
+                    checkOrganizationPermission(PERMISSIONS.PURCHASES_POSTDATE)
+                      ? dayjs().add(10, 'year').endOf('year')
+                      : dayjs().endOf('day')
+                  }
                   slotProps={{
                     textField: {
                       size: 'small',
                       fullWidth: true,
                       readOnly: true,
-                    }
+                    },
                   }}
                   onChange={(newValue) => {
-                    setValue(`date_received`, newValue ? newValue.toISOString() : null, {
-                      shouldValidate: true,
-                      shouldDirty: true
-                    });
+                    setValue(
+                      `date_received`,
+                      newValue ? newValue.toISOString() : null,
+                      {
+                        shouldValidate: true,
+                        shouldDirty: true,
+                      }
+                    );
                   }}
                 />
               </Div>
             </Grid>
-            <Grid size={{xs: 12, md: 6, lg: 4}}>
-              <Div sx={{ mt: 1}}>
+            <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+              <Div sx={{ mt: 1 }}>
                 <StoreSelector
                   allowSubStores={true}
                   frontError={errors.store_id}
@@ -312,18 +397,19 @@ function PurchaseOrderReceiveForm({ toggleOpen, order }) {
                 />
               </Div>
             </Grid>
-            <Grid size={{xs: 12, md: 6, lg: 3}} sx={{ mt: 2, mb: 2 }}>
-              <Stack direction="row" spacing={2}>
-                <Typography sx={{ fontWeight: 'bold'}}>Order Currency:</Typography>
+            <Grid size={{ xs: 12, md: 6, lg: 3 }} sx={{ mt: 2, mb: 2 }}>
+              <Stack direction='row' spacing={2}>
+                <Typography sx={{ fontWeight: 'bold' }}>
+                  Order Currency:
+                </Typography>
                 <Typography>{order.currency?.name}</Typography>
               </Stack>
             </Grid>
-            {
-              order_currency_id > 1 &&
-              <Grid size={{xs: 12, md: 6, lg: 4}}>
-                <Div sx={{mt: 1}}>
+            {order_currency_id > 1 && (
+              <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+                <Div sx={{ mt: 1 }}>
                   <TextField
-                    label="Order Exchange Rate"
+                    label='Order Exchange Rate'
                     fullWidth
                     size='small'
                     error={!!errors?.exchange_rate}
@@ -333,109 +419,138 @@ function PurchaseOrderReceiveForm({ toggleOpen, order }) {
                     }}
                     value={watch('exchange_rate')}
                     onChange={(e) => {
-                      setValue(`exchange_rate`,e.target.value ? sanitizedNumber(e.target.value ): null,{
-                        shouldValidate: true,
-                        shouldDirty: true
-                      });
+                      setValue(
+                        `exchange_rate`,
+                        e.target.value ? sanitizedNumber(e.target.value) : null,
+                        {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                        }
+                      );
                     }}
                   />
                 </Div>
               </Grid>
-            }
-              <Grid size={{xs: 12, md: 6, lg: 4}}>
-                <Div sx={{mt: 1}}>
-                  <TextField
-                    label="Order Reference"
-                    fullWidth
-                    size="small"
-                    defaultValue={watch('reference')}
-                    onChange={(e) => {
-                      setValue(`reference`,e.target.value,{
-                        shouldValidate: true,
-                        shouldDirty: true
-                      });
-                    }}
-                  />
-                </Div>
-              </Grid>
-              <Grid size={{xs: 12, md: 6, lg: 4}}>
-                <Div sx={{mt: 1}}>
-                  <TextField
-                    label="Cost Factor"
-                    fullWidth
-                    size='small'
-                    disabled
-                    InputProps={{
-                      inputComponent: CommaSeparatedField,
-                    }}
-                    value={watch('cost_factor')}
-                  />
-                </Div>
-              </Grid>
+            )}
+            <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+              <Div sx={{ mt: 1 }}>
+                <TextField
+                  label='Order Reference'
+                  fullWidth
+                  size='small'
+                  defaultValue={watch('reference')}
+                  onChange={(e) => {
+                    setValue(`reference`, e.target.value, {
+                      shouldValidate: true,
+                      shouldDirty: true,
+                    });
+                  }}
+                />
+              </Div>
+            </Grid>
+            <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+              <Div sx={{ mt: 1 }}>
+                <TextField
+                  label='Cost Factor'
+                  fullWidth
+                  size='small'
+                  disabled
+                  InputProps={{
+                    inputComponent: CommaSeparatedField,
+                  }}
+                  value={watch('cost_factor')}
+                />
+              </Div>
+            </Grid>
           </Grid>
         </form>
-      </DialogTitle>  
+      </DialogTitle>
       <DialogContent>
-        {activeTab === 0 && <ItemsTab/>}
+        {activeTab === 0 && <ItemsTab />}
 
-        {activeTab === 1 && <AdditionalCostsTab setIsDirty={setIsDirty}/>}
+        {activeTab === 1 && <AdditionalCostsTab setIsDirty={setIsDirty} />}
 
-        {activeTab === 2 && <SummaryTab/>}
+        {activeTab === 2 && <SummaryTab />}
 
         {activeTab === 1 &&
           additionalCosts.map((additionalCost, index) => {
-            return <AdditionalCostsTabRow key={index} setIsDirty={setIsDirty} additionalCost={additionalCost} index={index}/>
-          })
-        }
+            return (
+              <AdditionalCostsTabRow
+                key={index}
+                setIsDirty={setIsDirty}
+                additionalCost={additionalCost}
+                index={index}
+              />
+            );
+          })}
         <Dialog open={showWarning} onClose={() => setShowWarning(false)}>
           <DialogTitle>Unsaved Additional Cost</DialogTitle>
           <DialogContent>
-            You have unsaved Additional Cost. Are you sure you want to leave without saving?
+            You have unsaved Additional Cost. Are you sure you want to leave
+            without saving?
           </DialogContent>
           <DialogActions>
-            <Button size='small' onClick={()=> setShowWarning(false)}>Cancel</Button>
-            <Button size='small' onClick={handleDiscardChanges} color="secondary">Discard</Button>
+            <Button size='small' onClick={() => setShowWarning(false)}>
+              Cancel
+            </Button>
+            <Button
+              size='small'
+              onClick={handleDiscardChanges}
+              color='secondary'
+            >
+              Discard
+            </Button>
           </DialogActions>
         </Dialog>
       </DialogContent>
       <DialogActions>
         <Grid container spacing={1}>
-          <Grid size={{xs: 12, md: 8}}>
+          <Grid size={{ xs: 12, md: 8 }}>
             <Div sx={{ mt: 1, mb: 1 }}>
               <Tabs
                 value={activeTab}
                 onChange={(e, newValue) => handleTabChange(e, newValue)}
-                variant="scrollable"
+                variant='scrollable'
                 scrollButtons='auto'
                 allowScrollButtonsMobile
               >
-                <Tab label="Items"/>
-                <Tab label="Additional Costs"/>
-                <Tab label="Summary Preview"/>
+                <Tab label='Items' />
+                <Tab label='Additional Costs' />
+                <Tab label='Summary Preview' />
               </Tabs>
             </Div>
           </Grid>
-          <Grid size={{xs: 12, md: 4}}>
-            <Stack spacing={1} direction={'row'} justifyContent={'end'} sx={{ mt: 1, mb: 1 }}>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Stack
+              spacing={1}
+              direction={'row'}
+              justifyContent={'end'}
+              sx={{ mt: 1, mb: 1 }}
+            >
               <Button size='small' onClick={() => toggleOpen(false)}>
-                  Cancel
+                Cancel
               </Button>
-              {
-                activeTab > 0 &&
-                <Button size='small' variant='outlined' onClick={() => handleTabChange(null, activeTab - 1)}>
-                  <KeyboardArrowLeftOutlined/>
+              {activeTab > 0 && (
+                <Button
+                  size='small'
+                  variant='outlined'
+                  onClick={() => handleTabChange(null, activeTab - 1)}
+                >
+                  <KeyboardArrowLeftOutlined />
                   Previous
                 </Button>
-              }
-              {
-                activeTab < 2 &&
-                <Button size='small' variant='outlined' onClick={() => handleTabChange(null, activeTab + 1)}>
+              )}
+              {activeTab < 2 && (
+                <Button
+                  size='small'
+                  variant='outlined'
+                  onClick={() => handleTabChange(null, activeTab + 1)}
+                >
                   Next
-                  <KeyboardArrowRightOutlined/>
+                  <KeyboardArrowRightOutlined />
                 </Button>
-              }
-              {
-                activeTab === 2 &&
+              )}
+              {activeTab === 2 && (
                 <LoadingButton
                   loading={receiveOrder.isPending}
                   variant='contained'
@@ -444,13 +559,13 @@ function PurchaseOrderReceiveForm({ toggleOpen, order }) {
                 >
                   Submit
                 </LoadingButton>
-              }
+              )}
             </Stack>
           </Grid>
         </Grid>
       </DialogActions>
     </FormProvider>
-  )
+  );
 }
 
 export default PurchaseOrderReceiveForm;
