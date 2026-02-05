@@ -57,6 +57,7 @@ const EditShift = ({ ClosedShift, setOpenEditDialog }) => {
 const DocumentDialog = ({
   organization,
   ClosedShift,
+  isOpen,
   setOpenDocumentDialog,
 }) => {
   const { activeStation } = useContext(StationFormContext);
@@ -78,7 +79,7 @@ const DocumentDialog = ({
   }
 
   return (
-    <>
+    <Dialog open={isOpen} maxWidth='xl' fullWidth>
       <DialogTitle>
         <Stack
           direction={'row'}
@@ -96,31 +97,32 @@ const DocumentDialog = ({
         </Stack>
       </DialogTitle>
       <DialogContent>
-        {belowLargeScreen && (
-          <Grid
-            container
-            alignItems='center'
-            justifyContent='space-between'
-            mb={2}
-          >
+        <Grid
+          container
+          alignItems='center'
+          justifyContent='space-between'
+          mb={2}
+        >
+          {belowLargeScreen && (
             <Grid size={11}>
               <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)}>
                 <Tab label='ONSCREEN' />
                 <Tab label='PDF' />
               </Tabs>
             </Grid>
-            <Grid size={1} textAlign='right'>
-              <Tooltip title='Close'>
-                <IconButton
-                  size='small'
-                  onClick={() => setOpenDocumentDialog(false)}
-                >
-                  <HighlightOff color='primary' />
-                </IconButton>
-              </Tooltip>
-            </Grid>
+          )}
+          {!belowLargeScreen && <Grid size={11}></Grid>}
+          <Grid size={1} textAlign='right'>
+            <Tooltip title='Close'>
+              <IconButton
+                size='small'
+                onClick={() => setOpenDocumentDialog(false)}
+              >
+                <HighlightOff color='primary' />
+              </IconButton>
+            </Tooltip>
           </Grid>
-        )}
+        </Grid>
         {belowLargeScreen && activeTab === 0 ? (
           <SalesShiftOnScreen
             stationName={activeStation?.name}
@@ -162,7 +164,7 @@ const DocumentDialog = ({
           </Box>
         )}
       </DialogContent>
-    </>
+    </Dialog>
   );
 };
 
@@ -251,6 +253,7 @@ const SalesShiftsItemAction = ({ ClosedShift }) => {
         )}
         {openDocumentDialog && (
           <DocumentDialog
+            isOpen={openDocumentDialog}
             ClosedShift={ClosedShift}
             organization={organization}
             setOpenDocumentDialog={setOpenDocumentDialog}

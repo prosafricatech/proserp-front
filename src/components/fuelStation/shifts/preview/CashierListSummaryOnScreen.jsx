@@ -133,6 +133,11 @@ export default function CashierListSummaryOnScreen({
       </Box>
     );
 
+  // hide dipping summary table if openeing or closing reading is less than 1
+  const hideDippingTable = shiftData.shift_tanks.some((st) => {
+    st.opening_reading < 1 || st.closing_reading < 1;
+  });
+
   return (
     <>
       <SectionHeader title='Cashiers Summary' sectionKey='cashiersSection' />
@@ -294,7 +299,9 @@ export default function CashierListSummaryOnScreen({
                                 padding: '5px',
                               }}
                             >
-                              <Typography>Name</Typography>
+                              <Typography sx={{ color: headerColor }}>
+                                Name
+                              </Typography>
                             </Grid>
                             <Grid
                               size={4}
@@ -304,7 +311,9 @@ export default function CashierListSummaryOnScreen({
                                 padding: '5px',
                               }}
                             >
-                              <Typography>Fuel</Typography>
+                              <Typography sx={{ color: headerColor }}>
+                                Fuel
+                              </Typography>
                             </Grid>
                             <Grid
                               size={4}
@@ -314,7 +323,9 @@ export default function CashierListSummaryOnScreen({
                                 padding: '5px',
                               }}
                             >
-                              <Typography>Amount</Typography>
+                              <Typography sx={{ color: headerColor }}>
+                                Amount
+                              </Typography>
                             </Grid>
                           </Grid>
                           {c.pump_readings.map((pump, index) => {
@@ -432,7 +443,9 @@ export default function CashierListSummaryOnScreen({
                                 padding: '5px',
                               }}
                             >
-                              <Typography>Description</Typography>
+                              <Typography sx={{ color: headerColor }}>
+                                Description
+                              </Typography>
                             </Grid>
                             <Grid
                               size={4}
@@ -442,7 +455,9 @@ export default function CashierListSummaryOnScreen({
                                 padding: '5px',
                               }}
                             >
-                              <Typography>Count</Typography>
+                              <Typography sx={{ color: headerColor }}>
+                                Count
+                              </Typography>
                             </Grid>
                             <Grid
                               size={4}
@@ -452,7 +467,9 @@ export default function CashierListSummaryOnScreen({
                                 padding: '5px',
                               }}
                             >
-                              <Typography>Amount</Typography>
+                              <Typography sx={{ color: headerColor }}>
+                                Amount
+                              </Typography>
                             </Grid>
                           </Grid>
 
@@ -548,7 +565,9 @@ export default function CashierListSummaryOnScreen({
                                 padding: '5px',
                               }}
                             >
-                              <Typography>Expected</Typography>
+                              <Typography sx={{ color: headerColor }}>
+                                Expected
+                              </Typography>
                             </Grid>
                             <Grid
                               size={4}
@@ -558,7 +577,9 @@ export default function CashierListSummaryOnScreen({
                                 padding: '5px',
                               }}
                             >
-                              <Typography>Collected</Typography>
+                              <Typography sx={{ color: headerColor }}>
+                                Collected
+                              </Typography>
                             </Grid>
                             <Grid
                               size={4}
@@ -568,7 +589,9 @@ export default function CashierListSummaryOnScreen({
                                 padding: '5px',
                               }}
                             >
-                              <Typography>Over/Short</Typography>
+                              <Typography sx={{ color: headerColor }}>
+                                Over/Short
+                              </Typography>
                             </Grid>
                           </Grid>
                           <Grid
@@ -653,7 +676,7 @@ export default function CashierListSummaryOnScreen({
         sectionKey='dippingSummarySection'
         mt={2}
       />
-      {openSections.dippingSummarySection && (
+      {openSections.dippingSummarySection && !hideDippingTable && (
         <Card>
           <CardContent
             sx={{
@@ -696,7 +719,9 @@ export default function CashierListSummaryOnScreen({
                               padding: '5px',
                             }}
                           >
-                            <Typography>Opening</Typography>
+                            <Typography sx={{ color: headerColor }}>
+                              Opening
+                            </Typography>
                           </Grid>
                           <Grid
                             size={6}
@@ -729,7 +754,9 @@ export default function CashierListSummaryOnScreen({
                               padding: '5px',
                             }}
                           >
-                            <Typography>Purchase</Typography>
+                            <Typography sx={{ color: headerColor }}>
+                              Purchase
+                            </Typography>
                           </Grid>
                           <Grid
                             size={6}
@@ -759,7 +786,9 @@ export default function CashierListSummaryOnScreen({
                               padding: '5px',
                             }}
                           >
-                            <Typography>Total</Typography>
+                            <Typography sx={{ color: headerColor }}>
+                              Total
+                            </Typography>
                           </Grid>
                           <Grid
                             size={6}
@@ -791,7 +820,9 @@ export default function CashierListSummaryOnScreen({
                               padding: '5px',
                             }}
                           >
-                            <Typography>Closing</Typography>
+                            <Typography sx={{ color: headerColor }}>
+                              Closing
+                            </Typography>
                           </Grid>
                           <Grid
                             size={6}
@@ -823,7 +854,9 @@ export default function CashierListSummaryOnScreen({
                               padding: '5px',
                             }}
                           >
-                            <Typography>Tank Difference</Typography>
+                            <Typography sx={{ color: headerColor }}>
+                              Tank Difference
+                            </Typography>
                           </Grid>
                           <Grid
                             size={6}
@@ -855,7 +888,9 @@ export default function CashierListSummaryOnScreen({
                               padding: '5px',
                             }}
                           >
-                            <Typography>Actual Sold</Typography>
+                            <Typography sx={{ color: headerColor }}>
+                              Actual Sold
+                            </Typography>
                           </Grid>
                           <Grid
                             size={6}
@@ -884,7 +919,9 @@ export default function CashierListSummaryOnScreen({
                               padding: '5px',
                             }}
                           >
-                            <Typography>Pos/Neg</Typography>
+                            <Typography sx={{ color: headerColor }}>
+                              Pos/Neg
+                            </Typography>
                           </Grid>
                           <Grid
                             size={6}
