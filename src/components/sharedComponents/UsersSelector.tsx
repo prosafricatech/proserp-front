@@ -1,24 +1,18 @@
-'use client';
+"use client";
 
-import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
-import CheckBox from '@mui/icons-material/CheckBox';
-import CheckBoxOutlineBlank from '@mui/icons-material/CheckBoxOutlineBlank';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import {
   Autocomplete,
   Checkbox,
   Chip,
   LinearProgress,
   TextField,
-} from '@mui/material';
-import { useQuery } from '@tanstack/react-query';
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
-import organizationServices from '../organizations/organizationServices';
+} from "@mui/material";
+import CheckBoxOutlineBlank from "@mui/icons-material/CheckBoxOutlineBlank";
+import CheckBox from "@mui/icons-material/CheckBox";
+import { useJumboAuth } from "@/app/providers/JumboAuthProvider";
+import organizationServices from "../organizations/organizationServices";
+import { useQuery } from "@tanstack/react-query";
 
 interface User {
   id: number;
@@ -38,7 +32,7 @@ interface UsersSelectorProps {
 const UsersSelector: React.FC<UsersSelectorProps> = ({
   onChange,
   multiple = false,
-  label = 'Users',
+  label = "Users",
   defaultValue = null,
   frontError = null,
   excludeUsers = [],
@@ -46,12 +40,8 @@ const UsersSelector: React.FC<UsersSelectorProps> = ({
   const { authOrganization } = useJumboAuth();
   const organization = authOrganization?.organization;
 
-  const {
-    data: rawUsers = [],
-    isFetching,
-    error,
-  } = useQuery<User[]>({
-    queryKey: ['users', organization?.id],
+  const { data: rawUsers = [], isFetching, error } = useQuery<User[]>({
+    queryKey: ["users", organization?.id],
     queryFn: () =>
       organizationServices.getOrganizationUsers({
         organizationId: organization?.id,
@@ -112,7 +102,7 @@ const UsersSelector: React.FC<UsersSelectorProps> = ({
   return (
     <Autocomplete
       multiple={multiple}
-      size='small'
+      size="small"
       options={users}
       value={value}
       onChange={handleChange}
@@ -130,23 +120,12 @@ const UsersSelector: React.FC<UsersSelectorProps> = ({
         />
       )}
       renderTags={(value: User[], getTagProps) =>
-<<<<<<< HEAD
-        value.map((option, index) => {
-          const tagProps = getTagProps({ index });
-          const { key, ...rest } = tagProps;
-          return (
-            <Chip
-              key={key}
-              {...rest}
-              label={option.name}
-            />
-          );
-        })
-=======
         value.map((option, index) => (
-          <Chip {...getTagProps({ index })} label={option.name} />
+          <Chip
+            {...getTagProps({ index })}
+            label={option.name}
+          />
         ))
->>>>>>> 25e80778bafc04937228b8dcf4b3dcf56f0c02a6
       }
       {...(multiple && {
         renderOption: (props, option: any, { selected }) => {
@@ -155,8 +134,8 @@ const UsersSelector: React.FC<UsersSelectorProps> = ({
           return (
             <li key={key} {...rest}>
               <Checkbox
-                icon={<CheckBoxOutlineBlank fontSize='small' />}
-                checkedIcon={<CheckBox fontSize='small' />}
+                icon={<CheckBoxOutlineBlank fontSize="small" />}
+                checkedIcon={<CheckBox fontSize="small" />}
                 checked={selected}
                 sx={{ mr: 1 }}
               />

@@ -322,12 +322,11 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
   });
 
   const selectedCashiers = watch('cashiers') || [];
-  console.log(errors)
 
   const retrieveLastShiftReadings = useCallback(async () => {
     try {
       const shiftStart = watch('shift_start');
-      if (!shiftStart || SalesShift?.id) return;
+      if (!shiftStart) return;
       
       const lastReadings = await fuelStationServices.retrieveLastReadings({
         stationId: activeStation.id,
@@ -498,7 +497,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
         shouldDirty: true
       });
     }
-    if (shiftStart && !SalesShift?.id) {
+    if (shiftStart) {
       retrieveLastShiftReadings();
     }
   }, [watch('shift_start'), watch('sales_outlet_shift_id'), shifts, SalesShift?.id, retrieveLastShiftReadings, setValue, combineDateTime]);

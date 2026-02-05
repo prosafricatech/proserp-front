@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { JumboDdMenu } from '@jumbo/components';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
@@ -34,14 +34,24 @@ import { useProductsSelect } from '../../productAndServices/products/ProductsSel
 import fuelStationServices from '../fuelStationServices';
 import SalesShiftOnScreen from './preview/SalesShiftOnScreen';
 import SalesShiftPDF from './preview/SalesShiftPDF';
-<<<<<<< HEAD
-import SaleShiftForm2 from './SaleShiftForm2/SaleShiftForm2';
+import SaleShiftForm from './SaleShiftForm/SaleShiftForm';
 import { StationFormContext } from './SalesShifts';
 
+const EditShift = ({ ClosedShift, setOpenEditDialog }) => {
+  const { data: shiftData, isFetching } = useQuery({
+    queryKey: ['showshiftDetails', { id: ClosedShift.id }],
+    queryFn: async () => {
+      return await fuelStationServices.showShiftDetails(ClosedShift.id);
+    },
+  });
+
+  if (isFetching) {
+    return <LinearProgress />;
+  }
+
   return (
-    <SaleShiftForm2 SalesShift={shiftData} setOpenDialog={setOpenEditDialog} />
+    <SaleShiftForm SalesShift={shiftData} setOpenDialog={setOpenEditDialog} />
   );
-}
 };
 
 const DocumentDialog = ({
@@ -51,9 +61,15 @@ const DocumentDialog = ({
 }) => {
   const { activeStation } = useContext(StationFormContext);
   const { shift_teams, fuel_pumps, tanks } = activeStation;
->>>>>>> 25e80778bafc04937228b8dcf4b3dcf56f0c02a6
   const { productOptions } = useProductsSelect();
-  const [includeFuelVouchers, setIncludeFuelVouchers] = useState(false);
+  const [openDetails, setOpenDetails] = useState(false);
+  const [pdfKey, setPdfKey] = useState(0);
+
+  const handleDetailsChange = (e) => {
+    const isChecked = e.target.checked;
+    setOpenDetails(isChecked);
+    setPdfKey(prev => prev + 1);
+  };
 
   const { data: shiftData, isFetching } = useQuery({
     queryKey: ['showshiftDetails', { id: ClosedShift.id }],
@@ -78,11 +94,8 @@ const DocumentDialog = ({
         >
           <Typography>With More Details</Typography>
           <Checkbox
-            checked={includeFuelVouchers}
-            onChange={(e) => {
-              const isChecked = e.target.checked;
-              setIncludeFuelVouchers(isChecked);
-            }}
+            checked={openDetails}
+            onChange={handleDetailsChange}
           />
         </Stack>
       </DialogTitle>
@@ -113,14 +126,9 @@ const DocumentDialog = ({
           </Grid>
         )}
         {belowLargeScreen && activeTab === 0 ? (
-<<<<<<< HEAD
-          <SalesShiftOnScreen stationName={activeStation?.name} includeFuelVouchers={includeFuelVouchers} productOptions={productOptions} shiftData={shiftData} tanks={tanks} fuel_pumps={fuel_pumps} shifts={shifts} organization={organization}/>
-        ) : (
-          <PDFContent fileName={shiftData.shiftNo} document={<SalesShiftPDF stationName={activeStation?.name} includeFuelVouchers={includeFuelVouchers} productOptions={productOptions} shiftData={shiftData} tanks={tanks} fuel_pumps={fuel_pumps} shifts={shifts} organization={organization}/>}/>
-=======
           <SalesShiftOnScreen
             stationName={activeStation?.name}
-            includeFuelVouchers={includeFuelVouchers}
+            openDetails={openDetails}
             productOptions={productOptions}
             shiftData={shiftData}
             tanks={tanks}
@@ -130,11 +138,12 @@ const DocumentDialog = ({
           />
         ) : (
           <PDFContent
+            key={pdfKey}
             fileName={shiftData.shiftNo}
             document={
               <SalesShiftPDF
                 stationName={activeStation?.name}
-                includeFuelVouchers={includeFuelVouchers}
+                openDetails={openDetails}
                 productOptions={productOptions}
                 shiftData={shiftData}
                 tanks={tanks}
@@ -144,7 +153,6 @@ const DocumentDialog = ({
               />
             }
           />
->>>>>>> 25e80778bafc04937228b8dcf4b3dcf56f0c02a6
         )}
         {belowLargeScreen && (
           <Box textAlign='right' mt={5}>

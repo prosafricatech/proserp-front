@@ -1,7 +1,7 @@
 'use client';
 import { JumboCard } from '@jumbo/components';
 import { Breadcrumbs, Link, Typography } from '@mui/material';
-import { ChartIntranet } from './chartIntranet';
+import { ChartIntranet } from './ChartIntranet';
 
 const HeaderChart = ({ title }: { title: React.ReactNode }) => {
   return (
