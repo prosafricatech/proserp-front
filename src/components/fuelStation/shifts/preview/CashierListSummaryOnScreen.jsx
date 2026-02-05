@@ -244,15 +244,15 @@ export default function CashierListSummaryOnScreen({
                     flexDirection: 'column',
                     alignItems: 'center',
                     padding: 0,
-                    mt: 2,
+                    mt: 1,
                   }}
                 >
                   <SectionHeader
                     width='95%'
                     title={c.name}
-                    sectionKey='cashier'
+                    sectionKey={`cashier-${index}`}
                   />
-                  {openSections.cashier && (
+                  {openSections[`cashier-${index}`] && (
                     <>
                       {/* pump details */}
                       <Box
@@ -267,10 +267,10 @@ export default function CashierListSummaryOnScreen({
                           borderBottom: `1px solid ${theme.palette.divider}`,
                           '&:hover': { bgcolor: theme.palette.action.hover },
                         }}
-                        onClick={() => toggleSection('pumpdetails')}
+                        onClick={() => toggleSection(`pumpdetails-${index}`)}
                       >
                         <IconButton size='small' sx={{ mr: 1 }}>
-                          {openSections['pumpdetails'] ? (
+                          {openSections[`pumpdetails-${index}`] ? (
                             <KeyboardArrowDown />
                           ) : (
                             <KeyboardArrowRight />
@@ -280,7 +280,7 @@ export default function CashierListSummaryOnScreen({
                           Pump Details
                         </Typography>
                       </Box>
-                      {openSections.pumpdetails && (
+                      {openSections[`pumpdetails-${index}`] && (
                         <>
                           <Grid
                             container
@@ -314,7 +314,7 @@ export default function CashierListSummaryOnScreen({
                                 padding: '5px',
                               }}
                             >
-                              <Typography>Description</Typography>
+                              <Typography>Amount</Typography>
                             </Grid>
                           </Grid>
                           {c.pump_readings.map((pump, index) => {
@@ -326,6 +326,12 @@ export default function CashierListSummaryOnScreen({
                             );
                             const difference =
                               (pump.closing || 0) - (pump.opening || 0);
+
+                            const fuelPrice = shiftData.fuel_prices.find(
+                              (fp) => fp.product_id === pump.product_id
+                            );
+
+                            const amount = difference * fuelPrice.price;
 
                             return (
                               <Grid
@@ -367,10 +373,11 @@ export default function CashierListSummaryOnScreen({
                                     backgroundColor:
                                       theme.palette.background.default,
                                     padding: '5px',
+                                    textAlign: 'right',
                                   }}
                                 >
                                   <Typography>
-                                    {difference.toLocaleString('en-US', {
+                                    {amount.toLocaleString('en-US', {
                                       minimumFractionDigits: 2,
                                       maximumFractionDigits: 2,
                                     })}
@@ -396,10 +403,12 @@ export default function CashierListSummaryOnScreen({
                           borderBottom: `1px solid ${theme.palette.divider}`,
                           '&:hover': { bgcolor: theme.palette.action.hover },
                         }}
-                        onClick={() => toggleSection('cashDistributions')}
+                        onClick={() =>
+                          toggleSection(`cashDistributions-${index}`)
+                        }
                       >
                         <IconButton size='small' sx={{ mr: 1 }}>
-                          {openSections['cashDistributions'] ? (
+                          {openSections[`cashDistributions-${index}`] ? (
                             <KeyboardArrowDown />
                           ) : (
                             <KeyboardArrowRight />
@@ -409,7 +418,7 @@ export default function CashierListSummaryOnScreen({
                           Cash Distributions
                         </Typography>
                       </Box>
-                      {openSections.cashDistributions && (
+                      {openSections[`cashDistributions-${index}`] && (
                         <>
                           <Grid
                             container
@@ -481,6 +490,7 @@ export default function CashierListSummaryOnScreen({
                                   backgroundColor:
                                     theme.palette.background.default,
                                   padding: '5px',
+                                  textAlign: 'right',
                                 }}
                               >
                                 <Typography>
@@ -509,10 +519,12 @@ export default function CashierListSummaryOnScreen({
                           borderBottom: `1px solid ${theme.palette.divider}`,
                           '&:hover': { bgcolor: theme.palette.action.hover },
                         }}
-                        onClick={() => toggleSection('cashCollections')}
+                        onClick={() =>
+                          toggleSection(`cashCollections-${index}`)
+                        }
                       >
                         <IconButton size='small' sx={{ mr: 1 }}>
-                          {openSections['cashCollections'] ? (
+                          {openSections[`cashCollections-${index}`] ? (
                             <KeyboardArrowDown />
                           ) : (
                             <KeyboardArrowRight />
@@ -522,7 +534,7 @@ export default function CashierListSummaryOnScreen({
                           Cash Collections
                         </Typography>
                       </Box>
-                      {openSections.cashCollections && (
+                      {openSections[`cashCollections-${index}`] && (
                         <>
                           <Grid
                             container
@@ -571,6 +583,7 @@ export default function CashierListSummaryOnScreen({
                                 borderRightColor: 'white',
                                 borderRightWidth: 2,
                                 padding: '5px',
+                                textAlign: 'right',
                               }}
                             >
                               <Typography>
@@ -591,6 +604,7 @@ export default function CashierListSummaryOnScreen({
                                 backgroundColor:
                                   theme.palette.background.default,
                                 padding: '5px',
+                                textAlign: 'right',
                               }}
                             >
                               <Typography>
@@ -606,6 +620,7 @@ export default function CashierListSummaryOnScreen({
                                 backgroundColor:
                                   theme.palette.background.default,
                                 padding: '5px',
+                                textAlign: 'right',
                               }}
                             >
                               <Typography>
@@ -665,9 +680,9 @@ export default function CashierListSummaryOnScreen({
                   <SectionHeader
                     width='95%'
                     title={`Tank ${st.name}` || `Tank ${st.id}`}
-                    sectionKey='tankDetails'
+                    sectionKey={`tankDetails-${index}`}
                   />
-                  {openSections.tankDetails && (
+                  {openSections[`tankDetails-${index}`] && (
                     <Grid container sx={{ marginTop: '4px', width: '85%' }}>
                       <Grid size={12}>
                         {/* Opening */}
@@ -688,6 +703,7 @@ export default function CashierListSummaryOnScreen({
                             sx={{
                               backgroundColor: theme.palette.background.default,
                               padding: '5px',
+                              textAlign: 'right',
                             }}
                           >
                             <Typography>
@@ -720,6 +736,7 @@ export default function CashierListSummaryOnScreen({
                             sx={{
                               backgroundColor: theme.palette.background.default,
                               padding: '5px',
+                              textAlign: 'right',
                             }}
                           >
                             <Typography>
@@ -749,6 +766,7 @@ export default function CashierListSummaryOnScreen({
                             sx={{
                               backgroundColor: theme.palette.background.default,
                               padding: '5px',
+                              textAlign: 'right',
                             }}
                           >
                             <Typography>
@@ -780,6 +798,7 @@ export default function CashierListSummaryOnScreen({
                             sx={{
                               backgroundColor: theme.palette.background.default,
                               padding: '5px',
+                              textAlign: 'right',
                             }}
                           >
                             <Typography>
@@ -811,6 +830,7 @@ export default function CashierListSummaryOnScreen({
                             sx={{
                               backgroundColor: theme.palette.background.default,
                               padding: '5px',
+                              textAlign: 'right',
                             }}
                           >
                             <Typography>
@@ -842,6 +862,7 @@ export default function CashierListSummaryOnScreen({
                             sx={{
                               backgroundColor: theme.palette.background.default,
                               padding: '5px',
+                              textAlign: 'right',
                             }}
                           >
                             <Typography>
@@ -870,6 +891,7 @@ export default function CashierListSummaryOnScreen({
                             sx={{
                               backgroundColor: theme.palette.background.default,
                               padding: '5px',
+                              textAlign: 'right',
                             }}
                           >
                             <Typography>
