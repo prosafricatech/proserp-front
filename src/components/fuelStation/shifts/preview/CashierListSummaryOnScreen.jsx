@@ -135,7 +135,7 @@ export default function CashierListSummaryOnScreen({
 
   // hide dipping summary table if openeing or closing reading is less than 1
   const hideDippingTable = shiftData.shift_tanks.some((st) => {
-    st.opening_reading < 1 || st.closing_reading < 1;
+    return st.opening_reading < 1 || st.closing_reading < 1;
   });
 
   return (
@@ -671,282 +671,304 @@ export default function CashierListSummaryOnScreen({
       )}
 
       {/* === Dipping Summary === */}
-      <SectionHeader
-        title='Dipping Summary'
-        sectionKey='dippingSummarySection'
-        mt={2}
-      />
-      {openSections.dippingSummarySection && !hideDippingTable && (
-        <Card>
-          <CardContent
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              width: '100%',
-              paddingX: '10px',
-            }}
-          >
-            {shiftData.shift_tanks.map((st, index) => {
-              return (
-                <Box
-                  key={index}
-                  sx={{
-                    width: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    padding: 0,
-                    mt: 1,
-                  }}
-                >
-                  <SectionHeader
-                    width='95%'
-                    title={`Tank ${st.name}` || `Tank ${st.id}`}
-                    sectionKey={`tankDetails-${index}`}
-                  />
-                  {openSections[`tankDetails-${index}`] && (
-                    <Grid container sx={{ marginTop: '4px', width: '85%' }}>
-                      <Grid size={12}>
-                        {/* Opening */}
-                        <Grid container sx={{ marginTop: '4px' }}>
-                          <Grid
-                            size={6}
-                            sx={{
-                              backgroundColor: theme.palette.background.default,
-                              borderRightColor: 'white',
-                              borderRightWidth: 2,
-                              padding: '5px',
-                            }}
-                          >
-                            <Typography sx={{ color: headerColor }}>
-                              Opening
-                            </Typography>
-                          </Grid>
-                          <Grid
-                            size={6}
-                            sx={{
-                              backgroundColor: theme.palette.background.default,
-                              padding: '5px',
-                              textAlign: 'right',
-                            }}
-                          >
-                            <Typography>
-                              {' '}
-                              {(st.opening_reading || 0).toLocaleString(
-                                'en-US',
-                                {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                }
-                              )}
-                            </Typography>
+      {!hideDippingTable && (
+        <>
+          <SectionHeader
+            title='Dipping Summary'
+            sectionKey='dippingSummarySection'
+            mt={2}
+          />
+          {openSections.dippingSummarySection && (
+            <Card>
+              <CardContent
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  width: '100%',
+                  paddingX: '10px',
+                }}
+              >
+                {shiftData.shift_tanks.map((st, index) => {
+                  return (
+                    <Box
+                      key={index}
+                      sx={{
+                        width: '100%',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        padding: 0,
+                        mt: 1,
+                      }}
+                    >
+                      <SectionHeader
+                        width='95%'
+                        title={`Tank ${st.name}` || `Tank ${st.id}`}
+                        sectionKey={`tankDetails-${index}`}
+                      />
+                      {openSections[`tankDetails-${index}`] && (
+                        <Grid container sx={{ marginTop: '4px', width: '85%' }}>
+                          <Grid size={12}>
+                            {/* Opening */}
+                            <Grid container sx={{ marginTop: '4px' }}>
+                              <Grid
+                                size={6}
+                                sx={{
+                                  backgroundColor:
+                                    theme.palette.background.default,
+                                  borderRightColor: 'white',
+                                  borderRightWidth: 2,
+                                  padding: '5px',
+                                }}
+                              >
+                                <Typography sx={{ color: headerColor }}>
+                                  Opening
+                                </Typography>
+                              </Grid>
+                              <Grid
+                                size={6}
+                                sx={{
+                                  backgroundColor:
+                                    theme.palette.background.default,
+                                  padding: '5px',
+                                  textAlign: 'right',
+                                }}
+                              >
+                                <Typography>
+                                  {' '}
+                                  {(st.opening_reading || 0).toLocaleString(
+                                    'en-US',
+                                    {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    }
+                                  )}
+                                </Typography>
+                              </Grid>
+                            </Grid>
+                            {/* Purchase */}
+                            <Grid container sx={{ marginTop: '4px' }}>
+                              <Grid
+                                size={6}
+                                sx={{
+                                  backgroundColor:
+                                    theme.palette.background.default,
+                                  borderRightColor: 'white',
+                                  borderRightWidth: 2,
+                                  padding: '5px',
+                                }}
+                              >
+                                <Typography sx={{ color: headerColor }}>
+                                  Purchase
+                                </Typography>
+                              </Grid>
+                              <Grid
+                                size={6}
+                                sx={{
+                                  backgroundColor:
+                                    theme.palette.background.default,
+                                  padding: '5px',
+                                  textAlign: 'right',
+                                }}
+                              >
+                                <Typography>
+                                  {' '}
+                                  {(st.incoming || 0).toLocaleString('en-US', {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                  })}
+                                </Typography>
+                              </Grid>
+                            </Grid>
+                            {/* Total */}
+                            <Grid container sx={{ marginTop: '4px' }}>
+                              <Grid
+                                size={6}
+                                sx={{
+                                  backgroundColor:
+                                    theme.palette.background.default,
+                                  borderRightColor: 'white',
+                                  borderRightWidth: 2,
+                                  padding: '5px',
+                                }}
+                              >
+                                <Typography sx={{ color: headerColor }}>
+                                  Total
+                                </Typography>
+                              </Grid>
+                              <Grid
+                                size={6}
+                                sx={{
+                                  backgroundColor:
+                                    theme.palette.background.default,
+                                  padding: '5px',
+                                  textAlign: 'right',
+                                }}
+                              >
+                                <Typography>
+                                  {' '}
+                                  {(
+                                    (st.opening_reading || 0) +
+                                    (st.incoming || 0)
+                                  ).toLocaleString('en-US', {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                  })}
+                                </Typography>
+                              </Grid>
+                            </Grid>
+                            {/* Closing */}
+                            <Grid container sx={{ marginTop: '4px' }}>
+                              <Grid
+                                size={6}
+                                sx={{
+                                  backgroundColor:
+                                    theme.palette.background.default,
+                                  borderRightColor: 'white',
+                                  borderRightWidth: 2,
+                                  padding: '5px',
+                                }}
+                              >
+                                <Typography sx={{ color: headerColor }}>
+                                  Closing
+                                </Typography>
+                              </Grid>
+                              <Grid
+                                size={6}
+                                sx={{
+                                  backgroundColor:
+                                    theme.palette.background.default,
+                                  padding: '5px',
+                                  textAlign: 'right',
+                                }}
+                              >
+                                <Typography>
+                                  {(st.closing_reading || 0).toLocaleString(
+                                    'en-US',
+                                    {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    }
+                                  )}
+                                </Typography>
+                              </Grid>
+                            </Grid>
+                            {/* Tank Difference */}
+                            <Grid container sx={{ marginTop: '4px' }}>
+                              <Grid
+                                size={6}
+                                sx={{
+                                  backgroundColor:
+                                    theme.palette.background.default,
+                                  borderRightColor: 'white',
+                                  borderRightWidth: 2,
+                                  padding: '5px',
+                                }}
+                              >
+                                <Typography sx={{ color: headerColor }}>
+                                  Tank Difference
+                                </Typography>
+                              </Grid>
+                              <Grid
+                                size={6}
+                                sx={{
+                                  backgroundColor:
+                                    theme.palette.background.default,
+                                  padding: '5px',
+                                  textAlign: 'right',
+                                }}
+                              >
+                                <Typography>
+                                  {(st.tank_difference || 0).toLocaleString(
+                                    'en-US',
+                                    {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    }
+                                  )}
+                                </Typography>
+                              </Grid>
+                            </Grid>
+                            {/* Actual Sold */}
+                            <Grid container sx={{ marginTop: '4px' }}>
+                              <Grid
+                                size={6}
+                                sx={{
+                                  backgroundColor:
+                                    theme.palette.background.default,
+                                  borderRightColor: 'white',
+                                  borderRightWidth: 2,
+                                  padding: '5px',
+                                }}
+                              >
+                                <Typography sx={{ color: headerColor }}>
+                                  Actual Sold
+                                </Typography>
+                              </Grid>
+                              <Grid
+                                size={6}
+                                sx={{
+                                  backgroundColor:
+                                    theme.palette.background.default,
+                                  padding: '5px',
+                                  textAlign: 'right',
+                                }}
+                              >
+                                <Typography>
+                                  {(st.actual_sold || 0).toLocaleString(
+                                    'en-US',
+                                    {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    }
+                                  )}
+                                </Typography>
+                              </Grid>
+                            </Grid>
+                            {/* Pos/Neg */}
+                            <Grid container sx={{ marginTop: '4px' }}>
+                              <Grid
+                                size={6}
+                                sx={{
+                                  backgroundColor:
+                                    theme.palette.background.default,
+                                  borderRightColor: 'white',
+                                  borderRightWidth: 2,
+                                  padding: '5px',
+                                }}
+                              >
+                                <Typography sx={{ color: headerColor }}>
+                                  Pos/Neg
+                                </Typography>
+                              </Grid>
+                              <Grid
+                                size={6}
+                                sx={{
+                                  backgroundColor:
+                                    theme.palette.background.default,
+                                  padding: '5px',
+                                  textAlign: 'right',
+                                }}
+                              >
+                                <Typography>
+                                  {(st.deviation || 0).toLocaleString('en-US', {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                  })}
+                                </Typography>
+                              </Grid>
+                            </Grid>
                           </Grid>
                         </Grid>
-                        {/* Purchase */}
-                        <Grid container sx={{ marginTop: '4px' }}>
-                          <Grid
-                            size={6}
-                            sx={{
-                              backgroundColor: theme.palette.background.default,
-                              borderRightColor: 'white',
-                              borderRightWidth: 2,
-                              padding: '5px',
-                            }}
-                          >
-                            <Typography sx={{ color: headerColor }}>
-                              Purchase
-                            </Typography>
-                          </Grid>
-                          <Grid
-                            size={6}
-                            sx={{
-                              backgroundColor: theme.palette.background.default,
-                              padding: '5px',
-                              textAlign: 'right',
-                            }}
-                          >
-                            <Typography>
-                              {' '}
-                              {(st.incoming || 0).toLocaleString('en-US', {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              })}
-                            </Typography>
-                          </Grid>
-                        </Grid>
-                        {/* Total */}
-                        <Grid container sx={{ marginTop: '4px' }}>
-                          <Grid
-                            size={6}
-                            sx={{
-                              backgroundColor: theme.palette.background.default,
-                              borderRightColor: 'white',
-                              borderRightWidth: 2,
-                              padding: '5px',
-                            }}
-                          >
-                            <Typography sx={{ color: headerColor }}>
-                              Total
-                            </Typography>
-                          </Grid>
-                          <Grid
-                            size={6}
-                            sx={{
-                              backgroundColor: theme.palette.background.default,
-                              padding: '5px',
-                              textAlign: 'right',
-                            }}
-                          >
-                            <Typography>
-                              {' '}
-                              {(
-                                (st.opening_reading || 0) + (st.incoming || 0)
-                              ).toLocaleString('en-US', {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              })}
-                            </Typography>
-                          </Grid>
-                        </Grid>
-                        {/* Closing */}
-                        <Grid container sx={{ marginTop: '4px' }}>
-                          <Grid
-                            size={6}
-                            sx={{
-                              backgroundColor: theme.palette.background.default,
-                              borderRightColor: 'white',
-                              borderRightWidth: 2,
-                              padding: '5px',
-                            }}
-                          >
-                            <Typography sx={{ color: headerColor }}>
-                              Closing
-                            </Typography>
-                          </Grid>
-                          <Grid
-                            size={6}
-                            sx={{
-                              backgroundColor: theme.palette.background.default,
-                              padding: '5px',
-                              textAlign: 'right',
-                            }}
-                          >
-                            <Typography>
-                              {(st.closing_reading || 0).toLocaleString(
-                                'en-US',
-                                {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                }
-                              )}
-                            </Typography>
-                          </Grid>
-                        </Grid>
-                        {/* Tank Difference */}
-                        <Grid container sx={{ marginTop: '4px' }}>
-                          <Grid
-                            size={6}
-                            sx={{
-                              backgroundColor: theme.palette.background.default,
-                              borderRightColor: 'white',
-                              borderRightWidth: 2,
-                              padding: '5px',
-                            }}
-                          >
-                            <Typography sx={{ color: headerColor }}>
-                              Tank Difference
-                            </Typography>
-                          </Grid>
-                          <Grid
-                            size={6}
-                            sx={{
-                              backgroundColor: theme.palette.background.default,
-                              padding: '5px',
-                              textAlign: 'right',
-                            }}
-                          >
-                            <Typography>
-                              {(st.tank_difference || 0).toLocaleString(
-                                'en-US',
-                                {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                }
-                              )}
-                            </Typography>
-                          </Grid>
-                        </Grid>
-                        {/* Actual Sold */}
-                        <Grid container sx={{ marginTop: '4px' }}>
-                          <Grid
-                            size={6}
-                            sx={{
-                              backgroundColor: theme.palette.background.default,
-                              borderRightColor: 'white',
-                              borderRightWidth: 2,
-                              padding: '5px',
-                            }}
-                          >
-                            <Typography sx={{ color: headerColor }}>
-                              Actual Sold
-                            </Typography>
-                          </Grid>
-                          <Grid
-                            size={6}
-                            sx={{
-                              backgroundColor: theme.palette.background.default,
-                              padding: '5px',
-                              textAlign: 'right',
-                            }}
-                          >
-                            <Typography>
-                              {(st.actual_sold || 0).toLocaleString('en-US', {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              })}
-                            </Typography>
-                          </Grid>
-                        </Grid>
-                        {/* Pos/Neg */}
-                        <Grid container sx={{ marginTop: '4px' }}>
-                          <Grid
-                            size={6}
-                            sx={{
-                              backgroundColor: theme.palette.background.default,
-                              borderRightColor: 'white',
-                              borderRightWidth: 2,
-                              padding: '5px',
-                            }}
-                          >
-                            <Typography sx={{ color: headerColor }}>
-                              Pos/Neg
-                            </Typography>
-                          </Grid>
-                          <Grid
-                            size={6}
-                            sx={{
-                              backgroundColor: theme.palette.background.default,
-                              padding: '5px',
-                              textAlign: 'right',
-                            }}
-                          >
-                            <Typography>
-                              {(st.deviation || 0).toLocaleString('en-US', {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              })}
-                            </Typography>
-                          </Grid>
-                        </Grid>
-                      </Grid>
-                    </Grid>
-                  )}
-                </Box>
-              );
-            })}
-          </CardContent>
-        </Card>
+                      )}
+                    </Box>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          )}
+        </>
       )}
     </>
   );

@@ -125,7 +125,7 @@ function SalesShiftPDF({
 
   // hide dipping summary table if openeing or closing reading is less than 1
   const hideDippingTable = shiftData.shift_tanks.some((st) => {
-    st.opening_reading < 1 || st.closing_reading < 1;
+    return st.opening_reading < 1 || st.closing_reading < 1;
   });
 
   return (

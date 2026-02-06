@@ -1,6 +1,6 @@
 'use client';
 
-import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { useJumboAuth } from '@/app/providers/vider';
 import UnauthorizedAccess from '@/shared/Information/UnauthorizedAccess';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 import JumboListToolbar from '@jumbo/components/JumboList/components/JumboListToolbar';
