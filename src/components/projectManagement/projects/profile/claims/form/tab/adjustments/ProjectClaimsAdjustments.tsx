@@ -21,7 +21,7 @@ import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import { Div } from '@jumbo/shared';
 import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
 import { useLedgerSelect } from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
-
+ 
 interface Adjustment {
   type?: 'addition' | 'deduction' | '+ ' | '-' | string;
   type_name?: string;

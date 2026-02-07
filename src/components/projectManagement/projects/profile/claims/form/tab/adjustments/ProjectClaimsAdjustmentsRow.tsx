@@ -15,7 +15,7 @@ interface ProjectClaimsAdjustmentsRowProps {
   submitItemForm: boolean;
   setIsDirty: (dirty: boolean) => void;
 }
-
+ 
 const ProjectClaimsAdjustmentsRow: React.FC<ProjectClaimsAdjustmentsRowProps> = ({
   adjustment,
   adjustments = [],
