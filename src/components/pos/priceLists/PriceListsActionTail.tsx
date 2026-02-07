@@ -11,7 +11,7 @@ import { PERMISSIONS } from '@/utilities/constants/permissions';
 const PriceListForm = lazy(() => import("./form/PriceListForm"));
 const PriceListsExcel = lazy(() => import("./excel/PriceListsExcel"));
 
-const PriceListsActionTail = () => {
+const PriceListsActionTail = ({fuelPriceLists}: {fuelPriceLists?: boolean}) => {
     const { checkOrganizationPermission } = useJumboAuth();
     const [openDialog, setOpenDialog] = useState<boolean>(false);
     const [openExcelDialog, setOpenExcelDialog] = useState<boolean>(false);
@@ -30,11 +30,11 @@ const PriceListsActionTail = () => {
                 fullWidth 
                 fullScreen={belowLargeScreen} 
                 scroll={belowLargeScreen ? 'body' : 'paper'} 
-                maxWidth={openExcelDialog ? "md" : "lg"} 
+                maxWidth={(openExcelDialog || fuelPriceLists) ? "md" : "lg"} 
                 open={openDialog || openExcelDialog}
             >
                 {openExcelDialog && <PriceListsExcel setOpenExcelDialog={setOpenExcelDialog} />}
-                {openDialog && <PriceListForm toggleOpen={setOpenDialog} />}
+                {openDialog && <PriceListForm toggleOpen={setOpenDialog} fuelPriceLists={fuelPriceLists} />}
             </Dialog>
 
             <ButtonGroup variant="outlined" size="small" disableElevation sx={{ '& .MuiButton-root': { px: 1 } }}>

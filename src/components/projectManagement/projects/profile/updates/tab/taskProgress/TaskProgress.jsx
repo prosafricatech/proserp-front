@@ -20,22 +20,7 @@ function TaskProgress({taskProgressItem = null, index = -1, setShowForm = null})
   const [isRetrievingDetails, setIsRetrievingDetails] = useState(false);
   const [uploadFieldsKey, setUploadFieldsKey] = useState(0)
   const [unitToDisplay, setUnitToDisplay] = useState(taskProgressItem && taskProgressItem.unit_symbol);
-  const { deliverable_groups, setFetchDeliverables, projectTimelineActivities, setFetchTimelineActivities, project } =
-    useProjectProfile();
-
-  useEffect(() => {
-    if (!deliverable_groups) {
-      setFetchDeliverables(true);
-    } else {
-      setFetchDeliverables(false);
-    }
-
-    if (!projectTimelineActivities) {
-      setFetchTimelineActivities(true);
-    } else {
-      setFetchTimelineActivities(false);
-    }
-  }, [projectTimelineActivities, setFetchTimelineActivities]);
+  const { projectTimelineActivities, project }= useProjectProfile();
 
     //Define validation Schema
   const validationSchema = yup.object({
@@ -267,7 +252,7 @@ function TaskProgress({taskProgressItem = null, index = -1, setShowForm = null})
 
   return (
     <form autoComplete='off' onSubmit={handleSubmit(updateItems)}>
-        <Grid container columnSpacing={1} width={'100%'} rowSpacing={1}>
+        <Grid container columnSpacing={1} width={'100%'} rowSpacing={1} key={uploadFieldsKey}>
             <Grid size={{xs: 12, md: 4, lg: 4}}>
               <Div sx={{mt: 1}}>
                 <DateTimePicker

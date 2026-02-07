@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useEffect, useState } from "react";
 import {
   Autocomplete,
@@ -12,7 +11,6 @@ import { CheckBox, CheckBoxOutlineBlank } from "@mui/icons-material";
 import supportServices from "../support-services";
 import { useQuery } from "@tanstack/react-query";
 
-// ---- Types ----
 export interface PermissionModule {
   id: string | number;
   name: string;
@@ -42,21 +40,24 @@ const PermissionModulesSelector: React.FC<PermissionModulesSelectorProps> = ({
     PermissionModule[] | PermissionModule | null
   >(multiple ? [] : null);
 
-  // Update selectedModule when modules or defaultValue changes
   useEffect(() => {
     if (permissionModules.length > 0 && defaultValue) {
-      setSelectedModule(
-        multiple
-          ? permissionModules.filter((module: PermissionModule) =>
-              Array.isArray(defaultValue)
-                ? defaultValue.map((v: any) => v.id).includes(module.id)
-                : false
-            )
-          : permissionModules.find(
-              (module: PermissionModule) =>
-                (defaultValue as PermissionModule).id === module.id
-            ) || null
-      );
+      if (multiple) {
+        const ids = (defaultValue as any[]).map((v) =>
+          typeof v === "object" ? v.id : v
+        );
+        setSelectedModule(
+          permissionModules.filter((module) => ids.includes(module.id))
+        );
+      } else {
+        const defaultId =
+          typeof defaultValue === "object"
+            ? (defaultValue as PermissionModule).id
+            : defaultValue;
+        setSelectedModule(
+          permissionModules.find((module) => module.id === defaultId) || null
+        );
+      }
     }
   }, [permissionModules, defaultValue, multiple]);
 
@@ -68,11 +69,12 @@ const PermissionModulesSelector: React.FC<PermissionModulesSelectorProps> = ({
     <Autocomplete<PermissionModule, boolean, boolean, boolean>
       multiple={multiple}
       size="small"
-      isOptionEqualToValue={(option, value) => option.id === value.id}
       options={permissionModules}
       disableCloseOnSelect={multiple}
-      value={selectedModule as any} 
+      value={selectedModule as any}
       getOptionLabel={(option: any) => option.name}
+      // THIS IS THE KEY FIX
+      isOptionEqualToValue={(option, value) => option.id === value.id}
       renderInput={(params) => (
         <TextField
           {...params}

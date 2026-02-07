@@ -1,6 +1,6 @@
 'use client'
 import JumboCardQuick from '@jumbo/components/JumboCardQuick';
-import { Autocomplete, Grid, LinearProgress, Typography, TextField, Checkbox, Chip, useMediaQuery, FormControl, InputLabel, Select, MenuItem, ButtonGroup, Tooltip, Button } from '@mui/material';
+import { Autocomplete, Grid, LinearProgress, Typography, TextField, Checkbox, Chip, useMediaQuery, FormControl, InputLabel, Select, MenuItem, ButtonGroup, Tooltip, Button, Box } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { useDashboardSettings } from '../Dashboard';
 import DippingTrend from './DippingTrend';
@@ -29,7 +29,6 @@ function DippingsCard() {
         [costCenters]
     );
 
-    // Screen handling constants
     const { theme } = useJumboTheme();
     const smallScreen = useMediaQuery(theme.breakpoints.down('md')) || isMobile;
     const midScreen = useMediaQuery('(min-width: 960.1px) and (max-width: 1279.9px)');
@@ -66,7 +65,6 @@ function DippingsCard() {
         queryKey: ['dippingsReport', params],
         queryFn: async () => {
             return await fuelStationServices.dippingReport(params);
-            return null;
         }
     });
 
@@ -83,7 +81,7 @@ function DippingsCard() {
                             <Grid size={{ xs: 12, md: 2 }}>
                                 <Typography variant='h4'>Dippings</Typography>
                             </Grid>
-                            <Grid size={{ xs: 6, md: 5, lg: 3 }}> 
+                            <Grid size={{ xs: 6, md: 10, lg: 10 }} textAlign={'end'}> 
                                 <ButtonGroup
                                     variant="outlined"
                                     size='small'
@@ -106,46 +104,6 @@ function DippingsCard() {
                                     </Tooltip>
                                 </ButtonGroup>
                             </Grid>
-                            <Grid size={{ xs: 6, md: 5, lg: 7 }}>
-                                <Autocomplete
-                                    multiple
-                                    options={fuelStationCostCenters || []}
-                                    value={selectedStations}
-                                    getOptionLabel={(option) => option.name}
-                                    size='small'
-                                    onChange={(event, newValue) => {
-                                        setSelectedStations(newValue || []);
-                                    }}
-                                    renderInput={(params) => (
-                                        <TextField
-                                            {...params}
-                                            variant="outlined"
-                                            label="Fuel Stations"
-                                            placeholder="Fuel Stations"
-                                        />
-                                    )}
-                                    renderTags={(tagValue, getTagProps) => {
-                                        return tagValue.map((option, index) => {
-                                            const { key, ...restProps } = getTagProps({ index });
-                                            return <Chip {...restProps} key={option.id + "-" + key} label={option.name} />;
-                                        });
-                                    }}
-                                    renderOption={(props, option, { selected }) => {
-                                        const { key, ...restProps } = props;
-                                        return (
-                                            <li {...restProps} key={option.id + "-" + key}>
-                                                <Checkbox
-                                                    icon={<CheckBoxOutlineBlank fontSize="small" />}
-                                                    checkedIcon={<CheckBox fontSize="small" />}
-                                                    style={{ marginRight: 8 }}
-                                                    checked={selected}
-                                                />
-                                                {option.name}
-                                            </li>
-                                        );
-                                    }}
-                                />
-                            </Grid>
                         </Grid>
                         <Grid container spacing={5}>
                             <Grid size={{ xs: 12, md: 6 }}>
@@ -159,69 +117,37 @@ function DippingsCard() {
                     :
                     <Grid container spacing={1} columnSpacing={3}>
                         <Grid size={{ xs: 12 }} mb={1}>
-                            <Grid container spacing={1} borderBottom={1} borderColor={'divider'}>
-                                <Grid size={{ xs: 4, md: 1.5, lg: 2.5 }}>
+                            <Grid container spacing={1} borderBottom={1} borderColor={'divider'} pb={1}>
+                                <Grid size={{ xs: 6, md: 6, lg: 2.5 }}>
                                     <Typography variant='h4'>Dippings</Typography>
                                 </Grid>
-                                <Grid size={{ xs: 8, md: 4, lg: 3 }}>
-                                    <Div>
-                                        <FormControl fullWidth size='small'>
-                                            <InputLabel id="selected-display-trend-group-by-input-label">Display</InputLabel>
-                                            <Select
-                                                labelId="selected-display-group-by-label"
-                                                id="selected-display-group-by"
-                                                value={selectedType}
-                                                label={'Display'}
-                                                onChange={(e) => {
-                                                    setSelectedType(e.target.value as 'closing' | 'deviation' | 'calculated stock');
-                                                }}
-                                            >
-                                                <MenuItem value='closing'>Closing</MenuItem>
-                                                <MenuItem value='deviation'>Deviation</MenuItem>
-                                                <MenuItem value='calculated stock'>Stock</MenuItem>
-                                            </Select>
-                                        </FormControl>
-                                    </Div>
-                                </Grid>
-                                <Grid size={{ xs: 12, md: 6.5 }} paddingBottom={1}>
-                                    <Autocomplete
-                                        multiple
-                                        options={fuelStationCostCenters || []}
-                                        value={selectedStations}
-                                        getOptionLabel={(option) => option.name}
-                                        size='small'
-                                        onChange={(event, newValue) => {
-                                            setSelectedStations(newValue || []);
+                                <Grid size={{ xs: 6, md: 6, lg: 9.5 }} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+                                    <FormControl 
+                                        size='small' 
+                                        sx={{ 
+                                            minWidth: 120,
+                                            width: '100%',
+                                            maxWidth: 200 
                                         }}
-                                        renderInput={(params) => (
-                                            <TextField
-                                                {...params}
-                                                variant="outlined"
-                                                label="Fuel Stations"
-                                                placeholder="Fuel Stations"
-                                            />
-                                        )}
-                                        renderTags={(tagValue, getTagProps) => {
-                                            return tagValue.map((option, index) => {
-                                                const { key, ...restProps } = getTagProps({ index });
-                                                return <Chip {...restProps} key={option.id + "-" + key} label={option.name} />;
-                                            });
-                                        }}
-                                        renderOption={(props, option, { selected }) => {
-                                            const { key, ...restProps } = props;
-                                            return (
-                                                <li {...restProps} key={option.id + "-" + key}>
-                                                    <Checkbox
-                                                        icon={<CheckBoxOutlineBlank fontSize="small" />}
-                                                        checkedIcon={<CheckBox fontSize="small" />}
-                                                        style={{ marginRight: 8 }}
-                                                        checked={selected}
-                                                    />
-                                                    {option.name}
-                                                </li>
-                                            );
-                                        }}
-                                    />
+                                    >
+                                        <InputLabel id="selected-display-trend-group-by-input-label">Display</InputLabel>
+                                        <Select
+                                            labelId="selected-display-group-by-label"
+                                            id="selected-display-group-by"
+                                            value={selectedType}
+                                            label={'Display'}
+                                            onChange={(e) => {
+                                                setSelectedType(e.target.value as 'closing' | 'deviation' | 'calculated stock');
+                                            }}
+                                            sx={{
+                                                width: '100%',
+                                            }}
+                                        >
+                                            <MenuItem value='closing'>Closing</MenuItem>
+                                            <MenuItem value='deviation'>Deviation</MenuItem>
+                                            <MenuItem value='calculated stock'>Stock</MenuItem>
+                                        </Select>
+                                    </FormControl>
                                 </Grid>
                             </Grid>
                         </Grid>

@@ -31,7 +31,7 @@ import { Div } from '@jumbo/shared';
 import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
 
 const BudgetItemsForm = ({ budget, setOpenDialog }) => {
-  const { deliverable_groups, setFetchDeliverables, projectTimelineActivities, setFetchTimelineActivities} = useProjectProfile();
+  const { deliverable_groups, projectTimelineActivities} = useProjectProfile();
   const [activeTab, setActiveTab] = useState(0);
   const [boundToOption, setBoundToOption] = useState('');
   const [selectedItemable, setSelectedItemable] = useState(null)
@@ -39,21 +39,6 @@ const BudgetItemsForm = ({ budget, setOpenDialog }) => {
   const [searchQueryIds, setSearchQueryIds] = useState([]);
   const { currencies } = useCurrencySelect();
   const baseCurrency = currencies.find(c => c.is_base === 1);
-
-  useEffect(() => {
-    if (!deliverable_groups) {
-      setFetchDeliverables(true);
-    } else {
-      setFetchDeliverables(false)
-    }
-
-    if (!projectTimelineActivities) {
-      setFetchTimelineActivities(true);
-    } else {
-      setFetchTimelineActivities(false)
-    }
-
-  }, [projectTimelineActivities, deliverable_groups, setFetchDeliverables, setFetchTimelineActivities]);
 
   const deliverablesOptions = (groups, depth = 0) => {
     if (!Array.isArray(groups)) {

@@ -159,24 +159,24 @@ const RequisitionsOnScreen: React.FC<Props> = ({
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ backgroundColor: mainColor, color: contrastText }}>
+                    <TableCell colSpan={1} sx={{ backgroundColor: mainColor, color: contrastText }}>
                       S/N
                     </TableCell>
-                    <TableCell sx={{ backgroundColor: mainColor, color: contrastText }}>
+                    <TableCell colSpan={3} sx={{ backgroundColor: mainColor, color: contrastText }}>
                       {isPurchase ? 'Product' : 'Ledger'}
                     </TableCell>
-                    <TableCell sx={{ backgroundColor: mainColor, color: contrastText }} align="right">
+                    <TableCell colSpan={1} sx={{ backgroundColor: mainColor, color: contrastText }} align="right">
                       Quantity
                     </TableCell>
-                    <TableCell sx={{ backgroundColor: mainColor, color: contrastText }} align="right">
+                    <TableCell colSpan={1} sx={{ backgroundColor: mainColor, color: contrastText }} align="right">
                       Rate
                     </TableCell>
                     {isPurchase && requisition.vat_amount > 0 && (
-                      <TableCell sx={{ backgroundColor: mainColor, color: contrastText }} align="right">
+                      <TableCell colSpan={1} sx={{ backgroundColor: mainColor, color: contrastText }} align="right">
                         VAT
                       </TableCell>
                     )}
-                    <TableCell sx={{ backgroundColor: mainColor, color: contrastText }} align="right">
+                    <TableCell colSpan={1} sx={{ backgroundColor: mainColor, color: contrastText }} align="right">
                       Amount
                     </TableCell>
                   </TableRow>
@@ -190,8 +190,8 @@ const RequisitionsOnScreen: React.FC<Props> = ({
                           backgroundColor: theme.palette.action.hover,
                         }
                       }}>
-                        <TableCell>{index + 1}</TableCell>
-                        <TableCell>
+                        <TableCell colSpan={1}>{index + 1}</TableCell>
+                        <TableCell colSpan={3}>
                           <Box>
                             <Typography variant="body2">
                               {isPurchase ? (item as PurchaseItem).product?.name : (item as PaymentItem).ledger?.name}
@@ -227,18 +227,18 @@ const RequisitionsOnScreen: React.FC<Props> = ({
                             )}
                           </Box>
                         </TableCell>
-                        <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
+                        <TableCell colSpan={1} align="right" sx={{ fontFamily: 'monospace' }}>
                           {`${item.quantity?.toLocaleString()} ${item.measurement_unit.symbol}`}
                         </TableCell>
-                        <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
+                        <TableCell colSpan={1} align="right" sx={{ fontFamily: 'monospace' }}>
                           {formatNumber(item.rate)}
                         </TableCell>
                         {isPurchase && requisition?.vat_amount > 0 && (
-                          <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
+                          <TableCell colSpan={1} align="right" sx={{ fontFamily: 'monospace' }}>
                             {formatNumber(item.rate * (item.vat_percentage || 0) * 0.01)}
                           </TableCell>
                         )}
-                        <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
+                        <TableCell colSpan={1} align="right" sx={{ fontFamily: 'monospace' }}>
                           {formatCurrency(item.quantity * item.rate * (1 + (item.vat_percentage || 0) * 0.01))}
                         </TableCell>
                       </TableRow>

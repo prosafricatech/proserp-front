@@ -2,8 +2,8 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useJumboAuth } from "@/app/providers/JumboAuthProvider";
-import { Station } from './StationType';
 import stationServices from './station-services';
+import { Station } from './StationType';
 
 interface StationContextType {
   activeStation: Station | null;

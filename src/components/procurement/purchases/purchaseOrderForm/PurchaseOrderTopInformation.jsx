@@ -87,14 +87,14 @@ function PurchaseOrderTopInformation() {
                         }
                         }}
                         startAdornment= {
-                        <Tooltip title={'Add Supplier'}>
-                            <AddOutlined
-                                onClick={() => setStakeholderQuickAddDisplay(true)}
-                                sx={{
-                                    cursor: 'pointer',
-                                }}
-                            />
-                        </Tooltip>
+                            checkOrganizationPermission(PERMISSIONS.STAKEHOLDERS_CREATE) && (
+                                <Tooltip title="Add Supplier">
+                                    <AddOutlined
+                                        onClick={() => setStakeholderQuickAddDisplay(true)}
+                                        sx={{ cursor: 'pointer' }}
+                                    />
+                                </Tooltip>
+                            )
                         }
                     />
                 </Div>

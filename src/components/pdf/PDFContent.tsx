@@ -34,13 +34,13 @@ const StyledDownloadLink = styled('div')(({ theme }) => ({
 
 const PDFDownloadLink = lazy(() => 
   import('@react-pdf/renderer').then(module => ({ 
-    default: module.PDFDownloadLink 
+    default: module.PDFDownloadLink || module.default?.PDFDownloadLink 
   }))
 );
 
 const PDFViewer = lazy(() => 
   import('@react-pdf/renderer').then(module => ({ 
-    default: module.PDFViewer 
+    default: module.PDFViewer || module.default?.PDFViewer 
   }))
 );
 

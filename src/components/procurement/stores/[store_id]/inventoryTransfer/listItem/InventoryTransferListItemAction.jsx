@@ -185,7 +185,7 @@ const InventoryTransferListItemAction = ({ transfer }) => {
       {(checkOrganizationPermission(PERMISSIONS.INVENTORY_TRANSFERS_BACKDATE) ||
         transfer.transfer_date >= dayjs().startOf('date').toISOString()) &&
         transfer.external_transfer === null &&
-        activeStore.id === transfer.source_store_id &&
+        activeStore?.id === transfer.source_store_id &&
         (transfer.status === 'Pending' || transfer.status === 'Completed') && (
           <Tooltip title={`Edit ${transfer.transferNo}`}>
             <IconButton onClick={handleOpenEditForm}>
@@ -194,7 +194,7 @@ const InventoryTransferListItemAction = ({ transfer }) => {
           </Tooltip>
         )}
 
-      {(activeStore.id !== transfer.source_store_id &&
+      {(activeStore?.id !== transfer.source_store_id &&
         (transfer.status === 'Pending' || transfer.status === 'Partially Received')) && (
         <Tooltip title={`Receive ${transfer.transferNo}`}>
           <IconButton onClick={() => setOpenReceiveDialog(true)}>
@@ -206,7 +206,7 @@ const InventoryTransferListItemAction = ({ transfer }) => {
       {(checkOrganizationPermission(PERMISSIONS.INVENTORY_TRANSFERS_BACKDATE) ||
         transfer.transfer_date >= dayjs().startOf('date').toISOString()) &&
         !transfer.external_transfer &&
-        activeStore.id === transfer.source_store_id &&
+        activeStore?.id === transfer.source_store_id &&
         (transfer.status === 'Pending' || !['Fully Received', 'Partially Received'].includes(transfer.status)) && (
           <Tooltip title={`Delete ${transfer.transferNo}`}>
             <IconButton onClick={handleDelete}>

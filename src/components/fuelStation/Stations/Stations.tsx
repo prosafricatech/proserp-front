@@ -12,12 +12,12 @@ import { MODULES } from '@/utilities/constants/modules';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 import UnsubscribedAccess from '@/shared/Information/UnsubscribedAccess';
 import UnauthorizedAccess from '@/shared/Information/UnauthorizedAccess';
-import type { Station } from './StationType';
 import StationActionTail from './StationActionTail';
 import stationServices from './station-services';
 import ProductsProvider from '@/components/productAndServices/products/ProductsProvider';
 import ProductsSelectProvider from '@/components/productAndServices/products/ProductsSelectProvider';
 import StationListItem from './StationListItem';
+import { Station } from './StationType';
 
 const Stations = () => {
   const params = useParams<{ station?: string; id?: string; keyword?: string }>();
@@ -26,7 +26,7 @@ const Stations = () => {
   const [mounted, setMounted] = useState(false);
 
   const [queryOptions, setQueryOptions] = useState({
-    queryKey: 'station',
+    queryKey: 'stations',
     queryParams: { id: params.id, keyword: '' },
     countKey: 'total',
     dataKey: 'data',

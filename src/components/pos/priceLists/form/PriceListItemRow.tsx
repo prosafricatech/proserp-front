@@ -15,7 +15,8 @@ interface PriceListItemRowProps {
   index: number;
 }
 
-const PriceListItemRow: React.FC<PriceListItemRowProps> = ({ 
+const PriceListItemRow: React.FC<PriceListItemRowProps & { fuelPriceLists?: boolean }> = ({ 
+  fuelPriceLists,
   setClearFormKey, 
   setSubmitItemForm, 
   submitItemForm, 
@@ -45,7 +46,7 @@ const PriceListItemRow: React.FC<PriceListItemRowProps> = ({
           <Grid size={{xs: 1, md: 0.5}}>
             {index + 1}.
           </Grid>
-          <Grid size={{xs: 10, md: 4}}>
+          <Grid size={{xs: 10, md: fuelPriceLists ? 5 : 4}}>
             <Tooltip title={'Product Name'}>
               <Typography>{product.name}</Typography>
             </Tooltip>
@@ -55,17 +56,20 @@ const PriceListItemRow: React.FC<PriceListItemRowProps> = ({
               <Typography>{item?.unit_symbol || item.measurement_unit?.symbol}</Typography>
             </Tooltip>
           </Grid>
-          <Grid size={{xs: 6, md: 2.5}}>
+          <Grid size={{xs: 6, md: fuelPriceLists ? 3 : 2.5}}>
             <Tooltip title={'Price'}>
               <Typography>{item.price.toLocaleString()}</Typography>
             </Tooltip>
           </Grid>
-          <Grid size={{xs: 6, md: 2.5}} textAlign={{xs: 'end', md: 'start'}}>
-            <Tooltip title={'Bottom Cap'}>
-              <Typography>{item.bottom_cap.toLocaleString()}</Typography>
-            </Tooltip>
-          </Grid>
-          <Grid textAlign={'end'} size={{xs: 12, md: 1}}>
+          {
+           !fuelPriceLists && 
+            <Grid size={{xs: 6, md: 2.5}} textAlign={{xs: 'end', md: 'start'}}>
+              <Tooltip title={'Bottom Cap'}>
+                <Typography>{item.bottom_cap.toLocaleString()}</Typography>
+              </Tooltip>
+            </Grid>
+          }
+          <Grid textAlign={'end'} size={{xs: fuelPriceLists ?  6 : 12, md: fuelPriceLists ? 2 : 1}}>
             <Tooltip title='Edit Item'>
               <IconButton 
                 size='small' 
@@ -101,6 +105,7 @@ const PriceListItemRow: React.FC<PriceListItemRowProps> = ({
           index={index} 
           items={items} 
           setItems={setItems}
+          fuelPriceLists={fuelPriceLists}
         />
       )}
     </React.Fragment>

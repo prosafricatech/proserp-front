@@ -33,7 +33,7 @@ function PurchaseOrderReceiveForm({ toggleOpen, order }) {
   const {currencies} = useCurrencySelect();
   const {authOrganization,checkOrganizationPermission} = useJumboAuth();
   const [totalReceivedAmount, setTotalReceivedAmount] = useState(0);
-  const [totalAmount, settotalAmount] = useState(0);
+  const [totalAmount, setTotalAmount] = useState(0);
 
   const [nextTab, setNextTab] = useState(null);
   const [showWarning, setShowWarning] = useState(false);
@@ -200,7 +200,7 @@ function PurchaseOrderReceiveForm({ toggleOpen, order }) {
 
       total += currency_id > 1 ? amount * exchange_rate : amount;
     }
-    settotalAmount(total);
+    setTotalAmount(total);
   }, [watch()]);
 
   useEffect(() => {

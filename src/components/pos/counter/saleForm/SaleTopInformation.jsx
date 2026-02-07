@@ -140,16 +140,16 @@ function SaleTopInformation() {
                                 });
                                 setValue('vrn', newValue ? newValue.vrn : null);
                             }}
-                            startAdornment={
-                                !majorInfoOnly &&
-                                <Tooltip title={'Add Client'}>
-                                    <AddOutlined
-                                        onClick={() => setStakeholderQuickAddDisplay(true)}
-                                        sx={{
-                                          cursor: 'pointer',
-                                        }}
-                                    />
+                            startAdornment= {
+                              !majorInfoOnly &&
+                              checkOrganizationPermission(PERMISSIONS.STAKEHOLDERS_CREATE) && (
+                                <Tooltip title="Add Client">
+                                  <AddOutlined
+                                    onClick={() => setStakeholderQuickAddDisplay(true)}
+                                    sx={{ cursor: 'pointer' }}
+                                  />
                                 </Tooltip>
+                              )
                             }
                         />
                     </Div>

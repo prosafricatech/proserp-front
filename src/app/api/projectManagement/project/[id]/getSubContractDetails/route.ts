@@ -12,7 +12,7 @@ export async function GET(
   const { headers, response } = await getAuthHeaders(req);
   if (response) return response;
 
-  const url = new URL(`${API_BASE}/project-subcontracts/${id}/certificates`);
+  const url = new URL(`${API_BASE}/project-subcontract/${id}`);
   req.nextUrl.searchParams.forEach((value, key) => url.searchParams.set(key, value));
 
   const res = await fetch(url.toString(), {

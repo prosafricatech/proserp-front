@@ -1,5 +1,5 @@
 import { Alert, Button, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle, Divider, Grid, IconButton, Stack, TextField, Tooltip, Typography } from '@mui/material';
-import { DatePicker } from '@mui/x-date-pickers';
+import { DateTimePicker } from '@mui/x-date-pickers';
 import React, { useState } from 'react';
 import * as yup from "yup";
 import PriceListsItemForm from './PriceListItemForm';
@@ -34,7 +34,7 @@ interface FormValues {
   id?: number;
 }
 
-const PriceListForm: React.FC<PriceListFormProps> = ({ toggleOpen, priceList = null }) => {
+const PriceListForm: React.FC<PriceListFormProps & { fuelPriceLists?: boolean }> = ({ fuelPriceLists, toggleOpen, priceList = null }) => {
   const [effective_date] = useState<Dayjs>(priceList ? dayjs(priceList.effective_date) : dayjs());
   const [items, setItems] = useState<PriceListItem[]>(priceList ? priceList.items : []);
   const [applicableOutlets, setApplicableOutlets] = useState<any>(priceList ? priceList.items[0]?.sales_outlets || [] : []);
@@ -169,8 +169,8 @@ const handleMainFormSubmit = async () => {
           <Grid container spacing={1}>
             <Grid size={{xs: 12, md: 4}}>
               <Div sx={{ mt: 1, mb: 1 }}>
-                <DatePicker
-                  label="Effective Date"
+                <DateTimePicker
+                  label="Effective Date & Time"
                   defaultValue={effective_date}
                   slotProps={{
                     textField: {
@@ -208,55 +208,57 @@ const handleMainFormSubmit = async () => {
                 />
               </Div>
             </Grid>
-            <Grid size={{xs: 12, md: 4}}>
-              <Grid container rowSpacing={0.3}>
-                <Stack direction={'row'} alignItems={'center'}>
-                  <Checkbox
-                    checked={costInsights}
-                    size='small'
-                    onChange={(e) => {
-                      const isChecked = e.target.checked;
-                      setCostInsights(isChecked);
-                    }}
-                  />
-                  <Typography>Cost Insights</Typography>
-                </Stack>
-                {!!costInsights && (
-                  <>
-                    <Grid size={12}>
-                      <Div sx={{ mt: 0.5}}>
-                        <StoreSelector
-                          defaultValue={null}
-                          allowSubStores={true}
-                          onChange={(newValue: { id: number } | null) => {
-                            setValue('store_id', newValue ? newValue.id : null, {
-                              shouldValidate: true,
-                              shouldDirty: true,
-                            });
-                          }}
-                        />
-                      </Div>
-                    </Grid>
-                    <Grid size={12}>
-                      <Div sx={{mt: 0.5}}>
-                        <CostCenterSelector
-                          label="Cost Center"
-                          multiple={false}
-                          frontError={errors.cost_center_id}
-                          onChange={(newValue: any) => {
-                            setValue('cost_center_id', newValue?.id ? newValue.id : null, {
-                              shouldValidate: true,
-                              shouldDirty: true
-                            });
-                          }}
-                        />
-                      </Div>
-                    </Grid>
-                  </>
-                )}
+            {!fuelPriceLists &&
+              <Grid size={{xs: 12, md: 4}}>
+                <Grid container rowSpacing={0.3}>
+                  <Stack direction={'row'} alignItems={'center'}>
+                    <Checkbox
+                      checked={costInsights}
+                      size='small'
+                      onChange={(e) => {
+                        const isChecked = e.target.checked;
+                        setCostInsights(isChecked);
+                      }}
+                    />
+                    <Typography>Cost Insights</Typography>
+                  </Stack>
+                  {!!costInsights && (
+                    <>
+                      <Grid size={12}>
+                        <Div sx={{ mt: 0.5}}>
+                          <StoreSelector
+                            defaultValue={null}
+                            allowSubStores={true}
+                            onChange={(newValue: { id: number } | null) => {
+                              setValue('store_id', newValue ? newValue.id : null, {
+                                shouldValidate: true,
+                                shouldDirty: true,
+                              });
+                            }}
+                          />
+                        </Div>
+                      </Grid>
+                      <Grid size={12}>
+                        <Div sx={{mt: 0.5}}>
+                          <CostCenterSelector
+                            label="Cost Center"
+                            multiple={false}
+                            frontError={errors.cost_center_id}
+                            onChange={(newValue: any) => {
+                              setValue('cost_center_id', newValue?.id ? newValue.id : null, {
+                                shouldValidate: true,
+                                shouldDirty: true
+                              });
+                            }}
+                          />
+                        </Div>
+                      </Grid>
+                    </>
+                  )}
+                </Grid>
               </Grid>
-            </Grid>
-            <Grid size={{xs: 12, md: 8}} alignItems={'start'}>
+            }
+            <Grid size={{xs: 12, md: !fuelPriceLists ? 8 : 12}} alignItems={'start'}>
               <Div sx={{ mt: {xs: 1, md: !!costInsights ? 6 : 1}, mb: 1 }}>
                 <TextField
                   label='Narration'
@@ -274,7 +276,7 @@ const handleMainFormSubmit = async () => {
         <Grid size={12}>
           <Divider />
           <PriceListsItemForm 
-            setClearFormKey={setClearFormKey} submitItemForm={submitItemForm} setSubmitItemForm={setSubmitItemForm} key={clearFormKey} setIsDirty={setIsDirty} costInsights={costInsights} costCenterId={Number(costCenterId)} storeId={Number(storeId)} setItems={setItems} items={items} 
+            fuelPriceLists={fuelPriceLists} setClearFormKey={setClearFormKey} submitItemForm={submitItemForm} setSubmitItemForm={setSubmitItemForm} key={clearFormKey} setIsDirty={setIsDirty} costInsights={costInsights} costCenterId={Number(costCenterId)} storeId={Number(storeId)} setItems={setItems} items={items} 
           />
         </Grid>
       </DialogTitle>
@@ -282,7 +284,7 @@ const handleMainFormSubmit = async () => {
         {errors?.items?.message && items.length < 1 && <Alert severity='error'>{errors.items.message}</Alert>}
         
         {items.map((item, index) => (
-          <PriceListsItemRow setClearFormKey={setClearFormKey} submitItemForm={submitItemForm} setSubmitItemForm={setSubmitItemForm} setIsDirty={setIsDirty} key={index} index={index} setItems={setItems} items={items} item={item} />
+          <PriceListsItemRow fuelPriceLists={fuelPriceLists} setClearFormKey={setClearFormKey} submitItemForm={submitItemForm} setSubmitItemForm={setSubmitItemForm} setIsDirty={setIsDirty} key={index} index={index} setItems={setItems} items={items} item={item} />
         ))}
 
         <Dialog open={showWarning} onClose={() => setShowWarning(false)}>

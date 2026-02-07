@@ -5,7 +5,7 @@ const pdfStyles = StyleSheet.create({
     page: {
         flexDirection: 'column',
         padding: 50,
-        position: 'relative',// Necessary for positioning the footer
+        position: 'relative',
     },
     footer: {
       position: 'absolute',
@@ -13,7 +13,7 @@ const pdfStyles = StyleSheet.create({
       left: 30,
       right: 30,
       textAlign: 'center',
-      fontSize: 5
+      fontSize: 9
     },
     watermark: {
       position: 'absolute',
@@ -23,13 +23,13 @@ const pdfStyles = StyleSheet.create({
       height: '100%',
       justifyContent: 'center',
       alignItems: 'center',
-      opacity: 0.5, // Adjust the opacity as needed
-      //transform: 'rotate(-45deg)', // Rotate the text to your desired angle
+      opacity: 0.5,
     },
     watermarkText: {
-      fontSize: 48,
+      fontSize: 80,
       fontWeight: 'bold',
-      color: '#CCCCCC', // Watermark text color
+      color: '#CCCCCC',
+      transform: 'rotate(-30deg)',
     },
     table: {
       display: 'table' as any,
@@ -81,12 +81,12 @@ const pdfStyles = StyleSheet.create({
       padding: 3,
       fontSize: '12px',
     },
-    dottedLine: {//for adding dotted line
+    dottedLine: {
       textAlign: 'center',
       letterSpacing: 5,
       fontSize: '6px',
     },
-    blackLine: {//for adding black line
+    blackLine: {
       borderBottomWidth: 1.5,
       borderColor: 'black',
       marginBottom: 1,

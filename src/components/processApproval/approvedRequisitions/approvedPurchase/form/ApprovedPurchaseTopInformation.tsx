@@ -178,13 +178,15 @@ function ApprovedPurchaseTopInformation({
               defaultValue={order?.stakeholder?.id}
               addedStakeholder={addedStakeholder}
               onChange={handleStakeholderChange}
-              startAdornment={
-                <Tooltip title='Add Supplier'>
-                  <AddOutlined
-                    onClick={() => setStakeholderQuickAddDisplay(true)}
-                    sx={{ cursor: 'pointer' }}
-                  />
-                </Tooltip>
+              startAdornment= {
+                checkOrganizationPermission(PERMISSIONS.STAKEHOLDERS_CREATE) && (
+                  <Tooltip title="Add Supplier">
+                    <AddOutlined
+                        onClick={() => setStakeholderQuickAddDisplay(true)}
+                        sx={{ cursor: 'pointer' }}
+                    />
+                  </Tooltip>
+                )
               }
             />
           </Div>

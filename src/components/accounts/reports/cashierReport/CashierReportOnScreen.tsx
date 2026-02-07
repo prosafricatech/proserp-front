@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import {
   Accordion,
@@ -7,6 +9,7 @@ import {
   AccordionDetails,
   Typography,
   Tooltip,
+  useTheme,
 } from '@mui/material';
 import RemoveIcon from '@mui/icons-material/Remove';
 import AddIcon from '@mui/icons-material/Add';
@@ -36,10 +39,11 @@ interface CashierReportOnScreenProps {
   authOrganization: AuthOrganization;
 }
 
-const CashierReportOnScreen: React.FC<CashierReportOnScreenProps> = ({ 
-  reportData, 
-  authOrganization 
+const CashierReportOnScreen: React.FC<CashierReportOnScreenProps> = ({
+  reportData,
+  authOrganization,
 }) => {
+  const theme = useTheme();
   const [expanded, setExpanded] = useState<boolean[]>(Array(reportData.length).fill(false));
   const currencyCode = authOrganization.base_currency.code;
 
@@ -49,37 +53,38 @@ const CashierReportOnScreen: React.FC<CashierReportOnScreenProps> = ({
     setExpanded(newExpanded);
   };
 
+  const currency = (value: number) =>
+    value.toLocaleString('en-US', {
+      style: 'currency',
+      currency: currencyCode,
+    });
+
   return (
     <>
       {reportData.map((item, index) => {
-        const incomingTotal = item.incoming_transactions
-          ? Object.values(item.incoming_transactions).reduce(
-              (sum: number, transaction: Transaction) => sum + transaction.amount, 
-              0
-            )
-          : 0;
+        const incomingTotal =
+          item.incoming_transactions
+            ? Object.values(item.incoming_transactions).reduce((s, t) => s + t.amount, 0)
+            : 0;
 
-        const outgoingTotal = item.outgoing_transactions
-          ? Object.values(item.outgoing_transactions).reduce(
-              (sum: number, transaction: Transaction) => sum + transaction.amount, 
-              0
-            )
-          : 0;
+        const outgoingTotal =
+          item.outgoing_transactions
+            ? Object.values(item.outgoing_transactions).reduce((s, t) => s + t.amount, 0)
+            : 0;
+
+        const closingColor =
+          item.closing_balance > 0
+            ? theme.palette.info.main
+            : item.closing_balance < 0
+            ? theme.palette.warning.main
+            : theme.palette.text.secondary;
 
         return (
           <Accordion
             key={index}
-            square
             expanded={expanded[index]}
             onChange={() => handleChange(index)}
-            sx={{
-              borderRadius: 2,
-              borderTop: 2,
-              borderColor: 'divider',
-              '&:hover': {
-                bgcolor: 'action.hover',
-              },
-            }}
+            sx={{ borderRadius: 2, border: 1, borderColor: 'divider', mb: 1 }}
           >
             <AccordionSummary
               expandIcon={expanded[index] ? <RemoveIcon /> : <AddIcon />}
@@ -113,211 +118,176 @@ const CashierReportOnScreen: React.FC<CashierReportOnScreenProps> = ({
                 },
               }}
             >
-              <Grid
-                paddingLeft={1}
-                paddingRight={1}
-                columnSpacing={1}
-                rowSpacing={1}
-                alignItems={'center'}
-                container
-                width={'100%'}
-              >
-                <Grid size={12} textAlign={'center'}
+              <Grid container spacing={1} alignItems="center" width={'100%'}>
+                <Grid 
+                  size={12} 
+                  textAlign="center"                   
                   sx={{
                     borderBottom: 2,
                     borderColor: 'divider'
                   }}
                 >
-                  <Typography 
-                    variant="h4" 
-                    sx={{ fontWeight: expanded[index] ? 'bold' : 'normal' }}
-                  >
-                    {item.name}
-                  </Typography>
+                  <Tooltip title="Cash Account / Ledger Name">
+                    <Typography variant="h4" fontWeight={expanded[index] ? 600 : 400}>
+                      {item.name}
+                    </Typography>
+                  </Tooltip>
                 </Grid>
-                <Grid size={{xs: 12, md: 3}}>
-                  <Typography>Opening Balance</Typography>
-                  <Typography>
-                    {item.opening_balance.toLocaleString('en-US', { 
-                      style: 'currency', 
-                      currency: currencyCode 
-                    })}
-                  </Typography>
+
+                <Grid size={{ xs: 12, md: 3 }}>
+                  <Tooltip title="Balance at the beginning of the period">
+                    <Typography variant="body2" color="text.secondary">
+                      Opening Balance
+                    </Typography>
+                  </Tooltip>
+                  <Tooltip title={currency(item.opening_balance)}>
+                    <Typography>{currency(item.opening_balance)}</Typography>
+                  </Tooltip>
                 </Grid>
-                <Grid size={{xs: 12, md: 3}}>
-                  <Typography>Incoming Total</Typography>
-                  <Typography sx={{color:'green'}} variant="caption">
-                    {item.incoming_total.toLocaleString('en-US', { 
-                      style: 'currency', 
-                      currency: currencyCode 
-                    })}
-                  </Typography>
+
+                <Grid size={{ xs: 12, md: 3 }}>
+                  <Tooltip title="Total amount received during the period">
+                    <Typography variant="body2" color="text.secondary">
+                      Incoming Total
+                    </Typography>
+                  </Tooltip>
+                  <Tooltip title={currency(item.incoming_total)}>
+                    <Typography sx={{ color: theme.palette.success.main }} fontWeight={600}>
+                      {currency(item.incoming_total)}
+                    </Typography>
+                  </Tooltip>
                 </Grid>
-                <Grid size={{xs: 12, md: 3}}>
-                  <Typography>Outgoing Total</Typography>
-                  <Typography sx={{color:'red'}} variant="caption">
-                    {item.outgoing_total.toLocaleString('en-US', { 
-                      style: 'currency', 
-                      currency: currencyCode 
-                    })}
-                  </Typography>
+
+                <Grid size={{ xs: 12, md: 3 }}>
+                  <Tooltip title="Total amount paid out during the period">
+                    <Typography variant="body2" color="text.secondary">
+                      Outgoing Total
+                    </Typography>
+                  </Tooltip>
+                  <Tooltip title={currency(item.outgoing_total)}>
+                    <Typography sx={{ color: theme.palette.error.main }} fontWeight={600}>
+                      {currency(item.outgoing_total)}
+                    </Typography>
+                  </Tooltip>
                 </Grid>
-                <Grid size={{xs: 12, md: 3}}>
-                  <Typography>Closing Balance</Typography>
-                  <Typography sx={{color:'blue'}}>
-                    {item.closing_balance.toLocaleString('en-US', { 
-                      style: 'currency', 
-                      currency: currencyCode 
-                    })}
-                  </Typography>
+
+                <Grid size={{ xs: 12, md: 3 }}>
+                  <Tooltip title="Final balance after all transactions">
+                    <Typography variant="body2" color="text.secondary">
+                      Closing Balance
+                    </Typography>
+                  </Tooltip>
+                  <Tooltip title={currency(item.closing_balance)}>
+                    <Typography fontWeight={700} sx={{ color: closingColor }}>
+                      {currency(item.closing_balance)}
+                    </Typography>
+                  </Tooltip>
                 </Grid>
               </Grid>
-              <Divider />
             </AccordionSummary>
-            <AccordionDetails
-              sx={{
-                backgroundColor: 'background.paper',
-                marginBottom: 3,
-              }}
-            >
-              <Grid container>
-                <Grid size={12}>
-                  {item.incoming_transactions && Object.values(item.incoming_transactions).length > 0 && (
-                    <>
-                      <Typography 
-                        variant="h5" 
-                        sx={{ marginBottom: 1, marginTop: 2, textAlign: 'center' }}
-                      >
-                        Incoming Transactions
-                      </Typography>
-                      {Object.values(item.incoming_transactions).map((incomingItem, idx) => (
-                        <Grid
-                          key={idx}
-                          size={12}
-                          sx={{
-                            cursor: 'pointer',
-                            borderTop: 2,
-                            borderColor: 'divider',
-                            '&:hover': {
-                              bgcolor: 'action.hover',
-                            },
-                            padding: 0.5
-                          }}
-                          columnSpacing={2}
-                          alignItems={'center'}
-                          container
-                        >
-                          <Grid size={{xs: 6, md: 3}}>
-                            <Tooltip title="Transaction Date">
-                              <Typography>{readableDate(incomingItem.transactionDate)}</Typography>
-                            </Tooltip>
-                          </Grid>
-                          <Grid size={{xs: 6, md: 3}} sx={{ textAlign: { xs: 'end', md: 'center' } }}>
-                            <Tooltip title="Reference">
-                              <Typography>
-                                {`${incomingItem.voucherNo} ${incomingItem.reference?.trim() ? '/' : ''} ${incomingItem.reference}`}
-                              </Typography>
-                            </Tooltip>
-                          </Grid>
-                          <Grid size={{xs: 6, md: 3}} sx={{ textAlign: { xs: 'start'} }}>
-                            <Tooltip title="Description">
-                              <Typography>{incomingItem.description}</Typography>
-                            </Tooltip>
-                          </Grid>
-                          <Grid size={{xs: 6, md: 3}} textAlign="end">
-                            <Tooltip title="Amount">
-                              <Typography>
-                                {incomingItem.amount?.toLocaleString('en-US', {
-                                  style: 'currency',
-                                  currency: currencyCode
-                                })}
-                              </Typography>
-                            </Tooltip>
-                          </Grid>
-                        </Grid>
-                      ))}
-                      {/* Incoming Transactions Total */}
-                      <Grid size={12} sx={{ marginTop: 2 }}>
-                        <Typography variant="h6" sx={{ textAlign: 'end' }}>
-                          Total: {incomingTotal.toLocaleString('en-US', { 
-                            style: 'currency', 
-                            currency: currencyCode 
-                          })}
-                        </Typography>
+
+            <AccordionDetails>
+              {/* INCOMING */}
+              {item.incoming_transactions && (
+                <>
+                  <Tooltip title="All money received in this period">
+                    <Typography variant="h6" textAlign="center" mt={2}>
+                      Incoming Transactions
+                    </Typography>
+                  </Tooltip>
+
+                  {Object.values(item.incoming_transactions).map((t, i) => (
+                    <Grid
+                      key={i}
+                      container
+                      spacing={1}
+                      alignItems="center"
+                      sx={{ borderTop: 1, borderColor: 'divider', py: 0.5 }}
+                    >
+                      <Grid size={{ xs: 6, md: 3 }}>
+                        <Tooltip title="Transaction Date">
+                          <Typography>{readableDate(t.transactionDate)}</Typography>
+                        </Tooltip>
                       </Grid>
-                    </>
-                  )}
-                </Grid>
-              </Grid>
-              <Grid container marginTop={2}>
-                <Grid size={12}>
-                  {item.outgoing_transactions && Object.values(item.outgoing_transactions).length > 0 && (
-                    <>
-                      <Typography 
-                        variant="h5" 
-                        sx={{ marginBottom: 1, marginTop: 2, textAlign: 'center' }}
-                      >
-                        Outgoing Transactions
-                      </Typography>
-                      {Object.values(item.outgoing_transactions).map((outgoingItem, idx) => (
-                        <Grid
-                          key={idx}
-                          size={12}
-                          sx={{
-                            cursor: 'pointer',
-                            borderTop: 1,
-                            borderColor: 'divider',
-                            '&:hover': {
-                              bgcolor: 'action.hover',
-                            },
-                            padding: 0.5
-                          }}
-                          columnSpacing={2}
-                          alignItems={'center'}
-                          container
-                        >
-                          <Grid size={{xs: 6, md: 3}}>
-                            <Tooltip title="Transaction Date">
-                              <Typography>{readableDate(outgoingItem.transactionDate)}</Typography>
-                            </Tooltip>
-                          </Grid>
-                          <Grid size={{xs: 6, md: 3}} sx={{ textAlign: { xs: 'end', md: 'center' } }}>
-                            <Tooltip title="Reference">
-                              <Typography>
-                                {`${outgoingItem.voucherNo} ${outgoingItem.reference?.trim() ? '/' : ''} ${outgoingItem.reference}`}
-                              </Typography>
-                            </Tooltip>
-                          </Grid>
-                          <Grid size={{xs: 6, md: 3}} sx={{ textAlign: { xs: 'start'} }}>
-                            <Tooltip title="Description">
-                              <Typography>{outgoingItem.description}</Typography>
-                            </Tooltip>
-                          </Grid>
-                          <Grid size={{xs: 6, md: 3}} textAlign="end">
-                            <Tooltip title="Amount">
-                              <Typography>
-                                {outgoingItem.amount?.toLocaleString('en-US', {
-                                  style: 'currency',
-                                  currency: currencyCode
-                                })}
-                              </Typography>
-                            </Tooltip>
-                          </Grid>
-                        </Grid>
-                      ))}
-                      {/* Outgoing Transactions Total */}
-                      <Grid size={12} sx={{ marginTop: 2 }}>
-                        <Typography variant="h6" sx={{ textAlign: 'end' }}>
-                          Total: {outgoingTotal.toLocaleString('en-US', { 
-                            style: 'currency', 
-                            currency: currencyCode 
-                          })}
-                        </Typography>
+                      <Grid size={{ xs: 6, md: 3 }} textAlign="center">
+                        <Tooltip title="Voucher / Reference">
+                          <Typography>{t.voucherNo} {t.reference}</Typography>
+                        </Tooltip>
                       </Grid>
-                    </>
-                  )}
-                </Grid>
-              </Grid>
+                      <Grid size={{ xs: 6, md: 3 }}>
+                        <Tooltip title="Transaction Description">
+                          <Typography>{t.description}</Typography>
+                        </Tooltip>
+                      </Grid>
+                      <Grid size={{ xs: 6, md: 3 }} textAlign="end">
+                        <Tooltip title="Incoming Amount">
+                          <Typography sx={{ color: theme.palette.success.main }}>
+                            {currency(t.amount)}
+                          </Typography>
+                        </Tooltip>
+                      </Grid>
+                    </Grid>
+                  ))}
+
+                  <Tooltip title="Total incoming amount">
+                    <Typography textAlign="end" mt={1} fontWeight={600}>
+                      Total: {currency(incomingTotal)}
+                    </Typography>
+                  </Tooltip>
+                </>
+              )}
+
+              <Divider sx={{ my: 2 }} />
+
+              {/* OUTGOING */}
+              {item.outgoing_transactions && (
+                <>
+                  <Tooltip title="All money paid out in this period">
+                    <Typography variant="h6" textAlign="center">
+                      Outgoing Transactions
+                    </Typography>
+                  </Tooltip>
+
+                  {Object.values(item.outgoing_transactions).map((t, i) => (
+                    <Grid
+                      key={i}
+                      container
+                      spacing={1}
+                      alignItems="center"
+                      sx={{ borderTop: 1, borderColor: 'divider', py: 0.5 }}
+                    >
+                      <Grid size={{ xs: 6, md: 3 }}>
+                        <Tooltip title="Transaction Date">
+                          <Typography>{readableDate(t.transactionDate)}</Typography>
+                        </Tooltip>
+                      </Grid>
+                      <Grid size={{ xs: 6, md: 3 }} textAlign="center">
+                        <Tooltip title="Voucher / Reference">
+                          <Typography>{t.voucherNo} {t.reference}</Typography>
+                        </Tooltip>
+                      </Grid>
+                      <Grid size={{ xs: 6, md: 3 }}>
+                        <Tooltip title="Transaction Description">
+                          <Typography>{t.description}</Typography>
+                        </Tooltip>
+                      </Grid>
+                      <Grid size={{ xs: 6, md: 3 }} textAlign="end">
+                        <Tooltip title="Outgoing Amount">
+                          <Typography sx={{ color: theme.palette.error.main }}>
+                            {currency(t.amount)}
+                          </Typography>
+                        </Tooltip>
+                      </Grid>
+                    </Grid>
+                  ))}
+
+                  <Tooltip title="Total outgoing amount">
+                    <Typography textAlign="end" mt={1} fontWeight={600}>
+                      Total: {currency(outgoingTotal)}
+                    </Typography>
+                  </Tooltip>
+                </>
+              )}
             </AccordionDetails>
           </Accordion>
         );

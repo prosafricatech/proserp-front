@@ -21,6 +21,7 @@ import { MODULE_SETTINGS } from '@/utilities/constants/moduleSettings';
 import stakeholderServices from '@/components/masters/stakeholders/stakeholder-services';
 import { useVFD } from "@/components/vfd/VFDProvider";
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
+import { useCurrencySelect } from '@/components/masters/Currencies/CurrencySelectProvider';
 
 function SaleDialogForm({toggleOpen,sale = null}) {
     const [items, setItems] = useState([]);
@@ -28,6 +29,7 @@ function SaleDialogForm({toggleOpen,sale = null}) {
     const [transaction_date] = useState(sale ? dayjs(sale.transaction_date) : dayjs());
     const [counterLedgers, setCounterLedgers] = useState([]);
     const {enqueueSnackbar} = useSnackbar();
+    const { currencies } = useCurrencySelect();
     const {authOrganization : {organization},checkOrganizationPermission,moduleSetting} = useJumboAuth();
     const queryClient = useQueryClient();
     const [checkedForSuggestPrice, setCheckedForSuggestPrice] = useState(false);
@@ -90,7 +92,7 @@ function SaleDialogForm({toggleOpen,sale = null}) {
         defaultValues: {
             transaction_date : transaction_date.toISOString(),
             currency_id: sale?.currency_id ? sale.currency_id : 1,
-            currency: sale?.currency ? sale.currency : null,
+            currency: sale?.currency ? sale.currency : currencies?.find(c => c.is_base === 1),
             exchange_rate: sale?.exchange_rate ? sale.exchange_rate : 1,
             vat_registered: !!organization.settings?.vat_registered,
             vat_percentage: sale ? sale.vat_percentage : !!moduleSetting(MODULE_SETTINGS.POS_DEFAULT_VAT_INCLUSIVE) ? (!!organization.settings?.vat_registered && organization.settings.vat_percentage) : 0,

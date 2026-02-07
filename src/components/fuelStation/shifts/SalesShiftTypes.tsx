@@ -6,7 +6,6 @@ import { User } from '@/types/auth-types';
 import { PaginatedUserResponse } from '@/components/prosControl/userManagement/UserManagementType';
 import { JumboRqListProps } from '@jumbo/types/JumboRqListProps';
 
-
 export interface ShiftTeam {
   id: number;
   name: string;
@@ -68,12 +67,10 @@ export interface SalesShift {
   id?: number;
   shift_team_id: number;
   shift_team?: ShiftTeam;
-
   station_id?: number;
   station?: Station;
   shift_start: string;
   shift_end?: string | null;
-
   submit_type: 'open' | 'close' | 'suspend' | 'draft'; // Added 'suspend'
   product_prices: ProductPrice[];
   pump_readings: PumpReading[];
@@ -83,9 +80,6 @@ export interface SalesShift {
   main_ledger_amount?: number; // Added from payload
   other_ledgers: LedgerAmount[];
   adjustments: Adjustment[]; // Changed from optional to required, fixed plural name
-
-
-
   dipping_after: Dipping[]; // Added from payload
   isOpenSwitchON?: boolean; // Added from payload
   isCloseSwitchON?: boolean; // Added from payload
@@ -101,7 +95,6 @@ export interface Adjustment {
   operator: '+' | '-'; // Based on your payload
   description: string;
   product_id: number;
-  operator_name: string;
 }
 
 export interface Dipping {
@@ -114,11 +107,6 @@ export interface ProductPrice {
   product_id: number;
   price: number;
 }
-
-
-
-
-
 
 
 export interface ShiftTeam {
@@ -141,7 +129,6 @@ export interface PumpReading {
   tank_id: number;
   opening: number;
   closing: number;
-
   pump?: FuelPump;
   product?: Product;
 }
@@ -152,13 +139,11 @@ export interface FuelVoucher {
   narration?: string;
   product_id: number;
   quantity: number;
-
   expense_ledger_id?: number | null;
   stakeholder?: Stakeholder;
   product?: Product;
   expense_ledger?: Ledger;
   fuelVoucherData?: FuelVoucherData | null | undefined;
-
 }
 
 export interface LedgerAmount {
@@ -214,38 +199,31 @@ export interface SalesShiftServices {
   getSalesShiftDetails: (id: number) => Promise<SalesShift>;
   closeSalesShift: (id: number) => Promise<any>;
 }
-
 export interface AddSalesShiftResponse {
   message: string;
   data?: any; 
 }
-
 export interface DeleteSalesShiftResponse {
   message: string;
 }
-
 export interface UpdateSalesShiftResponse {
   message: string;
   data?: SalesShift;  
 }
-
 export interface PaginatedSalesShiftResponse {
   data: SalesShift[];
   current_page: number;
   total: number;
   last_page: number;
 }
-
 export interface AddSalesShifResponse {
   message: string;
   data?: any; 
 }
-
 export interface updateSalesShiftResponse {
   message: string;
   data?: SalesShift;
 }
-
 export interface deleteSalesShiftResponse {
   message: string;
 }

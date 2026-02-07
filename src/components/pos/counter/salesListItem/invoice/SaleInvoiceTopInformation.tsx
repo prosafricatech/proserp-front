@@ -49,8 +49,8 @@ interface DeliveryNote {
 const SaleInvoiceTopInformation: React.FC = () => {
     const { authOrganization } = useJumboAuth();
     const organization = authOrganization?.organization;
-    const [totalAmount, settotalAmount] = useState<number>(0);
-    const [vatableAmount, setvatableAmount] = useState<number>(0);
+    const [totalAmount, setTotalAmount] = useState<number>(0);
+    const [vatableAmount, setVatableAmount] = useState<number>(0);
     
     // Use type assertion for the form context
     const formContext = useFormContext<FormValues>();
@@ -100,8 +100,8 @@ const SaleInvoiceTopInformation: React.FC = () => {
             return acc;
         }, { total: 0, vatable: 0 });
 
-        settotalAmount(total);
-        setvatableAmount(vatable);
+        setTotalAmount(total);
+        setVatableAmount(vatable);
     }, [sale_items]);
 
     // Retrieve items from selected delivery notes

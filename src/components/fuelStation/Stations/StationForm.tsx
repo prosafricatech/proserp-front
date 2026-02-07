@@ -1,375 +1,697 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useState } from 'react';
+import { useFieldArray, useForm } from 'react-hook-form';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
 import {
-  Button,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   Grid,
   TextField,
-  Typography,
-} from "@mui/material";
-import { LoadingButton } from "@mui/lab";
-import { useForm, Controller, FormProvider } from "react-hook-form";
-import { yupResolver } from "@hookform/resolvers/yup";
-import * as yup from "yup";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useSnackbar } from "notistack";
-import UsersSelector from "@/components/sharedComponents/UsersSelector";
-import StationTabs from "./StationTabs";
-import stationServices from "./station-services";
-import type { AddStationResponse, Station, UpdateStationResponse } from "./StationType";
-import { useJumboAuth } from "@/app/providers/JumboAuthProvider";
-import { PERMISSIONS } from "@/utilities/constants/permissions";
-import { User } from "@/components/prosControl/userManagement/UserManagementType";
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+  DialogActions,
+  Button,
+  DialogContent,
+  Tooltip,
+  IconButton,
+  DialogTitle,
+  Divider,
+  Tabs,
+  Tab,
+  Stack,
+} from '@mui/material';
+import { LoadingButton } from '@mui/lab';
+import { useSnackbar } from 'notistack';
+import { AddOutlined, DisabledByDefault, KeyboardArrowLeftOutlined, KeyboardArrowRightOutlined } from '@mui/icons-material';
+import LedgerSelect from '../../accounts/ledgers/forms/LedgerSelect';
+import ProductSelect from '../../productAndServices/products/ProductSelect';
+import StoreSelector from '../../procurement/stores/StoreSelector';
+import stationServices from './station-services';
+import { useProductsSelect } from '../../productAndServices/products/ProductsSelectProvider';
+import { useLedgerSelect } from '../../accounts/ledgers/forms/LedgerSelectProvider';
+import UsersSelector from '../../sharedComponents/UsersSelector';
+import { Div } from '@jumbo/shared';
+import { TimePicker } from '@mui/x-date-pickers';
+import dayjs from 'dayjs';
 
-interface StationFormProps {
-  station?: Station;
-  setOpenDialog: (open: boolean) => void;
-}
-
-interface Ledger {
-  id: number;
-  name: string;
-  alias?: string | null;
-  ledger_group_id: number;
-}
-
-interface ShiftTeamFormData {
-  name: string;
-  Ledger: Ledger[];
-  description?: string | null;
-}
-
-interface FuelPumpFormData {
-  product_id: number | null;
-  product_name?: string;
-  name: string;
-  tank_id: number | null;
-}
-
-interface FormData {
+interface ShiftForm {
   id?: number;
   name: string;
-  address?: string;
-  users: User[];
-  shift_teams: ShiftTeamFormData[];
-  fuel_pumps: FuelPumpFormData[];
+  start_time?: string;
+  end_time?: string;
+  description?: string;
 }
 
+interface CashierForm {
+  id?: number;
+  name: string;
+  ledger_ids: number[];
+  description?: string;
+}
+
+interface FuelPumpForm {
+  id?: number;
+  name: string;
+  product_id: number | '';
+  tank_id: number | '';
+  tank?: { id: number; name: string };
+}
+
+interface StationFormData {
+  id?: number;
+  name: string;
+  address: string;
+  user_ids: number[];
+  collection_ledger_ids: number[];
+  shifts: ShiftForm[];
+  cashiers: CashierForm[];
+  fuel_pumps: FuelPumpForm[];
+}
+
+interface Station {
+  id: number;
+  name: string;
+  address?: string;
+  users: { id: number; name?: string }[];
+  collection_ledgers: { id: number; name?: string }[];
+  shifts: {
+    id: number;
+    name: string;
+    start_time?: string;
+    end_time?: string;
+    description?: string;
+  }[];
+  cashiers: {
+    id: number;
+    name: string;
+    ledgers: { id: number }[];
+    description?: string;
+  }[];
+  fuel_pumps: {
+    id: number;
+    name: string;
+    product_id: number;
+    tank_id: number;
+  }[];
+  tanks: { id: number; name: string }[];
+}
+
+interface StationsFormProps {
+  setOpenDialog: (open: boolean) => void;
+  station?: Station | null;
+}
+
+const getCurrentTime = () => {
+  return dayjs().format('HH:mm');
+};
+
+const getDefaultEndTime = () => {
+  return dayjs().add(8, 'hour').format('HH:mm');
+};
+
+const parseTimeToDayjs = (timeString: string | undefined) => {
+  if (!timeString) return dayjs();
+  try {
+    const [hours, minutes] = timeString.split(':').map(Number);
+    if (isNaN(hours) || isNaN(minutes)) {
+      return dayjs();
+    }
+    return dayjs().hour(hours).minute(minutes);
+  } catch (error) {
+    return dayjs();
+  }
+};
+
+const formatDayjsToTime = (dayjsObj: dayjs.Dayjs | null) => {
+  if (!dayjsObj || !dayjsObj.isValid()) {
+    return getCurrentTime();
+  }
+  return dayjsObj.format('HH:mm');
+};
+
 const validationSchema = yup.object({
-  name: yup.string().required("Station name is required"),
-  address: yup.string().nullable().optional(),
-  users: yup.array().of(
-    yup.object({
-      id: yup.number().required(),
-      name: yup.string().required(),
+  name: yup.string().required("Station name is required").typeError('Station name is required'),
+  collection_ledger_ids: yup.array()
+    .of(yup.number().required())
+    .min(1, 'At least one collection Account is required')
+    .required('Collection Accounts are required'),
+  shifts: yup.array().of(
+    yup.object().shape({
+      name: yup.string().required("Shift name is required").typeError('Shift name is required'),
+      start_time: yup.string()
+        .required("Start time is required")
+        .nullable()
+        .transform((value, originalValue) => originalValue === null ? '' : value),
+      end_time: yup.string()
+        .required("End time is required")
+        .nullable()
+        .transform((value, originalValue) => originalValue === null ? '' : value),
     })
-  ).optional(),
-  shift_teams: yup.array().of(
-    yup.object({
-      name: yup.string().required("Team name is required"),
-      Ledger: yup.array()
-        .of(yup.object({
-          id: yup.number().required(),
-          name: yup.string().required(),
-        }))
-        .min(1, "At least one ledger is required")
-        .required("Ledger accounts are required"),
-      description: yup.string().nullable().optional(),
+  ).min(1, 'At least one Shift required'),
+  cashiers: yup.array().of(
+    yup.object().shape({
+      name: yup.string().required("Cashier name is required").typeError('Cashier name is required'),
+      ledger_ids: yup.array().min(1, 'At least one ledger is required').required("Ledger name is required").typeError('Ledger name is required'),
     })
-  ).min(1, "At least one shift team is required"),
+  ).min(1, 'At least one Cashier required'),
   fuel_pumps: yup.array().of(
-    yup.object({
-      product_id: yup.number()
-        .nullable()
-        .required("Fuel name is required")
-        .typeError("Fuel name is required"),
-      product_name: yup.string().optional(),
-      name: yup.string().required("Pump name is required"),
-      tank_id: yup.number()
-        .nullable()
-        .required("Tank name is required")
-        .typeError("Tank name is required"),
+    yup.object().shape({
+      name: yup.string().required("Pump name is required").typeError('Pump name is required'),
+      product_id: yup.number().required("Fuel name is required").typeError('Fuel name is required'),
+      tank_id: yup.number().required("Tank name is required").typeError('Tank name is required'),
     })
-  ).min(1, "At least one fuel pump is required"),
+  ).min(1, 'At least one Fuel Pump required'),
 });
 
-const StationForm: React.FC<StationFormProps> = ({ station, setOpenDialog }) => {
+const StationsForm = ({ setOpenDialog, station }: StationsFormProps) => {
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
-  const { checkOrganizationPermission } = useJumboAuth();
-  const canCreateOrEdit = checkOrganizationPermission([
-    PERMISSIONS.FUEL_STATIONS_CREATE,
-    PERMISSIONS.FUEL_STATIONS_UPDATE,
-  ]);
+  const [activeTab, setActiveTab] = useState(0);
+  const { productOptions } = useProductsSelect();
+  const { ungroupedLedgerOptions } = useLedgerSelect();
 
-  // State to track current active tab
-  const [activeTab, setActiveTab] = useState<number>(0);
-
-  const defaultValues = useMemo(() => {
-    return {
-      id: station?.id,
-      name: station?.name ?? "",
-      address: station?.address ?? "",
-      users: station?.users ?? [],
-      
-      shift_teams: station?.shift_teams?.length ? station.shift_teams.map(team => {
-        const ledgers = Array.isArray(team.ledgers) ? team.ledgers.map(ledger => ({
-          id: ledger.id,
-          name: ledger.name,
-          code: ledger.code || null,
-          ledger_group_id: ledger.ledger_group_id || 0,
-          alias: ledger.alias || null,
-          nature_id: ledger.nature_id
-        })) : [];
-        
-        return {
-          name: team.name || "",
-          Ledger: ledgers,
-          description: team.description || null,
-        };
-      }) : [{ name: "", Ledger: [], description: null }],
-      
-      fuel_pumps: station?.fuel_pumps?.length ? station.fuel_pumps.map(pump => ({
-        product_id: pump.product_id ?? null,
-        product_name: pump.product?.name ?? "",
-        name: pump.name || "",
-        tank_id: pump.tank_id ?? null,
-      })) : [{ 
-        product_id: null, 
-        product_name: "",
-        name: "", 
-        tank_id: null 
-      }],
-    };
-  }, [station]);
-
-  const methods = useForm<FormData>({
-    defaultValues: defaultValues as unknown as FormData,
-    resolver: yupResolver(validationSchema) as any,
-  });
-
-  const { register, handleSubmit, control, formState: { errors } } = methods;
-
-  const { mutate: addStation, isPending: addLoading } = useMutation<
-    AddStationResponse,
-    unknown,
-    Station
-  >({
+  const { mutate: addStation, isPending: isAdding } = useMutation({
     mutationFn: stationServices.add,
-    onSuccess: (data) => {
-      enqueueSnackbar(data.message, { variant: "success" });
-      queryClient.invalidateQueries({ queryKey: ["station"] });
+    onSuccess: (data: { message?: string }) => {
       setOpenDialog(false);
+      enqueueSnackbar(data.message || 'Station created successfully', { variant: 'success' });
+      queryClient.invalidateQueries({ queryKey: ['stations'] });
     },
-    onError: (error: unknown) => {
-      let message = "Something went wrong";
-      if (
-        typeof error === "object" &&
-        error !== null &&
-        "response" in error &&
-        typeof (error as any).response?.data?.message === "string"
-      ) {
-        message = (error as any).response.data.message;
-      } else if (error instanceof Error) {
-        message = error.message;
-      }
-      enqueueSnackbar(message, { variant: "error" });
+    onError: (error: any) => {
+      const message = error?.response?.data?.message || 'Failed to create station';
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 
-  const { mutate: updateStation, isPending: updateLoading } = useMutation<
-    UpdateStationResponse,
-    unknown,
-    Station & { id: number }
-  >({
+  const { mutate: editStation, isPending: isEditing } = useMutation({
     mutationFn: stationServices.update,
-    onSuccess: (data) => {
-      enqueueSnackbar(data.message, { variant: "success" });
-      queryClient.invalidateQueries({ queryKey: ["station"] });
+    onSuccess: (data: { message?: string }) => {
       setOpenDialog(false);
+      enqueueSnackbar(data.message || 'Station updated successfully', { variant: 'success' });
+      queryClient.invalidateQueries({ queryKey: ['stations'] });
     },
-    onError: (error: unknown) => {
-      let message = "Something went wrong";
-      if (
-        typeof error === "object" &&
-        error !== null &&
-        "response" in error &&
-        typeof (error as any).response?.data?.message === "string"
-      ) {
-        message = (error as any).response.data.message;
-      } else if (error instanceof Error) {
-        message = error.message;
-      }
-      enqueueSnackbar(message, { variant: "error" });
+    onError: (error: any) => {
+      const message = error?.response?.data?.message || 'Failed to update station';
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 
-  const saveMutation = useMemo(
-    () => (station?.id ? updateStation : addStation),
-    [station, updateStation, addStation]
-  );
+  const saveMutation = station ? editStation : addStation;
+  const isLoading = isAdding || isEditing;
 
-  const onSubmit = (formData: FormData) => {
-    const validShifts = formData.shift_teams
-      ?.filter(team => team.name?.trim() && team.Ledger?.length > 0)
-      ?.map(team => ({
-        name: team.name.trim(),
-        ledger_ids: team.Ledger.map(ledger => ledger.id),
-        description: team.description?.trim() || null,
-      })) || [];
+  const {
+    control,
+    register,
+    setValue,
+    watch,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<StationFormData>({
+    resolver: yupResolver(validationSchema) as any,
+    defaultValues: {
+      id: station?.id,
+      name: station?.name || '',
+      address: station?.address || '',
+      user_ids: station?.users?.map((user) => user.id) || [],
+      collection_ledger_ids: station?.collection_ledgers?.map((ledger) => ledger.id) || [],
+      shifts: station?.shifts?.length
+        ? station.shifts.map((shift) => ({
+            id: shift.id,
+            name: shift.name,
+            start_time: shift.start_time || getCurrentTime(),
+            end_time: shift.end_time || getDefaultEndTime(),
+            description: shift.description || '',
+          }))
+        : [{ 
+            name: '', 
+            start_time: getCurrentTime(),
+            end_time: getDefaultEndTime(),
+            description: '' 
+          }],
+      cashiers: station?.cashiers?.length
+        ? station.cashiers.map((cashier) => ({
+            id: cashier.id,
+            name: cashier.name,
+            ledger_ids: cashier.ledgers?.map((ledger) => ledger.id) || [],
+            description: cashier.description || '',
+          }))
+        : [{ name: '', ledger_ids: [], description: '' }],
+      fuel_pumps: station?.fuel_pumps?.length
+        ? station.fuel_pumps.map((pump) => ({
+            id: pump.id,
+            name: pump.name,
+            product_id: pump.product_id,
+            tank_id: pump.tank_id,
+            tank: station.tanks?.find((tank) => tank.id === pump.tank_id),
+          }))
+        : [{ name: '', product_id: '', tank_id: '' }],
+    },
+  });
 
-    const validFuelPumps = formData.fuel_pumps
-      ?.filter(pump => pump.name?.trim() && pump.tank_id && pump.product_id)
-      ?.map(pump => ({
-        name: pump.name.trim(),
-        tank_id: pump.tank_id,
-        product_id: pump.product_id,
-      })) || [];
+  const { fields: shiftFields, append: appendShift, remove: removeShift } = useFieldArray({
+    control,
+    name: 'shifts',
+  });
 
-    if (validShifts.length === 0) {
-      enqueueSnackbar("At least one valid shift team is required", { variant: "error" });
-      return;
-    }
+  const { fields: cashierFields, append: appendCashier, remove: removeCashier } = useFieldArray({
+    control,
+    name: 'cashiers',
+  });
 
-    if (validFuelPumps.length === 0) {
-      enqueueSnackbar("At least one valid fuel pump is required", { variant: "error" });
-      return;
-    }
+  const { fields: fuelPumpFields, append: appendFuelPump, remove: removeFuelPump } = useFieldArray({
+    control,
+    name: 'fuel_pumps',
+  });
 
-    const dataToSend = {
-      name: formData.name.trim(),
-      address: formData.address?.trim() || null,
-      user_ids: formData.users?.map((user: User) => user.id) ?? [],
-      shift_teams: validShifts,
-      fuel_pumps: validFuelPumps,
-      ...(station?.id ? { id: station.id } : {}),
-    };
-    
-    saveMutation(dataToSend as any);
+  const onSubmit = (data: StationFormData) => {
+    saveMutation(data);
   };
 
-  // Handle tab change
-  const handleTabChange = (newValue: number) => {
-    setActiveTab(newValue);
+  const handleAddShift = () => {
+    appendShift({ 
+      name: '', 
+      start_time: getCurrentTime(),
+      end_time: getDefaultEndTime(),
+      description: '' 
+    });
   };
 
-  // Handle next button click
-  const handleNext = () => {
-    setActiveTab(1); // Move to Fuel Pump tab
-  };
-
-  // Handle previous button click
-  const handlePrevious = () => {
-    setActiveTab(0); // Move back to Shift Team tab
+  const handleTimeChange = (fieldName: string, value: dayjs.Dayjs | null) => {
+    const timeString = formatDayjsToTime(value);
+    setValue(fieldName as any, timeString, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
   };
 
   return (
-    <FormProvider {...methods}>
-      <form onSubmit={handleSubmit(onSubmit)} noValidate>
-        <DialogTitle>
-          <Grid container spacing={1}>
-            <Grid size={12}>
-              <Typography variant="h5" sx={{ textAlign: "center", mb: 2 }}>
-                {station ? `Edit ${station.name}` : "New Fuel Station"}
-              </Typography>
+    <>
+      <DialogTitle textAlign="center">
+        {station ? `Edit ${station.name}` : 'New Station'}
+      </DialogTitle>
+      
+      <DialogContent>
+        <form onSubmit={handleSubmit(onSubmit)} autoComplete="off">
+          <Grid container columnSpacing={2} rowSpacing={1} paddingTop={1}>
+            {/* Station Name */}
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Div sx={{ mt: 1 }}>
+                <TextField
+                  size="small"
+                  fullWidth
+                  label="Station name"
+                  error={!!errors.name}
+                  helperText={errors.name?.message}
+                  {...register('name')}
+                />
+              </Div>
             </Grid>
-
-            <Grid size={{xs:12, md:6}}>
-              <TextField
-                fullWidth
-                label="Station Name"
-                size="small"
-                {...register("name")}
-                error={!!errors.name}
-                helperText={errors.name?.message}
-                required
-              />
+            
+            {/* Address */}
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Div sx={{ mt: 1 }}>
+                <TextField
+                  size="small"
+                  fullWidth
+                  label="Address"
+                  error={!!errors.address}
+                  helperText={errors.address?.message}
+                  {...register('address')}
+                />
+              </Div>
             </Grid>
-
-            <Grid size={{xs:12, md:6}}>
-              <TextField
-                fullWidth
-                label="Address"
-                size="small"
-                {...register("address")}
-                error={!!errors.address}
-                helperText={errors.address?.message}
-              />
+            
+            {/* Users */}
+            <Grid size={{ xs: 12 }}>
+              <Div sx={{ mt: 1 }}>
+                <UsersSelector
+                  label="Users"
+                  multiple={true}
+                  defaultValue={station?.users || [] as any}
+                  onChange={(users: any) => {
+                    setValue('user_ids', users?.map((user: any) => user.id) || []);
+                  }}
+                />
+              </Div>
             </Grid>
-
-            <Grid size={{xs:12, md:6}}>
-              <Controller
-                name="users"
-                control={control}
-                render={({ field }) => (
-                  <UsersSelector
-                    multiple
-                    defaultValue={field.value || []}
-                    onChange={(users) => field.onChange(users || [])}
-                    frontError={errors.users}
-                  />
-                )}
-              />
+            
+            {/* Collection Accounts */}
+            <Grid size={{ xs: 12 }}>
+              <Div sx={{ mt: 2 }}>
+                <LedgerSelect
+                  label="Collection Accounts"
+                  allowedGroups={['Cash and cash equivalents', 'Banks']}
+                  multiple={true}
+                  defaultValue={ungroupedLedgerOptions.filter((ledger) =>
+                    watch('collection_ledger_ids')?.includes(ledger.id)
+                  )}
+                  frontError={errors.collection_ledger_ids}
+                  onChange={(newValue: any) =>
+                    setValue(
+                      'collection_ledger_ids',
+                      newValue?.map((l: any) => l.id) || [],
+                      { shouldValidate: true, shouldDirty: true }
+                    )
+                  }
+                />
+              </Div>
             </Grid>
+            
+            {/* Tabs */}
+            <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
+              <Tabs
+                value={activeTab}
+                onChange={(_, newValue: number) => setActiveTab(newValue)}
+                variant="scrollable"
+                scrollButtons="auto"
+                allowScrollButtonsMobile
+              >
+                <Tab label="Shifts" />
+                <Tab label="Cashiers" />
+                <Tab label="Fuel Pumps" />
+              </Tabs>
+            </Grid>
+            
+            {/* SHIFTS TAB */}
+            {activeTab === 0 && (
+              <Grid size={{ xs: 12 }} container spacing={2} sx={{ mt: 2 }}>
+                {shiftFields.map((field, index) => (
+                  <Grid key={field.id} size={{ xs: 12 }}>
+                    <Divider sx={{ mb: 1.5 }} />
+                    <Grid container spacing={2} alignItems="flex-start">
+                      <Grid size={{ xs: 12, md: 4 }}>
+                        <Div sx={{ mt: 1 }}>
+                          <TextField
+                            size="small"
+                            fullWidth
+                            label="Shift Name"
+                            error={!!errors.shifts?.[index]?.name}
+                            helperText={errors.shifts?.[index]?.name?.message}
+                            {...register(`shifts.${index}.name`)}
+                          />
+                        </Div>
+                      </Grid>
+                      <Grid size={{ xs: 12, md: shiftFields.length > 1 ? 3.5 : 4 }}>
+                        <Div sx={{ mt: 1 }}>
+                          <TimePicker
+                            label="Start Time"
+                            value={parseTimeToDayjs(watch(`shifts.${index}.start_time`))}
+                            onChange={(value) => handleTimeChange(`shifts.${index}.start_time`, value)}
+                            ampm={false}
+                            slotProps={{
+                              textField: {
+                                size: 'small',
+                                fullWidth: true,
+                                error: !!errors.shifts?.[index]?.start_time,
+                                helperText: errors.shifts?.[index]?.start_time?.message,
+                              },
+                            }}
+                          />
+                        </Div>
+                      </Grid>
+                      <Grid size={{ xs: 12, md: shiftFields.length > 1 ? 3.5 : 4 }}>
+                        <Div sx={{ mt: 1 }}>
+                          <TimePicker
+                            label="End Time"
+                            value={parseTimeToDayjs(watch(`shifts.${index}.end_time`))}
+                            onChange={(value) => handleTimeChange(`shifts.${index}.end_time`, value)}
+                            ampm={false}
+                            slotProps={{
+                              textField: {
+                                size: 'small',
+                                fullWidth: true,
+                                error: !!errors.shifts?.[index]?.end_time,
+                                helperText: errors.shifts?.[index]?.end_time?.message,
+                              },
+                            }}
+                          />
+                        </Div>
+                      </Grid>
+                      <Grid size={{ xs: 12, md: 1 }}>
+                        {shiftFields.length > 1 && (
+                          <Div sx={{ mt: 1 }}>
+                            <Tooltip title="Remove Shift">
+                              <IconButton
+                                size="small"
+                                onClick={() => removeShift(index)}
+                                color="error"
+                              >
+                                <DisabledByDefault fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          </Div>
+                        )}
+                      </Grid>
+                      <Grid size={{ xs: 12 }}>
+                        <Div sx={{ mt: 1 }}>
+                          <TextField
+                            size="small"
+                            fullWidth
+                            label="Description"
+                            multiline
+                            rows={2}
+                            {...register(`shifts.${index}.description`)}
+                          />
+                        </Div>
+                      </Grid>
+                    </Grid>
+                  </Grid>
+                ))}
+                <Grid size={{ xs: 12 }} sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                  <Div sx={{ mt: 1 }}>
+                    <Tooltip title="Add Shift">
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={handleAddShift}
+                        startIcon={<AddOutlined fontSize="small" />}
+                      >
+                        Add Shift
+                      </Button>
+                    </Tooltip>
+                  </Div>
+                </Grid>
+              </Grid>
+            )}
+            
+            {/* CASHIERS TAB */}
+            {activeTab === 1 && (
+              <Grid size={{ xs: 12 }} container spacing={2} sx={{ mt: 2 }}>
+                {cashierFields.map((field, index) => (
+                  <Grid key={field.id} size={{ xs: 12 }}>
+                    <Divider sx={{ mb: 1.5 }} />
+                    <Grid container spacing={2} alignItems="flex-start">
+                      <Grid size={{ xs: 12, md: 5 }}>
+                        <Div sx={{ mt: 1 }}>
+                          <TextField
+                            size="small"
+                            fullWidth
+                            label="Cashier Name"
+                            error={!!errors.cashiers?.[index]?.name}
+                            helperText={errors.cashiers?.[index]?.name?.message}
+                            {...register(`cashiers.${index}.name`)}
+                          />
+                        </Div>
+                      </Grid>
+                      <Grid size={{ xs: 12, md: 5 }}>
+                        <Div sx={{ mt: 1 }}>
+                          <LedgerSelect
+                            label="Ledgers"
+                            allowedGroups={['Cash and cash equivalents', 'Banks']}
+                            multiple={true}
+                            defaultValue={ungroupedLedgerOptions.filter((ledger) =>
+                              watch(`cashiers.${index}.ledger_ids`)?.includes(ledger.id)
+                            )}
+                            frontError={errors.cashiers?.[index]?.ledger_ids}
+                            onChange={(newValue: any) =>
+                              setValue(
+                                `cashiers.${index}.ledger_ids`,
+                                newValue?.map((l: any) => l.id) || [],
+                                { shouldValidate: true, shouldDirty: true }
+                              )
+                            }
+                          />
+                        </Div>
+                      </Grid>
+                      <Grid size={{ xs: 12, md: 1 }}>
+                        {cashierFields.length > 1 && (
+                          <Div sx={{ mt: 1 }}>
+                            <Tooltip title="Remove Cashier">
+                              <IconButton
+                                size="small"
+                                onClick={() => removeCashier(index)}
+                                color="error"
+                              >
+                                <DisabledByDefault fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          </Div>
+                        )}
+                      </Grid>
+                      <Grid size={{ xs: 12 }}>
+                        <Div sx={{ mt: 1 }}>
+                          <TextField
+                            size="small"
+                            fullWidth
+                            label="Description"
+                            multiline
+                            rows={2}
+                            {...register(`cashiers.${index}.description`)}
+                          />
+                        </Div>
+                      </Grid>
+                    </Grid>
+                  </Grid>
+                ))}
+                <Grid size={{ xs: 12 }} sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                  <Div sx={{ mt: 1 }}>
+                    <Tooltip title="Add Cashier">
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={() => appendCashier({ name: '', ledger_ids: [], description: '' })}
+                        startIcon={<AddOutlined fontSize="small" />}
+                      >
+                        Add Cashier
+                      </Button>
+                    </Tooltip>
+                  </Div>
+                </Grid>
+              </Grid>
+            )}
+            
+            {/* FUEL PUMPS TAB */}
+            {activeTab === 2 && (
+              <Grid size={{ xs: 12 }} container spacing={2} sx={{ mt: 2 }}>
+                {fuelPumpFields.map((field, index) => (
+                  <Grid key={field.id} size={{ xs: 12 }}>
+                    <Divider sx={{ mb: 1.5 }} />
+                    <Grid container spacing={2} alignItems="flex-start">
+                      <Grid size={{ xs: 12, md: 4 }}>
+                        <Div sx={{ mt: 1 }}>
+                          <ProductSelect
+                            label="Fuel"
+                            multiple={false}
+                            frontError={errors.fuel_pumps?.[index]?.product_id}
+                            defaultValue={productOptions.find(
+                              (product) => product.id === watch(`fuel_pumps.${index}.product_id`)
+                            )}
+                            onChange={(product: any) =>
+                              setValue(`fuel_pumps.${index}.product_id`, product?.id || '', {
+                                shouldValidate: true,
+                                shouldDirty: true,
+                              })
+                            }
+                          />
+                        </Div>
+                      </Grid>
+                      <Grid size={{ xs: 12, md: 4 }}>
+                        <Div sx={{ mt: 1 }}>
+                          <TextField
+                            size="small"
+                            fullWidth
+                            label="Pump Name"
+                            error={!!errors.fuel_pumps?.[index]?.name}
+                            helperText={errors.fuel_pumps?.[index]?.name?.message}
+                            {...register(`fuel_pumps.${index}.name`)}
+                          />
+                        </Div>
+                      </Grid>
+                      <Grid size={{ xs: 12, md: 3 }}>
+                        <Div sx={{ mt: 1 }}>
+                          <StoreSelector
+                            label="Tank"
+                            allowSubStores={true}
+                            frontError={errors.fuel_pumps?.[index]?.tank_id as any}
+                            defaultValue={watch(`fuel_pumps.${index}.tank`)}
+                            onChange={(store: any) => {
+                              setValue(`fuel_pumps.${index}.tank`, store);
+                              setValue(`fuel_pumps.${index}.tank_id`, store?.id || '', {
+                                shouldValidate: true,
+                                shouldDirty: true,
+                              });
+                            }}
+                          />
+                        </Div>
+                      </Grid>
+                      <Grid size={{ xs: 12, md: 1 }}>
+                        {fuelPumpFields.length > 1 && (
+                          <Div sx={{ mt: 1 }}>
+                            <Tooltip title="Remove Fuel Pump">
+                              <IconButton
+                                size="small"
+                                onClick={() => removeFuelPump(index)}
+                                color="error"
+                              >
+                                <DisabledByDefault fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          </Div>
+                        )}
+                      </Grid>
+                    </Grid>
+                  </Grid>
+                ))}
+                
+                <Grid size={{ xs: 12 }} sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                  <Div sx={{ mt: 1 }}>
+                    <Tooltip title="Add Fuel Pump">
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={() => appendFuelPump({ name: '', product_id: '', tank_id: '' })}
+                        startIcon={<AddOutlined fontSize="small" />}
+                      >
+                        Add Fuel Pump
+                      </Button>
+                    </Tooltip>
+                  </Div>
+                </Grid>
+              </Grid>
+            )}
           </Grid>
-        </DialogTitle>
-
-        <DialogContent>
-          <StationTabs 
-            station={station} 
-            activeTab={activeTab}
-            onTabChange={handleTabChange}
-          />
-        </DialogContent>
-
-        <DialogActions>
-          <Button onClick={() => setOpenDialog(false)} size="small">
+        </form>
+      </DialogContent>
+      
+      <DialogActions>
+        <Stack direction="row" spacing={2} justifyContent="flex-end" sx={{ mt: 1, mb: 1 }}>
+          <Button size="small" onClick={() => setOpenDialog(false)}>
             Cancel
           </Button>
-          
-         {/* Previous Button with Back Arrow - Only show on Fuel Pump tab (tab index 1) */}
-          {activeTab === 1 && (
-            <Button 
-              onClick={handlePrevious}
+          {activeTab > 0 && (
+            <Button
               size="small"
               variant="outlined"
-              startIcon={<ArrowBackIcon />}
+              onClick={() => setActiveTab((prev) => prev - 1)}
+              startIcon={<KeyboardArrowLeftOutlined />}
             >
               Previous
             </Button>
           )}
-          
-          {/* Next Button with Forward Arrow - Only show on Shift Team tab (tab index 0) */}
-          {activeTab === 0 ? (
-            <Button 
-              onClick={handleNext}
+          {activeTab < 2 && (
+            <Button
               size="small"
-              variant="outlined" // Changed to outlined to match Previous button
-              endIcon={<ArrowForwardIcon />} // Forward arrow at the end
+              variant="outlined"
+              onClick={() => setActiveTab((prev) => prev + 1)}
+              endIcon={<KeyboardArrowRightOutlined />}
             >
               Next
             </Button>
-          ) : (
-            /* Submit Button - Only show on Fuel Pump tab (tab index 1) */
+          )}
+          {activeTab === 2 && (
             <LoadingButton
               type="submit"
               variant="contained"
               size="small"
-              loading={addLoading || updateLoading}
-              disabled={!canCreateOrEdit}
+              loading={isLoading}
+              onClick={handleSubmit(onSubmit)}
             >
               Submit
             </LoadingButton>
           )}
-        </DialogActions>
-      </form>
-    </FormProvider>
+        </Stack>
+      </DialogActions>
+    </>
   );
 };
 
-export default StationForm;
+export default StationsForm;

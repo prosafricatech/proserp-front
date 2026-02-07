@@ -92,11 +92,6 @@ const DeliveryNotePDF: React.FC<DeliveryNotePDFProps> = ({ delivery, organizatio
           <Text style={{...pdfStyles.minInfo, color: mainColor }}>{`Date`}</Text>
         </View>
       </View>
-      <View style={{ ...pdfStyles.tableRow, marginTop: 50, textAlign: 'center'}}>
-        <View style={{ flex: 1, padding: 2}}>
-          <Text style={{...pdfStyles.minInfo }}>Powered by: proserp.co.tz</Text>
-        </View>
-      </View>
     </>
   );
 
@@ -268,13 +263,6 @@ const DeliveryNotePDF: React.FC<DeliveryNotePDFProps> = ({ delivery, organizatio
         {renderItemsTable()}
         {renderAdditionalInfo()}
         {renderSignatureSection()}
-
-        {/* Footer */}
-        <View style={{ ...pdfStyles.tableRow, marginTop: 50, textAlign: 'center' }}>
-          <View style={{ flex: 1, padding: 2 }}>
-            <Text style={pdfStyles.minInfo}>Powered by: proserp.co.tz</Text>
-          </View>
-        </View>
       </View>
     </Page>
   );

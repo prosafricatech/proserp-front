@@ -1,5 +1,5 @@
 'use client'
-import React, { lazy, useState, useMemo, useEffect } from 'react';
+import { lazy, useState } from 'react';
 import { Alert, Grid, ListItemText, Stack, Typography, Divider, Tooltip, useMediaQuery, Chip, LinearProgress, Box } from '@mui/material';
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
@@ -266,12 +266,13 @@ const TimelineActivityAccordion = ({ activity, expanded, handleChange }) => {
           <Grid
             size={12}
             textAlign="end"
+            paddingTop={1}
             display="flex"
             justifyContent="flex-end"
             alignItems="center"
           >
             {(activity.children?.length > 0 || activity.tasks.length > 0) && (
-              <Grid item pb={1}>
+              <Grid size={{xs: 12, md: 4}} pb={1}>
                 <Tooltip title="Search Tasks or Activities">
                   <div>
                     <JumboSearch
@@ -360,9 +361,9 @@ function WBSListItem() {
 
   return (
     <>
-      <Grid container columnSpacing={1} justifyContent="flex-end" alignItems="center">
+      <Grid container columnSpacing={1} justifyContent="flex-end" alignItems="center" width={'100%'}>
         {projectTimelineActivities?.length > 0 && (
-          <Grid>
+          <Grid size={{xs: 11, md: 4}}>
             <JumboSearch
               value={searchQuery}
               onChange={(value) => setSearchQuery(value)}
@@ -371,15 +372,15 @@ function WBSListItem() {
         )}
         {isLargeScreen && (
           <>
-            <Grid>
+            <Grid size={0.5}>
               <GanttChartActionTail />
             </Grid>
-            <Grid>
+            <Grid size={0.5}>
               <TasksTreeViewActionTail />
             </Grid>
           </>
         )}
-        <Grid>
+        <Grid size={{xs: 1, md: 0.5}}>
           <WBSActionTail
             openDialog={openDialog}
             setOpenDialog={setOpenDialog}

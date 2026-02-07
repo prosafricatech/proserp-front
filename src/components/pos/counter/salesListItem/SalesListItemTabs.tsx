@@ -37,6 +37,7 @@ import { DispatchReportOnScreen } from './saleDispatchReport/DispatchReportOnScr
 import { useCounter } from '../CounterProvider';
 import SaleAdjustments from './SaleAdjustments';
 import { BackdropSpinner } from '@/shared/ProgressIndicators/BackdropSpinner';
+import moment from 'moment';
 
 // Lazy-loaded components
 const SaleInvoiceForm = lazy(() => import('./invoice/SaleInvoiceForm'));
@@ -226,6 +227,10 @@ const SalesListItemTabs: React.FC<SalesListItemTabsProps> = ({
 
   const tabIndex = getTabIndex();
 
+  const isLessThan24Hours = (transaction_date: string | Date) => {
+    return moment().diff(moment(transaction_date), 'hours') < 24;
+  };
+
   return (
     <>
       <Grid size={12}>
@@ -269,17 +274,24 @@ const SalesListItemTabs: React.FC<SalesListItemTabsProps> = ({
               </IconButton>
             </Tooltip>
             {
-             !sale.is_instant_sale && sale.status !== 'Pending' && sale.status !== 'Fulfilled' && (checkOrganizationPermission([PERMISSIONS.SALES_DISPATCH_NOT_FULLY_PAID]) || (checkOrganizationPermission([PERMISSIONS.SALES_DISPATCH]) && !!sale.is_fully_paid)) && 
-             (
-              <Tooltip title={`Dispatch ${sale.saleNo}`}>
-                <IconButton 
-                  onClick={() => setOpenDispatchDialog(true)}
-                  aria-label="dispatch item"
-                >
-                  <FontAwesomeIcon icon={faTruckArrowRight} size={'xs'} />
-                </IconButton>
-              </Tooltip>
-            )}
+              !sale.is_instant_sale && 
+              sale.status !== 'Pending' && 
+              sale.status !== 'Fulfilled' && 
+              (checkOrganizationPermission([PERMISSIONS.SALES_DISPATCH_NOT_FULLY_PAID]) || 
+                (checkOrganizationPermission([PERMISSIONS.SALES_DISPATCH]) && !!sale.is_fully_paid)
+              ) && 
+              (
+                checkOrganizationPermission([PERMISSIONS.SALES_DISPATCH_OLD_SALES]) || 
+                isLessThan24Hours(sale.transaction_date)
+              ) &&
+              (
+                <Tooltip title={`Dispatch ${sale.saleNo}`}>
+                  <IconButton onClick={() => setOpenDispatchDialog(true)}>
+                    <FontAwesomeIcon icon={faTruckArrowRight} size={'xs'} />
+                  </IconButton>
+                </Tooltip>
+              )
+            }
           </Grid>
           <Grid size={12}>
             <SaleDeliveryNotes sale={sale} expanded={expanded}/>

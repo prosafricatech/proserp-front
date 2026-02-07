@@ -61,7 +61,7 @@ function Dashboard() {
   const [chartFilters, setChartFilters] = useState<ChartFilters>({
     from: dayjs().startOf('month').toISOString(),
     to: dayjs().endOf('day').toISOString(),
-    cost_center_ids: (authUser as AuthUser | null)?.user?.is_admin ? 'all' : (authOrganization?.costCenters ? authOrganization.costCenters.map((cost_center: CostCenter) => cost_center.id) : []),
+    cost_center_ids: ((authUser as AuthUser | null)?.user?.is_admin || checkOrganizationPermission('CostCenters:All')) ? 'all' : (authOrganization?.costCenters ? authOrganization.costCenters.map((cost_center: CostCenter) => cost_center.id) : []),
     costCenters: authOrganization?.costCenters && authOrganization.costCenters
   });
 

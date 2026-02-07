@@ -56,7 +56,7 @@ function Subscriptions() {
                     ))}
                 </React.Fragment>
             ) : (
-                <Alert variant="outlined" severity="warning">
+                <Alert severity="warning">
                     {subsDict.messages.noSubscriptions}
                 </Alert>
             )}

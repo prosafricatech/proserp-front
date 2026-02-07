@@ -9,13 +9,11 @@ import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { PROS_CONTROL_PERMISSIONS } from '@/utilities/constants/prosControlPermissions';
 import UnauthorizedAccess from '@/shared/Information/UnauthorizedAccess';
 
-// ---- Context Type ----
 interface SelectedTabContextType {
   activeTab: number;
   setActiveTab?: (tab: number) => void;
 }
 
-// ---- Provide default value ----
 export const SelectedTab = createContext<SelectedTabContextType>({ activeTab: 0 });
 
 function Troubleshooting() {

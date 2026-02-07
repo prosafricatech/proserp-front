@@ -28,7 +28,7 @@ const StationItemAction = ({ station }: StationItemActionProps) => {
   const { mutate: deleteStation } = useMutation({
     mutationFn: stationServices.delete,
     onSuccess: (data: { message: string }) => {
-      queryClient.invalidateQueries({ queryKey: ['station'] });
+      queryClient.invalidateQueries({ queryKey: ['stations'] });
       enqueueSnackbar('Station deleted successfully', {
         variant: 'success',
       });
@@ -75,7 +75,7 @@ const StationItemAction = ({ station }: StationItemActionProps) => {
         maxWidth="md"
         fullScreen={belowLargeScreen}
       >
-        <StationForm station={station} setOpenDialog={setOpenEditDialog} />
+        <StationForm station={station as any} setOpenDialog={setOpenEditDialog} />
       </Dialog>
       <JumboDdMenu
         icon={

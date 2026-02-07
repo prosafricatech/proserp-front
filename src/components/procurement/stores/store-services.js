@@ -88,4 +88,21 @@ storeServices.downloadExcelTemplate = async (filters) => {
     return data;
 };
 
+storeServices.getStockMovementExcel = async (filters) => {
+    const payload = {
+        ...filters,
+        export: 'excel',
+    };
+
+    const { data } = await axios.post(
+        `/api/stores/${filters.store_id}/getStockMovementExcel`,
+        payload, // ✅ payload goes here
+        {
+            responseType: 'blob', // ✅ keep blob response
+        }
+    );
+
+    return data;
+};
+
 export default storeServices;

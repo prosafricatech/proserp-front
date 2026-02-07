@@ -38,6 +38,17 @@ fuelStationServices.retrieveLastReadings = async(params) => {
     return data;
 }
 
+fuelStationServices.getProductsSellingPrices = async ({ product_ids, sales_outlet_id, as_at }) => {
+    const { data } = await axios.get('/api/fuelStations/salesShifts/productsSellingPrices', {
+        params: {
+            product_ids: product_ids,
+            sales_outlet_id,
+            as_at,
+        },
+    });
+    return data;
+};
+
 fuelStationServices.showShiftDetails = async (id) => {
     const {data} = await axios.get(`/api/fuelStations/salesShifts/${id}/showShiftDetails`);
     return data;

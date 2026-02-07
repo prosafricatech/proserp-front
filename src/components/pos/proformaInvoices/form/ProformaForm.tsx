@@ -21,6 +21,7 @@ import { Div } from '@jumbo/shared';
 import StakeholderQuickAdd from '@/components/masters/stakeholders/StakeholderQuickAdd';
 import { Proforma, ProformaItem } from '../ProformaType';
 import { Stakeholder } from '@/components/masters/stakeholders/StakeholderType';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
 
 interface ProformaFormProps {
   toggleOpen: (open: boolean) => void;
@@ -49,12 +50,13 @@ function ProformaForm({ toggleOpen, proforma = null }: ProformaFormProps) {
   const [expiry_date] = useState(proforma?.expiry_date ? dayjs(proforma.expiry_date) : null);
   const { activeOutlet } = useSalesOutlet();
   const [totalAmount, settotalAmount] = useState(0);
-  const [vatableAmount, setvatableAmount] = useState(0);
+  const [vatableAmount, setVatableAmount] = useState(0);
   const [items, setItems] = useState<ProformaItem[]>(proforma?.items || []);
   const [stakeholderQuickAddDisplay, setStakeholderQuickAddDisplay] = useState(false);
   const [addedStakeholder, setAddedStakeholder] = useState<Stakeholder | null>(null);
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
+  const {checkOrganizationPermission} = useJumboAuth();
 
   const [showWarning, setShowWarning] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
@@ -95,7 +97,7 @@ function ProformaForm({ toggleOpen, proforma = null }: ProformaFormProps) {
     }
   });
 
-  const ordertotalAmount = () => {
+  const orderTotalAmount = () => {
     let total = 0;
     let vatableTotal = 0;
 
@@ -123,7 +125,7 @@ function ProformaForm({ toggleOpen, proforma = null }: ProformaFormProps) {
       items.filter((item) => item.product?.vat_exempted !== true).forEach((item) => {
         vatableTotal += item.rate * item.quantity;
       });
-      setvatableAmount(vatableTotal);
+      setVatableAmount(vatableTotal);
     }
 
     loopItems();
@@ -134,7 +136,7 @@ function ProformaForm({ toggleOpen, proforma = null }: ProformaFormProps) {
   const vatAmount = vatableAmount * Number(vat_percentage) / 100;
 
   React.useEffect(() => {
-    ordertotalAmount();
+    orderTotalAmount();
   }, [items]);
 
   useEffect(() => {
@@ -316,13 +318,15 @@ function ProformaForm({ toggleOpen, proforma = null }: ProformaFormProps) {
                                 shouldValidate: true
                               });
                             }}
-                            startAdornment={
-                              <Tooltip title="Add Client">
-                                <AddOutlined
-                                  onClick={() => setStakeholderQuickAddDisplay(true)}
-                                  sx={{ cursor: 'pointer' }}
-                                />
-                              </Tooltip>
+                            startAdornment= {
+                              checkOrganizationPermission(PERMISSIONS.STAKEHOLDERS_CREATE) && (
+                                <Tooltip title="Add Client">
+                                  <AddOutlined
+                                    onClick={() => setStakeholderQuickAddDisplay(true)}
+                                    sx={{ cursor: 'pointer' }}
+                                  />
+                                </Tooltip>
+                              )
                             }
                           />
                         </Div>
