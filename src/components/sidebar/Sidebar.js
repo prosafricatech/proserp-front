@@ -140,13 +140,9 @@ function Sidebar({ menus }) {
                     }
                 }
 
-                //PoS > Masters > PriceLists
-<<<<<<< HEAD
-                if (!checkOrganizationPermission([PERMISSIONS.PRICE_LISTS_READ,PERMISSIONS.PRICE_LISTS_CREATE, PERMISSIONS.PRICE_LISTS_EDIT, PERMISSIONS.PRICE_LISTS_DELETE])) {
-=======
-                if (!checkOrganizationPermission([PERMISSIONS.PRICE_LISTS_READ, PERMISSIONS.PRICE_LISTS_CREATE])) {
->>>>>>> development
-                    const posMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.pos);
+//PoS > Masters > PriceLists
+if (!checkOrganizationPermission([PERMISSIONS.PRICE_LISTS_READ, PERMISSIONS.PRICE_LISTS_CREATE, PERMISSIONS.PRICE_LISTS_EDIT, PERMISSIONS.PRICE_LISTS_DELETE])) {
+    const posMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.pos);
                     if (posMenuIndex >= 0) {
                         const mastersIndex = updatedMenus[posMenuIndex].children.findIndex(child => child.label === dictionary.sidebar.menuItem.masters);
                         if (mastersIndex >= 0) {
