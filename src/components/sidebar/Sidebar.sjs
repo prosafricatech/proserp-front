@@ -12,23 +12,23 @@ import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import JumboVerticalNavbar from '@jumbo/components/JumboVerticalNavbar/JumboVerticalNavbar';
 import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
 
-function Sidebar ({ menus }) {
+function Sidebar({ menus }) {
     const dictionary = useDictionary();
     const [menuItems, setMenuItems] = React.useState(menus);
-    const {authOrganization,checkPermission,checkOrganizationPermission,organizationHasSubscribed, authUser } = useJumboAuth();
+    const { authOrganization, checkPermission, checkOrganizationPermission, organizationHasSubscribed, authUser } = useJumboAuth();
 
     React.useEffect(() => {
         let updatedMenus = [...menus.filter(menu => menu.label === dictionary.sidebar.menu.home)];
 
-        if (authOrganization?.organization?.name) {
+        if (authOrganization?.organization?.name) { 
 
-            if(organizationHasSubscribed(MODULES.PROCESS_APPROVAL)){
+            if (organizationHasSubscribed(MODULES.PROCESS_APPROVAL)) {
                 //Process Approval sections
-                updatedMenus = [...updatedMenus,...menus.filter(menu => menu.label === dictionary.sidebar.menu.processApproval)];
+                updatedMenus = [...updatedMenus, ...menus.filter(menu => menu.label === dictionary.sidebar.menu.processApproval)];
 
                 const processApprovalMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.processApproval);
 
-                if(!checkOrganizationPermission([PERMISSIONS.REQUISITIONS_CREATE,PERMISSIONS.REQUISITIONS_EDIT,PERMISSIONS.REQUISITIONS_DELETE,PERMISSIONS.REQUISITIONS_EDIT])){
+                if (!checkOrganizationPermission([PERMISSIONS.REQUISITIONS_CREATE, PERMISSIONS.REQUISITIONS_EDIT, PERMISSIONS.REQUISITIONS_DELETE, PERMISSIONS.REQUISITIONS_EDIT])) {
                     if (processApprovalMenuIndex >= 0) {
                         updatedMenus[processApprovalMenuIndex].children = updatedMenus[processApprovalMenuIndex].children.filter(
                             child => child.label !== dictionary.sidebar.menuItem.requisitions
@@ -64,18 +64,18 @@ function Sidebar ({ menus }) {
                     }
                 }
             }
-  
-            if(organizationHasSubscribed(MODULES.POINT_OF_SALE)){
+
+            if (organizationHasSubscribed(MODULES.POINT_OF_SALE)) {
                 //PoS
-                if(checkOrganizationPermission(
+                if (checkOrganizationPermission(
                     [
                         PERMISSIONS.SALES_READ,
                         PERMISSIONS.PROFORMA_INVOICES_READ,
                         PERMISSIONS.OUTLETS_READ,
                         PERMISSIONS.PRICE_LISTS_READ,
                         PERMISSIONS.SALES_REPORTS
-                    ])){
-                    updatedMenus = [...updatedMenus,...menus.filter(menu => menu.label === dictionary.sidebar.menu.pos)];
+                    ])) {
+                    updatedMenus = [...updatedMenus, ...menus.filter(menu => menu.label === dictionary.sidebar.menu.pos)];
                 }
 
                 //PoS > Counter/Sales
@@ -92,7 +92,7 @@ function Sidebar ({ menus }) {
                 }
 
                 // PoS > Proformas
-                if (!checkOrganizationPermission([PERMISSIONS.SALES_CREATE,PERMISSIONS.SALES_EDIT,PERMISSIONS.SALES_COMPLETE,PERMISSIONS.SALES_READ])) {
+                if (!checkOrganizationPermission([PERMISSIONS.SALES_CREATE, PERMISSIONS.SALES_EDIT, PERMISSIONS.SALES_COMPLETE, PERMISSIONS.SALES_READ])) {
                     const posMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.pos);
                     if (posMenuIndex >= 0) {
                         updatedMenus[posMenuIndex].children = updatedMenus[posMenuIndex].children.filter(
@@ -112,13 +112,13 @@ function Sidebar ({ menus }) {
                     const posMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.pos);
                     if (posMenuIndex >= 0) {
                         updatedMenus[posMenuIndex].children = updatedMenus[posMenuIndex].children.filter(
-                            child => child.label !==  dictionary.sidebar.menuItem.reports
+                            child => child.label !== dictionary.sidebar.menuItem.reports
                         );
                     }
                 }
 
                 // PoS > Masters
-                if (!checkOrganizationPermission([PERMISSIONS.OUTLETS_READ,PERMISSIONS.POS_SETTINGS, PERMISSIONS.PRICE_LISTS_READ, PERMISSIONS.PRICE_LISTS_CREATE])) {
+                if (!checkOrganizationPermission([PERMISSIONS.OUTLETS_READ, PERMISSIONS.POS_SETTINGS, PERMISSIONS.PRICE_LISTS_READ, PERMISSIONS.PRICE_LISTS_CREATE])) {
                     const posMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.pos);
                     if (posMenuIndex >= 0) {
                         updatedMenus[posMenuIndex].children = updatedMenus[posMenuIndex].children.filter(
@@ -131,25 +131,29 @@ function Sidebar ({ menus }) {
                 if (!checkOrganizationPermission(PERMISSIONS.OUTLETS_READ)) {
                     const posMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.pos);
                     if (posMenuIndex >= 0) {
-                    const mastersIndex = updatedMenus[posMenuIndex].children.findIndex(child => child.label === dictionary.sidebar.menuItem.masters);
-                    if (mastersIndex >= 0) {
-                        updatedMenus[posMenuIndex].children[mastersIndex].children = updatedMenus[posMenuIndex].children[mastersIndex].children.filter(
-                            item => item.label !== dictionary.sidebar.menuItem.outlets
-                        );
-                    }
+                        const mastersIndex = updatedMenus[posMenuIndex].children.findIndex(child => child.label === dictionary.sidebar.menuItem.masters);
+                        if (mastersIndex >= 0) {
+                            updatedMenus[posMenuIndex].children[mastersIndex].children = updatedMenus[posMenuIndex].children[mastersIndex].children.filter(
+                                item => item.label !== dictionary.sidebar.menuItem.outlets
+                            );
+                        }
                     }
                 }
 
                 //PoS > Masters > PriceLists
+<<<<<<< HEAD
                 if (!checkOrganizationPermission([PERMISSIONS.PRICE_LISTS_READ,PERMISSIONS.PRICE_LISTS_CREATE, PERMISSIONS.PRICE_LISTS_EDIT, PERMISSIONS.PRICE_LISTS_DELETE])) {
+=======
+                if (!checkOrganizationPermission([PERMISSIONS.PRICE_LISTS_READ, PERMISSIONS.PRICE_LISTS_CREATE])) {
+>>>>>>> development
                     const posMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.pos);
                     if (posMenuIndex >= 0) {
-                    const mastersIndex = updatedMenus[posMenuIndex].children.findIndex(child => child.label === dictionary.sidebar.menuItem.masters);
-                    if (mastersIndex >= 0) {
-                        updatedMenus[posMenuIndex].children[mastersIndex].children = updatedMenus[posMenuIndex].children[mastersIndex].children.filter(
-                            item => item.label !== dictionary.sidebar.menuItem.priceLists
-                        );
-                    }
+                        const mastersIndex = updatedMenus[posMenuIndex].children.findIndex(child => child.label === dictionary.sidebar.menuItem.masters);
+                        if (mastersIndex >= 0) {
+                            updatedMenus[posMenuIndex].children[mastersIndex].children = updatedMenus[posMenuIndex].children[mastersIndex].children.filter(
+                                item => item.label !== dictionary.sidebar.menuItem.priceLists
+                            );
+                        }
                     }
                 }
 
@@ -250,9 +254,9 @@ function Sidebar ({ menus }) {
                 }
             }
 
-            if(organizationHasSubscribed(MODULES.MANUFACTURING_AND_PROCESSING)){
+            if (organizationHasSubscribed(MODULES.MANUFACTURING_AND_PROCESSING)) {
                 //Manufacturing & Processing
-                if(checkOrganizationPermission([
+                if (checkOrganizationPermission([
                     PERMISSIONS.BOM_READ,
                     PERMISSIONS.BOM_CREATE,
                     PERMISSIONS.BOM_EDIT,
@@ -261,8 +265,8 @@ function Sidebar ({ menus }) {
                     PERMISSIONS.PRODUCTION_BATCHES_READ,
                     PERMISSIONS.PRODUCTION_BATCHES_EDIT,
                     PERMISSIONS.PRODUCTION_BATCHES_DELETE,
-                ])){
-                    updatedMenus = [...updatedMenus,...menus.filter(menu => menu.label === dictionary.sidebar.menu.manufacturing)];
+                ])) {
+                    updatedMenus = [...updatedMenus, ...menus.filter(menu => menu.label === dictionary.sidebar.menu.manufacturing)];
                 }
 
                 // Manufacturing & Processing > Manufacturing Orders
@@ -311,9 +315,9 @@ function Sidebar ({ menus }) {
                 }
             }
 
-            if(organizationHasSubscribed(MODULES.PROJECT_MANAGEMENT)){
+            if (organizationHasSubscribed(MODULES.PROJECT_MANAGEMENT)) {
                 //Project Management
-                if(checkOrganizationPermission([
+                if (checkOrganizationPermission([
                     PERMISSIONS.PROJECTS_READ,
                     PERMISSIONS.PROJECTS_CREATE,
                     PERMISSIONS.PROJECTS_EDIT,
@@ -322,8 +326,8 @@ function Sidebar ({ menus }) {
                     PERMISSIONS.PROJECT_CATEGORIES_CREATE,
                     PERMISSIONS.PROJECT_CATEGORIES_EDIT,
                     PERMISSIONS.PROJECT_CATEGORIES_DELETE,
-                ])){
-                    updatedMenus = [...updatedMenus,...menus.filter(menu => menu.label === dictionary.sidebar.menu.projectManagement)];
+                ])) {
+                    updatedMenus = [...updatedMenus, ...menus.filter(menu => menu.label === dictionary.sidebar.menu.projectManagement)];
                 }
 
                 // Project Management > Projects
@@ -372,18 +376,21 @@ function Sidebar ({ menus }) {
                 }
             }
 
-            if(organizationHasSubscribed(MODULES.ACCOUNTS_AND_FINANCE)){
+            // Human Resources
+            updatedMenus = [...updatedMenus, ...menus.filter(menu => menu.label === dictionary.sidebar.menu.humanResources)];
+
+            if (organizationHasSubscribed(MODULES.ACCOUNTS_AND_FINANCE)) {
 
                 //Accounts
-                if(checkOrganizationPermission(
+                if (checkOrganizationPermission(
                     [
                         PERMISSIONS.ACCOUNTS_MASTERS_READ,
                         PERMISSIONS.ACCOUNTS_MASTERS_CREATE,
                         PERMISSIONS.ACCOUNTS_MASTERS_READ,
                         PERMISSIONS.ACCOUNTS_TRANSACTIONS_CREATE,
                         PERMISSIONS.ACCOUNTS_REPORTS,
-                    ])){
-                    updatedMenus = [...updatedMenus,...menus.filter(menu => menu.label === dictionary.sidebar.menu.accounts_and_finance)];
+                    ])) {
+                    updatedMenus = [...updatedMenus, ...menus.filter(menu => menu.label === dictionary.sidebar.menu.accounts_and_finance)];
                 }
 
                 // Accounts > Transactions
@@ -415,7 +422,7 @@ function Sidebar ({ menus }) {
                 //Accounts > Approved Payments
                 if (!organizationHasSubscribed(MODULES.PROCESS_APPROVAL)) {
                     const accountsMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.accounts_and_finance);
-                    
+
                     if (accountsMenuIndex >= 0) {
                         updatedMenus[accountsMenuIndex].children = updatedMenus[accountsMenuIndex].children.filter(
                             item => item.label !== dictionary.sidebar.menuItem.approvedPayments
@@ -438,15 +445,15 @@ function Sidebar ({ menus }) {
                     const accountsMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.accounts_and_finance);
                     if (accountsMenuIndex >= 0) {
                         updatedMenus[accountsMenuIndex].children = updatedMenus[accountsMenuIndex].children.filter(
-                            child => child.label !==  dictionary.sidebar.menuItem.reports
+                            child => child.label !== dictionary.sidebar.menuItem.reports
                         );
                     }
                 }
             }
 
-            if(organizationHasSubscribed(MODULES.PROCUREMENT_AND_SUPPLY)){
+            if (organizationHasSubscribed(MODULES.PROCUREMENT_AND_SUPPLY)) {
                 //Procurement & Supply
-                if(checkOrganizationPermission(
+                if (checkOrganizationPermission(
                     [
                         PERMISSIONS.PURCHASES_READ,
                         PERMISSIONS.PURCHASES_CREATE,
@@ -460,8 +467,8 @@ function Sidebar ({ menus }) {
                         PERMISSIONS.STORES_CREATE,
                         PERMISSIONS.INVENTORY_CONSUMPTIONS_READ,
                         PERMISSIONS.INVENTORY_CONSUMPTIONS_CREATE
-                    ])){
-                    updatedMenus = [...updatedMenus,...menus.filter(menu => menu.label === dictionary.sidebar.menu.procurementAndSupply)];
+                    ])) {
+                    updatedMenus = [...updatedMenus, ...menus.filter(menu => menu.label === dictionary.sidebar.menu.procurementAndSupply)];
                 }
 
                 // Procurement > Purchases
@@ -516,7 +523,7 @@ function Sidebar ({ menus }) {
                 }
 
                 //Procurement > Inventory Consumptions
-                if (!checkOrganizationPermission([PERMISSIONS.INVENTORY_CONSUMPTIONS_READ,PERMISSIONS.INVENTORY_CONSUMPTIONS_CREATE])) {
+                if (!checkOrganizationPermission([PERMISSIONS.INVENTORY_CONSUMPTIONS_READ, PERMISSIONS.INVENTORY_CONSUMPTIONS_CREATE])) {
                     const procurementsMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.procurementAndSupply);
                     if (procurementsMenuIndex >= 0) {
                         updatedMenus[procurementsMenuIndex].children = updatedMenus[procurementsMenuIndex].children.filter(
@@ -555,7 +562,7 @@ function Sidebar ({ menus }) {
                 }
 
                 //Procurement > Masters > Products
-                if (!checkOrganizationPermission([PERMISSIONS.PRODUCTS_READ,PERMISSIONS.PRODUCTS_CREATE])) {
+                if (!checkOrganizationPermission([PERMISSIONS.PRODUCTS_READ, PERMISSIONS.PRODUCTS_CREATE])) {
                     const procurementsMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.procurementAndSupply);
                     if (procurementsMenuIndex >= 0) {
                         const mastersIndex = updatedMenus[procurementsMenuIndex].children.findIndex(child => child.label === dictionary.sidebar.menuItem.masters);
@@ -568,7 +575,7 @@ function Sidebar ({ menus }) {
                 }
 
                 //Procurement > Masters > Products
-                if (!checkOrganizationPermission([PERMISSIONS.STORES_READ,PERMISSIONS.STORES_CREATE])) {
+                if (!checkOrganizationPermission([PERMISSIONS.STORES_READ, PERMISSIONS.STORES_CREATE])) {
                     const procurementsMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.procurementAndSupply);
                     if (procurementsMenuIndex >= 0) {
                         const mastersIndex = updatedMenus[procurementsMenuIndex].children.findIndex(child => child.label === dictionary.sidebar.menuItem.masters);
@@ -582,11 +589,11 @@ function Sidebar ({ menus }) {
             }
 
             //Tools
-            if( authOrganization?.organization?.active_subscriptions?.length > 0 && checkOrganizationPermission(
+            if (authOrganization?.organization?.active_subscriptions?.length > 0 && checkOrganizationPermission(
                 [
                     PERMISSIONS.FILES_SHELF_BROWSE,
-                ])){
-                updatedMenus = [...updatedMenus,...menus.filter(menu => menu.label === dictionary.sidebar.menu.tools)];
+                ])) {
+                updatedMenus = [...updatedMenus, ...menus.filter(menu => menu.label === dictionary.sidebar.menu.tools)];
             }
 
             // Procurement > Purchases
@@ -600,14 +607,14 @@ function Sidebar ({ menus }) {
             }
 
             //Masters
-            if(authOrganization?.organization?.active_subscriptions?.length > 0 && checkOrganizationPermission(
+            if (authOrganization?.organization?.active_subscriptions?.length > 0 && checkOrganizationPermission(
                 [
                     PERMISSIONS.STAKEHOLDERS_READ,
                     PERMISSIONS.MEASUREMENT_UNITS_READ,
                     PERMISSIONS.ACCOUNTS_MASTERS_CREATE,
                 ])
-            ){
-                updatedMenus = [...updatedMenus,...menus.filter(menu => menu.label === dictionary.sidebar.menuItem.masters)];
+            ) {
+                updatedMenus = [...updatedMenus, ...menus.filter(menu => menu.label === dictionary.sidebar.menuItem.masters)];
             }
 
             // Masters > Stakeholders
@@ -619,7 +626,7 @@ function Sidebar ({ menus }) {
                     );
                 }
             }
-            
+
             // Masters > Currencies
             if (!checkOrganizationPermission(PERMISSIONS.ACCOUNTS_MASTERS_CREATE)) {
                 const mastersMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menuItem.masters);
@@ -629,7 +636,7 @@ function Sidebar ({ menus }) {
                     );
                 }
             }
-            
+
             // Masters > Measurement Units
             if (!checkOrganizationPermission(PERMISSIONS.MEASUREMENT_UNITS_READ)) {
                 const mastersMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menuItem.masters);
@@ -642,8 +649,8 @@ function Sidebar ({ menus }) {
         }
 
         //Pros Control
-        if(!!authUser?.permissions && authUser.permissions.length > 0){
-            updatedMenus = [...updatedMenus,...menus.filter(menu => menu.label === dictionary.sidebar.menu.prosControl)];
+        if (!!authUser?.permissions && authUser.permissions.length > 0) {
+            updatedMenus = [...updatedMenus, ...menus.filter(menu => menu.label === dictionary.sidebar.menu.prosControl)];
         }
 
         // Pros Control > ProsAfricans
@@ -698,7 +705,7 @@ function Sidebar ({ menus }) {
             }
         }
 
-       //Organizations should always included
+        //Organizations should always included
         const orgMenu = menus.find(menu => menu.label === dictionary.sidebar.menu.organizations);
         if (orgMenu) {
             updatedMenus.push(orgMenu);
@@ -707,11 +714,11 @@ function Sidebar ({ menus }) {
         setMenuItems([
             ...updatedMenus,
         ]);
-    }, [authOrganization, checkOrganizationPermission,authUser?.permissions,checkPermission,organizationHasSubscribed]);
+    }, [authOrganization, checkOrganizationPermission, authUser?.permissions, checkPermission, organizationHasSubscribed]);
 
     return (
         <React.Fragment>
-            <SidebarHeader/>
+            <SidebarHeader />
             <JumboScrollbar
                 autoHide
                 autoHideDuration={200}
@@ -728,11 +735,11 @@ function Sidebar ({ menus }) {
                                 px: 3
                             }}
                         >
-                            <SidebarSkeleton/>
+                            <SidebarSkeleton />
                         </Div>
                     }
                 >
-                    <JumboVerticalNavbar items={menuItems}/>
+                    <JumboVerticalNavbar items={menuItems} />
                 </Suspense>
             </JumboScrollbar>
         </React.Fragment>

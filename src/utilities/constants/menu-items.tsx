@@ -225,6 +225,40 @@ export async function getMenus(locale: string) {
     //   ],
     // },
     {
+      label: sidebar.menu.humanResources,
+      type: 'section',
+      children: [
+        {
+          uri: `/${locale}/humanResources/employees`,
+          label: sidebar.menuItem.employees,
+          type: 'nav-item',
+          icon: icon('employees'),
+        },
+        {
+          label: sidebar.menuItem.masters,
+          type: 'collapsible',
+          icon: icon('businessCenter'),
+          children: [
+            {
+              uri: `/${locale}/humanResources/departments`,
+              label: sidebar.menuItem.departments,
+              type: 'nav-item',
+            },
+            {
+              uri: `/${locale}/humanResources/leave_types`,
+              label: sidebar.menuItem.leave_types,
+              type: 'nav-item',
+            },
+            {
+              uri: `/${locale}/humanResources/designations`,
+              label: sidebar.menuItem.designations,
+              type: 'nav-item',
+            },
+          ],
+        },
+      ],
+    },
+    {
       label: sidebar.menu.accounts_and_finance,
       type: 'section',
       children: [
