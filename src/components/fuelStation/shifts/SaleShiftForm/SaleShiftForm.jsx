@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useContext, useState, useEffect, useCallback } from 'react';
+import Dialog from '@mui/material/Dialog';
 import { 
   Button, 
   DialogActions, 
@@ -14,7 +15,8 @@ import {
   Chip,
   Typography,
   Checkbox,
-  Alert
+  Alert,
+  DialogContentText
 } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 import { useSnackbar } from 'notistack';
@@ -36,9 +38,11 @@ import fuelStationServices from '../../fuelStationServices';
 import FuelPrices from './FuelPrices';
 import ShiftSummary from './ShiftSummary';
 import PaymentsReceivedItemRow from './tabs/PaymentsReceivedItemRow';
+import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 
 function SaleShiftForm({ SalesShift, setOpenDialog }) {
   const [showWarning, setShowWarning] = useState(false);
+  const [showHoldDialog, setShowHoldDialog] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [clearFormKey, setClearFormKey] = useState(0);
   const [submitItemForm, setSubmitItemForm] = useState(false);
@@ -415,6 +419,10 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
       // Set shift_start if not set or if shift times change
       let selectedDate = currentShiftStart ? dayjs(currentShiftStart) : dayjs().startOf('day');
       let newStartDateTime = newValue.start_time ? combineDateTime(selectedDate, newValue.start_time) : selectedDate.toISOString();
+      // Debug log for shift and computed start
+      console.log('Selected shift:', newValue);
+      console.log('Selected shift start_time:', newValue.start_time);
+      console.log('Computed newStartDateTime:', newStartDateTime);
       setValue('shift_start', newStartDateTime, {
         shouldValidate: true,
         shouldDirty: true
@@ -971,7 +979,6 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
         <Button size='small' onClick={() => setOpenDialog(false)}>
           Cancel
         </Button>
-        
         {activeTab > 0 && (
           <Button 
             size='small' 
@@ -982,7 +989,6 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
             Previous
           </Button>
         )}
-        
         {activeTab < 3 && (
           <Button 
             size='small' 
@@ -993,23 +999,45 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
             Next
           </Button>
         )}
-        
-        {activeTab === 3 && (
-          <>
+        <LoadingButton
+          loading={isPending || updateLoading}
+          size='small'
+          variant='contained'
+          onClick={() => setShowHoldDialog(true)}
+        >
+          Hold
+        </LoadingButton>
+        <Dialog
+          open={showHoldDialog}
+          onClose={() => setShowHoldDialog(false)}
+        >
+          <DialogTitle>Confirm Hold Action</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              Are you sure you want to put this shift on hold? This will save your progress but will not close the shift. You can resume editing later.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setShowHoldDialog(false)} color="inherit">
+              Cancel
+            </Button>
             <LoadingButton
               loading={isPending || updateLoading}
-              size='small'
-              variant='contained'
+              variant="contained"
+              color="warning"
               onClick={(e) => {
+                setShowHoldDialog(false);
                 setValue('submit_type', 'suspend');
                 handleSubmit(handleSubmitForm)(e);
               }}
             >
-              Suspend
+              Confirm Hold
             </LoadingButton>
-            
-            {
-             checkOrganizationPermission([PERMISSIONS.FUEL_SALES_SHIFT_CLOSE]) && (
+          </DialogActions>
+        </Dialog>
+        {activeTab === 3 && (
+          <>
+            {checkOrganizationPermission([PERMISSIONS.FUEL_SALES_SHIFT_CLOSE]) && (
               <LoadingButton
                 loading={isPending || updateLoading}
                 size='small'

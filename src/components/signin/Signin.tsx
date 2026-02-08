@@ -1,7 +1,6 @@
 'use client';
 
-import { LoginForm } from '@/components/LoginForm';
-import { Link } from '@/components/NextLink';
+import { Link } from '@/components/nextLink';
 import { ASSET_IMAGES } from '@/utilities/constants/paths';
 import { Facebook, Google, Twitter } from '@mui/icons-material';
 import {
@@ -16,6 +15,7 @@ import Image from 'next/image';
 import React from 'react';
 import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
 import { useLanguage } from '@/app/[lang]/contexts/LanguageContext';
+import { LoginForm } from '../loginForm';
 
 export const Signin = () => {
   const dictionary = useDictionary();
@@ -182,7 +182,7 @@ export const Signin = () => {
           }}
         >
           <Box sx={{ position: 'relative', zIndex: 3 }}>
-            <LoginForm />
+            <LoginForm/>
             
             {/* Additional Links */}
             <Box sx={{ mt: 3 }}>

@@ -208,55 +208,57 @@ const handleMainFormSubmit = async () => {
                 />
               </Div>
             </Grid>
-            <Grid size={{xs: 12, md: 4}}>
-              <Grid container rowSpacing={0.3}>
-                <Stack direction={'row'} alignItems={'center'}>
-                  <Checkbox
-                    checked={costInsights}
-                    size='small'
-                    onChange={(e) => {
-                      const isChecked = e.target.checked;
-                      setCostInsights(isChecked);
-                    }}
-                  />
-                  <Typography>Cost Insights</Typography>
-                </Stack>
-                {!!costInsights && (
-                  <>
-                    <Grid size={12}>
-                      <Div sx={{ mt: 0.5}}>
-                        <StoreSelector
-                          defaultValue={null}
-                          allowSubStores={true}
-                          onChange={(newValue: { id: number } | null) => {
-                            setValue('store_id', newValue ? newValue.id : null, {
-                              shouldValidate: true,
-                              shouldDirty: true,
-                            });
-                          }}
-                        />
-                      </Div>
-                    </Grid>
-                    <Grid size={12}>
-                      <Div sx={{mt: 0.5}}>
-                        <CostCenterSelector
-                          label="Cost Center"
-                          multiple={false}
-                          frontError={errors.cost_center_id}
-                          onChange={(newValue: any) => {
-                            setValue('cost_center_id', newValue?.id ? newValue.id : null, {
-                              shouldValidate: true,
-                              shouldDirty: true
-                            });
-                          }}
-                        />
-                      </Div>
-                    </Grid>
-                  </>
-                )}
+            {!fuelPriceLists &&
+              <Grid size={{xs: 12, md: 4}}>
+                <Grid container rowSpacing={0.3}>
+                  <Stack direction={'row'} alignItems={'center'}>
+                    <Checkbox
+                      checked={costInsights}
+                      size='small'
+                      onChange={(e) => {
+                        const isChecked = e.target.checked;
+                        setCostInsights(isChecked);
+                      }}
+                    />
+                    <Typography>Cost Insights</Typography>
+                  </Stack>
+                  {!!costInsights && (
+                    <>
+                      <Grid size={12}>
+                        <Div sx={{ mt: 0.5}}>
+                          <StoreSelector
+                            defaultValue={null}
+                            allowSubStores={true}
+                            onChange={(newValue: { id: number } | null) => {
+                              setValue('store_id', newValue ? newValue.id : null, {
+                                shouldValidate: true,
+                                shouldDirty: true,
+                              });
+                            }}
+                          />
+                        </Div>
+                      </Grid>
+                      <Grid size={12}>
+                        <Div sx={{mt: 0.5}}>
+                          <CostCenterSelector
+                            label="Cost Center"
+                            multiple={false}
+                            frontError={errors.cost_center_id}
+                            onChange={(newValue: any) => {
+                              setValue('cost_center_id', newValue?.id ? newValue.id : null, {
+                                shouldValidate: true,
+                                shouldDirty: true
+                              });
+                            }}
+                          />
+                        </Div>
+                      </Grid>
+                    </>
+                  )}
+                </Grid>
               </Grid>
-            </Grid>
-            <Grid size={{xs: 12, md: 8}} alignItems={'start'}>
+            }
+            <Grid size={{xs: 12, md: !fuelPriceLists ? 8 : 12}} alignItems={'start'}>
               <Div sx={{ mt: {xs: 1, md: !!costInsights ? 6 : 1}, mb: 1 }}>
                 <TextField
                   label='Narration'

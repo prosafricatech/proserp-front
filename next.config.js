@@ -2,27 +2,25 @@ const withPWAInit = require('@ducanh2912/next-pwa').default;
 
 const withPWA = withPWAInit({
   dest: 'public',
-  cacheOnFrontEndNav: true,
-  aggressiveFrontEndNavCaching: true,
+  disable: process.env.NODE_ENV !== 'production',
+
   reloadOnOnline: true,
-  swcMinify: true,
-  disable: false,
+
   workboxOptions: {
     disableDevLogs: true,
-    navigateFallback: '/index.html',
     skipWaiting: true,
     clientsClaim: true,
+    navigateFallback: '/',
   },
 });
 
 const nextConfig = {
   reactStrictMode: true,
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  turbopack: {},
   env: {
     REACT_APP_IMAGES_PATH: '/assets/images',
   },
+
   async redirects() {
     return [
       {
@@ -32,6 +30,7 @@ const nextConfig = {
       },
     ];
   },
+
   async rewrites() {
     return [
       {
@@ -40,17 +39,14 @@ const nextConfig = {
       },
     ];
   },
-  turbopack: {},
+
   images: {
     remotePatterns: [
       {
         protocol: 'https',
         hostname: 'images.unsplash.com',
-        port: '',
-        pathname: '/**',
       },
     ],
-    unoptimized: false,
   },
 };
 

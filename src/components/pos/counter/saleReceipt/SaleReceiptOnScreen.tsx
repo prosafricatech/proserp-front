@@ -1,4 +1,4 @@
-import { Currency } from '@/components/masters/currencies/CurrencyType';
+import { Currency } from '@/components/masters/Currencies/CurrencyType';
 import { MeasurementUnit } from '@/components/masters/measurementUnits/MeasurementUnitType';
 import { Organization } from '@/types/auth-types';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
@@ -29,22 +29,19 @@ interface SaleReceiptOnScreenProps {
   organization?: Organization;
 }
 
-const SaleReceiptOnScreen: React.FC<SaleReceiptOnScreenProps> = ({
-  sale,
-  organization,
-}) => {
+const SaleReceiptOnScreen: React.FC<SaleReceiptOnScreenProps> = ({ sale, organization }) => {
   const { theme } = useJumboTheme();
 
   // Calculate VAT amounts
   const { vatAmount, totalWithVAT } = React.useMemo(() => {
     const totalForVAT = sale.sale_items
-      .filter((item) => item.vat_exempted !== 1)
-      .reduce((total, item) => total + item.rate * item.quantity, 0);
+      .filter(item => item.vat_exempted !== 1)
+      .reduce((total, item) => total + (item.rate * item.quantity), 0);
 
-    const vat = (totalForVAT * sale.vat_percentage) / 100;
+    const vat = totalForVAT * sale.vat_percentage / 100;
     return {
       vatAmount: vat,
-      totalWithVAT: sale.amount + vat,
+      totalWithVAT: sale.amount + vat
     };
   }, [sale.sale_items, sale.vat_percentage, sale.amount]);
 
@@ -53,7 +50,7 @@ const SaleReceiptOnScreen: React.FC<SaleReceiptOnScreenProps> = ({
       style: 'currency',
       currency: sale.currency.code,
       minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
+      maximumFractionDigits: 2
     });
   };
 
@@ -70,14 +67,14 @@ const SaleReceiptOnScreen: React.FC<SaleReceiptOnScreenProps> = ({
   return (
     <>
       {sale.sale_items.map((item, index) => (
-        <Grid
-          container
+        <Grid 
+          container 
           key={`${item.product.name}-${index}`}
-          borderBottom={1}
-          borderColor='#484848'
+          borderBottom={1} 
+          borderColor="#484848" 
           color={theme.type === 'dark' ? 'white' : 'black'}
-          display='flex'
-          alignItems='flex-end'
+          display="flex" 
+          alignItems="flex-end"
           py={0.5}
         >
           <Grid size={12}>
@@ -90,52 +87,52 @@ const SaleReceiptOnScreen: React.FC<SaleReceiptOnScreenProps> = ({
               {`${item.quantity} ${item.measurement_unit.symbol} × ${formatItemPrice(item)}`}
             </Typography>
           </Grid>
-          <Grid size={6} textAlign='end'>
+          <Grid size={6} textAlign="end">
             <Typography lineHeight={1.2} fontSize={12}>
               {formatCurrency(calculateItemTotal(item))}
             </Typography>
           </Grid>
         </Grid>
       ))}
-
-      <Grid
-        container
-        mt={1}
-        borderBottom={1}
-        color={theme.type === 'dark' ? 'white' : 'black'}
-        display='flex'
-        alignItems='flex-end'
+      
+      <Grid 
+        container 
+        mt={1} 
+        borderBottom={1} 
+        color={theme.type === 'dark' ? 'white' : 'black'} 
+        display="flex" 
+        alignItems="flex-end"
         py={0.5}
       >
         <Grid size={6}>
-          <Typography lineHeight={1.2} fontSize={12} fontWeight='bold'>
+          <Typography lineHeight={1.2} fontSize={12} fontWeight="bold">
             Total
           </Typography>
         </Grid>
-        <Grid size={6} textAlign='end'>
+        <Grid size={6} textAlign="end">
           <Typography lineHeight={1.2} fontSize={12}>
             {formatCurrency(sale.amount)}
           </Typography>
         </Grid>
-
+        
         {sale.vat_percentage > 0 && (
           <>
             <Grid size={6}>
-              <Typography lineHeight={1.2} fontSize={12} fontWeight='bold'>
+              <Typography lineHeight={1.2} fontSize={12} fontWeight="bold">
                 VAT
               </Typography>
             </Grid>
-            <Grid size={6} textAlign='end'>
+            <Grid size={6} textAlign="end">
               <Typography lineHeight={1.2} fontSize={12}>
                 {formatCurrency(vatAmount)}
               </Typography>
             </Grid>
             <Grid size={6}>
-              <Typography lineHeight={1.2} fontSize={12} fontWeight='bold'>
+              <Typography lineHeight={1.2} fontSize={12} fontWeight="bold">
                 Total (VAT Incl.)
               </Typography>
             </Grid>
-            <Grid size={6} textAlign='end'>
+            <Grid size={6} textAlign="end">
               <Typography lineHeight={1.2} fontSize={12}>
                 {formatCurrency(totalWithVAT)}
               </Typography>

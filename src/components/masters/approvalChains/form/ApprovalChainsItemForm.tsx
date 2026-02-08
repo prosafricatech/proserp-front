@@ -2,25 +2,12 @@ import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import organizationServices from '@/components/organizations/organizationServices';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Div } from '@jumbo/shared';
-import {
-  AddOutlined,
-  CheckOutlined,
-  DisabledByDefault,
-} from '@mui/icons-material';
-import {
-  Autocomplete,
-  Button,
-  Checkbox,
-  Grid,
-  IconButton,
-  LinearProgress,
-  TextField,
-  Tooltip,
-} from '@mui/material';
+import { AddOutlined, CheckOutlined, DisabledByDefault } from '@mui/icons-material';
+import { Autocomplete, Button, Checkbox, Grid, IconButton, LinearProgress, TextField, Tooltip } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import React, { useEffect, useState } from 'react';
-import { SubmitHandler, useForm } from 'react-hook-form';
-import * as yup from 'yup';
+import { useForm, SubmitHandler } from 'react-hook-form';
+import * as yup from "yup";
 import { ApprovalChainItem } from '../ApprovalChainType';
 
 interface Role {
@@ -61,30 +48,24 @@ function ApprovalChainsItemForm({
   index = -1,
   setItems,
   items = [],
-  setShowForm,
+  setShowForm
 }: ApprovalChainsItemFormProps) {
   const { authOrganization } = useJumboAuth();
   const [can_finalize, setCan_finalize] = useState(item?.can_finalize === 1);
   const [can_override, setCan_override] = useState(item?.can_override === 1);
 
   const validationSchema = yup.object({
-    label: yup
-      .string()
-      .required('Label is required')
-      .typeError('Label is required'),
-    role_id: yup
-      .number()
-      .required('Role is required')
-      .typeError('Role is required'),
+    label: yup.string().required('Label is required').typeError('Label is required'),
+    role_id: yup.number().required('Role is required').typeError('Role is required'),
   });
 
-  const {
-    setValue,
-    register,
-    watch,
-    handleSubmit,
-    reset,
-    formState: { errors, dirtyFields },
+  const { 
+    setValue, 
+    register, 
+    watch, 
+    handleSubmit, 
+    reset, 
+    formState: { errors, dirtyFields } 
   } = useForm<FormValues>({
     resolver: yupResolver(validationSchema) as any,
     defaultValues: {
@@ -94,18 +75,18 @@ function ApprovalChainsItemForm({
       remarks: item?.remarks ?? '',
       role_id: item?.role_id ?? null,
       role: item?.role ?? null,
-    },
+    }
   });
 
   useEffect(() => {
-    const subscription = watch(() => {
-      const hasDirtyFields = Object.keys(dirtyFields).length > 0;
-      setIsDirty(hasDirtyFields);
-    });
-    return () => subscription.unsubscribe();
+      const subscription = watch(() => {
+          const hasDirtyFields = Object.keys(dirtyFields).length > 0;
+          setIsDirty(hasDirtyFields);
+      });
+      return () => subscription.unsubscribe();
   }, [watch, dirtyFields, setIsDirty]);
 
-  const [isAdding, setIsAdding] = useState(false);
+  const [isAdding, setIsAdding] = useState(false); 
 
   const updateItems: SubmitHandler<FormValues> = async (formData) => {
     setIsAdding(true);
@@ -119,14 +100,14 @@ function ApprovalChainsItemForm({
       const updatedItems = [...items];
       updatedItems[index] = newItem;
       setItems(updatedItems);
-      setClearFormKey((prevKey) => prevKey + 1);
+      setClearFormKey(prevKey => prevKey + 1);
     } else {
-      setItems((prevItems) => [...prevItems, newItem]);
+      setItems(prevItems => [...prevItems, newItem]);
       if (submitItemForm) {
         submitMainForm(newItem);
       }
       setSubmitItemForm(false);
-      setClearFormKey((prevKey) => prevKey + 1);
+      setClearFormKey(prevKey => prevKey + 1);
     }
 
     reset();
@@ -142,34 +123,33 @@ function ApprovalChainsItemForm({
     }
   }, [submitItemForm]);
 
-  const {
-    data: roles,
-    isLoading: isLoadingRoles,
-    isFetching: isFetchingRoles,
+  const { 
+    data: roles, 
+    isLoading: isLoadingRoles, 
+    isFetching: isFetchingRoles 
   } = useQuery<Role[]>({
     queryKey: ['organizationRoles', authOrganization?.organization?.id],
-    queryFn: () =>
-      organizationServices.getRoles(authOrganization?.organization?.id),
+    queryFn: () => organizationServices.getRoles(authOrganization?.organization?.id),
     enabled: !item && !!authOrganization?.organization?.id,
   });
 
   if (isAdding) {
-    return <LinearProgress />;
+    return <LinearProgress/>;
   }
 
   return (
     <form autoComplete='off' onSubmit={handleSubmit(updateItems)}>
       <Grid container columnSpacing={1} mb={1} mt={1}>
-        <Grid size={12} textAlign={'center'}>
+        <Grid size={12} textAlign={"center"}>
           {'Add Levels'}
         </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
-          {isFetchingRoles || isLoadingRoles ? (
-            <LinearProgress />
+        <Grid size={{xs: 12, md: 4}}>
+          {(isFetchingRoles || isLoadingRoles) ? (
+            <LinearProgress/> 
           ) : (
             <Div sx={{ mt: 1 }}>
               <Autocomplete
-                id='checkboxes-role_id'
+                id="checkboxes-role_id"
                 options={roles || []}
                 defaultValue={item?.role}
                 isOptionEqualToValue={(option, value) => option.id === value.id}
@@ -177,8 +157,8 @@ function ApprovalChainsItemForm({
                 renderInput={(params) => (
                   <TextField
                     {...params}
-                    label='Role'
-                    size='small'
+                    label="Role"
+                    size="small"
                     fullWidth
                     error={!!errors.role_id}
                     helperText={errors.role_id?.message}
@@ -195,11 +175,11 @@ function ApprovalChainsItemForm({
             </Div>
           )}
         </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
+        <Grid size={{xs: 12, md: 4}}>
           <Div sx={{ mt: 1 }}>
             <TextField
-              label='Label'
-              size='small'
+              label="Label"
+              size="small"
               fullWidth
               error={!!errors?.label}
               helperText={errors?.label?.message}
@@ -207,11 +187,11 @@ function ApprovalChainsItemForm({
             />
           </Div>
         </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
+        <Grid size={{xs: 12, md: 4}}>
           <Div sx={{ mt: 1 }}>
             <TextField
-              label='Remarks'
-              size='small'
+              label="Remarks"
+              size="small"
               multiline={true}
               minRows={2}
               fullWidth
@@ -219,8 +199,8 @@ function ApprovalChainsItemForm({
             />
           </Div>
         </Grid>
-        <Grid size={{ xs: 6, md: 2 }}>
-          <Div sx={{ mt: 1 }}>
+        <Grid size={{xs: 6, md: 2}}>
+          <Div sx={{ mt: 1}}>
             <Checkbox
               checked={can_finalize}
               size='small'
@@ -236,8 +216,8 @@ function ApprovalChainsItemForm({
             Can Finalize
           </Div>
         </Grid>
-        <Grid size={{ xs: 6, md: 2 }}>
-          <Div sx={{ mt: 1 }}>
+        <Grid size={{xs: 6, md: 2}}>
+          <Div sx={{ mt: 1}}>
             <Checkbox
               checked={can_override}
               size='small'
@@ -253,22 +233,22 @@ function ApprovalChainsItemForm({
             Can Override
           </Div>
         </Grid>
-        <Grid size={{ xs: 12, md: 8 }} mt={0.3} textAlign={'end'}>
+        <Grid size={{xs: 12, md: 8}} mt={0.3} textAlign={'end'}>
           <Div sx={{ mt: 1 }}>
-            <Button variant='contained' size='small' type='submit'>
+            <Button
+              variant='contained'
+              size='small'
+              type='submit'
+            >
               {item ? (
-                <>
-                  <CheckOutlined fontSize='small' /> Done
-                </>
+                <><CheckOutlined fontSize='small' /> Done</>
               ) : (
-                <>
-                  <AddOutlined fontSize='small' /> Add
-                </>
+                <><AddOutlined fontSize='small' /> Add</>
               )}
             </Button>
             {item && (
               <Tooltip title='Close Edit'>
-                <IconButton
+                <IconButton 
                   size='small'
                   onClick={() => {
                     setShowForm?.(false);

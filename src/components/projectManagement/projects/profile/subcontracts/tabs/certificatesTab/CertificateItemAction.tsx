@@ -1,14 +1,5 @@
 'use client';
 
-import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
-import { Currency } from '@/components/masters/currencies/CurrencyType';
-import PDFContent from '@/components/pdf/PDFContent';
-import projectsServices from '@/components/projectManagement/projects/project-services';
-import { Organization } from '@/types/auth-types';
-import { JumboDdMenu } from '@jumbo/components';
-import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
-import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
-import { MenuItemProps } from '@jumbo/types';
 import {
   DeleteOutlined,
   EditOutlined,
@@ -29,12 +20,21 @@ import {
   Tooltip,
   useMediaQuery,
 } from '@mui/material';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import React, { useState } from 'react';
+import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
+import { JumboDdMenu } from '@jumbo/components';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import CertificateForm from './form/CertificateForm';
-import CertificateOnScreen from './preview/CertificateOnScreen';
+import projectsServices from '@/components/projectManagement/projects/project-services';
 import CertificatePDF from './preview/CertificatePDF';
+import CertificateOnScreen from './preview/CertificateOnScreen';
+import PDFContent from '@/components/pdf/PDFContent';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { Organization } from '@/types/auth-types';
+import { MenuItemProps } from '@jumbo/types';
+import { Currency } from '@/components/masters/Currencies/CurrencyType';
 
 interface Certificate {
   id?: number | string;
@@ -63,7 +63,7 @@ const DocumentDialog: React.FC<{
 
   if (isFetching) {
     return (
-      <Dialog open fullWidth fullScreen={belowLargeScreen} maxWidth='md'>
+      <Dialog open fullWidth fullScreen={belowLargeScreen} maxWidth="md">
         <DialogContent>
           <LinearProgress />
         </DialogContent>
@@ -72,31 +72,20 @@ const DocumentDialog: React.FC<{
   }
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      fullScreen={belowLargeScreen}
-      maxWidth='md'
-      fullWidth
-    >
+    <Dialog open={open} onClose={onClose} fullScreen={belowLargeScreen} maxWidth="md" fullWidth>
       <DialogContent>
         {belowLargeScreen && (
-          <Grid
-            container
-            alignItems='center'
-            justifyContent='space-between'
-            mb={2}
-          >
+          <Grid container alignItems="center" justifyContent="space-between" mb={2}>
             <Grid size={11}>
               <Tabs value={activeTab} onChange={(_, tab) => setActiveTab(tab)}>
-                <Tab label='ONSCREEN' />
-                <Tab label='PDF' />
+                <Tab label="ONSCREEN" />
+                <Tab label="PDF" />
               </Tabs>
             </Grid>
-            <Grid size={1} textAlign='right'>
-              <Tooltip title='Close'>
-                <IconButton size='small' onClick={onClose}>
-                  <HighlightOff color='primary' />
+            <Grid size={1} textAlign="right">
+              <Tooltip title="Close">
+                <IconButton size="small" onClick={onClose}>
+                  <HighlightOff color="primary" />
                 </IconButton>
               </Tooltip>
             </Grid>
@@ -104,30 +93,17 @@ const DocumentDialog: React.FC<{
         )}
 
         {belowLargeScreen && activeTab === 0 ? (
-          <CertificateOnScreen
-            certificate={certificateDetails}
-            organization={organization as Organization}
-          />
+          <CertificateOnScreen certificate={certificateDetails} organization={organization as Organization} />
         ) : (
           <PDFContent
-            document={
-              <CertificatePDF
-                certificate={certificateDetails}
-                organization={organization as Organization}
-              />
-            }
+            document={<CertificatePDF certificate={certificateDetails} organization={organization as Organization} />}
             fileName={certificateDetails?.certificateNo || 'Certificate'}
           />
         )}
 
         {belowLargeScreen && (
-          <Box textAlign='right' mt={5}>
-            <Button
-              variant='outlined'
-              size='small'
-              color='primary'
-              onClick={onClose}
-            >
+          <Box textAlign="right" mt={5}>
+            <Button variant="outlined" size="small" color="primary" onClick={onClose}>
               Close
             </Button>
           </Box>
@@ -148,17 +124,10 @@ const EditCertificate: React.FC<{
 
   if (isFetching) return <LinearProgress />;
 
-  return (
-    <CertificateForm
-      setOpenDialog={setOpenDialog}
-      certificate={certificateDetails}
-    />
-  );
+  return <CertificateForm setOpenDialog={setOpenDialog} certificate={certificateDetails} />;
 };
 
-const CertificateItemAction: React.FC<{ certificate: Certificate }> = ({
-  certificate,
-}) => {
+const CertificateItemAction: React.FC<{ certificate: Certificate }> = ({ certificate }) => {
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [openPreviewDialog, setOpenPreviewDialog] = useState(false);
   const { showDialog, hideDialog } = useJumboDialog();
@@ -174,30 +143,17 @@ const CertificateItemAction: React.FC<{ certificate: Certificate }> = ({
     mutationFn: () => projectsServices.deleteCertificate(certificate.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['Certificates'] });
-      enqueueSnackbar('Certificate deleted successfully', {
-        variant: 'success',
-      });
+      enqueueSnackbar('Certificate deleted successfully', { variant: 'success' });
     },
     onError: (error: any) => {
-      enqueueSnackbar(
-        error?.response?.data?.message || 'Failed to delete certificate',
-        { variant: 'error' }
-      );
+      enqueueSnackbar(error?.response?.data?.message || 'Failed to delete certificate', { variant: 'error' });
     },
   });
 
   const menuItems = [
-    {
-      icon: <VisibilityOutlined fontSize='small' />,
-      title: 'View',
-      action: 'view',
-    },
-    { icon: <EditOutlined fontSize='small' />, title: 'Edit', action: 'edit' },
-    {
-      icon: <DeleteOutlined fontSize='small' color='error' />,
-      title: 'Delete',
-      action: 'delete',
-    },
+    { icon: <VisibilityOutlined fontSize="small" />, title: 'View', action: 'view' },
+    { icon: <EditOutlined fontSize="small" />, title: 'Edit', action: 'edit' },
+    { icon: <DeleteOutlined fontSize="small" color="error" />, title: 'Delete', action: 'delete' },
   ];
 
   const handleItemAction = (menu: MenuItemProps) => {
@@ -232,13 +188,10 @@ const CertificateItemAction: React.FC<{ certificate: Certificate }> = ({
         onClose={() => setOpenEditDialog(false)}
         fullWidth
         fullScreen={belowLargeScreen}
-        maxWidth='lg'
+        maxWidth="lg"
         scroll={belowLargeScreen ? 'body' : 'paper'}
       >
-        <EditCertificate
-          certificate={certificate}
-          setOpenDialog={setOpenEditDialog}
-        />
+        <EditCertificate certificate={certificate} setOpenDialog={setOpenEditDialog} />
       </Dialog>
 
       <DocumentDialog
@@ -250,8 +203,8 @@ const CertificateItemAction: React.FC<{ certificate: Certificate }> = ({
 
       <JumboDdMenu
         icon={
-          <Tooltip title='Actions'>
-            <MoreHorizOutlined fontSize='small' />
+          <Tooltip title="Actions">
+            <MoreHorizOutlined fontSize="small" />
           </Tooltip>
         }
         menuItems={menuItems}

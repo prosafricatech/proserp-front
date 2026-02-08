@@ -1,8 +1,5 @@
 'use client';
 
-import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
-import { useLanguage } from '@/app/[lang]/contexts/LanguageContext';
-import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import {
   JumboCheckbox,
   JumboForm,
@@ -10,21 +7,18 @@ import {
   JumboOutlinedInput,
 } from '@jumbo/vendors/react-hook-form';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
-import {
-  Box,
-  Button,
-  CircularProgress,
-  IconButton,
-  InputAdornment,
-  Stack,
-  Typography,
-} from '@mui/material';
-import { getSession, signIn, useSession } from 'next-auth/react';
+import { Button, CircularProgress, IconButton, InputAdornment, Stack, Typography, Box } from '@mui/material';
+import { getSession, signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useSnackbar } from 'notistack';
-import React, { useTransition } from 'react';
+import React from 'react';
 import * as yup from 'yup';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { useLanguage } from '@/app/[lang]/contexts/LanguageContext';
+import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
 import organizationServices from '../organizations/organizationServices';
+import { useSession } from 'next-auth/react';
+import { useTransition } from 'react';
 
 const LoginForm = () => {
   const lang = useLanguage();
@@ -41,19 +35,16 @@ const LoginForm = () => {
   });
 
   const validationSchema = yup.object().shape({
-    email: yup
-      .string()
+    email: yup.string()
       .email(dictionary.signin.form.errors.email.invalid)
       .required(dictionary.signin.form.errors.email.required),
-    password: yup
-      .string()
-      .required(dictionary.signin.form.errors.password.required),
+    password: yup.string().required(dictionary.signin.form.errors.password.required),
   });
 
   const [isPending, startTransition] = useTransition();
 
   const handleLogin = async (data) => {
-    setLoading(true);
+    setLoading(true); 
     try {
       const signInResponse = await signIn('credentials', {
         email: data.email,
@@ -79,10 +70,7 @@ const LoginForm = () => {
         targetUrl = `/${lang}/organizations`;
         setAuthValues(
           {
-            authUser: {
-              user: session.user,
-              permissions: session.permissions || [],
-            },
+            authUser: { user: session.user, permissions: session.permissions || [] },
             authOrganization: { permissions: [] },
             isAuthenticated: true,
             isLoading: false,
@@ -94,10 +82,7 @@ const LoginForm = () => {
           organization_id: session.organization_id,
         });
 
-        if (
-          !orgResponse?.data?.authUser ||
-          !orgResponse?.data?.authOrganization
-        ) {
+        if (!orgResponse?.data?.authUser || !orgResponse?.data?.authOrganization) {
           throw new Error('Failed to load organization');
         }
 
@@ -120,11 +105,11 @@ const LoginForm = () => {
       startTransition(() => {
         router.push(targetUrl);
       });
+
     } catch (error) {
       setLoading(false);
       enqueueSnackbar(
-        dictionary.signin.form.messages.loginError ||
-          'Login failed. Please try again.',
+        dictionary.signin.form.messages.loginError || 'Login failed. Please try again.',
         { variant: 'error' }
       );
       console.error('Login error:', error);
@@ -142,9 +127,9 @@ const LoginForm = () => {
 
   return (
     <Box>
-      <Typography
-        variant='h4'
-        mb={3}
+      <Typography 
+        variant="h4" 
+        mb={3} 
         align='center'
         sx={{
           background: 'linear-gradient(45deg, #0267a0, #00a8ff)',
@@ -157,7 +142,7 @@ const LoginForm = () => {
       >
         {dictionary.signin.form.title}
       </Typography>
-
+      
       <JumboForm
         validationSchema={validationSchema}
         onSubmit={handleLogin}
@@ -179,10 +164,10 @@ const LoginForm = () => {
                   borderColor: '#0267a0',
                   borderWidth: '2px',
                 },
-              },
+              }
             }}
           />
-
+          
           <JumboOutlinedInput
             fieldName={'password'}
             label={dictionary.signin.form.fields.password.label}
@@ -192,23 +177,21 @@ const LoginForm = () => {
             endAdornment={
               <InputAdornment position='end'>
                 <IconButton
-                  aria-label={
-                    values.showPassword ? 'Hide password' : 'Show password'
-                  }
+                  aria-label={values.showPassword ? 'Hide password' : 'Show password'}
                   onClick={handleClickShowPassword}
                   edge='end'
                   sx={{
                     color: '#0267a0',
                     '&:hover': {
                       backgroundColor: 'rgba(2, 103, 160, 0.1)',
-                    },
+                    }
                   }}
                 >
                   {values.showPassword ? <Visibility /> : <VisibilityOff />}
                 </IconButton>
               </InputAdornment>
             }
-            sx={{
+            sx={{ 
               bgcolor: (theme) => theme.palette.background.paper,
               borderRadius: '12px',
               '& .MuiOutlinedInput-root': {
@@ -220,10 +203,10 @@ const LoginForm = () => {
                   borderColor: '#0267a0',
                   borderWidth: '2px',
                 },
-              },
+              }
             }}
           />
-
+          
           <Stack
             direction={'row'}
             justifyContent={'space-between'}
@@ -242,7 +225,7 @@ const LoginForm = () => {
               }}
             />
           </Stack>
-
+          
           <Button
             fullWidth
             type='submit'
@@ -264,11 +247,7 @@ const LoginForm = () => {
               transition: 'all 0.3s ease',
             }}
           >
-            {loading || isPending ? (
-              <CircularProgress size={24} sx={{ color: 'white' }} />
-            ) : (
-              dictionary.signin.form.submit
-            )}
+            {loading || isPending ? <CircularProgress size={24} sx={{ color: 'white' }} /> : dictionary.signin.form.submit}
           </Button>
         </Stack>
       </JumboForm>

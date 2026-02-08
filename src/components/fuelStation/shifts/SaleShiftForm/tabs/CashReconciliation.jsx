@@ -415,9 +415,9 @@ function CashReconciliation({
                 <Grid size={{ xs: 12, md: 4 }}>
                   <Autocomplete
                     size="small"
-                    options={cashierLedgers || []}
+                    options={cashierLedgers.filter(l => l.ledger_group_id === 13) || []}
                     getOptionLabel={(opt) => opt.name}
-                    value={mainLedgerId ? cashierLedgers.find(l => l.id === mainLedgerId) || null : null}
+                    value={mainLedgerId ? cashierLedgers.filter(l => l.ledger_group_id === 13).find(l => l.id === mainLedgerId) || null : null}
                     onChange={(_, newValue) => {
                       const id = newValue?.id ?? null;
                       setValue(`cashiers.${cashierIndex}.main_ledger_id`, id, { shouldValidate: true });

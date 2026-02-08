@@ -2,7 +2,7 @@ import pdfStyles from '@/components/pdf/pdf-styles';
 import { Text, View } from '@react-pdf/renderer';
 
 export default function CashierListSummaryPDF({
-  openDetails,
+  includeFuelVouchers,
   shiftData,
   organization,
   fuel_pumps,
@@ -119,13 +119,18 @@ export default function CashierListSummaryPDF({
         const product = productOptions?.find((p) => p.id === pump.product_id);
         const type = product?.name || `Product ${pump.product_id}`;
         const difference = (pump.closing || 0) - (pump.opening || 0);
+        const fuelPrice = shiftData.fuel_prices.find(
+          (fp) => fp.product_id === pump.product_id
+        );
+
+        const amount = difference * fuelPrice.price;
 
         if (!acc[type]) {
           acc[type] = { type, count: 0, totalDifference: 0 };
         }
 
         acc[type].count++;
-        acc[type].totalDifference += difference;
+        acc[type].totalDifference += amount;
 
         return acc;
       }, {})
@@ -246,6 +251,7 @@ export default function CashierListSummaryPDF({
               Cash Collection
             </Text>
           </View>
+
           {/* ===== sub-titles row ===== */}
           <View
             style={{
@@ -298,7 +304,7 @@ export default function CashierListSummaryPDF({
                       flex: 0.5,
                     }}
                   >
-                    Difference
+                    Amount
                   </Text>
                 </View>
               </View>
@@ -392,6 +398,7 @@ export default function CashierListSummaryPDF({
               </View>
             </View>
           </View>
+
           {shiftData.cashiers?.map((cashier, index) => {
             // Calculate total products amount for this cashier
             const totalProductsAmount =
@@ -533,6 +540,12 @@ export default function CashierListSummaryPDF({
                       const difference =
                         (pump.closing || 0) - (pump.opening || 0);
 
+                      const fuelPrice = shiftData.fuel_prices.find(
+                        (fp) => fp.product_id === pump.product_id
+                      );
+
+                      const amount = difference * fuelPrice.price;
+
                       return (
                         <View
                           key={index}
@@ -569,7 +582,7 @@ export default function CashierListSummaryPDF({
                               flex: 0.5,
                             }}
                           >
-                            {difference.toLocaleString('en-US', {
+                            {amount.toLocaleString('en-US', {
                               minimumFractionDigits: 2,
                               maximumFractionDigits: 2,
                             })}

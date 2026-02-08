@@ -21,7 +21,6 @@ function MaterialIssuedForm({projectTaskIndex, taskProgressItem, material = null
   const { taskProgressItems, setTaskProgressItems} = useUpdateFormContext();
   const nonInventoryIds = productOptions.filter(product => product.type !== 'Inventory').map(product => product.id);
 
-  // FIXED: Use proper when() syntax with functions
   const validationSchema = yup.object({
     product: yup.object().required("Product is required").typeError('Product is required'),
     quantity: yup
@@ -38,7 +37,7 @@ function MaterialIssuedForm({projectTaskIndex, taskProgressItem, material = null
               const availableBalance = parseFloat(this.parent.available_balance);
               
               if (isNaN(currentBalance) || isNaN(availableBalance)) {
-                return true; // Skip validation if balances aren't available
+                return true;
               }
               
               return !isNaN(value) && value <= currentBalance;
@@ -47,7 +46,7 @@ function MaterialIssuedForm({projectTaskIndex, taskProgressItem, material = null
               const availableBalance = parseFloat(this.parent.available_balance);
               
               if (availableBalance === 'N/A' || isNaN(availableBalance)) {
-                return true; // Skip validation if balance is not available
+                return true;
               }
               
               return !isNaN(value) && value <= availableBalance;

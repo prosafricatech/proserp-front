@@ -1,7 +1,10 @@
-import OrganizationProfile from '@/components/organizations/profile/OrganizationProfile';
+import OrganizationProfile from '@/components/organizations/profile/OrganizationProfile'
+import React from 'react'
 
 function page() {
-  return <OrganizationProfile />;
+  return (
+    <OrganizationProfile/>
+  )
 }
 
-export default page;
+export default page

@@ -1,10 +1,16 @@
 'use client';
 
-import { readableDate } from '@/app/helpers/input-sanitization-helpers';
-import { Currency } from '@/components/masters/currencies/CurrencyType';
-import { Box, Grid, ListItemText, Tooltip, Typography } from '@mui/material';
 import React from 'react';
+import {
+  Grid,
+  ListItemText,
+  Tooltip,
+  Typography,
+  Box,
+} from '@mui/material';
+import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import CertificateItemAction from './CertificateItemAction';
+import { Currency } from '@/components/masters/Currencies/CurrencyType';
 
 interface Certificate {
   id?: number | string;
@@ -19,9 +25,7 @@ interface CertificatesListItemProps {
   certificate: Certificate;
 }
 
-const CertificatesListItem: React.FC<CertificatesListItemProps> = ({
-  certificate,
-}) => {
+const CertificatesListItem: React.FC<CertificatesListItemProps> = ({ certificate }) => {
   const formattedAmount = React.useMemo(() => {
     if (!certificate.total_amount) return '—';
 
@@ -36,7 +40,7 @@ const CertificatesListItem: React.FC<CertificatesListItemProps> = ({
   return (
     <Grid
       container
-      alignItems='center'
+      alignItems="center"
       columnSpacing={{ md: 2, lg: 3 }}
       rowSpacing={{ xs: 1, md: 0 }}
       sx={{
@@ -54,8 +58,8 @@ const CertificatesListItem: React.FC<CertificatesListItemProps> = ({
       <Grid size={{ xs: 12, md: 4, lg: 3.5 }}>
         <ListItemText
           primary={
-            <Tooltip title='Certificate Date'>
-              <Typography variant='body1' fontWeight={600} noWrap>
+            <Tooltip title="Certificate Date">
+              <Typography variant="body1" fontWeight={600} noWrap>
                 {certificate.certificate_date
                   ? readableDate(certificate.certificate_date, false)
                   : '—'}
@@ -63,7 +67,7 @@ const CertificatesListItem: React.FC<CertificatesListItemProps> = ({
             </Tooltip>
           }
           secondary={
-            <Tooltip title='Certificate Number'>
+            <Tooltip title="Certificate Number">
               <span style={{ display: 'block' }}>
                 {certificate.certificateNo || 'Draft / Pending'}
               </span>
@@ -73,10 +77,10 @@ const CertificatesListItem: React.FC<CertificatesListItemProps> = ({
       </Grid>
 
       <Grid size={{ xs: 12, md: 5, lg: 5 }}>
-        <Tooltip title={certificate.remarks} placement='top-start'>
+        <Tooltip title={certificate.remarks} placement="top-start">
           <Typography
-            variant='body2'
-            color='text.primary'
+            variant="body2"
+            color="text.primary"
             sx={{
               display: '-webkit-box',
               WebkitLineClamp: { xs: 2, md: 3 },
@@ -95,12 +99,16 @@ const CertificatesListItem: React.FC<CertificatesListItemProps> = ({
         textAlign={{ xs: 'left', md: 'right' }}
         sx={{ pr: { md: 2 } }}
       >
-        <Tooltip title='Certified Total Amount'>
-          <Typography variant='h6'>{formattedAmount}</Typography>
+        <Tooltip title="Certified Total Amount">
+          <Typography
+            variant="h6"
+          >
+            {formattedAmount}
+          </Typography>
         </Tooltip>
       </Grid>
 
-      <Grid size={{ xs: 4, md: 1, lg: 0.5 }} textAlign='end'>
+      <Grid size={{ xs: 4, md: 1, lg: 0.5 }} textAlign="end">
         <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
           <CertificateItemAction certificate={certificate} />
         </Box>

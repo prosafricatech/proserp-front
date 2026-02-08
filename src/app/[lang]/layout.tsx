@@ -6,7 +6,6 @@ import { Providers } from '../providers';
 import { getDictionary } from './dictionaries';
 import { DictionaryProvider } from './contexts/DictionaryContext';
 import { LanguageProvider } from './contexts/LanguageContext';
-import Script from 'next/script';
 
 interface RootLayoutProps {
   children: ReactNode;
@@ -79,7 +78,6 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children, params }: RootLayoutProps) {
   const { lang } = await params;
   const dictionary = await getDictionary(lang);
-  const isProd = process.env.NODE_ENV === 'production';
 
   return (
     <html lang={lang} data-lt-installed="true">
@@ -96,28 +94,6 @@ export default async function RootLayout({ children, params }: RootLayoutProps) 
             </DictionaryProvider>
           </LanguageProvider>
         </div>
-        {isProd && (
-          <Script strategy="afterInteractive">
-            {`
-              if ('serviceWorker' in navigator) {
-                window.addEventListener('load', () => {
-                  navigator.serviceWorker.register('/sw.js').then(
-                    (registration) => {
-                      console.log('Service Worker registered:', registration);
-                    },
-                    (err) => {
-                      console.error('Service Worker registration failed:', err);
-                    }
-                  );
-                });
-              }
-
-              window.addEventListener('beforeinstallprompt', (e) => {
-                e.preventDefault(); // Prevent the default prompt
-              });
-            `}
-          </Script>
-        )}
       </body>
     </html>
   );

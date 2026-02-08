@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Grid, IconButton, LinearProgress, TextField, Tooltip } from '@mui/material';
+import { Alert, Grid, IconButton, LinearProgress, TextField, Tooltip } from '@mui/material';
 import { useForm } from 'react-hook-form';
 import { AddOutlined, CheckOutlined, DisabledByDefault } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
@@ -17,9 +17,12 @@ import StakeholderSelector from '@/components/masters/stakeholders/StakeholderSe
 import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
 import ProductSelect from '@/components/productAndServices/products/ProductSelect';
 import StakeholderQuickAdd from '@/components/masters/stakeholders/StakeholderQuickAdd';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 
 function FuelVouchers({ cashierPumpProducts, index = -1, setShowForm = null, fuelVoucher, productPrices, fuelVouchers=[], setFuelVouchers }) {
   const iu = {id: null, name: 'Calibration/Internal use'};
+  const {checkOrganizationPermission} = useJumboAuth();
   const [isAdding, setIsAdding] = useState(false);
   const { productOptions } = useProductsSelect();
   const {stakeholders} = useStakeholderSelect();
@@ -34,7 +37,17 @@ function FuelVouchers({ cashierPumpProducts, index = -1, setShowForm = null, fue
   const validationSchema = yup.object({
     product_id: yup.number().required("Product is required").typeError('Product is required'),
     quantity: yup.number().required("Quantity is required").positive("Quantity is required").typeError('Quantity is required'),
-  });
+    stakeholder_id: yup.mixed().nullable(),
+    expense_ledger_id: yup.mixed().nullable(),
+  }).test(
+    'stakeholder-or-expense-required',
+    'Either of stakeholder or expense ledger required',
+    function (value, ctx) {
+      if (value.stakeholder && value.stakeholder.name === 'Calibration/Internal use') return true;
+      if (!!value.stakeholder_id || !!value.expense_ledger_id) return true;
+      return ctx.createError({ path: 'stakeholder-or-expense-required', message: 'Either of stakeholder or expense ledger required' });
+    }
+  );
 
   const {setValue, handleSubmit, watch, reset, formState: {errors}} = useForm({
     resolver: yupResolver(validationSchema),
@@ -106,6 +119,15 @@ function FuelVouchers({ cashierPumpProducts, index = -1, setShowForm = null, fue
 
   return (
     <form autoComplete='off' onSubmit={handleSubmit(updateItems)}>
+      {errors && errors['stakeholder-or-expense-required'] && (
+        <Grid item xs={12}>
+          <Div sx={{ mb: 2 }}>
+            <Alert severity="error" variant="outlined">
+              {errors['stakeholder-or-expense-required'].message}
+            </Alert>
+          </Div>
+        </Grid>
+      )}
       <Grid container spacing={1} marginTop={0.5}>
         {!stakeholderQuickAddDisplay &&
           <Grid size={{xs:12, md:4, lg: !watch(`stakeholder_id`) ? 4 : 5}}>
@@ -124,14 +146,14 @@ function FuelVouchers({ cashierPumpProducts, index = -1, setShowForm = null, fue
                   });
                 }}
                 startAdornment= {
-                  <Tooltip title={'Add Client'}>
-                    <AddOutlined
-                      onClick={() => setStakeholderQuickAddDisplay(true)}
-                      sx={{
-                      cursor: 'pointer',
-                      }}
-                    />
-                  </Tooltip>
+                  checkOrganizationPermission(PERMISSIONS.STAKEHOLDERS_CREATE) && (
+                    <Tooltip title="Add Client">
+                      <AddOutlined
+                        onClick={() => setStakeholderQuickAddDisplay(true)}
+                        sx={{ cursor: 'pointer' }}
+                      />
+                    </Tooltip>
+                  )
                 }
               />
             </Div>
@@ -191,6 +213,7 @@ function FuelVouchers({ cashierPumpProducts, index = -1, setShowForm = null, fue
               InputProps={{
                 inputComponent: CommaSeparatedField
               }}
+              disabled={!watch('product_id')}
               onChange={(e) => {
                 const value = sanitizedNumber(e.target.value);
                 setValue('quantity', value, { shouldValidate: true, shouldDirty: true });
@@ -210,6 +233,7 @@ function FuelVouchers({ cashierPumpProducts, index = -1, setShowForm = null, fue
               InputProps={{
                 inputComponent: CommaSeparatedField,
               }}
+              disabled={!watch('product_id')}
               onChange={(e) => {
                 const value = sanitizedNumber(e.target.value);
                 setValue('amount', value, { shouldValidate: true, shouldDirty: true });

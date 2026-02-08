@@ -37,7 +37,6 @@ function ShiftSummary({ paymentItems = [] }) {
       try {
         return amount.toLocaleString('en-US', { style: 'currency', currency: currencyCode });
       } catch {
-        // fallback to plain number if currencyCode is invalid
         return amount.toLocaleString();
       }
     }
@@ -1004,6 +1003,61 @@ function ShiftSummary({ paymentItems = [] }) {
         <Divider sx={{ mb: 2 }} />
 
         <Grid container spacing={2}>
+          {/* Per Cashier Breakdown - moved above */}
+          {profitLossSummary.cashierResults.length > 0 && (
+            <Grid size={{ xs: 12 }}>
+              <Paper elevation={0} sx={{ p: 2, bgcolor: 'background.default', borderRadius: 1, mb: 2 }}>
+                <Typography variant="subtitle2" color="textSecondary" gutterBottom>
+                  PER CASHIER BREAKDOWN
+                </Typography>
+                <TableContainer>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Cashier</TableCell>
+                        <TableCell align="right">Expected Cash</TableCell>
+                        <TableCell align="right">Collected Cash</TableCell>
+                        <TableCell align="right">Over/Short</TableCell>
+                        <TableCell align="center">Status</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {profitLossSummary.cashierResults.map((cashier, index) => (
+                        <TableRow key={index}>
+                          <TableCell>
+                            <Typography fontWeight="medium">{cashier.name}</Typography>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Typography>{formatMoney(cashier.expectedCash)}</Typography>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Typography color="info.main">{formatMoney(cashier.collectedAmount)}</Typography>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Typography
+                              fontWeight="bold"
+                              color={cashier.profitLoss === 0 ? "success.main" : cashier.profitLoss > 0 ? "info.main" : "error.main"}
+                            >
+                              {cashier.profitLoss === 0 ? '' : cashier.profitLoss > 0 ? '+' : '-'}{formatMoney(Math.abs(cashier.profitLoss))}
+                            </Typography>
+                          </TableCell>
+                          <TableCell align="center">
+                            <Chip
+                              size="small"
+                              label={cashier.isBalanced ? "BALANCED" : (cashier.profitLoss > 0 ? "OVER" : "SHORT")}
+                              color={cashier.isBalanced ? "success" : (cashier.profitLoss > 0 ? "info" : "error")}
+                              variant="outlined"
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Paper>
+            </Grid>
+          )}
+
           {/* Expected vs Collected Section */}
           <Grid size={{ xs: 12, md: 6 }}>
             <Paper elevation={0} sx={{ p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
@@ -1018,7 +1072,7 @@ function ShiftSummary({ paymentItems = [] }) {
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                 <Typography>Actual Collected{currencyCode ? ` (${currencyCode})` : ''}:</Typography>
-                <Typography variant="h6" color="info.main">
+                <Typography variant="h4" color="info.main" sx={{ fontWeight: 'bold' }}>
                   {formatMoney(totalCollectedAmount)}
                 </Typography>
               </Box>
@@ -1093,61 +1147,6 @@ function ShiftSummary({ paymentItems = [] }) {
               </Paper>
             </Paper>
           </Grid>
-
-          {/* Per Cashier Breakdown */}
-          {profitLossSummary.cashierResults.length > 0 && (
-            <Grid size={{ xs: 12 }}>
-              <Paper elevation={0} sx={{ p: 2, bgcolor: 'background.default', borderRadius: 1, mt: 2 }}>
-                <Typography variant="subtitle2" color="textSecondary" gutterBottom>
-                  PER CASHIER BREAKDOWN
-                </Typography>
-                <TableContainer>
-                  <Table size="small">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Cashier</TableCell>
-                        <TableCell align="right">Expected Cash</TableCell>
-                        <TableCell align="right">Collected Cash</TableCell>
-                        <TableCell align="right">Over/Short</TableCell>
-                        <TableCell align="center">Status</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {profitLossSummary.cashierResults.map((cashier, index) => (
-                        <TableRow key={index}>
-                          <TableCell>
-                            <Typography fontWeight="medium">{cashier.name}</Typography>
-                          </TableCell>
-                          <TableCell align="right">
-                            <Typography>{formatMoney(cashier.expectedCash)}</Typography>
-                          </TableCell>
-                          <TableCell align="right">
-                            <Typography color="info.main">{formatMoney(cashier.collectedAmount)}</Typography>
-                          </TableCell>
-                          <TableCell align="right">
-                            <Typography
-                              fontWeight="bold"
-                              color={cashier.profitLoss === 0 ? "success.main" : cashier.profitLoss > 0 ? "info.main" : "error.main"}
-                            >
-                              {cashier.profitLoss === 0 ? '' : cashier.profitLoss > 0 ? '+' : '-'}{formatMoney(Math.abs(cashier.profitLoss))}
-                            </Typography>
-                          </TableCell>
-                          <TableCell align="center">
-                            <Chip
-                              size="small"
-                              label={cashier.isBalanced ? "BALANCED" : (cashier.profitLoss > 0 ? "OVER" : "SHORT")}
-                              color={cashier.isBalanced ? "success" : (cashier.profitLoss > 0 ? "info" : "error")}
-                              variant="outlined"
-                            />
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </Paper>
-            </Grid>
-          )}
         </Grid>
       </CardContent>
     </Card>

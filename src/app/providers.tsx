@@ -7,8 +7,8 @@ import { JumboConfigProvider, JumboDialog, JumboDialogProvider, JumboTheme } fro
 import { CssBaseline } from '@mui/material';
 import Link from 'next/link';
 import { SessionProvider } from 'next-auth/react';
-import { AppSnackbar } from '@/components/AppSnackbar';
-import { AuthInitializer } from '@/components/AuthInitializer/AuthInitializer';
+import { AppSnackbar } from '@/components/appSnackbar';
+import { AuthInitializer } from '@/components/authInitializer/AuthInitializer';
 import { Suspense } from 'react';
 import { CONFIG } from '@/config';
 import { JumboAuthProvider } from './providers/JumboAuthProvider';

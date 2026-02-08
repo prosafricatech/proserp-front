@@ -1,4 +1,4 @@
-import { SignupForm } from '@/components/signupForm';
+import SignupForm from '@/components/signupForm/SignupForm';
 import { Div } from '@jumbo/shared';
 
 export default function Signup() {

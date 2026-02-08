@@ -1,21 +1,14 @@
-'use client';
-import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
-import UnauthorizedAccess from '@/shared/Information/UnauthorizedAccess';
-import UnsubscribedAccess from '@/shared/Information/UnsubscribedAccess';
-import { MODULES } from '@/utilities/constants/modules';
-import { PERMISSIONS } from '@/utilities/constants/permissions';
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useReducer,
-  useState,
-} from 'react';
-import CurrencySelectProvider from '../../masters/currencies/CurrencySelectProvider';
-import LedgerSelectProvider from '../ledgers/forms/LedgerSelectProvider';
+'use client'
+import React, { createContext, useContext, useReducer, useCallback, ReactNode, Dispatch, useEffect, useState } from 'react';
 import TransactionsList from './TransactionsList';
+import LedgerSelectProvider from '../ledgers/forms/LedgerSelectProvider';
+import CurrencySelectProvider from '../../masters/Currencies/CurrencySelectProvider';
 import { Transaction } from './TransactionTypes';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { MODULES } from '@/utilities/constants/modules';
+import UnsubscribedAccess from '@/shared/Information/UnsubscribedAccess';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
+import UnauthorizedAccess from '@/shared/Information/UnauthorizedAccess';
 
 type TransactionsAppState = {
   selectedTransactions: Transaction[];
@@ -35,16 +28,12 @@ type TransactionsContextType = TransactionsAppState & {
 // Context
 // -----------------------------
 
-export const TransactionsAppContext = createContext<
-  TransactionsContextType | undefined
->(undefined);
+export const TransactionsAppContext = createContext<TransactionsContextType | undefined>(undefined);
 
 export const useTransactionApp = (): TransactionsContextType => {
   const context = useContext(TransactionsAppContext);
   if (!context) {
-    throw new Error(
-      'useTransactionApp must be used within a TransactionsAppContext.Provider'
-    );
+    throw new Error('useTransactionApp must be used within a TransactionsAppContext.Provider');
   }
   return context;
 };
@@ -60,10 +49,7 @@ const TRANSACTION_ACTIONS = {
 
 const init = (appState: TransactionsAppState): TransactionsAppState => appState;
 
-const TransactionReducer = (
-  state: TransactionsAppState,
-  action: TransactionsAppAction
-): TransactionsAppState => {
+const TransactionReducer = (state: TransactionsAppState, action: TransactionsAppAction): TransactionsAppState => {
   switch (action.type) {
     case TRANSACTION_ACTIONS.SET_SELECTED_ITEMS:
       return { ...state, selectedTransactions: action.payload };
@@ -81,27 +67,17 @@ const TransactionReducer = (
 export default function Transactions() {
   const [mounted, setMounted] = useState(false);
 
-  const [transactionsApp, dispatch] = useReducer(
-    TransactionReducer,
-    {
-      selectedTransactions: [],
-      refreshTransactionsList: false,
-    },
-    init
-  );
+  const [transactionsApp, dispatch] = useReducer(TransactionReducer, {
+    selectedTransactions: [],
+    refreshTransactionsList: false,
+  }, init);
 
   const setSelectedTransactions = useCallback((transactions: Transaction[]) => {
-    dispatch({
-      type: TRANSACTION_ACTIONS.SET_SELECTED_ITEMS,
-      payload: transactions,
-    });
+    dispatch({ type: TRANSACTION_ACTIONS.SET_SELECTED_ITEMS, payload: transactions });
   }, []);
 
   const setTransactionsListRefresh = useCallback((refresh: boolean) => {
-    dispatch({
-      type: TRANSACTION_ACTIONS.SET_TRANSACTION_LIST_REFRESH,
-      payload: refresh,
-    });
+    dispatch({ type: TRANSACTION_ACTIONS.SET_TRANSACTION_LIST_REFRESH, payload: refresh });
   }, []);
 
   const contextValue: TransactionsContextType = {
@@ -110,8 +86,7 @@ export default function Transactions() {
     setTransactionsListRefresh,
   };
 
-  const { checkOrganizationPermission, organizationHasSubscribed } =
-    useJumboAuth();
+  const { checkOrganizationPermission, organizationHasSubscribed } = useJumboAuth();
 
   useEffect(() => {
     setMounted(true);
@@ -120,11 +95,10 @@ export default function Transactions() {
   if (!mounted) return null; // ⛔ Prevent mismatch during hydration
 
   if (!organizationHasSubscribed(MODULES.ACCOUNTS_AND_FINANCE)) {
-    return <UnsubscribedAccess modules='Accounts & Finance' />;
+    return <UnsubscribedAccess modules="Accounts & Finance" />;
   }
 
-  if (
-    !checkOrganizationPermission([
+  if (!checkOrganizationPermission([
       PERMISSIONS.ACCOUNTS_TRANSACTIONS_READ,
       PERMISSIONS.ACCOUNTS_TRANSACTIONS_CREATE,
       PERMISSIONS.ACCOUNTS_TRANSACTIONS_DELETE,
@@ -144,9 +118,8 @@ export default function Transactions() {
       PERMISSIONS.JOURNAL_VOUCHERS_READ,
       PERMISSIONS.JOURNAL_VOUCHERS_CREATE,
       PERMISSIONS.JOURNAL_VOUCHERS_DELETE,
-      PERMISSIONS.JOURNAL_VOUCHERS_EDIT,
-    ])
-  ) {
+      PERMISSIONS.JOURNAL_VOUCHERS_EDIT
+    ])) {
     return <UnauthorizedAccess />;
   }
 

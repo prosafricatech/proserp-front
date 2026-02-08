@@ -1,12 +1,12 @@
-import { Footer } from '@/components/Footer';
-import { Header } from '@/components/Header';
-import { Sidebar } from '@/components/Sidebar';
 import { defaultLayoutConfig } from '@/config/layouts';
 import { getMenus } from '@/services';
 import { JumboLayout } from '@jumbo/components';
 import { getDictionary } from '@/app/[lang]/dictionaries';
 import React from 'react';
 import JumboLayoutProvider from '@jumbo/components/JumboLayout/components/JumboLayoutProvider/JumboLayoutProvider';
+import { Header } from '@/components/header';
+import { Footer } from '@/components/footer';
+import { Sidebar } from '@/components/sidebar';
 
 interface CommonLayoutProps {
   children: React.ReactNode;

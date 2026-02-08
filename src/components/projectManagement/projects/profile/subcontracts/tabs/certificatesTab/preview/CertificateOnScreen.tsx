@@ -1,21 +1,21 @@
-import { readableDate } from '@/app/helpers/input-sanitization-helpers';
-import { Currency } from '@/components/masters/currencies/CurrencyType';
-import { MeasurementUnit } from '@/components/masters/measurementUnits/MeasurementUnitType';
-import { Organization } from '@/types/auth-types';
+import React from 'react';
 import {
   Box,
-  Grid,
-  Paper,
+  Typography,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Typography,
+  Paper,
+  Grid,
   useTheme,
 } from '@mui/material';
-import React from 'react';
+import { readableDate } from '@/app/helpers/input-sanitization-helpers';
+import { Organization } from '@/types/auth-types';
+import { MeasurementUnit } from '@/components/masters/measurementUnits/MeasurementUnitType';
+import { Currency } from '@/components/masters/Currencies/CurrencyType';
 
 interface Task {
   id?: string | number;
@@ -64,10 +64,7 @@ interface CertificateOnScreenProps {
   organization: Organization;
 }
 
-const CertificateOnScreen: React.FC<CertificateOnScreenProps> = ({
-  certificate,
-  organization,
-}) => {
+const CertificateOnScreen: React.FC<CertificateOnScreenProps> = ({ certificate, organization }) => {
   const theme = useTheme();
   const isDark = theme.type === 'dark';
 
@@ -94,26 +91,20 @@ const CertificateOnScreen: React.FC<CertificateOnScreenProps> = ({
       particular: adj.description,
       complement_ledger: adj.complement_ledger ?? null,
       type: adj.type,
-      amount:
-        adj.type === 'deduction' ? -Number(adj.amount) : Number(adj.amount),
+      amount: adj.type === 'deduction' ? -Number(adj.amount) : Number(adj.amount),
     })),
     ...(vatPercentage > 0
-      ? [
-          {
-            id: 'vat',
-            particular: `VAT (${vatPercentage}%)`,
-            amount: vatAmount,
-            complement_ledger: null,
-            type: null,
-          },
-        ]
-      : []),
+    ? [{
+        id: 'vat',
+        particular: `VAT (${vatPercentage}%)`,
+        amount: vatAmount,
+        complement_ledger: null,
+        type: null,
+      }]
+    : []),
   ];
 
-  const grandTotal = summaryItems.reduce(
-    (sum, item) => sum + Number(item.amount),
-    0
-  );
+  const grandTotal = summaryItems.reduce((sum, item) => sum + Number(item.amount), 0);
 
   // ==================== Certified Items ====================
   const certifiedItems = certificate.items.map((item, index) => {
@@ -146,12 +137,7 @@ const CertificateOnScreen: React.FC<CertificateOnScreenProps> = ({
       presentAmount: acc.presentAmount + item.presentAmount,
       cumulativeAmount: acc.cumulativeAmount + item.cumulativeAmount,
     }),
-    {
-      contractAmount: 0,
-      previousAmount: 0,
-      presentAmount: 0,
-      cumulativeAmount: 0,
-    }
+    { contractAmount: 0, previousAmount: 0, presentAmount: 0, cumulativeAmount: 0 }
   );
 
   const formatAmount = (amount: number) => {
@@ -163,24 +149,15 @@ const CertificateOnScreen: React.FC<CertificateOnScreenProps> = ({
   };
 
   return (
-    <Box
-      sx={{
-        p: { xs: 2, md: 4 },
-        maxWidth: 1400,
-        mx: 'auto',
-        bgcolor: 'background.paper',
-      }}
-    >
+    <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 1400, mx: 'auto', bgcolor: 'background.paper' }}>
       {/* ==================== Header ==================== */}
       <Grid container spacing={3} sx={{ mb: 6, alignItems: 'center' }}>
-        <Grid size={{ xs: 12, md: 8 }} textAlign='center'>
-          <Typography
-            variant='h3'
-            sx={{ color: headerColor, fontWeight: 'bold' }}
-          >
+
+        <Grid size={{ xs: 12, md: 8 }} textAlign="center">
+          <Typography variant="h3" sx={{ color: headerColor, fontWeight: 'bold' }}>
             CERTIFICATE
           </Typography>
-          <Typography variant='h4' fontWeight='bold' sx={{ mt: 2 }}>
+          <Typography variant="h4" fontWeight="bold" sx={{ mt: 2 }}>
             {certificate.certificateNo}
           </Typography>
         </Grid>
@@ -189,20 +166,20 @@ const CertificateOnScreen: React.FC<CertificateOnScreenProps> = ({
       {/* ==================== Certificate Info ==================== */}
       <Grid container spacing={4} sx={{ mb: 6 }}>
         <Grid size={{ xs: 12, md: 6 }}>
-          <Typography variant='subtitle2' color='text.secondary' gutterBottom>
+          <Typography variant="subtitle2" color="text.secondary" gutterBottom>
             Certificate Date
           </Typography>
-          <Typography variant='h6' fontWeight='medium'>
+          <Typography variant="h6" fontWeight="medium">
             {readableDate(certificate.certificate_date, false)}
           </Typography>
         </Grid>
 
         {certificate.remarks && (
           <Grid size={{ xs: 12, md: 6 }}>
-            <Typography variant='subtitle2' color='text.secondary' gutterBottom>
+            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
               Remarks
             </Typography>
-            <Typography variant='h6'>{certificate.remarks}</Typography>
+            <Typography variant="h6">{certificate.remarks}</Typography>
           </Grid>
         )}
       </Grid>
@@ -210,98 +187,40 @@ const CertificateOnScreen: React.FC<CertificateOnScreenProps> = ({
       {/* ==================== Summary Table (Right Aligned) ==================== */}
       <Box sx={{ mb: 8, display: 'flex', justifyContent: 'flex-end' }}>
         <Box>
-          <Typography variant='h6' sx={{ mb: 3, textAlign: 'center' }}>
+          <Typography variant="h6" sx={{ mb: 3, textAlign: 'center' }}>
             Summary
           </Typography>
 
           <TableContainer component={Paper} elevation={4}>
-            <Table size='medium'>
+            <Table size="medium">
               <TableHead>
                 <TableRow sx={{ backgroundColor: mainColor }}>
-                  <TableCell
-                    sx={{
-                      border: `1px solid ${contrastText}`,
-                      color: contrastText,
-                      fontWeight: 'bold',
-                    }}
-                  >
-                    S/N
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      border: `1px solid ${contrastText}`,
-                      color: contrastText,
-                      fontWeight: 'bold',
-                    }}
-                  >
-                    Particulars
-                  </TableCell>
-                  <TableCell
-                    align='right'
-                    sx={{
-                      border: `1px solid ${contrastText}`,
-                      color: contrastText,
-                      fontWeight: 'bold',
-                    }}
-                  >
+                  <TableCell sx={{ border: `1px solid ${contrastText}`, color: contrastText, fontWeight: 'bold' }}>S/N</TableCell>
+                  <TableCell sx={{ border: `1px solid ${contrastText}`, color: contrastText, fontWeight: 'bold' }}>Particulars</TableCell>
+                  <TableCell align="right" sx={{ border: `1px solid ${contrastText}`, color: contrastText, fontWeight: 'bold' }}>
                     Amount ({currencyCode})
                   </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {summaryItems.map((item, index) => (
-                  <TableRow
-                    key={item.id}
-                    sx={{
-                      bgcolor:
-                        index % 2 === 1
-                          ? isDark
-                            ? '#333'
-                            : '#f9f9f9'
-                          : 'inherit',
-                    }}
-                  >
-                    <TableCell
-                      sx={{
-                        border: '1px solid rgba(224, 224, 224, 1)',
-                        py: 1.5,
-                      }}
-                    >
-                      {index + 1}.
-                    </TableCell>
-                    <TableCell
-                      sx={{
-                        border: '1px solid rgba(224, 224, 224, 1)',
-                        py: 1.5,
-                      }}
-                    >
+                  <TableRow key={item.id} sx={{ bgcolor: index % 2 === 1 ? (isDark ? '#333' : '#f9f9f9') : 'inherit' }}>
+                    <TableCell sx={{ border: '1px solid rgba(224, 224, 224, 1)', py: 1.5 }}>{index + 1}.</TableCell>
+                    <TableCell sx={{ border: '1px solid rgba(224, 224, 224, 1)', py: 1.5 }}>
                       <Box>
-                        <Typography variant='body1' fontWeight='medium'>
-                          {item.particular}
-                        </Typography>
+                        <Typography variant="body1" fontWeight="medium">{item.particular}</Typography>
                         {item.complement_ledger?.name && (
-                          <Typography variant='caption' color='text.secondary'>
+                          <Typography variant="caption" color="text.secondary">
                             ({item.complement_ledger.name})
                           </Typography>
                         )}
                       </Box>
                     </TableCell>
-                    <TableCell
-                      align='right'
-                      sx={{
-                        border: '1px solid rgba(224, 224, 224, 1)',
-                        py: 1.5,
-                      }}
-                    >
+                    <TableCell align="right" sx={{ border: '1px solid rgba(224, 224, 224, 1)', py: 1.5 }}>
                       <Typography
-                        variant='body1'
-                        fontWeight='bold'
-                        sx={{
-                          color:
-                            item.type === 'deduction'
-                              ? 'error.main'
-                              : 'success.main',
-                        }}
+                        variant="body1"
+                        fontWeight="bold"
+                        sx={{ color: item.type === 'deduction' ? 'error.main' : 'success.main' }}
                       >
                         {formatAmount(Number(item.amount))}
                       </Typography>
@@ -310,28 +229,11 @@ const CertificateOnScreen: React.FC<CertificateOnScreenProps> = ({
                 ))}
 
                 <TableRow sx={{ backgroundColor: mainColor }}>
-                  <TableCell
-                    colSpan={2}
-                    align='center'
-                    sx={{
-                      border: `1px solid ${contrastText}`,
-                      color: contrastText,
-                      py: 2,
-                    }}
-                  >
+                  <TableCell colSpan={2} align="center" sx={{ border: `1px solid ${contrastText}`, color: contrastText, py: 2 }}>
                     Grand Total ({currencyCode})
                   </TableCell>
-                  <TableCell
-                    align='right'
-                    sx={{
-                      border: `1px solid ${contrastText}`,
-                      color: contrastText,
-                      py: 2,
-                    }}
-                  >
-                    {grandTotal.toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                    })}
+                  <TableCell align="right" sx={{ border: `1px solid ${contrastText}`, color: contrastText, py: 2 }}>
+                    {grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                   </TableCell>
                 </TableRow>
               </TableBody>
@@ -341,57 +243,23 @@ const CertificateOnScreen: React.FC<CertificateOnScreenProps> = ({
       </Box>
 
       {/* ==================== Certified Items Table ==================== */}
-      <Typography variant='h5' sx={{ mb: 4, textAlign: 'center' }}>
+      <Typography variant="h5" sx={{ mb: 4, textAlign: 'center' }}>
         Certified Items
       </Typography>
 
-      <TableContainer
-        component={Paper}
-        elevation={4}
-        sx={{ mb: 8, overflowX: 'auto' }}
-      >
+      <TableContainer component={Paper} elevation={4} sx={{ mb: 8, overflowX: 'auto' }}>
         <Table>
           <TableHead>
             {/* Group Headers */}
             <TableRow sx={{ backgroundColor: mainColor }}>
-              <TableCell
-                colSpan={3}
-                sx={{
-                  border: `1px solid ${contrastText}`,
-                  color: contrastText,
-                }}
-              />
-              <TableCell
-                colSpan={3}
-                align='center'
-                sx={{
-                  border: `1px solid ${contrastText}`,
-                  color: contrastText,
-                  fontWeight: 'bold',
-                }}
-              >
+              <TableCell colSpan={3} sx={{ border: `1px solid ${contrastText}`, color: contrastText }} />
+              <TableCell colSpan={3} align="center" sx={{ border: `1px solid ${contrastText}`, color: contrastText, fontWeight: 'bold' }}>
                 Price Schedule
               </TableCell>
-              <TableCell
-                colSpan={3}
-                align='center'
-                sx={{
-                  border: `1px solid ${contrastText}`,
-                  color: contrastText,
-                  fontWeight: 'bold',
-                }}
-              >
+              <TableCell colSpan={3} align="center" sx={{ border: `1px solid ${contrastText}`, color: contrastText, fontWeight: 'bold' }}>
                 Quantity
               </TableCell>
-              <TableCell
-                colSpan={3}
-                align='center'
-                sx={{
-                  border: `1px solid ${contrastText}`,
-                  color: contrastText,
-                  fontWeight: 'bold',
-                }}
-              >
+              <TableCell colSpan={3} align="center" sx={{ border: `1px solid ${contrastText}`, color: contrastText, fontWeight: 'bold' }}>
                 Amount ({currencyCode})
               </TableCell>
             </TableRow>
@@ -399,27 +267,15 @@ const CertificateOnScreen: React.FC<CertificateOnScreenProps> = ({
             {/* Sub Headers */}
             <TableRow sx={{ backgroundColor: mainColor + 'dd' }}>
               {[
-                'S/N',
-                'Description',
-                'Unit',
-                'Qty',
-                'Unit Rate',
-                'Amount',
-                'Previous',
-                'Present',
-                'Cumulative',
-                'Previous',
-                'Present',
-                'Cumulative',
+                'S/N', 'Description', 'Unit',
+                'Qty', 'Unit Rate', 'Amount',
+                'Previous', 'Present', 'Cumulative',
+                'Previous', 'Present', 'Cumulative',
               ].map((header, idx) => (
                 <TableCell
-                  key={idx}
+                   key={idx} 
                   align={idx >= 3 ? 'right' : idx === 2 ? 'center' : 'left'}
-                  sx={{
-                    border: `1px solid ${contrastText}`,
-                    color: contrastText,
-                    fontWeight: 'bold',
-                  }}
+                  sx={{ border: `1px solid ${contrastText}`, color: contrastText, fontWeight: 'bold' }}
                 >
                   {header}
                 </TableCell>
@@ -429,178 +285,40 @@ const CertificateOnScreen: React.FC<CertificateOnScreenProps> = ({
 
           <TableBody>
             {certifiedItems.map((item, index) => (
-              <TableRow
-                key={item.sn}
-                sx={{
-                  bgcolor:
-                    index % 2 === 1 ? (isDark ? '#333' : '#f9f9f9') : 'inherit',
-                }}
-              >
-                <TableCell sx={{ border: '1px solid rgba(224, 224, 224, 1)' }}>
-                  {item.sn}.
-                </TableCell>
-                <TableCell sx={{ border: '1px solid rgba(224, 224, 224, 1)' }}>
-                  {item.description}
-                </TableCell>
-                <TableCell
-                  align='center'
-                  sx={{ border: '1px solid rgba(224, 224, 224, 1)' }}
-                >
-                  {item.unit}
-                </TableCell>
-                <TableCell
-                  align='right'
-                  sx={{ border: '1px solid rgba(224, 224, 224, 1)' }}
-                >
-                  {item.contractQty.toLocaleString()}
-                </TableCell>
-                <TableCell
-                  align='right'
-                  sx={{
-                    border: '1px solid rgba(224, 224, 224, 1)',
-                    fontSize: '0.8rem',
-                  }}
-                >
-                  {item.unitRate.toLocaleString()}
-                </TableCell>
-                <TableCell
-                  align='right'
-                  sx={{
-                    border: '1px solid rgba(224, 224, 224, 1)',
-                    fontSize: '0.8rem',
-                  }}
-                >
-                  {item.contractAmount.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                  })}
-                </TableCell>
-                <TableCell
-                  align='right'
-                  sx={{ border: '1px solid rgba(224, 224, 224, 1)' }}
-                >
-                  {item.previousQty.toLocaleString()}
-                </TableCell>
-                <TableCell
-                  align='right'
-                  sx={{ border: '1px solid rgba(224, 224, 224, 1)' }}
-                >
-                  {item.presentQty.toLocaleString()}
-                </TableCell>
-                <TableCell
-                  align='right'
-                  sx={{ border: '1px solid rgba(224, 224, 224, 1)' }}
-                >
-                  {item.cumulativeQty.toLocaleString()}
-                </TableCell>
-                <TableCell
-                  align='right'
-                  sx={{
-                    border: '1px solid rgba(224, 224, 224, 1)',
-                    fontSize: '0.8rem',
-                  }}
-                >
-                  {item.previousAmount.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                  })}
-                </TableCell>
-                <TableCell
-                  align='right'
-                  sx={{
-                    border: '1px solid rgba(224, 224, 224, 1)',
-                    fontSize: '0.8rem',
-                  }}
-                >
-                  {item.presentAmount.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                  })}
-                </TableCell>
-                <TableCell
-                  align='right'
-                  sx={{
-                    border: '1px solid rgba(224, 224, 224, 1)',
-                    fontSize: '0.8rem',
-                  }}
-                >
-                  {item.cumulativeAmount.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                  })}
-                </TableCell>
+              <TableRow key={item.sn} sx={{ bgcolor: index % 2 === 1 ? (isDark ? '#333' : '#f9f9f9') : 'inherit' }}>
+                <TableCell sx={{ border: '1px solid rgba(224, 224, 224, 1)' }}>{item.sn}.</TableCell>
+                <TableCell sx={{ border: '1px solid rgba(224, 224, 224, 1)' }}>{item.description}</TableCell>
+                <TableCell align="center" sx={{ border: '1px solid rgba(224, 224, 224, 1)' }}>{item.unit}</TableCell>
+                <TableCell align="right" sx={{ border: '1px solid rgba(224, 224, 224, 1)' }}>{item.contractQty.toLocaleString()}</TableCell>
+                <TableCell align="right" sx={{ border: '1px solid rgba(224, 224, 224, 1)', fontSize: '0.8rem' }}>{item.unitRate.toLocaleString()}</TableCell>
+                <TableCell align="right" sx={{ border: '1px solid rgba(224, 224, 224, 1)', fontSize: '0.8rem' }}>{item.contractAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</TableCell>
+                <TableCell align="right" sx={{ border: '1px solid rgba(224, 224, 224, 1)' }}>{item.previousQty.toLocaleString()}</TableCell>
+                <TableCell align="right" sx={{ border: '1px solid rgba(224, 224, 224, 1)' }}>{item.presentQty.toLocaleString()}</TableCell>
+                <TableCell align="right" sx={{ border: '1px solid rgba(224, 224, 224, 1)' }}>{item.cumulativeQty.toLocaleString()}</TableCell>
+                <TableCell align="right" sx={{ border: '1px solid rgba(224, 224, 224, 1)', fontSize: '0.8rem' }}>{item.previousAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</TableCell>
+                <TableCell align="right" sx={{ border: '1px solid rgba(224, 224, 224, 1)', fontSize: '0.8rem' }}>{item.presentAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</TableCell>
+                <TableCell align="right" sx={{ border: '1px solid rgba(224, 224, 224, 1)', fontSize: '0.8rem' }}>{item.cumulativeAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</TableCell>
               </TableRow>
             ))}
 
             {/* Grand Total Row */}
             <TableRow sx={{ backgroundColor: mainColor }}>
-              <TableCell
-                colSpan={5}
-                align='right'
-                sx={{
-                  border: `1px solid ${contrastText}`,
-                  color: contrastText,
-                  py: 2,
-                }}
-              >
+              <TableCell colSpan={5} align="right" sx={{ border: `1px solid ${contrastText}`, color: contrastText, py: 2 }}>
                 GRAND TOTAL ({currencyCode})
               </TableCell>
-              <TableCell
-                align='right'
-                sx={{
-                  border: `1px solid ${contrastText}`,
-                  color: contrastText,
-                  py: 2,
-                }}
-              >
-                {totals.contractAmount.toLocaleString(undefined, {
-                  minimumFractionDigits: 2,
-                })}
+              <TableCell align="right" sx={{ border: `1px solid ${contrastText}`, color: contrastText, py: 2 }}>
+                {totals.contractAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
               </TableCell>
-              <TableCell
-                colSpan={1}
-                align='right'
-                sx={{
-                  border: `1px solid ${contrastText}`,
-                  color: contrastText,
-                  py: 2,
-                }}
-              ></TableCell>
-              <TableCell
-                colSpan={2}
-                sx={{ border: `1px solid ${contrastText}` }}
-              />
-              <TableCell
-                align='right'
-                sx={{
-                  border: `1px solid ${contrastText}`,
-                  color: contrastText,
-                  py: 2,
-                }}
-              >
-                {totals.previousAmount.toLocaleString(undefined, {
-                  minimumFractionDigits: 2,
-                })}
+              <TableCell colSpan={1} align="right" sx={{ border: `1px solid ${contrastText}`, color: contrastText, py: 2 }}></TableCell>
+              <TableCell colSpan={2} sx={{ border: `1px solid ${contrastText}` }} />
+              <TableCell align="right" sx={{ border: `1px solid ${contrastText}`, color: contrastText, py: 2 }}>
+                {totals.previousAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
               </TableCell>
-              <TableCell
-                align='right'
-                sx={{
-                  border: `1px solid ${contrastText}`,
-                  color: contrastText,
-                  py: 2,
-                }}
-              >
-                {totals.presentAmount.toLocaleString(undefined, {
-                  minimumFractionDigits: 2,
-                })}
+              <TableCell align="right" sx={{ border: `1px solid ${contrastText}`, color: contrastText, py: 2 }}>
+                {totals.presentAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
               </TableCell>
-              <TableCell
-                align='right'
-                sx={{
-                  border: `1px solid ${contrastText}`,
-                  color: contrastText,
-                  py: 2,
-                }}
-              >
-                {totals.cumulativeAmount.toLocaleString(undefined, {
-                  minimumFractionDigits: 2,
-                })}
+              <TableCell align="right" sx={{ border: `1px solid ${contrastText}`, color: contrastText, py: 2 }}>
+                {totals.cumulativeAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
               </TableCell>
             </TableRow>
           </TableBody>

@@ -1,26 +1,26 @@
-import { Currency } from '@/components/masters/currencies/CurrencyType';
-import { MeasurementUnit } from '@/components/masters/measurementUnits/MeasurementUnitType';
-import { Stakeholder } from '@/components/masters/stakeholders/StakeholderType';
-import PDFContent from '@/components/pdf/PDFContent';
-import { Organization, User } from '@/types/auth-types';
-import { LoadingButton } from '@mui/lab';
-import {
-  Button,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Grid,
-  LinearProgress,
-  TextField,
-  Typography,
+import { 
+  Button, 
+  DialogActions, 
+  DialogContent, 
+  DialogTitle, 
+  Grid, 
+  LinearProgress, 
+  TextField, 
+  Typography 
 } from '@mui/material';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useSnackbar } from 'notistack';
 import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { useSnackbar } from 'notistack';
 import posServices from '../../pos-services';
-import SaleReceiptOnScreen from './SaleReceiptOnScreen';
 import SaleReceiptPDF from './SaleReceiptPDF';
+import SaleReceiptOnScreen from './SaleReceiptOnScreen';
+import { LoadingButton } from '@mui/lab';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import PDFContent from '@/components/pdf/PDFContent';
+import { Stakeholder } from '@/components/masters/stakeholders/StakeholderType';
+import { Organization, User } from '@/types/auth-types';
+import { MeasurementUnit } from '@/components/masters/measurementUnits/MeasurementUnitType';
+import { Currency } from '@/components/masters/Currencies/CurrencyType';
 
 interface Product {
   name: string;
@@ -77,27 +77,27 @@ interface FormValues {
   customer_name?: string;
 }
 
-const SaleReceipt: React.FC<SaleReceiptProps> = ({
-  organization,
-  sale,
-  user,
-  setOpenReceiptDialog,
+const SaleReceipt: React.FC<SaleReceiptProps> = ({ 
+  organization, 
+  sale, 
+  user, 
+  setOpenReceiptDialog 
 }) => {
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset,
+  const { 
+    register, 
+    handleSubmit, 
+    formState: { errors }, 
+    reset 
   } = useForm<FormValues>({
     defaultValues: {
       customer_tin: '',
       id: '',
       vat_percentage: 0,
-      items: [],
-    },
+      items: []
+    }
   });
 
   useEffect(() => {
@@ -106,7 +106,7 @@ const SaleReceipt: React.FC<SaleReceiptProps> = ({
         customer_tin: sale?.stakeholder?.tin || '',
         id: sale?.id?.toString() || '', // Convert number to string if needed
         vat_percentage: sale?.vat_percentage || 0,
-        items: sale?.sale_items || [],
+        items: sale?.sale_items || []
       });
     }
   }, [sale, reset]);
@@ -118,20 +118,20 @@ const SaleReceipt: React.FC<SaleReceiptProps> = ({
       queryClient.invalidateQueries({ queryKey: ['counterSales'] });
     },
     onError: (error: any) => {
-      error?.response?.data?.message &&
+      error?.response?.data?.message && 
         enqueueSnackbar(error.response.data.message, { variant: 'error' });
-    },
+    }
   });
 
   return (
     <>
-      {organization.is_tra_connected && !sale.vfd_receipt && (
+      {(organization.is_tra_connected && !sale.vfd_receipt) && (
         <DialogTitle>
           <Grid container columnSpacing={1} rowSpacing={1}>
             <Grid size={12} marginBottom={2} textAlign={'center'}>
               <Typography variant='subtitle1'>{`Receipt ${sale.saleNo}`}</Typography>
             </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
+            <Grid size={{xs: 12, md: 6}}>
               <TextField
                 label={'Customer TIN'}
                 fullWidth
@@ -142,21 +142,18 @@ const SaleReceipt: React.FC<SaleReceiptProps> = ({
                       return true;
                     }
 
-                    const sanitizedValue = value.replace(/\D/g, '');
-                    if (
-                      sanitizedValue.length !== 9 ||
-                      !/^\d{9}$/.test(sanitizedValue)
-                    ) {
+                    const sanitizedValue = value.replace(/\D/g, ''); 
+                    if (sanitizedValue.length !== 9 || !/^\d{9}$/.test(sanitizedValue)) {
                       return 'Customer TIN must be exactly 9 digits';
                     }
                     return true;
-                  },
+                  }
                 })}
                 error={!!errors.customer_tin}
                 helperText={errors.customer_tin?.message}
               />
             </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
+            <Grid size={{xs: 12, md: 6}}>
               <TextField
                 label={'Customer VRN'}
                 fullWidth
@@ -175,18 +172,12 @@ const SaleReceipt: React.FC<SaleReceiptProps> = ({
           </Grid>
         </DialogTitle>
       )}
-
+      
       <DialogContent>
         {!organization.is_tra_connected ? (
           <PDFContent
             fileName={`Receipt ${sale.saleNo}`}
-            document={
-              <SaleReceiptPDF
-                organization={organization}
-                sale={sale}
-                user={user}
-              />
-            }
+            document={<SaleReceiptPDF organization={organization} sale={sale} user={user} />}
           />
         ) : !sale.vfd_receipt ? (
           <SaleReceiptOnScreen organization={organization} sale={sale} />
@@ -195,30 +186,24 @@ const SaleReceipt: React.FC<SaleReceiptProps> = ({
         ) : (
           <PDFContent
             fileName={`Receipt ${sale.vfd_receipt.verification_code}`}
-            document={
-              <SaleReceiptPDF
-                organization={organization}
-                sale={sale}
-                user={user}
-              />
-            }
+            document={<SaleReceiptPDF organization={organization} sale={sale} user={user} />}
           />
         )}
       </DialogContent>
 
       <DialogActions>
-        <Button
-          size='small'
-          variant='outlined'
+        <Button 
+          size="small" 
+          variant='outlined' 
           onClick={() => setOpenReceiptDialog(false)}
         >
           Close
         </Button>
         {organization.is_tra_connected && !sale.vfd_receipt && (
-          <LoadingButton
-            size='small'
-            loading={postSalesReceiptToVFD.isPending}
-            variant='contained'
+          <LoadingButton 
+            size='small' 
+            loading={postSalesReceiptToVFD.isPending} 
+            variant='contained' 
             onClick={handleSubmit((data) => postSalesReceiptToVFD.mutate(data))}
           >
             Post VFD

@@ -17,6 +17,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { useState } from 'react';
+import CashierListSummaryOnScreen from './CashierListSummaryOnScreen';
 
 const SalesShiftOnScreen = ({
   shiftData,
@@ -25,7 +26,7 @@ const SalesShiftOnScreen = ({
   fuel_pumps = [],
   tanks = [],
   productOptions = [],
-  openDetails = true,
+  openDetails = false,
 }) => {
   const theme = useTheme();
   const isDark = theme.type === 'dark';
@@ -34,39 +35,82 @@ const SalesShiftOnScreen = ({
   const contrastText = organization.settings?.contrast_text || '#FFFFFF';
   const headerColor = isDark ? '#29f096' : mainColor;
 
-  const [openSections, setOpenSections] = useState({
-    products: true,
-    cashDistribution: true,
-    pumpReadings: true,
-    tankAdjustments: !!shiftData?.adjustments?.length,
-    openingDipping: !!shiftData?.opening_dipping?.readings?.length,
-    closingDipping: !!shiftData?.closing_dipping?.readings?.length,
-    fuelVouchers: openDetails && !!shiftData?.fuel_vouchers?.length,
-  });
+  // Calculate totals for each cashier
+  const calculateCashierTotals = (cashier) => {
+    // Calculate total products amount for this cashier
+    const totalProductsAmount =
+      cashier.pump_readings?.reduce((total, pump) => {
+        const productPrice =
+          shiftData.fuel_prices.find((fp) => fp.product_id === pump.product_id)
+            ?.price || 0;
+        const quantity = (pump.closing || 0) - (pump.opening || 0);
+        return total + quantity * productPrice;
+      }, 0) || 0;
 
-  const toggleSection = (section) => {
-    setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
+    // Calculate adjustments amount for this cashier
+    const adjustmentsAmount =
+      cashier.tank_adjustments?.reduce((total, adj) => {
+        const productPrice =
+          shiftData.fuel_prices.find((fp) => fp.product_id === adj.product_id)
+            ?.price || 0;
+        if (adj.operator === '-') {
+          return total + adj.quantity * productPrice;
+        } else if (adj.operator === '+') {
+          return total - adj.quantity * productPrice;
+        }
+        return total;
+      }, 0) || 0;
+
+    // Calculate total fuel vouchers amount for this cashier
+    const totalFuelVouchersAmount =
+      cashier.fuel_vouchers?.reduce((total, fv) => {
+        const productPrice =
+          shiftData.fuel_prices.find((fp) => fp.product_id === fv.product_id)
+            ?.price || 0;
+        return total + fv.quantity * productPrice;
+      }, 0) || 0;
+
+    // Calculate other transactions total for this cashier
+    const otherTransactionsTotal =
+      cashier.other_transactions?.reduce(
+        (total, ot) => total + (ot.amount || 0),
+        0
+      ) || 0;
+
+    // Calculate cash remaining for this cashier
+    const cashRemaining =
+      totalProductsAmount + adjustmentsAmount - totalFuelVouchersAmount;
+
+    return {
+      totalProductsAmount,
+      adjustmentsAmount,
+      totalFuelVouchersAmount,
+      otherTransactionsTotal,
+      cashRemaining,
+      netSales: totalProductsAmount + adjustmentsAmount,
+    };
   };
 
-  const cashAccounts = [
-    ...(shiftData.other_ledgers || []),
-    shiftData.main_ledger,
-  ].filter(Boolean);
-
-  // Fuel Vouchers Total
-  const totalFuelVouchersAmount = (shiftData.fuel_vouchers || []).reduce(
-    (total, voucher) => {
-      const price =
-        shiftData.fuel_prices?.find((p) => p.product_id === voucher.product_id)
-          ?.price || 0;
-      return total + voucher.quantity * price;
-    },
-    0
-  );
-
-  const totalCash =
-    cashAccounts.reduce((sum, acc) => sum + (acc.amount || 0), 0) +
-    totalFuelVouchersAmount;
+  // Merge pump readings by product for a specific cashier
+  const mergeCashierPumpReadings = (pumpReadings) => {
+    const merged = pumpReadings.reduce((acc, pump) => {
+      if (!acc[pump.product_id]) {
+        acc[pump.product_id] = {
+          ...pump,
+          quantity: (pump.closing || 0) - (pump.opening || 0),
+          opening: pump.opening || 0,
+          closing: pump.closing || 0,
+        };
+      } else {
+        acc[pump.product_id].quantity +=
+          (pump.closing || 0) - (pump.opening || 0);
+        acc[pump.product_id].opening += pump.opening || 0;
+        acc[pump.product_id].closing += pump.closing || 0;
+      }
+      return acc;
+    }, {});
+    return Object.values(merged);
+  };
 
   // Products Sold Calculations (with adjustments)
   const mergedPumpReadings = (shiftData.pump_readings || []).reduce(
@@ -85,56 +129,6 @@ const SalesShiftOnScreen = ({
   );
 
   const mergedProducts = Object.values(mergedPumpReadings);
-
-  const productsTotals = mergedProducts.reduce(
-    (acc, product) => {
-      const price =
-        shiftData.fuel_prices?.find((p) => p.product_id === product.product_id)
-          ?.price || 0;
-      const adjustments = (shiftData.adjustments || []).filter(
-        (a) => a.product_id === product.product_id
-      );
-      const adjTotal = adjustments.reduce(
-        (sum, a) => sum + (a.operator === '+' ? -a.quantity : a.quantity),
-        0
-      );
-      const finalQty = product.quantity + adjTotal;
-      const amount = finalQty * price;
-
-      acc.totalQuantity += finalQty;
-      acc.totalAmount += amount;
-      return acc;
-    },
-    { totalQuantity: 0, totalAmount: 0 }
-  );
-
-  const SectionHeader = ({ title, sectionKey, hasData = true }) =>
-    hasData && (
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          cursor: 'pointer',
-          py: 1.5,
-          px: 2,
-          bgcolor: theme.palette.background.default,
-          borderBottom: `1px solid ${theme.palette.divider}`,
-          '&:hover': { bgcolor: theme.palette.action.hover },
-        }}
-        onClick={() => toggleSection(sectionKey)}
-      >
-        <IconButton size='small' sx={{ mr: 1 }}>
-          {openSections[sectionKey] ? (
-            <KeyboardArrowDown />
-          ) : (
-            <KeyboardArrowRight />
-          )}
-        </IconButton>
-        <Typography variant='h6' sx={{ color: headerColor }}>
-          {title}
-        </Typography>
-      </Box>
-    );
 
   const NumberCell = ({ value, bold = false, color = 'text.primary' }) => (
     <TableCell
@@ -213,365 +207,524 @@ const SalesShiftOnScreen = ({
         </Grid>
       </Grid>
 
-      <Paper elevation={3} sx={{ overflow: 'hidden' }}>
-        {/* Pump Readings */}
-        <SectionHeader title='Pump Readings' sectionKey='pumpReadings' />
-        {openSections.pumpReadings && (
-          <TableContainer sx={{ px: 2, pb: 2 }}>
-            <Table size='small'>
-              <TableHead>
-                <TableRow sx={{ bgcolor: mainColor }}>
-                  <TableCell sx={{ color: contrastText }}>Pump</TableCell>
-                  <TableCell sx={{ color: contrastText }}>Product</TableCell>
-                  <TableCell align='right' sx={{ color: contrastText }}>
-                    Opening
-                  </TableCell>
-                  <TableCell align='right' sx={{ color: contrastText }}>
-                    Closing
-                  </TableCell>
-                  <TableCell align='right' sx={{ color: contrastText }}>
-                    Difference
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {(shiftData.pump_readings || []).map((pump, idx) => (
-                  <TableRow key={idx} hover>
-                    <TableCell>
-                      {fuel_pumps?.find((p) => p.id === pump.fuel_pump_id)
-                        ?.name || '—'}
-                    </TableCell>
-                    <TableCell>
-                      {productOptions?.find((p) => p.id === pump.product_id)
-                        ?.name || '—'}
-                    </TableCell>
-                    <QuantityCell value={pump.opening} />
-                    <QuantityCell value={pump.closing} />
-                    <QuantityCell value={pump.closing - pump.opening} />
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
-
-        {/* Products Sold */}
-        <SectionHeader title='Products Sold' sectionKey='products' />
-        {openSections.products && (
-          <TableContainer sx={{ px: 2, pb: 2 }}>
-            <Table size='small'>
-              <TableHead>
-                <TableRow sx={{ bgcolor: mainColor }}>
-                  <TableCell sx={{ color: contrastText }}>Product</TableCell>
-                  <TableCell align='right' sx={{ color: contrastText }}>
-                    Quantity (L)
-                  </TableCell>
-                  <TableCell align='right' sx={{ color: contrastText }}>
-                    Price
-                  </TableCell>
-                  <TableCell align='right' sx={{ color: contrastText }}>
-                    Amount
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {mergedProducts.map((product, idx) => {
-                  const price =
-                    shiftData.fuel_prices?.find(
-                      (p) => p.product_id === product.product_id
-                    )?.price || 0;
-                  const adjustments = (shiftData.adjustments || []).filter(
-                    (a) => a.product_id === product.product_id
-                  );
-                  const adjTotal = adjustments.reduce(
-                    (sum, a) =>
-                      sum + (a.operator === '+' ? -a.quantity : a.quantity),
-                    0
-                  );
-                  const finalQty = product.quantity + adjTotal;
-                  const amount = finalQty * price;
-
-                  return (
-                    <TableRow key={idx} hover>
-                      <TableCell>
-                        {productOptions?.find(
-                          (p) => p.id === product.product_id
-                        )?.name || 'Unknown'}
-                      </TableCell>
-                      <QuantityCell value={finalQty} />
-                      <NumberCell value={price} />
-                      <NumberCell value={amount} bold />
-                    </TableRow>
-                  );
-                })}
-                <TotalRow
-                  label='Total Products'
-                  quantity={productsTotals.totalQuantity}
-                  amount={productsTotals.totalAmount}
-                />
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
-
-        {/* Cash Distribution */}
-        <SectionHeader
-          title='Cash Distribution'
-          sectionKey='cashDistribution'
+      {/* Conditional rendering based on openDetails */}
+      {!openDetails ? (
+        <CashierListSummaryOnScreen
+          shiftData={shiftData}
+          organization={organization}
+          shift_teams={shift_teams}
+          fuel_pumps={fuel_pumps}
+          tanks={tanks}
+          productOptions={productOptions}
+          openDetails={openDetails}
         />
-        {openSections.cashDistribution && (
-          <TableContainer sx={{ px: 2, pb: 2 }}>
-            <Table size='small'>
-              <TableHead>
-                <TableRow sx={{ bgcolor: mainColor }}>
-                  <TableCell sx={{ color: contrastText }}>Account</TableCell>
-                  <TableCell align='right' sx={{ color: contrastText }}>
-                    Amount
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {cashAccounts.map((acc, idx) => (
-                  <TableRow key={idx} hover>
-                    <TableCell>{acc.name}</TableCell>
-                    <NumberCell value={acc.amount} />
-                  </TableRow>
-                ))}
-                {totalFuelVouchersAmount > 0 && (
-                  <TableRow hover>
-                    <TableCell>Fuel Vouchers</TableCell>
-                    <NumberCell value={totalFuelVouchersAmount} />
-                  </TableRow>
-                )}
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 'bold' }}>Total Cash</TableCell>
-                  <NumberCell value={totalCash} bold />
-                </TableRow>
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
+      ) : (
+        <>
+          {/* Detailed View - Per Cashier Breakdown */}
+          {shiftData.cashiers?.map((cashier, cashierIndex) => {
+            const cashierTotals = calculateCashierTotals(cashier);
+            const mergedReadings = mergeCashierPumpReadings(
+              cashier.pump_readings || []
+            );
 
-        {/* Tank Adjustments */}
-        {!!shiftData?.adjustments?.length && (
-          <>
-            <SectionHeader
-              title='Tank Adjustments'
-              sectionKey='tankAdjustments'
-            />
-            {openSections.tankAdjustments && (
-              <TableContainer sx={{ px: 2, pb: 2 }}>
-                <Table size='small'>
-                  <TableHead>
-                    <TableRow sx={{ bgcolor: mainColor }}>
-                      <TableCell sx={{ color: contrastText }}>
-                        Product
-                      </TableCell>
-                      <TableCell sx={{ color: contrastText }}>Tank</TableCell>
-                      <TableCell sx={{ color: contrastText }}>
-                        Description
-                      </TableCell>
-                      <TableCell align='right' sx={{ color: contrastText }}>
-                        Quantity
-                      </TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {(shiftData.adjustments || []).map((adj, idx) => (
-                      <TableRow key={idx} hover>
-                        <TableCell>
-                          {productOptions?.find((p) => p.id === adj.product_id)
-                            ?.name || '—'}
+            return (
+              <Paper
+                key={cashier.id || cashierIndex}
+                elevation={3}
+                sx={{ mb: 3, overflow: 'hidden' }}
+              >
+                {/* Cashier Header */}
+                <Box
+                  sx={{
+                    p: 2,
+                    bgcolor: mainColor,
+                    color: contrastText,
+                    textAlign: 'center',
+                  }}
+                >
+                  <Typography variant='h6' sx={{ fontWeight: 'bold' }}>
+                    {cashier.name} - Summary
+                  </Typography>
+                </Box>
+
+                {/* Cashier Summary Table */}
+                <TableContainer sx={{ px: 2, pt: 2 }}>
+                  <Table size='small'>
+                    <TableHead>
+                      <TableRow
+                        sx={{
+                          bgcolor: theme.palette.background.default,
+                        }}
+                      >
+                        <TableCell
+                          sx={{ color: headerColor, fontWeight: 'bold' }}
+                        >
+                          Item
                         </TableCell>
-                        <TableCell>
-                          {tanks?.find((t) => t.id === adj.tank_id)?.name ||
-                            '—'}
-                        </TableCell>
-                        <TableCell>{adj.description || '—'}</TableCell>
                         <TableCell
                           align='right'
-                          sx={{ fontFamily: 'monospace' }}
+                          sx={{ color: headerColor, fontWeight: 'bold' }}
                         >
-                          {`(${adj.operator})${adj.quantity.toLocaleString(
-                            'en-US',
-                            {
-                              minimumFractionDigits: 3,
-                              maximumFractionDigits: 3,
-                            }
-                          )}`}
+                          Amount
                         </TableCell>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            )}
-          </>
-        )}
+                    </TableHead>
+                    <TableBody>
+                      <TableRow hover>
+                        <TableCell>Total Sales Amount</TableCell>
+                        <NumberCell value={cashierTotals.netSales} />
+                      </TableRow>
+                      <TableRow hover>
+                        <TableCell>Fuel Vouchers Total</TableCell>
+                        <NumberCell
+                          value={cashierTotals.totalFuelVouchersAmount}
+                        />
+                      </TableRow>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 'bold' }}>
+                          Cash Remaining
+                        </TableCell>
+                        <TableCell
+                          align='right'
+                          sx={{
+                            fontFamily: 'monospace',
+                            fontWeight: 'bold',
+                            color:
+                              cashierTotals.cashRemaining < 0
+                                ? theme.palette.error.main
+                                : headerColor,
+                          }}
+                        >
+                          {cashierTotals.cashRemaining?.toLocaleString(
+                            'en-US',
+                            {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            }
+                          ) || '—'}
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </TableContainer>
 
-        {/* Opening Dipping */}
-        {shiftData?.opening_dipping?.readings?.length > 0 && (
-          <>
-            <SectionHeader
-              title='Opening Dipping'
-              sectionKey='openingDipping'
-            />
-            {openSections.openingDipping && (
-              <TableContainer sx={{ px: 2, pb: 2 }}>
-                <Table size='small'>
-                  <TableHead>
-                    <TableRow sx={{ bgcolor: mainColor }}>
-                      <TableCell sx={{ color: contrastText }}>Tank</TableCell>
-                      <TableCell sx={{ color: contrastText }}>
-                        Product
-                      </TableCell>
-                      <TableCell align='right' sx={{ color: contrastText }}>
-                        Reading
-                      </TableCell>
-                      <TableCell align='right' sx={{ color: contrastText }}>
-                        Cumulative Deviation
-                      </TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {(shiftData.opening_dipping.readings || []).map(
-                      (d, idx) => (
-                        <TableRow key={idx} hover>
-                          <TableCell>{d.tank?.name || '—'}</TableCell>
-                          <TableCell>
-                            {productOptions?.find((p) => p.id === d.product_id)
-                              ?.name || '—'}
+                {/* Cashier Pump Readings */}
+                {cashier.pump_readings?.length > 0 && (
+                  <Box sx={{ mt: 3 }}>
+                    <Typography
+                      variant='subtitle1'
+                      sx={{
+                        color: headerColor,
+                        textAlign: 'center',
+                        mb: 1,
+                        fontWeight: 'bold',
+                      }}
+                    >
+                      {cashier.name} - Pump Readings
+                    </Typography>
+                    <TableContainer sx={{ px: 2, pb: 2 }}>
+                      <Table size='small'>
+                        <TableHead>
+                          <TableRow sx={{ bgcolor: mainColor }}>
+                            <TableCell sx={{ color: contrastText }}>
+                              Pump
+                            </TableCell>
+                            <TableCell sx={{ color: contrastText }}>
+                              Product
+                            </TableCell>
+                            <TableCell
+                              align='right'
+                              sx={{ color: contrastText }}
+                            >
+                              Opening
+                            </TableCell>
+                            <TableCell
+                              align='right'
+                              sx={{ color: contrastText }}
+                            >
+                              Closing
+                            </TableCell>
+                            <TableCell
+                              align='right'
+                              sx={{ color: contrastText }}
+                            >
+                              Difference
+                            </TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {cashier.pump_readings.map((pump, idx) => {
+                            const pumpInfo = fuel_pumps?.find(
+                              (p) => p.id === pump.fuel_pump_id
+                            );
+                            const product = productOptions?.find(
+                              (p) => p.id === pump.product_id
+                            );
+                            const difference =
+                              (pump.closing || 0) - (pump.opening || 0);
+
+                            return (
+                              <TableRow key={idx} hover>
+                                <TableCell>
+                                  {pumpInfo?.name ||
+                                    `Pump ${pump.fuel_pump_id}`}
+                                </TableCell>
+                                <TableCell>
+                                  {product?.name ||
+                                    `Product ${pump.product_id}`}
+                                </TableCell>
+                                <QuantityCell value={pump.opening} />
+                                <QuantityCell value={pump.closing} />
+                                <QuantityCell value={difference} />
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Box>
+                )}
+
+                {/* Cashier Products Summary */}
+                {mergedReadings.length > 0 && (
+                  <Box sx={{ mt: 3 }}>
+                    <Typography
+                      variant='subtitle1'
+                      sx={{
+                        color: headerColor,
+                        textAlign: 'center',
+                        mb: 1,
+                        fontWeight: 'bold',
+                      }}
+                    >
+                      {cashier.name} - Products Summary
+                    </Typography>
+                    <TableContainer sx={{ px: 2, pb: 2 }}>
+                      <Table size='small'>
+                        <TableHead>
+                          <TableRow sx={{ bgcolor: mainColor }}>
+                            <TableCell sx={{ color: contrastText }}>
+                              Product
+                            </TableCell>
+                            <TableCell
+                              align='right'
+                              sx={{ color: contrastText }}
+                            >
+                              Quantity
+                            </TableCell>
+                            <TableCell
+                              align='right'
+                              sx={{ color: contrastText }}
+                            >
+                              Price
+                            </TableCell>
+                            <TableCell
+                              align='right'
+                              sx={{ color: contrastText }}
+                            >
+                              Amount
+                            </TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {mergedReadings.map((productSales, idx) => {
+                            const product = productOptions?.find(
+                              (p) => p.id === productSales.product_id
+                            );
+                            const price =
+                              shiftData.fuel_prices.find(
+                                (p) => p.product_id === productSales.product_id
+                              )?.price || 0;
+
+                            // Adjustments for this product and cashier
+                            const adjustmentsQty = (
+                              cashier.tank_adjustments || []
+                            )
+                              .filter(
+                                (adj) =>
+                                  adj.product_id === productSales.product_id
+                              )
+                              .reduce((sum, adj) => {
+                                if (adj.operator === '+') {
+                                  return sum - adj.quantity;
+                                } else if (adj.operator === '-') {
+                                  return sum + adj.quantity;
+                                }
+                                return sum;
+                              }, 0);
+
+                            const totalQty =
+                              productSales.quantity + adjustmentsQty;
+                            const totalAmount = totalQty * price;
+
+                            return (
+                              <TableRow key={idx} hover>
+                                <TableCell>
+                                  {product?.name ||
+                                    `Product ${productSales.product_id}`}
+                                </TableCell>
+                                <QuantityCell value={totalQty} />
+                                <NumberCell value={price} />
+                                <NumberCell value={totalAmount} />
+                              </TableRow>
+                            );
+                          })}
+                          <TableRow sx={{ bgcolor: mainColor }}>
+                            <TableCell
+                              colSpan={3}
+                              sx={{ color: contrastText, fontWeight: 'bold' }}
+                            >
+                              Cashier Total
+                            </TableCell>
+                            <NumberCell
+                              value={cashierTotals.netSales}
+                              sx={{ color: contrastText, fontWeight: 'bold' }}
+                            />
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Box>
+                )}
+
+                {/* Cashier Cash Distribution */}
+                {(cashier.main_ledger ||
+                  cashier.cash_transactions?.length > 0) && (
+                  <Box sx={{ mt: 3 }}>
+                    <Typography
+                      variant='subtitle1'
+                      sx={{
+                        color: headerColor,
+                        textAlign: 'center',
+                        mb: 1,
+                        fontWeight: 'bold',
+                      }}
+                    >
+                      {cashier.name} - Cash Distribution
+                    </Typography>
+                    <TableContainer sx={{ px: 2, pb: 2 }}>
+                      <Table size='small'>
+                        <TableHead>
+                          <TableRow sx={{ bgcolor: mainColor }}>
+                            <TableCell sx={{ color: contrastText }}>
+                              Account
+                            </TableCell>
+                            <TableCell
+                              align='right'
+                              sx={{ color: contrastText }}
+                            >
+                              Amount
+                            </TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {/* Main Ledger */}
+                          {cashier.main_ledger && (
+                            <TableRow hover>
+                              <TableCell>
+                                {cashier.main_ledger.name ||
+                                  `Ledger ${cashier.main_ledger.id}`}
+                              </TableCell>
+                              <NumberCell value={cashier.main_ledger.amount} />
+                            </TableRow>
+                          )}
+
+                          {/* Cash Transactions */}
+                          {cashier.cash_transactions?.map(
+                            (transaction, idx) => {
+                              const ledger =
+                                cashier.ledgers?.find(
+                                  (l) => l.id === transaction.id
+                                ) ||
+                                (transaction.debit_ledger
+                                  ? { name: transaction.debit_ledger.name }
+                                  : { name: `Transaction ${idx + 1}` });
+
+                              return (
+                                <TableRow key={idx} hover>
+                                  <TableCell>{ledger.name}</TableCell>
+                                  <NumberCell value={transaction.amount} />
+                                </TableRow>
+                              );
+                            }
+                          )}
+
+                          {/* Total */}
+                          <TableRow sx={{ bgcolor: mainColor }}>
+                            <TableCell
+                              sx={{ color: contrastText, fontWeight: 'bold' }}
+                            >
+                              Total Distributed
+                            </TableCell>
+                            <NumberCell
+                              value={
+                                (cashier.cash_transactions?.reduce(
+                                  (sum, t) => sum + (t.amount || 0),
+                                  0
+                                ) || 0) + (cashier.main_ledger?.amount || 0)
+                              }
+                              sx={{ color: contrastText, fontWeight: 'bold' }}
+                            />
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Box>
+                )}
+
+                {/* Cashier Fuel Vouchers */}
+                <Box sx={{ mt: 3 }}>
+                  <Typography
+                    variant='subtitle1'
+                    sx={{
+                      color: headerColor,
+                      textAlign: 'center',
+                      mb: 1,
+                      fontWeight: 'bold',
+                    }}
+                  >
+                    {cashier.name} - Fuel Vouchers
+                  </Typography>
+                  <TableContainer sx={{ px: 2, pb: 2 }}>
+                    <Table size='small'>
+                      <TableHead>
+                        <TableRow sx={{ bgcolor: mainColor }}>
+                          <TableCell sx={{ color: contrastText }}>
+                            Voucher No
                           </TableCell>
-                          <QuantityCell value={d.reading} />
-                          <QuantityCell value={d.deviation} />
+                          <TableCell sx={{ color: contrastText }}>
+                            Client
+                          </TableCell>
+                          <TableCell sx={{ color: contrastText }}>
+                            Narration
+                          </TableCell>
+                          <TableCell sx={{ color: contrastText }}>
+                            Product
+                          </TableCell>
+                          <TableCell align='right' sx={{ color: contrastText }}>
+                            Quantity
+                          </TableCell>
+                          <TableCell align='right' sx={{ color: contrastText }}>
+                            Amount
+                          </TableCell>
                         </TableRow>
-                      )
-                    )}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            )}
-          </>
-        )}
+                      </TableHead>
+                      <TableBody>
+                        {cashier.fuel_vouchers?.map((fv, idx) => {
+                          const product = productOptions?.find(
+                            (p) => p.id === fv.product_id
+                          );
+                          const price =
+                            shiftData.fuel_prices.find(
+                              (p) => p.product_id === fv.product_id
+                            )?.price || 0;
+                          const amount = fv.quantity * price;
 
-        {/* Closing Dipping */}
-        {shiftData?.closing_dipping?.readings?.length > 0 && (
-          <>
-            <SectionHeader
-              title='Closing Dipping'
-              sectionKey='closingDipping'
-            />
-            {openSections.closingDipping && (
-              <TableContainer sx={{ px: 2, pb: 2 }}>
-                <Table size='small'>
-                  <TableHead>
-                    <TableRow sx={{ bgcolor: mainColor }}>
-                      <TableCell sx={{ color: contrastText }}>Tank</TableCell>
-                      <TableCell sx={{ color: contrastText }}>
-                        Product
-                      </TableCell>
-                      <TableCell align='right' sx={{ color: contrastText }}>
-                        Reading
-                      </TableCell>
-                      <TableCell align='right' sx={{ color: contrastText }}>
-                        Cumulative Deviation
-                      </TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {(shiftData.closing_dipping.readings || []).map(
-                      (d, idx) => (
-                        <TableRow key={idx} hover>
-                          <TableCell>{d.tank?.name || '—'}</TableCell>
-                          <TableCell>
-                            {productOptions?.find((p) => p.id === d.product_id)
-                              ?.name || '—'}
+                          return (
+                            <TableRow key={idx} hover>
+                              <TableCell>
+                                {fv.voucherNo || `FV-${idx + 1}`}
+                              </TableCell>
+                              <TableCell>
+                                {fv.stakeholder?.name || 'Internal Expense'}
+                              </TableCell>
+                              <TableCell>{fv.narration || '-'}</TableCell>
+                              <TableCell>
+                                {product?.name || `Product ${fv.product_id}`}
+                              </TableCell>
+                              <QuantityCell value={fv.quantity} />
+                              <NumberCell value={amount} />
+                            </TableRow>
+                          );
+                        })}
+                        <TableRow sx={{ bgcolor: mainColor }}>
+                          <TableCell
+                            colSpan={5}
+                            sx={{ color: contrastText, fontWeight: 'bold' }}
+                          >
+                            Cashier Total Fuel Vouchers
                           </TableCell>
-                          <QuantityCell value={d.reading} />
-                          <QuantityCell value={d.deviation} />
+                          <NumberCell
+                            value={cashierTotals.totalFuelVouchersAmount}
+                            sx={{ color: contrastText, fontWeight: 'bold' }}
+                          />
                         </TableRow>
-                      )
-                    )}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            )}
-          </>
-        )}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Box>
 
-        {/* Fuel Vouchers */}
-        {openDetails && shiftData?.fuel_vouchers?.length > 0 && (
-          <>
-            <SectionHeader title='Fuel Vouchers' sectionKey='fuelVouchers' />
-            {openSections.fuelVouchers && (
-              <TableContainer sx={{ px: 2, pb: 2 }}>
-                <Table size='small'>
-                  <TableHead>
-                    <TableRow sx={{ bgcolor: mainColor }}>
-                      <TableCell sx={{ color: contrastText }}>
-                        Voucher No
-                      </TableCell>
-                      <TableCell sx={{ color: contrastText }}>Client</TableCell>
-                      <TableCell sx={{ color: contrastText }}>
-                        Reference
-                      </TableCell>
-                      <TableCell sx={{ color: contrastText }}>
-                        Narration
-                      </TableCell>
-                      <TableCell sx={{ color: contrastText }}>
-                        Product
-                      </TableCell>
-                      <TableCell align='right' sx={{ color: contrastText }}>
-                        Quantity
-                      </TableCell>
-                      <TableCell align='right' sx={{ color: contrastText }}>
-                        Price
-                      </TableCell>
-                      <TableCell align='right' sx={{ color: contrastText }}>
-                        Amount
-                      </TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {(shiftData.fuel_vouchers || []).map((voucher, idx) => {
-                      const price =
-                        shiftData.fuel_prices?.find(
-                          (p) => p.product_id === voucher.product_id
-                        )?.price || 0;
-                      const amount = voucher.quantity * price;
+                {/* Cashier Tank Adjustments */}
+                {cashier.tank_adjustments?.length > 0 && (
+                  <Box sx={{ mt: 3, pb: 2 }}>
+                    <Typography
+                      variant='subtitle1'
+                      sx={{
+                        color: headerColor,
+                        textAlign: 'center',
+                        mb: 1,
+                        fontWeight: 'bold',
+                      }}
+                    >
+                      {cashier.name} - Tank Adjustments
+                    </Typography>
+                    <TableContainer sx={{ px: 2, pb: 2 }}>
+                      <Table size='small'>
+                        <TableHead>
+                          <TableRow sx={{ bgcolor: mainColor }}>
+                            <TableCell sx={{ color: contrastText }}>
+                              Product
+                            </TableCell>
+                            <TableCell sx={{ color: contrastText }}>
+                              Tank
+                            </TableCell>
+                            <TableCell sx={{ color: contrastText }}>
+                              Description
+                            </TableCell>
+                            <TableCell sx={{ color: contrastText }}>
+                              Operator
+                            </TableCell>
+                            <TableCell
+                              align='right'
+                              sx={{ color: contrastText }}
+                            >
+                              Quantity
+                            </TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {cashier.tank_adjustments.map((adj, idx) => {
+                            const product = productOptions?.find(
+                              (p) => p.id === adj.product_id
+                            );
+                            const tank = tanks?.find(
+                              (t) => t.id === adj.tank_id
+                            );
 
-                      return (
-                        <TableRow key={idx} hover>
-                          <TableCell>{voucher.voucherNo}</TableCell>
-                          <TableCell>
-                            {voucher.stakeholder?.name || '—'}
-                          </TableCell>
-                          <TableCell>{voucher.reference || '—'}</TableCell>
-                          <TableCell>{voucher.narration || '—'}</TableCell>
-                          <TableCell>
-                            {productOptions?.find(
-                              (p) => p.id === voucher.product_id
-                            )?.name || '—'}
-                          </TableCell>
-                          <QuantityCell value={voucher.quantity} />
-                          <NumberCell value={price} />
-                          <NumberCell value={amount} bold />
-                        </TableRow>
-                      );
-                    })}
-                    <TableRow>
-                      <TableCell colSpan={7} sx={{ fontWeight: 'bold' }}>
-                        Total Fuel Vouchers
-                      </TableCell>
-                      <NumberCell value={totalFuelVouchersAmount} bold />
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            )}
-          </>
-        )}
-      </Paper>
+                            return (
+                              <TableRow key={idx} hover>
+                                <TableCell>
+                                  {product?.name || `Product ${adj.product_id}`}
+                                </TableCell>
+                                <TableCell>
+                                  {tank?.name || `Tank ${adj.tank_id}`}
+                                </TableCell>
+                                <TableCell>{adj.description || '-'}</TableCell>
+                                <TableCell>{adj.operator}</TableCell>
+                                <QuantityCell value={adj.quantity} />
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Box>
+                )}
+              </Paper>
+            );
+          })}
+        </>
+      )}
     </Box>
   );
 };

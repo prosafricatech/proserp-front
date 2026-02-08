@@ -6,17 +6,17 @@ import {
 } from '@jumbo/components/JumboLayout/hooks';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { SIDEBAR_STYLES } from '@jumbo/utilities/constants';
-import { TranslationPopover } from '@/components/TranslationPopover';
+import { TranslationPopover } from '@/components/translationPopover';
 import { Stack, useMediaQuery } from '@mui/material';
 import React from 'react';
-import { Logo } from '../Logo';
-import { SidebarToggleButton } from '../SidebarToggleButton';
-import { Search } from './Search';
-import { ThemeModeOption } from './ThemeModeOptions';
+import { SidebarToggleButton } from '../sidebarToggleButton';
+import { Search } from './search';
 import dynamic from 'next/dynamic';
+import { Logo } from '../logo';
+import { ThemeModeOption } from './themeModeOptions/ThemeModeOption';
 
 const AuthUserPopover = dynamic(() =>
-  import('../AuthUserPopover').then((mod) => mod.AuthUserPopover),
+  import('../authUserPopover').then((mod) => mod.AuthUserPopover),
   { ssr: false }
 );
 
