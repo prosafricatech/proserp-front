@@ -67,7 +67,15 @@ const PriceListItemForm: React.FC<PriceListItemFormProps> = ({
   const validationSchema = yup.object({
     product: yup.object().required("Product is required").typeError('Product is required'),
     price: yup.number().required("Price is required").positive("Price is required").typeError('Price is required'),
-    bottom_cap: yup.number().positive("Invalid bottom cap").typeError('Invalid bottom cap'),
+    bottom_cap: yup
+      .number()
+      .positive("Invalid bottom cap")
+      .typeError('Invalid bottom cap')
+      .test('bottom-cap-max', 'Bottom cap cannot exceed price', function(value) {
+        const { price } = this.parent;
+        if (value === undefined || value === null) return true;
+        return value <= price;
+      }),
   });
 
   const { 
