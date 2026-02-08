@@ -167,9 +167,9 @@ function Sidebar({ menus }) {
                 }
             }
 
-            if (organizationHasSubscribed(MODULES.FUEL_STATION)) {
+            if(organizationHasSubscribed(MODULES.FUEL_STATION)){
                 //Fuel Station
-                if (checkOrganizationPermission(
+                if(checkOrganizationPermission(
                     [
                         PERMISSIONS.FUEL_STATIONS_READ,
                         PERMISSIONS.FUEL_STATIONS_CREATE,
@@ -180,8 +180,8 @@ function Sidebar({ menus }) {
                         PERMISSIONS.FUEL_SALES_SHIFT_UPDATE,
                         PERMISSIONS.FUEL_SALES_SHIFT_CLOSE,
                         PERMISSIONS.FUEL_SALES_SHIFT_DELETE,
-                    ])) {
-                    updatedMenus = [...updatedMenus, ...menus.filter(menu => menu.label === dictionary.sidebar.menu.fuelStations)];
+                    ])){
+                    updatedMenus = [...updatedMenus,...menus.filter(menu => menu.label === dictionary.sidebar.menu.fuelStations)];
                 }
 
                 // Fuel Station > Sales Shift
@@ -205,6 +205,10 @@ function Sidebar({ menus }) {
                     PERMISSIONS.FUEL_STATIONS_CREATE,
                     PERMISSIONS.FUEL_STATIONS_UPDATE,
                     PERMISSIONS.FUEL_STATIONS_DELETE,
+                    PERMISSIONS.PRICE_LISTS_READ,
+                    PERMISSIONS.PRICE_LISTS_CREATE,
+                    PERMISSIONS.PRICE_LISTS_EDIT,
+                    PERMISSIONS.PRICE_LISTS_DELETE
                 ])) {
                     const fuelStationMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.fuelStations);
                     if (fuelStationMenuIndex >= 0) {
@@ -224,11 +228,24 @@ function Sidebar({ menus }) {
                     const fuelStationMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.fuelStations);
                     if (fuelStationMenuIndex >= 0) {
                         const mastersIndex = updatedMenus[fuelStationMenuIndex].children.findIndex(child => child.label === dictionary.sidebar.menuItem.masters);
-                        if (mastersIndex >= 0) {
+                        if(mastersIndex >= 0){
                             updatedMenus[fuelStationMenuIndex].children[mastersIndex].children = updatedMenus[fuelStationMenuIndex].children[mastersIndex].children.filter(
                                 child => child.label !== dictionary.sidebar.menuItem.stations
                             );
                         }
+                    }
+                }
+
+                //fuelStations > Masters > PriceLists
+                if (!checkOrganizationPermission([PERMISSIONS.PRICE_LISTS_READ,PERMISSIONS.PRICE_LISTS_CREATE, PERMISSIONS.PRICE_LISTS_EDIT, PERMISSIONS.PRICE_LISTS_DELETE])) {
+                    const fuelStationMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.fuelStations);
+                    if (fuelStationMenuIndex >= 0) {
+                    const mastersIndex = updatedMenus[fuelStationMenuIndex].children.findIndex(child => child.label === dictionary.sidebar.menuItem.masters);
+                    if (mastersIndex >= 0) {
+                        updatedMenus[fuelStationMenuIndex].children[mastersIndex].children = updatedMenus[fuelStationMenuIndex].children[mastersIndex].children.filter(
+                            item => item.label !== dictionary.sidebar.menuItem.priceLists
+                        );
+                    }
                     }
                 }
             }
