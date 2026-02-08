@@ -1,0 +1,429 @@
+{
+  "form": {
+    "title": "Organization Management",
+    "buttons": {
+      "submit": "Submit",
+      "cancel": "Cancel",
+      "viewProfile": "View Organization Profile",
+      "viewList": "View All Organizations",
+      "upload": "Upload File",
+      "remove": "Remove"
+    },
+    "pageTitle": "Edit: {organizationName}",
+    "heading": "Editing: {organizationName}",
+    "labels": {
+      "basicInfo": "Basic Information",
+      "name": "Official Organization Name",
+      "email": "Primary Email",
+      "phone": "Primary Phone Number",
+      "website": "Official Website URL",
+      "recordingStart": "Recording Start Date",
+      "tin": "Tax Identification Number (TIN)",
+      "country": "Headquarters Country",
+      "currency": "Default Currency",
+      "address": "Official Business Address",
+      "vatSection": "VAT Registration Information",
+      "vatRegistered": "VAT Registration Status",
+      "vrn": "VAT Registration Number",
+      "vatPercentage": "VAT Percentage (%)",
+      "brandingSection": "Branding & Identity",
+      "logo": "Main Logo (Recommended: 300x300px)",
+      "symbol": "Business Symbol",
+      "mainColor": "Primary Brand Color (Hex)",
+      "lightColor": "Light Color (Hex)",
+      "darkColor": "Dark Color (Hex)",
+      "contrastText": "Accessible Text Color (Hex)",
+      "tagline": "Official Tagline (Max 50 chars)",
+      "preview": "Brand Preview"
+    },
+    "placeholders": {
+      "name": "e.g. Acme Corporation Ltd",
+      "email": "e.g. info@organization.com",
+      "phone": "e.g. +255123456789",
+      "website": "e.g. https://yourorganization.com",
+      "tin": "e.g. 123-456-789",
+      "address": "e.g. 123 Business Ave, City",
+      "vrn": "e.g. VAT123456789",
+      "vatPercentage": "e.g. 18 for 18% VAT",
+      "tagline": "e.g. 'Quality First, Always'",
+      "color": "e.g. #3A86FF"
+    },
+    "messages": {
+      "loading": "Processing organization details...",
+      "createSuccess": "Organization successfully registered!",
+      "updateSuccess": "Organization details successfully updated!",
+      "deleteSuccess": "Organization successfully archived.",
+      "imageGuide": "Recommended: PNG format, transparent background",
+      "colorGuide": "Use color picker or enter HEX code",
+      "error": "Error loading organization data",
+      "unauthorized": "You don't have permission to edit this organization"
+    },
+    "errors": {
+      "validation": {
+        "name": {
+          "required": "Organization legal name is required",
+          "min": "Name must be at least 3 characters",
+          "max": "Name cannot exceed 100 characters"
+        },
+        "email": {
+          "required": "Contact email is required",
+          "invalid": "Valid email format required (e.g. name@domain.com)"
+        },
+        "phone": {
+          "required": "Contact number is required",
+          "invalid": "Valid international format required (e.g. +255123456789)"
+        },
+        "recordingStart": {
+          "required": "Financial records start date is required",
+          "future": "Date cannot be in the future"
+        },
+        "website": {
+          "invalid": "Valid URL required (e.g. https://example.com)"
+        },
+        "country": {
+          "required": "Registered country must be selected"
+        },
+        "currency": {
+          "required": "Default currency must be selected"
+        },
+        "vrn": {
+          "required": "VRN required for VAT-registered organizations",
+          "pattern": "Valid VRN format required"
+        },
+        "vatPercentage": {
+          "required": "VAT rate required for VAT-registered organizations",
+          "min": "VAT rate cannot be negative",
+          "max": "VAT rate cannot exceed 100%",
+          "decimal": "Maximum 2 decimal places allowed"
+        },
+        "colors": {
+          "required": "All brand colors are required",
+          "invalid": "Valid HEX color code required (e.g. #FFFFFF)"
+        },
+        "tagline": {
+          "max": "Tagline cannot exceed 50 characters"
+        }
+      },
+      "fileUpload": {
+        "size": "File size cannot exceed 2MB",
+        "type": "Only JPG/PNG files are accepted",
+        "dimensions": "Image dimensions must be between 300x300px and 1000x1000px"
+      }
+    },
+    "helpText": {
+      "tin": "Official tax ID issued by government",
+      "vrn": "Required if VAT-registered (format: VAT123456789)",
+      "recordingStart": "This date determines your fiscal year reporting",
+      "brandColors": "These colors will be used across all platforms"
+    }
+  },
+
+  "list": {
+    "labels": {
+      "listHeader": "Organizations",
+      "newCreateLabel": "New Organization",
+      "haveOrgRoles": "Roles",
+      "haveNotOrgRoles": "No roles assigned",
+      "listtoProfile": "Profile",
+      "listtoEdit": "Edit",
+      "listtoDashboard": "Dashboard",
+      "loadOrganization": "Load",
+      "isLoadedAsActiveMessage": "is loaded to an active organization",
+      "isLoadedAsActiveSpinner": "Loading organization...",
+      "isLoadedAsActiveError": "Something went wrong on loading Organization",
+      "invitationLink": "invitations"
+    },
+    "messages": {
+      "noOrganizations": "No ProsERP organizations for you.",
+      "invitationText": "Join one from the "
+    },
+    "autoLoad": {
+      "button": {
+        "tooltip": {
+          "activate": "Activate auto-load",
+          "deactivate": "Deactivate auto-load"
+        }
+      },
+      "dialog": {
+        "title": {
+          "activate": "Activate {organizationName} auto-load?",
+          "deactivate": "Deactivate {organizationName} auto-load?"
+        },
+        "description": {
+          "activate": "Confirming this will set {organizationName} to load automatically when you login",
+          "deactivate": "Confirming this will prevent {organizationName} from being loaded automatically when you login"
+        },
+        "buttons": {
+          "cancel": "Cancel",
+          "confirm": "Confirm"
+        }
+      },
+      "messages": {
+        "success": "Auto-load setting updated successfully",
+        "error": "An error occurred while updating auto-load setting"
+      }
+    }
+  },
+  
+  "profile": {
+    "tabslabel": {
+      "roles": "Roles",
+      "users": "Users",
+      "subscriptions": "Subscriptions"
+    },
+    "usersTab": {
+      "listItem": {
+        "tooltip": {
+          "status": "User Status",
+          "roles": "Assigned Roles",
+          "email": "Email Address",
+          "phone": "Phone Number",
+          "name": "Full Name"
+        },
+        "actions": {
+          "editRoles": "Edit Roles",
+          "detach": "Detach User",
+          "leave": "Leave Organization",
+          "confirmDetachTitle": "Detach {userName}?",
+          "confirmDetachContent": "Revoke all organization access for this user",
+          "confirmLeaveTitle": "Leave {organizationName}?",
+          "confirmLeaveContent": "You won't be able to access the organization until you are reinvited"
+        },
+        "messages": {
+          "detachSuccess": "User detached successfully",
+          "detachError": "Error detaching user",
+          "leaveSuccess": "You have left the organization",
+          "leaveError": "Error leaving organization",
+          "status": {
+            "active": "Active",
+            "invited": "Invited",
+            "suspended": "Suspended"
+          }
+        }
+      },
+      "actionTail": {
+        "listViewTooltip": "List View",
+        "gridViewTooltip": "Grid View",
+        "inviteUsersTooltip": "Invite Users",
+        "inviteDialog": {
+          "title": "Invite Users",
+          "form": {
+            "emailLabel": "Email Address",
+            "emailPlaceholder": "Enter email addresses (comma separated)",
+            "roleLabel": "Select Role",
+            "submitButton": "Send Invitations",
+            "addButton": "Add",
+            "successMessage": "Invitations sent successfully",
+            "errorMessage": "Error sending invitations",
+            "validation": {
+              "required": "Email is required",
+              "invalid": "Invalid email format",
+              "roleRequired": "Please select at least one role for each invited user"
+            },
+            "messages": {
+              "alreadyQueued": "User is already in the queued list",
+              "alreadyMember": "User is already a member or has pending invitation",
+              "notFound": "No user with that email was found. An invitation to register will be sent instead.",
+              "error": "An error occurred",
+              "success": "Invitation added successfully"
+            }
+          }
+        }
+      },
+      "changeRoles": {
+        "dialog": {
+          "title": "Change {userName} Roles",
+          "saveButton": "Save",
+          "cancelButton": "Cancel",
+          "messages": {
+            "success": "Roles updated successfully",
+            "error": "Error saving roles"
+          },
+          "validation": {
+            "noChanges": "No changes made to roles"
+          }
+        }
+      }
+    },
+    "rolesTab": {
+      "newRoleForm": {
+        "labels": {
+          "name": "Name",
+          "description": "Description"
+        },
+        "validation": {
+          "nameRequired": "Role name required"
+        },
+        "buttons": {
+          "add": "Add",
+          "edit": "Edit Role",
+          "update": "Update",
+          "cancel": "Cancel"
+        },
+        "messages": {
+          "success": "Role added successfully",
+          "error": "Error adding role"
+        }
+      },
+      "roleManagement": {
+        "search": "Search",
+        "selectAll": "Select All",
+        "buttons": {
+          "delete": "Delete",
+          "save": "Save",
+          "confirmDelete": {
+            "title": "Delete {roleName} role?",
+            "content": "All users with this role won't have it anymore"
+          }
+        },
+        "messages": {
+          "deleteSuccess": "Role deleted successfully",
+          "deleteError": "Error deleting role",
+          "updateSuccess": "Role permissions updated successfully",
+          "updateError": "Error updating role permissions",
+          "noChanges": "No changes made to permissions"
+        }
+      }
+    },
+    "topHeader": {
+      "labels": {
+        "email": "Email",
+        "tin": "TIN",
+        "phone": "Phone"
+      },
+      "buttons": {
+        "dashboard": "Dashboard",
+        "load": "Load",
+        "edit": "Edit"
+      },
+      "tooltips": {
+        "loadOrganization": "Load {organizationName}",
+        "editOrganization": "Edit organization"
+      },
+      "messages": {
+        "organizationLoaded": "{organizationName} is loaded as active organization",
+        "loadError": "Failed to load organization",
+        "generalError": "Something went wrong"
+      }
+    },
+    "subscriptionsTab": {
+      "buttons": {
+        "addSubscription": "Add Subscription",
+        "edit": "Edit",
+        "delete": "Delete",
+        "confirmDelete": {
+          "title": "Delete {subscriptionNo}?",
+          "content": "Are you sure you want to delete this subscription?"
+        }
+      },
+      "labels": {
+        "subscriptionNo": "Subscription No",
+        "organizationName": "Organization Name",
+        "subscriptionValue": "Subscription Value",
+        "createdOn": "Created On",
+        "dateRange": "Date Range",
+        "successor": "Successor",
+        "status": "Status",
+        "modules": "Modules",
+        "moduleRate": "Module Rate",
+        "additionalFeatures": "Additional Features",
+        "monthlyRate": "Monthly Rate",
+        "quantity": "Quantity",
+        "amount": "Amount",
+        "modulesMonthlyCost": "Modules Monthly Cost",
+        "featuresMonthlyCost": "Additional Features Monthly Cost"
+      },
+      "messages": {
+        "noSubscriptions": "You don't have any active subscriptions. Please subscribe to the modules you need to prevent any inconveniences.",
+        "deleteSuccess": "Subscription deleted successfully",
+        "deleteError": "Error deleting subscription",
+        "editSuccess": "Subscription updated successfully",
+        "editError": "Error updating subscription"
+      },
+      "status": {
+        "active": "Active",
+        "expired": "Expired",
+        "pending": "Pending",
+        "renewed": "Renewed"
+      },
+      "form": {
+        "errors": {
+          "validation": {
+            "modules": {
+              "required": "Please select at least one module.",
+              "invalidSelection": "The selected module(s) are not valid."
+            },
+            "months": {
+              "required": "Please specify the subscription duration.",
+              "positive": "Duration must be a positive number.",
+              "minimum": {
+                "default": "Minimum subscription duration is {min} months.",
+                "prosAfrican": "Subscription must be at least {min} month(s)."
+              }
+            },
+            "gracePeriod": {
+              "positive": "Grace period cannot be negative.",
+              "maximum": "Grace period cannot exceed {max} days."
+            },
+            "organization": {
+              "required": "Please select an organization.",
+              "invalid": "The selected organization is not valid."
+            },
+            "startDate": {
+              "required": "Start date is required.",
+              "invalid": "Please enter a valid start date."
+            },
+            "additionalFeatures": {
+              "invalid": "One or more selected features are invalid."
+            }
+          },
+          "api": {
+            "createFailed": "Failed to create the subscription. Please try again.",
+            "updateFailed": "Failed to update the subscription. Please try again.",
+            "notFound": "The requested subscription could not be found."
+          }
+        },
+        "messages": {
+          "createSuccess": "Subscription created successfully.",
+          "edit": "Edit",
+          "new": "Add New Subscription",
+          "updateSuccess": "Subscription updated successfully.",
+          "deleteSuccess": "Subscription deleted successfully."
+        },
+        "labels": {
+          "organization": "Organization",
+          "months": "Subscription Duration (months)",
+          "gracePeriod": "Grace Period (days)",
+          "startDate": "Start Date",
+          "modules": "Modules",
+          "additionalFeatures": "Additional Features",
+          "additionalFeatureInfoMessage": "Please select at least one module to get additional features.",
+          "additionalFeatureQuantity": "Quantity",
+          "monthlyRate": "Monthly Rate",
+          "additionalFeatureRate": "Monthly Feature Rate",
+          "monthlyAmount": "Monthly Amount",
+          "additionalFeatureAmount": "Amount",
+          "additionalFeatureMonthlyCostLabel": "Additional Features Monthly Cost",
+          "modulesMonthlyCost": "Modules Monthly Cost",
+          "totalMonthlyRate": "Monthly Total",
+          "grandTotal": "Grand Total"
+        },
+        "helpTexts": {
+          "additionalFeatureQuantity": "Specify how many units of the feature you need.",
+          "additionalFeatureAmount": "The total cost for this feature based on your units.",
+          "additionalFeatureMonthlyCostLabel": "Total monthly cost for all selected additional features.",
+          "additionalFeatureRate": "Cost of a single unit of this feature per month.",
+          "months": "This defines how long the subscription will remain active.",
+          "gracePeriod": "Optional grace period after the subscription ends.",
+          "startDate": "The date when the subscription becomes effective.",
+          "modules": "Core functionalities included in the subscription.",
+          "additionalFeatures": "Optional add-ons that enhance capabilities.",
+          "monthlyRate": "The monthly subscription fee for this module.",
+          "grandTotal": "The final total including all subscription costs.",
+          "monthlyTotal": "The total monthly cost for this subscription.",
+          "modulesMonthlyCost": "Total cost per month for the selected modules."
+        }
+    }
+    }
+  }
+}

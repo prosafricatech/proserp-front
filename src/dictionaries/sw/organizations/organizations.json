@@ -1,0 +1,429 @@
+{
+  "form": {
+    "title": "Usimamizi wa Shirika",
+    "buttons": {
+      "submit": "Wasilisha",
+      "cancel": "Ghairi",
+      "viewProfile": "Tazama Wasifu wa Shirika",
+      "viewList": "Orodha ya Mashirika Yote",
+      "upload": "Pakia Faili",
+      "remove": "Ondoa"
+    },
+    "pageTitle": "Hariri: {organizationName}",
+    "heading": "Inahaririwa: {organizationName}",
+    "labels": {
+      "basicInfo": "Taarifa za Msingi",
+      "name": "Jina Rasmi la Shirika",
+      "email": "Barua Pepe Kuu",
+      "phone": "Namba ya Simu Kuu",
+      "website": "Anwani Rasmi ya Tovuti",
+      "recordingStart": "Tarehe ya Kuanza Kufanyika Kumbukumbu",
+      "tin": "Nambari ya Utambulisho wa Ushuru (TIN)",
+      "country": "Nchi ya Makao Makuu",
+      "currency": "Sarafu Chaguo-msingi",
+      "address": "Anwani Rasmi ya Biashara",
+      "vatSection": "Taarifa za Usajili wa VAT",
+      "vatRegistered": "Hali ya Usajili wa VAT",
+      "vrn": "Nambari ya Usajili wa VAT",
+      "vatPercentage": "Kiwango cha VAT (%)",
+      "brandingSection": "Utabasamu na Utambulisho",
+      "logo": "Nembo Kuu (Inapendekezwa: 300x300px)",
+      "symbol": "Alama ya Biashara",
+      "mainColor": "Rangi Kuu ya Biashara (Hex)",
+      "lightColor": "Rangi ya Mwangaza (Hex)",
+      "darkColor": "Rangi ya Giza (Hex)",
+      "contrastText": "Rangi ya Maandishi Yenye Ufikiaji (Hex)",
+      "tagline": "Kauli Mbiu Rasmi (Herufi 50 kwa upeo)",
+      "preview": "Hakiki ya Utabasamu"
+    },
+    "placeholders": {
+      "name": "Mf. Kampuni Ya ABC Ltd",
+      "email": "Mf. info@shirika.com",
+      "phone": "Mf. +255123456789",
+      "website": "Mf. https://shirika.com",
+      "tin": "Mf. 123-456-789",
+      "address": "Mf. Soko Kuu 123, Jiji",
+      "vrn": "Mf. VAT123456789",
+      "vatPercentage": "Mf. 18 kwa VAT 18%",
+      "tagline": "Mf. 'Ubora Kwanza, Kila Wakati'",
+      "color": "Mf. #3A86FF"
+    },
+    "messages": {
+      "loading": "Inashughulikia taarifa za shirika...",
+      "createSuccess": "Shirika limeandikishwa kikamilifu!",
+      "updateSuccess": "Taarifa za shirika zimesasishwa!",
+      "deleteSuccess": "Shirika limehifadhiwa kikamilifu.",
+      "imageGuide": "Inapendekezwa: PNG yenye rangi nyofu",
+      "colorGuide": "Tumia kichagua rangi au weka msimbo wa HEX",
+      "error": "Hitilafu katika kupakua taarifa za shirika",
+      "unauthorized": "Huna ruhusa ya kuhariri shirika hili"
+    },
+    "errors": {
+      "validation": {
+        "name": {
+          "required": "Jina rasmi la shirika linahitajika",
+          "min": "Jina lazima liwe na herufi 3 kwa chini",
+          "max": "Jina haliwezi kuzidi herufi 100"
+        },
+        "email": {
+          "required": "Barua pepe ya mawasiliano inahitajika",
+          "invalid": "Umbizo sahihi linahitajika (mf. jina@shirika.com)"
+        },
+        "phone": {
+          "required": "Namba ya mawasiliano inahitajika",
+          "invalid": "Umbizo sahihi la kimataifa linahitajika (mf. +255123456789)"
+        },
+        "recordingStart": {
+          "required": "Tarehe ya kuanza kufanyika kumbukumbu inahitajika",
+          "future": "Tarehe haiwezi kuwa ya baadaye"
+        },
+        "website": {
+          "invalid": "Anwani sahihi ya tovuti inahitajika (mf. https://mfano.com)"
+        },
+        "country": {
+          "required": "Nchi ya usajili inahitajika"
+        },
+        "currency": {
+          "required": "Sarafu chaguo-msingi inahitajika"
+        },
+        "vrn": {
+          "required": "Nambari ya usajili wa VAT inahitajika kwa mashirika yaliyosajiliwa",
+          "pattern": "Umbizo sahihi la VRN linahitajika"
+        },
+        "vatPercentage": {
+          "required": "Kiwango cha VAT kinahitajika kwa mashirika yaliyosajiliwa",
+          "min": "Kiwango cha VAT hakiwezi kuwa hasi",
+          "max": "Kiwango cha VAT hakiwezi kuzidi 100%",
+          "decimal": "Nafasi 2 za desimali kwa upeo zinaruhusiwa"
+        },
+        "colors": {
+          "required": "Rangi zote za biashara zinahitajika",
+          "invalid": "Msimbo sahihi wa rangi wa HEX unahitajika (mf. #FFFFFF)"
+        },
+        "tagline": {
+          "max": "Kauli mbiu haiwezi kuzidi herufi 50"
+        }
+      },
+      "fileUpload": {
+        "size": "Ukubwa wa faili hauwezi kuzidi 2MB",
+        "type": "Faili za JPG/PNG pekee zinakubalika",
+        "dimensions": "Vipimo vya picha lazima viwe kati ya 300x300px na 1000x1000px"
+      }
+    },
+    "helpText": {
+      "tin": "Nambari ya utambulisho wa ushuru kutoka serikalini",
+      "vrn": "Inahitajika kwa mashirika yaliyosajiliwa kwa VAT (umbizo: VAT123456789)",
+      "recordingStart": "Tarehe hii itaamua mwaka wa fedha wa kuripoti",
+      "brandColors": "Rangi hizi zitumika katika majukwaa yote"
+    }
+  },
+
+  "list": {
+    "labels": {
+      "listHeader": "Mashirika",
+      "newCreateLabel": "Shirika Jipya",
+      "haveOrgRoles": "Majukumu",
+      "haveNotOrgRoles": "Hakuna majukumu uliyopewa",
+      "listtoProfile": "Profaili",
+      "listtoEdit": "Hariri",
+      "listtoDashboard": "Dashibodi",
+      "loadOrganization": "Pakia",
+      "isLoadedAsActiveMessage": "imepakiwa kama shirika kuu",
+      "isLoadedAsActiveSpinner": "inapakia shirika...",
+      "isLoadedAsActiveError": "Kuna hitilafu imetokea wakati wa kupakia Shirika",
+      "invitationLink": "mialiko"
+    },
+    "messages": {
+      "noOrganizations": "Hakuna mashirika ya ProsERP kwako.",
+      "invitationText": "Jiunge na moja kutoka kwa "
+    },
+    "autoLoad": {
+      "button": {
+        "tooltip": {
+          "activate": "Amilisha upakiaji otomatiki",
+          "deactivate": "Zima upakiaji otomatiki"
+        }
+      },
+      "dialog": {
+        "title": {
+          "activate": "Amilisha upakiaji otomatiki wa {organizationName}?",
+          "deactivate": "Zima upakiaji otomatiki wa {organizationName}?"
+        },
+        "description": {
+          "activate": "Kuthibitisha hii itaweka {organizationName} kupakia otomatiki unapoingia",
+          "deactivate": "Kuthibitisha hii itazuia {organizationName} kupakia otomatiki unapoingia"
+        },
+        "buttons": {
+          "cancel": "Ghairi",
+          "confirm": "Thibitisha"
+        }
+      },
+      "messages": {
+        "success": "Mpangilio wa upakiaji otomatiki umehakikiwa",
+        "error": "Hitilafu imetokea wakati wa kusasisha mpangilio wa upakiaji otomatiki"
+      }
+    }
+  },
+  
+  "profile": {
+    "tabslabel": {
+      "roles": "Majukumu",
+      "users": "Watumiaji",
+      "subscriptions": "Usajili"
+    },
+    "usersTab": {
+      "listItem": {
+        "tooltip": {
+          "status": "Hali ya Mtumiaji",
+          "roles": "Majukumu Aliyopewa",
+          "email": "Barua Pepe",
+          "phone": "Namba ya Simu",
+          "name": "Jina Kamili"
+        },
+        "actions": {
+          "editRoles": "Hariri Majukumu",
+          "detach": "Muondoe Mtumiaji",
+          "leave": "Ondoka Katika Shirika",
+          "confirmDetachTitle": "Ondoa {userName}?",
+          "confirmDetachContent": "Futa ufikiaji wote wa shirika kwa mtumiaji huyu",
+          "confirmLeaveTitle": "Ondoka {organizationName}?",
+          "confirmLeaveContent": "Hutaweza kufikia shirika hadi utakapowekwa tena"
+        },
+        "messages": {
+          "detachSuccess": "Mtumiaji ameondolewa kikamilifu",
+          "detachError": "Hitilafu katika kuondoa mtumiaji",
+          "leaveSuccess": "Umeondoka katika shirika",
+          "leaveError": "Hitilafu katika kuondoka kwenye shirika",
+          "status": {
+            "active": "Amefanya kazi",
+            "invited": "Alialikwa",
+            "suspended": "Amezuiwa"
+          }
+        }
+      },
+      "actionTail": {
+        "listViewTooltip": "Mtazamo wa Orodha",
+        "gridViewTooltip": "Mtazamo wa Gridi",
+        "inviteUsersTooltip": "Alika Watumiaji",
+        "inviteDialog": {
+          "title": "Alika Watumiaji",
+          "form": {
+            "emailLabel": "Barua Pepe",
+            "emailPlaceholder": "Weka anwani za barua pepe (zitengwe na koma)",
+            "roleLabel": "Chagua Jukumu",
+            "submitButton": "Tuma Mialiko",
+            "addButton": "Ongeza",
+            "successMessage": "Mialiko imetumwa kikamilifu",
+            "errorMessage": "Hitilafu katika kutuma mialiko",
+            "validation": {
+              "required": "Barua pepe inahitajika",
+              "invalid": "Umbizo batili la barua pepe",
+              "roleRequired": "Tafadhali chagua angalau jukumu moja kwa kila mtumiaji aliyealikwa"
+            },
+            "messages": {
+              "alreadyQueued": "Mtumiaji tayari kwenye orodha ya kusubiri",
+              "alreadyMember": "Mtumiaji tayari ni mwanachama au ana mwaliko unaosubiri",
+              "notFound": "Hakuna mtumiaji mwenye barua pepe hiyo. Mialiko ya kujiandikisha itatumwa badala yake.",
+              "error": "Hitilafu imetokea",
+              "success": "Mialiko imeongezwa kikamilifu"
+            }
+          }
+        }
+      },
+      "changeRoles": {
+        "dialog": {
+          "title": "Badilisha Majukumu ya {userName}",
+          "saveButton": "Hifadhi",
+          "cancelButton": "Ghairi",
+          "messages": {
+            "success": "Majukumu yamesasishwa kikamilifu",
+            "error": "Hitilafu katika kuhifadhi majukumu"
+          },
+          "validation": {
+            "noChanges": "Hakuna mabadiliko yaliyofanywa kwa majukumu"
+          }
+        }
+      }
+    },
+    "rolesTab": {
+      "newRoleForm": {
+        "labels": {
+          "name": "Jina",
+          "description": "Maelezo"
+        },
+        "validation": {
+          "nameRequired": "Jina la jukumu linahitajika"
+        },
+        "buttons": {
+          "add": "Ongeza",
+          "edit": "Hariri Jukumu",
+          "update": "Sasisha",
+          "cancel": "Ghairi"
+        },
+        "messages": {
+          "success": "Jukumu limeongezwa kikamilifu",
+          "error": "Hitilafu katika kuongeza jukumu"
+        }
+      },
+      "roleManagement": {
+        "search": "Tafuta",
+        "selectAll": "Chagua Zote",
+        "buttons": {
+          "delete": "Futa",
+          "save": "Hifadhi",
+          "confirmDelete": {
+            "title": "Futa jukumu {roleName}?",
+            "content": "Watumiaji wote wenye jukumu hili hawata kuwa nalo tena"
+          }
+        },
+        "messages": {
+          "deleteSuccess": "Jukumu limefutwa kikamilifu",
+          "deleteError": "Hitilafu katika kufuta jukumu",
+          "updateSuccess": "Ruhusa za jukumu zimesasishwa kikamilifu",
+          "updateError": "Hitilafu katika kusasisha ruhusa za jukumu",
+          "noChanges": "Hakuna mabadiliko yaliyofanywa kwa ruhusa"
+        }
+      }
+    },
+    "topHeader": {
+      "labels": {
+        "email": "Barua pepe",
+        "tin": "Namba ya Ushuru",
+        "phone": "Simu"
+      },
+      "buttons": {
+        "dashboard": "Dashibodi",
+        "load": "Pakia",
+        "edit": "Hariri"
+      },
+      "tooltips": {
+        "loadOrganization": "Pakia {organizationName}",
+        "editOrganization": "Hariri shirika"
+      },
+      "messages": {
+        "organizationLoaded": "{organizationName} imepakwa kama shirika linalofanya kazi",
+        "loadError": "Imeshindwa kupakia shirika",
+        "generalError": "Kuna hitilafu imetokea"
+      }
+    },
+    "subscriptionsTab": {
+      "buttons": {
+        "addSubscription": "Ongeza Usajili",
+        "edit": "Hariri",
+        "delete": "Futa",
+        "confirmDelete": {
+          "title": "Futa {subscriptionNo}?",
+          "content": "Una uhakika unataka kufuta usajili huu?"
+        }
+      },
+      "labels": {
+        "subscriptionNo": "Nambari ya Usajili",
+        "organizationName": "Jina la Shirika",
+        "subscriptionValue": "Thamani ya Usajili",
+        "createdOn": "Imeundwa",
+        "dateRange": "Muda wa Usajili",
+        "successor": "Mrithi",
+        "status": "Hali",
+        "modules": "Moduli",
+        "moduleRate": "Kiwango cha Moduli",
+        "additionalFeatures": "Vipengele Vya Ziada",
+        "monthlyRate": "Kiwango cha Mwezi",
+        "quantity": "Idadi",
+        "amount": "Kiasi",
+        "modulesMonthlyCost": "Gharama ya Mwezi ya Moduli",
+        "featuresMonthlyCost": "Gharama ya Mwezi ya Vipengele Vya Ziada"
+      },
+      "messages": {
+        "noSubscriptions": "Huna usajili wowote unaoendelea. Tafadhali jiunge na moduli unazohitaji ili kuepuka usumbufu wowote.",
+        "deleteSuccess": "Usajili umeufutwa kikamilifu",
+        "deleteError": "Hitilafu katika kufuta usajili",
+        "editSuccess": "Usajili umehakikiwa kikamilifu",
+        "editError": "Hitilafu katika kuhakiki usajili"
+      },
+      "status": {
+        "active": "Inatumika",
+        "expired": "Imeisha",
+        "pending": "Inasubiri",
+        "renewed": "Imerekebishwa"
+      },
+      "form": {
+        "errors": {
+          "validation": {
+            "modules": {
+              "required": "Tafadhali chagua angalau moduli moja.",
+              "invalidSelection": "Moduli uliyoweka si sahihi."
+            },
+            "months": {
+              "required": "Tafadhali weka muda wa usajili.",
+              "positive": "Muda lazima uwe namba chanya.",
+              "minimum": {
+                "default": "Muda wa chini wa usajili ni miezi {min}.",
+                "prosAfrican": "Usajili lazima uwe angalau mwezi {min}."
+              }
+            },
+            "gracePeriod": {
+              "positive": "Kipindi cha neema hakiwezi kuwa hasi.",
+              "maximum": "Kipindi cha neema hakiwezi kuzidi siku {max}."
+            },
+            "organization": {
+              "required": "Tafadhali chagua shirika.",
+              "invalid": "Shirika ulilochagua si sahihi."
+            },
+            "startDate": {
+              "required": "Tarehe ya kuanza inahitajika.",
+              "invalid": "Tafadhali weka tarehe sahihi ya kuanza."
+            },
+            "additionalFeatures": {
+              "invalid": "Baadhi ya vipengele ulivyochagua si sahihi."
+            }
+          },
+          "api": {
+            "createFailed": "Imeshindikana kuunda usajili. Tafadhali jaribu tena.",
+            "updateFailed": "Imeshindikana kusasisha usajili. Tafadhali jaribu tena.",
+            "notFound": "Usajili uliotafutwa haukupatikana."
+          }
+        },
+        "messages": {
+          "createSuccess": "Usajili umeundwa kwa mafanikio.",
+          "edit": "Hariri",
+          "new": "Ongeza Usajili Mpya",
+          "updateSuccess": "Usajili umesasishwa kwa mafanikio.",
+          "deleteSuccess": "Usajili umefutwa kwa mafanikio."
+        },
+        "labels": {
+          "organization": "Shirika",
+          "months": "Muda wa Usajili (miezi)",
+          "gracePeriod": "Kipindi cha Neema (siku)",
+          "startDate": "Tarehe ya Kuanza",
+          "modules": "Moduli",
+          "additionalFeatures": "Vipengele vya Ziada",
+          "additionalFeatureInfoMessage": "Tafadhali chagua angalau moduli moja kupata vipengele vya ziada.",
+          "additionalFeatureQuantity": "Idadi",
+          "monthlyRate": "Kiwango cha Moduli kwa Mwezi",
+          "additionalFeatureRate": "Kiwango cha kipengele kwa Mwezi",
+          "monthlyAmount": "Kiasi cha Kila Mwezi",
+          "additionalFeatureAmount": "Gharama",
+          "additionalFeatureMonthlyCostLabel": "Gharama ya Kila Mwezi ya Vipengele vya Ziada",
+          "modulesMonthlyCost": "Gharama ya Kila Mwezi ya Moduli",
+          "totalMonthlyRate": "Jumla ya Kila Mwezi",
+          "grandTotal": "Jumla Kuu"
+        },
+        "helpTexts": {
+          "additionalFeatureQuantity": "Weka ni vipengele vingapi unahitaji.",
+          "additionalFeatureAmount": "Gharama ya jumla ya kipengele hiki kulingana na uhitaji wako.",
+          "additionalFeatureMonthlyCostLabel": "Jumla ya gharama ya kila mwezi kwa vipengele vyote vya ziada vilivyochaguliwa.",
+          "additionalFeatureRate": "Gharama ya kila mwezi kwa kipengele kimoja.",
+          "months": "Hii inaonyesha muda wa usajili kuwa hai.",
+          "gracePeriod": "Kipindi cha hiari baada ya usajili kumalizika.",
+          "startDate": "Tarehe ambayo usajili utaanza kutumika.",
+          "modules": "Vipengele vya msingi vilivyomo kwenye usajili.",
+          "additionalFeatures": "Vipengele vya hiari vya kuongeza uwezo.",
+          "monthlyRate": "Ada ya kila mwezi kwa moduli hii.",
+          "grandTotal": "Jumla ya mwisho ikijumuisha gharama zote za usajili.",
+          "monthlyTotal": "Gharama ya kila mwezi ya usajili huu.",
+          "modulesMonthlyCost": "Jumla ya gharama kwa mwezi kwa moduli zilizochaguliwa."
+        }
+      }
+    }
+  }
+}

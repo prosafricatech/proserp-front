@@ -1,0 +1,46 @@
+{
+    "form": {
+     "title": "Thibitisha Mtumiaji",
+   "buttons": {
+     "verify": "Thibitisha",
+     "cancel": "Ghairi"
+    },
+    "labels": {
+      "listHeader": "Watumiaji",
+      "name": "Jina",
+      "email": "Barua Pepe",
+      "status": "Hali"
+    },
+    "messages": {
+      "loading": "Inachakata maelezo ya uthibitisho...",
+      "verifySuccess": "Mtumiaji amethibitishwa kwa mafanikio!"
+    },
+    "errors": {
+      "validation": {
+        "email": {
+          "required": "Barua Pepe Inahitajika"
+        },
+        "valid": "Ingiza barua pepe halali"
+      },
+      "messages": {
+        "response": "Uthibitisho umefeli"
+      }
+    } 
+  },
+  "list": {
+    "labels": {
+      "name": "Jina",
+      "email": "Barua Pepe",
+      "status": "Hali",
+      "userActions": "Vitendo vya Mtumiaji",
+      "newCreateLabel": "Thibitisha Mtumiaji"
+
+    },
+    "actionsTitle": {
+      "labels": {
+      "reactivate": "Anzisha tena",
+      "deactivate": "Sitisha"
+      }
+    }
+  }
+}

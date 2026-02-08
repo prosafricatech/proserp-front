@@ -1,0 +1,74 @@
+{
+    "form":{
+    "title": "Mdau Mpya",
+    "buttons": {
+      "save": "Hifadhi",
+      "cancel": "Ghairi"
+    },
+     "pageTitle": "Hariri: {name}",
+     "heading": "Inahaririwa: {name}",
+     "labels": {
+       "listHeader": "Wadau",
+       "name": "Jina",
+       "address": "Anwani",
+       "type": "Aina",
+       "ledgerCode":"Msimbo wa Deka",
+       "phone": "Simu",
+       "email": "Barua Pepe",
+       "website": "Tovuti",
+       "tin": "TIN",
+       "vrn": "VRN",
+       "ledgerType": "Aina ya Deka",
+       "receivableAccount": "Akaunti ya Kupokea",
+       "payableLedger": "Deka ya Kulipwa"
+    },
+     "messages": {
+      "loading": "Kuchakata Maelezo ya Mdau...",
+      "createSuccess": "Mdau amesajiliwa kwa mafanikio!",
+      "updateSuccess": "Mdau amesasishwa kwa mafanikio",
+      "deleteSuccess": "Mdau amefutwa kwa mafanikio",
+      "ledgerType": "Chagua aina moja ya deka"
+    },
+    "errors": {
+      "validation": {
+        "name": {
+          "required": "Jina Linahitajika"
+        },
+        "type": {
+          "required": "Aina ya wadau inahitajika",
+          "typeError": "Aina ya wadau inahitajika"
+        },
+        "email": "Barua Pepe Sahihi Inahitajika" 
+      },
+       "messages": {
+        "deleteResponse": " Imefeli kufuta",
+        "updateResponse": "Imefeli kubadilisha",
+        "createResponse": "imefeli kuongea Mdau!"
+      }
+    }  
+  },
+  "list": {
+    "labels": {
+      "listHeader": "Wadau",
+       "name": "Jina",
+       "address": "Anwani",
+       "type": "Aina",
+       "phone": "Simu",
+       "tin": "TIN",
+       "actions": "vitendo",
+       "newCreateLabel": "Ongeza Mdau Mpya"
+    },
+    "actionsTittle": {
+      "edit": "Hariri",
+      "delete": "Futa",
+      "cancel":"Ghairi",
+      "comfirm":"Thibitisha"
+    },
+    "dialog": {
+      "showDialog": {
+        "title":"Thibitisha kufuta",
+        "content": "Je, una uhakika unataka kufuta {name}?"
+      }
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "list": {
+    "labels": {
+      "relatableNo": "Relatable No",
+      "relatableType": "Relatable Type",
+      "created": "Created",
+      "modified": "Modified",
+      "relatedTo": "Related To",
+      "fileType": "File Type",
+      "from": "From",
+      "to":"To"
+    },
+     "actionTittle": {
+      "filterDates": "Filter Dates"
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "list": {
+    "labels": {
+      "relatableNo": "Nambari Inayohusiana",
+      "relatableType": "Aina Inayohusiana",
+      "created": "Imeundwa",
+      "modified": "Imerekebishwa",
+      "relatedTo": "Inayohusiana na",
+      "fileType": "Aina ya Faili",
+      "from": "Kutoka",
+      "to":"Hadi"
+    },
+     "actionTittle": {
+      "filterDates": "Chuja Tarehe"
+    }
+  }
+}
