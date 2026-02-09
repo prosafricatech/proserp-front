@@ -1,11 +1,9 @@
 'use client';
 
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
-import { KeyboardArrowDown, KeyboardArrowRight } from '@mui/icons-material';
 import {
   Box,
   Grid,
-  IconButton,
   Paper,
   Table,
   TableBody,
@@ -16,7 +14,6 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-import { useState } from 'react';
 import CashierListSummaryOnScreen from './CashierListSummaryOnScreen';
 
 const SalesShiftOnScreen = ({

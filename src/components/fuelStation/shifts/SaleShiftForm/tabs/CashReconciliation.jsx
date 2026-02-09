@@ -66,22 +66,27 @@ function CashReconciliation({
     name: `cashiers.${cashierIndex}.collected_amount`,
   });
 
+  const collectionLedgerId = useWatch({ name: `cashiers.${cashierIndex}.collection_ledger_id` });
+
   useEffect(() => {
-    if (collectedAmount === null || collectedAmount === '' || isNaN(Number(collectedAmount))) {
+    // Collected Amount cannot be null or empty string, but 0 is allowed
+    if (
+      collectionLedgerId && (collectedAmount === null || collectedAmount === '' || isNaN(Number(collectedAmount)))
+    ) {
       setManualCollectedError('Collected Amount is required');
     } else {
       setManualCollectedError('');
     }
-  }, [collectedAmount]);
+  }, [collectedAmount, collectionLedgerId]);
 
-  const collectionLedgerId = useWatch({ name: `cashiers.${cashierIndex}.collection_ledger_id` });
   useEffect(() => {
-    if (!collectionLedgerId) {
+    // Only show error if user has attempted to enter collected amount
+    if (collectedAmount !== undefined && collectedAmount !== null && collectedAmount !== '' && !collectionLedgerId) {
       setManualLedgerError('Collection Ledger is required');
     } else {
       setManualLedgerError('');
     }
-  }, [collectionLedgerId]);
+  }, [collectionLedgerId, collectedAmount]);
 
   const cashierLedgers = getCashierLedgers ? getCashierLedgers(cashierIndex) : [];
   const actualMainLedgerAmount = watch(`cashiers.${cashierIndex}.main_ledger_amount`) || 0;
@@ -288,6 +293,7 @@ function CashReconciliation({
     } else if (typeof sanitizedValue === 'number') {
       sanitizedValue = sanitizedValue.toString().replace(/^0+(?!$)/, '');
     }
+    // Prevent null or empty string, allow 0
     if (/^0[0-9]+/.test(value)) {
       setValue(`cashiers.${cashierIndex}.collected_amount`, '', {
         shouldValidate: true,
@@ -297,14 +303,28 @@ function CashReconciliation({
       alert('Collected Amount should not start with 0. Please enter the correct amount.');
       return;
     }
+    if (value === '' || value === null) {
+      setValue(`cashiers.${cashierIndex}.collected_amount`, '', {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+      trigger(`cashiers.${cashierIndex}.collected_amount`);
+      return;
+    }
+    if (collectionLedgerId && (sanitizedValue === 0 || sanitizedValue === '0')) {
+      setValue(`cashiers.${cashierIndex}.collected_amount`, 0, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+      trigger(`cashiers.${cashierIndex}.collected_amount`);
+      return;
+    }
     setValue(`cashiers.${cashierIndex}.collected_amount`, sanitizedValue, {
       shouldValidate: true,
       shouldDirty: true,
     });
     trigger(`cashiers.${cashierIndex}.collected_amount`);
   };
-
-  const collectedLedgerId = useWatch({ name: `cashiers.${cashierIndex}.collection_ledger_id` });
 
   return (
     <>
@@ -574,7 +594,7 @@ function CashReconciliation({
                       size='small'
                       value={
                         ((collection_ledgers || []).filter(l => l.ledger_group_id === 13).find(
-                          l => l.id === collectedLedgerId
+                          l => l.id === collectionLedgerId
                         )) || null
                       }
                       onChange={(_, newValue) => {
@@ -603,8 +623,8 @@ function CashReconciliation({
                       fullWidth
                       value={collectedAmount}
                       onChange={(e) => handleCollectedAmountChange(e.target.value)}
-                      error={!!errors?.cashiers?.[cashierIndex]?.collected_amount || !!manualCollectedError}
-                      helperText={errors?.cashiers?.[cashierIndex]?.collected_amount?.message || manualCollectedError}
+                      error={!!collectionLedgerId && (!!errors?.cashiers?.[cashierIndex]?.collected_amount || !!manualCollectedError)}
+                      helperText={collectionLedgerId ? (errors?.cashiers?.[cashierIndex]?.collected_amount?.message || manualCollectedError) : ''}
                       InputProps={{
                         inputComponent: CommaSeparatedField,
                       }}

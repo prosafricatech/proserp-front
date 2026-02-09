@@ -5,17 +5,17 @@ import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import { StationFormContext } from '../../SalesShifts';
 
-function Dipping({SalesShift}) {
+function Dipping({SalesShift, lastClosingDipping}) {
     const { setValue, watch } = useFormContext();
     const [openSwitch, setOpenSwitch] = useState(!!watch('isOpenSwitchON') || !!SalesShift?.opening_dipping);
     const [closingSwitch, setClosingSwitch] = useState(!!watch('isCloseSwitchON') || !!SalesShift?.closing_dipping);
     const {activeStation} = useContext(StationFormContext);
     const { fuel_pumps, tanks } = activeStation;
-    
+
     useEffect(() => {
         if (SalesShift?.closing_dipping) {
             setClosingSwitch(true);
-            SalesShift.closing_dipping.readings.forEach((reading, index) => {
+            SalesShift?.closing_dipping.readings.forEach((reading, index) => {
                 setValue(`dipping_after.${index}`, {
                     id: reading.id,
                     tank_id: reading.tank_id,
@@ -25,9 +25,9 @@ function Dipping({SalesShift}) {
             });
         }
         
-        if (SalesShift?.opening_dipping) {
+        if (SalesShift?.opening_dipping || lastClosingDipping) {
             setOpenSwitch(true);
-            SalesShift.opening_dipping.readings.forEach((reading, index) => {
+            (SalesShift?.opening_dipping?.readings || lastClosingDipping).forEach((reading, index) => {
                 setValue(`dipping_before.${index}`, {
                     id: reading.id,
                     tank_id: reading.tank_id,
@@ -36,7 +36,7 @@ function Dipping({SalesShift}) {
                 }, { shouldValidate: true, shouldDirty: true });
             });
         }
-    }, [SalesShift, setValue]);
+    }, [SalesShift, lastClosingDipping, setValue]);
 
     const renderFields = (type) => {
         const fieldName = `dipping_${type}`;
