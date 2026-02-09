@@ -6,37 +6,52 @@ import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { Div } from '@jumbo/shared';
 import { Backdrop } from '@mui/material';
 import Image from 'next/image';
-import { useEffect } from 'react';
-import { useLanguage } from './[lang]/contexts/LanguageContext';
 
+/* =====================
+   ANIMATION
+===================== */
 const spiralRotate = keyframes`
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 `;
 
-export default function GlobalError() {
-  const lang = useLanguage();
+/* =====================
+   GLOBAL ERROR
+===================== */
+export default function GlobalError({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
   const { theme } = useJumboTheme();
 
-  useEffect(() => {
-    // Kill session directly
-    localStorage.removeItem('authData');
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.removeItem('authData');
+      sessionStorage.clear();
+    } catch {
+      // Storage might be unavailable (Safari / private mode)
+    }
 
-    sessionStorage.clear();
-
-    window.location.href = `/${lang}/auth/signin/`;
-  }, []);
+    window.location.replace('/auth/signin');
+  }
 
   return (
     <Backdrop
+      open
+      role='alert'
+      aria-live='assertive'
       sx={{
-        color: '#ffffff',
         zIndex: (theme) => theme.zIndex.drawer + 1,
         flexDirection: 'column',
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        backgroundColor: 'rgba(0,0,0,0.75)',
+        color: '#fff',
+        gap: 3,
       }}
-      open={true}
     >
+      {/* Loader */}
       <Div
         sx={{
           position: 'relative',

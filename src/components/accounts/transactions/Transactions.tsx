@@ -13,6 +13,7 @@ import {
   useState,
 } from 'react';
 import CurrencySelectProvider from '../../masters/currencies/CurrencySelectProvider';
+import LedgerGroupProvider from '../ledgerGroups/LedgerGroupProvider';
 import LedgerSelectProvider from '../ledgers/forms/LedgerSelectProvider';
 import TransactionsList from './TransactionsList';
 import { Transaction } from './TransactionTypes';
@@ -154,7 +155,9 @@ export default function Transactions() {
     <TransactionsAppContext.Provider value={contextValue}>
       <CurrencySelectProvider>
         <LedgerSelectProvider>
-          <TransactionsList />
+          <LedgerGroupProvider>
+            <TransactionsList />
+          </LedgerGroupProvider>
         </LedgerSelectProvider>
       </CurrencySelectProvider>
     </TransactionsAppContext.Provider>

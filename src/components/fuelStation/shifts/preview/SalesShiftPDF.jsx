@@ -54,10 +54,10 @@ function SalesShiftPDF({
         return total + fv.quantity * productPrice;
       }, 0) || 0;
 
-    // Calculate cash transactions total for this cashier
-    const cashTransactionsTotal =
-      cashier.cash_transactions?.reduce(
-        (total, ct) => total + (ct.amount || 0),
+    // Calculate other transactions total for this cashier
+    const otherTransactionsTotal =
+      cashier.other_transactions?.reduce(
+        (total, ot) => total + (ot.amount || 0),
         0
       ) || 0;
 
@@ -69,7 +69,7 @@ function SalesShiftPDF({
       totalProductsAmount,
       adjustmentsAmount,
       totalFuelVouchersAmount,
-      cashTransactionsTotal,
+      otherTransactionsTotal,
       cashRemaining,
       netSales: totalProductsAmount + adjustmentsAmount,
     };
@@ -86,8 +86,8 @@ function SalesShiftPDF({
           acc.adjustmentsAmount + cashierTotals.adjustmentsAmount,
         totalFuelVouchersAmount:
           acc.totalFuelVouchersAmount + cashierTotals.totalFuelVouchersAmount,
-        cashTransactionsTotal:
-          acc.cashTransactionsTotal + cashierTotals.cashTransactionsTotal,
+        otherTransactionsTotal:
+          acc.otherTransactionsTotal + cashierTotals.otherTransactionsTotal,
         cashRemaining: acc.cashRemaining + cashierTotals.cashRemaining,
         netSales: acc.netSales + cashierTotals.netSales,
       };
@@ -96,7 +96,7 @@ function SalesShiftPDF({
       totalProductsAmount: 0,
       adjustmentsAmount: 0,
       totalFuelVouchersAmount: 0,
-      cashTransactionsTotal: 0,
+      otherTransactionsTotal: 0,
       cashRemaining: 0,
       netSales: 0,
     }
@@ -655,7 +655,7 @@ function SalesShiftPDF({
 
                 {/* Cashier Cash Distribution */}
                 {(cashier.main_ledger ||
-                  cashier.cash_transactions?.length > 0) && (
+                  cashier.other_transactions?.length > 0) && (
                   <View style={{ marginBottom: 12 }}>
                     <Text
                       style={{
@@ -724,8 +724,8 @@ function SalesShiftPDF({
                         </View>
                       )}
 
-                      {/* Cash Transactions */}
-                      {cashier.cash_transactions?.map((transaction, index) => {
+                      {/* Other Transactions */}
+                      {cashier.other_transactions?.map((transaction, index) => {
                         const ledger =
                           cashier.ledgers?.find(
                             (l) => l.id === transaction.id
@@ -744,7 +744,7 @@ function SalesShiftPDF({
                                 flex: 3,
                               }}
                             >
-                              {ledger.name}
+                              {transaction.debit_ledger.name}
                             </Text>
                             <Text
                               style={{
@@ -793,7 +793,7 @@ function SalesShiftPDF({
                           }}
                         >
                           {(
-                            cashierTotals.cashTransactionsTotal +
+                            cashierTotals.otherTransactionsTotal +
                             (cashier.main_ledger?.amount || 0)
                           ).toLocaleString('en-US', {
                             minimumFractionDigits: 2,

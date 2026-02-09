@@ -564,7 +564,7 @@ const SalesShiftOnScreen = ({
 
                 {/* Cashier Cash Distribution */}
                 {(cashier.main_ledger ||
-                  cashier.cash_transactions?.length > 0) && (
+                  cashier.other_transactions?.length > 0) && (
                   <Box sx={{ mt: 3 }}>
                     <Typography
                       variant='subtitle1'
@@ -604,8 +604,8 @@ const SalesShiftOnScreen = ({
                             </TableRow>
                           )}
 
-                          {/* Cash Transactions */}
-                          {cashier.cash_transactions?.map(
+                          {/* Other Transactions */}
+                          {cashier.other_transactions?.map(
                             (transaction, idx) => {
                               const ledger =
                                 cashier.ledgers?.find(
@@ -617,7 +617,9 @@ const SalesShiftOnScreen = ({
 
                               return (
                                 <TableRow key={idx} hover>
-                                  <TableCell>{ledger.name}</TableCell>
+                                  <TableCell>
+                                    {transaction.debit_ledger.name}
+                                  </TableCell>
                                   <NumberCell value={transaction.amount} />
                                 </TableRow>
                               );
@@ -633,7 +635,7 @@ const SalesShiftOnScreen = ({
                             </TableCell>
                             <NumberCell
                               value={
-                                (cashier.cash_transactions?.reduce(
+                                (cashier.other_transactions?.reduce(
                                   (sum, t) => sum + (t.amount || 0),
                                   0
                                 ) || 0) + (cashier.main_ledger?.amount || 0)

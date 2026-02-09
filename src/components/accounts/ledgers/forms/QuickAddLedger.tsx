@@ -1,6 +1,7 @@
+import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { useLedgerGroup } from '@/components/accounts/ledgerGroups/LedgerGroupProvider';
 import CostCenterSelector from '@/components/masters/costCenters/CostCenterSelector';
-import axios from '@/lib/services/config';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Div } from '@jumbo/shared';
@@ -11,13 +12,8 @@ import {
   Button,
   DialogActions,
   DialogContent,
-  FormControl,
-  FormControlLabel,
-  FormHelperText,
+  Divider,
   Grid,
-  LinearProgress,
-  Radio,
-  RadioGroup,
   TextField,
   Tooltip,
   Typography,
@@ -26,10 +22,9 @@ import { DateTimePicker } from '@mui/x-date-pickers';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import * as yup from 'yup';
-import { useLedgerGroup } from '../../ledgerGroups/LedgerGroupProvider';
 import ledgerServices from '../ledger-services';
 import AddQuickLedgerGroup from './AddQuickLedgerGroup';
 
@@ -47,11 +42,27 @@ interface Ledger {
   ledger_group_id?: number;
 }
 
+interface MiniLedger {
+  id: number;
+  name: string;
+  code: string | null;
+  ledger_group_id: number;
+  alias: string | null;
+  nature_id?: number;
+}
+
 interface LedgerGroupOption {
   id: number;
   name: string;
   nature_id: number;
   value?: number;
+}
+
+interface QuickAddLedgerType {
+  ledgerType: string;
+  ledger?: Ledger;
+  toggleOpen: (open: boolean) => void;
+  setAddedLedger?: (value: MiniLedger) => void;
 }
 
 interface FormValues {
@@ -67,71 +78,23 @@ interface FormValues {
   cost_center_id?: number | null;
 }
 
-interface LedgerFormProps {
-  ledger?: Ledger;
-  toggleOpen: (open: boolean) => void;
-}
-
-const sanitizedNumber = (value: string): number => {
-  return parseFloat(value.replace(/,/g, '')) || 0;
-};
-
-export default function LedgerForm({ ledger, toggleOpen }: LedgerFormProps) {
-  const { enqueueSnackbar } = useSnackbar();
+const QuickAddLedger = ({
+  ledgerType,
+  ledger,
+  toggleOpen,
+  setAddedLedger,
+}: QuickAddLedgerType) => {
+  const { authOrganization } = useJumboAuth();
+  const [openQuickAddLedgerGroup, setOpenQuickAddLedgerGroup] = useState(false);
   const { ledgerGroupOptions } = useLedgerGroup();
   const queryClient = useQueryClient();
-  const [isFetching, setIsFetching] = useState(false);
-  const [openQuickAddLedgerGroup, setOpenQuickAddLedgerGroup] = useState(false);
-  const { authOrganization } = useJumboAuth();
+  const { enqueueSnackbar } = useSnackbar();
   const [openingBalanceCostCenter, setOpeningBalanceCostCenter] =
     useState<any>(null);
   const [serverError, setServerError] = useState<Record<
     string,
     string[]
   > | null>(null);
-
-  const addLedgerMutation = useMutation({
-    mutationFn: (data: FormValues) => ledgerServices.add(data),
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['ledgers-list'] });
-      queryClient.invalidateQueries({ queryKey: ['ledgerOptions'] });
-      enqueueSnackbar('Ledger created successfully', {
-        variant: 'success',
-        autoHideDuration: 2000,
-      });
-      toggleOpen(false);
-    },
-    onError: (err: any) => {
-      if (err.response?.status === 400) {
-        setServerError(err.response?.data?.validation_errors);
-      } else {
-        enqueueSnackbar(err.response?.data?.message, { variant: 'error' });
-      }
-    },
-  });
-
-  const updateLedgerMutation = useMutation({
-    mutationFn: (data: FormValues) => ledgerServices.update(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ledgers-list'] });
-      enqueueSnackbar('Ledger updated successfully', {
-        variant: 'success',
-        autoHideDuration: 2000,
-      });
-      toggleOpen(false);
-    },
-    onError: (err: any) => {
-      if (err.response?.status === 400) {
-        setServerError(err.response?.data?.validation_errors);
-      } else {
-        enqueueSnackbar(err.response?.data?.message, { variant: 'error' });
-      }
-    },
-  });
-
-  const saveMutation = React.useMemo(() => {
-    return ledger?.id ? updateLedgerMutation : addLedgerMutation;
-  }, [ledger, updateLedgerMutation, addLedgerMutation]);
 
   const validationSchema = yup.object({
     name: yup.string().required('Ledger Name is required'),
@@ -164,66 +127,55 @@ export default function LedgerForm({ ledger, toggleOpen }: LedgerFormProps) {
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     defaultValues: {
-      name: ledger?.name || '',
-      alias: ledger?.alias || '',
-      code: ledger?.code || '',
-      description: ledger?.description || '',
-      ledger_group_id: ledger?.ledger_group?.id || null,
+      name: '',
+      alias: '',
+      code: '',
+      description: '',
+      ledger_group_id: null,
       as_at: authOrganization?.organization?.recording_start_date,
     },
     resolver: yupResolver(validationSchema) as any,
   });
 
-  useEffect(() => {
-    if (ledger?.id) {
-      setIsFetching(true);
-      setValue('id', ledger.id);
-      setValue('name', ledger.name);
-      setValue('alias', ledger.alias);
-      setValue('ledger_group_id', ledger.ledger_group?.id || null);
-      setValue('code', ledger.code);
-      setValue('description', ledger.description);
-
-      axios
-        .get(
-          `/api/accountsAndFinance/ledgers/${ledger.id}/opening_balance_journal`
-        )
-        .then((response) => {
-          const opening_balance_journal = response.data;
-          if (opening_balance_journal) {
-            setValue('opening_balance', opening_balance_journal.amount);
-            setValue(
-              'opening_balance_side',
-              opening_balance_journal.credit_ledger_id === ledger.id
-                ? 'credit'
-                : 'debit'
-            );
-            if (opening_balance_journal.cost_centers.length > 0) {
-              setOpeningBalanceCostCenter(
-                opening_balance_journal.cost_centers[0]
-              );
-              setValue(
-                'cost_center_id',
-                opening_balance_journal.cost_centers[0].id
-              );
-            }
-          }
-          setIsFetching(false);
-        })
-        .catch(() => {
-          setIsFetching(false);
+  const addLedgerMutation = useMutation({
+    mutationFn: (data: FormValues) => {
+      const dataToSend = {
+        ...data,
+        opening_balance_side: ledgerType === 'credit' ? 'credit' : 'debit',
+      };
+      return ledgerServices.add(dataToSend);
+    },
+    // mutationFn: (data: FormValues) => ledgerServices.add(data),
+    onSuccess: (data) => {
+      setAddedLedger && setAddedLedger(data.ledger);
+      queryClient.invalidateQueries({ queryKey: ['ledgers-list'] });
+      queryClient.invalidateQueries({ queryKey: ['ledgerOptions'] });
+      enqueueSnackbar('Ledger created successfully', {
+        variant: 'success',
+        autoHideDuration: 2000,
+      });
+      toggleOpen(false);
+    },
+    onError: (err: any) => {
+      if (err.response?.status === 400) {
+        setServerError(err.response?.data?.validation_errors);
+      } else {
+        enqueueSnackbar(err.response?.data?.message || 'Something went wrong', {
+          variant: 'error',
         });
-    }
-  }, [ledger, setValue]);
+      }
+    },
+  });
 
-  if (isFetching) {
-    return <LinearProgress />;
-  }
+  const saveMutation = React.useMemo(() => {
+    return addLedgerMutation;
+  }, [ledger, addLedgerMutation]);
 
   return (
     <>
+      <Divider />
       <Typography textAlign={'center'} variant='h4' marginTop={2}>
-        {ledger ? `Edit ${ledger.name}` : `Create New Ledger`}
+        Create New Ledger
       </Typography>
       <DialogContent>
         <form autoComplete='off'>
@@ -400,36 +352,7 @@ export default function LedgerForm({ ledger, toggleOpen }: LedgerFormProps) {
                 />
               </Div>
             </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Div sx={{ mt: 1, mb: 3 }}>
-                <Controller
-                  name='opening_balance_side'
-                  control={control}
-                  render={({ field: { onChange, value } }) => (
-                    <FormControl
-                      component='fieldset'
-                      error={!!errors.opening_balance_side}
-                    >
-                      <RadioGroup row value={value} onChange={onChange}>
-                        <FormControlLabel
-                          value='credit'
-                          control={<Radio />}
-                          label='Credit'
-                        />
-                        <FormControlLabel
-                          value='debit'
-                          control={<Radio />}
-                          label='Debit'
-                        />
-                      </RadioGroup>
-                      <FormHelperText>
-                        {errors.opening_balance_side?.message}
-                      </FormHelperText>
-                    </FormControl>
-                  )}
-                />
-              </Div>
-            </Grid>
+
             <Grid size={{ xs: 12, md: 6 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <DateTimePicker
@@ -477,9 +400,11 @@ export default function LedgerForm({ ledger, toggleOpen }: LedgerFormProps) {
           sx={{ display: 'flex' }}
           loading={isSubmitting || saveMutation.isPending}
         >
-          Submit
+          Add
         </LoadingButton>
       </DialogActions>
     </>
   );
-}
+};
+
+export default QuickAddLedger;

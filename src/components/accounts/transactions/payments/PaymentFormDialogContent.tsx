@@ -8,7 +8,7 @@ import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Div } from '@jumbo/shared';
-import { HighlightOff } from '@mui/icons-material';
+import { AddOutlined, HighlightOff } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 import {
   Alert,
@@ -33,9 +33,19 @@ import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import LedgerSelect from '../../ledgers/forms/LedgerSelect';
 import { useLedgerSelect } from '../../ledgers/forms/LedgerSelectProvider';
+import QuickAddLedger from '../../ledgers/forms/QuickAddLedger';
 import TransactionItemForm from '../TransactionItemForm';
 import TransactionItemRow from '../TransactionItemRow';
 import paymentServices from './payment-services';
+
+interface Ledger {
+  id: number;
+  name: string;
+  code: string | null;
+  ledger_group_id: number;
+  alias: string | null;
+  nature_id?: number;
+}
 
 type PaymentItem = {
   debit_ledger_id?: number;
@@ -94,15 +104,17 @@ const PaymentFormDialogContent: React.FC<PaymentFormDialogContentProps> = ({
   const { enqueueSnackbar } = useSnackbar();
   const [items, setItems] = useState<PaymentItem[]>(payment?.items || []);
   const { ungroupedLedgerOptions } = useLedgerSelect();
-
-  const haveAllCostCenters = checkOrganizationPermission(
-    PERMISSIONS.COST_CENTERS_ALL
-  );
-
+  const [openLedgerQuickAdd, setOpenLedgerQuickAdd] = useState(false);
+  const [ledgerType, setLedgerType] = useState('credit');
   const [showWarning, setShowWarning] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [clearFormKey, setClearFormKey] = useState(0);
   const [submitItemForm, setSubmitItemForm] = useState(false);
+  const [addedLedger, setAddedLedger] = useState<Ledger | null>(null);
+
+  const haveAllCostCenters = checkOrganizationPermission(
+    PERMISSIONS.COST_CENTERS_ALL
+  );
 
   const addPayment = useMutation<PaymentResponse, Error, PaymentData>({
     mutationFn: paymentServices.add,
@@ -213,7 +225,10 @@ const PaymentFormDialogContent: React.FC<PaymentFormDialogContentProps> = ({
 
   useEffect(() => {
     setValue('items', items);
-  }, [items, setValue]);
+    if (addedLedger?.id) {
+      setValue('credit_ledger_id', addedLedger.id);
+    }
+  }, [items, setValue, addedLedger]);
 
   const totalAmount = items.reduce(
     (totalAmount, item) => totalAmount + item.amount,
@@ -269,135 +284,50 @@ const PaymentFormDialogContent: React.FC<PaymentFormDialogContentProps> = ({
             : `New Payment Form`}
       </DialogTitle>
       <DialogContent>
-        <form autoComplete='false' onSubmit={handleSubmit(onSubmit)}>
-          <Grid container columnSpacing={1} marginBottom={2}>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
-                <DateTimePicker
-                  label='Payment Date (MM/DD/YYYY)'
-                  minDate={
-                    checkOrganizationPermission([
-                      PERMISSIONS.ACCOUNTS_TRANSACTIONS_BACKDATE,
-                      PERMISSIONS.PAYMENTS_BACKDATE,
-                    ])
-                      ? dayjs(
-                          authOrganization?.organization.recording_start_date
-                        )
-                      : dayjs().startOf('day')
-                  }
-                  maxDate={
-                    checkOrganizationPermission([
-                      PERMISSIONS.ACCOUNTS_TRANSACTIONS_POSTDATE,
-                      PERMISSIONS.PAYMENTS_POSTDATE,
-                    ])
-                      ? dayjs().add(10, 'year').endOf('year')
-                      : dayjs().endOf('day')
-                  }
-                  defaultValue={
-                    payment && !isDuplicate
-                      ? dayjs(payment.transactionDate)
-                      : dayjs()
-                  }
-                  slotProps={{
-                    textField: {
-                      size: 'small',
-                      fullWidth: true,
-                      InputProps: { readOnly: true },
-                      error: !!errors?.transactionDate,
-                      helperText: errors?.transactionDate?.message,
-                    },
-                  }}
-                  onChange={(newValue: Dayjs | null) => {
-                    setValue(
-                      'transactionDate',
-                      newValue ? newValue.toISOString() : '',
-                      {
-                        shouldValidate: true,
-                        shouldDirty: true,
-                      }
-                    );
-                  }}
-                />
-              </Div>
-            </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
-                <LedgerSelect
-                  frontError={errors.credit_ledger_id}
-                  defaultValue={
-                    ungroupedLedgerOptions.find(
-                      (ledger) => ledger.id === payment?.credit_ledger_id
-                    ) || null
-                  }
-                  allowedGroups={['Cash and cash equivalents']}
-                  onChange={(newValue) => {
-                    if (Array.isArray(newValue)) return;
-                    setValue('credit_ledger_id', newValue ? newValue.id : 0, {
-                      shouldValidate: true,
-                      shouldDirty: true,
-                    });
-                  }}
-                  label='Pay From (Credit)'
-                />
-              </Div>
-            </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
-                <TextField
-                  size='small'
-                  label='Reference'
-                  fullWidth
-                  defaultValue={payment && payment.reference}
-                  {...register('reference')}
-                  onChange={(e) => {
-                    setServerError(null);
-                  }}
-                />
-                <span style={{ color: 'red' }}>{serverError?.reference}</span>
-              </Div>
-            </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
-                <CurrencySelector
-                  frontError={
-                    errors?.currency_id?.message
-                      ? { message: errors.currency_id.message }
-                      : null
-                  }
-                  defaultValue={payment?.currency?.id ?? 1}
-                  onChange={(newValue) => {
-                    setValue('currency_id', newValue ? newValue.id : null, {
-                      shouldDirty: true,
-                      shouldValidate: true,
-                    });
-
-                    clearErrors('exchange_rate');
-
-                    setValue(
-                      'exchange_rate',
-                      newValue?.exchangeRate ? newValue.exchangeRate : 1
-                    );
-                  }}
-                />
-              </Div>
-            </Grid>
-            {Number(watch('currency_id')) > 1 && (
+        {/* <form autoComplete='false' onSubmit={handleSubmit(onSubmit)}> */}
+        <Grid container columnSpacing={1} marginBottom={2}>
+          {!openLedgerQuickAdd && (
+            <>
               <Grid size={{ xs: 12, md: 4 }}>
                 <Div sx={{ mt: 1, mb: 1 }}>
-                  <TextField
-                    label='Exchange Rate'
-                    fullWidth
-                    size='small'
-                    error={!!errors?.exchange_rate}
-                    helperText={errors?.exchange_rate?.message}
-                    InputProps={{
-                      inputComponent: CommaSeparatedField,
+                  <DateTimePicker
+                    label='Payment Date (MM/DD/YYYY)'
+                    minDate={
+                      checkOrganizationPermission([
+                        PERMISSIONS.ACCOUNTS_TRANSACTIONS_BACKDATE,
+                        PERMISSIONS.PAYMENTS_BACKDATE,
+                      ])
+                        ? dayjs(
+                            authOrganization?.organization.recording_start_date
+                          )
+                        : dayjs().startOf('day')
+                    }
+                    maxDate={
+                      checkOrganizationPermission([
+                        PERMISSIONS.ACCOUNTS_TRANSACTIONS_POSTDATE,
+                        PERMISSIONS.PAYMENTS_POSTDATE,
+                      ])
+                        ? dayjs().add(10, 'year').endOf('year')
+                        : dayjs().endOf('day')
+                    }
+                    defaultValue={
+                      payment && !isDuplicate
+                        ? dayjs(payment.transactionDate)
+                        : dayjs()
+                    }
+                    slotProps={{
+                      textField: {
+                        size: 'small',
+                        fullWidth: true,
+                        InputProps: { readOnly: true },
+                        error: !!errors?.transactionDate,
+                        helperText: errors?.transactionDate?.message,
+                      },
                     }}
-                    value={watch('exchange_rate')}
-                    onChange={(e) => {
+                    onChange={(newValue: Dayjs | null) => {
                       setValue(
-                        `exchange_rate`,
-                        e.target.value ? sanitizedNumber(e.target.value) : null,
+                        'transactionDate',
+                        newValue ? newValue.toISOString() : '',
                         {
                           shouldValidate: true,
                           shouldDirty: true,
@@ -407,95 +337,207 @@ const PaymentFormDialogContent: React.FC<PaymentFormDialogContentProps> = ({
                   />
                 </Div>
               </Grid>
-            )}
-            <Grid size={{ xs: 12, md: watch('currency_id') !== 1 ? 4 : 8 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
-                <CostCenterSelector
-                  label='Cost Centers'
-                  frontError={errors.cost_centers}
-                  defaultValue={
-                    (payment && payment.cost_centers) ||
-                    (costCenters.length === 1 ? costCenters : [])
-                  }
-                  onChange={(newValue) => {
-                    const valueArray = Array.isArray(newValue)
-                      ? newValue
-                      : newValue
-                        ? [newValue]
-                        : [];
+              <Grid size={{ xs: 12, md: 4 }}>
+                <Div sx={{ mt: 1, mb: 1 }}>
+                  <LedgerSelect
+                    frontError={errors.credit_ledger_id}
+                    addedLedger={addedLedger}
+                    defaultValue={
+                      ungroupedLedgerOptions.find(
+                        (ledger) => ledger.id === payment?.credit_ledger_id
+                      ) || null
+                    }
+                    allowedGroups={['Cash and cash equivalents']}
+                    onChange={(newValue) => {
+                      if (Array.isArray(newValue)) return;
+                      setValue('credit_ledger_id', newValue ? newValue.id : 0, {
+                        shouldValidate: true,
+                        shouldDirty: true,
+                      });
+                    }}
+                    label='Pay From (Credit)'
+                    startAdornment={
+                      <Tooltip title={'Add New Ledger'}>
+                        <AddOutlined
+                          onClick={() => {
+                            setOpenLedgerQuickAdd(true);
+                            setLedgerType('credit');
+                          }}
+                          sx={{ cursor: 'pointer' }}
+                        />
+                      </Tooltip>
+                    }
+                  />
+                </Div>
+              </Grid>
+              <Grid size={{ xs: 12, md: 4 }}>
+                <Div sx={{ mt: 1, mb: 1 }}>
+                  <TextField
+                    size='small'
+                    label='Reference'
+                    fullWidth
+                    defaultValue={payment && payment.reference}
+                    {...register('reference')}
+                    onChange={(e) => {
+                      setServerError(null);
+                    }}
+                  />
+                  <span style={{ color: 'red' }}>{serverError?.reference}</span>
+                </Div>
+              </Grid>
+            </>
+          )}
 
-                    setValue('cost_centers', valueArray, {
-                      shouldValidate: true,
-                      shouldDirty: true,
-                    });
+          {openLedgerQuickAdd && ledgerType === 'credit' && (
+            <Grid size={12}>
+              <QuickAddLedger
+                toggleOpen={setOpenLedgerQuickAdd}
+                ledgerType='credit'
+                setAddedLedger={setAddedLedger}
+              />
+            </Grid>
+          )}
+
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Div sx={{ mt: 1, mb: 1 }}>
+              <CurrencySelector
+                frontError={
+                  errors?.currency_id?.message
+                    ? { message: errors.currency_id.message }
+                    : null
+                }
+                defaultValue={payment?.currency?.id ?? 1}
+                onChange={(newValue) => {
+                  setValue('currency_id', newValue ? newValue.id : null, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  });
+
+                  clearErrors('exchange_rate');
+
+                  setValue(
+                    'exchange_rate',
+                    newValue?.exchangeRate ? newValue.exchangeRate : 1
+                  );
+                }}
+              />
+            </Div>
+          </Grid>
+          {Number(watch('currency_id')) > 1 && (
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Div sx={{ mt: 1, mb: 1 }}>
+                <TextField
+                  label='Exchange Rate'
+                  fullWidth
+                  size='small'
+                  error={!!errors?.exchange_rate}
+                  helperText={errors?.exchange_rate?.message}
+                  InputProps={{
+                    inputComponent: CommaSeparatedField,
+                  }}
+                  value={watch('exchange_rate')}
+                  onChange={(e) => {
+                    setValue(
+                      `exchange_rate`,
+                      e.target.value ? sanitizedNumber(e.target.value) : null,
+                      {
+                        shouldValidate: true,
+                        shouldDirty: true,
+                      }
+                    );
                   }}
                 />
               </Div>
             </Grid>
-          </Grid>
+          )}
+          <Grid size={{ xs: 12, md: watch('currency_id') !== 1 ? 4 : 8 }}>
+            <Div sx={{ mt: 1, mb: 1 }}>
+              <CostCenterSelector
+                label='Cost Centers'
+                frontError={errors.cost_centers}
+                defaultValue={
+                  (payment && payment.cost_centers) ||
+                  (costCenters.length === 1 ? costCenters : [])
+                }
+                onChange={(newValue) => {
+                  const valueArray = Array.isArray(newValue)
+                    ? newValue
+                    : newValue
+                      ? [newValue]
+                      : [];
 
-          <TransactionItemForm
+                  setValue('cost_centers', valueArray, {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                  });
+                }}
+              />
+            </Div>
+          </Grid>
+        </Grid>
+
+        <TransactionItemForm
+          setClearFormKey={setClearFormKey}
+          submitMainForm={handleSubmit((data) => savePayment.mutate(data))}
+          submitItemForm={submitItemForm}
+          setSubmitItemForm={setSubmitItemForm}
+          key={clearFormKey}
+          setIsDirty={setIsDirty}
+          items={items}
+          setItems={setItems}
+          isPayment={true}
+        />
+
+        {errors?.items?.message && items.length < 1 && (
+          <Alert severity='error'>{errors.items.message}</Alert>
+        )}
+
+        {items.map((item, index) => (
+          <TransactionItemRow
             setClearFormKey={setClearFormKey}
             submitMainForm={handleSubmit((data) => savePayment.mutate(data))}
             submitItemForm={submitItemForm}
             setSubmitItemForm={setSubmitItemForm}
-            key={clearFormKey}
             setIsDirty={setIsDirty}
+            key={index}
+            index={index}
+            item={item}
             items={items}
             setItems={setItems}
             isPayment={true}
           />
+        ))}
 
-          {errors?.items?.message && items.length < 1 && (
-            <Alert severity='error'>{errors.items.message}</Alert>
-          )}
-
-          {items.map((item, index) => (
-            <TransactionItemRow
-              setClearFormKey={setClearFormKey}
-              submitMainForm={handleSubmit((data) => savePayment.mutate(data))}
-              submitItemForm={submitItemForm}
-              setSubmitItemForm={setSubmitItemForm}
-              setIsDirty={setIsDirty}
-              key={index}
-              index={index}
-              item={item}
-              items={items}
-              setItems={setItems}
-              isPayment={true}
-            />
-          ))}
-
-          <Divider />
-          <Grid container columnSpacing={1}>
-            <Grid
-              size={11}
-              sx={{
-                display: 'flex',
-                direction: 'row',
-                justifyContent: 'flex-end',
-              }}
-            >
-              <Typography variant={'h5'}>
-                {totalAmount?.toLocaleString()}
-              </Typography>
-            </Grid>
-            <Grid size={12}>
-              <Div sx={{ mt: 1, mb: 1 }}>
-                <TextField
-                  label='Narration'
-                  multiline={true}
-                  rows={2}
-                  fullWidth
-                  error={!!errors?.narration}
-                  helperText={errors?.narration?.message}
-                  size='small'
-                  {...register('narration')}
-                />
-              </Div>
-            </Grid>
+        <Divider />
+        <Grid container columnSpacing={1}>
+          <Grid
+            size={11}
+            sx={{
+              display: 'flex',
+              direction: 'row',
+              justifyContent: 'flex-end',
+            }}
+          >
+            <Typography variant={'h5'}>
+              {totalAmount?.toLocaleString()}
+            </Typography>
           </Grid>
-        </form>
+          <Grid size={12}>
+            <Div sx={{ mt: 1, mb: 1 }}>
+              <TextField
+                label='Narration'
+                multiline={true}
+                rows={2}
+                fullWidth
+                error={!!errors?.narration}
+                helperText={errors?.narration?.message}
+                size='small'
+                {...register('narration')}
+              />
+            </Div>
+          </Grid>
+        </Grid>
+        {/* </form> */}
 
         <Dialog open={showWarning} onClose={() => setShowWarning(false)}>
           <DialogTitle>

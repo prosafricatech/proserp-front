@@ -243,44 +243,93 @@ function JournalFormDialogContent({
             : `New Journal Form`}
       </DialogTitle>
       <DialogContent>
-        <form autoComplete='false'>
-          <Grid container columnSpacing={1} marginBottom={2}>
+        {/* <form autoComplete='false'> */}
+        <Grid container columnSpacing={1} marginBottom={2}>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Div sx={{ mt: 1, mb: 1 }}>
+              <DateTimePicker
+                label='Journal Date (MM/DD/YYYY)'
+                minDate={
+                  checkOrganizationPermission([
+                    PERMISSIONS.ACCOUNTS_TRANSACTIONS_BACKDATE,
+                    PERMISSIONS.JOURNAL_VOUCHERS_BACKDATE,
+                  ])
+                    ? dayjs(authOrganization?.organization.recording_start_date)
+                    : dayjs().startOf('day')
+                }
+                maxDate={
+                  checkOrganizationPermission([
+                    PERMISSIONS.ACCOUNTS_TRANSACTIONS_POSTDATE,
+                    PERMISSIONS.JOURNAL_VOUCHERS_POSTDATE,
+                  ])
+                    ? dayjs().add(10, 'year').endOf('year')
+                    : dayjs().endOf('day')
+                }
+                defaultValue={transactionDate}
+                slotProps={{
+                  textField: {
+                    size: 'small',
+                    fullWidth: true,
+                    InputProps: { readOnly: true },
+                    error: !!errors?.transactionDate,
+                    helperText: errors?.transactionDate?.message,
+                  },
+                }}
+                onChange={(newValue: Dayjs | null) => {
+                  setValue(
+                    'transactionDate',
+                    newValue ? newValue.toISOString() : '',
+                    {
+                      shouldValidate: true,
+                      shouldDirty: true,
+                    }
+                  );
+                }}
+              />
+            </Div>
+          </Grid>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Div sx={{ mt: 1, mb: 1 }}>
+              <CurrencySelector
+                frontError={
+                  errors?.currency_id?.message
+                    ? { message: errors.currency_id.message }
+                    : null
+                }
+                defaultValue={journal?.currency_id ?? 1}
+                onChange={(newValue) => {
+                  setValue('currency_id', newValue ? newValue.id : null, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  });
+
+                  clearErrors('exchange_rate');
+
+                  setValue(
+                    'exchange_rate',
+                    newValue?.exchangeRate ? newValue.exchangeRate : 1
+                  );
+                }}
+              />
+            </Div>
+          </Grid>
+          {Number(watch('currency_id')) > 1 && (
             <Grid size={{ xs: 12, md: 4 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
-                <DateTimePicker
-                  label='Journal Date (MM/DD/YYYY)'
-                  minDate={
-                    checkOrganizationPermission([
-                      PERMISSIONS.ACCOUNTS_TRANSACTIONS_BACKDATE,
-                      PERMISSIONS.JOURNAL_VOUCHERS_BACKDATE,
-                    ])
-                      ? dayjs(
-                          authOrganization?.organization.recording_start_date
-                        )
-                      : dayjs().startOf('day')
-                  }
-                  maxDate={
-                    checkOrganizationPermission([
-                      PERMISSIONS.ACCOUNTS_TRANSACTIONS_POSTDATE,
-                      PERMISSIONS.JOURNAL_VOUCHERS_POSTDATE,
-                    ])
-                      ? dayjs().add(10, 'year').endOf('year')
-                      : dayjs().endOf('day')
-                  }
-                  defaultValue={transactionDate}
-                  slotProps={{
-                    textField: {
-                      size: 'small',
-                      fullWidth: true,
-                      InputProps: { readOnly: true },
-                      error: !!errors?.transactionDate,
-                      helperText: errors?.transactionDate?.message,
-                    },
+                <TextField
+                  label='Exchange Rate'
+                  fullWidth
+                  size='small'
+                  error={!!errors?.exchange_rate}
+                  helperText={errors?.exchange_rate?.message}
+                  InputProps={{
+                    inputComponent: CommaSeparatedField,
                   }}
-                  onChange={(newValue: Dayjs | null) => {
+                  value={watch('exchange_rate')}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     setValue(
-                      'transactionDate',
-                      newValue ? newValue.toISOString() : '',
+                      'exchange_rate',
+                      e.target.value ? sanitizedNumber(e.target.value) : 0,
                       {
                         shouldValidate: true,
                         shouldDirty: true,
@@ -290,162 +339,111 @@ function JournalFormDialogContent({
                 />
               </Div>
             </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
-                <CurrencySelector
-                  frontError={
-                    errors?.currency_id?.message
-                      ? { message: errors.currency_id.message }
-                      : null
-                  }
-                  defaultValue={journal?.currency_id ?? 1}
-                  onChange={(newValue) => {
-                    setValue('currency_id', newValue ? newValue.id : null, {
-                      shouldDirty: true,
-                      shouldValidate: true,
-                    });
-
-                    clearErrors('exchange_rate');
-
-                    setValue(
-                      'exchange_rate',
-                      newValue?.exchangeRate ? newValue.exchangeRate : 1
-                    );
-                  }}
-                />
-              </Div>
-            </Grid>
-            {Number(watch('currency_id')) > 1 && (
-              <Grid size={{ xs: 12, md: 4 }}>
-                <Div sx={{ mt: 1, mb: 1 }}>
-                  <TextField
-                    label='Exchange Rate'
-                    fullWidth
-                    size='small'
-                    error={!!errors?.exchange_rate}
-                    helperText={errors?.exchange_rate?.message}
-                    InputProps={{
-                      inputComponent: CommaSeparatedField,
-                    }}
-                    value={watch('exchange_rate')}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                      setValue(
-                        'exchange_rate',
-                        e.target.value ? sanitizedNumber(e.target.value) : 0,
-                        {
-                          shouldValidate: true,
-                          shouldDirty: true,
-                        }
-                      );
-                    }}
-                  />
-                </Div>
-              </Grid>
-            )}
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
-                <TextField
-                  size='small'
-                  label='Reference'
-                  fullWidth
-                  defaultValue={journal?.reference}
-                  {...register('reference')}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                    setServerError(null);
-                  }}
-                />
-                <span style={{ color: 'red' }}>{serverError?.reference}</span>
-              </Div>
-            </Grid>
-            <Grid size={{ xs: 12, md: watch('currency_id') !== 1 ? 4 : 8 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
-                <CostCenterSelector
-                  label='Cost Centers'
-                  frontError={errors.cost_centers}
-                  defaultValue={
-                    journal?.cost_centers ||
-                    (costCenters.length === 1 ? costCenters : [])
-                  }
-                  onChange={(newValue) => {
-                    const valueArray = Array.isArray(newValue)
-                      ? newValue
-                      : newValue
-                        ? [newValue]
-                        : [];
-
-                    setValue('cost_centers', valueArray, {
-                      shouldValidate: true,
-                      shouldDirty: true,
-                    });
-                  }}
-                />
-              </Div>
-            </Grid>
+          )}
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Div sx={{ mt: 1, mb: 1 }}>
+              <TextField
+                size='small'
+                label='Reference'
+                fullWidth
+                defaultValue={journal?.reference}
+                {...register('reference')}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  setServerError(null);
+                }}
+              />
+              <span style={{ color: 'red' }}>{serverError?.reference}</span>
+            </Div>
           </Grid>
+          <Grid size={{ xs: 12, md: watch('currency_id') !== 1 ? 4 : 8 }}>
+            <Div sx={{ mt: 1, mb: 1 }}>
+              <CostCenterSelector
+                label='Cost Centers'
+                frontError={errors.cost_centers}
+                defaultValue={
+                  journal?.cost_centers ||
+                  (costCenters.length === 1 ? costCenters : [])
+                }
+                onChange={(newValue) => {
+                  const valueArray = Array.isArray(newValue)
+                    ? newValue
+                    : newValue
+                      ? [newValue]
+                      : [];
 
-          <JournalItemForm
+                  setValue('cost_centers', valueArray, {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                  });
+                }}
+              />
+            </Div>
+          </Grid>
+        </Grid>
+
+        <JournalItemForm
+          setClearFormKey={setClearFormKey}
+          submitMainForm={handleSubmit((data) => saveJournal.mutate(data))}
+          submitItemForm={submitItemForm}
+          setSubmitItemForm={setSubmitItemForm}
+          key={clearFormKey}
+          setIsDirty={setIsDirty}
+          items={items}
+          setItems={setItems}
+        />
+
+        {errors?.items?.message && items.length < 1 && (
+          <Alert severity='error'>{errors.items.message}</Alert>
+        )}
+
+        {items.map((item, index) => (
+          <JournalItemRow
             setClearFormKey={setClearFormKey}
             submitMainForm={handleSubmit((data) => saveJournal.mutate(data))}
             submitItemForm={submitItemForm}
             setSubmitItemForm={setSubmitItemForm}
-            key={clearFormKey}
             setIsDirty={setIsDirty}
+            key={index}
+            index={index}
+            item={item}
             items={items}
             setItems={setItems}
           />
+        ))}
 
-          {errors?.items?.message && items.length < 1 && (
-            <Alert severity='error'>{errors.items.message}</Alert>
-          )}
-
-          {items.map((item, index) => (
-            <JournalItemRow
-              setClearFormKey={setClearFormKey}
-              submitMainForm={handleSubmit((data) => saveJournal.mutate(data))}
-              submitItemForm={submitItemForm}
-              setSubmitItemForm={setSubmitItemForm}
-              setIsDirty={setIsDirty}
-              key={index}
-              index={index}
-              item={item}
-              items={items}
-              setItems={setItems}
-            />
-          ))}
-
-          <Divider />
-          <Grid container columnSpacing={1}>
-            <Grid
-              size={11}
-              sx={{
-                display: 'flex',
-                direction: 'row',
-                justifyContent: 'flex-end',
-              }}
-            >
-              <Tooltip title={'Total Amount'}>
-                <Typography variant={'h5'}>
-                  {totalAmount?.toLocaleString()}
-                </Typography>
-              </Tooltip>
-            </Grid>
-            <Grid size={12}>
-              <Div sx={{ mt: 1, mb: 1 }}>
-                <TextField
-                  label='Narration'
-                  multiline={true}
-                  rows={2}
-                  fullWidth
-                  size='small'
-                  error={!!errors?.narration}
-                  helperText={errors?.narration?.message}
-                  defaultValue={journal?.narration}
-                  {...register('narration')}
-                />
-              </Div>
-            </Grid>
+        <Divider />
+        <Grid container columnSpacing={1}>
+          <Grid
+            size={11}
+            sx={{
+              display: 'flex',
+              direction: 'row',
+              justifyContent: 'flex-end',
+            }}
+          >
+            <Tooltip title={'Total Amount'}>
+              <Typography variant={'h5'}>
+                {totalAmount?.toLocaleString()}
+              </Typography>
+            </Tooltip>
           </Grid>
-        </form>
+          <Grid size={12}>
+            <Div sx={{ mt: 1, mb: 1 }}>
+              <TextField
+                label='Narration'
+                multiline={true}
+                rows={2}
+                fullWidth
+                size='small'
+                error={!!errors?.narration}
+                helperText={errors?.narration?.message}
+                defaultValue={journal?.narration}
+                {...register('narration')}
+              />
+            </Div>
+          </Grid>
+        </Grid>
+        {/* </form> */}
 
         <Dialog open={showWarning} onClose={() => setShowWarning(false)}>
           <DialogTitle>
