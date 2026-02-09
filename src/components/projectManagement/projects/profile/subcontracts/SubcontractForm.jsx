@@ -132,7 +132,7 @@ function SubcontractForm({setOpenDialog, subContract = null }) {
                                 label="Store Assigned (optional)"
                                 allowSubStores={true}
                                 proposedOptions={project?.stores}
-                                defaultValue={subContract?.store_id ?? null}
+                                defaultValue={subContract?.store_id ? project.stores.find(store => store.id === subContract.store_id) : null}
                                 onChange={(newValue) => {
                                     setValue('store_id', newValue ? newValue.id : null, {
                                         shouldDirty: true,
