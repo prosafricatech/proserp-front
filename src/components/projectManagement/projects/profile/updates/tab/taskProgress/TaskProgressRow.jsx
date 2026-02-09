@@ -119,8 +119,17 @@ function TaskProgressRow({ taskProgressItem, index }) {
             </Grid>
             <Grid size={{ xs: 6, md: 3 }}>
               <Tooltip title="Task Name">
-                <Typography>{taskProgressItem.task?.name || 'N/A'}</Typography>
+                <Typography>
+                  {taskProgressItem.task?.name}
+                </Typography>
               </Tooltip>
+              {taskProgressItem.project_subcontract?.subcontractor?.name && taskProgressItem.project_subcontract?.subcontractNo && (
+                <Tooltip title="Subcontract">
+                  <Typography variant="body2" color="text.secondary">
+                    {`${taskProgressItem.project_subcontract.subcontractor.name} (${taskProgressItem.project_subcontract.subcontractNo})`}
+                  </Typography>
+                </Tooltip>
+              )}
             </Grid>
             <Grid textAlign={{ md: 'end' }} size={{ xs: 5, md: 3 }}>
               <Tooltip title="Executed Quantity">
