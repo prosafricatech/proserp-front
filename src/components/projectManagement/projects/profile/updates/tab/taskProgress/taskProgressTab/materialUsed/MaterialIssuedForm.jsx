@@ -22,40 +22,58 @@ function MaterialIssuedForm({projectTaskIndex, taskProgressItem, material = null
   const nonInventoryIds = productOptions.filter(product => product.type !== 'Inventory').map(product => product.id);
 
   const validationSchema = yup.object({
-    product: yup.object().required("Product is required").typeError('Product is required'),
+    product: yup
+      .object()
+      .required('Product is required')
+      .typeError('Product is required'),
+
     quantity: yup
       .number()
-      .transform((value) => (isNaN(value) ? undefined : value))
-      .when('product', (product, schema) => {
-        if (product && product.type === 'Inventory') {
-          return schema
-            .required("Quantity is required")
-            .positive("Quantity must be a positive number")
-            .typeError('Quantity is required')
-            .test('quantity-balance', 'This quantity will lead to negative balance', function(value) {
-              const currentBalance = parseFloat(this.parent.current_balance);
-              const availableBalance = parseFloat(this.parent.available_balance);
-              
-              if (isNaN(currentBalance) || isNaN(availableBalance)) {
-                return true;
-              }
-              
-              return !isNaN(value) && value <= currentBalance;
-            })
-            .test('quantity-exceeded', 'The quantity exceeds the balance', function(value) {
-              const availableBalance = parseFloat(this.parent.available_balance);
-              
-              if (availableBalance === 'N/A' || isNaN(availableBalance)) {
-                return true;
-              }
-              
-              return !isNaN(value) && value <= availableBalance;
-            });
+      .transform((value) =>
+        isNaN(value) || value === null ? undefined : value
+      )
+      .required('Quantity is required')
+      .positive('Quantity must be a positive number')
+      .test(
+        'inventory-balance-check',
+        'Quantity exceeds available balance',
+        function (value) {
+          const { product, available_balance } = this.parent;
+
+          // no product or not inventory → skip balance validation
+          if (!product || product.type !== 'Inventory') {
+            return true;
+          }
+
+          const available = Number(available_balance);
+
+          // still loading or invalid balance
+          if (isNaN(available)) {
+            return true;
+          }
+
+          return value <= available;
         }
-        return schema
-          .positive("Quantity must be a positive number")
-          .typeError('Quantity is required');
-      }),
+      )
+      .test(
+        'inventory-negative-check',
+        'This quantity will lead to negative stock balance',
+        function (value) {
+          const { product, current_balance } = this.parent;
+
+          if (!product || product.type !== 'Inventory') {
+            return true;
+          }
+
+          const current = Number(current_balance);
+
+          if (isNaN(current)) {
+            return true;
+          }
+
+          return value <= current;
+        }
+      ),
   });
 
   const {setValue, handleSubmit, register, watch, clearErrors, reset, formState: {errors}} = useForm({
