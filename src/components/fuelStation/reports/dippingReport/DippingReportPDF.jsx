@@ -1,4 +1,3 @@
-import React from 'react';
 import { Document, Page, Text, View } from '@react-pdf/renderer';
 import pdfStyles from '@/components/pdf/pdf-styles';
 import PdfLogo from '@/components/pdf/PdfLogo';
@@ -115,7 +114,7 @@ function DippingReportPDF({ reportData, organization, filters, activeStation }) 
                     acc.stockIn += tank.stock_in || 0;
                     acc.stockOut += tank.stock_out || 0;
                     acc.reading += tank.reading || 0;
-                    acc.tankDifference += (tank.opening + tank.stock_in - tank.reading) || 0;
+                    acc.tankDifference += tank.tank_difference || 0;
                     acc.deviation += tank.deviation || 0;
                     acc.calculatedStock += tank.calculated_stock || 0;
                     acc.cumulativeDeviation += tank.cummulative_deviation || 0;

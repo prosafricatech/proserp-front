@@ -228,7 +228,7 @@ function MaterialIssuedForm({projectTaskIndex, taskProgressItem, material = null
         <Grid size={{xs: 12, md: !!product && !!store_id ? 2 : 3}}>
           <StoreSelector
             allowSubStores={true}
-            proposedOptions={project?.stores}
+            proposedOptions={taskProgressItem?.project_subcontract?.store ? [taskProgressItem?.project_subcontract?.store] : project?.stores}
             defaultValue={material?.store}
             onChange={(newValue) => {
               newValue !== null && retrieveBalances(newValue.id, product, measurement_unit_id);
