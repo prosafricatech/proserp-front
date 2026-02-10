@@ -18,7 +18,6 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { DateTimePicker } from '@mui/x-date-pickers';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
@@ -132,7 +131,6 @@ const QuickAddLedger = ({
       code: '',
       description: '',
       ledger_group_id: null,
-      as_at: authOrganization?.organization?.recording_start_date,
     },
     resolver: yupResolver(validationSchema) as any,
   });
@@ -142,10 +140,10 @@ const QuickAddLedger = ({
       const dataToSend = {
         ...data,
         opening_balance_side: ledgerType === 'credit' ? 'credit' : 'debit',
+        as_at: dayjs().format('YYYY-MM-DD HH:mm:ss'),
       };
       return ledgerServices.add(dataToSend);
     },
-    // mutationFn: (data: FormValues) => ledgerServices.add(data),
     onSuccess: (data) => {
       setAddedLedger && setAddedLedger(data.ledger);
       queryClient.invalidateQueries({ queryKey: ['ledgers-list'] });
@@ -175,111 +173,107 @@ const QuickAddLedger = ({
     <>
       <Divider />
       <Typography textAlign={'center'} variant='h4' marginTop={2}>
-        Create New Ledger
+        {ledgerType === 'credit' ? 'Create New Credit' : 'Create New Debit'}
       </Typography>
       <DialogContent>
         <form autoComplete='off'>
           <Grid container spacing={1}>
-            <Grid size={12}>
-              <Div sx={{ mb: 1 }}>
-                <TextField
-                  fullWidth
-                  label='Ledger Name'
-                  size='small'
-                  error={!!errors.name || !!serverError?.name}
-                  helperText={errors.name?.message || serverError?.name?.[0]}
-                  {...register('name')}
-                />
-              </Div>
-            </Grid>
-            {!openQuickAddLedgerGroup && (
-              <Grid size={{ xs: 12, md: 6 }}>
-                <Div sx={{ mt: 1, mb: 1 }}>
-                  <Controller
-                    control={control}
-                    name='ledger_group_id'
-                    render={({ field: { onChange, value } }) => (
-                      <Autocomplete
-                        options={
-                          ledger?.ledger_group
-                            ? ledgerGroupOptions.filter(
-                                (ledger_group) =>
-                                  ledger_group.nature_id ===
-                                  ledger.ledger_group?.nature_id
-                              )
-                            : ledgerGroupOptions.filter(
-                                (ledger_group) =>
-                                  ledger_group.id !== ledger_group.nature_id ||
-                                  [3, 4].indexOf(ledger_group.nature_id) !== -1
-                              )
-                        }
-                        size='small'
-                        getOptionLabel={(option: LedgerGroupOption) =>
-                          option.name
-                        }
-                        isOptionEqualToValue={(
-                          option: LedgerGroupOption,
-                          value: LedgerGroupOption
-                        ) => option.id === value.id}
-                        defaultValue={ledger?.ledger_group}
-                        disabled={!!ledger?.ledger_group_id}
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            label='Ledger Group'
-                            InputProps={{
-                              ...params.InputProps,
-                              startAdornment: ledger?.ledger_group_id ? null : (
-                                <Tooltip title={'Quick Add Group'}>
-                                  <AddOutlined
-                                    onClick={() =>
-                                      setOpenQuickAddLedgerGroup(true)
-                                    }
-                                    sx={{ cursor: 'pointer' }}
-                                  />
-                                </Tooltip>
-                              ),
-                            }}
-                            error={!!errors.ledger_group_id}
-                            helperText={errors.ledger_group_id?.message}
-                          />
-                        )}
-                        value={
-                          ledgerGroupOptions.find(
-                            (option: LedgerGroupOption) => option.id === value
-                          ) || null
-                        }
-                        onChange={(
-                          event,
-                          newValue: LedgerGroupOption | null
-                        ) => {
-                          onChange(newValue ? newValue.id : null);
-                          setValue(
-                            'ledger_group_id',
-                            newValue ? newValue.id : null,
-                            {
-                              shouldValidate: true,
-                              shouldDirty: true,
-                            }
-                          );
-                        }}
-                      />
-                    )}
-                  />
-                </Div>
-              </Grid>
-            )}
-            {openQuickAddLedgerGroup && (
-              <Grid size={12}>
-                <AddQuickLedgerGroup
-                  setOpenQuickAddLedgerGroup={setOpenQuickAddLedgerGroup}
-                />
-              </Grid>
-            )}
             {!openQuickAddLedgerGroup && (
               <>
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <Div sx={{ mt: 1, mb: 1 }}>
+                <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+                  <Div sx={{ mb: 1 }}>
+                    <TextField
+                      fullWidth
+                      label='Ledger Name'
+                      size='small'
+                      error={!!errors.name || !!serverError?.name}
+                      helperText={
+                        errors.name?.message || serverError?.name?.[0]
+                      }
+                      {...register('name')}
+                    />
+                  </Div>
+                </Grid>
+                <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+                  <Div sx={{ mb: 1 }}>
+                    <Controller
+                      control={control}
+                      name='ledger_group_id'
+                      render={({ field: { onChange, value } }) => (
+                        <Autocomplete
+                          options={
+                            ledger?.ledger_group
+                              ? ledgerGroupOptions.filter(
+                                  (ledger_group) =>
+                                    ledger_group.nature_id ===
+                                    ledger.ledger_group?.nature_id
+                                )
+                              : ledgerGroupOptions.filter(
+                                  (ledger_group) =>
+                                    ledger_group.id !==
+                                      ledger_group.nature_id ||
+                                    [3, 4].indexOf(ledger_group.nature_id) !==
+                                      -1
+                                )
+                          }
+                          size='small'
+                          getOptionLabel={(option: LedgerGroupOption) =>
+                            option.name
+                          }
+                          isOptionEqualToValue={(
+                            option: LedgerGroupOption,
+                            value: LedgerGroupOption
+                          ) => option.id === value.id}
+                          defaultValue={ledger?.ledger_group}
+                          disabled={!!ledger?.ledger_group_id}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              label='Ledger Group'
+                              InputProps={{
+                                ...params.InputProps,
+                                startAdornment:
+                                  ledger?.ledger_group_id ? null : (
+                                    <Tooltip title={'Quick Add Group'}>
+                                      <AddOutlined
+                                        onClick={() =>
+                                          setOpenQuickAddLedgerGroup(true)
+                                        }
+                                        sx={{ cursor: 'pointer' }}
+                                      />
+                                    </Tooltip>
+                                  ),
+                              }}
+                              error={!!errors.ledger_group_id}
+                              helperText={errors.ledger_group_id?.message}
+                            />
+                          )}
+                          value={
+                            ledgerGroupOptions.find(
+                              (option: LedgerGroupOption) => option.id === value
+                            ) || null
+                          }
+                          onChange={(
+                            event,
+                            newValue: LedgerGroupOption | null
+                          ) => {
+                            onChange(newValue ? newValue.id : null);
+                            setValue(
+                              'ledger_group_id',
+                              newValue ? newValue.id : null,
+                              {
+                                shouldValidate: true,
+                                shouldDirty: true,
+                              }
+                            );
+                          }}
+                        />
+                      )}
+                    />
+                  </Div>
+                </Grid>
+                <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+                  <Div sx={{ mb: 1 }}>
                     <TextField
                       fullWidth
                       label='Alias (Optional)'
@@ -293,8 +287,19 @@ const QuickAddLedger = ({
                     )}
                   </Div>
                 </Grid>
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <Div sx={{ mt: 1, mb: 1 }}>
+              </>
+            )}
+            {openQuickAddLedgerGroup && (
+              <Grid size={12}>
+                <AddQuickLedgerGroup
+                  setOpenQuickAddLedgerGroup={setOpenQuickAddLedgerGroup}
+                />
+              </Grid>
+            )}
+            {!openQuickAddLedgerGroup && (
+              <>
+                <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+                  <Div sx={{ mb: 1 }}>
                     <TextField
                       fullWidth
                       label='Code (Optional)'
@@ -308,76 +313,62 @@ const QuickAddLedger = ({
                     )}
                   </Div>
                 </Grid>
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <Div sx={{ mt: 1, mb: 1 }}>
-                    <TextField
-                      fullWidth
-                      label='Description (Optional)'
-                      size='small'
-                      {...register('description')}
+                <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+                  <Div sx={{ mb: 1 }}>
+                    <CostCenterSelector
+                      label='Cost Centers'
+                      multiple={false}
+                      defaultValue={openingBalanceCostCenter}
+                      onChange={(newValue: any) => {
+                        setValue(
+                          'cost_center_id',
+                          newValue ? newValue.id : null
+                        );
+                      }}
+                    />
+                  </Div>
+                </Grid>
+                <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+                  <Div sx={{ mb: 1 }}>
+                    <Controller
+                      name='opening_balance'
+                      control={control}
+                      render={({ field: { onChange, value } }) => (
+                        <TextField
+                          label='Opening Balance (Optional)'
+                          fullWidth
+                          size='small'
+                          value={value}
+                          InputProps={{
+                            inputComponent: CommaSeparatedField,
+                          }}
+                          onChange={(
+                            e: React.ChangeEvent<HTMLInputElement>
+                          ) => {
+                            const sanitized = sanitizedNumber(e.target.value);
+                            onChange(sanitized);
+                            setValue('opening_balance', sanitized, {
+                              shouldValidate: true,
+                              shouldDirty: true,
+                            });
+                          }}
+                        />
+                      )}
                     />
                   </Div>
                 </Grid>
               </>
             )}
-            <Grid size={12} marginTop={2}>
-              <Typography variant='h5' textAlign={'center'}>
-                Opening Balance Details
-              </Typography>
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Div sx={{ mt: 1, mb: 3 }}>
-                <Controller
-                  name='opening_balance'
-                  control={control}
-                  render={({ field: { onChange, value } }) => (
-                    <TextField
-                      label='Opening Balance (Optional)'
-                      fullWidth
-                      size='small'
-                      value={value}
-                      InputProps={{
-                        inputComponent: CommaSeparatedField,
-                      }}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        const sanitized = sanitizedNumber(e.target.value);
-                        onChange(sanitized);
-                        setValue('opening_balance', sanitized, {
-                          shouldValidate: true,
-                          shouldDirty: true,
-                        });
-                      }}
-                    />
-                  )}
-                />
-              </Div>
-            </Grid>
 
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
-                <DateTimePicker
-                  label='As at (MM/DD/YYYY)'
-                  value={dayjs(
-                    authOrganization?.organization?.recording_start_date
-                  )}
-                  slotProps={{
-                    textField: {
-                      size: 'small',
-                      fullWidth: true,
-                    },
-                  }}
-                />
-              </Div>
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
-                <CostCenterSelector
-                  label='Cost Centers'
-                  multiple={false}
-                  defaultValue={openingBalanceCostCenter}
-                  onChange={(newValue: any) => {
-                    setValue('cost_center_id', newValue ? newValue.id : null);
-                  }}
+            <Grid size={{ xs: 12, md: 12, lg: 12 }}>
+              <Div sx={{ mb: 1 }}>
+                <TextField
+                  fullWidth
+                  label='Description (Optional)'
+                  size='small'
+                  multiline
+                  rows={2}
+                  {...register('description')}
                 />
               </Div>
             </Grid>

@@ -346,7 +346,7 @@ function ReceiptFormDialogContent({
                     }}
                     label='Receiving Account (Debit)'
                     startAdornment={
-                      <Tooltip title={'Add New Ledger'}>
+                      <Tooltip title={'Add New Debit'}>
                         <AddOutlined
                           onClick={() => {
                             setOpenLedgerQuickAdd(true);
