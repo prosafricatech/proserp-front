@@ -1,8 +1,10 @@
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 import Dashboard from '@/components/dashboard/Dashboard';
 
 function page() {
-  return <Dashboard />;
+  return (
+    <Dashboard/>
+  )
 }
 
-export default page;
+export default page

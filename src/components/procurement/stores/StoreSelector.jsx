@@ -30,6 +30,7 @@ function StoreSelector({onChange, frontError = null, multiple = false, label = '
     return [option].concat(subStores);
   };
   
+
   let storeOptions;
   if (!!allowSubStores) {
     if (proposedOptions) {
@@ -41,12 +42,26 @@ function StoreSelector({onChange, frontError = null, multiple = false, label = '
     storeOptions = proposedOptions || stores;
   }
 
-  let finalOptions = storeOptions; // Filter options if excludeStores or includeStores is provided
+  function dedupeById(options) {
+    if (!Array.isArray(options)) return options;
+    const seen = new Set();
+    return options.filter(option => {
+      if (!option || !option.id) return false;
+      if (seen.has(option.id)) return false;
+      seen.add(option.id);
+      return true;
+    });
+  }
+
+  storeOptions = dedupeById(storeOptions);
+
+  let finalOptions = storeOptions;
   if (excludeStores) {
     finalOptions = storeOptions?.filter(option => !excludeStores.every(store => store.id === option.id));
   } else if (includeStores) {
     finalOptions = storeOptions?.filter(option => includeStores.some(store => store.id === option.id));
   }
+  finalOptions = dedupeById(finalOptions);
 
   if (isFetchingStores) {
     return <LinearProgress />;
@@ -78,19 +93,17 @@ function StoreSelector({onChange, frontError = null, multiple = false, label = '
       )}
       renderTags={(tagValue, getTagProps) => {
         return tagValue.map((option, index) => {
-          const { key, ...restProps } = getTagProps({ index });
-          return <Chip {...restProps} key={option.id + "-" + key} label={option.name} />;
+          return <Chip {...getTagProps({ index })} key={`tag-${option.id}-${option.name}`} label={option.name} />;
         });
       }}
       renderOption={(props, option, { selected, inputValue }) => {
-        const { key, ...restProps } = props;
         const matches = match(option.name, inputValue);
         const parts = parse(option.name, matches);
 
         return (
           <li
-            {...restProps}
-            key={option.id + "-" + key}
+            {...props}
+            key={`option-${option.id}-${option.name}`}
             style={{
               paddingLeft: allowSubStores ? option.depth * 20 : 8,
               display: 'flex',
@@ -108,9 +121,9 @@ function StoreSelector({onChange, frontError = null, multiple = false, label = '
             )}
 
             <div style={{ marginLeft: multiple ? 0 : 10 }}>
-              {parts.map((part, index) => (
+              {parts.map((part, idx) => (
                 <span
-                  key={index}
+                  key={`part-${option.id}-${idx}`}
                   style={{
                     fontWeight: part.highlight ? 700 : 400,
                   }}

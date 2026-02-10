@@ -26,7 +26,7 @@ const SalesShiftOnScreen = ({
   fuel_pumps = [],
   tanks = [],
   productOptions = [],
-  includeFuelVouchers = true,
+  openDetails = true,
 }) => {
   const theme = useTheme();
   const isDark = theme.type === 'dark';
@@ -42,7 +42,7 @@ const SalesShiftOnScreen = ({
     tankAdjustments: !!shiftData?.adjustments?.length,
     openingDipping: !!shiftData?.opening_dipping?.readings?.length,
     closingDipping: !!shiftData?.closing_dipping?.readings?.length,
-    fuelVouchers: includeFuelVouchers && !!shiftData?.fuel_vouchers?.length,
+    fuelVouchers: openDetails && !!shiftData?.fuel_vouchers?.length,
   });
 
   const toggleSection = (section) => {

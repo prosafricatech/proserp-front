@@ -181,14 +181,14 @@ function SaleItemForm({ setClearFormKey, submitMainForm, submitItemForm, setSubm
 
     const retrieveBalances = async(storeId = null, product, measurement_unit_id) => {
         setValue(`product_id`,product.id);
-        
+        const storesArray = Array.isArray(stores) ? stores : Object.values(stores);
         if(product.type === 'Inventory'){
             setStoreBalances(null);
             setIsRetrieving(true);
             const balances = await productServices.getStoreBalances({
                 as_at: salesDate,
                 productId: product.id,
-                storeIds: !!storeId ? [storeId] : stores.map(store => store.id),
+                storeIds: !!storeId ? [storeId] : storesArray.map(store => store.id),
                 costCenterId : cost_center?.id,
                 sales_outlet_id : outlet.id,
                 measurement_unit_id: measurement_unit_id
@@ -351,10 +351,10 @@ function SaleItemForm({ setClearFormKey, submitMainForm, submitItemForm, setSubm
                             <Grid size={{xs: 12, md: 6, lg: 3}}>
                                 <StoreSelector
                                     allowSubStores={true}
-                                    proposedOptions={stores}
+                                    proposedOptions={Array.isArray(stores) ? stores : Object.values(stores)}
                                     includeStores={authOrganization.stores}
                                     frontError={errors.store_id}
-                                    defaultValue={item ? stores.find(store => store.id === (item.inventory_movement?.store_id || item?.store_id)) : stores[0]}
+                                    defaultValue={item ? (Array.isArray(stores) ? stores : Object.values(stores)).find(store => store.id === (item.inventory_movement?.store_id || item?.store_id)) : (Array.isArray(stores) ? stores[0] : Object.values(stores)[0])}
                                     onChange={(newValue) => {
                                         newValue !== null && retrieveBalances(newValue.id, product, measurement_unit_id);
                                             setValue(`store_id`, newValue && newValue.id, {

@@ -3,11 +3,14 @@ import axios from "@/lib/services/config";
 
 const priceListServices = {};
 
-priceListServices.getList = async (params) => {
-  const response = await axios.get('/api/pos/priceLists', {
-    params,
-  });
-  return response.data;
+priceListServices.getList = async (params, fuelPriceLists) => {
+    const response = await axios.get('/api/pos/priceLists', {
+        params: {
+            ...params,
+            fuelPriceLists: fuelPriceLists ? true : false,
+        },
+    });
+    return response.data;
 };
 
 priceListServices.getCostInsights = async(params) => {

@@ -11,6 +11,8 @@ import StakeholderQuickAdd from '@/components/masters/stakeholders/StakeholderQu
 import { Div } from '@jumbo/shared';
 import { Stakeholder } from '@/components/masters/stakeholders/StakeholderType';
 import { Vendor } from '../../RequisitionType';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 
 interface FormValues {
   stakeholder_id: number;
@@ -42,6 +44,7 @@ function ProductVendor({
   const { stakeholders } = useStakeholderSelect();
   const [stakeholderQuickAddDisplay, setStakeholderQuickAddDisplay] = useState(false);
   const [addedStakeholder, setAddedStakeholder] = useState<Stakeholder | null>(null);
+  const {checkOrganizationPermission} = useJumboAuth();
 
   const validationSchema = yup.object({
     stakeholder_id: yup
@@ -141,13 +144,15 @@ function ProductVendor({
                       });
                     }
                   }}
-                  startAdornment={
-                    <Tooltip title={'Add Client'}>
-                      <AddOutlined
-                        onClick={() => setStakeholderQuickAddDisplay(true)}
-                        sx={{ cursor: 'pointer' }}
-                      />
-                    </Tooltip>
+                  startAdornment= {
+                    checkOrganizationPermission(PERMISSIONS.STAKEHOLDERS_CREATE) && (
+                      <Tooltip title="Add Client">
+                        <AddOutlined
+                          onClick={() => setStakeholderQuickAddDisplay(true)}
+                          sx={{ cursor: 'pointer' }}
+                        />
+                      </Tooltip>
+                    )
                   }
                 />
               </Div>

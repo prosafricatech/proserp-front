@@ -1,56 +1,56 @@
-import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
-import { useCurrencySelect } from '@/components/masters/currencies/CurrencySelectProvider';
-import { Div } from '@jumbo/shared';
+import React, { useEffect, useState } from 'react';
 import {
-  Alert,
-  Autocomplete,
-  Button,
+  Grid,
+  TextField,
   DialogActions,
+  Button,
   DialogContent,
   DialogTitle,
-  FormControl,
-  Grid,
-  InputLabel,
-  MenuItem,
-  Select,
-  Stack,
-  Tab,
   Tabs,
-  TextField,
-  Tooltip,
+  Tab,
+  Stack,
+  Autocomplete,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
   Typography,
+  Alert,
+  Tooltip,
 } from '@mui/material';
-import dayjs from 'dayjs';
-import { useEffect, useState } from 'react';
-import { useProjectProfile } from '../../ProjectProfileProvider';
-import LedgerItemsRow from './tabs/LedgerItemsRow';
 import LedgerItemsTab from './tabs/LedgerItemsTab';
-import ProductItemsRow from './tabs/ProductItemsRow';
+import LedgerItemsRow from './tabs/LedgerItemsRow';
 import ProductItemsTab from './tabs/ProductItemsTab';
-import SubContractTasksRow from './tabs/SubContractTasksRow';
+import ProductItemsRow from './tabs/ProductItemsRow';
+import { useProjectProfile } from '../../ProjectProfileProvider';
+import dayjs from 'dayjs';
 import SubContractTasksTab from './tabs/SubContractTasksTab';
+import SubContractTasksRow from './tabs/SubContractTasksRow';
+import { useCurrencySelect } from '@/components/masters/Currencies/CurrencySelectProvider';
+import { Div } from '@jumbo/shared';
+import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
 
 const BudgetItemsForm = ({ budget, setOpenDialog }) => {
-  const { deliverable_groups, projectTimelineActivities } = useProjectProfile();
+  const { deliverable_groups, projectTimelineActivities} = useProjectProfile();
   const [activeTab, setActiveTab] = useState(0);
   const [boundToOption, setBoundToOption] = useState('');
-  const [selectedItemable, setSelectedItemable] = useState(null);
-  const [selectedBoundTo, setSelectedBoundTo] = useState(null);
+  const [selectedItemable, setSelectedItemable] = useState(null)
+  const [selectedBoundTo, setSelectedBoundTo] = useState(null)
   const [searchQueryIds, setSearchQueryIds] = useState([]);
   const { currencies } = useCurrencySelect();
-  const baseCurrency = currencies.find((c) => c.is_base === 1);
+  const baseCurrency = currencies.find(c => c.is_base === 1);
 
   const deliverablesOptions = (groups, depth = 0) => {
     if (!Array.isArray(groups)) {
       return [];
     }
-
-    return groups?.flatMap((group) => {
+  
+    return groups?.flatMap(group => {
       const { children, deliverables } = group;
-      const deliverableOptions = (deliverables || [])?.map((deliverable) => ({
+      const deliverableOptions = (deliverables || [])?.map(deliverable => ({
         label: deliverable.description,
         id: deliverable.id,
-        tasks: deliverable.tasks,
+        tasks: deliverable.tasks
       }));
       const groupChildren = deliverablesOptions(children, depth + 1);
       return [...deliverableOptions, ...groupChildren];
@@ -61,11 +61,11 @@ const BudgetItemsForm = ({ budget, setOpenDialog }) => {
     if (!Array.isArray(activities)) {
       return [];
     }
-
-    return activities.flatMap((activity) => {
+  
+    return activities.flatMap(activity => {
       const { children, tasks } = activity;
-
-      const tasksOptions = (tasks || []).map((task) => ({
+  
+      const tasksOptions = (tasks || []).map(task => ({
         id: task.id,
         label: task.name,
         handlers: task.handlers,
@@ -75,11 +75,11 @@ const BudgetItemsForm = ({ budget, setOpenDialog }) => {
         start_date: dayjs(task.start_date).format('YYYY-MM-DD'),
         end_date: dayjs(task.end_date).format('YYYY-MM-DD'),
         weighted_percentage: task.weighted_percentage,
-        project_deliverable_id: task.project_deliverable_id,
+        project_deliverable_id: task.project_deliverable_id
       }));
-
+  
       const tasksFromgroupChildren = getTaskOptions(children, depth + 1);
-
+  
       return [...tasksOptions, ...tasksFromgroupChildren];
     });
   };
@@ -92,86 +92,50 @@ const BudgetItemsForm = ({ budget, setOpenDialog }) => {
   const [existingSubContractTasks, setExistingSubContractTasks] = useState([]);
 
   useEffect(() => {
-    setExistingLedgerItems(budget.ledger_items || []);
-    setExistingProductItems(budget.product_items || []);
-    setExistingSubContractTasks(budget.subcontract_task_items || []);
-  }, [budget]);
+    setExistingLedgerItems(budget.ledger_items || [])
+    setExistingProductItems(budget.product_items || [])
+    setExistingSubContractTasks(budget.subcontract_task_items || [])
+  }, [budget])
 
   const filteredExistingLedgerItems = selectedItemable?.id
-    ? existingLedgerItems.filter(
-        (existItem) =>
-          existItem.bound_to === selectedBoundTo &&
-          existItem.budget_itemable_id === selectedItemable?.id
+    ? existingLedgerItems.filter(existItem =>
+        existItem.bound_to === selectedBoundTo && existItem.budget_itemable_id === selectedItemable?.id
       )
     : existingLedgerItems;
 
   const filteredExistingProductItems = selectedItemable?.id
-    ? existingProductItems.filter(
-        (existItem) =>
-          existItem.bound_to === selectedBoundTo &&
-          existItem.budget_itemable_id === selectedItemable?.id
+    ? existingProductItems.filter(existItem =>
+        existItem.bound_to === selectedBoundTo && existItem.budget_itemable_id === selectedItemable?.id
       )
-    : existingProductItems;
-
+    : existingProductItems;   
+    
   const filteredExistingSubContractTasks = selectedItemable?.id
-    ? existingSubContractTasks.filter(
-        (existItem) => existItem.project_task_id === selectedItemable?.id
+    ? existingSubContractTasks.filter(existItem =>
+        existItem.project_task_id === selectedItemable?.id
       )
-    : existingSubContractTasks;
+    : existingSubContractTasks;   
 
-  const filteredLedgerItemsByExpense = filteredExistingLedgerItems?.filter(
-    (ledgerItem) =>
-      searchQueryIds.length === 0 ||
-      searchQueryIds.includes(ledgerItem.ledger?.id)
-  );
+  const filteredLedgerItemsByExpense = filteredExistingLedgerItems?.filter(ledgerItem =>
+    searchQueryIds.length === 0 || searchQueryIds.includes(ledgerItem.ledger?.id)
+  );  
 
-  const totalExpenseTabAmount = filteredLedgerItemsByExpense.reduce(
-    (total, item) =>
-      total +
-      (item.quantity || 0) * (item.rate || 0) * (item.exchange_rate || 1),
-    0
-  );
-  const totalProductTabAmount = filteredExistingProductItems.reduce(
-    (total, item) =>
-      total +
-      (item.quantity || 0) * (item.rate || 0) * (item.exchange_rate || 1),
-    0
-  );
-  const totalSubContractTabAmount = filteredExistingSubContractTasks.reduce(
-    (total, item) =>
-      total +
-      (item.quantity || 0) * (item.rate || 0) * (item.exchange_rate || 1),
-    0
-  );
+  const totalExpenseTabAmount = filteredLedgerItemsByExpense.reduce((total, item) => total + ((item.quantity || 0) * (item.rate || 0) * (item.exchange_rate || 1)), 0);
+  const totalProductTabAmount = filteredExistingProductItems.reduce((total, item) => total + ((item.quantity || 0) * (item.rate || 0) * (item.exchange_rate || 1)), 0);
+  const totalSubContractTabAmount = filteredExistingSubContractTasks.reduce((total, item) => total + ((item.quantity || 0) * (item.rate || 0) * (item.exchange_rate || 1)), 0);
 
   return (
     <>
-      <Typography
-        textAlign={'center'}
-        variant='h4'
-        paddingTop={3}
-      >{`Budget For ${selectedItemable ? selectedItemable?.label : `Project`}`}</Typography>
+      <Typography textAlign={'center'} variant='h4' paddingTop={3}>{`Budget For ${selectedItemable ? selectedItemable?.label : `Project`}`}</Typography>
       <DialogTitle textAlign={'center'}>
-        <Grid
-          container
-          width={'100%'}
-          justifyContent='center'
-          alignItems='center'
-          columnSpacing={1}
-        >
-          <Grid size={{ xs: 12, md: 3.5 }} textAlign='center'>
-            <Div sx={{ mt: 1 }}>
+        <Grid container width={'100%'} justifyContent="center" alignItems="center" columnSpacing={1}>
+          <Grid size={{xs: 12, md: 3.5}} textAlign="center">
+            <Div sx={{mt: 1}}>
               <FormControl fullWidth>
-                <InputLabel
-                  id='bound-to-label'
-                  sx={{ textAlign: 'center', margin: -1 }}
-                >
-                  Bound To
-                </InputLabel>
+                <InputLabel id="bound-to-label" sx={{ textAlign: 'center', margin: -1 }}>Bound To</InputLabel>
                 <Select
-                  labelId='bound-to-label'
+                  labelId="bound-to-label"
                   value={boundToOption}
-                  label='Bound To'
+                  label="Bound To"
                   size='small'
                   fullWidth
                   onChange={(e) => {
@@ -180,43 +144,26 @@ const BudgetItemsForm = ({ budget, setOpenDialog }) => {
                     setBoundToOption(e.target.value);
                   }}
                 >
-                  <MenuItem value='Task'>Task</MenuItem>
+                  <MenuItem value="Task">Task</MenuItem>
                   {/* <MenuItem value="Deliverable">Deliverable</MenuItem> */}
                 </Select>
               </FormControl>
             </Div>
           </Grid>
-          <Grid size={{ xs: 12, md: 8.5 }} textAlign='center'>
+          <Grid size={{xs: 12, md: 8.5}} textAlign="center">
             <Div sx={{ mt: 1 }}>
               <Autocomplete
-                options={
-                  boundToOption === 'Task'
-                    ? allTasks
-                    : boundToOption === 'Deliverable'
-                      ? deliverables
-                      : []
-                }
-                isOptionEqualToValue={(option, value) =>
-                  option.id === value?.id
-                }
+                options={boundToOption === 'Task' ? allTasks : boundToOption === 'Deliverable' ? deliverables : []}
+                isOptionEqualToValue={(option, value) => option.id === value?.id}
                 getOptionLabel={(option) => option.label}
                 value={selectedItemable}
                 renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label={`Select ${boundToOption}`}
-                    size='small'
-                    fullWidth
-                  />
+                  <TextField {...params} label={`Select ${boundToOption}`} size="small" fullWidth />
                 )}
                 onChange={(e, newValue) => {
                   if (newValue) {
                     setSelectedItemable(newValue);
-                    setSelectedBoundTo(
-                      boundToOption === 'Task'
-                        ? 'ProjectTask'
-                        : 'ProjectDeliverable'
-                    );
+                    setSelectedBoundTo(boundToOption === 'Task' ? 'ProjectTask' : 'ProjectDeliverable');
                   } else {
                     setSelectedItemable(null);
                     setSelectedBoundTo(null);
@@ -234,79 +181,40 @@ const BudgetItemsForm = ({ budget, setOpenDialog }) => {
         <Tabs
           value={activeTab}
           onChange={(e, newValue) => setActiveTab(newValue)}
-          variant='scrollable'
-          scrollButtons='auto'
+          variant="scrollable"
+          scrollButtons="auto"
           allowScrollButtonsMobile
         >
-          <Tab label='Expense Items' />
-          <Tab label='Product Items' />
-          <Tab label='Subcontract Tasks' />
+          <Tab label="Expense Items"/>
+          <Tab label="Product Items"/>
+          <Tab label="Subcontract Tasks"/>
         </Tabs>
+        
+        {activeTab === 0 && <LedgerItemsTab budget={budget} selectedBoundTo={selectedBoundTo} selectedItemable={selectedItemable}/>}
+        {activeTab === 1 && <ProductItemsTab budget={budget} selectedBoundTo={selectedBoundTo} selectedItemable={selectedItemable}/>}
+        {activeTab === 2 && boundToOption === 'Task' && selectedItemable?.id && <SubContractTasksTab budget={budget} selectedBoundTo={selectedBoundTo} selectedItemable={selectedItemable}/>}
 
-        {activeTab === 0 && (
-          <LedgerItemsTab
-            budget={budget}
-            selectedBoundTo={selectedBoundTo}
-            selectedItemable={selectedItemable}
-          />
-        )}
-        {activeTab === 1 && (
-          <ProductItemsTab
-            budget={budget}
-            selectedBoundTo={selectedBoundTo}
-            selectedItemable={selectedItemable}
-          />
-        )}
-        {activeTab === 2 &&
-          boundToOption === 'Task' &&
-          selectedItemable?.id && (
-            <SubContractTasksTab
-              budget={budget}
-              selectedBoundTo={selectedBoundTo}
-              selectedItemable={selectedItemable}
-            />
-          )}
       </DialogTitle>
       <DialogContent>
-        <Grid
-          container
-          width={'100%'}
-          columnSpacing={1}
-          justifyContent='center'
-          marginTop={2}
-        >
-          <Grid size={{ xs: 12 }}>
+        <Grid container width={'100%'} columnSpacing={1} justifyContent="center" marginTop={2}>
+          <Grid size={{xs: 12}}>
             {activeTab === 0 && filteredExistingLedgerItems.length > 0 && (
               <>
-                <Grid
-                  container
-                  width={'100%'}
-                  paddingBottom={1}
-                  columnSpacing={1}
-                  justifyContent='flex-end'
-                  alignItems='center'
-                >
-                  <Grid size={{ xs: 12, md: 6 }}>
+                <Grid container width={'100%'} paddingBottom={1} columnSpacing={1} justifyContent="flex-end" alignItems="center">
+                  <Grid size={{xs: 12, md: 6}}>
                     <Tooltip title='Total Expenses Items'>
-                      <Typography
-                        fontWeight='bold'
-                        variant='h4'
-                        component='span'
-                      >
-                        {totalExpenseTabAmount?.toLocaleString('en-US', {
-                          style: 'currency',
-                          currency: baseCurrency?.code,
-                        })}
+                      <Typography fontWeight="bold" variant="h4" component="span">
+                        {totalExpenseTabAmount?.toLocaleString('en-US', { style: 'currency', currency: baseCurrency?.code })}
                       </Typography>
                     </Tooltip>
                   </Grid>
-                  <Grid size={{ xs: 12, md: 6 }}>
+                  <Grid size={{xs: 12, md: 6}}>
                     <LedgerSelect
                       multiple={true}
-                      label='Filter by Expense'
+                      label="Filter by Expense"
                       allowedGroups={['Expenses']}
-                      onChange={(newValue) => {
-                        setSearchQueryIds(newValue.map((ledger) => ledger.id));
+                      onChange={(newValue) => { 
+                        setSearchQueryIds(newValue.map(ledger => ledger.id));
                       }}
                     />
                   </Grid>
@@ -321,29 +229,17 @@ const BudgetItemsForm = ({ budget, setOpenDialog }) => {
                     />
                   ))
                 ) : (
-                  <Alert severity='warning'>No Expense Items Found</Alert>
+                  <Alert severity="warning">No Expense Items Found</Alert>
                 )}
               </>
             )}
             {activeTab === 1 && filteredExistingProductItems.length > 0 && (
               <>
-                <Grid
-                  container
-                  width={'100%'}
-                  paddingBottom={1}
-                  columnSpacing={1}
-                >
-                  <Grid size={{ xs: 12, md: 6 }}>
+                <Grid container width={'100%'} paddingBottom={1} columnSpacing={1}>
+                  <Grid size={{xs: 12, md: 6}}>
                     <Tooltip title='Total Product Items'>
-                      <Typography
-                        fontWeight='bold'
-                        variant='h4'
-                        component='span'
-                      >
-                        {totalProductTabAmount?.toLocaleString('en-US', {
-                          style: 'currency',
-                          currency: baseCurrency?.code,
-                        })}
+                      <Typography fontWeight="bold" variant="h4" component="span">
+                        {totalProductTabAmount?.toLocaleString('en-US', { style: 'currency', currency: baseCurrency?.code })}
                       </Typography>
                     </Tooltip>
                   </Grid>
@@ -360,56 +256,31 @@ const BudgetItemsForm = ({ budget, setOpenDialog }) => {
             )}
             {activeTab === 2 && filteredExistingSubContractTasks.length > 0 && (
               <>
-                <Grid
-                  container
-                  width={'100%'}
-                  paddingBottom={1}
-                  columnSpacing={1}
-                >
-                  <Grid size={{ xs: 12, md: 6 }}>
+                <Grid container width={'100%'} paddingBottom={1} columnSpacing={1}>
+                  <Grid size={{xs: 12, md: 6}}>
                     <Tooltip title='Total Subcontract Tasks'>
-                      <Typography
-                        fontWeight='bold'
-                        variant='h4'
-                        component='span'
-                      >
-                        {totalSubContractTabAmount?.toLocaleString('en-US', {
-                          style: 'currency',
-                          currency: baseCurrency?.code,
-                        })}
+                      <Typography fontWeight="bold" variant="h4" component="span">
+                        {totalSubContractTabAmount?.toLocaleString('en-US', { style: 'currency', currency: baseCurrency?.code })}
                       </Typography>
-                    </Tooltip>
+                    </Tooltip>  
                   </Grid>
                 </Grid>
-                {filteredExistingSubContractTasks.map(
-                  (subContractTask, index) => (
-                    <SubContractTasksRow
-                      key={index}
-                      subContractTask={subContractTask}
-                      index={index}
-                      existingSubContractTasks={
-                        filteredExistingSubContractTasks
-                      }
-                    />
-                  )
-                )}
+                {filteredExistingSubContractTasks.map((subContractTask, index) => (
+                  <SubContractTasksRow
+                    key={index}
+                    subContractTask={subContractTask}
+                    index={index}
+                    existingSubContractTasks={filteredExistingSubContractTasks}
+                  />
+                ))}
               </>
             )}
           </Grid>
         </Grid>
       </DialogContent>
       <DialogActions>
-        <Stack
-          spacing={1}
-          direction='row'
-          justifyContent='center'
-          sx={{ mt: 1, mb: 1 }}
-        >
-          <Button
-            size='small'
-            variant='outlined'
-            onClick={() => setOpenDialog(false)}
-          >
+        <Stack spacing={1} direction="row" justifyContent="center" sx={{ mt: 1, mb: 1 }}>
+          <Button size="small" variant="outlined" onClick={() => setOpenDialog(false)}>
             Close
           </Button>
         </Stack>

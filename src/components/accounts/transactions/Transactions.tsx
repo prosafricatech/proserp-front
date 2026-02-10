@@ -1,5 +1,6 @@
 'use client';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import CurrencySelectProvider from '@/components/masters/Currencies/CurrencySelectProvider';
 import UnauthorizedAccess from '@/shared/Information/UnauthorizedAccess';
 import UnsubscribedAccess from '@/shared/Information/UnsubscribedAccess';
 import { MODULES } from '@/utilities/constants/modules';
@@ -12,7 +13,6 @@ import {
   useReducer,
   useState,
 } from 'react';
-import CurrencySelectProvider from '../../masters/currencies/CurrencySelectProvider';
 import LedgerGroupProvider from '../ledgerGroups/LedgerGroupProvider';
 import LedgerSelectProvider from '../ledgers/forms/LedgerSelectProvider';
 import TransactionsList from './TransactionsList';

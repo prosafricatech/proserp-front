@@ -61,6 +61,7 @@ interface StationFormData {
   name: string;
   address: string;
   user_ids: number[];
+  collection_ledger_ids: number[];
   shifts: ShiftForm[];
   cashiers: CashierForm[];
   fuel_pumps: FuelPumpForm[];
@@ -71,6 +72,7 @@ interface Station {
   name: string;
   address?: string;
   users: { id: number; name?: string }[];
+  collection_ledgers: { id: number; name?: string }[];
   shifts: {
     id: number;
     name: string;
@@ -128,6 +130,10 @@ const formatDayjsToTime = (dayjsObj: dayjs.Dayjs | null) => {
 
 const validationSchema = yup.object({
   name: yup.string().required("Station name is required").typeError('Station name is required'),
+  collection_ledger_ids: yup.array()
+    .of(yup.number().required())
+    .min(1, 'At least one collection Account is required')
+    .required('Collection Accounts are required'),
   shifts: yup.array().of(
     yup.object().shape({
       name: yup.string().required("Shift name is required").typeError('Shift name is required'),
@@ -206,6 +212,7 @@ const StationsForm = ({ setOpenDialog, station }: StationsFormProps) => {
       name: station?.name || '',
       address: station?.address || '',
       user_ids: station?.users?.map((user) => user.id) || [],
+      collection_ledger_ids: station?.collection_ledgers?.map((ledger) => ledger.id) || [],
       shifts: station?.shifts?.length
         ? station.shifts.map((shift) => ({
             id: shift.id,
@@ -285,6 +292,7 @@ const StationsForm = ({ setOpenDialog, station }: StationsFormProps) => {
       <DialogContent>
         <form onSubmit={handleSubmit(onSubmit)} autoComplete="off">
           <Grid container columnSpacing={2} rowSpacing={1} paddingTop={1}>
+            {/* Station Name */}
             <Grid size={{ xs: 12, md: 6 }}>
               <Div sx={{ mt: 1 }}>
                 <TextField
@@ -297,6 +305,8 @@ const StationsForm = ({ setOpenDialog, station }: StationsFormProps) => {
                 />
               </Div>
             </Grid>
+            
+            {/* Address */}
             <Grid size={{ xs: 12, md: 6 }}>
               <Div sx={{ mt: 1 }}>
                 <TextField
@@ -309,6 +319,8 @@ const StationsForm = ({ setOpenDialog, station }: StationsFormProps) => {
                 />
               </Div>
             </Grid>
+            
+            {/* Users */}
             <Grid size={{ xs: 12 }}>
               <Div sx={{ mt: 1 }}>
                 <UsersSelector
@@ -322,6 +334,29 @@ const StationsForm = ({ setOpenDialog, station }: StationsFormProps) => {
               </Div>
             </Grid>
             
+            {/* Collection Accounts */}
+            <Grid size={{ xs: 12 }}>
+              <Div sx={{ mt: 2 }}>
+                <LedgerSelect
+                  label="Collection Accounts"
+                  allowedGroups={['Cash and cash equivalents', 'Banks']}
+                  multiple={true}
+                  defaultValue={ungroupedLedgerOptions.filter((ledger) =>
+                    watch('collection_ledger_ids')?.includes(ledger.id)
+                  )}
+                  frontError={errors.collection_ledger_ids}
+                  onChange={(newValue: any) =>
+                    setValue(
+                      'collection_ledger_ids',
+                      newValue?.map((l: any) => l.id) || [],
+                      { shouldValidate: true, shouldDirty: true }
+                    )
+                  }
+                />
+              </Div>
+            </Grid>
+            
+            {/* Tabs */}
             <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
               <Tabs
                 value={activeTab}
@@ -332,7 +367,7 @@ const StationsForm = ({ setOpenDialog, station }: StationsFormProps) => {
               >
                 <Tab label="Shifts" />
                 <Tab label="Cashiers" />
-                <Tab label="Fuel Pump" />
+                <Tab label="Fuel Pumps" />
               </Tabs>
             </Grid>
             

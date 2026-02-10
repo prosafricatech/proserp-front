@@ -9,7 +9,7 @@ import {
 import { Span } from '@jumbo/shared';
 import DarkModeOutlinedIcon from '@mui/icons-material/DarkModeOutlined';
 import LightModeOutlinedIcon from '@mui/icons-material/LightModeOutlined';
-
+ 
 import { mainTheme as mainThemeDefault } from '@/themes/main/default';
 import { headerTheme as headerThemeDefault } from '@/themes/header/default';
 import { sidebarTheme as sidebarThemeDefault } from '@/themes/sidebar/default';
@@ -32,7 +32,7 @@ const themeMap = {
     sidebar: sidebarThemeDefault,
     footer: footerThemeDefault,
   },
-  'semi-dark': {
+  'semi-dark': {  
     main: mainThemeSemiDark,
     header: headerThemeSemiDark,
     sidebar: sidebarThemeSemiDark,

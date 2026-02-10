@@ -3,7 +3,6 @@ import { StyleSheet } from '@react-pdf/renderer';
 const pdfStyles = StyleSheet.create({
   page: {
     flexDirection: 'column',
-    // padding: 50,
     padding: 30,
     position: 'relative',
   },

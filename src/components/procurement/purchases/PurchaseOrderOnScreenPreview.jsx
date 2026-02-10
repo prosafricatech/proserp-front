@@ -518,7 +518,7 @@ function PurchaseOrderOnScreenPreview({ order }) {
               mb: 2,
             }}
           >
-            CLOSURES
+            Closing Details
           </Typography>
 
           <TableContainer
@@ -548,27 +548,27 @@ function PurchaseOrderOnScreenPreview({ order }) {
                       color: contrastText,
                       fontSize: '0.875rem',
                     }}
-                  >
-                    Name
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      backgroundColor: mainColor,
-                      color: contrastText,
-                      fontSize: '0.875rem',
-                    }}
-                  >
-                    Closing Remarks
-                  </TableCell>
-                  <TableCell
-                    sx={{
-                      backgroundColor: mainColor,
-                      color: contrastText,
-                      fontSize: '0.875rem',
-                    }}
                     align='right'
                   >
                     Date
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      backgroundColor: mainColor,
+                      color: contrastText,
+                      fontSize: '0.875rem',
+                    }}
+                  >
+                    Done By
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      backgroundColor: mainColor,
+                      color: contrastText,
+                      fontSize: '0.875rem',
+                    }}
+                  >
+                    Remarks
                   </TableCell>
                 </TableRow>
               </TableHead>
@@ -584,11 +584,11 @@ function PurchaseOrderOnScreenPreview({ order }) {
                     }}
                   >
                     <TableCell>{index + 1}</TableCell>
+                    <TableCell align='right' sx={{ fontFamily: 'monospace' }}>
+                      {readableDate(closure.datetime_closed, true)}
+                    </TableCell>
                     <TableCell>{closure.creator.name}</TableCell>
                     <TableCell>{closure.closing_remarks ?? '-'}</TableCell>
-                    <TableCell align='right' sx={{ fontFamily: 'monospace' }}>
-                      {readableDate(closure.datetime_closed, false)}
-                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

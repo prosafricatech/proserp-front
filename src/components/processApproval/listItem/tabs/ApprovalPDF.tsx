@@ -20,6 +20,7 @@ interface Approval {
   remarks?: string;
   amount: number;
   vat_amount: number;
+  status?: string;
 }
 
 interface ApprovalPDFProps {
@@ -49,6 +50,11 @@ function ApprovalPDF({ approval, organization }: ApprovalPDFProps) {
       producer='ProsERP'
     >
       <Page size="A4" style={pdfStyles.page}>
+        {approval.status?.toLowerCase() === 'rejected' && (
+          <View style={pdfStyles.watermark} fixed>
+            <Text style={pdfStyles.watermarkText}>REJECTED</Text>
+          </View>
+        )}
         <View style={{ ...pdfStyles.tableRow, marginBottom: 20 }}>
           <View style={{ flex: 1, maxWidth: (organization?.logo_path ? 130 : 250)}}>
             <PdfLogo organization={organization}/>

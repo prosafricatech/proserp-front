@@ -82,6 +82,7 @@ function ProductSelect(props) {
     multiple = false,
     startAdornment,
     excludeFuelProducts = false,
+    includeOnlyFuelProducts = false,
     requiredProducts,
     addedProduct = null,
     defaultValue = null,
@@ -121,6 +122,11 @@ function ProductSelect(props) {
       opts = opts.filter((p) => !p.is_fuel);
     }
 
+    // 👇 ONLY fuel products when flag is true
+    if (includeOnlyFuelProducts) {
+      opts = opts.filter((p) => p.is_fuel);
+    }
+
     if (addedProduct?.id) {
       opts = [...opts, addedProduct];
     }
@@ -137,7 +143,8 @@ function ProductSelect(props) {
     excludeIds,
     addedProduct,
     requiredProducts,
-    excludeFuelProducts
+    excludeFuelProducts,
+    includeOnlyFuelProducts
   ]);
 
   const handleOnChange = (_, newValue) => {

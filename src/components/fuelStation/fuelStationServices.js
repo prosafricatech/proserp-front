@@ -18,60 +18,71 @@ fuelStationServices.getStationDippings = async (params = {}) => {
     return data;
 }
 
-fuelStationServices.dippingReport = async (params) => {
-    const { data } = await axios.get(`/api/fuelStations/dippings/dippingReport`, {
+fuelStationServices.dippingReport = async(params) => {
+    const {data} = await axios.get(`/api/fuelStations/dippings/dippingReport`,{
         params
     })
     return data;
 }
 
-fuelStationServices.getUserStations = async ({ queryKey }) => {
-    const { userId } = queryKey[1];
+fuelStationServices.getUserStations = async({queryKey}) => {
+    const { userId } = queryKey[1]; 
     const { data } = await axios.get(`/api/fuelStations/stations/${userId}/userStations`);
     return data;
 }
 
-fuelStationServices.retrieveLastReadings = async (params) => {
-    const { data } = await axios.get(`/api/fuelStations/stations/${params.stationId}/retrieveLastReadings`, {
+fuelStationServices.retrieveLastReadings = async(params) => {
+    const {data} = await axios.get(`/api/fuelStations/stations/${params.stationId}/retrieveLastReadings`,{
         params
     });
     return data;
 }
 
+fuelStationServices.getProductsSellingPrices = async ({ product_ids, sales_outlet_id, as_at }) => {
+    const { data } = await axios.get('/api/fuelStations/salesShifts/productsSellingPrices', {
+        params: {
+            product_ids: product_ids,
+            sales_outlet_id,
+            as_at,
+        },
+    });
+    return data;
+};
+
 fuelStationServices.showShiftDetails = async (id) => {
-    const { data } = await axios.get(`/api/fuelStations/salesShifts/${id}/showShiftDetails`);
+    const {data} = await axios.get(`/api/fuelStations/salesShifts/${id}/showShiftDetails`);
     return data;
 }
 
 fuelStationServices.showDippingDetails = async (id) => {
-    const { data } = await axios.get(`/api/fuelStations/dippings/${id}/showDippingDetails`);
+    const {data} = await axios.get(`/api/fuelStations/dippings/${id}/showDippingDetails`);
     return data;
 }
 
-fuelStationServices.addSalesShifts = async (salesShift) => {
+fuelStationServices.addSalesShifts = async(salesShift) => {
     return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const { data } = await axios.post('/api/fuelStations/salesShifts/add', salesShift)
+        const {data} = await axios.post('/api/fuelStations/salesShifts/add',salesShift)
         return data;
     })
 }
 
-fuelStationServices.updateSalesShifts = async (salesShift) => {
+fuelStationServices.updateSalesShifts = async(salesShift) => {
     return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const { data } = await axios.put(`/api/fuelStations/salesShifts/${salesShift.id}/update`, salesShift)
-        return data;
+        const {data} = await axios.put(`/api/fuelStations/salesShifts/${salesShift.id}/update`,salesShift)
+        return data;    
     })
 }
 
 fuelStationServices.deleteSalesShift = async (id) => {
     return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const { data } = await axios.delete(`/api/fuelStations/salesShifts/${id}/delete`);
+        const {data} = await axios.delete(`/api/fuelStations/salesShifts/${id}/delete`);
         return data;
     })
 };
 
 fuelStationServices.deleteDipping = async (id) => {
     return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const { data } = await axios.delete(`/api/fuelStations/dippings/${id}/deleteDipping`);
+        const {data} = await axios.delete(`/api/fuelStations/dippings/${id}/deleteDipping`);
         return data;
     })
 };

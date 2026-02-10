@@ -6,7 +6,7 @@ import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 
 const SalesShiftsListItem = ({ ClosedShift }) => {
     const {activeStation} = useContext(StationFormContext);
-    const { shift_teams } = activeStation;
+    const { shifts } = activeStation;
 
   return (
     <Grid 
@@ -35,7 +35,7 @@ const SalesShiftsListItem = ({ ClosedShift }) => {
       <Grid size={{xs: 6, md: 3}}>
             <Tooltip title='Shift Team'>
                 <Typography>
-                    {shift_teams?.find(team => team.id === ClosedShift.shift_team_id)?.name}
+                    {shifts?.find(team => team.id === ClosedShift.sales_outlet_shift_id)?.name}
                 </Typography>
             </Tooltip>
         </Grid>

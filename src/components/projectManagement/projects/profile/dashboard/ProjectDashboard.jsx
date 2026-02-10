@@ -35,8 +35,7 @@ const EditProject = ({ project, setOpenEditDialog }) => {
 };
 
 function ProjectDashboard() {
-  const { project, isDashboardTab, setIsDashboardTab, reFetchProject } =
-  useProjectProfile();
+  const { project, isDashboardTab, setIsDashboardTab, reFetchProject }=useProjectProfile();
   const [openEditDialog, setOpenEditDialog] = useState(false);
 
   const menuItems = [{ icon: <EditOutlined />, title: 'Edit', action: 'edit' }];

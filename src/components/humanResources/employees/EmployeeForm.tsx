@@ -15,9 +15,9 @@ import {
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import dayjs from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 import { useSnackbar } from 'notistack';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import humanResourcesServices from '../humanResourcesServices';
@@ -52,13 +52,23 @@ const EmployeeForm = ({
     { label: 'Female', value: 'female' },
   ];
 
-  const [employeeGender, setEmployeeGender] = useState<string | undefined>(
-    undefined
-  );
+  useEffect(() => {
+    const date = new Date();
+    const dayjsDate = dayjs(date).toISOString().split('T')[0];
+    setEmployeeDoB(dayjsDate);
+  }, []);
+
+  const [employeeDoB, setEmployeeDoB] = useState<string | undefined>('');
+  const [employeeGender, setEmployeeGender] = useState(genderOptions[0].value);
 
   const handleChange = (event: SelectChangeEvent) => {
     setEmployeeGender(event.target.value as string);
   };
+
+  useEffect(() => {
+    setValue('date_of_birth', new Date().toISOString().split('T')[0]);
+    setValue('gender', employeeGender);
+  }, [employeeDoB, employeeGender]);
 
   const {
     mutate: addEmployee,
@@ -72,7 +82,6 @@ const EmployeeForm = ({
         variant: 'success',
       });
       queryClient.invalidateQueries({ queryKey: ['employees'] });
-      console.log('data: ', data);
     },
     onError: (error) => {
       enqueueSnackbar('Error Adding Employee', {
@@ -103,32 +112,14 @@ const EmployeeForm = ({
   });
 
   const validationSchema = yup.object({
-    first_name: yup
-      .string()
-      .required('First Name is required')
-      .max(100, 'First Name is too long'),
-    middle_name: yup.string().nullable(),
-    last_name: yup
-      .string()
-      .required('Last Name is required')
-      .max(100, 'Last Name is too long'),
-    gender: yup
-      .string()
-      .required('Gender is required')
-      .oneOf(['male', 'female'], 'Gender is required'),
-    email: yup
-      .string()
-      .email()
-      .nullable()
-      .test(
-        'unique',
-        'Email already exists',
-        (value) => !value || !employee?.email.includes(value)
-      ),
-    phone_number: yup.string().nullable().max(20, 'Phone Number is too long'),
-    address: yup.string().nullable().max(500, 'Address is too long'),
-    date_of_birth: yup.date().nullable(),
-    user_id: yup.array().nullable(),
+    first_name: yup.string().required('First name is required'),
+    middle_name: yup.string().required('Middle name is required'),
+    last_name: yup.string().required('Last name is required'),
+    gender: yup.string().required('Gender is required'),
+    email: yup.string().email().required('email is required'),
+    phone_number: yup.string().required('Phone number is required'),
+    address: yup.string().required('Address is required'),
+    date_of_birth: yup.date().required('Date of birth is required'),
   });
 
   const {
@@ -146,8 +137,7 @@ const EmployeeForm = ({
       email: employee?.email || '',
       phone_number: employee?.phone_number || '',
       address: employee?.address || '',
-      date_of_birth: employee?.date_of_birth || undefined,
-      user_id: employee?.user_id || undefined,
+      date_of_birth: employee?.date_of_birth || employeeDoB,
     },
   });
 
@@ -175,7 +165,7 @@ const EmployeeForm = ({
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='First Name'
-                  placeholder=''
+                  placeholder='John'
                   size='small'
                   fullWidth
                   error={
@@ -196,7 +186,7 @@ const EmployeeForm = ({
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='Middle Name'
-                  placeholder=''
+                  placeholder='James'
                   size='small'
                   fullWidth
                   error={
@@ -218,7 +208,7 @@ const EmployeeForm = ({
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='Last Name'
-                  placeholder=''
+                  placeholder='Doe'
                   size='small'
                   fullWidth
                   error={
@@ -245,27 +235,14 @@ const EmployeeForm = ({
                     option.label === value.label
                   }
                   getOptionLabel={(option) => option.label}
-                  value={
-                    genderOptions.find(
-                      (option) => option.value === employeeGender
-                    ) || null
-                  }
+                  value={genderOptions[0]}
                   onChange={(event, newValue) => {
                     if (newValue) {
-                      setEmployeeGender(newValue?.value ?? '');
-                      setValue('gender', newValue?.value ?? '', {
-                        shouldValidate: true,
-                        shouldDirty: true,
-                      });
+                      setEmployeeGender(newValue.value);
                     }
                   }}
                   renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label='Gender'
-                      error={!!errors.gender}
-                      helperText={errors.gender?.message}
-                    />
+                    <TextField {...params} label='Gender' />
                   )}
                 />
               </Div>
@@ -274,7 +251,7 @@ const EmployeeForm = ({
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='Email'
-                  placeholder=''
+                  placeholder='example@gmail.com'
                   size='small'
                   fullWidth
                   error={
@@ -295,7 +272,7 @@ const EmployeeForm = ({
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='Phone Number'
-                  placeholder=''
+                  placeholder='0712345678'
                   size='small'
                   fullWidth
                   error={
@@ -318,25 +295,16 @@ const EmployeeForm = ({
               <Div sx={{ mt: 1, mb: 1 }}>
                 <DatePicker
                   label='Date of Birth'
-                  value={
-                    employee?.date_of_birth
-                      ? dayjs(employee.date_of_birth)
-                      : null
-                  }
-                  onChange={(value) => {
+                  value={dayjs(employeeDoB)}
+                  onChange={(value: Dayjs | null) => {
                     if (value) {
-                      setValue('date_of_birth', value?.format('YYYY-MM-DD'), {
-                        shouldValidate: true,
-                        shouldDirty: true,
-                      });
+                      setEmployeeDoB(value.toISOString().split('T')[0]);
                     }
                   }}
                   slotProps={{
                     textField: {
                       size: 'small',
                       fullWidth: true,
-                      error: !!errors.date_of_birth,
-                      helperText: errors.date_of_birth?.message,
                     },
                   }}
                 />
@@ -345,8 +313,8 @@ const EmployeeForm = ({
             <Grid size={{ xs: 12, md: 8 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
-                  label='Address'
-                  placeholder=''
+                  label='Adress'
+                  placeholder='Dar es salaam, Tanzania'
                   size='small'
                   fullWidth
                   error={

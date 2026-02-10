@@ -34,6 +34,11 @@ function RequisitionPDF({ requisition, organization }: RequisitionPDFProps) {
             producer="ProsERP"
         >
             <Page size="A4" style={pdfStyles.page}>
+                {requisition.status === 'rejected' && (
+                    <View style={pdfStyles.watermark} fixed>
+                        <Text style={pdfStyles.watermarkText}>REJECTED</Text>
+                    </View>
+                )}
                 <View style={{ ...pdfStyles.tableRow, marginBottom: 20 }}>
                     <View style={{ flex: 1, maxWidth: organization?.logo_path ? 130 : 250 }}>
                         <PdfLogo organization={organization} />

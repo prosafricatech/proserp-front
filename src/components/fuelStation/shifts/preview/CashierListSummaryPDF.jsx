@@ -2,7 +2,6 @@ import pdfStyles from '@/components/pdf/pdf-styles';
 import { Text, View } from '@react-pdf/renderer';
 
 export default function CashierListSummaryPDF({
-  includeFuelVouchers,
   shiftData,
   organization,
   fuel_pumps,

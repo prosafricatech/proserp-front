@@ -30,13 +30,18 @@ function PurchaseOrderPDF({
   return (
     <Document
       title={order.orderNo}
-      author={`${order.creator.name}`}
+      author={`${order.creator?.name}`}
       subject='Purchase Order'
       creator='ProsERP'
       producer='ProsERP'
-      keywords={order.stakeholder.name}
+      keywords={order.stakeholder?.name}
     >
       <Page size='A4' style={styles.page}>
+        {order.closures && order.closures.length > 0 && (
+          <View style={styles.watermark} fixed>
+            <Text style={styles.watermarkText}>CLOSED</Text>
+          </View>
+        )}
         <View style={{ ...pdfStyles.tableRow, marginBottom: 20 }}>
           <View
             style={{ flex: 1, maxWidth: organization?.logo_path ? 130 : 250 }}
@@ -459,6 +464,22 @@ function PurchaseOrderPDF({
           </View>
         )}
 
+        <View style={{ ...pdfStyles.tableRow, marginTop: 50 }}>
+          <View style={{ flex: 0.8 }}></View>
+          <View style={{ flex: 0.2 }}>
+            <Text
+              style={{
+                ...pdfStyles.minInfo,
+                color: mainColor,
+                fontFamily: 'Helvetica-Bold',
+              }}
+            >
+              Created By:
+            </Text>
+            <Text style={{ ...pdfStyles.minInfo }}>{order.creator?.name}</Text>
+          </View>
+        </View>
+
         {/* Closures */}
         {order.closures && order.closures.length > 0 && (
           <View
@@ -478,7 +499,7 @@ function PurchaseOrderPDF({
                   color: 'black',
                 }}
               >
-                CLOSURES
+                Closing Details
               </Text>
             </View>
             <View style={styles.tableRow}>
@@ -494,6 +515,18 @@ function PurchaseOrderPDF({
               >
                 S/N
               </Text>
+                <Text
+                    style={{
+                    ...styles.tableCell,
+                    ...styles.tableHeader,
+                    ...styles.midInfo,
+                    backgroundColor: mainColor,
+                    color: contrastText,
+                    flex: 1,
+                    }}
+                >
+                    Date
+                </Text>
               <Text
                 style={{
                   ...styles.tableCell,
@@ -504,7 +537,7 @@ function PurchaseOrderPDF({
                   flex: 2,
                 }}
               >
-                Name
+                Done By
               </Text>
               <Text
                 style={{
@@ -516,19 +549,7 @@ function PurchaseOrderPDF({
                   flex: 2,
                 }}
               >
-                Closing Remarks
-              </Text>
-              <Text
-                style={{
-                  ...styles.tableCell,
-                  ...styles.tableHeader,
-                  ...styles.midInfo,
-                  backgroundColor: mainColor,
-                  color: contrastText,
-                  flex: 1,
-                }}
-              >
-                Date
+                Remarks
               </Text>
             </View>
             {order.closures.map((closure, index) => (
@@ -541,6 +562,15 @@ function PurchaseOrderPDF({
                   }}
                 >
                   {index + 1}
+                </Text>
+                <Text
+                  style={{
+                    ...styles.tableCell,
+                    backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
+                    flex: 1,
+                  }}
+                >
+                  {readableDate(closure.datetime_closed, true)}
                 </Text>
                 <Text
                   style={{
@@ -560,41 +590,11 @@ function PurchaseOrderPDF({
                 >
                   {closure.closing_remarks ?? '-'}
                 </Text>
-                <Text
-                  style={{
-                    ...styles.tableCell,
-                    backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
-                    flex: 1,
-                    textAlign: 'right',
-                  }}
-                >
-                  {readableDate(closure.datetime_closed, false)}
-                </Text>
               </View>
             ))}
           </View>
         )}
 
-        <View style={{ ...pdfStyles.tableRow, marginTop: 50 }}>
-          <View style={{ flex: 0.8 }}></View>
-          <View style={{ flex: 0.2 }}>
-            <Text
-              style={{
-                ...pdfStyles.minInfo,
-                color: mainColor,
-                fontFamily: 'Helvetica-Bold',
-              }}
-            >
-              Created By:
-            </Text>
-            <Text style={{ ...pdfStyles.minInfo }}>{order.creator?.name}</Text>
-          </View>
-        </View>
-
-        {/* Watermark */}
-        {/* <View style={{ ...pdfStyles.watermark }}>
-          <Text style={{ fontSize: 50, fontWeight: 500, transform: '' }}>CLOSED</Text>
-        </View> */}
         <PageFooter />
       </Page>
     </Document>

@@ -1,6 +1,7 @@
-export const dynamic = 'force-dynamic';
-import { Signin } from '@/components/signin';
+import { Signin } from "@/components/signin";
+
+export const dynamic = "force-dynamic";
 
 export default function SignIn() {
-  return <Signin />;
+  return <Signin/>;
 }

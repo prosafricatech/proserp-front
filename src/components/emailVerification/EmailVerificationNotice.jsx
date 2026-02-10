@@ -15,17 +15,22 @@ import {
 } from "@mui/material";
 import Link from "next/link";
 import { useSnackbar } from "notistack";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
+import { useLanguage } from "@/app/[lang]/contexts/LanguageContext";
 
 const EmailVerificationNotice = () => {
   const { authUser } = useJumboAuth();
   const [isSending, setIsSending] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
+  const lang = useLanguage();
   const router = useRouter();
 
+  /**
+   * While authUser is loading
+   */
   if (!authUser) {
     return (
       <Div
@@ -41,12 +46,9 @@ const EmailVerificationNotice = () => {
     );
   }
 
-  useEffect(() => {
-    if (authUser?.user?.email_verified_at) {
-      router.replace("/");
-    }
-  }, [authUser, router]);
-
+  /**
+   * Resend verification email
+   */
   const resendVerificationLink = async () => {
     if (!authUser?.user?.email) return;
 
@@ -70,6 +72,9 @@ const EmailVerificationNotice = () => {
     }
   };
 
+  /**
+   * Logout user
+   */
   const handleLogout = async () => {
     setIsLoggingOut(true);
     await signOut({
@@ -90,8 +95,9 @@ const EmailVerificationNotice = () => {
         p: (theme) => theme.spacing(4),
       }}
     >
+      {/* Logo */}
       <Div sx={{ mb: 3, display: "inline-flex" }}>
-        <Link href="/" style={{ display: "inline-flex" }}>
+        <Link href={`/${lang}/dashboard`} style={{ display: "inline-flex" }}>
           <img
             width={200}
             src={`${ASSET_IMAGES}/logos/proserp-logo.jpeg`}
@@ -100,6 +106,7 @@ const EmailVerificationNotice = () => {
         </Link>
       </Div>
 
+      {/* Card */}
       <Card sx={{ maxWidth: "100%", width: 360, mb: 4 }}>
         <CardContent>
           <Typography textAlign="center" sx={{ mb: 2 }} variant="body1">
@@ -113,7 +120,7 @@ const EmailVerificationNotice = () => {
               fullWidth
               id="email"
               label="Email"
-              defaultValue={authUser?.user?.email}
+              value={authUser?.user?.email || ""}
               disabled
             />
           </Div>
@@ -144,10 +151,22 @@ const EmailVerificationNotice = () => {
           </LoadingButton>
 
           <Typography textAlign="center" variant="body2" mb={1}>
-            Already Verified?{" "}
-            <Link href="/" style={{ textDecoration: "none" }}>
+            Already Verified?{' '}
+            <span
+              style={{ textDecoration: 'none', fontWeight: 500, color: '#1976d2', cursor: 'pointer' }}
+              onClick={async () => {
+                try {
+                  window.location.href = '/';
+                } catch (e) {
+                  enqueueSnackbar('Could not recheck verification. Please try again.', { variant: 'error' });
+                }
+              }}
+              role="button"
+              tabIndex={0}
+              onKeyPress={e => { if (e.key === 'Enter') window.location.href = '/'; }}
+            >
               Proceed to Homepage
-            </Link>
+            </span>
           </Typography>
 
           <Typography textAlign="center" variant="body2">

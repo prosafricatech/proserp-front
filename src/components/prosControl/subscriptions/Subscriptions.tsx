@@ -1,19 +1,19 @@
-'use client';
+"use client";
 
-import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
-import SubscriptionItem from '@/components/organizations/profile/subscriptions/SubscriptionItem';
-import { Subscription } from '@/components/organizations/profile/subscriptions/SubscriptionTypes';
-import UnauthorizedAccess from '@/shared/Information/UnauthorizedAccess';
-import { PROS_CONTROL_PERMISSIONS } from '@/utilities/constants/prosControlPermissions';
-import JumboListToolbar from '@jumbo/components/JumboList/components/JumboListToolbar/JumboListToolbar';
-import JumboRqList from '@jumbo/components/JumboReactQuery/JumboRqList/JumboRqList';
-import JumboSearch from '@jumbo/components/JumboSearch/JumboSearch';
-import { Card, Grid, Stack, Typography } from '@mui/material';
-import { useParams } from 'next/navigation';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import prosAfricansServices from '../prosAfricans/prosAfricansServices';
-import SubscriptionActionTail from './SubscriptionActionTail';
-import SubscriptionsStatusSelector from './SubscriptionsStatusSelector';
+import React, { useState, useCallback, useRef, useEffect } from "react";
+import { Card, Grid, Stack, Typography } from "@mui/material";
+import JumboListToolbar from "@jumbo/components/JumboList/components/JumboListToolbar/JumboListToolbar";
+import JumboRqList from "@jumbo/components/JumboReactQuery/JumboRqList/JumboRqList";
+import JumboSearch from "@jumbo/components/JumboSearch/JumboSearch";
+import prosAfricansServices from "../prosAfricans/prosAfricansServices";
+import SubscriptionActionTail from "./SubscriptionActionTail";
+import SubscriptionsStatusSelector from "./SubscriptionsStatusSelector";
+import { useParams } from "next/navigation";
+import { useJumboAuth } from "@/app/providers/JumboAuthProvider";
+import SubscriptionItem from "@/components/organizations/profile/subscriptions/SubscriptionItem";
+import { PROS_CONTROL_PERMISSIONS } from "@/utilities/constants/prosControlPermissions";
+import UnauthorizedAccess from "@/shared/Information/UnauthorizedAccess";
+import { Subscription } from "@/components/organizations/profile/subscriptions/SubscriptionTypes";
 
 interface QueryOptions {
   queryKey: string;
@@ -33,17 +33,17 @@ const Subscriptions: React.FC = () => {
   const [mounted, setMounted] = useState(false);
 
   // Ensure id is always a string
-  const id = Array.isArray(params.id) ? params.id[0] : (params.id ?? '');
+  const id = Array.isArray(params.id) ? params.id[0] : params.id ?? "";
 
   const [queryOptions, setQueryOptions] = useState<QueryOptions>({
-    queryKey: 'subscriptions',
+    queryKey: "subscriptions",
     queryParams: {
       id,
-      status: 'active',
-      keyword: '',
+      status: "active",
+      keyword: "",
     },
-    countKey: 'total',
-    dataKey: 'data',
+    countKey: "total",
+    dataKey: "data",
   });
 
   useEffect(() => {
@@ -94,37 +94,37 @@ const Subscriptions: React.FC = () => {
 
   return (
     <>
-      <Typography variant='h4' mb={2}>
+      <Typography variant="h4" mb={2}>
         Subscriptions
       </Typography>
       <JumboRqList
         ref={listRef}
         wrapperComponent={Card}
         service={prosAfricansServices.getSubscriptionsList}
-        primaryKey='id'
+        primaryKey="id"
         queryOptions={queryOptions}
         itemsPerPage={10}
         itemsPerPageOptions={[5, 8, 10, 15, 20, 50, 100, 150, 200]}
         renderItem={renderSubscription}
-        componentElement='div'
+        componentElement="div"
         wrapperSx={{
           flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
+          display: "flex",
+          flexDirection: "column",
         }}
         toolbar={
           <JumboListToolbar
             hideItemsPerPage
             actionTail={
               <Grid container columnSpacing={1} rowSpacing={1}>
-                <Grid size={{ xs: 12, lg: 4 }} alignItems='center'>
+                <Grid size={{ xs: 12, lg: 4 }} alignItems="center">
                   <SubscriptionsStatusSelector
                     value={queryOptions.queryParams.status}
                     onChange={handleOnStatusChange}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, lg: 8 }}>
-                  <Stack direction='row'>
+                  <Stack direction="row">
                     <JumboSearch
                       onChange={handleOnChange}
                       value={queryOptions.queryParams.keyword}
