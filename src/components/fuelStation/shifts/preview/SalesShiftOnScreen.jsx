@@ -282,8 +282,8 @@ const SalesShiftOnScreen = ({
         })}
       </Grid>
 
-      {/* Conditional rendering based on includeFuelVouchers */}
-      {!includeFuelVouchers ? (
+      {/* Conditional rendering based on openDetails */}
+      {!openDetails ? (
         <CashierListSummaryOnScreen
           shiftData={shiftData}
           organization={organization}
@@ -291,7 +291,7 @@ const SalesShiftOnScreen = ({
           fuel_pumps={fuel_pumps}
           tanks={tanks}
           productOptions={productOptions}
-          includeFuelVouchers={includeFuelVouchers}
+          openDetails={openDetails}
         />
       ) : (
         <>

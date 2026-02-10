@@ -19,7 +19,7 @@ export default function CashierListSummaryOnScreen({
   fuel_pumps = [],
   tanks = [],
   productOptions = [],
-  includeFuelVouchers = true,
+  openDetails = true,
 }) {
   const theme = useTheme();
   const isDark = theme.type === 'dark';

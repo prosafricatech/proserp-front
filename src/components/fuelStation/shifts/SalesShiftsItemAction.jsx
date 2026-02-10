@@ -1,5 +1,7 @@
 'use client';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { faFileExcel } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { JumboDdMenu } from '@jumbo/components';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
@@ -85,6 +87,27 @@ const DocumentDialog = ({
     return <LinearProgress />;
   }
 
+  const exportedData = {
+    shiftData: shiftData,
+    organization: organization,
+    productOptions: productOptions,
+    stationName: activeStation?.name,
+  };
+
+  const handlExcelExport = async (exportedData) => {
+    const blob =
+      await fuelStationServices.exportSalesShiftsToExcel(exportedData);
+
+    console.log('exportedData: ', exportedData);
+
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'sales-shifts.xlsx';
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
   return (
     <Dialog open={isOpen} maxWidth='xl' fullWidth>
       <DialogTitle>
@@ -114,6 +137,14 @@ const DocumentDialog = ({
           )}
           {!belowLargeScreen && <Grid size={11}></Grid>}
           <Grid size={1} textAlign='right'>
+            <Tooltip title='Export file'>
+              <IconButton
+                size='small'
+                onClick={() => handlExcelExport(exportedData)}
+              >
+                <FontAwesomeIcon icon={faFileExcel} color='green' />
+              </IconButton>
+            </Tooltip>
             <Tooltip title='Close'>
               <IconButton
                 size='small'
