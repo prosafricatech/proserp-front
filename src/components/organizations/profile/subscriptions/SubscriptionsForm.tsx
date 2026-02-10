@@ -252,33 +252,23 @@ function SubscriptionsForm({ setOpenDialog, isFromProsAfricanSubscriptions = fal
     setTotalModulesMonthly(totalMonthlyCost);
   }, [modulesSelected, subscription]);
 
-  // Helper to parse comma-separated numbers
-  const parseNumber = (val: string | number) => {
-    if (typeof val === 'string') {
-      const cleaned = val.replace(/,/g, '');
-      const num = Number(cleaned);
-      return isNaN(num) ? 0 : num;
-    }
-    return typeof val === 'number' ? val : 0;
-  };
-
   useEffect(() => {
     const totalAdditionalFeaturesMonthlyCost = (subscription && subscription.additional_features.length > 0)
       ? additionalFeaturesSelected.reduce((total, feature) => {
-        const rate = parseNumber(feature.rate);
-        const quantity = parseNumber(feature.quantity);
+        const rate = feature.rate || 0;
+        const quantity = feature.quantity || 0;
         return total + (rate * quantity);
         }, 0)
       : additionalFeaturesSelected.reduce((total, feature) => {
           const featureInSelectedModules = modulesSelected.some(module =>
             module.additional_features?.some((moduleFeature: SubscriptionModule) => moduleFeature.id === feature.id)
           );
-          return featureInSelectedModules ? total + (parseNumber(feature.quantity) * parseNumber(feature.rate)) : total;
+          return featureInSelectedModules ? total + (feature.quantity || 0) * (feature.rate || 0) : total;
         }, 0);
     
     setTotalAdditionalFeaturesMonthlyCost(totalAdditionalFeaturesMonthlyCost);
   
-    const totalAmount = totalAdditionalFeaturesMonthlyCost * (parseNumber(watch('months')) || 0);
+    const totalAmount = totalAdditionalFeaturesMonthlyCost * watch('months');
     setTotalAdditionalFeaturesAmount(totalAmount);
   }, [additionalFeaturesSelected, modulesSelected, subscription, watch('months')]);  
 

@@ -567,3 +567,7 @@ declare global {
     params: Promise<ParamMap[AppRouteHandlerRoute]>
   }
 }
+andlerRoutes> {
+    params: Promise<ParamMap[AppRouteHandlerRoute]>
+  }
+}

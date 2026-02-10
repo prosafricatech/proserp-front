@@ -82,7 +82,13 @@ const StationListItem = React.memo(
           </Grid>
 
           <Grid container size={{ xs: 12, md: 9.5 }}>
-            <Grid size={{ xs: 10, md: 10 }} container justifyContent='start'>
+            <Grid
+              size={{ xs: 10, md: 10 }}
+              sx={{ justifyContent: 'space-evenly' }}
+              gap={{ xs: 2, md: 8 }}
+              container
+              justifyContent='start'
+            >
               {/* Fuel Pump Badge */}
               <Grid
                 size={{ xs: 1.5, md: 1.5 }}
