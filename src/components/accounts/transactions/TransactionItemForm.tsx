@@ -259,11 +259,7 @@ const TransactionItemForm: React.FC<TransactionItemFormProps> = ({
                   });
                 }}
                 startAdornment={
-<<<<<<< HEAD
-                  <Tooltip title={'Add New Ledger'}>
-=======
                   <Tooltip title={'Add New Debit'}>
->>>>>>> origin/junior-development
                     <AddOutlined
                       onClick={() => {
                         setOpenLedgerQuickAdd(true);
@@ -305,11 +301,7 @@ const TransactionItemForm: React.FC<TransactionItemFormProps> = ({
                   });
                 }}
                 startAdornment={
-<<<<<<< HEAD
-                  <Tooltip title={'Add New Ledger'}>
-=======
                   <Tooltip title={'Add New Credit'}>
->>>>>>> origin/junior-development
                     <AddOutlined
                       onClick={() => {
                         setOpenLedgerQuickAdd(true);
