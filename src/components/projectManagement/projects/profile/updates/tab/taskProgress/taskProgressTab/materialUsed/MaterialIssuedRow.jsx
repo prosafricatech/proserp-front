@@ -33,12 +33,12 @@ function MaterialIssuedRow({ material, index, MaterialIssued=[], setMaterialIssu
                         </Grid>
                         <Grid size={{xs: 11, md: 3.5}}>
                             <Tooltip title="Product">
-                                <Typography>{product?.name || 'N/A'}</Typography>
+                                <Typography>{product?.name}</Typography>
                             </Tooltip>
                         </Grid>
                         <Grid size={{xs: 6, md: 2.5}}>
                             <Tooltip title="Store">
-                                <Typography>{material.store?.name || 'N/A'}</Typography>
+                                <Typography>{material.store?.name}</Typography>
                             </Tooltip>
                         </Grid>
                         <Grid size={{xs: 6, md: 2}} textAlign={'end'}>
@@ -48,7 +48,7 @@ function MaterialIssuedRow({ material, index, MaterialIssued=[], setMaterialIssu
                         </Grid>
                         <Grid size={{xs: 12, md: 2.5}} paddingLeft={3}>
                             <Tooltip title="Remarks">
-                                <Typography>{material.remarks || 'No remarks'}</Typography>
+                                <Typography>{material.remarks}</Typography>
                             </Tooltip>
                         </Grid>
                         <Grid size={{xs: 12, md: 1}} textAlign={'end'}>

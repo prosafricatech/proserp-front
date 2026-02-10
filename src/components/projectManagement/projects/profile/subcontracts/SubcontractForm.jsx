@@ -10,6 +10,7 @@ import dayjs from 'dayjs';
 import { AddOutlined } from '@mui/icons-material';
 import { useProjectProfile } from '../ProjectProfileProvider';
 import StakeholderSelector from '@/components/masters/stakeholders/StakeholderSelector';
+import StoreSelector from '@/components/procurement/stores/StoreSelector';
 import { Div } from '@jumbo/shared';
 import CurrencySelector from '@/components/masters/Currencies/CurrencySelector';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
@@ -70,6 +71,7 @@ function SubcontractForm({setOpenDialog, subContract = null }) {
             id: subContract?.id,
             project_id: project?.id,
             subcontractor_id: subContract?.subcontractor_id,
+            store_id: subContract?.store_id ?? null,
             commencement_date: subContract?.commencement_date ?? null,
             completion_date: subContract?.completion_date ?? null,
             currency_id: subContract ? subContract?.currency_id : 1,
@@ -94,39 +96,56 @@ function SubcontractForm({setOpenDialog, subContract = null }) {
       }
       <DialogContent>
         <Grid container spacing={1}>
-          {!stakeholderQuickAddDisplay &&
-            <Grid size={{xs: 12, md: 4}}>
-              <Div sx={{ mt: 1 }}>
-                <StakeholderSelector
-                  label='Sub Contractor Name'
-                  defaultValue={subContract && subContract.subcontractor_id}
-                  frontError={errors?.subcontractor_id}
-                  addedStakeholder={addedStakeholder}
-                  onChange={(newValue) => {
-                    newValue ? setValue('subcontractor_id', newValue.id,{
-                      shouldDirty: true,
-                      shouldValidate: true
-                    }) : setValue('subcontractor_id','',{
-                      shouldDirty: true,
-                      shouldValidate: true
-                    });
-                  }}
-                  startAdornment= {
-                    checkOrganizationPermission(PERMISSIONS.STAKEHOLDERS_CREATE) && (
-                        <Tooltip title="Add Sub Contractor">
-                            <AddOutlined
-                                
-                                sx={{ cursor: 'pointer' }}
+            {!stakeholderQuickAddDisplay &&
+                <>
+                    <Grid size={{xs: 12, md: 4}}>
+                        <Div sx={{ mt: 1 }}>
+                            <StakeholderSelector
+                                label='Sub Contractor Name'
+                                defaultValue={subContract && subContract.subcontractor_id}
+                                frontError={errors?.subcontractor_id}
+                                addedStakeholder={addedStakeholder}
+                                onChange={(newValue) => {
+                                    newValue ? setValue('subcontractor_id', newValue.id,{
+                                        shouldDirty: true,
+                                        shouldValidate: true
+                                    }) : setValue('subcontractor_id','',{
+                                        shouldDirty: true,
+                                        shouldValidate: true
+                                    });
+                                }}
+                                startAdornment= {
+                                    checkOrganizationPermission(PERMISSIONS.STAKEHOLDERS_CREATE) && (
+                                            <Tooltip title="Add Sub Contractor">
+                                                    <AddOutlined
+                                                            sx={{ cursor: 'pointer' }}
+                                                    />
+                                            </Tooltip>
+                                    )
+                                }
                             />
-                        </Tooltip>
-                    )
-                  }
-                />
-              </Div>
-            </Grid>
-          }
+                        </Div>
+                    </Grid>
+                    <Grid size={{xs: 12, md: 4}}>
+                        <Div sx={{ mt: 1 }}>
+                            <StoreSelector
+                                label="Store Assigned (optional)"
+                                allowSubStores={true}
+                                proposedOptions={project?.stores}
+                                defaultValue={subContract?.store_id ? project.stores.find(store => store.id === subContract.store_id) : null}
+                                onChange={(newValue) => {
+                                    setValue('store_id', newValue ? newValue.id : null, {
+                                        shouldDirty: true,
+                                        shouldValidate: false,
+                                    });
+                                }}
+                            />
+                        </Div>
+                    </Grid>
+                </>
+            }
 
-          {stakeholderQuickAddDisplay && <StakeholderQuickAdd displayTitle={'Add Sub Contractor'} setStakeholderQuickAddDisplay={setStakeholderQuickAddDisplay} create_payable={true} setAddedStakeholder={setAddedStakeholder}/>} 
+            {stakeholderQuickAddDisplay && <StakeholderQuickAdd displayTitle={'Add Sub Contractor'} setStakeholderQuickAddDisplay={setStakeholderQuickAddDisplay} create_payable={true} setAddedStakeholder={setAddedStakeholder}/>} 
 
             {!stakeholderQuickAddDisplay &&
                 <>
@@ -229,7 +248,7 @@ function SubcontractForm({setOpenDialog, subContract = null }) {
                             />
                         </Div>
                     </Grid>
-                    <Grid size={{xs: 12, md: watch('currency_id') > 1 ? 12 : 4}}>
+                    <Grid size={{xs: 12, md: watch('currency_id') > 1 ? 8 : 12}}>
                         <Div sx={{ mt: 1 }}>
                             <TextField
                                 label="Remarks"

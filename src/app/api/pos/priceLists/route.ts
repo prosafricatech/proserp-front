@@ -8,20 +8,14 @@ export async function GET(request: NextRequest) {
   if (response) return response;
 
   const { searchParams } = new URL(request.url);
-  const fuelPriceLists = searchParams.get('fuelPriceLists') === 'true';
 
+  // Just forward all incoming query parameters exactly as they are
   const queryString = searchParams.toString();
 
-  const res = await (fuelPriceLists
-    ? fetch(`${API_BASE}/fuel-stations/fuel-pricelists?${queryString}`, {
-        headers,
-        credentials: 'include',
-      })
-    : fetch(`${API_BASE}/price_list?${queryString}`, {
-        headers,
-        credentials: 'include',
-      })
-  );
+  const res = await fetch(`${API_BASE}/price_list?${queryString}`, {
+    headers,
+    credentials: 'include',
+  });
 
   return handleJsonResponse(res);
 }

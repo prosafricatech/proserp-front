@@ -1,9 +1,11 @@
 'use client';
 
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
+import { KeyboardArrowDown, KeyboardArrowRight } from '@mui/icons-material';
 import {
   Box,
   Grid,
+  IconButton,
   Paper,
   Table,
   TableBody,
@@ -14,6 +16,7 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
+import { useState } from 'react';
 import CashierListSummaryOnScreen from './CashierListSummaryOnScreen';
 
 const SalesShiftOnScreen = ({
@@ -23,7 +26,7 @@ const SalesShiftOnScreen = ({
   fuel_pumps = [],
   tanks = [],
   productOptions = [],
-  openDetails = false,
+  openDetails = true,
 }) => {
   const theme = useTheme();
   const isDark = theme.type === 'dark';
@@ -31,6 +34,20 @@ const SalesShiftOnScreen = ({
   const mainColor = organization.settings?.main_color || '#2113AD';
   const contrastText = organization.settings?.contrast_text || '#FFFFFF';
   const headerColor = isDark ? '#29f096' : mainColor;
+
+  const [openSections, setOpenSections] = useState({
+    products: true,
+    cashDistribution: true,
+    pumpReadings: true,
+    tankAdjustments: !!shiftData?.adjustments?.length,
+    openingDipping: !!shiftData?.opening_dipping?.readings?.length,
+    closingDipping: !!shiftData?.closing_dipping?.readings?.length,
+    fuelVouchers: openDetails && !!shiftData?.fuel_vouchers?.length,
+  });
+
+  const toggleSection = (section) => {
+    setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
+  };
 
   // Calculate totals for each cashier
   const calculateCashierTotals = (cashier) => {
@@ -109,6 +126,22 @@ const SalesShiftOnScreen = ({
     return Object.values(merged);
   };
 
+  const cashAccounts = [
+    ...(shiftData.other_ledgers || []),
+    shiftData.main_ledger,
+  ].filter(Boolean);
+
+  // Fuel Vouchers Total
+  const totalFuelVouchersAmount = (shiftData.fuel_vouchers || []).reduce(
+    (total, voucher) => {
+      const price =
+        shiftData.fuel_prices?.find((p) => p.product_id === voucher.product_id)
+          ?.price || 0;
+      return total + voucher.quantity * price;
+    },
+    0
+  );
+
   // Products Sold Calculations (with adjustments)
   const mergedPumpReadings = (shiftData.pump_readings || []).reduce(
     (acc, pump) => {
@@ -126,6 +159,34 @@ const SalesShiftOnScreen = ({
   );
 
   const mergedProducts = Object.values(mergedPumpReadings);
+
+  const SectionHeader = ({ title, sectionKey, hasData = true }) =>
+    hasData && (
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          cursor: 'pointer',
+          py: 1.5,
+          px: 2,
+          bgcolor: theme.palette.background.default,
+          borderBottom: `1px solid ${theme.palette.divider}`,
+          '&:hover': { bgcolor: theme.palette.action.hover },
+        }}
+        onClick={() => toggleSection(sectionKey)}
+      >
+        <IconButton size='small' sx={{ mr: 1 }}>
+          {openSections[sectionKey] ? (
+            <KeyboardArrowDown />
+          ) : (
+            <KeyboardArrowRight />
+          )}
+        </IconButton>
+        <Typography variant='h6' sx={{ color: headerColor }}>
+          {title}
+        </Typography>
+      </Box>
+    );
 
   const NumberCell = ({ value, bold = false, color = 'text.primary' }) => (
     <TableCell
@@ -179,11 +240,10 @@ const SalesShiftOnScreen = ({
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid size={{ xs: 6, sm: 3 }}>
           <Typography variant='subtitle2' sx={{ color: headerColor }}>
-            Team
+            Sales Outlet Shift
           </Typography>
           <Typography variant='body1'>
-            {shift_teams?.find((t) => t.id === shiftData.shift_team_id)?.name ||
-              '—'}
+            {shiftData.shift?.name || 'N/A'}
           </Typography>
         </Grid>
         <Grid size={{ xs: 6, sm: 3 }}>
@@ -202,6 +262,24 @@ const SalesShiftOnScreen = ({
             {readableDate(shiftData.shift_end, true)}
           </Typography>
         </Grid>
+        {shiftData.fuel_prices?.map((price, index) => {
+          const product = productOptions?.find(
+            (p) => p.id === price.product_id
+          );
+          return (
+            <Grid key={index} size={{ xs: 6, sm: 3 }}>
+              <Typography variant='subtitle2' sx={{ color: headerColor }}>
+                {product?.name || `Product ${price.product_id}`}
+              </Typography>
+              <Typography variant='body1'>
+                {price.price?.toLocaleString('en-US', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </Typography>
+            </Grid>
+          );
+        })}
       </Grid>
 
       {/* Conditional rendering based on openDetails */}
@@ -486,7 +564,7 @@ const SalesShiftOnScreen = ({
 
                 {/* Cashier Cash Distribution */}
                 {(cashier.main_ledger ||
-                  cashier.cash_transactions?.length > 0) && (
+                  cashier.other_transactions?.length > 0) && (
                   <Box sx={{ mt: 3 }}>
                     <Typography
                       variant='subtitle1'
@@ -526,8 +604,8 @@ const SalesShiftOnScreen = ({
                             </TableRow>
                           )}
 
-                          {/* Cash Transactions */}
-                          {cashier.cash_transactions?.map(
+                          {/* Other Transactions */}
+                          {cashier.other_transactions?.map(
                             (transaction, idx) => {
                               const ledger =
                                 cashier.ledgers?.find(
@@ -539,7 +617,9 @@ const SalesShiftOnScreen = ({
 
                               return (
                                 <TableRow key={idx} hover>
-                                  <TableCell>{ledger.name}</TableCell>
+                                  <TableCell>
+                                    {transaction.debit_ledger.name}
+                                  </TableCell>
                                   <NumberCell value={transaction.amount} />
                                 </TableRow>
                               );
@@ -555,7 +635,7 @@ const SalesShiftOnScreen = ({
                             </TableCell>
                             <NumberCell
                               value={
-                                (cashier.cash_transactions?.reduce(
+                                (cashier.other_transactions?.reduce(
                                   (sum, t) => sum + (t.amount || 0),
                                   0
                                 ) || 0) + (cashier.main_ledger?.amount || 0)

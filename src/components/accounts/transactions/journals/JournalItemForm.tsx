@@ -246,7 +246,11 @@ function JournalItemForm({
                     startAdornment: (
                       <>
                         <Box sx={{ mr: 0.5 }}>
+<<<<<<< HEAD
                           <Tooltip title={'Add New Ledger'}>
+=======
+                          <Tooltip title={'Add New Debit'}>
+>>>>>>> origin/junior-development
                             <AddOutlined
                               onClick={() => {
                                 setOpenLedgerQuickAdd(true);
@@ -296,7 +300,11 @@ function JournalItemForm({
                     startAdornment: (
                       <>
                         <Box sx={{ mr: 0.5 }}>
+<<<<<<< HEAD
                           <Tooltip title={'Add New Ledger'}>
+=======
+                          <Tooltip title={'Add New Credit'}>
+>>>>>>> origin/junior-development
                             <AddOutlined
                               onClick={() => {
                                 setOpenLedgerQuickAdd(true);

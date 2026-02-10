@@ -357,7 +357,11 @@ const PaymentFormDialogContent: React.FC<PaymentFormDialogContentProps> = ({
                     }}
                     label='Pay From (Credit)'
                     startAdornment={
+<<<<<<< HEAD
                       <Tooltip title={'Add New Ledger'}>
+=======
+                      <Tooltip title={'Add New Credit'}>
+>>>>>>> origin/junior-development
                         <AddOutlined
                           onClick={() => {
                             setOpenLedgerQuickAdd(true);
