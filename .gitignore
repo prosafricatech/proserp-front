@@ -41,3 +41,6 @@ next-env.d.ts
 yarn.lock
 package-lock.json
 package-lock.json
+
+# error-wrapper
+/src/app/error-wrapper.tsx

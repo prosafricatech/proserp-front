@@ -1,5 +1,7 @@
 'use client';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { faFileExcel } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { JumboDdMenu } from '@jumbo/components';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
@@ -57,6 +59,7 @@ const EditShift = ({ ClosedShift, setOpenEditDialog }) => {
 const DocumentDialog = ({
   organization,
   ClosedShift,
+  isOpen,
   setOpenDocumentDialog,
 }) => {
   const { activeStation } = useContext(StationFormContext);
@@ -68,7 +71,7 @@ const DocumentDialog = ({
   const handleDetailsChange = (e) => {
     const isChecked = e.target.checked;
     setOpenDetails(isChecked);
-    setPdfKey(prev => prev + 1);
+    setPdfKey((prev) => prev + 1);
   };
 
   const { data: shiftData, isFetching } = useQuery({
@@ -84,8 +87,29 @@ const DocumentDialog = ({
     return <LinearProgress />;
   }
 
+  const exportedData = {
+    shiftData: shiftData,
+    organization: organization,
+    productOptions: productOptions,
+    stationName: activeStation?.name,
+  };
+
+  const handlExcelExport = async (exportedData) => {
+    const blob =
+      await fuelStationServices.exportSalesShiftsToExcel(exportedData);
+
+    console.log('exportedData: ', exportedData);
+
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'sales-shifts.xlsx';
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
   return (
-    <>
+    <Dialog open={isOpen} maxWidth='xl' fullWidth>
       <DialogTitle>
         <Stack
           direction={'row'}
@@ -93,38 +117,44 @@ const DocumentDialog = ({
           alignItems={'center'}
         >
           <Typography>With More Details</Typography>
-          <Checkbox
-            checked={openDetails}
-            onChange={handleDetailsChange}
-          />
+          <Checkbox checked={openDetails} onChange={handleDetailsChange} />
         </Stack>
       </DialogTitle>
       <DialogContent>
-        {belowLargeScreen && (
-          <Grid
-            container
-            alignItems='center'
-            justifyContent='space-between'
-            mb={2}
-          >
+        <Grid
+          container
+          alignItems='center'
+          justifyContent='space-between'
+          mb={2}
+        >
+          {belowLargeScreen && (
             <Grid size={11}>
               <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)}>
                 <Tab label='ONSCREEN' />
                 <Tab label='PDF' />
               </Tabs>
             </Grid>
-            <Grid size={1} textAlign='right'>
-              <Tooltip title='Close'>
-                <IconButton
-                  size='small'
-                  onClick={() => setOpenDocumentDialog(false)}
-                >
-                  <HighlightOff color='primary' />
-                </IconButton>
-              </Tooltip>
-            </Grid>
+          )}
+          {!belowLargeScreen && <Grid size={11}></Grid>}
+          <Grid size={1} textAlign='right'>
+            <Tooltip title='Export file'>
+              <IconButton
+                size='small'
+                onClick={() => handlExcelExport(exportedData)}
+              >
+                <FontAwesomeIcon icon={faFileExcel} color='green' />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title='Close'>
+              <IconButton
+                size='small'
+                onClick={() => setOpenDocumentDialog(false)}
+              >
+                <HighlightOff color='primary' />
+              </IconButton>
+            </Tooltip>
           </Grid>
-        )}
+        </Grid>
         {belowLargeScreen && activeTab === 0 ? (
           <SalesShiftOnScreen
             stationName={activeStation?.name}
@@ -167,7 +197,7 @@ const DocumentDialog = ({
           </Box>
         )}
       </DialogContent>
-    </>
+    </Dialog>
   );
 };
 
@@ -256,6 +286,7 @@ const SalesShiftsItemAction = ({ ClosedShift }) => {
         )}
         {openDocumentDialog && (
           <DocumentDialog
+            isOpen={openDocumentDialog}
             ClosedShift={ClosedShift}
             organization={organization}
             setOpenDocumentDialog={setOpenDocumentDialog}

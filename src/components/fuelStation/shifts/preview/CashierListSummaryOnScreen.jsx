@@ -15,13 +15,17 @@ import { useState } from 'react';
 export default function CashierListSummaryOnScreen({
   shiftData,
   organization,
+  shift_teams = [],
   fuel_pumps = [],
+  tanks = [],
   productOptions = [],
+  openDetails = true,
 }) {
   const theme = useTheme();
   const isDark = theme.type === 'dark';
 
   const mainColor = organization.settings?.main_color || '#2113AD';
+  const contrastText = organization.settings?.contrast_text || '#FFFFFF';
   const headerColor = isDark ? '#29f096' : mainColor;
 
   const [openSections, setOpenSections] = useState({

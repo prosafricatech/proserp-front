@@ -70,16 +70,16 @@ function AdditionalFeatures() {
 
   const handleFeatureChange = (
     featureId: number,
-    quantity: string,
-    rate: string
+    quantity: number,
+    rate: number
   ) => {
-    setAdditionalFeaturesSelected((existingFeatures: any[]) => 
-      existingFeatures.map((feature: any) =>
+    setAdditionalFeaturesSelected((existingFeatures: AdditionalFeature[]) => 
+      existingFeatures.map((feature: AdditionalFeature) =>
         feature.id === featureId 
           ? { 
               ...feature, 
-              quantity: quantity, // keep as string for editing
-              rate: rate // keep as string for editing
+              quantity: sanitizedNumber(quantity) || 0, 
+              rate: sanitizedNumber(rate) || 0 
             } 
           : feature
       )
@@ -88,8 +88,8 @@ function AdditionalFeatures() {
     setAdditionalFeatureValues((prevValues: any) => ({
       ...prevValues,
       [featureId]: {
-        quantity: quantity, // keep as string for editing
-        rate: rate,
+        quantity: sanitizedNumber(quantity) || 0,
+        rate: sanitizedNumber(rate) || 0,
       }
     }));
   };
@@ -104,19 +104,6 @@ function AdditionalFeatures() {
         additionalFeatures.map((additionaFeature, index) => {
           const isFeatureSelected = additionalFeaturesSelected.some((presentFeature) => presentFeature.id === additionaFeature.id);
           const currentValues = additionalFeatureValues[additionaFeature.id] || { quantity: additionaFeature.quantity, rate: additionaFeature.rate };
-          // Ensure empty string is allowed for editing
-          const displayQuantity = typeof currentValues.quantity === 'string' ? currentValues.quantity : String(currentValues.quantity ?? '');
-          const displayRate = typeof currentValues.rate === 'string' ? currentValues.rate : String(currentValues.rate ?? '');
-
-          // Helper to parse comma-separated numbers
-          const parseNumber = (val: string | number) => {
-            if (typeof val === 'string') {
-              const cleaned = val.replace(/,/g, '');
-              const num = Number(cleaned);
-              return isNaN(num) ? 0 : num;
-            }
-            return typeof val === 'number' ? val : 0;
-          };
 
           return (
             <Grid
@@ -166,9 +153,9 @@ function AdditionalFeatures() {
                     id={`quantity${additionaFeature.id}`}
                     size='small'
                     fullWidth
-                    value={displayQuantity}
+                    value={currentValues.quantity}
                     inputRef={(el) => (quantityRefs.current[additionaFeature.id] = el)}
-                    onChange={(e) => handleFeatureChange(additionaFeature.id, e.target.value, displayRate)}
+                    onChange={(e) => handleFeatureChange(additionaFeature.id, Number(e.target.value), currentValues.rate)}
                     InputProps={{
                       inputComponent: CommaSeparatedField,
                       endAdornment: <span>{additionaFeature?.unit?.symbol}</span>
@@ -184,9 +171,9 @@ function AdditionalFeatures() {
                       id={`rate_${additionaFeature.id}`}
                       size='small'
                       fullWidth
-                      value={displayRate}
+                      value={currentValues.rate}
                       inputRef={(el) => (rateRefs.current[additionaFeature.id] = el)}
-                      onChange={(e) => handleFeatureChange(additionaFeature.id, displayQuantity, e.target.value)}
+                      onChange={(e) => handleFeatureChange(additionaFeature.id, currentValues.quantity, Number(e.target.value))}
                       InputProps={{
                         inputComponent: CommaSeparatedField,
                       }}
@@ -200,7 +187,7 @@ function AdditionalFeatures() {
               </Grid>
               <Grid size={{xs: 6, md: 12, lg: 3}}>
                 <Tooltip title={subDictForm.helpTexts.additionalFeatureAmount}>
-                  <Typography align='right'>{(parseNumber(displayQuantity) * parseNumber(displayRate)).toLocaleString()}</Typography>
+                  <Typography align='right'>{((currentValues.quantity || 0) * (currentValues.rate || 0)).toLocaleString()}</Typography>
                 </Tooltip>
               </Grid>
             </Grid>
