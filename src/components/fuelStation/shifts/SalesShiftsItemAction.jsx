@@ -92,13 +92,15 @@ const DocumentDialog = ({
     organization: organization,
     productOptions: productOptions,
     stationName: activeStation?.name,
+    fuel_pumps: fuel_pumps,
+    tanks: tanks,
+    shift_teams: shift_teams,
+    withDetails: openDetails,
   };
 
   const handlExcelExport = async (exportedData) => {
     const blob =
       await fuelStationServices.exportSalesShiftsToExcel(exportedData);
-
-    console.log('exportedData: ', exportedData);
 
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -127,24 +129,14 @@ const DocumentDialog = ({
           justifyContent='space-between'
           mb={2}
         >
-          {belowLargeScreen && (
-            <Grid size={11}>
-              <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)}>
-                <Tab label='ONSCREEN' />
-                <Tab label='PDF' />
-              </Tabs>
-            </Grid>
-          )}
-          {!belowLargeScreen && <Grid size={11}></Grid>}
+          <Grid size={11}>
+            <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)}>
+              <Tab label='PDF' />
+              <Tab label='EXCEL' />
+              {belowLargeScreen && <Tab label='ONSCREEN' />}
+            </Tabs>
+          </Grid>
           <Grid size={1} textAlign='right'>
-            <Tooltip title='Export file'>
-              <IconButton
-                size='small'
-                onClick={() => handlExcelExport(exportedData)}
-              >
-                <FontAwesomeIcon icon={faFileExcel} color='green' />
-              </IconButton>
-            </Tooltip>
             <Tooltip title='Close'>
               <IconButton
                 size='small'
@@ -155,7 +147,7 @@ const DocumentDialog = ({
             </Tooltip>
           </Grid>
         </Grid>
-        {belowLargeScreen && activeTab === 0 ? (
+        {belowLargeScreen && activeTab === 2 && (
           <SalesShiftOnScreen
             stationName={activeStation?.name}
             openDetails={openDetails}
@@ -166,7 +158,28 @@ const DocumentDialog = ({
             shift_teams={shift_teams}
             organization={organization}
           />
-        ) : (
+        )}
+        {activeTab === 1 && (
+          <Grid
+            container
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+          >
+            <Tooltip title='Export file'>
+              <IconButton
+                size='large'
+                onClick={() => handlExcelExport(exportedData)}
+              >
+                <FontAwesomeIcon icon={faFileExcel} color='green' />
+              </IconButton>
+            </Tooltip>
+          </Grid>
+        )}
+
+        {activeTab === 0 && (
           <PDFContent
             key={pdfKey}
             fileName={shiftData.shiftNo}
@@ -184,7 +197,8 @@ const DocumentDialog = ({
             }
           />
         )}
-        {belowLargeScreen && (
+
+        {belowLargeScreen && activeTab === 0 && (
           <Box textAlign='right' mt={5}>
             <Button
               variant='outlined'
