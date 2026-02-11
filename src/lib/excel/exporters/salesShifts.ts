@@ -1,7 +1,4 @@
-<<<<<<< HEAD
-=======
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
->>>>>>> origin/junior-development
 import { addHeader, createWorkbook } from '../workBook';
 
 export async function exportSalesShiftsToExcel(exportedData: any) {
@@ -20,11 +17,7 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
       ' ',
       ' ',
       ' ',
-<<<<<<< HEAD
-      'Fuel Station Shift',
-=======
       'Fuel Sales Shift',
->>>>>>> origin/junior-development
     ]);
     addHeader(ws, [
       ' ',
@@ -51,22 +44,6 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
       exportedData.stationName,
     ]);
 
-<<<<<<< HEAD
-    // Add rows
-    const shiftInfoRow = ws.addRow([
-      'Sales Outlet',
-      'Shift Start',
-      'Shift End',
-      'Recorded By',
-      exportedData.shiftData.fuel_prices?.map((price: any, index: any) => {
-        const product = exportedData.productOptions?.find(
-          (p: any) => p.id === price.product_id
-        );
-        return product?.name || `Product ${price.product_id}`;
-      }),
-    ]);
-
-=======
     // fuel prices
     const fuelPrices: any[] = [];
 
@@ -104,9 +81,6 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
     ws.getCell('A7').alignment = { horizontal: 'center', vertical: 'middle' };
     ws.getCell('A7').font = { bold: true };
 
->>>>>>> origin/junior-development
-    // Return Excel buffer
-    return await wb.xlsx.writeBuffer();
   } catch (error) {
     console.error('Error exporting sample Excel:', error);
     throw error;
