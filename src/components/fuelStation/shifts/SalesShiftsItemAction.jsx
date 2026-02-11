@@ -102,8 +102,6 @@ const DocumentDialog = ({
     const blob =
       await fuelStationServices.exportSalesShiftsToExcel(exportedData);
 
-    console.log('exportedData: ', exportedData);
-
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;

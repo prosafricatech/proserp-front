@@ -1,7 +1,4 @@
-<<<<<<< HEAD
-=======
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
->>>>>>> origin/junior-development
 import { addHeader, createWorkbook } from '../workBook';
 
 export async function exportSalesShiftsToExcel(exportedData: any) {
@@ -229,11 +226,7 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
       ' ',
       ' ',
       ' ',
-<<<<<<< HEAD
-      'Fuel Station Shift',
-=======
       'Fuel Sales Shift',
->>>>>>> origin/junior-development
     ]);
     addHeader(ws, [
       ' ',
@@ -260,7 +253,6 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
       exportedData.stationName,
     ]);
 
-<<<<<<< HEAD
     // Add rows
     const shiftInfoRow = ws.addRow([
       'Sales Outlet',
@@ -275,7 +267,6 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
       }),
     ]);
 
-=======
     // fuel prices
     const fuelPrices: any[] = [];
 
@@ -1328,7 +1319,6 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
       }
     }
 
->>>>>>> origin/junior-development
     // Return Excel buffer
     return await wb.xlsx.writeBuffer();
     // return { cashierSummary: cashierSummary };
