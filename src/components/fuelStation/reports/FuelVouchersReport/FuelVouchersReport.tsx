@@ -272,40 +272,51 @@ const FuelVouchersReport: React.FC = () => {
         ) : reportData && reportData.length > 0 ? (
           <>
             <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)}>
-              <Tab label='PDF' />
               <Tab label='EXCEL' />
               {belowLargeScreen && <Tab label='ONSCREEN' />}
             </Tabs>
             {activeTab === 0 && (
-              <PDFContent
-                document={<FuelVouchersReportPDF />}
-                fileName={downloadFileName}
-              />
-            )}
-            {activeTab === 1 && (
               <Grid
                 container
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                }}
+                justifyContent="center"
+                alignItems="center"
+                sx={{ minHeight: 120 }}
               >
-                <Tooltip title='Export file'>
-                  <IconButton
-                    size='large'
-                    onClick={() => handlExcelExport(exportedData)}
-                    disabled={isExporting}
-                  >
-                    <FontAwesomeIcon icon={faFileExcel} color='green' />
-                  </IconButton>
+                <Tooltip title='Download Excel Report'>
+                  <span>
+                    <LoadingButton
+                      loading={isExporting}
+                      loadingPosition="start"
+                      startIcon={<FontAwesomeIcon icon={faFileExcel} color='white' />}
+                      variant="contained"
+                      color="success"
+                      size="large"
+                      sx={{
+                        px: 3,
+                        py: 1.5,
+                        fontWeight: 'bold',
+                        fontSize: '1.1rem',
+                        borderRadius: 2,
+                        boxShadow: 2,
+                        textTransform: 'none',
+                        background: 'linear-gradient(90deg, #43e97b 0%, #38f9d7 100%)',
+                        '&:hover': {
+                          background: 'linear-gradient(90deg, #38f9d7 0%, #43e97b 100%)',
+                        },
+                      }}
+                      onClick={() => handlExcelExport(exportedData)}
+                      disabled={isExporting}
+                    >
+                      Download Excel
+                    </LoadingButton>
+                  </span>
                 </Tooltip>
               </Grid>
             )}
           </>
         ) : (
           <Alert variant='outlined' severity='info'>
-            No data found
+            No fuel vouchers present
           </Alert>
         )}
       </DialogContent>
