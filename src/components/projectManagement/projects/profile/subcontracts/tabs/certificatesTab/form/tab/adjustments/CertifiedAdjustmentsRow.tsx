@@ -90,9 +90,7 @@ const CertifiedAdjustmentsRow: React.FC<CertifiedAdjustmentsRowProps> = ({
           <Grid size={{ xs: 5, md: 3 }}>
             <Tooltip title="Type">
               <Typography variant="body2">
-                {adjustment.type === '-' || adjustment.type === 'deduction'
-                  ? 'Deduction (-)'
-                  : 'Addition (+)'}
+                {(adjustment?.type === '-' || adjustment?.type === 'deduction') ? 'Deduction (-)' : 'Addition (+)'}
               </Typography>
             </Tooltip>
           </Grid>

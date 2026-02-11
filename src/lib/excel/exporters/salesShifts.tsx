@@ -215,6 +215,20 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
     const wb = createWorkbook();
     const ws = wb.addWorksheet('Sales Shifts');
 
+    // Set column widths for better readability
+    ws.columns = [
+      { width: 18 },
+      { width: 12 },
+      { width: 15 },
+      { width: 15 },
+      { width: 25 },
+      { width: 12 },
+      { width: 25 },
+      { width: 25 },
+      { width: 25 },
+      { width: 25 },
+    ];
+
     // Add header row using shared function
     addHeader(ws, [
       exportedData.organization.name,
@@ -222,36 +236,10 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
       ' ',
       ' ',
       ' ',
-      ' ',
-      ' ',
-      ' ',
-      ' ',
       'Fuel Sales Shift',
     ]);
-    addHeader(ws, [
-      ' ',
-      ' ',
-      ' ',
-      ' ',
-      ' ',
-      ' ',
-      ' ',
-      ' ',
-      ' ',
-      exportedData.shiftData.shiftNo,
-    ]);
-    addHeader(ws, [
-      ' ',
-      ' ',
-      ' ',
-      ' ',
-      ' ',
-      ' ',
-      ' ',
-      ' ',
-      ' ',
-      exportedData.stationName,
-    ]);
+    addHeader(ws, [' ', ' ', ' ', ' ', ' ', exportedData.shiftData.shiftNo]);
+    addHeader(ws, [' ', ' ', ' ', ' ', ' ', exportedData.stationName]);
 
     // fuel prices
     const fuelPrices: any[] = [];
@@ -425,15 +413,49 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
       'Recorded By',
       ...fuelPrices.map((p) => p.name),
     ]);
-    row.font = { size: 12, bold: true };
+    row.height = 20;
+    row.font = { size: 11, bold: true };
+    row.alignment = { horizontal: 'left', vertical: 'middle' };
 
-    ws.addRow([
+    // Apply header styling with borders and background
+    row.eachCell((cell) => {
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } },
+      };
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFD9D9D9' },
+      };
+    });
+
+    const dataRow = ws.addRow([
       exportedData.shiftData.shift?.name,
       readableDate(exportedData.shiftData.shift_start, true),
       readableDate(exportedData.shiftData.shift_end, true),
       exportedData.shiftData.creator?.name,
       ...fuelPrices.map((p) => p.price),
     ]);
+
+    dataRow.font = { size: 10 };
+    dataRow.alignment = { horizontal: 'left', vertical: 'middle' };
+    dataRow.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFFFFFFF' },
+    };
+
+    dataRow.eachCell((cell) => {
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } },
+      };
+    });
 
     if (!exportedData.withDetails) {
       // CASHIERS SUMMARY
@@ -444,22 +466,132 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
 
       ws.getCell('A8').value = 'Name';
       ws.getCell('A8').alignment = { horizontal: 'left', vertical: 'middle' };
-      ws.getCell('A8').font = { bold: true, size: 12 };
+      ws.getCell('A8').font = { bold: true, size: 11 };
+      ws.getCell('A8').border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } },
+      };
+      ws.getCell('A8').fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFD9D9D9' },
+      };
 
       ws.mergeCells('B8:D8');
       ws.getCell('B8').value = 'Pump Details';
       ws.getCell('B8').alignment = { horizontal: 'left', vertical: 'middle' };
-      ws.getCell('B8').font = { bold: true, size: 12 };
+      ws.getCell('B8').font = { bold: true, size: 11 };
+      ws.getCell('B8').border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } },
+      };
+      ws.getCell('B8').fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFD9D9D9' },
+      };
+      ws.getCell('C8').border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } },
+      };
+      ws.getCell('C8').fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFD9D9D9' },
+      };
+      ws.getCell('D8').border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } },
+      };
+      ws.getCell('D8').fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFD9D9D9' },
+      };
 
       ws.mergeCells('E8:G8');
       ws.getCell('E8').value = 'Cash Distributions';
       ws.getCell('E8').alignment = { horizontal: 'left', vertical: 'middle' };
-      ws.getCell('E8').font = { bold: true, size: 12 };
+      ws.getCell('E8').font = { bold: true, size: 11 };
+      ws.getCell('E8').border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } },
+      };
+      ws.getCell('E8').fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFD9D9D9' },
+      };
+      ws.getCell('F8').border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } },
+      };
+      ws.getCell('F8').fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFD9D9D9' },
+      };
+      ws.getCell('G8').border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } },
+      };
+      ws.getCell('G8').fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFD9D9D9' },
+      };
 
       ws.mergeCells('H8:J8');
       ws.getCell('H8').value = 'Cash Collection';
       ws.getCell('H8').alignment = { horizontal: 'left', vertical: 'middle' };
-      ws.getCell('H8').font = { bold: true, size: 12 };
+      ws.getCell('H8').font = { bold: true, size: 11 };
+      ws.getCell('H8').border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } },
+      };
+      ws.getCell('H8').fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFD9D9D9' },
+      };
+      ws.getCell('I8').border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } },
+      };
+      ws.getCell('I8').fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFD9D9D9' },
+      };
+      ws.getCell('J8').border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } },
+      };
+      ws.getCell('J8').fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFD9D9D9' },
+      };
 
       // SUB-TITLES ROW
       const subtitlesRow = ws.addRow([
@@ -474,12 +606,29 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
         'Collected',
         'Short/Over',
       ]);
-      subtitlesRow.font = { bold: true, size: 12 };
+      subtitlesRow.height = 20;
+      subtitlesRow.font = { bold: true, size: 11 };
+      subtitlesRow.alignment = { horizontal: 'left', vertical: 'middle' };
+
+      subtitlesRow.eachCell((cell) => {
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'FF000000' } },
+          bottom: { style: 'thin', color: { argb: 'FF000000' } },
+          left: { style: 'thin', color: { argb: 'FF000000' } },
+          right: { style: 'thin', color: { argb: 'FF000000' } },
+        };
+        cell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FFD9D9D9' },
+        };
+      });
 
       //     ACTUAL DATA    //
       // map the data to excel
       if (cashierSummary.length) {
         let currentRow = ws.lastRow?.number ?? 0;
+        let rowIndex = 0;
 
         cashierSummary.forEach((cashier) => {
           const pumpLen = cashier.pumpDetails.length;
@@ -489,6 +638,7 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
           if (maxLen === 0) return;
 
           const startRow = currentRow + 1;
+          const rowColor = rowIndex % 2 === 0 ? 'FFFFFFFF' : 'FFF8F8F8';
 
           ws.mergeCells(`A${startRow}:A${startRow + maxLen - 1}`);
           ws.getCell(`A${startRow}`).value = cashier.name;
@@ -496,23 +646,119 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
             horizontal: 'left',
             vertical: 'middle',
           };
+          ws.getCell(`A${startRow}`).font = { size: 10 };
+          ws.getCell(`A${startRow}`).fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: rowColor },
+          };
+          ws.getCell(`A${startRow}`).border = {
+            top: { style: 'thin', color: { argb: 'FF000000' } },
+            bottom: { style: 'thin', color: { argb: 'FF000000' } },
+            left: { style: 'thin', color: { argb: 'FF000000' } },
+            right: { style: 'thin', color: { argb: 'FF000000' } },
+          };
 
           // PUMP DETAILS
           cashier.pumpDetails.forEach((pump: any, i: any) => {
             const row = startRow + i;
             ws.getCell(`B${row}`).value = pump.pumpInfo.name;
+            ws.getCell(`B${row}`).alignment = {
+              horizontal: 'left',
+              vertical: 'middle',
+            };
+            ws.getCell(`B${row}`).font = { size: 10 };
+            ws.getCell(`B${row}`).fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: rowColor },
+            };
+            ws.getCell(`B${row}`).border = {
+              top: { style: 'thin', color: { argb: 'FF000000' } },
+              bottom: { style: 'thin', color: { argb: 'FF000000' } },
+              left: { style: 'thin', color: { argb: 'FF000000' } },
+              right: { style: 'thin', color: { argb: 'FF000000' } },
+            };
+
             ws.getCell(`C${row}`).value = pump.name;
+            ws.getCell(`C${row}`).alignment = {
+              horizontal: 'left',
+              vertical: 'middle',
+            };
+            ws.getCell(`C${row}`).font = { size: 10 };
+            ws.getCell(`C${row}`).fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: rowColor },
+            };
+            ws.getCell(`C${row}`).border = {
+              top: { style: 'thin', color: { argb: 'FF000000' } },
+              bottom: { style: 'thin', color: { argb: 'FF000000' } },
+              left: { style: 'thin', color: { argb: 'FF000000' } },
+              right: { style: 'thin', color: { argb: 'FF000000' } },
+            };
+
             ws.getCell(`D${row}`).value = pump.amount.toLocaleString('en-US', {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             });
+            ws.getCell(`D${row}`).alignment = {
+              horizontal: 'right',
+              vertical: 'middle',
+            };
+            ws.getCell(`D${row}`).font = { size: 10 };
+            ws.getCell(`D${row}`).fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: rowColor },
+            };
+            ws.getCell(`D${row}`).border = {
+              top: { style: 'thin', color: { argb: 'FF000000' } },
+              bottom: { style: 'thin', color: { argb: 'FF000000' } },
+              left: { style: 'thin', color: { argb: 'FF000000' } },
+              right: { style: 'thin', color: { argb: 'FF000000' } },
+            };
           });
 
           // CASH DISTRIBUTIONS
           cashier.cashDistributions.forEach((cd: any, i: any) => {
             const row = startRow + i;
             ws.getCell(`E${row}`).value = cd.type;
+            ws.getCell(`E${row}`).alignment = {
+              horizontal: 'left',
+              vertical: 'middle',
+            };
+            ws.getCell(`E${row}`).font = { size: 10 };
+            ws.getCell(`E${row}`).fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: rowColor },
+            };
+            ws.getCell(`E${row}`).border = {
+              top: { style: 'thin', color: { argb: 'FF000000' } },
+              bottom: { style: 'thin', color: { argb: 'FF000000' } },
+              left: { style: 'thin', color: { argb: 'FF000000' } },
+              right: { style: 'thin', color: { argb: 'FF000000' } },
+            };
+
             ws.getCell(`F${row}`).value = cd.count;
+            ws.getCell(`F${row}`).alignment = {
+              horizontal: 'right',
+              vertical: 'middle',
+            };
+            ws.getCell(`F${row}`).font = { size: 10 };
+            ws.getCell(`F${row}`).fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: rowColor },
+            };
+            ws.getCell(`F${row}`).border = {
+              top: { style: 'thin', color: { argb: 'FF000000' } },
+              bottom: { style: 'thin', color: { argb: 'FF000000' } },
+              left: { style: 'thin', color: { argb: 'FF000000' } },
+              right: { style: 'thin', color: { argb: 'FF000000' } },
+            };
+
             ws.getCell(`G${row}`).value = cd.totalAmount.toLocaleString(
               'en-US',
               {
@@ -520,6 +766,22 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
                 maximumFractionDigits: 2,
               }
             );
+            ws.getCell(`G${row}`).alignment = {
+              horizontal: 'right',
+              vertical: 'middle',
+            };
+            ws.getCell(`G${row}`).font = { size: 10 };
+            ws.getCell(`G${row}`).fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: rowColor },
+            };
+            ws.getCell(`G${row}`).border = {
+              top: { style: 'thin', color: { argb: 'FF000000' } },
+              bottom: { style: 'thin', color: { argb: 'FF000000' } },
+              left: { style: 'thin', color: { argb: 'FF000000' } },
+              right: { style: 'thin', color: { argb: 'FF000000' } },
+            };
           });
 
           // CASH COLLECTIONS
@@ -528,16 +790,60 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
           ws.mergeCells(`J${startRow}:J${startRow + maxLen - 1}`);
 
           ws.getCell(`H${startRow}:H${startRow + maxLen - 1}`).alignment = {
-            horizontal: 'center',
+            horizontal: 'right',
             vertical: 'middle',
           };
+          ws.getCell(`H${startRow}:H${startRow + maxLen - 1}`).font = {
+            size: 10,
+          };
+          ws.getCell(`H${startRow}:H${startRow + maxLen - 1}`).fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: rowColor },
+          };
+          ws.getCell(`H${startRow}:H${startRow + maxLen - 1}`).border = {
+            top: { style: 'thin', color: { argb: 'FF000000' } },
+            bottom: { style: 'thin', color: { argb: 'FF000000' } },
+            left: { style: 'thin', color: { argb: 'FF000000' } },
+            right: { style: 'thin', color: { argb: 'FF000000' } },
+          };
+
           ws.getCell(`I${startRow}:I${startRow + maxLen - 1}`).alignment = {
-            horizontal: 'center',
+            horizontal: 'right',
             vertical: 'middle',
           };
+          ws.getCell(`I${startRow}:I${startRow + maxLen - 1}`).font = {
+            size: 10,
+          };
+          ws.getCell(`I${startRow}:I${startRow + maxLen - 1}`).fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: rowColor },
+          };
+          ws.getCell(`I${startRow}:I${startRow + maxLen - 1}`).border = {
+            top: { style: 'thin', color: { argb: 'FF000000' } },
+            bottom: { style: 'thin', color: { argb: 'FF000000' } },
+            left: { style: 'thin', color: { argb: 'FF000000' } },
+            right: { style: 'thin', color: { argb: 'FF000000' } },
+          };
+
           ws.getCell(`J${startRow}:J${startRow + maxLen - 1}`).alignment = {
-            horizontal: 'center',
+            horizontal: 'right',
             vertical: 'middle',
+          };
+          ws.getCell(`J${startRow}:J${startRow + maxLen - 1}`).font = {
+            size: 10,
+          };
+          ws.getCell(`J${startRow}:J${startRow + maxLen - 1}`).fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: rowColor },
+          };
+          ws.getCell(`J${startRow}:J${startRow + maxLen - 1}`).border = {
+            top: { style: 'thin', color: { argb: 'FF000000' } },
+            bottom: { style: 'thin', color: { argb: 'FF000000' } },
+            left: { style: 'thin', color: { argb: 'FF000000' } },
+            right: { style: 'thin', color: { argb: 'FF000000' } },
           };
 
           ws.getCell(`H${startRow}`).value =
@@ -557,22 +863,64 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
             });
 
           currentRow = startRow + maxLen - 1;
+          rowIndex++;
         });
 
-        let totalsRow = ws.lastRow?.number ?? 0;
         // TOTALS
+        let totalsRow = ws.lastRow?.number ?? 0;
         ws.getCell(`A${totalsRow + 2}`).value = 'Totals';
-        ws.getCell(`A${totalsRow + 2}`).font = { bold: true };
+        ws.getCell(`A${totalsRow + 2}`).font = { bold: true, size: 11 };
         ws.getCell(`A${totalsRow + 2}`).alignment = {
-          horizontal: 'center',
+          horizontal: 'left',
           vertical: 'middle',
         };
+        // ws.getCell(`A${totalsRow + 2}`).fill = {
+        //   type: 'pattern',
+        //   pattern: 'solid',
+        //   fgColor: { argb: 'FFD9D9D9' },
+        // };
+        ws.getCell(`A${totalsRow + 2}`).border = {
+          top: { style: 'thin', color: { argb: 'FF000000' } },
+          bottom: { style: 'thin', color: { argb: 'FF000000' } },
+          left: { style: 'thin', color: { argb: 'FF000000' } },
+          right: { style: 'thin', color: { argb: 'FF000000' } },
+        };
+
         // pump details total
         ws.getCell(`B${totalsRow + 2}`).value = '';
+        // ws.getCell(`B${totalsRow + 2}`).fill = {
+        //   type: 'pattern',
+        //   pattern: 'solid',
+        //   fgColor: { argb: 'FFD9D9D9' },
+        // };
+        ws.getCell(`B${totalsRow + 2}`).border = {
+          top: { style: 'thin', color: { argb: 'FF000000' } },
+          bottom: { style: 'thin', color: { argb: 'FF000000' } },
+          left: { style: 'thin', color: { argb: 'FF000000' } },
+          right: { style: 'thin', color: { argb: 'FF000000' } },
+        };
+
         {
           pumpSummary.map((pump: any, index) => {
             const row = totalsRow + 2 + index;
             ws.getCell(`C${row}`).value = pump.type;
+            ws.getCell(`C${row}`).font = { bold: true, size: 11 };
+            ws.getCell(`C${row}`).alignment = {
+              horizontal: 'left',
+              vertical: 'middle',
+            };
+            // ws.getCell(`C${row}`).fill = {
+            //   type: 'pattern',
+            //   pattern: 'solid',
+            //   fgColor: { argb: 'FFD9D9D9' },
+            // };
+            ws.getCell(`C${row}`).border = {
+              top: { style: 'thin', color: { argb: 'FF000000' } },
+              bottom: { style: 'thin', color: { argb: 'FF000000' } },
+              left: { style: 'thin', color: { argb: 'FF000000' } },
+              right: { style: 'thin', color: { argb: 'FF000000' } },
+            };
+
             ws.getCell(`D${row}`).value = pump.totalDifference.toLocaleString(
               'en-US',
               {
@@ -580,30 +928,131 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
                 maximumFractionDigits: 2,
               }
             );
+            ws.getCell(`D${row}`).font = { bold: true, size: 11 };
+            ws.getCell(`D${row}`).alignment = {
+              horizontal: 'right',
+              vertical: 'middle',
+            };
+            // ws.getCell(`D${row}`).fill = {
+            //   type: 'pattern',
+            //   pattern: 'solid',
+            //   fgColor: { argb: 'FFD9D9D9' },
+            // };
+            ws.getCell(`D${row}`).border = {
+              top: { style: 'thin', color: { argb: 'FF000000' } },
+              bottom: { style: 'thin', color: { argb: 'FF000000' } },
+              left: { style: 'thin', color: { argb: 'FF000000' } },
+              right: { style: 'thin', color: { argb: 'FF000000' } },
+            };
           });
         }
         {
           totalTransactionsSummary?.map((t: any, index) => {
             const row = totalsRow + 2 + index;
             ws.getCell(`E${row}`).value = t.type;
+            ws.getCell(`E${row}`).font = { bold: true, size: 11 };
+            ws.getCell(`E${row}`).alignment = {
+              horizontal: 'left',
+              vertical: 'middle',
+            };
+            // ws.getCell(`E${row}`).fill = {
+            //   type: 'pattern',
+            //   pattern: 'solid',
+            //   fgColor: { argb: 'FFD9D9D9' },
+            // };
+            ws.getCell(`E${row}`).border = {
+              top: { style: 'thin', color: { argb: 'FF000000' } },
+              bottom: { style: 'thin', color: { argb: 'FF000000' } },
+              left: { style: 'thin', color: { argb: 'FF000000' } },
+              right: { style: 'thin', color: { argb: 'FF000000' } },
+            };
+
             ws.getCell(`F${row}`).value = t.count;
+            ws.getCell(`F${row}`).font = { bold: true, size: 11 };
+            ws.getCell(`F${row}`).alignment = {
+              horizontal: 'right',
+              vertical: 'middle',
+            };
+            // ws.getCell(`F${row}`).fill = {
+            //   type: 'pattern',
+            //   pattern: 'solid',
+            //   fgColor: { argb: 'FFD9D9D9' },
+            // };
+            ws.getCell(`F${row}`).border = {
+              top: { style: 'thin', color: { argb: 'FF000000' } },
+              bottom: { style: 'thin', color: { argb: 'FF000000' } },
+              left: { style: 'thin', color: { argb: 'FF000000' } },
+              right: { style: 'thin', color: { argb: 'FF000000' } },
+            };
+
             ws.getCell(`G${row}`).value =
               t.totalAmount.toLocaleString('en-US', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               }) || 0.0;
+            ws.getCell(`G${row}`).font = { bold: true, size: 11 };
+            ws.getCell(`G${row}`).alignment = {
+              horizontal: 'right',
+              vertical: 'middle',
+            };
+            // ws.getCell(`G${row}`).fill = {
+            //   type: 'pattern',
+            //   pattern: 'solid',
+            //   fgColor: { argb: 'FFD9D9D9' },
+            // };
+            ws.getCell(`G${row}`).border = {
+              top: { style: 'thin', color: { argb: 'FF000000' } },
+              bottom: { style: 'thin', color: { argb: 'FF000000' } },
+              left: { style: 'thin', color: { argb: 'FF000000' } },
+              right: { style: 'thin', color: { argb: 'FF000000' } },
+            };
           });
         }
+
         ws.getCell(`H${totalsRow + 2}`).value =
           totalExpectedAmount.toLocaleString('en-US', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
           });
+        ws.getCell(`H${totalsRow + 2}`).font = { bold: true, size: 11 };
+        ws.getCell(`H${totalsRow + 2}`).alignment = {
+          horizontal: 'right',
+          vertical: 'middle',
+        };
+        // ws.getCell(`H${totalsRow + 2}`).fill = {
+        //   type: 'pattern',
+        //   pattern: 'solid',
+        //   fgColor: { argb: 'FFD9D9D9' },
+        // };
+        ws.getCell(`H${totalsRow + 2}`).border = {
+          top: { style: 'thin', color: { argb: 'FF000000' } },
+          bottom: { style: 'thin', color: { argb: 'FF000000' } },
+          left: { style: 'thin', color: { argb: 'FF000000' } },
+          right: { style: 'thin', color: { argb: 'FF000000' } },
+        };
+
         ws.getCell(`I${totalsRow + 2}`).value =
           totalCollectedAmount.toLocaleString('en-US', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
           });
+        ws.getCell(`I${totalsRow + 2}`).font = { bold: true, size: 11 };
+        ws.getCell(`I${totalsRow + 2}`).alignment = {
+          horizontal: 'right',
+          vertical: 'middle',
+        };
+        // ws.getCell(`I${totalsRow + 2}`).fill = {
+        //   type: 'pattern',
+        //   pattern: 'solid',
+        //   fgColor: { argb: 'FFD9D9D9' },
+        // };
+        ws.getCell(`I${totalsRow + 2}`).border = {
+          top: { style: 'thin', color: { argb: 'FF000000' } },
+          bottom: { style: 'thin', color: { argb: 'FF000000' } },
+          left: { style: 'thin', color: { argb: 'FF000000' } },
+          right: { style: 'thin', color: { argb: 'FF000000' } },
+        };
+
         ws.getCell(`J${totalsRow + 2}`).value =
           totalShortOrOver > 0
             ? `+${totalShortOrOver.toLocaleString('en-US', {
@@ -614,9 +1063,60 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}`;
+        ws.getCell(`J${totalsRow + 2}`).font = { bold: true, size: 11 };
+        ws.getCell(`J${totalsRow + 2}`).alignment = {
+          horizontal: 'right',
+          vertical: 'middle',
+        };
+        // ws.getCell(`J${totalsRow + 2}`).fill = {
+        //   type: 'pattern',
+        //   pattern: 'solid',
+        //   fgColor: { argb: 'FFD9D9D9' },
+        // };
+        ws.getCell(`J${totalsRow + 2}`).border = {
+          top: { style: 'thin', color: { argb: 'FF000000' } },
+          bottom: { style: 'thin', color: { argb: 'FF000000' } },
+          left: { style: 'thin', color: { argb: 'FF000000' } },
+          right: { style: 'thin', color: { argb: 'FF000000' } },
+        };
 
         //   grand total
-        ws.addRow(['', '', '', '', 'Grand Total', '', grandTotal, '', '', '']);
+        const grandTotalRow = ws.addRow([
+          '',
+          '',
+          '',
+          '',
+          'Grand Total',
+          '',
+          grandTotal,
+          '',
+          '',
+          '',
+        ]);
+        grandTotalRow.height = 22;
+        grandTotalRow.font = { bold: true, size: 11 };
+        grandTotalRow.alignment = { horizontal: 'left', vertical: 'middle' };
+
+        grandTotalRow.eachCell((cell, colNumber) => {
+          cell.border = {
+            top: { style: 'thin', color: { argb: 'FF000000' } },
+            bottom: { style: 'thin', color: { argb: 'FF000000' } },
+            left: { style: 'thin', color: { argb: 'FF000000' } },
+            right: { style: 'thin', color: { argb: 'FF000000' } },
+          };
+          // cell.fill = {
+          //   type: 'pattern',
+          //   pattern: 'solid',
+          //   fgColor: { argb: 'FFD9D9D9' },
+          // };
+
+          // Right-align numeric columns
+          if (colNumber >= 6) {
+            cell.alignment = { horizontal: 'right', vertical: 'middle' };
+          } else {
+            cell.alignment = { horizontal: 'left', vertical: 'middle' };
+          }
+        });
       }
     } else {
       if (exportedData.shiftData.cashiers.length) {
@@ -627,6 +1127,8 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
               cashier.pump_readings || []
             );
             const cashierRow = (ws.lastRow?.number ?? 0) + cashierIndex;
+            const row = ws.getRow(cashierRow);
+            row.height = 20;
             ws.mergeCells(`A${cashierRow + 2}:J${cashierRow + 2}`);
             ws.getCell(`A${cashierRow + 2}`).value =
               cashier.name + ' - Summary';
@@ -635,6 +1137,17 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
               vertical: 'middle',
             };
             ws.getCell(`A${cashierRow + 2}`).font = { bold: true, size: 16 };
+            ws.getCell(`A${cashierRow + 2}`).fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: 'FFD9D9D9' },
+            };
+            ws.getCell(`A${cashierRow + 2}`).border = {
+              top: { style: 'thin', color: { argb: 'FF000000' } },
+              bottom: { style: 'thin', color: { argb: 'FF000000' } },
+              left: { style: 'thin', color: { argb: 'FF000000' } },
+              right: { style: 'thin', color: { argb: 'FF000000' } },
+            };
 
             ws.mergeCells(`A${cashierRow + 3}:G${cashierRow + 3}`);
             ws.getCell(`A${cashierRow + 3}`).value = 'Item';
@@ -642,7 +1155,18 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
               horizontal: 'left',
               vertical: 'middle',
             };
-            ws.getCell(`A${cashierRow + 3}`).font = { bold: true, size: 12 };
+            ws.getCell(`A${cashierRow + 3}`).font = { bold: true, size: 11 };
+            ws.getCell(`A${cashierRow + 3}`).fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: 'FFD9D9D9' },
+            };
+            ws.getCell(`A${cashierRow + 3}`).border = {
+              top: { style: 'thin', color: { argb: 'FF000000' } },
+              bottom: { style: 'thin', color: { argb: 'FF000000' } },
+              left: { style: 'thin', color: { argb: 'FF000000' } },
+              right: { style: 'thin', color: { argb: 'FF000000' } },
+            };
 
             ws.mergeCells(`H${cashierRow + 3}:J${cashierRow + 3}`);
             ws.getCell(`H${cashierRow + 3}`).value = 'Amount';
@@ -650,7 +1174,18 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
               horizontal: 'left',
               vertical: 'middle',
             };
-            ws.getCell(`H${cashierRow + 3}`).font = { bold: true, size: 12 };
+            ws.getCell(`H${cashierRow + 3}`).font = { bold: true, size: 11 };
+            ws.getCell(`H${cashierRow + 3}`).fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: 'FFD9D9D9' },
+            };
+            ws.getCell(`H${cashierRow + 3}`).border = {
+              top: { style: 'thin', color: { argb: 'FF000000' } },
+              bottom: { style: 'thin', color: { argb: 'FF000000' } },
+              left: { style: 'thin', color: { argb: 'FF000000' } },
+              right: { style: 'thin', color: { argb: 'FF000000' } },
+            };
 
             ws.mergeCells(`A${cashierRow + 4}:G${cashierRow + 4}`);
             ws.getCell(`A${cashierRow + 4}`).value = 'Total Sales Amount';
@@ -658,6 +1193,19 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
               horizontal: 'left',
               vertical: 'middle',
             };
+            ws.getCell(`A${cashierRow + 4}`).font = { size: 10 };
+            ws.getCell(`A${cashierRow + 4}`).fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: 'FFFFFFFF' },
+            };
+            ws.getCell(`A${cashierRow + 4}`).border = {
+              top: { style: 'thin', color: { argb: 'FF000000' } },
+              bottom: { style: 'thin', color: { argb: 'FF000000' } },
+              left: { style: 'thin', color: { argb: 'FF000000' } },
+              right: { style: 'thin', color: { argb: 'FF000000' } },
+            };
+
             ws.mergeCells(`H${cashierRow + 4}:J${cashierRow + 4}`);
             ws.getCell(`H${cashierRow + 4}`).value =
               cashierTotals.netSales.toLocaleString('en-US', {
@@ -668,6 +1216,18 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
               horizontal: 'right',
               vertical: 'middle',
             };
+            ws.getCell(`H${cashierRow + 4}`).font = { size: 10 };
+            ws.getCell(`H${cashierRow + 4}`).fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: 'FFFFFFFF' },
+            };
+            ws.getCell(`H${cashierRow + 4}`).border = {
+              top: { style: 'thin', color: { argb: 'FF000000' } },
+              bottom: { style: 'thin', color: { argb: 'FF000000' } },
+              left: { style: 'thin', color: { argb: 'FF000000' } },
+              right: { style: 'thin', color: { argb: 'FF000000' } },
+            };
 
             ws.mergeCells(`A${cashierRow + 5}:G${cashierRow + 5}`);
             ws.getCell(`A${cashierRow + 5}`).value = 'Fuel Vouchers Total';
@@ -675,6 +1235,19 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
               horizontal: 'left',
               vertical: 'middle',
             };
+            ws.getCell(`A${cashierRow + 5}`).font = { size: 10 };
+            ws.getCell(`A${cashierRow + 5}`).fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: 'FFF8F8F8' },
+            };
+            ws.getCell(`A${cashierRow + 5}`).border = {
+              top: { style: 'thin', color: { argb: 'FF000000' } },
+              bottom: { style: 'thin', color: { argb: 'FF000000' } },
+              left: { style: 'thin', color: { argb: 'FF000000' } },
+              right: { style: 'thin', color: { argb: 'FF000000' } },
+            };
+
             ws.mergeCells(`H${cashierRow + 5}:J${cashierRow + 5}`);
             ws.getCell(`H${cashierRow + 5}`).value =
               cashierTotals.totalFuelVouchersAmount.toLocaleString('en-US', {
@@ -685,6 +1258,18 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
               horizontal: 'right',
               vertical: 'middle',
             };
+            ws.getCell(`H${cashierRow + 5}`).font = { size: 10 };
+            ws.getCell(`H${cashierRow + 5}`).fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: 'FFF8F8F8' },
+            };
+            ws.getCell(`H${cashierRow + 5}`).border = {
+              top: { style: 'thin', color: { argb: 'FF000000' } },
+              bottom: { style: 'thin', color: { argb: 'FF000000' } },
+              left: { style: 'thin', color: { argb: 'FF000000' } },
+              right: { style: 'thin', color: { argb: 'FF000000' } },
+            };
 
             ws.mergeCells(`A${cashierRow + 6}:G${cashierRow + 6}`);
             ws.getCell(`A${cashierRow + 6}`).value = 'Cash Remaining';
@@ -692,15 +1277,40 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
               horizontal: 'left',
               vertical: 'middle',
             };
+            ws.getCell(`A${cashierRow + 6}`).font = { size: 10 };
+            ws.getCell(`A${cashierRow + 6}`).fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: 'FFFFFFFF' },
+            };
+            ws.getCell(`A${cashierRow + 6}`).border = {
+              top: { style: 'thin', color: { argb: 'FF000000' } },
+              bottom: { style: 'thin', color: { argb: 'FF000000' } },
+              left: { style: 'thin', color: { argb: 'FF000000' } },
+              right: { style: 'thin', color: { argb: 'FF000000' } },
+            };
+
             ws.mergeCells(`H${cashierRow + 6}:J${cashierRow + 6}`);
             ws.getCell(`H${cashierRow + 6}`).value =
               cashierTotals.cashRemaining.toLocaleString('en-US', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               });
-            ws.getCell('H11').alignment = {
+            ws.getCell(`H${cashierRow + 6}`).alignment = {
               horizontal: 'right',
               vertical: 'middle',
+            };
+            ws.getCell(`H${cashierRow + 6}`).font = { size: 10 };
+            ws.getCell(`H${cashierRow + 6}`).fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: 'FFFFFFFF' },
+            };
+            ws.getCell(`H${cashierRow + 6}`).border = {
+              top: { style: 'thin', color: { argb: 'FF000000' } },
+              bottom: { style: 'thin', color: { argb: 'FF000000' } },
+              left: { style: 'thin', color: { argb: 'FF000000' } },
+              right: { style: 'thin', color: { argb: 'FF000000' } },
             };
 
             //   PUMP READINGS
@@ -725,7 +1335,18 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
             };
             ws.getCell(`A${pumpReadingsRow + 3}`).font = {
               bold: true,
-              size: 12,
+              size: 11,
+            };
+            ws.getCell(`A${pumpReadingsRow + 3}`).fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: 'FFD9D9D9' },
+            };
+            ws.getCell(`A${pumpReadingsRow + 3}`).border = {
+              top: { style: 'thin', color: { argb: 'FF000000' } },
+              bottom: { style: 'thin', color: { argb: 'FF000000' } },
+              left: { style: 'thin', color: { argb: 'FF000000' } },
+              right: { style: 'thin', color: { argb: 'FF000000' } },
             };
 
             ws.mergeCells(`C${pumpReadingsRow + 3}:D${pumpReadingsRow + 3}`);
@@ -736,7 +1357,18 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
             };
             ws.getCell(`C${pumpReadingsRow + 3}`).font = {
               bold: true,
-              size: 12,
+              size: 11,
+            };
+            ws.getCell(`C${pumpReadingsRow + 3}`).fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: 'FFD9D9D9' },
+            };
+            ws.getCell(`C${pumpReadingsRow + 3}`).border = {
+              top: { style: 'thin', color: { argb: 'FF000000' } },
+              bottom: { style: 'thin', color: { argb: 'FF000000' } },
+              left: { style: 'thin', color: { argb: 'FF000000' } },
+              right: { style: 'thin', color: { argb: 'FF000000' } },
             };
 
             ws.mergeCells(`E${pumpReadingsRow + 3}:F${pumpReadingsRow + 3}`);
@@ -747,7 +1379,18 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
             };
             ws.getCell(`E${pumpReadingsRow + 3}`).font = {
               bold: true,
-              size: 12,
+              size: 11,
+            };
+            ws.getCell(`E${pumpReadingsRow + 3}`).fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: 'FFD9D9D9' },
+            };
+            ws.getCell(`E${pumpReadingsRow + 3}`).border = {
+              top: { style: 'thin', color: { argb: 'FF000000' } },
+              bottom: { style: 'thin', color: { argb: 'FF000000' } },
+              left: { style: 'thin', color: { argb: 'FF000000' } },
+              right: { style: 'thin', color: { argb: 'FF000000' } },
             };
 
             ws.mergeCells(`G${pumpReadingsRow + 3}:H${pumpReadingsRow + 3}`);
@@ -758,7 +1401,18 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
             };
             ws.getCell(`G${pumpReadingsRow + 3}`).font = {
               bold: true,
-              size: 12,
+              size: 11,
+            };
+            ws.getCell(`G${pumpReadingsRow + 3}`).fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: 'FFD9D9D9' },
+            };
+            ws.getCell(`G${pumpReadingsRow + 3}`).border = {
+              top: { style: 'thin', color: { argb: 'FF000000' } },
+              bottom: { style: 'thin', color: { argb: 'FF000000' } },
+              left: { style: 'thin', color: { argb: 'FF000000' } },
+              right: { style: 'thin', color: { argb: 'FF000000' } },
             };
 
             ws.mergeCells(`I${pumpReadingsRow + 3}:J${pumpReadingsRow + 3}`);
@@ -769,7 +1423,18 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
             };
             ws.getCell(`I${pumpReadingsRow + 3}`).font = {
               bold: true,
-              size: 12,
+              size: 11,
+            };
+            ws.getCell(`I${pumpReadingsRow + 3}`).fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: 'FFD9D9D9' },
+            };
+            ws.getCell(`I${pumpReadingsRow + 3}`).border = {
+              top: { style: 'thin', color: { argb: 'FF000000' } },
+              bottom: { style: 'thin', color: { argb: 'FF000000' } },
+              left: { style: 'thin', color: { argb: 'FF000000' } },
+              right: { style: 'thin', color: { argb: 'FF000000' } },
             };
             {
               cashier.pump_readings.forEach((pump: any, index: number) => {
@@ -789,13 +1454,27 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
                   horizontal: 'left',
                   vertical: 'middle',
                 };
+                ws.getCell(`A${pumpRow}`).border = {
+                  top: { style: 'thin', color: { argb: 'FF000000' } },
+                  bottom: { style: 'thin', color: { argb: 'FF000000' } },
+                  left: { style: 'thin', color: { argb: 'FF000000' } },
+                  right: { style: 'thin', color: { argb: 'FF000000' } },
+                };
+
                 ws.mergeCells(`C${pumpRow}:D${pumpRow}`);
                 ws.getCell(`C${pumpRow}`).value =
                   product?.name || `Product ${pump.product_id}`;
                 ws.getCell(`C${pumpRow}`).alignment = {
-                  horizontal: 'right',
+                  horizontal: 'left',
                   vertical: 'middle',
                 };
+                ws.getCell(`C${pumpRow}`).border = {
+                  top: { style: 'thin', color: { argb: 'FF000000' } },
+                  bottom: { style: 'thin', color: { argb: 'FF000000' } },
+                  left: { style: 'thin', color: { argb: 'FF000000' } },
+                  right: { style: 'thin', color: { argb: 'FF000000' } },
+                };
+
                 ws.mergeCells(`E${pumpRow}:F${pumpRow}`);
                 ws.getCell(`E${pumpRow}`).value = (
                   pump.opening || 0
@@ -807,6 +1486,13 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
                   horizontal: 'right',
                   vertical: 'middle',
                 };
+                ws.getCell(`E${pumpRow}`).border = {
+                  top: { style: 'thin', color: { argb: 'FF000000' } },
+                  bottom: { style: 'thin', color: { argb: 'FF000000' } },
+                  left: { style: 'thin', color: { argb: 'FF000000' } },
+                  right: { style: 'thin', color: { argb: 'FF000000' } },
+                };
+
                 ws.mergeCells(`G${pumpRow}:H${pumpRow}`);
                 ws.getCell(`G${pumpRow}`).value = (
                   pump.closing || 0
@@ -818,6 +1504,13 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
                   horizontal: 'right',
                   vertical: 'middle',
                 };
+                ws.getCell(`G${pumpRow}`).border = {
+                  top: { style: 'thin', color: { argb: 'FF000000' } },
+                  bottom: { style: 'thin', color: { argb: 'FF000000' } },
+                  left: { style: 'thin', color: { argb: 'FF000000' } },
+                  right: { style: 'thin', color: { argb: 'FF000000' } },
+                };
+
                 ws.mergeCells(`I${pumpRow}:J${pumpRow}`);
                 ws.getCell(`I${pumpRow}`).value = difference.toLocaleString(
                   'en-US',
@@ -830,172 +1523,275 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
                   horizontal: 'right',
                   vertical: 'middle',
                 };
+                ws.getCell(`I${pumpRow}`).border = {
+                  top: { style: 'thin', color: { argb: 'FF000000' } },
+                  bottom: { style: 'thin', color: { argb: 'FF000000' } },
+                  left: { style: 'thin', color: { argb: 'FF000000' } },
+                  right: { style: 'thin', color: { argb: 'FF000000' } },
+                };
               });
             }
+
             //   PRODUCT SUMMARY
-            const productSummaryRow = ws.lastRow?.number ?? 0;
-            ws.mergeCells(
-              `A${productSummaryRow + 2}:J${productSummaryRow + 2}`
-            );
-            ws.getCell(`A${productSummaryRow + 2}`).value =
-              cashier.name + ' - Product Summary';
-            ws.getCell(`A${productSummaryRow + 2}`).alignment = {
-              horizontal: 'center',
-              vertical: 'middle',
-            };
-            ws.getCell(`A${productSummaryRow + 2}`).font = {
-              bold: true,
-              size: 14,
-            };
+            if (mergedReadings.length > 0) {
+              const productSummaryRow = ws.lastRow?.number ?? 0;
+              ws.mergeCells(
+                `A${productSummaryRow + 2}:J${productSummaryRow + 2}`
+              );
+              ws.getCell(`A${productSummaryRow + 2}`).value =
+                cashier.name + ' - Product Summary';
+              ws.getCell(`A${productSummaryRow + 2}`).alignment = {
+                horizontal: 'center',
+                vertical: 'middle',
+              };
+              ws.getCell(`A${productSummaryRow + 2}`).font = {
+                bold: true,
+                size: 14,
+              };
+              ws.getCell(`A${productSummaryRow + 2}`).border = {
+                top: { style: 'thin', color: { argb: 'FF000000' } },
+                bottom: { style: 'thin', color: { argb: 'FF000000' } },
+                left: { style: 'thin', color: { argb: 'FF000000' } },
+                right: { style: 'thin', color: { argb: 'FF000000' } },
+              };
 
-            ws.mergeCells(
-              `A${productSummaryRow + 3}:D${productSummaryRow + 3}`
-            );
-            ws.getCell(`A${productSummaryRow + 3}`).value = 'Product';
-            ws.getCell(`A${productSummaryRow + 3}`).alignment = {
-              horizontal: 'left',
-              vertical: 'middle',
-            };
-            ws.getCell(`A${productSummaryRow + 3}`).font = {
-              bold: true,
-              size: 12,
-            };
+              ws.mergeCells(
+                `A${productSummaryRow + 3}:D${productSummaryRow + 3}`
+              );
+              ws.getCell(`A${productSummaryRow + 3}`).value = 'Product';
+              ws.getCell(`A${productSummaryRow + 3}`).alignment = {
+                horizontal: 'left',
+                vertical: 'middle',
+              };
+              ws.getCell(`A${productSummaryRow + 3}`).font = {
+                bold: true,
+                size: 11,
+              };
+              ws.getCell(`A${productSummaryRow + 3}`).fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FFD9D9D9' },
+              };
+              ws.getCell(`A${productSummaryRow + 3}`).border = {
+                top: { style: 'thin', color: { argb: 'FF000000' } },
+                bottom: { style: 'thin', color: { argb: 'FF000000' } },
+                left: { style: 'thin', color: { argb: 'FF000000' } },
+                right: { style: 'thin', color: { argb: 'FF000000' } },
+              };
 
-            ws.mergeCells(
-              `E${productSummaryRow + 3}:F${productSummaryRow + 3}`
-            );
-            ws.getCell(`E${productSummaryRow + 3}`).value = 'Quantity';
-            ws.getCell(`E${productSummaryRow + 3}`).alignment = {
-              horizontal: 'left',
-              vertical: 'middle',
-            };
-            ws.getCell(`E${productSummaryRow + 3}`).font = {
-              bold: true,
-              size: 12,
-            };
+              ws.mergeCells(
+                `E${productSummaryRow + 3}:F${productSummaryRow + 3}`
+              );
+              ws.getCell(`E${productSummaryRow + 3}`).value = 'Quantity';
+              ws.getCell(`E${productSummaryRow + 3}`).alignment = {
+                horizontal: 'left',
+                vertical: 'middle',
+              };
+              ws.getCell(`E${productSummaryRow + 3}`).font = {
+                bold: true,
+                size: 11,
+              };
+              ws.getCell(`E${productSummaryRow + 3}`).fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FFD9D9D9' },
+              };
+              ws.getCell(`E${productSummaryRow + 3}`).border = {
+                top: { style: 'thin', color: { argb: 'FF000000' } },
+                bottom: { style: 'thin', color: { argb: 'FF000000' } },
+                left: { style: 'thin', color: { argb: 'FF000000' } },
+                right: { style: 'thin', color: { argb: 'FF000000' } },
+              };
 
-            ws.mergeCells(
-              `G${productSummaryRow + 3}:H${productSummaryRow + 3}`
-            );
-            ws.getCell(`G${productSummaryRow + 3}`).value = 'Price';
-            ws.getCell(`G${productSummaryRow + 3}`).alignment = {
-              horizontal: 'left',
-              vertical: 'middle',
-            };
-            ws.getCell(`G${productSummaryRow + 3}`).font = {
-              bold: true,
-              size: 12,
-            };
+              ws.mergeCells(
+                `G${productSummaryRow + 3}:H${productSummaryRow + 3}`
+              );
+              ws.getCell(`G${productSummaryRow + 3}`).value = 'Price';
+              ws.getCell(`G${productSummaryRow + 3}`).alignment = {
+                horizontal: 'left',
+                vertical: 'middle',
+              };
+              ws.getCell(`G${productSummaryRow + 3}`).font = {
+                bold: true,
+                size: 11,
+              };
+              ws.getCell(`G${productSummaryRow + 3}`).fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FFD9D9D9' },
+              };
+              ws.getCell(`G${productSummaryRow + 3}`).border = {
+                top: { style: 'thin', color: { argb: 'FF000000' } },
+                bottom: { style: 'thin', color: { argb: 'FF000000' } },
+                left: { style: 'thin', color: { argb: 'FF000000' } },
+                right: { style: 'thin', color: { argb: 'FF000000' } },
+              };
 
-            ws.mergeCells(
-              `I${productSummaryRow + 3}:J${productSummaryRow + 3}`
-            );
-            ws.getCell(`I${productSummaryRow + 3}`).value = 'Amount';
-            ws.getCell(`I${productSummaryRow + 3}`).alignment = {
-              horizontal: 'left',
-              vertical: 'middle',
-            };
-            ws.getCell(`I${productSummaryRow + 3}`).font = {
-              bold: true,
-              size: 12,
-            };
+              ws.mergeCells(
+                `I${productSummaryRow + 3}:J${productSummaryRow + 3}`
+              );
+              ws.getCell(`I${productSummaryRow + 3}`).value = 'Amount';
+              ws.getCell(`I${productSummaryRow + 3}`).alignment = {
+                horizontal: 'left',
+                vertical: 'middle',
+              };
+              ws.getCell(`I${productSummaryRow + 3}`).font = {
+                bold: true,
+                size: 11,
+              };
+              ws.getCell(`I${productSummaryRow + 3}`).fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FFD9D9D9' },
+              };
+              ws.getCell(`I${productSummaryRow + 3}`).border = {
+                top: { style: 'thin', color: { argb: 'FF000000' } },
+                bottom: { style: 'thin', color: { argb: 'FF000000' } },
+                left: { style: 'thin', color: { argb: 'FF000000' } },
+                right: { style: 'thin', color: { argb: 'FF000000' } },
+              };
 
-            {
-              mergedReadings.forEach((productSales: any, index: number) => {
-                const product = exportedData.productOptions?.find(
-                  (p: any) => p.id === productSales.product_id
-                );
-                const price =
-                  exportedData.shiftData.fuel_prices.find(
-                    (p: any) => p.product_id === productSales.product_id
-                  )?.price || 0;
+              {
+                mergedReadings.forEach((productSales: any, index: number) => {
+                  const product = exportedData.productOptions?.find(
+                    (p: any) => p.id === productSales.product_id
+                  );
+                  const price =
+                    exportedData.shiftData.fuel_prices.find(
+                      (p: any) => p.product_id === productSales.product_id
+                    )?.price || 0;
 
-                // Adjustments for this product and cashier
-                const adjustmentsQty = (cashier.tank_adjustments || [])
-                  .filter(
-                    (adj: any) => adj.product_id === productSales.product_id
-                  )
-                  .reduce((sum: any, adj: any) => {
-                    if (adj.operator === '+') {
-                      return sum - adj.quantity;
-                    } else if (adj.operator === '-') {
-                      return sum + adj.quantity;
+                  // Adjustments for this product and cashier
+                  const adjustmentsQty = (cashier.tank_adjustments || [])
+                    .filter(
+                      (adj: any) => adj.product_id === productSales.product_id
+                    )
+                    .reduce((sum: any, adj: any) => {
+                      if (adj.operator === '+') {
+                        return sum - adj.quantity;
+                      } else if (adj.operator === '-') {
+                        return sum + adj.quantity;
+                      }
+                      return sum;
+                    }, 0);
+
+                  const totalQty = productSales.quantity + adjustmentsQty;
+                  const totalAmount = totalQty * price;
+
+                  const productRow = (ws.lastRow?.number ?? 0) + index + 1;
+                  ws.mergeCells(`A${productRow}:D${productRow}`);
+                  ws.getCell(`A${productRow}`).value =
+                    product?.name || `Product ${productSales.product_id}`;
+                  ws.getCell(`A${productRow}`).alignment = {
+                    horizontal: 'left',
+                    vertical: 'middle',
+                  };
+                  ws.getCell(`A${productRow}`).border = {
+                    top: { style: 'thin', color: { argb: 'FF000000' } },
+                    bottom: { style: 'thin', color: { argb: 'FF000000' } },
+                    left: { style: 'thin', color: { argb: 'FF000000' } },
+                    right: { style: 'thin', color: { argb: 'FF000000' } },
+                  };
+
+                  ws.mergeCells(`E${productRow}:F${productRow}`);
+                  ws.getCell(`E${productRow}`).value = totalQty.toLocaleString(
+                    'en-US',
+                    {
+                      minimumFractionDigits: 3,
+                      maximumFractionDigits: 3,
                     }
-                    return sum;
-                  }, 0);
+                  );
+                  ws.getCell(`E${productRow}`).alignment = {
+                    horizontal: 'right',
+                    vertical: 'middle',
+                  };
+                  ws.getCell(`E${productRow}`).border = {
+                    top: { style: 'thin', color: { argb: 'FF000000' } },
+                    bottom: { style: 'thin', color: { argb: 'FF000000' } },
+                    left: { style: 'thin', color: { argb: 'FF000000' } },
+                    right: { style: 'thin', color: { argb: 'FF000000' } },
+                  };
 
-                const totalQty = productSales.quantity + adjustmentsQty;
-                const totalAmount = totalQty * price;
+                  ws.mergeCells(`G${productRow}:H${productRow}`);
+                  ws.getCell(`G${productRow}`).value = price.toLocaleString(
+                    'en-US',
+                    {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    }
+                  );
+                  ws.getCell(`G${productRow}`).alignment = {
+                    horizontal: 'right',
+                    vertical: 'middle',
+                  };
+                  ws.getCell(`G${productRow}`).border = {
+                    top: { style: 'thin', color: { argb: 'FF000000' } },
+                    bottom: { style: 'thin', color: { argb: 'FF000000' } },
+                    left: { style: 'thin', color: { argb: 'FF000000' } },
+                    right: { style: 'thin', color: { argb: 'FF000000' } },
+                  };
 
-                const productRow = (ws.lastRow?.number ?? 0) + index + 1;
-                ws.mergeCells(`A${productRow}:D${productRow}`);
-                ws.getCell(`A${productRow}`).value =
-                  product?.name || `Product ${productSales.product_id}`;
-                ws.getCell(`A${productRow}`).alignment = {
-                  horizontal: 'left',
-                  vertical: 'middle',
-                };
+                  ws.mergeCells(`I${productRow}:J${productRow}`);
+                  ws.getCell(`I${productRow}`).value =
+                    totalAmount.toLocaleString('en-US', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    });
+                  ws.getCell(`I${productRow}`).alignment = {
+                    horizontal: 'right',
+                    vertical: 'middle',
+                  };
+                  ws.getCell(`I${productRow}`).border = {
+                    top: { style: 'thin', color: { argb: 'FF000000' } },
+                    bottom: { style: 'thin', color: { argb: 'FF000000' } },
+                    left: { style: 'thin', color: { argb: 'FF000000' } },
+                    right: { style: 'thin', color: { argb: 'FF000000' } },
+                  };
+                });
+              }
+              const cashierTotalRow = (ws.lastRow?.number ?? 0) + 1;
+              ws.mergeCells(`A${cashierTotalRow}:G${cashierTotalRow}`);
+              ws.getCell(`A${cashierTotalRow}`).value = 'Cashier Total';
+              ws.getCell(`A${cashierTotalRow}`).alignment = {
+                horizontal: 'left',
+                vertical: 'middle',
+              };
+              ws.getCell(`A${cashierTotalRow}`).font = { bold: true, size: 11 };
+              ws.getCell(`A${cashierTotalRow}`).fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FFD9D9D9' },
+              };
+              ws.getCell(`A${cashierTotalRow}`).border = {
+                top: { style: 'thin', color: { argb: 'FF000000' } },
+                bottom: { style: 'thin', color: { argb: 'FF000000' } },
+                left: { style: 'thin', color: { argb: 'FF000000' } },
+                right: { style: 'thin', color: { argb: 'FF000000' } },
+              };
 
-                ws.mergeCells(`E${productRow}:F${productRow}`);
-                ws.getCell(`E${productRow}`).value = totalQty.toLocaleString(
-                  'en-US',
-                  {
-                    minimumFractionDigits: 3,
-                    maximumFractionDigits: 3,
-                  }
-                );
-                ws.getCell(`E${productRow}`).alignment = {
-                  horizontal: 'right',
-                  vertical: 'middle',
-                };
-
-                ws.mergeCells(`G${productRow}:H${productRow}`);
-                ws.getCell(`G${productRow}`).value = price.toLocaleString(
-                  'en-US',
-                  {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  }
-                );
-                ws.getCell(`G${productRow}`).alignment = {
-                  horizontal: 'right',
-                  vertical: 'middle',
-                };
-
-                ws.mergeCells(`I${productRow}:J${productRow}`);
-                ws.getCell(`I${productRow}`).value = totalAmount.toLocaleString(
-                  'en-US',
-                  {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  }
-                );
-                ws.getCell(`I${productRow}`).alignment = {
-                  horizontal: 'right',
-                  vertical: 'middle',
-                };
-              });
+              ws.mergeCells(`H${cashierTotalRow}:J${cashierTotalRow}`);
+              ws.getCell(`H${cashierTotalRow}`).value =
+                cashierTotals.netSales.toLocaleString('en-US', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                });
+              ws.getCell(`H${cashierTotalRow}`).alignment = {
+                horizontal: 'right',
+                vertical: 'middle',
+              };
+              ws.getCell(`H${cashierTotalRow}`).font = { bold: true, size: 11 };
+              ws.getCell(`H${cashierTotalRow}`).fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FFD9D9D9' },
+              };
+              ws.getCell(`H${cashierTotalRow}`).border = {
+                top: { style: 'thin', color: { argb: 'FF000000' } },
+                bottom: { style: 'thin', color: { argb: 'FF000000' } },
+                left: { style: 'thin', color: { argb: 'FF000000' } },
+                right: { style: 'thin', color: { argb: 'FF000000' } },
+              };
             }
-            const cashierTotalRow = (ws.lastRow?.number ?? 0) + 1;
-            ws.mergeCells(`A${cashierTotalRow}:G${cashierTotalRow}`);
-            ws.getCell(`A${cashierTotalRow}`).value = 'Cashier Total';
-            ws.getCell(`A${cashierTotalRow}`).alignment = {
-              horizontal: 'left',
-              vertical: 'middle',
-            };
-            ws.getCell(`A${cashierTotalRow}`).font = { bold: true, size: 12 };
-
-            ws.mergeCells(`H${cashierTotalRow}:J${cashierTotalRow}`);
-            ws.getCell(`H${cashierTotalRow}`).value =
-              cashierTotals.netSales.toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              });
-            ws.getCell(`H${cashierTotalRow}`).alignment = {
-              horizontal: 'right',
-              vertical: 'middle',
-            };
-            ws.getCell(`H${cashierTotalRow}`).font = { bold: true, size: 12 };
 
             //   CASH DISTRIBUTIONS
             if (cashier.main_ledger || cashier.other_transactions?.length > 0) {
@@ -1024,7 +1820,18 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
               };
               ws.getCell(`A${cashDistributionsRow + 2}`).font = {
                 bold: true,
-                size: 12,
+                size: 11,
+              };
+              ws.getCell(`A${cashDistributionsRow + 2}`).fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FFD9D9D9' },
+              };
+              ws.getCell(`A${cashDistributionsRow + 2}`).border = {
+                top: { style: 'thin', color: { argb: 'FF000000' } },
+                bottom: { style: 'thin', color: { argb: 'FF000000' } },
+                left: { style: 'thin', color: { argb: 'FF000000' } },
+                right: { style: 'thin', color: { argb: 'FF000000' } },
               };
 
               ws.mergeCells(
@@ -1037,7 +1844,18 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
               };
               ws.getCell(`H${cashDistributionsRow + 2}`).font = {
                 bold: true,
-                size: 12,
+                size: 11,
+              };
+              ws.getCell(`H${cashDistributionsRow + 2}`).fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FFD9D9D9' },
+              };
+              ws.getCell(`H${cashDistributionsRow + 2}`).border = {
+                top: { style: 'thin', color: { argb: 'FF000000' } },
+                bottom: { style: 'thin', color: { argb: 'FF000000' } },
+                left: { style: 'thin', color: { argb: 'FF000000' } },
+                right: { style: 'thin', color: { argb: 'FF000000' } },
               };
 
               if (cashier.main_ledger) {
@@ -1050,6 +1868,12 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
                 ws.getCell(`A${cashDistributionsRow + 3}`).alignment = {
                   horizontal: 'left',
                   vertical: 'middle',
+                };
+                ws.getCell(`A${cashDistributionsRow + 3}`).border = {
+                  top: { style: 'thin', color: { argb: 'FF000000' } },
+                  bottom: { style: 'thin', color: { argb: 'FF000000' } },
+                  left: { style: 'thin', color: { argb: 'FF000000' } },
+                  right: { style: 'thin', color: { argb: 'FF000000' } },
                 };
 
                 ws.mergeCells(
@@ -1064,6 +1888,12 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
                 ws.getCell(`H${cashDistributionsRow + 3}`).alignment = {
                   horizontal: 'right',
                   vertical: 'middle',
+                };
+                ws.getCell(`H${cashDistributionsRow + 3}`).border = {
+                  top: { style: 'thin', color: { argb: 'FF000000' } },
+                  bottom: { style: 'thin', color: { argb: 'FF000000' } },
+                  left: { style: 'thin', color: { argb: 'FF000000' } },
+                  right: { style: 'thin', color: { argb: 'FF000000' } },
                 };
               }
 
@@ -1086,6 +1916,12 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
                     horizontal: 'left',
                     vertical: 'middle',
                   };
+                  ws.getCell(`A${otherTransctionsRow}`).border = {
+                    top: { style: 'thin', color: { argb: 'FF000000' } },
+                    bottom: { style: 'thin', color: { argb: 'FF000000' } },
+                    left: { style: 'thin', color: { argb: 'FF000000' } },
+                    right: { style: 'thin', color: { argb: 'FF000000' } },
+                  };
 
                   ws.mergeCells(
                     `H${otherTransctionsRow}:J${otherTransctionsRow}`
@@ -1100,149 +1936,280 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
                     horizontal: 'right',
                     vertical: 'middle',
                   };
+                  ws.getCell(`H${otherTransctionsRow}`).border = {
+                    top: { style: 'thin', color: { argb: 'FF000000' } },
+                    bottom: { style: 'thin', color: { argb: 'FF000000' } },
+                    left: { style: 'thin', color: { argb: 'FF000000' } },
+                    right: { style: 'thin', color: { argb: 'FF000000' } },
+                  };
                 }
               );
             }
 
             //   FUEL VOUCHERS
-            const FvRow = ws.lastRow?.number ?? 0;
-            ws.mergeCells(`A${FvRow + 2}:J${FvRow + 2}`);
-            ws.getCell(`A${FvRow + 2}`).value =
-              cashier.name + ' - Fuel Vouchers';
-            ws.getCell(`A${FvRow + 2}`).alignment = {
-              horizontal: 'center',
-              vertical: 'middle',
-            };
-            ws.getCell(`A${FvRow + 2}`).font = { bold: true, size: 14 };
+            if (cashier.fuel_vouchers.length > 0) {
+              const FvRow = ws.lastRow?.number ?? 0;
+              ws.mergeCells(`A${FvRow + 2}:J${FvRow + 2}`);
+              ws.getCell(`A${FvRow + 2}`).value =
+                cashier.name + ' - Fuel Vouchers';
+              ws.getCell(`A${FvRow + 2}`).alignment = {
+                horizontal: 'center',
+                vertical: 'middle',
+              };
+              ws.getCell(`A${FvRow + 2}`).font = { bold: true, size: 14 };
 
-            ws.mergeCells(`A${FvRow + 3}:C${FvRow + 3}`);
-            ws.getCell(`A${FvRow + 3}`).value = 'Voucher No';
-            ws.getCell(`A${FvRow + 3}`).alignment = {
-              horizontal: 'center',
-              vertical: 'middle',
-            };
-            ws.getCell(`A${FvRow + 3}`).font = { bold: true, size: 12 };
+              ws.mergeCells(`A${FvRow + 3}:C${FvRow + 3}`);
+              ws.getCell(`A${FvRow + 3}`).value = 'Voucher No';
+              ws.getCell(`A${FvRow + 3}`).alignment = {
+                horizontal: 'left',
+                vertical: 'middle',
+              };
+              ws.getCell(`A${FvRow + 3}`).font = { bold: true, size: 11 };
+              ws.getCell(`A${FvRow + 3}`).fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FFD9D9D9' },
+              };
+              ws.getCell(`A${FvRow + 3}`).border = {
+                top: { style: 'thin', color: { argb: 'FF000000' } },
+                bottom: { style: 'thin', color: { argb: 'FF000000' } },
+                left: { style: 'thin', color: { argb: 'FF000000' } },
+                right: { style: 'thin', color: { argb: 'FF000000' } },
+              };
 
-            ws.mergeCells(`D${FvRow + 3}:F${FvRow + 3}`);
-            ws.getCell(`D${FvRow + 3}`).value = 'Client';
-            ws.getCell(`D${FvRow + 3}`).alignment = {
-              horizontal: 'center',
-              vertical: 'middle',
-            };
-            ws.getCell(`D${FvRow + 3}`).font = { bold: true, size: 12 };
+              ws.mergeCells(`D${FvRow + 3}:F${FvRow + 3}`);
+              ws.getCell(`D${FvRow + 3}`).value = 'Client';
+              ws.getCell(`D${FvRow + 3}`).alignment = {
+                horizontal: 'left',
+                vertical: 'middle',
+              };
+              ws.getCell(`D${FvRow + 3}`).font = { bold: true, size: 11 };
+              ws.getCell(`D${FvRow + 3}`).fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FFD9D9D9' },
+              };
+              ws.getCell(`D${FvRow + 3}`).border = {
+                top: { style: 'thin', color: { argb: 'FF000000' } },
+                bottom: { style: 'thin', color: { argb: 'FF000000' } },
+                left: { style: 'thin', color: { argb: 'FF000000' } },
+                right: { style: 'thin', color: { argb: 'FF000000' } },
+              };
 
-            ws.getCell(`G${FvRow + 3}`).value = 'Narration';
-            ws.getCell(`G${FvRow + 3}`).alignment = {
-              horizontal: 'center',
-              vertical: 'middle',
-            };
-            ws.getCell(`G${FvRow + 3}`).font = { bold: true, size: 12 };
+              ws.getCell(`G${FvRow + 3}`).value = 'Narration';
+              ws.getCell(`G${FvRow + 3}`).alignment = {
+                horizontal: 'left',
+                vertical: 'middle',
+              };
+              ws.getCell(`G${FvRow + 3}`).font = { bold: true, size: 11 };
+              ws.getCell(`G${FvRow + 3}`).fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FFD9D9D9' },
+              };
+              ws.getCell(`G${FvRow + 3}`).border = {
+                top: { style: 'thin', color: { argb: 'FF000000' } },
+                bottom: { style: 'thin', color: { argb: 'FF000000' } },
+                left: { style: 'thin', color: { argb: 'FF000000' } },
+                right: { style: 'thin', color: { argb: 'FF000000' } },
+              };
 
-            ws.getCell(`H${FvRow + 3}`).value = 'Product';
-            ws.getCell(`H${FvRow + 3}`).alignment = {
-              horizontal: 'center',
-              vertical: 'middle',
-            };
-            ws.getCell(`H${FvRow + 3}`).font = { bold: true, size: 12 };
+              ws.getCell(`H${FvRow + 3}`).value = 'Product';
+              ws.getCell(`H${FvRow + 3}`).alignment = {
+                horizontal: 'left',
+                vertical: 'middle',
+              };
+              ws.getCell(`H${FvRow + 3}`).font = { bold: true, size: 11 };
+              ws.getCell(`H${FvRow + 3}`).fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FFD9D9D9' },
+              };
+              ws.getCell(`H${FvRow + 3}`).border = {
+                top: { style: 'thin', color: { argb: 'FF000000' } },
+                bottom: { style: 'thin', color: { argb: 'FF000000' } },
+                left: { style: 'thin', color: { argb: 'FF000000' } },
+                right: { style: 'thin', color: { argb: 'FF000000' } },
+              };
 
-            ws.getCell(`I${FvRow + 3}`).value = 'Quantity';
-            ws.getCell(`I${FvRow + 3}`).alignment = {
-              horizontal: 'center',
-              vertical: 'middle',
-            };
-            ws.getCell(`I${FvRow + 3}`).font = { bold: true, size: 12 };
+              ws.getCell(`I${FvRow + 3}`).value = 'Quantity';
+              ws.getCell(`I${FvRow + 3}`).alignment = {
+                horizontal: 'left',
+                vertical: 'middle',
+              };
+              ws.getCell(`I${FvRow + 3}`).font = { bold: true, size: 11 };
+              ws.getCell(`I${FvRow + 3}`).fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FFD9D9D9' },
+              };
+              ws.getCell(`I${FvRow + 3}`).border = {
+                top: { style: 'thin', color: { argb: 'FF000000' } },
+                bottom: { style: 'thin', color: { argb: 'FF000000' } },
+                left: { style: 'thin', color: { argb: 'FF000000' } },
+                right: { style: 'thin', color: { argb: 'FF000000' } },
+              };
 
-            ws.getCell(`J${FvRow + 3}`).value = 'Amount';
-            ws.getCell(`J${FvRow + 3}`).alignment = {
-              horizontal: 'center',
-              vertical: 'middle',
-            };
-            ws.getCell(`J${FvRow + 3}`).font = { bold: true, size: 12 };
+              ws.getCell(`J${FvRow + 3}`).value = 'Amount';
+              ws.getCell(`J${FvRow + 3}`).alignment = {
+                horizontal: 'left',
+                vertical: 'middle',
+              };
+              ws.getCell(`J${FvRow + 3}`).font = { bold: true, size: 11 };
+              ws.getCell(`J${FvRow + 3}`).fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FFD9D9D9' },
+              };
+              ws.getCell(`J${FvRow + 3}`).border = {
+                top: { style: 'thin', color: { argb: 'FF000000' } },
+                bottom: { style: 'thin', color: { argb: 'FF000000' } },
+                left: { style: 'thin', color: { argb: 'FF000000' } },
+                right: { style: 'thin', color: { argb: 'FF000000' } },
+              };
 
-            {
-              cashier.fuel_vouchers.forEach((fv: any, index: number) => {
-                const product = exportedData.productOptions?.find(
-                  (p: any) => p.id === fv.product_id
-                );
-                const price =
-                  exportedData.shiftData.fuel_prices.find(
-                    (p: any) => p.product_id === fv.product_id
-                  )?.price || 0;
-                const amount = fv.quantity * price;
+              {
+                cashier.fuel_vouchers.forEach((fv: any, index: number) => {
+                  const product = exportedData.productOptions?.find(
+                    (p: any) => p.id === fv.product_id
+                  );
+                  const price =
+                    exportedData.shiftData.fuel_prices.find(
+                      (p: any) => p.product_id === fv.product_id
+                    )?.price || 0;
+                  const amount = fv.quantity * price;
 
-                let fvLastRow = (ws.lastRow?.number ?? 0) + 1;
-                ws.mergeCells(`A${fvLastRow}:C${fvLastRow}`);
-                ws.getCell(`A${fvLastRow}`).value =
-                  fv.voucherNo || `FV-${index + 1}`;
-                ws.getCell(`A${fvLastRow}`).alignment = {
-                  horizontal: 'left',
-                  vertical: 'middle',
-                };
+                  let fvLastRow = (ws.lastRow?.number ?? 0) + 1;
+                  ws.mergeCells(`A${fvLastRow}:C${fvLastRow}`);
+                  ws.getCell(`A${fvLastRow}`).value =
+                    fv.voucherNo || `FV-${index + 1}`;
+                  ws.getCell(`A${fvLastRow}`).alignment = {
+                    horizontal: 'left',
+                    vertical: 'middle',
+                  };
+                  ws.getCell(`A${fvLastRow}`).border = {
+                    top: { style: 'thin', color: { argb: 'FF000000' } },
+                    bottom: { style: 'thin', color: { argb: 'FF000000' } },
+                    left: { style: 'thin', color: { argb: 'FF000000' } },
+                    right: { style: 'thin', color: { argb: 'FF000000' } },
+                  };
 
-                ws.mergeCells(`D${fvLastRow}:F${fvLastRow}`);
-                ws.getCell(`D${fvLastRow}`).value =
-                  fv.stakeholder?.name || 'Internal Expense';
-                ws.getCell(`D${fvLastRow}`).alignment = {
-                  horizontal: 'left',
-                  vertical: 'middle',
-                };
+                  ws.mergeCells(`D${fvLastRow}:F${fvLastRow}`);
+                  ws.getCell(`D${fvLastRow}`).value =
+                    fv.stakeholder?.name || 'Internal Expense';
+                  ws.getCell(`D${fvLastRow}`).alignment = {
+                    horizontal: 'left',
+                    vertical: 'middle',
+                  };
+                  ws.getCell(`D${fvLastRow}`).border = {
+                    top: { style: 'thin', color: { argb: 'FF000000' } },
+                    bottom: { style: 'thin', color: { argb: 'FF000000' } },
+                    left: { style: 'thin', color: { argb: 'FF000000' } },
+                    right: { style: 'thin', color: { argb: 'FF000000' } },
+                  };
 
-                ws.getCell(`G${fvLastRow}`).value = fv.narration || '-';
-                ws.getCell(`G${fvLastRow}`).alignment = {
-                  horizontal: 'left',
-                  vertical: 'middle',
-                };
+                  ws.getCell(`G${fvLastRow}`).value = fv.narration || '-';
+                  ws.getCell(`G${fvLastRow}`).alignment = {
+                    horizontal: 'left',
+                    vertical: 'middle',
+                  };
+                  ws.getCell(`G${fvLastRow}`).border = {
+                    top: { style: 'thin', color: { argb: 'FF000000' } },
+                    bottom: { style: 'thin', color: { argb: 'FF000000' } },
+                    left: { style: 'thin', color: { argb: 'FF000000' } },
+                    right: { style: 'thin', color: { argb: 'FF000000' } },
+                  };
 
-                ws.getCell(`H${fvLastRow}`).value =
-                  product?.name || `Product ${fv.product_id}`;
-                ws.getCell(`H${fvLastRow}`).alignment = {
-                  horizontal: 'left',
-                  vertical: 'middle',
-                };
+                  ws.getCell(`H${fvLastRow}`).value =
+                    product?.name || `Product ${fv.product_id}`;
+                  ws.getCell(`H${fvLastRow}`).alignment = {
+                    horizontal: 'left',
+                    vertical: 'middle',
+                  };
+                  ws.getCell(`H${fvLastRow}`).border = {
+                    top: { style: 'thin', color: { argb: 'FF000000' } },
+                    bottom: { style: 'thin', color: { argb: 'FF000000' } },
+                    left: { style: 'thin', color: { argb: 'FF000000' } },
+                    right: { style: 'thin', color: { argb: 'FF000000' } },
+                  };
 
-                ws.getCell(`I${fvLastRow}`).value = fv.quantity.toLocaleString(
-                  'en-US',
-                  {
-                    minimumFractionDigits: 3,
-                    maximumFractionDigits: 3,
-                  }
-                );
-                ws.getCell(`I${fvLastRow}`).alignment = {
-                  horizontal: 'right',
-                  vertical: 'middle',
-                };
+                  ws.getCell(`I${fvLastRow}`).value =
+                    fv.quantity.toLocaleString('en-US', {
+                      minimumFractionDigits: 3,
+                      maximumFractionDigits: 3,
+                    });
+                  ws.getCell(`I${fvLastRow}`).alignment = {
+                    horizontal: 'right',
+                    vertical: 'middle',
+                  };
+                  ws.getCell(`I${fvLastRow}`).border = {
+                    top: { style: 'thin', color: { argb: 'FF000000' } },
+                    bottom: { style: 'thin', color: { argb: 'FF000000' } },
+                    left: { style: 'thin', color: { argb: 'FF000000' } },
+                    right: { style: 'thin', color: { argb: 'FF000000' } },
+                  };
 
-                ws.getCell(`J${fvLastRow}`).value = amount.toLocaleString(
-                  'en-US',
-                  {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  }
-                );
-                ws.getCell(`J${fvLastRow}`).alignment = {
-                  horizontal: 'right',
-                  vertical: 'middle',
-                };
-              });
+                  ws.getCell(`J${fvLastRow}`).value = amount.toLocaleString(
+                    'en-US',
+                    {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    }
+                  );
+                  ws.getCell(`J${fvLastRow}`).alignment = {
+                    horizontal: 'right',
+                    vertical: 'middle',
+                  };
+                  ws.getCell(`J${fvLastRow}`).border = {
+                    top: { style: 'thin', color: { argb: 'FF000000' } },
+                    bottom: { style: 'thin', color: { argb: 'FF000000' } },
+                    left: { style: 'thin', color: { argb: 'FF000000' } },
+                    right: { style: 'thin', color: { argb: 'FF000000' } },
+                  };
+                });
+              }
+              let fvLastRow = (ws.lastRow?.number ?? 0) + 1;
+              ws.mergeCells(`A${fvLastRow}:I${fvLastRow}`);
+              ws.getCell(`A${fvLastRow}`).value = 'Cash Total Fuel Vouchers';
+              ws.getCell(`A${fvLastRow}`).alignment = {
+                horizontal: 'left',
+                vertical: 'middle',
+              };
+              ws.getCell(`A${fvLastRow}`).font = { bold: true, size: 11 };
+              ws.getCell(`A${fvLastRow}`).fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FFD9D9D9' },
+              };
+              ws.getCell(`A${fvLastRow}`).border = {
+                top: { style: 'thin', color: { argb: 'FF000000' } },
+                bottom: { style: 'thin', color: { argb: 'FF000000' } },
+                left: { style: 'thin', color: { argb: 'FF000000' } },
+                right: { style: 'thin', color: { argb: 'FF000000' } },
+              };
+
+              ws.getCell(`J${fvLastRow}`).value =
+                cashierTotals.totalFuelVouchersAmount.toLocaleString('en-US', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                });
+              ws.getCell(`J${fvLastRow}`).alignment = {
+                horizontal: 'right',
+                vertical: 'middle',
+              };
+              ws.getCell(`J${fvLastRow}`).font = { bold: true, size: 11 };
+              ws.getCell(`J${fvLastRow}`).fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FFD9D9D9' },
+              };
+              ws.getCell(`J${fvLastRow}`).border = {
+                top: { style: 'thin', color: { argb: 'FF000000' } },
+                bottom: { style: 'thin', color: { argb: 'FF000000' } },
+                left: { style: 'thin', color: { argb: 'FF000000' } },
+                right: { style: 'thin', color: { argb: 'FF000000' } },
+              };
             }
-            let fvLastRow = (ws.lastRow?.number ?? 0) + 1;
-            ws.mergeCells(`A${fvLastRow}:I${fvLastRow}`);
-            ws.getCell(`A${fvLastRow}`).value = 'Cash Total Fuel Vouchers';
-            ws.getCell(`A${fvLastRow}`).alignment = {
-              horizontal: 'left',
-              vertical: 'middle',
-            };
-            ws.getCell(`A${fvLastRow}`).font = { bold: true, size: 12 };
-
-            ws.getCell(`J${fvLastRow}`).value =
-              cashierTotals.totalFuelVouchersAmount.toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              });
-            ws.getCell(`J${fvLastRow}`).alignment = {
-              horizontal: 'right',
-              vertical: 'middle',
-            };
           }
         );
       }
@@ -1261,33 +2228,173 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
       // columns
       ws.mergeCells(`A${dippingsRow + 3}:C${dippingsRow + 3}`);
       ws.getCell(`A${dippingsRow + 3}`).value = 'Tank';
-      ws.getCell(`A${dippingsRow + 3}`).font = { bold: true, size: 12 };
+      ws.getCell(`A${dippingsRow + 3}`).font = { bold: true, size: 11 };
       ws.getCell(`A${dippingsRow + 3}`).alignment = {
         horizontal: 'left',
+        vertical: 'middle',
       };
+      ws.getCell(`A${dippingsRow + 3}`).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFD9D9D9' },
+      };
+      ws.getCell(`A${dippingsRow + 3}`).border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } },
+      };
+
       ws.getCell(`D${dippingsRow + 3}`).value = 'Opening';
-      ws.getCell(`D${dippingsRow + 3}`).font = { bold: true, size: 12 };
+      ws.getCell(`D${dippingsRow + 3}`).font = { bold: true, size: 11 };
+      ws.getCell(`D${dippingsRow + 3}`).alignment = {
+        horizontal: 'left',
+        vertical: 'middle',
+      };
+      ws.getCell(`D${dippingsRow + 3}`).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFD9D9D9' },
+      };
+      ws.getCell(`D${dippingsRow + 3}`).border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } },
+      };
+
       ws.getCell(`E${dippingsRow + 3}`).value = 'Purchase';
-      ws.getCell(`E${dippingsRow + 3}`).font = { bold: true, size: 12 };
+      ws.getCell(`E${dippingsRow + 3}`).font = { bold: true, size: 11 };
+      ws.getCell(`E${dippingsRow + 3}`).alignment = {
+        horizontal: 'left',
+        vertical: 'middle',
+      };
+      ws.getCell(`E${dippingsRow + 3}`).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFD9D9D9' },
+      };
+      ws.getCell(`E${dippingsRow + 3}`).border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } },
+      };
+
       ws.getCell(`F${dippingsRow + 3}`).value = 'Total';
-      ws.getCell(`F${dippingsRow + 3}`).font = { bold: true, size: 12 };
+      ws.getCell(`F${dippingsRow + 3}`).font = { bold: true, size: 11 };
+      ws.getCell(`F${dippingsRow + 3}`).alignment = {
+        horizontal: 'left',
+        vertical: 'middle',
+      };
+      ws.getCell(`F${dippingsRow + 3}`).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFD9D9D9' },
+      };
+      ws.getCell(`F${dippingsRow + 3}`).border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } },
+      };
+
       ws.getCell(`G${dippingsRow + 3}`).value = 'Closing';
-      ws.getCell(`G${dippingsRow + 3}`).font = { bold: true, size: 12 };
+      ws.getCell(`G${dippingsRow + 3}`).font = { bold: true, size: 11 };
+      ws.getCell(`G${dippingsRow + 3}`).alignment = {
+        horizontal: 'left',
+        vertical: 'middle',
+      };
+      ws.getCell(`G${dippingsRow + 3}`).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFD9D9D9' },
+      };
+      ws.getCell(`G${dippingsRow + 3}`).border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } },
+      };
+
       ws.getCell(`H${dippingsRow + 3}`).value = 'Tank Difference';
-      ws.getCell(`H${dippingsRow + 3}`).font = { bold: true, size: 12 };
+      ws.getCell(`H${dippingsRow + 3}`).font = { bold: true, size: 11 };
+      ws.getCell(`H${dippingsRow + 3}`).alignment = {
+        horizontal: 'left',
+        vertical: 'middle',
+      };
+      ws.getCell(`H${dippingsRow + 3}`).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFD9D9D9' },
+      };
+      ws.getCell(`H${dippingsRow + 3}`).border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } },
+      };
+
       ws.getCell(`I${dippingsRow + 3}`).value = 'Actual Sold';
-      ws.getCell(`I${dippingsRow + 3}`).font = { bold: true, size: 12 };
+      ws.getCell(`I${dippingsRow + 3}`).font = { bold: true, size: 11 };
+      ws.getCell(`I${dippingsRow + 3}`).alignment = {
+        horizontal: 'left',
+        vertical: 'middle',
+      };
+      ws.getCell(`I${dippingsRow + 3}`).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFD9D9D9' },
+      };
+      ws.getCell(`I${dippingsRow + 3}`).border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } },
+      };
+
       ws.getCell(`J${dippingsRow + 3}`).value = 'Pos/Neg';
-      ws.getCell(`J${dippingsRow + 3}`).font = { bold: true, size: 12 };
+      ws.getCell(`J${dippingsRow + 3}`).font = { bold: true, size: 11 };
+      ws.getCell(`J${dippingsRow + 3}`).alignment = {
+        horizontal: 'left',
+        vertical: 'middle',
+      };
+      ws.getCell(`J${dippingsRow + 3}`).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFD9D9D9' },
+      };
+      ws.getCell(`J${dippingsRow + 3}`).border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } },
+      };
 
       // dipping data
       {
         exportedData.shiftData.shift_tanks.forEach((st: any, index: any) => {
           const row = dippingsRow + 4 + index;
+          const rowColor = index % 2 === 0 ? 'FFFFFFFF' : 'FFF8F8F8';
 
           ws.mergeCells(`A${row}:C${row}`);
           ws.getCell(`A${row}`).value = st.name || `Tank ${st.id}`;
-          ws.getCell(`A${row}`).alignment = { horizontal: 'left' };
+          ws.getCell(`A${row}`).alignment = {
+            horizontal: 'left',
+            vertical: 'middle',
+          };
+          ws.getCell(`A${row}`).font = { size: 10 };
+          ws.getCell(`A${row}`).fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: rowColor },
+          };
+          ws.getCell(`A${row}`).border = {
+            top: { style: 'thin', color: { argb: 'FF000000' } },
+            bottom: { style: 'thin', color: { argb: 'FF000000' } },
+            left: { style: 'thin', color: { argb: 'FF000000' } },
+            right: { style: 'thin', color: { argb: 'FF000000' } },
+          };
 
           ws.getCell(`D${row}`).value = st.opening_reading || 0;
           ws.getCell(`E${row}`).value = st.incoming || 0;
@@ -1300,6 +2407,22 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
 
           ['D', 'E', 'F', 'G', 'H', 'I', 'J'].forEach((col) => {
             ws.getCell(`${col}${row}`).numFmt = '#,##0.00';
+            ws.getCell(`${col}${row}`).alignment = {
+              horizontal: 'right',
+              vertical: 'middle',
+            };
+            ws.getCell(`${col}${row}`).font = { size: 10 };
+            ws.getCell(`${col}${row}`).fill = {
+              type: 'pattern',
+              pattern: 'solid',
+              fgColor: { argb: rowColor },
+            };
+            ws.getCell(`${col}${row}`).border = {
+              top: { style: 'thin', color: { argb: 'FF000000' } },
+              bottom: { style: 'thin', color: { argb: 'FF000000' } },
+              left: { style: 'thin', color: { argb: 'FF000000' } },
+              right: { style: 'thin', color: { argb: 'FF000000' } },
+            };
           });
         });
       }

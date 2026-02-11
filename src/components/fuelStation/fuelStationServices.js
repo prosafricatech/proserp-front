@@ -36,7 +36,6 @@ fuelStationServices.exportFuelVouchersToExcel = async (exportedData) => {
     const res = await axios.post(`/api/exports/excel/fuelVouchers/`, exportedData, {
         responseType: 'blob',
     });
-    // const res = await axios.post(`/api/exports/excel/fuelVouchers/`, exportedData);
     return res.data;
 }
 

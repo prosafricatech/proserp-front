@@ -123,7 +123,6 @@ const ProjectClaimsAdjustments: React.FC<ProjectClaimsAdjustmentsProps> = ({
   }, [submitItemForm, trigger, handleSubmit, setSubmitItemForm]);
 
   const watchedAmount = watch('amount');
-  const watchedType = watch('type');
 
   const updateItems = (data: FormValues) => {
     setIsAdding(true);

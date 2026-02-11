@@ -64,44 +64,6 @@ function StoreProfileContent() {
 
   let contentComponent;
   let documentTitle = '';
-  
-  switch(content) {
-    case TAB_INDICES.STOCK:
-      documentTitle = `Store Stock | ${activeStore?.name}`;
-      contentComponent = <StoreStock/>;
-      break;
-    case TAB_INDICES.GRNS:
-      documentTitle = `GRNs | ${activeStore?.name}`;
-      contentComponent = <Grns />;
-      break;
-    case TAB_INDICES.TRANSFERS:
-      documentTitle = `Inventory Transfers | ${activeStore?.name}`;
-      contentComponent = <Transfer/>;
-      break;
-    case TAB_INDICES.CONSUMPTIONS:
-      documentTitle = `Inventory Consumptions | ${activeStore?.name}`;
-      contentComponent = <InventoryConsumptions/>;
-      break;
-    case TAB_INDICES.ADJUSTMENTS:
-      if (checkOrganizationPermission([
-        PERMISSIONS.STOCK_ADJUSTMENTS_READ, 
-        PERMISSIONS.STOCK_ADJUSTMENTS_CREATE, 
-        PERMISSIONS.STOCK_ADJUSTMENTS_EDIT, 
-        PERMISSIONS.STOCK_ADJUSTMENTS_DELETE
-      ])) {
-        documentTitle = `Stock Adjustments | ${activeStore?.name}`;
-        contentComponent = <StockAdjustments />;
-      }
-      break;
-    case TAB_INDICES.REPORTS:
-      documentTitle = `Store Reports | ${activeStore?.name}`;
-      contentComponent = <StoreReports/>;
-      break;
-    default:
-      // Fallback to stock if invalid tab
-      documentTitle = `Store Stock | ${activeStore?.name}`;
-      contentComponent = <StoreStock/>;
-  }
 
   // Set document title
   useEffect(() => {
@@ -133,6 +95,45 @@ function StoreProfileContent() {
 
   let availableTabs: { label: string; value: number }[] = [];
 
+  // If only transfer permission, always show Transfers tab and content
+  if (!hasStoresRead && hasTransferPermission) {
+    documentTitle = `Inventory Transfers | ${activeStore?.name}`;
+    contentComponent = <Transfer/>;
+  } else {
+    switch(content) {
+      case TAB_INDICES.STOCK:
+        documentTitle = `Store Stock | ${activeStore?.name}`;
+        contentComponent = <StoreStock/>;
+        break;
+      case TAB_INDICES.GRNS:
+        documentTitle = `GRNs | ${activeStore?.name}`;
+        contentComponent = <Grns />;
+        break;
+      case TAB_INDICES.TRANSFERS:
+        documentTitle = `Inventory Transfers | ${activeStore?.name}`;
+        contentComponent = <Transfer/>;
+        break;
+      case TAB_INDICES.CONSUMPTIONS:
+        documentTitle = `Inventory Consumptions | ${activeStore?.name}`;
+        contentComponent = <InventoryConsumptions/>;
+        break;
+      case TAB_INDICES.ADJUSTMENTS:
+        if (hasAdjustmentsPermission) {
+          documentTitle = `Stock Adjustments | ${activeStore?.name}`;
+          contentComponent = <StockAdjustments />;
+        }
+        break;
+      case TAB_INDICES.REPORTS:
+        documentTitle = `Store Reports | ${activeStore?.name}`;
+        contentComponent = <StoreReports/>;
+        break;
+      default:
+        // Fallback to stock if invalid tab
+        documentTitle = `Store Stock | ${activeStore?.name}`;
+        contentComponent = <StoreStock/>;
+    }
+  }
+
   // If user has only transfer permission, show only Transfers tab
   if (!hasStoresRead && hasTransferPermission) {
     availableTabs = [
@@ -155,29 +156,49 @@ function StoreProfileContent() {
     }
   }
 
+  // If only transfer permission, force tab selection to Transfers
+  if (!hasStoresRead && hasTransferPermission) {
+    return (
+      <Box p={1} sx={{
+        bgcolor: 'background.paper',
+        borderRadius: '15px',
+      }}>
+        <Tabs
+          value={TAB_INDICES.TRANSFERS}
+          variant="scrollable"
+          scrollButtons
+          allowScrollButtonsMobile
+        >
+          <Tab key={TAB_INDICES.TRANSFERS} label="Transfers" value={TAB_INDICES.TRANSFERS} />
+        </Tabs>
+        {contentComponent}
+      </Box>
+    );
+  }
+  // Otherwise, render as normal
   return (
     <Box p={1} sx={{
-       bgcolor: 'background.paper',
-       borderRadius: '15px',
-      } }>
-      <Tabs 
+      bgcolor: 'background.paper',
+      borderRadius: '15px',
+    }}>
+      <Tabs
         variant="scrollable"
         scrollButtons
         allowScrollButtonsMobile
-        value={content} 
+        value={content}
         onChange={handleTabChange}
       >
         {availableTabs.map((tab) => (
-          <Tab 
-            key={tab.value} 
-            label={tab.label} 
+          <Tab
+            key={tab.value}
+            label={tab.label}
             value={tab.value}
           />
         ))}
       </Tabs>
       {contentComponent}
     </Box>
-  )
+  );
 }
 
 export default StoreProfileContent

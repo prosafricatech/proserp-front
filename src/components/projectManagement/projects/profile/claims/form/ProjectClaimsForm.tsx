@@ -175,20 +175,22 @@ const ProjectClaimsForm: React.FC<ProjectClaimsFormProps> = ({
       return sum + (rate || 0) * qty;
     }, 0);
 
-  const netAdj = adjustments.reduce((sum, adj) => {
-    const amount = Number(adj.amount) || 0;
-    return adj.type === 'deduction' || adj.type === '-' ? sum - amount : sum + amount;
-  }, 0);
+    const netAdj = adjustments.reduce((sum, adj) => {
+      const amount = Number(adj.amount) || 0;
+      return (adj.type === 'deduction' || adj.type === '-') ? sum - amount : sum + amount;
+    }, 0);
 
+    // VAT should be calculated on gross before adjustments
+    const vat = (gross * Number(watchVatPercentage)) / 100;
     const sub = gross + netAdj;
-    const vat = (sub * Number(watchVatPercentage)) / 100;
+    const grand = sub + vat;
 
     return {
       grossAmount: gross,
       netAdjustments: netAdj,
       subtotal: sub,
       vatAmount: vat,
-      grandTotal: sub + vat,
+      grandTotal: grand,
     };
   }, [deliverableItems, adjustments, watchVatPercentage]);
 
@@ -220,7 +222,7 @@ const ProjectClaimsForm: React.FC<ProjectClaimsFormProps> = ({
       adjustments: adjustments.map((adj) => ({
         description: adj.description,
         complement_ledger_id: adj.complement_ledger_id || adj.complement_ledger?.id,
-        type: adj.type === '-' ? 'deduction' : 'addition',
+        type: (adj.type === '-' || adj.type === 'deduction') ? 'deduction' : 'addition',
         amount: Number(adj.amount),
       })),
     };
@@ -241,7 +243,7 @@ const ProjectClaimsForm: React.FC<ProjectClaimsFormProps> = ({
 
       <DialogContent dividers>
         <Grid container spacing={3}>
-          <Grid size={{ xs: 12, md: 9 }}>
+          <Grid size={{ xs: 12, md: 8 }}>
             <form autoComplete="off" onSubmit={handleSubmit(onSubmit)}>
               <Grid container spacing={2} mb={3}>
                 <Grid size={{ xs: 12, md: 6 }}>
@@ -295,7 +297,7 @@ const ProjectClaimsForm: React.FC<ProjectClaimsFormProps> = ({
             </form>
           </Grid>
 
-          <Grid size={{xs: 12, md: 3}}>
+          <Grid size={{xs: 12, md: 4}}>
             <Div
               sx={{
                 position: 'sticky',

@@ -64,7 +64,7 @@ const ProjectClaimsAdjustmentsRow: React.FC<ProjectClaimsAdjustmentsRowProps> = 
           <Grid size={{ xs: 6, md: 3 }}>
             <Tooltip title="Type">
               <Typography variant="body2">
-                {adjustment?.type === '-' ? 'Deduction (-)' : 'Addition (+)'}
+                {(adjustment?.type === '-' || adjustment?.type === 'deduction') ? 'Deduction (-)' : 'Addition (+)'}
               </Typography>
             </Tooltip>
           </Grid>

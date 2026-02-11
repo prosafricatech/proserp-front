@@ -33,6 +33,7 @@ function TaskProgress({taskProgressItem = null, index = -1, setShowForm = null})
       .number()
       .required("Quantity is required")
       .typeError("Quantity is required")
+      .positive("Quantity must be greater than zero")
       .test("max-quantity", function (value) {
         const { unexcuted_task_quantity = 0, task, project_subcontract } = this.parent;
         const {

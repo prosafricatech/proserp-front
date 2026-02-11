@@ -1,4 +1,5 @@
 'use client';
+import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { faFileExcel } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -98,6 +99,8 @@ const DocumentDialog = ({
     withDetails: openDetails,
   };
 
+  console.log('exportedData: ', exportedData);
+
   const handlExcelExport = async (exportedData) => {
     const blob =
       await fuelStationServices.exportSalesShiftsToExcel(exportedData);
@@ -105,7 +108,7 @@ const DocumentDialog = ({
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'sales-shifts.xlsx';
+    a.download = `Shift-${exportedData.stationName}-${readableDate(exportedData.shiftData?.shift_end)}-${exportedData.shiftData?.shift?.name}`;
     a.click();
     window.URL.revokeObjectURL(url);
   };
