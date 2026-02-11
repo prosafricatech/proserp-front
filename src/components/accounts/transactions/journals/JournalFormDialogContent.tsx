@@ -232,61 +232,7 @@ function JournalFormDialogContent({
     const updatedData = { ...data, items };
     await saveJournal.mutate(updatedData);
   };
-
-  // return (
-  //     <>
-  //         <DialogTitle textAlign={'center'}>
-  //             {isDuplicate ? `Duplicate: ${journal?.voucherNo}` : isEdit ? `Edit: ${journal?.voucherNo}` : `New Journal Form`}
-  //         </DialogTitle>
-  //         <DialogContent>
-  //             <form autoComplete='false'>
-  //                 <Grid container columnSpacing={1} marginBottom={2}>
-  //                     <Grid size={{xs: 12, md: 4 }}>
-  //                         <Div sx={{ mt: 1, mb: 1 }}>
-  //                             <DateTimePicker
-  //                                 label="Journal Date (MM/DD/YYYY)"
-  //                                 minDate={
-  //                                     checkOrganizationPermission([PERMISSIONS.ACCOUNTS_TRANSACTIONS_BACKDATE, PERMISSIONS.JOURNAL_VOUCHERS_BACKDATE]) ?
-  //                                     dayjs(authOrganization?.organization.recording_start_date) :
-  //                                     dayjs().startOf('day')
-  //                                 }
-  //                                 maxDate={
-  //                                     checkOrganizationPermission([PERMISSIONS.ACCOUNTS_TRANSACTIONS_POSTDATE, PERMISSIONS.JOURNAL_VOUCHERS_POSTDATE]) ?
-  //                                     dayjs().add(10, 'year').endOf('year') :
-  //                                     dayjs().endOf('day')
-  //                                 }
-  //                                 defaultValue={transactionDate}
-  //                                 slotProps={{
-  //                                     textField: {
-  //                                         size: 'small',
-  //                                         fullWidth: true,
-  //                                         InputProps: { readOnly: true },
-  //                                         error: !!errors?.transactionDate,
-  //                                         helperText: errors?.transactionDate?.message
-  //                                     }
-  //                                 }}
-  //                                 onChange={(newValue: Dayjs | null) => {
-  //                                     setValue('transactionDate', newValue ? newValue.toISOString() : '', {
-  //                                         shouldValidate: true,
-  //                                         shouldDirty: true
-  //                                     });
-  //                                 }}
-  //                             />
-  //                         </Div>
-  //                     </Grid>
-  //                     <Grid size={{xs: 12, md: 4 }}>
-  //                         <Div sx={{ mt: 1, mb: 1 }}>
-  //                             <CurrencySelector
-  //                                 frontError={errors?.currency_id?.message ? { message: errors.currency_id.message } : null}
-  //                                 defaultValue={journal?.currency_id ?? 1}
-  //                                 onChange={(newValue) => {
-  //                                     setValue('currency_id', newValue ? newValue.id : null, {
-  //                                         shouldDirty: true,
-  //                                         shouldValidate: true
-  //                                     });
-
-  //                                     clearErrors('exchange_rate');
-
+  
   return (
     <>
       <DialogTitle textAlign={'center'}>

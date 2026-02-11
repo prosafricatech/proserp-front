@@ -131,6 +131,7 @@ const QuickAddLedger = ({
       code: '',
       description: '',
       ledger_group_id: null,
+      as_at: authOrganization?.organization?.recording_start_date,
     },
     resolver: yupResolver(validationSchema) as any,
   });
@@ -287,17 +288,6 @@ const QuickAddLedger = ({
                     )}
                   </Div>
                 </Grid>
-              </>
-            )}
-            {openQuickAddLedgerGroup && (
-              <Grid size={12}>
-                <AddQuickLedgerGroup
-                  setOpenQuickAddLedgerGroup={setOpenQuickAddLedgerGroup}
-                />
-              </Grid>
-            )}
-            {!openQuickAddLedgerGroup && (
-              <>
                 <Grid size={{ xs: 12, md: 6, lg: 4 }}>
                   <Div sx={{ mb: 1 }}>
                     <TextField
@@ -359,7 +349,13 @@ const QuickAddLedger = ({
                 </Grid>
               </>
             )}
-
+            {openQuickAddLedgerGroup && (
+              <Grid size={12}>
+                <AddQuickLedgerGroup
+                  setOpenQuickAddLedgerGroup={setOpenQuickAddLedgerGroup}
+                />
+              </Grid>
+            )}
             <Grid size={{ xs: 12, md: 12, lg: 12 }}>
               <Div sx={{ mb: 1 }}>
                 <TextField
@@ -396,6 +392,6 @@ const QuickAddLedger = ({
       </DialogActions>
     </>
   );
-};
+}
 
 export default QuickAddLedger;
