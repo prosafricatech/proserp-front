@@ -122,8 +122,8 @@ const FuelVouchersReport: React.FC = () => {
 
     setFilters((prev: any) => ({
       ...prev,
-      from: readableDate(dayjs(cleanFilters.from)),
-      to: readableDate(dayjs(cleanFilters.to)),
+      from: readableDate(dayjs(cleanFilters?.from)),
+      to: readableDate(dayjs(cleanFilters?.to)),
       stationName: activeStation?.name,
     }));
 
@@ -135,8 +135,8 @@ const FuelVouchersReport: React.FC = () => {
   };
 
   const downloadFileName = `Fuel Vouchers Report ${readableDate(
-    dayjs(filters.from).startOf('day').toISOString()
-  )}-${readableDate(dayjs(filters.to).endOf('day').toISOString())}`;
+    dayjs(filters?.from)?.startOf('day')?.toISOString()
+  )}-${readableDate(dayjs(filters?.to)?.endOf('day')?.toISOString())}`;
 
   const exportedData = {
     fuelVouchers: reportData,
