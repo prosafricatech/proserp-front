@@ -14,8 +14,18 @@ export async function POST(req: NextRequest) {
         'Content-Disposition': 'attachment; filename="sales-shifts.xlsx"',
       },
     });
-  } catch (error) {
+    // return NextResponse.json(buffer);
+  } catch (error: any) {
     console.error('Error in API route:', error);
-    return new Response('Failed to generate Excel', { status: 500 });
+    return new Response(
+      JSON.stringify({
+        message: error.message,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
   }
 }
