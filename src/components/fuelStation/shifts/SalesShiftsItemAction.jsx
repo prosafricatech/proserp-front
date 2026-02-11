@@ -137,14 +137,16 @@ const DocumentDialog = ({
             </Tabs>
           </Grid>
           <Grid size={1} textAlign='right'>
-            <Tooltip title='Close'>
-              <IconButton
-                size='small'
-                onClick={() => setOpenDocumentDialog(false)}
-              >
-                <HighlightOff color='primary' />
-              </IconButton>
-            </Tooltip>
+            {belowLargeScreen && (
+              <Tooltip title='Close'>
+                <IconButton
+                  size='small'
+                  onClick={() => setOpenDocumentDialog(false)}
+                >
+                  <HighlightOff color='primary' />
+                </IconButton>
+              </Tooltip>
+            )}
           </Grid>
         </Grid>
         {belowLargeScreen && activeTab === 2 && (
@@ -198,7 +200,7 @@ const DocumentDialog = ({
           />
         )}
 
-        {belowLargeScreen && activeTab === 0 && (
+        {!belowLargeScreen && (
           <Box textAlign='right' mt={5}>
             <Button
               variant='outlined'

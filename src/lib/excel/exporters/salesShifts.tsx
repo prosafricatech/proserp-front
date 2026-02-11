@@ -253,20 +253,6 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
       exportedData.stationName,
     ]);
 
-    // Add rows
-    const shiftInfoRow = ws.addRow([
-      'Sales Outlet',
-      'Shift Start',
-      'Shift End',
-      'Recorded By',
-      exportedData.shiftData.fuel_prices?.map((price: any, index: any) => {
-        const product = exportedData.productOptions?.find(
-          (p: any) => p.id === price.product_id
-        );
-        return product?.name || `Product ${price.product_id}`;
-      }),
-    ]);
-
     // fuel prices
     const fuelPrices: any[] = [];
 
