@@ -26,7 +26,7 @@ const SalesShiftOnScreen = ({
   fuel_pumps = [],
   tanks = [],
   productOptions = [],
-  openDetails = true,
+  includeFuelVouchers = true,
 }) => {
   const theme = useTheme();
   const isDark = theme.type === 'dark';
@@ -35,6 +35,8 @@ const SalesShiftOnScreen = ({
   const contrastText = organization.settings?.contrast_text || '#FFFFFF';
   const headerColor = isDark ? '#29f096' : mainColor;
 
+  console.log('on screen shiftData: ', shiftData);
+
   const [openSections, setOpenSections] = useState({
     products: true,
     cashDistribution: true,
@@ -42,7 +44,7 @@ const SalesShiftOnScreen = ({
     tankAdjustments: !!shiftData?.adjustments?.length,
     openingDipping: !!shiftData?.opening_dipping?.readings?.length,
     closingDipping: !!shiftData?.closing_dipping?.readings?.length,
-    fuelVouchers: openDetails && !!shiftData?.fuel_vouchers?.length,
+    fuelVouchers: includeFuelVouchers && !!shiftData?.fuel_vouchers?.length,
   });
 
   const toggleSection = (section) => {
@@ -142,6 +144,10 @@ const SalesShiftOnScreen = ({
     0
   );
 
+  const totalCash =
+    cashAccounts.reduce((sum, acc) => sum + (acc.amount || 0), 0) +
+    totalFuelVouchersAmount;
+
   // Products Sold Calculations (with adjustments)
   const mergedPumpReadings = (shiftData.pump_readings || []).reduce(
     (acc, pump) => {
@@ -159,6 +165,28 @@ const SalesShiftOnScreen = ({
   );
 
   const mergedProducts = Object.values(mergedPumpReadings);
+
+  const productsTotals = mergedProducts.reduce(
+    (acc, product) => {
+      const price =
+        shiftData.fuel_prices?.find((p) => p.product_id === product.product_id)
+          ?.price || 0;
+      const adjustments = (shiftData.adjustments || []).filter(
+        (a) => a.product_id === product.product_id
+      );
+      const adjTotal = adjustments.reduce(
+        (sum, a) => sum + (a.operator === '+' ? -a.quantity : a.quantity),
+        0
+      );
+      const finalQty = product.quantity + adjTotal;
+      const amount = finalQty * price;
+
+      acc.totalQuantity += finalQty;
+      acc.totalAmount += amount;
+      return acc;
+    },
+    { totalQuantity: 0, totalAmount: 0 }
+  );
 
   const SectionHeader = ({ title, sectionKey, hasData = true }) =>
     hasData && (
@@ -240,10 +268,11 @@ const SalesShiftOnScreen = ({
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid size={{ xs: 6, sm: 3 }}>
           <Typography variant='subtitle2' sx={{ color: headerColor }}>
-            Sales Outlet Shift
+            Team
           </Typography>
           <Typography variant='body1'>
-            {shiftData.shift?.name || 'N/A'}
+            {shift_teams?.find((t) => t.id === shiftData.shift_team_id)?.name ||
+              '—'}
           </Typography>
         </Grid>
         <Grid size={{ xs: 6, sm: 3 }}>
@@ -262,28 +291,10 @@ const SalesShiftOnScreen = ({
             {readableDate(shiftData.shift_end, true)}
           </Typography>
         </Grid>
-        {shiftData.fuel_prices?.map((price, index) => {
-          const product = productOptions?.find(
-            (p) => p.id === price.product_id
-          );
-          return (
-            <Grid key={index} size={{ xs: 6, sm: 3 }}>
-              <Typography variant='subtitle2' sx={{ color: headerColor }}>
-                {product?.name || `Product ${price.product_id}`}
-              </Typography>
-              <Typography variant='body1'>
-                {price.price?.toLocaleString('en-US', {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
-              </Typography>
-            </Grid>
-          );
-        })}
       </Grid>
 
-      {/* Conditional rendering based on openDetails */}
-      {!openDetails ? (
+      {/* Conditional rendering based on includeFuelVouchers */}
+      {!includeFuelVouchers ? (
         <CashierListSummaryOnScreen
           shiftData={shiftData}
           organization={organization}
@@ -291,7 +302,7 @@ const SalesShiftOnScreen = ({
           fuel_pumps={fuel_pumps}
           tanks={tanks}
           productOptions={productOptions}
-          openDetails={openDetails}
+          includeFuelVouchers={includeFuelVouchers}
         />
       ) : (
         <>
@@ -564,7 +575,7 @@ const SalesShiftOnScreen = ({
 
                 {/* Cashier Cash Distribution */}
                 {(cashier.main_ledger ||
-                  cashier.other_transactions?.length > 0) && (
+                  cashier.cash_transactions?.length > 0) && (
                   <Box sx={{ mt: 3 }}>
                     <Typography
                       variant='subtitle1'
@@ -604,8 +615,8 @@ const SalesShiftOnScreen = ({
                             </TableRow>
                           )}
 
-                          {/* Other Transactions */}
-                          {cashier.other_transactions?.map(
+                          {/* Cash Transactions */}
+                          {cashier.cash_transactions?.map(
                             (transaction, idx) => {
                               const ledger =
                                 cashier.ledgers?.find(
@@ -617,9 +628,7 @@ const SalesShiftOnScreen = ({
 
                               return (
                                 <TableRow key={idx} hover>
-                                  <TableCell>
-                                    {transaction.debit_ledger.name}
-                                  </TableCell>
+                                  <TableCell>{ledger.name}</TableCell>
                                   <NumberCell value={transaction.amount} />
                                 </TableRow>
                               );
@@ -635,7 +644,7 @@ const SalesShiftOnScreen = ({
                             </TableCell>
                             <NumberCell
                               value={
-                                (cashier.other_transactions?.reduce(
+                                (cashier.cash_transactions?.reduce(
                                   (sum, t) => sum + (t.amount || 0),
                                   0
                                 ) || 0) + (cashier.main_ledger?.amount || 0)

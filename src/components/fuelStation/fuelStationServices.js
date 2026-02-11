@@ -32,6 +32,14 @@ fuelStationServices.FuelVouchersReport = async (params) => {
     return data;
 }
 
+fuelStationServices.exportFuelVouchersToExcel = async (exportedData) => {
+    const res = await axios.post(`/api/exports/excel/fuelVouchers/`, exportedData, {
+        responseType: 'blob',
+    });
+    // const res = await axios.post(`/api/exports/excel/fuelVouchers/`, exportedData);
+    return res.data;
+}
+
 fuelStationServices.getUserStations = async ({ queryKey }) => {
     const { userId } = queryKey[1];
     const { data } = await axios.get(`/api/fuelStations/stations/${userId}/userStations`);
@@ -65,7 +73,6 @@ fuelStationServices.exportSalesShiftsToExcel = async (exportedData) => {
     const res = await axios.post(`/api/exports/excel/salesShifts/`, exportedData, {
         responseType: 'blob',
     });
-    // const res = await axios.post(`/api/exports/excel/salesShifts/`, exportedData);
     return res.data;
 }
 

@@ -1,11 +1,11 @@
-import { exportSalesShiftsToExcel } from '@/lib/excel/exporters/salesShifts';
+import { exportFuelVouchersToExcel } from '@/lib/excel/exporters/fuelVouchers';
 import { NextRequest } from 'next/server';
 
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as any;
 
-    const buffer = await exportSalesShiftsToExcel(body);
+    const buffer = await exportFuelVouchersToExcel(body);
 
     return new Response(buffer, {
       headers: {
@@ -14,6 +14,7 @@ export async function POST(req: NextRequest) {
         'Content-Disposition': 'attachment; filename="sales-shifts.xlsx"',
       },
     });
+    // return NextResponse.json(buffer);
   } catch (error: any) {
     console.error('Error in API route:', error);
     return new Response(
