@@ -3,7 +3,6 @@ import React, { lazy, useEffect, useState } from 'react'
 import { useStoreProfile } from './StoreProfileProvider'
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
-
 const StoreReports = lazy(() => import('./reports/StoreReports'));
 const StockAdjustments = lazy(() => import('./stockAdjustments/StockAdjustments'));
 const Transfer = lazy(() => import('./inventoryTransfer/InventoryTransfer'));
@@ -111,24 +110,50 @@ function StoreProfileContent() {
     }
   }, [documentTitle]);
 
-  // Calculate available tabs based on permissions
-  const availableTabs = [
-    { label: "Stock", value: TAB_INDICES.STOCK },
-    { label: "GRNs", value: TAB_INDICES.GRNS },
-    { label: "Transfers", value: TAB_INDICES.TRANSFERS },
-    { label: "Consumptions", value: TAB_INDICES.CONSUMPTIONS },
-  ];
 
-  if (checkOrganizationPermission([
+  // Permission constants for easier checks
+  const hasStoresRead = checkOrganizationPermission([
+    PERMISSIONS.STORES_READ
+  ]);
+  const hasStoresReports = checkOrganizationPermission([
+    PERMISSIONS.STORES_REPORTS
+  ]);
+  const hasTransferPermission = checkOrganizationPermission([
+    PERMISSIONS.INVENTORY_TRANSFERS_READ,
+    PERMISSIONS.INVENTORY_TRANSFERS_CREATE,
+    PERMISSIONS.INVENTORY_TRANSFERS_EDIT,
+    PERMISSIONS.INVENTORY_TRANSFERS_DELETE
+  ]);
+  const hasAdjustmentsPermission = checkOrganizationPermission([
     PERMISSIONS.STOCK_ADJUSTMENTS_READ, 
     PERMISSIONS.STOCK_ADJUSTMENTS_CREATE, 
     PERMISSIONS.STOCK_ADJUSTMENTS_EDIT, 
     PERMISSIONS.STOCK_ADJUSTMENTS_DELETE
-  ])) {
-    availableTabs.push({ label: "Adjustments", value: TAB_INDICES.ADJUSTMENTS });
-  }
+  ]);
 
-  availableTabs.push({ label: "Reports", value: TAB_INDICES.REPORTS });
+  let availableTabs: { label: string; value: number }[] = [];
+
+  // If user has only transfer permission, show only Transfers tab
+  if (!hasStoresRead && hasTransferPermission) {
+    availableTabs = [
+      { label: "Transfers", value: TAB_INDICES.TRANSFERS }
+    ];
+  } else if (hasStoresRead) {
+    availableTabs = [
+      { label: "Stock", value: TAB_INDICES.STOCK },
+      { label: "GRNs", value: TAB_INDICES.GRNS },
+      { label: "Consumptions", value: TAB_INDICES.CONSUMPTIONS }
+    ];
+    if (hasTransferPermission) {
+      availableTabs.splice(2, 0, { label: "Transfers", value: TAB_INDICES.TRANSFERS });
+    }
+    if (hasAdjustmentsPermission) {
+      availableTabs.push({ label: "Adjustments", value: TAB_INDICES.ADJUSTMENTS });
+    }
+    if (hasStoresReports) {
+      availableTabs.push({ label: "Reports", value: TAB_INDICES.REPORTS });
+    }
+  }
 
   return (
     <Box p={1} sx={{
