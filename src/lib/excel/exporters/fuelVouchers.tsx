@@ -19,7 +19,7 @@ export async function exportFuelVouchersToExcel(exportedData: any) {
 
     // Set column widths for better readability
     ws.columns = [
-      { width: 15 }, // Voucher No
+      { width: 18 }, // Voucher No
       { width: 12 }, // Date
       { width: 15 }, // Reference
       { width: 15 }, // Product
@@ -30,62 +30,36 @@ export async function exportFuelVouchersToExcel(exportedData: any) {
     ];
 
     // === FILTER SECTION (Level 1 - Top Level) ===
-    // Filter labels row
-    ws.mergeCells(`A1:B1`);
+    // Sttion name row
     ws.getCell(`A1`).value = 'Station Name';
     ws.getCell(`A1`).font = { bold: true, size: 11 };
     ws.getCell(`A1`).alignment = { horizontal: 'left', vertical: 'middle' };
-    ws.getCell(`A1`).fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: 'FFE8E8E8' }, // Light gray background
-    };
-    ws.getCell(`A1`).border = {
-      bottom: { style: 'thin', color: { argb: 'FF999999' } },
-    };
 
-    ws.mergeCells(`C1:D1`);
-    ws.getCell(`C1`).value = 'Stakeholder Name';
-    ws.getCell(`C1`).font = { bold: true, size: 11 };
-    ws.getCell(`C1`).alignment = { horizontal: 'left', vertical: 'middle' };
-    ws.getCell(`C1`).fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: 'FFE8E8E8' },
-    };
-    ws.getCell(`C1`).border = {
-      bottom: { style: 'thin', color: { argb: 'FF999999' } },
-    };
+    ws.mergeCells(`B1:C1`);
+    ws.getCell(`B1`).value = exportedData.filters.stationName;
+    ws.getCell(`B1`).alignment = { horizontal: 'left', vertical: 'middle' };
+    ws.getCell(`B1`).font = { size: 10 };
 
-    ws.mergeCells(`E1:G1`);
-    ws.getCell(`E1`).value = 'Date Range';
-    ws.getCell(`E1`).font = { bold: true, size: 11 };
-    ws.getCell(`E1`).alignment = { horizontal: 'left', vertical: 'middle' };
-    ws.getCell(`E1`).fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: 'FFE8E8E8' },
-    };
-    ws.getCell(`E1`).border = {
-      bottom: { style: 'thin', color: { argb: 'FF999999' } },
-    };
-
-    // Filter values row
-    ws.mergeCells(`A2:B2`);
-    ws.getCell(`A2`).value = exportedData.filters.stationName;
+    // Stakeholder name row
+    ws.getCell(`A2`).value = 'Stakeholder Name';
+    ws.getCell(`A2`).font = { bold: true, size: 11 };
     ws.getCell(`A2`).alignment = { horizontal: 'left', vertical: 'middle' };
-    ws.getCell(`A2`).font = { size: 10 };
 
-    ws.mergeCells(`C2:D2`);
-    ws.getCell(`C2`).value = exportedData.filters.stakeholder_name;
-    ws.getCell(`C2`).alignment = { horizontal: 'left', vertical: 'middle' };
-    ws.getCell(`C2`).font = { size: 10 };
+    ws.mergeCells(`B2:C2`);
+    ws.getCell(`B2`).value = exportedData.filters.stakeholder_name;
+    ws.getCell(`B2`).alignment = { horizontal: 'left', vertical: 'middle' };
+    ws.getCell(`B2`).font = { size: 10 };
 
-    ws.mergeCells(`E2:G2`);
-    ws.getCell(`E2`).value =
+    // Stakeholder name row
+    ws.getCell(`A3`).value = 'Date Range';
+    ws.getCell(`A3`).font = { bold: true, size: 11 };
+    ws.getCell(`A3`).alignment = { horizontal: 'left', vertical: 'middle' };
+
+    ws.mergeCells(`B3:C3`);
+    ws.getCell(`B3`).value =
       `${exportedData.filters.from} - ${exportedData.filters.to}`;
-    ws.getCell(`E2`).alignment = { horizontal: 'left', vertical: 'middle' };
-    ws.getCell(`E2`).font = { size: 10 };
+    ws.getCell(`B3`).alignment = { horizontal: 'left', vertical: 'middle' };
+    ws.getCell(`B3`).font = { size: 10 };
 
     // Add spacing row
     ws.addRow([]);
@@ -101,22 +75,29 @@ export async function exportFuelVouchersToExcel(exportedData: any) {
       '@',
       'TOTAL',
     ]);
-    headingRow.font = { bold: true, size: 11, color: { argb: 'FFFFFFFF' } };
-    headingRow.alignment = { horizontal: 'center', vertical: 'middle' };
     headingRow.height = 20;
-    headingRow.fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: 'FF404040' }, // Dark gray for header
-    };
-    headingRow.eachCell((cell) => {
-      cell.border = {
+
+    for (let c = 0; c < 8; c++) {
+      ws.getCell(`${String.fromCharCode(65 + c)}5`).border = {
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
         top: { style: 'thin', color: { argb: 'FF000000' } },
-        bottom: { style: 'medium', color: { argb: 'FF000000' } },
-        left: { style: 'thin', color: { argb: 'FF666666' } },
-        right: { style: 'thin', color: { argb: 'FF666666' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } },
       };
-    });
+      ws.getCell(`${String.fromCharCode(65 + c)}5`).font = {
+        bold: true,
+        size: 11,
+      };
+      ws.getCell(`${String.fromCharCode(65 + c)}5`).alignment = {
+        horizontal: 'left',
+        vertical: 'middle',
+      };
+      ws.getCell(`${String.fromCharCode(65 + c)}5`).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFD9D9D9' }, // Dark gray for header
+      };
+    }
 
     // === DATA ROWS (Level 3 - Content) ===
     if (exportedData.fuelVouchers.length) {
@@ -124,7 +105,7 @@ export async function exportFuelVouchersToExcel(exportedData: any) {
         const dataRow = ws.addRow([
           fv.voucherNo,
           dayjs(fv.transaction_date).format('DD-MM-YYYY'),
-          fv.reference,
+          fv.reference || '',
           fv.product?.name,
           fv.narration,
           fv.quantity.toLocaleString('en-US', {
@@ -155,9 +136,10 @@ export async function exportFuelVouchersToExcel(exportedData: any) {
         // Add subtle borders
         dataRow.eachCell((cell, colNumber) => {
           cell.border = {
-            bottom: { style: 'thin', color: { argb: 'FFE0E0E0' } },
-            left: { style: 'thin', color: { argb: 'FFF0F0F0' } },
-            right: { style: 'thin', color: { argb: 'FFF0F0F0' } },
+            top: { style: 'thin', color: { argb: 'FF000000' } },
+            bottom: { style: 'thin', color: { argb: 'FF000000' } },
+            left: { style: 'thin', color: { argb: 'FF000000' } },
+            right: { style: 'thin', color: { argb: 'FF000000' } },
           };
 
           // Right-align numeric columns (LTS, @, TOTAL)
@@ -187,22 +169,27 @@ export async function exportFuelVouchersToExcel(exportedData: any) {
         }),
       ]);
 
-      totalRow.font = { bold: true, size: 11 };
       totalRow.height = 22;
-      totalRow.fill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: 'FFD9D9D9' }, // Light gray for total row
-      };
-
-      totalRow.eachCell((cell, colNumber) => {
-        cell.border = {
-          top: { style: 'medium', color: { argb: 'FF000000' } },
-          bottom: { style: 'medium', color: { argb: 'FF000000' } },
+      const totalRowNo = totalRow.number;
+      for (let c = 0; c < 8; c++) {
+        ws.getCell(`${String.fromCharCode(65 + c)}${totalRowNo}`).font = {
+          bold: true,
+          size: 11,
+        };
+        ws.getCell(`${String.fromCharCode(65 + c)}${totalRowNo}`).fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: 'FFD9D9D9' }, // Light gray for total row
+        };
+        ws.getCell(`${String.fromCharCode(65 + c)}${totalRowNo}`).border = {
+          top: { style: 'thin', color: { argb: 'FF000000' } },
+          bottom: { style: 'thin', color: { argb: 'FF000000' } },
           left: { style: 'thin', color: { argb: 'FF666666' } },
           right: { style: 'thin', color: { argb: 'FF666666' } },
         };
+      }
 
+      totalRow.eachCell((cell, colNumber) => {
         // Right-align numeric columns
         if (colNumber >= 6) {
           cell.alignment = { horizontal: 'right', vertical: 'middle' };

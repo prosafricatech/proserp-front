@@ -11,6 +11,7 @@ import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { Span } from '@jumbo/shared';
 import { LoadingButton } from '@mui/lab';
 import {
+  Alert,
   Autocomplete,
   DialogContent,
   DialogTitle,
@@ -134,9 +135,11 @@ const FuelVouchersReport: React.FC = () => {
     setIsFetching(false);
   };
 
-  const downloadFileName = `Fuel Vouchers Report ${readableDate(
-    dayjs(filters.from).startOf('day').toISOString()
-  )}-${readableDate(dayjs(filters.to).endOf('day').toISOString())}`;
+  const downloadFileName = `Fuel Vouchers Report ${
+    filters
+      ? readableDate(dayjs(filters.from).startOf('day').toISOString())
+      : readableDate(dayjs().startOf('day').toISOString())
+  }-${filters ? readableDate(dayjs(filters.to).endOf('day').toISOString()) : readableDate(dayjs().endOf('day').toISOString())}`;
 
   const exportedData = {
     fuelVouchers: reportData,
@@ -268,42 +271,44 @@ const FuelVouchersReport: React.FC = () => {
       <DialogContent>
         {isFetching ? (
           <LinearProgress />
+        ) : reportData && reportData.length > 0 ? (
+          <>
+            <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)}>
+              <Tab label='PDF' />
+              <Tab label='EXCEL' />
+              {belowLargeScreen && <Tab label='ONSCREEN' />}
+            </Tabs>
+            {activeTab === 0 && (
+              <PDFContent
+                document={<FuelVouchersReportPDF />}
+                fileName={downloadFileName}
+              />
+            )}
+            {activeTab === 1 && (
+              <Grid
+                container
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}
+              >
+                <Tooltip title='Export file'>
+                  <IconButton
+                    size='large'
+                    onClick={() => handlExcelExport(exportedData)}
+                    disabled={isExporting}
+                  >
+                    <FontAwesomeIcon icon={faFileExcel} color='green' />
+                  </IconButton>
+                </Tooltip>
+              </Grid>
+            )}
+          </>
         ) : (
-          reportData && (
-            <>
-              <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)}>
-                <Tab label='PDF' />
-                <Tab label='EXCEL' />
-                {belowLargeScreen && <Tab label='ONSCREEN' />}
-              </Tabs>
-              {activeTab === 0 && (
-                <PDFContent
-                  document={<FuelVouchersReportPDF />}
-                  fileName={downloadFileName}
-                />
-              )}
-              {activeTab === 1 && (
-                <Grid
-                  container
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                  }}
-                >
-                  <Tooltip title='Export file'>
-                    <IconButton
-                      size='large'
-                      onClick={() => handlExcelExport(exportedData)}
-                      disabled={isExporting}
-                    >
-                      <FontAwesomeIcon icon={faFileExcel} color='green' />
-                    </IconButton>
-                  </Tooltip>
-                </Grid>
-              )}
-            </>
-          )
+          <Alert variant='outlined' severity='info'>
+            No data found
+          </Alert>
         )}
       </DialogContent>
     </>
