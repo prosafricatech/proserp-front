@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "target": "es5",
+    "ignoreDeprecations": "6.0",
     "lib": [
       "dom",
       "dom.iterable",
@@ -265,7 +266,7 @@
     "src/components/projectManagement/projects/profile/updates/UpdatesForm.jsx",
     "src/components/projectManagement/projects/profile/updates/Updates.jsx",
     "src/components/projectManagement/projects/profile/updates/UpdateItemAction.jsx",
-    "src/components/projectManagement/projects/profile/updates/tab/DescriptionTab.jsx",
+    "src/components/projectManagement/projects/profile/updates/tab/DescriptionTab.tsx",
     "src/components/projectManagement/projects/profile/updates/tab/taskProgress/TaskProgressRow.jsx",
     "src/components/projectManagement/projects/profile/updates/tab/taskProgress/TaskProgress.jsx",
     "src/components/projectManagement/projects/profile/updates/tab/taskProgress/taskProgressTab/MaterialIssued/MaterialIssuedRow.jsx",
