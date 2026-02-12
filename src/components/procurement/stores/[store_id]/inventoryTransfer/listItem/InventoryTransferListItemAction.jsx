@@ -69,7 +69,7 @@ const InventoryTransferListItemAction = ({ transfer }) => {
       data: transferDetails,
       isLoading,
     } = useQuery({
-      queryKey: ['inventoryTransfer', { id: transfer.id }],
+      queryKey: ['transferDetails', { id: transfer.id }],
       queryFn: () => inventoryTransferServices.transferDetails(transfer.id),
     });
 

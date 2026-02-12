@@ -79,6 +79,7 @@ function InventoryTransferForm({ toggleOpen, transfer = null, type }) {
       toggleOpen(false);
       enqueueSnackbar(data.message, { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['inventoryTransfers'] });
+      queryClient.invalidateQueries({ queryKey: ['transferDetails'] });
     },
     onError: (error) => {
       const message = error?.response?.data?.message;
@@ -92,6 +93,7 @@ function InventoryTransferForm({ toggleOpen, transfer = null, type }) {
       toggleOpen(false);
       enqueueSnackbar(data.message, { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['inventoryTransfers'] });
+      queryClient.invalidateQueries({ queryKey: ['transferDetails'] });
     },
     onError: (error) => {
       const message = error?.response?.data?.message;
