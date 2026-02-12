@@ -61,7 +61,7 @@ const ProjectClaimsAdjustmentsRow: React.FC<ProjectClaimsAdjustmentsRowProps> = 
             <Typography variant="body2">{index + 1}.</Typography>
           </Grid>
 
-          <Grid size={{ xs: 6, md: 3 }}>
+          <Grid size={{ xs: 6, md: 3.5 }}>
             <Tooltip title="Type">
               <Typography variant="body2">
                 {(adjustment?.type === '-' || adjustment?.type === 'deduction') ? 'Deduction (-)' : 'Addition (+)'}
@@ -69,16 +69,24 @@ const ProjectClaimsAdjustmentsRow: React.FC<ProjectClaimsAdjustmentsRowProps> = 
             </Tooltip>
           </Grid>
 
-          <Grid size={{ xs: 6, md: 3.5 }}>
+          <Grid size={{ xs: 12, md: 4.5 }}>
+            <Tooltip title="Description">
+              <Typography
+                variant="body2"
+                sx={{ whiteSpace: 'normal', wordBreak: 'break-word' }}
+              >
+                {adjustment?.description || '-'}
+              </Typography>
+            </Tooltip>
             <Tooltip title="Complement Ledger">
-              <Typography variant="body2">
+              <Typography variant="caption" color="text.secondary">
                 {complementLedger?.name || '-'}
               </Typography>
             </Tooltip>
           </Grid>
 
           <Grid
-            size={{ xs: 6, md: 2 }}
+            size={{ xs: 12, md: 2 }}
             textAlign="end"
             paddingRight={1}
           >
@@ -89,15 +97,7 @@ const ProjectClaimsAdjustmentsRow: React.FC<ProjectClaimsAdjustmentsRowProps> = 
             </Tooltip>
           </Grid>
 
-          <Grid size={{ xs: 6, md: 2 }}>
-            <Tooltip title="Description">
-              <Typography variant="body2" noWrap>
-                {adjustment?.description || '-'}
-              </Typography>
-            </Tooltip>
-          </Grid>
-
-          <Grid textAlign="end" size={{ xs: 6, md: 1 }}>
+          <Grid textAlign="end" size={{ xs: 12, md: 1.5 }}>
             <Tooltip title="Edit Adjustment">
               <IconButton size="small" onClick={() => setShowForm(true)}>
                 <EditOutlined fontSize="small" />

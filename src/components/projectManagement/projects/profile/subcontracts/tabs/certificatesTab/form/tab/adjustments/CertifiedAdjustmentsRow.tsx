@@ -77,7 +77,7 @@ const CertifiedAdjustmentsRow: React.FC<CertifiedAdjustmentsRowProps> = ({
               bgcolor: 'action.hover',
             },
           }}
-          onClick={() => setShowForm(true)} // Optional: click whole row to edit
+          onClick={() => setShowForm(true)}
         >
           {/* Index */}
           <Grid size={{ xs: 1, md: 0.5 }}>
@@ -87,7 +87,7 @@ const CertifiedAdjustmentsRow: React.FC<CertifiedAdjustmentsRowProps> = ({
           </Grid>
 
           {/* Type */}
-          <Grid size={{ xs: 5, md: 3 }}>
+          <Grid size={{ xs: 11, md: 3.5 }}>
             <Tooltip title="Type">
               <Typography variant="body2">
                 {(adjustment?.type === '-' || adjustment?.type === 'deduction') ? 'Deduction (-)' : 'Addition (+)'}
@@ -95,19 +95,27 @@ const CertifiedAdjustmentsRow: React.FC<CertifiedAdjustmentsRowProps> = ({
             </Tooltip>
           </Grid>
 
-          {/* Complement Ledger */}
-          <Grid size={{ xs: 6, md: 3.5 }}>
+          {/* Description + Complement Ledger */}
+          <Grid size={{ xs: 12, md: 4.5 }}>
+            <Tooltip title={adjustment.description || ''}>
+              <Typography
+                variant="body2"
+                sx={{ whiteSpace: 'normal', wordBreak: 'break-word' }}
+              >
+                {adjustment.description || '-'}
+              </Typography>
+            </Tooltip>
             <Tooltip title="Complement Ledger">
-              <Typography variant="body2" noWrap>
+              <Typography variant="caption" color="text.secondary">
                 {complementLedger?.name || '-'}
               </Typography>
             </Tooltip>
           </Grid>
 
           {/* Amount */}
-          <Grid size={{ xs: 6, md: 2 }} textAlign="end">
+          <Grid size={{ xs: 12, md: 2 }} textAlign="end">
             <Tooltip title="Amount">
-              <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+              <Typography variant="body2">
                 {adjustment.amount
                   ? Number(adjustment.amount).toLocaleString(undefined, {
                       minimumFractionDigits: 2,
@@ -118,17 +126,8 @@ const CertifiedAdjustmentsRow: React.FC<CertifiedAdjustmentsRowProps> = ({
             </Tooltip>
           </Grid>
 
-          {/* Description */}
-          <Grid size={{ xs: 12, md: 2 }}>
-            <Tooltip title={adjustment.description || ''}>
-              <Typography variant="body2" noWrap>
-                {adjustment.description || '-'}
-              </Typography>
-            </Tooltip>
-          </Grid>
-
           {/* Actions */}
-          <Grid size={{ xs: 6, md: 1 }} textAlign="end">
+          <Grid size={{ xs: 12, md: 1.5 }} textAlign="end">
             <Tooltip title="Edit Adjustment">
               <IconButton size="small" onClick={(e) => { e.stopPropagation(); setShowForm(true); }}>
                 <EditOutlined fontSize="small" />
