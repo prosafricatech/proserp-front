@@ -62,6 +62,7 @@ const FuelVouchersReport: React.FC = () => {
   const [isFetching, setIsFetching] = useState<boolean>(false);
   const [isExporting, setIsExporting] = useState<boolean>(false);
   const [filters, setFilters] = useState<any>(null);
+  const [pdfKey, setPdfKey] = useState(0);
 
   const [activeTab, setActiveTab] = useState(0);
   const { theme } = useJumboTheme();
@@ -280,8 +281,15 @@ const FuelVouchersReport: React.FC = () => {
             </Tabs>
             {activeTab === 0 && (
               <PDFContent
-                document={<FuelVouchersReportPDF />}
+                key={pdfKey}
                 fileName={downloadFileName}
+                document={
+                  <FuelVouchersReportPDF
+                    reportData={reportData}
+                    organization={organization}
+                    filters={filters}
+                  />
+                }
               />
             )}
             {activeTab === 1 && (

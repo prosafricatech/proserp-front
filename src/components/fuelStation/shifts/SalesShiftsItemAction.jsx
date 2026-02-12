@@ -99,8 +99,6 @@ const DocumentDialog = ({
     withDetails: openDetails,
   };
 
-  console.log('exportedData: ', exportedData);
-
   const handlExcelExport = async (exportedData) => {
     const blob =
       await fuelStationServices.exportSalesShiftsToExcel(exportedData);
