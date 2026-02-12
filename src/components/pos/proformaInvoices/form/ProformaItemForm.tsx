@@ -35,6 +35,7 @@ interface FormValues {
   rate: number;
   measurement_unit_id?: number | null;
   unit_symbol?: string | null;
+  description?: string;
 }
 
 interface ProformaItemFormProps {
@@ -54,6 +55,7 @@ interface ProformaItemFormProps {
     store_id?: number;
     amount?: number;
     vat_amount?: number;
+    description?: string;
   } | null;
   index?: number;
   setItems: React.Dispatch<React.SetStateAction<any[]>>;
@@ -119,14 +121,15 @@ const ProformaItemForm: React.FC<ProformaItemFormProps> = ({
     resolver: yupResolver(validationSchema) as any,
     defaultValues: {
       product: item && productOptions.find((product: Product) => product.id === (item.product_id ?? item.product?.id)),
-      quantity: item?.quantity ?? 0,
-      rate: item?.rate ?? 0,
+      quantity: item?.quantity,
+      rate: item?.rate,
       measurement_unit_id: item
         ? item.measurement_unit_id ?? item.measurement_unit?.id ?? null
         : null,
       unit_symbol: item
         ? item.measurement_unit?.unit_symbol ?? item.unit_symbol ?? null
         : null,
+      description: item?.description,
     },
   });
 
@@ -161,7 +164,7 @@ const ProformaItemForm: React.FC<ProformaItemFormProps> = ({
       }
       return null;
     },
-    enabled: !!watch('product')?.id && !!activeOutlet?.id,
+    enabled: !!watch('product')?.id && !!activeOutlet?.id && !item,
   });
 
   const calculateAmount = (): number => {
@@ -187,6 +190,7 @@ const ProformaItemForm: React.FC<ProformaItemFormProps> = ({
       unit_symbol: watch('unit_symbol'),
       amount: calculateAmount(),
       vat_amount: product?.vat_exempted ? 0 : calculateAmount() * vat_factor,
+      description: watch('description'),
     };
 
     if (index > -1) {
@@ -308,7 +312,7 @@ const ProformaItemForm: React.FC<ProformaItemFormProps> = ({
                 label="Quantity"
                 fullWidth
                 size="small"
-                defaultValue={item && item.quantity}
+                defaultValue={item?.quantity ?? ''}
                 InputProps={{
                   inputComponent: CommaSeparatedField,
                   endAdornment: product && selectedUnit && (
@@ -365,7 +369,7 @@ const ProformaItemForm: React.FC<ProformaItemFormProps> = ({
                   InputProps={{
                     inputComponent: CommaSeparatedField,
                   }}
-                  defaultValue={Math.round((watch('rate') ?? 0) * 100000) / 100000}
+                  defaultValue={watch('rate') ? Math.round((watch('rate') ?? 0) * 100000) / 100000 : ''}
                   onChange={(e) => {
                     setIsVatfieldChange(false);
                     setPriceInclusiveVAT(0);
@@ -393,8 +397,8 @@ const ProformaItemForm: React.FC<ProformaItemFormProps> = ({
                   }}
                   value={
                     isVatfieldChange
-                      ? Math.round(priceInclusiveVAT * 100000) / 100000
-                      : Math.round(((watch('rate') ?? 0) * (1 + (product?.vat_exempted ? 0 : vat_factor)) * 100000)) / 100000
+                      ? (priceInclusiveVAT ? Math.round(priceInclusiveVAT * 100000) / 100000 : '')
+                      : (watch('rate') ? Math.round(((watch('rate') ?? 0) * (1 + (product?.vat_exempted ? 0 : vat_factor)) * 100000)) / 100000 : '')
                   }
                   onChange={(e) => {
                     setIsVatfieldChange(true);
@@ -426,7 +430,19 @@ const ProformaItemForm: React.FC<ProformaItemFormProps> = ({
               />
             </Grid>
 
-            <Grid size={{ xs: 12, md: 12 }} textAlign={'end'}>
+            <Grid size={{ xs: 12, md: vat_factor ? 10 : 11 }}>
+              <TextField
+                label="Description"
+                fullWidth
+                size="small"
+                rows={2}
+                multiline
+                defaultValue={item?.description ?? ''}
+                {...register('description')}
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, md: vat_factor ? 2 : 1 }} textAlign={'end'}>
               <Button
                 variant="contained"
                 size="small"
