@@ -4,8 +4,6 @@ import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import useProsERPStyles from '@/app/helpers/style-helpers';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import StakeholderSelector from '@/components/masters/stakeholders/StakeholderSelector';
-import { faFileExcel } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { Span } from '@jumbo/shared';
@@ -16,12 +14,10 @@ import {
   DialogContent,
   DialogTitle,
   Grid,
-  IconButton,
   LinearProgress,
   Tab,
   Tabs,
   TextField,
-  Tooltip,
   Typography,
   useMediaQuery,
 } from '@mui/material';
@@ -252,7 +248,19 @@ const FuelVouchersReport: React.FC = () => {
                 />
               </Grid>
 
-              <Grid size={{ xs: 12 }} textAlign='right'>
+              <Grid size={{ xs: 12 }} textAlign='right' spacing={10}>
+                <LoadingButton
+                  loading={isExporting}
+                  type='button'
+                  onClick={() => handlExcelExport(exportedData)}
+                  disabled={!reportData || reportData?.length < 1}
+                  size='small'
+                  variant='contained'
+                  color='success'
+                  sx={{ mr: 1 }}
+                >
+                  Excel
+                </LoadingButton>
                 <LoadingButton
                   loading={isFetching}
                   type='submit'
@@ -272,10 +280,12 @@ const FuelVouchersReport: React.FC = () => {
           <LinearProgress />
         ) : reportData && reportData.length > 0 ? (
           <>
-            <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)}>
-              <Tab label='EXCEL' />
-              {belowLargeScreen && <Tab label='ONSCREEN' />}
-            </Tabs>
+            {belowLargeScreen && (
+              <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)}>
+                <Tab label='PDF' />
+                <Tab label='ONSCREEN' />
+              </Tabs>
+            )}
             {activeTab === 0 && (
               <PDFContent
                 key={pdfKey}
@@ -289,7 +299,7 @@ const FuelVouchersReport: React.FC = () => {
                 }
               />
             )}
-            {activeTab === 1 && (
+            {/* {activeTab === 1 && (
               <Grid
                 container
                 justifyContent="center"
@@ -326,7 +336,7 @@ const FuelVouchersReport: React.FC = () => {
                   </span>
                 </Tooltip>
               </Grid>
-            )}
+            )} */}
           </>
         ) : (
           <Alert variant='outlined' severity='info'>

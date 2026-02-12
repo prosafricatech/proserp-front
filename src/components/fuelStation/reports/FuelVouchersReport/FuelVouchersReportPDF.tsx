@@ -45,40 +45,54 @@ function FuelVouchersReportPDF({
           </View>
         </View>
         {/* ===== FILTERS ===== */}
-        <View style={{ ...pdfStyles.tableRow }}>
-          <View style={{ flex: 1 }}>
-            <Text style={{ ...pdfStyles.majorInfo, color: mainColor }}>
-              Station Name
-            </Text>
+        <View style={pdfStyles.table}>
+          <View style={{ ...pdfStyles.tableRow }}>
+            {filters.stationName && (
+              <View style={{ ...pdfStyles.tableCell, flex: 1 }}>
+                <Text style={{ ...pdfStyles.majorInfo, color: mainColor }}>
+                  Station Name
+                </Text>
+              </View>
+            )}
+            {filters.stakeholder_name && (
+              <View style={{ ...pdfStyles.tableCell, flex: 1 }}>
+                <Text style={{ ...pdfStyles.majorInfo, color: mainColor }}>
+                  Stakeholder Name
+                </Text>
+              </View>
+            )}
+            {filters.from && filters.to && (
+              <View style={{ ...pdfStyles.tableCell, flex: 1 }}>
+                <Text style={{ ...pdfStyles.majorInfo, color: mainColor }}>
+                  Date Range
+                </Text>
+              </View>
+            )}
           </View>
-          <View style={{ flex: 1 }}>
-            <Text style={{ ...pdfStyles.majorInfo, color: 'black' }}>
-              {filters.stationName}
-            </Text>
-          </View>
-        </View>
-        <View style={{ ...pdfStyles.tableRow }}>
-          <View style={{ flex: 1 }}>
-            <Text style={{ ...pdfStyles.majorInfo, color: mainColor }}>
-              Stakeholder Name
-            </Text>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={{ ...pdfStyles.majorInfo, color: 'black' }}>
-              {filters.stakeholder_name}
-            </Text>
-          </View>
-        </View>
-        <View style={{ ...pdfStyles.tableRow }}>
-          <View style={{ flex: 1 }}>
-            <Text style={{ ...pdfStyles.majorInfo, color: mainColor }}>
-              Date Range
-            </Text>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={{ ...pdfStyles.majorInfo, color: 'black' }}>
-              {`${filters.from} - ${filters.to}`}
-            </Text>
+          <View style={{ ...pdfStyles.tableRow }}>
+            {filters.stationName && (
+              <View style={{ ...pdfStyles.tableCell, flex: 1 }}>
+                <Text style={{ ...pdfStyles.majorInfo, color: 'black' }}>
+                  {filters.stationName}
+                </Text>
+              </View>
+            )}
+
+            {filters.stakeholder_name && (
+              <View style={{ ...pdfStyles.tableCell, flex: 1 }}>
+                <Text style={{ ...pdfStyles.majorInfo, color: 'black' }}>
+                  {filters.stakeholder_name}
+                </Text>
+              </View>
+            )}
+
+            {filters.from && filters.to && (
+              <View style={{ ...pdfStyles.tableCell, flex: 1 }}>
+                <Text style={{ ...pdfStyles.majorInfo, color: 'black' }}>
+                  {`${filters.from} - ${filters.to}`}
+                </Text>
+              </View>
+            )}
           </View>
         </View>
 
