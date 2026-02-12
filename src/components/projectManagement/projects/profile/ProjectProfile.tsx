@@ -1,7 +1,9 @@
 'use client';
 
 import { lazy, useEffect, useMemo, useState } from 'react';
-import { Card, LinearProgress, Stack, Tab, Tabs, Typography } from '@mui/material';
+import { Card, IconButton, LinearProgress, Stack, Tab, Tabs, Tooltip, Typography } from '@mui/material';
+import { ArrowBackOutlined } from '@mui/icons-material';
+import { useRouter, useParams } from 'next/navigation';
 import JumboContentLayout from '@jumbo/components/JumboContentLayout';
 import ProjectDashboard from './dashboard/ProjectDashboard';
 import ProjectProfileProvider, { useProjectProfile } from './ProjectProfileProvider';
@@ -49,6 +51,8 @@ const TABS_NEEDING_TIMELINE: TabKey[] = [
 ];
 
 function ProfileContent() {
+  const router = useRouter();
+  const params = useParams<{ lang: string; id: string }>();
   const { project, updateProjectProfile, setIsDashboardTab }: any = useProjectProfile();
   const queryClient = useQueryClient();
   
@@ -228,10 +232,20 @@ function ProfileContent() {
   return (
     <JumboContentLayout
       header={
-        <>
-          <Typography variant="h4">{project?.name}</Typography>
-          <Typography variant="body1">{project?.reference}</Typography>
-        </>
+        <Stack direction="row" alignItems="center" spacing={1}>
+          <Tooltip title="Back to Projects">
+            <IconButton
+              size="small"
+              onClick={() => router.push(`/${params.lang}/projectManagement/projects`)}
+            >
+              <ArrowBackOutlined />
+            </IconButton>
+          </Tooltip>
+          <Stack>
+            <Typography variant="h4">{project?.name}</Typography>
+            <Typography variant="body1">{project?.reference}</Typography>
+          </Stack>
+        </Stack>
       }
     >
       <Card sx={{ height: '100%', p: 1 }}>
