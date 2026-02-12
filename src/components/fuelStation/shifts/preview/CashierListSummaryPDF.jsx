@@ -435,6 +435,21 @@ export default function CashierListSummaryPDF({
                 return total + fv.quantity * productPrice;
               }, 0) || 0;
 
+            const totalPumoAmount = cashier.pump_readings.reduce(
+              (acc, pump) => {
+                const difference = (pump.closing || 0) - (pump.opening || 0);
+
+                const fuelPrice = shiftData.fuel_prices.find(
+                  (fp) => fp.product_id === pump.product_id
+                );
+
+                const amount = difference * fuelPrice.price;
+
+                return acc + amount;
+              },
+              0
+            );
+
             // Calculate other transactions total for this cashier
             const otherTransactionsTotal =
               cashier.other_transactions?.reduce(
@@ -486,6 +501,12 @@ export default function CashierListSummaryPDF({
 
             cashDistributionSummary.unshift(mainLedgerObj);
             cashDistributionSummary.push(voucherObj);
+
+            const cashDistributionsTotalSummary =
+              cashDistributionSummary.reduce(
+                (acc, cd) => acc + cd.totalAmount,
+                0
+              );
 
             // total fuel vouchers for cashier
             const totalFuelVoucherAmount = cashier.fuel_vouchers?.reduce(
@@ -589,6 +610,37 @@ export default function CashierListSummaryPDF({
                         </View>
                       );
                     })}
+                    {/* === Total amount for pump details === */}
+                    <View
+                      style={{
+                        ...pdfStyles.tableRow,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          ...pdfStyles.tableCell,
+                          backgroundColor: mainColor,
+                          color: contrastText,
+                          flex: 1,
+                        }}
+                      >
+                        TOTAL
+                      </Text>
+                      <Text
+                        style={{
+                          ...pdfStyles.tableCell,
+                          backgroundColor: mainColor,
+                          color: contrastText,
+                          textAlign: 'right',
+                          flex: 0.5,
+                        }}
+                      >
+                        {totalPumoAmount.toLocaleString('en-US', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </Text>
+                    </View>
                   </View>
                 </View>
 
@@ -649,6 +701,41 @@ export default function CashierListSummaryPDF({
                             </View>
                           </View>
                         ))}
+                        <View
+                          style={{
+                            ...pdfStyles.tableRow,
+                          }}
+                        >
+                          <View
+                            style={{
+                              ...pdfStyles.tableCell,
+                              backgroundColor: mainColor,
+                              color: contrastText,
+                              flex: 2,
+                            }}
+                          >
+                            <Text>Total</Text>
+                          </View>
+                          <View
+                            style={{
+                              ...pdfStyles.tableCell,
+                              backgroundColor: mainColor,
+                              color: contrastText,
+                              textAlign: 'right',
+                              flex: 1,
+                            }}
+                          >
+                            <Text>
+                              {cashDistributionsTotalSummary.toLocaleString(
+                                'en-US',
+                                {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                }
+                              )}
+                            </Text>
+                          </View>
+                        </View>
                       </View>
                     </View>
                   </View>
@@ -768,6 +855,38 @@ export default function CashierListSummaryPDF({
                     </Text>
                   </View>
                 ))}
+                <View
+                  style={{
+                    ...pdfStyles.tableRow,
+                  }}
+                >
+                  <Text
+                    style={{
+                      ...pdfStyles.tableCell,
+                      backgroundColor: mainColor,
+                      color: contrastText,
+                      flex: 2.1,
+                    }}
+                  >
+                    TOTAL
+                  </Text>
+                  <Text
+                    style={{
+                      ...pdfStyles.tableCell,
+                      backgroundColor: mainColor,
+                      color: contrastText,
+                      textAlign: 'right',
+                      flex: 1,
+                    }}
+                  >
+                    {pumpSummary
+                      .reduce((acc, pump) => acc + pump.totalDifference, 0)
+                      .toLocaleString('en-US', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                  </Text>
+                </View>
               </View>
             </View>
 
@@ -826,7 +945,6 @@ export default function CashierListSummaryPDF({
                       ...pdfStyles.tableCell,
                       backgroundColor: mainColor,
                       color: contrastText,
-                      padding: 4,
                       fontSize: '10px',
                       flex: 2.05,
                     }}
@@ -838,7 +956,6 @@ export default function CashierListSummaryPDF({
                       ...pdfStyles.tableCell,
                       backgroundColor: mainColor,
                       color: contrastText,
-                      padding: 4,
                       fontSize: '10px',
                       textAlign: 'right',
                       flex: 1,
@@ -866,6 +983,8 @@ export default function CashierListSummaryPDF({
                     style={{
                       ...pdfStyles.tableCell,
                       textAlign: 'right',
+                      backgroundColor: mainColor,
+                      color: contrastText,
                       flex: 0.8,
                     }}
                   >
@@ -878,6 +997,8 @@ export default function CashierListSummaryPDF({
                     style={{
                       ...pdfStyles.tableCell,
                       textAlign: 'right',
+                      backgroundColor: mainColor,
+                      color: contrastText,
                       flex: 0.8,
                     }}
                   >
@@ -890,6 +1011,8 @@ export default function CashierListSummaryPDF({
                     style={{
                       ...pdfStyles.tableCell,
                       textAlign: 'right',
+                      backgroundColor: mainColor,
+                      color: contrastText,
                       flex: 0.8,
                     }}
                   >

@@ -20,12 +20,12 @@ export async function exportFuelVouchersToExcel(exportedData: any) {
     // Set column widths for better readability
     ws.columns = [
       { width: 18 }, // Voucher No
-      { width: 12 }, // Date
+      { width: 20 }, // Date
       { width: 15 }, // Reference
       { width: 15 }, // Product
       { width: 25 }, // Narration
       { width: 12 }, // LTS
-      { width: 10 }, // @
+      { width: 10 }, // Price
       { width: 15 }, // Total
     ];
 
@@ -66,13 +66,13 @@ export async function exportFuelVouchersToExcel(exportedData: any) {
 
     // === TABLE HEADER (Level 2 - Section Header) ===
     const headingRow = ws.addRow([
-      'VOUCHER NO.',
       'DATE',
+      'VOUCHER NO.',
       'REFERENCE',
       'PRODUCT',
       'NARRATION',
       'LTS',
-      '@',
+      'PRICE',
       'TOTAL',
     ]);
     headingRow.height = 20;
@@ -103,8 +103,8 @@ export async function exportFuelVouchersToExcel(exportedData: any) {
     if (exportedData.fuelVouchers.length) {
       exportedData.fuelVouchers.forEach((fv: any, index: number) => {
         const dataRow = ws.addRow([
-          fv.voucherNo,
           dayjs(fv.transaction_date).format('DD-MM-YYYY'),
+          fv.voucherNo,
           fv.reference || '',
           fv.product?.name,
           fv.narration,
@@ -121,14 +121,6 @@ export async function exportFuelVouchersToExcel(exportedData: any) {
             minimumFractionDigits: 2,
           }),
         ]);
-
-        // Alternating row colors for better readability
-        const rowColor = index % 2 === 0 ? 'FFFFFFFF' : 'FFF8F8F8';
-        dataRow.fill = {
-          type: 'pattern',
-          pattern: 'solid',
-          fgColor: { argb: rowColor },
-        };
 
         dataRow.font = { size: 10 };
         dataRow.alignment = { vertical: 'middle' };
