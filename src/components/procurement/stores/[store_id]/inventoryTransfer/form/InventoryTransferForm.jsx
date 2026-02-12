@@ -63,7 +63,7 @@ function InventoryTransferForm({ toggleOpen, transfer = null, type }) {
       vehicle_information: transfer?.vehicle_information || '',
       driver_information: transfer?.driver_information || '',
       source_cost_center_id: transfer?.source_cost_center?.id || null,
-      change_cost_center: transfer ? (transfer?.cost_center_change_transfer !== null ? 1 : 0) : 0,
+      change_cost_center: transfer ? (transfer?.cost_center_change_transfer ? 1 : 0) : 0,
       destination_cost_center_id: transfer?.destination_cost_center?.id || null,
       source_store_id: activeStore.id,
       destination_store_id: transfer ? transfer.destination_store_id : (type === 'cost center change' ? activeStore.id : null),
