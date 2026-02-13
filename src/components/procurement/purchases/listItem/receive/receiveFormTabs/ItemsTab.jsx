@@ -9,8 +9,8 @@ function ItemsTab({purchase_order_items}) {
   return (
     <>
       {purchase_order_items
-        .filter((item) => item.unreceived_quantity !== 0)
-        .map((item, index) => (
+        ?.filter((item) => item.unreceived_quantity !== 0)
+        ?.map((item, index) => (
           <React.Fragment key={item.id}>
             <Grid
               container
