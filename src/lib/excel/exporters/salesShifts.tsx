@@ -338,11 +338,7 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
         );
 
         // cash distributions
-        if (c.other_transactions.length) {
-          for (const cd of c.other_transactions) {
-            cashier.cashDistributions = cashDistributionSummary;
-          }
-        }
+        cashier.cashDistributions = cashDistributionSummary;
 
         // Calculate total products amount for this cashier
         const totalProductsAmount =

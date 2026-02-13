@@ -72,6 +72,7 @@ fuelStationServices.exportSalesShiftsToExcel = async (exportedData) => {
     const res = await axios.post(`/api/exports/excel/salesShifts/`, exportedData, {
         responseType: 'blob',
     });
+    // const res = await axios.post(`/api/exports/excel/salesShifts/`, exportedData);
     return res.data;
 }
 
