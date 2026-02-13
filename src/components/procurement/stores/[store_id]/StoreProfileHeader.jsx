@@ -24,4 +24,4 @@ function StoreProfileHeader() {
   );
 }
 
-export default StoreProfileHeader;
+export default StoreProfileHeader

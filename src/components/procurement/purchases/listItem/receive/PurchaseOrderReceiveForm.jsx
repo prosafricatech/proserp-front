@@ -266,7 +266,7 @@ function PurchaseOrderReceiveForm({ toggleOpen, order }) {
   };
 
   return (
-    <FormProvider {...{additionalCosts, setAdditionalCosts, purchase_order_items, totalAmount, order, getReceivedItemsSummary, gettotalAmount, getTotalCostAmount, getTotalAdditionalCostsAmount, getAdditionalCostsSummary,errors, register, setValue, watch, clearErrors,authOrganization}}>
+    <FormProvider {...{ errors, register, setValue, watch, clearErrors}}>
       <DialogTitle>
         <form autoComplete='off'>
           <Grid container spacing={1}>
@@ -376,17 +376,23 @@ function PurchaseOrderReceiveForm({ toggleOpen, order }) {
         </form>
       </DialogTitle>  
       <DialogContent>
-        {activeTab === 0 && <ItemsTab/>}
+        {activeTab === 0 && <ItemsTab purchase_order_items={purchase_order_items} />}
 
-        {activeTab === 1 && <AdditionalCostsTab setIsDirty={setIsDirty}/>}
+        {activeTab === 1 && <AdditionalCostsTab setIsDirty={setIsDirty} additionalCosts={additionalCosts} setAdditionalCosts={setAdditionalCosts} />}
 
-        {activeTab === 2 && <SummaryTab/>}
+        {activeTab === 2 && 
+          <SummaryTab 
+            authOrganization={authOrganization} order={order} getReceivedItemsSummary={getReceivedItemsSummary} gettotalAmount={gettotalAmount}
+            getTotalCostAmount={getTotalCostAmount} getTotalAdditionalCostsAmount={getTotalAdditionalCostsAmount} getAdditionalCostsSummary={getAdditionalCostsSummary}
+          />
+        }
 
         {activeTab === 1 &&
           additionalCosts.map((additionalCost, index) => {
-            return <AdditionalCostsTabRow key={index} setIsDirty={setIsDirty} additionalCost={additionalCost} index={index}/>
+            return <AdditionalCostsTabRow additionalCosts={additionalCosts} setAdditionalCosts={setAdditionalCosts} key={index} setIsDirty={setIsDirty} additionalCost={additionalCost} index={index}/>
           })
         }
+        
         <Dialog open={showWarning} onClose={() => setShowWarning(false)}>
           <DialogTitle>Unsaved Additional Cost</DialogTitle>
           <DialogContent>

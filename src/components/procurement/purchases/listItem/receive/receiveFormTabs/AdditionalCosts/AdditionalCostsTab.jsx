@@ -2,7 +2,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { Divider, Grid, IconButton, LinearProgress, TextField, Tooltip } from '@mui/material';
 import React, { useEffect, useState } from 'react'
 import * as yup from 'yup';
-import { useForm, useFormContext } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { AddOutlined, CheckOutlined, DisabledByDefault } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 import { useLedgerSelect } from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
@@ -13,9 +13,8 @@ import CurrencySelector from '@/components/masters/Currencies/CurrencySelector';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 
-function AdditionalCostsTab({index = -1, setShowForm = null, additionalCost, setIsDirty}) {
+function AdditionalCostsTab({index = -1, setShowForm = null, additionalCost, setIsDirty, additionalCosts=[], setAdditionalCosts}) {
   const {ungroupedLedgerOptions} = useLedgerSelect();
-  const {additionalCosts=[], setAdditionalCosts} = useFormContext();
   const [isAdding, setIsAdding] = useState(false);
   const {currencies} = useCurrencySelect();
 

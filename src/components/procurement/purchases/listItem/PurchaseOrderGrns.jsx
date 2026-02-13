@@ -28,27 +28,32 @@ function PurchaseOrderGrns({order}) {
                     width: '100%', m: 0 
                 }}
                 container
-                spacing={1}
+                columnSpacing={1}
                 alignItems="center"
             >
-                <Grid size={{xs: 4, md: 3}}>
+                <Grid size={{xs: 6, md: 3}}>
                     <Tooltip title={'Date Received'}>
                         <Typography>
                             {readableDate(orderGrn?.date_received)}
                         </Typography>
                     </Tooltip>
                 </Grid>
-                <Grid size={{xs: 4, md: 3}} align="center">
+                <Grid size={{xs: 6, md: 3}}>
                     <Tooltip title={'Grn No.'}>
-                    <Typography>{orderGrn?.grnNo}</Typography>
+                        <Typography>{orderGrn?.grnNo}</Typography>
+                    </Tooltip>
+                        <Tooltip title={'Reference'}>
+                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                                {orderGrn?.reference}
+                            </Typography>
+                        </Tooltip>
+                </Grid>
+                <Grid size={{xs: 6, md: 4}}>
+                    <Tooltip title={'Store'}>
+                        <Typography>{orderGrn?.store.name}</Typography>
                     </Tooltip>
                 </Grid>
-                <Grid size={{xs: 4, md: 4}} align="end">
-                    <Tooltip title={'Reference'}>
-                    <Typography>{orderGrn?.reference}</Typography>
-                    </Tooltip>
-                </Grid>
-                <Grid size={{xs: 12, md: 2}}>
+                <Grid size={{xs: 6, md: 2}}>
                     <Box
                         display={'flex'}
                         flexDirection={'row'}
@@ -62,7 +67,7 @@ function PurchaseOrderGrns({order}) {
                                         setOpenDialog(true);
                                     }}
                                 >
-                                <UndoOutlined color='error'/>
+                                    <UndoOutlined color='error'/>
                                 </IconButton>
                             </Tooltip>
                         }

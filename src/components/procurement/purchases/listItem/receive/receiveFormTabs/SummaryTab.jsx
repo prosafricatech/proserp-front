@@ -5,17 +5,11 @@ import {
     Divider, Grid, Table, TableBody, TableCell, TableContainer, TableHead,
     TableRow, Typography
 } from '@mui/material';
-import React from 'react';
-import { useFormContext } from 'react-hook-form';
 import { useTheme } from '@mui/material/styles';
 
-function SummaryTab() {
+function SummaryTab({authOrganization, order, getReceivedItemsSummary, gettotalAmount,
+        getTotalCostAmount, getTotalAdditionalCostsAmount, getAdditionalCostsSummary}) {
     const theme = useTheme();
-    const {
-        authOrganization, order, getReceivedItemsSummary, gettotalAmount,
-        getTotalCostAmount, getTotalAdditionalCostsAmount, getAdditionalCostsSummary
-    } = useFormContext();
-
     const { currencies } = useCurrencySelect();
     const currency = order.currency;
     const baseCurrency = currencies.find((currency) => !!currency?.is_base).symbol;

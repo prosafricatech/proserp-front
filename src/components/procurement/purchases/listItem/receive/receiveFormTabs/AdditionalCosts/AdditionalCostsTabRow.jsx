@@ -4,9 +4,8 @@ import React, { useState } from 'react'
 import { useFormContext } from 'react-hook-form';
 import AdditionalCostsTab from './AdditionalCostsTab';
 
-function AdditionalCostsTabRow({ additionalCost, setIsDirty, index}) {
+function AdditionalCostsTabRow({ additionalCost, setIsDirty, index, additionalCosts=[], setAdditionalCosts}) {
     const [showForm, setShowForm] = useState(false);
-    const {additionalCosts=[], setAdditionalCosts} = useFormContext();
 
   return (
     <React.Fragment>
