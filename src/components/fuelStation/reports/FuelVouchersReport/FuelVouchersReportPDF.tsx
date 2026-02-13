@@ -27,6 +27,8 @@ function FuelVouchersReportPDF({
     (sum: any, fv: any) => sum + fv.quantity * fv.price,
     0
   );
+
+  let runningBalance: number = 0;
   return (
     <Document
       title={`Fuel Vouchers Report | ${organization.name}`}
@@ -105,10 +107,10 @@ function FuelVouchersReportPDF({
                   ...pdfStyles.tableHeader,
                   backgroundColor: mainColor,
                   color: contrastText,
-                  flex: 1,
+                  flex: 0.5,
                 }}
               >
-                DATE
+                Date
               </Text>
               <Text
                 style={{
@@ -118,7 +120,17 @@ function FuelVouchersReportPDF({
                   flex: 1,
                 }}
               >
-                VOUCHER NO
+                Voucher No
+              </Text>
+              <Text
+                style={{
+                  ...pdfStyles.tableHeader,
+                  backgroundColor: mainColor,
+                  color: contrastText,
+                  flex: 1.5,
+                }}
+              >
+                Stakeholder/Expense Ledger
               </Text>
               <Text
                 style={{
@@ -128,7 +140,17 @@ function FuelVouchersReportPDF({
                   flex: 1,
                 }}
               >
-                REFERENCE
+                Reference
+              </Text>
+              <Text
+                style={{
+                  ...pdfStyles.tableHeader,
+                  backgroundColor: mainColor,
+                  color: contrastText,
+                  flex: 0.8,
+                }}
+              >
+                Product
               </Text>
               <Text
                 style={{
@@ -138,51 +160,66 @@ function FuelVouchersReportPDF({
                   flex: 1,
                 }}
               >
-                PRODUCT
+                Narration
               </Text>
               <Text
                 style={{
                   ...pdfStyles.tableHeader,
                   backgroundColor: mainColor,
                   color: contrastText,
-                  flex: 1,
+                  flex: 0.6,
                 }}
               >
-                NARRATION
+                Lts
               </Text>
               <Text
                 style={{
                   ...pdfStyles.tableHeader,
                   backgroundColor: mainColor,
                   color: contrastText,
-                  flex: 1,
+                  flex: 0.5,
                 }}
               >
-                LTS
+                Price
               </Text>
               <Text
                 style={{
                   ...pdfStyles.tableHeader,
                   backgroundColor: mainColor,
                   color: contrastText,
-                  flex: 1,
+                  flex: 0.8,
                 }}
               >
-                @
+                {`${filters.with_receipts == 1 ? 'Debit' : 'Amount'}`}
               </Text>
-              <Text
-                style={{
-                  ...pdfStyles.tableHeader,
-                  backgroundColor: mainColor,
-                  color: contrastText,
-                  flex: 1,
-                }}
-              >
-                TOTAL
-              </Text>
+              {filters.with_receipts == 1 && (
+                <Text
+                  style={{
+                    ...pdfStyles.tableHeader,
+                    backgroundColor: mainColor,
+                    color: contrastText,
+                    flex: 0.5,
+                  }}
+                >
+                  Credit
+                </Text>
+              )}
+              {filters.with_receipts == 1 && (
+                <Text
+                  style={{
+                    ...pdfStyles.tableHeader,
+                    backgroundColor: mainColor,
+                    color: contrastText,
+                    flex: 1,
+                  }}
+                >
+                  Running Balance
+                </Text>
+              )}
             </View>
             {reportData.length &&
               reportData.map((rd: any, index: number) => {
+                runningBalance += rd.debit - rd.credit;
                 return (
                   <View key={index} style={pdfStyles.tableRow}>
                     {/* date */}
@@ -191,7 +228,7 @@ function FuelVouchersReportPDF({
                         ...pdfStyles.tableCell,
                         backgroundColor:
                           index % 2 === 0 ? '#FFFFFF' : lightColor,
-                        flex: 1,
+                        flex: 0.5,
                       }}
                     >
                       {dayjs(rd.transaction_date).format('DD-MM-YYYY')}
@@ -207,6 +244,18 @@ function FuelVouchersReportPDF({
                       }}
                     >
                       {rd.voucherNo}
+                    </Text>
+                    {/* Stakeholder/Expense Ledger */}
+                    <Text
+                      style={{
+                        ...pdfStyles.tableCell,
+                        backgroundColor:
+                          index % 2 === 0 ? '#FFFFFF' : lightColor,
+                        flex: 1.5,
+                        textAlign: 'right',
+                      }}
+                    >
+                      {rd.expense_ledger?.name || rd.stakeholder?.name}
                     </Text>
                     {/* Reference */}
                     <Text
@@ -226,7 +275,7 @@ function FuelVouchersReportPDF({
                         ...pdfStyles.tableCell,
                         backgroundColor:
                           index % 2 === 0 ? '#FFFFFF' : lightColor,
-                        flex: 1,
+                        flex: 0.8,
                         textAlign: 'right',
                       }}
                     >
@@ -250,7 +299,7 @@ function FuelVouchersReportPDF({
                         ...pdfStyles.tableCell,
                         backgroundColor:
                           index % 2 === 0 ? '#FFFFFF' : lightColor,
-                        flex: 1,
+                        flex: 0.6,
                         textAlign: 'right',
                       }}
                     >
@@ -265,7 +314,7 @@ function FuelVouchersReportPDF({
                         ...pdfStyles.tableCell,
                         backgroundColor:
                           index % 2 === 0 ? '#FFFFFF' : lightColor,
-                        flex: 1,
+                        flex: 0.5,
                         textAlign: 'right',
                       }}
                     >
@@ -274,34 +323,71 @@ function FuelVouchersReportPDF({
                         minimumFractionDigits: 2,
                       })}
                     </Text>
-                    {/* TOTAL */}
+                    {/* AMOUNT */}
                     <Text
                       style={{
                         ...pdfStyles.tableCell,
                         backgroundColor:
                           index % 2 === 0 ? '#FFFFFF' : lightColor,
-                        flex: 1,
+                        flex: 0.8,
                         textAlign: 'right',
                       }}
                     >
-                      {(rd.quantity * rd.price).toLocaleString('en-US', {
-                        maximumFractionDigits: 2,
-                        minimumFractionDigits: 2,
-                      })}
+                      {filters.with_receipts == 0
+                        ? rd.amount.toLocaleString('en-US', {
+                            maximumFractionDigits: 2,
+                            minimumFractionDigits: 2,
+                          })
+                        : rd.debit.toLocaleString('en-US', {
+                            maximumFractionDigits: 2,
+                            minimumFractionDigits: 2,
+                          })}
                     </Text>
+                    {filters.with_receipts == 1 && (
+                      <Text
+                        style={{
+                          ...pdfStyles.tableCell,
+                          backgroundColor:
+                            index % 2 === 0 ? '#FFFFFF' : lightColor,
+                          flex: 0.5,
+                          textAlign: 'right',
+                        }}
+                      >
+                        {rd.credit.toLocaleString('en-US', {
+                          maximumFractionDigits: 2,
+                          minimumFractionDigits: 2,
+                        })}
+                      </Text>
+                    )}
+                    {filters.with_receipts == 1 && (
+                      <Text
+                        style={{
+                          ...pdfStyles.tableCell,
+                          backgroundColor:
+                            index % 2 === 0 ? '#FFFFFF' : lightColor,
+                          flex: 1,
+                          textAlign: 'right',
+                        }}
+                      >
+                        {runningBalance.toLocaleString('en-US', {
+                          maximumFractionDigits: 2,
+                          minimumFractionDigits: 2,
+                        })}
+                      </Text>
+                    )}
                   </View>
                 );
               })}
 
             {/* TOTALS */}
-            {reportData.length && (
+            {/* {reportData.length && (
               <View style={pdfStyles.tableRow}>
                 <Text
                   style={{
                     ...pdfStyles.tableCell,
                     backgroundColor: mainColor,
                     color: contrastText,
-                    flex: 5.2,
+                    flex: 5,
                   }}
                 >
                   TOTAL
@@ -311,7 +397,7 @@ function FuelVouchersReportPDF({
                     ...pdfStyles.tableCell,
                     backgroundColor: mainColor,
                     color: contrastText,
-                    flex: 1,
+                    flex: 0.5,
                     textAlign: 'right',
                   }}
                 >
@@ -344,7 +430,7 @@ function FuelVouchersReportPDF({
                   })}
                 </Text>
               </View>
-            )}
+            )} */}
           </View>
         </View>
       </Page>

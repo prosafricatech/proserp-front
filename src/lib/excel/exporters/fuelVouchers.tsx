@@ -1,4 +1,5 @@
 import dayjs from 'dayjs';
+import { applyCellStyle, CELL_STYLES, ROW_HEIGHTS } from '../styles';
 import { createWorkbook } from '../workBook';
 
 export async function exportFuelVouchersToExcel(exportedData: any) {
@@ -17,97 +18,107 @@ export async function exportFuelVouchersToExcel(exportedData: any) {
     const wb = createWorkbook();
     const ws = wb.addWorksheet('Fuel Vouchers');
 
-    // Set column widths for better readability
-    ws.columns = [
-      { width: 18 }, // Voucher No
-      { width: 20 }, // Date
+    // Set column widths for better readability - dynamic based on with_receipts
+    const baseColumns = [
+      { width: 12 }, // Date
+      { width: 15 }, // Voucher No
+      { width: 25 }, // Stakeholder/Expense Ledger
       { width: 15 }, // Reference
       { width: 15 }, // Product
       { width: 25 }, // Narration
       { width: 12 }, // LTS
       { width: 10 }, // Price
-      { width: 15 }, // Total
+      { width: 15 }, // Amount/Debit
     ];
 
+    // Add conditional columns if with_receipts is enabled
+    if (exportedData.filters.with_receipts == 1) {
+      baseColumns.push(
+        { width: 15 }, // Credit
+        { width: 18 } // Running Balance
+      );
+    }
+
+    ws.columns = baseColumns;
+
     // === FILTER SECTION (Level 1 - Top Level) ===
-    // Sttion name row
-    ws.getCell(`A1`).value = 'Station Name';
-    ws.getCell(`A1`).font = { bold: true, size: 11 };
-    ws.getCell(`A1`).alignment = { horizontal: 'left', vertical: 'middle' };
+    // Station name row
+    if (exportedData.filters.stationName) {
+      ws.getCell(`A1`).value = 'Station Name';
+      applyCellStyle(ws.getCell(`A1`), CELL_STYLES.filterLabel);
 
-    ws.mergeCells(`B1:C1`);
-    ws.getCell(`B1`).value = exportedData.filters.stationName;
-    ws.getCell(`B1`).alignment = { horizontal: 'left', vertical: 'middle' };
-    ws.getCell(`B1`).font = { size: 10 };
-
-    // Stakeholder name row
-    ws.getCell(`A2`).value = 'Stakeholder Name';
-    ws.getCell(`A2`).font = { bold: true, size: 11 };
-    ws.getCell(`A2`).alignment = { horizontal: 'left', vertical: 'middle' };
-
-    ws.mergeCells(`B2:C2`);
-    ws.getCell(`B2`).value = exportedData.filters.stakeholder_name;
-    ws.getCell(`B2`).alignment = { horizontal: 'left', vertical: 'middle' };
-    ws.getCell(`B2`).font = { size: 10 };
+      ws.mergeCells(`B1:C1`);
+      ws.getCell(`B1`).value = exportedData.filters.stationName;
+      applyCellStyle(ws.getCell(`B1`), CELL_STYLES.filterValue);
+    }
 
     // Stakeholder name row
-    ws.getCell(`A3`).value = 'Date Range';
-    ws.getCell(`A3`).font = { bold: true, size: 11 };
-    ws.getCell(`A3`).alignment = { horizontal: 'left', vertical: 'middle' };
+    if (exportedData.filters.stakeholder_name) {
+      ws.getCell(`A2`).value = 'Stakeholder Name';
+      applyCellStyle(ws.getCell(`A2`), CELL_STYLES.filterLabel);
 
-    ws.mergeCells(`B3:C3`);
-    ws.getCell(`B3`).value =
-      `${exportedData.filters.from} - ${exportedData.filters.to}`;
-    ws.getCell(`B3`).alignment = { horizontal: 'left', vertical: 'middle' };
-    ws.getCell(`B3`).font = { size: 10 };
+      ws.mergeCells(`B2:C2`);
+      ws.getCell(`B2`).value = exportedData.filters.stakeholder_name;
+      applyCellStyle(ws.getCell(`B2`), CELL_STYLES.filterValue);
+    }
+
+    // Date range row
+    if (exportedData.filters.from && exportedData.filters.to) {
+      ws.getCell(`A3`).value = 'Date Range';
+      applyCellStyle(ws.getCell(`A3`), CELL_STYLES.filterLabel);
+
+      ws.mergeCells(`B3:C3`);
+      ws.getCell(`B3`).value =
+        `${exportedData.filters.from} - ${exportedData.filters.to}`;
+      applyCellStyle(ws.getCell(`B3`), CELL_STYLES.filterValue);
+    }
 
     // Add spacing row
     ws.addRow([]);
 
     // === TABLE HEADER (Level 2 - Section Header) ===
-    const headingRow = ws.addRow([
+    const headerColumns = [
       'DATE',
       'VOUCHER NO.',
+      'STAKEHOLDER/EXPENSE LEDGER',
       'REFERENCE',
       'PRODUCT',
       'NARRATION',
       'LTS',
       'PRICE',
-      'TOTAL',
-    ]);
-    headingRow.height = 20;
+      exportedData.filters.with_receipts == 1 ? 'DEBIT' : 'AMOUNT',
+    ];
 
-    for (let c = 0; c < 8; c++) {
-      ws.getCell(`${String.fromCharCode(65 + c)}5`).border = {
-        bottom: { style: 'thin', color: { argb: 'FF000000' } },
-        top: { style: 'thin', color: { argb: 'FF000000' } },
-        left: { style: 'thin', color: { argb: 'FF000000' } },
-        right: { style: 'thin', color: { argb: 'FF000000' } },
-      };
-      ws.getCell(`${String.fromCharCode(65 + c)}5`).font = {
-        bold: true,
-        size: 11,
-      };
-      ws.getCell(`${String.fromCharCode(65 + c)}5`).alignment = {
-        horizontal: 'left',
-        vertical: 'middle',
-      };
-      ws.getCell(`${String.fromCharCode(65 + c)}5`).fill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: 'FFD9D9D9' }, // Dark gray for header
-      };
+    // Add conditional headers if with_receipts is enabled
+    if (exportedData.filters.with_receipts == 1) {
+      headerColumns.push('CREDIT', 'RUNNING BALANCE');
+    }
+
+    const headingRow = ws.addRow(headerColumns);
+    headingRow.height = ROW_HEIGHTS.header;
+
+    // Apply header styles to all columns
+    for (let c = 0; c < headerColumns.length; c++) {
+      applyCellStyle(
+        ws.getCell(`${String.fromCharCode(65 + c)}5`),
+        CELL_STYLES.tableHeader
+      );
     }
 
     // === DATA ROWS (Level 3 - Content) ===
+    let runningBalance = 0;
     if (exportedData.fuelVouchers.length) {
-      exportedData.fuelVouchers.forEach((fv: any, index: number) => {
-        const dataRow = ws.addRow([
+      exportedData.fuelVouchers.forEach((fv: any) => {
+        // Calculate running balance
+        runningBalance += fv.debit - fv.credit;
+
+        const rowData = [
           dayjs(fv.transaction_date).format('DD-MM-YYYY'),
           fv.voucherNo,
+          fv.expense_ledger?.name || fv.stakeholder?.name || '',
           fv.reference || '',
-          fv.product?.name,
-          fv.narration,
+          fv.product?.name || '',
+          fv.narration || '',
           fv.quantity.toLocaleString('en-US', {
             maximumFractionDigits: 2,
             minimumFractionDigits: 2,
@@ -116,36 +127,49 @@ export async function exportFuelVouchersToExcel(exportedData: any) {
             maximumFractionDigits: 2,
             minimumFractionDigits: 2,
           }),
-          (fv.quantity * fv.price).toLocaleString('en-US', {
-            maximumFractionDigits: 2,
-            minimumFractionDigits: 2,
-          }),
-        ]);
+          exportedData.filters.with_receipts == 0
+            ? fv.amount.toLocaleString('en-US', {
+                maximumFractionDigits: 2,
+                minimumFractionDigits: 2,
+              })
+            : fv.debit.toLocaleString('en-US', {
+                maximumFractionDigits: 2,
+                minimumFractionDigits: 2,
+              }),
+        ];
 
-        dataRow.font = { size: 10 };
-        dataRow.alignment = { vertical: 'middle' };
+        // Add conditional columns if with_receipts is enabled
+        if (exportedData.filters.with_receipts == 1) {
+          rowData.push(
+            fv.credit.toLocaleString('en-US', {
+              maximumFractionDigits: 2,
+              minimumFractionDigits: 2,
+            }),
+            runningBalance.toLocaleString('en-US', {
+              maximumFractionDigits: 2,
+              minimumFractionDigits: 2,
+            })
+          );
+        }
 
-        // Add subtle borders
+        const dataRow = ws.addRow(rowData);
+
         dataRow.eachCell((cell, colNumber) => {
-          cell.border = {
-            top: { style: 'thin', color: { argb: 'FF000000' } },
-            bottom: { style: 'thin', color: { argb: 'FF000000' } },
-            left: { style: 'thin', color: { argb: 'FF000000' } },
-            right: { style: 'thin', color: { argb: 'FF000000' } },
-          };
-
-          // Right-align numeric columns (LTS, @, TOTAL)
-          if (colNumber >= 6) {
-            cell.alignment = { horizontal: 'right', vertical: 'middle' };
+          // Right-align numeric columns (LTS, Price, Amount/Debit, Credit, Running Balance)
+          if (colNumber >= 7) {
+            applyCellStyle(cell, CELL_STYLES.dataRowNumeric);
           } else {
-            cell.alignment = { horizontal: 'left', vertical: 'middle' };
+            applyCellStyle(cell, CELL_STYLES.dataRowText);
           }
         });
       });
 
       // === TOTAL ROW (Level 2 - Summary) ===
-      const totalRow = ws.addRow([
+      // Note: Totals are commented out in PDF, keeping them in Excel for now
+      // If you want to remove totals, comment out this section
+      const totalRowData = [
         'TOTAL',
+        ' ',
         ' ',
         ' ',
         ' ',
@@ -159,34 +183,23 @@ export async function exportFuelVouchersToExcel(exportedData: any) {
           maximumFractionDigits: 2,
           minimumFractionDigits: 2,
         }),
-      ]);
+      ];
 
-      totalRow.height = 22;
-      const totalRowNo = totalRow.number;
-      for (let c = 0; c < 8; c++) {
-        ws.getCell(`${String.fromCharCode(65 + c)}${totalRowNo}`).font = {
-          bold: true,
-          size: 11,
-        };
-        ws.getCell(`${String.fromCharCode(65 + c)}${totalRowNo}`).fill = {
-          type: 'pattern',
-          pattern: 'solid',
-          fgColor: { argb: 'FFD9D9D9' }, // Light gray for total row
-        };
-        ws.getCell(`${String.fromCharCode(65 + c)}${totalRowNo}`).border = {
-          top: { style: 'thin', color: { argb: 'FF000000' } },
-          bottom: { style: 'thin', color: { argb: 'FF000000' } },
-          left: { style: 'thin', color: { argb: 'FF666666' } },
-          right: { style: 'thin', color: { argb: 'FF666666' } },
-        };
+      // Add empty cells for conditional columns if with_receipts is enabled
+      if (exportedData.filters.with_receipts == 1) {
+        totalRowData.push(' ', ' ');
       }
+
+      const totalRow = ws.addRow(totalRowData);
+
+      totalRow.height = ROW_HEIGHTS.total;
 
       totalRow.eachCell((cell, colNumber) => {
         // Right-align numeric columns
-        if (colNumber >= 6) {
-          cell.alignment = { horizontal: 'right', vertical: 'middle' };
+        if (colNumber >= 7) {
+          applyCellStyle(cell, CELL_STYLES.totalRowNumeric);
         } else {
-          cell.alignment = { horizontal: 'left', vertical: 'middle' };
+          applyCellStyle(cell, CELL_STYLES.totalRowText);
         }
       });
     }

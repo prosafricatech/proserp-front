@@ -3,16 +3,19 @@
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import useProsERPStyles from '@/app/helpers/style-helpers';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
 import StakeholderSelector from '@/components/masters/stakeholders/StakeholderSelector';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
-import { Span } from '@jumbo/shared';
+import { Div, Span } from '@jumbo/shared';
 import { LoadingButton } from '@mui/lab';
 import {
   Alert,
   Autocomplete,
+  Checkbox,
   DialogContent,
   DialogTitle,
+  FormControlLabel,
   Grid,
   LinearProgress,
   Tab,
@@ -36,11 +39,22 @@ interface Station {
   name: string;
 }
 
+interface Ledger {
+  id: number;
+  name: string;
+  code: string | null;
+  ledger_group_id: number;
+  alias: string | null;
+  nature_id?: number;
+}
+
 interface ReportFilters {
   station_id: number | null;
   from: string | null;
   to: string | null;
   stakeholder_id?: number | null;
+  expense_ledger_ids: number[] | null;
+  with_receipts?: 0 | 1;
 }
 
 interface ReportResponse {
@@ -54,11 +68,14 @@ const FuelVouchersReport: React.FC = () => {
   const { authUser, authOrganization } = useJumboAuth();
   const organization = authOrganization?.organization;
   const [activeStation, setActiveStation] = useState<Station | null>(null);
+  const [activeLedgers, setActiveLedgers] = useState<Ledger[] | null>(null);
+  const [withReceipts, setWithReceipts] = useState(0);
   const [reportData, setReportData] = useState<any>(null);
   const [isFetching, setIsFetching] = useState<boolean>(false);
   const [isExporting, setIsExporting] = useState<boolean>(false);
   const [filters, setFilters] = useState<any>(null);
   const [pdfKey, setPdfKey] = useState(0);
+  const [filterBy, setFilterBy] = useState<string>('');
 
   const [activeTab, setActiveTab] = useState(0);
   const { theme } = useJumboTheme();
@@ -80,6 +97,7 @@ const FuelVouchersReport: React.FC = () => {
   const {
     setValue,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<ReportFilters>({
     resolver: yupResolver(validationSchema) as any,
@@ -88,8 +106,28 @@ const FuelVouchersReport: React.FC = () => {
       from: dayjs().startOf('day').toISOString(),
       to: dayjs().endOf('day').toISOString(),
       stakeholder_id: null,
+      expense_ledger_ids: null,
+      with_receipts: 0,
     },
   });
+
+  const expenseLedgerId = watch('expense_ledger_ids');
+  const stakeholderId = watch('stakeholder_id');
+
+  useEffect(() => {
+    if ((!expenseLedgerId || expenseLedgerId.length === 0) && !stakeholderId) {
+      setFilterBy('');
+      setValue('with_receipts', 0);
+    } else if (
+      (!expenseLedgerId || expenseLedgerId.length === 0) &&
+      stakeholderId
+    ) {
+      setFilterBy('stakeholder');
+    } else if (!stakeholderId) {
+      setFilterBy('expense_ledger');
+      setValue('with_receipts', 0);
+    }
+  }, [expenseLedgerId, stakeholderId]);
 
   useEffect(() => {
     if (activeStation) {
@@ -98,7 +136,17 @@ const FuelVouchersReport: React.FC = () => {
         shouldValidate: true,
       });
     }
-  }, [activeStation, setValue]);
+    if (activeLedgers) {
+      setValue(
+        'expense_ledger_ids',
+        activeLedgers.map((ledger) => ledger.id),
+        {
+          shouldDirty: true,
+          shouldValidate: true,
+        }
+      );
+    }
+  }, [activeStation, activeLedgers, setValue]);
 
   useEffect(() => {
     setFilters({
@@ -106,6 +154,8 @@ const FuelVouchersReport: React.FC = () => {
       to: dayjs().toISOString(),
       stationName: activeStation?.name || '',
       stakeholder_name: '',
+      expense_ledger_ids: [],
+      with_receipts: 0,
     });
   }, []);
 
@@ -123,6 +173,7 @@ const FuelVouchersReport: React.FC = () => {
       from: readableDate(dayjs(cleanFilters?.from)),
       to: readableDate(dayjs(cleanFilters?.to)),
       stationName: activeStation?.name,
+      with_receipts: withReceipts,
     }));
 
     const report: ReportResponse =
@@ -198,21 +249,73 @@ const FuelVouchersReport: React.FC = () => {
                 />
               </Grid>
 
-              <Grid size={{ xs: 12, md: 6 }}>
-                <StakeholderSelector
-                  label='Client'
-                  onChange={(newValue: any) => {
-                    setValue('stakeholder_id', newValue?.id, {
-                      shouldDirty: true,
-                      shouldValidate: true,
-                    });
-                    setFilters((prev: any) => ({
-                      ...prev,
-                      stakeholder_name: newValue?.name || '',
-                    }));
+              {(filterBy === '' || filterBy === 'expense_ledger') && (
+                <Grid size={{ xs: 12, md: filterBy === '' ? 3 : 6 }}>
+                  <Div>
+                    <LedgerSelect
+                      label={'Expense Ledgers'}
+                      allowedGroups={['Expenses']}
+                      multiple={true}
+                      defaultValue={[]}
+                      onChange={(newValue: any) => {
+                        setValue(
+                          'expense_ledger_ids',
+                          newValue.length > 0 && newValue
+                            ? newValue.map((ledger: Ledger) => ledger.id)
+                            : null,
+                          {
+                            shouldValidate: true,
+                            shouldDirty: true,
+                          }
+                        );
+                      }}
+                    />
+                  </Div>
+                </Grid>
+              )}
+              {(filterBy === '' || filterBy === 'stakeholder') && (
+                <Grid
+                  size={{
+                    xs: filterBy === '' ? 12 : 8,
+                    md: filterBy === '' ? 3 : 4,
                   }}
-                />
-              </Grid>
+                >
+                  <StakeholderSelector
+                    label='Client'
+                    defaultValue={0}
+                    onChange={(newValue: any) => {
+                      setValue('stakeholder_id', newValue?.id, {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      });
+                      setFilters((prev: any) => ({
+                        ...prev,
+                        stakeholder_name: newValue?.name || '',
+                      }));
+                    }}
+                  />
+                </Grid>
+              )}
+              {filterBy === 'stakeholder' && (
+                <Grid size={{ xs: 4, md: 2 }}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        defaultChecked={false}
+                        onChange={(e) => {
+                          setValue('with_receipts', e.target.checked ? 1 : 0);
+                          setFilters((prev: any) => ({
+                            ...prev,
+                            with_receipts: e.target.checked ? 1 : 0,
+                          }));
+                          setWithReceipts(e.target.checked ? 1 : 0);
+                        }}
+                      />
+                    }
+                    label='With Receipts'
+                  />
+                </Grid>
+              )}
 
               <Grid size={{ xs: 12, md: 6 }}>
                 <DateTimePicker
@@ -248,7 +351,7 @@ const FuelVouchersReport: React.FC = () => {
                 />
               </Grid>
 
-              <Grid size={{ xs: 12 }} textAlign='right' spacing={10}>
+              <Grid size={{ xs: 12 }} textAlign='right'>
                 <LoadingButton
                   loading={isExporting}
                   type='button'
@@ -302,38 +405,20 @@ const FuelVouchersReport: React.FC = () => {
             {/* {activeTab === 1 && (
               <Grid
                 container
-                justifyContent="center"
-                alignItems="center"
-                sx={{ minHeight: 120 }}
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}
               >
-                <Tooltip title='Download Excel Report'>
-                  <span>
-                    <LoadingButton
-                      loading={isExporting}
-                      loadingPosition="start"
-                      startIcon={<FontAwesomeIcon icon={faFileExcel} color='white' />}
-                      variant="contained"
-                      color="success"
-                      size="large"
-                      sx={{
-                        px: 3,
-                        py: 1.5,
-                        fontWeight: 'bold',
-                        fontSize: '1.1rem',
-                        borderRadius: 2,
-                        boxShadow: 2,
-                        textTransform: 'none',
-                        background: 'linear-gradient(90deg, #43e97b 0%, #38f9d7 100%)',
-                        '&:hover': {
-                          background: 'linear-gradient(90deg, #38f9d7 0%, #43e97b 100%)',
-                        },
-                      }}
-                      onClick={() => handlExcelExport(exportedData)}
-                      disabled={isExporting}
-                    >
-                      Download Excel
-                    </LoadingButton>
-                  </span>
+                <Tooltip title='Export file'>
+                  <IconButton
+                    size='large'
+                    onClick={() => handlExcelExport(exportedData)}
+                    disabled={isExporting}
+                  >
+                    <FontAwesomeIcon icon={faFileExcel} color='green' />
+                  </IconButton>
                 </Tooltip>
               </Grid>
             )} */}
