@@ -30,36 +30,42 @@ export async function exportFuelVouchersToExcel(exportedData: any) {
     ];
 
     // === FILTER SECTION (Level 1 - Top Level) ===
-    // Sttion name row
-    ws.getCell(`A1`).value = 'Station Name';
-    ws.getCell(`A1`).font = { bold: true, size: 11 };
-    ws.getCell(`A1`).alignment = { horizontal: 'left', vertical: 'middle' };
+    // Station name row
+    if (exportedData.filters.stationName) {
+      ws.getCell(`A1`).value = 'Station Name';
+      ws.getCell(`A1`).font = { bold: true, size: 11 };
+      ws.getCell(`A1`).alignment = { horizontal: 'left', vertical: 'middle' };
 
-    ws.mergeCells(`B1:C1`);
-    ws.getCell(`B1`).value = exportedData.filters.stationName;
-    ws.getCell(`B1`).alignment = { horizontal: 'left', vertical: 'middle' };
-    ws.getCell(`B1`).font = { size: 10 };
-
-    // Stakeholder name row
-    ws.getCell(`A2`).value = 'Stakeholder Name';
-    ws.getCell(`A2`).font = { bold: true, size: 11 };
-    ws.getCell(`A2`).alignment = { horizontal: 'left', vertical: 'middle' };
-
-    ws.mergeCells(`B2:C2`);
-    ws.getCell(`B2`).value = exportedData.filters.stakeholder_name;
-    ws.getCell(`B2`).alignment = { horizontal: 'left', vertical: 'middle' };
-    ws.getCell(`B2`).font = { size: 10 };
+      ws.mergeCells(`B1:C1`);
+      ws.getCell(`B1`).value = exportedData.filters.stationName;
+      ws.getCell(`B1`).alignment = { horizontal: 'left', vertical: 'middle' };
+      ws.getCell(`B1`).font = { size: 10 };
+    }
 
     // Stakeholder name row
-    ws.getCell(`A3`).value = 'Date Range';
-    ws.getCell(`A3`).font = { bold: true, size: 11 };
-    ws.getCell(`A3`).alignment = { horizontal: 'left', vertical: 'middle' };
+    if (exportedData.filters.stakeholder_name) {
+      ws.getCell(`A2`).value = 'Stakeholder Name';
+      ws.getCell(`A2`).font = { bold: true, size: 11 };
+      ws.getCell(`A2`).alignment = { horizontal: 'left', vertical: 'middle' };
 
-    ws.mergeCells(`B3:C3`);
-    ws.getCell(`B3`).value =
-      `${exportedData.filters.from} - ${exportedData.filters.to}`;
-    ws.getCell(`B3`).alignment = { horizontal: 'left', vertical: 'middle' };
-    ws.getCell(`B3`).font = { size: 10 };
+      ws.mergeCells(`B2:C2`);
+      ws.getCell(`B2`).value = exportedData.filters.stakeholder_name;
+      ws.getCell(`B2`).alignment = { horizontal: 'left', vertical: 'middle' };
+      ws.getCell(`B2`).font = { size: 10 };
+    }
+
+    // Date range row
+    if (exportedData.filters.from && exportedData.filters.to) {
+      ws.getCell(`A3`).value = 'Date Range';
+      ws.getCell(`A3`).font = { bold: true, size: 11 };
+      ws.getCell(`A3`).alignment = { horizontal: 'left', vertical: 'middle' };
+
+      ws.mergeCells(`B3:C3`);
+      ws.getCell(`B3`).value =
+        `${exportedData.filters.from} - ${exportedData.filters.to}`;
+      ws.getCell(`B3`).alignment = { horizontal: 'left', vertical: 'middle' };
+      ws.getCell(`B3`).font = { size: 10 };
+    }
 
     // Add spacing row
     ws.addRow([]);
