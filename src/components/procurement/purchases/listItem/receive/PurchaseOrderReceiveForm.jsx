@@ -24,7 +24,7 @@ import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 
 function PurchaseOrderReceiveForm({ toggleOpen, order }) {
   const [additionalCosts, setAdditionalCosts] = useState([]);
-  const { purchase_order_items } = order;
+  const purchase_order_items = order?.purchase_order_items;
   const [date_received] = useState(dayjs());
   const [activeTab, setActiveTab] = useState(0);
   const { enqueueSnackbar } = useSnackbar();
@@ -392,7 +392,7 @@ function PurchaseOrderReceiveForm({ toggleOpen, order }) {
             return <AdditionalCostsTabRow additionalCosts={additionalCosts} setAdditionalCosts={setAdditionalCosts} key={index} setIsDirty={setIsDirty} additionalCost={additionalCost} index={index}/>
           })
         }
-        
+
         <Dialog open={showWarning} onClose={() => setShowWarning(false)}>
           <DialogTitle>Unsaved Additional Cost</DialogTitle>
           <DialogContent>
