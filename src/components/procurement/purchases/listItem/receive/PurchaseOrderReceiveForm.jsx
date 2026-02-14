@@ -36,11 +36,19 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
   const [totalReceivedAmount, setTotalReceivedAmount] = useState(0);
   const [totalAmount, setTotalAmount] = useState(0);
 
-  let purchase_order_items = order?.purchase_order_items?.map((item) => ({
-    ...item,
-    grn_quantity: grn?.items.find(i => i.product.id === item.product.id)?.quantity || 0,
-    unreceived_quantity: item.unreceived_quantity + (grn?.items.find(i => i.id === item.id)?.quantity || 0)
-  })) || [];
+  // Calculate correct unreceived_quantity for edit mode
+  let purchase_order_items = order?.purchase_order_items?.map((item) => {
+    let grnItem = grn?.items.find(i => i.product.id === item.product.id);
+    let unreceived_quantity = item.unreceived_quantity;
+    if (grnItem) {
+      unreceived_quantity += grnItem.quantity;
+    }
+    return {
+      ...item,
+      grn_quantity: grnItem ? grnItem.quantity : 0,
+      unreceived_quantity,
+    };
+  }) || [];
 
   const [nextTab, setNextTab] = useState(null);
   const [showWarning, setShowWarning] = useState(false);
@@ -160,16 +168,20 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
       cost_factor: grn.cost_factor || '',
       reference: grn.reference || order?.orderNo,
       exchange_rate: grn.exchange_rate || order?.exchange_rate || 1,
-      store_id: grn.store_id || order?.store_id,
-      change_cost_center: grn.cost_center_change || false,
+      store_id: grn.store.id,
+      change_cost_center: Boolean(grn.change_cost_center),
       destination_cost_center_id: grn.destination_cost_center_id || null,
       receivable_ledger_id: grn.receivable_ledger_id || null,
-      items: purchase_order_items?.filter(item => item.product.type === 'Inventory' && item.unreceived_quantity > 0).map(item => ({
-        unreceived_quantity : item.unreceived_quantity,
-        quantity : item.grn_quantity,
-        purchase_order_item_id: item.id,
-        rate: item.rate,
-      })) || [],
+      items: purchase_order_items
+        ?.filter(item => item.product.type === 'Inventory' && item.unreceived_quantity > 0)
+        .map(item => {
+          return {
+            unreceived_quantity: item.unreceived_quantity,
+            quantity: item.grn_quantity,
+            purchase_order_item_id: item.id,
+            rate: item.rate,
+          };
+        }) || [],
       additional_costs: grn.additional_costs || [],
     } : {
       id: order?.id,
@@ -177,12 +189,14 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
       cost_factor: '',
       reference: order?.orderNo,
       exchange_rate: order?.exchange_rate ? order.exchange_rate : 1,
-      items: purchase_order_items?.filter(item => item.product.type === 'Inventory' && item.unreceived_quantity > 0).map(item => ({
-        unreceived_quantity : item.unreceived_quantity,
-        quantity : item.unreceived_quantity,
-        purchase_order_item_id: item.id,
-        rate: item.rate,
-      })),
+      items: purchase_order_items
+        ?.filter(item => item.product.type === 'Inventory' && item.unreceived_quantity > 0)
+        .map(item => ({
+          unreceived_quantity: item.unreceived_quantity,
+          quantity: item.unreceived_quantity,
+          purchase_order_item_id: item.id,
+          rate: item.rate,
+        })),
     },
   });
 
@@ -191,36 +205,12 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
     setValue('additional_costs', additionalCosts?.map(additionalCost => ({
       credit_ledger_name: additionalCost.credit_ledger_name,
       credit_ledger_id : additionalCost.credit_ledger_id,
-      currency_id: additionalCost.currency_id,
+      currency_id: additionalCost.currency_id || additionalCost.currency?.id,
       exchange_rate: additionalCost.exchange_rate,
       reference: additionalCost.reference,
       amount: additionalCost.amount,
     })));
   }, [additionalCosts, setValue]); 
-
-    // If editing, adjust unreceived_quantity for each item
-  if (grn && Array.isArray(grn.items)) {
-    purchase_order_items = purchase_order_items?.map(item => {
-      const grnItem = grn.items.find(i => i.product.id === item.product.id);
-      if (grnItem) {
-        // Add back the quantity from this GRN to the unreceived_quantity
-        return {
-          ...item,
-          unreceived_quantity: (item.unreceived_quantity || 0) + (grnItem.quantity || 0),
-        };
-      }
-      return item;
-    });
-  }
-
-  // Update the quantity field whenever unreceived_quantity changes
-  useEffect(() => {
-    purchase_order_items
-      .filter(item => item.unreceived_quantity !== 0)
-      .forEach((item, index) => {
-        setValue(`items.${index}.quantity`, item.unreceived_quantity);
-      });
-  }, [purchase_order_items]);
 
   //total for items and its respectful rate
   useEffect(() => {
@@ -308,10 +298,25 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
 
   const handleSubmitForm = async (data) => {
     const validItems = validateItems(data);
-    const validAdditionalItems = data.additional_costs.every(item => item.credit_ledger_id === null) ? [] : data.additional_costs;// Check if additional costs is filled
-    const updatedData = { ...data, items: validItems, additional_costs: validAdditionalItems }
-    
-    await saveMutation(updatedData);
+    const validAdditionalItems = data.additional_costs.every(item => item.credit_ledger_id === null) ? [] : data.additional_costs;
+    const updatedData = { ...data, items: validItems, additional_costs: validAdditionalItems };
+
+    if (grn) {
+      // Edit mode: PUT grns/{grnId}
+      try {
+        const response = await purchaseServices.editGrn(grn.id, updatedData);
+        toggleOpen(false);
+        enqueueSnackbar(response.message || 'GRN updated successfully', { variant: 'success' });
+        queryClient.invalidateQueries({ queryKey: ['purchaseOrderDetails'] });
+        queryClient.invalidateQueries({ queryKey: ['purchaseOrders'] });
+        queryClient.invalidateQueries({ queryKey: ['purchaseOrderGrns'] });
+      } catch (error) {
+        enqueueSnackbar(error?.response?.data?.message || 'Failed to update GRN', { variant: 'error' });
+      }
+    } else {
+      // New receive
+      await saveMutation(updatedData);
+    }
   };
 
   return (
@@ -319,7 +324,9 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
       <DialogTitle>
         <Grid container spacing={1}>
           <Grid size={12} textAlign={"center"} mb={1}>
-            {`Receive ${grn ? grn.grnNo : order.orderNo}`}
+            {grn
+                ? `Edit ${grn.grnNo}`
+                : `Receive ${order.orderNo}`}
           </Grid>
           <Grid size={12}>
             <form autoComplete='off'>
@@ -329,7 +336,7 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
                     <DateTimePicker
                       fullWidth
                       label="Receive Date"
-                      // defaultValue={grn ? grn.date_received.toISOString() : date_received}
+                      defaultValue={grn && grn.date_received ? dayjs(grn.date_received) : date_received}
                       minDate={checkOrganizationPermission(PERMISSIONS.PURCHASES_BACKDATE) ? dayjs(authOrganization.organization.recording_start_date) : dayjs().startOf('day')}
                       maxDate={checkOrganizationPermission(PERMISSIONS.PURCHASES_POSTDATE) ? dayjs().add(10,'year').endOf('year') : dayjs().endOf('day')}
                       slotProps={{
@@ -353,6 +360,7 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
                     <StoreSelector
                       allowSubStores={true}
                       frontError={errors.store_id}
+                      defaultValue={grn?.store}
                       proposedOptions={authOrganization?.stores}
                       onChange={(newValue) => {
                         setValue(`store_id`, newValue ? newValue.id : null, {
@@ -396,7 +404,7 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
                   <Grid size={{xs: 12, md: 6, lg: 4}}>
                     <Div sx={{mt: 1, display: 'flex', alignItems: 'center'}}>
                       <Checkbox
-                        checked={!!watch('change_cost_center')}
+                        checked={Boolean(watch('change_cost_center'))}
                         onChange={e => {
                           setValue('change_cost_center', e.target.checked, {
                             shouldValidate: true,
