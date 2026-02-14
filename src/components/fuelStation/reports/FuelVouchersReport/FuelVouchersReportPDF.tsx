@@ -130,7 +130,17 @@ function FuelVouchersReportPDF({
                   flex: 1.5,
                 }}
               >
-                Stakeholder/Expense Ledger
+                {filters.stakeholder_name && 'Stakeholder'}
+                {filters.expense_ledger_ids &&
+                  filters.expense_ledger_ids?.length === 1 &&
+                  reportData[0]?.expense_ledger.name + ' Expense'}
+                {filters.expense_ledger_ids &&
+                  filters.expense_ledger_ids.length > 1 &&
+                  'Expenses'}
+                {!filters.stakeholder_name &&
+                  (filters.expense_ledger_ids?.length < 1 ||
+                    !filters.expense_ledger_ids) &&
+                  'Stakeholder/Expense'}
               </Text>
               <Text
                 style={{

@@ -75,12 +75,36 @@ export async function exportFuelVouchersToExcel(exportedData: any) {
 
     // Add spacing row
     ws.addRow([]);
+    let stakeholderexpense = '';
+    if (
+      exportedData.filters.expense_ledger_ids &&
+      exportedData.filters.expense_ledger_ids?.length === 1
+    ) {
+      stakeholderexpense =
+        exportedData.fuelVouchers[0]?.expense_ledger.name + ' Expense';
+    }
+    if (
+      exportedData.filters.expense_ledger_ids &&
+      exportedData.filters.expense_ledger_ids?.length > 1
+    ) {
+      stakeholderexpense = ' Expenses';
+    }
+    if (exportedData.filters.stakeholder_name) {
+      stakeholderexpense = 'Stakeholder';
+    }
+    if (
+      !exportedData.filters.stakeholder_name &&
+      (exportedData.filters.expense_ledger_ids?.length < 1 ||
+        !exportedData.filters.expense_ledger_ids)
+    ) {
+      stakeholderexpense = 'Stakeholder/Expense';
+    }
 
     // === TABLE HEADER (Level 2 - Section Header) ===
     const headerColumns = [
       'DATE',
       'VOUCHER NO.',
-      'STAKEHOLDER/EXPENSE LEDGER',
+      stakeholderexpense,
       'REFERENCE',
       'PRODUCT',
       'NARRATION',

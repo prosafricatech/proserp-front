@@ -5,6 +5,8 @@ import useProsERPStyles from '@/app/helpers/style-helpers';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
 import StakeholderSelector from '@/components/masters/stakeholders/StakeholderSelector';
+import { faFileExcel } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { Div, Span } from '@jumbo/shared';
@@ -17,10 +19,12 @@ import {
   DialogTitle,
   FormControlLabel,
   Grid,
+  IconButton,
   LinearProgress,
   Tab,
   Tabs,
   TextField,
+  Tooltip,
   Typography,
   useMediaQuery,
 } from '@mui/material';
@@ -228,7 +232,7 @@ const FuelVouchersReport: React.FC = () => {
               alignItems='center'
               justifyContent='center'
             >
-              <Grid size={{ xs: 12, md: 6 }}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <Autocomplete<Station>
                   size='small'
                   options={stations ?? []}
@@ -251,11 +255,45 @@ const FuelVouchersReport: React.FC = () => {
                 />
               </Grid>
 
+              <Grid size={{ xs: 12, md: 4 }}>
+                <DateTimePicker
+                  label='From'
+                  defaultValue={dayjs().startOf('day')}
+                  minDate={dayjs(organization?.recording_start_date)}
+                  slotProps={{
+                    textField: { size: 'small', fullWidth: true },
+                  }}
+                  onChange={(newValue) =>
+                    setValue('from', newValue ? newValue.toISOString() : null, {
+                      shouldDirty: true,
+                      shouldValidate: true,
+                    })
+                  }
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 4 }}>
+                <DateTimePicker
+                  label='To'
+                  defaultValue={dayjs().endOf('day')}
+                  minDate={dayjs(organization?.recording_start_date)}
+                  slotProps={{
+                    textField: { size: 'small', fullWidth: true },
+                  }}
+                  onChange={(newValue) =>
+                    setValue('to', newValue ? newValue.toISOString() : null, {
+                      shouldDirty: true,
+                      shouldValidate: true,
+                    })
+                  }
+                />
+              </Grid>
+
               {(filterBy === '' || filterBy === 'expense_ledger') && (
-                <Grid size={{ xs: 12, md: filterBy === '' ? 3 : 6 }}>
+                <Grid size={{ xs: 12, md: filterBy === '' ? 6 : 12 }}>
                   <Div>
                     <LedgerSelect
-                      label={'Expense Ledgers'}
+                      label={'Expense'}
                       allowedGroups={['Expenses']}
                       multiple={true}
                       defaultValue={[]}
@@ -270,6 +308,14 @@ const FuelVouchersReport: React.FC = () => {
                             shouldDirty: true,
                           }
                         );
+
+                        setFilters((prev: any) => ({
+                          ...prev,
+                          expense_ledger_ids:
+                            newValue.length > 0 && newValue
+                              ? newValue.map((ledger: Ledger) => ledger.id)
+                              : null,
+                        }));
                       }}
                     />
                   </Div>
@@ -279,7 +325,7 @@ const FuelVouchersReport: React.FC = () => {
                 <Grid
                   size={{
                     xs: filterBy === '' ? 12 : 8,
-                    md: filterBy === '' ? 3 : 4,
+                    md: filterBy === '' ? 6 : 8,
                   }}
                 >
                   <StakeholderSelector
@@ -299,7 +345,7 @@ const FuelVouchersReport: React.FC = () => {
                 </Grid>
               )}
               {filterBy === 'stakeholder' && (
-                <Grid size={{ xs: 4, md: 2 }}>
+                <Grid size={{ xs: 4, md: 4 }}>
                   <FormControlLabel
                     control={
                       <Checkbox
@@ -319,53 +365,16 @@ const FuelVouchersReport: React.FC = () => {
                 </Grid>
               )}
 
-              <Grid size={{ xs: 12, md: 6 }}>
-                <DateTimePicker
-                  label='From'
-                  defaultValue={dayjs().startOf('day')}
-                  minDate={dayjs(organization?.recording_start_date)}
-                  slotProps={{
-                    textField: { size: 'small', fullWidth: true },
-                  }}
-                  onChange={(newValue) =>
-                    setValue('from', newValue ? newValue.toISOString() : null, {
-                      shouldDirty: true,
-                      shouldValidate: true,
-                    })
-                  }
-                />
-              </Grid>
-
-              <Grid size={{ xs: 12, md: 6 }}>
-                <DateTimePicker
-                  label='To'
-                  defaultValue={dayjs().endOf('day')}
-                  minDate={dayjs(organization?.recording_start_date)}
-                  slotProps={{
-                    textField: { size: 'small', fullWidth: true },
-                  }}
-                  onChange={(newValue) =>
-                    setValue('to', newValue ? newValue.toISOString() : null, {
-                      shouldDirty: true,
-                      shouldValidate: true,
-                    })
-                  }
-                />
-              </Grid>
-
               <Grid size={{ xs: 12 }} textAlign='right'>
-                <LoadingButton
-                  loading={isExporting}
-                  type='button'
-                  onClick={() => handlExcelExport(exportedData)}
-                  disabled={!reportData || reportData?.length < 1}
-                  size='small'
-                  variant='contained'
-                  color='success'
-                  sx={{ mr: 1 }}
-                >
-                  Excel
-                </LoadingButton>
+                <Tooltip title='Export file'>
+                  <IconButton
+                    size='large'
+                    onClick={() => handlExcelExport(exportedData)}
+                    disabled={!reportData || reportData?.length < 1}
+                  >
+                    <FontAwesomeIcon icon={faFileExcel} color='green' />
+                  </IconButton>
+                </Tooltip>
                 <LoadingButton
                   loading={isFetching}
                   type='submit'
