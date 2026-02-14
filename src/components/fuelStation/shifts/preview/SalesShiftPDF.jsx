@@ -232,6 +232,60 @@ function SalesShiftPDF({
               0
             );
 
+            // Calculate total products amount for this cashier
+            const totalProductsAmount =
+              cashier?.pump_readings?.reduce((total, pump) => {
+                const productPrice =
+                  shiftData.fuel_prices.find(
+                    (fp) => fp.product_id === pump.product_id
+                  )?.price || 0;
+                const quantity = (pump.closing || 0) - (pump.opening || 0);
+                return total + quantity * productPrice;
+              }, 0) || 0;
+
+            // Calculate adjustments amount for this cashier
+            const adjustmentsAmount =
+              cashier?.tank_adjustments?.reduce((total, adj) => {
+                const productPrice =
+                  shiftData.fuel_prices.find(
+                    (fp) => fp.product_id === adj.product_id
+                  )?.price || 0;
+                if (adj.operator === '-') {
+                  return total + adj.quantity * productPrice;
+                } else if (adj.operator === '+') {
+                  return total - adj.quantity * productPrice;
+                }
+                return total;
+              }, 0) || 0;
+
+            // Calculate total fuel vouchers amount for this cashier
+            const totalFuelVouchersAmount =
+              cashier?.fuel_vouchers?.reduce((total, fv) => {
+                const productPrice =
+                  shiftData.fuel_prices.find(
+                    (fp) => fp.product_id === fv.product_id
+                  )?.price || 0;
+                return total + fv.quantity * productPrice;
+              }, 0) || 0;
+
+            // Calculate other transactions total for this cashier
+            const otherTransactionsTotal =
+              cashier.other_transactions?.reduce(
+                (total, ot) => total + (ot.amount || 0),
+                0
+              ) || 0;
+
+            // calculate short/over amount
+            const expectedAmount =
+              totalProductsAmount +
+              adjustmentsAmount -
+              totalFuelVouchersAmount -
+              otherTransactionsTotal;
+
+            const collectedAmount = cashier.collected_amount;
+
+            const shortOrOver = collectedAmount - expectedAmount;
+
             return (
               <View
                 key={cashier.id}
@@ -806,6 +860,39 @@ function SalesShiftPDF({
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2,
                           })}
+                        </Text>
+                      </View>
+                      <View style={{ ...pdfStyles.tableRow, marginTop: 2 }}>
+                        <Text
+                          style={{
+                            ...pdfStyles.tableHeader,
+                            ...pdfStyles.tableCell,
+                            backgroundColor: mainColor,
+                            color: contrastText,
+                            // flex: 4.1,
+                            width: '70%',
+                            fontWeight: 'bold',
+                          }}
+                        >
+                          Total Cash Collected
+                        </Text>
+                        <Text
+                          style={{
+                            ...pdfStyles.tableHeader,
+                            ...pdfStyles.tableCell,
+                            backgroundColor: mainColor,
+                            color: contrastText,
+                            // flex: 1.5,
+                            width: '30%',
+                            textAlign: 'right',
+                            fontWeight: 'bold',
+                          }}
+                        >
+                          {cashier.collected_amount.toLocaleString('en-US', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}{' '}
+                          {shortOrOver > 0 ? '(over)' : '(short)'}
                         </Text>
                       </View>
                     </View>
