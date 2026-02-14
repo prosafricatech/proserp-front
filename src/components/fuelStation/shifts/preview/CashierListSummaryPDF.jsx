@@ -214,7 +214,8 @@ export default function CashierListSummaryPDF({
                 ...pdfStyles.tableHeader,
                 backgroundColor: mainColor,
                 color: contrastText,
-                flex: 0.5,
+                // flex: 0.3,
+                width: '10%',
               }}
             >
               Name
@@ -224,7 +225,8 @@ export default function CashierListSummaryPDF({
                 ...pdfStyles.tableHeader,
                 backgroundColor: mainColor,
                 color: contrastText,
-                flex: 1,
+                // flex: 1,
+                width: '30%',
               }}
             >
               Pump Details
@@ -234,7 +236,8 @@ export default function CashierListSummaryPDF({
                 ...pdfStyles.tableHeader,
                 backgroundColor: mainColor,
                 color: contrastText,
-                flex: 1.3,
+                // flex: 1.3,
+                width: '30%',
               }}
             >
               Cash Distributions
@@ -244,7 +247,8 @@ export default function CashierListSummaryPDF({
                 ...pdfStyles.tableHeader,
                 backgroundColor: mainColor,
                 color: contrastText,
-                flex: 1,
+                // flex: 1,
+                width: '30%',
               }}
             >
               Cash Collection
@@ -255,30 +259,36 @@ export default function CashierListSummaryPDF({
           <View
             style={{
               ...pdfStyles.tableRow,
-              marginLeft: '3px',
+              gap: 2,
             }}
           >
             <View
               style={{
                 ...pdfStyles.tableCell,
-                flex: 0.5,
+                // flex: 0.3,
+                padding: 0,
+                width: '10%',
+                padding: '0px',
               }}
             ></View>
             <View
               style={{
                 ...pdfStyles.tableCell,
-                flex: 1.02,
+                // flex: 1.02,
+                width: '30%',
+                padding: '0px',
               }}
             >
               <View style={pdfStyles.table}>
-                <View style={{ ...pdfStyles.tableRow, gap: 2 }}>
+                <View style={{ ...pdfStyles.tableRow, marginTop: 2, gap: 2 }}>
                   <Text
                     style={{
                       fontSize: '10px',
                       padding: 2,
                       backgroundColor: mainColor,
                       color: contrastText,
-                      flex: 0.5,
+                      // flex: 0.5,
+                      width: '30%',
                     }}
                   >
                     Name
@@ -289,7 +299,8 @@ export default function CashierListSummaryPDF({
                       padding: 2,
                       backgroundColor: mainColor,
                       color: contrastText,
-                      flex: 0.5,
+                      // flex: 0.5,
+                      width: '35%',
                     }}
                   >
                     Fuel
@@ -300,7 +311,8 @@ export default function CashierListSummaryPDF({
                       padding: 2,
                       backgroundColor: mainColor,
                       color: contrastText,
-                      flex: 0.5,
+                      // flex: 0.5,
+                      width: '35%',
                     }}
                   >
                     Amount
@@ -311,18 +323,21 @@ export default function CashierListSummaryPDF({
             <View
               style={{
                 ...pdfStyles.tableCell,
-                flex: 1.31,
+                // flex: 1.31,
+                width: '30%',
+                padding: '0px',
               }}
             >
               <View style={pdfStyles.table}>
-                <View style={{ ...pdfStyles.tableRow, gap: 2 }}>
+                <View style={{ ...pdfStyles.tableRow, marginTop: 2, gap: 2 }}>
                   <Text
                     style={{
                       fontSize: '10px',
                       padding: 2,
                       backgroundColor: mainColor,
                       color: contrastText,
-                      flex: 1,
+                      // flex: 1,
+                      width: '40%',
                     }}
                   >
                     Description
@@ -333,7 +348,8 @@ export default function CashierListSummaryPDF({
                       padding: 2,
                       backgroundColor: mainColor,
                       color: contrastText,
-                      flex: 1,
+                      // flex: 1,
+                      width: '20%',
                     }}
                   >
                     Count
@@ -344,7 +360,8 @@ export default function CashierListSummaryPDF({
                       padding: 2,
                       backgroundColor: mainColor,
                       color: contrastText,
-                      flex: 1,
+                      // flex: 1,
+                      width: '40%',
                     }}
                   >
                     Amount
@@ -355,18 +372,21 @@ export default function CashierListSummaryPDF({
             <View
               style={{
                 ...pdfStyles.tableCell,
-                flex: 1.01,
+                // flex: 1.01,
+                width: '30%',
+                padding: '0px',
               }}
             >
               <View style={pdfStyles.table}>
-                <View style={{ ...pdfStyles.tableRow, gap: 2 }}>
+                <View style={{ ...pdfStyles.tableRow, marginTop: 2, gap: 2 }}>
                   <Text
                     style={{
                       fontSize: '10px',
                       padding: 2,
                       backgroundColor: mainColor,
                       color: contrastText,
-                      flex: 0.8,
+                      // flex: 0.8,
+                      width: '35%',
                     }}
                   >
                     Expected
@@ -377,7 +397,8 @@ export default function CashierListSummaryPDF({
                       padding: 2,
                       backgroundColor: mainColor,
                       color: contrastText,
-                      flex: 0.8,
+                      // flex: 0.8,
+                      width: '35%',
                     }}
                   >
                     Collected
@@ -388,7 +409,8 @@ export default function CashierListSummaryPDF({
                       padding: 2,
                       backgroundColor: mainColor,
                       color: contrastText,
-                      flex: 0.8,
+                      // flex: 0.8,
+                      width: '30%',
                     }}
                   >
                     Over/Short
@@ -536,7 +558,8 @@ export default function CashierListSummaryPDF({
                 <Text
                   style={{
                     ...pdfStyles.tableCell,
-                    flex: 0.5,
+                    // flex: 0.3,
+                    width: '10%',
                   }}
                 >
                   {cashier.name}
@@ -546,7 +569,9 @@ export default function CashierListSummaryPDF({
                 <View
                   style={{
                     ...pdfStyles.tableCell,
-                    flex: 1,
+                    // flex: 1,
+                    width: '30%',
+                    padding: '0px',
                   }}
                 >
                   <View style={pdfStyles.table}>
@@ -569,16 +594,15 @@ export default function CashierListSummaryPDF({
                       return (
                         <View
                           key={index}
-                          style={{
-                            ...pdfStyles.tableRow,
-                          }}
+                          style={{ ...pdfStyles.tableRow, gap: 2 }}
                         >
                           <Text
                             style={{
                               ...pdfStyles.tableCell,
                               backgroundColor:
                                 index % 2 === 0 ? '#FFFFFF' : lightColor,
-                              flex: 0.5,
+                              // flex: 0.5,
+                              width: '30%',
                             }}
                           >
                             {pumpInfo?.name || `Pump ${pump.fuel_pump_id}`}
@@ -588,7 +612,8 @@ export default function CashierListSummaryPDF({
                               ...pdfStyles.tableCell,
                               backgroundColor:
                                 index % 2 === 0 ? '#FFFFFF' : lightColor,
-                              flex: 0.5,
+                              // flex: 0.5,
+                              width: '35%',
                             }}
                           >
                             {product?.name || `Product ${pump.product_id}`}
@@ -599,7 +624,8 @@ export default function CashierListSummaryPDF({
                               backgroundColor:
                                 index % 2 === 0 ? '#FFFFFF' : lightColor,
                               textAlign: 'right',
-                              flex: 0.5,
+                              // flex: 0.5,
+                              width: '35%',
                             }}
                           >
                             {amount.toLocaleString('en-US', {
@@ -611,17 +637,14 @@ export default function CashierListSummaryPDF({
                       );
                     })}
                     {/* === Total amount for pump details === */}
-                    <View
-                      style={{
-                        ...pdfStyles.tableRow,
-                      }}
-                    >
+                    <View style={{ ...pdfStyles.tableRow, gap: 2 }}>
                       <Text
                         style={{
                           ...pdfStyles.tableCell,
                           backgroundColor: mainColor,
                           color: contrastText,
-                          flex: 1,
+                          // flex: 1,
+                          width: '65%',
                         }}
                       >
                         TOTAL
@@ -632,7 +655,8 @@ export default function CashierListSummaryPDF({
                           backgroundColor: mainColor,
                           color: contrastText,
                           textAlign: 'right',
-                          flex: 0.5,
+                          // flex: 0.5,
+                          width: '35%',
                         }}
                       >
                         {totalPumoAmount.toLocaleString('en-US', {
@@ -648,95 +672,87 @@ export default function CashierListSummaryPDF({
                 <View
                   style={{
                     ...pdfStyles.tableCell,
-                    flex: 1.3,
+                    // flex: 1.3,
+                    width: '30%',
+                    padding: '0px',
                   }}
                 >
                   <View style={pdfStyles.table}>
                     {/* === Cash Distribution Summary === */}
-                    <View style={{ ...pdfStyles.tableRow }}>
-                      <View style={{ ...pdfStyles.table }}>
-                        {cashDistributionSummary.map((t, index) => (
-                          <View
-                            key={index}
-                            style={{
-                              ...pdfStyles.tableRow,
-                            }}
-                          >
-                            <View
-                              style={{
-                                ...pdfStyles.tableCell,
-                                backgroundColor:
-                                  index % 2 === 0 ? '#FFFFFF' : lightColor,
-                                flex: 1,
-                              }}
-                            >
-                              <Text>{t.type}</Text>
-                            </View>
-                            <View
-                              style={{
-                                ...pdfStyles.tableCell,
-                                backgroundColor:
-                                  index % 2 === 0 ? '#FFFFFF' : lightColor,
-                                textAlign: 'right',
-                                flex: 1,
-                              }}
-                            >
-                              <Text>{t.count}</Text>
-                            </View>
-                            <View
-                              style={{
-                                ...pdfStyles.tableCell,
-                                backgroundColor:
-                                  index % 2 === 0 ? '#FFFFFF' : lightColor,
-                                textAlign: 'right',
-                                flex: 1,
-                              }}
-                            >
-                              <Text>
-                                {t.totalAmount.toLocaleString('en-US', {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                })}
-                              </Text>
-                            </View>
-                          </View>
-                        ))}
-                        <View
+                    {cashDistributionSummary.map((t, index) => (
+                      <View
+                        key={index}
+                        style={{ ...pdfStyles.tableRow, gap: 2 }}
+                      >
+                        <Text
                           style={{
-                            ...pdfStyles.tableRow,
+                            ...pdfStyles.tableCell,
+                            backgroundColor:
+                              index % 2 === 0 ? '#FFFFFF' : lightColor,
+                            // flex: 0.5,
+                            width: '40%',
                           }}
                         >
-                          <View
-                            style={{
-                              ...pdfStyles.tableCell,
-                              backgroundColor: mainColor,
-                              color: contrastText,
-                              flex: 2,
-                            }}
-                          >
-                            <Text>Total</Text>
-                          </View>
-                          <View
-                            style={{
-                              ...pdfStyles.tableCell,
-                              backgroundColor: mainColor,
-                              color: contrastText,
-                              textAlign: 'right',
-                              flex: 1,
-                            }}
-                          >
-                            <Text>
-                              {cashDistributionsTotalSummary.toLocaleString(
-                                'en-US',
-                                {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                }
-                              )}
-                            </Text>
-                          </View>
-                        </View>
+                          {t.type}
+                        </Text>
+                        <Text
+                          style={{
+                            ...pdfStyles.tableCell,
+                            backgroundColor:
+                              index % 2 === 0 ? '#FFFFFF' : lightColor,
+                            // flex: 0.5,
+                            width: '20%',
+                          }}
+                        >
+                          {t.count}
+                        </Text>
+                        <Text
+                          style={{
+                            ...pdfStyles.tableCell,
+                            backgroundColor:
+                              index % 2 === 0 ? '#FFFFFF' : lightColor,
+                            // flex: 0.5,
+                            width: '40%',
+                          }}
+                        >
+                          {t.totalAmount.toLocaleString('en-US', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </Text>
                       </View>
+                    ))}
+                    <View
+                      style={{
+                        ...pdfStyles.tableRow,
+                        gap: 2,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          ...pdfStyles.tableCell,
+                          backgroundColor: mainColor,
+                          color: contrastText,
+                          // flex: 0.5,
+                          width: '60%',
+                        }}
+                      >
+                        Total
+                      </Text>
+                      <Text
+                        style={{
+                          ...pdfStyles.tableCell,
+                          backgroundColor: mainColor,
+                          color: contrastText,
+                          // flex: 0.5,
+                          width: '40%',
+                        }}
+                      >
+                        {cashDistributionsTotalSummary.toLocaleString('en-US', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </Text>
                     </View>
                   </View>
                 </View>
@@ -745,17 +761,18 @@ export default function CashierListSummaryPDF({
                 <View
                   style={{
                     ...pdfStyles.tableCell,
-                    flex: 1,
+                    width: '30%',
+                    padding: '0px',
                   }}
                 >
                   <View style={pdfStyles.table}>
-                    <View style={pdfStyles.tableRow}>
+                    <View style={{ ...pdfStyles.tableRow, gap: 2 }}>
                       <Text
                         style={{
                           ...pdfStyles.tableCell,
                           backgroundColor: '#FFFFFF',
                           textAlign: 'right',
-                          flex: 0.8,
+                          width: '35%',
                         }}
                       >
                         {(
@@ -773,7 +790,7 @@ export default function CashierListSummaryPDF({
                           ...pdfStyles.tableCell,
                           backgroundColor: '#FFFFFF',
                           textAlign: 'right',
-                          flex: 0.8,
+                          width: '35%',
                         }}
                       >
                         {cashier.collected_amount.toLocaleString('en-US', {
@@ -786,7 +803,7 @@ export default function CashierListSummaryPDF({
                           ...pdfStyles.tableCell,
                           backgroundColor: '#FFFFFF',
                           textAlign: 'right',
-                          flex: 0.8,
+                          width: '30%',
                         }}
                       >
                         {shortOrOver > 0
@@ -812,21 +829,21 @@ export default function CashierListSummaryPDF({
               ...pdfStyles.tableRow,
             }}
           >
-            <View style={{ ...pdfStyles.tableCell, flex: 0.5 }}>
-              <Text style={{ ...pdfStyles.tableCell }}>TOTALS</Text>
-            </View>
+            <Text style={{ ...pdfStyles.tableCell, width: '10%' }}>TOTALS</Text>
 
             {/* pump details totals */}
-            <View style={{ ...pdfStyles.tableCell, flex: 1 }}>
+            <View
+              style={{ ...pdfStyles.tableCell, width: '30%', padding: '0px' }}
+            >
               <View style={pdfStyles.table}>
                 {pumpSummary.map((pump, index) => (
-                  <View key={index} style={pdfStyles.tableRow}>
+                  <View key={index} style={{ ...pdfStyles.tableRow, gap: 2 }}>
                     <Text
                       style={{
                         ...pdfStyles.tableCell,
                         backgroundColor:
                           index % 2 === 0 ? '#FFFFFF' : lightColor,
-                        flex: 1,
+                        width: '30%',
                       }}
                     ></Text>
                     <Text
@@ -834,7 +851,7 @@ export default function CashierListSummaryPDF({
                         ...pdfStyles.tableCell,
                         backgroundColor:
                           index % 2 === 0 ? '#FFFFFF' : lightColor,
-                        flex: 1,
+                        width: '35%',
                       }}
                     >
                       {pump.type}
@@ -845,7 +862,7 @@ export default function CashierListSummaryPDF({
                         backgroundColor:
                           index % 2 === 0 ? '#FFFFFF' : lightColor,
                         textAlign: 'right',
-                        flex: 1,
+                        width: '35%',
                       }}
                     >
                       {pump.totalDifference.toLocaleString('en-US', {
@@ -858,6 +875,7 @@ export default function CashierListSummaryPDF({
                 <View
                   style={{
                     ...pdfStyles.tableRow,
+                    gap: 2,
                   }}
                 >
                   <Text
@@ -865,7 +883,7 @@ export default function CashierListSummaryPDF({
                       ...pdfStyles.tableCell,
                       backgroundColor: mainColor,
                       color: contrastText,
-                      flex: 2.1,
+                      width: '65%',
                     }}
                   >
                     TOTAL
@@ -876,7 +894,7 @@ export default function CashierListSummaryPDF({
                       backgroundColor: mainColor,
                       color: contrastText,
                       textAlign: 'right',
-                      flex: 1,
+                      width: '35%',
                     }}
                   >
                     {pumpSummary
@@ -894,18 +912,19 @@ export default function CashierListSummaryPDF({
             <View
               style={{
                 ...pdfStyles.tableCell,
-                flex: 1.3,
+                width: '30%',
+                padding: '0px',
               }}
             >
               <View style={pdfStyles.table}>
                 {totalTransactionsSummary?.map((t, index) => (
-                  <View key={index} style={pdfStyles.tableRow}>
+                  <View key={index} style={{ ...pdfStyles.tableRow, gap: 2 }}>
                     <Text
                       style={{
                         ...pdfStyles.tableCell,
                         backgroundColor:
                           index % 2 === 0 ? '#FFFFFF' : lightColor,
-                        flex: 1,
+                        width: '40%',
                       }}
                     >
                       {t.type}
@@ -916,7 +935,7 @@ export default function CashierListSummaryPDF({
                         backgroundColor:
                           index % 2 === 0 ? '#FFFFFF' : lightColor,
                         textAlign: 'right',
-                        flex: 1,
+                        width: '20%',
                       }}
                     >
                       {t.count}
@@ -927,7 +946,7 @@ export default function CashierListSummaryPDF({
                         backgroundColor:
                           index % 2 === 0 ? '#FFFFFF' : lightColor,
                         textAlign: 'right',
-                        flex: 1,
+                        width: '40%',
                       }}
                     >
                       {t.totalAmount.toLocaleString('en-US', {
@@ -939,14 +958,14 @@ export default function CashierListSummaryPDF({
                 ))}
 
                 {/* Grand Total */}
-                <View style={{ ...pdfStyles.tableRow, marginTop: 2 }}>
+                <View style={{ ...pdfStyles.tableRow, marginTop: 2, gap: 2 }}>
                   <Text
                     style={{
                       ...pdfStyles.tableCell,
                       backgroundColor: mainColor,
                       color: contrastText,
                       fontSize: '10px',
-                      flex: 2.05,
+                      width: '60%',
                     }}
                   >
                     Grand Total
@@ -958,7 +977,7 @@ export default function CashierListSummaryPDF({
                       color: contrastText,
                       fontSize: '10px',
                       textAlign: 'right',
-                      flex: 1,
+                      width: '40%',
                     }}
                   >
                     {grandTotal.toLocaleString('en-US', {
@@ -974,18 +993,22 @@ export default function CashierListSummaryPDF({
             <View
               style={{
                 ...pdfStyles.tableCell,
-                flex: 1,
+                width: '30%',
+                padding: '0px',
               }}
             >
               <View style={pdfStyles.table}>
-                <View style={pdfStyles.tableRow}>
+                <View style={{ ...pdfStyles.tableRow, gap: 2 }}>
                   <Text
                     style={{
                       ...pdfStyles.tableCell,
                       textAlign: 'right',
                       backgroundColor: mainColor,
                       color: contrastText,
-                      flex: 0.8,
+                      fontWeight: 'bold',
+                      fontSize: '12px',
+                      padding: 2,
+                      width: '35%',
                     }}
                   >
                     {totalExpectedAmount.toLocaleString('en-US', {
@@ -999,7 +1022,10 @@ export default function CashierListSummaryPDF({
                       textAlign: 'right',
                       backgroundColor: mainColor,
                       color: contrastText,
-                      flex: 0.8,
+                      fontWeight: 'bold',
+                      fontSize: '12px',
+                      padding: 2,
+                      width: '35%',
                     }}
                   >
                     {totalCollectedAmount.toLocaleString('en-US', {
@@ -1013,7 +1039,10 @@ export default function CashierListSummaryPDF({
                       textAlign: 'right',
                       backgroundColor: mainColor,
                       color: contrastText,
-                      flex: 0.8,
+                      fontWeight: 'bold',
+                      fontSize: '12px',
+                      padding: 2,
+                      width: '30%',
                     }}
                   >
                     {totalShortOrOver > 0

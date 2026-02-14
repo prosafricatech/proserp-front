@@ -138,13 +138,26 @@ const DocumentDialog = ({
           mb={2}
         >
           <Grid size={11}>
-            <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)}>
-              <Tab label='PDF' />
-              <Tab label='EXCEL' />
-              {belowLargeScreen && <Tab label='ONSCREEN' />}
-            </Tabs>
+            {belowLargeScreen && (
+              <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)}>
+                <Tab label='PDF' />
+                <Tab label='ONSCREEN' />
+              </Tabs>
+            )}
           </Grid>
-          <Grid size={1} textAlign='right'>
+          <Grid
+            size={1}
+            textAlign='right'
+            sx={{ display: 'flex', flexDirection: 'row' }}
+          >
+            <Tooltip title='Export file'>
+              <IconButton
+                size='large'
+                onClick={() => handlExcelExport(exportedData)}
+              >
+                <FontAwesomeIcon icon={faFileExcel} color='green' />
+              </IconButton>
+            </Tooltip>
             {belowLargeScreen && (
               <Tooltip title='Close'>
                 <IconButton
@@ -157,7 +170,7 @@ const DocumentDialog = ({
             )}
           </Grid>
         </Grid>
-        {belowLargeScreen && activeTab === 2 && (
+        {belowLargeScreen && activeTab === 1 && (
           <SalesShiftOnScreen
             stationName={activeStation?.name}
             openDetails={openDetails}
@@ -209,8 +222,7 @@ const DocumentDialog = ({
             </Tooltip>
           </Grid>
         )}
-
-        {activeTab === 0 && (
+        {(!belowLargeScreen || activeTab === 0) && (
           <PDFContent
             key={pdfKey}
             fileName={shiftData.shiftNo}
