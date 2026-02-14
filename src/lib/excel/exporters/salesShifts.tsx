@@ -1237,6 +1237,61 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
               },
               0
             );
+
+            // Calculate total products amount for this cashier
+            const totalProductsAmount =
+              cashier?.pump_readings?.reduce((total: any, pump: any) => {
+                const productPrice =
+                  exportedData.shiftData.fuel_prices.find(
+                    (fp: any) => fp.product_id === pump.product_id
+                  )?.price || 0;
+                const quantity = (pump.closing || 0) - (pump.opening || 0);
+                return total + quantity * productPrice;
+              }, 0) || 0;
+
+            // Calculate adjustments amount for this cashier
+            const adjustmentsAmount =
+              cashier?.tank_adjustments?.reduce((total: any, adj: any) => {
+                const productPrice =
+                  exportedData.shiftData.fuel_prices.find(
+                    (fp: any) => fp.product_id === adj.product_id
+                  )?.price || 0;
+                if (adj.operator === '-') {
+                  return total + adj.quantity * productPrice;
+                } else if (adj.operator === '+') {
+                  return total - adj.quantity * productPrice;
+                }
+                return total;
+              }, 0) || 0;
+
+            // Calculate total fuel vouchers amount for this cashier
+            const totalFuelVouchersAmount =
+              cashier?.fuel_vouchers?.reduce((total: any, fv: any) => {
+                const productPrice =
+                  exportedData.shiftData.fuel_prices.find(
+                    (fp: any) => fp.product_id === fv.product_id
+                  )?.price || 0;
+                return total + fv.quantity * productPrice;
+              }, 0) || 0;
+
+            // Calculate other transactions total for this cashier
+            const otherTransactionsTotal =
+              cashier.other_transactions?.reduce(
+                (total: any, ot: any) => total + (ot.amount || 0),
+                0
+              ) || 0;
+
+            // calculate short/over amount
+            const expectedAmount =
+              totalProductsAmount +
+              adjustmentsAmount -
+              totalFuelVouchersAmount -
+              otherTransactionsTotal;
+
+            const collectedAmount = cashier.collected_amount;
+
+            const shortOrOver = collectedAmount - expectedAmount;
+
             const cashierRow = (ws.lastRow?.number ?? 0) + cashierIndex;
             const row = ws.getRow(cashierRow);
             row.height = 20;
@@ -2060,6 +2115,62 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
                 fgColor: { argb: 'FFD9D9D9' },
               };
               ws.getCell(`F${distributionTotalsRow}`).border = {
+                top: { style: 'thin', color: { argb: 'FF000000' } },
+                bottom: { style: 'thin', color: { argb: 'FF000000' } },
+                left: { style: 'thin', color: { argb: 'FF000000' } },
+                right: { style: 'thin', color: { argb: 'FF000000' } },
+              };
+
+              // Cash Collected
+              ws.mergeCells(
+                `A${distributionTotalsRow + 1}:E${distributionTotalsRow + 1}`
+              );
+              ws.getCell(`A${distributionTotalsRow + 1}`).value =
+                'Cash Collected';
+              ws.getCell(`A${distributionTotalsRow + 1}`).alignment = {
+                horizontal: 'left',
+                vertical: 'middle',
+              };
+              ws.getCell(`A${distributionTotalsRow + 1}`).font = {
+                bold: true,
+                size: 11,
+              };
+              ws.getCell(`A${distributionTotalsRow + 1}`).fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FFD9D9D9' },
+              };
+              ws.getCell(`A${distributionTotalsRow + 1}`).border = {
+                top: { style: 'thin', color: { argb: 'FF000000' } },
+                bottom: { style: 'thin', color: { argb: 'FF000000' } },
+                left: { style: 'thin', color: { argb: 'FF000000' } },
+                right: { style: 'thin', color: { argb: 'FF000000' } },
+              };
+
+              ws.mergeCells(
+                `F${distributionTotalsRow + 1}:G${distributionTotalsRow + 1}`
+              );
+              ws.getCell(`F${distributionTotalsRow + 1}`).value =
+                cashier.collected_amount.toLocaleString('en-US', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                }) +
+                ' ' +
+                (shortOrOver > 0 ? '(over)' : '(short)');
+              ws.getCell(`F${distributionTotalsRow + 1}`).alignment = {
+                horizontal: 'right',
+                vertical: 'middle',
+              };
+              ws.getCell(`F${distributionTotalsRow + 1}`).font = {
+                bold: true,
+                size: 11,
+              };
+              ws.getCell(`F${distributionTotalsRow + 1}`).fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FFD9D9D9' },
+              };
+              ws.getCell(`F${distributionTotalsRow + 1}`).border = {
                 top: { style: 'thin', color: { argb: 'FF000000' } },
                 bottom: { style: 'thin', color: { argb: 'FF000000' } },
                 left: { style: 'thin', color: { argb: 'FF000000' } },
