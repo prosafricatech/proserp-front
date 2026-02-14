@@ -189,7 +189,7 @@ function PurchaseOrderTopInformation() {
                     <Div sx={{mt: 0.3}}>
                         <CostCenterSelector
                             label="Cost Centers"
-                            frontError={errors.cost_centers}
+                            frontError={errors?.cost_centers}
                             multiple={true}
                             allowSameType={false}
                             defaultValue={
