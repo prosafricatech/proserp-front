@@ -35,7 +35,12 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
   const {authOrganization,checkOrganizationPermission} = useJumboAuth();
   const [totalReceivedAmount, setTotalReceivedAmount] = useState(0);
   const [totalAmount, setTotalAmount] = useState(0);
-  let purchase_order_items = order?.purchase_order_items || grn?.items;
+
+  let purchase_order_items = order?.purchase_order_items?.map((item) => ({
+    ...item,
+    grn_quantity: grn?.items.find(i => i.product.id === item.product.id)?.quantity || 0,
+    unreceived_quantity: item.unreceived_quantity + (grn?.items.find(i => i.id === item.id)?.quantity || 0)
+  })) || [];
 
   const [nextTab, setNextTab] = useState(null);
   const [showWarning, setShowWarning] = useState(false);
@@ -159,15 +164,12 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
       change_cost_center: grn.cost_center_change || false,
       destination_cost_center_id: grn.destination_cost_center_id || null,
       receivable_ledger_id: grn.receivable_ledger_id || null,
-      items: grn.items?.map(grnItem => {
-        const orderItem = purchase_order_items?.find(item => item.product.id === grnItem.product.id);
-        return {
-          unreceived_quantity: orderItem?.unreceived_quantity || grnItem.quantity,
-          quantity: grnItem.quantity,
-          purchase_order_item_id: orderItem?.id || grnItem.id,
-          rate: grnItem.rate,
-        };
-      }) || [],
+      items: purchase_order_items?.filter(item => item.product.type === 'Inventory' && item.unreceived_quantity > 0).map(item => ({
+        unreceived_quantity : item.unreceived_quantity,
+        quantity : item.grn_quantity,
+        purchase_order_item_id: item.id,
+        rate: item.rate,
+      })) || [],
       additional_costs: grn.additional_costs || [],
     } : {
       id: order?.id,
@@ -525,8 +527,8 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
       </DialogContent>
       <DialogActions>
         <Grid container spacing={1}>
-          <Grid item xs={12} md={8}></Grid>
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 8 }}></Grid>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Stack spacing={1} direction={'row'} justifyContent={'end'} sx={{ mt: 1, mb: 1 }}>
               <Button size='small' onClick={() => toggleOpen(false)}>
                   Cancel

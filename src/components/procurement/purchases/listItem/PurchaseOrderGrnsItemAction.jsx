@@ -24,12 +24,17 @@ const EditReceive = ({orderGrn, setOpenEditReceive, order}) => {
     queryFn: () => grnServices.grnDetails(orderGrn.id),
   });
 
-  if (isFetching) {
+  const { data: orderDetails, isFetching: isFetchingOrderDetails } = useQuery({
+    queryKey: ['purchaseOrderDetails', { id: order.id }],
+    queryFn: () => purchaseServices.orderDetails(order.id),
+  });
+
+  if (isFetching || isFetchingOrderDetails) {
     return <LinearProgress />;
   }
 
   return (
-    <PurchaseOrderReceiveForm toggleOpen={setOpenEditReceive} grn={grn} order={order}/>
+    <PurchaseOrderReceiveForm toggleOpen={setOpenEditReceive} grn={grn} order={orderDetails}/>
   )
 }
 
@@ -105,14 +110,13 @@ function PurchaseOrderGrnsItemAction({ order }) {
   const {organization} = authOrganization;
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
+  const [editReceiveGrn, setEditReceiveGrn] = React.useState(null);
   const {attachDialog, setAttachDialog, setExpanded,openDialog,setSelectedOrderGrn,selectedOrderGrn,setOpenDialog,openDocumentDialog,setOpenDocumentDialog, openEditReceive, setOpenEditReceive} = useContext(listItemContext);
 
   //Screen handling constants
   const {theme} = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
-  // For EditReceive dialog
-  const [editReceiveGrn, setEditReceiveGrn] = React.useState(null);
   React.useEffect(() => {
     if (openEditReceive && selectedOrderGrn) {
       setEditReceiveGrn(selectedOrderGrn);
