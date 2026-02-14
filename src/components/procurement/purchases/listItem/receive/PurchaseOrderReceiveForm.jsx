@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Grid, Stack, Tab,Tabs, TextField, Typography } from '@mui/material';
+import { Button, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle, Grid, Stack, Tab,Tabs, TextField, Typography } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -21,6 +21,9 @@ import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { Div } from '@jumbo/shared';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
+import { G } from '@react-pdf/renderer';
+import CostCenterSelector from '@/components/masters/costCenters/CostCenterSelector';
+import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
 
 function PurchaseOrderReceiveForm({ toggleOpen, order }) {
   const [additionalCosts, setAdditionalCosts] = useState([]);
@@ -85,6 +88,17 @@ function PurchaseOrderReceiveForm({ toggleOpen, order }) {
       .typeError('Exchange rate is required')
       .positive('Exchange rate is required')
       .required('Exchange rate is required'),
+    change_cost_center: yup.boolean(),
+    destination_cost_center_id: yup.number().when('change_cost_center', {
+      is: true,
+      then: (schema) => schema.required('Destination Cost Center is required').typeError('Destination Cost Center is required'),
+      otherwise: (schema) => schema.nullable(),
+    }),
+    receivable_ledger_id: yup.number().when('change_cost_center', {
+      is: true,
+      then: (schema) => schema.required('Receivable Ledger is required').typeError('Receivable Ledger is required'),
+      otherwise: (schema) => schema.nullable(),
+    }),
     items: yup.array().of(
       yup.object().shape({
         quantity: yup
@@ -268,112 +282,160 @@ function PurchaseOrderReceiveForm({ toggleOpen, order }) {
   return (
     <FormProvider {...{ errors, register, setValue, watch, clearErrors}}>
       <DialogTitle>
-        <form autoComplete='off'>
-          <Grid container spacing={1}>
-            <Grid size={12} textAlign={"center"} mb={1}> 
-              {`Receive ${order.orderNo}`}
-            </Grid>
-            <Grid size={{xs: 12, md: 6, lg: 4}}>
-              <Div sx={{ mt: 1}}>
-                <DateTimePicker
-                  fullWidth
-                  label="Receive Date"
-                  defaultValue={date_received}
-                  minDate={checkOrganizationPermission(PERMISSIONS.PURCHASES_BACKDATE) ? dayjs(authOrganization.organization.recording_start_date) : dayjs().startOf('day')}
-                  maxDate={checkOrganizationPermission(PERMISSIONS.PURCHASES_POSTDATE) ? dayjs().add(10,'year').endOf('year') : dayjs().endOf('day')}
-                  slotProps={{
-                    textField: {
-                      size: 'small',
-                      fullWidth: true,
-                      readOnly: true,
-                    }
-                  }}
-                  onChange={(newValue) => {
-                    setValue(`date_received`, newValue ? newValue.toISOString() : null, {
-                      shouldValidate: true,
-                      shouldDirty: true
-                    });
-                  }}
-                />
-              </Div>
-            </Grid>
-            <Grid size={{xs: 12, md: 6, lg: 4}}>
-              <Div sx={{ mt: 1}}>
-                <StoreSelector
-                  allowSubStores={true}
-                  frontError={errors.store_id}
-                  proposedOptions={authOrganization?.stores}
-                  onChange={(newValue) => {
-                    setValue(`store_id`, newValue ? newValue.id : null, {
-                      shouldValidate: true,
-                      shouldDirty: true,
-                    });
-                  }}
-                />
-              </Div>
-            </Grid>
-            <Grid size={{xs: 12, md: 6, lg: 3}} sx={{ mt: 2, mb: 2 }}>
-              <Stack direction="row" spacing={2}>
-                <Typography sx={{ fontWeight: 'bold'}}>Order Currency:</Typography>
-                <Typography>{order.currency?.name}</Typography>
-              </Stack>
-            </Grid>
-            {
-              order_currency_id > 1 &&
-              <Grid size={{xs: 12, md: 6, lg: 4}}>
-                <Div sx={{mt: 1}}>
-                  <TextField
-                    label="Order Exchange Rate"
-                    fullWidth
-                    size='small'
-                    error={!!errors?.exchange_rate}
-                    helperText={errors?.exchange_rate?.message}
-                    InputProps={{
-                      inputComponent: CommaSeparatedField,
-                    }}
-                    value={watch('exchange_rate')}
-                    onChange={(e) => {
-                      setValue(`exchange_rate`,e.target.value ? sanitizedNumber(e.target.value ): null,{
-                        shouldValidate: true,
-                        shouldDirty: true
-                      });
-                    }}
-                  />
-                </Div>
-              </Grid>
-            }
-              <Grid size={{xs: 12, md: 6, lg: 4}}>
-                <Div sx={{mt: 1}}>
-                  <TextField
-                    label="Order Reference"
-                    fullWidth
-                    size="small"
-                    defaultValue={watch('reference')}
-                    onChange={(e) => {
-                      setValue(`reference`,e.target.value,{
-                        shouldValidate: true,
-                        shouldDirty: true
-                      });
-                    }}
-                  />
-                </Div>
-              </Grid>
-              <Grid size={{xs: 12, md: 6, lg: 4}}>
-                <Div sx={{mt: 1}}>
-                  <TextField
-                    label="Cost Factor"
-                    fullWidth
-                    size='small'
-                    disabled
-                    InputProps={{
-                      inputComponent: CommaSeparatedField,
-                    }}
-                    value={watch('cost_factor')}
-                  />
-                </Div>
-              </Grid>
+        <Grid container spacing={1}>
+          <Grid size={12} textAlign={"center"} mb={1}>
+            {`Receive ${order.orderNo}`}
           </Grid>
-        </form>
+          <Grid size={12}>
+            <form autoComplete='off'>
+              <Grid container spacing={1}>
+                <Grid size={{xs: 12, md: 6, lg: 4}}>
+                  <Div sx={{ mt: 1}}>
+                    <StoreSelector
+                      allowSubStores={true}
+                      frontError={errors.store_id}
+                      proposedOptions={authOrganization?.stores}
+                      onChange={(newValue) => {
+                        setValue(`store_id`, newValue ? newValue.id : null, {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                        });
+                      }}
+                    />
+                  </Div>
+                </Grid>
+                  <Grid size={{xs: 12, md: 6, lg: 4}}>
+                    <Div sx={{mt: 1}}>
+                      <TextField
+                        label="Order Reference"
+                        fullWidth
+                        size="small"
+                        defaultValue={watch('reference')}
+                        onChange={(e) => {
+                          setValue(`reference`,e.target.value,{
+                            shouldValidate: true,
+                            shouldDirty: true
+                          });
+                        }}
+                      />
+                    </Div>
+                  </Grid>
+                  <Grid size={{xs: 12, md: 6, lg: 4}}>
+                    <Div sx={{mt: 1}}>
+                      <TextField
+                        label="Cost Factor"
+                        fullWidth
+                        size='small'
+                        disabled
+                        InputProps={{
+                          inputComponent: CommaSeparatedField,
+                        }}
+                        value={watch('cost_factor')}
+                      />
+                    </Div>
+                  </Grid>
+                  <Grid size={{xs: 12, md: 6, lg: 4}}>
+                    <Div sx={{mt: 1, display: 'flex', alignItems: 'center'}}>
+                      <Checkbox
+                        checked={!!watch('change_cost_center')}
+                        onChange={e => {
+                          setValue('change_cost_center', e.target.checked, {
+                            shouldValidate: true,
+                            shouldDirty: true
+                          });
+                          if (!e.target.checked) {
+                            setValue('destination_cost_center_id', null);
+                            setValue('receivable_ledger_id', null);
+                          }
+                        }}
+                        size="small"
+                      />
+                      <Typography>Change Cost Center</Typography>
+                    </Div>
+                  </Grid>
+                  {watch('change_cost_center') && (
+                    <>
+                      <Grid size={{xs: 12, md: 6, lg: 4}}>
+                        <Div sx={{mt: 1}}>
+                          <CostCenterSelector
+                            label="Destination Cost Center"
+                            multiple={false}
+                            frontError={errors.destination_cost_center_id}
+                            onChange={newValue => {
+                              setValue('destination_cost_center_id', newValue ? newValue.id : null, {
+                                shouldValidate: true,
+                                shouldDirty: true
+                              });
+                            }}
+                          />
+                        </Div>
+                      </Grid>
+                      <Grid size={{xs: 12, md: 6, lg: 4}}>
+                        <Div sx={{mt: 1}}>
+                          <LedgerSelect
+                            label="Receivable Ledger"
+                            allowedGroups={['Accounts Receivable']}
+                            multiple={false}
+                            frontError={errors.receivable_ledger_id}
+                            onChange={newValue => {
+                              setValue('receivable_ledger_id', newValue ? newValue.id : null, {
+                                shouldValidate: true,
+                                shouldDirty: true
+                              });
+                            }}
+                          />
+                        </Div>
+                      </Grid>
+                    </>
+                  )}
+                  <Grid size={{xs: 12, md: 6, lg: 4}} sx={{ mt: 2, mb: 2 }}>
+                    <Stack direction="row" spacing={2}>
+                      <Typography sx={{ fontWeight: 'bold', color: 'primary.main' }}>Order Currency:</Typography>
+                      <Typography>{order.currency?.name}</Typography>
+                    </Stack>
+                  </Grid>
+                  {
+                    order_currency_id > 1 &&
+                    <Grid size={{xs: 12, md: 6, lg: 4}}>
+                      <Div sx={{mt: 1}}>
+                        <TextField
+                          label="Order Exchange Rate"
+                          fullWidth
+                          size='small'
+                          error={!!errors?.exchange_rate}
+                          helperText={errors?.exchange_rate?.message}
+                          InputProps={{
+                            inputComponent: CommaSeparatedField,
+                          }}
+                          value={watch('exchange_rate')}
+                          onChange={(e) => {
+                            setValue(`exchange_rate`,e.target.value ? sanitizedNumber(e.target.value ): null,{
+                              shouldValidate: true,
+                              shouldDirty: true
+                            });
+                          }}
+                        />
+                      </Div>
+                    </Grid>
+                  }
+              </Grid>
+            </form>
+          </Grid>
+          <Grid size={12}>
+            <Tabs
+              value={activeTab}
+              onChange={(e, newValue) => handleTabChange(e, newValue)}
+              variant="scrollable"
+              scrollButtons='auto'
+              allowScrollButtonsMobile
+              sx={{ mt: 1 }}
+            >
+              <Tab label="Items"/>
+              <Tab label="Additional Costs"/>
+              <Tab label="Summary Preview"/>
+            </Tabs>
+          </Grid>
+        </Grid>
       </DialogTitle>  
       <DialogContent>
         {activeTab === 0 && <ItemsTab purchase_order_items={purchase_order_items} />}
@@ -406,22 +468,8 @@ function PurchaseOrderReceiveForm({ toggleOpen, order }) {
       </DialogContent>
       <DialogActions>
         <Grid container spacing={1}>
-          <Grid size={{xs: 12, md: 8}}>
-            <Div sx={{ mt: 1, mb: 1 }}>
-              <Tabs
-                value={activeTab}
-                onChange={(e, newValue) => handleTabChange(e, newValue)}
-                variant="scrollable"
-                scrollButtons='auto'
-                allowScrollButtonsMobile
-              >
-                <Tab label="Items"/>
-                <Tab label="Additional Costs"/>
-                <Tab label="Summary Preview"/>
-              </Tabs>
-            </Div>
-          </Grid>
-          <Grid size={{xs: 12, md: 4}}>
+          <Grid item xs={12} md={8}></Grid>
+          <Grid item xs={12} md={4}>
             <Stack spacing={1} direction={'row'} justifyContent={'end'} sx={{ mt: 1, mb: 1 }}>
               <Button size='small' onClick={() => toggleOpen(false)}>
                   Cancel
