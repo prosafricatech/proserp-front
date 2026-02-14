@@ -14,8 +14,8 @@ import dayjs from 'dayjs';
 import React, { useEffect } from 'react'
 import { useFormContext } from 'react-hook-form';
 
-function PurchaseOrderTopInformation() {
-    const {addedStakeholder, order_date, costCenters, setValue, stakeholderQuickAddDisplay, errors, order, clearErrors, watch, setStakeholderQuickAddDisplay, setAddedStakeholder, register} = useFormContext();
+function PurchaseOrderTopInformation({order, setStakeholderQuickAddDisplay, setAddedStakeholder, stakeholderQuickAddDisplay, addedStakeholder, order_date, costCenters}) {
+    const {setValue, errors, clearErrors, watch, register} = useFormContext();
     const {authOrganization,checkOrganizationPermission} = useJumboAuth();
     const cp = {id:null,name: 'Cash Purchase'};
 

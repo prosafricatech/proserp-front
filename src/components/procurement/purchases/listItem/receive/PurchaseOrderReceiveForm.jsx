@@ -25,7 +25,7 @@ import { DateTimePicker } from '@mui/x-date-pickers';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 
 function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
-  const [additionalCosts, setAdditionalCosts] = useState([]);
+  const [additionalCosts, setAdditionalCosts] = useState(grn ? grn?.additional_costs : []);
   const [date_received] = useState(dayjs());
   const [activeTab, setActiveTab] = useState(0);
   const { enqueueSnackbar } = useSnackbar();
@@ -40,7 +40,6 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
   const [nextTab, setNextTab] = useState(null);
   const [showWarning, setShowWarning] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
-
 
   const handleTabChange = (event, newTab) => {
     if (isDirty) {
@@ -87,13 +86,13 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
       .typeError('Exchange rate is required')
       .positive('Exchange rate is required')
       .required('Exchange rate is required'),
-    cost_center_change: yup.boolean(),
-    destination_cost_center_id: yup.number().when('cost_center_change', {
+    change_cost_center: yup.boolean(),
+    destination_cost_center_id: yup.number().when('change_cost_center', {
       is: true,
       then: (schema) => schema.required('Destination Cost Center is required').typeError('Destination Cost Center is required'),
       otherwise: (schema) => schema.nullable(),
     }),
-    receivable_ledger_id: yup.number().when('cost_center_change', {
+    receivable_ledger_id: yup.number().when('change_cost_center', {
       is: true,
       then: (schema) => schema.required('Receivable Ledger is required').typeError('Receivable Ledger is required'),
       otherwise: (schema) => schema.nullable(),
@@ -157,7 +156,7 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
       reference: grn.reference || order?.orderNo,
       exchange_rate: grn.exchange_rate || order?.exchange_rate || 1,
       store_id: grn.store_id || order?.store_id,
-      cost_center_change: grn.cost_center_change || false,
+      change_cost_center: grn.cost_center_change || false,
       destination_cost_center_id: grn.destination_cost_center_id || null,
       receivable_ledger_id: grn.receivable_ledger_id || null,
       items: grn.items?.map(grnItem => {
@@ -395,9 +394,9 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
                   <Grid size={{xs: 12, md: 6, lg: 4}}>
                     <Div sx={{mt: 1, display: 'flex', alignItems: 'center'}}>
                       <Checkbox
-                        checked={!!watch('cost_center_change')}
+                        checked={!!watch('change_cost_center')}
                         onChange={e => {
-                          setValue('cost_center_change', e.target.checked, {
+                          setValue('change_cost_center', e.target.checked, {
                             shouldValidate: true,
                             shouldDirty: true
                           });
@@ -411,7 +410,7 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
                       <Typography>Change Cost Center</Typography>
                     </Div>
                   </Grid>
-                  {watch('cost_center_change') && (
+                  {watch('change_cost_center') && (
                     <>
                       <Grid size={{xs: 12, md: 6, lg: 4}}>
                         <Div sx={{mt: 1}}>
