@@ -69,6 +69,7 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
     setActiveTab(nextTab); 
   };
 
+
   const receiveOrder = useMutation({
     mutationFn: purchaseServices.receive,
     onSuccess: (data) => {
@@ -83,9 +84,30 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
     },
   });
 
+  // Mutation for editing GRN
+  const editGrnMutation = useMutation({
+    mutationFn: ({ grnId, data }) => purchaseServices.editGrn(grnId, data),
+    onSuccess: (response) => {
+      toggleOpen(false);
+      enqueueSnackbar(response.message || 'GRN updated successfully', { variant: 'success' });
+      queryClient.invalidateQueries({ queryKey: ['purchaseOrderDetails'] });
+      queryClient.invalidateQueries({ queryKey: ['purchaseOrders'] });
+      queryClient.invalidateQueries({ queryKey: ['purchaseOrderGrns'] });
+    },
+    onError: (error) => {
+      enqueueSnackbar(error?.response?.data?.message || 'Failed to update GRN', { variant: 'error' });
+    },
+  });
+
   const saveMutation = React.useMemo(() => {
-    return receiveOrder.mutate
-  }, [receiveOrder]);
+    return (data) => {
+      if (grn) {
+        editGrnMutation.mutate({ grnId: grn.id, data });
+      } else {
+        receiveOrder.mutate(data);
+      }
+    };
+  }, [receiveOrder, editGrnMutation, grn]);
 
   const validationSchema = yup.object({
     date_received: yup.string().required('Receive Date is required'),
@@ -300,23 +322,7 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
     const validItems = validateItems(data);
     const validAdditionalItems = data.additional_costs.every(item => item.credit_ledger_id === null) ? [] : data.additional_costs;
     const updatedData = { ...data, items: validItems, additional_costs: validAdditionalItems };
-
-    if (grn) {
-      // Edit mode: PUT grns/{grnId}
-      try {
-        const response = await purchaseServices.editGrn(grn.id, updatedData);
-        toggleOpen(false);
-        enqueueSnackbar(response.message || 'GRN updated successfully', { variant: 'success' });
-        queryClient.invalidateQueries({ queryKey: ['purchaseOrderDetails'] });
-        queryClient.invalidateQueries({ queryKey: ['purchaseOrders'] });
-        queryClient.invalidateQueries({ queryKey: ['purchaseOrderGrns'] });
-      } catch (error) {
-        enqueueSnackbar(error?.response?.data?.message || 'Failed to update GRN', { variant: 'error' });
-      }
-    } else {
-      // New receive
-      await saveMutation(updatedData);
-    }
+    saveMutation(updatedData);
   };
 
   return (
@@ -558,7 +564,7 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
               {
                 activeTab === 2 &&
                 <LoadingButton
-                  loading={receiveOrder.isPending}
+                  loading={grn ? editGrnMutation.isPending : receiveOrder.isPending}
                   variant='contained'
                   size='small'
                   onClick={handleSubmit(() => handleSubmitForm(getValues()))}
