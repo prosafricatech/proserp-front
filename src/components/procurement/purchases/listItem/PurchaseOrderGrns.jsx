@@ -1,13 +1,13 @@
 import React, { useContext } from 'react'
 import { Box, Grid, IconButton, Tooltip, Typography } from '@mui/material';
-import { AttachmentOutlined, UndoOutlined, VisibilityOutlined } from '@mui/icons-material';
+import { AttachmentOutlined, UndoOutlined, VisibilityOutlined, EditOutlined } from '@mui/icons-material';
 import { listItemContext } from './PurchaseOrderListItem';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 
 function PurchaseOrderGrns({order}) {
-    const { setAttachDialog, setSelectedOrderGrn, setOpenDialog, setOpenDocumentDialog, purchaseOrderGrns} = useContext(listItemContext);
+    const { setOpenEditReceive, setAttachDialog, setSelectedOrderGrn, setOpenDialog, setOpenDocumentDialog, purchaseOrderGrns } = useContext(listItemContext);
     const {checkOrganizationPermission} = useJumboAuth();
 
   return (
@@ -71,6 +71,17 @@ function PurchaseOrderGrns({order}) {
                                 </IconButton>
                             </Tooltip>
                         }
+
+                        <Tooltip title={`Edit ${orderGrn.grnNo}`}>
+                            <IconButton
+                                onClick={() => {
+                                    setSelectedOrderGrn(orderGrn);
+                                    setOpenEditReceive(true);
+                                }}
+                            >
+                                <EditOutlined/>
+                            </IconButton>
+                        </Tooltip>
 
                         <Tooltip  title={`${orderGrn.grnNo} Attachments`}>
                             <IconButton onClick={() => {

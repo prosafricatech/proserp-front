@@ -6,7 +6,6 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useSnackbar } from 'notistack';
 import dayjs from 'dayjs';
-import { DateTimePicker } from '@mui/x-date-pickers';
 import {  KeyboardArrowLeftOutlined, KeyboardArrowRightOutlined } from '@mui/icons-material';
 import purchaseServices from '../../purchase-services';
 import StoreSelector from '../../../stores/StoreSelector';
@@ -17,17 +16,16 @@ import ItemsTab from './receiveFormTabs/ItemsTab';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCurrencySelect } from '@/components/masters/Currencies/CurrencySelectProvider';
-import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { Div } from '@jumbo/shared';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
-import { G } from '@react-pdf/renderer';
 import CostCenterSelector from '@/components/masters/costCenters/CostCenterSelector';
 import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
+import { DateTimePicker } from '@mui/x-date-pickers';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
 
-function PurchaseOrderReceiveForm({ toggleOpen, order }) {
+function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
   const [additionalCosts, setAdditionalCosts] = useState([]);
-  const purchase_order_items = order?.purchase_order_items;
   const [date_received] = useState(dayjs());
   const [activeTab, setActiveTab] = useState(0);
   const { enqueueSnackbar } = useSnackbar();
@@ -37,6 +35,7 @@ function PurchaseOrderReceiveForm({ toggleOpen, order }) {
   const {authOrganization,checkOrganizationPermission} = useJumboAuth();
   const [totalReceivedAmount, setTotalReceivedAmount] = useState(0);
   const [totalAmount, setTotalAmount] = useState(0);
+  let purchase_order_items = order?.purchase_order_items || grn?.items;
 
   const [nextTab, setNextTab] = useState(null);
   const [showWarning, setShowWarning] = useState(false);
@@ -151,7 +150,27 @@ function PurchaseOrderReceiveForm({ toggleOpen, order }) {
   
   const {register, getValues, watch, setValue, clearErrors, handleSubmit, formState: { errors } } = useForm({
     resolver: yupResolver(validationSchema),
-    defaultValues: {
+    defaultValues: grn ? {
+      id: grn.id,
+      date_received: grn.date_received || date_received.toISOString(),
+      cost_factor: grn.cost_factor || '',
+      reference: grn.reference || order?.orderNo,
+      exchange_rate: grn.exchange_rate || order?.exchange_rate || 1,
+      store_id: grn.store_id || order?.store_id,
+      change_cost_center: grn.cost_center_change || false,
+      destination_cost_center_id: grn.destination_cost_center_id || null,
+      receivable_ledger_id: grn.receivable_ledger_id || null,
+      items: grn.items?.map(grnItem => {
+        const orderItem = purchase_order_items?.find(item => item.product.id === grnItem.product.id);
+        return {
+          unreceived_quantity: orderItem?.unreceived_quantity || grnItem.quantity,
+          quantity: grnItem.quantity,
+          purchase_order_item_id: orderItem?.id || grnItem.id,
+          rate: grnItem.rate,
+        };
+      }) || [],
+      additional_costs: grn.additional_costs || [],
+    } : {
       id: order?.id,
       date_received: date_received.toISOString(),
       cost_factor: '',
@@ -177,6 +196,21 @@ function PurchaseOrderReceiveForm({ toggleOpen, order }) {
       amount: additionalCost.amount,
     })));
   }, [additionalCosts, setValue]); 
+
+    // If editing, adjust unreceived_quantity for each item
+  if (grn && Array.isArray(grn.items)) {
+    purchase_order_items = purchase_order_items?.map(item => {
+      const grnItem = grn.items.find(i => i.product.id === item.product.id);
+      if (grnItem) {
+        // Add back the quantity from this GRN to the unreceived_quantity
+        return {
+          ...item,
+          unreceived_quantity: (item.unreceived_quantity || 0) + (grnItem.quantity || 0),
+        };
+      }
+      return item;
+    });
+  }
 
   // Update the quantity field whenever unreceived_quantity changes
   useEffect(() => {
@@ -284,11 +318,35 @@ function PurchaseOrderReceiveForm({ toggleOpen, order }) {
       <DialogTitle>
         <Grid container spacing={1}>
           <Grid size={12} textAlign={"center"} mb={1}>
-            {`Receive ${order.orderNo}`}
+            {`Receive ${grn ? grn.grnNo : order.orderNo}`}
           </Grid>
           <Grid size={12}>
             <form autoComplete='off'>
               <Grid container spacing={1}>
+                <Grid size={{xs: 12, md: 6, lg: 4}}>
+                  <Div sx={{ mt: 1}}>
+                    <DateTimePicker
+                      fullWidth
+                      label="Receive Date"
+                      // defaultValue={grn ? grn.date_received.toISOString() : date_received}
+                      minDate={checkOrganizationPermission(PERMISSIONS.PURCHASES_BACKDATE) ? dayjs(authOrganization.organization.recording_start_date) : dayjs().startOf('day')}
+                      maxDate={checkOrganizationPermission(PERMISSIONS.PURCHASES_POSTDATE) ? dayjs().add(10,'year').endOf('year') : dayjs().endOf('day')}
+                      slotProps={{
+                        textField: {
+                          size: 'small',
+                          fullWidth: true,
+                          readOnly: true,
+                        }
+                      }}
+                      onChange={(newValue) => {
+                        setValue(`date_received`, newValue ? newValue.toISOString() : null, {
+                          shouldValidate: true,
+                          shouldDirty: true
+                        });
+                      }}
+                    />
+                  </Div>
+                </Grid>
                 <Grid size={{xs: 12, md: 6, lg: 4}}>
                   <Div sx={{ mt: 1}}>
                     <StoreSelector
