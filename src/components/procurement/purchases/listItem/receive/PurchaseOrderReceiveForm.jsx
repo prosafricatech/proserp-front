@@ -23,9 +23,15 @@ import CostCenterSelector from '@/components/masters/costCenters/CostCenterSelec
 import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
 import { DateTimePicker } from '@mui/x-date-pickers';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
+import { useLedgerSelect } from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
 
 function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
-  const [additionalCosts, setAdditionalCosts] = useState(grn ? grn?.additional_costs : []);
+  const [additionalCosts, setAdditionalCosts] = useState(grn ? grn?.additional_costs.map(cost => ({ 
+    ...cost,
+    credit_ledger_name: cost.credit_ledger_name || cost.name,
+    currency_id: cost.currency_id || cost.currency?.id,
+    currency_name: cost.currency_name || cost.currency?.name,
+   })) : []);
   const [date_received] = useState(dayjs());
   const [activeTab, setActiveTab] = useState(0);
   const { enqueueSnackbar } = useSnackbar();
@@ -35,6 +41,7 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
   const {authOrganization,checkOrganizationPermission} = useJumboAuth();
   const [totalReceivedAmount, setTotalReceivedAmount] = useState(0);
   const [totalAmount, setTotalAmount] = useState(0);
+  const { ungroupedLedgerOptions } = useLedgerSelect();
 
   // Calculate correct unreceived_quantity for edit mode
   let purchase_order_items = order?.purchase_order_items?.map((item) => {
@@ -189,10 +196,10 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
       date_received: grn.date_received || date_received.toISOString(),
       cost_factor: grn.cost_factor || '',
       reference: grn.reference || order?.orderNo,
+      destination_cost_center_id: grn.destination_cost_center_id || null,
       exchange_rate: grn.exchange_rate || order?.exchange_rate || 1,
       store_id: grn.store.id,
       change_cost_center: Boolean(grn.change_cost_center),
-      destination_cost_center_id: grn.destination_cost_center_id || null,
       receivable_ledger_id: grn.receivable_ledger_id || null,
       items: purchase_order_items
         ?.filter(item => item.product.type === 'Inventory' && item.unreceived_quantity > 0)
@@ -433,6 +440,8 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
                           <CostCenterSelector
                             label="Destination Cost Center"
                             multiple={false}
+                            defaultValue={grn?.cost_center}
+                            removedCostCentersIds={grn?.order?.cost_centers?.map(c => c.id)}
                             frontError={errors.destination_cost_center_id}
                             onChange={newValue => {
                               setValue('destination_cost_center_id', newValue ? newValue.id : null, {
@@ -449,6 +458,9 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
                             label="Receivable Ledger"
                             allowedGroups={['Accounts Receivable']}
                             multiple={false}
+                            defaultValue={ungroupedLedgerOptions.find(
+                              (ledger) => ledger.id === watch('receivable_ledger_id')
+                            )}
                             frontError={errors.receivable_ledger_id}
                             onChange={newValue => {
                               setValue('receivable_ledger_id', newValue ? newValue.id : null, {
@@ -545,13 +557,13 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
           <Grid size={{ xs: 12, md: 4 }}>
             <Stack spacing={1} direction={'row'} justifyContent={'end'} sx={{ mt: 1, mb: 1 }}>
               <Button size='small' onClick={() => toggleOpen(false)}>
-                  Cancel
+                Cancel
               </Button>
               {
                 activeTab > 0 &&
                 <Button size='small' variant='outlined' onClick={() => handleTabChange(null, activeTab - 1)}>
                   <KeyboardArrowLeftOutlined/>
-                  Previous
+                  Prev
                 </Button>
               }
               {

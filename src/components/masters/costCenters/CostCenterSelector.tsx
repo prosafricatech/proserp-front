@@ -10,7 +10,7 @@ import { CostCenter } from './CostCenterType';
 
 interface CostCenterSelectorProps {
   frontError?: { message?: string } | null;
-  removedCostCenters?: number[];
+  removedCostCentersIds?: number[];
   allowAllCostCenters?: boolean;
   disabled?: boolean;
   readOnly?: boolean;
@@ -26,7 +26,7 @@ function CostCenterSelector(props: CostCenterSelectorProps) {
   const { authOrganization } = useJumboAuth();
   const { 
     frontError = null, 
-    removedCostCenters = [], 
+    removedCostCentersIds = [], 
     allowAllCostCenters = false, 
     disabled = false, 
     readOnly = false, 
@@ -77,7 +77,7 @@ function CostCenterSelector(props: CostCenterSelectorProps) {
   // Filter out removed cost centers
   const filteredCostCenters = (costCenters: CostCenter[]) =>
     costCenters.filter(
-      (center) => !removedCostCenters.some((removed) => removed === center.id)
+      (center) => !removedCostCentersIds.some((removed) => removed === center.id)
     );
 
   const finalCostCenters = allowAllCostCenters
