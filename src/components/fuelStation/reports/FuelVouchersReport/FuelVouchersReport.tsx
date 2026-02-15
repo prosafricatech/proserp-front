@@ -181,8 +181,6 @@ const FuelVouchersReport: React.FC = () => {
     const report: ReportResponse =
       await fuelStationServices.FuelVouchersReport(cleanFilters);
 
-    console.log('filters: ', filters);
-
     setReportData(report);
     setIsFetching(false);
   };

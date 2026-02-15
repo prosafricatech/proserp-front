@@ -43,7 +43,6 @@ function FuelVouchersReportPDF({
   } else {
     filtersTableWidth = '76%';
   }
-  console.log('filtersTableWidth: ', filtersTableWidth);
   return (
     <Document
       title={`Fuel Vouchers Report | ${organization.name}`}
@@ -172,6 +171,10 @@ function FuelVouchersReportPDF({
                       (filters.expense_ledger_ids?.length < 1 ||
                         !filters.expense_ledger_ids) &&
                       'Stakeholder/Expense'}
+                    {(!filters.stakeholder_name ||
+                      filters.stakeholder_name === '') &&
+                      filters.expense_ledger_ids?.length > 1 &&
+                      'Expense'}
                   </Text>
                 )}
               <Text
@@ -398,7 +401,7 @@ function FuelVouchersReportPDF({
                         textAlign: 'right',
                       }}
                     >
-                      {rd.quantity.toLocaleString('en-US', {
+                      {rd.quantity?.toLocaleString('en-US', {
                         maximumFractionDigits: 2,
                         minimumFractionDigits: 2,
                       })}
@@ -413,7 +416,7 @@ function FuelVouchersReportPDF({
                         textAlign: 'right',
                       }}
                     >
-                      {rd.price.toLocaleString('en-US', {
+                      {rd.price?.toLocaleString('en-US', {
                         maximumFractionDigits: 2,
                         minimumFractionDigits: 2,
                       })}
@@ -429,11 +432,11 @@ function FuelVouchersReportPDF({
                       }}
                     >
                       {filters.with_receipts == 0
-                        ? rd.amount.toLocaleString('en-US', {
+                        ? rd.amount?.toLocaleString('en-US', {
                             maximumFractionDigits: 2,
                             minimumFractionDigits: 2,
                           })
-                        : rd.debit.toLocaleString('en-US', {
+                        : rd.debit?.toLocaleString('en-US', {
                             maximumFractionDigits: 2,
                             minimumFractionDigits: 2,
                           })}

@@ -74,33 +74,6 @@ function SalesShiftPDF({
     };
   };
 
-  // Calculate overall totals
-  const overallTotals = shiftData.cashiers?.reduce(
-    (acc, cashier) => {
-      const cashierTotals = calculateCashierTotals(cashier);
-      return {
-        totalProductsAmount:
-          acc.totalProductsAmount + cashierTotals.totalProductsAmount,
-        adjustmentsAmount:
-          acc.adjustmentsAmount + cashierTotals.adjustmentsAmount,
-        totalFuelVouchersAmount:
-          acc.totalFuelVouchersAmount + cashierTotals.totalFuelVouchersAmount,
-        otherTransactionsTotal:
-          acc.otherTransactionsTotal + cashierTotals.otherTransactionsTotal,
-        cashRemaining: acc.cashRemaining + cashierTotals.cashRemaining,
-        netSales: acc.netSales + cashierTotals.netSales,
-      };
-    },
-    {
-      totalProductsAmount: 0,
-      adjustmentsAmount: 0,
-      totalFuelVouchersAmount: 0,
-      otherTransactionsTotal: 0,
-      cashRemaining: 0,
-      netSales: 0,
-    }
-  );
-
   // Merge pump readings by product for a specific cashier
   const mergeCashierPumpReadings = (pumpReadings) => {
     const merged = pumpReadings.reduce((acc, pump) => {
@@ -291,118 +264,6 @@ function SalesShiftPDF({
                 key={cashier.id}
                 style={{ marginBottom: 20, pageBreakInside: 'avoid' }}
               >
-                {/* Cashier Header */}
-                {/* <View
-                  style={{
-                    marginBottom: 8,
-                    padding: 8,
-                    backgroundColor: mainColor,
-                    borderRadius: 4,
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      color: contrastText,
-                      fontWeight: 'bold',
-                      textAlign: 'center',
-                    }}
-                  >
-                    {cashier.name} - Summary
-                  </Text>
-                </View> */}
-
-                {/* Cashier Summary */}
-                {/* <View style={{ marginBottom: 12 }}>
-                  <View style={pdfStyles.table}>
-                    <View style={pdfStyles.tableRow}>
-                      <Text
-                        style={{
-                          ...pdfStyles.tableHeader,
-                          backgroundColor: lightColor,
-                          color: mainColor,
-                          flex: 2,
-                        }}
-                      >
-                        Item
-                      </Text>
-                      <Text
-                        style={{
-                          ...pdfStyles.tableHeader,
-                          backgroundColor: lightColor,
-                          color: mainColor,
-                          flex: 1,
-                          textAlign: 'right',
-                        }}
-                      >
-                        Amount
-                      </Text>
-                    </View>
-                    <View style={pdfStyles.tableRow}>
-                      <Text style={{ ...pdfStyles.tableCell, flex: 2 }}>
-                        Total Sales Amount
-                      </Text>
-                      <Text
-                        style={{
-                          ...pdfStyles.tableCell,
-                          flex: 1,
-                          textAlign: 'right',
-                        }}
-                      >
-                        {cashierTotals.netSales.toLocaleString('en-US', {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </Text>
-                    </View>
-                    <View style={pdfStyles.tableRow}>
-                      <Text style={{ ...pdfStyles.tableCell, flex: 2 }}>
-                        Fuel Vouchers Total
-                      </Text>
-                      <Text
-                        style={{
-                          ...pdfStyles.tableCell,
-                          flex: 1,
-                          textAlign: 'right',
-                        }}
-                      >
-                        {cashierTotals.totalFuelVouchersAmount.toLocaleString(
-                          'en-US',
-                          { minimumFractionDigits: 2, maximumFractionDigits: 2 }
-                        )}
-                      </Text>
-                    </View>
-                    <View style={pdfStyles.tableRow}>
-                      <Text
-                        style={{
-                          ...pdfStyles.tableCell,
-                          flex: 2,
-                          fontWeight: 'bold',
-                        }}
-                      >
-                        Cash Remaining
-                      </Text>
-                      <Text
-                        style={{
-                          ...pdfStyles.tableCell,
-                          flex: 1,
-                          textAlign: 'right',
-                          fontWeight: 'bold',
-                          color:
-                            cashierTotals.cashRemaining < 0
-                              ? '#FF0000'
-                              : '#000000',
-                        }}
-                      >
-                        {cashierTotals.cashRemaining.toLocaleString('en-US', {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </Text>
-                    </View>
-                  </View>
-                </View> */}
-
                 {/* Cashier Pump Readings */}
                 {cashier.pump_readings?.length > 0 && (
                   <View style={{ marginBottom: 12 }}>
@@ -432,7 +293,6 @@ function SalesShiftPDF({
                             ...pdfStyles.tableHeader,
                             backgroundColor: mainColor,
                             color: contrastText,
-                            // flex: 1.5,
                             width: '12%',
                           }}
                         >
@@ -443,7 +303,6 @@ function SalesShiftPDF({
                             ...pdfStyles.tableHeader,
                             backgroundColor: mainColor,
                             color: contrastText,
-                            // flex: 1.5,
                             width: '13%',
                           }}
                         >
@@ -454,7 +313,6 @@ function SalesShiftPDF({
                             ...pdfStyles.tableHeader,
                             backgroundColor: mainColor,
                             color: contrastText,
-                            // flex: 1,
                             width: '15%',
                           }}
                         >
@@ -465,7 +323,6 @@ function SalesShiftPDF({
                             ...pdfStyles.tableHeader,
                             backgroundColor: mainColor,
                             color: contrastText,
-                            // flex: 1,
                             width: '15%',
                           }}
                         >
@@ -476,7 +333,6 @@ function SalesShiftPDF({
                             ...pdfStyles.tableHeader,
                             backgroundColor: mainColor,
                             color: contrastText,
-                            // flex: 1,
                             width: '15%',
                           }}
                         >
@@ -487,7 +343,6 @@ function SalesShiftPDF({
                             ...pdfStyles.tableHeader,
                             backgroundColor: mainColor,
                             color: contrastText,
-                            // flex: 1,
                             width: '15%',
                           }}
                         >
@@ -498,7 +353,6 @@ function SalesShiftPDF({
                             ...pdfStyles.tableHeader,
                             backgroundColor: mainColor,
                             color: contrastText,
-                            // flex: 1,
                             width: '15%',
                           }}
                         >
@@ -541,7 +395,6 @@ function SalesShiftPDF({
                                 ...pdfStyles.tableCell,
                                 backgroundColor:
                                   index % 2 === 0 ? '#FFFFFF' : lightColor,
-                                // flex: 1.5,
                                 width: '12%',
                               }}
                             >
@@ -552,7 +405,6 @@ function SalesShiftPDF({
                                 ...pdfStyles.tableCell,
                                 backgroundColor:
                                   index % 2 === 0 ? '#FFFFFF' : lightColor,
-                                // flex: 1.5,
                                 width: '13%',
                               }}
                             >
@@ -563,7 +415,6 @@ function SalesShiftPDF({
                                 ...pdfStyles.tableCell,
                                 backgroundColor:
                                   index % 2 === 0 ? '#FFFFFF' : lightColor,
-                                // flex: 1,
                                 width: '15%',
                                 textAlign: 'right',
                               }}
@@ -578,7 +429,6 @@ function SalesShiftPDF({
                                 ...pdfStyles.tableCell,
                                 backgroundColor:
                                   index % 2 === 0 ? '#FFFFFF' : lightColor,
-                                // flex: 1,
                                 width: '15%',
                                 textAlign: 'right',
                               }}
@@ -593,7 +443,6 @@ function SalesShiftPDF({
                                 ...pdfStyles.tableCell,
                                 backgroundColor:
                                   index % 2 === 0 ? '#FFFFFF' : lightColor,
-                                // flex: 1,
                                 width: '15%',
                                 textAlign: 'right',
                               }}
@@ -608,7 +457,6 @@ function SalesShiftPDF({
                                 ...pdfStyles.tableCell,
                                 backgroundColor:
                                   index % 2 === 0 ? '#FFFFFF' : lightColor,
-                                // flex: 1,
                                 width: '15%',
                                 textAlign: 'right',
                               }}
@@ -623,7 +471,6 @@ function SalesShiftPDF({
                                 ...pdfStyles.tableCell,
                                 backgroundColor:
                                   index % 2 === 0 ? '#FFFFFF' : lightColor,
-                                // flex: 1,
                                 width: '15%',
                                 textAlign: 'right',
                               }}
@@ -644,7 +491,6 @@ function SalesShiftPDF({
                             ...pdfStyles.tableCell,
                             backgroundColor: mainColor,
                             color: contrastText,
-                            // flex: 4.1,
                             width: '85%',
                             fontWeight: 'bold',
                           }}
@@ -657,7 +503,6 @@ function SalesShiftPDF({
                             ...pdfStyles.tableCell,
                             backgroundColor: mainColor,
                             color: contrastText,
-                            // flex: 1.5,
                             width: '15%',
                             textAlign: 'right',
                             fontWeight: 'bold',
@@ -694,7 +539,6 @@ function SalesShiftPDF({
                             ...pdfStyles.tableHeader,
                             backgroundColor: mainColor,
                             color: contrastText,
-                            // flex: 1,
                             width: '20%',
                           }}
                         >
@@ -705,7 +549,6 @@ function SalesShiftPDF({
                             ...pdfStyles.tableHeader,
                             backgroundColor: mainColor,
                             color: contrastText,
-                            // flex: 3,
                             width: '50%',
                             textAlign: 'left',
                           }}
@@ -717,7 +560,6 @@ function SalesShiftPDF({
                             ...pdfStyles.tableHeader,
                             backgroundColor: mainColor,
                             color: contrastText,
-                            // flex: 1.5,
                             width: '30%',
                             textAlign: 'right',
                           }}
@@ -733,7 +575,6 @@ function SalesShiftPDF({
                             style={{
                               ...pdfStyles.tableCell,
                               backgroundColor: '#FFFFFF',
-                              // flex: 1,
                               width: '20%',
                             }}
                           >
@@ -744,7 +585,6 @@ function SalesShiftPDF({
                             style={{
                               ...pdfStyles.tableCell,
                               backgroundColor: '#FFFFFF',
-                              // flex: 3,
                               width: '50%',
                               textAlign: 'right',
                             }}
@@ -753,7 +593,6 @@ function SalesShiftPDF({
                             style={{
                               ...pdfStyles.tableCell,
                               backgroundColor: '#FFFFFF',
-                              // flex: 1.5,
                               width: '30%',
                               textAlign: 'right',
                             }}
@@ -786,7 +625,6 @@ function SalesShiftPDF({
                                 ...pdfStyles.tableCell,
                                 backgroundColor:
                                   index % 2 === 0 ? lightColor : '#FFFFFF',
-                                // flex: 1,
                                 width: '20%',
                               }}
                             >
@@ -797,7 +635,6 @@ function SalesShiftPDF({
                                 ...pdfStyles.tableCell,
                                 backgroundColor:
                                   index % 2 === 0 ? lightColor : '#FFFFFF',
-                                // flex: 3,
                                 width: '50%',
                                 textAlign: 'left',
                               }}
@@ -809,7 +646,6 @@ function SalesShiftPDF({
                                 ...pdfStyles.tableCell,
                                 backgroundColor:
                                   index % 2 === 0 ? lightColor : '#FFFFFF',
-                                // flex: 1.5,
                                 width: '30%',
                                 textAlign: 'right',
                               }}
@@ -834,7 +670,6 @@ function SalesShiftPDF({
                             ...pdfStyles.tableCell,
                             backgroundColor: mainColor,
                             color: contrastText,
-                            // flex: 4.1,
                             width: '70%',
                             fontWeight: 'bold',
                           }}
@@ -847,7 +682,6 @@ function SalesShiftPDF({
                             ...pdfStyles.tableCell,
                             backgroundColor: mainColor,
                             color: contrastText,
-                            // flex: 1.5,
                             width: '30%',
                             textAlign: 'right',
                             fontWeight: 'bold',
@@ -870,7 +704,6 @@ function SalesShiftPDF({
                             ...pdfStyles.tableCell,
                             backgroundColor: lightColor,
                             color: 'black',
-                            // flex: 4.1,
                             width: '70%',
                             fontWeight: 'bold',
                           }}
@@ -882,8 +715,6 @@ function SalesShiftPDF({
                             ...pdfStyles.tableHeader,
                             ...pdfStyles.tableCell,
                             backgroundColor: lightColor,
-                            color: shortOrOver > 0 ? 'green' : 'red',
-                            // flex: 1.5,
                             width: '30%',
                             textAlign: 'right',
                             fontWeight: 'bold',
@@ -1046,8 +877,8 @@ function SalesShiftPDF({
                               }}
                             >
                               {fv.quantity.toLocaleString('en-US', {
-                                minimumFractionDigits: 3,
-                                maximumFractionDigits: 3,
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
                               })}
                             </Text>
                             <Text
@@ -1228,8 +1059,8 @@ function SalesShiftPDF({
                               }}
                             >
                               {adj.quantity.toLocaleString('en-US', {
-                                minimumFractionDigits: 3,
-                                maximumFractionDigits: 3,
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
                               })}
                             </Text>
                           </View>
@@ -1292,16 +1123,6 @@ function SalesShiftPDF({
                   >
                     Tank
                   </Text>
-                  {/* <Text
-                      style={{
-                        ...pdfStyles.tableHeader,
-                        backgroundColor: mainColor,
-                        color: contrastText,
-                        flex: 1.5,
-                      }}
-                    >
-                      Product
-                    </Text> */}
                   <Text
                     style={{
                       ...pdfStyles.tableHeader,

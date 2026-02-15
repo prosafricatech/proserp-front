@@ -126,26 +126,6 @@ const SalesShiftOnScreen = ({
     return Object.values(merged);
   };
 
-  const cashAccounts = [
-    ...(shiftData.other_ledgers || []),
-    shiftData.main_ledger,
-  ].filter(Boolean);
-
-  // Fuel Vouchers Total
-  const totalFuelVouchersAmount = (shiftData.fuel_vouchers || []).reduce(
-    (total, voucher) => {
-      const price =
-        shiftData.fuel_prices?.find((p) => p.product_id === voucher.product_id)
-          ?.price || 0;
-      return total + voucher.quantity * price;
-    },
-    0
-  );
-
-  const totalCash =
-    cashAccounts.reduce((sum, acc) => sum + (acc.amount || 0), 0) +
-    totalFuelVouchersAmount;
-
   // Products Sold Calculations (with adjustments)
   const mergedPumpReadings = (shiftData.pump_readings || []).reduce(
     (acc, pump) => {
