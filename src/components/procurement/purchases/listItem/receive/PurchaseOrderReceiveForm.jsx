@@ -440,7 +440,7 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
                           <CostCenterSelector
                             label="Destination Cost Center"
                             multiple={false}
-                            defaultValue={grn?.cost_center}
+                            defaultValue={grn?.receivable_ledger_id && grn?.cost_center}
                             removedCostCentersIds={grn?.order?.cost_centers?.map(c => c.id)}
                             frontError={errors.destination_cost_center_id}
                             onChange={newValue => {
