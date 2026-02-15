@@ -21,7 +21,8 @@ import { useQuery } from '@tanstack/react-query';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 
-export const listItemContext = createContext({});//will be used as distrubuter of all useStates and needed data
+export const listItemContext = createContext({});
+
 const PurchaseOrderGrns = lazy(() => import('./PurchaseOrderGrns'));
 const PurchaseOrderGrnsItemAction = lazy(() => import('./PurchaseOrderGrnsItemAction'));
 
@@ -32,6 +33,7 @@ const PurchaseOrderListItem = ({ order }) => {
   const [openDialog, setOpenDialog] = useState(false);
   const [attachDialog, setAttachDialog] = useState(false);
   const [openDocumentDialog, setOpenDocumentDialog] = useState(false);
+  const [openEditReceive, setOpenEditReceive] = React.useState(false);
 
   const { data: purchaseOrderGrns, isLoading } = useQuery({
     queryKey: ['purchaseOrderGrns', { orderId: order.id }],
@@ -40,7 +42,7 @@ const PurchaseOrderListItem = ({ order }) => {
   });
 
   return (
-    <listItemContext.Provider value={{attachDialog, setAttachDialog, purchaseOrderGrns,expanded,setExpanded,selectedOrderGrn,setSelectedOrderGrn,openDialog,setOpenDialog,openDocumentDialog,setOpenDocumentDialog}}>
+    <listItemContext.Provider value={{attachDialog, setAttachDialog, purchaseOrderGrns,expanded,setExpanded,selectedOrderGrn,setSelectedOrderGrn,openDialog,setOpenDialog,openDocumentDialog,setOpenDocumentDialog,openEditReceive,setOpenEditReceive}}>
       <React.Fragment>
         <Accordion
           expanded={expanded}
@@ -186,7 +188,7 @@ const PurchaseOrderListItem = ({ order }) => {
         </Accordion>
 
           {/*OrderGrnsItemAction*/}
-          <PurchaseOrderGrnsItemAction/>
+          <PurchaseOrderGrnsItemAction order={order}/>
       </React.Fragment>
     </listItemContext.Provider>
   );

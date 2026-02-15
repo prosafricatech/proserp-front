@@ -109,4 +109,11 @@ purchaseServices.reOpenOrder = async(order) => {
     })
 }
 
+purchaseServices.editGrn = async (grnId, grnData) => {
+    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
+        const {data} = await axios.put(`/api/grns/${grnId}/editGrn`,grnData)
+        return data;
+    })
+};
+
 export default purchaseServices;

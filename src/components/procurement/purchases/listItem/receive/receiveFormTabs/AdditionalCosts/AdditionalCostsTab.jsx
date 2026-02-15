@@ -29,10 +29,10 @@ function AdditionalCostsTab({index = -1, setShowForm = null, additionalCost, set
   const {setValue, handleSubmit, watch, reset, formState: {errors, dirtyFields}} = useForm({
     resolver: yupResolver(validationSchema),
     defaultValues: {
-      credit_ledger_name: additionalCost && additionalCost.credit_ledger_name,
+      credit_ledger_name: additionalCost && (additionalCost.credit_ledger_name || additionalCost.name),
       credit_ledger_id : additionalCost && additionalCost.credit_ledger_id,
-      currency_id: additionalCost ? additionalCost.currency_id : 1,
-      currency_name: additionalCost ? additionalCost.currency_name : currencies.find(currency => currency.id === 1).name_plural,
+      currency_id: additionalCost ? (additionalCost.currency_id || additionalCost.currency.id) : 1,
+      currency_name: additionalCost ? (additionalCost.currency_name || additionalCost.currency?.name) : currencies.find(currency => currency.id === 1).name_plural,
       exchange_rate: additionalCost ? additionalCost.exchange_rate : 1,
       reference: additionalCost && additionalCost.reference,
       amount: additionalCost && additionalCost.amount,

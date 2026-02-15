@@ -19,7 +19,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 function PurchaseOrderDialogForm({toggleOpen, order = null}) {
   const {authOrganization} = useJumboAuth();
-  const {costCenters} = authOrganization;
+  const costCenters = authOrganization?.costCenters;
   const [totalAmount, setTotalAmount] = useState(0);
   const [vatableAmount, setVatableAmount] = useState(0);
   const itemTemplate = {product_id: null, quantity: null, rate: null};
@@ -287,7 +287,7 @@ function PurchaseOrderDialogForm({toggleOpen, order = null}) {
           </Grid>
           <Grid size={{xs: 12, md: 8, lg: 9}}>
             <form autoComplete='off'>
-              <PurchaseOrderTopInformation/>
+              <PurchaseOrderTopInformation order={order} setStakeholderQuickAddDisplay={setStakeholderQuickAddDisplay} setAddedStakeholder={setAddedStakeholder} stakeholderQuickAddDisplay={stakeholderQuickAddDisplay} addedStakeholder={addedStakeholder} order_date={order_date} costCenters={costCenters} />
             </form>
           </Grid>
           <Grid size={{xs: 12, md: 4, lg: 3}}>
