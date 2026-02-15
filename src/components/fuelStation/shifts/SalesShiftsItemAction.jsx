@@ -130,7 +130,7 @@ const DocumentDialog = ({
           justifyContent='space-between'
           mb={2}
         >
-          <Grid size={11}>
+          <Grid size={10}>
             {belowLargeScreen && (
               <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)}>
                 <Tab label='PDF' />
@@ -139,18 +139,51 @@ const DocumentDialog = ({
             )}
           </Grid>
           <Grid
-            size={1}
+            size={2}
             textAlign='right'
-            sx={{ display: 'flex', flexDirection: 'row' }}
+            sx={{
+              display: 'flex',
+              flexDirection: 'row',
+              justifyContent: 'space-evenly',
+              gap: 1,
+            }}
           >
-            <Tooltip title='Export file'>
+            {!belowLargeScreen && (
+              <Button
+                size='large'
+                onClick={() => handlExcelExport(exportedData)}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '4px',
+                  gap: 1,
+                }}
+                color='primary'
+                variant='outlined'
+              >
+                <FontAwesomeIcon icon={faFileExcel} color='green' />
+                {!belowLargeScreen && 'Excel'}
+              </Button>
+            )}
+
+            {belowLargeScreen && (
               <IconButton
                 size='large'
                 onClick={() => handlExcelExport(exportedData)}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '0px',
+                  gap: 1,
+                }}
+                color='primary'
+                variant='outlined'
               >
                 <FontAwesomeIcon icon={faFileExcel} color='green' />
+                {!belowLargeScreen && 'Excel'}
               </IconButton>
-            </Tooltip>
+            )}
+
             {belowLargeScreen && (
               <Tooltip title='Close'>
                 <IconButton

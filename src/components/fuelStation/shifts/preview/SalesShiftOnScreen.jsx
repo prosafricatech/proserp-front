@@ -35,8 +35,6 @@ const SalesShiftOnScreen = ({
   const contrastText = organization.settings?.contrast_text || '#FFFFFF';
   const headerColor = isDark ? '#29f096' : mainColor;
 
-  console.log('on screen shiftData: ', shiftData);
-
   const [openSections, setOpenSections] = useState({
     products: true,
     cashDistribution: true,
@@ -251,7 +249,7 @@ const SalesShiftOnScreen = ({
   );
 
   return (
-    <Box sx={{ p: { xs: 2, md: 3 } }}>
+    <Box sx={{ p: { xs: 0, md: 3 } }}>
       {/* Header */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid size={{ xs: 12, md: 8 }}>

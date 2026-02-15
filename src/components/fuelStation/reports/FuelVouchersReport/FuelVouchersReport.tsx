@@ -19,12 +19,10 @@ import {
   DialogTitle,
   FormControlLabel,
   Grid,
-  IconButton,
   LinearProgress,
   Tab,
   Tabs,
   TextField,
-  Tooltip,
   Typography,
   useMediaQuery,
 } from '@mui/material';
@@ -183,6 +181,8 @@ const FuelVouchersReport: React.FC = () => {
     const report: ReportResponse =
       await fuelStationServices.FuelVouchersReport(cleanFilters);
 
+    console.log('filters: ', filters);
+
     setReportData(report);
     setIsFetching(false);
   };
@@ -233,29 +233,6 @@ const FuelVouchersReport: React.FC = () => {
               justifyContent='center'
             >
               <Grid size={{ xs: 12, md: 4 }}>
-                <Autocomplete<Station>
-                  size='small'
-                  options={stations ?? []}
-                  getOptionLabel={(option) => option.name}
-                  value={activeStation}
-                  isOptionEqualToValue={(option, value) =>
-                    option.id === value.id
-                  }
-                  onChange={(_, newValue) => {
-                    setActiveStation(newValue);
-                  }}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label='Station'
-                      error={!!errors.station_id}
-                      helperText={errors.station_id?.message}
-                    />
-                  )}
-                />
-              </Grid>
-
-              <Grid size={{ xs: 12, md: 4 }}>
                 <DateTimePicker
                   label='From'
                   defaultValue={dayjs().startOf('day')}
@@ -289,6 +266,74 @@ const FuelVouchersReport: React.FC = () => {
                 />
               </Grid>
 
+              <Grid size={{ xs: 12, md: 4 }}>
+                <Autocomplete<Station>
+                  size='small'
+                  options={stations ?? []}
+                  getOptionLabel={(option) => option.name}
+                  value={activeStation}
+                  isOptionEqualToValue={(option, value) =>
+                    option.id === value.id
+                  }
+                  onChange={(_, newValue) => {
+                    setActiveStation(newValue);
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label='Station'
+                      error={!!errors.station_id}
+                      helperText={errors.station_id?.message}
+                    />
+                  )}
+                />
+              </Grid>
+
+              {(filterBy === '' || filterBy === 'stakeholder') && (
+                <Grid
+                  size={{
+                    xs: filterBy === '' ? 12 : 8,
+                    md: filterBy === '' ? 6 : 8,
+                  }}
+                >
+                  <StakeholderSelector
+                    label='Client'
+                    defaultValue={0}
+                    onChange={(newValue: any) => {
+                      setValue('stakeholder_id', newValue?.id, {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      });
+                      setFilters((prev: any) => ({
+                        ...prev,
+                        stakeholder_name: newValue?.name || '',
+                      }));
+                    }}
+                  />
+                </Grid>
+              )}
+
+              {filterBy === 'stakeholder' && (
+                <Grid size={{ xs: 4, md: 4 }}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        defaultChecked={false}
+                        onChange={(e) => {
+                          setValue('with_receipts', e.target.checked ? 1 : 0);
+                          setFilters((prev: any) => ({
+                            ...prev,
+                            with_receipts: e.target.checked ? 1 : 0,
+                          }));
+                          setWithReceipts(e.target.checked ? 1 : 0);
+                        }}
+                      />
+                    }
+                    label='With Receipts'
+                  />
+                </Grid>
+              )}
+
               {(filterBy === '' || filterBy === 'expense_ledger') && (
                 <Grid size={{ xs: 12, md: filterBy === '' ? 6 : 12 }}>
                   <Div>
@@ -321,60 +366,38 @@ const FuelVouchersReport: React.FC = () => {
                   </Div>
                 </Grid>
               )}
-              {(filterBy === '' || filterBy === 'stakeholder') && (
-                <Grid
-                  size={{
-                    xs: filterBy === '' ? 12 : 8,
-                    md: filterBy === '' ? 6 : 8,
-                  }}
-                >
-                  <StakeholderSelector
-                    label='Client'
-                    defaultValue={0}
-                    onChange={(newValue: any) => {
-                      setValue('stakeholder_id', newValue?.id, {
-                        shouldDirty: true,
-                        shouldValidate: true,
-                      });
-                      setFilters((prev: any) => ({
-                        ...prev,
-                        stakeholder_name: newValue?.name || '',
-                      }));
-                    }}
-                  />
-                </Grid>
-              )}
-              {filterBy === 'stakeholder' && (
-                <Grid size={{ xs: 4, md: 4 }}>
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        defaultChecked={false}
-                        onChange={(e) => {
-                          setValue('with_receipts', e.target.checked ? 1 : 0);
-                          setFilters((prev: any) => ({
-                            ...prev,
-                            with_receipts: e.target.checked ? 1 : 0,
-                          }));
-                          setWithReceipts(e.target.checked ? 1 : 0);
-                        }}
-                      />
-                    }
-                    label='With Receipts'
-                  />
-                </Grid>
-              )}
 
-              <Grid size={{ xs: 12 }} textAlign='right'>
-                <Tooltip title='Export file'>
-                  <IconButton
-                    size='large'
-                    onClick={() => handlExcelExport(exportedData)}
-                    disabled={!reportData || reportData?.length < 1}
-                  >
-                    <FontAwesomeIcon icon={faFileExcel} color='green' />
-                  </IconButton>
-                </Tooltip>
+              <Grid
+                size={{ xs: 12 }}
+                textAlign='right'
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'end',
+                  gap: 1,
+                }}
+              >
+                <LoadingButton
+                  size='small'
+                  onClick={() => handlExcelExport(exportedData)}
+                  disabled={
+                    !reportData ||
+                    reportData?.length < 1 ||
+                    isExporting ||
+                    isFetching
+                  }
+                  loading={isExporting}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                  }}
+                  color='primary'
+                  variant='outlined'
+                >
+                  <FontAwesomeIcon icon={faFileExcel} color='green' /> Excel
+                </LoadingButton>
                 <LoadingButton
                   loading={isFetching}
                   type='submit'

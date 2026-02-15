@@ -29,6 +29,21 @@ function FuelVouchersReportPDF({
   );
 
   let runningBalance: number = 0;
+
+  // total column width
+  let filtersTableWidth = '0%';
+  if (
+    filters.stakeholder_name === '' &&
+    (filters.expense_ledger_ids?.length !== 1 || !filters.expense_ledger_ids)
+  ) {
+    filtersTableWidth = '100%';
+  }
+  if (filters.with_receipts == 1 && filters.stakeholder_name) {
+    filtersTableWidth = '89%';
+  } else {
+    filtersTableWidth = '76%';
+  }
+  console.log('filtersTableWidth: ', filtersTableWidth);
   return (
     <Document
       title={`Fuel Vouchers Report | ${organization.name}`}
@@ -47,7 +62,7 @@ function FuelVouchersReportPDF({
           </View>
         </View>
         {/* ===== FILTERS ===== */}
-        <View style={pdfStyles.table}>
+        <View style={{ ...pdfStyles.table, width: filtersTableWidth }}>
           <View style={{ ...pdfStyles.tableRow }}>
             {filters.stationName && (
               <View style={{ ...pdfStyles.tableCell, flex: 1 }}>
@@ -56,10 +71,17 @@ function FuelVouchersReportPDF({
                 </Text>
               </View>
             )}
-            {filters.stakeholder_name && (
+            {((filters.stakeholder_name && filters.stakeholder_name !== '') ||
+              (filters.expense_ledger_ids &&
+                filters.expense_ledger_ids?.length === 1)) && (
               <View style={{ ...pdfStyles.tableCell, flex: 1 }}>
                 <Text style={{ ...pdfStyles.majorInfo, color: mainColor }}>
-                  Stakeholder Name
+                  {filters.stakeholder_name &&
+                    filters.stakeholder_name !== '' &&
+                    'Stakeholder Name'}
+                  {filters.expense_ledger_ids &&
+                    filters.expense_ledger_ids?.length === 1 &&
+                    'Expense'}
                 </Text>
               </View>
             )}
@@ -80,10 +102,17 @@ function FuelVouchersReportPDF({
               </View>
             )}
 
-            {filters.stakeholder_name && (
+            {((filters.stakeholder_name && filters.stakeholder_name !== '') ||
+              (filters.expense_ledger_ids &&
+                filters.expense_ledger_ids?.length === 1)) && (
               <View style={{ ...pdfStyles.tableCell, flex: 1 }}>
                 <Text style={{ ...pdfStyles.majorInfo, color: 'black' }}>
-                  {filters.stakeholder_name}
+                  {filters.stakeholder_name &&
+                    filters.stakeholder_name !== '' &&
+                    filters.stakeholder_name}
+                  {filters.expense_ledger_ids &&
+                    filters.expense_ledger_ids?.length === 1 &&
+                    reportData[0]?.expense_ledger.name}
                 </Text>
               </View>
             )}
@@ -107,7 +136,7 @@ function FuelVouchersReportPDF({
                   ...pdfStyles.tableHeader,
                   backgroundColor: mainColor,
                   color: contrastText,
-                  flex: 0.5,
+                  width: '7%',
                 }}
               >
                 Date
@@ -117,37 +146,47 @@ function FuelVouchersReportPDF({
                   ...pdfStyles.tableHeader,
                   backgroundColor: mainColor,
                   color: contrastText,
-                  flex: 1,
+                  width:
+                    filters.with_receipts == 1 && filters.stakeholder_name
+                      ? '7%'
+                      : '11%',
                 }}
               >
                 Voucher No
               </Text>
+              {filters.stakeholder_name === '' &&
+                (filters.expense_ledger_ids?.length !== 1 ||
+                  !filters.expense_ledger_ids) && (
+                  <Text
+                    style={{
+                      ...pdfStyles.tableHeader,
+                      backgroundColor: mainColor,
+                      color: contrastText,
+                      width:
+                        filters.with_receipts == 1 && filters.stakeholder_name
+                          ? '12%'
+                          : '22%',
+                    }}
+                  >
+                    {!filters.stakeholder_name &&
+                      (filters.expense_ledger_ids?.length < 1 ||
+                        !filters.expense_ledger_ids) &&
+                      'Stakeholder/Expense'}
+                  </Text>
+                )}
               <Text
                 style={{
                   ...pdfStyles.tableHeader,
                   backgroundColor: mainColor,
                   color: contrastText,
-                  flex: 1.5,
-                }}
-              >
-                {filters.stakeholder_name && 'Stakeholder'}
-                {filters.expense_ledger_ids &&
-                  filters.expense_ledger_ids?.length === 1 &&
-                  reportData[0]?.expense_ledger.name + ' Expense'}
-                {filters.expense_ledger_ids &&
-                  filters.expense_ledger_ids.length > 1 &&
-                  'Expenses'}
-                {!filters.stakeholder_name &&
-                  (filters.expense_ledger_ids?.length < 1 ||
-                    !filters.expense_ledger_ids) &&
-                  'Stakeholder/Expense'}
-              </Text>
-              <Text
-                style={{
-                  ...pdfStyles.tableHeader,
-                  backgroundColor: mainColor,
-                  color: contrastText,
-                  flex: 1,
+                  width:
+                    filters.stakeholder_name === '' &&
+                    (filters.expense_ledger_ids?.length !== 1 ||
+                      !filters.expense_ledger_ids)
+                      ? '11%'
+                      : filters.with_receipts == 1 && filters.stakeholder_name
+                        ? '11%'
+                        : '21%',
                 }}
               >
                 Reference
@@ -157,7 +196,10 @@ function FuelVouchersReportPDF({
                   ...pdfStyles.tableHeader,
                   backgroundColor: mainColor,
                   color: contrastText,
-                  flex: 0.8,
+                  width:
+                    filters.with_receipts == 1 && filters.stakeholder_name
+                      ? '7%'
+                      : '11%',
                 }}
               >
                 Product
@@ -167,7 +209,14 @@ function FuelVouchersReportPDF({
                   ...pdfStyles.tableHeader,
                   backgroundColor: mainColor,
                   color: contrastText,
-                  flex: 1,
+                  width:
+                    filters.stakeholder_name === '' &&
+                    (filters.expense_ledger_ids?.length !== 1 ||
+                      !filters.expense_ledger_ids)
+                      ? '21%'
+                      : filters.with_receipts == 1 && filters.stakeholder_name
+                        ? '7%'
+                        : '11%',
                 }}
               >
                 Narration
@@ -177,7 +226,10 @@ function FuelVouchersReportPDF({
                   ...pdfStyles.tableHeader,
                   backgroundColor: mainColor,
                   color: contrastText,
-                  flex: 0.6,
+                  width:
+                    filters.with_receipts == 1 && filters.stakeholder_name
+                      ? '5%'
+                      : '7%',
                 }}
               >
                 Lts
@@ -187,7 +239,7 @@ function FuelVouchersReportPDF({
                   ...pdfStyles.tableHeader,
                   backgroundColor: mainColor,
                   color: contrastText,
-                  flex: 0.5,
+                  width: '9%',
                 }}
               >
                 Price
@@ -197,30 +249,30 @@ function FuelVouchersReportPDF({
                   ...pdfStyles.tableHeader,
                   backgroundColor: mainColor,
                   color: contrastText,
-                  flex: 0.8,
+                  width: '11%',
                 }}
               >
-                {`${filters.with_receipts == 1 ? 'Debit' : 'Amount'}`}
+                {`${filters.with_receipts == 1 && filters.stakeholder_name ? 'Debit' : 'Amount'}`}
               </Text>
-              {filters.with_receipts == 1 && (
+              {filters.with_receipts == 1 && filters.stakeholder_name && (
                 <Text
                   style={{
                     ...pdfStyles.tableHeader,
                     backgroundColor: mainColor,
                     color: contrastText,
-                    flex: 0.5,
+                    width: '10%',
                   }}
                 >
                   Credit
                 </Text>
               )}
-              {filters.with_receipts == 1 && (
+              {filters.with_receipts == 1 && filters.stakeholder_name && (
                 <Text
                   style={{
                     ...pdfStyles.tableHeader,
                     backgroundColor: mainColor,
                     color: contrastText,
-                    flex: 1,
+                    width: '14%',
                   }}
                 >
                   Running Balance
@@ -238,7 +290,7 @@ function FuelVouchersReportPDF({
                         ...pdfStyles.tableCell,
                         backgroundColor:
                           index % 2 === 0 ? '#FFFFFF' : lightColor,
-                        flex: 0.5,
+                        width: '7%',
                       }}
                     >
                       {dayjs(rd.transaction_date).format('DD-MM-YYYY')}
@@ -249,32 +301,51 @@ function FuelVouchersReportPDF({
                         ...pdfStyles.tableCell,
                         backgroundColor:
                           index % 2 === 0 ? '#FFFFFF' : lightColor,
-                        flex: 1,
-                        textAlign: 'right',
+                        width:
+                          filters.with_receipts == 1 && filters.stakeholder_name
+                            ? '7%'
+                            : '11%',
+                        textAlign: 'left',
                       }}
                     >
                       {rd.voucherNo}
                     </Text>
                     {/* Stakeholder/Expense Ledger */}
-                    <Text
-                      style={{
-                        ...pdfStyles.tableCell,
-                        backgroundColor:
-                          index % 2 === 0 ? '#FFFFFF' : lightColor,
-                        flex: 1.5,
-                        textAlign: 'right',
-                      }}
-                    >
-                      {rd.expense_ledger?.name || rd.stakeholder?.name}
-                    </Text>
+                    {filters.stakeholder_name === '' &&
+                      (filters.expense_ledger_ids?.length !== 1 ||
+                        !filters.expense_ledger_ids) && (
+                        <Text
+                          style={{
+                            ...pdfStyles.tableCell,
+                            backgroundColor:
+                              index % 2 === 0 ? '#FFFFFF' : lightColor,
+                            width:
+                              filters.with_receipts == 1 &&
+                              filters.stakeholder_name
+                                ? '12%'
+                                : '22%',
+                            textAlign: 'left',
+                          }}
+                        >
+                          {rd.expense_ledger?.name || rd.stakeholder?.name}
+                        </Text>
+                      )}
                     {/* Reference */}
                     <Text
                       style={{
                         ...pdfStyles.tableCell,
                         backgroundColor:
                           index % 2 === 0 ? '#FFFFFF' : lightColor,
-                        flex: 1,
-                        textAlign: 'right',
+                        width:
+                          filters.stakeholder_name === '' &&
+                          (filters.expense_ledger_ids?.length !== 1 ||
+                            !filters.expense_ledger_ids)
+                            ? '11%'
+                            : filters.with_receipts == 1 &&
+                                filters.stakeholder_name
+                              ? '11%'
+                              : '21%',
+                        textAlign: 'left',
                       }}
                     >
                       {rd.reference || ''}
@@ -285,8 +356,11 @@ function FuelVouchersReportPDF({
                         ...pdfStyles.tableCell,
                         backgroundColor:
                           index % 2 === 0 ? '#FFFFFF' : lightColor,
-                        flex: 0.8,
-                        textAlign: 'right',
+                        width:
+                          filters.with_receipts == 1 && filters.stakeholder_name
+                            ? '7%'
+                            : '11%',
+                        textAlign: 'left',
                       }}
                     >
                       {rd.product?.name}
@@ -297,8 +371,16 @@ function FuelVouchersReportPDF({
                         ...pdfStyles.tableCell,
                         backgroundColor:
                           index % 2 === 0 ? '#FFFFFF' : lightColor,
-                        flex: 1,
-                        textAlign: 'right',
+                        width:
+                          filters.stakeholder_name === '' &&
+                          (filters.expense_ledger_ids?.length !== 1 ||
+                            !filters.expense_ledger_ids)
+                            ? '21%'
+                            : filters.with_receipts == 1 &&
+                                filters.stakeholder_name
+                              ? '7%'
+                              : '11%',
+                        textAlign: 'left',
                       }}
                     >
                       {rd.narration}
@@ -309,7 +391,10 @@ function FuelVouchersReportPDF({
                         ...pdfStyles.tableCell,
                         backgroundColor:
                           index % 2 === 0 ? '#FFFFFF' : lightColor,
-                        flex: 0.6,
+                        width:
+                          filters.with_receipts == 1 && filters.stakeholder_name
+                            ? '5%'
+                            : '7%',
                         textAlign: 'right',
                       }}
                     >
@@ -324,7 +409,7 @@ function FuelVouchersReportPDF({
                         ...pdfStyles.tableCell,
                         backgroundColor:
                           index % 2 === 0 ? '#FFFFFF' : lightColor,
-                        flex: 0.5,
+                        width: '9%',
                         textAlign: 'right',
                       }}
                     >
@@ -339,7 +424,7 @@ function FuelVouchersReportPDF({
                         ...pdfStyles.tableCell,
                         backgroundColor:
                           index % 2 === 0 ? '#FFFFFF' : lightColor,
-                        flex: 0.8,
+                        width: '11%',
                         textAlign: 'right',
                       }}
                     >
@@ -353,13 +438,13 @@ function FuelVouchersReportPDF({
                             minimumFractionDigits: 2,
                           })}
                     </Text>
-                    {filters.with_receipts == 1 && (
+                    {filters.with_receipts == 1 && filters.stakeholder_name && (
                       <Text
                         style={{
                           ...pdfStyles.tableCell,
                           backgroundColor:
                             index % 2 === 0 ? '#FFFFFF' : lightColor,
-                          flex: 0.5,
+                          width: '10%',
                           textAlign: 'right',
                         }}
                       >
@@ -369,13 +454,13 @@ function FuelVouchersReportPDF({
                         })}
                       </Text>
                     )}
-                    {filters.with_receipts == 1 && (
+                    {filters.with_receipts == 1 && filters.stakeholder_name && (
                       <Text
                         style={{
                           ...pdfStyles.tableCell,
                           backgroundColor:
                             index % 2 === 0 ? '#FFFFFF' : lightColor,
-                          flex: 1,
+                          width: '14%',
                           textAlign: 'right',
                         }}
                       >
@@ -390,24 +475,49 @@ function FuelVouchersReportPDF({
               })}
 
             {/* TOTALS */}
-            {/* {reportData.length && (
+            {reportData.length && (
               <View style={pdfStyles.tableRow}>
+                {filters.stakeholder_name === '' &&
+                  (filters.expense_ledger_ids?.length !== 1 ||
+                    !filters.expense_ledger_ids) && (
+                    <Text
+                      style={{
+                        ...pdfStyles.tableCell,
+                        backgroundColor: mainColor,
+                        color: contrastText,
+                        width: '83%',
+                      }}
+                    >
+                      TOTAL
+                    </Text>
+                  )}
+                {((filters.stakeholder_name != '' &&
+                  filters.stakeholder_name) ||
+                  (filters.expense_ledger_ids?.length === 1 &&
+                    filters.expense_ledger_ids)) && (
+                  <Text
+                    style={{
+                      ...pdfStyles.tableCell,
+                      backgroundColor: mainColor,
+                      color: contrastText,
+                      width:
+                        filters.with_receipts == 1 && filters.stakeholder_name
+                          ? '39.5%'
+                          : '61.5%',
+                    }}
+                  >
+                    TOTAL
+                  </Text>
+                )}
                 <Text
                   style={{
                     ...pdfStyles.tableCell,
                     backgroundColor: mainColor,
                     color: contrastText,
-                    flex: 5,
-                  }}
-                >
-                  TOTAL
-                </Text>
-                <Text
-                  style={{
-                    ...pdfStyles.tableCell,
-                    backgroundColor: mainColor,
-                    color: contrastText,
-                    flex: 0.5,
+                    width:
+                      filters.with_receipts == 1 && filters.stakeholder_name
+                        ? '5%'
+                        : '7%',
                     textAlign: 'right',
                   }}
                 >
@@ -421,7 +531,7 @@ function FuelVouchersReportPDF({
                     ...pdfStyles.tableCell,
                     backgroundColor: mainColor,
                     color: contrastText,
-                    flex: 1,
+                    width: '9%',
                     textAlign: 'right',
                   }}
                 ></Text>
@@ -430,7 +540,7 @@ function FuelVouchersReportPDF({
                     ...pdfStyles.tableCell,
                     backgroundColor: mainColor,
                     color: contrastText,
-                    flex: 1,
+                    width: '11%',
                     textAlign: 'right',
                   }}
                 >
@@ -439,8 +549,30 @@ function FuelVouchersReportPDF({
                     minimumFractionDigits: 2,
                   })}
                 </Text>
+                {filters.with_receipts == 1 && filters.stakeholder_name && (
+                  <Text
+                    style={{
+                      ...pdfStyles.tableCell,
+                      backgroundColor: mainColor,
+                      color: contrastText,
+                      width: '10%',
+                      textAlign: 'right',
+                    }}
+                  ></Text>
+                )}
+                {filters.with_receipts == 1 && filters.stakeholder_name && (
+                  <Text
+                    style={{
+                      ...pdfStyles.tableCell,
+                      backgroundColor: mainColor,
+                      color: contrastText,
+                      width: '14%',
+                      textAlign: 'right',
+                    }}
+                  ></Text>
+                )}
               </View>
-            )} */}
+            )}
           </View>
         </View>
       </Page>

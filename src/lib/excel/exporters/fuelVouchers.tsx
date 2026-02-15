@@ -53,12 +53,34 @@ export async function exportFuelVouchersToExcel(exportedData: any) {
     }
 
     // Stakeholder name row
-    if (exportedData.filters.stakeholder_name) {
-      ws.getCell(`A2`).value = 'Stakeholder Name';
+    if (
+      (exportedData.filters.stakeholder_name &&
+        exportedData.filters.stakeholder_name !== '') ||
+      (exportedData.filters.expense_ledger_ids &&
+        exportedData.filters.expense_ledger_ids?.length === 1)
+    ) {
+      let title = '';
+      let titleValue = '';
+      if (
+        exportedData.filters.stakeholder_name &&
+        exportedData.filters.stakeholder_name !== ''
+      ) {
+        title = 'Stakeholder Name';
+        titleValue = exportedData.filters.stakeholder_name;
+      }
+
+      if (
+        exportedData.filters.expense_ledger_ids &&
+        exportedData.filters.expense_ledger_ids?.length === 1
+      ) {
+        title = 'Expense';
+        titleValue = exportedData.fuelVouchers[0]?.expense_ledger.name;
+      }
+      ws.getCell(`A2`).value = title;
       applyCellStyle(ws.getCell(`A2`), CELL_STYLES.filterLabel);
 
       ws.mergeCells(`B2:C2`);
-      ws.getCell(`B2`).value = exportedData.filters.stakeholder_name;
+      ws.getCell(`B2`).value = titleValue;
       applyCellStyle(ws.getCell(`B2`), CELL_STYLES.filterValue);
     }
 
@@ -101,17 +123,35 @@ export async function exportFuelVouchersToExcel(exportedData: any) {
     }
 
     // === TABLE HEADER (Level 2 - Section Header) ===
-    const headerColumns = [
-      'DATE',
-      'VOUCHER NO.',
-      stakeholderexpense,
-      'REFERENCE',
-      'PRODUCT',
-      'NARRATION',
-      'LTS',
-      'PRICE',
-      exportedData.filters.with_receipts == 1 ? 'DEBIT' : 'AMOUNT',
-    ];
+    let headerColumns;
+    if (
+      exportedData.filters.stakeholder_name === '' &&
+      (exportedData.filters.expense_ledger_ids?.length !== 1 ||
+        !exportedData.filters.expense_ledger_ids)
+    ) {
+      headerColumns = [
+        'DATE',
+        'VOUCHER NO.',
+        stakeholderexpense,
+        'REFERENCE',
+        'PRODUCT',
+        'NARRATION',
+        'LTS',
+        'PRICE',
+        exportedData.filters.with_receipts == 1 ? 'DEBIT' : 'AMOUNT',
+      ];
+    } else {
+      headerColumns = [
+        'DATE',
+        'VOUCHER NO.',
+        'REFERENCE',
+        'PRODUCT',
+        'NARRATION',
+        'LTS',
+        'PRICE',
+        exportedData.filters.with_receipts == 1 ? 'DEBIT' : 'AMOUNT',
+      ];
+    }
 
     // Add conditional headers if with_receipts is enabled
     if (exportedData.filters.with_receipts == 1) {
@@ -135,32 +175,64 @@ export async function exportFuelVouchersToExcel(exportedData: any) {
       exportedData.fuelVouchers.forEach((fv: any) => {
         // Calculate running balance
         runningBalance += fv.debit - fv.credit;
+        let rowData;
 
-        const rowData = [
-          dayjs(fv.transaction_date).format('DD-MM-YYYY'),
-          fv.voucherNo,
-          fv.expense_ledger?.name || fv.stakeholder?.name || '',
-          fv.reference || '',
-          fv.product?.name || '',
-          fv.narration || '',
-          fv.quantity.toLocaleString('en-US', {
-            maximumFractionDigits: 2,
-            minimumFractionDigits: 2,
-          }),
-          fv.price.toLocaleString('en-US', {
-            maximumFractionDigits: 2,
-            minimumFractionDigits: 2,
-          }),
-          exportedData.filters.with_receipts == 0
-            ? fv.amount.toLocaleString('en-US', {
-                maximumFractionDigits: 2,
-                minimumFractionDigits: 2,
-              })
-            : fv.debit.toLocaleString('en-US', {
-                maximumFractionDigits: 2,
-                minimumFractionDigits: 2,
-              }),
-        ];
+        if (
+          exportedData.filters.stakeholder_name === '' &&
+          (exportedData.filters.expense_ledger_ids?.length !== 1 ||
+            !exportedData.filters.expense_ledger_ids)
+        ) {
+          rowData = [
+            dayjs(fv.transaction_date).format('DD-MM-YYYY'),
+            fv.voucherNo,
+            fv.expense_ledger?.name || fv.stakeholder?.name || '',
+            fv.reference || '',
+            fv.product?.name || '',
+            fv.narration || '',
+            fv.quantity.toLocaleString('en-US', {
+              maximumFractionDigits: 2,
+              minimumFractionDigits: 2,
+            }),
+            fv.price.toLocaleString('en-US', {
+              maximumFractionDigits: 2,
+              minimumFractionDigits: 2,
+            }),
+            exportedData.filters.with_receipts == 0
+              ? fv.amount.toLocaleString('en-US', {
+                  maximumFractionDigits: 2,
+                  minimumFractionDigits: 2,
+                })
+              : fv.debit.toLocaleString('en-US', {
+                  maximumFractionDigits: 2,
+                  minimumFractionDigits: 2,
+                }),
+          ];
+        } else {
+          rowData = [
+            dayjs(fv.transaction_date).format('DD-MM-YYYY'),
+            fv.voucherNo,
+            fv.reference || '',
+            fv.product?.name || '',
+            fv.narration || '',
+            fv.quantity.toLocaleString('en-US', {
+              maximumFractionDigits: 2,
+              minimumFractionDigits: 2,
+            }),
+            fv.price.toLocaleString('en-US', {
+              maximumFractionDigits: 2,
+              minimumFractionDigits: 2,
+            }),
+            exportedData.filters.with_receipts == 0
+              ? fv.amount.toLocaleString('en-US', {
+                  maximumFractionDigits: 2,
+                  minimumFractionDigits: 2,
+                })
+              : fv.debit.toLocaleString('en-US', {
+                  maximumFractionDigits: 2,
+                  minimumFractionDigits: 2,
+                }),
+          ];
+        }
 
         // Add conditional columns if with_receipts is enabled
         if (exportedData.filters.with_receipts == 1) {
@@ -189,25 +261,47 @@ export async function exportFuelVouchersToExcel(exportedData: any) {
       });
 
       // === TOTAL ROW (Level 2 - Summary) ===
-      // Note: Totals are commented out in PDF, keeping them in Excel for now
-      // If you want to remove totals, comment out this section
-      const totalRowData = [
-        'TOTAL',
-        ' ',
-        ' ',
-        ' ',
-        ' ',
-        ' ',
-        totalLts.toLocaleString('en-US', {
-          maximumFractionDigits: 2,
-          minimumFractionDigits: 2,
-        }),
-        ' ',
-        totalAmount.toLocaleString('en-US', {
-          maximumFractionDigits: 2,
-          minimumFractionDigits: 2,
-        }),
-      ];
+      let totalRowData;
+      if (
+        exportedData.filters.stakeholder_name === '' &&
+        (exportedData.filters.expense_ledger_ids?.length !== 1 ||
+          !exportedData.filters.expense_ledger_ids)
+      ) {
+        totalRowData = [
+          'TOTAL',
+          ' ',
+          ' ',
+          ' ',
+          ' ',
+          ' ',
+          totalLts.toLocaleString('en-US', {
+            maximumFractionDigits: 2,
+            minimumFractionDigits: 2,
+          }),
+          ' ',
+          totalAmount.toLocaleString('en-US', {
+            maximumFractionDigits: 2,
+            minimumFractionDigits: 2,
+          }),
+        ];
+      } else {
+        totalRowData = [
+          'TOTAL',
+          ' ',
+          ' ',
+          ' ',
+          ' ',
+          totalLts.toLocaleString('en-US', {
+            maximumFractionDigits: 2,
+            minimumFractionDigits: 2,
+          }),
+          ' ',
+          totalAmount.toLocaleString('en-US', {
+            maximumFractionDigits: 2,
+            minimumFractionDigits: 2,
+          }),
+        ];
+      }
 
       // Add empty cells for conditional columns if with_receipts is enabled
       if (exportedData.filters.with_receipts == 1) {
