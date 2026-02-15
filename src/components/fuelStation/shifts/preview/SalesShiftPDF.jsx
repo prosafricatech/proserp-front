@@ -569,8 +569,8 @@ function SalesShiftPDF({
                               }}
                             >
                               {(pump.opening || 0).toLocaleString('en-US', {
-                                minimumFractionDigits: 3,
-                                maximumFractionDigits: 3,
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
                               })}
                             </Text>
                             <Text
@@ -584,8 +584,8 @@ function SalesShiftPDF({
                               }}
                             >
                               {(pump.closing || 0).toLocaleString('en-US', {
-                                minimumFractionDigits: 3,
-                                maximumFractionDigits: 3,
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
                               })}
                             </Text>
                             <Text
@@ -599,8 +599,8 @@ function SalesShiftPDF({
                               }}
                             >
                               {difference.toLocaleString('en-US', {
-                                minimumFractionDigits: 3,
-                                maximumFractionDigits: 3,
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
                               })}
                             </Text>
                             <Text
@@ -707,7 +707,7 @@ function SalesShiftPDF({
                             color: contrastText,
                             // flex: 3,
                             width: '50%',
-                            textAlign: 'right',
+                            textAlign: 'left',
                           }}
                         >
                           Narration
@@ -799,7 +799,7 @@ function SalesShiftPDF({
                                   index % 2 === 0 ? lightColor : '#FFFFFF',
                                 // flex: 3,
                                 width: '50%',
-                                textAlign: 'right',
+                                textAlign: 'left',
                               }}
                             >
                               {transaction.narration}
@@ -862,26 +862,27 @@ function SalesShiftPDF({
                           })}
                         </Text>
                       </View>
+                      {/* cash collected */}
                       <View style={{ ...pdfStyles.tableRow, marginTop: 2 }}>
                         <Text
                           style={{
                             ...pdfStyles.tableHeader,
                             ...pdfStyles.tableCell,
-                            backgroundColor: mainColor,
-                            color: contrastText,
+                            backgroundColor: lightColor,
+                            color: 'black',
                             // flex: 4.1,
                             width: '70%',
                             fontWeight: 'bold',
                           }}
                         >
-                          Total Cash Collected
+                          Cash Collected
                         </Text>
                         <Text
                           style={{
                             ...pdfStyles.tableHeader,
                             ...pdfStyles.tableCell,
-                            backgroundColor: mainColor,
-                            color: contrastText,
+                            backgroundColor: lightColor,
+                            color: shortOrOver > 0 ? 'green' : 'red',
                             // flex: 1.5,
                             width: '30%',
                             textAlign: 'right',
@@ -892,7 +893,15 @@ function SalesShiftPDF({
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2,
                           })}{' '}
-                          {shortOrOver > 0 ? '(over)' : '(short)'}
+                          {shortOrOver > 0
+                            ? `(+${shortOrOver.toLocaleString('en-US', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })} ${' '} over`
+                            : `(${shortOrOver.toLocaleString('en-US', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })} ${' '} short)`}
                         </Text>
                       </View>
                     </View>
@@ -1069,7 +1078,7 @@ function SalesShiftPDF({
                             fontWeight: 'bold',
                           }}
                         >
-                          Cashier Total Fuel Vouchers
+                          Total Fuel Vouchers
                         </Text>
                         <Text
                           style={{
