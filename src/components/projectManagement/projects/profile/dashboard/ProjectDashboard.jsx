@@ -73,10 +73,12 @@ function ProjectDashboard() {
     ? ((dashboardFigures?.cost_to_date / dashboardFigures?.budget) * 100).toFixed(1)
     : 0;
 
-  // Format currency
+  // Format currency with two decimal places and space between amount and currency code
   const formatCurrency = (value) => {
-    if (!value) return `0 ${currencyCode || ''}`.trim();
-    return new Intl.NumberFormat('en-TZ').format(value) + ` ${currencyCode || ''}`.trim();
+    const amount = Number(value) || 0;
+    // Always show two decimal places
+    const formatted = amount.toLocaleString('en-TZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return `${formatted}${currencyCode ? ' ' + currencyCode : ''}`;
   };
 
   return (
