@@ -78,7 +78,7 @@ function ProjectDashboard() {
     const amount = Number(value) || 0;
     // Always show two decimal places
     const formatted = amount.toLocaleString('en-TZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    return `${formatted}${currencyCode ? ' ' + currencyCode : ''}`;
+    return `${currencyCode ? currencyCode + ' ' : ''}${formatted}`;
   };
 
   return (
