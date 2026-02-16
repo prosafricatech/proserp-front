@@ -337,18 +337,9 @@ projectsServices.showProject = async({queryKey}) => {
     return data;
 }
 
-projectsServices.getProjectRevenue = async (projectId) => {
-    const {data} = await axios.get(`/api/projectManagement/project/${projectId}/revenue`);
-    return data;
-}
 
-projectsServices.getProjectBudget = async (projectId) => {
-    const {data} = await axios.get(`/api/projectManagement/project/${projectId}/budget`);
-    return data;
-}
-
-projectsServices.getProjectProgress = async (projectId) => {
-    const {data} = await axios.get(`/api/projectManagement/project/${projectId}/progress`);
+projectsServices.getProjectDashboardFigures = async (projectId) => {
+    const { data } = await axios.get(`/api/projectManagement/project/${projectId}/dashboard-figures`);
     return data;
 }
 
