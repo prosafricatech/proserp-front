@@ -213,8 +213,8 @@ const SalesShiftOnScreen = ({
   const QuantityCell = ({ value }) => (
     <TableCell align='right' sx={{ fontFamily: 'monospace' }}>
       {value?.toLocaleString('en-US', {
-        minimumFractionDigits: 3,
-        maximumFractionDigits: 3,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
       }) || '—'}
     </TableCell>
   );
