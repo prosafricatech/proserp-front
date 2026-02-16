@@ -700,7 +700,7 @@ export default function CashierListSummaryPDF({
                             ...pdfStyles.tableCell,
                             backgroundColor:
                               index % 2 === 0 ? '#FFFFFF' : lightColor,
-                            // flex: 0.5,
+                            textAlign: 'right',
                             width: '20%',
                           }}
                         >
@@ -711,7 +711,7 @@ export default function CashierListSummaryPDF({
                             ...pdfStyles.tableCell,
                             backgroundColor:
                               index % 2 === 0 ? '#FFFFFF' : lightColor,
-                            // flex: 0.5,
+                            textAlign: 'right',
                             width: '40%',
                           }}
                         >

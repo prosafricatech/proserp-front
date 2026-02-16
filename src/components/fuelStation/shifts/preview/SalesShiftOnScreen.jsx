@@ -26,7 +26,7 @@ const SalesShiftOnScreen = ({
   fuel_pumps = [],
   tanks = [],
   productOptions = [],
-  includeFuelVouchers = true,
+  openDetails,
 }) => {
   const theme = useTheme();
   const isDark = theme.type === 'dark';
@@ -42,7 +42,7 @@ const SalesShiftOnScreen = ({
     tankAdjustments: !!shiftData?.adjustments?.length,
     openingDipping: !!shiftData?.opening_dipping?.readings?.length,
     closingDipping: !!shiftData?.closing_dipping?.readings?.length,
-    fuelVouchers: includeFuelVouchers && !!shiftData?.fuel_vouchers?.length,
+    fuelVouchers: openDetails && !!shiftData?.fuel_vouchers?.length,
   });
 
   const toggleSection = (section) => {
@@ -229,7 +229,7 @@ const SalesShiftOnScreen = ({
   );
 
   return (
-    <Box sx={{ p: { xs: 0, md: 3 } }}>
+    <Box sx={{ p: { xs: 0, md: 3 }, width: '100%' }}>
       {/* Header */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid size={{ xs: 12, md: 8 }}>
@@ -271,8 +271,8 @@ const SalesShiftOnScreen = ({
         </Grid>
       </Grid>
 
-      {/* Conditional rendering based on includeFuelVouchers */}
-      {!includeFuelVouchers ? (
+      {/* Conditional rendering based on openDetails */}
+      {!openDetails ? (
         <CashierListSummaryOnScreen
           shiftData={shiftData}
           organization={organization}
@@ -280,7 +280,7 @@ const SalesShiftOnScreen = ({
           fuel_pumps={fuel_pumps}
           tanks={tanks}
           productOptions={productOptions}
-          includeFuelVouchers={includeFuelVouchers}
+          openDetails={openDetails}
         />
       ) : (
         <>

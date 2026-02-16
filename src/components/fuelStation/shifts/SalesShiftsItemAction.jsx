@@ -112,7 +112,7 @@ const DocumentDialog = ({
   };
 
   return (
-    <Dialog open={isOpen} maxWidth='xl' fullWidth>
+    <Dialog open={isOpen} maxWidth='xl' fullWidth fullScreen={belowLargeScreen}>
       <DialogTitle>
         <Stack
           direction={'row'}
@@ -150,7 +150,7 @@ const DocumentDialog = ({
           >
             {!belowLargeScreen && (
               <Button
-                size='large'
+                size='small'
                 onClick={() => handlExcelExport(exportedData)}
                 sx={{
                   display: 'flex',
@@ -158,8 +158,8 @@ const DocumentDialog = ({
                   padding: '4px',
                   gap: 1,
                 }}
-                color='primary'
-                variant='outlined'
+                color='success'
+                variant='contained'
               >
                 <FontAwesomeIcon icon={faFileExcel} color='green' />
                 {!belowLargeScreen && 'Excel'}
@@ -168,7 +168,7 @@ const DocumentDialog = ({
 
             {belowLargeScreen && (
               <IconButton
-                size='large'
+                size='small'
                 onClick={() => handlExcelExport(exportedData)}
                 sx={{
                   display: 'flex',
@@ -176,8 +176,8 @@ const DocumentDialog = ({
                   padding: '0px',
                   gap: 1,
                 }}
-                color='primary'
-                variant='outlined'
+                color='success'
+                variant='contained'
               >
                 <FontAwesomeIcon icon={faFileExcel} color='green' />
                 {!belowLargeScreen && 'Excel'}
