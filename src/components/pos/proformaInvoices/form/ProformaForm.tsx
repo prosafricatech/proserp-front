@@ -106,6 +106,7 @@ function ProformaForm({ toggleOpen, proforma = null }: ProformaFormProps) {
       items.forEach((item, index) => {
         total += item.rate * item.quantity;
         setValue(`items.${index}.product_id`, item?.product?.id ?? item.product_id);
+        setValue(`items.${index}.description`, item?.description ?? item.description);
         if (item.product?.type) {
           setValue(`items.${index}.product_type`, item.product.type);
         }

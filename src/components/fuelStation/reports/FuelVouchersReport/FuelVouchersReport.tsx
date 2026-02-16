@@ -331,7 +331,7 @@ const FuelVouchersReport: React.FC<fvPdfDialog> = ({
                     allowedGroups={['Expenses']}
                     multiple={true}
                     defaultValue={[]}
-                    onChange={(newValue: Ledger[]) => {
+                    onChange={(newValue: any) => {
                       const ledgerIds =
                         newValue.length > 0
                           ? newValue.map((ledger: Ledger) => ledger.id)
@@ -412,7 +412,7 @@ const FuelVouchersReport: React.FC<fvPdfDialog> = ({
           </>
         ) : (
           <Alert variant='outlined' severity='info'>
-            No data found
+            No fuel vouchers present
           </Alert>
         )}
       </DialogContent>

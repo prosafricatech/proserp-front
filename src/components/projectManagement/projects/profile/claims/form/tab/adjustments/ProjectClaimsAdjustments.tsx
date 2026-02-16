@@ -123,7 +123,6 @@ const ProjectClaimsAdjustments: React.FC<ProjectClaimsAdjustmentsProps> = ({
   }, [submitItemForm, trigger, handleSubmit, setSubmitItemForm]);
 
   const watchedAmount = watch('amount');
-  const watchedType = watch('type');
 
   const updateItems = (data: FormValues) => {
     setIsAdding(true);
@@ -187,7 +186,7 @@ const ProjectClaimsAdjustments: React.FC<ProjectClaimsAdjustmentsProps> = ({
             defaultValue={ungroupedLedgerOptions?.find(
               (l: any) => l.id === watch('complement_ledger_id')
             )}
-            allowedGroups={['Expenses', 'Fixed Assets', 'Liabilities']}
+            allowedGroups={['Expenses', 'Fixed Assets', 'Liabilities', 'Accounts Receivable']}
             frontError={errors.complement_ledger_id}
             onChange={(newValue: any) => {
               setValue('complement_ledger_id', newValue?.id ?? null, {

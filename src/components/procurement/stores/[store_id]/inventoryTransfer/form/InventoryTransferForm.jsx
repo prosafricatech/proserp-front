@@ -21,6 +21,7 @@ import { Div } from '@jumbo/shared';
 import CostCenterSelector from '@/components/masters/costCenters/CostCenterSelector';
 import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
 import { BackdropSpinner } from '@/shared/ProgressIndicators/BackdropSpinner';
+import { useLedgerSelect } from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
 
 function InventoryTransferForm({ toggleOpen, transfer = null, type }) {
   const [items, setItems] = useState(transfer ? transfer.items: []);
@@ -29,6 +30,7 @@ function InventoryTransferForm({ toggleOpen, transfer = null, type }) {
   const [transfer_date] = useState(transfer ? dayjs(transfer.transfer_date) : dayjs());
   const {authOrganization,checkOrganizationPermission} = useJumboAuth();
   const { enqueueSnackbar } = useSnackbar();
+  const { ungroupedLedgerOptions } = useLedgerSelect()
   const queryClient = useQueryClient();
 
   const [showWarning, setShowWarning] = useState(false);
@@ -63,9 +65,10 @@ function InventoryTransferForm({ toggleOpen, transfer = null, type }) {
       vehicle_information: transfer?.vehicle_information || '',
       driver_information: transfer?.driver_information || '',
       source_cost_center_id: transfer?.source_cost_center?.id || null,
-      change_cost_center: transfer ? (transfer?.cost_center_change_transfer !== null ? 1 : 0) : 0,
+      change_cost_center: transfer ? (transfer?.cost_center_change_transfer ? 1 : 0) : 0,
       destination_cost_center_id: transfer?.destination_cost_center?.id || null,
       source_store_id: activeStore.id,
+      receivable_ledger_id: transfer?.receivable_ledger_id,
       destination_store_id: transfer ? transfer.destination_store_id : (type === 'cost center change' ? activeStore.id : null),
       narration: transfer?.narration || '',
     }
@@ -79,6 +82,7 @@ function InventoryTransferForm({ toggleOpen, transfer = null, type }) {
       toggleOpen(false);
       enqueueSnackbar(data.message, { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['inventoryTransfers'] });
+      queryClient.invalidateQueries({ queryKey: ['transferDetails'] });
     },
     onError: (error) => {
       const message = error?.response?.data?.message;
@@ -92,6 +96,7 @@ function InventoryTransferForm({ toggleOpen, transfer = null, type }) {
       toggleOpen(false);
       enqueueSnackbar(data.message, { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['inventoryTransfers'] });
+      queryClient.invalidateQueries({ queryKey: ['transferDetails'] });
     },
     onError: (error) => {
       const message = error?.response?.data?.message;
@@ -289,7 +294,7 @@ function InventoryTransferForm({ toggleOpen, transfer = null, type }) {
                         multiple={false}
                         label="Destination Cost Center"
                         allowAllCostCenters={true}
-                        removedCostCenters={[watch(`source_cost_center_id`)]}
+                        removedCostCentersIds={[watch(`source_cost_center_id`)]}
                         withNotSpecified={true}
                         defaultValue={transfer?.destination_cost_center}
                         onChange={(newValue) => {
@@ -307,7 +312,9 @@ function InventoryTransferForm({ toggleOpen, transfer = null, type }) {
                         multiple={false}
                         label="Receivable Account"
                         allowedGroups={['Accounts Receivable','Accounts Payable']}
-                        defaultValue={transfer?.receivable_ledger_id} 
+                        defaultValue={ungroupedLedgerOptions.find(
+                          (ledger) => ledger.id === watch('receivable_ledger_id')
+                        )}
                         frontError={errors.receivable_ledger_id}
                         onChange={(newValue) => {
                           setValue(`receivable_ledger_id`, newValue ? newValue.id : null, {
@@ -347,7 +354,7 @@ function InventoryTransferForm({ toggleOpen, transfer = null, type }) {
                             multiple={false}
                             label="Destination Cost Center"
                             allowAllCostCenters={true}
-                            removedCostCenters={[watch(`source_cost_center_id`)]}
+                            removedCostCentersIds={[watch(`source_cost_center_id`)]}
                             withNotSpecified={true}
                             defaultValue={transfer?.destination_cost_center}
                             onChange={(newValue) => {
@@ -365,7 +372,9 @@ function InventoryTransferForm({ toggleOpen, transfer = null, type }) {
                             multiple={false}
                             label="Receivable Account"
                             allowedGroups={['Accounts Receivable','Accounts Payable']}
-                            defaultValue={transfer?.receivable_ledger_id} 
+                            defaultValue={ungroupedLedgerOptions.find(
+                              (ledger) => ledger.id === watch('receivable_ledger_id')
+                            )}
                             frontError={errors.receivable_ledger_id}
                             onChange={(newValue) => {
                               setValue(`receivable_ledger_id`, newValue ? newValue.id : null, {

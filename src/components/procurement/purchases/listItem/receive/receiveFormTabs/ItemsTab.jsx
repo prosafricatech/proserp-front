@@ -3,14 +3,14 @@ import { Divider, Grid, TextField, Tooltip, Typography } from '@mui/material';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
 
-function ItemsTab() {
-  const {purchase_order_items,errors,register,setValue,watch} = useFormContext();
+function ItemsTab({purchase_order_items}) {
+  const {errors,register,setValue,watch} = useFormContext();
 
   return (
     <>
       {purchase_order_items
-        .filter((item) => item.unreceived_quantity !== 0)
-        .map((item, index) => (
+        ?.filter((item) => item.unreceived_quantity !== 0)
+        ?.map((item, index) => (
           <React.Fragment key={item.id}>
             <Grid
               container

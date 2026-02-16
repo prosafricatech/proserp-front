@@ -460,6 +460,8 @@ if (!checkOrganizationPermission([PERMISSIONS.PRICE_LISTS_READ, PERMISSIONS.PRIC
                         PERMISSIONS.PRODUCT_CATEGORIES_READ,
                         PERMISSIONS.PRODUCT_CATEGORIES_CREATE,
                         PERMISSIONS.STORES_READ,
+                        PERMISSIONS.INVENTORY_TRANSFERS_READ,
+                        PERMISSIONS.INVENTORY_TRANSFERS_CREATE,
                         PERMISSIONS.STORES_CREATE,
                         PERMISSIONS.INVENTORY_CONSUMPTIONS_READ,
                         PERMISSIONS.INVENTORY_CONSUMPTIONS_CREATE
@@ -533,7 +535,11 @@ if (!checkOrganizationPermission([PERMISSIONS.PRICE_LISTS_READ, PERMISSIONS.PRIC
                 if (!checkOrganizationPermission([
                     PERMISSIONS.PRODUCT_CATEGORIES_READ,
                     PERMISSIONS.STORES_READ,
-                    PERMISSIONS.PRODUCTS_READ
+                    PERMISSIONS.INVENTORY_TRANSFERS_READ,
+                    PERMISSIONS.INVENTORY_TRANSFERS_CREATE,
+                    PERMISSIONS.PRODUCTS_READ,
+                    PERMISSIONS.INVENTORY_CONSUMPTIONS_READ,
+                    PERMISSIONS.INVENTORY_CONSUMPTIONS_CREATE
                 ])) {
                     const procurementsMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.procurementAndSupply);
                     if (procurementsMenuIndex >= 0) {
@@ -570,8 +576,8 @@ if (!checkOrganizationPermission([PERMISSIONS.PRICE_LISTS_READ, PERMISSIONS.PRIC
                     }
                 }
 
-                //Procurement > Masters > Products
-                if (!checkOrganizationPermission([PERMISSIONS.STORES_READ, PERMISSIONS.STORES_CREATE])) {
+                //Procurement > Masters > Stores
+                if (!checkOrganizationPermission([PERMISSIONS.STORES_READ, PERMISSIONS.STORES_CREATE, PERMISSIONS.INVENTORY_TRANSFERS_READ, PERMISSIONS.INVENTORY_TRANSFERS_CREATE, PERMISSIONS.INVENTORY_CONSUMPTIONS_READ, PERMISSIONS.INVENTORY_CONSUMPTIONS_CREATE])) {
                     const procurementsMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.procurementAndSupply);
                     if (procurementsMenuIndex >= 0) {
                         const mastersIndex = updatedMenus[procurementsMenuIndex].children.findIndex(child => child.label === dictionary.sidebar.menuItem.masters);

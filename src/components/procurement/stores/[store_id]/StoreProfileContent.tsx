@@ -3,7 +3,6 @@ import React, { lazy, useEffect, useState } from 'react'
 import { useStoreProfile } from './StoreProfileProvider'
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
-
 const StoreReports = lazy(() => import('./reports/StoreReports'));
 const StockAdjustments = lazy(() => import('./stockAdjustments/StockAdjustments'));
 const Transfer = lazy(() => import('./inventoryTransfer/InventoryTransfer'));
@@ -65,44 +64,6 @@ function StoreProfileContent() {
 
   let contentComponent;
   let documentTitle = '';
-  
-  switch(content) {
-    case TAB_INDICES.STOCK:
-      documentTitle = `Store Stock | ${activeStore?.name}`;
-      contentComponent = <StoreStock/>;
-      break;
-    case TAB_INDICES.GRNS:
-      documentTitle = `GRNs | ${activeStore?.name}`;
-      contentComponent = <Grns />;
-      break;
-    case TAB_INDICES.TRANSFERS:
-      documentTitle = `Inventory Transfers | ${activeStore?.name}`;
-      contentComponent = <Transfer/>;
-      break;
-    case TAB_INDICES.CONSUMPTIONS:
-      documentTitle = `Inventory Consumptions | ${activeStore?.name}`;
-      contentComponent = <InventoryConsumptions/>;
-      break;
-    case TAB_INDICES.ADJUSTMENTS:
-      if (checkOrganizationPermission([
-        PERMISSIONS.STOCK_ADJUSTMENTS_READ, 
-        PERMISSIONS.STOCK_ADJUSTMENTS_CREATE, 
-        PERMISSIONS.STOCK_ADJUSTMENTS_EDIT, 
-        PERMISSIONS.STOCK_ADJUSTMENTS_DELETE
-      ])) {
-        documentTitle = `Stock Adjustments | ${activeStore?.name}`;
-        contentComponent = <StockAdjustments />;
-      }
-      break;
-    case TAB_INDICES.REPORTS:
-      documentTitle = `Store Reports | ${activeStore?.name}`;
-      contentComponent = <StoreReports/>;
-      break;
-    default:
-      // Fallback to stock if invalid tab
-      documentTitle = `Store Stock | ${activeStore?.name}`;
-      contentComponent = <StoreStock/>;
-  }
 
   // Set document title
   useEffect(() => {
@@ -111,48 +72,133 @@ function StoreProfileContent() {
     }
   }, [documentTitle]);
 
-  // Calculate available tabs based on permissions
-  const availableTabs = [
-    { label: "Stock", value: TAB_INDICES.STOCK },
-    { label: "GRNs", value: TAB_INDICES.GRNS },
-    { label: "Transfers", value: TAB_INDICES.TRANSFERS },
-    { label: "Consumptions", value: TAB_INDICES.CONSUMPTIONS },
-  ];
 
-  if (checkOrganizationPermission([
+  // Permission constants for easier checks
+  const hasStoresRead = checkOrganizationPermission([
+    PERMISSIONS.STORES_READ
+  ]);
+  const hasStoresReports = checkOrganizationPermission([
+    PERMISSIONS.STORES_REPORTS
+  ]);
+  const hasTransferPermission = checkOrganizationPermission([
+    PERMISSIONS.INVENTORY_TRANSFERS_READ,
+    PERMISSIONS.INVENTORY_TRANSFERS_CREATE,
+    PERMISSIONS.INVENTORY_TRANSFERS_EDIT,
+    PERMISSIONS.INVENTORY_TRANSFERS_DELETE
+  ]);
+  const hasAdjustmentsPermission = checkOrganizationPermission([
     PERMISSIONS.STOCK_ADJUSTMENTS_READ, 
     PERMISSIONS.STOCK_ADJUSTMENTS_CREATE, 
     PERMISSIONS.STOCK_ADJUSTMENTS_EDIT, 
     PERMISSIONS.STOCK_ADJUSTMENTS_DELETE
-  ])) {
-    availableTabs.push({ label: "Adjustments", value: TAB_INDICES.ADJUSTMENTS });
+  ]);
+
+  let availableTabs: { label: string; value: number }[] = [];
+
+  // If only transfer permission, always show Transfers tab and content
+  if (!hasStoresRead && hasTransferPermission) {
+    documentTitle = `Inventory Transfers | ${activeStore?.name}`;
+    contentComponent = <Transfer/>;
+  } else {
+    switch(content) {
+      case TAB_INDICES.STOCK:
+        documentTitle = `Store Stock | ${activeStore?.name}`;
+        contentComponent = <StoreStock/>;
+        break;
+      case TAB_INDICES.GRNS:
+        documentTitle = `GRNs | ${activeStore?.name}`;
+        contentComponent = <Grns />;
+        break;
+      case TAB_INDICES.TRANSFERS:
+        documentTitle = `Inventory Transfers | ${activeStore?.name}`;
+        contentComponent = <Transfer/>;
+        break;
+      case TAB_INDICES.CONSUMPTIONS:
+        documentTitle = `Inventory Consumptions | ${activeStore?.name}`;
+        contentComponent = <InventoryConsumptions/>;
+        break;
+      case TAB_INDICES.ADJUSTMENTS:
+        if (hasAdjustmentsPermission) {
+          documentTitle = `Stock Adjustments | ${activeStore?.name}`;
+          contentComponent = <StockAdjustments />;
+        }
+        break;
+      case TAB_INDICES.REPORTS:
+        documentTitle = `Store Reports | ${activeStore?.name}`;
+        contentComponent = <StoreReports/>;
+        break;
+      default:
+        // Fallback to stock if invalid tab
+        documentTitle = `Store Stock | ${activeStore?.name}`;
+        contentComponent = <StoreStock/>;
+    }
   }
 
-  availableTabs.push({ label: "Reports", value: TAB_INDICES.REPORTS });
+  // If user has only transfer permission, show only Transfers tab
+  if (!hasStoresRead && hasTransferPermission) {
+    availableTabs = [
+      { label: "Transfers", value: TAB_INDICES.TRANSFERS }
+    ];
+  } else if (hasStoresRead) {
+    availableTabs = [
+      { label: "Stock", value: TAB_INDICES.STOCK },
+      { label: "GRNs", value: TAB_INDICES.GRNS },
+      { label: "Consumptions", value: TAB_INDICES.CONSUMPTIONS }
+    ];
+    if (hasTransferPermission) {
+      availableTabs.splice(2, 0, { label: "Transfers", value: TAB_INDICES.TRANSFERS });
+    }
+    if (hasAdjustmentsPermission) {
+      availableTabs.push({ label: "Adjustments", value: TAB_INDICES.ADJUSTMENTS });
+    }
+    if (hasStoresReports) {
+      availableTabs.push({ label: "Reports", value: TAB_INDICES.REPORTS });
+    }
+  }
 
+  // If only transfer permission, force tab selection to Transfers
+  if (!hasStoresRead && hasTransferPermission) {
+    return (
+      <Box p={1} sx={{
+        bgcolor: 'background.paper',
+        borderRadius: '15px',
+      }}>
+        <Tabs
+          value={TAB_INDICES.TRANSFERS}
+          variant="scrollable"
+          scrollButtons
+          allowScrollButtonsMobile
+        >
+          <Tab key={TAB_INDICES.TRANSFERS} label="Transfers" value={TAB_INDICES.TRANSFERS} />
+        </Tabs>
+        {contentComponent}
+      </Box>
+    );
+  }
+  // Otherwise, render as normal
   return (
     <Box p={1} sx={{
-       bgcolor: 'background.paper',
-       borderRadius: '15px',
-      } }>
-      <Tabs 
+      bgcolor: 'background.paper',
+      borderRadius: '15px',
+    }}>
+      <Tabs
         variant="scrollable"
         scrollButtons
         allowScrollButtonsMobile
-        value={content} 
+        value={content}
         onChange={handleTabChange}
       >
         {availableTabs.map((tab) => (
-          <Tab 
-            key={tab.value} 
-            label={tab.label} 
+          <Tab
+            key={tab.value}
+            label={tab.label}
             value={tab.value}
           />
         ))}
       </Tabs>
       {contentComponent}
     </Box>
-  )
+  );
 }
 
 export default StoreProfileContent

@@ -19,6 +19,7 @@ export interface ProformaItem {
   product_type?: string;
   quantity: number;
   measurement_unit_id?: number;
+  description?: string;
   measurement_unit?: {
     id: number;
     name: string;

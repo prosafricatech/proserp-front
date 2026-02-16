@@ -73,7 +73,7 @@ const Stores: React.FC = () => {
         return <UnsubscribedAccess modules={'Procurement & Supply'}/>;
     }
 
-    if (!checkOrganizationPermission([PERMISSIONS.STORES_READ])) {
+    if (!checkOrganizationPermission([PERMISSIONS.STORES_READ, PERMISSIONS.INVENTORY_TRANSFERS_READ, PERMISSIONS.INVENTORY_TRANSFERS_CREATE,])) {
         return <UnauthorizedAccess/>;
     }
     

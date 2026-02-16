@@ -205,10 +205,9 @@ const CertifiedAdjustments: React.FC<CertifiedAdjustmentsProps> = ({
                 (l: LedgerOption) => l.id === watchedComplementLedgerId
               ) || null
             }
-            allowedGroups={['Expenses', 'Fixed Assets', 'Liabilities']}
+            allowedGroups={['Expenses', 'Fixed Assets', 'Liabilities', 'Accounts Receivable']}
             frontError={errors.complement_ledger_id}
             onChange={(newValue: any) => {
-              // Safe access: newValue is always single object or null when multiple={false}
               setValue(
                 'complement_ledger_id',
                 newValue ? newValue.id : undefined,

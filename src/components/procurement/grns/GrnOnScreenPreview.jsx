@@ -126,13 +126,13 @@ function GrnOnScreenPreview({ grn, baseCurrency, checkOrganizationPermission, or
                         <Typography variant="body1">{grn.store.name}</Typography>
                     </Box>
                 </Grid>
-                {grn?.cost_centers && (
+                {grn?.cost_center && (
                     <Grid size={{xs: 12, sm: 6, md: 4}}>
                         <Box>
                             <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
-                                Cost Center{grn.cost_centers.length > 1 ? 's' : ''}
+                                Cost Center
                             </Typography>
-                            <Typography variant="body1">{grn.cost_centers.map((cc) => cc.name).join(', ')}</Typography>
+                            <Typography variant="body1">{grn.cost_center.name}</Typography>
                         </Box>
                     </Grid>
                 )}
@@ -146,7 +146,7 @@ function GrnOnScreenPreview({ grn, baseCurrency, checkOrganizationPermission, or
                 </Grid>
             </Grid>
 
-            {/* Items Section */}
+            {/* Items Section - Table Format */}
             <Box sx={{ mb: 3 }}>
                 <Typography 
                     variant="h6" 
@@ -158,95 +158,73 @@ function GrnOnScreenPreview({ grn, baseCurrency, checkOrganizationPermission, or
                 >
                     ITEMS RECEIVED
                 </Typography>
-                
                 <Box 
                     sx={{ 
                         p: 2, 
                         backgroundColor: theme.palette.background.default,
                         border: `1px solid ${theme.palette.divider}`,
-                        borderRadius: 1
+                        borderRadius: 1,
+                        overflowX: 'auto'
                     }}
                 >
-                    {grn.items.map((grnItem, index) => (
-                        <Box key={index}>
-                            <Grid container alignItems="center" sx={{ py: 1 }}>
-                                <Grid size={{xs: 1, md: 1}}>
-                                    <Typography variant="body2" fontWeight="medium">
-                                        {index + 1}.
-                                    </Typography>
-                                </Grid>
-                                <Grid size={{xs: 7, md: 5}}>
-                                    <Typography variant="body2" fontWeight="medium">
-                                        {grnItem.product.name}
-                                    </Typography>
-                                </Grid>
-                                <Grid size={{xs: 4, md: 2}} sx={{ textAlign: 'right' }}>
-                                    <Typography variant="body2" fontFamily="monospace" fontWeight="medium">
-                                        {`${grnItem.quantity} ${grnItem.measurement_unit?.symbol}`}
-                                    </Typography>
-                                </Grid>
-                                
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                        <thead>
+                            <tr style={{ background: theme.palette.action.hover }}>
+                                <th style={{ padding: 8, border: `1px solid ${theme.palette.divider}` }}>s/n</th>
+                                <th style={{ padding: 8, border: `1px solid ${theme.palette.divider}` }}>Product</th>
+                                <th style={{ padding: 8, border: `1px solid ${theme.palette.divider}` }}>Quantity</th>
                                 {displayAmounts && (
                                     <>
-                                        <Grid size={{xs: 6, md: 2}} sx={{ textAlign: 'right' }}>
-                                            <Tooltip title="Unit Price">
-                                                <Typography variant="body2" fontFamily="monospace">
-                                                    {currencySymbol} {formatNumber(grnItem.rate)}
-                                                </Typography>
-                                            </Tooltip>
-                                        </Grid>
-                                        <Grid size={{xs: 6, md: 2}} sx={{ textAlign: 'right' }}>
-                                            <Tooltip title="Amount">
-                                                <Typography variant="body2" fontWeight="bold" fontFamily="monospace">
-                                                    {currencySymbol} {formatNumber(grnItem.quantity * grnItem.rate)}
-                                                </Typography>
-                                            </Tooltip>
-                                        </Grid>
+                                        <th style={{ padding: 8, border: `1px solid ${theme.palette.divider}` }}>Unit Price ({currencySymbol})</th>
+                                        <th style={{ padding: 8, border: `1px solid ${theme.palette.divider}` }}>Amount ({currencySymbol})</th>
                                     </>
                                 )}
-                            </Grid>
-                            
-                            {displayAmounts && grn.additional_costs.length > 0 && (
-                                <Grid container sx={{ pl: 4, py: 0.5 }}>
-                                    <Grid size={{xs: 6, md: 3}} sx={{ textAlign: 'right' }}>
-                                        <Tooltip title={`Cost Per Unit in ${base_Currency}`}>
-                                            <Typography variant="body2" color="text.secondary" fontFamily="monospace">
-                                                {base_Currency} {formatNumber(costFactor * grnItem.rate * exchangeRate)}
-                                            </Typography>
-                                        </Tooltip>
-                                    </Grid>
-                                    <Grid size={{xs: 6, md: 3}} sx={{ textAlign: 'right' }}>
-                                        <Tooltip title={`Amount in ${base_Currency}`}>
-                                            <Typography variant="body2" color="text.secondary" fontWeight="medium" fontFamily="monospace">
-                                                {base_Currency} {formatNumber(costFactor * grnItem.rate * exchangeRate * grnItem.quantity)}
-                                            </Typography>
-                                        </Tooltip>
-                                    </Grid>
-                                </Grid>
-                            )}
-                            
-                            {index < grn.items.length - 1 && (
-                                <Divider sx={{ borderColor: theme.palette.divider, my: 1 }} />
-                            )}
-                        </Box>
-                    ))}
-                    
-                    {displayAmounts && (
-                        <Box sx={{ mt: 2, pt: 2, borderTop: `1px solid ${theme.palette.divider}` }}>
-                            <Grid container>
-                                <Grid size={8}>
-                                    <Typography variant="body1" fontWeight="bold">
-                                        TOTAL ({currencySymbol})
-                                    </Typography>
-                                </Grid>
-                                <Grid size={4} sx={{ textAlign: 'right' }}>
-                                    <Typography variant="body1" fontWeight="bold" fontFamily="monospace">
-                                        {currencySymbol} {formatNumber(totalAmount)}
-                                    </Typography>
-                                </Grid>
-                            </Grid>
-                        </Box>
-                    )}
+                                {displayAmounts && grn.additional_costs.length > 0 && (
+                                    <>
+                                        <th style={{ padding: 8, border: `1px solid ${theme.palette.divider}` }}>Unit Cost ({base_Currency})</th>
+                                        <th style={{ padding: 8, border: `1px solid ${theme.palette.divider}` }}>Amount ({base_Currency})</th>
+                                    </>
+                                )}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {grn.items.map((grnItem, index) => (
+                                <tr key={index}>
+                                    <td style={{ padding: 8, border: `1px solid ${theme.palette.divider}`, textAlign: 'center' }}>{index + 1}</td>
+                                    <td style={{ padding: 8, border: `1px solid ${theme.palette.divider}` }}>{grnItem.product.name}</td>
+                                    <td style={{ padding: 8, border: `1px solid ${theme.palette.divider}`, textAlign: 'right' }}>{`${grnItem.quantity} ${grnItem.measurement_unit?.symbol}`}</td>
+                                    {displayAmounts && (
+                                        <>
+                                            <td style={{ padding: 8, border: `1px solid ${theme.palette.divider}`, textAlign: 'right' }}>{formatNumber(grnItem.rate)}</td>
+                                            <td style={{ padding: 8, border: `1px solid ${theme.palette.divider}`, textAlign: 'right' }}>{formatNumber(grnItem.quantity * grnItem.rate)}</td>
+                                        </>
+                                    )}
+                                    {displayAmounts && grn.additional_costs.length > 0 && (
+                                        <>
+                                            <td style={{ padding: 8, border: `1px solid ${theme.palette.divider}`, textAlign: 'right' }}>{formatNumber(costFactor * grnItem.rate * exchangeRate)}</td>
+                                            <td style={{ padding: 8, border: `1px solid ${theme.palette.divider}`, textAlign: 'right' }}>{formatNumber(costFactor * grnItem.rate * exchangeRate * grnItem.quantity)}</td>
+                                        </>
+                                    )}
+                                </tr>
+                            ))}
+                        </tbody>
+                        {displayAmounts && (
+                            <tfoot>
+                                <tr>
+                                    <td style={{ padding: 8, border: `1px solid ${theme.palette.divider}` }} colSpan={2}></td>
+                                    <td style={{ padding: 8, border: `1px solid ${theme.palette.divider}`, fontWeight: 'bold', textAlign: 'right' }}>TOTAL</td>
+                                    <td style={{ padding: 8, border: `1px solid ${theme.palette.divider}` }}></td>
+                                    <td style={{ padding: 8, border: `1px solid ${theme.palette.divider}`, fontWeight: 'bold', textAlign: 'right' }}>{formatNumber(totalAmount)}</td>
+                                    {grn.additional_costs.length > 0 && (
+                                        <>
+                                            <td style={{ padding: 8, border: `1px solid ${theme.palette.divider}` }}></td>
+                                            <td style={{ padding: 8, border: `1px solid ${theme.palette.divider}` }}></td>
+                                        </>
+                                    )}
+                                </tr>
+                            </tfoot>
+                        )}
+                    </table>
                 </Box>
             </Box>
 

@@ -129,7 +129,7 @@ function FuelVouchers({ cashierPumpProducts, index = -1, setShowForm = null, fue
         </Grid>
       )}
       <Grid container spacing={1} marginTop={0.5}>
-        {!stakeholderQuickAddDisplay &&
+        {(!stakeholderQuickAddDisplay && !watch('expense_ledger_id')) &&
           <Grid size={{xs:12, md:4, lg: !watch(`stakeholder_id`) ? 4 : 5}}>
             <Div sx={{ mt: 1}}>
               <StakeholderSelector

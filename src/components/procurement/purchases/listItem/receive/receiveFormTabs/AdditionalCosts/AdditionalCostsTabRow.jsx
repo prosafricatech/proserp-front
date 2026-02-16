@@ -4,9 +4,8 @@ import React, { useState } from 'react'
 import { useFormContext } from 'react-hook-form';
 import AdditionalCostsTab from './AdditionalCostsTab';
 
-function AdditionalCostsTabRow({ additionalCost, setIsDirty, index}) {
+function AdditionalCostsTabRow({ additionalCost, setIsDirty, index, additionalCosts=[], setAdditionalCosts}) {
     const [showForm, setShowForm] = useState(false);
-    const {additionalCosts=[], setAdditionalCosts} = useFormContext();
 
   return (
     <React.Fragment>
@@ -25,7 +24,7 @@ function AdditionalCostsTabRow({ additionalCost, setIsDirty, index}) {
             </Grid>
             <Grid size={{xs: 7, md: 2.5}}>
               <Tooltip title="Cost name">
-                <Typography>{additionalCost.credit_ledger_name}</Typography>
+                <Typography>{additionalCost.credit_ledger_name || additionalCost.name}</Typography>
               </Tooltip>
             </Grid>
             <Grid size={{xs: 4, md: 2}} textAlign={{xs: 'right', md: 'start'}}>
@@ -35,7 +34,7 @@ function AdditionalCostsTabRow({ additionalCost, setIsDirty, index}) {
             </Grid>
             <Grid size={{xs: 6, md: 3}}>
               <Tooltip title="Currency">
-                <Typography>{additionalCost.currency_name}</Typography>
+                <Typography>{additionalCost.currency_name || additionalCost.currency?.name}</Typography>
               </Tooltip>
             </Grid>
             <Grid size={{xs: 6, md: 1.5}} textAlign={'right'}>

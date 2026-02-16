@@ -57,6 +57,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
   const [cashierLedgers, setCashierLedgers] = useState({});
   const [lastClosingReadings, setLastClosingReadings] = useState({});
   const [lastClosingDipping, setLastClosingDipping] = useState([]);
+  const [voucherErrors, setVoucherErrors] = useState({});
 
   const { mutate: addSalesShifts, isPending } = useMutation({
     mutationFn: fuelStationServices.addSalesShifts,
@@ -591,24 +592,63 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
   const getCashierLedgers = (cashierIndex) => {
     return cashierLedgers[cashierIndex] || [];
   };
+  
+  useEffect(() => {
+    selectedCashiers.forEach((cashier, cashierIdx) => {
+      if (!cashier.pump_readings || !cashier.fuel_vouchers) return;
+      const productQuantities = {};
+      cashier.pump_readings.forEach(pr => {
+        if (!productQuantities[pr.product_id]) productQuantities[pr.product_id] = 0;
+        productQuantities[pr.product_id] += Number(pr.closing) - Number(pr.opening);
+      });
+      const voucherQuantities = {};
+      cashier.fuel_vouchers.forEach(fv => {
+        if (!voucherQuantities[fv.product_id]) voucherQuantities[fv.product_id] = 0;
+        voucherQuantities[fv.product_id] += Number(fv.quantity);
+      });
+      // Check for excess
+      const errors = [];
+      Object.keys(voucherQuantities).forEach(pid => {
+        if (voucherQuantities[pid] > (productQuantities[pid] || 0)) {
+          const product = (activeStation.products || []).find(p => p.id === Number(pid));
+          errors.push(`Total quantity (${voucherQuantities[pid]}) for product ${product?.name || pid} in vouchers for cashier ${cashier.name} exceeds the pump readings quantity (${productQuantities[pid] || 0}).`);
+        }
+      });
+      setVoucherErrors(prev => ({ ...prev, [cashier.id]: errors }));
+    });
+  }, [JSON.stringify(selectedCashiers)]);
 
   const handleSubmitForm = async (data) => {
-      const allProductIds = (activeStation.products || []).map(p => p.id);
-      const pricedProductIds = (data.product_prices || []).map(p => p.product_id);
-      const missingPriceProducts = allProductIds.filter(pid => !pricedProductIds.includes(pid));
-      if (missingPriceProducts.length > 0) {
-        const missingNames = (activeStation.products || [])
-          .filter(p => missingPriceProducts.includes(p.id))
-          .map(p => p.name)
-          .join(', ');
-        enqueueSnackbar(
-          `Cannot proceed: The following products are missing prices: ${missingNames}`,
-          { variant: 'error' }
-        );
-        return;
-      }
+    const allProductIds = (activeStation.products || []).map(p => p.id);
+    const pricedProductIds = (data.product_prices || []).map(p => p.product_id);
+    const missingPriceProducts = allProductIds.filter(pid => !pricedProductIds.includes(pid));
+    if (missingPriceProducts.length > 0) {
+      const missingNames = (activeStation.products || [])
+        .filter(p => missingPriceProducts.includes(p.id))
+        .map(p => p.name)
+        .join(', ');
+      enqueueSnackbar(
+        `Cannot proceed: The following products are missing prices: ${missingNames}`,
+        { variant: 'error' }
+      );
+      return;
+    }
     if (data.cashiers.length === 0) {
       enqueueSnackbar('Please add at least one cashier', { variant: 'error' });
+      return;
+    }
+
+    // Prevent submission if voucherErrors exist
+    const hasVoucherExcess = Object.values(voucherErrors).some(errArr => Array.isArray(errArr) && errArr.length > 0);
+    if (hasVoucherExcess) {
+      enqueueSnackbar(
+        <div>
+          {Object.values(voucherErrors).flat().map((msg, idx) => (
+            <div key={idx}>{msg}</div>
+          ))}
+        </div>,
+        { variant: 'error' }
+      );
       return;
     }
 
@@ -902,19 +942,27 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
               </>
             ) : (
               selectedCashiers.map((cashier, index) => (
-                <CashierAccordion
-                  key={cashier.id}
-                  cashier={cashier}
-                  index={index}
-                  control={control}
-                  watch={watch}
-                  lastClosingReadings={lastClosingReadings}
-                  handlePumpSelection={handlePumpSelection}
-                  getCashierLedgers={getCashierLedgers}
-                  getAvailablePumpsForCashier={getAvailablePumpsForCashier}
-                  setValue={setValue}
-                  onFuelVouchersChange={(vouchers) => setValue(`cashiers.${index}.fuel_vouchers`, vouchers, { shouldValidate: true, shouldDirty: true })}
-                />
+                <React.Fragment key={cashier.id}>
+                  {voucherErrors[cashier.id] && voucherErrors[cashier.id].length > 0 && (
+                    <Alert severity="error" sx={{ mb: 2 }}>
+                      {voucherErrors[cashier.id].map((err, idx) => (
+                        <div key={idx}>{err}</div>
+                      ))}
+                    </Alert>
+                  )}
+                  <CashierAccordion
+                    cashier={cashier}
+                    index={index}
+                    control={control}
+                    watch={watch}
+                    lastClosingReadings={lastClosingReadings}
+                    handlePumpSelection={handlePumpSelection}
+                    getCashierLedgers={getCashierLedgers}
+                    getAvailablePumpsForCashier={getAvailablePumpsForCashier}
+                    setValue={setValue}
+                    onFuelVouchersChange={(vouchers) => setValue(`cashiers.${index}.fuel_vouchers`, vouchers, { shouldValidate: true, shouldDirty: true })}
+                  />
+                </React.Fragment>
               ))
             )}
           </div>

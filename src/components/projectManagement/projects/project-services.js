@@ -337,6 +337,12 @@ projectsServices.showProject = async({queryKey}) => {
     return data;
 }
 
+
+projectsServices.getProjectDashboardFigures = async (projectId) => {
+    const { data } = await axios.get(`/api/projectManagement/project/${projectId}/dashboard-figures`);
+    return data;
+}
+
 projectsServices.deleteProject = async (project_id) => {
     return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
         const {data} = await axios.delete(`/api/projectManagement/project/${project_id}/deleteProject`);
