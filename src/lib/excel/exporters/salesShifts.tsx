@@ -242,8 +242,16 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
       ' ',
       ' ',
     ]);
-    addHeader(ws, [' ', ' ', ' ', ' ', ' ', exportedData.shiftData.shiftNo]);
-    addHeader(ws, [' ', ' ', ' ', ' ', ' ', exportedData.stationName]);
+    addHeader(ws, [
+      exportedData.stationName,
+      ' ',
+      ' ',
+      ' ',
+      ' ',
+      exportedData.shiftData.shiftNo,
+    ]);
+    // addHeader(ws, [' ', ' ', ' ', ' ', ' ', exportedData.stationName]);
+    ws.addRow([]);
 
     // fuel prices
     const fuelPrices: any[] = [];

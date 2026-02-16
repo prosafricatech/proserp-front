@@ -121,6 +121,13 @@ export async function exportFuelVouchersToExcel(exportedData: any) {
     ) {
       stakeholderexpense = 'Stakeholder/Expense';
     }
+    if (
+      (!exportedData.filters.stakeholder_name ||
+        exportedData.filters.stakeholder_name === '') &&
+      exportedData.filters.expense_ledger_ids?.length > 1
+    ) {
+      stakeholderexpense = 'Expense';
+    }
 
     // === TABLE HEADER (Level 2 - Section Header) ===
     let headerColumns;
@@ -189,20 +196,20 @@ export async function exportFuelVouchersToExcel(exportedData: any) {
             fv.reference || '',
             fv.product?.name || '',
             fv.narration || '',
-            fv.quantity.toLocaleString('en-US', {
+            fv.quantity?.toLocaleString('en-US', {
               maximumFractionDigits: 2,
               minimumFractionDigits: 2,
             }),
-            fv.price.toLocaleString('en-US', {
+            fv.price?.toLocaleString('en-US', {
               maximumFractionDigits: 2,
               minimumFractionDigits: 2,
             }),
             exportedData.filters.with_receipts == 0
-              ? fv.amount.toLocaleString('en-US', {
+              ? fv.amount?.toLocaleString('en-US', {
                   maximumFractionDigits: 2,
                   minimumFractionDigits: 2,
                 })
-              : fv.debit.toLocaleString('en-US', {
+              : fv.debit?.toLocaleString('en-US', {
                   maximumFractionDigits: 2,
                   minimumFractionDigits: 2,
                 }),
@@ -214,20 +221,20 @@ export async function exportFuelVouchersToExcel(exportedData: any) {
             fv.reference || '',
             fv.product?.name || '',
             fv.narration || '',
-            fv.quantity.toLocaleString('en-US', {
+            fv.quantity?.toLocaleString('en-US', {
               maximumFractionDigits: 2,
               minimumFractionDigits: 2,
             }),
-            fv.price.toLocaleString('en-US', {
+            fv.price?.toLocaleString('en-US', {
               maximumFractionDigits: 2,
               minimumFractionDigits: 2,
             }),
             exportedData.filters.with_receipts == 0
-              ? fv.amount.toLocaleString('en-US', {
+              ? fv.amount?.toLocaleString('en-US', {
                   maximumFractionDigits: 2,
                   minimumFractionDigits: 2,
                 })
-              : fv.debit.toLocaleString('en-US', {
+              : fv.debit?.toLocaleString('en-US', {
                   maximumFractionDigits: 2,
                   minimumFractionDigits: 2,
                 }),

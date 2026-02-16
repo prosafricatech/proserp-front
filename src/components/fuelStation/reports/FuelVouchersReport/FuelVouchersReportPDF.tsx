@@ -171,6 +171,10 @@ function FuelVouchersReportPDF({
                       (filters.expense_ledger_ids?.length < 1 ||
                         !filters.expense_ledger_ids) &&
                       'Stakeholder/Expense'}
+                    {(!filters.stakeholder_name ||
+                      filters.stakeholder_name === '') &&
+                      filters.expense_ledger_ids?.length > 1 &&
+                      'Expense'}
                   </Text>
                 )}
               <Text
@@ -185,7 +189,7 @@ function FuelVouchersReportPDF({
                       ? '11%'
                       : filters.with_receipts == 1 && filters.stakeholder_name
                         ? '11%'
-                        : '21%',
+                        : '11%',
                 }}
               >
                 Reference
@@ -198,7 +202,7 @@ function FuelVouchersReportPDF({
                   width:
                     filters.with_receipts == 1 && filters.stakeholder_name
                       ? '7%'
-                      : '11%',
+                      : '16%',
                 }}
               >
                 Product
@@ -215,7 +219,7 @@ function FuelVouchersReportPDF({
                       ? '21%'
                       : filters.with_receipts == 1 && filters.stakeholder_name
                         ? '7%'
-                        : '11%',
+                        : '16%',
                 }}
               >
                 Narration
@@ -343,7 +347,7 @@ function FuelVouchersReportPDF({
                             : filters.with_receipts == 1 &&
                                 filters.stakeholder_name
                               ? '11%'
-                              : '21%',
+                              : '11%',
                         textAlign: 'left',
                       }}
                     >
@@ -358,7 +362,7 @@ function FuelVouchersReportPDF({
                         width:
                           filters.with_receipts == 1 && filters.stakeholder_name
                             ? '7%'
-                            : '11%',
+                            : '16%',
                         textAlign: 'left',
                       }}
                     >
@@ -378,7 +382,7 @@ function FuelVouchersReportPDF({
                             : filters.with_receipts == 1 &&
                                 filters.stakeholder_name
                               ? '7%'
-                              : '11%',
+                              : '16%',
                         textAlign: 'left',
                       }}
                     >
@@ -397,7 +401,7 @@ function FuelVouchersReportPDF({
                         textAlign: 'right',
                       }}
                     >
-                      {rd.quantity.toLocaleString('en-US', {
+                      {rd.quantity?.toLocaleString('en-US', {
                         maximumFractionDigits: 2,
                         minimumFractionDigits: 2,
                       })}
@@ -412,7 +416,7 @@ function FuelVouchersReportPDF({
                         textAlign: 'right',
                       }}
                     >
-                      {rd.price.toLocaleString('en-US', {
+                      {rd.price?.toLocaleString('en-US', {
                         maximumFractionDigits: 2,
                         minimumFractionDigits: 2,
                       })}
@@ -428,11 +432,11 @@ function FuelVouchersReportPDF({
                       }}
                     >
                       {filters.with_receipts == 0
-                        ? rd.amount.toLocaleString('en-US', {
+                        ? rd.amount?.toLocaleString('en-US', {
                             maximumFractionDigits: 2,
                             minimumFractionDigits: 2,
                           })
-                        : rd.debit.toLocaleString('en-US', {
+                        : rd.debit?.toLocaleString('en-US', {
                             maximumFractionDigits: 2,
                             minimumFractionDigits: 2,
                           })}
@@ -484,7 +488,7 @@ function FuelVouchersReportPDF({
                         ...pdfStyles.tableCell,
                         backgroundColor: mainColor,
                         color: contrastText,
-                        width: '83%',
+                        width: '88%',
                       }}
                     >
                       TOTAL

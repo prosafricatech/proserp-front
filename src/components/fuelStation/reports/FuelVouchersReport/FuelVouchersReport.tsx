@@ -7,9 +7,9 @@ import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
 import StakeholderSelector from '@/components/masters/stakeholders/StakeholderSelector';
 import { faFileExcel } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { yupResolver } from '@hookform/resolvers/yup';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { Div, Span } from '@jumbo/shared';
+import { HighlightOff } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 import {
   Alert,
@@ -19,10 +19,13 @@ import {
   DialogTitle,
   FormControlLabel,
   Grid,
+  IconButton,
   LinearProgress,
+  Stack,
   Tab,
   Tabs,
   TextField,
+  Tooltip,
   Typography,
   useMediaQuery,
 } from '@mui/material';
@@ -30,8 +33,6 @@ import { DateTimePicker } from '@mui/x-date-pickers';
 import { useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import React, { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import * as yup from 'yup';
 import PDFContent from '../../../pdf/PDFContent';
 import fuelStationServices from '../../fuelStationServices';
 import FuelVouchersReportPDF from './FuelVouchersReportPDF';
@@ -50,7 +51,7 @@ interface Ledger {
   nature_id?: number;
 }
 
-interface ReportFilters {
+interface QueryParams {
   station_id: number | null;
   from: string | null;
   to: string | null;
@@ -59,29 +60,50 @@ interface ReportFilters {
   with_receipts?: 0 | 1;
 }
 
-interface ReportResponse {
-  report_data: any;
+interface PDFFilters {
+  from: string;
+  to: string;
+  stationName: string;
+  stakeholder_name: string;
+  expense_ledger_ids: number[] | null;
+  with_receipts: 0 | 1;
 }
 
-const validationSchema = yup.object({});
+interface fvPdfDialog {
+  closeDialog?: (value: boolean) => void;
+}
 
-const FuelVouchersReport: React.FC = () => {
+const FuelVouchersReport: React.FC<fvPdfDialog> = ({
+  closeDialog,
+}: fvPdfDialog) => {
   const css = useProsERPStyles();
   const { authUser, authOrganization } = useJumboAuth();
   const organization = authOrganization?.organization;
-  const [activeStation, setActiveStation] = useState<Station | null>(null);
-  const [activeLedgers, setActiveLedgers] = useState<Ledger[] | null>(null);
-  const [withReceipts, setWithReceipts] = useState(0);
-  const [reportData, setReportData] = useState<any>(null);
-  const [isFetching, setIsFetching] = useState<boolean>(false);
   const [isExporting, setIsExporting] = useState<boolean>(false);
-  const [filters, setFilters] = useState<any>(null);
-  const [pdfKey, setPdfKey] = useState(0);
   const [filterBy, setFilterBy] = useState<string>('');
-
   const [activeTab, setActiveTab] = useState(0);
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
+
+  // Query params for API call
+  const [queryParams, setQueryParams] = useState<QueryParams>({
+    station_id: null,
+    from: dayjs().startOf('day').toISOString(),
+    to: dayjs().endOf('day').toISOString(),
+    stakeholder_id: null,
+    expense_ledger_ids: null,
+    with_receipts: 0,
+  });
+
+  // Filters for PDF display
+  const [pdfFilters, setPdfFilters] = useState<PDFFilters>({
+    from: readableDate(dayjs().startOf('day')),
+    to: readableDate(dayjs().endOf('day')),
+    stationName: '',
+    stakeholder_name: '',
+    expense_ledger_ids: null,
+    with_receipts: 0,
+  });
 
   const { data: stations, isFetching: isFetchingStation } = useQuery<Station[]>(
     {
@@ -90,108 +112,54 @@ const FuelVouchersReport: React.FC = () => {
     }
   );
 
-  useEffect(() => {
-    if (stations?.length === 1) {
-      setActiveStation(stations[0]);
-    }
-  }, [stations]);
-
-  const {
-    setValue,
-    handleSubmit,
-    watch,
-    formState: { errors },
-  } = useForm<ReportFilters>({
-    resolver: yupResolver(validationSchema) as any,
-    defaultValues: {
-      station_id: null,
-      from: dayjs().startOf('day').toISOString(),
-      to: dayjs().endOf('day').toISOString(),
-      stakeholder_id: null,
-      expense_ledger_ids: null,
-      with_receipts: 0,
+  // Auto-fetch report when query params change
+  const { data: reportData, isFetching } = useQuery({
+    queryKey: ['fuelVouchersReport', queryParams],
+    queryFn: async () => {
+      const cleanFilters = Object.fromEntries(
+        Object.entries(queryParams).filter(
+          ([_, value]) => value !== null && value !== undefined
+        )
+      );
+      return await fuelStationServices.FuelVouchersReport(cleanFilters);
     },
+    enabled: !!queryParams.station_id,
+    refetchOnWindowFocus: false,
   });
 
-  const expenseLedgerId = watch('expense_ledger_ids');
-  const stakeholderId = watch('stakeholder_id');
-
+  // Set default station when stations load
   useEffect(() => {
-    if ((!expenseLedgerId || expenseLedgerId.length === 0) && !stakeholderId) {
+    if (stations?.length === 1 && !queryParams.station_id) {
+      setQueryParams((prev) => ({ ...prev, station_id: stations[0].id }));
+      setPdfFilters((prev) => ({ ...prev, stationName: stations[0].name }));
+    }
+  }, [stations, queryParams.station_id]);
+
+  // Update filterBy based on selected filters
+  useEffect(() => {
+    const hasExpenseLedgers =
+      queryParams.expense_ledger_ids &&
+      queryParams.expense_ledger_ids.length > 0;
+    const hasStakeholder = !!queryParams.stakeholder_id;
+
+    if (!hasExpenseLedgers && !hasStakeholder) {
       setFilterBy('');
-      setValue('with_receipts', 0);
-    } else if (
-      (!expenseLedgerId || expenseLedgerId.length === 0) &&
-      stakeholderId
-    ) {
+      setQueryParams((prev) => ({ ...prev, with_receipts: 0 }));
+      setPdfFilters((prev) => ({ ...prev, with_receipts: 0 }));
+    } else if (!hasExpenseLedgers && hasStakeholder) {
       setFilterBy('stakeholder');
-    } else if (!stakeholderId) {
+    } else if (!hasStakeholder) {
       setFilterBy('expense_ledger');
-      setValue('with_receipts', 0);
+      setQueryParams((prev) => ({ ...prev, with_receipts: 0 }));
+      setPdfFilters((prev) => ({ ...prev, with_receipts: 0 }));
     }
-  }, [expenseLedgerId, stakeholderId]);
+  }, [queryParams.expense_ledger_ids, queryParams.stakeholder_id]);
 
-  useEffect(() => {
-    if (activeStation) {
-      setValue('station_id', activeStation.id, {
-        shouldDirty: true,
-        shouldValidate: true,
-      });
-    }
-    if (activeLedgers) {
-      setValue(
-        'expense_ledger_ids',
-        activeLedgers.map((ledger) => ledger.id),
-        {
-          shouldDirty: true,
-          shouldValidate: true,
-        }
-      );
-    }
-  }, [activeStation, activeLedgers, setValue]);
-
-  useEffect(() => {
-    setFilters({
-      from: dayjs().toISOString(),
-      to: dayjs().toISOString(),
-      stationName: activeStation?.name || '',
-      stakeholder_name: '',
-      expense_ledger_ids: [],
-      with_receipts: 0,
-    });
-  }, []);
-
-  const retrieveReport = async (formFilters: ReportFilters) => {
-    setIsFetching(true);
-
-    const cleanFilters = Object.fromEntries(
-      Object.entries(formFilters).filter(
-        ([_, value]) => value !== null && value !== undefined
-      )
-    );
-
-    setFilters((prev: any) => ({
-      ...prev,
-      from: readableDate(dayjs(cleanFilters?.from)),
-      to: readableDate(dayjs(cleanFilters?.to)),
-      stationName: activeStation?.name,
-      with_receipts: withReceipts,
-    }));
-
-    const report: ReportResponse =
-      await fuelStationServices.FuelVouchersReport(cleanFilters);
-
-    setReportData(report);
-    setIsFetching(false);
-  };
-
-  const downloadFileName = `Fuel Vouchers Report ${readableDate(
-    dayjs(filters?.from)?.startOf('day')?.toISOString()
-  )}-${readableDate(dayjs(filters?.to)?.endOf('day')?.toISOString())}`;
+  const downloadFileName = `Fuel Vouchers Report ${pdfFilters.from}-${pdfFilters.to}`;
 
   const exportedData = {
     fuelVouchers: reportData,
-    filters: filters,
+    filters: pdfFilters,
   };
 
   const handlExcelExport = async (exportedData: any) => {
@@ -215,196 +183,206 @@ const FuelVouchersReport: React.FC = () => {
   return (
     <>
       <DialogTitle textAlign='center'>
-        <Typography variant='h4' fontWeight={600}>
-          Fuel Vouchers Report
-        </Typography>
+        <Stack
+          direction={'row'}
+          justifyContent={'center'}
+          alignItems={'center'}
+        >
+          <Typography variant='h4' fontWeight={600}>
+            Fuel Vouchers Report
+          </Typography>
+          {belowLargeScreen && (
+            <Tooltip title='Close'>
+              <IconButton
+                size='small'
+                sx={{ position: 'absolute', right: '20px', top: '10px' }}
+                onClick={() => closeDialog?.(false)}
+              >
+                <HighlightOff color='primary' />
+              </IconButton>
+            </Tooltip>
+          )}
+        </Stack>
 
         <Span className={css.hiddenOnPrint}>
-          <form autoComplete='off' onSubmit={handleSubmit(retrieveReport)}>
-            <Grid
-              container
-              spacing={2}
-              mt={2}
-              alignItems='center'
-              justifyContent='center'
-            >
-              <Grid size={{ xs: 12, md: 4 }}>
-                <DateTimePicker
-                  label='From'
-                  defaultValue={dayjs().startOf('day')}
-                  minDate={dayjs(organization?.recording_start_date)}
-                  slotProps={{
-                    textField: { size: 'small', fullWidth: true },
+          <Grid
+            container
+            spacing={2}
+            mt={2}
+            alignItems='center'
+            justifyContent='center'
+          >
+            <Grid size={{ xs: 12, md: 4 }}>
+              <DateTimePicker
+                label='From'
+                value={dayjs(queryParams.from)}
+                minDate={dayjs(organization?.recording_start_date)}
+                slotProps={{
+                  textField: { size: 'small', fullWidth: true },
+                }}
+                onChange={(newValue) => {
+                  const isoValue = newValue ? newValue.toISOString() : null;
+                  setQueryParams((prev) => ({ ...prev, from: isoValue }));
+                  setPdfFilters((prev) => ({
+                    ...prev,
+                    from: readableDate(newValue || dayjs()),
+                  }));
+                }}
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 4 }}>
+              <DateTimePicker
+                label='To'
+                value={dayjs(queryParams.to)}
+                minDate={dayjs(organization?.recording_start_date)}
+                slotProps={{
+                  textField: { size: 'small', fullWidth: true },
+                }}
+                onChange={(newValue) => {
+                  const isoValue = newValue ? newValue.toISOString() : null;
+                  setQueryParams((prev) => ({ ...prev, to: isoValue }));
+                  setPdfFilters((prev) => ({
+                    ...prev,
+                    to: readableDate(newValue || dayjs()),
+                  }));
+                }}
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Autocomplete<Station>
+                size='small'
+                options={stations ?? []}
+                getOptionLabel={(option) => option.name}
+                value={
+                  stations?.find((s) => s.id === queryParams.station_id) || null
+                }
+                isOptionEqualToValue={(option, value) => option.id === value.id}
+                onChange={(_, newValue) => {
+                  setQueryParams((prev) => ({
+                    ...prev,
+                    station_id: newValue?.id || null,
+                  }));
+                  setPdfFilters((prev) => ({
+                    ...prev,
+                    stationName: newValue?.name || '',
+                  }));
+                }}
+                renderInput={(params) => (
+                  <TextField {...params} label='Station' />
+                )}
+              />
+            </Grid>
+
+            {(filterBy === '' || filterBy === 'stakeholder') && (
+              <Grid
+                size={{
+                  xs: filterBy === '' ? 12 : 12,
+                  md: filterBy === '' ? 6 : 8,
+                }}
+              >
+                <StakeholderSelector
+                  label='Client'
+                  defaultValue={0}
+                  onChange={(newValue: any) => {
+                    setQueryParams((prev) => ({
+                      ...prev,
+                      stakeholder_id: newValue?.id || null,
+                    }));
+                    setPdfFilters((prev) => ({
+                      ...prev,
+                      stakeholder_name: newValue?.name || '',
+                    }));
                   }}
-                  onChange={(newValue) =>
-                    setValue('from', newValue ? newValue.toISOString() : null, {
-                      shouldDirty: true,
-                      shouldValidate: true,
-                    })
-                  }
                 />
               </Grid>
+            )}
 
+            {filterBy === 'stakeholder' && (
               <Grid size={{ xs: 12, md: 4 }}>
-                <DateTimePicker
-                  label='To'
-                  defaultValue={dayjs().endOf('day')}
-                  minDate={dayjs(organization?.recording_start_date)}
-                  slotProps={{
-                    textField: { size: 'small', fullWidth: true },
-                  }}
-                  onChange={(newValue) =>
-                    setValue('to', newValue ? newValue.toISOString() : null, {
-                      shouldDirty: true,
-                      shouldValidate: true,
-                    })
-                  }
-                />
-              </Grid>
-
-              <Grid size={{ xs: 12, md: 4 }}>
-                <Autocomplete<Station>
-                  size='small'
-                  options={stations ?? []}
-                  getOptionLabel={(option) => option.name}
-                  value={activeStation}
-                  isOptionEqualToValue={(option, value) =>
-                    option.id === value.id
-                  }
-                  onChange={(_, newValue) => {
-                    setActiveStation(newValue);
-                  }}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label='Station'
-                      error={!!errors.station_id}
-                      helperText={errors.station_id?.message}
-                    />
-                  )}
-                />
-              </Grid>
-
-              {(filterBy === '' || filterBy === 'stakeholder') && (
-                <Grid
-                  size={{
-                    xs: filterBy === '' ? 12 : 8,
-                    md: filterBy === '' ? 6 : 8,
-                  }}
-                >
-                  <StakeholderSelector
-                    label='Client'
-                    defaultValue={0}
-                    onChange={(newValue: any) => {
-                      setValue('stakeholder_id', newValue?.id, {
-                        shouldDirty: true,
-                        shouldValidate: true,
-                      });
-                      setFilters((prev: any) => ({
-                        ...prev,
-                        stakeholder_name: newValue?.name || '',
-                      }));
-                    }}
-                  />
-                </Grid>
-              )}
-
-              {filterBy === 'stakeholder' && (
-                <Grid size={{ xs: 4, md: 4 }}>
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        defaultChecked={false}
-                        onChange={(e) => {
-                          setValue('with_receipts', e.target.checked ? 1 : 0);
-                          setFilters((prev: any) => ({
-                            ...prev,
-                            with_receipts: e.target.checked ? 1 : 0,
-                          }));
-                          setWithReceipts(e.target.checked ? 1 : 0);
-                        }}
-                      />
-                    }
-                    label='With Receipts'
-                  />
-                </Grid>
-              )}
-
-              {(filterBy === '' || filterBy === 'expense_ledger') && (
-                <Grid size={{ xs: 12, md: filterBy === '' ? 6 : 12 }}>
-                  <Div>
-                    <LedgerSelect
-                      label={'Expense'}
-                      allowedGroups={['Expenses']}
-                      multiple={true}
-                      defaultValue={[]}
-                      onChange={(newValue: any) => {
-                        setValue(
-                          'expense_ledger_ids',
-                          newValue.length > 0 && newValue
-                            ? newValue.map((ledger: Ledger) => ledger.id)
-                            : null,
-                          {
-                            shouldValidate: true,
-                            shouldDirty: true,
-                          }
-                        );
-
-                        setFilters((prev: any) => ({
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={queryParams.with_receipts === 1}
+                      onChange={(e) => {
+                        const value = e.target.checked ? 1 : 0;
+                        setQueryParams((prev) => ({
                           ...prev,
-                          expense_ledger_ids:
-                            newValue.length > 0 && newValue
-                              ? newValue.map((ledger: Ledger) => ledger.id)
-                              : null,
+                          with_receipts: value as 0 | 1,
+                        }));
+                        setPdfFilters((prev) => ({
+                          ...prev,
+                          with_receipts: value as 0 | 1,
                         }));
                       }}
                     />
-                  </Div>
-                </Grid>
-              )}
+                  }
+                  label='With Receipts'
+                />
+              </Grid>
+            )}
 
-              <Grid
-                size={{ xs: 12 }}
-                textAlign='right'
+            {(filterBy === '' || filterBy === 'expense_ledger') && (
+              <Grid size={{ xs: 12, md: filterBy === '' ? 6 : 12 }}>
+                <Div>
+                  <LedgerSelect
+                    label={'Expense'}
+                    allowedGroups={['Expenses']}
+                    multiple={true}
+                    defaultValue={[]}
+                    onChange={(newValue: any) => {
+                      const ledgerIds =
+                        newValue.length > 0
+                          ? newValue.map((ledger: Ledger) => ledger.id)
+                          : null;
+                      setQueryParams((prev) => ({
+                        ...prev,
+                        expense_ledger_ids: ledgerIds,
+                      }));
+                      setPdfFilters((prev) => ({
+                        ...prev,
+                        expense_ledger_ids: ledgerIds,
+                      }));
+                    }}
+                  />
+                </Div>
+              </Grid>
+            )}
+
+            <Grid
+              size={{ xs: 12 }}
+              textAlign='right'
+              sx={{
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'end',
+                gap: 1,
+              }}
+            >
+              <LoadingButton
+                size='small'
+                onClick={() => handlExcelExport(exportedData)}
+                disabled={
+                  !reportData ||
+                  reportData?.length < 1 ||
+                  isExporting ||
+                  isFetching
+                }
+                loading={isExporting}
                 sx={{
                   display: 'flex',
-                  flexDirection: 'row',
                   alignItems: 'center',
-                  justifyContent: 'end',
                   gap: 1,
                 }}
+                color='primary'
+                variant='outlined'
               >
-                <LoadingButton
-                  size='small'
-                  onClick={() => handlExcelExport(exportedData)}
-                  disabled={
-                    !reportData ||
-                    reportData?.length < 1 ||
-                    isExporting ||
-                    isFetching
-                  }
-                  loading={isExporting}
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1,
-                  }}
-                  color='primary'
-                  variant='outlined'
-                >
-                  <FontAwesomeIcon icon={faFileExcel} color='green' /> Excel
-                </LoadingButton>
-                <LoadingButton
-                  loading={isFetching}
-                  type='submit'
-                  size='small'
-                  variant='contained'
-                >
-                  Filter
-                </LoadingButton>
-              </Grid>
+                <FontAwesomeIcon icon={faFileExcel} color='green' /> Excel
+              </LoadingButton>
             </Grid>
-          </form>
+          </Grid>
         </Span>
       </DialogTitle>
 
@@ -421,13 +399,12 @@ const FuelVouchersReport: React.FC = () => {
             )}
             {activeTab === 0 && (
               <PDFContent
-                key={pdfKey}
                 fileName={downloadFileName}
                 document={
                   <FuelVouchersReportPDF
                     reportData={reportData}
                     organization={organization}
-                    filters={filters}
+                    filters={pdfFilters}
                   />
                 }
               />
