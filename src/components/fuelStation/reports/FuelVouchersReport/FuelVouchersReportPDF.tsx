@@ -135,7 +135,10 @@ function FuelVouchersReportPDF({
                   ...pdfStyles.tableHeader,
                   backgroundColor: mainColor,
                   color: contrastText,
-                  width: '7%',
+                  width:
+                    filters.with_receipts == 1 && filters.stakeholder_name
+                      ? '7%'
+                      : '13%',
                 }}
               >
                 Date
@@ -147,8 +150,8 @@ function FuelVouchersReportPDF({
                   color: contrastText,
                   width:
                     filters.with_receipts == 1 && filters.stakeholder_name
-                      ? '7%'
-                      : '11%',
+                      ? '9%'
+                      : '17%',
                 }}
               >
                 Voucher No
@@ -182,14 +185,7 @@ function FuelVouchersReportPDF({
                   ...pdfStyles.tableHeader,
                   backgroundColor: mainColor,
                   color: contrastText,
-                  width:
-                    filters.stakeholder_name === '' &&
-                    (filters.expense_ledger_ids?.length !== 1 ||
-                      !filters.expense_ledger_ids)
-                      ? '11%'
-                      : filters.with_receipts == 1 && filters.stakeholder_name
-                        ? '11%'
-                        : '11%',
+                  width: '11%',
                 }}
               >
                 Reference
@@ -201,7 +197,7 @@ function FuelVouchersReportPDF({
                   color: contrastText,
                   width:
                     filters.with_receipts == 1 && filters.stakeholder_name
-                      ? '7%'
+                      ? '17%'
                       : '16%',
                 }}
               >
@@ -218,7 +214,7 @@ function FuelVouchersReportPDF({
                       !filters.expense_ledger_ids)
                       ? '21%'
                       : filters.with_receipts == 1 && filters.stakeholder_name
-                        ? '7%'
+                        ? '17%'
                         : '16%',
                 }}
               >
@@ -293,7 +289,10 @@ function FuelVouchersReportPDF({
                         ...pdfStyles.tableCell,
                         backgroundColor:
                           index % 2 === 0 ? '#FFFFFF' : lightColor,
-                        width: '7%',
+                        width:
+                          filters.with_receipts == 1 && filters.stakeholder_name
+                            ? '7%'
+                            : '13%',
                       }}
                     >
                       {dayjs(rd.transaction_date).format('DD-MM-YYYY')}
@@ -306,8 +305,8 @@ function FuelVouchersReportPDF({
                           index % 2 === 0 ? '#FFFFFF' : lightColor,
                         width:
                           filters.with_receipts == 1 && filters.stakeholder_name
-                            ? '7%'
-                            : '11%',
+                            ? '9%'
+                            : '17%',
                         textAlign: 'left',
                       }}
                     >
@@ -339,15 +338,7 @@ function FuelVouchersReportPDF({
                         ...pdfStyles.tableCell,
                         backgroundColor:
                           index % 2 === 0 ? '#FFFFFF' : lightColor,
-                        width:
-                          filters.stakeholder_name === '' &&
-                          (filters.expense_ledger_ids?.length !== 1 ||
-                            !filters.expense_ledger_ids)
-                            ? '11%'
-                            : filters.with_receipts == 1 &&
-                                filters.stakeholder_name
-                              ? '11%'
-                              : '11%',
+                        width: '11%',
                         textAlign: 'left',
                       }}
                     >
@@ -361,7 +352,7 @@ function FuelVouchersReportPDF({
                           index % 2 === 0 ? '#FFFFFF' : lightColor,
                         width:
                           filters.with_receipts == 1 && filters.stakeholder_name
-                            ? '7%'
+                            ? '17%'
                             : '16%',
                         textAlign: 'left',
                       }}
@@ -381,7 +372,7 @@ function FuelVouchersReportPDF({
                             ? '21%'
                             : filters.with_receipts == 1 &&
                                 filters.stakeholder_name
-                              ? '7%'
+                              ? '17%'
                               : '16%',
                         textAlign: 'left',
                       }}
@@ -488,7 +479,7 @@ function FuelVouchersReportPDF({
                         ...pdfStyles.tableCell,
                         backgroundColor: mainColor,
                         color: contrastText,
-                        width: '88%',
+                        width: '100%',
                       }}
                     >
                       TOTAL
@@ -505,8 +496,8 @@ function FuelVouchersReportPDF({
                       color: contrastText,
                       width:
                         filters.with_receipts == 1 && filters.stakeholder_name
-                          ? '39.5%'
-                          : '61.5%',
+                          ? '61.5%'
+                          : '73.5%',
                     }}
                   >
                     TOTAL

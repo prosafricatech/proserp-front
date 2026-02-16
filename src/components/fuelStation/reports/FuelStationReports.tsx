@@ -46,6 +46,7 @@ const FuelStationReports: React.FC = () => {
         <Dialog
           scroll={belowLargeScreen ? 'body' : 'paper'}
           fullScreen={belowLargeScreen}
+          fullWidth
           maxWidth='xl'
           open={openReportDialog}
           onClose={() => setOpenReportDialog(false)}

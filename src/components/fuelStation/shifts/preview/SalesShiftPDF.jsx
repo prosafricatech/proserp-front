@@ -706,6 +706,7 @@ function SalesShiftPDF({
                             color: 'black',
                             width: '70%',
                             fontWeight: 'bold',
+                            fontSize: '.7rem',
                           }}
                         >
                           Cash Collected
@@ -718,21 +719,52 @@ function SalesShiftPDF({
                             width: '30%',
                             textAlign: 'right',
                             fontWeight: 'bold',
+                            fontSize: '.7rem',
                           }}
                         >
-                          {cashier.collected_amount.toLocaleString('en-US', {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}{' '}
+                          {(cashier.collected_amount || 0).toLocaleString(
+                            'en-US',
+                            {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            }
+                          )}
+                        </Text>
+                      </View>
+                      <View style={{ ...pdfStyles.tableRow, marginTop: 2 }}>
+                        <Text
+                          style={{
+                            ...pdfStyles.tableHeader,
+                            ...pdfStyles.tableCell,
+                            backgroundColor: lightColor,
+                            color: 'black',
+                            width: '70%',
+                            fontWeight: 'bold',
+                            fontSize: '.7rem',
+                          }}
+                        >
+                          Short/Over
+                        </Text>
+                        <Text
+                          style={{
+                            ...pdfStyles.tableHeader,
+                            ...pdfStyles.tableCell,
+                            backgroundColor: lightColor,
+                            width: '30%',
+                            textAlign: 'right',
+                            fontWeight: 'bold',
+                            fontSize: '.7rem',
+                          }}
+                        >
                           {shortOrOver > 0
-                            ? `(+${shortOrOver.toLocaleString('en-US', {
+                            ? `+${shortOrOver.toLocaleString('en-US', {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2,
-                              })} ${' '} over`
-                            : `(${shortOrOver.toLocaleString('en-US', {
+                              })}`
+                            : `${shortOrOver.toLocaleString('en-US', {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2,
-                              })} ${' '} short)`}
+                              })}`}
                         </Text>
                       </View>
                     </View>

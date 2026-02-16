@@ -1954,29 +1954,15 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
               // Cash Collected
               let shortOverVal;
               if (shortOrOver > 0) {
-                shortOverVal =
-                  (cashier.collected_amount || 0).toLocaleString('en-US', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  }) +
-                  ' (+' +
-                  shortOrOver.toLocaleString('en-US', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  }) +
-                  ' over)';
+                shortOverVal = shortOrOver.toLocaleString('en-US', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                });
               } else {
-                shortOverVal =
-                  (cashier.collected_amount || 0).toLocaleString('en-US', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  }) +
-                  ' (' +
-                  shortOrOver.toLocaleString('en-US', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  }) +
-                  ' short)';
+                shortOverVal = shortOrOver.toLocaleString('en-US', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                });
               }
               ws.mergeCells(
                 `A${distributionTotalsRow + 1}:E${distributionTotalsRow + 1}`
@@ -1989,7 +1975,7 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
               };
               ws.getCell(`A${distributionTotalsRow + 1}`).font = {
                 bold: true,
-                size: 11,
+                size: 14,
               };
               ws.getCell(`A${distributionTotalsRow + 1}`).fill = {
                 type: 'pattern',
@@ -2006,14 +1992,19 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
               ws.mergeCells(
                 `F${distributionTotalsRow + 1}:G${distributionTotalsRow + 1}`
               );
-              ws.getCell(`F${distributionTotalsRow + 1}`).value = shortOverVal;
+              ws.getCell(`F${distributionTotalsRow + 1}`).value = (
+                cashier.collected_amount || 0
+              ).toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              });
               ws.getCell(`F${distributionTotalsRow + 1}`).alignment = {
                 horizontal: 'right',
                 vertical: 'middle',
               };
               ws.getCell(`F${distributionTotalsRow + 1}`).font = {
                 bold: true,
-                size: 11,
+                size: 14,
               };
               ws.getCell(`F${distributionTotalsRow + 1}`).fill = {
                 type: 'pattern',
@@ -2021,6 +2012,55 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
                 fgColor: { argb: 'FFD9D9D9' },
               };
               ws.getCell(`F${distributionTotalsRow + 1}`).border = {
+                top: { style: 'thin', color: { argb: 'FF000000' } },
+                bottom: { style: 'thin', color: { argb: 'FF000000' } },
+                left: { style: 'thin', color: { argb: 'FF000000' } },
+                right: { style: 'thin', color: { argb: 'FF000000' } },
+              };
+
+              // SHORT / OVER
+              ws.mergeCells(
+                `A${distributionTotalsRow + 2}:E${distributionTotalsRow + 2}`
+              );
+              ws.getCell(`A${distributionTotalsRow + 2}`).value = 'Short/Over';
+              ws.getCell(`A${distributionTotalsRow + 2}`).alignment = {
+                horizontal: 'left',
+                vertical: 'middle',
+              };
+              ws.getCell(`A${distributionTotalsRow + 2}`).font = {
+                bold: true,
+                size: 14,
+              };
+              ws.getCell(`A${distributionTotalsRow + 2}`).fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FFD9D9D9' },
+              };
+              ws.getCell(`A${distributionTotalsRow + 2}`).border = {
+                top: { style: 'thin', color: { argb: 'FF000000' } },
+                bottom: { style: 'thin', color: { argb: 'FF000000' } },
+                left: { style: 'thin', color: { argb: 'FF000000' } },
+                right: { style: 'thin', color: { argb: 'FF000000' } },
+              };
+
+              ws.mergeCells(
+                `F${distributionTotalsRow + 2}:G${distributionTotalsRow + 2}`
+              );
+              ws.getCell(`F${distributionTotalsRow + 2}`).value = shortOverVal;
+              ws.getCell(`F${distributionTotalsRow + 2}`).alignment = {
+                horizontal: 'right',
+                vertical: 'middle',
+              };
+              ws.getCell(`F${distributionTotalsRow + 2}`).font = {
+                bold: true,
+                size: 14,
+              };
+              ws.getCell(`F${distributionTotalsRow + 2}`).fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FFD9D9D9' },
+              };
+              ws.getCell(`F${distributionTotalsRow + 2}`).border = {
                 top: { style: 'thin', color: { argb: 'FF000000' } },
                 bottom: { style: 'thin', color: { argb: 'FF000000' } },
                 left: { style: 'thin', color: { argb: 'FF000000' } },

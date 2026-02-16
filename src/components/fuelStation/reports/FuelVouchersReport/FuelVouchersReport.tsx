@@ -376,8 +376,8 @@ const FuelVouchersReport: React.FC<fvPdfDialog> = ({
                   alignItems: 'center',
                   gap: 1,
                 }}
-                color='primary'
-                variant='outlined'
+                color='success'
+                variant='contained'
               >
                 <FontAwesomeIcon icon={faFileExcel} color='green' /> Excel
               </LoadingButton>
