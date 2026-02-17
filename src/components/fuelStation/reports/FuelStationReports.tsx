@@ -101,7 +101,7 @@ const FuelStationReports: React.FC = () => {
                 icon={faReceipt}
                 style={{ fontSize: '48px' }}
               />
-              <Typography mt={1}>Fuel Vouchers</Typography>
+              <Typography mt={1}>FV Report</Typography>
             </Grid>
           </Grid>
         </JumboCardQuick>
