@@ -15,7 +15,9 @@ import React, {
   useEffect,
   useState,
 } from 'react';
+import LedgerSelectProvider from '../accounts/ledgers/forms/LedgerSelectProvider';
 import { CostCenter } from '../masters/costCenters/CostCenterType';
+import StakeholderSelectProvider from '../masters/stakeholders/StakeholderSelectProvider';
 import QuickLinks from './QuickLinks';
 
 const OrganizationCalendar = lazy(() => import('./OrganizationCalendar'));
@@ -254,7 +256,11 @@ function Dashboard() {
                 PERMISSIONS.SALES_REPORTS,
               ]) && (
                 <Grid size={{ xs: 12 }} textAlign={'center'}>
-                  <QuickReports />
+                  <StakeholderSelectProvider>
+                    <LedgerSelectProvider>
+                      <QuickReports />
+                    </LedgerSelectProvider>
+                  </StakeholderSelectProvider>
                 </Grid>
               )}
           </Grid>

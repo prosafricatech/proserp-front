@@ -123,8 +123,8 @@ const FuelVouchersReport: React.FC<fvPdfDialog> = ({
   // Query params for API call - only updated on form submission
   const [queryParams, setQueryParams] = useState<QueryParams>({
     station_id: null,
-    from: dayjs().startOf('day').toISOString(),
-    to: dayjs().endOf('day').toISOString(),
+    from: dayjs().toISOString(),
+    to: dayjs().toISOString(),
     stakeholder_id: null,
     expense_ledger_ids: null,
     with_receipts: 0,
@@ -132,8 +132,8 @@ const FuelVouchersReport: React.FC<fvPdfDialog> = ({
 
   // Filters for PDF display
   const [pdfFilters, setPdfFilters] = useState<PDFFilters>({
-    from: readableDate(dayjs().startOf('day')),
-    to: readableDate(dayjs().endOf('day')),
+    from: readableDate(dayjs()),
+    to: readableDate(dayjs()),
     stationName: '',
     stakeholder_name: '',
     expense_ledger_ids: null,
@@ -144,8 +144,8 @@ const FuelVouchersReport: React.FC<fvPdfDialog> = ({
   const { control, handleSubmit, watch, setValue } = useForm<FilterFormValues>({
     resolver: yupResolver(filterSchema),
     defaultValues: {
-      from: dayjs().startOf('day'),
-      to: dayjs().endOf('day'),
+      from: dayjs(),
+      to: dayjs(),
       station: null,
       stakeholder: null,
       expense_ledgers: [],
@@ -176,12 +176,8 @@ const FuelVouchersReport: React.FC<fvPdfDialog> = ({
   });
 
   // Watch all form values for auto-refetch and filterBy updates
-  const watchFrom = watch('from');
-  const watchTo = watch('to');
-  const watchStation = watch('station');
   const watchStakeholder = watch('stakeholder');
   const watchExpenseLedgers = watch('expense_ledgers');
-  const watchWithReceipts = watch('with_receipts');
 
   // Update filterBy based on form values
   useEffect(() => {
@@ -199,26 +195,6 @@ const FuelVouchersReport: React.FC<fvPdfDialog> = ({
       setValue('with_receipts', false);
     }
   }, [watchExpenseLedgers, watchStakeholder, setValue]);
-
-  // Auto-refetch when any filter changes (restore original behavior)
-  useEffect(() => {
-    const formData: FilterFormValues = {
-      from: watchFrom,
-      to: watchTo,
-      station: watchStation,
-      stakeholder: watchStakeholder,
-      expense_ledgers: watchExpenseLedgers,
-      with_receipts: watchWithReceipts,
-    };
-    onSubmit(formData);
-  }, [
-    watchFrom,
-    watchTo,
-    watchStation,
-    watchStakeholder,
-    watchExpenseLedgers,
-    watchWithReceipts,
-  ]);
 
   // Form submission handler
   const onSubmit = (data: FilterFormValues) => {
