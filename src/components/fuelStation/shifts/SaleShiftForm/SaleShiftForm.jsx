@@ -58,45 +58,34 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
   const [lastClosingReadings, setLastClosingReadings] = useState({});
   const [lastClosingDipping, setLastClosingDipping] = useState([]);
 
-  const { mutate: addSalesShifts, isPending } = useMutation({
+  const isAutoSavingRef = React.useRef(false);
+  const AUTO_SAVE_INTERVAL = 1 * 60 * 1000; // 1 minute
+
+  const addMutation = useMutation({
     mutationFn: fuelStationServices.addSalesShifts,
     onSuccess: (data) => {
-      setOpenDialog(false);
-      enqueueSnackbar(data.message, { variant: 'success' });
-      queryClient.invalidateQueries({ queryKey: ['salesShifts'] });
-    },
-    onError: (error) => {
-      let message = 'Something went wrong';
-      if (typeof error === 'object' && error !== null && 'response' in error && typeof error.response?.data?.message === 'string') {
-        message = error.response.data.message;
-      } else if (error instanceof Error) {
-        message = error.message;
+      // ❌ NO setOpenDialog here
+      // ❌ NO snackbar here
+
+      if (data?.id) {
+        setValue('id', data.id); // 🔑 convert autosave → update
       }
-      enqueueSnackbar(message, { variant: 'error' });
+
+      queryClient.invalidateQueries({ queryKey: ['salesShifts'] });
     },
   });
 
-  const { mutate: updateSalesShifts, isPending: updateLoading } = useMutation({
+  const updateMutation = useMutation({
     mutationFn: fuelStationServices.updateSalesShifts,
-    onSuccess: (data) => {
-      setOpenDialog(false);
-      enqueueSnackbar(data.message, { variant: 'success' });
+    onSuccess: () => {
+      // ❌ no UI here
       queryClient.invalidateQueries({ queryKey: ['salesShifts'] });
-    },
-    onError: (error) => {
-      let message = 'Something went wrong';
-      if (typeof error === 'object' && error !== null && 'response' in error && typeof error.response?.data?.message === 'string') {
-        message = error.response.data.message;
-      } else if (error instanceof Error) {
-        message = error.message;
-      }
-      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 
-  const saveMutation = React.useMemo(() => {
-    return SalesShift?.id ? updateSalesShifts : addSalesShifts;
-  }, [SalesShift, addSalesShifts, updateSalesShifts]);
+  const saveAsync = SalesShift?.id
+    ? updateMutation.mutateAsync
+    : addMutation.mutateAsync;
 
   const validationSchema = yup.object({
     sales_outlet_shift_id: yup.number().required('Sales Outlet Shift is required').typeError('Sales Outlet Shift must be a number'),
@@ -562,7 +551,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
     );
   };
 
-    // Retrieve product prices for the station at a specific date/time
+  // Retrieve product prices for the station at a specific date/time
   const retrieveProductPrices = useCallback(async (as_at) => {
     try {
       const product_ids = Array.from(new Set((fuel_pumps || []).map(p => p.product_id)));
@@ -592,7 +581,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
     return cashierLedgers[cashierIndex] || [];
   };
 
-  const handleSubmitForm = async (data) => {
+  const handleSubmitForm = async (data, options = { silent: false }) => {
       const allProductIds = (activeStation.products || []).map(p => p.id);
       const pricedProductIds = (data.product_prices || []).map(p => p.product_id);
       const missingPriceProducts = allProductIds.filter(pid => !pricedProductIds.includes(pid));
@@ -683,8 +672,33 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
         : [],
     }));
     data.payments_received = paymentItems;
-    await saveMutation(data);
+
+    await saveAsync(data);
+
+    if (!options.silent) {
+      enqueueSnackbar('Saved successfully', { variant: 'success' });
+      setOpenDialog(false);
+    }
   };
+
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      isAutoSavingRef.current = true;
+
+      const isValid = await trigger();
+      if (!isValid) {
+        isAutoSavingRef.current = false;
+        return;
+      }
+
+      const data = watch();
+      await handleSubmitForm(data, { silent: true });
+
+      isAutoSavingRef.current = false;
+    }, AUTO_SAVE_INTERVAL);
+
+    return () => clearInterval(interval);
+  }, [trigger, watch]);
 
   return (
     <FormProvider {...{
@@ -992,7 +1006,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
           </Button>
         )}
         <LoadingButton
-          loading={isPending || updateLoading}
+          loading={addMutation.isPending || updateMutation.isPending}
           size='small'
           variant='contained'
           onClick={() => setShowHoldDialog(true)}
@@ -1014,10 +1028,11 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
               Cancel
             </Button>
             <LoadingButton
-              loading={isPending || updateLoading}
+              loading={addMutation.isPending || updateMutation.isPending}
               variant="contained"
               color="warning"
               onClick={(e) => {
+                isAutoSavingRef.current = false;
                 setShowHoldDialog(false);
                 setValue('submit_type', 'suspend');
                 handleSubmit(handleSubmitForm)(e);
@@ -1031,11 +1046,12 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
           <>
             {checkOrganizationPermission([PERMISSIONS.FUEL_SALES_SHIFT_CLOSE]) && (
               <LoadingButton
-                loading={isPending || updateLoading}
+                loading={addMutation.isPending || updateMutation.isPending}
                 size='small'
                 variant='contained'
                 color='success'
                 onClick={(e) => {
+                  isAutoSavingRef.current = false;
                   setValue('submit_type', 'close');
                   handleSubmit(handleSubmitForm)(e);
                 }}
