@@ -107,6 +107,8 @@ function QuickReports() {
           openSalesManifest ||
           openCashierReport
             ? 'lg'
+            : fuelVouchersDialogOpen
+            ? 'xl'
             : 'md'
         }
         fullScreen={belowLargeScreen}
