@@ -7,6 +7,7 @@ import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
 import StakeholderSelector from '@/components/masters/stakeholders/StakeholderSelector';
 import { faFileExcel } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { yupResolver } from '@hookform/resolvers/yup';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { Div, Span } from '@jumbo/shared';
 import { HighlightOff } from '@mui/icons-material';
@@ -31,8 +32,10 @@ import {
 } from '@mui/material';
 import { DateTimePicker } from '@mui/x-date-pickers';
 import { useQuery } from '@tanstack/react-query';
-import dayjs from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 import React, { useEffect, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import * as yup from 'yup';
 import PDFContent from '../../../pdf/PDFContent';
 import fuelStationServices from '../../fuelStationServices';
 import FuelVouchersReportPDF from './FuelVouchersReportPDF';
@@ -73,6 +76,38 @@ interface fvPdfDialog {
   closeDialog?: (value: boolean) => void;
 }
 
+interface FilterFormValues {
+  from: Dayjs;
+  to: Dayjs;
+  station: Station | null;
+  stakeholder?: any;
+  expense_ledgers: Ledger[];
+  with_receipts: boolean;
+}
+
+// Validation schema
+const filterSchema: yup.ObjectSchema<FilterFormValues> = yup.object().shape({
+  from: yup
+    .mixed<Dayjs>()
+    .required('From date is required')
+    .test('is-dayjs', 'Invalid date', (value) => dayjs.isDayjs(value)),
+  to: yup
+    .mixed<Dayjs>()
+    .required('To date is required')
+    .test('is-dayjs', 'Invalid date', (value) => dayjs.isDayjs(value))
+    .test('is-after-from', 'To date must be after From date', function (value) {
+      const { from } = this.parent;
+      if (!from || !value) return true;
+      return (
+        dayjs(value).isAfter(dayjs(from)) || dayjs(value).isSame(dayjs(from))
+      );
+    }),
+  station: yup.mixed<Station>().nullable(),
+  stakeholder: yup.mixed<any>().nullable().default(null),
+  expense_ledgers: yup.array().of(yup.mixed<Ledger>().required()).default([]),
+  with_receipts: yup.boolean().default(false),
+}) as yup.ObjectSchema<FilterFormValues>;
+
 const FuelVouchersReport: React.FC<fvPdfDialog> = ({
   closeDialog,
 }: fvPdfDialog) => {
@@ -85,7 +120,7 @@ const FuelVouchersReport: React.FC<fvPdfDialog> = ({
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
-  // Query params for API call
+  // Query params for API call - only updated on form submission
   const [queryParams, setQueryParams] = useState<QueryParams>({
     station_id: null,
     from: dayjs().startOf('day').toISOString(),
@@ -105,6 +140,19 @@ const FuelVouchersReport: React.FC<fvPdfDialog> = ({
     with_receipts: 0,
   });
 
+  // Initialize react-hook-form with validation
+  const { control, handleSubmit, watch, setValue } = useForm<FilterFormValues>({
+    resolver: yupResolver(filterSchema),
+    defaultValues: {
+      from: dayjs().startOf('day'),
+      to: dayjs().endOf('day'),
+      station: null,
+      stakeholder: null,
+      expense_ledgers: [],
+      with_receipts: false,
+    },
+  });
+
   const { data: stations, isFetching: isFetchingStation } = useQuery<Station[]>(
     {
       queryKey: ['userStations', { userId: authUser?.user?.id }],
@@ -112,7 +160,7 @@ const FuelVouchersReport: React.FC<fvPdfDialog> = ({
     }
   );
 
-  // Auto-fetch report when query params change
+  // Fetch report only when queryParams change (triggered by form submission)
   const { data: reportData, isFetching } = useQuery({
     queryKey: ['fuelVouchersReport', queryParams],
     queryFn: async () => {
@@ -123,37 +171,83 @@ const FuelVouchersReport: React.FC<fvPdfDialog> = ({
       );
       return await fuelStationServices.FuelVouchersReport(cleanFilters);
     },
-    enabled: !!queryParams.station_id,
+    enabled: true,
     refetchOnWindowFocus: false,
   });
 
-  // Set default station when stations load
-  useEffect(() => {
-    if (stations?.length === 1 && !queryParams.station_id) {
-      setQueryParams((prev) => ({ ...prev, station_id: stations[0].id }));
-      setPdfFilters((prev) => ({ ...prev, stationName: stations[0].name }));
-    }
-  }, [stations, queryParams.station_id]);
+  // Watch all form values for auto-refetch and filterBy updates
+  const watchFrom = watch('from');
+  const watchTo = watch('to');
+  const watchStation = watch('station');
+  const watchStakeholder = watch('stakeholder');
+  const watchExpenseLedgers = watch('expense_ledgers');
+  const watchWithReceipts = watch('with_receipts');
 
-  // Update filterBy based on selected filters
+  // Update filterBy based on form values
   useEffect(() => {
     const hasExpenseLedgers =
-      queryParams.expense_ledger_ids &&
-      queryParams.expense_ledger_ids.length > 0;
-    const hasStakeholder = !!queryParams.stakeholder_id;
+      watchExpenseLedgers && watchExpenseLedgers.length > 0;
+    const hasStakeholder = !!watchStakeholder;
 
     if (!hasExpenseLedgers && !hasStakeholder) {
       setFilterBy('');
-      setQueryParams((prev) => ({ ...prev, with_receipts: 0 }));
-      setPdfFilters((prev) => ({ ...prev, with_receipts: 0 }));
+      setValue('with_receipts', false);
     } else if (!hasExpenseLedgers && hasStakeholder) {
       setFilterBy('stakeholder');
     } else if (!hasStakeholder) {
       setFilterBy('expense_ledger');
-      setQueryParams((prev) => ({ ...prev, with_receipts: 0 }));
-      setPdfFilters((prev) => ({ ...prev, with_receipts: 0 }));
+      setValue('with_receipts', false);
     }
-  }, [queryParams.expense_ledger_ids, queryParams.stakeholder_id]);
+  }, [watchExpenseLedgers, watchStakeholder, setValue]);
+
+  // Auto-refetch when any filter changes (restore original behavior)
+  useEffect(() => {
+    const formData: FilterFormValues = {
+      from: watchFrom,
+      to: watchTo,
+      station: watchStation,
+      stakeholder: watchStakeholder,
+      expense_ledgers: watchExpenseLedgers,
+      with_receipts: watchWithReceipts,
+    };
+    onSubmit(formData);
+  }, [
+    watchFrom,
+    watchTo,
+    watchStation,
+    watchStakeholder,
+    watchExpenseLedgers,
+    watchWithReceipts,
+  ]);
+
+  // Form submission handler
+  const onSubmit = (data: FilterFormValues) => {
+    // Update query params to trigger API call
+    setQueryParams({
+      station_id: data.station?.id || null,
+      from: data.from.toISOString(),
+      to: data.to.toISOString(),
+      stakeholder_id: data.stakeholder?.id || null,
+      expense_ledger_ids:
+        data.expense_ledgers.length > 0
+          ? data.expense_ledgers.map((ledger) => ledger.id)
+          : null,
+      with_receipts: data.with_receipts ? 1 : 0,
+    });
+
+    // Update PDF filters
+    setPdfFilters({
+      from: readableDate(data.from),
+      to: readableDate(data.to),
+      stationName: data.station?.name || '',
+      stakeholder_name: data.stakeholder?.name || '',
+      expense_ledger_ids:
+        data.expense_ledgers.length > 0
+          ? data.expense_ledgers.map((ledger) => ledger.id)
+          : null,
+      with_receipts: data.with_receipts ? 1 : 0,
+    });
+  };
 
   const downloadFileName = `Fuel Vouchers Report ${pdfFilters.from}-${pdfFilters.to}`;
 
@@ -205,184 +299,193 @@ const FuelVouchersReport: React.FC<fvPdfDialog> = ({
         </Stack>
 
         <Span className={css.hiddenOnPrint}>
-          <Grid
-            container
-            spacing={2}
-            mt={2}
-            alignItems='center'
-            justifyContent='center'
-          >
-            <Grid size={{ xs: 12, md: 4 }}>
-              <DateTimePicker
-                label='From'
-                value={dayjs(queryParams.from)}
-                minDate={dayjs(organization?.recording_start_date)}
-                slotProps={{
-                  textField: { size: 'small', fullWidth: true },
-                }}
-                onChange={(newValue) => {
-                  const isoValue = newValue ? newValue.toISOString() : null;
-                  setQueryParams((prev) => ({ ...prev, from: isoValue }));
-                  setPdfFilters((prev) => ({
-                    ...prev,
-                    from: readableDate(newValue || dayjs()),
-                  }));
-                }}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 4 }}>
-              <DateTimePicker
-                label='To'
-                value={dayjs(queryParams.to)}
-                minDate={dayjs(organization?.recording_start_date)}
-                slotProps={{
-                  textField: { size: 'small', fullWidth: true },
-                }}
-                onChange={(newValue) => {
-                  const isoValue = newValue ? newValue.toISOString() : null;
-                  setQueryParams((prev) => ({ ...prev, to: isoValue }));
-                  setPdfFilters((prev) => ({
-                    ...prev,
-                    to: readableDate(newValue || dayjs()),
-                  }));
-                }}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Autocomplete<Station>
-                size='small'
-                options={stations ?? []}
-                getOptionLabel={(option) => option.name}
-                value={
-                  stations?.find((s) => s.id === queryParams.station_id) || null
-                }
-                isOptionEqualToValue={(option, value) => option.id === value.id}
-                onChange={(_, newValue) => {
-                  setQueryParams((prev) => ({
-                    ...prev,
-                    station_id: newValue?.id || null,
-                  }));
-                  setPdfFilters((prev) => ({
-                    ...prev,
-                    stationName: newValue?.name || '',
-                  }));
-                }}
-                renderInput={(params) => (
-                  <TextField {...params} label='Station' />
-                )}
-              />
-            </Grid>
-
-            {(filterBy === '' || filterBy === 'stakeholder') && (
-              <Grid
-                size={{
-                  xs: filterBy === '' ? 12 : 12,
-                  md: filterBy === '' ? 6 : 8,
-                }}
-              >
-                <StakeholderSelector
-                  label='Client'
-                  defaultValue={0}
-                  onChange={(newValue: any) => {
-                    setQueryParams((prev) => ({
-                      ...prev,
-                      stakeholder_id: newValue?.id || null,
-                    }));
-                    setPdfFilters((prev) => ({
-                      ...prev,
-                      stakeholder_name: newValue?.name || '',
-                    }));
-                  }}
-                />
-              </Grid>
-            )}
-
-            {filterBy === 'stakeholder' && (
-              <Grid size={{ xs: 12, md: 4 }}>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={queryParams.with_receipts === 1}
-                      onChange={(e) => {
-                        const value = e.target.checked ? 1 : 0;
-                        setQueryParams((prev) => ({
-                          ...prev,
-                          with_receipts: value as 0 | 1,
-                        }));
-                        setPdfFilters((prev) => ({
-                          ...prev,
-                          with_receipts: value as 0 | 1,
-                        }));
-                      }}
-                    />
-                  }
-                  label='With Receipts'
-                />
-              </Grid>
-            )}
-
-            {(filterBy === '' || filterBy === 'expense_ledger') && (
-              <Grid size={{ xs: 12, md: filterBy === '' ? 6 : 12 }}>
-                <Div>
-                  <LedgerSelect
-                    label={'Expense'}
-                    allowedGroups={['Expenses']}
-                    multiple={true}
-                    defaultValue={[]}
-                    onChange={(newValue: any) => {
-                      const ledgerIds =
-                        newValue.length > 0
-                          ? newValue.map((ledger: Ledger) => ledger.id)
-                          : null;
-                      setQueryParams((prev) => ({
-                        ...prev,
-                        expense_ledger_ids: ledgerIds,
-                      }));
-                      setPdfFilters((prev) => ({
-                        ...prev,
-                        expense_ledger_ids: ledgerIds,
-                      }));
-                    }}
-                  />
-                </Div>
-              </Grid>
-            )}
-
+          <form autoComplete='off' onSubmit={handleSubmit(onSubmit)}>
             <Grid
-              size={{ xs: 12 }}
-              textAlign='right'
-              sx={{
-                display: 'flex',
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'end',
-                gap: 1,
-              }}
+              container
+              spacing={2}
+              mt={2}
+              alignItems='center'
+              justifyContent='center'
             >
-              <LoadingButton
-                size='small'
-                onClick={() => handlExcelExport(exportedData)}
-                disabled={
-                  !reportData ||
-                  reportData?.length < 1 ||
-                  isExporting ||
-                  isFetching
-                }
-                loading={isExporting}
+              <Grid size={{ xs: 12, md: 4 }}>
+                <Controller
+                  name='from'
+                  control={control}
+                  render={({ field, fieldState: { error } }) => (
+                    <DateTimePicker
+                      label='From'
+                      value={field.value}
+                      minDate={dayjs(organization?.recording_start_date)}
+                      slotProps={{
+                        textField: {
+                          size: 'small',
+                          fullWidth: true,
+                          error: !!error,
+                          helperText: error?.message,
+                        },
+                      }}
+                      onChange={(newValue) => field.onChange(newValue)}
+                    />
+                  )}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 4 }}>
+                <Controller
+                  name='to'
+                  control={control}
+                  render={({ field, fieldState: { error } }) => (
+                    <DateTimePicker
+                      label='To'
+                      value={field.value}
+                      minDate={dayjs(organization?.recording_start_date)}
+                      slotProps={{
+                        textField: {
+                          size: 'small',
+                          fullWidth: true,
+                          error: !!error,
+                          helperText: error?.message,
+                        },
+                      }}
+                      onChange={(newValue) => field.onChange(newValue)}
+                    />
+                  )}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 4 }}>
+                <Controller
+                  name='station'
+                  control={control}
+                  render={({ field, fieldState: { error } }) => (
+                    <Autocomplete<Station>
+                      size='small'
+                      options={stations ?? []}
+                      getOptionLabel={(option) => option.name}
+                      value={field.value ?? null}
+                      isOptionEqualToValue={(option, value) =>
+                        value != null && option.id === value.id
+                      }
+                      onChange={(_, newValue) => field.onChange(newValue)}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label='Station'
+                          error={!!error}
+                          helperText={error?.message}
+                        />
+                      )}
+                    />
+                  )}
+                />
+              </Grid>
+
+              {(filterBy === '' || filterBy === 'stakeholder') && (
+                <Grid
+                  size={{
+                    xs: filterBy === '' ? 12 : 12,
+                    md: filterBy === '' ? 6 : 8,
+                  }}
+                >
+                  <Controller
+                    name='stakeholder'
+                    control={control}
+                    render={({ field }) => (
+                      <StakeholderSelector
+                        label='Client'
+                        defaultValue={0}
+                        onChange={(newValue: any) => field.onChange(newValue)}
+                      />
+                    )}
+                  />
+                </Grid>
+              )}
+
+              {filterBy === 'stakeholder' && (
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <Controller
+                    name='with_receipts'
+                    control={control}
+                    render={({ field }) => (
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={field.value}
+                            onChange={(e) => field.onChange(e.target.checked)}
+                          />
+                        }
+                        label='With Receipts'
+                      />
+                    )}
+                  />
+                </Grid>
+              )}
+
+              {(filterBy === '' || filterBy === 'expense_ledger') && (
+                <Grid size={{ xs: 12, md: filterBy === '' ? 6 : 12 }}>
+                  <Div>
+                    <Controller
+                      name='expense_ledgers'
+                      control={control}
+                      render={({ field }) => (
+                        <LedgerSelect
+                          label={'Expense'}
+                          allowedGroups={['Expenses']}
+                          multiple={true}
+                          defaultValue={[]}
+                          onChange={(newValue: any) =>
+                            field.onChange(newValue || [])
+                          }
+                        />
+                      )}
+                    />
+                  </Div>
+                </Grid>
+              )}
+
+              <Grid
+                size={{ xs: 12 }}
+                textAlign='right'
                 sx={{
                   display: 'flex',
+                  flexDirection: 'row',
                   alignItems: 'center',
+                  justifyContent: 'end',
                   gap: 1,
                 }}
-                color='success'
-                variant='contained'
               >
-                <FontAwesomeIcon icon={faFileExcel} color='green' /> Excel
-              </LoadingButton>
+                <LoadingButton
+                  size='small'
+                  onClick={() => handlExcelExport(exportedData)}
+                  disabled={
+                    !reportData ||
+                    reportData?.length < 1 ||
+                    isExporting ||
+                    isFetching
+                  }
+                  loading={isExporting}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                  }}
+                  color='success'
+                  variant='contained'
+                >
+                  <FontAwesomeIcon icon={faFileExcel} color='green' /> Excel
+                </LoadingButton>
+
+                <LoadingButton
+                  size='small'
+                  type='submit'
+                  loading={isFetching}
+                  variant='contained'
+                >
+                  Filter
+                </LoadingButton>
+              </Grid>
             </Grid>
-          </Grid>
+          </form>
         </Span>
       </DialogTitle>
 
