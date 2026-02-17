@@ -65,34 +65,33 @@ export interface Adjustments {
 
 export interface SalesShift {
   id?: number;
-  shift_team_id: number;
+  sales_outlet_shift_id: number;
   shift_team?: ShiftTeam;
   station_id?: number;
   station?: Station;
   shift_start: string;
   shift_end?: string | null;
-  submit_type: 'open' | 'close' | 'suspend' | 'draft'; // Added 'suspend'
+  submit_type: 'open' | 'close' | 'suspend' | 'draft';
   product_prices: ProductPrice[];
   pump_readings: PumpReading[];
   fuel_vouchers: FuelVoucher[];
   main_ledger: LedgerAmount;
-  main_ledger_id?: number; // Added from payload
-  main_ledger_amount?: number; // Added from payload
+  main_ledger_id?: number;
+  main_ledger_amount?: number;
   other_ledgers: LedgerAmount[];
-  adjustments: Adjustment[]; // Changed from optional to required, fixed plural name
-  dipping_after: Dipping[]; // Added from payload
-  isOpenSwitchON?: boolean; // Added from payload
-  isCloseSwitchON?: boolean; // Added from payload
+  adjustments: Adjustment[];
+  dipping_after: Dipping[];
+  isOpenSwitchON?: boolean;
+  isCloseSwitchON?: boolean;
   created_at?: string;
   updated_at?: string;
-  users?: User[]; // Made optional since not in payload
+  users?: User[];
 }
 
-// Supporting interfaces based on your payload structure
 export interface Adjustment {
   tank_id: number;
   quantity: number;
-  operator: '+' | '-'; // Based on your payload
+  operator: '+' | '-';
   description: string;
   product_id: number;
 }
@@ -175,7 +174,7 @@ export interface FuelVoucherData {
 
 
 export interface CreateSalesShiftData {
-  shift_team_id: number;
+  sales_outlet_shift_id: number;
   shift_start: string;
   shift_end: string;
   submit_type: 'close' | 'draft'; 
