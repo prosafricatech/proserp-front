@@ -161,7 +161,13 @@ function QuickReports() {
             <SalesManifest setOpenSalesManifest={setOpenSalesManifest} />
           </StakeholderSelectProvider>
         )}
-        {fuelVouchersDialogOpen && <FuelVouchersReport />}
+        {fuelVouchersDialogOpen && 
+          <StakeholderSelectProvider>
+            <LedgerSelectProvider>
+              <FuelVouchersReport />
+            </LedgerSelectProvider>
+          </StakeholderSelectProvider>
+        }
 
         {(debtorsCreditorsDialogOpen ||
           openDippingReport ||

@@ -256,11 +256,7 @@ function Dashboard() {
                 PERMISSIONS.SALES_REPORTS,
               ]) && (
                 <Grid size={{ xs: 12 }} textAlign={'center'}>
-                  <StakeholderSelectProvider>
-                    <LedgerSelectProvider>
-                      <QuickReports />
-                    </LedgerSelectProvider>
-                  </StakeholderSelectProvider>
+                  <QuickReports />
                 </Grid>
               )}
           </Grid>
