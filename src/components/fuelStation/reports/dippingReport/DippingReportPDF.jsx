@@ -1,7 +1,7 @@
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import pdfStyles from '@/components/pdf/pdf-styles';
 import PdfLogo from '@/components/pdf/PdfLogo';
-import { Document, Page, Text, View } from '@react-pdf/renderer';
+import { Document, Font, Page, Text, View } from '@react-pdf/renderer';
 
 function DippingReportPDF({
   reportData,
@@ -12,6 +12,8 @@ function DippingReportPDF({
   const mainColor = organization.settings?.main_color || '#2113AD';
   const lightColor = organization.settings?.light_color || '#bec5da';
   const contrastText = organization.settings?.contrast_text || '#FFFFFF';
+
+  Font.registerHyphenationCallback((word) => [word]);
 
   const allReadings = reportData.flatMap((data) => data.readings); // Collect all readings in the same array
 
@@ -176,13 +178,13 @@ function DippingReportPDF({
                 Closing
               </Text>
               <Text
+                wrap
                 style={{
                   ...pdfStyles.tableHeader,
                   ...pdfStyles.tableCell,
                   ...pdfStyles.midInfo,
                   backgroundColor: mainColor,
                   color: contrastText,
-                  // flex: 2,
                   width: '10%',
                 }}
               >
@@ -195,7 +197,6 @@ function DippingReportPDF({
                   ...pdfStyles.midInfo,
                   backgroundColor: mainColor,
                   color: contrastText,
-                  // flex: 2,
                   width: '10%',
                 }}
               >
