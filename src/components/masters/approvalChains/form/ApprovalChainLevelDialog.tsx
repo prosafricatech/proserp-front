@@ -1,10 +1,20 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import { LoadingButton } from '@mui/lab';
-import { Autocomplete, Button, Checkbox, DialogActions, DialogContent, DialogTitle, Grid, LinearProgress, TextField} from '@mui/material';
+import {
+  Autocomplete,
+  Button,
+  Checkbox,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Grid,
+  LinearProgress,
+  TextField,
+} from '@mui/material';
 import { useSnackbar } from 'notistack';
-import React, { useContext, useState } from 'react';
-import { useForm, SubmitHandler } from 'react-hook-form';
-import * as yup from "yup";
+import React, { useContext, useEffect, useMemo, useState } from 'react';
+import { SubmitHandler, useForm } from 'react-hook-form';
+import * as yup from 'yup';
 import approvalChainsServices from '../approvalChainsServices';
 import { approvalChainsListItemContext } from '../ApprovalChainsListItem';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -31,7 +41,7 @@ interface FormValues {
   can_finalize: number;
   can_override: number;
   label: string;
-  remarks?: string;
+  remarks?: string | null;
   role_id?: number;
   role?: Role | null;
 }
@@ -39,28 +49,39 @@ interface FormValues {
 interface ApprovalChainLevelDialogProps {
   approvalChainLevel?: ApprovalChainLevel;
   toggleOpen: (open: boolean) => void;
-  approvalChain?: {
-    id: number;
-  };
+  approvalChain?: { id: number };
 }
 
-function ApprovalChainLevelDialog({ approvalChainLevel, toggleOpen, approvalChain }: ApprovalChainLevelDialogProps) {
+const getValidationSchema = (approvalChain: ApprovalChainLevelDialogProps['approvalChain']) =>
+  yup.object({
+    label: yup.string().required('Label is required'),
+    role_id: yup.number().required('Role is required').typeError('Role is required'),
+    approval_chain_id: yup.number()
+      .when([], {
+        is: () => !!approvalChain,
+        then: (schema) => schema.required('Approval chain is required').typeError('Approval chain is required'),
+        otherwise: (schema) => schema.notRequired(),
+      }),
+    position_index: yup.number().nullable(),
+    can_finalize: yup.number().nullable(),
+    can_override: yup.number().nullable(),
+    remarks: yup.string().nullable(),
+  });
+
+function ApprovalChainLevelDialog({
+  approvalChainLevel,
+  toggleOpen,
+  approvalChain,
+}: ApprovalChainLevelDialogProps) {
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
   const { authOrganization } = useJumboAuth();
-  const [can_finalize, setCan_finalize] = useState(approvalChainLevel?.can_finalize === 1);
-  const [can_override, setCan_override] = useState(approvalChainLevel?.can_override === 1);
   const { approvalChainLevels = [] } = useContext(approvalChainsListItemContext);
 
-  const validationSchema = yup.object({
-    label: yup.string().required('Label is required').typeError('Label is required'),
-    role_id: yup.number().required('Role is required').typeError('Role is required'),
-    approval_chain_id: yup.number().required(),
-    position_index: yup.number().nullable(),
-    can_finalize: yup.number(),
-    can_override: yup.number(),
-    remarks: yup.string().nullable(),
-  });
+  const [canFinalize, setCanFinalize] = useState(approvalChainLevel?.can_finalize === 1);
+  const [canOverride, setCanOverride] = useState(approvalChainLevel?.can_override === 1);
+
+  const isEditMode = !!approvalChainLevel?.id;
 
   const addNewChainLevel = useMutation({
     mutationFn: (data: FormValues) => approvalChainsServices.addNewChainLevel(data),
@@ -70,8 +91,9 @@ function ApprovalChainLevelDialog({ approvalChainLevel, toggleOpen, approvalChai
       queryClient.invalidateQueries({ queryKey: ['approvalChainLevels'] });
     },
     onError: (error: any) => {
-      error?.response?.data?.message && enqueueSnackbar(error.response.data.message, { variant: 'error' });
-    }
+      const msg = error?.response?.data?.message || 'Failed to add level';
+      enqueueSnackbar(msg, { variant: 'error' });
+    },
   });
 
   const editApprovalChainLevel = useMutation({
@@ -82,12 +104,36 @@ function ApprovalChainLevelDialog({ approvalChainLevel, toggleOpen, approvalChai
       queryClient.invalidateQueries({ queryKey: ['approvalChainLevels'] });
     },
     onError: (error: any) => {
-      error?.response?.data?.message && enqueueSnackbar(error.response.data.message, { variant: 'error' });
-    }
+      const msg = error?.response?.data?.message || 'Failed to update level';
+      enqueueSnackbar(msg, { variant: 'error' });
+    },
   });
 
-  const { setValue, register, handleSubmit, formState: { errors } } = useForm<FormValues>({
-    resolver: yupResolver(validationSchema) as any,
+  const { data: roles, isLoading: isLoadingRoles, isFetching: isFetchingRoles } = useQuery<Role[]>({
+    queryKey: ['organizationRoles', authOrganization?.organization?.id],
+    queryFn: () => organizationServices.getRoles(authOrganization?.organization?.id!),
+    enabled: !!authOrganization?.organization?.id,
+  });
+
+  const positionIndexOptions: PositionIndexOption[] = useMemo(
+    () => [
+      { label: 'At the beginning', position_index: null, id: null },
+      ...approvalChainLevels.map((level) => ({
+        label: `After ${level.role?.name ?? ''} ${level.label}`,
+        position_index: level.position_index ?? null,
+        id: level.id ?? null,
+      })),
+    ],
+    [approvalChainLevels]
+  );
+
+  const {
+    setValue,
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FormValues>({
+    resolver: yupResolver(getValidationSchema(approvalChain)) as any,
     defaultValues: {
       id: approvalChainLevel?.id,
       approval_chain_id: approvalChain?.id,
@@ -98,29 +144,22 @@ function ApprovalChainLevelDialog({ approvalChainLevel, toggleOpen, approvalChai
       remarks: approvalChainLevel?.remarks ?? '',
       role_id: approvalChainLevel?.role_id,
       role: approvalChainLevel?.role ?? null,
+    },
+  });
+
+  // ✅ Ensure required hidden field is always set
+  useEffect(() => {
+    if (approvalChain?.id) {
+      setValue('approval_chain_id', approvalChain.id, { shouldDirty: false, shouldValidate: true });
     }
-  });
-
-  const { data: roles, isLoading: isLoadingRoles, isFetching: isFetchingRoles } = useQuery<Role[]>({
-    queryKey: ['organizationRoles', authOrganization?.organization?.id],
-    queryFn: () => organizationServices.getRoles(authOrganization?.organization?.id!),
-    enabled: !!authOrganization?.organization?.id
-  });
-
-  const positionIndexOptions: PositionIndexOption[] = [
-    { label: 'At the beginning', position_index: null, id: null },
-    ...approvalChainLevels.map((level) => ({
-      label: `After ${level.role?.name} ${level.label}`,
-      position_index: level.position_index ?? null,
-      id: level.id ?? null,
-    })),
-  ];
+  }, [approvalChain?.id, setValue]);
 
   const onSubmit: SubmitHandler<FormValues> = (formData) => {
-    if (approvalChain) {
-      addNewChainLevel.mutate(formData);
-    } else {
+    // ✅ IMPORTANT: pick add vs edit by approvalChainLevel.id (not approvalChain)
+    if (isEditMode) {
       editApprovalChainLevel.mutate(formData);
+    } else {
+      addNewChainLevel.mutate(formData);
     }
   };
 
@@ -128,26 +167,23 @@ function ApprovalChainLevelDialog({ approvalChainLevel, toggleOpen, approvalChai
     <>
       <DialogTitle>
         <Grid container columnSpacing={1}>
-          <Grid size={12} textAlign={"center"}>
-            {approvalChain ? 'Add New Chain Level' : 'Edit Level'}
+          <Grid size={12} textAlign="center">
+            {isEditMode ? 'Edit Level' : 'Add New Chain Level'}
           </Grid>
         </Grid>
       </DialogTitle>
+
       <DialogContent>
-        <form autoComplete='off' onSubmit={handleSubmit(onSubmit)}>
+        <form id="approval-chain-level-form" autoComplete="off" onSubmit={handleSubmit(onSubmit)}>
           <Grid container columnSpacing={1} mb={1}>
-            <Grid size={{xs: 12, md: 4}}>
+            <Grid size={{ xs: 12, md: 4 }}>
               {(isFetchingRoles || isLoadingRoles) ? (
-                <LinearProgress/>
+                <LinearProgress />
               ) : (
                 <Div sx={{ mt: 1 }}>
                   <Autocomplete
-                    id="checkboxes-role_id"
                     options={roles || []}
-                    defaultValue={approvalChainLevel?.role ? 
-                      { id: approvalChainLevel.role.id, name: approvalChainLevel.role.name } as Role : 
-                      null
-                    }
+                    value={approvalChainLevel?.role ?? null}
                     isOptionEqualToValue={(option, value) => option.id === value.id}
                     getOptionLabel={(option: Role) => option.name}
                     renderInput={(params) => (
@@ -160,49 +196,49 @@ function ApprovalChainLevelDialog({ approvalChainLevel, toggleOpen, approvalChai
                         helperText={errors.role_id?.message}
                       />
                     )}
-                    onChange={(e, newValue: Role | null) => {
+                    onChange={(_, newValue: Role | null) => {
                       setValue('role_id', newValue?.id ?? undefined, {
                         shouldValidate: true,
                         shouldDirty: true,
                       });
-                      setValue('role', newValue ?? null);
+                      setValue('role', newValue ?? null, { shouldDirty: true });
                     }}
                   />
                 </Div>
               )}
             </Grid>
-            <Grid size={{xs: 12, md: 4}}>
+
+            <Grid size={{ xs: 12, md: 4 }}>
               <Div sx={{ mt: 1 }}>
                 <TextField
                   label="Label"
                   size="small"
                   fullWidth
-                  error={!!errors?.label}
-                  helperText={errors?.label?.message}
+                  error={!!errors.label}
+                  helperText={errors.label?.message}
                   {...register('label')}
                 />
               </Div>
             </Grid>
-            <Grid size={{xs: 12, md: 4}}>
-              <Div sx={{ mt: 1}}>
+
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Div sx={{ mt: 1 }}>
                 <Autocomplete
-                  options={approvalChain ? 
-                    positionIndexOptions.filter(index => index.position_index !== approvalChainLevel?.position_index) : 
-                    positionIndexOptions}
+                  options={positionIndexOptions.filter(
+                    (opt) => opt.position_index !== approvalChainLevel?.position_index
+                  )}
                   isOptionEqualToValue={(option, value) => option.id === value.id}
                   getOptionLabel={(option) => option.label}
-                  renderInput={(params) => 
-                    <TextField 
-                      {...params} 
-                      label="Position" 
-                      size="small" 
-                      fullWidth
-                    />
-                  }
-                  onChange={(e, newValue) => {
-                    setValue('position_index', newValue?.position_index !== null ? 
-                      (newValue?.position_index ?? 0) + 1 : 
-                      null, {
+                  renderInput={(params) => (
+                    <TextField {...params} label="Position" size="small" fullWidth />
+                  )}
+                  onChange={(_, newValue) => {
+                    const val =
+                      newValue?.position_index !== null
+                        ? (newValue?.position_index ?? 0) + 1
+                        : null;
+
+                    setValue('position_index', val, {
                       shouldValidate: true,
                       shouldDirty: true,
                     });
@@ -210,27 +246,29 @@ function ApprovalChainLevelDialog({ approvalChainLevel, toggleOpen, approvalChai
                 />
               </Div>
             </Grid>
-            <Grid size={{xs: 12, md: 4}}>
+
+            <Grid size={{ xs: 12, md: 4 }}>
               <Div sx={{ mt: 1 }}>
                 <TextField
                   label="Remarks"
                   size="small"
-                  multiline={true}
+                  multiline
                   minRows={2}
                   fullWidth
                   {...register('remarks')}
                 />
               </Div>
             </Grid>
-            <Grid size={{xs: 6, md: 4}}>
-              <Div sx={{ mt: 1}}>
+
+            <Grid size={{ xs: 6, md: 4 }}>
+              <Div sx={{ mt: 1 }}>
                 <Checkbox
-                  checked={can_finalize}
-                  size='small'
+                  checked={canFinalize}
+                  size="small"
                   onChange={(e) => {
-                    const isChecked = e.target.checked;
-                    setCan_finalize(isChecked);
-                    setValue('can_finalize', isChecked ? 1 : 0, {
+                    const checked = e.target.checked;
+                    setCanFinalize(checked);
+                    setValue('can_finalize', checked ? 1 : 0, {
                       shouldValidate: true,
                       shouldDirty: true,
                     });
@@ -239,15 +277,16 @@ function ApprovalChainLevelDialog({ approvalChainLevel, toggleOpen, approvalChai
                 Can Finalize
               </Div>
             </Grid>
-            <Grid size={{xs: 6, md: 4}}>
-              <Div sx={{ mt: 1}}>
+
+            <Grid size={{ xs: 6, md: 4 }}>
+              <Div sx={{ mt: 1 }}>
                 <Checkbox
-                  checked={can_override}
-                  size='small'
+                  checked={canOverride}
+                  size="small"
                   onChange={(e) => {
-                    const isChecked = e.target.checked;
-                    setCan_override(isChecked);
-                    setValue('can_override', isChecked ? 1 : 0, {
+                    const checked = e.target.checked;
+                    setCanOverride(checked);
+                    setValue('can_override', checked ? 1 : 0, {
                       shouldValidate: true,
                       shouldDirty: true,
                     });
@@ -259,15 +298,18 @@ function ApprovalChainLevelDialog({ approvalChainLevel, toggleOpen, approvalChai
           </Grid>
         </form>
       </DialogContent>
+
       <DialogActions>
-        <Button size='small' onClick={() => toggleOpen(false)}>
+        <Button size="small" onClick={() => toggleOpen(false)}>
           Cancel
         </Button>
+
         <LoadingButton
           loading={editApprovalChainLevel.isPending || addNewChainLevel.isPending}
-          variant='contained' 
-          onClick={handleSubmit(onSubmit)}
-          size='small'
+          variant="contained"
+          size="small"
+          type="submit"
+          form="approval-chain-level-form"
         >
           Submit
         </LoadingButton>

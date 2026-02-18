@@ -60,7 +60,7 @@ approvalChainsServices.editApprovalChain = async(chain) => {
 
 approvalChainsServices.editApprovalChainLevel = async(level) => {
     return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.put(`/api/masters/approvalChains/${level.id}`,level)
+        const {data} = await axios.put(`/api/masters/approvalChains/${level.id}/editApprovalChainLevel`,level)
         return data;
     })
 }
@@ -78,6 +78,5 @@ approvalChainsServices.deactivateLevel = async (id) => {
         return data;
     })
 };
-
 
 export default approvalChainsServices;
