@@ -15,9 +15,7 @@ import React, {
   useEffect,
   useState,
 } from 'react';
-import LedgerSelectProvider from '../accounts/ledgers/forms/LedgerSelectProvider';
 import { CostCenter } from '../masters/costCenters/CostCenterType';
-import StakeholderSelectProvider from '../masters/stakeholders/StakeholderSelectProvider';
 import QuickLinks from './QuickLinks';
 
 const OrganizationCalendar = lazy(() => import('./OrganizationCalendar'));

@@ -184,7 +184,7 @@ function PurchaseOrderGrnsItemAction({ order }) {
 
         {/* Separate Dialog for EditReceive */}
         {openEditReceive && editReceiveGrn && (
-          <Dialog open={openEditReceive} onClose={() => setOpenEditReceive(false)} fullWidth maxWidth="lg">
+          <Dialog open={openEditReceive} onClose={() => setOpenEditReceive(false)} fullScreen={ belowLargeScreen} fullWidth maxWidth="lg">
             <EditReceive order={order} orderGrn={editReceiveGrn} setOpenEditReceive={setOpenEditReceive} />
           </Dialog>
         )}

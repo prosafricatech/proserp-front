@@ -25,6 +25,7 @@ interface Product {
 interface ProformaItem {
   id: number;
   product: Product;
+  description?: string;
   measurement_unit: MeasurementUnit;
   quantity: number;
   rate: number;
@@ -182,7 +183,14 @@ function ProformaOnScreen({ proforma, organization }: ProformaOnScreenProps) {
                 }}
               >
                 <TableCell>{index + 1}</TableCell>
-                <TableCell>{proformaItem.product.name}</TableCell>
+                <TableCell>
+                  {proformaItem.product.name}
+                  {proformaItem.description && (
+                    <span style={{ color: '#888', fontStyle: 'italic', marginLeft: 4 }}>
+                      ({proformaItem.description})
+                    </span>
+                  )}
+                </TableCell>
                 <TableCell>{proformaItem.measurement_unit.symbol}</TableCell>
                 <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                   {proformaItem.quantity.toLocaleString()}

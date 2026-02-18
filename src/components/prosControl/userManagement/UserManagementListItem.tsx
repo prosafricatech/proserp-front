@@ -101,13 +101,13 @@ import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
       </Div>
     </Grid>
 
-    <Grid size={{ xs: 4, md: 1 }} textAlign={"end"}>
+    <Grid size={{ xs: 6, md: 1 }} textAlign={{ md: "end" }}>
       <Tooltip title={dictionary.userManagement.list.labels.status}>
           <Chip size='small' color={user.status === 'active' ? 'success' : 'error'} label={user.status} />
       </Tooltip>
     </Grid>
 
-    <Grid size={{ xs: 12, md: 1 }} container justifyContent="flex-end">
+    <Grid size={{ xs: 6, md: 1 }} container justifyContent="flex-end">
       <UserManagementListItemActions
         user={user}
         onUserUpdated={onUserUpdated}

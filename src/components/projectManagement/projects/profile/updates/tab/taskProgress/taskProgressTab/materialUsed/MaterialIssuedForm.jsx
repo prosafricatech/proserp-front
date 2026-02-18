@@ -20,7 +20,7 @@ function MaterialIssuedForm({projectTaskIndex, taskProgressItem, material = null
   const { productOptions } = useProductsSelect();
   const { taskProgressItems, setTaskProgressItems} = useUpdateFormContext();
   const nonInventoryIds = productOptions.filter(product => product.type !== 'Inventory').map(product => product.id);
-
+  
   const validationSchema = yup.object({
     product: yup
       .object()
@@ -89,10 +89,14 @@ function MaterialIssuedForm({projectTaskIndex, taskProgressItem, material = null
   const {setValue, handleSubmit, register, watch, clearErrors, reset, formState: {errors}} = useForm({
     resolver: yupResolver(validationSchema),
     defaultValues: {
+      id: material?.id,
+      execution_date: material?.execution_date || taskProgressItem?.execution_date,
       product: material && productOptions.find(product => product.id === material.product?.id),
+      product_id: material?.product?.id,
       available_balance: 'N/A',
       projectTaskIndex: material?.projectTaskIndex,
       store_id: material?.store?.id,
+      remarks: material?.remarks,
       store: material?.store,
       quantity: material ? material.quantity : null,
       conversion_factor: material ? material.conversion_factor : 1,
