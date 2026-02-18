@@ -45,7 +45,7 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
 
   // Calculate correct unreceived_quantity for edit mode
   let purchase_order_items = order?.purchase_order_items?.map((item) => {
-    let grnItem = grn?.items.find(i => i.product.id === item.product.id);
+    let grnItem = grn?.items.find(i => i.purchase_order_item_id === item.id);
     let unreceived_quantity = item.unreceived_quantity;
     if (grnItem) {
       unreceived_quantity += (grnItem.quantity || 0);

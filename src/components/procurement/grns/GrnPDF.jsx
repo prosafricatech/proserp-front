@@ -39,7 +39,7 @@ function GrnPDF({grn,organization = null,baseCurrency,checkOrganizationPermissio
     return (
         <Document 
             title={grn.grnNo}
-            author={`${grn.creator.name}`}
+            author={`${grn.creator?.name}`}
             subject='GOODS RECEIVABLE NOTES'
             creator='ProsERP'
             producer='ProsERP'
