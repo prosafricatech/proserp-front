@@ -59,7 +59,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
   const [lastClosingDipping, setLastClosingDipping] = useState([]);
 
   const isAutoSavingRef = React.useRef(false);
-  const AUTO_SAVE_INTERVAL = 10 * 60 * 1000; // 10 minutes
+  const AUTO_SAVE_INTERVAL = 60 * 60 * 1000; // 10 minutes
 
   const addMutation = useMutation({
     mutationFn: fuelStationServices.addSalesShifts,
