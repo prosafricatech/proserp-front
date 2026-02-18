@@ -3,11 +3,10 @@ import axios from "@/lib/services/config";
 const approvalChainsServices = {};
 
 approvalChainsServices.getList = async (params = {}) => {
-    const { page = 1, limit = 10, ...queryParams } = params;
-    const { data } = await axios.get("/api/masters/approvalChains", {
-        params: { page, limit, ...queryParams }
-    });
-    return data;
+  const response = await axios.get('/api/masters/approvalChains', {
+    params,  // pass all query params here directly
+  });
+  return response.data;
 },
 
 approvalChainsServices.getApprovalRequisitionsList = async (params = {}) => {
