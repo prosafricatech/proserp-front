@@ -249,7 +249,7 @@ const SalesShiftOnScreen = ({
             Team
           </Typography>
           <Typography variant='body1'>
-            {shift_teams?.find((t) => t.id === shiftData.shift_team_id)?.name ||
+            {shift_teams?.find((t) => t.id === shiftData.sales_outlet_shift_id)?.name ||
               '—'}
           </Typography>
         </Grid>
