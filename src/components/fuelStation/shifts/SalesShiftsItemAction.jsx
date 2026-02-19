@@ -1,6 +1,7 @@
 'use client';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { useLedgerSelect } from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
 import { faFileExcel } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { JumboDdMenu } from '@jumbo/components';
@@ -66,6 +67,7 @@ const DocumentDialog = ({
   const { activeStation } = useContext(StationFormContext);
   const { shift_teams, fuel_pumps, tanks } = activeStation;
   const { productOptions } = useProductsSelect();
+  const { ungroupedLedgerOptions } = useLedgerSelect();
   const [openDetails, setOpenDetails] = useState(false);
   const [pdfKey, setPdfKey] = useState(0);
   const [isExporting, setIsExporting] = useState(false);
@@ -89,6 +91,28 @@ const DocumentDialog = ({
     return <LinearProgress />;
   }
 
+  let paymentReceived = [];
+
+  console.log('shiftData: ', shiftData);
+  console.log('ungroupedLedgerOptions: ', ungroupedLedgerOptions);
+
+  if (shiftData.payments_received?.length) {
+    const ledgerMap = new Map(ungroupedLedgerOptions.map((ul) => [ul.id, ul]));
+
+    shiftData.payments_received.forEach((p, i) => {
+      const creditLedger = ledgerMap.get(p.credit_ledger_id);
+
+      const debitLedger = ledgerMap.get(p.debit_ledger_id);
+
+      p.creditLedger = creditLedger;
+      p.debitLedger = debitLedger;
+    });
+
+    paymentReceived = shiftData.payments_received;
+  }
+
+  console.log('paymentReceived:', paymentReceived);
+
   const exportedData = {
     shiftData: shiftData,
     organization: organization,
@@ -98,6 +122,7 @@ const DocumentDialog = ({
     tanks: tanks,
     shift_teams: shift_teams,
     withDetails: openDetails,
+    paymentReceived: paymentReceived,
   };
 
   const handlExcelExport = async (exportedData) => {
@@ -229,6 +254,7 @@ const DocumentDialog = ({
                 fuel_pumps={fuel_pumps}
                 shift_teams={shift_teams}
                 organization={organization}
+                paymentReceived={paymentReceived}
               />
             }
           />

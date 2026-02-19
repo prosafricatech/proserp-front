@@ -108,8 +108,8 @@ function QuickReports() {
           openCashierReport
             ? 'lg'
             : fuelVouchersDialogOpen
-            ? 'xl'
-            : 'md'
+              ? 'xl'
+              : 'md'
         }
         fullScreen={belowLargeScreen}
         open={
@@ -161,17 +161,19 @@ function QuickReports() {
             <SalesManifest setOpenSalesManifest={setOpenSalesManifest} />
           </StakeholderSelectProvider>
         )}
-        {fuelVouchersDialogOpen && 
+        {fuelVouchersDialogOpen && (
           <StakeholderSelectProvider>
             <LedgerSelectProvider>
-              <FuelVouchersReport />
+              <FuelVouchersReport
+                closeDialog={() => setFuelVouchersDialogOpen(false)}
+              />
             </LedgerSelectProvider>
           </StakeholderSelectProvider>
-        }
+        )}
 
         {(debtorsCreditorsDialogOpen ||
           openDippingReport ||
-          fuelVouchersDialogOpen) && (
+          (fuelVouchersDialogOpen && !belowLargeScreen)) && (
           <DialogActions className={css.hiddenOnPrint}>
             <Button
               sx={{ m: 1 }}
