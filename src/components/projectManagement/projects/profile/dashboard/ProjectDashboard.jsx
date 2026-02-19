@@ -219,30 +219,30 @@ function ProjectDashboard() {
               ) : (
                 <Grid container spacing={3}>
                   <Grid size={{ xs: 12, md: 6 }}>
-                    <StatItem label="Time %" value={dashboardFigures?.time_progress ? `${dashboardFigures.time_progress}%` : ''} />
+                    <StatItem label="Time %" value={dashboardFigures?.time_progress_percentage ? `${dashboardFigures.time_progress_percentage}%` : ''} />
                     <Box display="flex" alignItems="center" gap={1}>
                       <LinearProgress 
                         variant="determinate" 
-                        value={dashboardFigures?.time_progress || 0} 
+                        value={dashboardFigures?.time_progress_percentage || 0} 
                         sx={{ flex: 1 }} 
                       />
                       <Typography variant="body2" color="text.secondary">
-                        {dashboardFigures?.time_progress || 0}%
+                        {dashboardFigures?.time_progress_percentage || 0}%
                       </Typography>
                     </Box>
                   </Grid>
 
                   <Grid size={{ xs: 12, md: 6 }}>
-                    <StatItem label="Physical Progress %" value={dashboardFigures?.physical_progress ? `${dashboardFigures.physical_progress}%` : ''} />
+                    <StatItem label="Physical Progress %" value={dashboardFigures?.execution_percentage ? `${dashboardFigures.execution_percentage}%` : ''} />
                     <Box display="flex" alignItems="center" gap={1}>
                       <LinearProgress 
                         variant="determinate" 
-                        value={dashboardFigures?.physical_progress || 0} 
+                        value={dashboardFigures?.execution_percentage || 0} 
                         color="warning" 
                         sx={{ flex: 1 }} 
                       />
                       <Typography variant="body2" color="text.secondary">
-                        {dashboardFigures?.physical_progress || 0}%
+                        {dashboardFigures?.execution_percentage || 0}%
                       </Typography>
                     </Box>
                   </Grid>
