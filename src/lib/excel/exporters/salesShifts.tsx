@@ -2337,6 +2337,155 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
       }
     }
 
+    // PAYMENTS RECEIVED
+    let paymentsRow = ws.lastRow?.number ?? 0;
+    if (exportedData.paymentReceived?.length) {
+      ws.mergeCells(`A${paymentsRow + 2}:H${paymentsRow + 2}`);
+      ws.getCell(`A${paymentsRow + 2}`).value = 'Payments Received';
+      ws.getCell(`A${paymentsRow + 2}`).font = { bold: true, size: 14 };
+      ws.getCell(`A${paymentsRow + 2}`).alignment = {
+        horizontal: 'center',
+        vertical: 'middle',
+      };
+
+      // ===== payments received columns ===== //
+      ws.mergeCells(`A${paymentsRow + 3}:B${paymentsRow + 3}`);
+      ws.getCell(`A${paymentsRow + 3}`).value = 'Credit';
+      ws.getCell(`A${paymentsRow + 3}`).font = { bold: true, size: 11 };
+      ws.getCell(`A${paymentsRow + 3}`).alignment = {
+        horizontal: 'left',
+        vertical: 'middle',
+      };
+      ws.getCell(`A${paymentsRow + 3}`).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFD9D9D9' },
+      };
+      ws.getCell(`A${paymentsRow + 3}`).border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } },
+      };
+
+      ws.mergeCells(`C${paymentsRow + 3}:D${paymentsRow + 3}`);
+      ws.getCell(`C${paymentsRow + 3}`).value = 'Debit';
+      ws.getCell(`C${paymentsRow + 3}`).font = { bold: true, size: 11 };
+      ws.getCell(`C${paymentsRow + 3}`).alignment = {
+        horizontal: 'left',
+        vertical: 'middle',
+      };
+      ws.getCell(`C${paymentsRow + 3}`).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFD9D9D9' },
+      };
+      ws.getCell(`C${paymentsRow + 3}`).border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } },
+      };
+
+      ws.mergeCells(`E${paymentsRow + 3}:F${paymentsRow + 3}`);
+      ws.getCell(`E${paymentsRow + 3}`).value = 'Narration';
+      ws.getCell(`E${paymentsRow + 3}`).font = { bold: true, size: 11 };
+      ws.getCell(`E${paymentsRow + 3}`).alignment = {
+        horizontal: 'left',
+        vertical: 'middle',
+      };
+      ws.getCell(`E${paymentsRow + 3}`).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFD9D9D9' },
+      };
+      ws.getCell(`E${paymentsRow + 3}`).border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } },
+      };
+
+      ws.mergeCells(`G${paymentsRow + 3}:H${paymentsRow + 3}`);
+      ws.getCell(`G${paymentsRow + 3}`).value = 'Amount';
+      ws.getCell(`G${paymentsRow + 3}`).font = { bold: true, size: 11 };
+      ws.getCell(`G${paymentsRow + 3}`).alignment = {
+        horizontal: 'left',
+        vertical: 'middle',
+      };
+      ws.getCell(`G${paymentsRow + 3}`).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFD9D9D9' },
+      };
+      ws.getCell(`G${paymentsRow + 3}`).border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } },
+      };
+
+      exportedData.paymentReceived.forEach((pr: any, i: number) => {
+        let paymentDataRow = paymentsRow + 4 + i;
+        ws.mergeCells(`A${paymentDataRow}:B${paymentDataRow}`);
+        ws.getCell(`A${paymentDataRow}`).value = pr.creditLedger.name;
+        ws.getCell(`A${paymentDataRow}`).alignment = {
+          horizontal: 'left',
+          vertical: 'middle',
+        };
+        ws.getCell(`A${paymentDataRow}`).border = {
+          top: { style: 'thin', color: { argb: 'FF000000' } },
+          bottom: { style: 'thin', color: { argb: 'FF000000' } },
+          left: { style: 'thin', color: { argb: 'FF000000' } },
+          right: { style: 'thin', color: { argb: 'FF000000' } },
+        };
+
+        ws.mergeCells(`C${paymentDataRow}:D${paymentDataRow}`);
+        ws.getCell(`C${paymentDataRow}`).value = pr.debitLedger.name;
+        ws.getCell(`C${paymentDataRow}`).alignment = {
+          horizontal: 'left',
+          vertical: 'middle',
+        };
+        ws.getCell(`C${paymentDataRow}`).border = {
+          top: { style: 'thin', color: { argb: 'FF000000' } },
+          bottom: { style: 'thin', color: { argb: 'FF000000' } },
+          left: { style: 'thin', color: { argb: 'FF000000' } },
+          right: { style: 'thin', color: { argb: 'FF000000' } },
+        };
+
+        ws.mergeCells(`E${paymentDataRow}:F${paymentDataRow}`);
+        ws.getCell(`E${paymentDataRow}`).value = pr.narration || '';
+        ws.getCell(`E${paymentDataRow}`).alignment = {
+          horizontal: 'left',
+          vertical: 'middle',
+        };
+        ws.getCell(`E${paymentDataRow}`).border = {
+          top: { style: 'thin', color: { argb: 'FF000000' } },
+          bottom: { style: 'thin', color: { argb: 'FF000000' } },
+          left: { style: 'thin', color: { argb: 'FF000000' } },
+          right: { style: 'thin', color: { argb: 'FF000000' } },
+        };
+
+        ws.mergeCells(`G${paymentDataRow}:H${paymentDataRow}`);
+        ws.getCell(`G${paymentDataRow}`).value = (
+          pr.amount || 0
+        ).toLocaleString('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
+        ws.getCell(`G${paymentDataRow}`).alignment = {
+          horizontal: 'right',
+          vertical: 'middle',
+        };
+        ws.getCell(`G${paymentDataRow}`).border = {
+          top: { style: 'thin', color: { argb: 'FF000000' } },
+          bottom: { style: 'thin', color: { argb: 'FF000000' } },
+          left: { style: 'thin', color: { argb: 'FF000000' } },
+          right: { style: 'thin', color: { argb: 'FF000000' } },
+        };
+      });
+    }
+
     // DIPPING SUMMARY
     if (!hideDippingTable) {
       let dippingsRow = ws.lastRow?.number ?? 0;

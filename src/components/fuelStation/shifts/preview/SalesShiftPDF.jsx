@@ -13,6 +13,7 @@ function SalesShiftPDF({
   fuel_pumps,
   tanks,
   productOptions,
+  paymentReceived,
 }) {
   const mainColor = organization.settings?.main_color || '#2113AD';
   const lightColor = organization.settings?.light_color || '#bec5da';
@@ -1113,6 +1114,139 @@ function SalesShiftPDF({
             fuel_pumps={fuel_pumps}
             productOptions={productOptions}
           />
+        )}
+
+        {/* ================= PAYMENTS RECEIVED SECTION ================= */}
+        {paymentReceived.length && (
+          <View
+            wrap={false}
+            style={{ marginTop: 20, pageBreakInside: 'avoid' }}
+          >
+            <View
+              style={{
+                marginBottom: 8,
+                padding: 8,
+                backgroundColor: mainColor,
+                borderRadius: 4,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 14,
+                  color: contrastText,
+                  fontWeight: 'bold',
+                  textAlign: 'center',
+                }}
+              >
+                Payments Received
+              </Text>
+            </View>
+
+            {/* Payments Received */}
+            <View style={{ marginBottom: 12 }}>
+              <View style={pdfStyles.table}>
+                <View style={pdfStyles.tableRow}>
+                  <Text
+                    style={{
+                      ...pdfStyles.tableHeader,
+                      backgroundColor: mainColor,
+                      color: contrastText,
+                      flex: 1,
+                    }}
+                  >
+                    Credit
+                  </Text>
+                  <Text
+                    style={{
+                      ...pdfStyles.tableHeader,
+                      backgroundColor: mainColor,
+                      color: contrastText,
+                      flex: 1,
+                    }}
+                  >
+                    Debit
+                  </Text>
+                  <Text
+                    style={{
+                      ...pdfStyles.tableHeader,
+                      backgroundColor: mainColor,
+                      color: contrastText,
+                      flex: 1.5,
+                    }}
+                  >
+                    Narration
+                  </Text>
+                  <Text
+                    style={{
+                      ...pdfStyles.tableHeader,
+                      backgroundColor: mainColor,
+                      color: contrastText,
+                      flex: 1,
+                    }}
+                  >
+                    Amount
+                  </Text>
+                </View>
+                {paymentReceived.map((pr, index) => {
+                  return (
+                    <View key={index} style={pdfStyles.tableRow}>
+                      {/* credit */}
+                      <Text
+                        style={{
+                          ...pdfStyles.tableCell,
+                          backgroundColor:
+                            index % 2 === 0 ? '#FFFFFF' : lightColor,
+                          flex: 1,
+                          textAlign: 'left',
+                        }}
+                      >
+                        {pr.creditLedger.name}
+                      </Text>
+                      {/* Debit */}
+                      <Text
+                        style={{
+                          ...pdfStyles.tableCell,
+                          backgroundColor:
+                            index % 2 === 0 ? '#FFFFFF' : lightColor,
+                          flex: 1,
+                          textAlign: 'left',
+                        }}
+                      >
+                        {pr.debitLedger.name}
+                      </Text>
+                      {/* Narration */}
+                      <Text
+                        style={{
+                          ...pdfStyles.tableCell,
+                          backgroundColor:
+                            index % 2 === 0 ? '#FFFFFF' : lightColor,
+                          flex: 1.5,
+                          textAlign: 'left',
+                        }}
+                      >
+                        {pr.narration}
+                      </Text>
+                      {/* Amount */}
+                      <Text
+                        style={{
+                          ...pdfStyles.tableCell,
+                          backgroundColor:
+                            index % 2 === 0 ? '#FFFFFF' : lightColor,
+                          flex: 1,
+                          textAlign: 'right',
+                        }}
+                      >
+                        {(pr.amount || 0).toLocaleString('en-US', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </Text>
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+          </View>
         )}
 
         {/* ================= DIPPING SECTION ================= */}

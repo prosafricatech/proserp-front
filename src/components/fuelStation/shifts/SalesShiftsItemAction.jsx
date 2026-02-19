@@ -1,6 +1,7 @@
 'use client';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { useLedgerSelect } from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
 import { faFileExcel } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { JumboDdMenu } from '@jumbo/components';
@@ -39,7 +40,6 @@ import SalesShiftOnScreen from './preview/SalesShiftOnScreen';
 import SalesShiftPDF from './preview/SalesShiftPDF';
 import SaleShiftForm from './SaleShiftForm/SaleShiftForm';
 import { StationFormContext } from './SalesShifts';
-import { LoadingButton } from '@mui/lab';
 
 const EditShift = ({ ClosedShift, setOpenEditDialog }) => {
   const { data: shiftData, isFetching } = useQuery({
@@ -67,6 +67,7 @@ const DocumentDialog = ({
   const { activeStation } = useContext(StationFormContext);
   const { shift_teams, fuel_pumps, tanks } = activeStation;
   const { productOptions } = useProductsSelect();
+  const { ungroupedLedgerOptions } = useLedgerSelect();
   const [openDetails, setOpenDetails] = useState(false);
   const [pdfKey, setPdfKey] = useState(0);
   const [isExporting, setIsExporting] = useState(false);
@@ -90,6 +91,23 @@ const DocumentDialog = ({
     return <LinearProgress />;
   }
 
+  let paymentReceived = [];
+
+  if (shiftData?.payments_received?.length) {
+    const ledgerMap = new Map(ungroupedLedgerOptions.map((ul) => [ul.id, ul]));
+
+    shiftData.payments_received.forEach((p, i) => {
+      const creditLedger = ledgerMap.get(p.credit_ledger_id);
+
+      const debitLedger = ledgerMap.get(p.debit_ledger_id);
+
+      p.creditLedger = creditLedger;
+      p.debitLedger = debitLedger;
+    });
+
+    paymentReceived = shiftData.payments_received;
+  }
+
   const exportedData = {
     shiftData: shiftData,
     organization: organization,
@@ -99,12 +117,14 @@ const DocumentDialog = ({
     tanks: tanks,
     shift_teams: shift_teams,
     withDetails: openDetails,
+    paymentReceived: paymentReceived,
   };
 
   const handlExcelExport = async (exportedData) => {
     setIsExporting(true);
     try {
-      const blob = await fuelStationServices.exportSalesShiftsToExcel(exportedData);
+      const blob =
+        await fuelStationServices.exportSalesShiftsToExcel(exportedData);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -215,46 +235,6 @@ const DocumentDialog = ({
             organization={organization}
           />
         )}
-        {activeTab === 1 && (
-          <Grid
-            container
-            sx={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}
-          >
-            <Tooltip title='Download Excel Report'>
-              <span>
-                <LoadingButton
-                  loading={isExporting}
-                  loadingPosition="start"
-                  startIcon={<FontAwesomeIcon icon={faFileExcel} color='white' />}
-                  variant="contained"
-                  color="success"
-                  size="large"
-                  sx={{
-                    px: 3,
-                    py: 1.5,
-                    fontWeight: 'bold',
-                    fontSize: '1.1rem',
-                    borderRadius: 2,
-                    boxShadow: 2,
-                    textTransform: 'none',
-                    background: 'linear-gradient(90deg, #43e97b 0%, #38f9d7 100%)',
-                    '&:hover': {
-                      background: 'linear-gradient(90deg, #38f9d7 0%, #43e97b 100%)',
-                    },
-                  }}
-                  onClick={() => handlExcelExport(exportedData)}
-                  disabled={isExporting}
-                >
-                  Download Excel
-                </LoadingButton>
-              </span>
-            </Tooltip>
-          </Grid>
-        )}
         {(!belowLargeScreen || activeTab === 0) && (
           <PDFContent
             key={pdfKey}
@@ -269,6 +249,7 @@ const DocumentDialog = ({
                 fuel_pumps={fuel_pumps}
                 shift_teams={shift_teams}
                 organization={organization}
+                paymentReceived={paymentReceived}
               />
             }
           />
