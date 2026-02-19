@@ -187,6 +187,7 @@ const DocumentDialog = ({
                 }}
                 color='success'
                 variant='contained'
+                disabled={isExporting}
               >
                 <FontAwesomeIcon icon={faFileExcel} color='green' />
                 {!belowLargeScreen && 'Excel'}
@@ -205,6 +206,7 @@ const DocumentDialog = ({
                 }}
                 color='success'
                 variant='contained'
+                disabled={isExporting}
               >
                 <FontAwesomeIcon icon={faFileExcel} color='green' />
                 {!belowLargeScreen && 'Excel'}

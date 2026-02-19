@@ -6,6 +6,7 @@ export default function CashierListSummaryPDF({
   organization,
   fuel_pumps,
   productOptions,
+  paymentReceived,
 }) {
   const mainColor = organization.settings?.main_color || '#2113AD';
   const lightColor = organization.settings?.light_color || '#bec5da';
@@ -181,6 +182,12 @@ export default function CashierListSummaryPDF({
 
   totalTransactionsSummary.unshift(mainLedgerTotalsObject);
   totalTransactionsSummary.push(fuelVoucherTotalsObject);
+
+  // payments received total
+  const paymentsReceivedTotal = paymentReceived.reduce(
+    (sum, pr) => sum + pr.amount,
+    0
+  );
 
   return (
     <View style={{ marginBottom: 20, marginTop: 8, pageBreakInside: 'avoid' }}>
@@ -1057,6 +1064,80 @@ export default function CashierListSummaryPDF({
                         })}`}
                   </Text>
                 </View>
+                {paymentReceived.length && (
+                  <>
+                    <View
+                      style={{ ...pdfStyles.tableRow, marginTop: 2, gap: 2 }}
+                    >
+                      <Text
+                        style={{
+                          ...pdfStyles.tableCell,
+                          textAlign: 'left',
+
+                          fontWeight: 'bold',
+                          fontSize: '12px',
+                          padding: 2,
+                          width: '34%',
+                        }}
+                      >
+                        Payments
+                      </Text>
+                      <Text
+                        style={{
+                          ...pdfStyles.tableCell,
+                          textAlign: 'right',
+
+                          fontWeight: 'bold',
+                          fontSize: '12px',
+                          padding: 2,
+                          width: '34%',
+                        }}
+                      >
+                        {paymentsReceivedTotal.toLocaleString('en-US', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </Text>
+                    </View>
+                    <View
+                      style={{ ...pdfStyles.tableRow, marginTop: 2, gap: 2 }}
+                    >
+                      <Text
+                        style={{
+                          ...pdfStyles.tableCell,
+                          textAlign: 'left',
+                          backgroundColor: mainColor,
+                          color: contrastText,
+                          fontWeight: 'bold',
+                          fontSize: '12px',
+                          padding: 2,
+                          width: '34%',
+                        }}
+                      >
+                        Grand Total
+                      </Text>
+                      <Text
+                        style={{
+                          ...pdfStyles.tableCell,
+                          textAlign: 'right',
+                          backgroundColor: mainColor,
+                          color: contrastText,
+                          fontWeight: 'bold',
+                          fontSize: '12px',
+                          padding: 2,
+                          width: '34%',
+                        }}
+                      >
+                        {(
+                          paymentsReceivedTotal + totalCollectedAmount
+                        ).toLocaleString('en-US', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </Text>
+                    </View>
+                  </>
+                )}
               </View>
             </View>
           </View>
