@@ -66,6 +66,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
     onSuccess: (data) => {
       // ❌ NO setOpenDialog here
       // ❌ NO snackbar here
+      console.log('Add successful:', data);
 
       if (data?.id) {
         setValue('id', data.id); // 🔑 convert autosave → update
@@ -77,15 +78,13 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
 
   const updateMutation = useMutation({
     mutationFn: fuelStationServices.updateSalesShifts,
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Update successful:', data);
       // ❌ no UI here
       queryClient.invalidateQueries({ queryKey: ['salesShifts'] });
     },
   });
 
-  const saveAsync = SalesShift?.id
-    ? updateMutation.mutateAsync
-    : addMutation.mutateAsync;
 
   const validationSchema = yup.object({
     sales_outlet_shift_id: yup.number().required('Sales Outlet Shift is required').typeError('Sales Outlet Shift must be a number'),
@@ -582,20 +581,20 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
   };
 
   const handleSubmitForm = async (data, options = { silent: false }) => {
-      const allProductIds = (activeStation.products || []).map(p => p.id);
-      const pricedProductIds = (data.product_prices || []).map(p => p.product_id);
-      const missingPriceProducts = allProductIds.filter(pid => !pricedProductIds.includes(pid));
-      if (missingPriceProducts.length > 0) {
-        const missingNames = (activeStation.products || [])
-          .filter(p => missingPriceProducts.includes(p.id))
-          .map(p => p.name)
-          .join(', ');
-        enqueueSnackbar(
-          `Cannot proceed: The following products are missing prices: ${missingNames}`,
-          { variant: 'error' }
-        );
-        return;
-      }
+    const allProductIds = (activeStation.products || []).map(p => p.id);
+    const pricedProductIds = (data.product_prices || []).map(p => p.product_id);
+    const missingPriceProducts = allProductIds.filter(pid => !pricedProductIds.includes(pid));
+    if (missingPriceProducts.length > 0) {
+      const missingNames = (activeStation.products || [])
+        .filter(p => missingPriceProducts.includes(p.id))
+        .map(p => p.name)
+        .join(', ');
+      enqueueSnackbar(
+        `Cannot proceed: The following products are missing prices: ${missingNames}`,
+        { variant: 'error' }
+      );
+      return;
+    }
     if (data.cashiers.length === 0) {
       enqueueSnackbar('Please add at least one cashier', { variant: 'error' });
       return;
@@ -673,7 +672,21 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
     }));
     data.payments_received = paymentItems;
 
-    await saveAsync(data);
+    // Decide add or update at submit time
+    const isUpdate = !!data.id || !!SalesShift?.id;
+    try {
+      if (isUpdate) {
+        await updateMutation.mutateAsync(data);
+      } else {
+        const created = await addMutation.mutateAsync(data);
+        if (created?.id) {
+          setValue('id', created.id, { shouldValidate: false, shouldDirty: false });
+        }
+      }
+    } catch (err) {
+      enqueueSnackbar('Error saving shift', { variant: 'error' });
+      return;
+    }
 
     if (!options.silent) {
       enqueueSnackbar('Saved successfully', { variant: 'success' });
