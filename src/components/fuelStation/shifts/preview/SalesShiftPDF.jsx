@@ -1154,7 +1154,7 @@ function SalesShiftPDF({
                       flex: 1,
                     }}
                   >
-                    Credit
+                    Pay From (Credit)
                   </Text>
                   <Text
                     style={{
@@ -1164,7 +1164,7 @@ function SalesShiftPDF({
                       flex: 1,
                     }}
                   >
-                    Debit
+                    Pay To (Debit)
                   </Text>
                   <Text
                     style={{
