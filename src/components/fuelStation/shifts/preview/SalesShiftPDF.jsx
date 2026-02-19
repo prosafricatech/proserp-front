@@ -519,6 +519,202 @@ function SalesShiftPDF({
                   </View>
                 )}
 
+                {/* Cashier Fuel Vouchers */}
+                {cashier.fuel_vouchers?.length > 0 && (
+                  <View style={{ marginBottom: 12 }}>
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        color: mainColor,
+                        marginBottom: 4,
+                        textAlign: 'center',
+                      }}
+                    >
+                      {cashier.name} - Fuel Vouchers
+                    </Text>
+                    <View style={pdfStyles.table}>
+                      <View style={pdfStyles.tableRow}>
+                        <Text
+                          style={{
+                            ...pdfStyles.tableHeader,
+                            backgroundColor: mainColor,
+                            color: contrastText,
+                            width: '18%',
+                          }}
+                        >
+                          Voucher No
+                        </Text>
+                        <Text
+                          style={{
+                            ...pdfStyles.tableHeader,
+                            backgroundColor: mainColor,
+                            color: contrastText,
+                            width: '18%',
+                          }}
+                        >
+                          Client
+                        </Text>
+                        <Text
+                          style={{
+                            ...pdfStyles.tableHeader,
+                            backgroundColor: mainColor,
+                            color: contrastText,
+                            width: '20%',
+                          }}
+                        >
+                          Narration
+                        </Text>
+                        <Text
+                          style={{
+                            ...pdfStyles.tableHeader,
+                            backgroundColor: mainColor,
+                            color: contrastText,
+                            width: '18%',
+                          }}
+                        >
+                          Product
+                        </Text>
+                        <Text
+                          style={{
+                            ...pdfStyles.tableHeader,
+                            backgroundColor: mainColor,
+                            color: contrastText,
+                            width: '13%',
+                          }}
+                        >
+                          Quantity
+                        </Text>
+                        <Text
+                          style={{
+                            ...pdfStyles.tableHeader,
+                            backgroundColor: mainColor,
+                            color: contrastText,
+                            width: '13%',
+                          }}
+                        >
+                          Amount
+                        </Text>
+                      </View>
+                      {cashier.fuel_vouchers.map((fv, index) => {
+                        const product = productOptions?.find(
+                          (p) => p.id === fv.product_id
+                        );
+                        const price =
+                          shiftData.fuel_prices.find(
+                            (p) => p.product_id === fv.product_id
+                          )?.price || 0;
+                        const amount = fv.quantity * price;
+
+                        return (
+                          <View key={index} style={pdfStyles.tableRow}>
+                            <Text
+                              style={{
+                                ...pdfStyles.tableCell,
+                                backgroundColor:
+                                  index % 2 === 0 ? '#FFFFFF' : lightColor,
+                                width: '18%',
+                              }}
+                            >
+                              {fv.voucherNo || `FV-${index + 1}`}
+                            </Text>
+                            <Text
+                              style={{
+                                ...pdfStyles.tableCell,
+                                backgroundColor:
+                                  index % 2 === 0 ? '#FFFFFF' : lightColor,
+                                width: '18%',
+                              }}
+                            >
+                              {fv.stakeholder?.name || 'Internal Expense'}
+                            </Text>
+                            <Text
+                              style={{
+                                ...pdfStyles.tableCell,
+                                backgroundColor:
+                                  index % 2 === 0 ? '#FFFFFF' : lightColor,
+                                width: '20%',
+                              }}
+                            >
+                              {fv.narration || '-'}
+                            </Text>
+                            <Text
+                              style={{
+                                ...pdfStyles.tableCell,
+                                backgroundColor:
+                                  index % 2 === 0 ? '#FFFFFF' : lightColor,
+                                width: '18%',
+                              }}
+                            >
+                              {product?.name || `Product ${fv.product_id}`}
+                            </Text>
+                            <Text
+                              style={{
+                                ...pdfStyles.tableCell,
+                                backgroundColor:
+                                  index % 2 === 0 ? '#FFFFFF' : lightColor,
+                                width: '13%',
+                                textAlign: 'right',
+                              }}
+                            >
+                              {fv.quantity.toLocaleString('en-US', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </Text>
+                            <Text
+                              style={{
+                                ...pdfStyles.tableCell,
+                                backgroundColor:
+                                  index % 2 === 0 ? '#FFFFFF' : lightColor,
+                                width: '13%',
+                                textAlign: 'right',
+                              }}
+                            >
+                              {amount.toLocaleString('en-US', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </Text>
+                          </View>
+                        );
+                      })}
+                      <View style={pdfStyles.tableRow}>
+                        <Text
+                          style={{
+                            ...pdfStyles.tableHeader,
+                            ...pdfStyles.tableCell,
+                            backgroundColor: mainColor,
+                            color: contrastText,
+                            width: '87%',
+                            fontWeight: 'bold',
+                          }}
+                        >
+                          Total Fuel Vouchers
+                        </Text>
+                        <Text
+                          style={{
+                            ...pdfStyles.tableHeader,
+                            ...pdfStyles.tableCell,
+                            backgroundColor: mainColor,
+                            color: contrastText,
+                            width: '13%',
+                            textAlign: 'right',
+                            fontWeight: 'bold',
+                          }}
+                        >
+                          {cashierTotals.totalFuelVouchersAmount.toLocaleString(
+                            'en-US',
+                            {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            }
+                          )}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                )}
+
                 {/* Cashier Cash Distribution */}
                 {(cashier.main_ledger ||
                   cashier.other_transactions?.length > 0) && (
@@ -772,202 +968,6 @@ function SalesShiftPDF({
                   </View>
                 )}
 
-                {/* Cashier Fuel Vouchers */}
-                {cashier.fuel_vouchers?.length > 0 && (
-                  <View style={{ marginBottom: 12 }}>
-                    <Text
-                      style={{
-                        fontSize: 12,
-                        color: mainColor,
-                        marginBottom: 4,
-                        textAlign: 'center',
-                      }}
-                    >
-                      {cashier.name} - Fuel Vouchers
-                    </Text>
-                    <View style={pdfStyles.table}>
-                      <View style={pdfStyles.tableRow}>
-                        <Text
-                          style={{
-                            ...pdfStyles.tableHeader,
-                            backgroundColor: mainColor,
-                            color: contrastText,
-                            width: '18%',
-                          }}
-                        >
-                          Voucher No
-                        </Text>
-                        <Text
-                          style={{
-                            ...pdfStyles.tableHeader,
-                            backgroundColor: mainColor,
-                            color: contrastText,
-                            width: '18%',
-                          }}
-                        >
-                          Client
-                        </Text>
-                        <Text
-                          style={{
-                            ...pdfStyles.tableHeader,
-                            backgroundColor: mainColor,
-                            color: contrastText,
-                            width: '20%',
-                          }}
-                        >
-                          Narration
-                        </Text>
-                        <Text
-                          style={{
-                            ...pdfStyles.tableHeader,
-                            backgroundColor: mainColor,
-                            color: contrastText,
-                            width: '18%',
-                          }}
-                        >
-                          Product
-                        </Text>
-                        <Text
-                          style={{
-                            ...pdfStyles.tableHeader,
-                            backgroundColor: mainColor,
-                            color: contrastText,
-                            width: '13%',
-                          }}
-                        >
-                          Quantity
-                        </Text>
-                        <Text
-                          style={{
-                            ...pdfStyles.tableHeader,
-                            backgroundColor: mainColor,
-                            color: contrastText,
-                            width: '13%',
-                          }}
-                        >
-                          Amount
-                        </Text>
-                      </View>
-                      {cashier.fuel_vouchers.map((fv, index) => {
-                        const product = productOptions?.find(
-                          (p) => p.id === fv.product_id
-                        );
-                        const price =
-                          shiftData.fuel_prices.find(
-                            (p) => p.product_id === fv.product_id
-                          )?.price || 0;
-                        const amount = fv.quantity * price;
-
-                        return (
-                          <View key={index} style={pdfStyles.tableRow}>
-                            <Text
-                              style={{
-                                ...pdfStyles.tableCell,
-                                backgroundColor:
-                                  index % 2 === 0 ? '#FFFFFF' : lightColor,
-                                width: '18%',
-                              }}
-                            >
-                              {fv.voucherNo || `FV-${index + 1}`}
-                            </Text>
-                            <Text
-                              style={{
-                                ...pdfStyles.tableCell,
-                                backgroundColor:
-                                  index % 2 === 0 ? '#FFFFFF' : lightColor,
-                                width: '18%',
-                              }}
-                            >
-                              {fv.stakeholder?.name || 'Internal Expense'}
-                            </Text>
-                            <Text
-                              style={{
-                                ...pdfStyles.tableCell,
-                                backgroundColor:
-                                  index % 2 === 0 ? '#FFFFFF' : lightColor,
-                                width: '20%',
-                              }}
-                            >
-                              {fv.narration || '-'}
-                            </Text>
-                            <Text
-                              style={{
-                                ...pdfStyles.tableCell,
-                                backgroundColor:
-                                  index % 2 === 0 ? '#FFFFFF' : lightColor,
-                                width: '18%',
-                              }}
-                            >
-                              {product?.name || `Product ${fv.product_id}`}
-                            </Text>
-                            <Text
-                              style={{
-                                ...pdfStyles.tableCell,
-                                backgroundColor:
-                                  index % 2 === 0 ? '#FFFFFF' : lightColor,
-                                width: '13%',
-                                textAlign: 'right',
-                              }}
-                            >
-                              {fv.quantity.toLocaleString('en-US', {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              })}
-                            </Text>
-                            <Text
-                              style={{
-                                ...pdfStyles.tableCell,
-                                backgroundColor:
-                                  index % 2 === 0 ? '#FFFFFF' : lightColor,
-                                width: '13%',
-                                textAlign: 'right',
-                              }}
-                            >
-                              {amount.toLocaleString('en-US', {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              })}
-                            </Text>
-                          </View>
-                        );
-                      })}
-                      <View style={pdfStyles.tableRow}>
-                        <Text
-                          style={{
-                            ...pdfStyles.tableHeader,
-                            ...pdfStyles.tableCell,
-                            backgroundColor: mainColor,
-                            color: contrastText,
-                            width: '87%',
-                            fontWeight: 'bold',
-                          }}
-                        >
-                          Total Fuel Vouchers
-                        </Text>
-                        <Text
-                          style={{
-                            ...pdfStyles.tableHeader,
-                            ...pdfStyles.tableCell,
-                            backgroundColor: mainColor,
-                            color: contrastText,
-                            width: '13%',
-                            textAlign: 'right',
-                            fontWeight: 'bold',
-                          }}
-                        >
-                          {cashierTotals.totalFuelVouchersAmount.toLocaleString(
-                            'en-US',
-                            {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            }
-                          )}
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
-                )}
-
                 {/* Cashier Adjustments */}
                 {cashier.tank_adjustments?.length > 0 && (
                   <View style={{ marginBottom: 12 }}>
@@ -1113,11 +1113,12 @@ function SalesShiftPDF({
             organization={organization}
             fuel_pumps={fuel_pumps}
             productOptions={productOptions}
+            paymentReceived={paymentReceived}
           />
         )}
 
         {/* ================= PAYMENTS RECEIVED SECTION ================= */}
-        {paymentReceived.length && (
+        {paymentReceived.length && openDetails && (
           <View
             wrap={false}
             style={{ marginTop: 20, pageBreakInside: 'avoid' }}
