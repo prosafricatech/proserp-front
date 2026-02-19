@@ -93,10 +93,7 @@ const DocumentDialog = ({
 
   let paymentReceived = [];
 
-  console.log('shiftData: ', shiftData);
-  console.log('ungroupedLedgerOptions: ', ungroupedLedgerOptions);
-
-  if (shiftData.payments_received?.length) {
+  if (shiftData?.payments_received?.length) {
     const ledgerMap = new Map(ungroupedLedgerOptions.map((ul) => [ul.id, ul]));
 
     shiftData.payments_received.forEach((p, i) => {
@@ -110,8 +107,6 @@ const DocumentDialog = ({
 
     paymentReceived = shiftData.payments_received;
   }
-
-  console.log('paymentReceived:', paymentReceived);
 
   const exportedData = {
     shiftData: shiftData,
