@@ -746,6 +746,7 @@ export default function CashierListSummaryPDF({
                           color: contrastText,
                           // flex: 0.5,
                           width: '40%',
+                          textAlign: 'right',
                         }}
                       >
                         {cashDistributionsTotalSummary.toLocaleString('en-US', {

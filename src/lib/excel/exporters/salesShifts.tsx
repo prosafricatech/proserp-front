@@ -2350,7 +2350,7 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
 
       // ===== payments received columns ===== //
       ws.mergeCells(`A${paymentsRow + 3}:B${paymentsRow + 3}`);
-      ws.getCell(`A${paymentsRow + 3}`).value = 'Credit';
+      ws.getCell(`A${paymentsRow + 3}`).value = 'Pay From (Credit)';
       ws.getCell(`A${paymentsRow + 3}`).font = { bold: true, size: 11 };
       ws.getCell(`A${paymentsRow + 3}`).alignment = {
         horizontal: 'left',
@@ -2369,7 +2369,7 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
       };
 
       ws.mergeCells(`C${paymentsRow + 3}:D${paymentsRow + 3}`);
-      ws.getCell(`C${paymentsRow + 3}`).value = 'Debit';
+      ws.getCell(`C${paymentsRow + 3}`).value = 'Pay To (Debit)';
       ws.getCell(`C${paymentsRow + 3}`).font = { bold: true, size: 11 };
       ws.getCell(`C${paymentsRow + 3}`).alignment = {
         horizontal: 'left',
