@@ -982,6 +982,9 @@ function ShiftSummary({ paymentItems = [] }) {
     </Card>
   );
 
+
+  const totalPayments = paymentItems.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+
   const renderProfitLossSummary = () => (
     <Card variant="outlined" sx={{ mb: 3 }}>
       <CardContent>
@@ -1057,6 +1060,21 @@ function ShiftSummary({ paymentItems = [] }) {
               </Paper>
             </Grid>
           )}
+
+          {/* Payment Received Summary */}
+          <Grid size={{ xs: 12 }} sx={{ p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
+            <Paper elevation={0} sx={{ p: 2, bgcolor: 'info.50', borderRadius: 1, mb: 2 }}>
+              <Typography variant="subtitle2" color="info.dark" gutterBottom>
+                PAYMENTS RECEIVED DURING SHIFT
+              </Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
+                <Typography fontWeight="bold">Total Payments Collected:</Typography>
+                <Typography variant="h6" fontWeight="bold" color="info.main">
+                  {formatMoney(totalPayments)}
+                </Typography>
+              </Box>
+            </Paper>
+          </Grid>
 
           {/* Expected vs Collected Section */}
           <Grid size={{ xs: 12, md: 6 }}>
