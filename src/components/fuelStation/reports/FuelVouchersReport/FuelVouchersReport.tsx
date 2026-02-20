@@ -244,6 +244,7 @@ const FuelVouchersReport: React.FC<fvPdfDialog> = ({ closeDialog }) => {
                       label="From"
                       value={field.value}
                       minDate={dayjs(organization?.recording_start_date)}
+                      ampm={false}
                       slotProps={{
                         textField: {
                           size: 'small',
@@ -267,6 +268,7 @@ const FuelVouchersReport: React.FC<fvPdfDialog> = ({ closeDialog }) => {
                       label="To"
                       value={field.value}
                       minDate={dayjs(organization?.recording_start_date)}
+                      ampm={false}
                       slotProps={{
                         textField: {
                           size: 'small',
