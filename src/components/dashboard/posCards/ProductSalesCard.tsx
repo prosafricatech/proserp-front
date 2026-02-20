@@ -209,7 +209,7 @@ function ProductSalesCard() {
         open={open}
         scroll={smallScreen || !open ? 'body' : 'paper'}
         fullWidth
-        maxWidth='lg'
+        maxWidth='md'
         onClose={onClose}
       >
         <DialogContent>
