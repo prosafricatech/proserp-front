@@ -2,13 +2,13 @@
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { Organization, User } from '@/types/auth-types';
-import { faFileExcel } from '@fortawesome/free-solid-svg-icons';
+import { faFileExcel, faFilePdf } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { JumboScrollbar } from '@jumbo/components';
+import { JumboDdMenu, JumboScrollbar } from '@jumbo/components';
 import JumboCardQuick from '@jumbo/components/JumboCardQuick/JumboCardQuick';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { Div } from '@jumbo/shared';
-import { Share } from '@mui/icons-material';
+import { Visibility } from '@mui/icons-material';
 import {
   Alert,
   Autocomplete,
@@ -16,7 +16,6 @@ import {
   DialogContent,
   FormControl,
   Grid,
-  IconButton,
   InputLabel,
   LinearProgress,
   List,
@@ -172,6 +171,32 @@ function ProductSalesCard() {
     }
   };
 
+  const menuItems = [
+    {
+      icon: <FontAwesomeIcon icon={faFilePdf} color='red' />,
+      title: 'PDF',
+      action: 'open',
+    },
+    {
+      icon: <FontAwesomeIcon icon={faFileExcel} color='green' />,
+      title: 'Excel',
+      action: 'export',
+    },
+  ];
+
+  const handleItemAction = (menuItem: any) => {
+    switch (menuItem.action) {
+      case 'open':
+        setOpenDocumentDialog(true);
+        break;
+      case 'export':
+        handlExcelExport(exportedData);
+        break;
+      default:
+        break;
+    }
+  };
+
   const DocumentDialog: React.FC<DocumentDialogProps> = ({
     open,
     onClose,
@@ -210,7 +235,12 @@ function ProductSalesCard() {
 
   const Actions = () => {
     return (
-      <Grid container columnSpacing={1} paddingLeft={1}>
+      <Grid
+        container
+        columnSpacing={2}
+        paddingLeft={2}
+        sx={{ alignItems: 'center' }}
+      >
         <Grid size={{ xs: 3, md: 3 }}>
           <Div>
             <FormControl fullWidth size='small'>
@@ -236,7 +266,7 @@ function ProductSalesCard() {
             </FormControl>
           </Div>
         </Grid>
-        <Grid size={{ xs: 6, md: 4 }}>
+        <Grid size={{ xs: 5, md: 4 }}>
           <Div>
             <FormControl fullWidth size='small'>
               <InputLabel id='top-products-order-by-direction-label'>
@@ -260,7 +290,7 @@ function ProductSalesCard() {
             </FormControl>
           </Div>
         </Grid>
-        <Grid size={{ xs: 3, md: 2 }}>
+        <Grid size={{ xs: 3, md: 3 }}>
           <Div>
             <FormControl fullWidth size='small'>
               <InputLabel id='products-limit-label'>Limit</InputLabel>
@@ -286,20 +316,16 @@ function ProductSalesCard() {
           </Div>
         </Grid>
         {popularProducts.length > 0 && (
-          <Grid size={{ xs: 12, md: 3 }} textAlign='right'>
-            <Tooltip title={'Export'}>
-              <IconButton onClick={() => setOpenDocumentDialog(true)}>
-                <Share />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title={'Excel'}>
-              <IconButton
-                disabled={isExporting}
-                onClick={() => handlExcelExport(exportedData)}
-              >
-                <FontAwesomeIcon icon={faFileExcel} color='green' />
-              </IconButton>
-            </Tooltip>
+          <Grid size={{ xs: 1, md: 2 }} textAlign='right'>
+            <JumboDdMenu
+              icon={
+                <Tooltip title='View'>
+                  <Visibility />
+                </Tooltip>
+              }
+              menuItems={menuItems}
+              onClickCallback={handleItemAction}
+            />
           </Grid>
         )}
       </Grid>
@@ -318,7 +344,7 @@ function ProductSalesCard() {
         title={
           <Grid
             container
-            spacing={1}
+            spacing={2}
             width={{ xs: '100%', md: '70%', lg: '100%' }}
             alignItems='center'
           >
