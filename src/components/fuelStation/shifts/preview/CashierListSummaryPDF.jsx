@@ -1073,8 +1073,6 @@ export default function CashierListSummaryPDF({
                         style={{
                           ...pdfStyles.tableCell,
                           textAlign: 'left',
-
-                          fontWeight: 'bold',
                           fontSize: '12px',
                           padding: 2,
                           width: '34%',
@@ -1086,8 +1084,6 @@ export default function CashierListSummaryPDF({
                         style={{
                           ...pdfStyles.tableCell,
                           textAlign: 'right',
-
-                          fontWeight: 'bold',
                           fontSize: '12px',
                           padding: 2,
                           width: '34%',
