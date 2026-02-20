@@ -1199,7 +1199,7 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
         // payments received total
         if (exportedData.paymentReceived.length) {
           ws.getCell(`H${totalsRow + 3}`).value = 'Payments';
-          ws.getCell(`H${totalsRow + 3}`).font = { bold: true, size: 14 };
+          ws.getCell(`H${totalsRow + 3}`).font = { size: 14 };
           ws.getCell(`H${totalsRow + 3}`).alignment = {
             horizontal: 'left',
             vertical: 'middle',
@@ -1216,7 +1216,7 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             });
-          ws.getCell(`I${totalsRow + 3}`).font = { bold: true, size: 14 };
+          ws.getCell(`I${totalsRow + 3}`).font = { size: 14 };
           ws.getCell(`I${totalsRow + 3}`).alignment = {
             horizontal: 'right',
             vertical: 'middle',
@@ -1229,7 +1229,7 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
           };
 
           ws.getCell(`J${totalsRow + 3}`).value = '';
-          ws.getCell(`J${totalsRow + 3}`).font = { bold: true, size: 14 };
+          ws.getCell(`J${totalsRow + 3}`).font = { size: 14 };
           ws.getCell(`J${totalsRow + 3}`).alignment = {
             horizontal: 'left',
             vertical: 'middle',
