@@ -59,17 +59,14 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
   const [lastClosingDipping, setLastClosingDipping] = useState([]);
 
   const isAutoSavingRef = React.useRef(false);
-  const AUTO_SAVE_INTERVAL = 1 * 60 * 1000; // 1 minute
+  const AUTO_SAVE_INTERVAL = 1 * 60 * 1000;
 
   const addMutation = useMutation({
     mutationFn: fuelStationServices.addSalesShifts,
     onSuccess: (data) => {
-      // ❌ NO setOpenDialog here
-      // ❌ NO snackbar here
-      console.log('Add successful:', data);
 
       if (data?.id) {
-        setValue('id', data.id); // 🔑 convert autosave → update
+        setValue('id', data.id);
       }
 
       queryClient.invalidateQueries({ queryKey: ['salesShifts'] });
@@ -79,8 +76,6 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
   const updateMutation = useMutation({
     mutationFn: fuelStationServices.updateSalesShifts,
     onSuccess: (data) => {
-      console.log('Update successful:', data);
-      // ❌ no UI here
       queryClient.invalidateQueries({ queryKey: ['salesShifts'] });
     },
   });
@@ -698,14 +693,29 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
     const interval = setInterval(async () => {
       isAutoSavingRef.current = true;
 
-      const isValid = await trigger();
-      if (!isValid) {
+      const data = watch();
+
+
+      // Autosave logic: Save if any cashier has pumps selected, even if others are incomplete
+      let filteredCashiers = [];
+      if (data.cashiers && data.cashiers.length > 0) {
+        filteredCashiers = data.cashiers.filter(cashier => cashier.selected_pumps && cashier.selected_pumps.length > 0);
+      }
+
+      // If no pumps are selected for any cashier, skip autosave (no error flash)
+      if (filteredCashiers.length === 0) {
         isAutoSavingRef.current = false;
         return;
       }
 
-      const data = watch();
-      await handleSubmitForm(data, { silent: true });
+      // Prepare partial data for autosave
+      const partialData = { ...data, cashiers: filteredCashiers };
+
+      // Validate only the partial data (skip blocking on errors from incomplete cashiers)
+      // Note: trigger() validates the whole form, but we want to save only the ready cashiers
+      // So we skip blocking on errors from incomplete cashiers
+
+      await handleSubmitForm(partialData, { silent: true });
 
       isAutoSavingRef.current = false;
     }, AUTO_SAVE_INTERVAL);
