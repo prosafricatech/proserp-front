@@ -24,7 +24,7 @@ import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import { useQuery } from '@tanstack/react-query';
 
 function TaskProgress({ taskProgressItem = null, index = -1, setShowForm = null }) {
-  const { taskProgressItems, setTaskProgressItems } = useUpdateFormContext();
+  const { taskProgressItems, setTaskProgressItems, removedTaskProgressItems } = useUpdateFormContext();
   const { projectTimelineActivities, project } = useProjectProfile();
 
   const [isAdding, setIsAdding] = useState(false);
@@ -56,6 +56,7 @@ function TaskProgress({ taskProgressItem = null, index = -1, setShowForm = null 
           taskProgressItems = [],
           taskProgressItem,
           index,
+          removedTaskProgressItems = []
         } = this.options.context || {};
 
         if (!task) return true;
@@ -80,8 +81,18 @@ function TaskProgress({ taskProgressItem = null, index = -1, setShowForm = null 
             0
           );
 
+        // Add back removed allocations for this task
+        const removedQtyProject = (removedTaskProgressItems || [])
+          .filter(
+            (itm) => itm.task?.id === task.id
+          )
+          .reduce(
+            (sum, itm) => sum + Number(itm.quantity_executed || 0),
+            0
+          );
+
         const remainingProject =
-          projectAvailable - existingDraftProject;
+          projectAvailable - existingDraftProject + removedQtyProject;
 
         if (value > remainingProject) {
           return this.createError({
@@ -110,8 +121,20 @@ function TaskProgress({ taskProgressItem = null, index = -1, setShowForm = null 
               0
             );
 
+          // Add back removed allocations for this task/subcontractor
+          const removedQtySub = (removedTaskProgressItems || [])
+            .filter(
+              (itm) =>
+                itm.task?.id === task.id &&
+                itm.project_subcontract?.id === project_subcontract.id
+            )
+            .reduce(
+              (sum, itm) => sum + Number(itm.quantity_executed || 0),
+              0
+            );
+
           const remainingSubcontract =
-            subcontractAvailable - existingDraftSub;
+            subcontractAvailable - existingDraftSub + removedQtySub;
 
           if (value > remainingSubcontract) {
             return this.createError({
@@ -147,7 +170,7 @@ function TaskProgress({ taskProgressItem = null, index = -1, setShowForm = null 
       remarks: taskProgressItem?.remarks || '',
       unit_symbol: taskProgressItem?.unit_symbol || null,
     },
-    context: { taskProgressItems, taskProgressItem, index },
+    context: { taskProgressItems, taskProgressItem, index, removedTaskProgressItems },
   });
 
   const updateItems = async (item) => {

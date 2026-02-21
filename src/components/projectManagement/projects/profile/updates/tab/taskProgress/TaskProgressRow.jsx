@@ -22,7 +22,7 @@ import MaterialIssuedForm from './taskProgressTab/materialUsed/MaterialIssuedFor
 import MaterialIssuedRow from './taskProgressTab/materialUsed/MaterialIssuedRow';
 
 function TaskProgressRow({ taskProgressItem, index }) {
-  const { taskProgressItems, setTaskProgressItems } = useUpdateFormContext();
+  const { taskProgressItems, setTaskProgressItems, removedTaskProgressItems, setRemovedTaskProgressItems } = useUpdateFormContext();
   const [expanded, setExpanded] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [tabValue, setTabValue] = useState(0);
@@ -53,7 +53,19 @@ function TaskProgressRow({ taskProgressItem, index }) {
   const handleRemoveItem = () => {
     setTaskProgressItems((items) => {
       const newItems = [...items];
-      newItems.splice(index, 1);
+      const removed = newItems.splice(index, 1)[0];
+      if (removed) {
+        setRemovedTaskProgressItems((prev) => {
+          // Prevent duplicates by checking id and execution_date
+          const alreadyExists = prev.some(
+            (itm) => itm.id === removed.id && itm.execution_date === removed.execution_date
+          );
+          if (!alreadyExists) {
+            return [...prev, removed];
+          }
+          return prev;
+        });
+      }
       return newItems;
     });
   };

@@ -27,6 +27,9 @@ function UpdatesForm({ setOpenDialog, update }) {
         ...task_execution,
         project_task_id: task_execution.task?.id, 
     })) : []);
+    
+    // Track removed task progress items
+    const [removedTaskProgressItems, setRemovedTaskProgressItems] = useState([]);
 
     const { mutate: addProjectUpdates, isPending } = useMutation({
         mutationFn: projectsServices.addProjectUpdates,
@@ -82,7 +85,7 @@ function UpdatesForm({ setOpenDialog, update }) {
     };
 
     return (
-        <UpdateFormContext.Provider value={{ taskProgressItems, setTaskProgressItems, activeTab }}>
+        <UpdateFormContext.Provider value={{ taskProgressItems, setTaskProgressItems, removedTaskProgressItems, setRemovedTaskProgressItems, activeTab }}>
             <Typography textAlign={'center'} variant='h4' paddingTop={1}>
                 {update ? `Edit Project Update` : `New Project Update`}
             </Typography>
