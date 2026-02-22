@@ -123,8 +123,8 @@ function ProjectDashboard() {
               ) : (
                 <>
                   <StatItem label="Contract Sum" value={formatCurrency(dashboardFigures?.contract_sum)} />
+                  <StatItem label="Certified Revenue" value={formatCurrency(dashboardFigures?.certified_revenue)} />
                   <StatItem label="Progressive Revenue" value={formatCurrency(dashboardFigures?.progressive_revenue)} />
-
                   <Box mt={2} mb={2}>
                     <Box display="flex" alignItems="center" gap={1}>
                       <LinearProgress
@@ -137,8 +137,6 @@ function ProjectDashboard() {
                       </Typography>
                     </Box>
                   </Box>
-
-                  <StatItem label="Certified Revenue" value={formatCurrency(dashboardFigures?.certified_revenue)} />
                   <StatItem label="Gross Profit to Date" value={formatCurrency(dashboardFigures?.gross_profit_to_date)} />
                 </>
               )}
@@ -170,9 +168,6 @@ function ProjectDashboard() {
                   <StatItem label="Remaining Budget" value={formatCurrency(dashboardFigures?.remaining_budget)} />
 
                   <Box mt={2}>
-                    <Typography variant="body2" color="text.secondary">
-                      % Spent
-                    </Typography>
                     <Box display="flex" alignItems="center" gap={1}>
                       <LinearProgress
                         variant="determinate"
@@ -183,6 +178,9 @@ function ProjectDashboard() {
                         {budgetSpentPercent}%
                       </Typography>
                     </Box>
+                    <Typography variant="body2" color="text.secondary">
+                      % Spent
+                    </Typography>
                   </Box>
                 </>
               )}

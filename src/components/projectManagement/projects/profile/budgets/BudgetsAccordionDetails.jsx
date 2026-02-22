@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Alert, Box, Chip, Grid, LinearProgress, Tooltip, Typography } from '@mui/material';
+import { Alert, Box, Chip, Grid, LinearProgress, Skeleton, Tooltip, Typography } from '@mui/material';
 import BudgetItemsActionTail from './BudgetItemsActionTail';
 import projectsServices from '../../project-services';
 import { useQuery } from '@tanstack/react-query';
 import { useCurrencySelect } from '@/components/masters/Currencies/CurrencySelectProvider';
 import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
+import { Stack } from '@mui/system';
 
 function BudgetsAccordionDetails({ budget, expanded }) {
   const { currencies } = useCurrencySelect();
@@ -36,7 +37,11 @@ function BudgetsAccordionDetails({ budget, expanded }) {
       {isLoading ? (
         <Grid container width={'100%'}>
           <Grid size={12}>
-            <LinearProgress />
+            <Stack spacing={2} sx={{ width: '100%', mb: 2 }}>
+              <Skeleton variant="text" width={180} height={32} sx={{ borderRadius: 1, marginLeft: 'auto' }} />
+              <Skeleton variant="rectangular" width="100%" height={48} sx={{ borderRadius: 1 }} />
+              <Skeleton variant="rectangular" width="100%" height={32} sx={{ borderRadius: 1 }} />
+            </Stack>
           </Grid>
         </Grid>
       ) : (
