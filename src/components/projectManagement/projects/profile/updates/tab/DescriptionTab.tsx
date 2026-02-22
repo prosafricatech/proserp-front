@@ -15,6 +15,7 @@ const DescriptionTab: React.FC<DescriptionTabProps> = ({
   setDescriptionContent,
 }) => {
   const { theme } = useJumboTheme()
+  const isDarkMode = theme.type === 'dark';
   const isBelowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'))
 
   const handleChange = (e: ContentEditableEvent) => {
@@ -27,7 +28,8 @@ const DescriptionTab: React.FC<DescriptionTabProps> = ({
         width: '100%',
         borderRadius: '6px',
         padding: '8px',
-        background: '#fff',
+        background: isDarkMode ? theme.palette.background.paper : '#fff',
+        color: isDarkMode ? theme.palette.text.primary : undefined,
       }}
     >
       <Editor

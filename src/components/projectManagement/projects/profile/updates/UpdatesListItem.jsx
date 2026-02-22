@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Divider, Grid, Skeleton, Stack, Tab, Tabs, Tooltip, Typography } from '@mui/material';
+import { Divider, Grid, Skeleton, Stack, Tab, Tabs, Tooltip, Typography, useTheme } from '@mui/material';
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
@@ -12,6 +12,8 @@ import { useQuery } from '@tanstack/react-query';
 
 const UpdatesAccordion = ({ accordionExpanded, handleChange, update }) => {
   const [isUpdateFormOpen, setIsUpdateFormOpen] = useState(false);
+  const theme = useTheme();
+  const isDarkMode = theme.type === 'dark';
 
   const { data: updateDetails, isFetching, error } = useQuery({
     queryKey: ['editProjectUpdate', { id: update.id }],
@@ -206,7 +208,14 @@ const UpdatesAccordion = ({ accordionExpanded, handleChange, update }) => {
             </Tabs>
 
             {tabValue === 0 && (
-              <div style={{ padding: '8px', background: '#fff', borderRadius: '6px' }}>
+              <div
+                style={{
+                  padding: '8px',
+                  background: isDarkMode ? theme.palette.background.paper : '#fff',
+                  borderRadius: '6px',
+                  color: isDarkMode ? theme.palette.text.primary : undefined
+                }}
+              >
                 <div dangerouslySetInnerHTML={{ __html: description }} />
               </div>
             )}
