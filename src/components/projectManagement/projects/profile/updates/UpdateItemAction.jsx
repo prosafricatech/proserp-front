@@ -10,7 +10,7 @@ import projectsServices from '../../project-services';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { JumboDdMenu } from '@jumbo/components';
 
-const EditUpdate = ({update, setOpenDialog}) => {
+const EditUpdate = ({update, setOpenDialog, setIsUpdateFormOpen}) => {
   const {data:updateDetails, isFetching} = useQuery({
     queryKey: ['editProjectUpdate',{id:update.id}],
     queryFn: async() => projectsServices.projectUpdateDetails(update.id)
@@ -21,11 +21,11 @@ const EditUpdate = ({update, setOpenDialog}) => {
   }
 
   return (
-    <UpdatesForm setOpenDialog={setOpenDialog} update={updateDetails} />
+    <UpdatesForm setOpenDialog={setOpenDialog} update={updateDetails} setIsUpdateFormOpen={setIsUpdateFormOpen} />
   )
 }
 
-const UpdateItemAction = ({ update }) => {
+const UpdateItemAction = ({ update, setIsUpdateFormOpen }) => {
   const [openEditDialog,setOpenEditDialog] = useState(false);
   const {showDialog,hideDialog} = useJumboDialog();
   const { enqueueSnackbar } = useSnackbar();
@@ -83,7 +83,7 @@ const UpdateItemAction = ({ update }) => {
         maxWidth={'lg'} 
         scroll={belowLargeScreen ? 'body' : 'paper'}
       >
-        <EditUpdate update={update} setOpenDialog={setOpenEditDialog} />
+        <EditUpdate update={update} setOpenDialog={setOpenEditDialog} setIsUpdateFormOpen={setIsUpdateFormOpen} />
       </Dialog>
       <JumboDdMenu
         icon={
