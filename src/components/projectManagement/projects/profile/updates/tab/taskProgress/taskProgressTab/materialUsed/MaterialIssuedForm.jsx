@@ -293,6 +293,8 @@ function MaterialIssuedForm({projectTaskIndex, taskProgressItem, material = null
             error={!!errors?.quantity}
             helperText={errors?.quantity?.message}
             value={watch('quantity') || ''}
+            type="number"
+            inputProps={{ step: 'any', min: 0 }}
             onChange={(e)=> {
               const sanitized = e.target.value ? sanitizedNumber(e.target.value) : null;
               setValue(`quantity`, sanitized, {
