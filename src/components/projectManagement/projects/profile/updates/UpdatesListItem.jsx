@@ -216,7 +216,22 @@ const UpdatesAccordion = ({ accordionExpanded, handleChange, update }) => {
                   color: isDarkMode ? theme.palette.text.primary : undefined
                 }}
               >
-                <div dangerouslySetInnerHTML={{ __html: description }} />
+                {isDarkMode && (
+                  <style>
+                    {`
+                      .description-content-dark a {
+                        color: #4FC3F7 !important;
+                        text-decoration: underline;
+                        pointer-events: auto;
+                        cursor: pointer;
+                      }
+                    `}
+                  </style>
+                )}
+                <div
+                  className={isDarkMode ? 'description-content-dark' : ''}
+                  dangerouslySetInnerHTML={{ __html: description }}
+                />
               </div>
             )}
 

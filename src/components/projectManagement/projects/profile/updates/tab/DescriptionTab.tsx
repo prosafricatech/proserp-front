@@ -32,6 +32,18 @@ const DescriptionTab: React.FC<DescriptionTabProps> = ({
         color: isDarkMode ? theme.palette.text.primary : undefined,
       }}
     >
+      {isDarkMode && (
+        <style>
+          {`
+            .rsw-editor a {
+              color: #4FC3F7 !important;
+              text-decoration: underline;
+              pointer-events: auto;
+              cursor: pointer;
+            }
+          `}
+        </style>
+      )}
       <Editor
         value={descriptionContent || ''}
         onChange={handleChange}
