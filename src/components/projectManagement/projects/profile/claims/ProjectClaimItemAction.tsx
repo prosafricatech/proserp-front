@@ -1,6 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import PDFContent from '@/components/pdf/PDFContent';
+import projectsServices from '@/components/projectManagement/projects/project-services';
+import { JumboDdMenu } from '@jumbo/components';
+import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
+import { MenuItemProps } from '@jumbo/types';
 import {
   DeleteOutlined,
   EditOutlined,
@@ -11,28 +17,26 @@ import {
 import {
   Box,
   Button,
+  Checkbox,
   Dialog,
   DialogContent,
+  DialogTitle,
   Grid,
   IconButton,
   LinearProgress,
+  Stack,
   Tab,
   Tabs,
   Tooltip,
+  Typography,
   useMediaQuery,
 } from '@mui/material';
-import { useSnackbar } from 'notistack';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
-import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
-import { JumboDdMenu } from '@jumbo/components';
-import projectsServices from '@/components/projectManagement/projects/project-services';
-import PDFContent from '@/components/pdf/PDFContent';
-import ProjectClaimsForm from './form/ProjectClaimsForm';
-import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
-import { MenuItemProps } from '@jumbo/types';
-import ClaimPDF from './ClaimPDF';
+import { useSnackbar } from 'notistack';
+import React, { useState } from 'react';
 import ClaimOnscreen from './ClaimOnscreen';
+import ClaimPDF from './ClaimPDF';
+import ProjectClaimsForm from './form/ProjectClaimsForm';
 
 interface DocumentDialogProps {
   open: boolean;
@@ -65,10 +69,16 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
   const [activeTab, setActiveTab] = useState<number>(0);
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
+  const [openDetails, setOpenDetails] = useState(false);
+
+  const handleDetailsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const isChecked = e.target.checked;
+    setOpenDetails(isChecked);
+  };
 
   if (isFetching) {
     return (
-      <Dialog open fullWidth fullScreen={belowLargeScreen} maxWidth="md">
+      <Dialog open fullWidth fullScreen={belowLargeScreen} maxWidth='md'>
         <LinearProgress />
       </Dialog>
     );
@@ -79,23 +89,41 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
       open={open}
       onClose={onClose}
       fullWidth
-      maxWidth="md"
+      maxWidth='md'
       fullScreen={belowLargeScreen}
     >
+      {(!belowLargeScreen || activeTab === 1) && (
+        <DialogTitle>
+          <Stack
+            direction={'row'}
+            justifyContent={'center'}
+            alignItems={'center'}
+          >
+            <Typography>With Claim Derivations</Typography>
+            <Checkbox checked={openDetails} onChange={handleDetailsChange} />
+          </Stack>
+        </DialogTitle>
+      )}
+
       <DialogContent>
         {belowLargeScreen && (
-          <Grid container alignItems="center" justifyContent="space-between" mb={2}>
+          <Grid
+            container
+            alignItems='center'
+            justifyContent='space-between'
+            mb={2}
+          >
             <Grid size={11}>
               <Tabs value={activeTab} onChange={(_, tab) => setActiveTab(tab)}>
-                <Tab label="ONSCREEN" />
-                <Tab label="PDF" />
+                <Tab label='ONSCREEN' />
+                <Tab label='PDF' />
               </Tabs>
             </Grid>
 
-            <Grid size={1} textAlign="right">
-              <Tooltip title="Close">
-                <IconButton size="small" onClick={onClose}>
-                  <HighlightOff color="primary" />
+            <Grid size={1} textAlign='right'>
+              <Tooltip title='Close'>
+                <IconButton size='small' onClick={onClose}>
+                  <HighlightOff color='primary' />
                 </IconButton>
               </Tooltip>
             </Grid>
@@ -106,14 +134,20 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
           <ClaimOnscreen claim={claimDetails} organization={organization} />
         ) : (
           <PDFContent
-            document={<ClaimPDF claim={claimDetails} organization={organization} />}
+            document={
+              <ClaimPDF
+                claim={claimDetails}
+                organization={organization}
+                openDetails={openDetails}
+              />
+            }
             fileName={claimDetails?.claimNo}
           />
         )}
 
         {belowLargeScreen && (
-          <Box textAlign="right" mt={5}>
-            <Button variant="outlined" size="small" onClick={onClose}>
+          <Box textAlign='right' mt={5}>
+            <Button variant='outlined' size='small' onClick={onClose}>
               Close
             </Button>
           </Box>
@@ -133,10 +167,7 @@ const EditClaim: React.FC<EditClaimProps> = ({ claim, setOpenDialog }) => {
   if (isFetching) return <LinearProgress />;
 
   return (
-    <ProjectClaimsForm
-      claim={claimDetails}
-      setOpenDialog={setOpenDialog}
-    />
+    <ProjectClaimsForm claim={claimDetails} setOpenDialog={setOpenDialog} />
   );
 };
 
@@ -174,7 +205,11 @@ const ProjectClaimItemAction: React.FC<ProjectClaimItemActionProps> = ({
   const menuItems = [
     { icon: <VisibilityOutlined />, title: 'View', action: 'view' },
     { icon: <EditOutlined />, title: 'Edit', action: 'edit' },
-    { icon: <DeleteOutlined color="error" />, title: 'Delete', action: 'delete' },
+    {
+      icon: <DeleteOutlined color='error' />,
+      title: 'Delete',
+      action: 'delete',
+    },
   ];
 
   const handleItemAction = (menu: MenuItemProps) => {
@@ -210,15 +245,12 @@ const ProjectClaimItemAction: React.FC<ProjectClaimItemActionProps> = ({
       <Dialog
         open={openEditDialog}
         fullWidth
-        maxWidth="lg"
+        maxWidth='lg'
         fullScreen={belowLargeScreen}
         scroll={belowLargeScreen ? 'body' : 'paper'}
       >
         {openEditDialog && (
-          <EditClaim
-            claim={claim}
-            setOpenDialog={setOpenEditDialog}
-          />
+          <EditClaim claim={claim} setOpenDialog={setOpenEditDialog} />
         )}
       </Dialog>
 
@@ -231,7 +263,7 @@ const ProjectClaimItemAction: React.FC<ProjectClaimItemActionProps> = ({
 
       <JumboDdMenu
         icon={
-          <Tooltip title="Actions">
+          <Tooltip title='Actions'>
             <MoreHorizOutlined />
           </Tooltip>
         }
