@@ -97,10 +97,10 @@ const ProductBudgetCheckDetails: React.FC<ProductBudgetCheckDetailsProps> = ({
       <Box sx={{ p: 3 }}>
         {/* Header */}
         <Box mb={3}>
-          <Typography variant="h3" fontWeight={700}>
+          <Typography variant="h3" textAlign={'center'} fontWeight={700}>
             Budget Check
           </Typography>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" color="text.secondary" textAlign={'center'}>
             {productName}
           </Typography>
         </Box>

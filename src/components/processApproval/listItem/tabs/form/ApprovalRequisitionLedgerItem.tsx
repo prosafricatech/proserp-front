@@ -22,6 +22,7 @@ import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import purchaseServices from '@/components/procurement/purchases/purchase-services';
 import { Approval, Requisition, RequisitionItem } from '@/components/processApproval/RequisitionType';
 import { Div } from '@jumbo/shared';
+import { Currency } from '@/components/masters/Currencies/CurrencyType';
 
 interface FetchRelatableDetailsProps {
     requisition: Requisition;
@@ -65,7 +66,7 @@ function ApprovalRequisitionLedgerItem({
     const [selectedRelated, setSelectedRelated] = useState<{ id: number; orderNo: string; order_date: string } | null>(null);
     const [initialItems, setInitialItems] = useState<RequisitionItem[]>([]);
     const [openLedgerBudgetDialog, setOpenLedgerBudgetDialog] = useState(false);
-    const [ledgerDialogData, setLedgerDialogData] = useState<{ ledgerId: number, costCenterId: number } | null>(null);
+    const [ledgerDialogData, setLedgerDialogData] = useState<{ ledgerId: number, ledgerName: string, costCenterId: number, currency: Currency } | null>(null);
 
     useEffect(() => {
         setInitialItems([...requisitionLedgerItem]);
@@ -113,7 +114,9 @@ function ApprovalRequisitionLedgerItem({
                                                         onClick={() => {
                                                             setLedgerDialogData({
                                                                 ledgerId: item.ledger.id,
-                                                                costCenterId: requisition.cost_center?.id
+                                                                ledgerName: item.ledger.name,
+                                                                costCenterId: requisition.cost_center?.id,
+                                                                currency: requisition.currency
                                                             });
                                                             setOpenLedgerBudgetDialog(true);
                                                         }}
@@ -270,6 +273,8 @@ function ApprovalRequisitionLedgerItem({
                 onClose={() => setOpenLedgerBudgetDialog(false)}
                 ledgerId={ledgerDialogData?.ledgerId || 0}
                 costCenterId={ledgerDialogData?.costCenterId || 0}
+                currency={ledgerDialogData?.currency as Currency}
+                ledgerName={ledgerDialogData?.ledgerName || ''}
             />
         </React.Fragment>
     );
