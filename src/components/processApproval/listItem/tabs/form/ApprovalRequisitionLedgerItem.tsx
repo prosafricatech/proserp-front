@@ -1,4 +1,4 @@
-import { VisibilityOutlined, Delete, Restore } from '@mui/icons-material';
+import { VisibilityOutlined, Delete, Restore, AccountBalanceWalletOutlined } from '@mui/icons-material';
 import {
     Box,
     Button,
@@ -15,6 +15,7 @@ import {
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import RelatableOrderDetails from './RelatableOrderDetails';
+import LedgerBudgetCheckDetails from './LedgerBudgetCheckDetails';
 import { useQuery } from '@tanstack/react-query';
 import { readableDate, sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
@@ -37,7 +38,7 @@ interface ApprovalRequisitionLedgerItemProps {
     setRequisitionLedgerItem: (items: RequisitionItem[]) => void;
 }
 
-const FetchRelatableDetails = ({ requisition, relatable, toggleOpen }: FetchRelatableDetailsProps) => {
+const FetchRelatableDetails = ({ relatable, toggleOpen }: FetchRelatableDetailsProps) => {
     const { data: orderDetails, isFetching } = useQuery({
         queryKey: ['purchaseOrder', { id: relatable?.id }],
         queryFn: async () => purchaseServices.orderDetails(relatable?.id)
@@ -63,6 +64,8 @@ function ApprovalRequisitionLedgerItem({
     const [openViewDialog, setOpenViewDialog] = useState(false);
     const [selectedRelated, setSelectedRelated] = useState<{ id: number; orderNo: string; order_date: string } | null>(null);
     const [initialItems, setInitialItems] = useState<RequisitionItem[]>([]);
+    const [openLedgerBudgetDialog, setOpenLedgerBudgetDialog] = useState(false);
+    const [ledgerDialogData, setLedgerDialogData] = useState<{ ledgerId: number, costCenterId: number } | null>(null);
 
     useEffect(() => {
         setInitialItems([...requisitionLedgerItem]);
@@ -96,12 +99,29 @@ function ApprovalRequisitionLedgerItem({
                         <Div sx={{ mt: 2, mb: 0.5 }}>{itemIndex + 1}.</Div>
                     </Grid>
                     <Grid size={{xs: 11, md: 3, lg: 3}}>
-                        <Div sx={{ mt: 2, mb: 0.5 }}>
+                        <Div sx={{ mt: 2, mb: 0.5, display: 'flex', alignItems: 'center', gap: 1 }}>
                             <ListItemText
                                 primary={
                                     <Tooltip title={'Ledger'}>
                                         <Typography variant="h5" fontSize={14} lineHeight={1.25} mb={0} noWrap>
                                             {item.ledger?.name}
+                                            {item.ledger && (
+                                                <Tooltip title={`${item.ledger.name} Budget check`}>
+                                                    <IconButton
+                                                        size="small"
+                                                        sx={{ ml: 1 }}
+                                                        onClick={() => {
+                                                            setLedgerDialogData({
+                                                                ledgerId: item.ledger.id,
+                                                                costCenterId: requisition.cost_center?.id
+                                                            });
+                                                            setOpenLedgerBudgetDialog(true);
+                                                        }}
+                                                    >
+                                                        <AccountBalanceWalletOutlined fontSize="small" />
+                                                    </IconButton>
+                                                </Tooltip>
+                                            )}
                                         </Typography>
                                     </Tooltip>
                                 }
@@ -110,12 +130,12 @@ function ApprovalRequisitionLedgerItem({
                                         <>
                                             <Tooltip title={'Relatable To'}>
                                                 <Typography variant="caption" fontSize={14} lineHeight={1.25} mb={0}>
-                                                    {`${item.relatable.orderNo} (${readableDate(item.relatable.order_date, false)})`}
+                                                    {`${item?.relatable?.orderNo} (${readableDate(item?.relatable?.order_date, false)})`}
                                                 </Typography>
                                             </Tooltip>
                                             <Tooltip title={`View Order`}>
                                                 <IconButton onClick={() => {
-                                                    setSelectedRelated(item.relatable);
+                                                    setSelectedRelated(item?.relatable);
                                                     setOpenViewDialog(true);
                                                 }}>
                                                     <VisibilityOutlined />
@@ -244,6 +264,13 @@ function ApprovalRequisitionLedgerItem({
                     />
                 )}
             </Dialog>
+
+            <LedgerBudgetCheckDetails
+                open={openLedgerBudgetDialog}
+                onClose={() => setOpenLedgerBudgetDialog(false)}
+                ledgerId={ledgerDialogData?.ledgerId || 0}
+                costCenterId={ledgerDialogData?.costCenterId || 0}
+            />
         </React.Fragment>
     );
 }
