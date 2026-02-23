@@ -222,7 +222,7 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
     const ws = wb.addWorksheet('Sales Shifts');
 
     // Set column widths for better readability
-    ws.columns = [
+    const baseColumns = [
       { width: 18 },
       { width: 12 },
       { width: 15 },
@@ -234,6 +234,8 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
       { width: 35 },
       { width: 35 },
     ];
+
+    ws.columns = baseColumns;
 
     // Add header row using shared function
     addHeader(ws, [
@@ -483,6 +485,10 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
     });
 
     if (!exportedData.withDetails) {
+      ws.getColumn('G').width = 20;
+      ws.getColumn('H').width = 20;
+      ws.getColumn('I').width = 20;
+      ws.getColumn('J').width = 20;
       // CASHIERS SUMMARY
       ws.mergeCells('A7:J7');
       ws.getCell('A7').value = 'Cashiers Summary';
@@ -1334,6 +1340,7 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
       }
     } else {
       if (exportedData.shiftData.cashiers.length) {
+        ws.getColumn('G').width = 20;
         exportedData.shiftData.cashiers?.forEach(
           (cashier: any, cashierIndex: number) => {
             const cashierTotals = calculateCashierTotals(cashier);
