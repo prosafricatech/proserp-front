@@ -141,7 +141,7 @@ function RequisitionLedgerItemRow({
           >
             <Tooltip title="Quantity">
               <Typography>
-                {ledger_item.quantity?.toLocaleString()} 
+                {ledger_item.quantity?.toLocaleString()} {''}
                 {ledger_item?.unit_symbol || 
                  ledger_item.measurement_unit?.symbol || 
                  ledger_item.product?.unit_symbol}

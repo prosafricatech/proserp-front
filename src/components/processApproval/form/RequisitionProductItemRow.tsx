@@ -152,7 +152,7 @@ function RequisitionProductItemRow({
             <Grid textAlign={{md: 'end'}} size={{xs: 6, md: 2}}>
               <Tooltip title="Quantity">
                 <Typography>
-                  {product_item.quantity?.toLocaleString() ?? '0'} 
+                  {product_item.quantity?.toLocaleString() ?? '0'} {''}
                   {product_item?.unit_symbol ?? 
                    product_item.measurement_unit?.symbol ?? 
                    product_item.product?.unit_symbol}

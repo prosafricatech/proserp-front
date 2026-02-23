@@ -80,8 +80,6 @@ function ApprovalRequisitionProductItem({
         setRequisitionProductItem([...initialItems]);
     };
 
-    console.log(approval)
-
     return (
         <React.Fragment>
             {requisitionProductItem.map((item: RequisitionItem, itemIndex: number) => {
