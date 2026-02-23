@@ -8,7 +8,7 @@ import { JumboDdMenu, JumboScrollbar } from '@jumbo/components';
 import JumboCardQuick from '@jumbo/components/JumboCardQuick/JumboCardQuick';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { Div } from '@jumbo/shared';
-import { Visibility } from '@mui/icons-material';
+import { Share } from '@mui/icons-material';
 import {
   Alert,
   Autocomplete,
@@ -319,8 +319,8 @@ function ProductSalesCard() {
           <Grid size={{ xs: 1, md: 2 }} textAlign='right'>
             <JumboDdMenu
               icon={
-                <Tooltip title='View'>
-                  <Visibility />
+                <Tooltip title='Share'>
+                  <Share />
                 </Tooltip>
               }
               menuItems={menuItems}
