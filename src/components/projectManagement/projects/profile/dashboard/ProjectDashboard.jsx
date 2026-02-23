@@ -40,7 +40,7 @@ const StatItem = ({ label, value }) => (
       {label}
     </Typography>
     <Typography variant="h4">
-      {value}
+      {typeof value === 'number' ? value.toFixed(2) : value}
     </Typography>
   </Box>
 );
@@ -66,12 +66,12 @@ function ProjectDashboard() {
 
   // Calculate percentages from unified data
   const progressiveRevenuePercent = dashboardFigures?.contract_sum 
-    ? ((dashboardFigures?.progressive_revenue / dashboardFigures?.contract_sum) * 100).toFixed(1)
-    : 0;
+    ? ((dashboardFigures?.progressive_revenue / dashboardFigures?.contract_sum) * 100).toFixed(2)
+    : '0.00';
 
   const budgetSpentPercent = dashboardFigures?.budget
-    ? ((dashboardFigures?.cost_to_date / dashboardFigures?.budget) * 100).toFixed(1)
-    : 0;
+    ? ((dashboardFigures?.cost_to_date / dashboardFigures?.budget) * 100).toFixed(2)
+    : '0.00';
 
   // Format currency with two decimal places and space between amount and currency code
   const formatCurrency = (value) => {
@@ -133,7 +133,7 @@ function ProjectDashboard() {
                         sx={{ height: 8, borderRadius: 5, mt: 1, flex: 1 }}
                       />
                       <Typography variant="body2" color="text.secondary">
-                        {progressiveRevenuePercent}%
+                        {parseFloat(progressiveRevenuePercent).toFixed(2)}%
                       </Typography>
                     </Box>
                   </Box>
@@ -175,7 +175,7 @@ function ProjectDashboard() {
                         sx={{ height: 8, borderRadius: 5, mt: 1, flex: 1 }}
                       />
                       <Typography variant="body2" color="text.secondary">
-                        {budgetSpentPercent}%
+                        {parseFloat(budgetSpentPercent).toFixed(2)}%
                       </Typography>
                     </Box>
                     <Typography variant="body2" color="text.secondary">
@@ -217,7 +217,7 @@ function ProjectDashboard() {
               ) : (
                 <Grid container spacing={3}>
                   <Grid size={{ xs: 12, md: 6 }}>
-                    <StatItem label="Time %" value={dashboardFigures?.time_progress_percentage ? `${dashboardFigures.time_progress_percentage}%` : ''} />
+                    <StatItem label="Time %" value={dashboardFigures?.time_progress_percentage ? `${parseFloat(dashboardFigures.time_progress_percentage).toFixed(2)}%` : ''} />
                     <Box display="flex" alignItems="center" gap={1}>
                       <LinearProgress 
                         variant="determinate" 
@@ -225,13 +225,13 @@ function ProjectDashboard() {
                         sx={{ flex: 1 }} 
                       />
                       <Typography variant="body2" color="text.secondary">
-                        {dashboardFigures?.time_progress_percentage || 0}%
+                        {dashboardFigures?.time_progress_percentage ? parseFloat(dashboardFigures.time_progress_percentage).toFixed(2) : '0.00'}%
                       </Typography>
                     </Box>
                   </Grid>
 
                   <Grid size={{ xs: 12, md: 6 }}>
-                    <StatItem label="Physical Progress %" value={dashboardFigures?.execution_percentage ? `${dashboardFigures.execution_percentage}%` : ''} />
+                    <StatItem label="Physical Progress %" value={dashboardFigures?.execution_percentage ? `${parseFloat(dashboardFigures.execution_percentage).toFixed(2)}%` : ''} />
                     <Box display="flex" alignItems="center" gap={1}>
                       <LinearProgress 
                         variant="determinate" 
@@ -240,7 +240,7 @@ function ProjectDashboard() {
                         sx={{ flex: 1 }} 
                       />
                       <Typography variant="body2" color="text.secondary">
-                        {dashboardFigures?.execution_percentage || 0}%
+                        {dashboardFigures?.execution_percentage ? parseFloat(dashboardFigures.execution_percentage).toFixed(2) : '0.00'}%
                       </Typography>
                     </Box>
                   </Grid>
