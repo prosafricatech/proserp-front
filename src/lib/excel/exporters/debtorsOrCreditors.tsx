@@ -53,7 +53,7 @@ export async function exportDebtorsOrCreditorsToExcel(exportedData: any) {
     // info section
     if (reportData.filters?.cost_centers?.length > 0) {
       ws.mergeCells('A4:C4');
-      ws.getCell('A4').value = 'Cost Centers';
+      ws.getCell('A4').value = 'Cost Centers ';
       ws.getCell('D4').value = 'Printed By';
       ws.getCell('F4').value = 'Printed On';
       let row = 5;
