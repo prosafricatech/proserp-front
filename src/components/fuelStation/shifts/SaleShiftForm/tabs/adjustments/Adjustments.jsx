@@ -22,7 +22,6 @@ function Adjustments({cashierPumpProducts, index = -1, setShowForm = null, adjus
   const [productTanks, setProductTanks] = useState([])
   const [tanksKey, setTanksKeyKey] = useState(0);
 
-  // Define validation Schema
   const validationSchema = yup.object({
     product_id: yup.number().required("Product is required").typeError('Product is required'),
     tank_id: yup.number().required("Tank is required").typeError('Tank is required'),
@@ -77,9 +76,10 @@ function Adjustments({cashierPumpProducts, index = -1, setShowForm = null, adjus
               requiredProducts={cashierPumpProducts}
               onChange={(newValue) => {
                 setTanksKeyKey(prevKey => prevKey + 1);
-                const relatedPumps = fuel_pumps.filter(pump => pump.product_id === newValue?.id);
-                const relatedTankIds = relatedPumps.map(pump => pump.tank_id);
-                const tanksHavingProduct = tanks.filter(tank => relatedTankIds.includes(tank.id));
+                // Allow all tanks for this product assigned to this cashier
+                const productObj = cashierPumpProducts.find(p => p.id === newValue?.id);
+                const allowedTankIds = productObj?.tankIds || [];
+                const tanksHavingProduct = tanks.filter(tank => allowedTankIds.includes(tank.id));
                 setProductTanks(tanksHavingProduct);
                 setValue(`product_id`, newValue ? newValue.id : '', {
                   shouldValidate: true, 

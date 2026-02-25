@@ -43,11 +43,10 @@ function PumpReadings({
   useEffect(() => {
     const savedReadings = cashierData.pump_readings || [];
     const savedSelectedPumps = cashierData.selected_pumps || [];
-    
     if (savedReadings.length > 0 && localPumpReadings.length === 0) {
       setLocalPumpReadings(savedReadings);
     }
-    
+    // selectedPumps is now array of objects { pump_id, tank_id }
     if (savedSelectedPumps.length > 0 && selectedPumps.length === 0) {
       formSetValue(`cashiers.${cashierIndex}.selected_pumps`, savedSelectedPumps, {
         shouldValidate: true,
@@ -89,7 +88,12 @@ function PumpReadings({
     if (handleCashierPumpSelection) {
       handleCashierPumpSelection(cashierIndex, selectedPumpIds);
     } else {
-      formSetValue(`cashiers.${cashierIndex}.selected_pumps`, selectedPumpIds, {
+      // Map selectedPumpIds to objects with pump_id and tank_id
+      const selectedPumpObjs = selectedPumpIds.map(pumpId => {
+        const pump = fuel_pumps?.find(p => p.id === pumpId);
+        return pump ? { pump_id: pumpId, tank_id: pump.tank_id } : { pump_id: pumpId };
+      });
+      formSetValue(`cashiers.${cashierIndex}.selected_pumps`, selectedPumpObjs, {
         shouldValidate: true,
         shouldDirty: true
       });
@@ -120,15 +124,15 @@ function PumpReadings({
   };
 
   const selectedPumpsWithDetails = useMemo(() => {
-    return selectedPumps.map(pumpId => {
+    // selectedPumps is now array of objects { pump_id, tank_id }
+    return selectedPumps.map(sel => {
+      const pumpId = sel.pump_id ?? sel;
       const pump = fuel_pumps?.find(p => p.id === pumpId);
       if (!pump) return null;
-      
       const tank = tanks?.find(t => t.id === pump.tank_id);
       const product = products?.find(p => p.id === pump.product_id);
       const reading = localPumpReadings.find(r => r.fuel_pump_id === pumpId);
       const lastClosing = lastClosingReadings?.[pumpId];
-      
       return {
         id: pumpId,
         name: pump.name,
@@ -213,7 +217,7 @@ function PumpReadings({
               handlePumpSelection(selectedIds);
             }}
             value={availablePumps.filter(pump => 
-              selectedPumps.includes(pump.id)
+              selectedPumps.some(sel => (sel.pump_id ?? sel) === pump.id)
             )}
             isOptionEqualToValue={(option, value) => option.id === value.id}
           />
@@ -241,21 +245,31 @@ function PumpReadings({
                 <Grid size={{xs: 12, sm: 6, md: 4, lg: 3}} key={pump.id}>
                   <Card variant="outlined" sx={{ height: '100%' }}>
                     <CardContent>
-                      <Box sx={{ mb: 2 }}>
-                        <Tooltip title={`Pump: ${pump.name} | Tank: ${pump.tankName}`}>
-                          <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
+                      <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <Tooltip 
+                          title={'Pump name'}
+                          arrow
+                        >
+                          <Typography variant="subtitle2" sx={{ fontWeight: 'bold', cursor: 'pointer' }}>
                             {pump.name}
                           </Typography>
                         </Tooltip>
-                        <Typography variant="caption" color="textSecondary">
+                        <Tooltip title={'Tank name'} arrow>
+                          <Typography variant="caption" color="textSecondary" sx={{ ml: 2, fontWeight: 'bold', cursor: 'pointer' }}>
+                            {pump.tankName}
+                          </Typography>
+                        </Tooltip>
+                      </Box>
+                      <Tooltip title="Fuel Name" arrow>
+                        <Typography variant="caption" color="textSecondary" sx={{ display: 'block', mb: 2, cursor: 'pointer' }}>
                           {pump.productName}
                         </Typography>
-                        {pump.lastClosing !== undefined && (
-                          <Typography variant="caption" display="block" color="info.main">
-                            Last closing: {pump.lastClosing.toLocaleString()}
-                          </Typography>
-                        )}
-                      </Box>
+                      </Tooltip>
+                      {pump.lastClosing !== undefined && (
+                        <Typography variant="caption" display="block" color="info.main">
+                          Last closing: {pump.lastClosing.toLocaleString()}
+                        </Typography>
+                      )}
                       
                       <Grid container spacing={1}>
                         <Grid size={12}>

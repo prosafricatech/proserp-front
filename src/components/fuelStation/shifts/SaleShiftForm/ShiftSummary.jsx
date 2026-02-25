@@ -72,16 +72,13 @@ function ShiftSummary({ paymentItems = [] }) {
     const cashTransactions = cashier.other_transactions || [];
     const selectedPumps = cashier.selected_pumps || [];
     const mainLedgerId = cashier.main_ledger?.id || cashier.main_ledger_id;
-    
     let productsTotal = 0;
-    
-    selectedPumps.forEach(pumpId => {
+    selectedPumps.forEach(sel => {
+      const pumpId = sel.pump_id ?? sel;
       const pump = fuel_pumps?.find(p => p.id === pumpId);
       if (!pump) return;
-
       const productId = pump.product_id;
       const reading = pumpReadings.find(r => r?.fuel_pump_id === pumpId);
-
       if (reading) {
         const sold = (sanitizedNumber(reading.closing) - sanitizedNumber(reading.opening)) || 0;
         const price = getProductPrice(productId);
@@ -244,7 +241,8 @@ function ShiftSummary({ paymentItems = [] }) {
     const pumpReadings = cashier.pump_readings || [];
     const selectedPumps = cashier.selected_pumps || [];
     let cashierProductsTotal = 0;
-    selectedPumps.forEach(pumpId => {
+    selectedPumps.forEach(sel => {
+      const pumpId = sel.pump_id ?? sel;
       const pump = fuel_pumps?.find(p => p.id === pumpId);
       if (!pump) return;
       const productId = pump.product_id;
@@ -320,14 +318,12 @@ function ShiftSummary({ paymentItems = [] }) {
     allCashiers.forEach(cashier => {
       const pumpReadings = cashier.pump_readings || [];
       const selectedPumps = cashier.selected_pumps || [];
-
-      selectedPumps.forEach(pumpId => {
+      selectedPumps.forEach(sel => {
+        const pumpId = sel.pump_id ?? sel;
         const pump = fuel_pumps?.find(p => p.id === pumpId);
         if (!pump) return;
-
         const productId = pump.product_id;
         const reading = pumpReadings.find(r => r?.fuel_pump_id === pumpId);
-
         if (reading) {
           const sold = (sanitizedNumber(reading.closing) - sanitizedNumber(reading.opening)) || 0;
           totals[productId] = (totals[productId] || 0) + sold;
