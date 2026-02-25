@@ -7,7 +7,7 @@ import {
   ButtonGroup,
   FormControl,
   InputLabel,
-  LinearProgress,
+  Skeleton,
   MenuItem,
   Select,
   Tooltip,
@@ -204,7 +204,7 @@ function InventoryValueTrend() {
       }
     >
       {isLoading ? (
-        <LinearProgress />
+        <Skeleton variant="rectangular" width="100%" height={xlScreen ? 240 : 260} sx={{ borderRadius: 2 }} />
       ) : (
         <ResponsiveContainer width="100%" height={xlScreen ? 240 : 260}>
           <ComposedChart

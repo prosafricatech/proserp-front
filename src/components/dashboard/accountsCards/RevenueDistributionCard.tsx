@@ -1,7 +1,7 @@
 'use client'
 import JumboCardQuick from '@jumbo/components/JumboCardQuick/JumboCardQuick';
 import React, { useEffect, useState } from 'react';
-import { LinearProgress, Typography, useMediaQuery, Box } from '@mui/material';
+import { Skeleton, Typography, useMediaQuery, Box } from '@mui/material';
 import financialReportsServices from '../../accounts/reports/financial-reports-services';
 import { useDashboardSettings } from '../Dashboard';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
@@ -138,7 +138,7 @@ function RevenueDistributionCard() {
         }}
       >
         {isLoading ? (
-          <LinearProgress sx={{ width: '100%' }} />
+          <Skeleton variant="rectangular" width="100%" height={245} sx={{ borderRadius: 2 }} />
         ) : (
           // 👇 Key ensures full chart redraw when theme changes
           <HighchartsReact
