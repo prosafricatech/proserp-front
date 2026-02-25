@@ -59,7 +59,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
   const [lastClosingDipping, setLastClosingDipping] = useState([]);
 
   const isAutoSavingRef = React.useRef(false);
-  const AUTO_SAVE_INTERVAL = 1 * 60 * 1000;
+  const AUTO_SAVE_INTERVAL = 2 * 60 * 1000;
 
   const addMutation = useMutation({
     mutationFn: fuelStationServices.addSalesShifts,
@@ -335,15 +335,10 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
     return lastClosingReadings[pumpId] || 0;
   }, [SalesShift, selectedCashiers, lastClosingReadings]);
 
-  const handlePumpSelection = useCallback((cashierIndex, selectedPumpIds) => {
+  const handleCashierPumpSelection = useCallback((cashierIndex, selectedPumpIds) => {
     const currentCashier = selectedCashiers[cashierIndex];
     if (!currentCashier) return;
-    
-    setValue(`cashiers.${cashierIndex}.selected_pumps`, selectedPumpIds, {
-      shouldValidate: true,
-      shouldDirty: true
-    });
-    
+
     const currentReadings = currentCashier.pump_readings || [];
     
     let updatedReadings = currentReadings.filter(reading => 
@@ -652,6 +647,12 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
 
     data.cashiers = data.cashiers.map(cashier => ({
       ...cashier,
+      selected_pumps: Array.isArray(cashier.selected_pumps)
+        ? cashier.selected_pumps.map(sel => {
+            const id = sel.pump_id ?? sel;
+            return typeof id === 'string' ? Number(id) : id;
+          })
+        : [],
       fuel_vouchers: Array.isArray(cashier.fuel_vouchers)
         ? cashier.fuel_vouchers.map(fuelVoucher => ({
             stakeholder_id: fuelVoucher.stakeholder_id ?? (fuelVoucher.stakeholder?.id ?? null),
@@ -695,25 +696,18 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
 
       const data = watch();
 
-
-      // Autosave logic: Save if any cashier has pumps selected, even if others are incomplete
       let filteredCashiers = [];
       if (data.cashiers && data.cashiers.length > 0) {
         filteredCashiers = data.cashiers.filter(cashier => cashier.selected_pumps && cashier.selected_pumps.length > 0);
       }
 
-      // If no pumps are selected for any cashier, skip autosave (no error flash)
       if (filteredCashiers.length === 0) {
         isAutoSavingRef.current = false;
         return;
       }
 
-      // Prepare partial data for autosave
-      const partialData = { ...data, cashiers: filteredCashiers };
-
-      // Validate only the partial data (skip blocking on errors from incomplete cashiers)
-      // Note: trigger() validates the whole form, but we want to save only the ready cashiers
-      // So we skip blocking on errors from incomplete cashiers
+      // Always set submit_type to 'suspend' for autosave
+      const partialData = { ...data, cashiers: filteredCashiers, submit_type: 'suspend' };
 
       await handleSubmitForm(partialData, { silent: true });
 
@@ -946,7 +940,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
                   control={control}
                   watch={watch}
                   lastClosingReadings={lastClosingReadings}
-                  handlePumpSelection={handlePumpSelection}
+                  handleCashierPumpSelection={handleCashierPumpSelection}
                   getCashierLedgers={getCashierLedgers}
                   getAvailablePumpsForCashier={getAvailablePumpsForCashier}
                   setValue={setValue}
