@@ -6,7 +6,7 @@ import {
   ButtonGroup,
   FormControl,
   InputLabel,
-  LinearProgress,
+  Skeleton,
   MenuItem,
   Select,
   Tooltip,
@@ -144,7 +144,7 @@ function PurchasesAndGrns() {
       }
     >
       {isLoading ? (
-        <LinearProgress />
+        <Skeleton variant="rectangular" width="100%" height={xlScreen ? 250 : 180} sx={{ borderRadius: 2 }} />
       ) : (
         <ResponsiveContainer width="100%" height={xlScreen ? 250 : 180}>
           <ComposedChart data={mergedData}>
