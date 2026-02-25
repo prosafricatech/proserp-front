@@ -85,42 +85,36 @@ function PumpReadings({
   }, [getAvailablePumpsForCashier, cashierIndex, fuel_pumps]);
 
   const handlePumpSelection = (selectedPumpIds) => {
-    if (handleCashierPumpSelection) {
-      handleCashierPumpSelection(cashierIndex, selectedPumpIds);
-    } else {
-      // Map selectedPumpIds to objects with pump_id and tank_id
-      const selectedPumpObjs = selectedPumpIds.map(pumpId => {
+    handleCashierPumpSelection(cashierIndex, selectedPumpIds);
+
+    // Store only pump_id numbers in selected_pumps
+    formSetValue(`cashiers.${cashierIndex}.selected_pumps`, selectedPumpIds, {
+      shouldValidate: true,
+      shouldDirty: true
+    });
+
+    const updatedReadings = localPumpReadings.filter(reading =>
+      selectedPumpIds.includes(reading.fuel_pump_id)
+    );
+
+    selectedPumpIds.forEach(pumpId => {
+      if (!updatedReadings.some(r => r.fuel_pump_id === pumpId)) {
         const pump = fuel_pumps?.find(p => p.id === pumpId);
-        return pump ? { pump_id: pumpId, tank_id: pump.tank_id } : { pump_id: pumpId };
-      });
-      formSetValue(`cashiers.${cashierIndex}.selected_pumps`, selectedPumpObjs, {
-        shouldValidate: true,
-        shouldDirty: true
-      });
-
-      const updatedReadings = localPumpReadings.filter(reading => 
-        selectedPumpIds.includes(reading.fuel_pump_id)
-      );
-
-      selectedPumpIds.forEach(pumpId => {
-        if (!updatedReadings.some(r => r.fuel_pump_id === pumpId)) {
-          const pump = fuel_pumps?.find(p => p.id === pumpId);
-          if (pump) {
-            const lastClosing = lastClosingReadings?.[pumpId] || 0;
-            updatedReadings.push({
-              fuel_pump_id: pumpId,
-              product_id: pump.product_id,
-              tank_id: pump.tank_id,
-              opening: lastClosing,
-              closing: 0
-            });
-          }
+        if (pump) {
+          const lastClosing = lastClosingReadings?.[pumpId] || 0;
+          updatedReadings.push({
+            fuel_pump_id: pumpId,
+            product_id: pump.product_id,
+            tank_id: pump.tank_id,
+            opening: lastClosing,
+            closing: 0
+          });
         }
-      });
+      }
+    });
 
-      setLocalPumpReadings(updatedReadings);
-      formSetValue(name, updatedReadings, { shouldValidate: true, shouldDirty: true });
-    }
+    setLocalPumpReadings(updatedReadings);
+    formSetValue(name, updatedReadings, { shouldValidate: true, shouldDirty: true });
   };
 
   const selectedPumpsWithDetails = useMemo(() => {
@@ -261,12 +255,12 @@ function PumpReadings({
                         </Tooltip>
                       </Box>
                       <Tooltip title="Fuel Name" arrow>
-                        <Typography variant="caption" color="textSecondary" sx={{ display: 'block', mb: 2, cursor: 'pointer' }}>
+                        <Typography variant="caption" color="textSecondary" sx={{ display: 'block', cursor: 'pointer' }}>
                           {pump.productName}
                         </Typography>
                       </Tooltip>
                       {pump.lastClosing !== undefined && (
-                        <Typography variant="caption" display="block" color="info.main">
+                        <Typography variant="caption" display="block" color="info.main" sx={{ mb: 2 }}>
                           Last closing: {pump.lastClosing.toLocaleString()}
                         </Typography>
                       )}

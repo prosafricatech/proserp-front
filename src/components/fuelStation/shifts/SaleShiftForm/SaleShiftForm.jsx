@@ -338,12 +338,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
   const handleCashierPumpSelection = useCallback((cashierIndex, selectedPumpIds) => {
     const currentCashier = selectedCashiers[cashierIndex];
     if (!currentCashier) return;
-    
-    setValue(`cashiers.${cashierIndex}.selected_pumps`, selectedPumpIds, {
-      shouldValidate: true,
-      shouldDirty: true
-    });
-    
+
     const currentReadings = currentCashier.pump_readings || [];
     
     let updatedReadings = currentReadings.filter(reading => 
@@ -711,7 +706,8 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
         return;
       }
 
-      const partialData = { ...data, cashiers: filteredCashiers };
+      // Always set submit_type to 'suspend' for autosave
+      const partialData = { ...data, cashiers: filteredCashiers, submit_type: 'suspend' };
 
       await handleSubmitForm(partialData, { silent: true });
 
@@ -720,8 +716,6 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
 
     return () => clearInterval(interval);
   }, [trigger, watch]);
-
-  // console.log(watch());
 
   return (
     <FormProvider {...{

@@ -9,13 +9,13 @@ import {
   Grid,
   IconButton,
   InputLabel,
-  LinearProgress,
+  Skeleton,
   MenuItem,
   Select,
   Tooltip,
   useMediaQuery,
 } from '@mui/material';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   CartesianGrid,
   Legend,
@@ -181,7 +181,17 @@ function BalanceSheetTrend() {
       </Dialog>
 
       {isLoading ? (
-        <LinearProgress />
+        <ResponsiveContainer width="100%" height={200}>
+          <Div sx={{ width: '100%', height: '100%', p: 1 }}>
+            <Skeleton variant="text" width="40%" height={32} animation="wave" sx={{ mb: 1 }} />
+            <Skeleton variant="rectangular" width="100%" height={160} animation="wave" sx={{ mb: 1, borderRadius: 2 }} />
+            <Div sx={{ display: 'flex', gap: 2 }}>
+              <Skeleton variant="rounded" width={80} height={32} animation="wave" />
+              <Skeleton variant="rounded" width={80} height={32} animation="wave" />
+              <Skeleton variant="rounded" width={80} height={32} animation="wave" />
+            </Div>
+          </Div>
+        </ResponsiveContainer>
       ) : (
         <ResponsiveContainer width="100%" height={200}>
           <ComposedChart data={balanceSheetTrend}>
