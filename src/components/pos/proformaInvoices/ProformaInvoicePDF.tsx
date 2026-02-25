@@ -15,13 +15,14 @@ interface Creator {
 }
 
 interface Product {
-  name: string;
-  vat_exempted?: boolean;
+    name: string;
+    vat_exempted?: boolean;
 }
 
 interface ProformaItem {
   id: number;
   product: Product;
+  description?: string;
   measurement_unit: MeasurementUnit;
   quantity: number;
   rate: number;
@@ -116,9 +117,12 @@ function ProformaInvoicePDF({ proforma, organization }: ProformaInvoicePDFProps)
                             <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 0.3 }}>
                                 {index + 1}
                             </Text>
-                            <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 3 }}>
-                                {proformaItem.product.name}
-                            </Text>
+                            <View style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 3 }}>
+                                <Text>{proformaItem.product.name}</Text>
+                                {proformaItem.description && (
+                                  <Text style={{ fontSize: 10, color: '#888', marginTop: 2 }}>{' ('}{proformaItem.description}{')'}</Text>
+                                )}
+                            </View>
                             <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 0.5 }}>
                                 {proformaItem.measurement_unit.symbol}
                             </Text>

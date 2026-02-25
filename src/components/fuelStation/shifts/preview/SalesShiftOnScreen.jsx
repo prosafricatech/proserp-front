@@ -26,7 +26,7 @@ const SalesShiftOnScreen = ({
   fuel_pumps = [],
   tanks = [],
   productOptions = [],
-  includeFuelVouchers = true,
+  openDetails,
 }) => {
   const theme = useTheme();
   const isDark = theme.type === 'dark';
@@ -35,8 +35,6 @@ const SalesShiftOnScreen = ({
   const contrastText = organization.settings?.contrast_text || '#FFFFFF';
   const headerColor = isDark ? '#29f096' : mainColor;
 
-  console.log('on screen shiftData: ', shiftData);
-
   const [openSections, setOpenSections] = useState({
     products: true,
     cashDistribution: true,
@@ -44,7 +42,7 @@ const SalesShiftOnScreen = ({
     tankAdjustments: !!shiftData?.adjustments?.length,
     openingDipping: !!shiftData?.opening_dipping?.readings?.length,
     closingDipping: !!shiftData?.closing_dipping?.readings?.length,
-    fuelVouchers: includeFuelVouchers && !!shiftData?.fuel_vouchers?.length,
+    fuelVouchers: openDetails && !!shiftData?.fuel_vouchers?.length,
   });
 
   const toggleSection = (section) => {
@@ -127,26 +125,6 @@ const SalesShiftOnScreen = ({
     }, {});
     return Object.values(merged);
   };
-
-  const cashAccounts = [
-    ...(shiftData.other_ledgers || []),
-    shiftData.main_ledger,
-  ].filter(Boolean);
-
-  // Fuel Vouchers Total
-  const totalFuelVouchersAmount = (shiftData.fuel_vouchers || []).reduce(
-    (total, voucher) => {
-      const price =
-        shiftData.fuel_prices?.find((p) => p.product_id === voucher.product_id)
-          ?.price || 0;
-      return total + voucher.quantity * price;
-    },
-    0
-  );
-
-  const totalCash =
-    cashAccounts.reduce((sum, acc) => sum + (acc.amount || 0), 0) +
-    totalFuelVouchersAmount;
 
   // Products Sold Calculations (with adjustments)
   const mergedPumpReadings = (shiftData.pump_readings || []).reduce(
@@ -235,8 +213,8 @@ const SalesShiftOnScreen = ({
   const QuantityCell = ({ value }) => (
     <TableCell align='right' sx={{ fontFamily: 'monospace' }}>
       {value?.toLocaleString('en-US', {
-        minimumFractionDigits: 3,
-        maximumFractionDigits: 3,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
       }) || '—'}
     </TableCell>
   );
@@ -251,7 +229,7 @@ const SalesShiftOnScreen = ({
   );
 
   return (
-    <Box sx={{ p: { xs: 2, md: 3 } }}>
+    <Box sx={{ p: { xs: 0, md: 3 }, width: '100%' }}>
       {/* Header */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid size={{ xs: 12, md: 8 }}>
@@ -271,7 +249,7 @@ const SalesShiftOnScreen = ({
             Team
           </Typography>
           <Typography variant='body1'>
-            {shift_teams?.find((t) => t.id === shiftData.shift_team_id)?.name ||
+            {shift_teams?.find((t) => t.id === shiftData.sales_outlet_shift_id)?.name ||
               '—'}
           </Typography>
         </Grid>
@@ -293,8 +271,8 @@ const SalesShiftOnScreen = ({
         </Grid>
       </Grid>
 
-      {/* Conditional rendering based on includeFuelVouchers */}
-      {!includeFuelVouchers ? (
+      {/* Conditional rendering based on openDetails */}
+      {!openDetails ? (
         <CashierListSummaryOnScreen
           shiftData={shiftData}
           organization={organization}
@@ -302,7 +280,7 @@ const SalesShiftOnScreen = ({
           fuel_pumps={fuel_pumps}
           tanks={tanks}
           productOptions={productOptions}
-          includeFuelVouchers={includeFuelVouchers}
+          openDetails={openDetails}
         />
       ) : (
         <>

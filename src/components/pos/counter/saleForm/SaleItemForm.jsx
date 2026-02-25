@@ -83,13 +83,12 @@ function SaleItemForm({ setClearFormKey, submitMainForm, submitItemForm, setSubm
     const validationSchema = yup.lazy((values) => {
         const isInventory = values?.product?.type === 'Inventory';
         const requiresInventoryValidation = checkedForInstantSale && isInventory;
-        
         return yup.object().shape({
             ...baseSchema,
             ...(requiresInventoryValidation ? inventoryValidations : nonInventoryValidations),
-            store_id: requiresInventoryValidation 
-                ? inventoryValidations.store_id 
-                : yup.number().nullable()
+            store_id: isInventory
+                ? yup.number().required('Store is required').typeError('Store is required')
+                : yup.mixed().notRequired().nullable()
         });
     });
 
@@ -212,6 +211,13 @@ function SaleItemForm({ setClearFormKey, submitMainForm, submitItemForm, setSubm
             setValue(`rate`, item.rate)
         }
     }, [item]);
+
+    // Set store_id to null when a non-inventory product is selected
+    useEffect(() => {
+        if (product && product.type !== 'Inventory') {
+            setValue('store_id', null);
+        }
+    }, [product, setValue]);
     
     useEffect(() => {
         const priceFilling = async () => {
@@ -302,6 +308,8 @@ function SaleItemForm({ setClearFormKey, submitMainForm, submitItemForm, setSubm
     if(isAdding) {
        return <LinearProgress/>
     }
+
+    console.log(errors && errors);
 
   return (
     <>

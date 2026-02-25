@@ -36,7 +36,7 @@ const SalesShifts = ({ activeStation }) => {
     queryKey: 'salesShifts',
     queryParams: {
       id: params.id,
-      shift_team_id: 'null',
+      sales_outlet_shift_id: 'null',
       status: 'All',
       keyword: '',
       stationId: !!activeStation?.id && activeStation?.id,
@@ -61,16 +61,16 @@ const SalesShifts = ({ activeStation }) => {
   }, []);
 
   const handleOnTeamChange = React.useCallback(
-    (shift_team_id) => {
+    (sales_outlet_shift_id) => {
       setQueryOptions((state) => ({
         ...state,
         queryParams: {
           ...state.queryParams,
-          shift_team_id: shift_team_id,
+          sales_outlet_shift_id: sales_outlet_shift_id,
         },
       }));
     },
-    [queryOptions.queryParams.shift_team_id]
+    [queryOptions.queryParams.sales_outlet_shift_id]
   );
 
   const handleOnStatusChange = React.useCallback(
@@ -218,7 +218,7 @@ const SalesShifts = ({ activeStation }) => {
                           alignItems='center'
                         >
                           <ShiftTeamsSelector
-                            value={queryOptions.queryParams.shift_team_id}
+                            value={queryOptions.queryParams.sales_outlet_shift_id}
                             onChange={handleOnTeamChange}
                           />
                         </Grid>

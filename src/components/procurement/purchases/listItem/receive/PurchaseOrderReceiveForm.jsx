@@ -45,17 +45,21 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
 
   // Calculate correct unreceived_quantity for edit mode
   let purchase_order_items = order?.purchase_order_items?.map((item) => {
-    let grnItem = grn?.items.find(i => i.product.id === item.product.id);
+    let grnItem = grn?.items.find(i => i.purchase_order_item_id === item.id);
     let unreceived_quantity = item.unreceived_quantity;
     if (grnItem) {
-      unreceived_quantity += grnItem.quantity;
+      unreceived_quantity += (grnItem.quantity || 0);
     }
     return {
       ...item,
-      grn_quantity: grnItem ? grnItem.quantity : 0,
+      grn_quantity: grnItem ? (grnItem.quantity || 0) : 0,
       unreceived_quantity,
     };
   }) || [];
+
+  const initialItems = React.useMemo(() =>
+    purchase_order_items?.filter(item => item.product.type === 'Inventory' && item.unreceived_quantity > 0) || []
+  , [order]);
 
   const [nextTab, setNextTab] = useState(null);
   const [showWarning, setShowWarning] = useState(false);
@@ -82,8 +86,8 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
     onSuccess: (data) => {
       toggleOpen(false);
       enqueueSnackbar(data.message, { variant: 'success' });
-      queryClient.invalidateQueries({ queryKey: ['purchaseOrderDetails'] });
       queryClient.invalidateQueries({ queryKey: ['purchaseOrders'] });
+      queryClient.invalidateQueries({ queryKey: ['purchaseOrderDetails'] });
       queryClient.invalidateQueries({ queryKey: ['purchaseOrderGrns'] });
     },
     onError: (error) => {
@@ -97,8 +101,8 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
     onSuccess: (response) => {
       toggleOpen(false);
       enqueueSnackbar(response.message || 'GRN updated successfully', { variant: 'success' });
-      queryClient.invalidateQueries({ queryKey: ['purchaseOrderDetails'] });
       queryClient.invalidateQueries({ queryKey: ['purchaseOrders'] });
+      queryClient.invalidateQueries({ queryKey: ['purchaseOrderDetails'] });
       queryClient.invalidateQueries({ queryKey: ['purchaseOrderGrns'] });
     },
     onError: (error) => {
@@ -289,6 +293,34 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
       }));
   };
 
+  const [itemsState, setItemsState] = useState(initialItems);
+  // Handler to reset items
+  const handleResetItems = () => {
+    setItemsState(initialItems);
+    setValue('items', initialItems.map(item => ({
+      unreceived_quantity: item.unreceived_quantity,
+      quantity: item.grn_quantity || item.unreceived_quantity,
+      purchase_order_item_id: item.id,
+      rate: item.rate,
+    })));
+  };
+
+  // Handler to remove item
+  const handleRemoveItem = (index) => {
+    if (itemsState.length > 1) {
+      const newItems = [...itemsState];
+      newItems.splice(index, 1);
+      setItemsState(newItems);
+      // Also update form values
+      setValue('items', newItems.map(item => ({
+        unreceived_quantity: item.unreceived_quantity,
+        quantity: item.grn_quantity || item.unreceived_quantity,
+        purchase_order_item_id: item.id,
+        rate: item.rate,
+      })));
+    }
+  };
+
   const getAdditionalCostsSummary = () => {
     return additionalCosts.filter(item => item.amount > 0).map((item, index) => {
       const itemCurrency = currencies.find((currency) => currency.id === item.currency_id);
@@ -440,7 +472,7 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
                           <CostCenterSelector
                             label="Destination Cost Center"
                             multiple={false}
-                            defaultValue={grn?.cost_center}
+                            defaultValue={grn?.receivable_ledger_id && grn?.cost_center}
                             removedCostCentersIds={grn?.order?.cost_centers?.map(c => c.id)}
                             frontError={errors.destination_cost_center_id}
                             onChange={newValue => {
@@ -523,7 +555,14 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
         </Grid>
       </DialogTitle>  
       <DialogContent>
-        {activeTab === 0 && <ItemsTab purchase_order_items={purchase_order_items} />}
+        {activeTab === 0 && (
+          <ItemsTab
+            purchase_order_items={itemsState}
+            onRemoveItem={handleRemoveItem}
+            onResetItems={handleResetItems}
+            canReset={itemsState.length < initialItems.length}
+          />
+        )}
 
         {activeTab === 1 && <AdditionalCostsTab setIsDirty={setIsDirty} additionalCosts={additionalCosts} setAdditionalCosts={setAdditionalCosts} />}
 

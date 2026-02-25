@@ -347,7 +347,7 @@ const PaymentFormDialogContent: React.FC<PaymentFormDialogContentProps> = ({
                         (ledger) => ledger.id === payment?.credit_ledger_id
                       ) || null
                     }
-                    allowedGroups={['Current Assets', 'Current Liabilities']}
+                    allowedGroups={['Current Assets', 'Current Liabilities', 'Cash and Cash Equivalents', 'Banks', 'Accounts Payable', 'Accounts Receivable']}
                     onChange={(newValue) => {
                       if (Array.isArray(newValue)) return;
                       setValue('credit_ledger_id', newValue ? newValue.id : 0, {

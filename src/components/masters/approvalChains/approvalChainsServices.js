@@ -3,11 +3,10 @@ import axios from "@/lib/services/config";
 const approvalChainsServices = {};
 
 approvalChainsServices.getList = async (params = {}) => {
-    const { page = 1, limit = 10, ...queryParams } = params;
-    const { data } = await axios.get("/api/masters/approvalChains", {
-        params: { page, limit, ...queryParams }
-    });
-    return data;
+  const response = await axios.get('/api/masters/approvalChains', {
+    params,  // pass all query params here directly
+  });
+  return response.data;
 },
 
 approvalChainsServices.getApprovalRequisitionsList = async (params = {}) => {
@@ -61,7 +60,7 @@ approvalChainsServices.editApprovalChain = async(chain) => {
 
 approvalChainsServices.editApprovalChainLevel = async(level) => {
     return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.put(`/api/masters/approvalChains/${level.id}`,level)
+        const {data} = await axios.put(`/api/masters/approvalChains/${level.id}/editApprovalChainLevel`,level)
         return data;
     })
 }
@@ -79,6 +78,5 @@ approvalChainsServices.deactivateLevel = async (id) => {
         return data;
     })
 };
-
 
 export default approvalChainsServices;

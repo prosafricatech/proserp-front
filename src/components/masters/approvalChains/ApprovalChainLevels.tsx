@@ -113,7 +113,7 @@ function ApprovalChainLevels() {
       <Grid container spacing={2} alignItems="center" padding={1}>
         <Grid size={{xs: 12, md: 10}}>
           {approvalChainLevels.length > 0 && (
-            <Typography variant="body1">Chain Levels</Typography>
+            <Typography variant="body1" fontWeight={600}>Chain Levels</Typography>
           )}
         </Grid>
 
@@ -126,7 +126,7 @@ function ApprovalChainLevels() {
           </Grid>
 
           {approvalChain?.status === 'active' && (
-            <Grid size={1}>
+            <Grid size={1} paddingRight={3}>
               <Tooltip title="Add Level">
                 <IconButton onClick={() => setOpenAddLevelDialog(true)}>
                   <PlaylistAddOutlined />

@@ -19,6 +19,9 @@ import React, { ReactNode, useState } from 'react';
 import DippingReport from './dippingReport/DippingReport';
 import FuelVouchersReport from './FuelVouchersReport/FuelVouchersReport';
 
+interface ReportProps {
+  closeDialog: () => void;
+}
 const FuelStationReports: React.FC = () => {
   const css = useProsERPStyles();
 
@@ -28,8 +31,8 @@ const FuelStationReports: React.FC = () => {
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
-  const openReport = (Component: React.ComponentType) => {
-    setReport(<Component />);
+  const openReport = (Component: React.ComponentType<ReportProps>) => {
+    setReport(<Component closeDialog={() => setOpenReportDialog(false)} />);
     setOpenReportDialog(true);
   };
 
@@ -42,21 +45,24 @@ const FuelStationReports: React.FC = () => {
 
         <Dialog
           scroll={belowLargeScreen ? 'body' : 'paper'}
+          fullScreen={belowLargeScreen}
           fullWidth
-          maxWidth='lg'
+          maxWidth='xl'
           open={openReportDialog}
           onClose={() => setOpenReportDialog(false)}
         >
           {report}
           <DialogActions className={css.hiddenOnPrint}>
-            <Button
-              sx={{ m: 1 }}
-              size='small'
-              variant='outlined'
-              onClick={() => setOpenReportDialog(false)}
-            >
-              Close
-            </Button>
+            {!belowLargeScreen && (
+              <Button
+                sx={{ m: 1 }}
+                size='small'
+                variant='outlined'
+                onClick={() => setOpenReportDialog(false)}
+              >
+                Close
+              </Button>
+            )}
           </DialogActions>
         </Dialog>
 
@@ -95,7 +101,7 @@ const FuelStationReports: React.FC = () => {
                 icon={faReceipt}
                 style={{ fontSize: '48px' }}
               />
-              <Typography mt={1}>Fuel Vouchers</Typography>
+              <Typography mt={1}>FV Report</Typography>
             </Grid>
           </Grid>
         </JumboCardQuick>

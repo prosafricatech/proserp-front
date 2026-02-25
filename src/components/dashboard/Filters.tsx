@@ -2,7 +2,6 @@ import JumboCardQuick from '@jumbo/components/JumboCardQuick/JumboCardQuick'
 import { Grid } from '@mui/material'
 import { DateTimePicker } from '@mui/x-date-pickers'
 import dayjs, { Dayjs } from 'dayjs'
-import React from 'react'
 import { useDashboardSettings } from './Dashboard'
 import CostCenterSelector from '../masters/costCenters/CostCenterSelector'
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider'
@@ -58,13 +57,11 @@ function Filters() {
                         allowSameType={true}
                         onChange={(cost_centers: any) => {
                             let costCenters = authOrganization?.costCenters;
-                            let cost_center_ids = authOrganization?.costCenters?.map((cost_center: CostCenter) => cost_center.id) || [];
-                            
+                            let cost_center_ids: string | number[] = 'all';
                             if (cost_centers.length > 0) {
                                 cost_center_ids = cost_centers.map((cost_center: CostCenter) => cost_center.id);
                                 costCenters = cost_centers;
                             }
-                            
                             setChartFilters((filters) => { 
                                 return { ...filters, cost_center_ids, costCenters }; 
                             });

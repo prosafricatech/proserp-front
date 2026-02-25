@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import Highcharts from "highcharts";
-import { Button, DialogActions, DialogContent, DialogTitle, IconButton, LinearProgress, Tooltip } from "@mui/material";
+import { Button, DialogActions, DialogContent, DialogTitle, IconButton, Tooltip } from "@mui/material";
 import { HighlightOff } from "@mui/icons-material";
 import { useProjectProfile } from "../../ProjectProfileProvider";
 import { BackdropSpinner } from "@/shared/ProgressIndicators/BackdropSpinner";

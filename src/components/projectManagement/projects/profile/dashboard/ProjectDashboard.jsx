@@ -23,6 +23,7 @@ import {
 import ProjectFormDialog from '../../ProjectFormDialog';
 import { useQuery } from '@tanstack/react-query';
 import projectsServices from '../../project-services';
+import { useCurrencySelect } from '@/components/masters/Currencies/CurrencySelectProvider';
 
 const EditProject = ({ project, setOpenEditDialog }) => {
   return (
@@ -39,7 +40,7 @@ const StatItem = ({ label, value }) => (
       {label}
     </Typography>
     <Typography variant="h4">
-      {value}
+      {typeof value === 'number' ? value.toFixed(2) : value}
     </Typography>
   </Box>
 );
@@ -47,25 +48,14 @@ const StatItem = ({ label, value }) => (
 function ProjectDashboard() {
   const { project, setIsDashboardTab, reFetchProject } = useProjectProfile();
   const [openEditDialog, setOpenEditDialog] = useState(false);
+  const { currencies } = useCurrencySelect();
+  const baseCurrency = currencies?.find(c => c.is_base === 1);
+  const currencyCode = baseCurrency?.code;
 
-  // Fetch revenue data
-  const { data: revenueData, isLoading: isLoadingRevenue } = useQuery({
-    queryKey: ['projectRevenue', project?.id],
-    queryFn: () => projectsServices.getProjectRevenue(project?.id),
-    enabled: !!project?.id,
-  });
-
-  // Fetch budget data
-  const { data: budgetData, isLoading: isLoadingBudget } = useQuery({
-    queryKey: ['projectBudget', project?.id],
-    queryFn: () => projectsServices.getProjectBudget(project?.id),
-    enabled: !!project?.id,
-  });
-
-  // Fetch progress data
-  const { data: progressData, isLoading: isLoadingProgress } = useQuery({
-    queryKey: ['projectProgress', project?.id],
-    queryFn: () => projectsServices.getProjectProgress(project?.id),
+  // Fetch all dashboard figures in one call
+  const { data: dashboardFigures, isLoading: isLoadingDashboard } = useQuery({
+    queryKey: ['projectDashboardFigures', project?.id],
+    queryFn: () => projectsServices.getProjectDashboardFigures(project?.id),
     enabled: !!project?.id,
   });
 
@@ -74,23 +64,21 @@ function ProjectDashboard() {
     setIsDashboardTab(true);
   }, [reFetchProject, setIsDashboardTab]);
 
-  // Calculate percentages
-  const progressiveRevenuePercent = revenueData?.contract_sum 
-    ? ((revenueData?.progressive_revenue / revenueData?.contract_sum) * 100).toFixed(1)
-    : 0;
-  
-  const certifiedRevenuePercent = revenueData?.contract_sum
-    ? ((revenueData?.certified_revenue / revenueData?.contract_sum) * 100).toFixed(1)
-    : 0;
+  // Calculate percentages from unified data
+  const progressiveRevenuePercent = dashboardFigures?.contract_sum 
+    ? ((dashboardFigures?.progressive_revenue / dashboardFigures?.contract_sum) * 100).toFixed(2)
+    : '0.00';
 
-  const budgetSpentPercent = budgetData?.budget
-    ? ((budgetData?.cost_to_date / budgetData?.budget) * 100).toFixed(1)
-    : 0;
+  const budgetSpentPercent = dashboardFigures?.budget
+    ? ((dashboardFigures?.cost_to_date / dashboardFigures?.budget) * 100).toFixed(2)
+    : '0.00';
 
-  // Format currency
+  // Format currency with two decimal places and space between amount and currency code
   const formatCurrency = (value) => {
-    if (!value) return '0 TZS';
-    return new Intl.NumberFormat('en-TZ').format(value) + ' TZS';
+    const amount = Number(value) || 0;
+    // Always show two decimal places
+    const formatted = amount.toLocaleString('en-TZ', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return `${currencyCode ? currencyCode + ' ' : ''}${formatted}`;
   };
 
   return (
@@ -124,7 +112,7 @@ function ProjectDashboard() {
                 </Typography>
               </Box>
 
-              {isLoadingRevenue ? (
+              {isLoadingDashboard ? (
                 <>
                   <Skeleton variant="text" height={80} />
                   <Skeleton variant="text" height={80} />
@@ -134,9 +122,9 @@ function ProjectDashboard() {
                 </>
               ) : (
                 <>
-                  <StatItem label="Contract Sum" value={formatCurrency(revenueData?.contract_sum)} />
-                  <StatItem label="Progressive Revenue" value={formatCurrency(revenueData?.progressive_revenue)} />
-                  
+                  <StatItem label="Contract Sum" value={formatCurrency(dashboardFigures?.contract_sum)} />
+                  <StatItem label="Certified Revenue" value={formatCurrency(dashboardFigures?.certified_revenue)} />
+                  <StatItem label="Progressive Revenue" value={formatCurrency(dashboardFigures?.progressive_revenue)} />
                   <Box mt={2} mb={2}>
                     <Box display="flex" alignItems="center" gap={1}>
                       <LinearProgress
@@ -145,26 +133,11 @@ function ProjectDashboard() {
                         sx={{ height: 8, borderRadius: 5, mt: 1, flex: 1 }}
                       />
                       <Typography variant="body2" color="text.secondary">
-                        {progressiveRevenuePercent}%
+                        {parseFloat(progressiveRevenuePercent).toFixed(2)}%
                       </Typography>
                     </Box>
                   </Box>
-
-                  <StatItem label="Certified Revenue" value={formatCurrency(revenueData?.certified_revenue)} />
-                  
-                  <Box mt={2}>
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <LinearProgress
-                        variant="determinate"
-                        value={parseFloat(certifiedRevenuePercent)}
-                        sx={{ height: 8, borderRadius: 5, mt: 1, flex: 1 }}
-                        color="success"
-                      />
-                      <Typography variant="body2" color="text.secondary">
-                        {certifiedRevenuePercent}%
-                      </Typography>
-                    </Box>
-                  </Box>
+                  <StatItem label="Gross Profit to Date" value={formatCurrency(dashboardFigures?.gross_profit_to_date)} />
                 </>
               )}
             </CardContent>
@@ -182,7 +155,7 @@ function ProjectDashboard() {
                 </Typography>
               </Box>
 
-              {isLoadingBudget ? (
+              {isLoadingDashboard ? (
                 <>
                   <Skeleton variant="text" height={80} />
                   <Skeleton variant="text" height={80} />
@@ -190,13 +163,11 @@ function ProjectDashboard() {
                 </>
               ) : (
                 <>
-                  <StatItem label="Total Budget" value={formatCurrency(budgetData?.budget)} />
-                  <StatItem label="Cost to Date" value={formatCurrency(budgetData?.cost_to_date)} />
+                  <StatItem label="Total Budget" value={formatCurrency(dashboardFigures?.budget)} />
+                  <StatItem label="Cost to Date" value={formatCurrency(dashboardFigures?.cost_to_date)} />
+                  <StatItem label="Remaining Budget" value={formatCurrency(dashboardFigures?.remaining_budget)} />
 
                   <Box mt={2}>
-                    <Typography variant="body2" color="text.secondary">
-                      % Spent
-                    </Typography>
                     <Box display="flex" alignItems="center" gap={1}>
                       <LinearProgress
                         variant="determinate"
@@ -204,9 +175,12 @@ function ProjectDashboard() {
                         sx={{ height: 8, borderRadius: 5, mt: 1, flex: 1 }}
                       />
                       <Typography variant="body2" color="text.secondary">
-                        {budgetSpentPercent}%
+                        {parseFloat(budgetSpentPercent).toFixed(2)}%
                       </Typography>
                     </Box>
+                    <Typography variant="body2" color="text.secondary">
+                      % Spent
+                    </Typography>
                   </Box>
                 </>
               )}
@@ -225,7 +199,7 @@ function ProjectDashboard() {
                 </Typography>
               </Box>
 
-              {isLoadingProgress ? (
+              {isLoadingDashboard ? (
                 <Grid container spacing={3}>
                   <Grid size={{ xs: 12, md: 4 }}>
                     <Skeleton variant="text" height={80} />
@@ -242,46 +216,31 @@ function ProjectDashboard() {
                 </Grid>
               ) : (
                 <Grid container spacing={3}>
-                  <Grid size={{ xs: 12, md: 4 }}>
-                    <StatItem label="Time %" value="" />
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <StatItem label="Time %" value={dashboardFigures?.time_progress_percentage ? `${parseFloat(dashboardFigures.time_progress_percentage).toFixed(2)}%` : ''} />
                     <Box display="flex" alignItems="center" gap={1}>
                       <LinearProgress 
                         variant="determinate" 
-                        value={progressData?.time_progress || 0} 
+                        value={dashboardFigures?.time_progress_percentage || 0} 
                         sx={{ flex: 1 }} 
                       />
                       <Typography variant="body2" color="text.secondary">
-                        {progressData?.time_progress || 0}%
+                        {dashboardFigures?.time_progress_percentage ? parseFloat(dashboardFigures.time_progress_percentage).toFixed(2) : '0.00'}%
                       </Typography>
                     </Box>
                   </Grid>
 
-                  <Grid size={{ xs: 12, md: 4 }}>
-                    <StatItem label="Physical Progress %" value="" />
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <StatItem label="Physical Progress %" value={dashboardFigures?.execution_percentage ? `${parseFloat(dashboardFigures.execution_percentage).toFixed(2)}%` : ''} />
                     <Box display="flex" alignItems="center" gap={1}>
                       <LinearProgress 
                         variant="determinate" 
-                        value={progressData?.physical_progress || 0} 
+                        value={dashboardFigures?.execution_percentage || 0} 
                         color="warning" 
                         sx={{ flex: 1 }} 
                       />
                       <Typography variant="body2" color="text.secondary">
-                        {progressData?.physical_progress || 0}%
-                      </Typography>
-                    </Box>
-                  </Grid>
-
-                  <Grid size={{ xs: 12, md: 4 }}>
-                    <StatItem label="Certified Progress %" value="" />
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <LinearProgress 
-                        variant="determinate" 
-                        value={progressData?.certified_progress || 0} 
-                        color="success" 
-                        sx={{ flex: 1 }} 
-                      />
-                      <Typography variant="body2" color="text.secondary">
-                        {progressData?.certified_progress || 0}%
+                        {dashboardFigures?.execution_percentage ? parseFloat(dashboardFigures.execution_percentage).toFixed(2) : '0.00'}%
                       </Typography>
                     </Box>
                   </Grid>

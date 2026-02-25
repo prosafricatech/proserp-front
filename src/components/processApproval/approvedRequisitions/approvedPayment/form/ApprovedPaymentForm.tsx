@@ -258,7 +258,7 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
                         } as Ledger 
                       : null
                   }
-                  allowedGroups={['Current Assets', 'Current Liabilities']}
+                  allowedGroups={['Current Assets', 'Current Liabilities', 'Cash and Cash Equivalents', 'Banks', 'Accounts Payable', 'Accounts Receivable']}
                   onChange={(newValue: Ledger | Ledger[] | null) => {
                     const singleValue = Array.isArray(newValue) ? newValue[0] : newValue;
                     setValue('credit_ledger_id', singleValue?.id || 0, {

@@ -1,6 +1,7 @@
 'use client';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { useLedgerSelect } from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
 import { faFileExcel } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { JumboDdMenu } from '@jumbo/components';
@@ -39,7 +40,6 @@ import SalesShiftOnScreen from './preview/SalesShiftOnScreen';
 import SalesShiftPDF from './preview/SalesShiftPDF';
 import SaleShiftForm from './SaleShiftForm/SaleShiftForm';
 import { StationFormContext } from './SalesShifts';
-import { LoadingButton } from '@mui/lab';
 
 const EditShift = ({ ClosedShift, setOpenEditDialog }) => {
   const { data: shiftData, isFetching } = useQuery({
@@ -67,6 +67,7 @@ const DocumentDialog = ({
   const { activeStation } = useContext(StationFormContext);
   const { shift_teams, fuel_pumps, tanks } = activeStation;
   const { productOptions } = useProductsSelect();
+  const { ungroupedLedgerOptions } = useLedgerSelect();
   const [openDetails, setOpenDetails] = useState(false);
   const [pdfKey, setPdfKey] = useState(0);
   const [isExporting, setIsExporting] = useState(false);
@@ -90,6 +91,23 @@ const DocumentDialog = ({
     return <LinearProgress />;
   }
 
+  let paymentReceived = [];
+
+  if (shiftData?.payments_received?.length) {
+    const ledgerMap = new Map(ungroupedLedgerOptions.map((ul) => [ul.id, ul]));
+
+    shiftData.payments_received.forEach((p, i) => {
+      const creditLedger = ledgerMap.get(p.credit_ledger_id);
+
+      const debitLedger = ledgerMap.get(p.debit_ledger_id);
+
+      p.creditLedger = creditLedger;
+      p.debitLedger = debitLedger;
+    });
+
+    paymentReceived = shiftData.payments_received;
+  }
+
   const exportedData = {
     shiftData: shiftData,
     organization: organization,
@@ -99,12 +117,14 @@ const DocumentDialog = ({
     tanks: tanks,
     shift_teams: shift_teams,
     withDetails: openDetails,
+    paymentReceived: paymentReceived,
   };
 
   const handlExcelExport = async (exportedData) => {
     setIsExporting(true);
     try {
-      const blob = await fuelStationServices.exportSalesShiftsToExcel(exportedData);
+      const blob =
+        await fuelStationServices.exportSalesShiftsToExcel(exportedData);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -119,7 +139,7 @@ const DocumentDialog = ({
   };
 
   return (
-    <Dialog open={isOpen} maxWidth='xl' fullWidth>
+    <Dialog open={isOpen} maxWidth='xl' fullWidth fullScreen={belowLargeScreen}>
       <DialogTitle>
         <Stack
           direction={'row'}
@@ -137,14 +157,62 @@ const DocumentDialog = ({
           justifyContent='space-between'
           mb={2}
         >
-          <Grid size={11}>
-            <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)}>
-              <Tab label='PDF' />
-              <Tab label='EXCEL' />
-              {belowLargeScreen && <Tab label='ONSCREEN' />}
-            </Tabs>
+          <Grid size={10}>
+            {belowLargeScreen && (
+              <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)}>
+                <Tab label='PDF' />
+                <Tab label='ONSCREEN' />
+              </Tabs>
+            )}
           </Grid>
-          <Grid size={1} textAlign='right'>
+          <Grid
+            size={2}
+            textAlign='right'
+            sx={{
+              display: 'flex',
+              flexDirection: 'row',
+              justifyContent: 'space-evenly',
+              gap: 1,
+            }}
+          >
+            {!belowLargeScreen && (
+              <Button
+                size='small'
+                onClick={() => handlExcelExport(exportedData)}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '4px',
+                  gap: 1,
+                }}
+                color='success'
+                variant='contained'
+                disabled={isExporting}
+              >
+                <FontAwesomeIcon icon={faFileExcel} color='green' />
+                {!belowLargeScreen && 'Excel'}
+              </Button>
+            )}
+
+            {belowLargeScreen && (
+              <IconButton
+                size='small'
+                onClick={() => handlExcelExport(exportedData)}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '0px',
+                  gap: 1,
+                }}
+                color='success'
+                variant='contained'
+                disabled={isExporting}
+              >
+                <FontAwesomeIcon icon={faFileExcel} color='green' />
+                {!belowLargeScreen && 'Excel'}
+              </IconButton>
+            )}
+
             {belowLargeScreen && (
               <Tooltip title='Close'>
                 <IconButton
@@ -157,7 +225,7 @@ const DocumentDialog = ({
             )}
           </Grid>
         </Grid>
-        {belowLargeScreen && activeTab === 2 && (
+        {belowLargeScreen && activeTab === 1 && (
           <SalesShiftOnScreen
             stationName={activeStation?.name}
             openDetails={openDetails}
@@ -169,48 +237,7 @@ const DocumentDialog = ({
             organization={organization}
           />
         )}
-        {activeTab === 1 && (
-          <Grid
-            container
-            sx={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}
-          >
-            <Tooltip title='Download Excel Report'>
-              <span>
-                <LoadingButton
-                  loading={isExporting}
-                  loadingPosition="start"
-                  startIcon={<FontAwesomeIcon icon={faFileExcel} color='white' />}
-                  variant="contained"
-                  color="success"
-                  size="large"
-                  sx={{
-                    px: 3,
-                    py: 1.5,
-                    fontWeight: 'bold',
-                    fontSize: '1.1rem',
-                    borderRadius: 2,
-                    boxShadow: 2,
-                    textTransform: 'none',
-                    background: 'linear-gradient(90deg, #43e97b 0%, #38f9d7 100%)',
-                    '&:hover': {
-                      background: 'linear-gradient(90deg, #38f9d7 0%, #43e97b 100%)',
-                    },
-                  }}
-                  onClick={() => handlExcelExport(exportedData)}
-                  disabled={isExporting}
-                >
-                  Download Excel
-                </LoadingButton>
-              </span>
-            </Tooltip>
-          </Grid>
-        )}
-
-        {activeTab === 0 && (
+        {(!belowLargeScreen || activeTab === 0) && (
           <PDFContent
             key={pdfKey}
             fileName={shiftData.shiftNo}
@@ -224,6 +251,7 @@ const DocumentDialog = ({
                 fuel_pumps={fuel_pumps}
                 shift_teams={shift_teams}
                 organization={organization}
+                paymentReceived={paymentReceived}
               />
             }
           />

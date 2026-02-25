@@ -1,6 +1,6 @@
 'use client'
 import { DeleteOutlined, EditOutlined, MoreHorizOutlined } from '@mui/icons-material';
-import { Dialog,LinearProgress,Tooltip, useMediaQuery } from '@mui/material';
+import { Dialog,Skeleton,Tooltip, useMediaQuery } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import React, { useState } from 'react';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
@@ -10,22 +10,28 @@ import projectsServices from '../../project-services';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { JumboDdMenu } from '@jumbo/components';
 
-const EditUpdate = ({update, setOpenDialog}) => {
+const EditUpdate = ({update, setOpenDialog, setIsUpdateFormOpen}) => {
   const {data:updateDetails, isFetching} = useQuery({
     queryKey: ['editProjectUpdate',{id:update.id}],
     queryFn: async() => projectsServices.projectUpdateDetails(update.id)
   });
 
   if(isFetching){
-    return <LinearProgress/>;
+    return (
+      <div style={{ width: '100%', padding: '16px' }}>
+        <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
+        <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
+        <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+      </div>
+    );
   }
 
   return (
-    <UpdatesForm setOpenDialog={setOpenDialog} update={updateDetails} />
+    <UpdatesForm setOpenDialog={setOpenDialog} update={updateDetails} setIsUpdateFormOpen={setIsUpdateFormOpen} />
   )
 }
 
-const UpdateItemAction = ({ update }) => {
+const UpdateItemAction = ({ update, setIsUpdateFormOpen }) => {
   const [openEditDialog,setOpenEditDialog] = useState(false);
   const {showDialog,hideDialog} = useJumboDialog();
   const { enqueueSnackbar } = useSnackbar();
@@ -83,7 +89,7 @@ const UpdateItemAction = ({ update }) => {
         maxWidth={'lg'} 
         scroll={belowLargeScreen ? 'body' : 'paper'}
       >
-        <EditUpdate update={update} setOpenDialog={setOpenEditDialog} />
+        <EditUpdate update={update} setOpenDialog={setOpenEditDialog} setIsUpdateFormOpen={setIsUpdateFormOpen} />
       </Dialog>
       <JumboDdMenu
         icon={

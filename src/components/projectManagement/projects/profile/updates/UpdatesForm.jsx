@@ -1,5 +1,5 @@
 import { Button, DialogActions, DialogContent, DialogTitle, Tab, Tabs, Typography } from '@mui/material';
-import React, { createContext, useContext, useMemo, useState } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { useProjectProfile } from '../ProjectProfileProvider';
 import * as yup from 'yup';
 import dayjs from 'dayjs';
@@ -16,7 +16,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 const UpdateFormContext = createContext();
 export const useUpdateFormContext = () => useContext(UpdateFormContext);
 
-function UpdatesForm({ setOpenDialog, update }) {
+function UpdatesForm({ setOpenDialog, update, setIsUpdateFormOpen=() => {} }) {
     const { project } = useProjectProfile();
     const [activeTab, setActiveTab] = useState(0);
     const [descriptionContent, setDescriptionContent] = useState(update && JSON.parse(update.description)[0]);
@@ -27,6 +27,9 @@ function UpdatesForm({ setOpenDialog, update }) {
         ...task_execution,
         project_task_id: task_execution.task?.id, 
     })) : []);
+    
+    // Track removed task progress items
+    const [removedTaskProgressItems, setRemovedTaskProgressItems] = useState([]);
 
     const { mutate: addProjectUpdates, isPending } = useMutation({
         mutationFn: projectsServices.addProjectUpdates,
@@ -81,8 +84,15 @@ function UpdatesForm({ setOpenDialog, update }) {
         saveMutation(formData);
     };
 
+    useEffect(() => {
+      setIsUpdateFormOpen(true);
+      return () => {
+        setIsUpdateFormOpen(false);
+      };
+    }, []);
+
     return (
-        <UpdateFormContext.Provider value={{ taskProgressItems, setTaskProgressItems, activeTab }}>
+        <UpdateFormContext.Provider value={{ taskProgressItems, setTaskProgressItems, removedTaskProgressItems, setRemovedTaskProgressItems, activeTab }}>
             <Typography textAlign={'center'} variant='h4' paddingTop={1}>
                 {update ? `Edit Project Update` : `New Project Update`}
             </Typography>
@@ -116,7 +126,7 @@ function UpdatesForm({ setOpenDialog, update }) {
                 )}
             </DialogContent>
             <DialogActions>
-                <Button size="small" onClick={() => setOpenDialog(false)}>
+                <Button size="small" onClick={() => {setOpenDialog(false); setIsUpdateFormOpen(false);}}>
                     Cancel
                 </Button>
                 <LoadingButton

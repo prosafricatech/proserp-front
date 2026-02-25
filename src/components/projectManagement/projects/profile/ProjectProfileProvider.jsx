@@ -1,10 +1,12 @@
 'use client'
 
-import React, { createContext, useContext, useState, useCallback } from 'react';
-import { LinearProgress } from '@mui/material';
+import { createContext, useContext, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import projectsServices from '../project-services';
+import { Skeleton } from '@mui/material';
+import { Div } from '@jumbo/shared';
+import { Stack } from '@mui/system';
 
 const ProjectProfileContext = createContext({});
 
@@ -29,7 +31,22 @@ function ProjectProfileProvider({ children }) {
   }, []);
 
   if (isLoading) {
-    return <LinearProgress />;
+    return (
+      <Div sx={{ width: '100%', p: 2 }}>
+        <Stack spacing={2} sx={{ width: '100%' }}>
+          <Skeleton variant="text" width="50%" height={48} sx={{ borderRadius: 1 }} />
+          <Skeleton variant="rectangular" width="100%" height={48} sx={{ borderRadius: 1 }} />
+          <Skeleton variant="rectangular" width="100%" height={48} sx={{ borderRadius: 1 }} />
+          <Skeleton variant="rectangular" width="100%" height={48} sx={{ borderRadius: 1 }} />
+          <Skeleton variant="rectangular" width="100%" height={48} sx={{ borderRadius: 1 }} />
+          <Skeleton variant="rectangular" width="100%" height={48} sx={{ borderRadius: 1 }} />
+          <Skeleton variant="rectangular" width="100%" height={48} sx={{ borderRadius: 1 }} />
+          <Skeleton variant="rectangular" width="100%" height={48} sx={{ borderRadius: 1 }} />
+          <Skeleton variant="rectangular" width="100%" height={48} sx={{ borderRadius: 1 }} />
+          <Skeleton variant="rectangular" width="100%" height={48} sx={{ borderRadius: 1 }} />
+        </Stack>
+      </Div>
+    );
   }
 
   // Optional chaining to prevent errors if project is undefined

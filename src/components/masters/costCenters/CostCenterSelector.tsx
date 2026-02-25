@@ -10,8 +10,8 @@ import { CostCenter } from './CostCenterType';
 
 interface CostCenterSelectorProps {
   frontError?: { message?: string } | null;
-  removedCostCentersIds?: number[];
-  allowAllCostCenters?: boolean;
+  removedCostCenters?: number[];
+  removedCostCentersIds?: boolean;
   disabled?: boolean;
   readOnly?: boolean;
   allowSameType?: boolean;
@@ -26,8 +26,8 @@ function CostCenterSelector(props: CostCenterSelectorProps) {
   const { authOrganization } = useJumboAuth();
   const { 
     frontError = null, 
-    removedCostCentersIds = [], 
-    allowAllCostCenters = false, 
+    removedCostCenters = [], 
+    removedCostCentersIds = false, 
     disabled = false, 
     readOnly = false, 
     allowSameType = false, 
@@ -45,7 +45,7 @@ function CostCenterSelector(props: CostCenterSelectorProps) {
   const { data: fetchedCostCenters, isLoading } = useQuery<CostCenter[]>({
     queryKey: ['allCostCenters'],
     queryFn: costCenterservices.getCostCenters,
-    enabled: !!allowAllCostCenters
+    enabled: !!removedCostCentersIds
   });
 
   // Helper function to create a "Not Specified" option
@@ -77,10 +77,10 @@ function CostCenterSelector(props: CostCenterSelectorProps) {
   // Filter out removed cost centers
   const filteredCostCenters = (costCenters: CostCenter[]) =>
     costCenters.filter(
-      (center) => !removedCostCentersIds.some((removed) => removed === center.id)
+      (center) => !removedCostCenters.some((removed) => removed === center.id)
     );
 
-  const finalCostCenters = allowAllCostCenters
+  const finalCostCenters = removedCostCentersIds
     ? filteredCostCenters(allCostCenters)
     : filteredCostCenters(authOrganizationCostCenters);
 

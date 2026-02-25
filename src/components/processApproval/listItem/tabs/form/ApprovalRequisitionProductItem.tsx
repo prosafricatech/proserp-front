@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Divider, Typography, TextField, Tabs, Tab, Tooltip, InputAdornment, Checkbox, IconButton, Box, Button, Grid } from '@mui/material';
+import { AccountBalanceWalletOutlined } from '@mui/icons-material';
+import ProductBudgetCheckDetails from './ProductBudgetCheckDetails';
 import Vendors from './Vendors';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { Restore } from '@mui/icons-material';
@@ -8,6 +10,8 @@ import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { Approval, Requisition, RequisitionItem } from '@/components/processApproval/RequisitionType';
+import { MeasurementUnit } from '@/components/masters/measurementUnits/MeasurementUnitType';
+import { Currency } from '@/components/masters/Currencies/CurrencyType';
 
 interface ApprovalRequisitionProductItemProps {
     approval?: Approval;
@@ -35,10 +39,11 @@ function ApprovalRequisitionProductItem({
 }: ApprovalRequisitionProductItemProps) {
     const { authOrganization } = useJumboAuth();
     const [initialItems, setInitialItems] = useState<RequisitionItem[]>([]);
-    
     const [vatFieldStates, setVatFieldStates] = useState<Record<number, ItemState>>({});
     const [priceInclusiveVATs, setPriceInclusiveVATs] = useState<Record<number, ItemState>>({});
     const [fieldKeys, setFieldKeys] = useState<Record<number, ItemState>>({});
+    const [openProductBudgetDialog, setOpenProductBudgetDialog] = useState(false);
+    const [productDialogData, setProductDialogData] = useState<{ productId: number, costCenterId: number, productName: string, measurementUnit: MeasurementUnit, currency: Currency } | null>(null);
 
     useEffect(() => {
         setInitialItems([...requisitionProductItem]);
@@ -103,12 +108,42 @@ function ApprovalRequisitionProductItem({
                             <Div sx={{ mt: 2, mb: 1.7 }}>{itemIndex + 1}.</Div>
                         </Grid>
                         <Grid size={{xs: 11, md: 3, lg: 3}}>
-                            <Div sx={{ mt: 2, mb: 1.7 }}>
+                            <Div sx={{ mt: 1, mb: 1.7, display: 'flex', alignItems: 'center'}}>
                                 <Tooltip title="Product">
                                     <Typography>{item.product?.name}</Typography>
                                 </Tooltip>
+                                {item.product && (
+                                    <Tooltip title={`${item.product.name} Budget check`}>
+                                        <IconButton
+                                            size="small"
+                                            sx={{ ml: 1 }}
+                                            onClick={() => {
+                                                setProductDialogData({
+                                                    productId: item.product.id,
+                                                    costCenterId: requisition.cost_center?.id,
+                                                    productName: item.product.name,
+                                                    measurementUnit: item?.measurement_unit,
+                                                    currency: requisition.currency,
+                                                });
+                                                setOpenProductBudgetDialog(true);
+                                            }}
+                                        >
+                                            <AccountBalanceWalletOutlined fontSize="small" />
+                                        </IconButton>
+                                    </Tooltip>
+                                )}
                             </Div>
                         </Grid>
+                        <ProductBudgetCheckDetails
+                            requisition={requisition}
+                            open={openProductBudgetDialog}
+                            onClose={() => setOpenProductBudgetDialog(false)}
+                            productId={productDialogData?.productId || 0}
+                            costCenterId={productDialogData?.costCenterId || 0}
+                            productName={productDialogData?.productName || ''}
+                            measurementUnit={productDialogData?.measurementUnit as MeasurementUnit}
+                            currency={productDialogData?.currency as Currency}
+                        />
                         <Grid size={{xs: 6, md: 1.5, lg: 1.5}}>
                             <Div sx={{ mt: 1}}>
                                 <TextField
@@ -232,8 +267,8 @@ function ApprovalRequisitionProductItem({
                         </Grid>
                         <Grid size={{
                             xs: requisitionProductItem.length > 1 ? 11 : 12,
-                            md: 5.5,
-                            lg: 5.5
+                            md: 10.5,
+                            lg: 10.5
                         }}>
                             <Div sx={{ mt: 1}}>
                                 <TextField
@@ -250,10 +285,10 @@ function ApprovalRequisitionProductItem({
                             </Div>
                         </Grid>
                         {requisitionProductItem.length > 1 && (
-                            <Grid size={{
+                            <Grid textAlign={'end'} size={{
                                 xs: 1,
-                                md: 6.5,
-                                lg: 6.5
+                                md: 1.5,
+                                lg: 1.5
                             }}>
                                 <Div sx={{ mt: 1.5, mb: 0.5 }}>
                                     <Tooltip title="Delete item">

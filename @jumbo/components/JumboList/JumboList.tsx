@@ -3,7 +3,7 @@ import TransitionGroup from "react-transition-group/TransitionGroup";
 import Collapse from "@mui/material/Collapse";
 import List, { ListProps } from "@mui/material/List";
 import Grid, { GridProps } from "@mui/material/Grid";
-import { SxProps, Theme } from "@mui/material";
+import { Skeleton, SxProps, Theme } from "@mui/material";
 import { Div } from '@jumbo/shared';
 import JumboListContext from "./JumboListContext";
 import JumboListWrapper from "./components/JumboListWrapper";
@@ -17,11 +17,7 @@ import {
 } from "./utils/constants";
 import { getUpdatedSelectedItems } from "./utils/listHelpers";
 import JumboListPagination from './components/JumboListPagination';
-import Image from 'next/image';
-import { useJumboAuth } from "@/app/providers/JumboAuthProvider";
-import { ASSET_IMAGES } from '@/utilities/constants/paths';
-import { keyframes } from '@emotion/css';
-import { useJumboTheme } from '../JumboTheme/hooks';
+import { Stack } from '@mui/system';
 
 interface MultiSelectOption {
     label: React.ReactNode;
@@ -153,12 +149,6 @@ const JumboList = React.forwardRef<{ resetSelection: () => void }, JumboListProp
         view = 'list'
     } = props;
 
-    const { theme } = useJumboTheme();
-    const { authOrganization } = useJumboAuth();
-    const mainColor = authOrganization?.organization?.settings?.main_color || "#2113AD";
-    const lightColor = authOrganization?.organization?.settings?.light_color || "#bec5da";
-    const contrastText = authOrganization?.organization?.settings?.contrast_text || "#FFFFFF";
-
     const [jumboList, setJumboList] = React.useReducer(jumboListReducer, {
         primaryKey,
         data,
@@ -220,89 +210,23 @@ const JumboList = React.forwardRef<{ resetSelection: () => void }, JumboListProp
         },
     }), [setSelectedItems]);
 
-    const spiralRotate = keyframes`
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    `;
-
     if (isLoading) {
         return (
             <JumboListContext.Provider value={jumboListContextValue}>
                 <JumboListWrapper component={wrapperComponent} sx={wrapperSx}>
-                    <Div
-                        sx={{
-                            position: "relative",
-                            width: 150,
-                            height: 150,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            m: 'auto',
-                        }}
-                    >
-                        {/* Spiral arcs */}
-                        <Div
-                            sx={{
-                                position: "absolute",
-                                width: 140,
-                                height: 140,
-                                border: "5px solid transparent",
-                                borderTopColor: mainColor,
-                                borderRadius: "50%",
-                                animation: `${spiralRotate} 2s linear infinite`,
-                                boxShadow: `0 0 10px ${mainColor}80`,
-                                clipPath: "polygon(0 0, 100% 0, 100% 50%, 0 50%)",
-                            }}
-                        />
-                        <Div
-                            sx={{
-                                position: "absolute",
-                                width: 120,
-                                height: 120,
-                                border: "5px solid transparent",
-                                borderBottomColor: lightColor,
-                                borderRadius: "50%",
-                                animation: `${spiralRotate} 2s linear infinite 0.3s`,
-                                boxShadow: `0 0 10px ${lightColor}80`,
-                                clipPath: "polygon(0 50%, 100% 50%, 100% 100%, 0 100%)",
-                            }}
-                        />
-                        <Div
-                            sx={{
-                                position: "absolute",
-                                width: 100,
-                                height: 100,
-                                border: "5px solid transparent",
-                                borderTopColor: contrastText,
-                                borderRadius: "50%",
-                                animation: `${spiralRotate} 2s linear infinite 0.6s`,
-                                boxShadow: `0 0 10px ${contrastText}80`,
-                                clipPath: "polygon(0 0, 100% 0, 100% 50%, 0 50%)",
-                            }}
-                        />
-                        {/* Static logo in the center */}
-                        <Div
-                            sx={{
-                                width: 100,
-                                height: 100,
-                                borderRadius: "50%",
-                                overflow: "hidden",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                boxShadow: `0 0 10px ${mainColor}30`,
-                                zIndex: 1,
-                            }}
-                        >
-                            <Image
-                                src={theme?.type === 'light' ? `${ASSET_IMAGES}/logos/proserp-blue.png` : `${ASSET_IMAGES}/logos/proserp-white.png`}
-                                alt="ProsERP"
-                                width={85}
-                                height={85}
-                                style={{ objectFit: "contain" }}
-                                unoptimized
-                            />
-                        </Div>
+                    <Div sx={{ width: '100%', p: 2 }}>
+                        <Stack spacing={2} sx={{ width: '100%' }}>
+                            <Skeleton variant="text" width="50%" height={48} sx={{ borderRadius: 1 }} />
+                            <Skeleton variant="rectangular" width="100%" height={48} sx={{ borderRadius: 1 }} />
+                            <Skeleton variant="rectangular" width="100%" height={48} sx={{ borderRadius: 1 }} />
+                            <Skeleton variant="rectangular" width="100%" height={48} sx={{ borderRadius: 1 }} />
+                            <Skeleton variant="rectangular" width="100%" height={48} sx={{ borderRadius: 1 }} />
+                            <Skeleton variant="rectangular" width="100%" height={48} sx={{ borderRadius: 1 }} />
+                            <Skeleton variant="rectangular" width="100%" height={48} sx={{ borderRadius: 1 }} />
+                            <Skeleton variant="rectangular" width="100%" height={48} sx={{ borderRadius: 1 }} />
+                            <Skeleton variant="rectangular" width="100%" height={48} sx={{ borderRadius: 1 }} />
+                            <Skeleton variant="rectangular" width="100%" height={48} sx={{ borderRadius: 1 }} />
+                        </Stack>
                     </Div>
                 </JumboListWrapper>
             </JumboListContext.Provider>

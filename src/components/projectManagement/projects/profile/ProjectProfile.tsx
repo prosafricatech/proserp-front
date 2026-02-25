@@ -1,7 +1,7 @@
 'use client';
 
 import { lazy, useEffect, useMemo, useState } from 'react';
-import { Card, IconButton, LinearProgress, Stack, Tab, Tabs, Tooltip, Typography } from '@mui/material';
+import { Card, IconButton, Skeleton, Stack, Tab, Tabs, Tooltip, Typography } from '@mui/material';
 import { ArrowBackOutlined } from '@mui/icons-material';
 import { useRouter, useParams } from 'next/navigation';
 import JumboContentLayout from '@jumbo/components/JumboContentLayout';
@@ -268,7 +268,15 @@ function ProfileContent() {
             <Tab label="Attachments" value="attachments" />
           </Tabs>
 
-          {isLoading ? <LinearProgress /> : renderTabContent}
+          {isLoading ? (
+            <Stack spacing={2} sx={{ width: '100%' }}>
+              <Skeleton variant="text" width="50%" height={32} sx={{ borderRadius: 1 }} />
+              <Skeleton variant="rectangular" width="100%" height={48} sx={{ borderRadius: 1 }} />
+              <Skeleton variant="rectangular" width="100%" height={48} sx={{ borderRadius: 1 }} />
+              <Skeleton variant="rectangular" width="100%" height={48} sx={{ borderRadius: 1 }} />
+              <Skeleton variant="rectangular" width="100%" height={48} sx={{ borderRadius: 1 }} />
+            </Stack>
+          ) : renderTabContent}
         </Stack>
       </Card>
     </JumboContentLayout>

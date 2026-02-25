@@ -86,7 +86,7 @@ const Stores: React.FC = () => {
                 service={storeServices.getList}
                 primaryKey={"id"}
                 queryOptions={queryOptions}
-                itemsPerPage={8}
+                itemsPerPage={10}
                 itemsPerPageOptions={[8, 10, 15, 20]}
                 renderItem={renderStore}
                 componentElement={"div"}

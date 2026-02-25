@@ -33,7 +33,6 @@ function DippingsCard() {
     const smallScreen = useMediaQuery(theme.breakpoints.down('md')) || isMobile;
     const midScreen = useMediaQuery('(min-width: 960.1px) and (max-width: 1279.9px)');
 
-    const [selectedStations, setSelectedStations] = useState<CostCenter[]>([]);
     const [selectedType, setSelectedType] = useState<'closing' | 'deviation' | 'calculated stock'>('closing');
     const [params, setParams] = useState<DippingReportParams>({
         from,
@@ -50,16 +49,12 @@ function DippingsCard() {
             from,
             to,
             fuel_station_ids:
-            selectedStations.length > 0
-                ? selectedStations
-                    .map(station => station.cost_centerable_id)
-                    .filter((id): id is number => id !== undefined)
-                : fuelStationCostCenters
+                fuelStationCostCenters
                     ?.map(cost_center => cost_center.cost_centerable_id)
                     .filter((id): id is number => id !== undefined),
             with_calculated_stock: selectedType === 'closing' ? 0 : 1,
         }));
-    }, [from, to, selectedStations, fuelStationCostCenters, selectedType]);
+    }, [from, to, fuelStationCostCenters, selectedType]);
 
     const { data: reportData, isLoading } = useQuery({
         queryKey: ['dippingsReport', params],

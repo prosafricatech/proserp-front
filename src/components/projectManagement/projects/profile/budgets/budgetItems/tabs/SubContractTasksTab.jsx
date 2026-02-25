@@ -2,7 +2,7 @@
 
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Grid, TextField, useMediaQuery } from '@mui/material';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import * as yup from 'yup';
 import { useForm } from 'react-hook-form';
 import { LoadingButton } from '@mui/lab';
@@ -17,6 +17,7 @@ import projectsServices from '@/components/projectManagement/projects/project-se
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 
 function SubContractTasksTab({ budget, selectedBoundTo, selectedItemable }) {
+  const [clearFormKey, setClearFormKey] = useState(0);
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
   const { theme } = useJumboTheme();
@@ -28,6 +29,7 @@ function SubContractTasksTab({ budget, selectedBoundTo, selectedItemable }) {
       enqueueSnackbar(data.message, { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['budgetItemsDetails'] });
       reset(formDefaultValues);
+      setClearFormKey((prevKey) => prevKey + 1);
     },
     onError: (error) => {
       enqueueSnackbar(error?.response?.data?.message || 'Failed to add item', { variant: 'error' });
@@ -82,14 +84,15 @@ function SubContractTasksTab({ budget, selectedBoundTo, selectedItemable }) {
 
   return (
     <form
-        onSubmit={handleSubmit((data) =>
-            addBudgetItem({
-            ...data,
-            rate: Number(data.rate),
-            quantity: Number(data.quantity),
-            exchange_rate: Number(data.exchange_rate),
-            })
-        )}
+      key={clearFormKey}
+      onSubmit={handleSubmit((data) =>
+        addBudgetItem({
+          ...data,
+          rate: Number(data.rate),
+          quantity: Number(data.quantity),
+          exchange_rate: Number(data.exchange_rate),
+        })
+      )}
     >
       <Grid container width="100%" spacing={1}>
         <Grid size={{ xs: 12, md: 5 }}>
@@ -152,13 +155,10 @@ function SubContractTasksTab({ budget, selectedBoundTo, selectedItemable }) {
                 error={!!errors?.quantity}
                 helperText={errors?.quantity?.message}
                 {...register('quantity', {
-                    onChange: (e) => {
-                    const sanitized = sanitizedNumber(e.target.value);
-                    setValue('quantity', sanitized !== null ? Number(sanitized) : 0, {
-                        shouldValidate: true,
-                        shouldDirty: true,
-                    });
-                    },
+                  setValueAs: (value) => {
+                    const sanitized = sanitizedNumber(value);
+                    return sanitized === null ? undefined : Number(sanitized);
+                  },
                 })}
             />
           </Div>
@@ -166,23 +166,20 @@ function SubContractTasksTab({ budget, selectedBoundTo, selectedItemable }) {
 
         <Grid size={{ xs: watch('currency_id') > 1 ? 6 : 12, md: watch('currency_id') > 1 ? 1.5 : 2 }}>
           <Div sx={{ mt: 1 }}>
-            <TextField
-                label="Rate"
-                fullWidth
-                size="small"
-                InputProps={{ inputComponent: CommaSeparatedField }}
-                error={!!errors?.rate}
-                helperText={errors?.rate?.message}
-                {...register('rate', {
-                    onChange: (e) => {
-                    const sanitized = sanitizedNumber(e.target.value);
-                    setValue('rate', sanitized !== null ? Number(sanitized) : 0, {
-                        shouldValidate: true,
-                        shouldDirty: true,
-                    });
-                    },
-                })}
-            />
+          <TextField
+            label="Rate"
+            fullWidth
+            size="small"
+            InputProps={{ inputComponent: CommaSeparatedField }}
+            error={!!errors?.rate}
+            helperText={errors?.rate?.message}
+            {...register('rate', {
+              setValueAs: (value) => {
+                const sanitized = sanitizedNumber(value);
+                return sanitized === null ? undefined : Number(sanitized);
+              },
+            })}
+          />
           </Div>
         </Grid>
 

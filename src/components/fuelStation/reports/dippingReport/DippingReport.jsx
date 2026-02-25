@@ -1,33 +1,33 @@
-import React, { useEffect, useState } from 'react';
-import * as yup from 'yup';
+import { readableDate } from '@/app/helpers/input-sanitization-helpers';
+import useProsERPStyles from '@/app/helpers/style-helpers';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { yupResolver } from '@hookform/resolvers/yup';
-import dayjs from 'dayjs';
-import { DateTimePicker } from '@mui/x-date-pickers';
+import { Div, Span } from '@jumbo/shared';
+import { LoadingButton } from '@mui/lab';
 import {
-  DialogTitle,
+  Autocomplete,
   DialogContent,
+  DialogTitle,
   Grid,
   LinearProgress,
-  Typography,
-  Autocomplete,
   TextField,
+  Typography,
 } from '@mui/material';
-import { LoadingButton } from '@mui/lab';
-import { useForm } from 'react-hook-form';
-import fuelStationServices from '../../fuelStationServices';
-import PDFContent from '../../../pdf/PDFContent';
-import DippingReportPDF from './DippingReportPDF';
-import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { DateTimePicker } from '@mui/x-date-pickers';
 import { useQuery } from '@tanstack/react-query';
-import useProsERPStyles from '@/app/helpers/style-helpers';
-import { readableDate } from '@/app/helpers/input-sanitization-helpers';
-import { Div, Span } from '@jumbo/shared';
+import dayjs from 'dayjs';
+import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import * as yup from 'yup';
+import PDFContent from '../../../pdf/PDFContent';
+import fuelStationServices from '../../fuelStationServices';
+import DippingReportPDF from './DippingReportPDF';
 
 function DippingReport() {
   const { authUser } = useJumboAuth();
   const { data: stations, isFetching: isFetchingStation } = useQuery({
-    queryKey: ['userStations', {userId: authUser?.user?.id}],
-    queryFn: fuelStationServices.getUserStations
+    queryKey: ['userStations', { userId: authUser?.user?.id }],
+    queryFn: fuelStationServices.getUserStations,
   });
 
   const [activeStation, setActiveStation] = useState(null);
@@ -40,14 +40,16 @@ function DippingReport() {
 
   document.title = 'Dipping Report';
   const css = useProsERPStyles();
-  const { authOrganization: { organization }} = useJumboAuth();
+  const {
+    authOrganization: { organization },
+  } = useJumboAuth();
   const [reportData, setReportData] = useState(null);
 
   const [filters, setFilters] = useState({
     from: dayjs().startOf('day').toISOString(),
     to: dayjs().endOf('day').toISOString(),
     fuel_station_id: activeStation?.id,
-    with_calculated_stock: 1
+    with_calculated_stock: 1,
   });
 
   useEffect(() => {
@@ -64,12 +66,25 @@ function DippingReport() {
   }, [activeStation]);
 
   const validationSchema = yup.object({
-    fuel_station_id: yup.number().required("Station is required").typeError('Station is required'),
-    from: yup.string().required('Start Date is required').typeError('Start Date is required'),
-    to: yup.string().required('End Date is required').typeError('End Date is required'),
+    fuel_station_id: yup
+      .number()
+      .required('Station is required')
+      .typeError('Station is required'),
+    from: yup
+      .string()
+      .required('Start Date is required')
+      .typeError('Start Date is required'),
+    to: yup
+      .string()
+      .required('End Date is required')
+      .typeError('End Date is required'),
   });
 
-  const { setValue, handleSubmit, formState: { errors } } = useForm({
+  const {
+    setValue,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
     resolver: yupResolver(validationSchema),
     defaultValues: filters,
   });
@@ -78,7 +93,10 @@ function DippingReport() {
 
   const retrieveReport = async (formFilters) => {
     setisFetching(true);
-    const filtersWithStation = { ...formFilters, fuel_station_id: activeStation.id };
+    const filtersWithStation = {
+      ...formFilters,
+      fuel_station_id: activeStation.id,
+    };
     const report = await fuelStationServices.dippingReport(filtersWithStation);
     setReportData(report.report_data);
     setisFetching(false);
@@ -88,37 +106,41 @@ function DippingReport() {
   const downloadFileName = `Dipping Report ${readableDate(filters.from)}-${readableDate(filters.to)}`;
 
   if (isFetchingStation) {
-    return <LinearProgress />
+    return <LinearProgress />;
   }
 
   return (
     <>
       <DialogTitle textAlign={'center'}>
         <Grid container>
-          <Grid size={{xs: 12, md: 12}}>
-            <Typography variant="h3" textAlign={'center'}>Dipping Report</Typography>
+          <Grid size={{ xs: 12, md: 12 }}>
+            <Typography variant='h3' textAlign={'center'}>
+              Dipping Report
+            </Typography>
           </Grid>
         </Grid>
         <Span className={css.hiddenOnPrint}>
-          <form autoComplete="off" onSubmit={handleSubmit(retrieveReport)}>
+          <form autoComplete='off' onSubmit={handleSubmit(retrieveReport)}>
             <Grid
               container
               columnSpacing={1}
               rowSpacing={1}
-              alignItems="center"
-              justifyContent="center"
+              alignItems='center'
+              justifyContent='center'
             >
-              <Grid size={{xs: 12, md: 4}}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <Autocomplete
-                  size="small"
-                  isOptionEqualToValue={(option, value) => option.id === value.id}
+                  size='small'
+                  isOptionEqualToValue={(option, value) =>
+                    option.id === value.id
+                  }
                   options={stations}
                   getOptionLabel={(option) => option.name}
                   defaultValue={stations?.length === 1 ? stations[0] : null}
                   renderInput={(params) => (
                     <TextField
                       {...params}
-                      label="Station"
+                      label='Station'
                       error={errors && !!errors?.fuel_station_id}
                       helperText={errors && errors.fuel_station_id?.message}
                     />
@@ -140,12 +162,13 @@ function DippingReport() {
                   }}
                 />
               </Grid>
-              <Grid size={{xs: 12, md: 4}}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <Div sx={{ mt: 1, mb: 1 }}>
                   <DateTimePicker
-                    label="From (MM/DD/YYYY)"
+                    label='From (MM/DD/YYYY)'
                     defaultValue={dayjs().startOf('day')}
                     minDate={dayjs(organization.recording_start_date)}
+                    ampm={false}
                     slotProps={{
                       textField: {
                         size: 'small',
@@ -153,20 +176,25 @@ function DippingReport() {
                       },
                     }}
                     onChange={(newValue) => {
-                      setValue('from', newValue ? newValue.toISOString() : null, {
-                        shouldValidate: true,
-                        shouldDirty: true,
-                      });
+                      setValue(
+                        'from',
+                        newValue ? newValue.toISOString() : null,
+                        {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                        }
+                      );
                     }}
                   />
                 </Div>
               </Grid>
-              <Grid size={{xs: 12, md: 4}}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <Div sx={{ mt: 1, mb: 1 }}>
                   <DateTimePicker
-                    label="To (MM/DD/YYYY)"
+                    label='To (MM/DD/YYYY)'
                     defaultValue={dayjs().endOf('day')}
                     minDate={dayjs(organization.recording_start_date)}
+                    ampm={false}
                     slotProps={{
                       textField: {
                         size: 'small',
@@ -182,8 +210,13 @@ function DippingReport() {
                   />
                 </Div>
               </Grid>
-              <Grid size={12} textAlign="right">
-                <LoadingButton loading={isFetching} type="submit" size="small" variant="contained">
+              <Grid size={12} textAlign='right'>
+                <LoadingButton
+                  loading={isFetching}
+                  type='submit'
+                  size='small'
+                  variant='contained'
+                >
                   Filter
                 </LoadingButton>
               </Grid>
@@ -192,16 +225,23 @@ function DippingReport() {
         </Span>
       </DialogTitle>
       <DialogContent>
-        {
-          isFetching ? <LinearProgress /> :
-            reportData &&
-            (
-              <PDFContent
-                document={<DippingReportPDF reportData={reportData} activeStation={activeStation} filters={filters} organization={organization} />}
-                fileName={downloadFileName}
-              />
-            )
-        }
+        {isFetching ? (
+          <LinearProgress />
+        ) : (
+          reportData && (
+            <PDFContent
+              document={
+                <DippingReportPDF
+                  reportData={reportData}
+                  activeStation={activeStation}
+                  filters={filters}
+                  organization={organization}
+                />
+              }
+              fileName={downloadFileName}
+            />
+          )
+        )}
       </DialogContent>
     </>
   );

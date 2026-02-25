@@ -7,14 +7,17 @@ import { useDrawingArea } from '@mui/x-charts/hooks';
 import { styled } from '@mui/material/styles';
 
 function CustomBarWithBackground(props) {
-  const { ownerState, id, dataIndex, xOrigin, yOrigin, ...other } = props;
+  const { ownerState, id, dataIndex, xOrigin, yOrigin, skipAnimation, ...other } = props;
   const theme = useTheme();
   const { width } = useDrawingArea();
 
+  // Remove skipAnimation from props passed to <rect>
+  const rectProps = { ...other };
+  delete rectProps.skipAnimation;
   return (
     <React.Fragment>
       <rect
-        {...other}
+        {...rectProps}
         fill={theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}
         x={0}
         width={width}
@@ -23,7 +26,7 @@ function CustomBarWithBackground(props) {
         rx={4}
       />
       <rect
-        {...other}
+        {...rectProps}
         filter={ownerState.isHighlighted ? 'brightness(120%)' : undefined}
         opacity={ownerState.isFaded ? 0.5 : 1}
         data-highlighted={ownerState.isHighlighted || undefined}
@@ -156,7 +159,6 @@ function DeliverableSummary({ deliverableDetails }) {
           slotProps={{
             bar: {
               rx: 4,
-              barSize: barThickness,
             },
             barLabel: {
               style: {
