@@ -142,7 +142,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
             narration: yup.string().nullable(),
           })
         ),
-        tank_adjustments: yup.array().of(
+        adjustments: yup.array().of(
           yup.object().shape({
             tank_id: yup.number().nullable().typeError('Tank is Required'),
             quantity: yup.number().required('Quantity is required').typeError('Quantity is Required'),
@@ -224,7 +224,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
           })) || [],
           collected_amount: cashier.collected_amount || 0,
           collection_ledger_id: cashier.collection_ledger_id || null,
-          tank_adjustments: cashier.tank_adjustments?.map(adj => ({
+          adjustments: cashier.tank_adjustments?.map(adj => ({
             tank_id: adj.tank_id,
             quantity: adj.quantity,
             operator: adj.operator,
@@ -490,7 +490,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
           selected_pumps: [],
           pump_readings: [],
           fuel_vouchers: [],
-          tank_adjustments: [],
+          adjustments: [],
           other_transactions: [],
           main_ledger: null,
         };
