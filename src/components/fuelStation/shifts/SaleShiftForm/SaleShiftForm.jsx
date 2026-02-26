@@ -645,27 +645,31 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
       return;
     }
 
-    data.cashiers = data.cashiers.map(cashier => ({
-      ...cashier,
-      selected_pumps: Array.isArray(cashier.selected_pumps)
-        ? cashier.selected_pumps.map(sel => {
-            const id = sel.pump_id ?? sel;
-            return typeof id === 'string' ? Number(id) : id;
-          })
-        : [],
-      fuel_vouchers: Array.isArray(cashier.fuel_vouchers)
-        ? cashier.fuel_vouchers.map(fuelVoucher => ({
-            stakeholder_id: fuelVoucher.stakeholder_id ?? (fuelVoucher.stakeholder?.id ?? null),
-            expense_ledger_id: fuelVoucher.expense_ledger_id ?? (fuelVoucher.expense_ledger?.id ?? null),
-            product_id: fuelVoucher.product_id,
-            quantity: fuelVoucher.quantity,
-            amount: fuelVoucher.amount,
-            reference: fuelVoucher.reference,
-            narration: fuelVoucher.narration,
-          })
-        )
-        : [],
-    }));
+    data.cashiers = data.cashiers.map(cashier => {
+      const { adjustments, ...rest } = cashier;
+      return {
+        ...rest,
+        tank_adjustments: adjustments || [],
+        selected_pumps: Array.isArray(cashier.selected_pumps)
+          ? cashier.selected_pumps.map(sel => {
+              const id = sel.pump_id ?? sel;
+              return typeof id === 'string' ? Number(id) : id;
+            })
+          : [],
+        fuel_vouchers: Array.isArray(cashier.fuel_vouchers)
+          ? cashier.fuel_vouchers.map(fuelVoucher => ({
+              stakeholder_id: fuelVoucher.stakeholder_id ?? (fuelVoucher.stakeholder?.id ?? null),
+              expense_ledger_id: fuelVoucher.expense_ledger_id ?? (fuelVoucher.expense_ledger?.id ?? null),
+              product_id: fuelVoucher.product_id,
+              quantity: fuelVoucher.quantity,
+              amount: fuelVoucher.amount,
+              reference: fuelVoucher.reference,
+              narration: fuelVoucher.narration,
+            })
+          )
+          : [],
+      };
+    });
     data.payments_received = paymentItems;
 
     // Decide add or update at submit time
