@@ -1339,6 +1339,7 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
         });
       }
     } else {
+      ws.getColumn('H').width = 20;
       if (exportedData.shiftData.cashiers.length) {
         ws.getColumn('G').width = 20;
         exportedData.shiftData.cashiers?.forEach(
@@ -2595,6 +2596,116 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
           right: { style: 'thin', color: { argb: 'FF000000' } },
         };
       });
+    }
+
+    // CASH COLLECTION SUMMARY
+    let cashCollectionRow = (ws.lastRow?.number ?? 0) + 2;
+    if (exportedData.withDetails) {
+      ws.mergeCells(`A${cashCollectionRow}:H${cashCollectionRow}`);
+      ws.getCell(`A${cashCollectionRow}`).value = 'Cash Collection Summary';
+      ws.getCell(`A${cashCollectionRow}`).font = { bold: true, size: 14 };
+      ws.getCell(`A${cashCollectionRow}`).alignment = {
+        horizontal: 'center',
+        vertical: 'middle',
+      };
+
+      ws.mergeCells(`A${cashCollectionRow + 1}:G${cashCollectionRow + 1}`);
+      ws.getCell(`A${cashCollectionRow + 1}`).value = 'Total Expected';
+      ws.getCell(`A${cashCollectionRow + 1}`).font = { bold: true, size: 11 };
+      ws.getCell(`A${cashCollectionRow + 1}`).alignment = {
+        horizontal: 'left',
+        vertical: 'middle',
+      };
+      ws.getCell(`A${cashCollectionRow + 1}`).border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } },
+      };
+
+      ws.getCell(`H${cashCollectionRow + 1}`).value =
+        totalExpectedAmount.toLocaleString('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
+      ws.getCell(`H${cashCollectionRow + 1}`).font = { bold: true, size: 11 };
+      ws.getCell(`H${cashCollectionRow + 1}`).alignment = {
+        horizontal: 'right',
+        vertical: 'middle',
+      };
+      ws.getCell(`H${cashCollectionRow + 1}`).border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } },
+      };
+
+      ws.mergeCells(`A${cashCollectionRow + 2}:G${cashCollectionRow + 2}`);
+      ws.getCell(`A${cashCollectionRow + 2}`).value = 'Total Collected';
+      ws.getCell(`A${cashCollectionRow + 2}`).font = { bold: true, size: 11 };
+      ws.getCell(`A${cashCollectionRow + 2}`).alignment = {
+        horizontal: 'left',
+        vertical: 'middle',
+      };
+      ws.getCell(`A${cashCollectionRow + 2}`).border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } },
+      };
+
+      ws.getCell(`H${cashCollectionRow + 2}`).value =
+        totalCollectedAmount.toLocaleString('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
+      ws.getCell(`H${cashCollectionRow + 2}`).font = { bold: true, size: 11 };
+      ws.getCell(`H${cashCollectionRow + 2}`).alignment = {
+        horizontal: 'right',
+        vertical: 'middle',
+      };
+      ws.getCell(`H${cashCollectionRow + 2}`).border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } },
+      };
+
+      ws.mergeCells(`A${cashCollectionRow + 3}:G${cashCollectionRow + 3}`);
+      ws.getCell(`A${cashCollectionRow + 3}`).value = 'Short/Over';
+      ws.getCell(`A${cashCollectionRow + 3}`).font = { bold: true, size: 11 };
+      ws.getCell(`A${cashCollectionRow + 3}`).alignment = {
+        horizontal: 'left',
+        vertical: 'middle',
+      };
+      ws.getCell(`A${cashCollectionRow + 3}`).border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } },
+      };
+
+      ws.getCell(`H${cashCollectionRow + 3}`).value =
+        totalShortOrOver > 0
+          ? `+${totalShortOrOver.toLocaleString('en-US', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}`
+          : totalShortOrOver.toLocaleString('en-US', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            });
+      ws.getCell(`H${cashCollectionRow + 3}`).font = { bold: true, size: 11 };
+      ws.getCell(`H${cashCollectionRow + 3}`).alignment = {
+        horizontal: 'right',
+        vertical: 'middle',
+      };
+      ws.getCell(`H${cashCollectionRow + 3}`).border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } },
+      };
     }
 
     // DIPPING SUMMARY

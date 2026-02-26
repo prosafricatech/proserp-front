@@ -101,6 +101,31 @@ function SalesShiftPDF({
     return st.opening_reading < 1 || st.closing_reading < 1;
   });
 
+  // total expected amount
+  const totalExpectedAmount =
+    shiftData.cashiers?.reduce((sum, c) => {
+      const {
+        totalProductsAmount,
+        adjustmentsAmount,
+        totalFuelVouchersAmount,
+        otherTransactionsTotal,
+      } = calculateCashierTotals(c);
+
+      return (
+        sum +
+        totalProductsAmount +
+        adjustmentsAmount -
+        totalFuelVouchersAmount -
+        otherTransactionsTotal
+      );
+    }, 0) || 0;
+
+  // total collected amount
+  const totalCollectedAmount =
+    shiftData.cashiers?.reduce((sum, c) => sum + c.collected_amount, 0) || 0.0;
+
+  const totalShortOrOver = totalCollectedAmount - totalExpectedAmount;
+
   return (
     <Document
       title={`${shiftData.shiftNo} | ${organization.name}`}
@@ -1245,6 +1270,116 @@ function SalesShiftPDF({
                     </View>
                   );
                 })}
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* ================= CASH COLLECTION SUMMARY============== */}
+        {openDetails && shiftData.cashiers.length && (
+          <View
+            wrap={false}
+            style={{ marginTop: 20, pageBreakInside: 'avoid' }}
+          >
+            <View
+              style={{
+                marginBottom: 8,
+                padding: 8,
+                backgroundColor: mainColor,
+                borderRadius: 4,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 14,
+                  color: contrastText,
+                  fontWeight: 'bold',
+                  textAlign: 'center',
+                }}
+              >
+                Cash Collection Summary
+              </Text>
+            </View>
+
+            <View style={{ marginBottom: 12 }}>
+              <View style={pdfStyles.table}>
+                <View style={pdfStyles.tableRow}>
+                  <Text
+                    style={{
+                      ...pdfStyles.tableCell,
+                      backgroundColor: '#FFFFFF',
+                      width: '70%',
+                    }}
+                  >
+                    Total Expected
+                  </Text>
+                  <Text
+                    style={{
+                      ...pdfStyles.tableCell,
+                      backgroundColor: '#FFFFFF',
+                      width: '30%',
+                      textAlign: 'right',
+                    }}
+                  >
+                    {totalExpectedAmount.toLocaleString('en-US', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </Text>
+                </View>
+                <View style={pdfStyles.tableRow}>
+                  <Text
+                    style={{
+                      ...pdfStyles.tableCell,
+                      backgroundColor: lightColor,
+                      width: '70%',
+                    }}
+                  >
+                    Total Collected
+                  </Text>
+                  <Text
+                    style={{
+                      ...pdfStyles.tableCell,
+                      backgroundColor: lightColor,
+                      width: '30%',
+                      textAlign: 'right',
+                    }}
+                  >
+                    {totalCollectedAmount.toLocaleString('en-US', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </Text>
+                </View>
+                <View style={pdfStyles.tableRow}>
+                  <Text
+                    style={{
+                      ...pdfStyles.tableCell,
+                      backgroundColor: '#FFFFFF',
+                      width: '70%',
+                    }}
+                  >
+                    Short/Over
+                  </Text>
+                  <Text
+                    style={{
+                      ...pdfStyles.tableCell,
+                      backgroundColor: '#FFFFFF',
+                      width: '30%',
+                      textAlign: 'right',
+                    }}
+                  >
+                    {totalShortOrOver > 0
+                      ? `+${totalShortOrOver.toLocaleString('en-US', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}`
+                      : `${totalShortOrOver.toLocaleString('en-US', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}`}
+                  </Text>
+                </View>
               </View>
             </View>
           </View>
