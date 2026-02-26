@@ -9,7 +9,7 @@ import {
   Grid,
   IconButton,
   InputLabel,
-  LinearProgress,
+  Skeleton,
   MenuItem,
   Select,
   Tooltip,
@@ -197,7 +197,7 @@ function ProfitAndLossTrendCard() {
       </Dialog>
 
       {isLoading ? (
-        <LinearProgress />
+        <Skeleton variant="rectangular" width="100%" height={180} sx={{ borderRadius: 2 }} />
       ) : (
         <ResponsiveContainer width="100%" height={180}>
           <ComposedChart data={profitAndLossTrend}>

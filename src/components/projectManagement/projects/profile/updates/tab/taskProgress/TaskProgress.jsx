@@ -180,8 +180,10 @@ function TaskProgress({ taskProgressItem = null, index = -1, setShowForm = null 
       const updated = [...taskProgressItems];
       updated[index] = item;
       setTaskProgressItems(updated);
+      setUploadFieldsKey((prevKey) => prevKey + 1);
     } else {
       setTaskProgressItems((prev) => [...prev, item]);
+      setUploadFieldsKey((prevKey) => prevKey + 1);
     }
 
     reset();

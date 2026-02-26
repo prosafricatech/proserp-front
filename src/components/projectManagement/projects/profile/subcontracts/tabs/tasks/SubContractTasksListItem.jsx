@@ -3,12 +3,12 @@ import React from 'react';
 import {
   Alert,
   Grid,
-  Tooltip,
   Typography,
   LinearProgress,
   Box,
   Stack,
   Chip,
+  Skeleton,
 } from '@mui/material';
 import SubContractTaskItemAction from './SubContractTaskItemAction';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
@@ -47,7 +47,13 @@ function SubContractTasksListItem({
 
   return (
     <Grid size={{ xs: 12 }} padding={1}>
-      {isLoading && <LinearProgress sx={{ mb: 2 }} />}
+      {isLoading && (
+        <Stack spacing={2} sx={{ width: '100%', mb: 2 }}>
+          <Skeleton variant="text" width={180} height={32} sx={{ borderRadius: 1, marginLeft: 'auto' }} />
+          <Skeleton variant="rectangular" width="100%" height={48} sx={{ borderRadius: 1 }} />
+          <Skeleton variant="rectangular" width="100%" height={32} sx={{ borderRadius: 1 }} />
+        </Stack>
+      )}
 
       {subContractTasks.length > 0 ? (
         subContractTasks.map((task, index) => {

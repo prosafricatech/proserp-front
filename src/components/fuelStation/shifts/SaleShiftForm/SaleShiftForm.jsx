@@ -57,47 +57,29 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
   const [cashierLedgers, setCashierLedgers] = useState({});
   const [lastClosingReadings, setLastClosingReadings] = useState({});
   const [lastClosingDipping, setLastClosingDipping] = useState([]);
-  const [voucherErrors, setVoucherErrors] = useState({});
 
-  const { mutate: addSalesShifts, isPending } = useMutation({
+  const isAutoSavingRef = React.useRef(false);
+  const AUTO_SAVE_INTERVAL = 2 * 60 * 1000;
+
+  const addMutation = useMutation({
     mutationFn: fuelStationServices.addSalesShifts,
     onSuccess: (data) => {
-      setOpenDialog(false);
-      enqueueSnackbar(data.message, { variant: 'success' });
-      queryClient.invalidateQueries({ queryKey: ['salesShifts'] });
-    },
-    onError: (error) => {
-      let message = 'Something went wrong';
-      if (typeof error === 'object' && error !== null && 'response' in error && typeof error.response?.data?.message === 'string') {
-        message = error.response.data.message;
-      } else if (error instanceof Error) {
-        message = error.message;
+
+      if (data?.id) {
+        setValue('id', data.id);
       }
-      enqueueSnackbar(message, { variant: 'error' });
+
+      queryClient.invalidateQueries({ queryKey: ['salesShifts'] });
     },
   });
 
-  const { mutate: updateSalesShifts, isPending: updateLoading } = useMutation({
+  const updateMutation = useMutation({
     mutationFn: fuelStationServices.updateSalesShifts,
     onSuccess: (data) => {
-      setOpenDialog(false);
-      enqueueSnackbar(data.message, { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['salesShifts'] });
-    },
-    onError: (error) => {
-      let message = 'Something went wrong';
-      if (typeof error === 'object' && error !== null && 'response' in error && typeof error.response?.data?.message === 'string') {
-        message = error.response.data.message;
-      } else if (error instanceof Error) {
-        message = error.message;
-      }
-      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 
-  const saveMutation = React.useMemo(() => {
-    return SalesShift?.id ? updateSalesShifts : addSalesShifts;
-  }, [SalesShift, addSalesShifts, updateSalesShifts]);
 
   const validationSchema = yup.object({
     sales_outlet_shift_id: yup.number().required('Sales Outlet Shift is required').typeError('Sales Outlet Shift must be a number'),
@@ -160,7 +142,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
             narration: yup.string().nullable(),
           })
         ),
-        tank_adjustments: yup.array().of(
+        adjustments: yup.array().of(
           yup.object().shape({
             tank_id: yup.number().nullable().typeError('Tank is Required'),
             quantity: yup.number().required('Quantity is required').typeError('Quantity is Required'),
@@ -242,7 +224,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
           })) || [],
           collected_amount: cashier.collected_amount || 0,
           collection_ledger_id: cashier.collection_ledger_id || null,
-          tank_adjustments: cashier.tank_adjustments?.map(adj => ({
+          adjustments: cashier.tank_adjustments?.map(adj => ({
             tank_id: adj.tank_id,
             quantity: adj.quantity,
             operator: adj.operator,
@@ -353,15 +335,10 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
     return lastClosingReadings[pumpId] || 0;
   }, [SalesShift, selectedCashiers, lastClosingReadings]);
 
-  const handlePumpSelection = useCallback((cashierIndex, selectedPumpIds) => {
+  const handleCashierPumpSelection = useCallback((cashierIndex, selectedPumpIds) => {
     const currentCashier = selectedCashiers[cashierIndex];
     if (!currentCashier) return;
-    
-    setValue(`cashiers.${cashierIndex}.selected_pumps`, selectedPumpIds, {
-      shouldValidate: true,
-      shouldDirty: true
-    });
-    
+
     const currentReadings = currentCashier.pump_readings || [];
     
     let updatedReadings = currentReadings.filter(reading => 
@@ -513,7 +490,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
           selected_pumps: [],
           pump_readings: [],
           fuel_vouchers: [],
-          tank_adjustments: [],
+          adjustments: [],
           other_transactions: [],
           main_ledger: null,
         };
@@ -563,7 +540,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
     );
   };
 
-    // Retrieve product prices for the station at a specific date/time
+  // Retrieve product prices for the station at a specific date/time
   const retrieveProductPrices = useCallback(async (as_at) => {
     try {
       const product_ids = Array.from(new Set((fuel_pumps || []).map(p => p.product_id)));
@@ -592,33 +569,8 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
   const getCashierLedgers = (cashierIndex) => {
     return cashierLedgers[cashierIndex] || [];
   };
-  
-  useEffect(() => {
-    selectedCashiers.forEach((cashier, cashierIdx) => {
-      if (!cashier.pump_readings || !cashier.fuel_vouchers) return;
-      const productQuantities = {};
-      cashier.pump_readings.forEach(pr => {
-        if (!productQuantities[pr.product_id]) productQuantities[pr.product_id] = 0;
-        productQuantities[pr.product_id] += Number(pr.closing) - Number(pr.opening);
-      });
-      const voucherQuantities = {};
-      cashier.fuel_vouchers.forEach(fv => {
-        if (!voucherQuantities[fv.product_id]) voucherQuantities[fv.product_id] = 0;
-        voucherQuantities[fv.product_id] += Number(fv.quantity);
-      });
-      // Check for excess
-      const errors = [];
-      Object.keys(voucherQuantities).forEach(pid => {
-        if (voucherQuantities[pid] > (productQuantities[pid] || 0)) {
-          const product = (activeStation.products || []).find(p => p.id === Number(pid));
-          errors.push(`Total quantity (${voucherQuantities[pid]}) for product ${product?.name || pid} in vouchers for cashier ${cashier.name} exceeds the pump readings quantity (${productQuantities[pid] || 0}).`);
-        }
-      });
-      setVoucherErrors(prev => ({ ...prev, [cashier.id]: errors }));
-    });
-  }, [JSON.stringify(selectedCashiers)]);
 
-  const handleSubmitForm = async (data) => {
+  const handleSubmitForm = async (data, options = { silent: false }) => {
     const allProductIds = (activeStation.products || []).map(p => p.id);
     const pricedProductIds = (data.product_prices || []).map(p => p.product_id);
     const missingPriceProducts = allProductIds.filter(pid => !pricedProductIds.includes(pid));
@@ -635,20 +587,6 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
     }
     if (data.cashiers.length === 0) {
       enqueueSnackbar('Please add at least one cashier', { variant: 'error' });
-      return;
-    }
-
-    // Prevent submission if voucherErrors exist
-    const hasVoucherExcess = Object.values(voucherErrors).some(errArr => Array.isArray(errArr) && errArr.length > 0);
-    if (hasVoucherExcess) {
-      enqueueSnackbar(
-        <div>
-          {Object.values(voucherErrors).flat().map((msg, idx) => (
-            <div key={idx}>{msg}</div>
-          ))}
-        </div>,
-        { variant: 'error' }
-      );
       return;
     }
 
@@ -709,6 +647,12 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
 
     data.cashiers = data.cashiers.map(cashier => ({
       ...cashier,
+      selected_pumps: Array.isArray(cashier.selected_pumps)
+        ? cashier.selected_pumps.map(sel => {
+            const id = sel.pump_id ?? sel;
+            return typeof id === 'string' ? Number(id) : id;
+          })
+        : [],
       fuel_vouchers: Array.isArray(cashier.fuel_vouchers)
         ? cashier.fuel_vouchers.map(fuelVoucher => ({
             stakeholder_id: fuelVoucher.stakeholder_id ?? (fuelVoucher.stakeholder?.id ?? null),
@@ -723,8 +667,55 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
         : [],
     }));
     data.payments_received = paymentItems;
-    await saveMutation(data);
+
+    // Decide add or update at submit time
+    const isUpdate = !!data.id || !!SalesShift?.id;
+    try {
+      if (isUpdate) {
+        await updateMutation.mutateAsync(data);
+      } else {
+        const created = await addMutation.mutateAsync(data);
+        if (created?.id) {
+          setValue('id', created.id, { shouldValidate: false, shouldDirty: false });
+        }
+      }
+    } catch (err) {
+      enqueueSnackbar('Error saving shift', { variant: 'error' });
+      return;
+    }
+
+    if (!options.silent) {
+      enqueueSnackbar('Saved successfully', { variant: 'success' });
+      setOpenDialog(false);
+    }
   };
+
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      isAutoSavingRef.current = true;
+
+      const data = watch();
+
+      let filteredCashiers = [];
+      if (data.cashiers && data.cashiers.length > 0) {
+        filteredCashiers = data.cashiers.filter(cashier => cashier.selected_pumps && cashier.selected_pumps.length > 0);
+      }
+
+      if (filteredCashiers.length === 0) {
+        isAutoSavingRef.current = false;
+        return;
+      }
+
+      // Always set submit_type to 'suspend' for autosave
+      const partialData = { ...data, cashiers: filteredCashiers, submit_type: 'suspend' };
+
+      await handleSubmitForm(partialData, { silent: true });
+
+      isAutoSavingRef.current = false;
+    }, AUTO_SAVE_INTERVAL);
+
+    return () => clearInterval(interval);
+  }, [trigger, watch]);
 
   return (
     <FormProvider {...{
@@ -942,27 +933,19 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
               </>
             ) : (
               selectedCashiers.map((cashier, index) => (
-                <React.Fragment key={cashier.id}>
-                  {voucherErrors[cashier.id] && voucherErrors[cashier.id].length > 0 && (
-                    <Alert severity="error" sx={{ mb: 2 }}>
-                      {voucherErrors[cashier.id].map((err, idx) => (
-                        <div key={idx}>{err}</div>
-                      ))}
-                    </Alert>
-                  )}
-                  <CashierAccordion
-                    cashier={cashier}
-                    index={index}
-                    control={control}
-                    watch={watch}
-                    lastClosingReadings={lastClosingReadings}
-                    handlePumpSelection={handlePumpSelection}
-                    getCashierLedgers={getCashierLedgers}
-                    getAvailablePumpsForCashier={getAvailablePumpsForCashier}
-                    setValue={setValue}
-                    onFuelVouchersChange={(vouchers) => setValue(`cashiers.${index}.fuel_vouchers`, vouchers, { shouldValidate: true, shouldDirty: true })}
-                  />
-                </React.Fragment>
+                <CashierAccordion
+                  key={cashier.id}
+                  cashier={cashier}
+                  index={index}
+                  control={control}
+                  watch={watch}
+                  lastClosingReadings={lastClosingReadings}
+                  handleCashierPumpSelection={handleCashierPumpSelection}
+                  getCashierLedgers={getCashierLedgers}
+                  getAvailablePumpsForCashier={getAvailablePumpsForCashier}
+                  setValue={setValue}
+                  onFuelVouchersChange={(vouchers) => setValue(`cashiers.${index}.fuel_vouchers`, vouchers, { shouldValidate: true, shouldDirty: true })}
+                />
               ))
             )}
           </div>
@@ -1040,7 +1023,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
           </Button>
         )}
         <LoadingButton
-          loading={isPending || updateLoading}
+          loading={addMutation.isPending || updateMutation.isPending}
           size='small'
           variant='contained'
           onClick={() => setShowHoldDialog(true)}
@@ -1062,10 +1045,11 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
               Cancel
             </Button>
             <LoadingButton
-              loading={isPending || updateLoading}
+              loading={addMutation.isPending || updateMutation.isPending}
               variant="contained"
               color="warning"
               onClick={(e) => {
+                isAutoSavingRef.current = false;
                 setShowHoldDialog(false);
                 setValue('submit_type', 'suspend');
                 handleSubmit(handleSubmitForm)(e);
@@ -1079,11 +1063,12 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
           <>
             {checkOrganizationPermission([PERMISSIONS.FUEL_SALES_SHIFT_CLOSE]) && (
               <LoadingButton
-                loading={isPending || updateLoading}
+                loading={addMutation.isPending || updateMutation.isPending}
                 size='small'
                 variant='contained'
                 color='success'
                 onClick={(e) => {
+                  isAutoSavingRef.current = false;
                   setValue('submit_type', 'close');
                   handleSubmit(handleSubmitForm)(e);
                 }}
