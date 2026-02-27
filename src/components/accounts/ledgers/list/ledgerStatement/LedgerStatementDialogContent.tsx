@@ -175,7 +175,7 @@ const LedgerStatementDialogContent: React.FC<LedgerStatementDialogContentProps> 
     const [transactions, setTransactions] = useState<ReportDocumentProps['transactionsData'] | null>(null);
     const { authOrganization, authUser, checkOrganizationPermission } = useJumboAuth();
     const user= authUser?.user; 
-    const [withItemDescription, setWithItemDescription] = useState(false);
+    const [withItemDescription, setWithItemDescription] = useState(!!incomeStatementfilters);
     const [activeTab, setActiveTab] = useState(0);
     const isMobile = deviceType() === 'mobile';
     const { enqueueSnackbar } = useSnackbar();
@@ -185,13 +185,15 @@ const LedgerStatementDialogContent: React.FC<LedgerStatementDialogContentProps> 
 
   const { setValue, handleSubmit, watch } = useForm({
     defaultValues: {
-      from: dayjs().startOf('day').toISOString(),
-      to: dayjs().endOf('day').toISOString(),
-      ledger_id: ledger?.id,
-      cost_center_ids: checkOrganizationPermission(PERMISSIONS.COST_CENTERS_ALL) 
-        ? 'all' 
-        : authOrganization?.costCenters?.map((cost_center: any) => cost_center.id) || [],
-      with_item_description: withItemDescription
+        from: incomeStatementfilters?.from || dayjs().startOf('day').toISOString(),
+        to: incomeStatementfilters?.to || dayjs().endOf('day').toISOString(),
+        ledger_id: incomeStatementfilters?.ledger_id ?? ledger?.id,
+        cost_center_ids: incomeStatementfilters?.cost_center_ids ?? (
+            checkOrganizationPermission(PERMISSIONS.COST_CENTERS_ALL)
+                ? 'all'
+                : authOrganization?.costCenters?.map((cost_center: any) => cost_center.id) || []
+        ),
+        with_item_description: incomeStatementfilters ? true : withItemDescription
     }
   });
 
@@ -220,10 +222,10 @@ const LedgerStatementDialogContent: React.FC<LedgerStatementDialogContentProps> 
             
             // Get all current filter parameters
             const filters = {
-                from: watch('from'),
-                to: watch('to'),
-                ledger_id: watch('ledger_id'),
-                cost_center_ids: watch('cost_center_ids'),
+                from: watch('from') || incomeStatementfilters?.from,
+                to: watch('to') || incomeStatementfilters?.to,
+                ledger_id: watch('ledger_id') ?? incomeStatementfilters?.ledger_id ?? ledger?.id,
+                cost_center_ids: watch('cost_center_ids') ?? incomeStatementfilters?.cost_center_ids,
                 with_item_description: watch('with_item_description')
             };
 
@@ -248,12 +250,35 @@ const LedgerStatementDialogContent: React.FC<LedgerStatementDialogContentProps> 
   // Initial data load
   useEffect(() => {
     if (incomeStatementfilters) {
-      fetchTransactions(incomeStatementfilters);
+            const initialFilters = {
+                ...incomeStatementfilters,
+                with_item_description: true,
+            };
+            setWithItemDescription(true);
+            setValue('with_item_description', true, {
+                shouldValidate: false,
+                shouldDirty: false,
+            });
+            setValue('from', incomeStatementfilters.from, {
+                shouldValidate: false,
+                shouldDirty: false,
+            });
+            setValue('to', incomeStatementfilters.to, {
+                shouldValidate: false,
+                shouldDirty: false,
+            });
+            setValue('cost_center_ids', incomeStatementfilters.cost_center_ids, {
+                shouldValidate: false,
+                shouldDirty: false,
+            });
+            fetchTransactions(initialFilters);
     }
-  }, [incomeStatementfilters, fetchTransactions]);
+    }, [incomeStatementfilters, fetchTransactions, setValue]);
 
   const ledgerName = incomeStatementfilters?.ledgerName;
-  const downloadFileName = `${ledger?.name || ledgerName} Statement ${readableDate(watch('from'))}-${readableDate(watch('to'))}`;
+    const effectiveFrom = watch('from') || incomeStatementfilters?.from;
+    const effectiveTo = watch('to') || incomeStatementfilters?.to;
+    const downloadFileName = `${ledger?.name || ledgerName} Statement ${readableDate(effectiveFrom)}-${readableDate(effectiveTo)}`;
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
@@ -346,26 +371,26 @@ const LedgerStatementDialogContent: React.FC<LedgerStatementDialogContentProps> 
                                         With Items Description
                                     </Div>
                                 </Grid>
-                                <Grid size={{xs: 12, md: 1}} textAlign={'right'}>
-                                    <Stack direction="row" spacing={0.5} justifyContent="flex-end" alignItems="center">
-                                        <>                                
-                                            <LoadingButton
-                                                size="small"
-                                                onClick={downloadExcelTemplate}
-                                                loading={isDownloadingTemplate}
-                                                variant="contained"
-                                                color="success"
-                                            >
-                                                Excel
-                                            </LoadingButton>
-                                            <LoadingButton loading={isFetching} type='submit' size='small' variant='contained'>
-                                                Filter
-                                            </LoadingButton>
-                                        </>
-                                    </Stack>
-                                </Grid>
                             </>
                         )}
+                        <Grid size={{xs: 12}} textAlign={'right'}>
+                            <Stack direction="row" spacing={0.5} justifyContent="flex-end" alignItems="center">
+                                <LoadingButton
+                                    size="small"
+                                    onClick={downloadExcelTemplate}
+                                    loading={isDownloadingTemplate}
+                                    variant="contained"
+                                    color="success"
+                                >
+                                    Excel
+                                </LoadingButton>
+                                {!incomeStatementfilters && (
+                                    <LoadingButton loading={isFetching} type='submit' size='small' variant='contained'>
+                                        Filter
+                                    </LoadingButton>
+                                )}
+                            </Stack>
+                        </Grid>
                         <Grid size={12}>
                             {transactions && isMobile && (
                                 <Tabs value={activeTab} onChange={handleTabChange} variant="fullWidth">
