@@ -685,6 +685,7 @@ export default function CashierListSummaryPDF({
                     })}
 
                     {/* === PUMP READINGS SUB-TOTAL */}
+                    {/* check for adjustments */}
                     {groupedAdjustments.length && (
                       <View
                         style={{ ...pdfStyles.tableRow, marginTop: 2, gap: 2 }}
