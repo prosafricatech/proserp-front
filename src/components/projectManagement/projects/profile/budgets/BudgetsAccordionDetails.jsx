@@ -74,9 +74,11 @@ function BudgetsAccordionDetails({ budget, expanded, isProjectBudget=true }) {
                 onChange={(newValue) => setSearchQueryNames(newValue.map(l => l.name))}
               />
             </Grid>
-            <Grid size={{xs: 12, md: 0.5}} textAlign="end">
-              <BudgetItemsActionTail budget={budgetItemsDetails} isProjectBudget={isProjectBudget} />
-            </Grid>
+            {isProjectBudget && (
+              <Grid size={{xs: 12, md: 0.5}} textAlign="end">
+                <BudgetItemsActionTail budget={budgetItemsDetails} isProjectBudget={isProjectBudget} />
+              </Grid>
+            )}
           </Grid>
 
           {/* Summary */}
