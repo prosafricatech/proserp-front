@@ -1,5 +1,6 @@
 import pdfStyles from '@/components/pdf/pdf-styles';
 import { Text, View } from '@react-pdf/renderer';
+import { useMemo } from 'react';
 
 export default function CashierListSummaryPDF({
   shiftData,
@@ -11,6 +12,8 @@ export default function CashierListSummaryPDF({
   const mainColor = organization.settings?.main_color || '#2113AD';
   const lightColor = organization.settings?.light_color || '#bec5da';
   const contrastText = organization.settings?.contrast_text || '#FFFFFF';
+
+  console.log('mainColor: ', mainColor);
 
   // Calculate totals for each cashier
   const calculateCashierTotals = (cashier) => {
@@ -87,6 +90,13 @@ export default function CashierListSummaryPDF({
       );
     }, 0) || 0;
 
+  // total adjstment amont
+  const totalAdjustmentsAmount =
+    shiftData.cashiers?.reduce((sum, c) => {
+      const { adjustmentsAmount } = calculateCashierTotals(c);
+      return sum + adjustmentsAmount;
+    }, 0) || 0;
+
   // total collected amount
   const totalCollectedAmount =
     shiftData.cashiers?.reduce((sum, c) => sum + c.collected_amount, 0) || 0.0;
@@ -155,10 +165,9 @@ export default function CashierListSummaryPDF({
     0
   );
 
-  const totalMainLedger = shiftData.cashiers?.reduce(
-    (sum, c) => sum + c.main_ledger?.amount,
-    0
-  );
+  const totalMainLedger =
+    shiftData.cashiers?.reduce((sum, c) => sum + c.main_ledger?.amount, 0) +
+    totalAdjustmentsAmount;
 
   const grandTotal = totalFvAmount + totalOtherTransactions + totalMainLedger;
 
@@ -232,8 +241,7 @@ export default function CashierListSummaryPDF({
                 ...pdfStyles.tableHeader,
                 backgroundColor: mainColor,
                 color: contrastText,
-                // flex: 1,
-                width: '40%',
+                width: '30%',
               }}
             >
               Pump Details
@@ -244,7 +252,7 @@ export default function CashierListSummaryPDF({
                 backgroundColor: mainColor,
                 color: contrastText,
                 // flex: 1.3,
-                width: '20%',
+                width: '30%',
               }}
             >
               Cash Distributions
@@ -280,7 +288,7 @@ export default function CashierListSummaryPDF({
             <View
               style={{
                 ...pdfStyles.tableCell,
-                width: '40%',
+                width: '30%',
                 padding: '0px',
               }}
             >
@@ -291,7 +299,7 @@ export default function CashierListSummaryPDF({
                     padding: 2,
                     backgroundColor: mainColor,
                     color: contrastText,
-                    width: '20%',
+                    width: '30%',
                   }}
                 >
                   Name
@@ -303,7 +311,7 @@ export default function CashierListSummaryPDF({
                     backgroundColor: mainColor,
                     color: contrastText,
                     // flex: 0.5,
-                    width: '30%',
+                    width: '35%',
                   }}
                 >
                   Fuel
@@ -315,19 +323,7 @@ export default function CashierListSummaryPDF({
                     backgroundColor: mainColor,
                     color: contrastText,
                     // flex: 0.5,
-                    width: '25%',
-                  }}
-                >
-                  Adjustments (+/-)
-                </Text>
-                <Text
-                  style={{
-                    fontSize: '10px',
-                    padding: 2,
-                    backgroundColor: mainColor,
-                    color: contrastText,
-                    // flex: 0.5,
-                    width: '25%',
+                    width: '35%',
                   }}
                 >
                   Amount
@@ -338,7 +334,7 @@ export default function CashierListSummaryPDF({
               style={{
                 ...pdfStyles.tableCell,
                 // flex: 1.31,
-                width: '20%',
+                width: '30%',
                 padding: '0px',
               }}
             >
@@ -517,11 +513,15 @@ export default function CashierListSummaryPDF({
             );
 
             // main ledger object
-            const mainLedgerObj = {
-              type: cashier.main_ledger?.name,
-              count: 1,
-              totalAmount: cashier.main_ledger?.amount,
-            };
+            if (cashier.main_ledger) {
+              const mainLedgerObj = {
+                type: cashier.main_ledger?.name,
+                count: 1,
+                totalAmount: cashier.main_ledger?.amount + adjustmentsAmount,
+              };
+
+              cashDistributionSummary.unshift(mainLedgerObj);
+            }
 
             // fuel vouchers object
             const voucherObj = {
@@ -531,7 +531,6 @@ export default function CashierListSummaryPDF({
                 calculateCashierTotals(cashier).totalFuelVouchersAmount,
             };
 
-            cashDistributionSummary.unshift(mainLedgerObj);
             cashDistributionSummary.push(voucherObj);
 
             const cashDistributionsTotalSummary =
@@ -540,17 +539,54 @@ export default function CashierListSummaryPDF({
                 0
               );
 
-            // total fuel vouchers for cashier
-            const totalFuelVoucherAmount = cashier.fuel_vouchers?.reduce(
-              (total, fv) => {
-                const productPrice =
-                  shiftData.fuel_prices.find(
-                    (fp) => fp.product_id === fv.product_id
-                  )?.price || 0;
-                return total + fv.quantity * productPrice;
-              },
-              0
-            );
+            let pumpReadingsSubTotal = 0;
+
+            // create adjustments grouped by tanks
+            const groupedAdjustments = useMemo(() => {
+              // 1. flatten all adjustments
+              const allAdjustments = cashier.tank_adjustments;
+
+              // 2. group by tank_id
+              const grouped = allAdjustments.reduce((acc, adj) => {
+                if (!acc[adj.tank_id]) {
+                  acc[adj.tank_id] = 0;
+                }
+
+                // handle + / -
+                const qty = adj.operator === '-' ? adj.quantity : -adj.quantity;
+                acc[adj.tank_id] += qty;
+
+                return acc;
+              }, {});
+
+              // 3. build final array
+              const finalArray = Object.entries(grouped).map(
+                ([tankId, totalQty]) => {
+                  const tank = shiftData.shift_tanks.find(
+                    (t) => t.id === Number(tankId)
+                  );
+                  if (!tank) return null;
+
+                  const productId = tank.product.id;
+
+                  const priceObj = shiftData.fuel_prices.find(
+                    (p) => p.product_id === productId
+                  );
+                  const price = priceObj ? priceObj.price : 0;
+
+                  return {
+                    tank_id: tank.id,
+                    tank_name: tank.name,
+                    product_name: tank.product.name,
+                    total_quantity: totalQty,
+                    price,
+                    total_amount: totalQty * price,
+                  };
+                }
+              );
+
+              return finalArray.filter(Boolean);
+            }, [cashier, shiftData.shift_tanks, shiftData.fuel_prices]);
 
             return (
               <View
@@ -580,7 +616,7 @@ export default function CashierListSummaryPDF({
                   style={{
                     ...pdfStyles.tableCell,
                     // flex: 1,
-                    width: '40%',
+                    width: '30%',
                     padding: '0px',
                   }}
                 >
@@ -601,6 +637,8 @@ export default function CashierListSummaryPDF({
 
                       const amount = difference * fuelPrice.price;
 
+                      pumpReadingsSubTotal += amount;
+
                       return (
                         <View
                           key={index}
@@ -611,8 +649,7 @@ export default function CashierListSummaryPDF({
                               ...pdfStyles.tableCell,
                               backgroundColor:
                                 index % 2 === 0 ? '#FFFFFF' : lightColor,
-                              // flex: 0.5,
-                              width: '20%',
+                              width: '30%',
                             }}
                           >
                             {pumpInfo?.name || `Pump ${pump.fuel_pump_id}`}
@@ -623,7 +660,7 @@ export default function CashierListSummaryPDF({
                               backgroundColor:
                                 index % 2 === 0 ? '#FFFFFF' : lightColor,
                               // flex: 0.5,
-                              width: '30%',
+                              width: '35%',
                             }}
                           >
                             {product?.name || `Product ${pump.product_id}`}
@@ -635,22 +672,7 @@ export default function CashierListSummaryPDF({
                                 index % 2 === 0 ? '#FFFFFF' : lightColor,
                               textAlign: 'right',
                               // flex: 0.5,
-                              width: '25%',
-                            }}
-                          >
-                            {amount.toLocaleString('en-US', {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })}
-                          </Text>
-                          <Text
-                            style={{
-                              ...pdfStyles.tableCell,
-                              backgroundColor:
-                                index % 2 === 0 ? '#FFFFFF' : lightColor,
-                              textAlign: 'right',
-                              // flex: 0.5,
-                              width: '25%',
+                              width: '35%',
                             }}
                           >
                             {amount.toLocaleString('en-US', {
@@ -661,14 +683,161 @@ export default function CashierListSummaryPDF({
                         </View>
                       );
                     })}
-                    {/* === Total amount for pump details === */}
-                    <View style={{ ...pdfStyles.tableRow, gap: 2 }}>
+
+                    {/* === PUMP READINGS SUB-TOTAL */}
+                    {groupedAdjustments.length && (
+                      <View
+                        style={{ ...pdfStyles.tableRow, marginTop: 2, gap: 2 }}
+                      >
+                        <Text
+                          style={{
+                            ...pdfStyles.tableCell,
+                            backgroundColor: mainColor,
+                            color: contrastText,
+                            width: '65.4%',
+                          }}
+                        >
+                          Sub-total
+                        </Text>
+                        <Text
+                          style={{
+                            ...pdfStyles.tableCell,
+                            backgroundColor: mainColor,
+                            color: contrastText,
+                            textAlign: 'right',
+                            width: '34.6%',
+                          }}
+                        >
+                          {pumpReadingsSubTotal.toLocaleString('en-US', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </Text>
+                      </View>
+                    )}
+
+                    {/* === TANK ADJUSTMENTS === */}
+                    {groupedAdjustments.length && (
+                      <View
+                        style={{ ...pdfStyles.tableRow, marginTop: 2, gap: 2 }}
+                      >
+                        <Text
+                          style={{
+                            ...pdfStyles.tableHeader,
+                            backgroundColor: mainColor,
+                            color: contrastText,
+                            width: '100%',
+                          }}
+                        >
+                          Tank Adjustments
+                        </Text>
+                      </View>
+                    )}
+
+                    {groupedAdjustments.length &&
+                      groupedAdjustments.map((adj, index) => {
+                        return (
+                          <View
+                            style={{
+                              ...pdfStyles.tableRow,
+                              marginTop: 2,
+                              gap: 2,
+                            }}
+                            key={index}
+                          >
+                            <Text
+                              style={{
+                                ...pdfStyles.tableCell,
+                                backgroundColor:
+                                  index % 2 === 0 ? '#FFFFFF' : lightColor,
+                                width: '30%',
+                              }}
+                            >
+                              {adj.tank_name}
+                            </Text>
+                            <Text
+                              style={{
+                                ...pdfStyles.tableCell,
+                                backgroundColor:
+                                  index % 2 === 0 ? '#FFFFFF' : lightColor,
+                                textAlign: 'right',
+                                width: '35%',
+                              }}
+                            >
+                              {adj.total_quantity > 0
+                                ? '+' + adj.total_quantity.toLocaleString()
+                                : adj.total_quantity.toLocaleString()}
+                            </Text>
+                            <Text
+                              style={{
+                                ...pdfStyles.tableCell,
+                                backgroundColor:
+                                  index % 2 === 0 ? '#FFFFFF' : lightColor,
+                                textAlign: 'right',
+                                width: '35%',
+                              }}
+                            >
+                              {adj.total_amount > 0
+                                ? '+' +
+                                  adj.total_amount.toLocaleString('en-US', {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                  })
+                                : adj.total_amount.toLocaleString('en-US', {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                  })}
+                            </Text>
+                          </View>
+                        );
+                      })}
+
+                    {/* === adjustments and Total amount for pump details === */}
+                    {groupedAdjustments.length && (
+                      <View
+                        style={{ ...pdfStyles.tableRow, marginTop: 2, gap: 2 }}
+                      >
+                        <Text
+                          style={{
+                            ...pdfStyles.tableCell,
+                            backgroundColor: mainColor,
+                            color: contrastText,
+                            width: '65.4%',
+                          }}
+                        >
+                          Sub-total (+/-)
+                        </Text>
+                        <Text
+                          style={{
+                            ...pdfStyles.tableCell,
+                            backgroundColor: mainColor,
+                            color: contrastText,
+                            textAlign: 'right',
+                            width: '34.6%',
+                          }}
+                        >
+                          {adjustmentsAmount > 0
+                            ? '+' +
+                              adjustmentsAmount.toLocaleString('en-US', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })
+                            : adjustmentsAmount.toLocaleString('en-US', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                        </Text>
+                      </View>
+                    )}
+                    <View
+                      style={{ ...pdfStyles.tableRow, marginTop: 2, gap: 2 }}
+                    >
                       <Text
                         style={{
                           ...pdfStyles.tableCell,
                           backgroundColor: mainColor,
                           color: contrastText,
-                          width: '75.4%',
+                          width: '65.4%',
                         }}
                       >
                         TOTAL
@@ -679,13 +848,16 @@ export default function CashierListSummaryPDF({
                           backgroundColor: mainColor,
                           color: contrastText,
                           textAlign: 'right',
-                          width: '24.6%',
+                          width: '34.6%',
                         }}
                       >
-                        {totalPumoAmount.toLocaleString('en-US', {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
+                        {(totalPumoAmount + adjustmentsAmount).toLocaleString(
+                          'en-US',
+                          {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          }
+                        )}
                       </Text>
                     </View>
                   </View>
@@ -696,7 +868,7 @@ export default function CashierListSummaryPDF({
                   style={{
                     ...pdfStyles.tableCell,
                     // flex: 1.3,
-                    width: '20%',
+                    width: '30%',
                     padding: '0px',
                   }}
                 >
@@ -748,6 +920,7 @@ export default function CashierListSummaryPDF({
                     <View
                       style={{
                         ...pdfStyles.tableRow,
+                        marginTop: 2,
                         gap: 2,
                       }}
                     >
@@ -757,7 +930,7 @@ export default function CashierListSummaryPDF({
                           backgroundColor: mainColor,
                           color: contrastText,
                           // flex: 0.5,
-                          width: '60%',
+                          width: '60.5%',
                         }}
                       >
                         Total
@@ -768,7 +941,7 @@ export default function CashierListSummaryPDF({
                           backgroundColor: mainColor,
                           color: contrastText,
                           // flex: 0.5,
-                          width: '40%',
+                          width: '39.5%',
                           textAlign: 'right',
                         }}
                       >
@@ -826,6 +999,7 @@ export default function CashierListSummaryPDF({
                         style={{
                           ...pdfStyles.tableCell,
                           backgroundColor: '#FFFFFF',
+                          color: shortOrOver > 0 ? '#4a990eff' : 'red',
                           textAlign: 'right',
                           width: '30%',
                         }}
@@ -1061,7 +1235,8 @@ export default function CashierListSummaryPDF({
                     style={{
                       ...pdfStyles.tableCell,
                       textAlign: 'right',
-                      backgroundColor: mainColor,
+                      backgroundColor:
+                        totalShortOrOver > 0 ? '#4a990eff' : 'red',
                       color: contrastText,
                       fontWeight: 'bold',
                       fontSize: '12px',
