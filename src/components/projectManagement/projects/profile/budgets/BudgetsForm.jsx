@@ -21,7 +21,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import projectsServices from '../../project-services';
 
-const BudgetsForm = ({ setOpenDialog, budget }) => {
+const BudgetsForm = ({ setOpenDialog, budget, isProjectBudget=true }) => {
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
   const { authOrganization: { organization } } = useJumboAuth();
@@ -71,7 +71,7 @@ const BudgetsForm = ({ setOpenDialog, budget }) => {
       name: budget?.name,
       start_date: budget?.start_date,
       end_date: budget?.end_date,
-      cost_center_id: project.cost_center.id,
+      cost_center_id: project?.cost_center?.id,
       remarks: budget?.remarks || '',
     },
   });
@@ -79,7 +79,7 @@ const BudgetsForm = ({ setOpenDialog, budget }) => {
   return (
     <>
       <DialogTitle textAlign="center">
-        {budget ? `Edit ${budget?.name} Budget` : 'New Project Budget'}
+        {budget ? `Edit ${budget?.name} Budget` : isProjectBudget ? 'New Project Budget' : 'New Budget'}
       </DialogTitle>
       <DialogContent>
         <form autoComplete="off">
