@@ -19,8 +19,6 @@ function BudgetsAccordionDetails({ budget, expanded }) {
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
-  console.log(budget)
-
   // React Query v5 syntax
   const { data: budgetItemsDetails, isLoading } = useQuery({
     queryKey: ['budgetItemsDetails', { id: budget.id }],
@@ -46,7 +44,7 @@ function BudgetsAccordionDetails({ budget, expanded }) {
       from: budget?.start_date,
       to: budget?.end_date,
       cost_center_ids: budget?.cost_center_id ? [budget.cost_center_id] : 'all',
-      ledger_id: item?.id,
+      ledger_id: item?.ledger_id,
       ledgerName: item?.name,
     });
     setLedgerDialogOpen(true);
