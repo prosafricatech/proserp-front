@@ -220,7 +220,7 @@ const IncomeStatementOnScreen = ({ reportData }) => {
                     fullScreen={belowLargeScreen}
                 >
                     <LedgerStatementDialogContent 
-                        incomeStatementfilters={ledgerFilters}
+                        commingFilters={ledgerFilters}
                         setOpen={setLedgerDialogOpen}
                     />
                 </Dialog>

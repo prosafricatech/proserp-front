@@ -142,7 +142,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
             narration: yup.string().nullable(),
           })
         ),
-        tank_adjustments: yup.array().of(
+        adjustments: yup.array().of(
           yup.object().shape({
             tank_id: yup.number().nullable().typeError('Tank is Required'),
             quantity: yup.number().required('Quantity is required').typeError('Quantity is Required'),
@@ -224,7 +224,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
           })) || [],
           collected_amount: cashier.collected_amount || 0,
           collection_ledger_id: cashier.collection_ledger_id || null,
-          tank_adjustments: cashier.tank_adjustments?.map(adj => ({
+          adjustments: cashier.tank_adjustments?.map(adj => ({
             tank_id: adj.tank_id,
             quantity: adj.quantity,
             operator: adj.operator,
@@ -490,7 +490,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
           selected_pumps: [],
           pump_readings: [],
           fuel_vouchers: [],
-          tank_adjustments: [],
+          adjustments: [],
           other_transactions: [],
           main_ledger: null,
         };
@@ -645,27 +645,31 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
       return;
     }
 
-    data.cashiers = data.cashiers.map(cashier => ({
-      ...cashier,
-      selected_pumps: Array.isArray(cashier.selected_pumps)
-        ? cashier.selected_pumps.map(sel => {
-            const id = sel.pump_id ?? sel;
-            return typeof id === 'string' ? Number(id) : id;
-          })
-        : [],
-      fuel_vouchers: Array.isArray(cashier.fuel_vouchers)
-        ? cashier.fuel_vouchers.map(fuelVoucher => ({
-            stakeholder_id: fuelVoucher.stakeholder_id ?? (fuelVoucher.stakeholder?.id ?? null),
-            expense_ledger_id: fuelVoucher.expense_ledger_id ?? (fuelVoucher.expense_ledger?.id ?? null),
-            product_id: fuelVoucher.product_id,
-            quantity: fuelVoucher.quantity,
-            amount: fuelVoucher.amount,
-            reference: fuelVoucher.reference,
-            narration: fuelVoucher.narration,
-          })
-        )
-        : [],
-    }));
+    data.cashiers = data.cashiers.map(cashier => {
+      const { adjustments, ...rest } = cashier;
+      return {
+        ...rest,
+        tank_adjustments: adjustments || [],
+        selected_pumps: Array.isArray(cashier.selected_pumps)
+          ? cashier.selected_pumps.map(sel => {
+              const id = sel.pump_id ?? sel;
+              return typeof id === 'string' ? Number(id) : id;
+            })
+          : [],
+        fuel_vouchers: Array.isArray(cashier.fuel_vouchers)
+          ? cashier.fuel_vouchers.map(fuelVoucher => ({
+              stakeholder_id: fuelVoucher.stakeholder_id ?? (fuelVoucher.stakeholder?.id ?? null),
+              expense_ledger_id: fuelVoucher.expense_ledger_id ?? (fuelVoucher.expense_ledger?.id ?? null),
+              product_id: fuelVoucher.product_id,
+              quantity: fuelVoucher.quantity,
+              amount: fuelVoucher.amount,
+              reference: fuelVoucher.reference,
+              narration: fuelVoucher.narration,
+            })
+          )
+          : [],
+      };
+    });
     data.payments_received = paymentItems;
 
     // Decide add or update at submit time

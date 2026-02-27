@@ -17,7 +17,7 @@ import {
   FormControl,
   Grid,
   InputLabel,
-  LinearProgress,
+  Skeleton,
   List,
   ListItem,
   MenuItem,
@@ -376,7 +376,15 @@ function ProductSalesCard() {
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
               {isFetchingSalesPeople ? (
-                <LinearProgress />
+                <Div sx={{ width: '100%', height: '100%', p: 1 }}>
+                  <Skeleton variant="text" width="40%" height={32} animation="wave" sx={{ mb: 1 }} />
+                  <Skeleton variant="rectangular" width="100%" height={160} animation="wave" sx={{ mb: 1, borderRadius: 2 }} />
+                  <Div sx={{ display: 'flex', gap: 2 }}>
+                    <Skeleton variant="rounded" width={80} height={32} animation="wave" />
+                    <Skeleton variant="rounded" width={80} height={32} animation="wave" />
+                    <Skeleton variant="rounded" width={80} height={32} animation="wave" />
+                  </Div>
+                </Div>
               ) : (
                 <Autocomplete
                   id='checkboxes-salesPerson'
@@ -472,7 +480,7 @@ function ProductSalesCard() {
         >
           <List>
             {isLoading ? (
-              <LinearProgress />
+              <Skeleton variant="rectangular" width="100%" height={40} sx={{ borderRadius: 2 }} />
             ) : popularProducts.length > 0 ? (
               popularProducts.map((product: any, index: number) => (
                 <React.Fragment key={index}>
