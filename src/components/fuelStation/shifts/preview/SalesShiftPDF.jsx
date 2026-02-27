@@ -972,6 +972,7 @@ function SalesShiftPDF({
                             ...pdfStyles.tableHeader,
                             ...pdfStyles.tableCell,
                             backgroundColor: lightColor,
+                            color: shortOrOver > 0 ? '#4a990eff' : 'red',
                             width: '30%',
                             textAlign: 'right',
                             fontWeight: 'bold',
@@ -1365,6 +1366,7 @@ function SalesShiftPDF({
                     style={{
                       ...pdfStyles.tableCell,
                       backgroundColor: '#FFFFFF',
+                      color: totalShortOrOver > 0 ? '#4a990eff' : 'red',
                       width: '30%',
                       textAlign: 'right',
                     }}
