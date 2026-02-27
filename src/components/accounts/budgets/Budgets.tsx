@@ -74,11 +74,6 @@ const Budgets = () => {
   }, [params]);
 
   useEffect(() => {
-    const organizationCostCenters = authOrganization?.costCenters || [];
-    setSelectedCostCenter(organizationCostCenters);
-  }, [authOrganization?.costCenters]);
-
-  useEffect(() => {
     setQueryOptions(prev => ({
       ...prev,
       queryParams: {
