@@ -58,7 +58,7 @@ interface LedgerStatementDialogContentProps {
     id: number;
     name: string;
   };
-  incomeStatementfilters?: {
+  commingFilters?: {
     from: string;
     to: string;
     ledger_id?: number;
@@ -170,12 +170,12 @@ const ReportDocument: React.FC<ReportDocumentProps> = ({
 const LedgerStatementDialogContent: React.FC<LedgerStatementDialogContentProps> = ({ 
   setOpen, 
   ledger, 
-  incomeStatementfilters = null 
+  commingFilters = null 
 }) => {
     const [transactions, setTransactions] = useState<ReportDocumentProps['transactionsData'] | null>(null);
     const { authOrganization, authUser, checkOrganizationPermission } = useJumboAuth();
     const user= authUser?.user; 
-    const [withItemDescription, setWithItemDescription] = useState(!!incomeStatementfilters);
+    const [withItemDescription, setWithItemDescription] = useState(!!commingFilters);
     const [activeTab, setActiveTab] = useState(0);
     const isMobile = deviceType() === 'mobile';
     const { enqueueSnackbar } = useSnackbar();
@@ -185,15 +185,15 @@ const LedgerStatementDialogContent: React.FC<LedgerStatementDialogContentProps> 
 
   const { setValue, handleSubmit, watch } = useForm({
     defaultValues: {
-        from: incomeStatementfilters?.from || dayjs().startOf('day').toISOString(),
-        to: incomeStatementfilters?.to || dayjs().endOf('day').toISOString(),
-        ledger_id: incomeStatementfilters?.ledger_id ?? ledger?.id,
-        cost_center_ids: incomeStatementfilters?.cost_center_ids ?? (
+        from: commingFilters?.from || dayjs().startOf('day').toISOString(),
+        to: commingFilters?.to || dayjs().endOf('day').toISOString(),
+        ledger_id: commingFilters?.ledger_id ?? ledger?.id,
+        cost_center_ids: commingFilters?.cost_center_ids ?? (
             checkOrganizationPermission(PERMISSIONS.COST_CENTERS_ALL)
                 ? 'all'
                 : authOrganization?.costCenters?.map((cost_center: any) => cost_center.id) || []
         ),
-        with_item_description: incomeStatementfilters ? true : withItemDescription
+        with_item_description: commingFilters ? true : withItemDescription
     }
   });
 
@@ -222,10 +222,10 @@ const LedgerStatementDialogContent: React.FC<LedgerStatementDialogContentProps> 
             
             // Get all current filter parameters
             const filters = {
-                from: watch('from') || incomeStatementfilters?.from,
-                to: watch('to') || incomeStatementfilters?.to,
-                ledger_id: watch('ledger_id') ?? incomeStatementfilters?.ledger_id ?? ledger?.id,
-                cost_center_ids: watch('cost_center_ids') ?? incomeStatementfilters?.cost_center_ids,
+                from: watch('from') || commingFilters?.from,
+                to: watch('to') || commingFilters?.to,
+                ledger_id: watch('ledger_id') ?? commingFilters?.ledger_id ?? ledger?.id,
+                cost_center_ids: watch('cost_center_ids') ?? commingFilters?.cost_center_ids,
                 with_item_description: watch('with_item_description')
             };
 
@@ -249,9 +249,9 @@ const LedgerStatementDialogContent: React.FC<LedgerStatementDialogContentProps> 
 
   // Initial data load
   useEffect(() => {
-    if (incomeStatementfilters) {
+    if (commingFilters) {
             const initialFilters = {
-                ...incomeStatementfilters,
+                ...commingFilters,
                 with_item_description: true,
             };
             setWithItemDescription(true);
@@ -259,25 +259,25 @@ const LedgerStatementDialogContent: React.FC<LedgerStatementDialogContentProps> 
                 shouldValidate: false,
                 shouldDirty: false,
             });
-            setValue('from', incomeStatementfilters.from, {
+            setValue('from', commingFilters.from, {
                 shouldValidate: false,
                 shouldDirty: false,
             });
-            setValue('to', incomeStatementfilters.to, {
+            setValue('to', commingFilters.to, {
                 shouldValidate: false,
                 shouldDirty: false,
             });
-            setValue('cost_center_ids', incomeStatementfilters.cost_center_ids, {
+            setValue('cost_center_ids', commingFilters.cost_center_ids, {
                 shouldValidate: false,
                 shouldDirty: false,
             });
             fetchTransactions(initialFilters);
     }
-    }, [incomeStatementfilters, fetchTransactions, setValue]);
+    }, [commingFilters, fetchTransactions, setValue]);
 
-  const ledgerName = incomeStatementfilters?.ledgerName;
-    const effectiveFrom = watch('from') || incomeStatementfilters?.from;
-    const effectiveTo = watch('to') || incomeStatementfilters?.to;
+  const ledgerName = commingFilters?.ledgerName;
+    const effectiveFrom = watch('from') || commingFilters?.from;
+    const effectiveTo = watch('to') || commingFilters?.to;
     const downloadFileName = `${ledger?.name || ledgerName} Statement ${readableDate(effectiveFrom)}-${readableDate(effectiveTo)}`;
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
@@ -289,7 +289,7 @@ const LedgerStatementDialogContent: React.FC<LedgerStatementDialogContentProps> 
             <DialogTitle textAlign={'center'}>
                 <form autoComplete='off' key={uploadFieldsKey} onSubmit={handleSubmit(fetchTransactions)}>
                     <Grid container columnSpacing={1} rowSpacing={1} alignItems={'center'} justifyContent={'center'}>
-                        {!incomeStatementfilters && (
+                        {!commingFilters && (
                             <>
                                 <Grid size={{xs: 12 }}>{ledger && ledger.name + ' statement'}</Grid>
                                 {!ledger && (
@@ -384,7 +384,7 @@ const LedgerStatementDialogContent: React.FC<LedgerStatementDialogContentProps> 
                                 >
                                     Excel
                                 </LoadingButton>
-                                {!incomeStatementfilters && (
+                                {!commingFilters && (
                                     <LoadingButton loading={isFetching} type='submit' size='small' variant='contained'>
                                         Filter
                                     </LoadingButton>
