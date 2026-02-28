@@ -19,6 +19,7 @@ interface LedgerOption {
 }
 
 interface PaymentItem {
+  id?: number;
   debit_ledger_id?: number;
   credit_ledger_id?: number;
   amount: number;
@@ -42,6 +43,7 @@ interface PaymentsReceivedProps {
 }
 
 interface FormValues {
+  id?: number;
   debit_ledger?: LedgerOption | null;
   debit_ledger_id?: number | null;
   credit_ledger?: LedgerOption | null;
@@ -98,6 +100,7 @@ function PaymentsReceived({
   } = useForm<FormValues>({
     resolver: yupResolver(validationSchema) as any,
     defaultValues: {
+      id: item ? item.id : undefined,
       credit_ledger: item ? ungroupedLedgerOptions.find(option => option.id === item.credit_ledger_id) : null,
       credit_ledger_id: item?.credit_ledger_id,
       debit_ledger: item ? ungroupedLedgerOptions.find(option => option.id === item.debit_ledger_id) : null,
@@ -111,10 +114,10 @@ function PaymentsReceived({
     setIsDirty(Object.keys(dirtyFields).length > 0);
   }, [dirtyFields, setIsDirty, watch]);
 
-
   const updateItems = async (formData: FormValues) => {
     setIsAdding(true);
     const newItem: PaymentItem = {
+      id: formData.id,
       debit_ledger_id: formData.debit_ledger_id || undefined,
       credit_ledger_id: formData.credit_ledger_id || undefined,
       amount: formData.amount,
