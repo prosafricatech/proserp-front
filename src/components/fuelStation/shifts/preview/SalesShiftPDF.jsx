@@ -126,6 +126,12 @@ function SalesShiftPDF({
 
   const totalShortOrOver = totalCollectedAmount - totalExpectedAmount;
 
+  // payments received total
+  const paymentsReceivedTotal = paymentReceived.reduce(
+    (sum, pr) => sum + pr.amount,
+    0
+  );
+
   return (
     <Document
       title={`${shiftData.shiftNo} | ${organization.name}`}
@@ -1382,6 +1388,41 @@ function SalesShiftPDF({
                         })}`}
                   </Text>
                 </View>
+
+                {paymentReceived.length && (
+                  <View style={{ ...pdfStyles.tableRow, marginTop: 4 }}>
+                    <Text
+                      style={{
+                        ...pdfStyles.tableCell,
+                        backgroundColor: mainColor,
+                        color: contrastText,
+                        fontWeight: 'bold',
+                        fontSize: 10,
+                        width: '70%',
+                      }}
+                    >
+                      Grand Total (Total Collected + Total Payments Received)
+                    </Text>
+                    <Text
+                      style={{
+                        ...pdfStyles.tableCell,
+                        backgroundColor: mainColor,
+                        color: contrastText,
+                        fontWeight: 'bold',
+                        fontSize: 10,
+                        width: '30%',
+                        textAlign: 'right',
+                      }}
+                    >
+                      {(
+                        totalCollectedAmount + paymentsReceivedTotal
+                      ).toLocaleString('en-US', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </Text>
+                  </View>
+                )}
               </View>
             </View>
           </View>

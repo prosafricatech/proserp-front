@@ -2277,7 +2277,7 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
                 `A${distributionTotalsRow}:E${distributionTotalsRow}`
               );
               ws.getCell(`A${distributionTotalsRow}`).value =
-                'Total Distrinuted';
+                'Total Distributed';
               ws.getCell(`A${distributionTotalsRow}`).alignment = {
                 horizontal: 'left',
                 vertical: 'middle',

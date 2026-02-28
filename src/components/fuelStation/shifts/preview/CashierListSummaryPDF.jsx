@@ -13,8 +13,6 @@ export default function CashierListSummaryPDF({
   const lightColor = organization.settings?.light_color || '#bec5da';
   const contrastText = organization.settings?.contrast_text || '#FFFFFF';
 
-  console.log('mainColor: ', mainColor);
-
   // Calculate totals for each cashier
   const calculateCashierTotals = (cashier) => {
     // Calculate total products amount for this cashier
