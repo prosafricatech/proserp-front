@@ -10,6 +10,8 @@ import {
   DialogContent,
   DialogTitle,
   Alert,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 import { useSnackbar } from 'notistack';
@@ -20,12 +22,15 @@ import { Div } from '@jumbo/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import projectsServices from '../../project-services';
+import LedgerItemsTab from './budgetItems/tabs/LedgerItemsTab';
+import ProductItemsTab from './budgetItems/tabs/ProductItemsTab';
 
 const BudgetsForm = ({ setOpenDialog, budget, isProjectBudget=true }) => {
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
   const { authOrganization: { organization } } = useJumboAuth();
   const { project } = useProjectProfile();
+  const [activeTab, setActiveTab] = useState(0);
   const [serverError, setServerError] = useState(null);
 
   // React Query v5 mutations
@@ -78,15 +83,14 @@ const BudgetsForm = ({ setOpenDialog, budget, isProjectBudget=true }) => {
 
   return (
     <>
-      <DialogTitle textAlign="center">
+      <DialogTitle textAlign="center" sx={{ pb: 1 }}>
         {budget ? `Edit ${budget?.name} Budget` : isProjectBudget ? 'New Project Budget' : 'New Budget'}
       </DialogTitle>
       <DialogContent>
         <form autoComplete="off">
-          <Grid container columnSpacing={1}>
-            <Grid container spacing={1} alignItems="center" justifyContent="center">
+          <Grid container spacing={1.5} alignItems="center" justifyContent="center" sx={{ mt: 0.25 }}>
               <Grid size={{xs: 12, md: 4}}>
-                <Div sx={{ mt: 1 }}>
+                <Div>
                   <TextField
                     label="Budget Name"
                     size="small"
@@ -99,7 +103,7 @@ const BudgetsForm = ({ setOpenDialog, budget, isProjectBudget=true }) => {
               </Grid>
 
               <Grid size={{xs: 12, md: 4}}>
-                <Div sx={{ mt: 1 }}>
+                <Div>
                   <DateTimePicker
                     label="Start Date"
                     fullWidth
@@ -123,7 +127,7 @@ const BudgetsForm = ({ setOpenDialog, budget, isProjectBudget=true }) => {
               </Grid>
 
               <Grid size={{xs: 12, md: 4}}>
-                <Div sx={{ mt: 1 }}>
+                <Div>
                   <DateTimePicker
                     label="End Date"
                     fullWidth
@@ -153,7 +157,7 @@ const BudgetsForm = ({ setOpenDialog, budget, isProjectBudget=true }) => {
               )}
 
               <Grid size={12}>
-                <Div sx={{ mt: 1 }}>
+                <Div>
                   <TextField
                     label="Remarks"
                     size="small"
@@ -164,7 +168,24 @@ const BudgetsForm = ({ setOpenDialog, budget, isProjectBudget=true }) => {
                   />
                 </Div>
               </Grid>
-            </Grid>
+
+              <Grid size={12}>
+                <Tabs
+                  value={activeTab}
+                  onChange={(e, newValue) => setActiveTab(newValue)}
+                  variant="scrollable"
+                  scrollButtons="auto"
+                  allowScrollButtonsMobile
+                >
+                  <Tab label="Expense Items"/>
+                  <Tab label="Product Items"/>
+                </Tabs>
+              </Grid>
+
+              <Grid size={12}>
+                {activeTab === 0 && <LedgerItemsTab budget={budget}/>}
+                {activeTab === 1 && <ProductItemsTab budget={budget}/>}
+              </Grid>
           </Grid>
         </form>
       </DialogContent>

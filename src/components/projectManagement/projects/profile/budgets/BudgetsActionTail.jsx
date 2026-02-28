@@ -12,7 +12,7 @@ const BudgetsActionTail = ({ isProjectBudget=true }) => {
   
     return (
       <React.Fragment>
-        <Dialog maxWidth="md" fullWidth scroll={belowLargeScreen ? 'body' : 'paper'} fullScreen={belowLargeScreen} open={openDialog}>
+        <Dialog maxWidth="lg" fullWidth scroll={belowLargeScreen ? 'body' : 'paper'} fullScreen={belowLargeScreen} open={openDialog}>
           <BudgetsForm setOpenDialog={setOpenDialog} isProjectBudget={isProjectBudget} />
         </Dialog>
   
