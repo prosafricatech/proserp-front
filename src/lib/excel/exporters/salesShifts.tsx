@@ -2706,6 +2706,42 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
         left: { style: 'thin', color: { argb: 'FF000000' } },
         right: { style: 'thin', color: { argb: 'FF000000' } },
       };
+
+      // GRAND TOTAL FOR CASH COLLECTED AND PAYMENTS RECIEVED
+      if (exportedData.paymentReceived?.length) {
+        ws.mergeCells(`A${cashCollectionRow + 4}:G${cashCollectionRow + 4}`);
+        ws.getCell(`A${cashCollectionRow + 4}`).value =
+          'Grand Total (Total Collected + Total Payments Received)';
+        ws.getCell(`A${cashCollectionRow + 4}`).font = { bold: true, size: 11 };
+        ws.getCell(`A${cashCollectionRow + 4}`).alignment = {
+          horizontal: 'left',
+          vertical: 'middle',
+        };
+        ws.getCell(`A${cashCollectionRow + 4}`).border = {
+          top: { style: 'thin', color: { argb: 'FF000000' } },
+          bottom: { style: 'thin', color: { argb: 'FF000000' } },
+          left: { style: 'thin', color: { argb: 'FF000000' } },
+          right: { style: 'thin', color: { argb: 'FF000000' } },
+        };
+
+        ws.getCell(`H${cashCollectionRow + 4}`).value = (
+          totalCollectedAmount + paymentsReceivedTotal
+        ).toLocaleString('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
+        ws.getCell(`H${cashCollectionRow + 4}`).font = { bold: true, size: 11 };
+        ws.getCell(`H${cashCollectionRow + 4}`).alignment = {
+          horizontal: 'right',
+          vertical: 'middle',
+        };
+        ws.getCell(`H${cashCollectionRow + 4}`).border = {
+          top: { style: 'thin', color: { argb: 'FF000000' } },
+          bottom: { style: 'thin', color: { argb: 'FF000000' } },
+          left: { style: 'thin', color: { argb: 'FF000000' } },
+          right: { style: 'thin', color: { argb: 'FF000000' } },
+        };
+      }
     }
 
     // DIPPING SUMMARY
