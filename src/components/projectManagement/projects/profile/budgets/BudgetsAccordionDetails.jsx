@@ -1,16 +1,23 @@
-import React, { useState } from 'react';
-import { Alert, Box, Chip, Grid, LinearProgress, Skeleton, Tooltip, Typography } from '@mui/material';
+import { useState } from 'react';
+import { Alert, Box, Chip, Dialog, Grid, IconButton, LinearProgress, Skeleton, Tooltip, Typography, useMediaQuery } from '@mui/material';
 import BudgetItemsActionTail from './BudgetItemsActionTail';
 import projectsServices from '../../project-services';
 import { useQuery } from '@tanstack/react-query';
 import { useCurrencySelect } from '@/components/masters/Currencies/CurrencySelectProvider';
 import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
 import { Stack } from '@mui/system';
+import { VisibilityOutlined } from '@mui/icons-material';
+import LedgerStatementDialogContent from '@/components/accounts/ledgers/list/ledgerStatement/LedgerStatementDialogContent';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 
 function BudgetsAccordionDetails({ budget, expanded }) {
   const { currencies } = useCurrencySelect();
   const baseCurrency = currencies.find(c => c.is_base === 1);
   const [searchQueryNames, setSearchQueryNames] = useState([]);
+  const [ledgerDialogOpen, setLedgerDialogOpen] = useState(false);
+  const [ledgerFilters, setLedgerFilters] = useState(null);
+  const { theme } = useJumboTheme();
+  const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
   // React Query v5 syntax
   const { data: budgetItemsDetails, isLoading } = useQuery({
@@ -31,6 +38,17 @@ function BudgetsAccordionDetails({ budget, expanded }) {
 
   const totalBudgetedAmount = filteredExpenses?.reduce((total, item) => total + item?.budgeted, 0) || 0;
   const totalSpentAmount = filteredExpenses?.reduce((total, item) => total + item?.spent, 0) || 0;
+
+  const handleViewLedger = (item) => {
+    setLedgerFilters({
+      from: budget?.start_date,
+      to: budget?.end_date,
+      cost_center_ids: budget?.cost_center_id ? [budget.cost_center_id] : 'all',
+      ledger_id: item?.ledger_id,
+      ledgerName: item?.name,
+    });
+    setLedgerDialogOpen(true);
+  };
 
   return (
     <>
@@ -118,9 +136,22 @@ function BudgetsAccordionDetails({ budget, expanded }) {
                   </Grid>
                   <Grid size={{xs: 8, md: 2}}>
                     <Tooltip title="Spent">
-                      <Typography variant="h6">
-                        {item?.spent.toLocaleString('en-US', { style: 'currency', currency: baseCurrency?.code })}
-                      </Typography>
+                      <Box display="flex" alignItems="center" gap={0.5}>
+                        <Typography variant="h6">
+                          {item?.spent.toLocaleString('en-US', { style: 'currency', currency: baseCurrency?.code })}
+                        </Typography>
+                        <Tooltip title={`View ${item?.name}`}>
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleViewLedger(item);
+                            }}
+                          >
+                            <VisibilityOutlined fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
                     </Tooltip>
                   </Grid>
                   <Grid size={{xs: 4, md: 2}}>
@@ -151,6 +182,21 @@ function BudgetsAccordionDetails({ budget, expanded }) {
             )}
           </Grid>
         </Grid>
+      )}
+
+      {ledgerDialogOpen && (
+        <Dialog
+          open={ledgerDialogOpen}
+          onClose={() => setLedgerDialogOpen(false)}
+          maxWidth="md"
+          fullWidth
+          fullScreen={belowLargeScreen}
+        >
+          <LedgerStatementDialogContent
+            commingFilters={ledgerFilters}
+            setOpen={setLedgerDialogOpen}
+          />
+        </Dialog>
       )}
     </>
   );
