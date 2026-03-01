@@ -15,6 +15,7 @@ import { useJumboAuth } from "@/app/providers/JumboAuthProvider";
 import { PERMISSIONS } from "@/utilities/constants/permissions";
 import CostCenterSelector from "@/components/masters/costCenters/CostCenterSelector";
 import { CostCenter } from "@/components/masters/costCenters/CostCenterType";
+import ProductsSelectProvider from "@/components/productAndServices/products/ProductsSelectProvider";
 
 type BudgetId = number | string;
 
@@ -104,56 +105,58 @@ const Budgets = () => {
   return (
     <LedgerSelectProvider>
       <CurrencySelectProvider>
-        <JumboRqList
-          ref={listRef}
-          wrapperComponent={Card}
-          queryOptions={queryOptions}
-          primaryKey="id"
-          service={budgetsServices.getBudgets}
-          renderItem={renderBudgetItem}
-          itemsPerPage={10}
-          itemsPerPageOptions={[10, 15, 30, 60]}
-          componentElement="div"
-          wrapperSx={{
-            flex: 1,
-            display: "flex",
-            flexDirection: "column",
-          }}
-          toolbar={
-            <JumboListToolbar
-              hideItemsPerPage
-              action={
-                <Grid container columnSpacing={1} rowSpacing={1} direction="row" alignItems="center">
-                  {multiCostCenters && (
-                    <Grid size={{xs: 12, md: 5, lg: 7}}>
-                      <CostCenterSelector
-                        label="Cost Centers"
-                        allowSameType={true}
-                        defaultValue={selectedCostCenter}
-                        onChange={(newValue: CostCenter | CostCenter[] | null) => {
-                          if (newValue === null) {
-                            setSelectedCostCenter([]);
-                          } else {
-                            setSelectedCostCenter(Array.isArray(newValue) ? newValue : [newValue]);
-                          }
-                        }}
+        <ProductsSelectProvider>
+          <JumboRqList
+            ref={listRef}
+            wrapperComponent={Card}
+            queryOptions={queryOptions}
+            primaryKey="id"
+            service={budgetsServices.getBudgets}
+            renderItem={renderBudgetItem}
+            itemsPerPage={10}
+            itemsPerPageOptions={[10, 15, 30, 60]}
+            componentElement="div"
+            wrapperSx={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+            }}
+            toolbar={
+              <JumboListToolbar
+                hideItemsPerPage
+                action={
+                  <Grid container columnSpacing={1} rowSpacing={1} direction="row" alignItems="center">
+                    {multiCostCenters && (
+                      <Grid size={{xs: 12, md: 5, lg: 7}}>
+                        <CostCenterSelector
+                          label="Cost Centers"
+                          allowSameType={true}
+                          defaultValue={selectedCostCenter}
+                          onChange={(newValue: CostCenter | CostCenter[] | null) => {
+                            if (newValue === null) {
+                              setSelectedCostCenter([]);
+                            } else {
+                              setSelectedCostCenter(Array.isArray(newValue) ? newValue : [newValue]);
+                            }
+                          }}
+                        />
+                      </Grid>
+                    )}
+                    <Grid size={{xs: 10.5, md: multiCostCenters ? 6 : 5.5, lg: multiCostCenters ? 4 : 10.5}}>
+                      <JumboSearch
+                        onChange={handleOnChange}
+                        value={queryOptions.queryParams.keyword}
                       />
                     </Grid>
-                  )}
-                  <Grid size={{xs: 10.5, md: multiCostCenters ? 6 : 5.5, lg: multiCostCenters ? 4 : 10.5}}>
-                    <JumboSearch
-                      onChange={handleOnChange}
-                      value={queryOptions.queryParams.keyword}
-                    />
+                    <Grid size={{xs: 1.5, md: 1, lg: 1}}>
+                      <BudgetsActionTail isProjectBudget={false}/>
+                    </Grid>
                   </Grid>
-                  <Grid size={{xs: 1.5, md: 1, lg: 1}}>
-                    <BudgetsActionTail isProjectBudget={false}/>
-                  </Grid>
-                </Grid>
-              }
-            />
-          }
-        />
+                }
+              />
+            }
+          />
+        </ProductsSelectProvider>
       </CurrencySelectProvider>
     </LedgerSelectProvider>
   );

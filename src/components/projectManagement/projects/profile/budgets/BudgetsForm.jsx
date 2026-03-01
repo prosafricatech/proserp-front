@@ -51,6 +51,7 @@ const BudgetsForm = ({ setOpenDialog, budget=null, isProjectBudget=true }) => {
       setOpenDialog(false);
       enqueueSnackbar(data.message, { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['projectBudgets'] });
+      queryClient.invalidateQueries({ queryKey: ['budgets-list'] });
     },
     onError: (err) => {
       if (err.response?.status === 400) setServerError(err.response?.data?.validation_errors);
@@ -64,6 +65,7 @@ const BudgetsForm = ({ setOpenDialog, budget=null, isProjectBudget=true }) => {
       setOpenDialog(false);
       enqueueSnackbar(data.message, { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['projectBudgets'] });
+      queryClient.invalidateQueries({ queryKey: ['budgets-list'] });
     },
     onError: (err) => {
       if (err.response?.status === 400) setServerError(err.response?.data?.validation_errors);
