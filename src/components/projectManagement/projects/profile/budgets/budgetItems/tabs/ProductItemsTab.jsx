@@ -5,11 +5,8 @@ import * as yup from 'yup';
 import { useForm } from 'react-hook-form';
 import { AddOutlined } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
-import { useSnackbar } from 'notistack';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { useProductsSelect } from '@/components/productAndServices/products/ProductsSelectProvider';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import projectsServices from '@/components/projectManagement/projects/project-services';
 import { Div } from '@jumbo/shared';
 import ProductSelect from '@/components/productAndServices/products/ProductSelect';
 import CurrencySelector from '@/components/masters/Currencies/CurrencySelector';
@@ -18,46 +15,19 @@ import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import ProductQuickAdd from '@/components/productAndServices/products/ProductQuickAdd';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 
-function ProductItemsTab({budget, selectedBoundTo, selectedItemable}) {
+function ProductItemsTab({
+    budget,
+    selectedBoundTo,
+    selectedItemable,
+    productItems = [],
+    setProductItems,
+}) {
     const {productOptions} = useProductsSelect();
     const {checkOrganizationPermission} = useJumboAuth();
     const [openProductQuickAdd, setOpenProductQuickAdd] = useState(false);
     const [addedProduct, setAddedProduct] = useState(null);
     const [selectedUnit, setSelectedUnit] = useState(null);
-    const [triggerKey, setTriggerKey] = useState(0);
-    const { enqueueSnackbar } = useSnackbar();
-    const queryClient = useQueryClient();
-  
-    const { mutate: addBudgetItem, isPending } = useMutation({
-      mutationFn: projectsServices.addBudgetItems,
-      onSuccess: (data) => {
-        enqueueSnackbar(data.message, { variant: 'success' });
-        queryClient.invalidateQueries({queryKey: ['budgetItemsDetails']});
-        reset({
-          type: 'product',
-          budget_id: budget.id,
-          product_id: null,
-          currency_id: 1,
-          exchange_rate: 1,
-          rate: '',
-          quantity: '',
-          alternative_product_ids: [],
-          description: '',
-          unit_symbol: '',
-          measurement_unit_id: null,
-          budget_itemable_id: selectedItemable?.id,
-          bound_to: selectedBoundTo,
-        }); 
-        setTriggerKey(prevKey => prevKey + 1);
-      },
-      onError: (error) => {
-        enqueueSnackbar(error.response.data.message, {variant: 'error'});
-      },
-    });
-  
-    const saveMutation = React.useMemo(() => {
-      return addBudgetItem;
-    }, [addBudgetItem]);
+        const isLocalMode = typeof setProductItems === 'function';
 
     // Define validation schema
     const validationSchema = yup.object({
@@ -90,7 +60,7 @@ function ProductItemsTab({budget, selectedBoundTo, selectedItemable}) {
             description: '',
             unit_symbol: '',
             measurement_unit_id: null,
-            budget_id: budget.id,
+            budget_id: budget?.id,
             budget_itemable_id: selectedItemable?.id,
             bound_to: selectedBoundTo,
         }
@@ -108,7 +78,7 @@ function ProductItemsTab({budget, selectedBoundTo, selectedItemable}) {
         } else {
           setValue('budget_itemable_id', null);
         }
-    }, [selectedBoundTo, selectedItemable, triggerKey, setValue]);
+        }, [selectedBoundTo, selectedItemable, setValue]);
 
     // setvalues from coming addedProduct
     useEffect(() => {
@@ -124,9 +94,37 @@ function ProductItemsTab({budget, selectedBoundTo, selectedItemable}) {
 
     const combinedUnits = product?.secondary_units?.concat(product?.primary_unit);
 
+    const updateItems = async (item) => {
+        if (!isLocalMode) return;
+
+        const normalizedItem = {
+            ...item,
+            product: item.product || product,
+            product_name: item.product?.name || product?.name,
+        };
+        await setProductItems((prevItems) => [...prevItems, normalizedItem]);
+        reset({
+            type: 'product',
+            product_id: null,
+            currency_id: 1,
+            exchange_rate: 1,
+            rate: '',
+            quantity: '',
+            alternative_product_ids: [],
+            description: '',
+            unit_symbol: '',
+            measurement_unit_id: null,
+            budget_id: budget?.id,
+            budget_itemable_id: selectedItemable?.id,
+            bound_to: selectedBoundTo,
+        });
+        setAddedProduct(null);
+        setSelectedUnit(null);
+    };
+
   return (
-    <form autoComplete='off' onSubmit={handleSubmit(saveMutation)} >
-        <Grid container columnSpacing={1} key={triggerKey}>
+        <form autoComplete='off' onSubmit={handleSubmit(updateItems)} >
+                <Grid container columnSpacing={1}>
             {
                 !openProductQuickAdd &&
                     <>
@@ -332,7 +330,7 @@ function ProductItemsTab({budget, selectedBoundTo, selectedItemable}) {
                         </Grid>
                         <Grid size={{xs: 12, md: 12}} textAlign={'end'} paddingTop={0.5}>
                             <LoadingButton
-                                loading={isPending}
+                                loading={false}
                                 variant='contained'
                                 size='small'
                                 type='submit'

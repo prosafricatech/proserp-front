@@ -1,10 +1,33 @@
-import { DisabledByDefault } from '@mui/icons-material'
+import { DisabledByDefault, EditOutlined } from '@mui/icons-material'
 import { Divider, Grid, IconButton, ListItemText, Tooltip, Typography } from '@mui/material'
-import React from 'react'
+import React, { useState } from 'react'
 import LedgerItemsTab from './LedgerItemsTab';
+import { useLedgerSelect } from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
 
-function LedgerItemsRow({ ledgerItem, index, ledgerItems, setLedgerItems}) {
+function LedgerItemsRow({
+  ledgerItem,
+  index,
+  ledgerItems,
+  setLedgerItems,
+  submitMainForm,
+  setSubmitItemForm,
+  submitItemForm,
+  setIsDirty,
+}) {
   const [showForm, setShowForm] = useState(false);
+  const { ungroupedLedgerOptions } = useLedgerSelect();
+
+  const ledger =
+    ledgerItem?.ledger ||
+    ungroupedLedgerOptions.find((ledgerOption) => ledgerOption.id === ledgerItem?.ledger_id);
+
+  const handleDelete = () => {
+    setLedgerItems((prevItems) => {
+      const nextItems = [...prevItems];
+      nextItems.splice(index, 1);
+      return nextItems;
+    });
+  };
 
   return (
     <React.Fragment>
@@ -26,42 +49,47 @@ function LedgerItemsRow({ ledgerItem, index, ledgerItems, setLedgerItems}) {
               <ListItemText
                 primary={
                   <Tooltip title="Expense name">
-                    <Typography component="span">{ledgerItem.ledger.name}</Typography>
+                    <Typography component="span">{ledger?.name || '-'}</Typography>
                   </Tooltip>
                 }
                 secondary={
                   <Tooltip title="Description">
-                    <Typography component="span">{ledgerItem.description}</Typography>
+                    <Typography component="span">{ledgerItem.description || '-'}</Typography>
                   </Tooltip>
                 }
               />
             </Grid>
             <Grid size={{xs: 4, md: 2}} textAlign={{md: 'right'}}>
               <Tooltip title="Quantity">
-                <Typography>{ledgerItem.quantity.toLocaleString()} {ledgerItem.measurement_unit?.symbol}</Typography>
+                <Typography>{Number(ledgerItem.quantity || 0).toLocaleString()} {ledgerItem.measurement_unit?.symbol || ''}</Typography>
               </Tooltip>
             </Grid>
             <Grid size={{xs: 6, md: 2}} textAlign={{md: 'right'}}>
               <Tooltip title="Rate">
-                <Typography>{ledgerItem.rate.toLocaleString('en-US', 
+                <Typography>{Number(ledgerItem.rate || 0).toLocaleString('en-US', 
                   {
                     style: 'currency',
-                    currency: ledgerItem.currency?.code,
+                    currency: ledgerItem.currency?.code || 'USD',
                   })}
                 </Typography>
               </Tooltip>
             </Grid>
             <Grid size={{xs: 6, md: 2}} textAlign={{md: 'right'}}>
               <Tooltip title="Amount">
-                <Typography>{(ledgerItem.quantity * ledgerItem.rate).toLocaleString('en-US', 
+                <Typography>{(Number(ledgerItem.quantity || 0) * Number(ledgerItem.rate || 0)).toLocaleString('en-US', 
                   {
                     style: 'currency',
-                    currency: ledgerItem.currency?.code,
+                    currency: ledgerItem.currency?.code || 'USD',
                   })}
                 </Typography>
               </Tooltip>
             </Grid>
             <Grid size={{xs: 12, md: 1}} textAlign={'end'}>
+              <Tooltip title='Edit Expense Item'>
+                <IconButton size='small' onClick={() => setShowForm(true)}>
+                  <EditOutlined fontSize='small' />
+                </IconButton>
+              </Tooltip>
               <Tooltip title='Remove Expense Item'>
                 <IconButton size='small' 
                   onClick={() => {
@@ -80,6 +108,10 @@ function LedgerItemsRow({ ledgerItem, index, ledgerItems, setLedgerItems}) {
             ledgerItem={ledgerItem}
             ledgerItems={ledgerItems}
             setLedgerItems={setLedgerItems}
+            submitMainForm={submitMainForm}
+            setSubmitItemForm={setSubmitItemForm}
+            submitItemForm={submitItemForm}
+            setIsDirty={setIsDirty}
           />
         )}
     </React.Fragment>

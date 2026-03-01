@@ -1,44 +1,42 @@
-'use client';
+"use client";
 
+import React, { useContext, useState, useEffect, useCallback } from 'react';
+import Dialog from '@mui/material/Dialog';
+import { 
+  Button, 
+  DialogActions, 
+  DialogContent, 
+  DialogTitle, 
+  Tabs, 
+  Tab, 
+  Grid, 
+  TextField, 
+  Autocomplete, 
+  Chip,
+  Typography,
+  Checkbox,
+  Alert,
+  DialogContentText
+} from '@mui/material';
+import { LoadingButton } from '@mui/lab';
+import { useSnackbar } from 'notistack';
+import * as yup from 'yup';
+import { FormProvider, useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup'
+import dayjs from 'dayjs';
+import { DateTimePicker } from '@mui/x-date-pickers';
+import { KeyboardArrowLeftOutlined, KeyboardArrowRightOutlined } from '@mui/icons-material';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Div } from '@jumbo/shared';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
-import { yupResolver } from '@hookform/resolvers/yup';
-import { Div } from '@jumbo/shared';
-import {
-  KeyboardArrowLeftOutlined,
-  KeyboardArrowRightOutlined,
-} from '@mui/icons-material';
-import { LoadingButton } from '@mui/lab';
-import {
-  Autocomplete,
-  Button,
-  Checkbox,
-  Chip,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  Grid,
-  Tab,
-  Tabs,
-  TextField,
-  Typography,
-} from '@mui/material';
-import Dialog from '@mui/material/Dialog';
-import { DateTimePicker } from '@mui/x-date-pickers';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import dayjs from 'dayjs';
-import { useSnackbar } from 'notistack';
-import React, { useCallback, useContext, useEffect, useState } from 'react';
-import { FormProvider, useForm } from 'react-hook-form';
-import * as yup from 'yup';
-import fuelStationServices from '../../fuelStationServices';
-import { StationFormContext } from '../SalesShifts';
 import CashierAccordion from './CashierAccordion';
-import FuelPrices from './FuelPrices';
-import ShiftSummary from './ShiftSummary';
 import Dipping from './tabs/Dipping';
 import PaymentsReceived from './tabs/PaymentsReceived';
+import { StationFormContext } from '../SalesShifts';
+import fuelStationServices from '../../fuelStationServices';
+import FuelPrices from './FuelPrices';
+import ShiftSummary from './ShiftSummary';
 import PaymentsReceivedItemRow from './tabs/PaymentsReceivedItemRow';
 
 function SaleShiftForm({ SalesShift, setOpenDialog }) {
@@ -47,18 +45,14 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
   const [isDirty, setIsDirty] = useState(false);
   const [clearFormKey, setClearFormKey] = useState(0);
   const [submitItemForm, setSubmitItemForm] = useState(false);
-  const [paymentItems, setPaymentItems] = useState(() =>
-    SalesShift?.payments_received ? [...SalesShift.payments_received] : []
-  );
+  const [paymentItems, setPaymentItems] = useState(() => SalesShift?.payments_received ? [...SalesShift.payments_received] : []);
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
   const [activeTab, setActiveTab] = useState(0);
-  const { activeStation } = useContext(StationFormContext);
-  const { fuel_pumps, cashiers, shifts } = activeStation;
-  const {
-    authOrganization: { organization },
-  } = useJumboAuth();
-  const { checkOrganizationPermission } = useJumboAuth();
+  const {activeStation} = useContext(StationFormContext);
+  const {fuel_pumps, cashiers, shifts} = activeStation;
+  const {authOrganization : {organization}} = useJumboAuth();
+  const {checkOrganizationPermission} = useJumboAuth();
 
   const [cashierLedgers, setCashierLedgers] = useState({});
   const [lastClosingReadings, setLastClosingReadings] = useState({});
@@ -70,6 +64,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
   const addMutation = useMutation({
     mutationFn: fuelStationServices.addSalesShifts,
     onSuccess: (data) => {
+
       if (data?.id) {
         setValue('id', data.id);
       }
@@ -85,17 +80,11 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
     },
   });
 
+
   const validationSchema = yup.object({
-    sales_outlet_shift_id: yup
-      .number()
-      .required('Sales Outlet Shift is required')
-      .typeError('Sales Outlet Shift must be a number'),
-    shift_start: yup
-      .string()
-      .required('Start Date is required')
-      .typeError('Start Date must be a valid string'),
-    shift_end: yup
-      .string()
+    sales_outlet_shift_id: yup.number().required('Sales Outlet Shift is required').typeError('Sales Outlet Shift must be a number'),
+    shift_start: yup.string().required('Start Date is required').typeError('Start Date must be a valid string'),
+    shift_end: yup.string()
       .required('End Date is required')
       .typeError('End Date must be a valid string')
       .test(
@@ -110,247 +99,151 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
           return endDate.isAfter(startDate.add(1, 'minute'));
         }
       ),
-    cashiers: yup
-      .array()
-      .of(
-        yup.object().shape({
-          id: yup
+    cashiers: yup.array().of(
+      yup.object().shape({
+        id: yup.number().required('Cashier is required').typeError('Cashier is required'),
+        name: yup.string(),
+        selected_pumps: yup.array().of(yup.number()),
+        pump_readings: yup.array().of(
+          yup.object().shape({
+            fuel_pump_id: yup.number().required('Fuel Pump is required').typeError('Fuel Pump is required'),
+            opening: yup.number()
+              .required("Opening Reading is required")
+              .typeError('Opening Reading is required')
+              .min(0, 'Opening reading cannot be negative')
+              .test('opening-less-than-closing', 'Opening Reading should not exceed the Closing Reading', 
+                function(value) {
+                  const { closing } = this.parent;
+                  if (value == null || closing == null) return true;
+                  return Number(value) <= Number(closing);
+                }
+              ),
+            closing: yup.number()
+              .required("Closing Reading is required")
+              .typeError('Closing Reading is required')
+              .min(0, 'Closing reading cannot be negative')
+              .test('closing-greater-than-or-equal-to-opening', 'Closing Reading should be greater than or equal to the Opening Reading', 
+                function(value) {
+                  const { opening } = this.parent;
+                  if (value == null || opening == null) return true;
+                  return Number(value) >= Number(opening);
+                }
+              ),
+            product_id: yup.number().required('Product is required').typeError('Product is required'),
+          })
+        ),
+        fuel_vouchers: yup.array().of(
+          yup.object().shape({
+            stakeholder_id: yup.number().nullable().typeError('Stakeholder is Required'),
+            quantity: yup.number().required('Quantity is required').typeError('Quantity is Required').positive('Quantity must be positive'),
+            product_id: yup.number().required('Product is required').typeError('Product is Required'),
+            expense_ledger_id: yup.number().nullable().typeError('Expense Ledger is Required'),
+            reference: yup.string().nullable(),
+            narration: yup.string().nullable(),
+          })
+        ),
+        adjustments: yup.array().of(
+          yup.object().shape({
+            tank_id: yup.number().nullable().typeError('Tank is Required'),
+            quantity: yup.number().required('Quantity is required').typeError('Quantity is Required'),
+            operator: yup.string().required('Operator is required'),
+            description: yup.string().nullable(),
+            product_id: yup.number().required('Product is required').typeError('Product is Required'),
+          })
+        ),
+        other_transactions: yup.array().of(
+          yup.object().shape({
+            ledger_id: yup.number().required('Ledger is required').typeError('Ledger is Required'),
+            amount: yup.number().required('Amount is required').typeError('Amount is Required').positive('Amount must be positive'),
+          })
+        ),
+        main_ledger: yup.object().shape({
+          id: yup.number().required('Main Ledger is required').typeError('Main Ledger is Required'),
+          amount: yup
             .number()
-            .required('Cashier is required')
-            .typeError('Cashier is required'),
-          name: yup.string(),
-          selected_pumps: yup.array().of(yup.number()),
-          pump_readings: yup.array().of(
-            yup.object().shape({
-              fuel_pump_id: yup
-                .number()
-                .required('Fuel Pump is required')
-                .typeError('Fuel Pump is required'),
-              opening: yup
-                .number()
-                .required('Opening Reading is required')
-                .typeError('Opening Reading is required')
-                .min(0, 'Opening reading cannot be negative')
-                .test(
-                  'opening-less-than-closing',
-                  'Opening Reading should not exceed the Closing Reading',
-                  function (value) {
-                    const { closing } = this.parent;
-                    if (value == null || closing == null) return true;
-                    return Number(value) <= Number(closing);
-                  }
-                ),
-              closing: yup
-                .number()
-                .required('Closing Reading is required')
-                .typeError('Closing Reading is required')
-                .min(0, 'Closing reading cannot be negative')
-                .test(
-                  'closing-greater-than-or-equal-to-opening',
-                  'Closing Reading should be greater than or equal to the Opening Reading',
-                  function (value) {
-                    const { opening } = this.parent;
-                    if (value == null || opening == null) return true;
-                    return Number(value) >= Number(opening);
-                  }
-                ),
-              product_id: yup
-                .number()
-                .required('Product is required')
-                .typeError('Product is required'),
-            })
-          ),
-          fuel_vouchers: yup.array().of(
-            yup.object().shape({
-              stakeholder_id: yup
-                .number()
-                .nullable()
-                .typeError('Stakeholder is Required'),
-              quantity: yup
-                .number()
-                .required('Quantity is required')
-                .typeError('Quantity is Required')
-                .positive('Quantity must be positive'),
-              product_id: yup
-                .number()
-                .required('Product is required')
-                .typeError('Product is Required'),
-              expense_ledger_id: yup
-                .number()
-                .nullable()
-                .typeError('Expense Ledger is Required'),
-              reference: yup.string().nullable(),
-              narration: yup.string().nullable(),
-            })
-          ),
-          adjustments: yup.array().of(
-            yup.object().shape({
-              tank_id: yup.number().nullable().typeError('Tank is Required'),
-              quantity: yup
-                .number()
-                .required('Quantity is required')
-                .typeError('Quantity is Required'),
-              operator: yup.string().required('Operator is required'),
-              description: yup.string().nullable(),
-              product_id: yup
-                .number()
-                .required('Product is required')
-                .typeError('Product is Required'),
-            })
-          ),
-          other_transactions: yup.array().of(
-            yup.object().shape({
-              ledger_id: yup
-                .number()
-                .required('Ledger is required')
-                .typeError('Ledger is Required'),
-              amount: yup
-                .number()
-                .required('Amount is required')
-                .typeError('Amount is Required')
-                .positive('Amount must be positive'),
-            })
-          ),
-          main_ledger: yup
-            .object()
-            .shape({
-              id: yup
-                .number()
-                .required('Main Ledger is required')
-                .typeError('Main Ledger is Required'),
-              amount: yup
-                .number()
-                .typeError('Main Ledger Amount is required')
-                .test(
-                  'not-null-or-empty',
-                  'Main Ledger Amount is required',
-                  (v) => v !== null && v !== '' && !isNaN(Number(v))
-                ),
-            })
-            .nullable(),
-        })
-      )
-      .required('At least one cashier is required')
-      .min(1, 'At least one cashier is required'),
+            .typeError('Main Ledger Amount is required')
+            .test('not-null-or-empty', 'Main Ledger Amount is required', v => v !== null && v !== '' && !isNaN(Number(v)))
+        }).nullable(),
+      })
+    ).required('At least one cashier is required').min(1, 'At least one cashier is required'),
     dipping_before: yup.array().of(
       yup.object().shape({
-        reading: yup
-          .number()
-          .required('Reading is required')
-          .typeError('Reading must be a number')
-          .min(0, 'Reading cannot be negative'),
-        product_id: yup
-          .number()
-          .required('Product is required')
-          .typeError('Product must be a number'),
-        tank_id: yup
-          .number()
-          .required('Tank is required')
-          .typeError('Tank must be a number'),
+        reading: yup.number().required('Reading is required').typeError('Reading must be a number').min(0, 'Reading cannot be negative'),
+        product_id: yup.number().required('Product is required').typeError('Product must be a number'),
+        tank_id: yup.number().required('Tank is required').typeError('Tank must be a number'),
       })
     ),
     dipping_after: yup.array().of(
       yup.object().shape({
-        reading: yup
-          .number()
-          .required('Reading is required')
-          .typeError('Reading must be a number')
-          .min(0, 'Reading cannot be negative'),
-        product_id: yup
-          .number()
-          .required('Product is required')
-          .typeError('Product must be a number'),
-        tank_id: yup
-          .number()
-          .required('Tank is required')
-          .typeError('Tank must be a number'),
+        reading: yup.number().required('Reading is required').typeError('Reading must be a number').min(0, 'Reading cannot be negative'),
+        product_id: yup.number().required('Product is required').typeError('Product must be a number'),
+        tank_id: yup.number().required('Tank is required').typeError('Tank must be a number'),
       })
     ),
     submit_type: yup.string().oneOf(['suspend', 'close']).required(),
-    product_prices: yup
-      .array()
-      .of(
-        yup.object().shape({
-          product_id: yup
-            .number()
-            .required('Product is required')
-            .typeError('Product is required'),
-          price: yup
-            .number()
-            .required('Price is required')
-            .typeError('Price is required')
-            .positive('Price must be positive'),
-        })
-      )
-      .required('Product prices are required')
-      .min(1, 'At least one product price is required'),
+    product_prices: yup.array().of(
+      yup.object().shape({
+        product_id: yup.number().required('Product is required').typeError('Product is required'),
+        price: yup.number().required('Price is required').typeError('Price is required').positive('Price must be positive'),
+      })
+    ).required('Product prices are required').min(1, 'At least one product price is required'),
   });
 
   const getDefaultValues = useCallback(() => {
     if (SalesShift) {
-      const initialProductPrices =
-        SalesShift.fuel_prices?.map((fp) => ({
-          product_id: fp.product_id,
-          price: fp.price,
+      const initialProductPrices = SalesShift.fuel_prices?.map(fp => ({
+        product_id: fp.product_id,
+        price: fp.price,
+      })) || [];
+      
+      const cashiersData = SalesShift.cashiers?.map(cashier => {
+        const selectedPumps = cashier.pump_readings?.map(pr => pr.fuel_pump_id) || [];
+        
+        const pumpReadings = cashier.pump_readings?.map(pr => ({
+          fuel_pump_id: pr.fuel_pump_id,
+          product_id: pr.product_id,
+          tank_id: pr.tank_id,
+          opening: pr.opening,
+          closing: pr.closing,
         })) || [];
-
-      const cashiersData =
-        SalesShift.cashiers?.map((cashier) => {
-          const selectedPumps =
-            cashier.pump_readings?.map((pr) => pr.fuel_pump_id) || [];
-
-          const pumpReadings =
-            cashier.pump_readings?.map((pr) => ({
-              fuel_pump_id: pr.fuel_pump_id,
-              product_id: pr.product_id,
-              tank_id: pr.tank_id,
-              opening: pr.opening,
-              closing: pr.closing,
-            })) || [];
-
-          return {
-            id: cashier.id,
-            name: cashier.name,
-            selected_pumps: selectedPumps,
-            pump_readings: pumpReadings,
-            fuel_vouchers:
-              cashier.fuel_vouchers?.map((fv) => ({
-                stakeholder_id: fv.stakeholder_id || fv.stakeholder?.id,
-                stakeholder: fv.stakeholder || null,
-                quantity: fv.quantity,
-                product_id: fv.product_id,
-                expense_ledger: fv.expense_ledger || null,
-                expense_ledger_id:
-                  fv.expense_ledger_id || fv.expense_ledger?.id,
-                reference: fv.reference,
-                narration: fv.narration,
-              })) || [],
-            collected_amount: cashier.collected_amount || 0,
-            collection_ledger_id: cashier.collection_ledger_id || null,
-            adjustments:
-              cashier.tank_adjustments?.map((adj) => ({
-                tank_id: adj.tank_id,
-                quantity: adj.quantity,
-                operator: adj.operator,
-                description: adj.description,
-                product_id: adj.product_id,
-              })) || [],
-            other_transactions:
-              cashier.other_transactions?.map((ct) => ({
-                ledger_id: ct.debit_ledger?.id || ct.id,
-                amount: ct.amount,
-                narration: ct.narration,
-              })) || [],
-            main_ledger: cashier.main_ledger
-              ? {
-                  id: cashier.main_ledger.id,
-                  name: cashier.main_ledger.name,
-                  amount: cashier.main_ledger.amount,
-                }
-              : null,
-          };
-        }) || [];
-
+        
+        return {
+          id: cashier.id,
+          name: cashier.name,
+          selected_pumps: selectedPumps,
+          pump_readings: pumpReadings,
+          fuel_vouchers: cashier.fuel_vouchers?.map(fv => ({
+            stakeholder_id: fv.stakeholder_id || fv.stakeholder?.id,
+            stakeholder: fv.stakeholder || null,
+            quantity: fv.quantity,
+            product_id: fv.product_id,
+            expense_ledger: fv.expense_ledger || null,
+            expense_ledger_id: fv.expense_ledger_id || fv.expense_ledger?.id,
+            reference: fv.reference,
+            narration: fv.narration,
+          })) || [],
+          collected_amount: cashier.collected_amount || 0,
+          collection_ledger_id: cashier.collection_ledger_id || null,
+          adjustments: cashier.tank_adjustments?.map(adj => ({
+            tank_id: adj.tank_id,
+            quantity: adj.quantity,
+            operator: adj.operator,
+            description: adj.description,
+            product_id: adj.product_id,
+          })) || [],
+          other_transactions: cashier.other_transactions?.map(ct => ({
+            ledger_id: ct.debit_ledger?.id || ct.id,
+            amount: ct.amount,
+            narration: ct.narration,
+          })) || [],
+          main_ledger: cashier.main_ledger ? {
+            id: cashier.main_ledger.id,
+            name: cashier.main_ledger.name,
+            amount: cashier.main_ledger.amount,
+          } : null,
+        };
+      }) || [];
+      
       return {
         id: SalesShift.id,
         submit_type: SalesShift.status === 'closed' ? 'close' : 'suspend',
@@ -359,24 +252,22 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
         shift_end: dayjs(SalesShift.shift_end).toISOString(),
         product_prices: initialProductPrices,
         cashiers: cashiersData,
-
-        dipping_before:
-          SalesShift.opening_dipping?.readings.map((od) => ({
-            id: od.id,
-            reading: od.reading,
-            product_id: od.product_id,
-            tank_id: od.tank_id,
-          })) || [],
-        dipping_after:
-          SalesShift.closing_dipping?.readings.map((cd) => ({
-            id: cd.id,
-            reading: cd.reading,
-            product_id: cd.product_id,
-            tank_id: cd.tank_id,
-          })) || [],
+        
+        dipping_before: SalesShift.opening_dipping?.readings.map(od => ({
+          id: od.id,
+          reading: od.reading,
+          product_id: od.product_id,
+          tank_id: od.tank_id,
+        })) || [],
+        dipping_after: SalesShift.closing_dipping?.readings.map(cd => ({
+          id: cd.id,
+          reading: cd.reading,
+          product_id: cd.product_id,
+          tank_id: cd.tank_id,
+        })) || [],
       };
     }
-
+    
     return {
       submit_type: 'suspend',
       sales_outlet_shift_id: null,
@@ -387,19 +278,9 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
     };
   }, [SalesShift]);
 
-  const {
-    register,
-    control,
-    handleSubmit,
-    setError,
-    trigger,
-    clearErrors,
-    setValue,
-    watch,
-    formState: { errors },
-  } = useForm({
+  const { register, control, handleSubmit, setError, trigger, clearErrors, setValue, watch, formState: { errors } } = useForm({
     resolver: yupResolver(validationSchema),
-    defaultValues: getDefaultValues(),
+    defaultValues: getDefaultValues()
   });
 
   const selectedCashiers = watch('cashiers') || [];
@@ -415,94 +296,80 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
 
       // Pump readings
       const readingsMap = {};
-      lastReadings.cashiers
-        .flatMap((cashier) => cashier.pump_readings || [])
-        .forEach((reading) => {
-          readingsMap[reading.fuel_pump_id] = reading.closing;
-        });
+      lastReadings.cashiers.flatMap(cashier => 
+        cashier.pump_readings || []
+      ).forEach(reading => {
+        readingsMap[reading.fuel_pump_id] = reading.closing;
+      });
       setLastClosingReadings(readingsMap);
 
       // Dipping readings
-      if (
-        lastReadings.closing_dipping &&
-        Array.isArray(lastReadings.closing_dipping.readings)
-      ) {
+      if (lastReadings.closing_dipping && Array.isArray(lastReadings.closing_dipping.readings)) {
         setLastClosingDipping(
-          lastReadings.closing_dipping.readings.map((r) => ({
+          lastReadings.closing_dipping.readings.map(r => ({
             reading: r.reading,
             product_id: r.product_id,
             tank_id: r.tank_id,
           }))
         );
         // Optionally, set as opening dipping for this shift if not already set
-        setValue(
-          'dipping_before',
-          lastReadings.closing_dipping.readings.map((r) => ({
-            reading: r.reading,
-            product_id: r.product_id,
-            tank_id: r.tank_id,
-          })),
-          { shouldValidate: true, shouldDirty: true }
-        );
+        setValue('dipping_before', lastReadings.closing_dipping.readings.map(r => ({
+          reading: r.reading,
+          product_id: r.product_id,
+          tank_id: r.tank_id,
+        })), { shouldValidate: true, shouldDirty: true });
       }
-    } catch (error) {}
+    } catch (error) {
+    }
   }, [activeStation.id, watch, enqueueSnackbar, SalesShift, setValue]);
 
-  const getPumpOpeningValue = useCallback(
-    (pumpId, cashierIndex) => {
-      if (SalesShift?.id) {
-        const cashier = selectedCashiers[cashierIndex];
-        if (cashier?.pump_readings) {
-          const savedReading = cashier.pump_readings.find(
-            (pr) => pr.fuel_pump_id === pumpId
-          );
-          return savedReading?.opening || 0;
+  const getPumpOpeningValue = useCallback((pumpId, cashierIndex) => {
+    if (SalesShift?.id) {
+      const cashier = selectedCashiers[cashierIndex];
+      if (cashier?.pump_readings) {
+        const savedReading = cashier.pump_readings.find(pr => pr.fuel_pump_id === pumpId);
+        return savedReading?.opening || 0;
+      }
+    }
+    
+    return lastClosingReadings[pumpId] || 0;
+  }, [SalesShift, selectedCashiers, lastClosingReadings]);
+
+  const handleCashierPumpSelection = useCallback((cashierIndex, selectedPumpIds) => {
+    const currentCashier = selectedCashiers[cashierIndex];
+    if (!currentCashier) return;
+
+    const currentReadings = currentCashier.pump_readings || [];
+    
+    let updatedReadings = currentReadings.filter(reading => 
+      selectedPumpIds.includes(reading.fuel_pump_id)
+    );
+    
+    selectedPumpIds.forEach(pumpId => {
+      if (!updatedReadings.some(r => r.fuel_pump_id === pumpId)) {
+        const pump = fuel_pumps?.find(p => p.id === pumpId);
+        if (pump) {
+          const openingValue = getPumpOpeningValue(pumpId, cashierIndex);
+          updatedReadings.push({
+            fuel_pump_id: pumpId,
+            product_id: pump.product_id,
+            tank_id: pump.tank_id,
+            opening: openingValue,
+            closing: openingValue,
+          });
         }
       }
-
-      return lastClosingReadings[pumpId] || 0;
-    },
-    [SalesShift, selectedCashiers, lastClosingReadings]
-  );
-
-  const handleCashierPumpSelection = useCallback(
-    (cashierIndex, selectedPumpIds) => {
-      const currentCashier = selectedCashiers[cashierIndex];
-      if (!currentCashier) return;
-
-      const currentReadings = currentCashier.pump_readings || [];
-
-      let updatedReadings = currentReadings.filter((reading) =>
-        selectedPumpIds.includes(reading.fuel_pump_id)
-      );
-
-      selectedPumpIds.forEach((pumpId) => {
-        if (!updatedReadings.some((r) => r.fuel_pump_id === pumpId)) {
-          const pump = fuel_pumps?.find((p) => p.id === pumpId);
-          if (pump) {
-            const openingValue = getPumpOpeningValue(pumpId, cashierIndex);
-            updatedReadings.push({
-              fuel_pump_id: pumpId,
-              product_id: pump.product_id,
-              tank_id: pump.tank_id,
-              opening: openingValue,
-              closing: openingValue,
-            });
-          }
-        }
-      });
-
-      setValue(`cashiers.${cashierIndex}.pump_readings`, updatedReadings, {
-        shouldValidate: true,
-        shouldDirty: true,
-      });
-    },
-    [selectedCashiers, setValue, fuel_pumps, getPumpOpeningValue]
-  );
+    });
+    
+    setValue(`cashiers.${cashierIndex}.pump_readings`, updatedReadings, {
+      shouldValidate: true,
+      shouldDirty: true
+    });
+  }, [selectedCashiers, setValue, fuel_pumps, getPumpOpeningValue]);
 
   const combineDateTime = useCallback((date, timeString) => {
     if (!date || !timeString) return date;
-
+    
     const time = dayjs(timeString, 'HH:mm:ss');
     return dayjs(date)
       .hour(time.hour())
@@ -511,65 +378,58 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
       .toISOString();
   }, []);
 
-  const handleShiftChange = useCallback(
-    (newValue) => {
-      const currentShiftStart = watch('shift_start');
-      setValue('sales_outlet_shift_id', newValue ? newValue.id : '', {
-        shouldValidate: true,
-        shouldDirty: true,
-      });
-      if (newValue) {
-        // Set shift_start if not set or if shift times change
-        let selectedDate = currentShiftStart
-          ? dayjs(currentShiftStart)
-          : dayjs().startOf('day');
-        let newStartDateTime = newValue.start_time
-          ? combineDateTime(selectedDate, newValue.start_time)
-          : selectedDate.toISOString();
+  const handleShiftChange = useCallback((newValue) => {
+    const currentShiftStart = watch('shift_start');
+    setValue('sales_outlet_shift_id', newValue ? newValue.id : '', {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+    if (newValue) {
+      // Set shift_start if not set or if shift times change
+      let selectedDate = currentShiftStart ? dayjs(currentShiftStart) : dayjs().startOf('day');
+      let newStartDateTime = newValue.start_time ? combineDateTime(selectedDate, newValue.start_time) : selectedDate.toISOString();
 
-        setValue('shift_start', newStartDateTime, {
-          shouldValidate: true,
-          shouldDirty: true,
-        });
-        // Always set shift_end automatically
-        let endDateTime;
-        if (newValue.end_time) {
-          const startTime = dayjs(newValue.start_time, 'HH:mm:ss');
-          const endTime = dayjs(newValue.end_time, 'HH:mm:ss');
-          if (endTime.isBefore(startTime)) {
-            endDateTime = dayjs(selectedDate)
-              .add(1, 'day')
-              .hour(endTime.hour())
-              .minute(endTime.minute())
-              .second(endTime.second())
-              .toISOString();
-          } else {
-            endDateTime = combineDateTime(selectedDate, newValue.end_time);
-          }
-          setValue('shift_end', endDateTime, {
-            shouldValidate: true,
-            shouldDirty: true,
-          });
+      setValue('shift_start', newStartDateTime, {
+        shouldValidate: true,
+        shouldDirty: true
+      });
+      // Always set shift_end automatically
+      let endDateTime;
+      if (newValue.end_time) {
+        const startTime = dayjs(newValue.start_time, 'HH:mm:ss');
+        const endTime = dayjs(newValue.end_time, 'HH:mm:ss');
+        if (endTime.isBefore(startTime)) {
+          endDateTime = dayjs(selectedDate)
+            .add(1, 'day')
+            .hour(endTime.hour())
+            .minute(endTime.minute())
+            .second(endTime.second())
+            .toISOString();
         } else {
-          endDateTime = null;
+          endDateTime = combineDateTime(selectedDate, newValue.end_time);
         }
-        // Retrieve product prices after setting shift start and end
-        if (newStartDateTime) {
-          retrieveProductPrices(newStartDateTime);
-        }
+        setValue('shift_end', endDateTime, {
+          shouldValidate: true,
+          shouldDirty: true
+        });
+      } else {
+        endDateTime = null;
       }
-    },
-    [setValue, watch, combineDateTime]
-  );
+      // Retrieve product prices after setting shift start and end
+      if (newStartDateTime) {
+        retrieveProductPrices(newStartDateTime);
+      }
+    }
+  }, [setValue, watch, combineDateTime]);
 
   useEffect(() => {
     if (SalesShift?.cashiers) {
       SalesShift.cashiers.forEach((cashier, index) => {
-        const cashierData = cashiers?.find((c) => c.id === cashier.id);
+        const cashierData = cashiers?.find(c => c.id === cashier.id);
         if (cashierData && cashierData.ledgers) {
-          setCashierLedgers((prev) => ({
+          setCashierLedgers(prev => ({
             ...prev,
-            [index]: cashierData.ledgers,
+            [index]: cashierData.ledgers
           }));
         }
       });
@@ -578,11 +438,11 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
 
   useEffect(() => {
     selectedCashiers.forEach((cashier, index) => {
-      const cashierData = cashiers?.find((c) => c.id === cashier.id);
+      const cashierData = cashiers?.find(c => c.id === cashier.id);
       if (cashierData && cashierData.ledgers && !cashierLedgers[index]) {
-        setCashierLedgers((prev) => ({
+        setCashierLedgers(prev => ({
           ...prev,
-          [index]: cashierData.ledgers,
+          [index]: cashierData.ledgers
         }));
       }
     });
@@ -591,7 +451,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
   useEffect(() => {
     const shiftStart = watch('shift_start');
     const currentShiftId = watch('sales_outlet_shift_id');
-    const selectedShift = shifts?.find((s) => s.id === currentShiftId);
+    const selectedShift = shifts?.find(s => s.id === currentShiftId);
     if (shiftStart && selectedShift && selectedShift.end_time) {
       const startTime = dayjs(selectedShift.start_time, 'HH:mm:ss');
       const endTime = dayjs(selectedShift.end_time, 'HH:mm:ss');
@@ -608,28 +468,20 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
       }
       setValue('shift_end', endDateTime, {
         shouldValidate: true,
-        shouldDirty: true,
+        shouldDirty: true
       });
     }
     if (shiftStart) {
       retrieveLastShiftReadings();
     }
-  }, [
-    watch('shift_start'),
-    watch('sales_outlet_shift_id'),
-    shifts,
-    SalesShift?.id,
-    retrieveLastShiftReadings,
-    setValue,
-    combineDateTime,
-  ]);
+  }, [watch('shift_start'), watch('sales_outlet_shift_id'), shifts, SalesShift?.id, retrieveLastShiftReadings, setValue, combineDateTime]);
 
   const addCashiers = (selectedCashierIds) => {
     const newCashiers = selectedCashierIds
-      .map((cashierId) => {
-        const cashier = cashiers.find((c) => c.id === cashierId);
+      .map(cashierId => {
+        const cashier = cashiers.find(c => c.id === cashierId);
         if (!cashier) return null;
-        if (selectedCashiers.some((sc) => sc.id === cashierId)) {
+        if (selectedCashiers.some(sc => sc.id === cashierId)) {
           return null;
         }
         return {
@@ -643,35 +495,27 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
           main_ledger: null,
         };
       })
-      .filter((c) => c !== null);
+      .filter(c => c !== null);
     const updatedCashiers = [...selectedCashiers, ...newCashiers];
-    setValue('cashiers', updatedCashiers, {
-      shouldValidate: true,
-      shouldDirty: true,
-    });
+    setValue('cashiers', updatedCashiers, { shouldValidate: true, shouldDirty: true });
     newCashiers.forEach((cashier, offsetIndex) => {
       const cashierIndex = selectedCashiers.length + offsetIndex;
-      const cashierData = cashiers.find((c) => c.id === cashier.id);
+      const cashierData = cashiers.find(c => c.id === cashier.id);
       if (cashierData && cashierData.ledgers) {
-        setCashierLedgers((prev) => ({
+        setCashierLedgers(prev => ({
           ...prev,
-          [cashierIndex]: cashierData.ledgers,
+          [cashierIndex]: cashierData.ledgers
         }));
       }
     });
   };
 
   const removeCashier = (cashierId) => {
-    const cashierIndex = selectedCashiers.findIndex((c) => c.id === cashierId);
+    const cashierIndex = selectedCashiers.findIndex(c => c.id === cashierId);
     if (cashierIndex !== -1) {
-      const updatedCashiers = selectedCashiers.filter(
-        (c) => c.id !== cashierId
-      );
-      setValue('cashiers', updatedCashiers, {
-        shouldValidate: true,
-        shouldDirty: true,
-      });
-      setCashierLedgers((prev) => {
+      const updatedCashiers = selectedCashiers.filter(c => c.id !== cashierId);
+      setValue('cashiers', updatedCashiers, { shouldValidate: true, shouldDirty: true });
+      setCashierLedgers(prev => {
         const newState = { ...prev };
         delete newState[cashierIndex];
         const reindexedState = {};
@@ -685,85 +529,55 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
 
   const getAvailablePumpsForCashier = (cashierIndex) => {
     const allPumps = fuel_pumps || [];
-    const currentCashierPumps =
-      selectedCashiers[cashierIndex]?.selected_pumps || [];
-
+    const currentCashierPumps = selectedCashiers[cashierIndex]?.selected_pumps || [];
+    
     const otherCashiersPumps = selectedCashiers
       .filter((_, idx) => idx !== cashierIndex)
-      .flatMap((c) => c.selected_pumps || []);
-
-    return allPumps.filter(
-      (pump) =>
-        currentCashierPumps.includes(pump.id) ||
-        !otherCashiersPumps.includes(pump.id)
+      .flatMap(c => c.selected_pumps || []);
+    
+    return allPumps.filter(pump => 
+      currentCashierPumps.includes(pump.id) || !otherCashiersPumps.includes(pump.id)
     );
   };
 
   // Retrieve product prices for the station at a specific date/time
-  const retrieveProductPrices = useCallback(
-    async (as_at) => {
-      try {
-        const product_ids = Array.from(
-          new Set((fuel_pumps || []).map((p) => p.product_id))
-        );
-        if (!product_ids.length) return;
-        const sales_outlet_id = activeStation.id;
-        const response = await fuelStationServices.getProductsSellingPrices({
-          product_ids,
-          sales_outlet_id,
-          as_at,
-        });
-        let prices = [];
-
-        if (Array.isArray(response)) {
-          prices = response;
-        } else if (
-          response &&
-          typeof response === 'object' &&
-          !Array.isArray(response)
-        ) {
-          prices = Object.values(response);
-        } else if (response && Array.isArray(response.data)) {
-          prices = response.data;
-        }
-        if (prices.length > 0) {
-          setValue(
-            'product_prices',
-            prices.map((p) => ({ product_id: p.product_id, price: p.price })),
-            { shouldValidate: true, shouldDirty: true }
-          );
-        } else {
-          setValue('product_prices', [], {
-            shouldValidate: true,
-            shouldDirty: true,
-          });
-        }
-      } catch (error) {
-        setValue('product_prices', [], {
-          shouldValidate: true,
-          shouldDirty: true,
-        });
+  const retrieveProductPrices = useCallback(async (as_at) => {
+    try {
+      const product_ids = Array.from(new Set((fuel_pumps || []).map(p => p.product_id)));
+      if (!product_ids.length) return;
+      const sales_outlet_id = activeStation.id;
+      const response = await fuelStationServices.getProductsSellingPrices({ product_ids, sales_outlet_id, as_at });
+      let prices = [];
+      
+      if (Array.isArray(response)) {
+        prices = response;
+      } else if (response && typeof response === 'object' && !Array.isArray(response)) {
+        prices = Object.values(response);
+      } else if (response && Array.isArray(response.data)) {
+        prices = response.data;
       }
-    },
-    [fuel_pumps, activeStation.id, setValue]
-  );
+      if (prices.length > 0) {
+        setValue('product_prices', prices.map(p => ({ product_id: p.product_id, price: p.price })), { shouldValidate: true, shouldDirty: true });
+      } else {
+        setValue('product_prices', [], { shouldValidate: true, shouldDirty: true });
+      }
+    } catch (error) {
+      setValue('product_prices', [], { shouldValidate: true, shouldDirty: true });
+    }
+  }, [fuel_pumps, activeStation.id, setValue]);
 
   const getCashierLedgers = (cashierIndex) => {
     return cashierLedgers[cashierIndex] || [];
   };
 
   const handleSubmitForm = async (data, options = { silent: false }) => {
-    const allProductIds = (activeStation.products || []).map((p) => p.id);
-    const pricedProductIds = (data.product_prices || []).map(
-      (p) => p.product_id
-    );
-    const missingPriceProducts = allProductIds.filter(
-      (pid) => !pricedProductIds.includes(pid)
-    );
+    const allProductIds = (activeStation.products || []).map(p => p.id);
+    const pricedProductIds = (data.product_prices || []).map(p => p.product_id);
+    const missingPriceProducts = allProductIds.filter(pid => !pricedProductIds.includes(pid));
     if (missingPriceProducts.length > 0) {
       const missingNames = (activeStation.products || [])
-        .filter((p) => missingPriceProducts.includes(p.id))
-        .map((p) => p.name)
+        .filter(p => missingPriceProducts.includes(p.id))
+        .map(p => p.name)
         .join(', ');
       enqueueSnackbar(
         `Cannot proceed: The following products are missing prices: ${missingNames}`,
@@ -778,74 +592,36 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
 
     const cashiersMissingFields = data.cashiers
       .map((cashier, idx) => {
-        const missingLedger =
-          cashier.collection_ledger_id === undefined ||
-          cashier.collection_ledger_id === null ||
-          cashier.collection_ledger_id === '' ||
-          isNaN(Number(cashier.collection_ledger_id));
-        const missingMainLedger =
-          !cashier.main_ledger ||
-          cashier.main_ledger.id === undefined ||
-          cashier.main_ledger.id === null ||
-          cashier.main_ledger.id === '' ||
-          isNaN(Number(cashier.main_ledger.id));
-        const missingCollected =
-          cashier.collected_amount === null ||
-          cashier.collected_amount === '' ||
-          isNaN(Number(cashier.collected_amount));
-        const missingMainLedgerAmount =
-          cashier.main_ledger &&
-          (cashier.main_ledger.amount === null ||
-            cashier.main_ledger.amount === '' ||
-            isNaN(Number(cashier.main_ledger.amount)));
+        const missingLedger = cashier.collection_ledger_id === undefined || cashier.collection_ledger_id === null || cashier.collection_ledger_id === '' || isNaN(Number(cashier.collection_ledger_id));
+        const missingMainLedger = !cashier.main_ledger || cashier.main_ledger.id === undefined || cashier.main_ledger.id === null || cashier.main_ledger.id === '' || isNaN(Number(cashier.main_ledger.id));
+        const missingCollected = cashier.collected_amount === null || cashier.collected_amount === '' || isNaN(Number(cashier.collected_amount));
+        const missingMainLedgerAmount = cashier.main_ledger && (cashier.main_ledger.amount === null || cashier.main_ledger.amount === '' || isNaN(Number(cashier.main_ledger.amount)));
         return {
           name: cashier.name,
           missingCollected,
           missingLedger,
           missingMainLedger,
-          missingMainLedgerAmount,
+          missingMainLedgerAmount
         };
       })
-      .filter(
-        (c) =>
-          c.missingCollected ||
-          c.missingLedger ||
-          c.missingMainLedger ||
-          c.missingMainLedgerAmount
-      );
+      .filter(c => c.missingCollected || c.missingLedger || c.missingMainLedger || c.missingMainLedgerAmount);
     if (cashiersMissingFields.length > 0 && data.submit_type === 'close') {
-      const missingCollected = cashiersMissingFields
-        .filter((c) => c.missingCollected)
-        .map((c) => c.name);
-      const missingLedger = cashiersMissingFields
-        .filter((c) => c.missingLedger)
-        .map((c) => c.name);
-      const missingMainLedger = cashiersMissingFields
-        .filter((c) => c.missingMainLedger)
-        .map((c) => c.name);
-      const missingMainLedgerAmount = cashiersMissingFields
-        .filter((c) => c.missingMainLedgerAmount)
-        .map((c) => c.name);
+      const missingCollected = cashiersMissingFields.filter(c => c.missingCollected).map(c => c.name);
+      const missingLedger = cashiersMissingFields.filter(c => c.missingLedger).map(c => c.name);
+      const missingMainLedger = cashiersMissingFields.filter(c => c.missingMainLedger).map(c => c.name);
+      const missingMainLedgerAmount = cashiersMissingFields.filter(c => c.missingMainLedgerAmount).map(c => c.name);
       const messageRows = [];
       if (missingCollected.length > 0) {
-        messageRows.push(
-          `Please fill Collected Amount for: ${missingCollected.join(', ')}`
-        );
+        messageRows.push(`Please fill Collected Amount for: ${missingCollected.join(', ')}`);
       }
       if (missingLedger.length > 0) {
-        messageRows.push(
-          `Please select Collection Ledger for: ${missingLedger.join(', ')}`
-        );
+        messageRows.push(`Please select Collection Ledger for: ${missingLedger.join(', ')}`);
       }
       if (missingMainLedger.length > 0) {
-        messageRows.push(
-          `Please fill Main Ledger information for: ${missingMainLedger.join(', ')}`
-        );
+        messageRows.push(`Please fill Main Ledger information for: ${missingMainLedger.join(', ')}`);
       }
       if (missingMainLedgerAmount.length > 0) {
-        messageRows.push(
-          `Please fill Main Ledger Amount for: ${missingMainLedgerAmount.join(', ')}`
-        );
+        messageRows.push(`Please fill Main Ledger Amount for: ${missingMainLedgerAmount.join(', ')}`);
       }
       enqueueSnackbar(
         <div>
@@ -858,44 +634,39 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
       return;
     }
 
-    const cashiersWithoutPumps = data.cashiers.filter(
-      (c) => !c.selected_pumps || c.selected_pumps.length === 0
+    const cashiersWithoutPumps = data.cashiers.filter(c => 
+      !c.selected_pumps || c.selected_pumps.length === 0
     );
     if (cashiersWithoutPumps.length > 0) {
       enqueueSnackbar(
-        `Cashier(s) ${cashiersWithoutPumps.map((c) => c.name).join(', ')} must have at least one pump selected`,
+        `Cashier(s) ${cashiersWithoutPumps.map(c => c.name).join(', ')} must have at least one pump selected`,
         { variant: 'error' }
       );
       return;
     }
 
-    data.cashiers = data.cashiers.map((cashier) => {
+    data.cashiers = data.cashiers.map(cashier => {
       const { adjustments, ...rest } = cashier;
       return {
         ...rest,
         tank_adjustments: adjustments || [],
         selected_pumps: Array.isArray(cashier.selected_pumps)
-          ? cashier.selected_pumps.map((sel) => {
+          ? cashier.selected_pumps.map(sel => {
               const id = sel.pump_id ?? sel;
               return typeof id === 'string' ? Number(id) : id;
             })
           : [],
         fuel_vouchers: Array.isArray(cashier.fuel_vouchers)
-          ? cashier.fuel_vouchers.map((fuelVoucher) => ({
-              stakeholder_id:
-                fuelVoucher.stakeholder_id ??
-                fuelVoucher.stakeholder?.id ??
-                null,
-              expense_ledger_id:
-                fuelVoucher.expense_ledger_id ??
-                fuelVoucher.expense_ledger?.id ??
-                null,
+          ? cashier.fuel_vouchers.map(fuelVoucher => ({
+              stakeholder_id: fuelVoucher.stakeholder_id ?? (fuelVoucher.stakeholder?.id ?? null),
+              expense_ledger_id: fuelVoucher.expense_ledger_id ?? (fuelVoucher.expense_ledger?.id ?? null),
               product_id: fuelVoucher.product_id,
               quantity: fuelVoucher.quantity,
               amount: fuelVoucher.amount,
               reference: fuelVoucher.reference,
               narration: fuelVoucher.narration,
-            }))
+            })
+          )
           : [],
       };
     });
@@ -909,10 +680,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
       } else {
         const created = await addMutation.mutateAsync(data);
         if (created?.id) {
-          setValue('id', created.id, {
-            shouldValidate: false,
-            shouldDirty: false,
-          });
+          setValue('id', created.id, { shouldValidate: false, shouldDirty: false });
         }
       }
     } catch (err) {
@@ -934,10 +702,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
 
       let filteredCashiers = [];
       if (data.cashiers && data.cashiers.length > 0) {
-        filteredCashiers = data.cashiers.filter(
-          (cashier) =>
-            cashier.selected_pumps && cashier.selected_pumps.length > 0
-        );
+        filteredCashiers = data.cashiers.filter(cashier => cashier.selected_pumps && cashier.selected_pumps.length > 0);
       }
 
       if (filteredCashiers.length === 0) {
@@ -946,11 +711,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
       }
 
       // Always set submit_type to 'suspend' for autosave
-      const partialData = {
-        ...data,
-        cashiers: filteredCashiers,
-        submit_type: 'suspend',
-      };
+      const partialData = { ...data, cashiers: filteredCashiers, submit_type: 'suspend' };
 
       await handleSubmitForm(partialData, { silent: true });
 
@@ -961,43 +722,35 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
   }, [trigger, watch]);
 
   return (
-    <FormProvider
-      {...{
-        register,
-        handleSubmit,
-        setError,
-        clearErrors,
-        setValue,
-        watch,
-        errors,
-        control,
-        trigger,
-      }}
-    >
+    <FormProvider {...{
+      register, 
+      handleSubmit, 
+      setError, 
+      clearErrors, 
+      setValue, 
+      watch, 
+      errors,
+      control,
+      trigger
+    }}>
       <DialogTitle>
-        <form autoComplete='off'>
+        <form autoComplete='off'>    
           <Grid container spacing={1} marginTop={1}>
             <Grid size={12} textAlign={'center'} marginBottom={1}>
-              {SalesShift
-                ? `Edit ${SalesShift.shiftNo}`
-                : `New Fuel Sales Shift`}
+              {SalesShift ? `Edit ${SalesShift.shiftNo}` : `New Fuel Sales Shift`}
             </Grid>
-            <Grid size={{ xs: 12, md: 4, lg: 4 }}>
-              <Div sx={{ mt: 0.3 }}>
+            <Grid size={{xs: 12, md: 4, lg: 4}}>
+              <Div sx={{ mt: 0.3}}>
                 <Autocomplete
-                  size='small'
-                  isOptionEqualToValue={(option, value) =>
-                    option.id === value.id
-                  }
+                  size="small"
+                  isOptionEqualToValue={(option, value) => option.id === value.id}
                   options={shifts || []}
-                  defaultValue={shifts?.find(
-                    (team) => team.id === SalesShift?.sales_outlet_shift_id
-                  )}
+                  defaultValue={shifts?.find(team => team.id === SalesShift?.sales_outlet_shift_id)}
                   getOptionLabel={(option) => option.name}
                   renderInput={(params) => (
                     <TextField
-                      {...params}
-                      label='Sales Outlet Shift'
+                      {...params} 
+                      label="Sales Outlet Shift"
                       error={!!errors?.sales_outlet_shift_id}
                       helperText={errors?.sales_outlet_shift_id?.message}
                     />
@@ -1007,54 +760,39 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
                   }}
                   renderTags={(tagValue, getTagProps) => {
                     return tagValue.map((option, index) => (
-                      <Chip
-                        {...getTagProps({ index })}
-                        key={option.id}
-                        label={option.name}
-                      />
-                    ));
+                      <Chip {...getTagProps({index})} key={option.id} label={option.name} />
+                    ))
                   }}
                 />
               </Div>
             </Grid>
-
-            <Grid size={{ xs: 12, md: 4, lg: 4 }}>
-              <Div sx={{ mt: 0.3 }}>
+            
+            <Grid size={{xs: 12, md: 4, lg: 4}}>
+              <Div sx={{mt: 0.3}}>
                 <DateTimePicker
                   label='Shift Start'
                   fullWidth
-                  value={
-                    watch('shift_start') ? dayjs(watch('shift_start')) : null
-                  }
+                  value={watch('shift_start') ? dayjs(watch('shift_start')) : null}
                   minDate={dayjs(organization.recording_start_date)}
                   slotProps={{
                     textField: {
                       size: 'small',
                       fullWidth: true,
                       error: !!errors?.shift_start,
-                      helperText: errors?.shift_start?.message,
-                    },
+                      helperText: errors?.shift_start?.message
+                    }
                   }}
                   onChange={async (newValue) => {
                     const currentShiftId = watch('sales_outlet_shift_id');
-                    const selectedShift = shifts?.find(
-                      (s) => s.id === currentShiftId
-                    );
-                    let newStartDateTime = newValue
-                      ? selectedShift && selectedShift.start_time
-                        ? combineDateTime(newValue, selectedShift.start_time)
-                        : newValue.toISOString()
-                      : null;
+                    const selectedShift = shifts?.find(s => s.id === currentShiftId);
+                    let newStartDateTime = newValue ? (selectedShift && selectedShift.start_time ? combineDateTime(newValue, selectedShift.start_time) : newValue.toISOString()) : null;
                     setValue('shift_start', newStartDateTime, {
                       shouldValidate: true,
-                      shouldDirty: true,
+                      shouldDirty: true
                     });
                     // Always recalculate shift_end if possible
                     if (selectedShift && selectedShift.end_time && newValue) {
-                      const startTime = dayjs(
-                        selectedShift.start_time,
-                        'HH:mm:ss'
-                      );
+                      const startTime = dayjs(selectedShift.start_time, 'HH:mm:ss');
                       const endTime = dayjs(selectedShift.end_time, 'HH:mm:ss');
                       let endDateTime;
                       if (endTime.isBefore(startTime)) {
@@ -1065,14 +803,11 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
                           .second(endTime.second())
                           .toISOString();
                       } else {
-                        endDateTime = combineDateTime(
-                          newValue,
-                          selectedShift.end_time
-                        );
+                        endDateTime = combineDateTime(newValue, selectedShift.end_time);
                       }
                       setValue('shift_end', endDateTime, {
                         shouldValidate: true,
-                        shouldDirty: true,
+                        shouldDirty: true
                       });
                     }
                     if (newStartDateTime) {
@@ -1082,9 +817,9 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
                 />
               </Div>
             </Grid>
-
-            <Grid size={{ xs: 12, md: 4, lg: 4 }}>
-              <Div sx={{ mt: 0.3 }}>
+            
+            <Grid size={{xs: 12, md: 4, lg: 4}}>
+              <Div sx={{mt: 0.3}}>
                 <DateTimePicker
                   label='Shift End'
                   fullWidth
@@ -1097,7 +832,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
                       error: !!errors?.shift_end,
                       helperText: errors?.shift_end?.message,
                       readOnly: true,
-                    },
+                    }
                   }}
                   readOnly
                   onChange={() => {}}
@@ -1106,40 +841,29 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
             </Grid>
 
             <Grid size={{ xs: 12, md: 4, lg: 4 }}>
-              <Typography sx={{ mt: 1, mb: 1 }}>Select Cashiers</Typography>
+              <Typography sx={{ mt: 1, mb: 1 }}>
+                Select Cashiers
+              </Typography>
               {(() => {
-                const cashierOptions = React.useMemo(
-                  () => cashiers || [],
-                  [cashiers]
-                );
-                const cashierValue = React.useMemo(
-                  () =>
-                    cashierOptions.filter((c) =>
-                      selectedCashiers.some((sc) => sc.id === c.id)
-                    ),
+                const cashierOptions = React.useMemo(() => cashiers || [], [cashiers]);
+                const cashierValue = React.useMemo(() =>
+                  cashierOptions.filter(c => selectedCashiers.some(sc => sc.id === c.id)),
                   [cashierOptions, selectedCashiers]
                 );
-                const handleCashierChange = React.useCallback(
-                  (e, selectedValues) => {
-                    const selectedIds = selectedValues.map((v) => v.id);
-                    const currentCashierIds = selectedCashiers.map((c) => c.id);
-                    const toRemove = currentCashierIds.filter(
-                      (id) => !selectedIds.includes(id)
-                    );
-                    const toAdd = selectedIds.filter(
-                      (id) => !currentCashierIds.includes(id)
-                    );
-                    toRemove.forEach((cashierId) => removeCashier(cashierId));
-                    if (toAdd.length > 0) {
-                      addCashiers(toAdd);
-                    }
-                  },
-                  [selectedCashiers, addCashiers, removeCashier]
-                );
+                const handleCashierChange = React.useCallback((e, selectedValues) => {
+                  const selectedIds = selectedValues.map(v => v.id);
+                  const currentCashierIds = selectedCashiers.map(c => c.id);
+                  const toRemove = currentCashierIds.filter(id => !selectedIds.includes(id));
+                  const toAdd = selectedIds.filter(id => !currentCashierIds.includes(id));
+                  toRemove.forEach(cashierId => removeCashier(cashierId));
+                  if (toAdd.length > 0) {
+                    addCashiers(toAdd);
+                  }
+                }, [selectedCashiers, addCashiers, removeCashier]);
                 return (
                   <Autocomplete
                     multiple
-                    size='small'
+                    size="small"
                     options={cashierOptions}
                     disableCloseOnSelect
                     getOptionLabel={(option) => option.name}
@@ -1158,8 +882,8 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label='Select Cashiers'
-                        placeholder='Choose Cashiers...'
+                        label="Select Cashiers"
+                        placeholder="Choose Cashiers..."
                       />
                     )}
                     onChange={handleCashierChange}
@@ -1168,17 +892,11 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
                 );
               })()}
 
-              {Object.keys(lastClosingReadings).length > 0 &&
-                !SalesShift?.id && (
-                  <Typography
-                    variant='body2'
-                    color='textSecondary'
-                    sx={{ mt: 1 }}
-                  >
-                    ✓ Last shift readings loaded for{' '}
-                    {Object.keys(lastClosingReadings).length} pump(s)
-                  </Typography>
-                )}
+              {Object.keys(lastClosingReadings).length > 0 && !SalesShift?.id && (
+                <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+                  ✓ Last shift readings loaded for {Object.keys(lastClosingReadings).length} pump(s)
+                </Typography>
+              )}
             </Grid>
 
             <Grid size={{ xs: 12, md: 12, lg: 8 }}>
@@ -1190,29 +908,29 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
         <Tabs
           value={activeTab}
           onChange={(e, newValue) => setActiveTab(newValue)}
-          variant='scrollable'
-          scrollButtons='auto'
+          variant="scrollable"
+          scrollButtons="auto"
           allowScrollButtonsMobile
           sx={{ mt: 2 }}
         >
-          <Tab label='Cashiers Records' />
-          <Tab label='Payments Received' />
-          <Tab label='Dipping' />
-          <Tab label='Shift Summary' />
+          <Tab label="Cashiers Records" />
+          <Tab label="Payments Received" />
+          <Tab label="Dipping" />
+          <Tab label="Shift Summary" />
         </Tabs>
       </DialogTitle>
-
+      
       <DialogContent>
         {activeTab === 0 && (
           <div>
             {selectedCashiers.length === 0 ? (
               <>
                 {errors?.cashiers?.message ? (
-                  <Typography color='error' textAlign='center' py={4}>
+                  <Typography color="error" textAlign="center" py={4}>
                     {errors.cashiers.message}
                   </Typography>
                 ) : (
-                  <Typography textAlign='center' py={4}>
+                  <Typography textAlign="center" py={4}>
                     Please select cashiers using the selector above
                   </Typography>
                 )}
@@ -1230,12 +948,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
                   getCashierLedgers={getCashierLedgers}
                   getAvailablePumpsForCashier={getAvailablePumpsForCashier}
                   setValue={setValue}
-                  onFuelVouchersChange={(vouchers) =>
-                    setValue(`cashiers.${index}.fuel_vouchers`, vouchers, {
-                      shouldValidate: true,
-                      shouldDirty: true,
-                    })
-                  }
+                  onFuelVouchersChange={(vouchers) => setValue(`cashiers.${index}.fuel_vouchers`, vouchers, { shouldValidate: true, shouldDirty: true })}
                 />
               ))
             )}
@@ -1257,7 +970,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
               setSubmitItemForm={setSubmitItemForm}
             />
             {paymentItems.length === 0 ? (
-              <Typography color='textSecondary' textAlign='center' py={4}>
+              <Typography color="textSecondary" textAlign="center" py={4}>
                 No payments received yet.
               </Typography>
             ) : (
@@ -1282,15 +995,10 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
           </>
         )}
 
-        {activeTab === 2 && (
-          <Dipping
-            SalesShift={SalesShift}
-            lastClosingDipping={lastClosingDipping}
-          />
-        )}
+        {activeTab === 2 && <Dipping SalesShift={SalesShift} lastClosingDipping={lastClosingDipping} />}
 
         {activeTab === 3 && (
-          <ShiftSummary paymentItems={paymentItems} shiftData={SalesShift} />
+          <ShiftSummary paymentItems={paymentItems} />
         )}
       </DialogContent>
 
@@ -1299,9 +1007,9 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
           Cancel
         </Button>
         {activeTab > 0 && (
-          <Button
-            size='small'
-            variant='outlined'
+          <Button 
+            size='small' 
+            variant='outlined' 
             onClick={() => setActiveTab(activeTab - 1)}
             startIcon={<KeyboardArrowLeftOutlined />}
           >
@@ -1309,9 +1017,9 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
           </Button>
         )}
         {activeTab < 3 && (
-          <Button
-            size='small'
-            variant='outlined'
+          <Button 
+            size='small' 
+            variant='outlined' 
             onClick={() => setActiveTab(activeTab + 1)}
             endIcon={<KeyboardArrowRightOutlined />}
           >
@@ -1326,23 +1034,24 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
         >
           Hold
         </LoadingButton>
-        <Dialog open={showHoldDialog} onClose={() => setShowHoldDialog(false)}>
+        <Dialog
+          open={showHoldDialog}
+          onClose={() => setShowHoldDialog(false)}
+        >
           <DialogTitle>Confirm Hold Action</DialogTitle>
           <DialogContent>
             <DialogContentText>
-              Are you sure you want to put this shift on hold? This will save
-              your progress but will not close the shift. You can resume editing
-              later.
+              Are you sure you want to put this shift on hold? This will save your progress but will not close the shift. You can resume editing later.
             </DialogContentText>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setShowHoldDialog(false)} color='inherit'>
+            <Button onClick={() => setShowHoldDialog(false)} color="inherit">
               Cancel
             </Button>
             <LoadingButton
               loading={addMutation.isPending || updateMutation.isPending}
-              variant='contained'
-              color='warning'
+              variant="contained"
+              color="warning"
               onClick={(e) => {
                 isAutoSavingRef.current = false;
                 setShowHoldDialog(false);
@@ -1356,9 +1065,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
         </Dialog>
         {activeTab === 3 && (
           <>
-            {checkOrganizationPermission([
-              PERMISSIONS.FUEL_SALES_SHIFT_CLOSE,
-            ]) && (
+            {checkOrganizationPermission([PERMISSIONS.FUEL_SALES_SHIFT_CLOSE]) && (
               <LoadingButton
                 loading={addMutation.isPending || updateMutation.isPending}
                 size='small'

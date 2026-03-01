@@ -2,16 +2,23 @@ import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import useProsERPStyles from '@/app/helpers/style-helpers';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { Div, Span } from '@jumbo/shared';
+import { HighlightOff } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 import {
+  Alert,
   Autocomplete,
   DialogContent,
   DialogTitle,
   Grid,
+  IconButton,
   LinearProgress,
+  Stack,
   TextField,
+  Tooltip,
   Typography,
+  useMediaQuery,
 } from '@mui/material';
 import { DateTimePicker } from '@mui/x-date-pickers';
 import { useQuery } from '@tanstack/react-query';
@@ -23,12 +30,14 @@ import PDFContent from '../../../pdf/PDFContent';
 import fuelStationServices from '../../fuelStationServices';
 import DippingReportPDF from './DippingReportPDF';
 
-function DippingReport() {
+function DippingReport({ closeDialog }) {
   const { authUser } = useJumboAuth();
   const { data: stations, isFetching: isFetchingStation } = useQuery({
     queryKey: ['userStations', { userId: authUser?.user?.id }],
     queryFn: fuelStationServices.getUserStations,
   });
+  const { theme } = useJumboTheme();
+  const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
   const [activeStation, setActiveStation] = useState(null);
 
@@ -101,6 +110,7 @@ function DippingReport() {
     setReportData(report.report_data);
     setisFetching(false);
     setFilters(filtersWithStation); // Update the filters state after fetching the report
+    // console.log('report data: ', report);
   };
 
   const downloadFileName = `Dipping Report ${readableDate(filters.from)}-${readableDate(filters.to)}`;
@@ -112,13 +122,31 @@ function DippingReport() {
   return (
     <>
       <DialogTitle textAlign={'center'}>
-        <Grid container>
-          <Grid size={{ xs: 12, md: 12 }}>
-            <Typography variant='h3' textAlign={'center'}>
-              Dipping Report
-            </Typography>
-          </Grid>
-        </Grid>
+        {/* <Grid container>
+          <Grid size={{ xs: 12, md: 12 }}> */}
+        <Stack
+          direction='row'
+          justifyContent='center'
+          alignItems='center'
+          position='relative'
+        >
+          <Typography variant='h3' textAlign={'center'}>
+            Dipping Report
+          </Typography>
+          {belowLargeScreen && (
+            <Tooltip title='Close'>
+              <IconButton
+                size='small'
+                sx={{ position: 'absolute', right: 20, top: 0 }}
+                onClick={() => closeDialog?.(false)}
+              >
+                <HighlightOff color='primary' />
+              </IconButton>
+            </Tooltip>
+          )}
+        </Stack>
+        {/* </Grid>
+        </Grid> */}
         <Span className={css.hiddenOnPrint}>
           <form autoComplete='off' onSubmit={handleSubmit(retrieveReport)}>
             <Grid
@@ -227,20 +255,22 @@ function DippingReport() {
       <DialogContent>
         {isFetching ? (
           <LinearProgress />
+        ) : reportData && reportData?.length > 0 ? (
+          <PDFContent
+            document={
+              <DippingReportPDF
+                reportData={reportData}
+                activeStation={activeStation}
+                filters={filters}
+                organization={organization}
+              />
+            }
+            fileName={downloadFileName}
+          />
         ) : (
-          reportData && (
-            <PDFContent
-              document={
-                <DippingReportPDF
-                  reportData={reportData}
-                  activeStation={activeStation}
-                  filters={filters}
-                  organization={organization}
-                />
-              }
-              fileName={downloadFileName}
-            />
-          )
+          <Alert variant='outlined' severity='info'>
+            No dipping records present for the selected filters
+          </Alert>
         )}
       </DialogContent>
     </>

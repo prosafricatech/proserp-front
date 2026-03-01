@@ -10,11 +10,23 @@ import CurrencySelector from '@/components/masters/Currencies/CurrencySelector';
 import MeasurementSelector from '@/components/masters/measurementUnits/MeasurementSelector';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
-import { AddOutlined, DisabledByDefault } from '@mui/icons-material';
+import { AddOutlined, CheckOutlined, DisabledByDefault } from '@mui/icons-material';
+import { IconButton, LinearProgress, Tooltip } from '@mui/material';
+import { useLedgerSelect } from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
 
-function LedgerItemsTab({index = -1, setShowForm = null, ledgerItem, ledgerItems = [], setLedgerItems}) {
-  const [triggerKey, setTriggerKey] = useState(0);
+function LedgerItemsTab({
+  index = -1,
+  setShowForm = null,
+  ledgerItem,
+  ledgerItems = [],
+  setLedgerItems,
+  submitMainForm,
+  submitItemForm = false,
+  setSubmitItemForm,
+  setIsDirty,
+}) {
   const [isAdding, setIsAdding] = useState(false);
+  const { ungroupedLedgerOptions } = useLedgerSelect();
 
   const validationSchema = yup.object({
     ledger_id: yup.number().required("Expense name is required").typeError('Expense name is required'),
@@ -25,40 +37,68 @@ function LedgerItemsTab({index = -1, setShowForm = null, ledgerItem, ledgerItems
     measurement_unit_id: yup.number().required("Measurement Unit is required").typeError('Measurement Unit is required'),
   });
 
-  const {setValue, handleSubmit, watch, reset, formState: {errors}} = useForm({
+  const { setValue, handleSubmit, watch, reset, formState: { errors, dirtyFields } } = useForm({
     resolver: yupResolver(validationSchema),
     defaultValues: {
       type: 'ledger',
-      currency_id: 1,
-      exchange_rate: 1,
+      ledger_id: ledgerItem?.ledger_id || ledgerItem?.ledger?.id || null,
+      ledger: ledgerItem?.ledger || null,
+      currency_id: ledgerItem?.currency_id || ledgerItem?.currency?.id || 1,
+      currency: ledgerItem?.currency || null,
+      exchange_rate: ledgerItem?.exchange_rate || 1,
+      rate: ledgerItem?.rate || '',
+      quantity: ledgerItem?.quantity || '',
+      measurement_unit_id: ledgerItem?.measurement_unit_id || ledgerItem?.measurement_unit?.id || null,
+      measurement_unit: ledgerItem?.measurement_unit || null,
+      description: ledgerItem?.description || '',
     }
   });
 
+  useEffect(() => {
+    setIsDirty?.(Object.keys(dirtyFields).length > 0);
+  }, [dirtyFields, setIsDirty]);
+
   const updateItems = async (item) => {
     setIsAdding(true);
+      const normalizedItem = {
+        ...item,
+        ledger: item.ledger || ungroupedLedgerOptions.find((ledger) => ledger.id === item.ledger_id),
+      };
       if (index > -1) {
         // Replace the existing item with the edited item
         let updatedLedgerItems = [...ledgerItems];
-        updatedLedgerItems[index] = item;
+        updatedLedgerItems[index] = normalizedItem;
         await setLedgerItems(updatedLedgerItems);
       } else {
         // Add the new item to the ledgerItems array
-        await setLedgerItems((ledgerItems) => [...ledgerItems, item]);
-        setTriggerKey(prev => prev + 1);
+        await setLedgerItems((ledgerItems) => [...ledgerItems, normalizedItem]);
+        if (submitItemForm) {
+          submitMainForm?.();
+        }
+        setSubmitItemForm?.(false);
       }
 
       reset();
+      setIsDirty?.(false);
       setIsAdding(false);
       setShowForm && setShowForm(false);
   };
+
+  useEffect(() => {
+    if (submitItemForm) {
+      handleSubmit(updateItems, () => {
+        setSubmitItemForm?.(false);
+      })();
+    }
+  }, [submitItemForm]);
 
   if(isAdding){
     return <LinearProgress/>
   }
 
   return (
-    <form autoComplete='off' onSubmit={handleSubmit(updateItems)}>
-      <Grid container spacing={1} key={triggerKey}>
+    <>
+      <Grid container spacing={1}>
         <Grid size={{xs: 12, md: 3.5}}>
           <Div sx={{ mt: 1 }}>
             <LedgerSelect
@@ -66,11 +106,14 @@ function LedgerItemsTab({index = -1, setShowForm = null, ledgerItem, ledgerItems
               label="Expense Name"
               allowedGroups={['Expenses']}
               frontError={errors?.ledger_id}
+              value={ungroupedLedgerOptions.find(option => option.id === watch('ledger_id')) || null}
               onChange={(newValue) => {
+                if (Array.isArray(newValue)) return;
                 setValue(`ledger_id`, newValue ? newValue.id : null,{
                   shouldValidate: true,
                   shouldDirty: true
-                })
+                });
+                setValue('ledger', newValue || null);
               }}
             />
           </Div>
@@ -79,12 +122,14 @@ function LedgerItemsTab({index = -1, setShowForm = null, ledgerItem, ledgerItems
           <Div sx={{mt: 1}}>
             <CurrencySelector
               frontError={errors?.currency_id}
+              defaultValue={ledgerItem?.currency_id}
               onChange={(newValue) => {
                 setValue(`exchange_rate`, newValue ? newValue.exchangeRate : 1);
                 setValue(`currency_id`, newValue ? newValue.id : 1,{
                   shouldDirty: true,
                   shouldValidate: true
                 });
+                setValue('currency', newValue || null);
               }}
             />
           </Div>
@@ -118,11 +163,14 @@ function LedgerItemsTab({index = -1, setShowForm = null, ledgerItem, ledgerItems
               <MeasurementSelector
                 label='Unit'
                 frontError={errors && errors?.measurement_unit_id}
+                defaultValue={ledgerItem?.measurement_unit_id}
                 onChange={(newValue) => {
+                  if (Array.isArray(newValue)) return;
                   setValue(`measurement_unit_id`, newValue ? newValue.id : null,{
                     shouldDirty: true,
                     shouldValidate: true
-                  })
+                  });
+                  setValue('measurement_unit', newValue || null);
                 }}      
               />
             </Div>
@@ -136,6 +184,7 @@ function LedgerItemsTab({index = -1, setShowForm = null, ledgerItem, ledgerItems
                 InputProps={{
                     inputComponent: CommaSeparatedField,
                 }}
+                defaultValue={ledgerItem?.quantity}
                 error={errors && !!errors?.quantity}
                 helperText={errors && errors?.quantity?.message}
                 onChange={(e) => {
@@ -155,6 +204,7 @@ function LedgerItemsTab({index = -1, setShowForm = null, ledgerItem, ledgerItems
                 size="small"
                 error={errors && !!errors?.rate}
                 helperText={errors && errors?.rate?.message}
+                defaultValue={ledgerItem?.rate}
                 InputProps={{
                   inputComponent: CommaSeparatedField,
                 }}
@@ -175,6 +225,7 @@ function LedgerItemsTab({index = -1, setShowForm = null, ledgerItem, ledgerItems
                 multiline={true}
                 rows={2}
                 size="small"
+                defaultValue={ledgerItem?.description}
                 onChange={(e) => {
                   setValue(`description`,e.target.value,{
                     shouldValidate: true,
@@ -191,7 +242,8 @@ function LedgerItemsTab({index = -1, setShowForm = null, ledgerItem, ledgerItems
           variant='contained'
           type='submit'
           size='small'
-          sx={{marginBottom: 0.5}}
+          sx={{marginBottom: 0.5, marginTop: 1}}
+          onClick={handleSubmit(updateItems)}
         >
           {
             ledgerItem ? (
@@ -214,7 +266,7 @@ function LedgerItemsTab({index = -1, setShowForm = null, ledgerItem, ledgerItems
           </Tooltip>
         }
       </Grid>
-    </form>
+    </>
   )
 }
 

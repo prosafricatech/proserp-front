@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -7,7 +7,9 @@ import {
   TextField,
   DialogActions,
   Button,
+  Dialog,
   DialogContent,
+  DialogContentText,
   DialogTitle,
   Alert,
   Tabs,
@@ -23,7 +25,9 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import projectsServices from '../../project-services';
 import LedgerItemsTab from './budgetItems/tabs/LedgerItemsTab';
+import LedgerItemsRow from './budgetItems/tabs/LedgerItemsRow';
 import ProductItemsTab from './budgetItems/tabs/ProductItemsTab';
+import ProductItemsRow from './budgetItems/tabs/ProductItemsRow';
 
 const BudgetsForm = ({ setOpenDialog, budget, isProjectBudget=true }) => {
   const queryClient = useQueryClient();
@@ -32,8 +36,11 @@ const BudgetsForm = ({ setOpenDialog, budget, isProjectBudget=true }) => {
   const { project } = useProjectProfile();
   const [activeTab, setActiveTab] = useState(0);
   const [serverError, setServerError] = useState(null);
-  const [ledgerItems, setLedgerItems] = useState([]);
-  const [productItems, setProductItems] = useState([]);
+  const [ledgerItems, setLedgerItems] = useState(budget ? budget.ledger_items : []);
+  const [productItems, setProductItems] = useState(budget ? budget.product_items : []);
+  const [showWarning, setShowWarning] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
+  const [submitItemForm, setSubmitItemForm] = useState(false);
 
   // React Query v5 mutations
   const addBudgetMutation = useMutation({
@@ -65,6 +72,11 @@ const BudgetsForm = ({ setOpenDialog, budget, isProjectBudget=true }) => {
   const saveMutation = useMemo(() => (budget ? editBudgetMutation.mutate : addBudgetMutation.mutate), [budget, editBudgetMutation.mutate, addBudgetMutation.mutate]);
   const isPending = budget ? editBudgetMutation.isPending : addBudgetMutation.isPending;
 
+  useEffect(() => {
+    setLedgerItems(budget?.ledger_items || []);
+    setProductItems(budget?.product_items || []);
+  }, [budget]);
+
   const validationSchema = yup.object({
     name: yup.string().required('Budget name is required'),
     start_date: yup.string().required('Start Date is required'),
@@ -83,13 +95,47 @@ const BudgetsForm = ({ setOpenDialog, budget, isProjectBudget=true }) => {
     },
   });
 
+  const handleSubmitForm = (data) => {
+    const payload = {
+      ...data,
+      ledger_items: ledgerItems,
+      product_items: productItems,
+    };
+    saveMutation(payload);
+  };
+
+  const submitMainForm = () => {
+    handleSubmit((data) => handleSubmitForm(data))();
+  };
+
+  const onSubmit = (data) => {
+    if (activeTab === 0 && isDirty) {
+      setShowWarning(true);
+      return;
+    }
+    handleSubmitForm(data);
+  };
+
+  const handleConfirmSubmitWithoutAdd = () => {
+    setShowWarning(false);
+    setIsDirty(false);
+    setSubmitItemForm(false);
+    submitMainForm();
+  };
+
+  const handleAddAndSubmit = () => {
+    setShowWarning(false);
+    setSubmitItemForm(true);
+  };
+
+  console.log('Render BudgetsForm', { ledgerItems, productItems, serverError, errors });
+
   return (
     <>
       <DialogTitle textAlign="center" sx={{ pb: 1 }}>
         {budget ? `Edit ${budget?.name} Budget` : isProjectBudget ? 'New Project Budget' : 'New Budget'}
       </DialogTitle>
       <DialogContent>
-        <form autoComplete="off">
           <Grid container spacing={1.5} alignItems="center" justifyContent="center" sx={{ mt: 0.25 }}>
               <Grid size={{xs: 12, md: 4}}>
                 <Div>
@@ -185,17 +231,60 @@ const BudgetsForm = ({ setOpenDialog, budget, isProjectBudget=true }) => {
               </Grid>
 
               <Grid size={12}>
-                {activeTab === 0 && <LedgerItemsTab ledgerItems={ledgerItems} setLedgerItems={setLedgerItems}/>}
-                {activeTab === 1 && <ProductItemsTab productItems={productItems} setProductItems={setProductItems}/>}
+                {activeTab === 0 && (
+                  <>
+                    <LedgerItemsTab
+                      ledgerItems={ledgerItems}
+                      setLedgerItems={setLedgerItems}
+                      submitMainForm={submitMainForm}
+                      submitItemForm={submitItemForm}
+                      setSubmitItemForm={setSubmitItemForm}
+                      setIsDirty={setIsDirty}
+                    />
+                    {ledgerItems?.map((ledgerItem, index) => (
+                      <LedgerItemsRow
+                        key={`${ledgerItem?.id ?? 'new'}-${index}`}
+                        ledgerItem={ledgerItem}
+                        index={index}
+                        ledgerItems={ledgerItems}
+                        setLedgerItems={setLedgerItems}
+                        submitMainForm={submitMainForm}
+                        setSubmitItemForm={setSubmitItemForm}
+                        submitItemForm={submitItemForm}
+                        setIsDirty={setIsDirty}
+                      />
+                    ))}
+                  </>
+                )}
+                {activeTab === 1 && (
+                  <>
+                    <ProductItemsTab
+                      productItems={productItems}
+                      setProductItems={setProductItems}
+                      submitMainForm={submitMainForm}
+                      submitItemForm={submitItemForm}
+                      setSubmitItemForm={setSubmitItemForm}
+                      setIsDirty={setIsDirty}
+                    />
+                    {productItems?.map((productItem, index) => (
+                      <ProductItemsRow
+                        key={`${productItem?.id ?? 'new'}-${index}`}
+                        productItem={productItem}
+                        index={index}
+                        productItems={productItems}
+                        setProductItems={setProductItems}
+                      />
+                    ))}
+                  </>
+                )}
               </Grid>
           </Grid>
-        </form>
       </DialogContent>
       <DialogActions>
         <Button size="small" onClick={() => setOpenDialog(false)}>Cancel</Button>
         <LoadingButton
           type="submit"
-          onClick={handleSubmit(saveMutation)}
+          onClick={handleSubmit(onSubmit)}
           variant="contained"
           size="small"
           sx={{ display: 'flex' }}
@@ -204,6 +293,25 @@ const BudgetsForm = ({ setOpenDialog, budget, isProjectBudget=true }) => {
           Submit
         </LoadingButton>
       </DialogActions>
+      <Dialog open={showWarning} onClose={() => setShowWarning(false)}>
+        <DialogTitle>Unsaved Expense Item</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            You have unsaved changes in Expense Items form. Do you want to add the item first, or submit without adding it?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowWarning(false)} color='inherit'>
+            Cancel
+          </Button>
+          <Button onClick={handleConfirmSubmitWithoutAdd} color='warning' variant='outlined'>
+            Submit Without Add
+          </Button>
+          <LoadingButton onClick={handleAddAndSubmit} variant='contained'>
+            Add & Submit
+          </LoadingButton>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };
