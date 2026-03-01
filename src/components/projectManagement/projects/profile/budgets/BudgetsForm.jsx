@@ -28,11 +28,14 @@ import LedgerItemsTab from './budgetItems/tabs/LedgerItemsTab';
 import LedgerItemsRow from './budgetItems/tabs/LedgerItemsRow';
 import ProductItemsTab from './budgetItems/tabs/ProductItemsTab';
 import ProductItemsRow from './budgetItems/tabs/ProductItemsRow';
+import CostCenterSelector from '@/components/masters/costCenters/CostCenterSelector';
 
-const BudgetsForm = ({ setOpenDialog, budget, isProjectBudget=true }) => {
+const BudgetsForm = ({ setOpenDialog, budget=null, isProjectBudget=true }) => {
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
-  const { authOrganization: { organization } } = useJumboAuth();
+  const { authOrganization } = useJumboAuth();
+  const organization = authOrganization?.organization;
+  const costCenters = authOrganization?.costCenters;
   const { project } = useProjectProfile();
   const [activeTab, setActiveTab] = useState(0);
   const [serverError, setServerError] = useState(null);
@@ -42,7 +45,6 @@ const BudgetsForm = ({ setOpenDialog, budget, isProjectBudget=true }) => {
   const [isDirty, setIsDirty] = useState(false);
   const [submitItemForm, setSubmitItemForm] = useState(false);
 
-  // React Query v5 mutations
   const addBudgetMutation = useMutation({
     mutationFn: (data) => projectsServices.addBudget(data),
     onSuccess: (data) => {
@@ -81,6 +83,11 @@ const BudgetsForm = ({ setOpenDialog, budget, isProjectBudget=true }) => {
     name: yup.string().required('Budget name is required'),
     start_date: yup.string().required('Start Date is required'),
     end_date: yup.string().required('End Date is required'),
+    cost_center_id: yup
+      .number()
+      .required('Cost Center is required')
+      .positive('Cost Center is Required')
+      .typeError('Cost Center is Required'),
   });
 
   const { register, setValue, watch, handleSubmit, formState: { errors } } = useForm({
@@ -90,7 +97,7 @@ const BudgetsForm = ({ setOpenDialog, budget, isProjectBudget=true }) => {
       name: budget?.name,
       start_date: budget?.start_date,
       end_date: budget?.end_date,
-      cost_center_id: project?.cost_center?.id,
+      cost_center_id: project?.cost_center?.id || budget?.cost_center_id ,
       remarks: budget?.remarks || '',
     },
   });
@@ -128,157 +135,167 @@ const BudgetsForm = ({ setOpenDialog, budget, isProjectBudget=true }) => {
     setSubmitItemForm(true);
   };
 
-  console.log('Render BudgetsForm', { ledgerItems, productItems, serverError, errors });
-
   return (
     <>
       <DialogTitle textAlign="center" sx={{ pb: 1 }}>
         {budget ? `Edit ${budget?.name} Budget` : isProjectBudget ? 'New Project Budget' : 'New Budget'}
       </DialogTitle>
       <DialogContent>
-          <Grid container spacing={1.5} alignItems="center" justifyContent="center" sx={{ mt: 0.25 }}>
-              <Grid size={{xs: 12, md: 4}}>
-                <Div>
-                  <TextField
-                    label="Budget Name"
-                    size="small"
-                    fullWidth
-                    error={!!errors?.name}
-                    helperText={errors?.name?.message}
-                    {...register('name')}
-                  />
-                </Div>
-              </Grid>
+        <Grid container spacing={1.5} alignItems="center" justifyContent="center" sx={{ mt: 1 }}>
+            <Grid size={{xs: 12, md: 4}}>
+              <TextField
+                label="Budget Name"
+                size="small"
+                fullWidth
+                error={!!errors?.name}
+                helperText={errors?.name?.message}
+                {...register('name')}
+              />
+            </Grid>
 
-              <Grid size={{xs: 12, md: 4}}>
-                <Div>
-                  <DateTimePicker
-                    label="Start Date"
-                    fullWidth
-                    minDate={dayjs(organization.recording_start_date)}
-                    defaultValue={budget ? dayjs(budget.start_date) : null}
-                    slotProps={{
-                      textField: {
-                        size: 'small',
-                        fullWidth: true,
-                        readOnly: true,
-                        error: !!errors?.start_date,
-                        helperText: errors?.start_date?.message,
-                      },
-                    }}
-                    onChange={(newValue) => {
-                      setServerError(null);
-                      setValue('start_date', newValue ? newValue.toISOString() : null, { shouldValidate: true, shouldDirty: true });
-                    }}
-                  />
-                </Div>
-              </Grid>
+            <Grid size={{xs: 12, md: 4}}>
+              <DateTimePicker
+                label="Start Date"
+                fullWidth
+                minDate={dayjs(organization.recording_start_date)}
+                defaultValue={budget ? dayjs(budget.start_date) : null}
+                slotProps={{
+                  textField: {
+                    size: 'small',
+                    fullWidth: true,
+                    readOnly: true,
+                    error: !!errors?.start_date,
+                    helperText: errors?.start_date?.message,
+                  },
+                }}
+                onChange={(newValue) => {
+                  setServerError(null);
+                  setValue('start_date', newValue ? newValue.toISOString() : null, { shouldValidate: true, shouldDirty: true });
+                }}
+              />
+            </Grid>
 
-              <Grid size={{xs: 12, md: 4}}>
-                <Div>
-                  <DateTimePicker
-                    label="End Date"
-                    fullWidth
-                    minDate={dayjs(watch('start_date'))}
-                    defaultValue={budget ? dayjs(budget.end_date) : null}
-                    slotProps={{
-                      textField: {
-                        size: 'small',
-                        fullWidth: true,
-                        readOnly: true,
-                        error: !!errors?.end_date,
-                        helperText: errors?.end_date?.message,
-                      },
-                    }}
-                    onChange={(newValue) => {
-                      setServerError(null);
-                      setValue('end_date', newValue ? newValue.toISOString() : null, { shouldValidate: true, shouldDirty: true });
-                    }}
-                  />
-                </Div>
-              </Grid>
+            <Grid size={{xs: 12, md: 4}}>
+              <DateTimePicker
+                label="End Date"
+                fullWidth
+                minDate={dayjs(watch('start_date'))}
+                defaultValue={budget ? dayjs(budget.end_date) : null}
+                slotProps={{
+                  textField: {
+                    size: 'small',
+                    fullWidth: true,
+                    readOnly: true,
+                    error: !!errors?.end_date,
+                    helperText: errors?.end_date?.message,
+                  },
+                }}
+                onChange={(newValue) => {
+                  setServerError(null);
+                  setValue('end_date', newValue ? newValue.toISOString() : null, { shouldValidate: true, shouldDirty: true });
+                }}
+              />
+            </Grid>
 
-              {serverError?.date_overlap && (
-                <Grid size={12}>
-                  <Alert severity="error" variant="outlined">{serverError.date_overlap[0]}</Alert>
-                </Grid>
-              )}
-
+            {serverError?.date_overlap && (
               <Grid size={12}>
-                <Div>
-                  <TextField
-                    label="Remarks"
-                    size="small"
-                    fullWidth
-                    multiline
-                    rows={2}
-                    {...register('remarks')}
+                <Alert severity="error" variant="outlined">{serverError.date_overlap[0]}</Alert>
+              </Grid>
+            )}
+
+            <Grid size={{ xs: 12, md: 4 }}>
+              <CostCenterSelector
+                label='Cost Center'
+                frontError={errors.cost_center_id}
+                defaultValue={
+                  (budget && budget.cost_center) ||
+                  (costCenters.length === 1 ? costCenters[0] : null)
+                }
+                multiple={false}
+                onChange={(newValue) => {
+                  setValue('cost_center_id', newValue?.id, {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                  });
+                }}
+              />
+            </Grid> 
+
+            <Grid size={{ xs: 12, md: 8 }}>
+              <Div>
+                <TextField
+                  label="Remarks"
+                  size="small"
+                  fullWidth
+                  multiline
+                  rows={2}
+                  {...register('remarks')}
+                />
+              </Div>
+            </Grid>
+
+            <Grid size={12}>
+              <Tabs
+                value={activeTab}
+                onChange={(e, newValue) => setActiveTab(newValue)}
+                variant="scrollable"
+                scrollButtons="auto"
+                allowScrollButtonsMobile
+              >
+                <Tab label="Expense Items"/>
+                <Tab label="Product Items"/>
+              </Tabs>
+            </Grid>
+
+            <Grid size={12}>
+              {activeTab === 0 && (
+                <>
+                  <LedgerItemsTab
+                    ledgerItems={ledgerItems}
+                    setLedgerItems={setLedgerItems}
+                    submitMainForm={submitMainForm}
+                    submitItemForm={submitItemForm}
+                    setSubmitItemForm={setSubmitItemForm}
+                    setIsDirty={setIsDirty}
                   />
-                </Div>
-              </Grid>
-
-              <Grid size={12}>
-                <Tabs
-                  value={activeTab}
-                  onChange={(e, newValue) => setActiveTab(newValue)}
-                  variant="scrollable"
-                  scrollButtons="auto"
-                  allowScrollButtonsMobile
-                >
-                  <Tab label="Expense Items"/>
-                  <Tab label="Product Items"/>
-                </Tabs>
-              </Grid>
-
-              <Grid size={12}>
-                {activeTab === 0 && (
-                  <>
-                    <LedgerItemsTab
+                  {ledgerItems?.map((ledgerItem, index) => (
+                    <LedgerItemsRow
+                      key={`${ledgerItem?.id ?? 'new'}-${index}`}
+                      ledgerItem={ledgerItem}
+                      index={index}
                       ledgerItems={ledgerItems}
                       setLedgerItems={setLedgerItems}
                       submitMainForm={submitMainForm}
-                      submitItemForm={submitItemForm}
                       setSubmitItemForm={setSubmitItemForm}
+                      submitItemForm={submitItemForm}
                       setIsDirty={setIsDirty}
                     />
-                    {ledgerItems?.map((ledgerItem, index) => (
-                      <LedgerItemsRow
-                        key={`${ledgerItem?.id ?? 'new'}-${index}`}
-                        ledgerItem={ledgerItem}
-                        index={index}
-                        ledgerItems={ledgerItems}
-                        setLedgerItems={setLedgerItems}
-                        submitMainForm={submitMainForm}
-                        setSubmitItemForm={setSubmitItemForm}
-                        submitItemForm={submitItemForm}
-                        setIsDirty={setIsDirty}
-                      />
-                    ))}
-                  </>
-                )}
-                {activeTab === 1 && (
-                  <>
-                    <ProductItemsTab
+                  ))}
+                </>
+              )}
+              {activeTab === 1 && (
+                <>
+                  <ProductItemsTab
+                    productItems={productItems}
+                    setProductItems={setProductItems}
+                    submitMainForm={submitMainForm}
+                    submitItemForm={submitItemForm}
+                    setSubmitItemForm={setSubmitItemForm}
+                    setIsDirty={setIsDirty}
+                  />
+                  {productItems?.map((productItem, index) => (
+                    <ProductItemsRow
+                      key={`${productItem?.id ?? 'new'}-${index}`}
+                      productItem={productItem}
+                      index={index}
                       productItems={productItems}
                       setProductItems={setProductItems}
-                      submitMainForm={submitMainForm}
-                      submitItemForm={submitItemForm}
-                      setSubmitItemForm={setSubmitItemForm}
-                      setIsDirty={setIsDirty}
                     />
-                    {productItems?.map((productItem, index) => (
-                      <ProductItemsRow
-                        key={`${productItem?.id ?? 'new'}-${index}`}
-                        productItem={productItem}
-                        index={index}
-                        productItems={productItems}
-                        setProductItems={setProductItems}
-                      />
-                    ))}
-                  </>
-                )}
-              </Grid>
-          </Grid>
+                  ))}
+                </>
+              )}
+            </Grid>
+        </Grid>
       </DialogContent>
       <DialogActions>
         <Button size="small" onClick={() => setOpenDialog(false)}>Cancel</Button>
