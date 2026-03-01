@@ -2,7 +2,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { Grid, TextField } from '@mui/material';
 import { useEffect, useState } from 'react'
 import * as yup from 'yup';
-import { useForm } from 'react-hook-form';
+import { set, useForm } from 'react-hook-form';
 import { LoadingButton } from '@mui/lab';
 import { Div } from '@jumbo/shared';
 import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
@@ -13,6 +13,7 @@ import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import { AddOutlined, CheckOutlined, DisabledByDefault } from '@mui/icons-material';
 import { IconButton, LinearProgress, Tooltip } from '@mui/material';
 import { useLedgerSelect } from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
+import { useCurrencySelect } from '@/components/masters/Currencies/CurrencySelectProvider';
 
 function LedgerItemsTab({
   index = -1,
@@ -27,6 +28,7 @@ function LedgerItemsTab({
 }) {
   const [isAdding, setIsAdding] = useState(false);
   const { ungroupedLedgerOptions } = useLedgerSelect();
+  const { currencies } = useCurrencySelect();
 
   const validationSchema = yup.object({
     ledger_id: yup.number().required("Expense name is required").typeError('Expense name is required'),
@@ -44,7 +46,7 @@ function LedgerItemsTab({
       ledger_id: ledgerItem?.ledger_id || ledgerItem?.ledger?.id || null,
       ledger: ledgerItem?.ledger || null,
       currency_id: ledgerItem?.currency_id || ledgerItem?.currency?.id || 1,
-      currency: ledgerItem?.currency || null,
+      currency: ledgerItem?.currency || currencies?.find(c => c.is_base === 1),
       exchange_rate: ledgerItem?.exchange_rate || 1,
       rate: ledgerItem?.rate || '',
       quantity: ledgerItem?.quantity || '',
@@ -124,6 +126,7 @@ function LedgerItemsTab({
               frontError={errors?.currency_id}
               defaultValue={ledgerItem?.currency_id}
               onChange={(newValue) => {
+                setValue('currency', newValue ? newValue : null);
                 setValue(`exchange_rate`, newValue ? newValue.exchangeRate : 1);
                 setValue(`currency_id`, newValue ? newValue.id : 1,{
                   shouldDirty: true,
