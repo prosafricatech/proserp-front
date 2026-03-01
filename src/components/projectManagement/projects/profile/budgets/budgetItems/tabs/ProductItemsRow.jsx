@@ -1,8 +1,19 @@
-import { DisabledByDefault } from '@mui/icons-material'
+import { DisabledByDefault, EditOutlined } from '@mui/icons-material'
 import { Chip, Divider, Grid, IconButton, ListItemText, Tooltip, Typography } from '@mui/material'
-import React from 'react'
+import React, { useState } from 'react'
+import ProductItemsTab from './ProductItemsTab';
 
-function ProductItemsRow({ productItem, index, setProductItems }) { 
+function ProductItemsRow({ 
+  productItem,
+  index,
+  productItems,
+  setProductItems,
+  submitMainForm,
+  setSubmitItemForm,
+  submitItemForm,
+  setIsDirty,
+}) { 
+    const [showForm, setShowForm] = useState(false);
 
     const handleDelete = () => {
         if (typeof setProductItems !== 'function') return;
@@ -14,11 +25,12 @@ function ProductItemsRow({ productItem, index, setProductItems }) {
     };
 
     const alternativeProducts = productItem?.alternative_products || [];
-    const currencyCode = productItem?.currency?.code || 'USD';
+    const currencyCode = productItem?.currency?.code;
 
   return (
     <React.Fragment>
         <Divider/>
+        {!showForm ? (
             <Grid container 
                 width={'100%'}
                 sx={{
@@ -86,18 +98,36 @@ function ProductItemsRow({ productItem, index, setProductItems }) {
                         </Tooltip>
                     </Grid>
                 }
-                <Grid size={{xs: alternativeProducts.length > 0 ? 12 : 8, md: 1}} textAlign={'end'}>
+                <Grid size={{xs: 12, md: 1}} textAlign={'end'}>
+                    <Tooltip title='Edit Product Item'>
+                        <IconButton size='small' onClick={() => setShowForm(true)}>
+                            <EditOutlined fontSize='small' />
+                        </IconButton>
+                    </Tooltip>
                     <Tooltip title='Remove Product Item'>
                         <IconButton size='small' 
                             onClick={() => {
                                 handleDelete();
                             }}
                         >
-                            <DisabledByDefault fontSize='small' color='error'/>
+                            <DisabledByDefault fontSize='small' color='error' />
                         </IconButton>
                     </Tooltip>
                 </Grid>
             </Grid>
+        ) : (
+            <ProductItemsTab
+                index={index}
+                setShowForm={setShowForm}
+                productItem={productItem}
+                productItems={productItems}
+                setProductItems={setProductItems}
+                submitMainForm={submitMainForm}
+                setSubmitItemForm={setSubmitItemForm}
+                submitItemForm={submitItemForm}
+                setIsDirty={setIsDirty}
+            />
+        )}
     </React.Fragment>
   )
 }
