@@ -32,6 +32,8 @@ const BudgetsForm = ({ setOpenDialog, budget, isProjectBudget=true }) => {
   const { project } = useProjectProfile();
   const [activeTab, setActiveTab] = useState(0);
   const [serverError, setServerError] = useState(null);
+  const [ledgerItems, setLedgerItems] = useState([]);
+  const [productItems, setProductItems] = useState([]);
 
   // React Query v5 mutations
   const addBudgetMutation = useMutation({
@@ -183,8 +185,8 @@ const BudgetsForm = ({ setOpenDialog, budget, isProjectBudget=true }) => {
               </Grid>
 
               <Grid size={12}>
-                {activeTab === 0 && <LedgerItemsTab budget={budget}/>}
-                {activeTab === 1 && <ProductItemsTab budget={budget}/>}
+                {activeTab === 0 && <LedgerItemsTab ledgerItems={ledgerItems} setLedgerItems={setLedgerItems}/>}
+                {activeTab === 1 && <ProductItemsTab productItems={productItems} setProductItems={setProductItems}/>}
               </Grid>
           </Grid>
         </form>
