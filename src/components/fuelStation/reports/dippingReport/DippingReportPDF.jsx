@@ -43,6 +43,7 @@ function DippingReportPDF({
           calculated_stock: tank.calculated_stock,
           deviation: 0,
           cummulative_deviation: tank.cummulative_deviation,
+          tank_difference: 0,
         });
       }
       const tankData = productData.tanks.get(tank.tank);
@@ -58,6 +59,7 @@ function DippingReportPDF({
       tankData.calculated_stock = tank.calculated_stock || 0;
       tankData.deviation += tank.deviation || 0;
       tankData.cummulative_deviation = tank.cummulative_deviation || 0;
+      tankData.tank_difference = tank.tank_difference || 0;
     });
   });
 
@@ -796,7 +798,7 @@ function DippingReportPDF({
                 width: '10%',
               }}
             >
-              Calculated Stock
+              Tank Difference
             </Text>
             <Text
               style={{
@@ -856,7 +858,6 @@ function DippingReportPDF({
             <View
               style={{
                 ...pdfStyles.tableCell,
-                // flex: 2,
                 width: '6%',
               }}
             >
@@ -868,7 +869,6 @@ function DippingReportPDF({
             <View
               style={{
                 ...pdfStyles.tableCell,
-                // flex: 15,
                 width: '94%',
                 border: '0.3',
                 padding: 0,
@@ -882,6 +882,7 @@ function DippingReportPDF({
                     acc.stockIn += tank.stock_in || 0;
                     acc.stockOut += tank.stock_out || 0;
                     acc.reading += tank.reading || 0;
+                    acc.tankDifference += tank.tank_difference || 0;
                     acc.deviation += tank.deviation || 0;
                     acc.calculatedStock += tank.calculated_stock || 0;
                     acc.cumulativeDeviation += tank.cummulative_deviation || 0;
@@ -892,6 +893,7 @@ function DippingReportPDF({
                     stockIn: 0,
                     stockOut: 0,
                     reading: 0,
+                    tankDifference: 0,
                     deviation: 0,
                     calculatedStock: 0,
                     cumulativeDeviation: 0,
@@ -1010,7 +1012,7 @@ function DippingReportPDF({
                                 maximumFractionDigits: 2,
                               }) || 0}
                             </Text>
-                            {/* calculated stock */}
+                            {/* Tank Difference */}
                             <Text
                               style={{
                                 ...pdfStyles.tableCell,
@@ -1021,7 +1023,7 @@ function DippingReportPDF({
                                 textAlign: 'right',
                               }}
                             >
-                              {tank.calculated_stock?.toLocaleString('en-US', {
+                              {tank.tank_difference?.toLocaleString('en-US', {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2,
                               }) || 0}
@@ -1185,7 +1187,7 @@ function DippingReportPDF({
                             fontWeight: 'bold',
                           }}
                         >
-                          {productTotals.calculatedStock?.toLocaleString(
+                          {productTotals.tankDifference?.toLocaleString(
                             'en-US',
                             {
                               minimumFractionDigits: 2,

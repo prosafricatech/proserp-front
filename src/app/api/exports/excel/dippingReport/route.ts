@@ -1,5 +1,5 @@
 import { exportDippingReportToExcel } from '@/lib/excel/exporters/dippingReport';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
 export async function POST(req: NextRequest) {
   try {
@@ -7,17 +7,17 @@ export async function POST(req: NextRequest) {
 
     const buffer = await exportDippingReportToExcel(body);
 
-    // return new Response(buffer, {
-    //   headers: {
-    //     'Content-Type':
-    //       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    //     'Content-Disposition': 'attachment; filename="sales-shifts.xlsx"',
-    //   },
-    // });
-
-    return NextResponse.json({
-      response: buffer,
+    return new Response(buffer, {
+      headers: {
+        'Content-Type':
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'Content-Disposition': 'attachment; filename="sales-shifts.xlsx"',
+      },
     });
+
+    // return NextResponse.json({
+    //   response: buffer,
+    // });
   } catch (error: any) {
     console.error('Error in API route:', error);
     return new Response(
