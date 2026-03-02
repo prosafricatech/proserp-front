@@ -110,7 +110,6 @@ function DippingReport({ closeDialog }) {
     setReportData(report.report_data);
     setisFetching(false);
     setFilters(filtersWithStation); // Update the filters state after fetching the report
-    // console.log('report data: ', report);
   };
 
   const downloadFileName = `Dipping Report ${readableDate(filters.from)}-${readableDate(filters.to)}`;
@@ -122,8 +121,6 @@ function DippingReport({ closeDialog }) {
   return (
     <>
       <DialogTitle textAlign={'center'}>
-        {/* <Grid container>
-          <Grid size={{ xs: 12, md: 12 }}> */}
         <Stack
           direction='row'
           justifyContent='center'
@@ -145,8 +142,7 @@ function DippingReport({ closeDialog }) {
             </Tooltip>
           )}
         </Stack>
-        {/* </Grid>
-        </Grid> */}
+
         <Span className={css.hiddenOnPrint}>
           <form autoComplete='off' onSubmit={handleSubmit(retrieveReport)}>
             <Grid
