@@ -29,7 +29,6 @@ fuelStationServices.exportDippingReportToExcel = async (exportedData) => {
     const res = await axios.post(`/api/exports/excel/dippingReport/`, exportedData, {
         responseType: 'blob',
     });
-    // const res = await axios.post(`/api/exports/excel/dippingReport/`, exportedData);
     return res.data;
 }
 
