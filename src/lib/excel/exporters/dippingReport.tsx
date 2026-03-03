@@ -59,7 +59,57 @@ export async function exportDippingReportToExcel(exportedData: any) {
       tanks: Array.from(product.tanks.values()),
     }));
 
+    // add commulative deviation for each tank
+    const processedReports = (reportData: any) => {
+      if (!reportData) return [];
+
+      const cumulativeMap: any = {};
+
+      return [...reportData].map((report) => ({
+        ...report,
+        readings: report.readings.map((reading: any) => ({
+          ...reading,
+          tanks: reading.tanks.map((tank: any) => {
+            const key = tank.tank;
+
+            cumulativeMap[key] = (cumulativeMap[key] || 0) + tank.deviation;
+
+            return {
+              ...tank,
+              accumulated_deviation: cumulativeMap[key],
+            };
+          }),
+        })),
+      }));
+    };
+
+    const finalReport = processedReports(reportData);
+
+    // const processedReports = (reportData: any) => {
+    //   if (!reportData) return [];
+
+    //   const cumulativeMap: any = {};
+
+    //   return [...reportData].map((report) => ({
+    //     ...report,
+    //     readings: report.readings.map((reading: any) => ({
+    //       ...reading,
+    //       tanks: reading.tanks.map((tank: any) => {
+    //         const key = tank.tank;
+
+    //         cumulativeMap[key] = (cumulativeMap[key] || 0) + tank.deviation;
+
+    //         return {
+    //           ...tank,
+    //           accumulated_deviation: cumulativeMap[key],
+    //         };
+    //       }),
+    //     })),
+    //   }));
+    // };
+
     // create workbook and worksheet
+
     const wb = createWorkbook();
     const ws = wb.addWorksheet('Dipping Report');
 
@@ -148,7 +198,8 @@ export async function exportDippingReportToExcel(exportedData: any) {
     let dippingRow = (ws.lastRow?.number ?? 0) + 1;
 
     // ===== REPORT DATA ===== //
-    reportData.forEach((dipping: any, index: number) => {
+    // processedReports.forEach((dipping: any, index: number) => {
+    finalReport.forEach((dipping: any, index: number) => {
       // length of tanks for each reding
       const tanksLength =
         dipping.readings.reduce((acc: number, reading: any) => {
@@ -288,7 +339,11 @@ export async function exportDippingReportToExcel(exportedData: any) {
             }
           );
           ws.getCell(`J${currentRow}`).value =
-            commulativeDeviation.toLocaleString('en-US', {
+            // commulativeDeviation.toLocaleString('en-US', {
+            //   minimumFractionDigits: 2,
+            //   maximumFractionDigits: 2,
+            // });
+            tank.accumulated_deviation.toLocaleString('en-US', {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             });
@@ -461,7 +516,7 @@ export async function exportDippingReportToExcel(exportedData: any) {
     // period cell
     ws.mergeCells(`A${summaryRow + 2}:A${summaryRow + tanksLength + 1}`);
     ws.getCell(`A${summaryRow + 2}`).value =
-      `${readableDate(filters.from, true)}\nTo\n${readableDate(filters.to, true)}\n\n${filters.dippingNo}`;
+      `${readableDate(filters.from, true)}\nTo\n${readableDate(filters.to, true)}\n\nSUMMARY`;
     ws.getCell(`A${summaryRow + 2}`).alignment = {
       wrapText: true,
       vertical: 'middle',
@@ -665,7 +720,7 @@ export async function exportDippingReportToExcel(exportedData: any) {
     // Return Excel buffer
     return await wb.xlsx.writeBuffer();
     // return {
-    //   messaage: exportedData,
+    //   messaage: processedReports,
     // };
   } catch (error: any) {
     console.error('Error exporting sample Excel:', error);

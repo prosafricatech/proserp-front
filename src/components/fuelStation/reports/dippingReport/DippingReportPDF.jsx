@@ -2,6 +2,7 @@ import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import pdfStyles from '@/components/pdf/pdf-styles';
 import PdfLogo from '@/components/pdf/PdfLogo';
 import { Document, Font, Page, Text, View } from '@react-pdf/renderer';
+import { useMemo } from 'react';
 
 function DippingReportPDF({
   reportData,
@@ -68,6 +69,34 @@ function DippingReportPDF({
     tanks: Array.from(product.tanks.values()),
   }));
 
+  // add commulative deviation for each tank
+  const processedReports = useMemo(() => {
+    if (!reportData) return [];
+
+    const cumulativeMap = {};
+
+    return (
+      [...reportData]
+        // .sort((a, b) => new Date(a.as_at) - new Date(b.as_at))
+        .map((report) => ({
+          ...report,
+          readings: report.readings.map((reading) => ({
+            ...reading,
+            tanks: reading.tanks.map((tank) => {
+              const key = tank.tank;
+
+              cumulativeMap[key] = (cumulativeMap[key] || 0) + tank.deviation;
+
+              return {
+                ...tank,
+                accumulated_deviation: cumulativeMap[key],
+              };
+            }),
+          })),
+        }))
+    );
+  }, [reportData]);
+
   return (
     <Document
       title={`Dipping Report | ${organization.name}`}
@@ -96,7 +125,7 @@ function DippingReportPDF({
           </View>
         </View>
 
-        {reportData.map((dipping, index) => {
+        {processedReports.map((dipping, index) => {
           return (
             <View key={index} style={{ border: '0.5', marginTop: 20 }}>
               {/* Header Row */}
@@ -450,7 +479,7 @@ function DippingReportPDF({
                                       textAlign: 'right',
                                     }}
                                   >
-                                    {commulativeDeviation.toLocaleString(
+                                    {tank.accumulated_deviation.toLocaleString(
                                       'en-US',
                                       {
                                         minimumFractionDigits: 2,
