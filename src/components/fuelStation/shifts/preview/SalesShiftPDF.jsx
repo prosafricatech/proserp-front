@@ -1184,7 +1184,8 @@ function SalesShiftPDF({
                       ...pdfStyles.tableHeader,
                       backgroundColor: mainColor,
                       color: contrastText,
-                      flex: 1,
+                      // flex: 1,
+                      width: '20%',
                     }}
                   >
                     Pay From (Credit)
@@ -1194,7 +1195,8 @@ function SalesShiftPDF({
                       ...pdfStyles.tableHeader,
                       backgroundColor: mainColor,
                       color: contrastText,
-                      flex: 1,
+                      // flex: 1,
+                      width: '20%',
                     }}
                   >
                     Pay To (Debit)
@@ -1204,7 +1206,8 @@ function SalesShiftPDF({
                       ...pdfStyles.tableHeader,
                       backgroundColor: mainColor,
                       color: contrastText,
-                      flex: 1.5,
+                      // flex: 1.5,
+                      width: '30%',
                     }}
                   >
                     Narration
@@ -1214,7 +1217,8 @@ function SalesShiftPDF({
                       ...pdfStyles.tableHeader,
                       backgroundColor: mainColor,
                       color: contrastText,
-                      flex: 1,
+                      // flex: 1,
+                      width: '30%',
                     }}
                   >
                     Amount
@@ -1229,7 +1233,8 @@ function SalesShiftPDF({
                           ...pdfStyles.tableCell,
                           backgroundColor:
                             index % 2 === 0 ? '#FFFFFF' : lightColor,
-                          flex: 1,
+                          // flex: 1,
+                          width: '20%',
                           textAlign: 'left',
                         }}
                       >
@@ -1241,7 +1246,8 @@ function SalesShiftPDF({
                           ...pdfStyles.tableCell,
                           backgroundColor:
                             index % 2 === 0 ? '#FFFFFF' : lightColor,
-                          flex: 1,
+                          // flex: 1,
+                          width: '20%',
                           textAlign: 'left',
                         }}
                       >
@@ -1253,7 +1259,8 @@ function SalesShiftPDF({
                           ...pdfStyles.tableCell,
                           backgroundColor:
                             index % 2 === 0 ? '#FFFFFF' : lightColor,
-                          flex: 1.5,
+                          // flex: 1.5,
+                          width: '30%',
                           textAlign: 'left',
                         }}
                       >
@@ -1265,7 +1272,7 @@ function SalesShiftPDF({
                           ...pdfStyles.tableCell,
                           backgroundColor:
                             index % 2 === 0 ? '#FFFFFF' : lightColor,
-                          flex: 1,
+                          width: '30%',
                           textAlign: 'right',
                         }}
                       >
@@ -1277,6 +1284,34 @@ function SalesShiftPDF({
                     </View>
                   );
                 })}
+                <View style={pdfStyles.tableRow}>
+                  <Text
+                    style={{
+                      ...pdfStyles.tableCell,
+                      backgroundColor: mainColor,
+                      color: contrastText,
+                      width: '70%',
+                      textAlign: 'left',
+                    }}
+                  >
+                    Total Payments
+                  </Text>
+
+                  <Text
+                    style={{
+                      ...pdfStyles.tableCell,
+                      backgroundColor: mainColor,
+                      color: contrastText,
+                      width: '30%',
+                      textAlign: 'right',
+                    }}
+                  >
+                    {paymentsReceivedTotal.toLocaleString('en-US', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </Text>
+                </View>
               </View>
             </View>
           </View>
@@ -1390,38 +1425,64 @@ function SalesShiftPDF({
                 </View>
 
                 {paymentReceived.length && (
-                  <View style={{ ...pdfStyles.tableRow, marginTop: 4 }}>
-                    <Text
-                      style={{
-                        ...pdfStyles.tableCell,
-                        backgroundColor: mainColor,
-                        color: contrastText,
-                        fontWeight: 'bold',
-                        fontSize: 10,
-                        width: '70%',
-                      }}
-                    >
-                      Grand Total (Total Collected + Total Payments Received)
-                    </Text>
-                    <Text
-                      style={{
-                        ...pdfStyles.tableCell,
-                        backgroundColor: mainColor,
-                        color: contrastText,
-                        fontWeight: 'bold',
-                        fontSize: 10,
-                        width: '30%',
-                        textAlign: 'right',
-                      }}
-                    >
-                      {(
-                        totalCollectedAmount + paymentsReceivedTotal
-                      ).toLocaleString('en-US', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
-                    </Text>
-                  </View>
+                  <>
+                    <View style={pdfStyles.tableRow}>
+                      <Text
+                        style={{
+                          ...pdfStyles.tableCell,
+                          backgroundColor: lightColor,
+                          width: '70%',
+                        }}
+                      >
+                        Total Payments
+                      </Text>
+                      <Text
+                        style={{
+                          ...pdfStyles.tableCell,
+                          backgroundColor: lightColor,
+                          width: '30%',
+                          textAlign: 'right',
+                        }}
+                      >
+                        {paymentsReceivedTotal.toLocaleString('en-US', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </Text>
+                    </View>
+                    <View style={{ ...pdfStyles.tableRow, marginTop: 4 }}>
+                      <Text
+                        style={{
+                          ...pdfStyles.tableCell,
+                          backgroundColor: mainColor,
+                          color: contrastText,
+                          fontWeight: 'bold',
+                          fontSize: 10,
+                          width: '70%',
+                        }}
+                      >
+                        Grand Total (Total Collected + Total Payments Received)
+                      </Text>
+                      <Text
+                        style={{
+                          ...pdfStyles.tableCell,
+                          backgroundColor: mainColor,
+                          color: contrastText,
+                          fontWeight: 'bold',
+                          fontSize: 10,
+                          width: '30%',
+                          textAlign: 'right',
+                        }}
+                      >
+                        {(
+                          totalCollectedAmount + paymentsReceivedTotal
+                        ).toLocaleString('en-US', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </Text>
+                    </View>
+                  </>
                 )}
               </View>
             </View>
