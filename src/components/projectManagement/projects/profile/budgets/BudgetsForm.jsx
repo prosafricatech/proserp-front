@@ -14,6 +14,12 @@ import {
   Alert,
   Tabs,
   Tab,
+  InputLabel,
+  FormControl,
+  Select,
+  MenuItem,
+  Autocomplete,
+  LinearProgress,
 } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 import { useSnackbar } from 'notistack';
@@ -21,7 +27,7 @@ import { DateTimePicker } from '@mui/x-date-pickers';
 import dayjs from 'dayjs';
 import { useProjectProfile } from '../ProjectProfileProvider';
 import { Div } from '@jumbo/shared';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import projectsServices from '../../project-services';
 import LedgerItemsTab from './budgetItems/tabs/LedgerItemsTab';
@@ -40,11 +46,13 @@ const BudgetsForm = ({ setOpenDialog, budget=null, isProjectBudget=true }) => {
   const costCenters = authOrganization?.costCenters;
   const { project } = useProjectProfile();
   const [activeTab, setActiveTab] = useState(0);
+  const [boundToOption, setBoundToOption] = useState('');
+  const [selectedItemable, setSelectedItemable] = useState(null);
   const [serverError, setServerError] = useState(null);
   const [ledgerItems, setLedgerItems] = useState(budget ? budget.ledger_items : []);
   const [productItems, setProductItems] = useState(budget ? budget.product_items : []);
   const [subContractItems, setSubContractItems] = useState(budget ? budget.subcontract_task_items : []);
-  
+
   const [showWarning, setShowWarning] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [submitItemForm, setSubmitItemForm] = useState(false);
@@ -108,6 +116,46 @@ const BudgetsForm = ({ setOpenDialog, budget=null, isProjectBudget=true }) => {
       remarks: budget?.remarks || '',
     },
   });
+
+  // Determine the project id to use for timeline activities
+  const selectedCostCenterId = watch('cost_center_id');
+  const selectedCostCenter = useMemo(() => costCenters?.find(c => c.id === selectedCostCenterId), [costCenters, selectedCostCenterId]);
+  const timelineProjectId = selectedCostCenter?.cost_centerable_id || project?.id;
+
+  const { data: timelineActivitiesData, isFetching: isTimelineActivitiesFetching } = useQuery({
+    queryKey: ['projectTimelineActivities', timelineProjectId],
+    queryFn: () => projectsServices.showProjectTimelineActivities(timelineProjectId),
+    enabled: !!timelineProjectId,
+  });
+
+  const getTaskOptions = (activities, depth = 0) => {
+    if (!Array.isArray(activities)) {
+      return [];
+    }
+  
+    return activities.flatMap(activity => {
+      const { children, tasks } = activity;
+  
+      const tasksOptions = (tasks || []).map(task => ({
+        id: task.id,
+        label: task.name,
+        handlers: task.handlers,
+        dependencies: task.dependencies,
+        quantity: task.quantity,
+        measurement_unit: task.measurement_unit,
+        start_date: dayjs(task.start_date).format('YYYY-MM-DD'),
+        end_date: dayjs(task.end_date).format('YYYY-MM-DD'),
+        weighted_percentage: task.weighted_percentage,
+        project_deliverable_id: task.project_deliverable_id
+      }));
+  
+      const tasksFromgroupChildren = getTaskOptions(children, depth + 1);
+  
+      return [...tasksOptions, ...tasksFromgroupChildren];
+    });
+  };
+
+  const allTasks = getTaskOptions(timelineActivitiesData);
 
   const handleSubmitForm = (data) => {
     const payload = {
@@ -221,7 +269,6 @@ const BudgetsForm = ({ setOpenDialog, budget=null, isProjectBudget=true }) => {
                 }
                 multiple={false}
                 onChange={(newValue) => {
-                  console.log('Selected Cost Center:', newValue);
                   setValue('cost_center_id', newValue?.id, {
                     shouldValidate: true,
                     shouldDirty: true,
@@ -230,7 +277,68 @@ const BudgetsForm = ({ setOpenDialog, budget=null, isProjectBudget=true }) => {
               />
             </Grid> 
 
-            <Grid size={{ xs: 12, md: 8 }}>
+            {selectedCostCenter?.cost_centerable_id && (
+              <>
+                {(isTimelineActivitiesFetching) ? (
+                  <Grid size={{xs: 12, md: 8}}>
+                    <LinearProgress />
+                  </Grid>
+                ) : (
+                  <>
+                    <Grid size={{xs: 12, md: 4}} textAlign="center">
+                      <Div sx={{mt: 1}}>
+                        <FormControl fullWidth>
+                          <InputLabel id="bound-to-label" sx={{ textAlign: 'center', margin: -1 }}>Bound To</InputLabel>
+                          <Select
+                            labelId="bound-to-label"
+                            value={boundToOption}
+                            label="Bound To"
+                            size='small'
+                            fullWidth
+                            onChange={(e) => {
+                              setSelectedItemable(null);
+                              setBoundToOption(e.target.value);
+                            }}
+                            disabled={isTimelineActivitiesFetching}
+                          >
+                            <MenuItem value="Task">Task</MenuItem>
+                            {/* <MenuItem value="Deliverable">Deliverable</MenuItem> */}
+                          </Select>
+                        </FormControl>
+                      </Div>
+                    </Grid>
+                    <Grid size={{xs: 12, md: 4}} textAlign="center">
+                      <Div sx={{ mt: 1 }}>
+                        <Autocomplete
+                          options={boundToOption === 'Task' ? allTasks : boundToOption === 'Deliverable' ? deliverables : []}
+                          isOptionEqualToValue={(option, value) => option.id === value?.id}
+                          getOptionLabel={(option) => option.label}
+                          value={selectedItemable}
+                          renderInput={(params) => (
+                            <TextField {...params} label={`Select ${boundToOption}`} size="small" fullWidth />
+                          )}
+                          onChange={(e, newValue) => {
+                            if (newValue) {
+                              setSelectedItemable(newValue);
+                            } else {
+                              setSelectedItemable(null);
+                            }
+                          }}
+                          renderOption={(props, option) => (
+                            <li {...props} key={option.id}>
+                              {option.label}
+                            </li>
+                          )}
+                          disabled={isTimelineActivitiesFetching}
+                        />
+                      </Div>
+                    </Grid>
+                  </>
+                )}
+              </>
+            )}
+
+            <Grid size={{ xs: 12, md: selectedCostCenter?.cost_centerable_id ? 12 : 8 }}>
               <Div>
                 <TextField
                   label="Remarks"
