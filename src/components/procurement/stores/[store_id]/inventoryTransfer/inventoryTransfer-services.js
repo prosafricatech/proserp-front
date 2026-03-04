@@ -10,10 +10,8 @@ inventoryTransferServices.getList = async ({ store_id, type, keyword, page, limi
 };
 
 inventoryTransferServices.add = async(transfers) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-         const {data} = await axios.post(`/api/inventoryTransfer/add`,transfers);
-         return data;
-     })
+    const {data} = await axios.post(`/api/inventoryTransfer/add`,transfers);
+    return data;
 }
 
 inventoryTransferServices.transferDetails = async (id) => {
@@ -22,24 +20,18 @@ inventoryTransferServices.transferDetails = async (id) => {
 }
 
 inventoryTransferServices.update = async(transfer) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.put(`/api/inventoryTransfer/${transfer.id}/update`,transfer)
-        return data;
-    })
+    const {data} = await axios.put(`/api/inventoryTransfer/${transfer.id}/update`,transfer)
+    return data;
 }
 
 inventoryTransferServices.delete = async (transfers) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.delete(`/api/inventoryTransfer/${transfers.id}/delete`);
-        return data;
-    })
+    const {data} = await axios.delete(`/api/inventoryTransfer/${transfers.id}/delete`);
+    return data;
 };
 
 inventoryTransferServices.receive = async(transfer) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.post(`/api/inventoryTransfer/${transfer.id}/receive`,transfer)
-        return data;
-    })
+    const {data} = await axios.post(`/api/inventoryTransfer/${transfer.id}/receive`,transfer)
+    return data;
 }
 
 inventoryTransferServices.getInventoryTrns = async (id) => {

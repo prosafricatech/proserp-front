@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import axios from '@/lib/services/config';
 import { ASSET_IMAGES } from '@/utilities/constants/paths';
-import { getAssetPath } from '@/utilities/helpers';
 import { Div } from '@jumbo/shared';
 import { LoadingButton } from '@mui/lab';
 import {
@@ -12,10 +11,7 @@ import {
   CardContent,
   TextField,
   Typography,
-  alpha,
-  Box,
 } from '@mui/material';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useSnackbar } from 'notistack';
 
@@ -26,13 +22,10 @@ export default function ResetPassword() {
   const mutation = useMutation({
     mutationFn: async (email: string) => {
       return axios
-        .get('/sanctum/csrf-cookie')
-        .then(() => {
-          return axios.post('/api/auth/reset-password', { email });
-        })
+        .post('/api/auth/reset-password', { email })
         .then((response) => {
           if (response.status === 200) {
-            return response.data; 
+            return response.data;
           }
           throw new Error('Unexpected response status');
         })

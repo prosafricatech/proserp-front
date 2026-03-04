@@ -18,10 +18,8 @@ requisitionsServices.getList = async (params) => {
 };
 
 requisitionsServices.addRequisitions = async(requisitions) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.post(`/api/processApproval/addRequisitions`,requisitions)
-        return data;
-    }) 
+    const {data} = await axios.post(`/api/processApproval/addRequisitions`,requisitions)
+    return data;
 }
 
 requisitionsServices.getRolesOptions = async(mainOnly = true) => {
@@ -34,10 +32,8 @@ requisitionsServices.getRolesOptions = async(mainOnly = true) => {
 }
 
 requisitionsServices.approveRequisition = async(approval) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.post(`/api/processApproval/approveRequisition`,approval)
-        return data;
-    })
+    const {data} = await axios.post(`/api/processApproval/approveRequisition`,approval)
+    return data;
 }
 
 requisitionsServices.getRequisitionDetails = async (id) => {
@@ -73,45 +69,33 @@ requisitionsServices.getApprovedPayments = async (id) => {
 }
 
 requisitionsServices.updateRequisition = async(requisition) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.put(`/api/processApproval/${requisition.id}/updateRequisition`,requisition)
-        return data;
-    })
+    const {data} = await axios.put(`/api/processApproval/${requisition.id}/updateRequisition`,requisition)
+    return data;
 }
 
 requisitionsServices.editApprovalRequisition = async(approval) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.put(`/api/processApproval/${approval.id}/editApprovalRequisition`,approval)
-        return data;
-    })
+    const {data} = await axios.put(`/api/processApproval/${approval.id}/editApprovalRequisition`,approval)
+    return data;
 }
 
 requisitionsServices.deleteRequisiton = async (id) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.delete(`/api/processApproval/${id}/deleteRequisiton`);
-        return data;
-    })
+    const {data} = await axios.delete(`/api/processApproval/${id}/deleteRequisiton`);
+    return data;
 };
 
 requisitionsServices.deleteApprovedPurchaseOrder = async (id) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.delete(`/api/processApproval/${id}/deleteApprovedPurchaseOrder`);
-        return data;
-    })
+    const {data} = await axios.delete(`/api/processApproval/${id}/deleteApprovedPurchaseOrder`);
+    return data;
 };
 
 requisitionsServices.deleteApprovedPaymentOrder = async (id) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.delete(`/api/processApproval/${id}/deleteApprovedPaymentOrder`);
-        return data;
-    })
+    const {data} = await axios.delete(`/api/processApproval/${id}/deleteApprovedPaymentOrder`);
+    return data;
 };
 
 requisitionsServices.deleteApproval = async (id) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.delete(`/api/processApproval/${id}/deleteApproval`);
-        return data;
-    })
+    const {data} = await axios.delete(`/api/processApproval/${id}/deleteApproval`);
+    return data;
 };
 
 requisitionsServices.expenseBudgetCheck = async ({ ledger_id, cost_center_id }) => {

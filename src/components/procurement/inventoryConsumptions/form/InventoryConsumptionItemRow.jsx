@@ -26,24 +26,24 @@ function InventoryConsumptionItemRow({ setClearFormKey, submitMainForm, setSubmi
                         <ListItemText
                             primary={
                                 <Tooltip title="Product">
-                                    <Typography>{product.name}</Typography>
+                                    <Typography component="span">{product.name}</Typography>
                                 </Tooltip>
                             }
                             secondary={
                                 <Tooltip title="Description">
-                                    <Typography>{item.description}</Typography>
+                                    <Typography component="span">{item.description}</Typography>
                                 </Tooltip>
                             }
                         />
                     </Grid>
                     <Grid textAlign={{md: 'end'}} size={{xs: 6, md: 3.5}}>
                         <Tooltip title="Quantity">
-                            <Typography>{item.quantity.toLocaleString()} {item?.unit_symbol ? item.unit_symbol : (item.measurement_unit?.symbol ? item.measurement_unit?.symbol : item.product.unit_symbol)}</Typography>
+                            <Typography component="span">{item.quantity.toLocaleString()} {item?.unit_symbol ? item.unit_symbol : (item.measurement_unit?.symbol ? item.measurement_unit?.symbol : item.product.unit_symbol)}</Typography>
                         </Tooltip>
                     </Grid>
                     <Grid size={{xs: 6, md: 3}} paddingLeft={2}>
                         <Tooltip title="Expense Ledger">
-                            <Typography>{item.ledger?.name}</Typography>
+                            <Typography component="span">{item.ledger?.name}</Typography>
                         </Tooltip>
                     </Grid>
                     <Grid textAlign={'end'} size={{xs: 12, md: 1}}>

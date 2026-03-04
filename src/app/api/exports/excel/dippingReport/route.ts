@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
       headers: {
         'Content-Type':
           'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'Content-Disposition': 'attachment; filename="sales-shifts.xlsx"',
+        'Content-Disposition': 'attachment; filename="dipping-report.xlsx"',
       },
     });
   } catch (error: any) {

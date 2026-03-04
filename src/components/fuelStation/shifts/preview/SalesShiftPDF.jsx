@@ -451,7 +451,7 @@ function SalesShiftPDF({
                                 textAlign: 'right',
                               }}
                             >
-                              {(pump.opening || 0).toLocaleString('en-US', {
+                              {(pump.opening || 0)?.toLocaleString('en-US', {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2,
                               })}
@@ -465,7 +465,7 @@ function SalesShiftPDF({
                                 textAlign: 'right',
                               }}
                             >
-                              {(pump.closing || 0).toLocaleString('en-US', {
+                              {(pump.closing || 0)?.toLocaleString('en-US', {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2,
                               })}
@@ -479,7 +479,7 @@ function SalesShiftPDF({
                                 textAlign: 'right',
                               }}
                             >
-                              {difference.toLocaleString('en-US', {
+                              {difference?.toLocaleString('en-US', {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2,
                               })}
@@ -493,7 +493,7 @@ function SalesShiftPDF({
                                 textAlign: 'right',
                               }}
                             >
-                              {price.toLocaleString('en-US', {
+                              {price?.toLocaleString('en-US', {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2,
                               })}
@@ -507,7 +507,7 @@ function SalesShiftPDF({
                                 textAlign: 'right',
                               }}
                             >
-                              {totalAmount.toLocaleString('en-US', {
+                              {totalAmount?.toLocaleString('en-US', {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2,
                               })}
@@ -540,7 +540,7 @@ function SalesShiftPDF({
                             fontWeight: 'bold',
                           }}
                         >
-                          {totalPumoAmount.toLocaleString('en-US', {
+                          {totalPumoAmount?.toLocaleString('en-US', {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2,
                           })}
@@ -687,7 +687,7 @@ function SalesShiftPDF({
                                 textAlign: 'right',
                               }}
                             >
-                              {fv.quantity.toLocaleString('en-US', {
+                              {fv.quantity?.toLocaleString('en-US', {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2,
                               })}
@@ -701,7 +701,7 @@ function SalesShiftPDF({
                                 textAlign: 'right',
                               }}
                             >
-                              {amount.toLocaleString('en-US', {
+                              {amount?.toLocaleString('en-US', {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2,
                               })}
@@ -733,7 +733,7 @@ function SalesShiftPDF({
                             fontWeight: 'bold',
                           }}
                         >
-                          {cashierTotals.totalFuelVouchersAmount.toLocaleString(
+                          {cashierTotals.totalFuelVouchersAmount?.toLocaleString(
                             'en-US',
                             {
                               minimumFractionDigits: 2,
@@ -825,7 +825,7 @@ function SalesShiftPDF({
                               textAlign: 'right',
                             }}
                           >
-                            {(cashier.main_ledger.amount || 0).toLocaleString(
+                            {(cashier.main_ledger.amount || 0)?.toLocaleString(
                               'en-US',
                               {
                                 minimumFractionDigits: 2,
@@ -878,7 +878,7 @@ function SalesShiftPDF({
                                 textAlign: 'right',
                               }}
                             >
-                              {(transaction.amount || 0).toLocaleString(
+                              {(transaction.amount || 0)?.toLocaleString(
                                 'en-US',
                                 {
                                   minimumFractionDigits: 2,
@@ -918,7 +918,7 @@ function SalesShiftPDF({
                           {(
                             cashierTotals.otherTransactionsTotal +
                             (cashier.main_ledger?.amount || 0)
-                          ).toLocaleString('en-US', {
+                          )?.toLocaleString('en-US', {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2,
                           })}
@@ -950,7 +950,7 @@ function SalesShiftPDF({
                             fontSize: '.7rem',
                           }}
                         >
-                          {(cashier.collected_amount || 0).toLocaleString(
+                          {(cashier.collected_amount || 0)?.toLocaleString(
                             'en-US',
                             {
                               minimumFractionDigits: 2,
@@ -986,11 +986,11 @@ function SalesShiftPDF({
                           }}
                         >
                           {shortOrOver > 0
-                            ? `+${shortOrOver.toLocaleString('en-US', {
+                            ? `+${shortOrOver?.toLocaleString('en-US', {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2,
                               })}`
-                            : `${shortOrOver.toLocaleString('en-US', {
+                            : `${shortOrOver?.toLocaleString('en-US', {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2,
                               })}`}
@@ -1123,7 +1123,7 @@ function SalesShiftPDF({
                                 textAlign: 'right',
                               }}
                             >
-                              {adj.quantity.toLocaleString('en-US', {
+                              {adj.quantity?.toLocaleString('en-US', {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2,
                               })}
@@ -1276,7 +1276,7 @@ function SalesShiftPDF({
                           textAlign: 'right',
                         }}
                       >
-                        {(pr.amount || 0).toLocaleString('en-US', {
+                        {(pr.amount || 0)?.toLocaleString('en-US', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
@@ -1306,7 +1306,7 @@ function SalesShiftPDF({
                       textAlign: 'right',
                     }}
                   >
-                    {paymentsReceivedTotal.toLocaleString('en-US', {
+                    {paymentsReceivedTotal?.toLocaleString('en-US', {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
                     })}
@@ -1363,7 +1363,7 @@ function SalesShiftPDF({
                       textAlign: 'right',
                     }}
                   >
-                    {totalExpectedAmount.toLocaleString('en-US', {
+                    {totalExpectedAmount?.toLocaleString('en-US', {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
                     })}
@@ -1387,7 +1387,7 @@ function SalesShiftPDF({
                       textAlign: 'right',
                     }}
                   >
-                    {totalCollectedAmount.toLocaleString('en-US', {
+                    {totalCollectedAmount?.toLocaleString('en-US', {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
                     })}
@@ -1413,11 +1413,11 @@ function SalesShiftPDF({
                     }}
                   >
                     {totalShortOrOver > 0
-                      ? `+${totalShortOrOver.toLocaleString('en-US', {
+                      ? `+${totalShortOrOver?.toLocaleString('en-US', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}`
-                      : `${totalShortOrOver.toLocaleString('en-US', {
+                      : `${totalShortOrOver?.toLocaleString('en-US', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}`}
@@ -1444,7 +1444,7 @@ function SalesShiftPDF({
                           textAlign: 'right',
                         }}
                       >
-                        {paymentsReceivedTotal.toLocaleString('en-US', {
+                        {paymentsReceivedTotal?.toLocaleString('en-US', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
@@ -1476,7 +1476,7 @@ function SalesShiftPDF({
                       >
                         {(
                           totalCollectedAmount + paymentsReceivedTotal
-                        ).toLocaleString('en-US', {
+                        )?.toLocaleString('en-US', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
@@ -1624,7 +1624,7 @@ function SalesShiftPDF({
                           textAlign: 'right',
                         }}
                       >
-                        {(st.opening_reading || 0).toLocaleString('en-US', {
+                        {(st.opening_reading || 0)?.toLocaleString('en-US', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
@@ -1639,7 +1639,7 @@ function SalesShiftPDF({
                           textAlign: 'right',
                         }}
                       >
-                        {(st.incoming || 0).toLocaleString('en-US', {
+                        {(st.incoming || 0)?.toLocaleString('en-US', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
@@ -1656,7 +1656,7 @@ function SalesShiftPDF({
                       >
                         {(
                           (st.opening_reading || 0) + (st.incoming || 0)
-                        ).toLocaleString('en-US', {
+                        )?.toLocaleString('en-US', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
@@ -1671,7 +1671,7 @@ function SalesShiftPDF({
                           textAlign: 'right',
                         }}
                       >
-                        {(st.closing_reading || 0).toLocaleString('en-US', {
+                        {(st.closing_reading || 0)?.toLocaleString('en-US', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
@@ -1686,7 +1686,7 @@ function SalesShiftPDF({
                           textAlign: 'right',
                         }}
                       >
-                        {(st.tank_difference || 0).toLocaleString('en-US', {
+                        {(st.tank_difference || 0)?.toLocaleString('en-US', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
@@ -1701,7 +1701,7 @@ function SalesShiftPDF({
                           textAlign: 'right',
                         }}
                       >
-                        {(st.actual_sold || 0).toLocaleString('en-US', {
+                        {(st.actual_sold || 0)?.toLocaleString('en-US', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
@@ -1716,7 +1716,7 @@ function SalesShiftPDF({
                           textAlign: 'right',
                         }}
                       >
-                        {(st.deviation || 0).toLocaleString('en-US', {
+                        {(st.deviation || 0)?.toLocaleString('en-US', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
