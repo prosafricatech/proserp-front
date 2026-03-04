@@ -1,43 +1,34 @@
 import { DisabledByDefault } from '@mui/icons-material'
 import { Divider, Grid, IconButton, ListItemText, Tooltip, Typography } from '@mui/material'
-import React from 'react'
-import { useSnackbar } from 'notistack';
-import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import projectsServices from '@/components/projectManagement/projects/project-services';
+import React, { useState } from 'react'
+import SubContractTasksTab from './SubContractTasksTab';
 
-function SubContractTasksRow({ subContractTask, index}) {
-    const {enqueueSnackbar} = useSnackbar();
-    const {showDialog,hideDialog} = useJumboDialog();
-    const queryClient = useQueryClient();
+function SubContractTasksRow({ 
+  subContractTask,
+  index,
+  subContractItems,
+  setSubContractItems,
+  submitMainForm,
+  setSubmitItemForm,
+  submitItemForm,
+  setIsDirty,
+}) {
+  const [showForm, setShowForm] = useState(false);
 
-    const deleteExistingBudgetItem = useMutation({
-      mutationFn: (variables) => projectsServices.deleteExistingBudgetItem(variables),
-      onSuccess: (data) => {
-        enqueueSnackbar(data.message,{variant : 'success'});
-        queryClient.invalidateQueries({queryKey: ['budgetItemsDetails']});
-      },
-      onError: (error) => {
-        enqueueSnackbar(error?.response?.data.message,{variant : 'error'});
-      },
+  console.log('Rendering SubContractTasksRow with task:', subContractTask);
+
+  const handleDelete = () => {
+    setSubContractItems((prevItems) => {
+      const nextItems = [...prevItems];
+      nextItems.splice(index, 1);
+      return nextItems;
     });
-
-    const handleDelete = () => {
-      showDialog({
-        title: 'Confirm Delete?',
-        content: 'If you click yes, this SubContract Task will be deleted',
-      onYes: () => {
-        hideDialog();
-        deleteExistingBudgetItem.mutate({ id: subContractTask.id, type: 'subcontract_task' });
-      },
-      onNo: () => hideDialog(),
-        variant: 'confirm'
-      });
-    }
+  };
 
   return (
     <React.Fragment>
       <Divider/>
+      {!showForm ? (
         <Grid container 
           width={'100%'}
           sx={{
@@ -52,11 +43,11 @@ function SubContractTasksRow({ subContractTask, index}) {
           </Grid>
           <Grid size={{xs: 11, md: 2.1}}>
             <ListItemText
-              primary={
-                <Tooltip title="Task name">
-                  <Typography component="span">{subContractTask.project_task?.name}</Typography>
-                </Tooltip>
-              }
+              // primary={
+              //   <Tooltip title="Task name">
+              //     <Typography component="span">{subContractTask.project_task?.name}</Typography>
+              //   </Tooltip>
+              // }
               secondary={
                 <Tooltip title="Description">
                   <Typography component="span">{subContractTask.description}</Typography>
@@ -106,6 +97,19 @@ function SubContractTasksRow({ subContractTask, index}) {
               </Tooltip>
           </Grid>
         </Grid>
+      ) : (
+        <SubContractTasksTab
+          index={index}
+          setShowForm={setShowForm}
+          subContractItem={subContractTask}
+          subContractItems={subContractItems}
+          setSubContractItems={setSubContractItems}
+          submitMainForm={submitMainForm}
+          setSubmitItemForm={setSubmitItemForm}
+          submitItemForm={submitItemForm}
+          setIsDirty={setIsDirty}
+        />
+      )}
     </React.Fragment>
   )
 }

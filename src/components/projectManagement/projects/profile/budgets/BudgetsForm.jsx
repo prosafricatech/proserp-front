@@ -29,6 +29,8 @@ import LedgerItemsRow from './budgetItems/tabs/LedgerItemsRow';
 import ProductItemsTab from './budgetItems/tabs/ProductItemsTab';
 import ProductItemsRow from './budgetItems/tabs/ProductItemsRow';
 import CostCenterSelector from '@/components/masters/costCenters/CostCenterSelector';
+import SubContractTasksTab from './budgetItems/tabs/SubContractTasksTab';
+import SubContractTasksRow from './budgetItems/tabs/SubContractTasksRow';
 
 const BudgetsForm = ({ setOpenDialog, budget=null, isProjectBudget=true }) => {
   const queryClient = useQueryClient();
@@ -41,6 +43,8 @@ const BudgetsForm = ({ setOpenDialog, budget=null, isProjectBudget=true }) => {
   const [serverError, setServerError] = useState(null);
   const [ledgerItems, setLedgerItems] = useState(budget ? budget.ledger_items : []);
   const [productItems, setProductItems] = useState(budget ? budget.product_items : []);
+  const [subContractItems, setSubContractItems] = useState(budget ? budget.subcontract_task_items : []);
+  
   const [showWarning, setShowWarning] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [submitItemForm, setSubmitItemForm] = useState(false);
@@ -79,6 +83,7 @@ const BudgetsForm = ({ setOpenDialog, budget=null, isProjectBudget=true }) => {
   useEffect(() => {
     setLedgerItems(budget?.ledger_items || []);
     setProductItems(budget?.product_items || []);
+    setSubContractItems(budget?.subcontract_task_items || []);
   }, [budget]);
 
   const validationSchema = yup.object({
@@ -109,6 +114,7 @@ const BudgetsForm = ({ setOpenDialog, budget=null, isProjectBudget=true }) => {
       ...data,
       ledger_items: ledgerItems,
       product_items: productItems,
+      subcontract_task_items: subContractItems,
     };
     saveMutation(payload);
   };
@@ -215,6 +221,7 @@ const BudgetsForm = ({ setOpenDialog, budget=null, isProjectBudget=true }) => {
                 }
                 multiple={false}
                 onChange={(newValue) => {
+                  console.log('Selected Cost Center:', newValue);
                   setValue('cost_center_id', newValue?.id, {
                     shouldValidate: true,
                     shouldDirty: true,
@@ -246,6 +253,7 @@ const BudgetsForm = ({ setOpenDialog, budget=null, isProjectBudget=true }) => {
               >
                 <Tab label="Expense Items"/>
                 <Tab label="Product Items"/>
+                <Tab label="Subcontract Task"/>
               </Tabs>
             </Grid>
 
@@ -292,6 +300,27 @@ const BudgetsForm = ({ setOpenDialog, budget=null, isProjectBudget=true }) => {
                       index={index}
                       productItems={productItems}
                       setProductItems={setProductItems}
+                    />
+                  ))}
+                </>
+              )}
+              {activeTab === 2 && (
+                <>
+                  <SubContractTasksTab
+                    subContractItems={subContractItems}
+                    setSubContractItems={setSubContractItems}
+                    submitMainForm={submitMainForm}
+                    submitItemForm={submitItemForm}
+                    setSubmitItemForm={setSubmitItemForm}
+                    setIsDirty={setIsDirty}
+                  />
+                  {subContractItems?.map((subContractItem, index) => (
+                    <SubContractTasksRow
+                      key={`${subContractItem?.id ?? 'new'}-${index}`}
+                      subContractItem={subContractItem}
+                      index={index}
+                      subContractItems={subContractItems}
+                      setSubContractItems={setSubContractItems}
                     />
                   ))}
                 </>
