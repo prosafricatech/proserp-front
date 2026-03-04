@@ -2596,6 +2596,50 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
           right: { style: 'thin', color: { argb: 'FF000000' } },
         };
       });
+
+      // payment received total
+      const paymentsTotalRow = (ws.lastRow?.number ?? 0) + 1;
+      ws.mergeCells(`A${paymentsTotalRow}:F${paymentsTotalRow}`);
+      ws.getCell(`A${paymentsTotalRow}`).value = 'Total Payments';
+      ws.getCell(`A${paymentsTotalRow}`).font = { bold: true, size: 11 };
+      ws.getCell(`A${paymentsTotalRow}`).alignment = {
+        horizontal: 'left',
+        vertical: 'middle',
+      };
+      ws.getCell(`A${paymentsTotalRow}`).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFD9D9D9' },
+      };
+      ws.getCell(`A${paymentsTotalRow}`).border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } },
+      };
+
+      ws.mergeCells(`G${paymentsTotalRow}:H${paymentsTotalRow}`);
+      ws.getCell(`G${paymentsTotalRow}`).value =
+        paymentsReceivedTotal.toLocaleString('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
+      ws.getCell(`G${paymentsTotalRow}`).font = { bold: true, size: 11 };
+      ws.getCell(`G${paymentsTotalRow}`).alignment = {
+        horizontal: 'right',
+        vertical: 'middle',
+      };
+      ws.getCell(`G${paymentsTotalRow}`).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFD9D9D9' },
+      };
+      ws.getCell(`G${paymentsTotalRow}`).border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } },
+      };
     }
 
     // CASH COLLECTION SUMMARY
@@ -2710,8 +2754,7 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
       // GRAND TOTAL FOR CASH COLLECTED AND PAYMENTS RECIEVED
       if (exportedData.paymentReceived?.length) {
         ws.mergeCells(`A${cashCollectionRow + 4}:G${cashCollectionRow + 4}`);
-        ws.getCell(`A${cashCollectionRow + 4}`).value =
-          'Grand Total (Total Collected + Total Payments Received)';
+        ws.getCell(`A${cashCollectionRow + 4}`).value = 'Total Oayments';
         ws.getCell(`A${cashCollectionRow + 4}`).font = { bold: true, size: 11 };
         ws.getCell(`A${cashCollectionRow + 4}`).alignment = {
           horizontal: 'left',
@@ -2724,18 +2767,50 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
           right: { style: 'thin', color: { argb: 'FF000000' } },
         };
 
-        ws.getCell(`H${cashCollectionRow + 4}`).value = (
-          totalCollectedAmount + paymentsReceivedTotal
-        ).toLocaleString('en-US', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        });
+        ws.getCell(`H${cashCollectionRow + 4}`).value =
+          paymentsReceivedTotal.toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          });
         ws.getCell(`H${cashCollectionRow + 4}`).font = { bold: true, size: 11 };
         ws.getCell(`H${cashCollectionRow + 4}`).alignment = {
           horizontal: 'right',
           vertical: 'middle',
         };
         ws.getCell(`H${cashCollectionRow + 4}`).border = {
+          top: { style: 'thin', color: { argb: 'FF000000' } },
+          bottom: { style: 'thin', color: { argb: 'FF000000' } },
+          left: { style: 'thin', color: { argb: 'FF000000' } },
+          right: { style: 'thin', color: { argb: 'FF000000' } },
+        };
+
+        ws.mergeCells(`A${cashCollectionRow + 5}:G${cashCollectionRow + 5}`);
+        ws.getCell(`A${cashCollectionRow + 5}`).value =
+          'Grand Total (Total Collected + Total Payments Received)';
+        ws.getCell(`A${cashCollectionRow + 5}`).font = { bold: true, size: 11 };
+        ws.getCell(`A${cashCollectionRow + 5}`).alignment = {
+          horizontal: 'left',
+          vertical: 'middle',
+        };
+        ws.getCell(`A${cashCollectionRow + 5}`).border = {
+          top: { style: 'thin', color: { argb: 'FF000000' } },
+          bottom: { style: 'thin', color: { argb: 'FF000000' } },
+          left: { style: 'thin', color: { argb: 'FF000000' } },
+          right: { style: 'thin', color: { argb: 'FF000000' } },
+        };
+
+        ws.getCell(`H${cashCollectionRow + 5}`).value = (
+          totalCollectedAmount + paymentsReceivedTotal
+        ).toLocaleString('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
+        ws.getCell(`H${cashCollectionRow + 5}`).font = { bold: true, size: 11 };
+        ws.getCell(`H${cashCollectionRow + 5}`).alignment = {
+          horizontal: 'right',
+          vertical: 'middle',
+        };
+        ws.getCell(`H${cashCollectionRow + 5}`).border = {
           top: { style: 'thin', color: { argb: 'FF000000' } },
           bottom: { style: 'thin', color: { argb: 'FF000000' } },
           left: { style: 'thin', color: { argb: 'FF000000' } },

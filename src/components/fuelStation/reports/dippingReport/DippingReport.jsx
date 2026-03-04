@@ -1,6 +1,8 @@
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import useProsERPStyles from '@/app/helpers/style-helpers';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { faFileExcel } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { Div, Span } from '@jumbo/shared';
@@ -40,6 +42,7 @@ function DippingReport({ closeDialog }) {
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
   const [activeStation, setActiveStation] = useState(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
     if (stations?.length === 1) {
@@ -110,10 +113,34 @@ function DippingReport({ closeDialog }) {
     setReportData(report.report_data);
     setisFetching(false);
     setFilters(filtersWithStation); // Update the filters state after fetching the report
-    // console.log('report data: ', report);
   };
 
   const downloadFileName = `Dipping Report ${readableDate(filters.from)}-${readableDate(filters.to)}`;
+
+  const handleExcelExport = async () => {
+    if (!reportData || !filters) return;
+    setIsExporting(true);
+    try {
+      const blob = await fuelStationServices.exportDippingReportToExcel({
+        reportData: reportData,
+        activeStation: activeStation,
+        filters: filters,
+        organization: organization,
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Dipping Report ${readableDate(filters.from)}-${readableDate(filters.to)}.xlsx`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      // console.log('blob: ', blob);
+    } catch (e) {
+      console.error('error exporting file: ', e);
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   if (isFetchingStation) {
     return <LinearProgress />;
@@ -122,8 +149,6 @@ function DippingReport({ closeDialog }) {
   return (
     <>
       <DialogTitle textAlign={'center'}>
-        {/* <Grid container>
-          <Grid size={{ xs: 12, md: 12 }}> */}
         <Stack
           direction='row'
           justifyContent='center'
@@ -145,8 +170,7 @@ function DippingReport({ closeDialog }) {
             </Tooltip>
           )}
         </Stack>
-        {/* </Grid>
-        </Grid> */}
+
         <Span className={css.hiddenOnPrint}>
           <form autoComplete='off' onSubmit={handleSubmit(retrieveReport)}>
             <Grid
@@ -238,7 +262,33 @@ function DippingReport({ closeDialog }) {
                   />
                 </Div>
               </Grid>
-              <Grid size={12} textAlign='right'>
+              <Grid
+                size={12}
+                textAlign='right'
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'end',
+                  gap: 1,
+                }}
+              >
+                <LoadingButton
+                  size='small'
+                  onClick={handleExcelExport}
+                  disabled={
+                    isFetching ||
+                    isExporting ||
+                    !reportData ||
+                    reportData?.length < 1
+                  }
+                  loading={isExporting}
+                  sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                  color='success'
+                  variant='contained'
+                >
+                  <FontAwesomeIcon icon={faFileExcel} color='green' /> Excel
+                </LoadingButton>
                 <LoadingButton
                   loading={isFetching}
                   type='submit'

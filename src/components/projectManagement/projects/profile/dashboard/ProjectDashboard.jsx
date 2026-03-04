@@ -231,7 +231,7 @@ function ProjectDashboard() {
                   </Grid>
 
                   <Grid size={{ xs: 12, md: 6 }}>
-                    <StatItem label="Physical Progress %" value={dashboardFigures?.execution_percentage ? `${parseFloat(dashboardFigures.execution_percentage).toFixed(2)}%` : ''} />
+                    <StatItem label="WBS Progress %" value={dashboardFigures?.execution_percentage ? `${parseFloat(dashboardFigures.execution_percentage).toFixed(2)}%` : ''} />
                     <Box display="flex" alignItems="center" gap={1}>
                       <LinearProgress 
                         variant="determinate" 
