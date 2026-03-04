@@ -12,6 +12,8 @@ import CurrencySelector from '@/components/masters/Currencies/CurrencySelector';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import { AddOutlined, CheckOutlined, DisabledByDefault } from '@mui/icons-material';
+import { useCurrencySelect } from '@/components/masters/Currencies/CurrencySelectProvider';
+import { useLedgerSelect } from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
 
 function SubContractTasksTab({ 
   index = -1,
@@ -28,6 +30,8 @@ function SubContractTasksTab({
 }) {
   const [isAdding, setIsAdding] = useState(false);
   const [triggerKey, setTriggerKey] = useState(0);
+  const { ungroupedLedgerOptions } = useLedgerSelect();
+  const { currencies } = useCurrencySelect();
 
   const validationSchema = yup.object({
     expense_ledger_id: yup.number().required("Expense name is required").typeError('Expense name is required'),
@@ -39,10 +43,16 @@ function SubContractTasksTab({
 
   const formDefaultValues = {
     type: 'subcontract_task',
-    currency_id: 1,
-    exchange_rate: 1,
-    quantity: 0,
-    rate: 0,
+    currency_id:  subContractItem?.currency_id ?? currencies?.find(c => c.is_base === 1)?.id,
+    exchange_rate: subContractItem?.exchange_rate ?? 1,
+    quantity: subContractItem?.quantity ?? 0,
+    rate: subContractItem?.rate ?? 0,
+    expense_ledger_id: subContractItem?.expense_ledger_id ?? null,
+    currency: subContractItem?.currency ?? currencies?.find(c => c.is_base === 1),
+    project_task: subContractItem?.project_task ?? selectedItemable,
+    project_task_id: subContractItem?.project_task?.id ?? selectedItemable?.id ?? null,
+    description: subContractItem?.description ?? '',
+    bound_to: subContractItem ? subContractItem.bound_to : selectedBoundTo,
   };
 
   const {
@@ -65,6 +75,8 @@ function SubContractTasksTab({
     setIsAdding(true);
       const normalizedItem = {
         ...item,
+        expense_ledger: ungroupedLedgerOptions.find(option => option.id === item.expense_ledger_id) || null,
+        currency: currencies.find(option => option.id === item.currency_id) || null,
       };
       if (index > -1) {
         // Replace the existing item with the edited item
@@ -123,8 +135,10 @@ function SubContractTasksTab({
             multiple={false}
             label="Expense Name"
             allowedGroups={['Expenses']}
+            value={ungroupedLedgerOptions.find(option => option.id === watch('expense_ledger_id')) || null}
             frontError={errors?.expense_ledger_id}
             onChange={(newValue) => {
+              setValue('expense_ledger', newValue ?? null);
               setValue('expense_ledger_id', newValue?.id ?? null, {
                 shouldValidate: true,
                 shouldDirty: true,
@@ -138,7 +152,9 @@ function SubContractTasksTab({
         <Div sx={{ mt: 1 }}>
           <CurrencySelector
             frontError={errors?.currency_id}
+            defaultValue={subContractItem?.currency_id}
             onChange={(newValue) => {
+              setValue('currency', newValue ?? null);
               setValue('currency_id', newValue?.id ?? 1, { shouldDirty: true, shouldValidate: true });
               setValue('exchange_rate', newValue?.exchangeRate ?? 1, { shouldDirty: true });
             }}
@@ -154,6 +170,7 @@ function SubContractTasksTab({
               fullWidth
               size="small"
               error={!!errors?.exchange_rate}
+              defaultValue={watch(`exchange_rate`)}
               helperText={errors?.exchange_rate?.message}
               InputProps={{ inputComponent: CommaSeparatedField }}
               {...register('exchange_rate', {
@@ -173,6 +190,7 @@ function SubContractTasksTab({
               label="Quantity"
               fullWidth
               size="small"
+              defaultValue={subContractItem?.quantity ?? null}
               InputProps={{ inputComponent: CommaSeparatedField }}
               error={!!errors?.quantity}
               helperText={errors?.quantity?.message}
@@ -192,6 +210,7 @@ function SubContractTasksTab({
           label="Rate"
           fullWidth
           size="small"
+          defaultValue={subContractItem?.rate ?? null}
           InputProps={{ inputComponent: CommaSeparatedField }}
           error={!!errors?.rate}
           helperText={errors?.rate?.message}

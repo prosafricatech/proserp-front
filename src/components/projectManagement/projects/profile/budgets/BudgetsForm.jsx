@@ -436,7 +436,7 @@ const BudgetsForm = ({ setOpenDialog, budget=null, isProjectBudget=true }) => {
                 <>
                   {!(boundToOption === 'Task' && selectedItemable?.id) ? (
                     <Alert severity="info" sx={{ mb: 2 }}>
-                      Please select <b>Bound To</b> and <b>Select Task</b> before adding Subcontract Tasks.
+                      Please select <b>Bound To</b> and <b>Select Task</b> for adding Subcontract Tasks.
                     </Alert>
                   ) : (
                     <SubContractTasksTab
