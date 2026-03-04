@@ -274,6 +274,10 @@ const BudgetsForm = ({ setOpenDialog, budget=null, isProjectBudget=true }) => {
                     shouldValidate: true,
                     shouldDirty: true,
                   });
+
+                  if (activeTab === 2 && !newValue?.cost_centerable_id) {
+                    setActiveTab(0);
+                  }
                 }}
               />
             </Grid> 
@@ -358,14 +362,18 @@ const BudgetsForm = ({ setOpenDialog, budget=null, isProjectBudget=true }) => {
             <Grid size={12}>
               <Tabs
                 value={activeTab}
-                onChange={(e, newValue) => setActiveTab(newValue)}
+                onChange={(e, newValue) => {
+                  setActiveTab(newValue);
+                }}
                 variant="scrollable"
                 scrollButtons="auto"
                 allowScrollButtonsMobile
               >
-                <Tab label="Expense Items"/>
-                <Tab label="Product Items"/>
-                <Tab label="Subcontract Task"/>
+                <Tab label="Expense Items" />
+                <Tab label="Product Items" />
+                {selectedCostCenter?.cost_centerable_id && 
+                  <Tab label="Subcontract Task" />
+                }
               </Tabs>
             </Grid>
 
@@ -424,18 +432,24 @@ const BudgetsForm = ({ setOpenDialog, budget=null, isProjectBudget=true }) => {
                   ))}
                 </>
               )}
-              {activeTab === 2 && boundToOption === 'Task' && (
+              {activeTab === 2 && selectedCostCenter?.cost_centerable_id && (
                 <>
-                  <SubContractTasksTab
-                    subContractItems={subContractItems}
-                    setSubContractItems={setSubContractItems}
-                    submitMainForm={submitMainForm}
-                    selectedBoundTo={selectedBoundTo}
-                    selectedItemable={selectedItemable}
-                    submitItemForm={submitItemForm}
-                    setSubmitItemForm={setSubmitItemForm}
-                    setIsDirty={setIsDirty}
-                  />
+                  {!(boundToOption === 'Task' && selectedItemable?.id) ? (
+                    <Alert severity="info" sx={{ mb: 2 }}>
+                      Please select <b>Bound To</b> and <b>Select Task</b> before adding Subcontract Tasks.
+                    </Alert>
+                  ) : (
+                    <SubContractTasksTab
+                      subContractItems={subContractItems}
+                      setSubContractItems={setSubContractItems}
+                      submitMainForm={submitMainForm}
+                      selectedBoundTo={selectedBoundTo}
+                      selectedItemable={selectedItemable}
+                      submitItemForm={submitItemForm}
+                      setSubmitItemForm={setSubmitItemForm}
+                      setIsDirty={setIsDirty}
+                    />
+                  )}
                   {subContractItems?.map((subContractItem, index) => (
                     <SubContractTasksRow
                       key={`${subContractItem?.id ?? 'new'}-${index}`}
