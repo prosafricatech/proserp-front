@@ -237,11 +237,10 @@ function ProductSalesCard() {
     return (
       <Grid
         container
-        columnSpacing={2}
-        paddingLeft={2}
+        columnSpacing={1}
         sx={{ alignItems: 'center' }}
       >
-        <Grid size={{ xs: 3, md: 3 }}>
+        <Grid size={{ xs: 3.5, md: 3 }}>
           <Div>
             <FormControl fullWidth size='small'>
               <InputLabel id='top-products-order-by-label'>Order By</InputLabel>
@@ -266,7 +265,7 @@ function ProductSalesCard() {
             </FormControl>
           </Div>
         </Grid>
-        <Grid size={{ xs: 5, md: 4 }}>
+        <Grid size={{ xs: 4.5, md: 4 }}>
           <Div>
             <FormControl fullWidth size='small'>
               <InputLabel id='top-products-order-by-direction-label'>
@@ -344,11 +343,11 @@ function ProductSalesCard() {
         title={
           <Grid
             container
-            spacing={2}
-            width={{ xs: '100%', md: '70%', lg: '100%' }}
+            spacing={1}
+            width={{ xs: '100%', md: '100%', lg: '100%' }}
             alignItems='center'
           >
-            <Grid size={{ xs: 12, md: 8 }}>
+            <Grid size={{ xs: 12, md: 3, lg: 5 }}>
               <Stack direction='row' spacing={1} alignItems='center'>
                 <Typography variant='h4'>Top</Typography>
                 <FormControl fullWidth size='small'>
@@ -374,7 +373,7 @@ function ProductSalesCard() {
                 </FormControl>
               </Stack>
             </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
+            <Grid size={{ xs: 12, md: 3, lg: 3 }}>
               {isFetchingSalesPeople ? (
                 <Div sx={{ width: '100%', height: '100%', p: 1 }}>
                   <Skeleton variant="text" width="40%" height={32} animation="wave" sx={{ mb: 1 }} />
@@ -419,6 +418,11 @@ function ProductSalesCard() {
                 />
               )}
             </Grid>
+            {!smallScreen && 
+              <Grid size={{ xs: 12, md: 6, lg: 4 }} textAlign='right'>
+                <Actions />
+              </Grid>
+            }
           </Grid>
         }
         sx={{
@@ -431,7 +435,6 @@ function ProductSalesCard() {
                 ? 500
                 : null,
         }}
-        action={!smallScreen && <Actions />}
       >
         {smallScreen && <Actions />}
         <Grid

@@ -309,8 +309,6 @@ function SaleItemForm({ setClearFormKey, submitMainForm, submitItemForm, setSubm
        return <LinearProgress/>
     }
 
-    console.log(errors && errors);
-
   return (
     <>
         {!item && (

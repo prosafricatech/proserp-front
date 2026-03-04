@@ -69,7 +69,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
   const lastFormSnapshotRef = React.useRef(null);
   const lastPaymentItemsSnapshotRef = React.useRef(null);
   const AUTO_SAVE_DEBUG = true;
-  const AUTO_SAVE_INTERVAL = 1 * 60 * 1000;
+  const AUTO_SAVE_INTERVAL = 2 * 60 * 1000;
   const AUTO_SAVE_TICK = 1000;
 
   const addMutation = useMutation({
@@ -90,7 +90,6 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
       queryClient.invalidateQueries({ queryKey: ['salesShifts'] });
     },
   });
-
 
   const validationSchema = yup.object({
     sales_outlet_shift_id: yup.number().required('Sales Outlet Shift is required').typeError('Sales Outlet Shift must be a number'),
@@ -575,7 +574,13 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
     } catch (error) {
       setValue('product_prices', [], { shouldValidate: true, shouldDirty: true });
     }
-  }, [fuel_pumps, activeStation.id, setValue]);
+  }, [fuel_pumps, activeStation.id, setValue, SalesShift]);
+
+  useEffect(() => {
+    if (!SalesShift?.id) return;
+    const shiftStart = SalesShift?.shift_start;
+    retrieveProductPrices(shiftStart);
+  }, [SalesShift]);
 
   const getCashierLedgers = (cashierIndex) => {
     return cashierLedgers[cashierIndex] || [];

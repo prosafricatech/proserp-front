@@ -75,67 +75,53 @@ productServices.getProductSpecifications = async() => {
 }
 
 productServices.add = async(product) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.post(`/api/masters/products/add`,product)
-        return data;
-    })
+    const {data} = await axios.post(`/api/masters/products/add`,product)
+    return data;
 }
 
 productServices.addSecondaryUnit = async(product) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.post(`/api/masters/products/${product.id}/addSecondaryUnit`,product)
-        return data;
-    })
+    const {data} = await axios.post(`/api/masters/products/${product.id}/addSecondaryUnit`,product)
+    return data;
 }
 
 productServices.importProductsExcel = async(postData) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const formData = new FormData();
-        Object.keys(postData).forEach((key) => {
-            if(key === 'products_excel') {
-                // If the value is a FileList (like it will be for file inputs),
-                // append the first file in the list.
-                formData.append(key, postData[key][0]);
-            } else {
-                formData.append(key, postData[key] !== 'null' ? postData[key] : null);
-            }
-        });
+    const formData = new FormData();
+    Object.keys(postData).forEach((key) => {
+        if(key === 'products_excel') {
+            // If the value is a FileList (like it will be for file inputs),
+            // append the first file in the list.
+            formData.append(key, postData[key][0]);
+        } else {
+            formData.append(key, postData[key] !== 'null' ? postData[key] : null);
+        }
+    });
 
-        const {data} = await axios.post(`/api/masters/products/importProductsExcel`,formData,{
-            headers: {
-                'Content-Type': 'multipart/form-data'
-            }
-        })
-        return data;
+    const {data} = await axios.post(`/api/masters/products/importProductsExcel`,formData,{
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
     })
+    return data;
 }
 
 productServices.update = async(product) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.put(`/api/masters/products/${product.id}/update`,product)
-        return data;
-    })
+    const {data} = await axios.put(`/api/masters/products/${product.id}/update`,product)
+    return data;
 }
 
 productServices.updateUnit = async(product) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.put(`/api/masters/products/${product.id}/updateUnit`,product)
-        return data;
-    })
+    const {data} = await axios.put(`/api/masters/products/${product.id}/updateUnit`,product)
+    return data;
 }
 
 productServices.delete = async (product) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.delete(`/api/masters/products/${product.id}/delete`);
-        return data;
-    })
+    const {data} = await axios.delete(`/api/masters/products/${product.id}/delete`);
+    return data;
 };
 
 productServices.deleteUnit = async ({productId, unitId}) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.delete(`/api/masters/products/${productId}/deleteUnit/${unitId}`);
-        return data;
-    })
+    const {data} = await axios.delete(`/api/masters/products/${productId}/deleteUnit/${unitId}`);
+    return data;
 };
 
 productServices.ItemMovementDownloadExcel = async (params) => {
@@ -150,10 +136,8 @@ productServices.ItemMovementDownloadExcel = async (params) => {
 };
 
 productServices.mergeProducts = async(product) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.post(`/api/masters/products/mergeProducts`,product)
-        return data;
-    })
+    const {data} = await axios.post(`/api/masters/products/mergeProducts`,product)
+    return data;
 }
 
 export default productServices;

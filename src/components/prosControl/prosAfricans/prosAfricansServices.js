@@ -17,10 +17,8 @@ prosAfricansServices.getUsers = async (params) => {
 };
 
 prosAfricansServices.addRole = async(roleData) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-         const {data} = await axios.post(`/api/prosControl/prosafricans/addRole`,roleData);
-         return data;
-     })
+    const {data} = await axios.post(`/api/prosControl/prosafricans/addRole`,roleData);
+    return data;
 }
 
 prosAfricansServices.permissionOptions = async() => {
@@ -39,36 +37,28 @@ prosAfricansServices.checkMember = async(email) => {
 }
 
 prosAfricansServices.addMember = async(addMemberData) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.post(`/api/prosControl/prosafricans/addMember`,{users: addMemberData});
-        return data;
-    })
+    const {data} = await axios.post(`/api/prosControl/prosafricans/addMember`,{users: addMemberData});
+    return data;
 }
 
 prosAfricansServices.userDetachAction = async(data) => {
     const action = data;
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.delete(`/api/prosControl/prosafricans/${action.user_id}/userDetachAction`, action);
-        return data; 
-    })
+    const {data: responseData} = await axios.delete(`/api/prosControl/prosafricans/${action.user_id}/userDetachAction`, { data: action });
+    return responseData;
 }
 
 prosAfricansServices.userLeaveAction = async(data) => {
     const action = data;
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.delete(`/api/prosControl/prosafricans/${action.user_id}/userLeaveAction`, action);
-        return data; 
-    })
+    const {data: responseData} = await axios.delete(`/api/prosControl/prosafricans/${action.user_id}/userLeaveAction`, { data: action });
+    return responseData;
 }
 
  prosAfricansServices.saveUserRoles = async(user,selectedRoles) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.put(`/api/prosControl/prosafricans/saveUserRoles`,{
-            user_id: user.id,
-            role_ids: selectedRoles
-        });
-        return data;
-    })
+    const {data} = await axios.put(`/api/prosControl/prosafricans/saveUserRoles`,{
+        user_id: user.id,
+        role_ids: selectedRoles
+    });
+    return data;
 }
 
 export default prosAfricansServices;
