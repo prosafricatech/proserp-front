@@ -17,11 +17,11 @@ import {
   FormControl,
   Grid,
   InputLabel,
-  Skeleton,
   List,
   ListItem,
   MenuItem,
   Select,
+  Skeleton,
   Stack,
   TextField,
   Tooltip,
@@ -238,7 +238,7 @@ function ProductSalesCard() {
       <Grid
         container
         columnSpacing={2}
-        paddingLeft={2}
+        paddingLeft={{ xs: 0, md: 2 }}
         sx={{ alignItems: 'center' }}
       >
         <Grid size={{ xs: 3, md: 3 }}>
@@ -266,7 +266,7 @@ function ProductSalesCard() {
             </FormControl>
           </Div>
         </Grid>
-        <Grid size={{ xs: 5, md: 4 }}>
+        <Grid size={{ xs: 6, md: 4 }}>
           <Div>
             <FormControl fullWidth size='small'>
               <InputLabel id='top-products-order-by-direction-label'>
@@ -315,7 +315,7 @@ function ProductSalesCard() {
             </FormControl>
           </Div>
         </Grid>
-        {popularProducts.length > 0 && (
+        {!smallScreen && popularProducts.length > 0 && (
           <Grid size={{ xs: 1, md: 2 }} textAlign='right'>
             <JumboDdMenu
               icon={
@@ -374,15 +374,142 @@ function ProductSalesCard() {
                 </FormControl>
               </Stack>
             </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
+            {smallScreen ? (
+              <Grid size={{ xs: 12 }}>
+                <Actions />
+              </Grid>
+            ) : (
+              <Grid size={{ xs: 12, md: 4 }}>
+                {isFetchingSalesPeople ? (
+                  <Div sx={{ width: '100%', height: '100%', p: 1 }}>
+                    <Skeleton
+                      variant='text'
+                      width='40%'
+                      height={32}
+                      animation='wave'
+                      sx={{ mb: 1 }}
+                    />
+                    <Skeleton
+                      variant='rectangular'
+                      width='100%'
+                      height={160}
+                      animation='wave'
+                      sx={{ mb: 1, borderRadius: 2 }}
+                    />
+                    <Div sx={{ display: 'flex', gap: 2 }}>
+                      <Skeleton
+                        variant='rounded'
+                        width={80}
+                        height={32}
+                        animation='wave'
+                      />
+                      <Skeleton
+                        variant='rounded'
+                        width={80}
+                        height={32}
+                        animation='wave'
+                      />
+                      <Skeleton
+                        variant='rounded'
+                        width={80}
+                        height={32}
+                        animation='wave'
+                      />
+                    </Div>
+                  </Div>
+                ) : (
+                  <Autocomplete
+                    id='checkboxes-salesPerson'
+                    options={salesPersons}
+                    multiple
+                    disableCloseOnSelect
+                    isOptionEqualToValue={(option, value) => option === value}
+                    getOptionLabel={(option: string) => option}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label='Sales Person'
+                        size='small'
+                        fullWidth
+                      />
+                    )}
+                    onChange={(e, newValue: string[] | null) => {
+                      if (newValue) {
+                        setParams((prevParams) => ({
+                          ...prevParams,
+                          sales_persons: newValue,
+                        }));
+                        setSalesPersonsSelected(newValue);
+                      } else {
+                        setParams((prevParams) => ({
+                          ...prevParams,
+                          sales_persons: [],
+                        }));
+                        setSalesPersonsSelected([]);
+                      }
+                    }}
+                  />
+                )}
+              </Grid>
+            )}
+          </Grid>
+        }
+        sx={{
+          height:
+            !isLoading && popularProducts.length < 1
+              ? smallScreen
+                ? 400
+                : 300
+              : smallScreen
+                ? 500
+                : null,
+        }}
+        action={!smallScreen && <Actions />}
+      >
+        {/* {smallScreen && <Actions />} */}
+        {smallScreen && (
+          <Grid
+            container
+            columnSpacing={2}
+            sx={{ alignItems: 'center' }}
+            mt={-3}
+          >
+            <Grid size={{ xs: 11, md: 4 }}>
               {isFetchingSalesPeople ? (
                 <Div sx={{ width: '100%', height: '100%', p: 1 }}>
-                  <Skeleton variant="text" width="40%" height={32} animation="wave" sx={{ mb: 1 }} />
-                  <Skeleton variant="rectangular" width="100%" height={160} animation="wave" sx={{ mb: 1, borderRadius: 2 }} />
+                  <Skeleton
+                    variant='text'
+                    width='40%'
+                    height={32}
+                    animation='wave'
+                    sx={{ mb: 1 }}
+                  />
+                  <Skeleton
+                    variant='rectangular'
+                    width='100%'
+                    height={160}
+                    animation='wave'
+                    sx={{ mb: 1, borderRadius: 2 }}
+                  />
                   <Div sx={{ display: 'flex', gap: 2 }}>
-                    <Skeleton variant="rounded" width={80} height={32} animation="wave" />
-                    <Skeleton variant="rounded" width={80} height={32} animation="wave" />
-                    <Skeleton variant="rounded" width={80} height={32} animation="wave" />
+                    <Skeleton
+                      variant='rounded'
+                      width={80}
+                      height={32}
+                      animation='wave'
+                    />
+                    <Skeleton
+                      variant='rounded'
+                      width={80}
+                      height={32}
+                      animation='wave'
+                    />
+                    <Skeleton
+                      variant='rounded'
+                      width={80}
+                      height={32}
+                      animation='wave'
+                    />
                   </Div>
                 </Div>
               ) : (
@@ -419,21 +546,21 @@ function ProductSalesCard() {
                 />
               )}
             </Grid>
+            {smallScreen && popularProducts.length > 0 && (
+              <Grid size={{ xs: 1, md: 2 }} textAlign='right'>
+                <JumboDdMenu
+                  icon={
+                    <Tooltip title='Share'>
+                      <Share />
+                    </Tooltip>
+                  }
+                  menuItems={menuItems}
+                  onClickCallback={handleItemAction}
+                />
+              </Grid>
+            )}
           </Grid>
-        }
-        sx={{
-          height:
-            !isLoading && popularProducts.length < 1
-              ? smallScreen
-                ? 400
-                : 300
-              : smallScreen
-                ? 500
-                : null,
-        }}
-        action={!smallScreen && <Actions />}
-      >
-        {smallScreen && <Actions />}
+        )}
         <Grid
           container
           columnSpacing={1}
@@ -480,7 +607,12 @@ function ProductSalesCard() {
         >
           <List>
             {isLoading ? (
-              <Skeleton variant="rectangular" width="100%" height={40} sx={{ borderRadius: 2 }} />
+              <Skeleton
+                variant='rectangular'
+                width='100%'
+                height={40}
+                sx={{ borderRadius: 2 }}
+              />
             ) : popularProducts.length > 0 ? (
               popularProducts.map((product: any, index: number) => (
                 <React.Fragment key={index}>
