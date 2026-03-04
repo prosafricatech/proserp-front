@@ -25,6 +25,14 @@ fuelStationServices.dippingReport = async (params) => {
     return data;
 }
 
+fuelStationServices.exportDippingReportToExcel = async (exportedData) => {
+    const res = await axios.post(`/api/exports/excel/dippingReport/`, exportedData, {
+        responseType: 'blob',
+    });
+    // const res = await axios.post(`/api/exports/excel/dippingReport/`, exportedData);
+    return res.data;
+}
+
 fuelStationServices.FuelVouchersReport = async (params) => {
     const { data } = await axios.get(`/api/fuelStations/stations/fuelVouchersReport`, {
         params
