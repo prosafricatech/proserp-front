@@ -4,7 +4,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { Grid, IconButton, LinearProgress, TextField, Tooltip, useMediaQuery } from '@mui/material';
 import { useEffect, useState } from 'react';
 import * as yup from 'yup';
-import { useForm } from 'react-hook-form';
+import { set, useForm } from 'react-hook-form';
 import { LoadingButton } from '@mui/lab';
 import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
 import { Div } from '@jumbo/shared';
@@ -23,8 +23,11 @@ function SubContractTasksTab({
   submitItemForm = false,
   setSubmitItemForm,
   setIsDirty,
+  selectedBoundTo,
+  selectedItemable
 }) {
   const [isAdding, setIsAdding] = useState(false);
+  const [triggerKey, setTriggerKey] = useState(0);
 
   const validationSchema = yup.object({
     expense_ledger_id: yup.number().required("Expense name is required").typeError('Expense name is required'),
@@ -68,6 +71,7 @@ function SubContractTasksTab({
         let updatedSubContractItems = [...subContractItems];
         updatedSubContractItems[index] = normalizedItem;
         await setSubContractItems(updatedSubContractItems);
+        setTriggerKey((prev) => prev + 1);
       } else {
         // Add the new item to the subContractItems array
         await setSubContractItems((subContractItems) => [...subContractItems, normalizedItem]);
@@ -75,13 +79,29 @@ function SubContractTasksTab({
           submitMainForm?.();
         }
         setSubmitItemForm?.(false);
+        setTriggerKey((prev) => prev + 1);
       }
 
+      setTriggerKey((prev) => prev + 1);
       reset();
       setIsDirty?.(false);
       setIsAdding(false);
       setShowForm && setShowForm(false);
   };
+
+  useEffect(() => {
+    if (selectedBoundTo) {
+      setValue('bound_to', selectedBoundTo);
+    } else {
+      setValue('bound_to', null);
+    }
+  
+    if (selectedItemable) {
+      setValue('budget_itemable_id', selectedItemable.id);
+    } else {
+      setValue('budget_itemable_id', null);
+    }
+  }, [selectedBoundTo, selectedItemable, triggerKey, setValue]);
 
   useEffect(() => {
     if (submitItemForm) {

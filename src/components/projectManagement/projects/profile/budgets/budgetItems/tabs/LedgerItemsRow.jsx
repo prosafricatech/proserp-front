@@ -13,6 +13,8 @@ function LedgerItemsRow({
   setSubmitItemForm,
   submitItemForm,
   setIsDirty,
+  selectedBoundTo,
+  selectedItemable
 }) {
   const [showForm, setShowForm] = useState(false);
   const { ungroupedLedgerOptions } = useLedgerSelect();
@@ -112,6 +114,8 @@ function LedgerItemsRow({
             setSubmitItemForm={setSubmitItemForm}
             submitItemForm={submitItemForm}
             setIsDirty={setIsDirty}
+            selectedBoundTo={selectedBoundTo}
+            selectedItemable={selectedItemable}
           />
         )}
     </React.Fragment>

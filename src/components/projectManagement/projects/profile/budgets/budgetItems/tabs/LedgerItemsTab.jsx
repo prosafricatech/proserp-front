@@ -25,10 +25,13 @@ function LedgerItemsTab({
   submitItemForm = false,
   setSubmitItemForm,
   setIsDirty,
+  selectedBoundTo,
+  selectedItemable
 }) {
   const [isAdding, setIsAdding] = useState(false);
   const { ungroupedLedgerOptions } = useLedgerSelect();
   const { currencies } = useCurrencySelect();
+  const [triggerKey, setTriggerKey] = useState(0);
 
   const validationSchema = yup.object({
     ledger_id: yup.number().required("Expense name is required").typeError('Expense name is required'),
@@ -45,6 +48,8 @@ function LedgerItemsTab({
       type: 'ledger',
       ledger_id: ledgerItem?.ledger_id || ledgerItem?.ledger?.id || null,
       ledger: ledgerItem?.ledger || null,
+      bound_to: selectedBoundTo,
+      budget_itemable_id: selectedItemable?.id,
       currency_id: ledgerItem?.currency_id || ledgerItem?.currency?.id || 1,
       currency: ledgerItem?.currency || currencies?.find(c => c.is_base === 1),
       exchange_rate: ledgerItem?.exchange_rate || 1,
@@ -71,6 +76,7 @@ function LedgerItemsTab({
         let updatedLedgerItems = [...ledgerItems];
         updatedLedgerItems[index] = normalizedItem;
         await setLedgerItems(updatedLedgerItems);
+        setTriggerKey((prev) => prev + 1);
       } else {
         // Add the new item to the ledgerItems array
         await setLedgerItems((ledgerItems) => [...ledgerItems, normalizedItem]);
@@ -78,6 +84,7 @@ function LedgerItemsTab({
           submitMainForm?.();
         }
         setSubmitItemForm?.(false);
+        setTriggerKey((prev) => prev + 1);
       }
 
       reset();
@@ -85,6 +92,20 @@ function LedgerItemsTab({
       setIsAdding(false);
       setShowForm && setShowForm(false);
   };
+
+  useEffect(() => {
+    if (selectedBoundTo) {
+      setValue('bound_to', selectedBoundTo);
+    } else {
+      setValue('bound_to', null);
+    }
+  
+    if (selectedItemable) {
+      setValue('budget_itemable_id', selectedItemable.id);
+    } else {
+      setValue('budget_itemable_id', null);
+    }
+  }, [selectedBoundTo, selectedItemable, triggerKey, setValue]);
 
   useEffect(() => {
     if (submitItemForm) {

@@ -2,7 +2,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { FormControl, Grid, IconButton, MenuItem, Select, TextField, Tooltip } from '@mui/material';
 import React, { useEffect, useState } from 'react'
 import * as yup from 'yup';
-import { useForm } from 'react-hook-form';
+import { set, useForm } from 'react-hook-form';
 import { AddOutlined, CheckOutlined, DisabledByDefault } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
@@ -25,12 +25,15 @@ function ProductItemsTab({
   submitItemForm = false,
   setSubmitItemForm,
   setIsDirty,
+  selectedBoundTo,
+  selectedItemable
 }) {
     const {productOptions} = useProductsSelect();
     const {checkOrganizationPermission} = useJumboAuth();
     const [openProductQuickAdd, setOpenProductQuickAdd] = useState(false);
     const [addedProduct, setAddedProduct] = useState(null);
     const [selectedUnit, setSelectedUnit] = useState(null);
+    const [triggerKey, setTriggerKey] = useState(0);
 
     // Define validation schema
     const validationSchema = yup.object({
@@ -63,6 +66,8 @@ function ProductItemsTab({
             description: '',
             unit_symbol: '',
             measurement_unit_id: null,
+            bound_to: selectedBoundTo,
+            budget_itemable_id: selectedItemable?.id || null
         }
     });
 
@@ -92,13 +97,15 @@ function ProductItemsTab({
             let updatedProductItems = [...productItems];
             updatedProductItems[index] = normalizedItem;
             await setProductItems(updatedProductItems);
+            setTriggerKey(prev => prev + 1);
         } else {
             // Add the new item to the productItems array
             await setProductItems((productItems) => [...productItems, normalizedItem]);
             if (submitItemForm) {
-            submitMainForm?.();
+                submitMainForm?.();
             }
             setSubmitItemForm?.(false);
+            setTriggerKey(prev => prev + 1);
         }
 
         reset({
@@ -119,6 +126,20 @@ function ProductItemsTab({
         setIsAdding(false);
         setShowForm && setShowForm(false);
     };
+
+    useEffect(() => {
+        if (selectedBoundTo) {
+            setValue('bound_to', selectedBoundTo);
+        } else {
+            setValue('bound_to', null);
+        }
+    
+        if (selectedItemable) {
+            setValue('budget_itemable_id', selectedItemable.id);
+        } else {
+            setValue('budget_itemable_id', null);
+        }
+    }, [selectedBoundTo, selectedItemable, setValue, triggerKey]);
 
   return (
         <form autoComplete='off' onSubmit={handleSubmit(updateItems)} >
