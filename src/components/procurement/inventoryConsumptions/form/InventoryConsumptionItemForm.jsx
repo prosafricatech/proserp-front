@@ -88,6 +88,7 @@ function InventoryConsumptionItemForm({ setClearFormKey, submitMainForm, submitI
         }
 
         reset();
+        setIsDirty && setIsDirty(false);
         setIsAdding(false);
         setShowForm && setShowForm(false);
     };

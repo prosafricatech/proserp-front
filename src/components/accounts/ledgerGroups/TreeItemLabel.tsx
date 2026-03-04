@@ -40,7 +40,6 @@ const TreeItemLabel: React.FC<TreeItemLabelProps> = ({ node }) => {
 
     const deleteLedgerGroup = (nodeId: number) => {
         setLoading(true);
-        axios.get("/sanctum/csrf-cookie").then(() => {
             axios
                 .delete(`/api/accountsAndFinance/ledgers/${nodeId}/deleteLedgerGroup`)
                 .then((res) => {
@@ -57,7 +56,6 @@ const TreeItemLabel: React.FC<TreeItemLabelProps> = ({ node }) => {
                 .finally(() => {
                     setLoading(false);
                 });
-        });
     };
 
     return (

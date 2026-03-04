@@ -11,38 +11,28 @@ currencyServices.getList = async (params = {}) => {
 },
 
 currencyServices.add = async(currency) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.post(`/api/masters/currencies/add`,currency)
-        return data;
-    })
+    const {data} = await axios.post(`/api/masters/currencies/add`,currency)
+    return data;
 }
 
 currencyServices.updateCurrencyExchangeRate = async(exchangeRate) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.post(`/api/masters/currencies/${exchangeRate.id}/updateCurrencyExchangeRate`,exchangeRate)
-        return data;
-    })
+    const {data} = await axios.post(`/api/masters/currencies/${exchangeRate.id}/updateCurrencyExchangeRate`,exchangeRate)
+    return data;
 }
 
 currencyServices.update = async(currency) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.put(`/api/masters/currencies/${currency.id}/update`,currency)
-        return data;    
-    })
+    const {data} = await axios.put(`/api/masters/currencies/${currency.id}/update`,currency)
+    return data;    
 }
 
 currencyServices.delete = async (id) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.delete(`/api/masters/currencies/${id}/delete`);
-        return data;
-    })
+    const {data} = await axios.delete(`/api/masters/currencies/${id}/delete`);
+    return data;
 };
 
 currencyServices.deleteExchangeRate = async (id) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.delete(`/api/masters/currencies/${id}/deleteExchangeRate`);
-        return data;
-    })
+    const {data} = await axios.delete(`/api/masters/currencies/${id}/deleteExchangeRate`);
+    return data;
 };
 
 currencyServices.getExchangeRate = async(params) => {

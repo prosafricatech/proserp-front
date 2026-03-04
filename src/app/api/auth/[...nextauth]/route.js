@@ -20,7 +20,6 @@ const authOptions = {
             },
           });
 
-          await axiosInstance.get('/sanctum/csrf-cookie');
           const { data } = await axiosInstance.post('/login', credentials, {
             validateStatus: (status) => status < 500,
           });
