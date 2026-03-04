@@ -24,33 +24,27 @@ projectCategoryServices.getAll = async (): Promise<{ id: number; name: string }[
 };
 
 projectCategoryServices.add = async (category: { name: string; description?: string }) => {
-  await axios.get('/sanctum/csrf-cookie').then(async (response) => {
   const { data } = await axios.post('/api/projectManagement/projectCategories/add', category);
   return data;
-  });
 };
 
 projectCategoryServices.update = async (
   category: { id: number; name: string; description?: string }
 ): Promise<UpdateCategoryResponse> => {
-  return await axios.get('/sanctum/csrf-cookie').then(async () => {
-    const { data } = await axios.put(
-      `/api/projectManagement/projectCategories/${category.id}/update`,
-      category
-    );
-    return data;
-  });
+  const { data } = await axios.put(
+    `/api/projectManagement/projectCategories/${category.id}/update`,
+    category
+  );
+  return data;
 };
 
 projectCategoryServices.delete = async (
   params: { id: number }
 ): Promise<DeleteCategoryResponse> => {
-  return await axios.get('/sanctum/csrf-cookie').then(async () => {
-    const { data } = await axios.delete(
-      `/api/projectManagement/projectCategories/${params.id}/delete`
-    );
-    return data;
-  });
+  const { data } = await axios.delete(
+    `/api/projectManagement/projectCategories/${params.id}/delete`
+  );
+  return data;
 };
 
 

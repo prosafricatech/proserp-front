@@ -17,17 +17,13 @@ inventoryConsumptionsServices.getListInStore = async (params) => {
 };
 
 inventoryConsumptionsServices.add = async(inventoryConsumptions) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.post(`/api/inventoryConsumptions/add`,inventoryConsumptions)
-        return data;
-    })
+    const {data} = await axios.post(`/api/inventoryConsumptions/add`,inventoryConsumptions)
+    return data;
 }
 
 inventoryConsumptionsServices.delete = async (inventoryConsumption) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.delete(`/api/inventoryConsumptions/${inventoryConsumption.id}/delete`);
-        return data;
-    })
+    const {data} = await axios.delete(`/api/inventoryConsumptions/${inventoryConsumption.id}/delete`);
+    return data;
 };
 
 inventoryConsumptionsServices.show = async(id) => {
@@ -36,10 +32,8 @@ inventoryConsumptionsServices.show = async(id) => {
 }
 
 inventoryConsumptionsServices.update = async(inventoryConsumption) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.put(`/api/inventoryConsumptions/${inventoryConsumption.id}/update`,inventoryConsumption)
-        return data;
-    })
+    const {data} = await axios.put(`/api/inventoryConsumptions/${inventoryConsumption.id}/update`,inventoryConsumption)
+    return data;
 }
 
 export default inventoryConsumptionsServices;

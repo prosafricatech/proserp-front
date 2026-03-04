@@ -11,13 +11,9 @@ export async function POST(req: NextRequest) {
       headers: {
         'Content-Type':
           'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'Content-Disposition': 'attachment; filename="sales-shifts.xlsx"',
+        'Content-Disposition': 'attachment; filename="dipping-report.xlsx"',
       },
     });
-
-    // return NextResponse.json({
-    //   data: buffer,
-    // });
   } catch (error: any) {
     console.error('Error in API route:', error);
     return new Response(

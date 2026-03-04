@@ -673,7 +673,7 @@ export default function CashierListSummaryPDF({
                               width: '35%',
                             }}
                           >
-                            {amount.toLocaleString('en-US', {
+                            {amount?.toLocaleString('en-US', {
                               minimumFractionDigits: 2,
                               maximumFractionDigits: 2,
                             })}
@@ -707,7 +707,7 @@ export default function CashierListSummaryPDF({
                             width: '34.6%',
                           }}
                         >
-                          {pumpReadingsSubTotal.toLocaleString('en-US', {
+                          {pumpReadingsSubTotal?.toLocaleString('en-US', {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2,
                           })}
@@ -764,8 +764,8 @@ export default function CashierListSummaryPDF({
                               }}
                             >
                               {adj.total_quantity > 0
-                                ? '+' + adj.total_quantity.toLocaleString()
-                                : adj.total_quantity.toLocaleString()}
+                                ? '+' + adj.total_quantity?.toLocaleString()
+                                : adj.total_quantity?.toLocaleString()}
                             </Text>
                             <Text
                               style={{
@@ -778,11 +778,11 @@ export default function CashierListSummaryPDF({
                             >
                               {adj.total_amount > 0
                                 ? '+' +
-                                  adj.total_amount.toLocaleString('en-US', {
+                                  adj.total_amount?.toLocaleString('en-US', {
                                     minimumFractionDigits: 2,
                                     maximumFractionDigits: 2,
                                   })
-                                : adj.total_amount.toLocaleString('en-US', {
+                                : adj.total_amount?.toLocaleString('en-US', {
                                     minimumFractionDigits: 2,
                                     maximumFractionDigits: 2,
                                   })}
@@ -817,11 +817,11 @@ export default function CashierListSummaryPDF({
                         >
                           {adjustmentsAmount > 0
                             ? '+' +
-                              adjustmentsAmount.toLocaleString('en-US', {
+                              adjustmentsAmount?.toLocaleString('en-US', {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2,
                               })
-                            : adjustmentsAmount.toLocaleString('en-US', {
+                            : adjustmentsAmount?.toLocaleString('en-US', {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2,
                               })}
@@ -850,7 +850,7 @@ export default function CashierListSummaryPDF({
                           width: '34.6%',
                         }}
                       >
-                        {(totalPumoAmount + adjustmentsAmount).toLocaleString(
+                        {(totalPumoAmount + adjustmentsAmount)?.toLocaleString(
                           'en-US',
                           {
                             minimumFractionDigits: 2,
@@ -909,7 +909,7 @@ export default function CashierListSummaryPDF({
                             width: '40%',
                           }}
                         >
-                          {t.totalAmount.toLocaleString('en-US', {
+                          {t.totalAmount?.toLocaleString('en-US', {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2,
                           })}
@@ -944,7 +944,7 @@ export default function CashierListSummaryPDF({
                           textAlign: 'right',
                         }}
                       >
-                        {cashDistributionsTotalSummary.toLocaleString('en-US', {
+                        {cashDistributionsTotalSummary?.toLocaleString('en-US', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
@@ -976,7 +976,7 @@ export default function CashierListSummaryPDF({
                           adjustmentsAmount -
                           totalFuelVouchersAmount -
                           otherTransactionsTotal
-                        ).toLocaleString('en-US', {
+                        )?.toLocaleString('en-US', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
@@ -989,7 +989,7 @@ export default function CashierListSummaryPDF({
                           width: '35%',
                         }}
                       >
-                        {cashier.collected_amount.toLocaleString('en-US', {
+                        {cashier.collected_amount?.toLocaleString('en-US', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
@@ -1004,11 +1004,11 @@ export default function CashierListSummaryPDF({
                         }}
                       >
                         {shortOrOver > 0
-                          ? `+${shortOrOver.toLocaleString('en-US', {
+                          ? `+${shortOrOver?.toLocaleString('en-US', {
                               minimumFractionDigits: 2,
                               maximumFractionDigits: 2,
                             })}`
-                          : `${shortOrOver.toLocaleString('en-US', {
+                          : `${shortOrOver?.toLocaleString('en-US', {
                               minimumFractionDigits: 2,
                               maximumFractionDigits: 2,
                             })}`}
@@ -1062,7 +1062,7 @@ export default function CashierListSummaryPDF({
                         width: '35%',
                       }}
                     >
-                      {pump.totalDifference.toLocaleString('en-US', {
+                      {pump.totalDifference?.toLocaleString('en-US', {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       })}
@@ -1096,7 +1096,7 @@ export default function CashierListSummaryPDF({
                   >
                     {pumpSummary
                       .reduce((acc, pump) => acc + pump.totalDifference, 0)
-                      .toLocaleString('en-US', {
+                      ?.toLocaleString('en-US', {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       })}
@@ -1146,7 +1146,7 @@ export default function CashierListSummaryPDF({
                         width: '40%',
                       }}
                     >
-                      {t.totalAmount.toLocaleString('en-US', {
+                      {t.totalAmount?.toLocaleString('en-US', {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       }) || 0.0}
@@ -1177,7 +1177,7 @@ export default function CashierListSummaryPDF({
                       width: '40%',
                     }}
                   >
-                    {grandTotal.toLocaleString('en-US', {
+                    {grandTotal?.toLocaleString('en-US', {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
                     })}
@@ -1208,7 +1208,7 @@ export default function CashierListSummaryPDF({
                       width: '35%',
                     }}
                   >
-                    {totalExpectedAmount.toLocaleString('en-US', {
+                    {totalExpectedAmount?.toLocaleString('en-US', {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
                     })}
@@ -1225,7 +1225,7 @@ export default function CashierListSummaryPDF({
                       width: '35%',
                     }}
                   >
-                    {totalCollectedAmount.toLocaleString('en-US', {
+                    {totalCollectedAmount?.toLocaleString('en-US', {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
                     })}
@@ -1244,11 +1244,11 @@ export default function CashierListSummaryPDF({
                     }}
                   >
                     {totalShortOrOver > 0
-                      ? `+${totalShortOrOver.toLocaleString('en-US', {
+                      ? `+${totalShortOrOver?.toLocaleString('en-US', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}`
-                      : `${totalShortOrOver.toLocaleString('en-US', {
+                      : `${totalShortOrOver?.toLocaleString('en-US', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}`}
@@ -1279,7 +1279,7 @@ export default function CashierListSummaryPDF({
                           width: '34%',
                         }}
                       >
-                        {paymentsReceivedTotal.toLocaleString('en-US', {
+                        {paymentsReceivedTotal?.toLocaleString('en-US', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
@@ -1316,7 +1316,7 @@ export default function CashierListSummaryPDF({
                       >
                         {(
                           paymentsReceivedTotal + totalCollectedAmount
-                        ).toLocaleString('en-US', {
+                        )?.toLocaleString('en-US', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}

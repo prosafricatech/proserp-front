@@ -49,7 +49,7 @@ function BudgetsAccordionDetails({ budget, expanded, isProjectBudget=true }) {
     });
     setLedgerDialogOpen(true);
   };
-
+ 
   return (
     <>
       {isLoading ? (
