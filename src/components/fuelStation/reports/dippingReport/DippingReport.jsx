@@ -92,10 +92,17 @@ function DippingReport({ closeDialog }) {
       .typeError('End Date is required'),
   });
 
+  useEffect(() => {
+    if (activeStation?.id) {
+      retrieveReport(filters);
+    }
+  }, [activeStation]);
+
   const {
     setValue,
     handleSubmit,
     formState: { errors },
+    getValues,
   } = useForm({
     resolver: yupResolver(validationSchema),
     defaultValues: filters,
@@ -118,27 +125,39 @@ function DippingReport({ closeDialog }) {
   const downloadFileName = `Dipping Report ${readableDate(filters.from)}-${readableDate(filters.to)}`;
 
   const handleExcelExport = async () => {
-    if (!reportData || !filters) return;
     setIsExporting(true);
+    setisFetching(true);
+    const { from, to } = getValues();
+    const filtersWithStation = {
+      from,
+      to,
+      fuel_station_id: activeStation?.id,
+      with_calculated_stock: 1,
+    };
+    const report = await fuelStationServices.dippingReport(filtersWithStation);
+    if (!report.report_data?.length || !filtersWithStation) {
+      setIsExporting(false);
+      setisFetching(false);
+      return;
+    }
     try {
       const blob = await fuelStationServices.exportDippingReportToExcel({
-        reportData: reportData,
+        reportData: report.report_data,
         activeStation: activeStation,
-        filters: filters,
+        filters: filtersWithStation,
         organization: organization,
       });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `Dipping Report ${readableDate(filters.from)}-${readableDate(filters.to)}.xlsx`;
+      a.download = `Dipping Report ${readableDate(from)}-${readableDate(to)}.xlsx`;
       a.click();
       URL.revokeObjectURL(url);
-
-      // console.log('blob: ', blob);
     } catch (e) {
       console.error('error exporting file: ', e);
     } finally {
       setIsExporting(false);
+      setisFetching(false);
     }
   };
 
@@ -276,12 +295,12 @@ function DippingReport({ closeDialog }) {
                 <LoadingButton
                   size='small'
                   onClick={handleExcelExport}
-                  disabled={
-                    isFetching ||
-                    isExporting ||
-                    !reportData ||
-                    reportData?.length < 1
-                  }
+                  // disabled={
+                  //   isFetching ||
+                  //   isExporting ||
+                  //   !reportData ||
+                  //   reportData?.length < 1
+                  // }
                   loading={isExporting}
                   sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
                   color='success'

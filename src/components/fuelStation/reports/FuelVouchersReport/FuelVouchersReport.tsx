@@ -34,16 +34,27 @@ import { DateTimePicker } from '@mui/x-date-pickers';
 import { useQuery } from '@tanstack/react-query';
 import dayjs, { Dayjs } from 'dayjs';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
-dayjs.extend(isSameOrAfter);
 import React, { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import PDFContent from '../../../pdf/PDFContent';
 import fuelStationServices from '../../fuelStationServices';
+import FuelVoucherReportOnScreen from './FuelVoucherReportOnScreen';
 import FuelVouchersReportPDF from './FuelVouchersReportPDF';
+dayjs.extend(isSameOrAfter);
 
-interface Station { id: number; name: string; }
-interface Ledger { id: number; name: string; code: string | null; ledger_group_id: number; alias: string | null; nature_id?: number; }
+interface Station {
+  id: number;
+  name: string;
+}
+interface Ledger {
+  id: number;
+  name: string;
+  code: string | null;
+  ledger_group_id: number;
+  alias: string | null;
+  nature_id?: number;
+}
 
 interface QueryParams {
   station_id: number | null;
@@ -63,7 +74,9 @@ interface PDFFilters {
   with_receipts: 0 | 1;
 }
 
-interface fvPdfDialog { closeDialog?: (value: boolean) => void; }
+interface fvPdfDialog {
+  closeDialog?: (value: boolean) => void;
+}
 
 interface FilterFormValues {
   from: Dayjs;
@@ -75,14 +88,22 @@ interface FilterFormValues {
 }
 
 const filterSchema = yup.object({
-  from: yup.mixed<Dayjs>().required('From date is required').test('is-dayjs', 'Invalid date', dayjs.isDayjs),
-  to: yup.mixed<Dayjs>()
+  from: yup
+    .mixed<Dayjs>()
+    .required('From date is required')
+    .test('is-dayjs', 'Invalid date', dayjs.isDayjs),
+  to: yup
+    .mixed<Dayjs>()
     .required('To date is required')
     .test('is-dayjs', 'Invalid date', dayjs.isDayjs)
-    .test('after-or-same', 'To date must be after or same as From date', function (value) {
-      const { from } = this.parent;
-      return !from || !value || dayjs(value).isSameOrAfter(dayjs(from));
-    }),
+    .test(
+      'after-or-same',
+      'To date must be after or same as From date',
+      function (value) {
+        const { from } = this.parent;
+        return !from || !value || dayjs(value).isSameOrAfter(dayjs(from));
+      }
+    ),
   station: yup.mixed<Station>().nullable(),
   stakeholder: yup.mixed().nullable().default(null),
   expense_ledgers: yup.array().of(yup.mixed<Ledger>()).default([]),
@@ -102,27 +123,37 @@ const FuelVouchersReport: React.FC<fvPdfDialog> = ({ closeDialog }) => {
   const [queryParams, setQueryParams] = useState<QueryParams | null>(null);
   const [pdfFilters, setPdfFilters] = useState<PDFFilters | null>(null);
   const [pdfKey, setPdfKey] = useState(0);
-  const [submittedNames, setSubmittedNames] = useState<{ station: string; stakeholder: string }>({
+  const [submittedNames, setSubmittedNames] = useState<{
+    station: string;
+    stakeholder: string;
+  }>({
     station: '',
     stakeholder: '',
   });
 
-  const { control, handleSubmit, setValue, watch } = useForm<FilterFormValues>({
-    resolver: yupResolver(filterSchema) as any,
-    defaultValues: {
-      from: dayjs(),
-      to: dayjs(),
-      station: null,
-      stakeholder: null,
-      expense_ledgers: [],
-      with_receipts: false,
-    },
-  });
+  useEffect(() => {
+    belowLargeScreen ? setActiveTab(1) : setActiveTab(0);
+  }, [belowLargeScreen]);
+
+  const { control, handleSubmit, setValue, watch, getValues } =
+    useForm<FilterFormValues>({
+      resolver: yupResolver(filterSchema) as any,
+      defaultValues: {
+        from: dayjs(),
+        to: dayjs(),
+        station: null,
+        stakeholder: null,
+        expense_ledgers: [],
+        with_receipts: false,
+      },
+    });
 
   const watchStakeholder = watch('stakeholder');
   const watchExpenseLedgers = watch('expense_ledgers');
 
-  const { data: stations, isFetching: isFetchingStations } = useQuery<Station[]>({
+  const { data: stations, isFetching: isFetchingStations } = useQuery<
+    Station[]
+  >({
     queryKey: ['userStations', { userId: authUser?.user?.id }],
     queryFn: fuelStationServices.getUserStations,
   });
@@ -132,7 +163,9 @@ const FuelVouchersReport: React.FC<fvPdfDialog> = ({ closeDialog }) => {
     queryFn: async () => {
       if (!queryParams) return null;
       const clean = Object.fromEntries(
-        Object.entries(queryParams).filter(([, v]) => v !== null && v !== undefined)
+        Object.entries(queryParams).filter(
+          ([, v]) => v !== null && v !== undefined
+        )
       );
       return await fuelStationServices.FuelVouchersReport(clean);
     },
@@ -167,7 +200,7 @@ const FuelVouchersReport: React.FC<fvPdfDialog> = ({ closeDialog }) => {
         expense_ledger_ids: queryParams.expense_ledger_ids,
         with_receipts: queryParams.with_receipts ?? 0,
       });
-      setPdfKey(prev => prev + 1);
+      setPdfKey((prev) => prev + 1);
     }
   }, [reportData, queryParams, submittedNames]);
 
@@ -182,16 +215,61 @@ const FuelVouchersReport: React.FC<fvPdfDialog> = ({ closeDialog }) => {
       from: data.from.toISOString(),
       to: data.to.toISOString(),
       stakeholder_id: data.stakeholder?.id ?? null,
-      expense_ledger_ids: data.expense_ledgers.length > 0
-        ? data.expense_ledgers.map(l => l.id)
-        : null,
+      expense_ledger_ids:
+        data.expense_ledgers.length > 0
+          ? data.expense_ledgers.map((l) => l.id)
+          : null,
       with_receipts: data.with_receipts ? 1 : 0,
     });
   };
 
+  useEffect(() => {
+    onSubmit({
+      from: dayjs(),
+      to: dayjs(),
+      station: null,
+      stakeholder: null,
+      expense_ledgers: [],
+      with_receipts: false,
+    });
+  }, []);
+
   const handleExcelExport = async () => {
-    if (!reportData || !pdfFilters) return;
     setIsExporting(true);
+    const data = getValues();
+    const filters = {
+      station_id: data.station?.id ?? null,
+      from: data.from.toISOString(),
+      to: data.to.toISOString(),
+      stakeholder_id: data.stakeholder?.id ?? null,
+      expense_ledger_ids:
+        data.expense_ledgers.length > 0
+          ? data.expense_ledgers.map((l) => l.id)
+          : null,
+      with_receipts: data.with_receipts ? 1 : 0,
+    };
+
+    const pdfFilters = {
+      from: readableDate(data.from),
+      to: readableDate(data.to),
+      stationName: data.station?.name || '',
+      stakeholder_name: data.stakeholder?.name || '',
+      expense_ledger_ids:
+        data.expense_ledgers.length > 0
+          ? data.expense_ledgers.map((l) => l.id)
+          : null,
+      with_receipts: data.with_receipts ? 1 : 0,
+    };
+
+    const clean = Object.fromEntries(
+      Object.entries(filters).filter(([, v]) => v !== null && v !== undefined)
+    );
+
+    const reportData = await fuelStationServices.FuelVouchersReport(clean);
+    if (!reportData || !reportData.length || !pdfFilters) {
+      setIsExporting(false);
+      return;
+    }
     try {
       const blob = await fuelStationServices.exportFuelVouchersToExcel({
         fuelVouchers: reportData,
@@ -214,34 +292,45 @@ const FuelVouchersReport: React.FC<fvPdfDialog> = ({ closeDialog }) => {
 
   return (
     <>
-      <DialogTitle textAlign="center">
-        <Stack direction="row" justifyContent="center" alignItems="center" position="relative">
-          <Typography variant="h4" fontWeight={600}>
+      <DialogTitle textAlign='center'>
+        <Stack
+          direction='row'
+          justifyContent='center'
+          alignItems='center'
+          position='relative'
+        >
+          <Typography variant='h4' fontWeight={600}>
             Fuel Vouchers Report
           </Typography>
           {belowLargeScreen && (
-            <Tooltip title="Close">
+            <Tooltip title='Close'>
               <IconButton
-                size="small"
-                sx={{ position: 'absolute', right: 20, top: 10 }}
+                size='small'
+                sx={{ position: 'absolute', right: 20, top: 0 }}
                 onClick={() => closeDialog?.(false)}
               >
-                <HighlightOff color="primary" />
+                <HighlightOff color='primary' />
               </IconButton>
             </Tooltip>
           )}
         </Stack>
 
         <Span className={css.hiddenOnPrint}>
-          <form onSubmit={handleSubmit(onSubmit)} autoComplete="off">
-            <Grid container spacing={2} mt={2} alignItems="center" justifyContent="center">
+          <form onSubmit={handleSubmit(onSubmit)} autoComplete='off'>
+            <Grid
+              container
+              spacing={2}
+              mt={2}
+              alignItems='center'
+              justifyContent='center'
+            >
               <Grid size={{ xs: 12, md: 4 }}>
                 <Controller
-                  name="from"
+                  name='from'
                   control={control}
                   render={({ field, fieldState: { error } }) => (
                     <DateTimePicker
-                      label="From"
+                      label='From'
                       value={field.value}
                       minDate={dayjs(organization?.recording_start_date)}
                       ampm={false}
@@ -261,11 +350,11 @@ const FuelVouchersReport: React.FC<fvPdfDialog> = ({ closeDialog }) => {
 
               <Grid size={{ xs: 12, md: 4 }}>
                 <Controller
-                  name="to"
+                  name='to'
                   control={control}
                   render={({ field, fieldState: { error } }) => (
                     <DateTimePicker
-                      label="To"
+                      label='To'
                       value={field.value}
                       minDate={dayjs(organization?.recording_start_date)}
                       ampm={false}
@@ -285,20 +374,22 @@ const FuelVouchersReport: React.FC<fvPdfDialog> = ({ closeDialog }) => {
 
               <Grid size={{ xs: 12, md: 4 }}>
                 <Controller
-                  name="station"
+                  name='station'
                   control={control}
                   render={({ field, fieldState: { error } }) => (
                     <Autocomplete<Station>
-                      size="small"
+                      size='small'
                       options={stations ?? []}
-                      getOptionLabel={option => option.name}
+                      getOptionLabel={(option) => option.name}
                       value={field.value}
-                      isOptionEqualToValue={(option, value) => option.id === value?.id}
+                      isOptionEqualToValue={(option, value) =>
+                        option.id === value?.id
+                      }
                       onChange={(_, newValue) => field.onChange(newValue)}
-                      renderInput={params => (
+                      renderInput={(params) => (
                         <TextField
                           {...params}
-                          label="Station"
+                          label='Station'
                           error={!!error}
                           helperText={error?.message}
                         />
@@ -311,11 +402,11 @@ const FuelVouchersReport: React.FC<fvPdfDialog> = ({ closeDialog }) => {
               {(filterBy === '' || filterBy === 'stakeholder') && (
                 <Grid size={{ xs: 12, md: filterBy === '' ? 6 : 8 }}>
                   <Controller
-                    name="stakeholder"
+                    name='stakeholder'
                     control={control}
                     render={({ field }) => (
                       <StakeholderSelector
-                        label="Client"
+                        label='Client'
                         defaultValue={0}
                         onChange={field.onChange}
                       />
@@ -327,17 +418,17 @@ const FuelVouchersReport: React.FC<fvPdfDialog> = ({ closeDialog }) => {
               {filterBy === 'stakeholder' && (
                 <Grid size={{ xs: 12, md: 4 }}>
                   <Controller
-                    name="with_receipts"
+                    name='with_receipts'
                     control={control}
                     render={({ field }) => (
                       <FormControlLabel
                         control={
                           <Checkbox
                             checked={field.value}
-                            onChange={e => field.onChange(e.target.checked)}
+                            onChange={(e) => field.onChange(e.target.checked)}
                           />
                         }
-                        label="With Receipts"
+                        label='With Receipts'
                       />
                     )}
                   />
@@ -348,15 +439,17 @@ const FuelVouchersReport: React.FC<fvPdfDialog> = ({ closeDialog }) => {
                 <Grid size={{ xs: 12, md: filterBy === '' ? 6 : 12 }}>
                   <Div>
                     <Controller
-                      name="expense_ledgers"
+                      name='expense_ledgers'
                       control={control}
                       render={({ field }) => (
                         <LedgerSelect
-                          label="Expense"
+                          label='Expense'
                           allowedGroups={['Expenses']}
                           multiple={true}
                           defaultValue={[]}
-                          onChange={newValue => field.onChange(newValue || [])}
+                          onChange={(newValue) =>
+                            field.onChange(newValue || [])
+                          }
                         />
                       )}
                     />
@@ -366,26 +459,32 @@ const FuelVouchersReport: React.FC<fvPdfDialog> = ({ closeDialog }) => {
 
               <Grid
                 size={{ xs: 12 }}
-                textAlign="right"
-                sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'end', gap: 1 }}
+                textAlign='right'
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'end',
+                  gap: 1,
+                }}
               >
                 <LoadingButton
-                  size="small"
+                  size='small'
                   onClick={handleExcelExport}
-                  disabled={!hasData || isExporting || isFetchingReport}
+                  // disabled={!hasData || isExporting || isFetchingReport}
                   loading={isExporting}
                   sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-                  color="success"
-                  variant="contained"
+                  color='success'
+                  variant='contained'
                 >
-                  <FontAwesomeIcon icon={faFileExcel} color="green" /> Excel
+                  <FontAwesomeIcon icon={faFileExcel} color='green' /> Excel
                 </LoadingButton>
 
                 <LoadingButton
-                  size="small"
-                  type="submit"
+                  size='small'
+                  type='submit'
                   loading={isFetchingReport}
-                  variant="contained"
+                  variant='contained'
                 >
                   Filter
                 </LoadingButton>
@@ -402,8 +501,8 @@ const FuelVouchersReport: React.FC<fvPdfDialog> = ({ closeDialog }) => {
           <>
             {belowLargeScreen && (
               <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)}>
-                <Tab label="PDF" />
-                <Tab label="ONSCREEN" />
+                <Tab label='PDF' />
+                <Tab label='ONSCREEN' />
               </Tabs>
             )}
 
@@ -420,9 +519,17 @@ const FuelVouchersReport: React.FC<fvPdfDialog> = ({ closeDialog }) => {
                 }
               />
             )}
+
+            {(belowLargeScreen || activeTab === 1) && (
+              <FuelVoucherReportOnScreen
+                reportData={reportData}
+                organization={organization}
+                filters={pdfFilters!}
+              />
+            )}
           </>
         ) : (
-          <Alert variant="outlined" severity="info">
+          <Alert variant='outlined' severity='info'>
             {queryParams
               ? 'No fuel vouchers present for the selected filters'
               : 'Please select filters and click "Filter" to generate the report'}
