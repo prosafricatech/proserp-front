@@ -24,9 +24,7 @@ function SubContractTasksTab({
   submitMainForm,
   submitItemForm = false,
   setSubmitItemForm,
-  setIsDirty,
-  selectedBoundTo,
-  selectedItemable
+  setIsDirty
 }) {
   const [isAdding, setIsAdding] = useState(false);
   const [triggerKey, setTriggerKey] = useState(0);
@@ -49,10 +47,7 @@ function SubContractTasksTab({
     rate: subContractItem?.rate ?? 0,
     expense_ledger_id: subContractItem?.expense_ledger_id ?? null,
     currency: subContractItem?.currency ?? currencies?.find(c => c.is_base === 1),
-    project_task: subContractItem?.project_task ?? selectedItemable,
-    project_task_id: subContractItem?.project_task?.id ?? selectedItemable?.id ?? null,
-    description: subContractItem?.description ?? '',
-    bound_to: subContractItem ? subContractItem.bound_to : selectedBoundTo,
+    description: subContractItem?.description ?? ''
   };
 
   const {
@@ -102,20 +97,6 @@ function SubContractTasksTab({
   };
 
   useEffect(() => {
-    if (selectedBoundTo) {
-      setValue('bound_to', selectedBoundTo);
-    } else {
-      setValue('bound_to', null);
-    }
-  
-    if (selectedItemable) {
-      setValue('budget_itemable_id', selectedItemable.id);
-    } else {
-      setValue('budget_itemable_id', null);
-    }
-  }, [selectedBoundTo, selectedItemable, triggerKey, setValue]);
-
-  useEffect(() => {
     if (submitItemForm) {
       handleSubmit(updateItems, () => {
         setSubmitItemForm?.(false);
@@ -128,7 +109,7 @@ function SubContractTasksTab({
   }
 
   return (
-    <Grid container width="100%" spacing={1}>
+    <Grid container width="100%" spacing={1} key={triggerKey}>
       <Grid size={{ xs: 12, md: 5 }}>
         <Div sx={{ mt: 1 }}>
           <LedgerSelect

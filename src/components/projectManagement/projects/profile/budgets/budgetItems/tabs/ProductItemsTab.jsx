@@ -24,9 +24,7 @@ function ProductItemsTab({
   submitMainForm,
   submitItemForm = false,
   setSubmitItemForm,
-  setIsDirty,
-  selectedBoundTo,
-  selectedItemable
+  setIsDirty
 }) {
     const {productOptions} = useProductsSelect();
     const {checkOrganizationPermission} = useJumboAuth();
@@ -66,8 +64,6 @@ function ProductItemsTab({
             description: '',
             unit_symbol: '',
             measurement_unit_id: null,
-            bound_to: selectedBoundTo,
-            budget_itemable_id: selectedItemable?.id || null
         }
     });
 
@@ -127,22 +123,8 @@ function ProductItemsTab({
         setShowForm && setShowForm(false);
     };
 
-    useEffect(() => {
-        if (selectedBoundTo) {
-            setValue('bound_to', selectedBoundTo);
-        } else {
-            setValue('bound_to', null);
-        }
-    
-        if (selectedItemable) {
-            setValue('budget_itemable_id', selectedItemable.id);
-        } else {
-            setValue('budget_itemable_id', null);
-        }
-    }, [selectedBoundTo, selectedItemable, setValue, triggerKey]);
-
   return (
-        <form autoComplete='off' onSubmit={handleSubmit(updateItems)} >
+        <form autoComplete='off' onSubmit={handleSubmit(updateItems)} key={triggerKey}>
                 <Grid container columnSpacing={1}>
             {
                 !openProductQuickAdd &&

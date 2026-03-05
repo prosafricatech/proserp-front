@@ -158,6 +158,38 @@ const BudgetsForm = ({ setOpenDialog, budget=null, isProjectBudget=true }) => {
 
   const allTasks = getTaskOptions(timelineActivitiesData);
 
+  // Autofill bound_to and budget_itemable_id for all items when Bound To and Task are selected
+  useEffect(() => {
+    if (selectedBoundTo && selectedItemable?.id) {
+      setLedgerItems((items) => items.map(item => ({
+        ...item,
+        bound_to: selectedBoundTo,
+        budget_itemable_id: selectedItemable.id
+      })));
+      setProductItems((items) => items.map(item => ({
+        ...item,
+        bound_to: selectedBoundTo,
+        budget_itemable_id: selectedItemable.id
+      })));
+      setSubContractItems((items) => items.map(item => ({
+        ...item,
+        bound_to: selectedBoundTo,
+        budget_itemable_id: selectedItemable.id,
+        project_task: selectedItemable ?? null,
+        project_task_id: selectedItemable?.id ?? null
+      })));
+    }
+  }, [selectedBoundTo, selectedItemable]);
+
+  // Clear bound_to and budget_itemable_id for all items when cost center changes to null
+  useEffect(() => {
+    if (!selectedCostCenter?.cost_centerable_id) {
+      setLedgerItems((items) => items.map(item => ({ ...item, bound_to: null, budget_itemable_id: null })));
+      setProductItems((items) => items.map(item => ({ ...item, bound_to: null, budget_itemable_id: null })));
+      setSubContractItems((items) => items.map(item => ({ ...item, bound_to: null, budget_itemable_id: null })));
+    }
+  }, [selectedCostCenter?.cost_centerable_id]);
+
   const handleSubmitForm = (data) => {
     const payload = {
       ...data,
@@ -385,8 +417,6 @@ const BudgetsForm = ({ setOpenDialog, budget=null, isProjectBudget=true }) => {
                     setLedgerItems={setLedgerItems}
                     submitMainForm={submitMainForm}
                     submitItemForm={submitItemForm}
-                    selectedBoundTo={selectedBoundTo}
-                    selectedItemable={selectedItemable}
                     setSubmitItemForm={setSubmitItemForm}
                     setIsDirty={setIsDirty}
                   />
@@ -398,8 +428,6 @@ const BudgetsForm = ({ setOpenDialog, budget=null, isProjectBudget=true }) => {
                       ledgerItems={ledgerItems}
                       setLedgerItems={setLedgerItems}
                       submitMainForm={submitMainForm}
-                      selectedBoundTo={selectedBoundTo}
-                      selectedItemable={selectedItemable}
                       setSubmitItemForm={setSubmitItemForm}
                       submitItemForm={submitItemForm}
                       setIsDirty={setIsDirty}
@@ -413,8 +441,6 @@ const BudgetsForm = ({ setOpenDialog, budget=null, isProjectBudget=true }) => {
                     productItems={productItems}
                     setProductItems={setProductItems}
                     submitMainForm={submitMainForm}
-                    selectedBoundTo={selectedBoundTo}
-                    selectedItemable={selectedItemable}
                     submitItemForm={submitItemForm}
                     setSubmitItemForm={setSubmitItemForm}
                     setIsDirty={setIsDirty}
@@ -424,8 +450,6 @@ const BudgetsForm = ({ setOpenDialog, budget=null, isProjectBudget=true }) => {
                       key={`${productItem?.id ?? 'new'}-${index}`}
                       productItem={productItem}
                       index={index}
-                      selectedBoundTo={selectedBoundTo}
-                      selectedItemable={selectedItemable}
                       productItems={productItems}
                       setProductItems={setProductItems}
                     />
@@ -443,8 +467,6 @@ const BudgetsForm = ({ setOpenDialog, budget=null, isProjectBudget=true }) => {
                       subContractItems={subContractItems}
                       setSubContractItems={setSubContractItems}
                       submitMainForm={submitMainForm}
-                      selectedBoundTo={selectedBoundTo}
-                      selectedItemable={selectedItemable}
                       submitItemForm={submitItemForm}
                       setSubmitItemForm={setSubmitItemForm}
                       setIsDirty={setIsDirty}
@@ -455,8 +477,6 @@ const BudgetsForm = ({ setOpenDialog, budget=null, isProjectBudget=true }) => {
                       key={`${subContractItem?.id ?? 'new'}-${index}`}
                       subContractItem={subContractItem}
                       index={index}
-                      selectedBoundTo={selectedBoundTo}
-                      selectedItemable={selectedItemable}
                       subContractItems={subContractItems}
                       setSubContractItems={setSubContractItems}
                     />

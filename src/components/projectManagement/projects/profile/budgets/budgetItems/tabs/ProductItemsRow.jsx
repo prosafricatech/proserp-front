@@ -11,9 +11,7 @@ function ProductItemsRow({
   submitMainForm,
   setSubmitItemForm,
   submitItemForm,
-  setIsDirty,
-  selectedBoundTo,
-  selectedItemable
+  setIsDirty
 }) { 
     const [showForm, setShowForm] = useState(false);
 
@@ -128,8 +126,6 @@ function ProductItemsRow({
                 setSubmitItemForm={setSubmitItemForm}
                 submitItemForm={submitItemForm}
                 setIsDirty={setIsDirty}
-                selectedBoundTo={selectedBoundTo}
-                selectedItemable={selectedItemable}
             />
         )}
     </React.Fragment>

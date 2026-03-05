@@ -24,9 +24,7 @@ function LedgerItemsTab({
   submitMainForm,
   submitItemForm = false,
   setSubmitItemForm,
-  setIsDirty,
-  selectedBoundTo,
-  selectedItemable
+  setIsDirty
 }) {
   const [isAdding, setIsAdding] = useState(false);
   const { ungroupedLedgerOptions } = useLedgerSelect();
@@ -48,8 +46,6 @@ function LedgerItemsTab({
       type: 'ledger',
       ledger_id: ledgerItem?.ledger_id || ledgerItem?.ledger?.id || null,
       ledger: ledgerItem?.ledger || null,
-      bound_to: selectedBoundTo,
-      budget_itemable_id: selectedItemable?.id,
       currency_id: ledgerItem?.currency_id || ledgerItem?.currency?.id || 1,
       currency: ledgerItem?.currency || currencies?.find(c => c.is_base === 1),
       exchange_rate: ledgerItem?.exchange_rate || 1,
@@ -94,20 +90,6 @@ function LedgerItemsTab({
   };
 
   useEffect(() => {
-    if (selectedBoundTo) {
-      setValue('bound_to', selectedBoundTo);
-    } else {
-      setValue('bound_to', null);
-    }
-  
-    if (selectedItemable) {
-      setValue('budget_itemable_id', selectedItemable.id);
-    } else {
-      setValue('budget_itemable_id', null);
-    }
-  }, [selectedBoundTo, selectedItemable, triggerKey, setValue]);
-
-  useEffect(() => {
     if (submitItemForm) {
       handleSubmit(updateItems, () => {
         setSubmitItemForm?.(false);
@@ -121,7 +103,7 @@ function LedgerItemsTab({
 
   return (
     <>
-      <Grid container spacing={1}>
+      <Grid container spacing={1} key={triggerKey}>
         <Grid size={{xs: 12, md: 3.5}}>
           <Div sx={{ mt: 1 }}>
             <LedgerSelect
