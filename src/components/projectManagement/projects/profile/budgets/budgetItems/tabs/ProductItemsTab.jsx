@@ -1,5 +1,5 @@
 import { yupResolver } from '@hookform/resolvers/yup';
-import { FormControl, Grid, IconButton, MenuItem, Select, TextField, Tooltip, InputLabel, Autocomplete } from '@mui/material';
+import { FormControl, Grid, IconButton, MenuItem, Select, TextField, Tooltip, InputLabel, Autocomplete, LinearProgress } from '@mui/material';
 import React, { useEffect, useState } from 'react'
 import * as yup from 'yup';
 import { set, useForm } from 'react-hook-form';
@@ -30,13 +30,14 @@ function ProductItemsTab({
   selectedCostCenter
 }) {
     const {productOptions} = useProductsSelect();
+    const [isAdding, setIsAdding] = useState(false);
     const {checkOrganizationPermission} = useJumboAuth();
     const [openProductQuickAdd, setOpenProductQuickAdd] = useState(false);
     const [addedProduct, setAddedProduct] = useState(null);
     const [selectedUnit, setSelectedUnit] = useState(null);
     const [triggerKey, setTriggerKey] = useState(0);
     const { currencies } = useCurrencySelect();
-    const [boundToOption, setBoundToOption] = useState(productItem?.selectedItemable ? 'Task' : '');
+    const [boundToOption, setBoundToOption] = useState(productItem?.selectedItemable ? 'Task' : productItem?.bound_to === 'ProjectTask' ? 'Task' : '');
     const [selectedItemable, setSelectedItemable] = useState(productItem?.selectedItemable ?? allTasks.find(task => task.id === productItem?.budget_itemable_id) ?? null);
 
     // Define validation schema
@@ -61,7 +62,8 @@ function ProductItemsTab({
         resolver: yupResolver(validationSchema),
         defaultValues: {
             type: 'product',
-            product_id: productItem?.product_id || productItem?.product?.id || null,
+            product: productItem?.product,
+            product_id: productItem?.product_id || productItem?.product?.id,
             currency_id: productItem?.currency_id || productItem?.currency?.id || 1,
             currency: productItem?.currency || currencies?.find(c => c.is_base === 1),
             exchange_rate: productItem?.exchange_rate || 1,
@@ -95,6 +97,9 @@ function ProductItemsTab({
         setIsAdding(true);
         const normalizedItem = {
             ...item,
+            selectedItemable: selectedItemable,
+            budget_itemable_id: selectedItemable?.id || null,
+            bound_to: boundToOption === 'Task' ? 'ProjectTask' : null,
             product: item.product || product,
             product_name: item.product?.name || product?.name,
         };
@@ -133,6 +138,10 @@ function ProductItemsTab({
         setShowForm && setShowForm(false);
     };
 
+    if(isAdding){
+        return <LinearProgress/>
+    }
+
   return (
         <form autoComplete='off' onSubmit={handleSubmit(updateItems)} key={triggerKey}>
                 <Grid container columnSpacing={1}>
@@ -145,6 +154,7 @@ function ProductItemsTab({
                                     multiple={false}
                                     label="Product name"
                                     frontError={errors?.product_id}
+                                    defaultValue={productItem && productItem.product}
                                     addedProduct={addedProduct}
                                     onChange={(newValue) => {
                                         if (!!newValue) {
@@ -181,24 +191,9 @@ function ProductItemsTab({
                                 />
                             </Div>
                         </Grid>
-                        <Grid size={{xs: 12, md: 4}}>
-                            <Div sx={{mt: 1}}>
-                                <TextField
-                                    label="Description"
-                                    fullWidth
-                                    size="small"
-                                    onChange={(e) => {
-                                        setValue(`description`,e.target.value,{
-                                            shouldValidate: true,
-                                            shouldDirty: true
-                                        });
-                                    }}
-                                />
-                            </Div>
-                        </Grid>
                         {selectedCostCenter?.cost_centerable_id &&
                             <>
-                                <Grid size={{ xs: 12, md: 4 }} display="flex" flexDirection="column" alignItems="center" justifyContent="center">
+                                <Grid size={{ xs: 12, md: 4 }} display="flex" flexDirection="column">
                                     <Div sx={{ mt: 1, width: '100%' }}>
                                         <FormControl fullWidth>
                                             <InputLabel id="bound-to-label" sx={{ width: '100%'}}>Bound To</InputLabel>
@@ -243,10 +238,27 @@ function ProductItemsTab({
                                 </Grid>
                             </>
                         }
+                        <Grid size={{xs: 12, md: 4}}>
+                            <Div sx={{mt: 1}}>
+                                <TextField
+                                    label="Description"
+                                    fullWidth
+                                    defaultValue={productItem?.description}
+                                    size="small"
+                                    onChange={(e) => {
+                                        setValue(`description`,e.target.value,{
+                                            shouldValidate: true,
+                                            shouldDirty: true
+                                        });
+                                    }}
+                                />
+                            </Div>
+                        </Grid>
                         <Grid size={{xs: 12, md: watch(`currency_id`) > 1 ? 2 : 4}}>
                             <Div sx={{mt: 1}}>
                                 <CurrencySelector
                                     frontError={errors?.currency_id}
+                                    defaultValue={productItem?.currency_id}
                                     onChange={(newValue) => {
                                         setValue(`currency_id`, newValue ? newValue.id : 1,{
                                             shouldDirty: true,
@@ -288,6 +300,7 @@ function ProductItemsTab({
                                     label="Quantity"
                                     fullWidth
                                     size="small"
+                                    defaultValue={productItem?.quantity}
                                     InputProps={{
                                         inputComponent: CommaSeparatedField,
                                         endAdornment: (
@@ -349,6 +362,7 @@ function ProductItemsTab({
                                     label="Rate"
                                     fullWidth
                                     size="small"
+                                    defaultValue={productItem?.rate}
                                     InputProps={{
                                         inputComponent: CommaSeparatedField,
                                     }}
@@ -363,51 +377,12 @@ function ProductItemsTab({
                                 />
                             </Div>
                         </Grid>
-                        <Grid item xs={12} md={4} textAlign="center">
-                          <FormControl fullWidth>
-                            <InputLabel id="bound-to-label" sx={{ textAlign: 'center', margin: -1 }}>Bound To</InputLabel>
-                            <Select
-                              labelId="bound-to-label"
-                              value={boundToOption}
-                              label="Bound To"
-                              size='small'
-                              fullWidth
-                              onChange={(e) => {
-                                setSelectedItemable(null);
-                                setBoundToOption(e.target.value);
-                                setValue('bound_to', e.target.value);
-                              }}
-                            >
-                              <MenuItem value="Task">Task</MenuItem>
-                              {/* <MenuItem value="Deliverable">Deliverable</MenuItem> */}
-                            </Select>
-                          </FormControl>
-                        </Grid>
-                        <Grid item xs={12} md={4} textAlign="center">
-                          <Autocomplete
-                            options={boundToOption === 'Task' ? allTasks : []}
-                            isOptionEqualToValue={(option, value) => option.id === value?.id}
-                            getOptionLabel={(option) => option.label}
-                            value={selectedItemable}
-                            renderInput={(params) => (
-                              <TextField {...params} label={`Select ${boundToOption}`} size="small" fullWidth />
-                            )}
-                            onChange={(e, newValue) => {
-                              setSelectedItemable(newValue);
-                              setValue('budget_itemable_id', newValue?.id ?? null);
-                            }}
-                            renderOption={(props, option) => (
-                              <li {...props} key={option.id}>
-                                {option.label}
-                              </li>
-                            )}
-                          />
-                        </Grid>
                         <Grid size={{xs: 12, md: 8}}>
                             <Div sx={{ mt: 1 }}>
                                 <ProductSelect
                                     multiple={true}
                                     label="Alternative Products"
+                                    defaultValue={productItem ? productOptions.filter(product => productItem.alternative_product_ids?.includes(product.id)) : []}
                                     excludeIds={productOptions.filter(product => product.primary_unit.unit_symbol !== watch(`unit_symbol`))}
                                     frontError={errors?.alternative_product_ids}
                                     onChange={(newValue) => {

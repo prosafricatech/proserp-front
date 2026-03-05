@@ -48,9 +48,17 @@ function ProductItemsRow({
                 <Grid size={{xs: 11, md: 5}}>
                     <ListItemText
                         primary={
+                        <>
                             <Tooltip title="Product name">
-                               <Typography component="span">{productItem.product_name || productItem?.product?.name || '-'}</Typography>
+                               <Typography component="span">{productItem.product_name || productItem?.product?.name}</Typography>
                             </Tooltip>
+                            <br />
+                            <Tooltip title="Bound To Task">
+                                <Typography component="span" color="primary">
+                                    {productItem.selectedItemable?.name || productItem.selectedItemable?.label || allTasks?.find(task => task.id === productItem?.budget_itemable_id)?.label}
+                                </Typography>
+                            </Tooltip>
+                        </>
                         }
                         secondary={
                             <Tooltip title="Description">
