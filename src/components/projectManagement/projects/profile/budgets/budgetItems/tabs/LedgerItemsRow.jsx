@@ -57,7 +57,7 @@ function LedgerItemsRow({
                     <br />
                     <Tooltip title="Bound To Task">
                       <Typography component="span" color="primary">
-                        {ledgerItem.selectedItemable?.name || ledgerItem.selectedItemable?.label}
+                        {ledgerItem.selectedItemable?.name || ledgerItem.selectedItemable?.label || allTasks?.find(task => task.id === ledgerItem?.budget_itemable_id)?.label}
                       </Typography>
                     </Tooltip>
                   </>

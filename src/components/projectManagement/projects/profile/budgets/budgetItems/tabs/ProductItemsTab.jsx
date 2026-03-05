@@ -14,6 +14,7 @@ import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import ProductQuickAdd from '@/components/productAndServices/products/ProductQuickAdd';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
+import { useCurrencySelect } from '@/components/masters/Currencies/CurrencySelectProvider';
 
 function ProductItemsTab({
   index = -1,
@@ -24,7 +25,9 @@ function ProductItemsTab({
   submitMainForm,
   submitItemForm = false,
   setSubmitItemForm,
-  setIsDirty
+  setIsDirty,
+  allTasks = [],
+  selectedCostCenter
 }) {
     const {productOptions} = useProductsSelect();
     const {checkOrganizationPermission} = useJumboAuth();
@@ -32,11 +35,9 @@ function ProductItemsTab({
     const [addedProduct, setAddedProduct] = useState(null);
     const [selectedUnit, setSelectedUnit] = useState(null);
     const [triggerKey, setTriggerKey] = useState(0);
-    // Bound To/Task state
-    const [boundToOption, setBoundToOption] = useState('Task');
-    const [selectedItemable, setSelectedItemable] = useState(null);
-    // Simulated task options (replace with real data as needed)
-    const allTasks = [];
+    const { currencies } = useCurrencySelect();
+    const [boundToOption, setBoundToOption] = useState(productItem?.selectedItemable ? 'Task' : '');
+    const [selectedItemable, setSelectedItemable] = useState(productItem?.selectedItemable ?? allTasks.find(task => task.id === productItem?.budget_itemable_id) ?? null);
 
     // Define validation schema
     const validationSchema = yup.object({
@@ -60,15 +61,19 @@ function ProductItemsTab({
         resolver: yupResolver(validationSchema),
         defaultValues: {
             type: 'product',
-            product_id: null,
-            currency_id: 1,
-            exchange_rate: 1,
-            rate: '',
-            quantity: '',
-            alternative_product_ids: [],
-            description: '',
-            unit_symbol: '',
-            measurement_unit_id: null,
+            product_id: productItem?.product_id || productItem?.product?.id || null,
+            currency_id: productItem?.currency_id || productItem?.currency?.id || 1,
+            currency: productItem?.currency || currencies?.find(c => c.is_base === 1),
+            exchange_rate: productItem?.exchange_rate || 1,
+            rate: productItem?.rate || '',
+            quantity: productItem?.quantity || '',
+            alternative_product_ids: productItem?.alternative_product_ids || [],
+            description: productItem?.description || '',
+            unit_symbol: productItem?.unit_symbol || '',
+            budget_itemable_id: productItem?.budget_itemable_id || productItem?.selectedItemable?.id || null,
+            selectedItemable: productItem?.selectedItemable ?? allTasks.find(task => task.id === productItem?.budget_itemable_id) ?? null,
+            measurement_unit_id: productItem?.measurement_unit_id || productItem?.measurement_unit?.id || null,
+            measurement_unit: productItem?.measurement_unit || null,
         }
     });
 
@@ -191,6 +196,53 @@ function ProductItemsTab({
                                 />
                             </Div>
                         </Grid>
+                        {selectedCostCenter?.cost_centerable_id &&
+                            <>
+                                <Grid size={{ xs: 12, md: 4 }} display="flex" flexDirection="column" alignItems="center" justifyContent="center">
+                                    <Div sx={{ mt: 1, width: '100%' }}>
+                                        <FormControl fullWidth>
+                                            <InputLabel id="bound-to-label" sx={{ width: '100%'}}>Bound To</InputLabel>
+                                            <Select
+                                                labelId="bound-to-label"
+                                                value={boundToOption}
+                                                label="Bound To"
+                                                size='small'
+                                                fullWidth
+                                                onChange={(e) => {
+                                                    setSelectedItemable(null);
+                                                    setBoundToOption(e.target.value);
+                                                    setValue('bound_to', e.target.value);
+                                                }}
+                                            >
+                                                <MenuItem value="Task">Task</MenuItem>
+                                            </Select>
+                                        </FormControl>
+                                    </Div>
+                                </Grid>
+                                <Grid size={{ xs: 12, md: 4 }} textAlign="center">
+                                    <Div sx={{ mt: 1 }}>
+                                        <Autocomplete
+                                            options={boundToOption === 'Task' ? allTasks : []}
+                                            isOptionEqualToValue={(option, value) => option.id === value?.id}
+                                            getOptionLabel={(option) => option.label}
+                                            value={selectedItemable}
+                                            renderInput={(params) => (
+                                                <TextField {...params} label={`Select ${boundToOption}`} size="small" fullWidth />
+                                            )}
+                                            onChange={(e, newValue) => {
+                                                setSelectedItemable(newValue);
+                                                setValue('budget_itemable_id', newValue?.id ?? null);
+                                            }}
+                                            renderOption={(props, option) => (
+                                                <li {...props} key={option.id}>
+                                                    {option.label}
+                                                </li>
+                                            )}
+                                        />
+                                    </Div>
+                                </Grid>
+                            </>
+                        }
                         <Grid size={{xs: 12, md: watch(`currency_id`) > 1 ? 2 : 4}}>
                             <Div sx={{mt: 1}}>
                                 <CurrencySelector

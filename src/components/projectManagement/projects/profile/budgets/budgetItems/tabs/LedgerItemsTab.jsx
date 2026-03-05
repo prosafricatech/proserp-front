@@ -2,7 +2,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { Grid, TextField, FormControl, InputLabel, Select, MenuItem, Autocomplete } from '@mui/material';
 import { useEffect, useState } from 'react'
 import * as yup from 'yup';
-import { set, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { LoadingButton } from '@mui/lab';
 import { Div } from '@jumbo/shared';
 import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
@@ -29,7 +29,7 @@ function LedgerItemsTab({
   selectedCostCenter
 }) {
   const [isAdding, setIsAdding] = useState(false);
-  const [boundToOption, setBoundToOption] = useState(ledgerItem?.selectedItemable ? 'Task' : '');
+  const [boundToOption, setBoundToOption] = useState(ledgerItem?.selectedItemable ? 'Task' : ledgerItem?.bound_to === 'ProjectTask' ? 'Task' : '');
   const [selectedItemable, setSelectedItemable] = useState(ledgerItem?.selectedItemable ?? allTasks.find(task => task.id === ledgerItem?.budget_itemable_id) ?? null);
   const { ungroupedLedgerOptions } = useLedgerSelect();
   const { currencies } = useCurrencySelect();
@@ -73,6 +73,7 @@ function LedgerItemsTab({
         ...item,
         selectedItemable: selectedItemable,
         budget_itemable_id: selectedItemable?.id || null,
+        bound_to: boundToOption === 'Task' ? 'ProjectTask' : null,
         ledger: item.ledger || ungroupedLedgerOptions.find((ledger) => ledger.id === item.ledger_id),
       };
       if (index > -1) {
