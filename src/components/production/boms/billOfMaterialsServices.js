@@ -20,25 +20,19 @@ billOfMaterialsServices.billOfMaterialDetails = async (id) => {
 }
 
 billOfMaterialsServices.addBillOfMaterials = async(billOfMaterial) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.post(`/api/manufacturing/boms/add`,billOfMaterial)
-        return data;
-    })
+    const {data} = await axios.post(`/api/manufacturing/boms/add`,billOfMaterial)
+    return data;
 }
 
 billOfMaterialsServices.updateBillOfMaterial = async(billOfMaterial) => {
     const id = billOfMaterial.id;
-    return await axios.get('/sanctum/csrf-cookie').then(    async (response) => {
-        const {data} = await axios.put(`/api/manufacturing/boms/${id}/update`,billOfMaterial)
-        return data;    
-    })
+    const {data} = await axios.put(`/api/manufacturing/boms/${id}/update`,billOfMaterial)
+    return data;    
 }
 
 billOfMaterialsServices.delete = async (id) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.delete(`/api/manufacturing/boms/${id}/delete`);
-        return data;
-    })
+    const {data} = await axios.delete(`/api/manufacturing/boms/${id}/delete`);
+    return data;
 };
 
 export default billOfMaterialsServices;

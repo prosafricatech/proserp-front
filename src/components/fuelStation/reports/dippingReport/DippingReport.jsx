@@ -1,17 +1,26 @@
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import useProsERPStyles from '@/app/helpers/style-helpers';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { faFileExcel } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { Div, Span } from '@jumbo/shared';
+import { HighlightOff } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 import {
+  Alert,
   Autocomplete,
   DialogContent,
   DialogTitle,
   Grid,
+  IconButton,
   LinearProgress,
+  Stack,
   TextField,
+  Tooltip,
   Typography,
+  useMediaQuery,
 } from '@mui/material';
 import { DateTimePicker } from '@mui/x-date-pickers';
 import { useQuery } from '@tanstack/react-query';
@@ -23,14 +32,17 @@ import PDFContent from '../../../pdf/PDFContent';
 import fuelStationServices from '../../fuelStationServices';
 import DippingReportPDF from './DippingReportPDF';
 
-function DippingReport() {
+function DippingReport({ closeDialog }) {
   const { authUser } = useJumboAuth();
   const { data: stations, isFetching: isFetchingStation } = useQuery({
     queryKey: ['userStations', { userId: authUser?.user?.id }],
     queryFn: fuelStationServices.getUserStations,
   });
+  const { theme } = useJumboTheme();
+  const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
   const [activeStation, setActiveStation] = useState(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
     if (stations?.length === 1) {
@@ -80,10 +92,17 @@ function DippingReport() {
       .typeError('End Date is required'),
   });
 
+  useEffect(() => {
+    if (activeStation?.id) {
+      retrieveReport(filters);
+    }
+  }, [activeStation]);
+
   const {
     setValue,
     handleSubmit,
     formState: { errors },
+    getValues,
   } = useForm({
     resolver: yupResolver(validationSchema),
     defaultValues: filters,
@@ -105,6 +124,43 @@ function DippingReport() {
 
   const downloadFileName = `Dipping Report ${readableDate(filters.from)}-${readableDate(filters.to)}`;
 
+  const handleExcelExport = async () => {
+    setIsExporting(true);
+    setisFetching(true);
+    const { from, to } = getValues();
+    const filtersWithStation = {
+      from,
+      to,
+      fuel_station_id: activeStation?.id,
+      with_calculated_stock: 1,
+    };
+    const report = await fuelStationServices.dippingReport(filtersWithStation);
+    if (!report.report_data?.length || !filtersWithStation) {
+      setIsExporting(false);
+      setisFetching(false);
+      return;
+    }
+    try {
+      const blob = await fuelStationServices.exportDippingReportToExcel({
+        reportData: report.report_data,
+        activeStation: activeStation,
+        filters: filtersWithStation,
+        organization: organization,
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Dipping Report ${readableDate(from)}-${readableDate(to)}.xlsx`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error('error exporting file: ', e);
+    } finally {
+      setIsExporting(false);
+      setisFetching(false);
+    }
+  };
+
   if (isFetchingStation) {
     return <LinearProgress />;
   }
@@ -112,13 +168,28 @@ function DippingReport() {
   return (
     <>
       <DialogTitle textAlign={'center'}>
-        <Grid container>
-          <Grid size={{ xs: 12, md: 12 }}>
-            <Typography variant='h3' textAlign={'center'}>
-              Dipping Report
-            </Typography>
-          </Grid>
-        </Grid>
+        <Stack
+          direction='row'
+          justifyContent='center'
+          alignItems='center'
+          position='relative'
+        >
+          <Typography variant='h3' textAlign={'center'}>
+            Dipping Report
+          </Typography>
+          {belowLargeScreen && (
+            <Tooltip title='Close'>
+              <IconButton
+                size='small'
+                sx={{ position: 'absolute', right: 20, top: 0 }}
+                onClick={() => closeDialog?.(false)}
+              >
+                <HighlightOff color='primary' />
+              </IconButton>
+            </Tooltip>
+          )}
+        </Stack>
+
         <Span className={css.hiddenOnPrint}>
           <form autoComplete='off' onSubmit={handleSubmit(retrieveReport)}>
             <Grid
@@ -210,7 +281,33 @@ function DippingReport() {
                   />
                 </Div>
               </Grid>
-              <Grid size={12} textAlign='right'>
+              <Grid
+                size={12}
+                textAlign='right'
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'end',
+                  gap: 1,
+                }}
+              >
+                <LoadingButton
+                  size='small'
+                  onClick={handleExcelExport}
+                  // disabled={
+                  //   isFetching ||
+                  //   isExporting ||
+                  //   !reportData ||
+                  //   reportData?.length < 1
+                  // }
+                  loading={isExporting}
+                  sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                  color='success'
+                  variant='contained'
+                >
+                  <FontAwesomeIcon icon={faFileExcel} color='green' /> Excel
+                </LoadingButton>
                 <LoadingButton
                   loading={isFetching}
                   type='submit'
@@ -227,20 +324,22 @@ function DippingReport() {
       <DialogContent>
         {isFetching ? (
           <LinearProgress />
+        ) : reportData && reportData?.length > 0 ? (
+          <PDFContent
+            document={
+              <DippingReportPDF
+                reportData={reportData}
+                activeStation={activeStation}
+                filters={filters}
+                organization={organization}
+              />
+            }
+            fileName={downloadFileName}
+          />
         ) : (
-          reportData && (
-            <PDFContent
-              document={
-                <DippingReportPDF
-                  reportData={reportData}
-                  activeStation={activeStation}
-                  filters={filters}
-                  organization={organization}
-                />
-              }
-              fileName={downloadFileName}
-            />
-          )
+          <Alert variant='outlined' severity='info'>
+            No dipping records present for the selected filters
+          </Alert>
         )}
       </DialogContent>
     </>

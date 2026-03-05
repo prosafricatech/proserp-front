@@ -155,7 +155,7 @@ function QuickReports() {
             isFromDashboard={true}
           />
         )}
-        {openDippingReport && <DippingReport />}
+        {openDippingReport && <DippingReport closeDialog={setOpenDippingReport}/>}
         {openSalesManifest && (
           <StakeholderSelectProvider>
             <SalesManifest setOpenSalesManifest={setOpenSalesManifest} />

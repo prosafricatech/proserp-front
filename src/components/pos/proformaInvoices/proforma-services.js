@@ -21,24 +21,18 @@ proformaServices.getProformaDetails = async (id) => {
 }
 
 proformaServices.add = async(proforma) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.post(`/api/pos/proforma/add`,proforma)
-        return data;
-    })
+    const {data} = await axios.post(`/api/pos/proforma/add`,proforma)
+    return data;
 }
 
 proformaServices.update = async(proforma) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.put(`/api/pos/proforma/${proforma.id}/update`,proforma)
-        return data;
-    })
+    const {data} = await axios.put(`/api/pos/proforma/${proforma.id}/update`,proforma)
+    return data;
 }
 
 proformaServices.deleteProforma = async (id) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.delete(`/api/pos/proforma/${id}/delete`);
-        return data;
-    })
+    const {data} = await axios.delete(`/api/pos/proforma/${id}/delete`);
+    return data;
 };
 
 export default proformaServices;

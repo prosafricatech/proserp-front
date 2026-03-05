@@ -61,7 +61,6 @@ const InvitationListItem: React.FC<InvitationListItemProps> = ({
 
   const respondToInvitation = async (response: boolean) => {
     try {
-      await axios.get("/sanctum/csrf-cookie");
       const res = await axios.put(`/api/invitations/${organization.id}/respond`, {
         response,
       });
