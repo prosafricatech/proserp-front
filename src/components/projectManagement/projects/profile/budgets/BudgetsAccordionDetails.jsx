@@ -100,7 +100,7 @@ function BudgetsAccordionDetails({ budget, expanded }) {
           {/* Expenses */}
           <Grid size={12} paddingTop={1} width={'100%'}>
             {filteredExpenses?.length > 0 ? filteredExpenses.map((item, index) => {
-              const percentageSpent = (item?.spent / item?.budgeted) * 100;
+              const percentageSpent = (item?.budgeted === 0) ? Infinity : (item?.spent / item?.budgeted) * 100;
 
               return (
                 <Grid
@@ -153,8 +153,12 @@ function BudgetsAccordionDetails({ budget, expanded }) {
                   <Grid size={{xs: 4, md: 2}}>
                     <Tooltip title="Percentage Spent">
                       <Chip
-                        label={`${percentageSpent.toFixed(2)}%`}
-                        color={getPercentageColor(percentageSpent)}
+                        label={
+                          percentageSpent === Infinity
+                            ? 'unbudgeted'
+                            : `${percentageSpent.toFixed(2)}%`
+                        }
+                        color={percentageSpent === Infinity ? 'error' : getPercentageColor(percentageSpent)}
                         size="small"
                       />
                     </Tooltip>
@@ -164,9 +168,16 @@ function BudgetsAccordionDetails({ budget, expanded }) {
                       <Box sx={{ width: '100%', textAlign: 'center' }}>
                         <LinearProgress
                           variant="determinate"
-                          value={percentageSpent}
-                          color={getPercentageColor(percentageSpent)}
-                          sx={{ height: 15, borderRadius: 5 }}
+                          value={percentageSpent === Infinity ? 100 : percentageSpent}
+                          color={percentageSpent === Infinity ? 'error' : getPercentageColor(percentageSpent)}
+                          sx={{ height: 15, borderRadius: 5,
+                            ...(percentageSpent === Infinity && {
+                              backgroundColor: (theme) => theme.palette.error.main,
+                              '& .MuiLinearProgress-bar': {
+                                backgroundColor: (theme) => theme.palette.error.main,
+                              },
+                            })
+                          }}
                         />
                       </Box>
                     </Tooltip>
