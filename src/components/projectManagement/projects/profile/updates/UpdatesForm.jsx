@@ -55,7 +55,7 @@ function UpdatesForm({ setOpenDialog, update, setIsUpdateFormOpen = () => {} }) 
   const lastChangeAtRef = useRef(null);
   const lastSnapshotRef = useRef(null);
 
-  const AUTO_SAVE_INTERVAL = 60 * 1000;
+  const AUTO_SAVE_INTERVAL = 1 * 60 * 1000;
   const AUTO_SAVE_TICK = 1000;
 
   const addMutation = useMutation({
