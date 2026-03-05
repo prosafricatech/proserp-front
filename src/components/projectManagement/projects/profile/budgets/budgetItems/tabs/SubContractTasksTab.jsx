@@ -1,7 +1,7 @@
 'use client';
 
 import { yupResolver } from '@hookform/resolvers/yup';
-import { Grid, IconButton, LinearProgress, TextField, Tooltip, useMediaQuery } from '@mui/material';
+import { Autocomplete, FormControl, Grid, IconButton, InputLabel, LinearProgress, MenuItem, Select, TextField, Tooltip, useMediaQuery } from '@mui/material';
 import { useEffect, useState } from 'react';
 import * as yup from 'yup';
 import { set, useForm } from 'react-hook-form';
@@ -24,12 +24,15 @@ function SubContractTasksTab({
   submitMainForm,
   submitItemForm = false,
   setSubmitItemForm,
-  setIsDirty
+  setIsDirty,
+  allTasks = [],
 }) {
   const [isAdding, setIsAdding] = useState(false);
   const [triggerKey, setTriggerKey] = useState(0);
   const { ungroupedLedgerOptions } = useLedgerSelect();
   const { currencies } = useCurrencySelect();
+  const [boundToOption, setBoundToOption] = useState(() => (subContractItem && subContractItem.project_task ? 'Task' : ''));
+  const [selectedItemable, setSelectedItemable] = useState(allTasks.find(task => task.id === subContractItem?.project_task_id) ?? null);
 
   const validationSchema = yup.object({
     expense_ledger_id: yup.number().required("Expense name is required").typeError('Expense name is required'),
@@ -41,10 +44,13 @@ function SubContractTasksTab({
 
   const formDefaultValues = {
     type: 'subcontract_task',
+    expense_ledger: subContractItem?.expense_ledger || null,
     currency_id:  subContractItem?.currency_id ?? currencies?.find(c => c.is_base === 1)?.id,
     exchange_rate: subContractItem?.exchange_rate ?? 1,
     quantity: subContractItem?.quantity ?? 0,
     rate: subContractItem?.rate ?? 0,
+    project_task: subContractItem?.project_task || null,
+    project_task_id: subContractItem?.project_task_id || subContractItem?.project_task?.id || null,
     expense_ledger_id: subContractItem?.expense_ledger_id ?? null,
     currency: subContractItem?.currency ?? currencies?.find(c => c.is_base === 1),
     description: subContractItem?.description ?? ''
@@ -110,11 +116,10 @@ function SubContractTasksTab({
 
   return (
     <Grid container width="100%" spacing={1} key={triggerKey}>
-      {/* Bound To and Select Task fields (required for subcontract tab) */}
-      <Grid item xs={12} md={4} textAlign="center">
-        <Div sx={{mt: 1}}>
+      <Grid size={{ xs: 12, md: 4 }} display="flex" flexDirection="column" alignItems="center" justifyContent="center">
+        <Div sx={{ mt: 1, width: '100%' }}>
           <FormControl fullWidth>
-            <InputLabel id="bound-to-label" sx={{ textAlign: 'center', margin: -1 }}>Bound To</InputLabel>
+            <InputLabel id="bound-to-label" sx={{ width: '100%'}}>Bound To</InputLabel>
             <Select
               labelId="bound-to-label"
               value={boundToOption}
@@ -124,16 +129,15 @@ function SubContractTasksTab({
               onChange={(e) => {
                 setSelectedItemable(null);
                 setBoundToOption(e.target.value);
-                setValue('bound_to', e.target.value, { shouldValidate: true });
+                setValue('bound_to', e.target.value);
               }}
             >
               <MenuItem value="Task">Task</MenuItem>
-              {/* <MenuItem value="Deliverable">Deliverable</MenuItem> */}
             </Select>
           </FormControl>
         </Div>
       </Grid>
-      <Grid item xs={12} md={4} textAlign="center">
+      <Grid size={{ xs: 12, md: 4 }} textAlign="center">
         <Div sx={{ mt: 1 }}>
           <Autocomplete
             options={boundToOption === 'Task' ? allTasks : []}
@@ -141,11 +145,10 @@ function SubContractTasksTab({
             getOptionLabel={(option) => option.label}
             value={selectedItemable}
             renderInput={(params) => (
-              <TextField {...params} label={`Select ${boundToOption}`} size="small" fullWidth error={!!errors.budget_itemable_id} helperText={errors.budget_itemable_id?.message} />
+              <TextField {...params} label={`Select ${boundToOption}`} size="small" fullWidth />
             )}
             onChange={(e, newValue) => {
               setSelectedItemable(newValue);
-              setValue('budget_itemable_id', newValue?.id ?? null, { shouldValidate: true });
             }}
             renderOption={(props, option) => (
               <li {...props} key={option.id}>
@@ -155,7 +158,8 @@ function SubContractTasksTab({
           />
         </Div>
       </Grid>
-      <Grid size={{ xs: 12, md: 5 }}>
+
+      <Grid size={{ xs: 12, md: 4 }}>
         <Div sx={{ mt: 1 }}>
           <LedgerSelect
             multiple={false}
@@ -174,7 +178,7 @@ function SubContractTasksTab({
         </Div>
       </Grid>
 
-      <Grid size={{ xs: 12, md: watch('currency_id') > 1 ? 2.5 : 3 }}>
+      <Grid size={{ xs: 12, md: watch('currency_id') > 1 ? 2 : 4 }}>
         <Div sx={{ mt: 1 }}>
           <CurrencySelector
             frontError={errors?.currency_id}
@@ -189,7 +193,7 @@ function SubContractTasksTab({
       </Grid>
 
       {watch('currency_id') > 1 && (
-        <Grid size={{ xs: 6, md: 2, lg: 1.5 }}>
+        <Grid size={{ xs: 6, md: 2, lg: 2 }}>
           <Div sx={{ mt: 1 }}>
             <TextField
               label="Exchange Rate"
@@ -210,7 +214,7 @@ function SubContractTasksTab({
         </Grid>
       )}
 
-      <Grid size={{ xs: watch('currency_id') > 1 ? 6 : 12, md: watch('currency_id') > 1 ? 1.5 : 2 }}>
+      <Grid size={{ xs: watch('currency_id') > 1 ? 6 : 12, md: watch('currency_id') > 1 ? 4 : 4 }}>
         <Div sx={{ mt: 1 }}>
           <TextField
               label="Quantity"
@@ -230,7 +234,7 @@ function SubContractTasksTab({
         </Div>
       </Grid>
 
-      <Grid size={{ xs: watch('currency_id') > 1 ? 6 : 12, md: watch('currency_id') > 1 ? 1.5 : 2 }}>
+      <Grid size={{ xs: watch('currency_id') > 1 ? 6 : 12, md: watch('currency_id') > 1 ? 4 : 4 }}>
         <Div sx={{ mt: 1 }}>
         <TextField
           label="Rate"
@@ -256,6 +260,7 @@ function SubContractTasksTab({
             label="Description"
             fullWidth
             multiline
+            defaultValue={subContractItem?.description}
             rows={2}
             size="small"
             {...register('description')}

@@ -46,9 +46,6 @@ const BudgetsForm = ({ setOpenDialog, budget=null, isProjectBudget=true }) => {
   const costCenters = authOrganization?.costCenters;
   const { project } = useProjectProfile();
   const [activeTab, setActiveTab] = useState(0);
-  const [boundToOption, setBoundToOption] = useState('');
-  const [selectedBoundTo, setSelectedBoundTo] = useState(null)
-  const [selectedItemable, setSelectedItemable] = useState(null);
   const [serverError, setServerError] = useState(null);
   const [ledgerItems, setLedgerItems] = useState(budget ? budget.ledger_items : []);
   const [productItems, setProductItems] = useState(budget ? budget.product_items : []);
@@ -530,21 +527,15 @@ const BudgetsForm = ({ setOpenDialog, budget=null, isProjectBudget=true }) => {
             )}
             {activeTab === 2 && selectedCostCenter?.cost_centerable_id && (
               <>
-                {!(boundToOption === 'Task' && selectedItemable?.id) ? (
-                  <Alert severity="info" sx={{ mb: 2 }}>
-                    Please select <b>Bound To</b> and <b>Select Task</b> for adding Subcontract Tasks.
-                  </Alert>
-                ) : (
-                  <SubContractTasksTab
-                    subContractItems={subContractItems}
-                    setSubContractItems={setSubContractItems}
-                    submitMainForm={submitMainForm}
-                    submitItemForm={submitItemForm}
-                    setSubmitItemForm={setSubmitItemForm}
-                    setIsDirty={setIsDirty}
-                    selectedCostCenter={selectedCostCenter}
-                  />
-                )}
+                <SubContractTasksTab
+                  subContractItems={subContractItems}
+                  setSubContractItems={setSubContractItems}
+                  submitMainForm={submitMainForm}
+                  submitItemForm={submitItemForm}
+                  setSubmitItemForm={setSubmitItemForm}
+                  setIsDirty={setIsDirty}
+                  selectedCostCenter={selectedCostCenter}
+                />
                 {subContractItems?.map((subContractItem, index) => (
                   <SubContractTasksRow
                     key={`${subContractItem?.id ?? 'new'}-${index}`}
