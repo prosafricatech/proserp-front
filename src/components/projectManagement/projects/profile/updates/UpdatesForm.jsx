@@ -55,7 +55,7 @@ function UpdatesForm({ setOpenDialog, update, setIsUpdateFormOpen = () => {} }) 
   const lastChangeAtRef = useRef(null);
   const lastSnapshotRef = useRef(null);
 
-  const AUTO_SAVE_INTERVAL = 1 * 60 * 1000;
+  const AUTO_SAVE_INTERVAL = 60 * 1000;
   const AUTO_SAVE_TICK = 1000;
 
   const addMutation = useMutation({
@@ -138,8 +138,10 @@ function UpdatesForm({ setOpenDialog, update, setIsUpdateFormOpen = () => {} }) 
           if (response?.id) {
             formIdRef.current = response.id;
           }
+          queryClient.invalidateQueries({ queryKey: ['projectUpdates'] });
         } else {
           await projectsServices.updateProjectUpdates(payload);
+          queryClient.invalidateQueries({ queryKey: ['projectUpdates'] });
         }
       } finally {
         isAutoSavingRef.current = false;
