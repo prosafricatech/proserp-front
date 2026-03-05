@@ -53,8 +53,14 @@ const BudgetsForm = ({ setOpenDialog, budget=null, isProjectBudget=true }) => {
   const [ledgerItems, setLedgerItems] = useState(budget ? budget.ledger_items : []);
   const [productItems, setProductItems] = useState(budget ? budget.product_items : []);
   const [subContractItems, setSubContractItems] = useState(budget ? budget.subcontract_task_items : []);
+  // Store subcontract tasks per project cost center id
+  const [subContractItemsByCostCenter, setSubContractItemsByCostCenter] = useState({});
+  const [showRestoreDialog, setShowRestoreDialog] = useState(false);
+  const [restoreTargetCostCenter, setRestoreTargetCostCenter] = useState(null);
 
   const [showWarning, setShowWarning] = useState(false);
+  const [showSubcontractLossDialog, setShowSubcontractLossDialog] = useState(false);
+  const [pendingCostCenter, setPendingCostCenter] = useState(null);
   const [isDirty, setIsDirty] = useState(false);
   const [submitItemForm, setSubmitItemForm] = useState(false);
 
@@ -122,6 +128,12 @@ const BudgetsForm = ({ setOpenDialog, budget=null, isProjectBudget=true }) => {
   const selectedCostCenterId = watch('cost_center_id');
   const selectedCostCenter = useMemo(() => costCenters?.find(c => c.id === selectedCostCenterId), [costCenters, selectedCostCenterId]);
   const timelineProjectId = selectedCostCenter?.cost_centerable_id || project?.id;
+
+    // Track previous project-typed cost center for dialog logic
+  const prevProjectCostCenterRef = React.useRef(selectedCostCenter?.cost_centerable_id);
+  useEffect(() => {
+    prevProjectCostCenterRef.current = selectedCostCenter?.cost_centerable_id;
+  }, [selectedCostCenter?.cost_centerable_id]);
 
   const { data: timelineActivitiesData, isFetching: isTimelineActivitiesFetching } = useQuery({
     queryKey: ['projectTimelineActivities', timelineProjectId],
@@ -230,6 +242,45 @@ const BudgetsForm = ({ setOpenDialog, budget=null, isProjectBudget=true }) => {
         {budget ? `Edit ${budget?.name} Budget` : isProjectBudget ? 'New Project Budget' : 'New Budget'}
       </DialogTitle>
       <DialogContent>
+        {/* Restore dialog should be rendered at the top level, not inside Grid */}
+        <Dialog open={showRestoreDialog} onClose={() => setShowRestoreDialog(false)}>
+          <DialogTitle>Restore Previous Subcontract Tasks?</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              You have previous Subcontract Tasks for this cost center. Would you like to restore them or start with a blank list?
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => {
+              setShowRestoreDialog(false);
+              setValue('cost_center_id', restoreTargetCostCenter?.id, {
+                shouldValidate: true,
+                shouldDirty: true,
+              });
+              setSubContractItems([]);
+              setRestoreTargetCostCenter(null);
+              if (activeTab === 2 && !restoreTargetCostCenter?.cost_centerable_id) {
+                setActiveTab(0);
+              }
+            }} color="inherit">
+              Start New
+            </Button>
+            <Button onClick={() => {
+              setShowRestoreDialog(false);
+              setValue('cost_center_id', restoreTargetCostCenter?.id, {
+                shouldValidate: true,
+                shouldDirty: true,
+              });
+              setSubContractItems(subContractItemsByCostCenter[restoreTargetCostCenter.cost_centerable_id] || []);
+              setRestoreTargetCostCenter(null);
+              if (activeTab === 2 && !restoreTargetCostCenter?.cost_centerable_id) {
+                setActiveTab(0);
+              }
+            }} color="primary" variant="contained">
+              Restore Previous
+            </Button>
+          </DialogActions>
+        </Dialog>
         <Grid container spacing={1.5} alignItems="center" justifyContent="center" sx={{ mt: 1 }}>
             <Grid size={{xs: 12, md: 4}}>
               <TextField
@@ -302,16 +353,119 @@ const BudgetsForm = ({ setOpenDialog, budget=null, isProjectBudget=true }) => {
                 }
                 multiple={false}
                 onChange={(newValue) => {
+                  // Always update subContractItemsByCostCenter before dialog logic
+                  let updatedSubContractItemsByCostCenter = { ...subContractItemsByCostCenter };
+                  if (selectedCostCenter?.cost_centerable_id) {
+                    updatedSubContractItemsByCostCenter[selectedCostCenter.cost_centerable_id] = subContractItems;
+                  }
+                  // If switching from project to non-project, save current tasks and clear
+                  if (!newValue?.cost_centerable_id && selectedCostCenter?.cost_centerable_id) {
+                    setSubContractItemsByCostCenter(updatedSubContractItemsByCostCenter);
+                    setSubContractItems([]);
+                  }
+                  // If switching between two project cost centers and there is data, show dialog
+                  else if (
+                    newValue?.cost_centerable_id &&
+                    selectedCostCenter?.cost_centerable_id &&
+                    newValue?.cost_centerable_id !== selectedCostCenter?.cost_centerable_id &&
+                    subContractItems.length > 0
+                  ) {
+                    setSubContractItemsByCostCenter(updatedSubContractItemsByCostCenter);
+                    setPendingCostCenter(newValue);
+                    setShowSubcontractLossDialog(true);
+                    return; // Don't change cost center yet
+                  }
+                  // If switching to a project cost center with saved tasks, prompt to restore
+                  if (
+                    newValue?.cost_centerable_id &&
+                    updatedSubContractItemsByCostCenter[newValue.cost_centerable_id]?.length > 0
+                  ) {
+                    setSubContractItemsByCostCenter(updatedSubContractItemsByCostCenter);
+                    setRestoreTargetCostCenter(newValue);
+                    setShowRestoreDialog(true);
+                    return;
+                  }
+                  setSubContractItemsByCostCenter(updatedSubContractItemsByCostCenter);
                   setValue('cost_center_id', newValue?.id, {
                     shouldValidate: true,
                     shouldDirty: true,
                   });
-
                   if (activeTab === 2 && !newValue?.cost_centerable_id) {
                     setActiveTab(0);
                   }
+                  {/* Dialog for restoring previous subcontract tasks */}
+                  <Dialog open={showRestoreDialog} onClose={() => setShowRestoreDialog(false)}>
+                    <DialogTitle>Restore Previous Subcontract Tasks?</DialogTitle>
+                    <DialogContent>
+                      <DialogContentText>
+                        You have previous Subcontract Tasks for this cost center. Would you like to restore them or start with a blank list?
+                      </DialogContentText>
+                    </DialogContent>
+                    <DialogActions>
+                      <Button onClick={() => {
+                        setShowRestoreDialog(false);
+                        setValue('cost_center_id', restoreTargetCostCenter?.id, {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                        });
+                        setSubContractItems([]);
+                        setRestoreTargetCostCenter(null);
+                        if (activeTab === 2 && !restoreTargetCostCenter?.cost_centerable_id) {
+                          setActiveTab(0);
+                        }
+                      }} color="inherit">
+                        Start New
+                      </Button>
+                      <Button onClick={() => {
+                        setShowRestoreDialog(false);
+                        setValue('cost_center_id', restoreTargetCostCenter?.id, {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                        });
+                        setSubContractItems(subContractItemsByCostCenter[restoreTargetCostCenter.cost_centerable_id] || []);
+                        setRestoreTargetCostCenter(null);
+                        if (activeTab === 2 && !restoreTargetCostCenter?.cost_centerable_id) {
+                          setActiveTab(0);
+                        }
+                      }} color="primary" variant="contained">
+                        Restore Previous
+                      </Button>
+                    </DialogActions>
+                  </Dialog>
                 }}
               />
+                  {/* Dialog for subcontract task data loss warning */}
+                  <Dialog open={showSubcontractLossDialog} onClose={() => setShowSubcontractLossDialog(false)}>
+                    <DialogTitle>Subcontract Tasks Will Be Lost</DialogTitle>
+                    <DialogContent>
+                      <DialogContentText>
+                        Changing the cost center will clear all current Subcontract Tasks. Do you want to continue?
+                      </DialogContentText>
+                    </DialogContent>
+                    <DialogActions>
+                      <Button onClick={() => setShowSubcontractLossDialog(false)} color="inherit">
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          setShowSubcontractLossDialog(false);
+                          setSubContractItems([]);
+                          setValue('cost_center_id', pendingCostCenter?.id, {
+                            shouldValidate: true,
+                            shouldDirty: true,
+                          });
+                          if (activeTab === 2 && !pendingCostCenter?.cost_centerable_id) {
+                            setActiveTab(0);
+                          }
+                          setPendingCostCenter(null);
+                        }}
+                        color="warning"
+                        variant="contained"
+                      >
+                        Continue
+                      </Button>
+                    </DialogActions>
+                  </Dialog>
             </Grid> 
 
             {selectedCostCenter?.cost_centerable_id && (
