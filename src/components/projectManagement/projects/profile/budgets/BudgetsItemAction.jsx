@@ -1,14 +1,35 @@
 'use client'
 import React, { useState } from 'react';
 import { DeleteOutlined, EditOutlined, MoreHorizOutlined } from '@mui/icons-material';
-import { Dialog, Tooltip, useMediaQuery } from '@mui/material';
+import { Dialog, Skeleton, Tooltip, useMediaQuery } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
 import BudgetsForm from './BudgetsForm';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import projectsServices from '../../project-services';
 import { JumboDdMenu } from '@jumbo/components';
+
+const EditBudget = ({ budget, setOpenDialog }) => {
+  const { data: budgetDetails, isFetching } = useQuery({
+    queryKey: ['editBudget', { id: budget.id }],
+    queryFn: async () => projectsServices.getbudgetItemsDetails(budget.id),
+  });
+
+  if (isFetching) {
+    return (
+      <div style={{ width: '100%', padding: '16px' }}>
+        <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
+        <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
+        <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+      </div>
+    );
+  }
+
+  return (
+    <BudgetsForm budget={budgetDetails} setOpenDialog={setOpenDialog} />
+  );
+};
 
 const BudgetsItemAction = ({ budget }) => {
   const [openEditDialog, setOpenEditDialog] = useState(false);
@@ -64,10 +85,10 @@ const BudgetsItemAction = ({ budget }) => {
         open={openEditDialog}
         fullWidth
         fullScreen={belowLargeScreen}
-        maxWidth="md"
+        maxWidth="lg"
         scroll={belowLargeScreen ? 'body' : 'paper'}
       >
-        <BudgetsForm budget={budget} setOpenDialog={setOpenEditDialog} />
+        <EditBudget budget={budget} setOpenDialog={setOpenEditDialog} />
       </Dialog>
 
       <JumboDdMenu

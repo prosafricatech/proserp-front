@@ -10,9 +10,9 @@ import { VisibilityOutlined } from '@mui/icons-material';
 import LedgerStatementDialogContent from '@/components/accounts/ledgers/list/ledgerStatement/LedgerStatementDialogContent';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 
-function BudgetsAccordionDetails({ budget, expanded }) {
+function BudgetsAccordionDetails({ budget, expanded, isProjectBudget=true }) {
   const { currencies } = useCurrencySelect();
-  const baseCurrency = currencies.find(c => c.is_base === 1);
+  const baseCurrency = currencies?.find(c => c.is_base === 1);
   const [searchQueryNames, setSearchQueryNames] = useState([]);
   const [ledgerDialogOpen, setLedgerDialogOpen] = useState(false);
   const [ledgerFilters, setLedgerFilters] = useState(null);
@@ -74,9 +74,11 @@ function BudgetsAccordionDetails({ budget, expanded }) {
                 onChange={(newValue) => setSearchQueryNames(newValue.map(l => l.name))}
               />
             </Grid>
-            <Grid size={{xs: 12, md: 0.5}} textAlign="end">
-              <BudgetItemsActionTail budget={budgetItemsDetails} />
-            </Grid>
+            {isProjectBudget && (
+              <Grid size={{xs: 12, md: 0.5}} textAlign="end">
+                <BudgetItemsActionTail budget={budgetItemsDetails} isProjectBudget={isProjectBudget} />
+              </Grid>
+            )}
           </Grid>
 
           {/* Summary */}

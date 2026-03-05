@@ -30,7 +30,7 @@ import { useCurrencySelect } from '@/components/masters/Currencies/CurrencySelec
 import { Div } from '@jumbo/shared';
 import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
 
-const BudgetItemsForm = ({ budget, setOpenDialog }) => {
+const BudgetItemsForm = ({ budget, setOpenDialog, isProjectBudget=true }) => {
   const { deliverable_groups, projectTimelineActivities} = useProjectProfile();
   const [activeTab, setActiveTab] = useState(0);
   const [boundToOption, setBoundToOption] = useState('');
@@ -127,57 +127,60 @@ const BudgetItemsForm = ({ budget, setOpenDialog }) => {
     <>
       <Typography textAlign={'center'} variant='h4' paddingTop={3}>{`Budget For ${selectedItemable ? selectedItemable?.label : `Project`}`}</Typography>
       <DialogTitle textAlign={'center'}>
-        <Grid container width={'100%'} justifyContent="center" alignItems="center" columnSpacing={1}>
-          <Grid size={{xs: 12, md: 3.5}} textAlign="center">
-            <Div sx={{mt: 1}}>
-              <FormControl fullWidth>
-                <InputLabel id="bound-to-label" sx={{ textAlign: 'center', margin: -1 }}>Bound To</InputLabel>
-                <Select
-                  labelId="bound-to-label"
-                  value={boundToOption}
-                  label="Bound To"
-                  size='small'
-                  fullWidth
-                  onChange={(e) => {
-                    setSelectedItemable(null);
-                    setSelectedBoundTo(null);
-                    setBoundToOption(e.target.value);
+        {
+          isProjectBudget && 
+          <Grid container width={'100%'} justifyContent="center" alignItems="center" columnSpacing={1}>
+            <Grid size={{xs: 12, md: 3.5}} textAlign="center">
+              <Div sx={{mt: 1}}>
+                <FormControl fullWidth>
+                  <InputLabel id="bound-to-label" sx={{ textAlign: 'center', margin: -1 }}>Bound To</InputLabel>
+                  <Select
+                    labelId="bound-to-label"
+                    value={boundToOption}
+                    label="Bound To"
+                    size='small'
+                    fullWidth
+                    onChange={(e) => {
+                      setSelectedItemable(null);
+                      setSelectedBoundTo(null);
+                      setBoundToOption(e.target.value);
+                    }}
+                  >
+                    <MenuItem value="Task">Task</MenuItem>
+                    {/* <MenuItem value="Deliverable">Deliverable</MenuItem> */}
+                  </Select>
+                </FormControl>
+              </Div>
+            </Grid>
+            <Grid size={{xs: 12, md: 8.5}} textAlign="center">
+              <Div sx={{ mt: 1 }}>
+                <Autocomplete
+                  options={boundToOption === 'Task' ? allTasks : boundToOption === 'Deliverable' ? deliverables : []}
+                  isOptionEqualToValue={(option, value) => option.id === value?.id}
+                  getOptionLabel={(option) => option.label}
+                  value={selectedItemable}
+                  renderInput={(params) => (
+                    <TextField {...params} label={`Select ${boundToOption}`} size="small" fullWidth />
+                  )}
+                  onChange={(e, newValue) => {
+                    if (newValue) {
+                      setSelectedItemable(newValue);
+                      setSelectedBoundTo(boundToOption === 'Task' ? 'ProjectTask' : 'ProjectDeliverable');
+                    } else {
+                      setSelectedItemable(null);
+                      setSelectedBoundTo(null);
+                    }
                   }}
-                >
-                  <MenuItem value="Task">Task</MenuItem>
-                  {/* <MenuItem value="Deliverable">Deliverable</MenuItem> */}
-                </Select>
-              </FormControl>
-            </Div>
+                  renderOption={(props, option) => (
+                    <li {...props} key={option.id}>
+                      {option.label}
+                    </li>
+                  )}
+                />
+              </Div>
+            </Grid>
           </Grid>
-          <Grid size={{xs: 12, md: 8.5}} textAlign="center">
-            <Div sx={{ mt: 1 }}>
-              <Autocomplete
-                options={boundToOption === 'Task' ? allTasks : boundToOption === 'Deliverable' ? deliverables : []}
-                isOptionEqualToValue={(option, value) => option.id === value?.id}
-                getOptionLabel={(option) => option.label}
-                value={selectedItemable}
-                renderInput={(params) => (
-                  <TextField {...params} label={`Select ${boundToOption}`} size="small" fullWidth />
-                )}
-                onChange={(e, newValue) => {
-                  if (newValue) {
-                    setSelectedItemable(newValue);
-                    setSelectedBoundTo(boundToOption === 'Task' ? 'ProjectTask' : 'ProjectDeliverable');
-                  } else {
-                    setSelectedItemable(null);
-                    setSelectedBoundTo(null);
-                  }
-                }}
-                renderOption={(props, option) => (
-                  <li {...props} key={option.id}>
-                    {option.label}
-                  </li>
-                )}
-              />
-            </Div>
-          </Grid>
-        </Grid>
+        }
         <Tabs
           value={activeTab}
           onChange={(e, newValue) => setActiveTab(newValue)}
@@ -187,12 +190,12 @@ const BudgetItemsForm = ({ budget, setOpenDialog }) => {
         >
           <Tab label="Expense Items"/>
           <Tab label="Product Items"/>
-          <Tab label="Subcontract Tasks"/>
+          {isProjectBudget && <Tab label="Subcontract Tasks"/>}
         </Tabs>
-        
+
         {activeTab === 0 && <LedgerItemsTab budget={budget} selectedBoundTo={selectedBoundTo} selectedItemable={selectedItemable}/>}
         {activeTab === 1 && <ProductItemsTab budget={budget} selectedBoundTo={selectedBoundTo} selectedItemable={selectedItemable}/>}
-        {activeTab === 2 && boundToOption === 'Task' && selectedItemable?.id && <SubContractTasksTab budget={budget} selectedBoundTo={selectedBoundTo} selectedItemable={selectedItemable}/>}
+        {activeTab === 2 && isProjectBudget && boundToOption === 'Task' && selectedItemable?.id && <SubContractTasksTab budget={budget} selectedBoundTo={selectedBoundTo} selectedItemable={selectedItemable}/>}
 
       </DialogTitle>
       <DialogContent>
