@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Alert, Box, Chip, Dialog, Grid, IconButton, LinearProgress, Skeleton, Tooltip, Typography, useMediaQuery } from '@mui/material';
-import BudgetItemsActionTail from './BudgetItemsActionTail';
 import projectsServices from '../../project-services';
 import { useQuery } from '@tanstack/react-query';
 import { useCurrencySelect } from '@/components/masters/Currencies/CurrencySelectProvider';
@@ -10,7 +9,7 @@ import { VisibilityOutlined } from '@mui/icons-material';
 import LedgerStatementDialogContent from '@/components/accounts/ledgers/list/ledgerStatement/LedgerStatementDialogContent';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 
-function BudgetsAccordionDetails({ budget, expanded, isProjectBudget=true }) {
+function BudgetsAccordionDetails({ budget, expanded }) {
   const { currencies } = useCurrencySelect();
   const baseCurrency = currencies?.find(c => c.is_base === 1);
   const [searchQueryNames, setSearchQueryNames] = useState([]);
@@ -74,11 +73,6 @@ function BudgetsAccordionDetails({ budget, expanded, isProjectBudget=true }) {
                 onChange={(newValue) => setSearchQueryNames(newValue.map(l => l.name))}
               />
             </Grid>
-            {isProjectBudget && (
-              <Grid size={{xs: 12, md: 0.5}} textAlign="end">
-                <BudgetItemsActionTail budget={budgetItemsDetails} isProjectBudget={isProjectBudget} />
-              </Grid>
-            )}
           </Grid>
 
           {/* Summary */}
