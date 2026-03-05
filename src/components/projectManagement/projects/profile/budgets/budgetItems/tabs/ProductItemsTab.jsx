@@ -1,5 +1,5 @@
 import { yupResolver } from '@hookform/resolvers/yup';
-import { FormControl, Grid, IconButton, MenuItem, Select, TextField, Tooltip } from '@mui/material';
+import { FormControl, Grid, IconButton, MenuItem, Select, TextField, Tooltip, InputLabel, Autocomplete } from '@mui/material';
 import React, { useEffect, useState } from 'react'
 import * as yup from 'yup';
 import { set, useForm } from 'react-hook-form';
@@ -32,6 +32,11 @@ function ProductItemsTab({
     const [addedProduct, setAddedProduct] = useState(null);
     const [selectedUnit, setSelectedUnit] = useState(null);
     const [triggerKey, setTriggerKey] = useState(0);
+    // Bound To/Task state
+    const [boundToOption, setBoundToOption] = useState('Task');
+    const [selectedItemable, setSelectedItemable] = useState(null);
+    // Simulated task options (replace with real data as needed)
+    const allTasks = [];
 
     // Define validation schema
     const validationSchema = yup.object({
@@ -305,6 +310,46 @@ function ProductItemsTab({
                                     }}
                                 />
                             </Div>
+                        </Grid>
+                        <Grid item xs={12} md={4} textAlign="center">
+                          <FormControl fullWidth>
+                            <InputLabel id="bound-to-label" sx={{ textAlign: 'center', margin: -1 }}>Bound To</InputLabel>
+                            <Select
+                              labelId="bound-to-label"
+                              value={boundToOption}
+                              label="Bound To"
+                              size='small'
+                              fullWidth
+                              onChange={(e) => {
+                                setSelectedItemable(null);
+                                setBoundToOption(e.target.value);
+                                setValue('bound_to', e.target.value);
+                              }}
+                            >
+                              <MenuItem value="Task">Task</MenuItem>
+                              {/* <MenuItem value="Deliverable">Deliverable</MenuItem> */}
+                            </Select>
+                          </FormControl>
+                        </Grid>
+                        <Grid item xs={12} md={4} textAlign="center">
+                          <Autocomplete
+                            options={boundToOption === 'Task' ? allTasks : []}
+                            isOptionEqualToValue={(option, value) => option.id === value?.id}
+                            getOptionLabel={(option) => option.label}
+                            value={selectedItemable}
+                            renderInput={(params) => (
+                              <TextField {...params} label={`Select ${boundToOption}`} size="small" fullWidth />
+                            )}
+                            onChange={(e, newValue) => {
+                              setSelectedItemable(newValue);
+                              setValue('budget_itemable_id', newValue?.id ?? null);
+                            }}
+                            renderOption={(props, option) => (
+                              <li {...props} key={option.id}>
+                                {option.label}
+                              </li>
+                            )}
+                          />
                         </Grid>
                         <Grid size={{xs: 12, md: 8}}>
                             <Div sx={{ mt: 1 }}>

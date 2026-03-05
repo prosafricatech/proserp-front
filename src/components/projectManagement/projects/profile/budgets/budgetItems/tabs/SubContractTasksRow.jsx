@@ -11,7 +11,9 @@ function SubContractTasksRow({
   submitMainForm,
   setSubmitItemForm,
   submitItemForm,
-  setIsDirty
+  setIsDirty,
+  allTasks,
+  selectedCostCenter
 }) {
   const [showForm, setShowForm] = useState(false);
 
@@ -111,6 +113,8 @@ function SubContractTasksRow({
           setSubmitItemForm={setSubmitItemForm}
           submitItemForm={submitItemForm}
           setIsDirty={setIsDirty}
+          allTasks={allTasks}
+          selectedCostCenter={selectedCostCenter}
         />
       )}
     </React.Fragment>

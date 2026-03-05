@@ -110,6 +110,51 @@ function SubContractTasksTab({
 
   return (
     <Grid container width="100%" spacing={1} key={triggerKey}>
+      {/* Bound To and Select Task fields (required for subcontract tab) */}
+      <Grid item xs={12} md={4} textAlign="center">
+        <Div sx={{mt: 1}}>
+          <FormControl fullWidth>
+            <InputLabel id="bound-to-label" sx={{ textAlign: 'center', margin: -1 }}>Bound To</InputLabel>
+            <Select
+              labelId="bound-to-label"
+              value={boundToOption}
+              label="Bound To"
+              size='small'
+              fullWidth
+              onChange={(e) => {
+                setSelectedItemable(null);
+                setBoundToOption(e.target.value);
+                setValue('bound_to', e.target.value, { shouldValidate: true });
+              }}
+            >
+              <MenuItem value="Task">Task</MenuItem>
+              {/* <MenuItem value="Deliverable">Deliverable</MenuItem> */}
+            </Select>
+          </FormControl>
+        </Div>
+      </Grid>
+      <Grid item xs={12} md={4} textAlign="center">
+        <Div sx={{ mt: 1 }}>
+          <Autocomplete
+            options={boundToOption === 'Task' ? allTasks : []}
+            isOptionEqualToValue={(option, value) => option.id === value?.id}
+            getOptionLabel={(option) => option.label}
+            value={selectedItemable}
+            renderInput={(params) => (
+              <TextField {...params} label={`Select ${boundToOption}`} size="small" fullWidth error={!!errors.budget_itemable_id} helperText={errors.budget_itemable_id?.message} />
+            )}
+            onChange={(e, newValue) => {
+              setSelectedItemable(newValue);
+              setValue('budget_itemable_id', newValue?.id ?? null, { shouldValidate: true });
+            }}
+            renderOption={(props, option) => (
+              <li {...props} key={option.id}>
+                {option.label}
+              </li>
+            )}
+          />
+        </Div>
+      </Grid>
       <Grid size={{ xs: 12, md: 5 }}>
         <Div sx={{ mt: 1 }}>
           <LedgerSelect

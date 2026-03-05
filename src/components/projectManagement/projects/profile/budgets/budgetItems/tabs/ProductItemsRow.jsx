@@ -11,7 +11,9 @@ function ProductItemsRow({
   submitMainForm,
   setSubmitItemForm,
   submitItemForm,
-  setIsDirty
+  setIsDirty,
+  allTasks,
+  selectedCostCenter
 }) { 
     const [showForm, setShowForm] = useState(false);
 
@@ -126,6 +128,8 @@ function ProductItemsRow({
                 setSubmitItemForm={setSubmitItemForm}
                 submitItemForm={submitItemForm}
                 setIsDirty={setIsDirty}
+                allTasks={allTasks}
+                selectedCostCenter={selectedCostCenter}
             />
         )}
     </React.Fragment>

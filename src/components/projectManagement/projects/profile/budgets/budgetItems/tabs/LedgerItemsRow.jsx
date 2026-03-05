@@ -12,7 +12,9 @@ function LedgerItemsRow({
   submitMainForm,
   setSubmitItemForm,
   submitItemForm,
-  setIsDirty
+  setIsDirty,
+  allTasks,
+  selectedCostCenter
 }) {
   const [showForm, setShowForm] = useState(false);
   const { ungroupedLedgerOptions } = useLedgerSelect();
@@ -48,9 +50,17 @@ function LedgerItemsRow({
             <Grid size={{xs: 7, md: 4.5}}>
               <ListItemText
                 primary={
-                  <Tooltip title="Expense name">
-                    <Typography component="span">{ledger?.name || '-'}</Typography>
-                  </Tooltip>
+                  <>
+                    <Tooltip title="Expense name">
+                      <Typography component="span">{ledger?.name || '-'}</Typography>
+                    </Tooltip>
+                    <br />
+                    <Tooltip title="Bound To Task">
+                      <Typography component="span" color="primary">
+                        {ledgerItem.selectedItemable?.name || ledgerItem.selectedItemable?.label}
+                      </Typography>
+                    </Tooltip>
+                  </>
                 }
                 secondary={
                   <Tooltip title="Description">
@@ -112,6 +122,8 @@ function LedgerItemsRow({
             setSubmitItemForm={setSubmitItemForm}
             submitItemForm={submitItemForm}
             setIsDirty={setIsDirty}
+            allTasks={allTasks}
+            selectedCostCenter={selectedCostCenter}
           />
         )}
     </React.Fragment>

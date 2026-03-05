@@ -1,5 +1,5 @@
 import { yupResolver } from '@hookform/resolvers/yup';
-import { Grid, TextField } from '@mui/material';
+import { Grid, TextField, FormControl, InputLabel, Select, MenuItem, Autocomplete } from '@mui/material';
 import { useEffect, useState } from 'react'
 import * as yup from 'yup';
 import { set, useForm } from 'react-hook-form';
@@ -24,9 +24,13 @@ function LedgerItemsTab({
   submitMainForm,
   submitItemForm = false,
   setSubmitItemForm,
-  setIsDirty
+  setIsDirty,
+  allTasks = [],
+  selectedCostCenter
 }) {
   const [isAdding, setIsAdding] = useState(false);
+  const [boundToOption, setBoundToOption] = useState(ledgerItem?.selectedItemable ? 'Task' : '');
+  const [selectedItemable, setSelectedItemable] = useState(ledgerItem?.selectedItemable ?? allTasks.find(task => task.id === ledgerItem?.budget_itemable_id) ?? null);
   const { ungroupedLedgerOptions } = useLedgerSelect();
   const { currencies } = useCurrencySelect();
   const [triggerKey, setTriggerKey] = useState(0);
@@ -51,6 +55,8 @@ function LedgerItemsTab({
       exchange_rate: ledgerItem?.exchange_rate || 1,
       rate: ledgerItem?.rate || '',
       quantity: ledgerItem?.quantity || '',
+      budget_itemable_id: ledgerItem?.budget_itemable_id || ledgerItem?.selectedItemable?.id || null,
+      selectedItemable: ledgerItem?.selectedItemable ?? allTasks.find(task => task.id === ledgerItem?.budget_itemable_id) ?? null,
       measurement_unit_id: ledgerItem?.measurement_unit_id || ledgerItem?.measurement_unit?.id || null,
       measurement_unit: ledgerItem?.measurement_unit || null,
       description: ledgerItem?.description || '',
@@ -65,6 +71,8 @@ function LedgerItemsTab({
     setIsAdding(true);
       const normalizedItem = {
         ...item,
+        selectedItemable: selectedItemable,
+        budget_itemable_id: selectedItemable?.id || null,
         ledger: item.ledger || ungroupedLedgerOptions.find((ledger) => ledger.id === item.ledger_id),
       };
       if (index > -1) {
@@ -104,7 +112,7 @@ function LedgerItemsTab({
   return (
     <>
       <Grid container spacing={1} key={triggerKey}>
-        <Grid size={{xs: 12, md: 3.5}}>
+        <Grid size={{xs: 12, md: 4}}>
           <Div sx={{ mt: 1 }}>
             <LedgerSelect
               multiple={false}
@@ -123,7 +131,54 @@ function LedgerItemsTab({
             />
           </Div>
         </Grid>
-        <Grid size={{xs: 12, md: watch(`currency_id`) > 1 ? 2.5 : 3}}>
+        {selectedCostCenter?.cost_centerable_id &&
+          <>
+            <Grid size={{ xs: 12, md: 4 }} display="flex" flexDirection="column" alignItems="center" justifyContent="center">
+              <Div sx={{ mt: 1, width: '100%' }}>
+                <FormControl fullWidth>
+                  <InputLabel id="bound-to-label" sx={{ width: '100%'}}>Bound To</InputLabel>
+                  <Select
+                    labelId="bound-to-label"
+                    value={boundToOption}
+                    label="Bound To"
+                    size='small'
+                    fullWidth
+                    onChange={(e) => {
+                      setSelectedItemable(null);
+                      setBoundToOption(e.target.value);
+                      setValue('bound_to', e.target.value);
+                    }}
+                  >
+                    <MenuItem value="Task">Task</MenuItem>
+                  </Select>
+                </FormControl>
+              </Div>
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }} textAlign="center">
+              <Div sx={{ mt: 1 }}>
+                <Autocomplete
+                  options={boundToOption === 'Task' ? allTasks : []}
+                  isOptionEqualToValue={(option, value) => option.id === value?.id}
+                  getOptionLabel={(option) => option.label}
+                  value={selectedItemable}
+                  renderInput={(params) => (
+                    <TextField {...params} label={`Select ${boundToOption}`} size="small" fullWidth />
+                  )}
+                  onChange={(e, newValue) => {
+                    setSelectedItemable(newValue);
+                    setValue('budget_itemable_id', newValue?.id ?? null);
+                  }}
+                  renderOption={(props, option) => (
+                    <li {...props} key={option.id}>
+                      {option.label}
+                    </li>
+                  )}
+                />
+              </Div>
+            </Grid>
+          </>
+        }
+        <Grid size={{xs: 12, md: 4}}>
           <Div sx={{mt: 1}}>
             <CurrencySelector
               frontError={errors?.currency_id}
@@ -142,7 +197,7 @@ function LedgerItemsTab({
         </Grid>
         {
           watch(`currency_id`) > 1 &&
-          <Grid size={{xs: 6, md: 2, lg: 1.5}}>
+          <Grid size={{xs: 6, md: 2, lg: 2}}>
             <Div sx={{mt: 1}}>
               <TextField
                 label="Exchange Rate"
@@ -164,83 +219,83 @@ function LedgerItemsTab({
             </Div>
           </Grid>
         }
-          <Grid size={{xs: 12, md: 1.5}}>
-            <Div sx={{ mt: 1}}>
-              <MeasurementSelector
-                label='Unit'
-                frontError={errors && errors?.measurement_unit_id}
-                defaultValue={ledgerItem?.measurement_unit_id}
-                onChange={(newValue) => {
-                  if (Array.isArray(newValue)) return;
-                  setValue(`measurement_unit_id`, newValue ? newValue.id : null,{
-                    shouldDirty: true,
-                    shouldValidate: true
-                  });
-                  setValue('measurement_unit', newValue || null);
-                }}      
-              />
-            </Div>
-          </Grid>
-          <Grid size={{xs: watch(`currency_id`) > 1 ? 6 : 12, md: watch(`currency_id`) > 1 ? 1.5 : 2}}>
-            <Div sx={{mt: 1}}>
-              <TextField
-                label="Quantity"
-                fullWidth
-                size="small"
-                InputProps={{
-                    inputComponent: CommaSeparatedField,
-                }}
-                defaultValue={ledgerItem?.quantity}
-                error={errors && !!errors?.quantity}
-                helperText={errors && errors?.quantity?.message}
-                onChange={(e) => {
-                  setValue(`quantity`,e.target.value ? sanitizedNumber(e.target.value) : 0,{
-                    shouldValidate: true,
-                    shouldDirty: true
-                  });
-                }}
-              />
-            </Div>
-          </Grid>
-          <Grid size={{xs: watch(`currency_id`) > 1 ? 6 : 12, md: watch(`currency_id`) > 1 ? 1.5 : 2}}>
-            <Div sx={{mt: 1}}>
-              <TextField
-                label="Rate"
-                fullWidth
-                size="small"
-                error={errors && !!errors?.rate}
-                helperText={errors && errors?.rate?.message}
-                defaultValue={ledgerItem?.rate}
-                InputProps={{
+        <Grid size={{xs: 12, md: watch(`currency_id`) > 1 ? 2 : (selectedCostCenter?.cost_centerable_id ? 2.66 : 4)}}>
+          <Div sx={{ mt: 1}}>
+            <MeasurementSelector
+              label='Unit'
+              frontError={errors && errors?.measurement_unit_id}
+              defaultValue={ledgerItem?.measurement_unit_id}
+              onChange={(newValue) => {
+                if (Array.isArray(newValue)) return;
+                setValue(`measurement_unit_id`, newValue ? newValue.id : null,{
+                  shouldDirty: true,
+                  shouldValidate: true
+                });
+                setValue('measurement_unit', newValue || null);
+              }}      
+            />
+          </Div>
+        </Grid>
+        <Grid size={{xs: watch(`currency_id`) > 1 ? 6 : 12, md: watch(`currency_id`) > 1 ? 2 : (selectedCostCenter?.cost_centerable_id ? 2.66 : 4)}}>
+          <Div sx={{mt: 1}}>
+            <TextField
+              label="Quantity"
+              fullWidth
+              size="small"
+              InputProps={{
                   inputComponent: CommaSeparatedField,
-                }}
-                onChange={(e) => {
-                  setValue(`rate`,e.target.value ? sanitizedNumber(e.target.value) : 0,{
-                    shouldValidate: true,
-                    shouldDirty: true
-                  });
-                }}
-              />
-            </Div>
-          </Grid>
-          <Grid size={{xs: 12, md: 12}}>
-            <Div sx={{mt: 0.3}}>
-              <TextField
-                label="Description"
-                fullWidth
-                multiline={true}
-                rows={2}
-                size="small"
-                defaultValue={ledgerItem?.description}
-                onChange={(e) => {
-                  setValue(`description`,e.target.value,{
-                    shouldValidate: true,
-                    shouldDirty: true
-                  });
-                }}
-              />
-            </Div>
-          </Grid>
+              }}
+              defaultValue={ledgerItem?.quantity}
+              error={errors && !!errors?.quantity}
+              helperText={errors && errors?.quantity?.message}
+              onChange={(e) => {
+                setValue(`quantity`,e.target.value ? sanitizedNumber(e.target.value) : 0,{
+                  shouldValidate: true,
+                  shouldDirty: true
+                });
+              }}
+            />
+          </Div>
+        </Grid>
+        <Grid size={{xs: watch(`currency_id`) > 1 ? 6 : 12, md: watch(`currency_id`) > 1 ? 2 : (selectedCostCenter?.cost_centerable_id ? 2.66 : 4)}}>
+          <Div sx={{mt: 1}}>
+            <TextField
+              label="Rate"
+              fullWidth
+              size="small"
+              error={errors && !!errors?.rate}
+              helperText={errors && errors?.rate?.message}
+              defaultValue={ledgerItem?.rate}
+              InputProps={{
+                inputComponent: CommaSeparatedField,
+              }}
+              onChange={(e) => {
+                setValue(`rate`,e.target.value ? sanitizedNumber(e.target.value) : 0,{
+                  shouldValidate: true,
+                  shouldDirty: true
+                });
+              }}
+            />
+          </Div>
+        </Grid>
+        <Grid size={{xs: 12, md: selectedCostCenter?.cost_centerable_id ? 12 :  watch(`currency_id`) > 1 ? 8 : 4}}>
+          <Div sx={{mt: 1}}>
+            <TextField
+              label="Description"
+              fullWidth
+              multiline={true}
+              rows={2}
+              size="small"
+              defaultValue={ledgerItem?.description}
+              onChange={(e) => {
+                setValue(`description`,e.target.value,{
+                  shouldValidate: true,
+                  shouldDirty: true
+                });
+              }}
+            />
+          </Div>
+        </Grid>
       </Grid>
       <Grid size={12} textAlign={'end'}>
         <LoadingButton
