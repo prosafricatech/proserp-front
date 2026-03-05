@@ -76,7 +76,7 @@ function BudgetsListItemInMaters({ budgetItem }: BudgetsListItemInMatersProps) {
             }}
         >
             <Grid container width={'100%'} columnSpacing={2} alignItems="center">
-                <Grid size={{ xs: 12, md: 4 }}>
+                <Grid size={{ xs: 12, md: 5 }}>
                     <Tooltip title="Name">
                         <Typography variant="h5" fontSize={14} lineHeight={1.25} mb={0} noWrap>
                             {budgetItem.name}
@@ -97,9 +97,6 @@ function BudgetsListItemInMaters({ budgetItem }: BudgetsListItemInMatersProps) {
                     </Typography>
                     </Tooltip>
                 </Grid>
-                <Grid size={{ xs: 12, md: 1 }} textAlign="end">
-                    <BudgetsItemAction budget={budgetItem} />
-                </Grid>
             </Grid>
         </AccordionSummary>
 
@@ -111,7 +108,10 @@ function BudgetsListItemInMaters({ budgetItem }: BudgetsListItemInMatersProps) {
             }}
         >
             <Grid container>
-                <BudgetsAccordionDetails budget={budgetItem} expanded={expanded[budgetItem.id]} isProjectBudget={false}/>
+                <Grid size={{ xs: 12 }} textAlign="end">
+                    <BudgetsItemAction budget={budgetItem} />
+                </Grid>
+                <BudgetsAccordionDetails budget={budgetItem} expanded={expanded[budgetItem.id]}/>
             </Grid>
         </AccordionDetails>
     </Accordion>

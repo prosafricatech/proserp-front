@@ -435,7 +435,7 @@ const BudgetsForm = ({ setOpenDialog, budget=null, isProjectBudget=true }) => {
             </Grid> 
           }
 
-          <Grid size={{ xs: 12, md: 8 }}>
+          <Grid size={{ xs: 12, md: project ? 12 : 8 }}>
             <Div>
               <TextField
                 label="Remarks"
