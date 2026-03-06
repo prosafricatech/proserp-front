@@ -20,7 +20,10 @@ function BudgetSummaryTab({
   subContractItems = [],
   hasSubcontractTab = false,
 }) {
-  const itemAmount = (item) => (Number(item?.quantity) || 0) * (Number(item?.rate) || 0);
+  const itemAmount = (item) =>
+    (Number(item?.quantity) || 0) *
+    (Number(item?.rate) || 0) *
+    (Number(item?.exchange_rate) || 1);
 
   const buildGroupedSummary = (items, labelResolver) => {
     const map = new Map();

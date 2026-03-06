@@ -76,12 +76,19 @@ function LedgerItemsRow({
             </Grid>
             <Grid size={{xs: 6, md: 2}} textAlign={{md: 'right'}}>
               <Tooltip title="Rate">
-                <Typography>{Number(ledgerItem.rate || 0).toLocaleString('en-US', 
-                  {
-                    style: 'currency',
-                    currency: ledgerItem.currency?.code || 'USD',
-                  })}
-                </Typography>
+                <span>
+                  <Typography>{Number(ledgerItem.rate || 0).toLocaleString('en-US', 
+                    {
+                      style: 'currency',
+                      currency: ledgerItem.currency?.code || 'USD',
+                    })}
+                  </Typography>
+                  {Number(ledgerItem?.exchange_rate || 1) !== 1 && (
+                    <Typography variant='caption' color='text.secondary'>
+                      Exch: {Number(ledgerItem.exchange_rate).toLocaleString()}
+                    </Typography>
+                  )}
+                </span>
               </Tooltip>
             </Grid>
             <Grid size={{xs: 6, md: 2}} textAlign={{md: 'right'}}>

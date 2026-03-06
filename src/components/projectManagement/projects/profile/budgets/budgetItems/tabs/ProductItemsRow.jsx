@@ -74,12 +74,19 @@ function ProductItemsRow({
                 </Grid>
                 <Grid size={{xs: 6, md: alternativeProducts.length > 0 ? 2 : 1.5}} paddingRight={alternativeProducts.length > 0 ? 2 : 0} textAlign={alternativeProducts.length > 0 ? 'center' : 'right'}>
                     <Tooltip title="Rate">
-                        <Typography>{Number(productItem.rate || 0).toLocaleString('en-US', 
-                            {
-                                style: 'currency',
-                                currency: currencyCode,
-                            })}
-                        </Typography>
+                        <span>
+                            <Typography>{Number(productItem.rate || 0).toLocaleString('en-US', 
+                                {
+                                    style: 'currency',
+                                    currency: currencyCode,
+                                })}
+                            </Typography>
+                            {Number(productItem?.exchange_rate || 1) !== 1 && (
+                                <Typography variant='caption' color='text.secondary'>
+                                    Exch: {Number(productItem.exchange_rate).toLocaleString()}
+                                </Typography>
+                            )}
+                        </span>
                     </Tooltip>
                 </Grid>
                 <Grid size={{xs: 4, md: alternativeProducts.length > 0 ? 2.4 : 2.5}} textAlign={{xs: 'left', md: 'center'}}>
