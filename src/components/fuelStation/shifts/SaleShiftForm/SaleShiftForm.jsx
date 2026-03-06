@@ -69,7 +69,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
   const lastFormSnapshotRef = React.useRef(null);
   const lastPaymentItemsSnapshotRef = React.useRef(null);
   const AUTO_SAVE_DEBUG = true;
-  const AUTO_SAVE_INTERVAL = 2 * 60 * 1000;
+  const AUTO_SAVE_INTERVAL = 60 * 1000;
   const AUTO_SAVE_TICK = 1000;
 
   const addMutation = useMutation({
@@ -843,26 +843,19 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
 
         await handleSubmitForm(partialData, { silent: true });
         autoSaveDebug('Autosave completed');
+
+        // After successful autosave, update the snapshot
+        const nextSnapshot = toSnapshot(watch());
+        lastFormSnapshotRef.current = nextSnapshot;
+        hasQueuedAutoSaveCycleRef.current = false;
+        resetAutoSaveTracking();
       } finally {
         isAutoSavingRef.current = false;
-        if (hasQueuedAutoSaveCycleRef.current) {
-          hasPendingAutoSaveRef.current = true;
-          lastChangeAtRef.current = Date.now();
-          hasQueuedAutoSaveCycleRef.current = false;
-          autoSaveDebug('Queued changes detected after autosave, starting new countdown journey', {
-            saveInMs: AUTO_SAVE_INTERVAL,
-          });
-          return;
-        }
-
-        if (!lastChangeAtRef.current || lastChangeAtRef.current <= saveStartedAt) {
-          resetAutoSaveTracking();
-        }
       }
     }, AUTO_SAVE_TICK);
 
     return () => clearInterval(interval);
-  }, [AUTO_SAVE_INTERVAL, AUTO_SAVE_TICK, watch, paymentItems, resetAutoSaveTracking]);
+  }, [AUTO_SAVE_INTERVAL, AUTO_SAVE_TICK, watch, paymentItems, resetAutoSaveTracking, toSnapshot]);
 
   return (
     <div onChangeCapture={markUserInteraction} onInputCapture={markUserInteraction}>
