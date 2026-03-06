@@ -68,7 +68,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
   const lastFormSnapshotRef = React.useRef(null);
   const lastPaymentItemsSnapshotRef = React.useRef(null);
   const AUTO_SAVE_DEBUG = true;
-  const AUTO_SAVE_INTERVAL = 1 * 60 * 1000;
+  const AUTO_SAVE_INTERVAL = 60 * 1000;
   const AUTO_SAVE_TICK = 1000;
 
   const addMutation = useMutation({
@@ -222,6 +222,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
           selected_pumps: selectedPumps,
           pump_readings: pumpReadings,
           fuel_vouchers: cashier.fuel_vouchers?.map(fv => ({
+            id: fv.id,
             stakeholder_id: fv.stakeholder_id || fv.stakeholder?.id,
             stakeholder: fv.stakeholder || null,
             quantity: fv.quantity,
@@ -598,6 +599,129 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
     }
   }, []);
 
+  const syncFuelVoucherIdsFromResponse = useCallback((responseData) => {
+    const serverCashiers = responseData?.salesShift?.cashiers || responseData?.cashiers;
+    if (!Array.isArray(serverCashiers) || serverCashiers.length === 0) return;
+
+    const currentCashiers = watch('cashiers') || [];
+    if (!Array.isArray(currentCashiers) || currentCashiers.length === 0) return;
+
+    const buildSignature = (voucher) => {
+      const quantity = Number(voucher?.quantity || 0);
+      return [
+        voucher?.product_id ?? '',
+        voucher?.expense_ledger_id ?? '',
+        voucher?.stakeholder_id ?? '',
+        Number.isFinite(quantity) ? quantity.toFixed(6) : '0.000000',
+        voucher?.reference ?? '',
+        voucher?.narration ?? '',
+      ].join('|');
+    };
+
+    const updatedCashiers = currentCashiers.map((cashier) => {
+      const serverCashier = serverCashiers.find((sc) => Number(sc?.id) === Number(cashier?.id));
+      if (!serverCashier) return cashier;
+
+      const localVouchers = Array.isArray(cashier?.fuel_vouchers) ? cashier.fuel_vouchers : [];
+      const serverVouchers = Array.isArray(serverCashier?.fuel_vouchers) ? serverCashier.fuel_vouchers : [];
+
+      if (localVouchers.length === 0 || serverVouchers.length === 0) return cashier;
+
+      const usedServerVoucherIds = new Set();
+
+      const mergedFuelVouchers = localVouchers.map((localVoucher) => {
+        let matchedServerVoucher = null;
+
+        if (localVoucher?.id) {
+          matchedServerVoucher = serverVouchers.find((serverVoucher) => Number(serverVoucher?.id) === Number(localVoucher.id));
+        }
+
+        if (!matchedServerVoucher) {
+          const localSignature = buildSignature(localVoucher);
+          matchedServerVoucher = serverVouchers.find((serverVoucher) => {
+            if (usedServerVoucherIds.has(serverVoucher?.id)) return false;
+            return buildSignature(serverVoucher) === localSignature;
+          });
+        }
+
+        if (matchedServerVoucher?.id) {
+          usedServerVoucherIds.add(matchedServerVoucher.id);
+          return {
+            ...localVoucher,
+            id: matchedServerVoucher.id,
+          };
+        }
+
+        return localVoucher;
+      });
+
+      return {
+        ...cashier,
+        fuel_vouchers: mergedFuelVouchers,
+      };
+    });
+
+    setValue('cashiers', updatedCashiers, { shouldValidate: false, shouldDirty: false });
+  }, [setValue, watch]);
+
+  const syncPaymentsReceivedIdsFromResponse = useCallback((responseData) => {
+    const serverPayments = responseData?.salesShift?.payments_received || responseData?.payments_received;
+    if (!Array.isArray(serverPayments) || serverPayments.length === 0) return;
+
+    const buildPaymentSignature = (payment) => {
+      const amount = Number(payment?.amount || 0);
+      return [
+        payment?.debit_ledger_id ?? '',
+        payment?.credit_ledger_id ?? '',
+        Number.isFinite(amount) ? amount.toFixed(6) : '0.000000',
+        payment?.narration ?? '',
+      ].join('|');
+    };
+
+    setPaymentItems((prevItems) => {
+      if (!Array.isArray(prevItems) || prevItems.length === 0) return prevItems;
+
+      const usedServerPaymentIds = new Set();
+      let hasChanged = false;
+
+      const mergedPayments = prevItems.map((localPayment) => {
+        let matchedServerPayment = null;
+
+        if (localPayment?.id) {
+          matchedServerPayment = serverPayments.find((serverPayment) => Number(serverPayment?.id) === Number(localPayment.id));
+        }
+
+        if (!matchedServerPayment) {
+          const localSignature = buildPaymentSignature(localPayment);
+          matchedServerPayment = serverPayments.find((serverPayment) => {
+            if (usedServerPaymentIds.has(serverPayment?.id)) return false;
+            return buildPaymentSignature(serverPayment) === localSignature;
+          });
+        }
+
+        if (matchedServerPayment?.id) {
+          usedServerPaymentIds.add(matchedServerPayment.id);
+          if (Number(localPayment?.id) !== Number(matchedServerPayment.id)) {
+            hasChanged = true;
+            return {
+              ...localPayment,
+              id: matchedServerPayment.id,
+            };
+          }
+        }
+
+        return localPayment;
+      });
+
+      if (hasChanged) {
+        lastPaymentItemsSnapshotRef.current = toSnapshot(mergedPayments);
+        return mergedPayments;
+      }
+
+      return prevItems;
+    });
+  }, [setPaymentItems, toSnapshot]);
+
   const handleSubmitForm = async (data, options = { silent: false }) => {
     const allProductIds = (activeStation.products || []).map(p => p.id);
     const pricedProductIds = (data.product_prices || []).map(p => p.product_id);
@@ -686,6 +810,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
           : [],
         fuel_vouchers: Array.isArray(cashier.fuel_vouchers)
           ? cashier.fuel_vouchers.map(fuelVoucher => ({
+              ...(fuelVoucher.id ? { id: fuelVoucher.id } : {}),
               stakeholder_id: fuelVoucher.stakeholder_id ?? (fuelVoucher.stakeholder?.id ?? null),
               expense_ledger_id: fuelVoucher.expense_ledger_id ?? (fuelVoucher.expense_ledger?.id ?? null),
               product_id: fuelVoucher.product_id,
@@ -702,15 +827,19 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
 
     // Decide add or update at submit time
     const isUpdate = !!data.id || !!SalesShift?.id;
+    let serverResponse;
     try {
       if (isUpdate) {
-        await updateMutation.mutateAsync(data);
+        serverResponse = await updateMutation.mutateAsync(data);
       } else {
         const created = await addMutation.mutateAsync(data);
+        serverResponse = created;
         if (created?.id) {
           setValue('id', created.id, { shouldValidate: false, shouldDirty: false });
         }
       }
+      syncFuelVoucherIdsFromResponse(serverResponse);
+      syncPaymentsReceivedIdsFromResponse(serverResponse);
     } catch (err) {
       enqueueSnackbar('Error saving shift', { variant: 'error' });
       return;
