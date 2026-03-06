@@ -37,6 +37,7 @@ import ProductItemsRow from './budgetItems/tabs/ProductItemsRow';
 import CostCenterSelector from '@/components/masters/costCenters/CostCenterSelector';
 import SubContractTasksTab from './budgetItems/tabs/SubContractTasksTab';
 import SubContractTasksRow from './budgetItems/tabs/SubContractTasksRow';
+import BudgetSummaryTab from './budgetItems/tabs/BudgetSummaryTab';
 
 const BudgetsForm = ({ setOpenDialog, budget=null, isProjectBudget=true }) => {
   const queryClient = useQueryClient();
@@ -167,6 +168,17 @@ const BudgetsForm = ({ setOpenDialog, budget=null, isProjectBudget=true }) => {
 
   const allTasks = getTaskOptions(timelineActivitiesData);
 
+  const hasSubcontractTab = !!selectedCostCenter?.cost_centerable_id;
+  const subcontractTabIndex = hasSubcontractTab ? 2 : -1;
+  const summaryTabIndex = hasSubcontractTab ? 3 : 2;
+  const tabsCount = hasSubcontractTab ? 4 : 3;
+
+  useEffect(() => {
+    if (activeTab > tabsCount - 1) {
+      setActiveTab(tabsCount - 1);
+    }
+  }, [activeTab, tabsCount]);
+
   const handleSubmitForm = (data) => {
     const payload = {
       ...data,
@@ -224,7 +236,7 @@ const BudgetsForm = ({ setOpenDialog, budget=null, isProjectBudget=true }) => {
               });
               setSubContractItems([]);
               setRestoreTargetCostCenter(null);
-              if (activeTab === 2 && !restoreTargetCostCenter?.cost_centerable_id) {
+              if (activeTab === subcontractTabIndex && !restoreTargetCostCenter?.cost_centerable_id) {
                 setActiveTab(0);
               }
             }} color="inherit">
@@ -238,7 +250,7 @@ const BudgetsForm = ({ setOpenDialog, budget=null, isProjectBudget=true }) => {
               });
               setSubContractItems(subContractItemsByCostCenter[restoreTargetCostCenter.cost_centerable_id] || []);
               setRestoreTargetCostCenter(null);
-              if (activeTab === 2 && !restoreTargetCostCenter?.cost_centerable_id) {
+              if (activeTab === subcontractTabIndex && !restoreTargetCostCenter?.cost_centerable_id) {
                 setActiveTab(0);
               }
             }} color="primary" variant="contained">
@@ -356,7 +368,7 @@ const BudgetsForm = ({ setOpenDialog, budget=null, isProjectBudget=true }) => {
                     shouldValidate: true,
                     shouldDirty: true,
                   });
-                  if (activeTab === 2 && !newValue?.cost_centerable_id) {
+                  if (activeTab === subcontractTabIndex && !newValue?.cost_centerable_id) {
                     setActiveTab(0);
                   }
                   {/* Dialog for restoring previous subcontract tasks */}
@@ -376,7 +388,7 @@ const BudgetsForm = ({ setOpenDialog, budget=null, isProjectBudget=true }) => {
                         });
                         setSubContractItems([]);
                         setRestoreTargetCostCenter(null);
-                        if (activeTab === 2 && !restoreTargetCostCenter?.cost_centerable_id) {
+                        if (activeTab === subcontractTabIndex && !restoreTargetCostCenter?.cost_centerable_id) {
                           setActiveTab(0);
                         }
                       }} color="inherit">
@@ -390,7 +402,7 @@ const BudgetsForm = ({ setOpenDialog, budget=null, isProjectBudget=true }) => {
                         });
                         setSubContractItems(subContractItemsByCostCenter[restoreTargetCostCenter.cost_centerable_id] || []);
                         setRestoreTargetCostCenter(null);
-                        if (activeTab === 2 && !restoreTargetCostCenter?.cost_centerable_id) {
+                        if (activeTab === subcontractTabIndex && !restoreTargetCostCenter?.cost_centerable_id) {
                           setActiveTab(0);
                         }
                       }} color="primary" variant="contained">
@@ -420,7 +432,7 @@ const BudgetsForm = ({ setOpenDialog, budget=null, isProjectBudget=true }) => {
                         shouldValidate: true,
                         shouldDirty: true,
                       });
-                      if (activeTab === 2 && !pendingCostCenter?.cost_centerable_id) {
+                      if (activeTab === subcontractTabIndex && !pendingCostCenter?.cost_centerable_id) {
                         setActiveTab(0);
                       }
                       setPendingCostCenter(null);
@@ -463,6 +475,7 @@ const BudgetsForm = ({ setOpenDialog, budget=null, isProjectBudget=true }) => {
               {selectedCostCenter?.cost_centerable_id && 
                 <Tab label="Subcontract Task" />
               }
+              <Tab label="Summary" />
             </Tabs>
           </Grid>
 
@@ -525,7 +538,7 @@ const BudgetsForm = ({ setOpenDialog, budget=null, isProjectBudget=true }) => {
                 ))}
               </>
             )}
-            {activeTab === 2 && selectedCostCenter?.cost_centerable_id && (
+            {activeTab === subcontractTabIndex && selectedCostCenter?.cost_centerable_id && (
               <>
                 <SubContractTasksTab
                   subContractItems={subContractItems}
@@ -553,6 +566,14 @@ const BudgetsForm = ({ setOpenDialog, budget=null, isProjectBudget=true }) => {
                   />
                 ))}
               </>
+            )}
+            {activeTab === summaryTabIndex && (
+              <BudgetSummaryTab
+                ledgerItems={ledgerItems}
+                productItems={productItems}
+                subContractItems={subContractItems}
+                hasSubcontractTab={hasSubcontractTab}
+              />
             )}
           </Grid>
         </Grid>
