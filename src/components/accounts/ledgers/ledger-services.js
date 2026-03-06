@@ -10,12 +10,10 @@ ledgerServices.getLedgers = async (params = {}) => {
     return data;
 },
 
-    ledgerServices.storeLedgerGroup = async (group) => {
-        return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-            const { data } = await axios.post('/api/accountsAndFinance/ledgers/storeLedgerGroup', group)
-            return data;
-        })
-    }
+ledgerServices.storeLedgerGroup = async (group) => {
+    const { data } = await axios.post('/api/accountsAndFinance/ledgers/storeLedgerGroup', group)
+    return data;
+}
 
 ledgerServices.getLedgerOptions = async () => {
     const { data } = await axios.get("/api/accountsAndFinance/ledgers/getLedgerOptions");
@@ -24,7 +22,6 @@ ledgerServices.getLedgerOptions = async () => {
 
 ledgerServices.add = async (ledger) => {
     try {
-        await axios.get('/sanctum/csrf-cookie');
         const res = await axios.post("/api/accountsAndFinance/ledgers/add", ledger);
         return res.data;
     } catch (err) {
@@ -33,33 +30,25 @@ ledgerServices.add = async (ledger) => {
 };
 
 ledgerServices.update = async (ledger) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const { data } = await axios.put(`/api/accountsAndFinance/ledgers/${ledger.id}/update`, ledger);
-        return data;
-    });
+    const { data } = await axios.put(`/api/accountsAndFinance/ledgers/${ledger.id}/update`, ledger);
+    return data;
 };
 
 ledgerServices.updateLedgerGroup = async (group) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const { data } = await axios.put(`/api/accountsAndFinance/ledgers/${group.id}/updateLedgerGroup`, group);
-        return data;
-    });
+    const { data } = await axios.put(`/api/accountsAndFinance/ledgers/${group.id}/updateLedgerGroup`, group);
+    return data;
 };
 
 ledgerServices.delete = async (ledger) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const { data } = await axios.delete(`/api/accountsAndFinance/ledgers/${ledger.id}/delete`);
-        return data;
-    });
+    const { data } = await axios.delete(`/api/accountsAndFinance/ledgers/${ledger.id}/delete`);
+    return data;
 };
 
 ledgerServices.deleteMultiple = async (selectedIDs) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const { data } = await axios.put("/api/accountsAndFinance/ledgers/delete_multiple_ledgers", {
-            ledgerIDs: selectedIDs
-        });
-        return data;
+    const { data } = await axios.put("/api/accountsAndFinance/ledgers/delete_multiple_ledgers", {
+        ledgerIDs: selectedIDs
     });
+    return data;
 };
 
 ledgerServices.statement = async (params) => {
@@ -70,10 +59,8 @@ ledgerServices.statement = async (params) => {
 }
 
 ledgerServices.mergeLedgers = async (ledger) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const { data } = await axios.post(`/api/accountsAndFinance/ledgers/mergeLedgers`, ledger)
-        return data;
-    })
+    const { data } = await axios.post(`/api/accountsAndFinance/ledgers/mergeLedgers`, ledger)
+    return data;
 }
 
 ledgerServices.downloadExcelTemplate = async (filters) => {

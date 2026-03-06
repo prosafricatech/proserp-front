@@ -38,38 +38,28 @@ posServices.saleRelatableAdjustments = async (id) => {
 }
 
 posServices.addSale = async (sale) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const { data } = await axios.post(`/api/pos/counter/addSale`, sale);
-        return data;
-    })
+    const { data } = await axios.post(`/api/pos/counter/addSale`, sale);
+    return data;
 }
 
 posServices.invoiceAdjustment = async (invoiceAdjustment) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const { data } = await axios.post(`/api/pos/counter/invoiceAdjustment`, invoiceAdjustment);
-        return data;
-    })
+    const { data } = await axios.post(`/api/pos/counter/invoiceAdjustment`, invoiceAdjustment);
+    return data;
 }
 
 posServices.postSaleToVFD = async (saleData) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const { data } = await axios.post(`/api/pos/counter/postSaleToVFD`, saleData);
-        return data;
-    })
+    const { data } = await axios.post(`/api/pos/counter/postSaleToVFD`, saleData);
+    return data;
 }
 
 posServices.updateSale = async (sale) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const { data } = await axios.put(`/api/pos/counter/${sale.id}/updateSale`, sale)
-        return data;
-    })
+    const { data } = await axios.put(`/api/pos/counter/${sale.id}/updateSale`, sale)
+    return data;
 }
 
 posServices.updateInvoiceAdjustment = async (adjustmnet) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const { data } = await axios.put(`/api/accountsAndFinance/transactions/${adjustmnet.note_type}/${adjustmnet.id}/updateInvoiceAdjustment`, adjustmnet)
-        return data;
-    })
+    const { data } = await axios.put(`/api/accountsAndFinance/transactions/${adjustmnet.note_type}/${adjustmnet.id}/updateInvoiceAdjustment`, adjustmnet)
+    return data;
 }
 
 posServices.getSaleComplements = async (sale) => {
@@ -78,10 +68,8 @@ posServices.getSaleComplements = async (sale) => {
 };
 
 posServices.deleteSale = async (sale) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const { data } = await axios.delete(`/api/pos/counter/${sale.id}/deleteSale`);
-        return data;
-    })
+    const { data } = await axios.delete(`/api/pos/counter/${sale.id}/deleteSale`);
+    return data;
 };
 
 posServices.saleDetails = async (id) => {
@@ -118,26 +106,20 @@ posServices.getLastPrice = async (params) => {
 }
 
 posServices.dispatchSale = async (dispatchSale) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const { data } = await axios.post(`/api/pos/counter/dispatchSale`, dispatchSale);
-        return data;
-    })
+    const { data } = await axios.post(`/api/pos/counter/dispatchSale`, dispatchSale);
+    return data;
 }
 
 posServices.invoiceSale = async (invoiceSale) => {
     const id = invoiceSale.id
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const { data } = await axios.post(`/api/pos/counter/${id}/invoiceSale`, invoiceSale);
-        return data;
-    })
+    const { data } = await axios.post(`/api/pos/counter/${id}/invoiceSale`, invoiceSale);
+    return data;
 }
 
 posServices.receiptSale = async (invoiceSale) => {
     const id = invoiceSale.id
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const { data } = await axios.post(`/api/pos/counter/${id}/receiptSale`, invoiceSale);
-        return data;
-    })
+    const { data } = await axios.post(`/api/pos/counter/${id}/receiptSale`, invoiceSale);
+    return data;
 }
 
 posServices.deliveryNotesSalesItems = async (params) => {
@@ -148,24 +130,18 @@ posServices.deliveryNotesSalesItems = async (params) => {
 }
 
 posServices.updateDeliveryNote = async (deliveryNote) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const { data } = await axios.put(`/api/pos/counter/${deliveryNote.id}/updateDeliveryNote`, deliveryNote)
-        return data;
-    })
+    const { data } = await axios.put(`/api/pos/counter/${deliveryNote.id}/updateDeliveryNote`, deliveryNote)
+    return data;
 }
 
 posServices.updateInvoice = async (invoice) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const { data } = await axios.put(`/api/pos/counter/${invoice.id}/updateInvoice`, invoice)
-        return data;
-    })
+    const { data } = await axios.put(`/api/pos/counter/${invoice.id}/updateInvoice`, invoice)
+    return data;
 }
 
 posServices.updateSaleInvoice = async (invoice) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const { data } = await axios.put(`/api/pos/counter/${invoice.id}/updateSaleInvoice`, invoice)
-        return data;
-    })
+    const { data } = await axios.put(`/api/pos/counter/${invoice.id}/updateSaleInvoice`, invoice)
+    return data;
 }
 
 posServices.saleDeliveryNotes = async (id) => {
@@ -194,31 +170,23 @@ posServices.receiptDetails = async (id) => {
 }
 
 posServices.deleteDeliveryNote = async (id) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const { data } = await axios.delete(`/api/pos/counter/${id}/deleteDeliveryNote`);
-        return data;
-    })
+    const { data } = await axios.delete(`/api/pos/counter/${id}/deleteDeliveryNote`);
+    return data;
 };
 
 posServices.deleteInvoice = async (id) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const { data } = await axios.delete(`/api/pos/counter/${id}/deleteInvoice`);
-        return data;
-    })
+    const { data } = await axios.delete(`/api/pos/counter/${id}/deleteInvoice`);
+    return data;
 };
 
 posServices.deleteReceipt = async (id) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const { data } = await axios.delete(`/api/pos/counter/${id}/deleteReceipt`);
-        return data;
-    })
+    const { data } = await axios.delete(`/api/pos/counter/${id}/deleteReceipt`);
+    return data;
 };
 
 posServices.deleteSaleInvoiceAdjustment = async ({ id, type }) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const { data } = await axios.delete(`/api/accountsAndFinance/transactions/${type}/${id}/deleteSaleInvoiceAdjustment`);
-        return data;
-    })
+    const { data } = await axios.delete(`/api/accountsAndFinance/transactions/${type}/${id}/deleteSaleInvoiceAdjustment`);
+    return data;
 };
 
 posServices.deliveryNoteDetails = async (id) => {

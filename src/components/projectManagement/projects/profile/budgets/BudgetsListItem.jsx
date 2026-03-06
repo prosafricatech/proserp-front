@@ -101,7 +101,7 @@ function BudgetsListItem() {
                   }}
                 >
                   <Grid container width={'100%'} columnSpacing={2} alignItems="center">
-                    <Grid size={{ xs: 12, md: 4 }}>
+                    <Grid size={{ xs: 12, md: 5 }}>
                       <Tooltip title="Name">
                         <Typography variant="h5" fontSize={14} lineHeight={1.25} mb={0} noWrap>
                           {budget.name}
@@ -122,9 +122,6 @@ function BudgetsListItem() {
                         </Typography>
                       </Tooltip>
                     </Grid>
-                    <Grid size={{ xs: 12, md: 1 }} textAlign="end">
-                      <BudgetsItemAction budget={budget} />
-                    </Grid>
                   </Grid>
                 </AccordionSummary>
 
@@ -136,6 +133,9 @@ function BudgetsListItem() {
                   }}
                 >
                   <Grid container>
+                    <Grid size={{ xs: 12 }} textAlign="end">
+                      <BudgetsItemAction budget={budget} />
+                    </Grid>
                     <BudgetsAccordionDetails budget={budget} expanded={expanded[index]} />
                   </Grid>
                 </AccordionDetails>

@@ -80,7 +80,7 @@ const ReportDocumet = ({reportData,authOrganization,user}) => {
         <View style={pdfStyles.table}>
             <View style={pdfStyles.tableRow}>
               <View style={{...pdfStyles.tableHeader, flex : 1}}>
-                  <Text style={pdfStyles.tableCellText}>Revenue</Text>
+                  <Text style={pdfStyles.tableCell}>Revenue</Text>
               </View>
             </View>
             {
@@ -88,27 +88,27 @@ const ReportDocumet = ({reportData,authOrganization,user}) => {
                 income.amount !== 0 &&
                 <View  key={index} style={pdfStyles.tableRow}>
                   <View style={{...pdfStyles.tableCell, flex : 2}}>
-                      <Text style={{ ...pdfStyles.tableCellText,marginLeft: 10 }}>{income.ledger_name}</Text>
+                      <Text style={{ ...pdfStyles.tableCell,marginLeft: 10 }}>{income.ledger_name}</Text>
                   </View>
                   <View style={{...pdfStyles.tableCell, flex:1,textAlign : 'right' }}>
-                    <Text style={pdfStyles.tableCellText}>{income.amount?.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
+                    <Text style={pdfStyles.tableCell}>{income.amount?.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
                   </View>
                 </View>
               ))
             }
             <View style={pdfStyles.tableRow}> 
               <View style={{...pdfStyles.tableHeader, marginLeft: 5, backgroundColor: pdfStyles.shadedBG, flex : 2}}>
-                  <Text style={pdfStyles.tableCellText}>Total Revenue</Text>
+                  <Text style={pdfStyles.tableCell}>Total Revenue</Text>
               </View>
               <View style={{...pdfStyles.tableHeader, backgroundColor: pdfStyles.shadedBG, flex:1,textAlign : 'right' }}>
-                <Text style={pdfStyles.tableCellText}>{totalRevenue.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
+                <Text style={pdfStyles.tableCell}>{totalRevenue.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
               </View>
             </View>
 
 
             <View style={{ ...pdfStyles.tableRow,marginLeft: 10 }}>
               <View style={{...pdfStyles.tableHeader, flex : 1}}>
-                  <Text style={pdfStyles.tableCellText}>Cost of Revenue</Text>
+                  <Text style={pdfStyles.tableCell}>Cost of Revenue</Text>
               </View>
             </View>
             {
@@ -116,33 +116,33 @@ const ReportDocumet = ({reportData,authOrganization,user}) => {
                 expense.amount !== 0 &&
                 <View  key={index} style={pdfStyles.tableRow}>
                   <View style={{...pdfStyles.tableCell, flex : 2}}>
-                      <Text style={{ ...pdfStyles.tableCellText,marginLeft: 15 }}>{expense.ledger_name}</Text>
+                      <Text style={{ ...pdfStyles.tableCell,marginLeft: 15 }}>{expense.ledger_name}</Text>
                   </View>
                   <View style={{...pdfStyles.tableCell, flex:1,textAlign : 'right' }}>
-                    <Text style={pdfStyles.tableCellText}>{expense.amount?.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
+                    <Text style={pdfStyles.tableCell}>{expense.amount?.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
                   </View>
                 </View>
               ))
             }
             <View style={pdfStyles.tableRow}> 
               <View style={{...pdfStyles.tableHeader, marginLeft: 5, backgroundColor: pdfStyles.shadedBG, flex : 2}}>
-                  <Text style={pdfStyles.tableCellText}>Total Cost Of Revenue</Text>
+                  <Text style={pdfStyles.tableCell}>Total Cost Of Revenue</Text>
               </View>
               <View style={{...pdfStyles.tableHeader, backgroundColor: pdfStyles.shadedBG, flex:1,textAlign : 'right' }}>
-                <Text style={pdfStyles.tableCellText}>{costOfRevenue.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
+                <Text style={pdfStyles.tableCell}>{costOfRevenue.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
               </View>
             </View>
             <View style={pdfStyles.tableRow}>
               <View style={{...pdfStyles.tableCell, marginLeft: 5, flex : 2}}>
-                  <Text style={pdfStyles.tableCellText}>Gross Profit</Text>
+                  <Text style={pdfStyles.tableCell}>Gross Profit</Text>
               </View>
               <View style={{...pdfStyles.tableCell, flex:1,textAlign : 'right' }}>
-                <Text style={pdfStyles.tableCellText}>{(totalRevenue - costOfRevenue).toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
+                <Text style={pdfStyles.tableCell}>{(totalRevenue - costOfRevenue).toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
               </View>
             </View>
             <View style={{ ...pdfStyles.tableRow, marginTop: 15 }}>
               <View style={{...pdfStyles.tableHeader, flex : 1}}>
-                  <Text style={pdfStyles.tableCellText}>Operating Expenses</Text>
+                  <Text style={pdfStyles.tableCell}>Operating Expenses</Text>
               </View>
             </View>
             {
@@ -150,28 +150,28 @@ const ReportDocumet = ({reportData,authOrganization,user}) => {
                 expense.amount !== 0 &&
                 <View key={index} style={pdfStyles.tableRow}>
                   <View style={{...pdfStyles.tableCell, flex : 2}}>
-                      <Text style={{ ...pdfStyles.tableCellText,marginLeft: 10 }}>{expense.ledger_name}</Text>
+                      <Text style={{ ...pdfStyles.tableCell,marginLeft: 10 }}>{expense.ledger_name}</Text>
                   </View>
                   <View style={{...pdfStyles.tableCell, flex:1,textAlign : 'right' }}>
-                    <Text style={pdfStyles.tableCellText}>{expense.amount?.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
+                    <Text style={pdfStyles.tableCell}>{expense.amount?.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
                   </View>
                 </View>                        
               ))
             }
             <View style={pdfStyles.tableRow}>
               <View style={{...pdfStyles.tableCell,marginLeft: 10, backgroundColor: pdfStyles.shadedBG, flex : 2}}>
-                  <Text style={pdfStyles.tableCellText}>Total Operating Expenses</Text>
+                  <Text style={pdfStyles.tableCell}>Total Operating Expenses</Text>
               </View>
               <View style={{...pdfStyles.tableCell, backgroundColor: pdfStyles.shadedBG, flex:1,textAlign : 'right' }}>
-                <Text style={pdfStyles.tableCellText}>{operationalExpenseTotal.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
+                <Text style={pdfStyles.tableCell}>{operationalExpenseTotal.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
               </View>
             </View>
             <View style={{ ...pdfStyles.tableRow,marginTop: 15 }}>
               <View style={{...pdfStyles.tableHeader, flex : 2}}>
-                  <Text style={pdfStyles.tableCellText}>Net Income</Text>
+                  <Text style={pdfStyles.tableCell}>Net Income</Text>
               </View>
               <View style={{...pdfStyles.tableHeader, flex:1,textAlign : 'right' }}>
-                <Text style={pdfStyles.tableCellText}>{(totalRevenue - costOfRevenue - operationalExpenseTotal).toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
+                <Text style={pdfStyles.tableCell}>{(totalRevenue - costOfRevenue - operationalExpenseTotal).toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
               </View>
             </View>
         </View>

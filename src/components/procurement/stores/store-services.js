@@ -42,24 +42,18 @@ storeServices.getStoreOptions = async(mainOnly = true) => {
 }
 
 storeServices.add = async(store) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.post(`/api/stores/add`,store)
-        return data;
-    })
+    const {data} = await axios.post(`/api/stores/add`,store)
+    return data;
 }
 
 storeServices.update = async(store) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.put(`/api/stores/${store.id}/update`,store)
-        return data;
-    })
+    const {data} = await axios.put(`/api/stores/${store.id}/update`,store)
+    return data;
 }
 
 storeServices.delete = async (id) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.delete(`/api/stores/${id}/delete`);
-        return data;
-    })
+    const {data} = await axios.delete(`/api/stores/${id}/delete`);
+    return data;
 };
 
 storeServices.getStockMovement = async (params, dormantStock = false) => {

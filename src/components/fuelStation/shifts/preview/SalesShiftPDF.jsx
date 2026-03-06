@@ -101,6 +101,37 @@ function SalesShiftPDF({
     return st.opening_reading < 1 || st.closing_reading < 1;
   });
 
+  // total expected amount
+  const totalExpectedAmount =
+    shiftData.cashiers?.reduce((sum, c) => {
+      const {
+        totalProductsAmount,
+        adjustmentsAmount,
+        totalFuelVouchersAmount,
+        otherTransactionsTotal,
+      } = calculateCashierTotals(c);
+
+      return (
+        sum +
+        totalProductsAmount +
+        adjustmentsAmount -
+        totalFuelVouchersAmount -
+        otherTransactionsTotal
+      );
+    }, 0) || 0;
+
+  // total collected amount
+  const totalCollectedAmount =
+    shiftData.cashiers?.reduce((sum, c) => sum + c.collected_amount, 0) || 0.0;
+
+  const totalShortOrOver = totalCollectedAmount - totalExpectedAmount;
+
+  // payments received total
+  const paymentsReceivedTotal = paymentReceived.reduce(
+    (sum, pr) => sum + pr.amount,
+    0
+  );
+
   return (
     <Document
       title={`${shiftData.shiftNo} | ${organization.name}`}
@@ -420,7 +451,7 @@ function SalesShiftPDF({
                                 textAlign: 'right',
                               }}
                             >
-                              {(pump.opening || 0).toLocaleString('en-US', {
+                              {(pump.opening || 0)?.toLocaleString('en-US', {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2,
                               })}
@@ -434,7 +465,7 @@ function SalesShiftPDF({
                                 textAlign: 'right',
                               }}
                             >
-                              {(pump.closing || 0).toLocaleString('en-US', {
+                              {(pump.closing || 0)?.toLocaleString('en-US', {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2,
                               })}
@@ -448,7 +479,7 @@ function SalesShiftPDF({
                                 textAlign: 'right',
                               }}
                             >
-                              {difference.toLocaleString('en-US', {
+                              {difference?.toLocaleString('en-US', {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2,
                               })}
@@ -462,7 +493,7 @@ function SalesShiftPDF({
                                 textAlign: 'right',
                               }}
                             >
-                              {price.toLocaleString('en-US', {
+                              {price?.toLocaleString('en-US', {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2,
                               })}
@@ -476,7 +507,7 @@ function SalesShiftPDF({
                                 textAlign: 'right',
                               }}
                             >
-                              {totalAmount.toLocaleString('en-US', {
+                              {totalAmount?.toLocaleString('en-US', {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2,
                               })}
@@ -509,7 +540,7 @@ function SalesShiftPDF({
                             fontWeight: 'bold',
                           }}
                         >
-                          {totalPumoAmount.toLocaleString('en-US', {
+                          {totalPumoAmount?.toLocaleString('en-US', {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2,
                           })}
@@ -656,7 +687,7 @@ function SalesShiftPDF({
                                 textAlign: 'right',
                               }}
                             >
-                              {fv.quantity.toLocaleString('en-US', {
+                              {fv.quantity?.toLocaleString('en-US', {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2,
                               })}
@@ -670,7 +701,7 @@ function SalesShiftPDF({
                                 textAlign: 'right',
                               }}
                             >
-                              {amount.toLocaleString('en-US', {
+                              {amount?.toLocaleString('en-US', {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2,
                               })}
@@ -702,7 +733,7 @@ function SalesShiftPDF({
                             fontWeight: 'bold',
                           }}
                         >
-                          {cashierTotals.totalFuelVouchersAmount.toLocaleString(
+                          {cashierTotals.totalFuelVouchersAmount?.toLocaleString(
                             'en-US',
                             {
                               minimumFractionDigits: 2,
@@ -794,7 +825,7 @@ function SalesShiftPDF({
                               textAlign: 'right',
                             }}
                           >
-                            {(cashier.main_ledger.amount || 0).toLocaleString(
+                            {(cashier.main_ledger.amount || 0)?.toLocaleString(
                               'en-US',
                               {
                                 minimumFractionDigits: 2,
@@ -847,7 +878,7 @@ function SalesShiftPDF({
                                 textAlign: 'right',
                               }}
                             >
-                              {(transaction.amount || 0).toLocaleString(
+                              {(transaction.amount || 0)?.toLocaleString(
                                 'en-US',
                                 {
                                   minimumFractionDigits: 2,
@@ -887,7 +918,7 @@ function SalesShiftPDF({
                           {(
                             cashierTotals.otherTransactionsTotal +
                             (cashier.main_ledger?.amount || 0)
-                          ).toLocaleString('en-US', {
+                          )?.toLocaleString('en-US', {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2,
                           })}
@@ -919,7 +950,7 @@ function SalesShiftPDF({
                             fontSize: '.7rem',
                           }}
                         >
-                          {(cashier.collected_amount || 0).toLocaleString(
+                          {(cashier.collected_amount || 0)?.toLocaleString(
                             'en-US',
                             {
                               minimumFractionDigits: 2,
@@ -947,6 +978,7 @@ function SalesShiftPDF({
                             ...pdfStyles.tableHeader,
                             ...pdfStyles.tableCell,
                             backgroundColor: lightColor,
+                            color: shortOrOver > 0 ? '#4a990eff' : 'red',
                             width: '30%',
                             textAlign: 'right',
                             fontWeight: 'bold',
@@ -954,11 +986,11 @@ function SalesShiftPDF({
                           }}
                         >
                           {shortOrOver > 0
-                            ? `+${shortOrOver.toLocaleString('en-US', {
+                            ? `+${shortOrOver?.toLocaleString('en-US', {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2,
                               })}`
-                            : `${shortOrOver.toLocaleString('en-US', {
+                            : `${shortOrOver?.toLocaleString('en-US', {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2,
                               })}`}
@@ -1091,7 +1123,7 @@ function SalesShiftPDF({
                                 textAlign: 'right',
                               }}
                             >
-                              {adj.quantity.toLocaleString('en-US', {
+                              {adj.quantity?.toLocaleString('en-US', {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2,
                               })}
@@ -1152,7 +1184,8 @@ function SalesShiftPDF({
                       ...pdfStyles.tableHeader,
                       backgroundColor: mainColor,
                       color: contrastText,
-                      flex: 1,
+                      // flex: 1,
+                      width: '20%',
                     }}
                   >
                     Pay From (Credit)
@@ -1162,7 +1195,8 @@ function SalesShiftPDF({
                       ...pdfStyles.tableHeader,
                       backgroundColor: mainColor,
                       color: contrastText,
-                      flex: 1,
+                      // flex: 1,
+                      width: '20%',
                     }}
                   >
                     Pay To (Debit)
@@ -1172,7 +1206,8 @@ function SalesShiftPDF({
                       ...pdfStyles.tableHeader,
                       backgroundColor: mainColor,
                       color: contrastText,
-                      flex: 1.5,
+                      // flex: 1.5,
+                      width: '30%',
                     }}
                   >
                     Narration
@@ -1182,7 +1217,8 @@ function SalesShiftPDF({
                       ...pdfStyles.tableHeader,
                       backgroundColor: mainColor,
                       color: contrastText,
-                      flex: 1,
+                      // flex: 1,
+                      width: '30%',
                     }}
                   >
                     Amount
@@ -1197,7 +1233,8 @@ function SalesShiftPDF({
                           ...pdfStyles.tableCell,
                           backgroundColor:
                             index % 2 === 0 ? '#FFFFFF' : lightColor,
-                          flex: 1,
+                          // flex: 1,
+                          width: '20%',
                           textAlign: 'left',
                         }}
                       >
@@ -1209,7 +1246,8 @@ function SalesShiftPDF({
                           ...pdfStyles.tableCell,
                           backgroundColor:
                             index % 2 === 0 ? '#FFFFFF' : lightColor,
-                          flex: 1,
+                          // flex: 1,
+                          width: '20%',
                           textAlign: 'left',
                         }}
                       >
@@ -1221,7 +1259,8 @@ function SalesShiftPDF({
                           ...pdfStyles.tableCell,
                           backgroundColor:
                             index % 2 === 0 ? '#FFFFFF' : lightColor,
-                          flex: 1.5,
+                          // flex: 1.5,
+                          width: '30%',
                           textAlign: 'left',
                         }}
                       >
@@ -1233,11 +1272,11 @@ function SalesShiftPDF({
                           ...pdfStyles.tableCell,
                           backgroundColor:
                             index % 2 === 0 ? '#FFFFFF' : lightColor,
-                          flex: 1,
+                          width: '30%',
                           textAlign: 'right',
                         }}
                       >
-                        {(pr.amount || 0).toLocaleString('en-US', {
+                        {(pr.amount || 0)?.toLocaleString('en-US', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
@@ -1245,6 +1284,206 @@ function SalesShiftPDF({
                     </View>
                   );
                 })}
+                <View style={pdfStyles.tableRow}>
+                  <Text
+                    style={{
+                      ...pdfStyles.tableCell,
+                      backgroundColor: mainColor,
+                      color: contrastText,
+                      width: '70%',
+                      textAlign: 'left',
+                    }}
+                  >
+                    Total Payments
+                  </Text>
+
+                  <Text
+                    style={{
+                      ...pdfStyles.tableCell,
+                      backgroundColor: mainColor,
+                      color: contrastText,
+                      width: '30%',
+                      textAlign: 'right',
+                    }}
+                  >
+                    {paymentsReceivedTotal?.toLocaleString('en-US', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* ================= CASH COLLECTION SUMMARY============== */}
+        {openDetails && shiftData.cashiers.length && (
+          <View
+            wrap={false}
+            style={{ marginTop: 20, pageBreakInside: 'avoid' }}
+          >
+            <View
+              style={{
+                marginBottom: 8,
+                padding: 8,
+                backgroundColor: mainColor,
+                borderRadius: 4,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 14,
+                  color: contrastText,
+                  fontWeight: 'bold',
+                  textAlign: 'center',
+                }}
+              >
+                Cash Collection Summary
+              </Text>
+            </View>
+
+            <View style={{ marginBottom: 12 }}>
+              <View style={pdfStyles.table}>
+                <View style={pdfStyles.tableRow}>
+                  <Text
+                    style={{
+                      ...pdfStyles.tableCell,
+                      backgroundColor: '#FFFFFF',
+                      width: '70%',
+                    }}
+                  >
+                    Total Expected
+                  </Text>
+                  <Text
+                    style={{
+                      ...pdfStyles.tableCell,
+                      backgroundColor: '#FFFFFF',
+                      width: '30%',
+                      textAlign: 'right',
+                    }}
+                  >
+                    {totalExpectedAmount?.toLocaleString('en-US', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </Text>
+                </View>
+                <View style={pdfStyles.tableRow}>
+                  <Text
+                    style={{
+                      ...pdfStyles.tableCell,
+                      backgroundColor: lightColor,
+                      width: '70%',
+                    }}
+                  >
+                    Total Collected
+                  </Text>
+                  <Text
+                    style={{
+                      ...pdfStyles.tableCell,
+                      backgroundColor: lightColor,
+                      width: '30%',
+                      textAlign: 'right',
+                    }}
+                  >
+                    {totalCollectedAmount?.toLocaleString('en-US', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </Text>
+                </View>
+                <View style={pdfStyles.tableRow}>
+                  <Text
+                    style={{
+                      ...pdfStyles.tableCell,
+                      backgroundColor: '#FFFFFF',
+                      width: '70%',
+                    }}
+                  >
+                    Short/Over
+                  </Text>
+                  <Text
+                    style={{
+                      ...pdfStyles.tableCell,
+                      backgroundColor: '#FFFFFF',
+                      color: totalShortOrOver > 0 ? '#4a990eff' : 'red',
+                      width: '30%',
+                      textAlign: 'right',
+                    }}
+                  >
+                    {totalShortOrOver > 0
+                      ? `+${totalShortOrOver?.toLocaleString('en-US', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}`
+                      : `${totalShortOrOver?.toLocaleString('en-US', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}`}
+                  </Text>
+                </View>
+
+                {paymentReceived.length && (
+                  <>
+                    <View style={pdfStyles.tableRow}>
+                      <Text
+                        style={{
+                          ...pdfStyles.tableCell,
+                          backgroundColor: lightColor,
+                          width: '70%',
+                        }}
+                      >
+                        Total Payments
+                      </Text>
+                      <Text
+                        style={{
+                          ...pdfStyles.tableCell,
+                          backgroundColor: lightColor,
+                          width: '30%',
+                          textAlign: 'right',
+                        }}
+                      >
+                        {paymentsReceivedTotal?.toLocaleString('en-US', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </Text>
+                    </View>
+                    <View style={{ ...pdfStyles.tableRow, marginTop: 4 }}>
+                      <Text
+                        style={{
+                          ...pdfStyles.tableCell,
+                          backgroundColor: mainColor,
+                          color: contrastText,
+                          fontWeight: 'bold',
+                          fontSize: 10,
+                          width: '70%',
+                        }}
+                      >
+                        Grand Total (Total Collected + Total Payments Received)
+                      </Text>
+                      <Text
+                        style={{
+                          ...pdfStyles.tableCell,
+                          backgroundColor: mainColor,
+                          color: contrastText,
+                          fontWeight: 'bold',
+                          fontSize: 10,
+                          width: '30%',
+                          textAlign: 'right',
+                        }}
+                      >
+                        {(
+                          totalCollectedAmount + paymentsReceivedTotal
+                        )?.toLocaleString('en-US', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </Text>
+                    </View>
+                  </>
+                )}
               </View>
             </View>
           </View>
@@ -1385,7 +1624,7 @@ function SalesShiftPDF({
                           textAlign: 'right',
                         }}
                       >
-                        {(st.opening_reading || 0).toLocaleString('en-US', {
+                        {(st.opening_reading || 0)?.toLocaleString('en-US', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
@@ -1400,7 +1639,7 @@ function SalesShiftPDF({
                           textAlign: 'right',
                         }}
                       >
-                        {(st.incoming || 0).toLocaleString('en-US', {
+                        {(st.incoming || 0)?.toLocaleString('en-US', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
@@ -1417,7 +1656,7 @@ function SalesShiftPDF({
                       >
                         {(
                           (st.opening_reading || 0) + (st.incoming || 0)
-                        ).toLocaleString('en-US', {
+                        )?.toLocaleString('en-US', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
@@ -1432,7 +1671,7 @@ function SalesShiftPDF({
                           textAlign: 'right',
                         }}
                       >
-                        {(st.closing_reading || 0).toLocaleString('en-US', {
+                        {(st.closing_reading || 0)?.toLocaleString('en-US', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
@@ -1447,7 +1686,7 @@ function SalesShiftPDF({
                           textAlign: 'right',
                         }}
                       >
-                        {(st.tank_difference || 0).toLocaleString('en-US', {
+                        {(st.tank_difference || 0)?.toLocaleString('en-US', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
@@ -1462,7 +1701,7 @@ function SalesShiftPDF({
                           textAlign: 'right',
                         }}
                       >
-                        {(st.actual_sold || 0).toLocaleString('en-US', {
+                        {(st.actual_sold || 0)?.toLocaleString('en-US', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
@@ -1477,7 +1716,7 @@ function SalesShiftPDF({
                           textAlign: 'right',
                         }}
                       >
-                        {(st.deviation || 0).toLocaleString('en-US', {
+                        {(st.deviation || 0)?.toLocaleString('en-US', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}

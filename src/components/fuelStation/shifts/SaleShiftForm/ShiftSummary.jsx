@@ -122,8 +122,9 @@ function ShiftSummary({ paymentItems = [] }) {
   };
 
   const totalCollectedAmount = useMemo(() => {
-    return allCashiers.reduce((sum, cashier) => sum + sanitizedNumber(cashier.collected_amount), 0);
-  }, [allCashiers]);
+    const paymentsReceivedTotal = paymentItems.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+    return allCashiers.reduce((sum, cashier) => sum + sanitizedNumber(cashier.collected_amount), 0) + paymentsReceivedTotal;
+  }, [allCashiers, paymentItems]);
 
   const mainLedgersSummary = useMemo(() => {
     const summary = [];
@@ -517,7 +518,7 @@ function ShiftSummary({ paymentItems = [] }) {
       </Card>
     );
   };
-
+ 
   const renderFinancialLedgersSummary = () => (
     <Card variant="outlined" sx={{ mb: 3 }}>
       <CardContent>

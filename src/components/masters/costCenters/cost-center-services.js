@@ -26,17 +26,13 @@ costCenterservices.getAllOutlets = async(response) => {
 }
 
 costCenterservices.add = async(costCenter) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.post(`/api/accountsAndFinance/cost-centers/add`,costCenter)
-        return data;
-    })
+    const {data} = await axios.post(`/api/accountsAndFinance/cost-centers/add`,costCenter)
+    return data;
 }
 
 costCenterservices.update = async(costCenter) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.put(`/api/accountsAndFinance/cost-centers/${costCenter.id}/update`,costCenter)
-        return data;    
-    })
+    const {data} = await axios.put(`/api/accountsAndFinance/cost-centers/${costCenter.id}/update`,costCenter)
+    return data;    
 }
 
 export default costCenterservices;

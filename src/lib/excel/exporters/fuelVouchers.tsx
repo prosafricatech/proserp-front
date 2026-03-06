@@ -256,10 +256,20 @@ export async function exportFuelVouchersToExcel(exportedData: any) {
         }
 
         const dataRow = ws.addRow(rowData);
+        let ltsColNo;
+        if (
+          exportedData.filters.stakeholder_name === '' &&
+          (exportedData.filters.expense_ledger_ids?.length !== 1 ||
+            !exportedData.filters.expense_ledger_ids)
+        ) {
+          ltsColNo = 7;
+        } else {
+          ltsColNo = 6;
+        }
 
         dataRow.eachCell((cell, colNumber) => {
           // Right-align numeric columns (LTS, Price, Amount/Debit, Credit, Running Balance)
-          if (colNumber >= 7) {
+          if (colNumber >= ltsColNo) {
             applyCellStyle(cell, CELL_STYLES.dataRowNumeric);
           } else {
             applyCellStyle(cell, CELL_STYLES.dataRowText);
@@ -319,9 +329,20 @@ export async function exportFuelVouchersToExcel(exportedData: any) {
 
       totalRow.height = ROW_HEIGHTS.total;
 
+      let ltsColNo;
+      if (
+        exportedData.filters.stakeholder_name === '' &&
+        (exportedData.filters.expense_ledger_ids?.length !== 1 ||
+          !exportedData.filters.expense_ledger_ids)
+      ) {
+        ltsColNo = 7;
+      } else {
+        ltsColNo = 6;
+      }
+
       totalRow.eachCell((cell, colNumber) => {
         // Right-align numeric columns
-        if (colNumber >= 7) {
+        if (colNumber >= ltsColNo) {
           applyCellStyle(cell, CELL_STYLES.totalRowNumeric);
         } else {
           applyCellStyle(cell, CELL_STYLES.totalRowText);

@@ -4,26 +4,20 @@ const smsServices = {};
 
 // Send single SMS
 smsServices.sendSingleSms = async (payload) => {
-  return await axios.get('/sanctum/csrf-cookie').then(async () => {
-    const { data } = await axios.post('/api/prosControl/sms/send-single', payload);
-    return data;
-  });
+  const { data } = await axios.post('/api/prosControl/sms/send-single', payload);
+  return data;
 };
 
 // Send one text to multiple users
 smsServices.sendSingleTextMultiUsers = async (payload) => {
-  return await axios.get('/sanctum/csrf-cookie').then(async () => {
-    const { data } = await axios.post('/api/prosControl/sms/send-multi-users', payload);
-    return data;
-  });
+  const { data } = await axios.post('/api/prosControl/sms/send-multi-users', payload);
+  return data;
 };
 
 // Send multiple texts to multiple users
 smsServices.sendMultiTextMultiUsers = async (payload) => {
-  return await axios.get('/sanctum/csrf-cookie').then(async () => {
-    const { data } = await axios.post('/api/prosControl/sms/send-multi-messages', payload);
-    return data;
-  });
+  const { data } = await axios.post('/api/prosControl/sms/send-multi-messages', payload);
+  return data;
 };
 
 // Check balance

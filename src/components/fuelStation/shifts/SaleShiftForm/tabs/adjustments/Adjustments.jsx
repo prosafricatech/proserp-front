@@ -1,7 +1,7 @@
 import { Grid, IconButton, LinearProgress, TextField, Tooltip} from '@mui/material';
-import { useContext, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import * as yup  from "yup";
-import { useForm, useFormContext } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { AddOutlined, CheckOutlined, DisabledByDefault } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
@@ -17,10 +17,11 @@ import { StationFormContext } from '../../../SalesShifts';
 function Adjustments({cashierPumpProducts, index = -1, setShowForm = null, adjustment, adjustments = [], setAdjustments}) {
   const [isAdding, setIsAdding] = useState(false);
   const {activeStation} = useContext(StationFormContext);
-  const { fuel_pumps, tanks } = activeStation;
+  const { tanks } = activeStation;
   const { productOptions } = useProductsSelect();
   const [productTanks, setProductTanks] = useState([])
   const [tanksKey, setTanksKeyKey] = useState(0);
+  const [formKey, setFormKey] = useState(0);
 
   const validationSchema = yup.object({
     product_id: yup.number().required("Product is required").typeError('Product is required'),
@@ -60,12 +61,17 @@ function Adjustments({cashierPumpProducts, index = -1, setShowForm = null, adjus
       setShowForm && setShowForm(false);
   };
 
+  useEffect(() => {
+    setFormKey(prevKey => prevKey + 1);
+    setTanksKeyKey(prevKey => prevKey + 1);
+  }, [cashierPumpProducts]);
+
   if(isAdding){
     return <LinearProgress/>
   }
 
   return (
-    <form autoComplete='off' onSubmit={handleSubmit(updateItems)}>
+    <form key={formKey} autoComplete='off' onSubmit={handleSubmit(updateItems)}>
       <Grid container spacing={1} marginTop={0.5}>
          <Grid size={{xs: 12, md: 6, lg: 2.6}}>
           <Div sx={{ mt: 1}}>

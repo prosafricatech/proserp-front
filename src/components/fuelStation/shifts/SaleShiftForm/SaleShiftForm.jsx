@@ -59,7 +59,18 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
   const [lastClosingDipping, setLastClosingDipping] = useState([]);
 
   const isAutoSavingRef = React.useRef(false);
-  const AUTO_SAVE_INTERVAL = 2 * 60 * 1000;
+  const hasPendingAutoSaveRef = React.useRef(false);
+  const lastChangeAtRef = React.useRef(null);
+  const hasMountedRef = React.useRef(false);
+  const isInitializingAutoSaveRef = React.useRef(true);
+  const hasInitializedPaymentItemsRef = React.useRef(false);
+  const hasUserInteractedRef = React.useRef(false);
+  const hasQueuedAutoSaveCycleRef = React.useRef(false);
+  const lastFormSnapshotRef = React.useRef(null);
+  const lastPaymentItemsSnapshotRef = React.useRef(null);
+  const AUTO_SAVE_DEBUG = true;
+  const AUTO_SAVE_INTERVAL = 1 * 60 * 1000;
+  const AUTO_SAVE_TICK = 1000;
 
   const addMutation = useMutation({
     mutationFn: fuelStationServices.addSalesShifts,
@@ -79,7 +90,6 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
       queryClient.invalidateQueries({ queryKey: ['salesShifts'] });
     },
   });
-
 
   const validationSchema = yup.object({
     sales_outlet_shift_id: yup.number().required('Sales Outlet Shift is required').typeError('Sales Outlet Shift must be a number'),
@@ -142,7 +152,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
             narration: yup.string().nullable(),
           })
         ),
-        tank_adjustments: yup.array().of(
+        adjustments: yup.array().of(
           yup.object().shape({
             tank_id: yup.number().nullable().typeError('Tank is Required'),
             quantity: yup.number().required('Quantity is required').typeError('Quantity is Required'),
@@ -224,7 +234,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
           })) || [],
           collected_amount: cashier.collected_amount || 0,
           collection_ledger_id: cashier.collection_ledger_id || null,
-          tank_adjustments: cashier.tank_adjustments?.map(adj => ({
+          adjustments: cashier.tank_adjustments?.map(adj => ({
             tank_id: adj.tank_id,
             quantity: adj.quantity,
             operator: adj.operator,
@@ -490,7 +500,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
           selected_pumps: [],
           pump_readings: [],
           fuel_vouchers: [],
-          tank_adjustments: [],
+          adjustments: [],
           other_transactions: [],
           main_ledger: null,
         };
@@ -564,11 +574,30 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
     } catch (error) {
       setValue('product_prices', [], { shouldValidate: true, shouldDirty: true });
     }
-  }, [fuel_pumps, activeStation.id, setValue]);
+  }, [fuel_pumps, activeStation.id, setValue, SalesShift]);
+
+  useEffect(() => {
+    if (!SalesShift?.id) return;
+    const shiftStart = SalesShift?.shift_start;
+    retrieveProductPrices(shiftStart);
+  }, [SalesShift]);
 
   const getCashierLedgers = (cashierIndex) => {
     return cashierLedgers[cashierIndex] || [];
   };
+
+  const autoSaveDebug = useCallback((message, meta = {}) => {
+    if (!AUTO_SAVE_DEBUG) return;
+    console.log('[SaleShiftForm][autosave]', message, meta);
+  }, [AUTO_SAVE_DEBUG]);
+
+  const toSnapshot = useCallback((value) => {
+    try {
+      return JSON.stringify(value ?? null);
+    } catch {
+      return null;
+    }
+  }, []);
 
   const handleSubmitForm = async (data, options = { silent: false }) => {
     const allProductIds = (activeStation.products || []).map(p => p.id);
@@ -645,27 +674,31 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
       return;
     }
 
-    data.cashiers = data.cashiers.map(cashier => ({
-      ...cashier,
-      selected_pumps: Array.isArray(cashier.selected_pumps)
-        ? cashier.selected_pumps.map(sel => {
-            const id = sel.pump_id ?? sel;
-            return typeof id === 'string' ? Number(id) : id;
-          })
-        : [],
-      fuel_vouchers: Array.isArray(cashier.fuel_vouchers)
-        ? cashier.fuel_vouchers.map(fuelVoucher => ({
-            stakeholder_id: fuelVoucher.stakeholder_id ?? (fuelVoucher.stakeholder?.id ?? null),
-            expense_ledger_id: fuelVoucher.expense_ledger_id ?? (fuelVoucher.expense_ledger?.id ?? null),
-            product_id: fuelVoucher.product_id,
-            quantity: fuelVoucher.quantity,
-            amount: fuelVoucher.amount,
-            reference: fuelVoucher.reference,
-            narration: fuelVoucher.narration,
-          })
-        )
-        : [],
-    }));
+    data.cashiers = data.cashiers.map(cashier => {
+      const { adjustments, ...rest } = cashier;
+      return {
+        ...rest,
+        tank_adjustments: adjustments || [],
+        selected_pumps: Array.isArray(cashier.selected_pumps)
+          ? cashier.selected_pumps.map(sel => {
+              const id = sel.pump_id ?? sel;
+              return typeof id === 'string' ? Number(id) : id;
+            })
+          : [],
+        fuel_vouchers: Array.isArray(cashier.fuel_vouchers)
+          ? cashier.fuel_vouchers.map(fuelVoucher => ({
+              stakeholder_id: fuelVoucher.stakeholder_id ?? (fuelVoucher.stakeholder?.id ?? null),
+              expense_ledger_id: fuelVoucher.expense_ledger_id ?? (fuelVoucher.expense_ledger?.id ?? null),
+              product_id: fuelVoucher.product_id,
+              quantity: fuelVoucher.quantity,
+              amount: fuelVoucher.amount,
+              reference: fuelVoucher.reference,
+              narration: fuelVoucher.narration,
+            })
+          )
+          : [],
+      };
+    });
     data.payments_received = paymentItems;
 
     // Decide add or update at submit time
@@ -690,35 +723,143 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
     }
   };
 
+  const markAutoSaveChange = useCallback(() => {
+    if (!hasMountedRef.current) return;
+    if (!hasUserInteractedRef.current) {
+      autoSaveDebug('Change ignored (no user interaction yet)');
+      return;
+    }
+    if (hasPendingAutoSaveRef.current) {
+      hasQueuedAutoSaveCycleRef.current = true;
+      autoSaveDebug('Change detected while countdown active (keeping existing countdown)');
+      return;
+    }
+    hasPendingAutoSaveRef.current = true;
+    lastChangeAtRef.current = Date.now();
+    autoSaveDebug('Countdown started', {
+      saveInMs: AUTO_SAVE_INTERVAL,
+    });
+  }, [AUTO_SAVE_INTERVAL, autoSaveDebug]);
+
+  const markUserInteraction = useCallback(() => {
+    if (!hasUserInteractedRef.current) {
+      autoSaveDebug('User interaction detected (autosave can start tracking changes)');
+    }
+    hasUserInteractedRef.current = true;
+  }, [autoSaveDebug]);
+
+  const resetAutoSaveTracking = useCallback(() => {
+    hasPendingAutoSaveRef.current = false;
+    lastChangeAtRef.current = null;
+    hasQueuedAutoSaveCycleRef.current = false;
+    autoSaveDebug('Countdown reset/cleared');
+  }, [autoSaveDebug]);
+
   useEffect(() => {
-    const interval = setInterval(async () => {
-      isAutoSavingRef.current = true;
+    const subscription = watch((value) => {
+      if (isInitializingAutoSaveRef.current) return;
 
-      const data = watch();
+      const nextSnapshot = toSnapshot(value);
+      if (nextSnapshot === null) return;
 
-      let filteredCashiers = [];
-      if (data.cashiers && data.cashiers.length > 0) {
-        filteredCashiers = data.cashiers.filter(cashier => cashier.selected_pumps && cashier.selected_pumps.length > 0);
-      }
-
-      if (filteredCashiers.length === 0) {
-        isAutoSavingRef.current = false;
+      if (lastFormSnapshotRef.current === null) {
+        lastFormSnapshotRef.current = nextSnapshot;
+        autoSaveDebug('Initial form snapshot captured');
         return;
       }
 
-      // Always set submit_type to 'suspend' for autosave
-      const partialData = { ...data, cashiers: filteredCashiers, submit_type: 'suspend' };
+      if (lastFormSnapshotRef.current === nextSnapshot) {
+        return;
+      }
 
-      await handleSubmitForm(partialData, { silent: true });
+      lastFormSnapshotRef.current = nextSnapshot;
+      markAutoSaveChange();
+    });
 
-      isAutoSavingRef.current = false;
-    }, AUTO_SAVE_INTERVAL);
+    hasMountedRef.current = true;
+    lastFormSnapshotRef.current = toSnapshot(watch());
+
+    const initTimer = setTimeout(() => {
+      isInitializingAutoSaveRef.current = false;
+    }, 0);
+
+    return () => {
+      clearTimeout(initTimer);
+      isInitializingAutoSaveRef.current = true;
+      lastFormSnapshotRef.current = null;
+      subscription.unsubscribe();
+      resetAutoSaveTracking();
+    };
+  }, [watch, markAutoSaveChange, resetAutoSaveTracking, toSnapshot, autoSaveDebug]);
+
+  useEffect(() => {
+    if (!hasInitializedPaymentItemsRef.current) {
+      hasInitializedPaymentItemsRef.current = true;
+      lastPaymentItemsSnapshotRef.current = toSnapshot(paymentItems);
+      return;
+    }
+
+    const nextSnapshot = toSnapshot(paymentItems);
+    if (nextSnapshot === null) return;
+    if (lastPaymentItemsSnapshotRef.current === nextSnapshot) return;
+
+    lastPaymentItemsSnapshotRef.current = nextSnapshot;
+    markAutoSaveChange();
+  }, [paymentItems, markAutoSaveChange, toSnapshot]);
+
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      if (!hasPendingAutoSaveRef.current) return;
+      if (!lastChangeAtRef.current) return;
+      if (isAutoSavingRef.current) return;
+
+      const elapsed = Date.now() - lastChangeAtRef.current;
+      if (elapsed < AUTO_SAVE_INTERVAL) return;
+
+      const saveStartedAt = Date.now();
+      isAutoSavingRef.current = true;
+      autoSaveDebug('Autosave started', { elapsedMs: elapsed });
+
+      try {
+        const data = watch();
+
+        let filteredCashiers = [];
+        if (data.cashiers && data.cashiers.length > 0) {
+          filteredCashiers = data.cashiers.filter(cashier => cashier.selected_pumps && cashier.selected_pumps.length > 0);
+        }
+
+        if (filteredCashiers.length === 0) {
+          autoSaveDebug('Autosave skipped (no cashier with selected pump)');
+          resetAutoSaveTracking();
+          return;
+        }
+
+        const partialData = {
+          ...data,
+          cashiers: filteredCashiers,
+          payments_received: paymentItems,
+          submit_type: 'suspend'
+        };
+
+        await handleSubmitForm(partialData, { silent: true });
+        autoSaveDebug('Autosave completed');
+
+        // After successful autosave, update the snapshot
+        const nextSnapshot = toSnapshot(watch());
+        lastFormSnapshotRef.current = nextSnapshot;
+        hasQueuedAutoSaveCycleRef.current = false;
+        resetAutoSaveTracking();
+      } finally {
+        isAutoSavingRef.current = false;
+      }
+    }, AUTO_SAVE_TICK);
 
     return () => clearInterval(interval);
-  }, [trigger, watch]);
+  }, [AUTO_SAVE_INTERVAL, AUTO_SAVE_TICK, watch, paymentItems, resetAutoSaveTracking, toSnapshot]);
 
   return (
-    <FormProvider {...{
+    <div onChangeCapture={markUserInteraction} onInputCapture={markUserInteraction}>
+      <FormProvider {...{
       register, 
       handleSubmit, 
       setError, 
@@ -1050,6 +1191,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
               color="warning"
               onClick={(e) => {
                 isAutoSavingRef.current = false;
+                resetAutoSaveTracking();
                 setShowHoldDialog(false);
                 setValue('submit_type', 'suspend');
                 handleSubmit(handleSubmitForm)(e);
@@ -1069,6 +1211,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
                 color='success'
                 onClick={(e) => {
                   isAutoSavingRef.current = false;
+                  resetAutoSaveTracking();
                   setValue('submit_type', 'close');
                   handleSubmit(handleSubmitForm)(e);
                 }}
@@ -1080,6 +1223,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
         )}
       </DialogActions>
     </FormProvider>
+    </div>
   );
 }
 

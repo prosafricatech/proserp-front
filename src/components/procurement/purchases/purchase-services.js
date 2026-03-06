@@ -4,7 +4,7 @@ const purchaseServices = {};
 
 purchaseServices.getList = async (params) => {
   const response = await axios.get('/api/purchaseOrders', {
-    params,  // pass all query params here directly
+    params,
   });
   return response.data;
 };
@@ -20,24 +20,18 @@ purchaseServices.PurchaseGrnsReport = async (id) => {
 }
 
 purchaseServices.add = async(order) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.post(`/api/purchaseOrders/add`,order)
-        return data;
-    })
+    const {data} = await axios.post(`/api/purchaseOrders/add`,order)
+    return data;
 }
 
 purchaseServices.update = async(order) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.put(`/api/purchaseOrders/${order.id}/update`,order)
-        return data;
-    })
+    const {data} = await axios.put(`/api/purchaseOrders/${order.id}/update`,order)
+    return data;
 }
 
 purchaseServices.delete = async (order) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.delete(`/api/purchaseOrders/${order.id}/delete`);
-        return data;
-    })
+    const {data} = await axios.delete(`/api/purchaseOrders/${order.id}/delete`);
+    return data;
 };
 
 purchaseServices.orderDetails = async (id) => {
@@ -61,10 +55,8 @@ purchaseServices.purchaseValues = async(params) => {
 }
 
 purchaseServices.receive = async(order) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.post(`/api/purchaseOrders/${order.id}/receive`,order)
-        return data;
-    })
+    const {data} = await axios.post(`/api/purchaseOrders/${order.id}/receive`,order)
+    return data;
 }
 
 purchaseServices.getPurchasesReport = async (params) => {
@@ -96,24 +88,18 @@ purchaseServices.getLastPrice = async(params) => {
 }
 
 purchaseServices.closeOrder = async(order) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.post(`/api/purchaseOrders/${order.id}/closeOrder`,order)
-        return data;
-    })
+    const {data} = await axios.post(`/api/purchaseOrders/${order.id}/closeOrder`,order)
+    return data;
 }
 
 purchaseServices.reOpenOrder = async(order) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.put(`/api/purchaseOrders/${order.id}/reOpenOrder`,order)
-        return data;
-    })
+    const {data} = await axios.put(`/api/purchaseOrders/${order.id}/reOpenOrder`,order)
+    return data;
 }
 
 purchaseServices.editGrn = async (grnId, grnData) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.put(`/api/grns/${grnId}/editGrn`,grnData)
-        return data;
-    })
+    const {data} = await axios.put(`/api/grns/${grnId}/editGrn`,grnData)
+    return data;
 };
 
 export default purchaseServices;
