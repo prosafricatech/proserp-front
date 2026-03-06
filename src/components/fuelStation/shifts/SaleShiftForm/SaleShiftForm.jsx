@@ -51,8 +51,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
   const [activeTab, setActiveTab] = useState(0);
   const {activeStation} = useContext(StationFormContext);
   const {fuel_pumps, cashiers, shifts} = activeStation;
-  const {authOrganization : {organization}} = useJumboAuth();
-  const {checkOrganizationPermission} = useJumboAuth();
+  const {authOrganization, checkOrganizationPermission} = useJumboAuth();
 
   const [cashierLedgers, setCashierLedgers] = useState({});
   const [lastClosingReadings, setLastClosingReadings] = useState({});
@@ -910,7 +909,13 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
                   label='Shift Start'
                   fullWidth
                   value={watch('shift_start') ? dayjs(watch('shift_start')) : null}
-                  minDate={dayjs(organization.recording_start_date)}
+                  minDate={
+                    checkOrganizationPermission([
+                      PERMISSIONS.FUEL_SALES_SHIFTS_BACKDATE,
+                    ])
+                      ? dayjs(authOrganization?.organization.recording_start_date)
+                      : dayjs().startOf('day')
+                  }
                   slotProps={{
                     textField: {
                       size: 'small',
@@ -961,7 +966,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
                   label='Shift End'
                   fullWidth
                   value={watch('shift_end') ? dayjs(watch('shift_end')) : null}
-                  minDate={dayjs(organization.recording_start_date)}
+                  minDate={dayjs(authOrganization.organization.recording_start_date)}
                   slotProps={{
                     textField: {
                       size: 'small',
