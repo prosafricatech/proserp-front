@@ -1,10 +1,10 @@
 'use client';
 
 import { yupResolver } from '@hookform/resolvers/yup';
-import { Autocomplete, FormControl, Grid, IconButton, InputLabel, LinearProgress, MenuItem, Select, TextField, Tooltip, useMediaQuery } from '@mui/material';
+import { Autocomplete, FormControl, Grid, IconButton, InputLabel, LinearProgress, MenuItem, Select, TextField, Tooltip, FormHelperText } from '@mui/material';
 import { useEffect, useState } from 'react';
 import * as yup from 'yup';
-import { set, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { LoadingButton } from '@mui/lab';
 import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
 import { Div } from '@jumbo/shared';
@@ -31,10 +31,20 @@ function SubContractTasksTab({
   const [triggerKey, setTriggerKey] = useState(0);
   const { ungroupedLedgerOptions } = useLedgerSelect();
   const { currencies } = useCurrencySelect();
-  const [boundToOption, setBoundToOption] = useState(() => (subContractItem && subContractItem.project_task ? 'Task' : ''));
+  const initialBoundTo = subContractItem && subContractItem.project_task ? 'Task' : '';
+  const [boundToOption, setBoundToOption] = useState(() => initialBoundTo);
   const [selectedItemable, setSelectedItemable] = useState(allTasks.find(task => task.id === subContractItem?.project_task_id) ?? null);
 
   const validationSchema = yup.object({
+    bound_to: yup.string().required('Bound to is required'),
+    project_task_id: yup
+      .number()
+      .nullable()
+      .when('bound_to', {
+        is: (value) => value === 'Task',
+        then: (schema) => schema.required('Select Task is required').typeError('Select Task is required'),
+        otherwise: (schema) => schema.nullable(),
+      }),
     expense_ledger_id: yup.number().required("Expense name is required").typeError('Expense name is required'),
     currency_id: yup.number().positive().required().typeError('Currency is required'),
     exchange_rate: yup.number().positive().required().typeError('Exchange rate is required'),
@@ -44,6 +54,7 @@ function SubContractTasksTab({
 
   const formDefaultValues = {
     type: 'subcontract_task',
+    bound_to: initialBoundTo,
     expense_ledger: subContractItem?.expense_ledger || null,
     currency_id:  subContractItem?.currency_id ?? currencies?.find(c => c.is_base === 1)?.id,
     exchange_rate: subContractItem?.exchange_rate ?? 1,
@@ -126,14 +137,18 @@ function SubContractTasksTab({
               label="Bound To"
               size='small'
               fullWidth
+              error={!!errors?.bound_to}
               onChange={(e) => {
                 setSelectedItemable(null);
                 setBoundToOption(e.target.value);
-                setValue('bound_to', e.target.value);
+                setValue('bound_to', e.target.value, { shouldValidate: true, shouldDirty: true });
+                setValue('project_task', null, { shouldValidate: true, shouldDirty: true });
+                setValue('project_task_id', null, { shouldValidate: true, shouldDirty: true });
               }}
             >
               <MenuItem value="Task">Task</MenuItem>
             </Select>
+            <FormHelperText error>{errors?.bound_to?.message}</FormHelperText>
           </FormControl>
         </Div>
       </Grid>
@@ -145,10 +160,19 @@ function SubContractTasksTab({
             getOptionLabel={(option) => option.label}
             value={selectedItemable}
             renderInput={(params) => (
-              <TextField {...params} label={`Select ${boundToOption}`} size="small" fullWidth />
+              <TextField
+                {...params}
+                label={`Select ${boundToOption || 'Task'}`}
+                size="small"
+                fullWidth
+                error={!!errors?.project_task_id}
+                helperText={errors?.project_task_id?.message}
+              />
             )}
             onChange={(e, newValue) => {
               setSelectedItemable(newValue);
+              setValue('project_task', newValue || null, { shouldValidate: true, shouldDirty: true });
+              setValue('project_task_id', newValue?.id ?? null, { shouldValidate: true, shouldDirty: true });
             }}
             renderOption={(props, option) => (
               <li {...props} key={option.id}>
@@ -236,21 +260,21 @@ function SubContractTasksTab({
 
       <Grid size={{ xs: watch('currency_id') > 1 ? 6 : 12, md: watch('currency_id') > 1 ? 4 : 4 }}>
         <Div sx={{ mt: 1 }}>
-        <TextField
-          label="Rate"
-          fullWidth
-          size="small"
-          defaultValue={subContractItem?.rate ?? null}
-          InputProps={{ inputComponent: CommaSeparatedField }}
-          error={!!errors?.rate}
-          helperText={errors?.rate?.message}
-          {...register('rate', {
-            setValueAs: (value) => {
-              const sanitized = sanitizedNumber(value);
-              return sanitized === null ? undefined : Number(sanitized);
-            },
-          })}
-        />
+          <TextField
+            label="Rate"
+            fullWidth
+            size="small"
+            defaultValue={subContractItem?.rate ?? null}
+            InputProps={{ inputComponent: CommaSeparatedField }}
+            error={!!errors?.rate}
+            helperText={errors?.rate?.message}
+            {...register('rate', {
+              setValueAs: (value) => {
+                const sanitized = sanitizedNumber(value);
+                return sanitized === null ? undefined : Number(sanitized);
+              },
+            })}
+          />
         </Div>
       </Grid>
 
