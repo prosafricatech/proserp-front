@@ -534,6 +534,7 @@ const BudgetsForm = ({ setOpenDialog, budget=null, isProjectBudget=true }) => {
                   submitItemForm={submitItemForm}
                   setSubmitItemForm={setSubmitItemForm}
                   setIsDirty={setIsDirty}
+                  allTasks={allTasks}
                   selectedCostCenter={selectedCostCenter}
                 />
                 {subContractItems?.map((subContractItem, index) => (
