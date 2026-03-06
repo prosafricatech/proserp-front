@@ -61,6 +61,14 @@ function ShiftSummary({ paymentItems = [] }) {
     return productPrices.find(p => p?.product_id === productId)?.price || 0;
   };
 
+  const isCashDebitPayment = (item) => {
+    const debitLedgerGroupId =
+      item?.debit_ledger?.ledger_group_id ||
+      ungroupedLedgerOptions.find(l => l.id === item?.debit_ledger_id)?.ledger_group_id;
+
+    return Number(debitLedgerGroupId) === 13;
+  };
+
   const calculateCashierMainLedgerAmount = (cashier) => {
     if (cashier.main_ledger_amount !== undefined && cashier.main_ledger_amount !== null) {
       return cashier.main_ledger_amount;
@@ -122,9 +130,12 @@ function ShiftSummary({ paymentItems = [] }) {
   };
 
   const totalCollectedAmount = useMemo(() => {
-    const paymentsReceivedTotal = paymentItems.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+    const paymentsReceivedTotal = paymentItems
+      .filter(isCashDebitPayment)
+      .reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+
     return allCashiers.reduce((sum, cashier) => sum + sanitizedNumber(cashier.collected_amount), 0) + paymentsReceivedTotal;
-  }, [allCashiers, paymentItems]);
+  }, [allCashiers, paymentItems, ungroupedLedgerOptions]);
 
   const mainLedgersSummary = useMemo(() => {
     const summary = [];
