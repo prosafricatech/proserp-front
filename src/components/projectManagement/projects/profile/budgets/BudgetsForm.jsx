@@ -178,7 +178,7 @@ const BudgetsForm = ({ setOpenDialog, budget=null, isProjectBudget=true }) => {
 
   const allTasks = getTaskOptions(timelineActivitiesData);
 
-  const hasSubcontractTab = !!selectedCostCenter?.cost_centerable_id;
+  const hasSubcontractTab = !!isProjectBudget && !!selectedCostCenter?.cost_centerable_id;
   const subcontractTabIndex = hasSubcontractTab ? 2 : -1;
   const summaryTabIndex = hasSubcontractTab ? 3 : 2;
   const tabsCount = hasSubcontractTab ? 4 : 3;
