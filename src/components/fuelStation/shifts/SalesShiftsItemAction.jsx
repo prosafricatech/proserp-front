@@ -32,8 +32,12 @@ import {
 import { Box, Grid } from '@mui/system';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
+<<<<<<< HEAD
 import { useContext, useState } from 'react';
 import dayjs from 'dayjs';
+=======
+import { useContext, useEffect, useState } from 'react';
+>>>>>>> origin/junior-development
 import PDFContent from '../../pdf/PDFContent';
 import { useProductsSelect } from '../../productAndServices/products/ProductsSelectProvider';
 import fuelStationServices from '../fuelStationServices';
@@ -88,6 +92,10 @@ const DocumentDialog = ({
   const [activeTab, setActiveTab] = useState(0);
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
+
+  useEffect(() => {
+    belowLargeScreen && setActiveTab(1);
+  }, [belowLargeScreen]);
 
   if (isFetching) {
     return <LinearProgress />;
@@ -237,6 +245,7 @@ const DocumentDialog = ({
             fuel_pumps={fuel_pumps}
             shift_teams={shift_teams}
             organization={organization}
+            paymentReceived={paymentReceived}
           />
         )}
         {(!belowLargeScreen || activeTab === 0) && (
