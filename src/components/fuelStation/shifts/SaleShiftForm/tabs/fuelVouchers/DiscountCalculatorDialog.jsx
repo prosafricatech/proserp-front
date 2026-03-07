@@ -1,12 +1,19 @@
 import React, { useState } from 'react';
 import { Dialog, DialogActions, DialogContent, DialogTitle, Button, TextField, Grid, Typography, Divider } from '@mui/material';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
+import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 
 const DiscountCalculatorDialog = ({ open, onClose, onSubmit, productPrice }) => {
   const [discountQuantity, setDiscountQuantity] = useState('');
   const [discountRate, setDiscountRate] = useState('');
   const [discountAmount, setDiscountAmount] = useState('');
   const [netAmount, setNetAmount] = useState('');
+
+  const parseInputValue = (rawValue) => {
+    if (rawValue === '' || rawValue === null || rawValue === undefined) return '';
+    const sanitizedValue = sanitizedNumber(rawValue);
+    return Number.isFinite(Number(sanitizedValue)) ? sanitizedValue : '';
+  };
 
   React.useEffect(() => {
     const quantityValue = Number(discountQuantity) || 0;
@@ -62,7 +69,10 @@ const DiscountCalculatorDialog = ({ open, onClose, onSubmit, productPrice }) => 
               size='small'
               value={discountQuantity}
               placeholder='Enter liters'
-              onChange={e => setDiscountQuantity(sanitizedNumber(e.target.value))}
+              InputProps={{
+                inputComponent: CommaSeparatedField,
+              }}
+              onChange={e => setDiscountQuantity(parseInputValue(e.target.value))}
             />
           </Grid>
           <Grid size={12}>
@@ -72,7 +82,10 @@ const DiscountCalculatorDialog = ({ open, onClose, onSubmit, productPrice }) => 
               size='small'
               value={discountRate}
               placeholder='Discount per liter'
-              onChange={e => setDiscountRate(sanitizedNumber(e.target.value))}
+              InputProps={{
+                inputComponent: CommaSeparatedField,
+              }}
+              onChange={e => setDiscountRate(parseInputValue(e.target.value))}
             />
           </Grid>
           <Grid size={12}>
@@ -81,7 +94,10 @@ const DiscountCalculatorDialog = ({ open, onClose, onSubmit, productPrice }) => 
               fullWidth
               size='small'
               value={discountAmount ? Number(discountAmount).toLocaleString() : ''}
-              InputProps={{ readOnly: true }}
+              InputProps={{
+                readOnly: true,
+                inputComponent: CommaSeparatedField,
+              }}
               sx={{ '& .MuiInputBase-input.Mui-disabled': { WebkitTextFillColor: 'inherit' } }}
             />
           </Grid>
@@ -91,7 +107,10 @@ const DiscountCalculatorDialog = ({ open, onClose, onSubmit, productPrice }) => 
               fullWidth
               size='small'
               value={netAmount ? Number(netAmount).toLocaleString() : ''}
-              InputProps={{ readOnly: true }}
+              InputProps={{
+                readOnly: true,
+                inputComponent: CommaSeparatedField,
+              }}
               sx={{ '& .MuiInputBase-root': { fontWeight: 600 } }}
             />
           </Grid>
