@@ -100,7 +100,7 @@ const DocumentDialog = ({
   if (shiftData?.payments_received?.length) {
     const ledgerMap = new Map(ungroupedLedgerOptions.map((ul) => [ul.id, ul]));
 
-    shiftData.payments_received.forEach((p, i) => {
+    shiftData.payments_received.forEach((p) => {
       const creditLedger = ledgerMap.get(p.credit_ledger_id);
 
       const debitLedger = ledgerMap.get(p.debit_ledger_id);
@@ -109,7 +109,11 @@ const DocumentDialog = ({
       p.debitLedger = debitLedger;
     });
 
-    paymentReceived = shiftData.payments_received;
+    const allPayments = shiftData.payments_received.filter(
+      (p) => p.debitLedger.ledger_group_id === 13
+    );
+
+    paymentReceived = allPayments;
   }
 
   const exportedData = {
