@@ -38,6 +38,7 @@ function Header({ dictionary }: { dictionary: any }) {
   const isBelowLg = useMediaQuery(
     theme.breakpoints.down(headerOptions?.drawerBreakpoint ?? 'xl')
   );
+  const smallScreen = useMediaQuery(theme.breakpoints.down('md'));
 
   const handleSearchVisibility = React.useCallback((value: boolean) => {
     setSearchVisibility(value);
@@ -112,27 +113,29 @@ function Header({ dictionary }: { dictionary: any }) {
   return (
     <React.Fragment>
       <SidebarToggleButton />
-      <Stack direction='row' alignItems='center' gap={0.5} sx={{ mr: 1 }}>
-        {canGoBack && (
-          <Tooltip title='Back'>
-            <IconButton color='inherit' size='small' onClick={handleGoBack}>
-              <ArrowBackIcon fontSize='small' />
+      {smallScreen &&
+        <Stack direction='row' alignItems='center' gap={0.5} sx={{ mr: 1 }}>
+          {canGoBack && (
+            <Tooltip title='Back'>
+              <IconButton color='inherit' size='small' onClick={handleGoBack}>
+                <ArrowBackIcon fontSize='small' />
+              </IconButton>
+            </Tooltip>
+          )}
+          {canGoForward && (
+            <Tooltip title='Forward'>
+              <IconButton color='inherit' size='small' onClick={handleGoForward}>
+                <ArrowForwardIcon fontSize='small' />
+              </IconButton>
+            </Tooltip>
+          )}
+          <Tooltip title='Refresh'>
+            <IconButton color='inherit' size='small' onClick={handleRefresh}>
+              <RefreshIcon fontSize='small' />
             </IconButton>
           </Tooltip>
-        )}
-        {canGoForward && (
-          <Tooltip title='Forward'>
-            <IconButton color='inherit' size='small' onClick={handleGoForward}>
-              <ArrowForwardIcon fontSize='small' />
-            </IconButton>
-          </Tooltip>
-        )}
-        <Tooltip title='Refresh'>
-          <IconButton color='inherit' size='small' onClick={handleRefresh}>
-            <RefreshIcon fontSize='small' />
-          </IconButton>
-        </Tooltip>
-      </Stack>
+        </Stack>
+      }
       {isSidebarStyle(SIDEBAR_STYLES.CLIPPED_UNDER_HEADER) && !isBelowLg && (
         <Logo sx={{ mr: 3, minWidth: 150 }} mode={theme.type} />
       )}
