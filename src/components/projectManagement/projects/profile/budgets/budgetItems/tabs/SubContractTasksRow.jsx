@@ -67,12 +67,19 @@ function SubContractTasksRow({
           </Grid>
           <Grid size={{xs: 5.5, md: 1.5}} textAlign={{md: 'right'}}>
             <Tooltip title="Rate">
-              <Typography>{subContractItem.rate.toLocaleString('en-US', 
-                {
-                  style: 'currency',
-                  currency: subContractItem.currency?.code,
-                })}
-              </Typography>
+              <span>
+                <Typography>{subContractItem.rate.toLocaleString('en-US', 
+                  {
+                    style: 'currency',
+                    currency: subContractItem.currency?.code,
+                  })}
+                </Typography>
+                {Number(subContractItem?.exchange_rate || 1) !== 1 && (
+                  <Typography variant='caption' color='text.secondary'>
+                    Exch: {Number(subContractItem.exchange_rate).toLocaleString()}
+                  </Typography>
+                )}
+              </span>
             </Tooltip>
           </Grid>
           <Grid size={{xs: 5.5, md: 2}} textAlign={{md: 'right'}}>
