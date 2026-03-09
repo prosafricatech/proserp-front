@@ -56,6 +56,14 @@ function Header({ dictionary }: { dictionary: any }) {
     window.location.reload();
   }, []);
 
+  // Clear navigation stack on first app load (if not already set)
+  React.useEffect(() => {
+    const storageKey = 'proserp-navigation-stack';
+    if (!sessionStorage.getItem(storageKey)) {
+      sessionStorage.setItem(storageKey, JSON.stringify({ stack: [], index: 0 }));
+    }
+  }, []);
+
   React.useEffect(() => {
     const currentPath = `${pathname || ''}${searchParams?.toString() ? `?${searchParams.toString()}` : ''}`;
     const storageKey = 'proserp-navigation-stack';
