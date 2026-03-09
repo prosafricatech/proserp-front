@@ -109,33 +109,57 @@ function Header({ dictionary }: { dictionary: any }) {
 
   const canGoBack = navigationIndex > 0;
   const canGoForward = navigationIndex < navigationStack.length - 1;
+  const isLightMode = theme.type === 'light';
+
+  const headerActionButtonSx = {
+    color: isLightMode ? 'text.primary' : 'inherit',
+    backgroundColor: isLightMode ? 'common.white' : 'transparent',
+    border: '1px solid',
+    borderColor: isLightMode ? 'divider' : 'transparent',
+    '&:hover': {
+      backgroundColor: isLightMode ? 'grey.100' : 'action.hover',
+    },
+  };
 
   return (
     <React.Fragment>
       <SidebarToggleButton />
-      {smallScreen &&
-        <Stack direction='row' alignItems='center' gap={0.5} sx={{ mr: 1 }}>
-          {canGoBack && (
-            <Tooltip title='Back'>
-              <IconButton color='inherit' size='small' onClick={handleGoBack}>
-                <ArrowBackIcon fontSize='small' />
-              </IconButton>
-            </Tooltip>
-          )}
-          {canGoForward && (
-            <Tooltip title='Forward'>
-              <IconButton color='inherit' size='small' onClick={handleGoForward}>
-                <ArrowForwardIcon fontSize='small' />
-              </IconButton>
-            </Tooltip>
-          )}
-          <Tooltip title='Refresh'>
-            <IconButton color='inherit' size='small' onClick={handleRefresh}>
-              <RefreshIcon fontSize='small' />
+      <Stack direction='row' alignItems='center' gap={0.5} sx={{ mr: 1 }}>
+        {canGoBack && (
+          <Tooltip title='Back'>
+            <IconButton
+              color='inherit'
+              size='small'
+              onClick={handleGoBack}
+              sx={headerActionButtonSx}
+            >
+              <ArrowBackIcon fontSize='small' />
             </IconButton>
           </Tooltip>
-        </Stack>
-      }
+        )}
+        {canGoForward && (
+          <Tooltip title='Forward'>
+            <IconButton
+              color='inherit'
+              size='small'
+              onClick={handleGoForward}
+              sx={headerActionButtonSx}
+            >
+              <ArrowForwardIcon fontSize='small' />
+            </IconButton>
+          </Tooltip>
+        )}
+        <Tooltip title='Refresh'>
+          <IconButton
+            color='inherit'
+            size='small'
+            onClick={handleRefresh}
+            sx={headerActionButtonSx}
+          >
+            <RefreshIcon fontSize='small' />
+          </IconButton>
+        </Tooltip>
+      </Stack>
       {isSidebarStyle(SIDEBAR_STYLES.CLIPPED_UNDER_HEADER) && !isBelowLg && (
         <Logo sx={{ mr: 3, minWidth: 150 }} mode={theme.type} />
       )}
