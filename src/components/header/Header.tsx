@@ -128,20 +128,35 @@ function Header({ dictionary }: { dictionary: any }) {
         <Stack direction='row' alignItems='center' gap={0.5} sx={{ mr: 1 }}>
           {canGoBack && (
             <Tooltip title='Back'>
-              <IconButton color='inherit' size='small' onClick={handleGoBack}>
+              <IconButton
+                color='inherit'
+                size='small'
+                onClick={handleGoBack}
+                sx={headerActionButtonSx}
+              >
                 <ArrowBackIcon fontSize='small' />
               </IconButton>
             </Tooltip>
           )}
           {canGoForward && (
             <Tooltip title='Forward'>
-              <IconButton color='inherit' size='small' onClick={handleGoForward}>
+              <IconButton
+                color='inherit'
+                size='small'
+                onClick={handleGoForward}
+                sx={headerActionButtonSx}
+              >
                 <ArrowForwardIcon fontSize='small' />
               </IconButton>
             </Tooltip>
           )}
           <Tooltip title='Refresh'>
-            <IconButton color='inherit' size='small' onClick={handleRefresh}>
+            <IconButton
+              color='inherit'
+              size='small'
+              onClick={handleRefresh}
+              sx={headerActionButtonSx}
+            >
               <RefreshIcon fontSize='small' />
             </IconButton>
           </Tooltip>
