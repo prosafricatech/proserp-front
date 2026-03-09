@@ -944,10 +944,13 @@ export default function CashierListSummaryPDF({
                           textAlign: 'right',
                         }}
                       >
-                        {cashDistributionsTotalSummary?.toLocaleString('en-US', {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
+                        {cashDistributionsTotalSummary?.toLocaleString(
+                          'en-US',
+                          {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          }
+                        )}
                       </Text>
                     </View>
                   </View>
@@ -1268,7 +1271,7 @@ export default function CashierListSummaryPDF({
                           width: '34%',
                         }}
                       >
-                        Payments
+                        Cash Payments
                       </Text>
                       <Text
                         style={{

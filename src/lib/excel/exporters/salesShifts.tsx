@@ -218,6 +218,11 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
       0
     );
 
+    const allPaymentsTotal = exportedData.allPaymentsReceived.reduce(
+      (sum: number, pr: any) => sum + pr.amount,
+      0
+    );
+
     const wb = createWorkbook();
     const ws = wb.addWorksheet('Sales Shifts');
 
@@ -429,7 +434,7 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
 
     // Add rows
     const row = ws.addRow([
-      'Sales Outlet Shift',
+      'Shift Name',
       'Shift Start',
       'Shift End',
       'Recorded By',
@@ -986,6 +991,20 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
               maximumFractionDigits: 2,
             });
 
+          if (parseFloat(cashier.cashCollection.shortOver) > 0) {
+            ws.getCell(`J${startRow}`).font = {
+              bold: true,
+              size: 14,
+              color: { argb: 'FF4A990E' },
+            };
+          } else {
+            ws.getCell(`J${startRow}`).font = {
+              bold: true,
+              size: 14,
+              color: { argb: 'FFFF0000' },
+            };
+          }
+
           currentRow = startRow + maxLen - 1;
           rowIndex++;
         });
@@ -1185,16 +1204,33 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}`;
-        ws.getCell(`J${totalsRow + 2}`).font = { bold: true, size: 14 };
+        ws.getCell(`J${totalsRow + 2}`).font = {
+          bold: true,
+          size: 14,
+          color: { argb: 'FFFFFF' },
+        };
         ws.getCell(`J${totalsRow + 2}`).alignment = {
           horizontal: 'right',
           vertical: 'middle',
         };
-        ws.getCell(`J${totalsRow + 2}`).fill = {
-          type: 'pattern',
-          pattern: 'solid',
-          fgColor: { argb: 'FFD9D9D9' },
-        };
+        if (totalShortOrOver > 0) {
+          ws.getCell(`J${totalsRow + 2}`).fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FF4A990E' },
+          };
+        } else {
+          ws.getCell(`J${totalsRow + 2}`).fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: 'FFFF0000' },
+          };
+        }
+        // ws.getCell(`J${totalsRow + 2}`).fill = {
+        //   type: 'pattern',
+        //   pattern: 'solid',
+        //   fgColor: { argb: 'FFD9D9D9' },
+        // };
         ws.getCell(`J${totalsRow + 2}`).border = {
           top: { style: 'thin', color: { argb: 'FF000000' } },
           bottom: { style: 'thin', color: { argb: 'FF000000' } },
@@ -1204,7 +1240,7 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
 
         // payments received total
         if (exportedData.paymentReceived.length) {
-          ws.getCell(`H${totalsRow + 3}`).value = 'Payments';
+          ws.getCell(`H${totalsRow + 3}`).value = 'Cash Payments';
           ws.getCell(`H${totalsRow + 3}`).font = { size: 14 };
           ws.getCell(`H${totalsRow + 3}`).alignment = {
             horizontal: 'left',
@@ -2428,10 +2464,19 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
                 horizontal: 'right',
                 vertical: 'middle',
               };
-              ws.getCell(`F${distributionTotalsRow + 2}`).font = {
-                bold: true,
-                size: 14,
-              };
+              if (parseFloat(shortOverVal) > 0) {
+                ws.getCell(`F${distributionTotalsRow + 2}`).font = {
+                  bold: true,
+                  size: 14,
+                  color: { argb: 'FF4A990E' },
+                };
+              } else {
+                ws.getCell(`F${distributionTotalsRow + 2}`).font = {
+                  bold: true,
+                  size: 14,
+                  color: { argb: 'FFFF0000' },
+                };
+              }
               ws.getCell(`F${distributionTotalsRow + 2}`).fill = {
                 type: 'pattern',
                 pattern: 'solid',
@@ -2451,8 +2496,8 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
 
     // PAYMENTS RECEIVED
     let paymentsRow = ws.lastRow?.number ?? 0;
-    if (exportedData.paymentReceived?.length && exportedData.withDetails) {
-      ws.mergeCells(`A${paymentsRow + 2}:H${paymentsRow + 2}`);
+    if (exportedData.allPaymentsReceived?.length && exportedData.withDetails) {
+      ws.mergeCells(`A${paymentsRow + 2}:G${paymentsRow + 2}`);
       ws.getCell(`A${paymentsRow + 2}`).value = 'Payments Received';
       ws.getCell(`A${paymentsRow + 2}`).font = { bold: true, size: 14 };
       ws.getCell(`A${paymentsRow + 2}`).alignment = {
@@ -2518,7 +2563,7 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
         right: { style: 'thin', color: { argb: 'FF000000' } },
       };
 
-      ws.mergeCells(`G${paymentsRow + 3}:H${paymentsRow + 3}`);
+      // ws.mergeCells(`G${paymentsRow + 3}:H${paymentsRow + 3}`);
       ws.getCell(`G${paymentsRow + 3}`).value = 'Amount';
       ws.getCell(`G${paymentsRow + 3}`).font = { bold: true, size: 11 };
       ws.getCell(`G${paymentsRow + 3}`).alignment = {
@@ -2537,7 +2582,7 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
         right: { style: 'thin', color: { argb: 'FF000000' } },
       };
 
-      exportedData.paymentReceived.forEach((pr: any, i: number) => {
+      exportedData.allPaymentsReceived.forEach((pr: any, i: number) => {
         let paymentDataRow = paymentsRow + 4 + i;
         ws.mergeCells(`A${paymentDataRow}:B${paymentDataRow}`);
         ws.getCell(`A${paymentDataRow}`).value = pr.creditLedger.name;
@@ -2578,7 +2623,7 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
           right: { style: 'thin', color: { argb: 'FF000000' } },
         };
 
-        ws.mergeCells(`G${paymentDataRow}:H${paymentDataRow}`);
+        // ws.mergeCells(`G${paymentDataRow}:H${paymentDataRow}`);
         ws.getCell(`G${paymentDataRow}`).value = (
           pr.amount || 0
         ).toLocaleString('en-US', {
@@ -2618,9 +2663,9 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
         right: { style: 'thin', color: { argb: 'FF000000' } },
       };
 
-      ws.mergeCells(`G${paymentsTotalRow}:H${paymentsTotalRow}`);
+      // ws.mergeCells(`G${paymentsTotalRow}:H${paymentsTotalRow}`);
       ws.getCell(`G${paymentsTotalRow}`).value =
-        paymentsReceivedTotal.toLocaleString('en-US', {
+        allPaymentsTotal.toLocaleString('en-US', {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         });
@@ -2645,7 +2690,7 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
     // CASH COLLECTION SUMMARY
     let cashCollectionRow = (ws.lastRow?.number ?? 0) + 2;
     if (exportedData.withDetails) {
-      ws.mergeCells(`A${cashCollectionRow}:H${cashCollectionRow}`);
+      ws.mergeCells(`A${cashCollectionRow}:G${cashCollectionRow}`);
       ws.getCell(`A${cashCollectionRow}`).value = 'Cash Collection Summary';
       ws.getCell(`A${cashCollectionRow}`).font = { bold: true, size: 14 };
       ws.getCell(`A${cashCollectionRow}`).alignment = {
@@ -2653,7 +2698,7 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
         vertical: 'middle',
       };
 
-      ws.mergeCells(`A${cashCollectionRow + 1}:G${cashCollectionRow + 1}`);
+      ws.mergeCells(`A${cashCollectionRow + 1}:F${cashCollectionRow + 1}`);
       ws.getCell(`A${cashCollectionRow + 1}`).value = 'Total Expected';
       ws.getCell(`A${cashCollectionRow + 1}`).font = { bold: true, size: 11 };
       ws.getCell(`A${cashCollectionRow + 1}`).alignment = {
@@ -2667,24 +2712,24 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
         right: { style: 'thin', color: { argb: 'FF000000' } },
       };
 
-      ws.getCell(`H${cashCollectionRow + 1}`).value =
+      ws.getCell(`G${cashCollectionRow + 1}`).value =
         totalExpectedAmount.toLocaleString('en-US', {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         });
-      ws.getCell(`H${cashCollectionRow + 1}`).font = { bold: true, size: 11 };
-      ws.getCell(`H${cashCollectionRow + 1}`).alignment = {
+      ws.getCell(`G${cashCollectionRow + 1}`).font = { bold: true, size: 11 };
+      ws.getCell(`G${cashCollectionRow + 1}`).alignment = {
         horizontal: 'right',
         vertical: 'middle',
       };
-      ws.getCell(`H${cashCollectionRow + 1}`).border = {
+      ws.getCell(`G${cashCollectionRow + 1}`).border = {
         top: { style: 'thin', color: { argb: 'FF000000' } },
         bottom: { style: 'thin', color: { argb: 'FF000000' } },
         left: { style: 'thin', color: { argb: 'FF000000' } },
         right: { style: 'thin', color: { argb: 'FF000000' } },
       };
 
-      ws.mergeCells(`A${cashCollectionRow + 2}:G${cashCollectionRow + 2}`);
+      ws.mergeCells(`A${cashCollectionRow + 2}:F${cashCollectionRow + 2}`);
       ws.getCell(`A${cashCollectionRow + 2}`).value = 'Total Collected';
       ws.getCell(`A${cashCollectionRow + 2}`).font = { bold: true, size: 11 };
       ws.getCell(`A${cashCollectionRow + 2}`).alignment = {
@@ -2698,24 +2743,24 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
         right: { style: 'thin', color: { argb: 'FF000000' } },
       };
 
-      ws.getCell(`H${cashCollectionRow + 2}`).value =
+      ws.getCell(`G${cashCollectionRow + 2}`).value =
         totalCollectedAmount.toLocaleString('en-US', {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         });
-      ws.getCell(`H${cashCollectionRow + 2}`).font = { bold: true, size: 11 };
-      ws.getCell(`H${cashCollectionRow + 2}`).alignment = {
+      ws.getCell(`G${cashCollectionRow + 2}`).font = { bold: true, size: 11 };
+      ws.getCell(`G${cashCollectionRow + 2}`).alignment = {
         horizontal: 'right',
         vertical: 'middle',
       };
-      ws.getCell(`H${cashCollectionRow + 2}`).border = {
+      ws.getCell(`G${cashCollectionRow + 2}`).border = {
         top: { style: 'thin', color: { argb: 'FF000000' } },
         bottom: { style: 'thin', color: { argb: 'FF000000' } },
         left: { style: 'thin', color: { argb: 'FF000000' } },
         right: { style: 'thin', color: { argb: 'FF000000' } },
       };
 
-      ws.mergeCells(`A${cashCollectionRow + 3}:G${cashCollectionRow + 3}`);
+      ws.mergeCells(`A${cashCollectionRow + 3}:F${cashCollectionRow + 3}`);
       ws.getCell(`A${cashCollectionRow + 3}`).value = 'Short/Over';
       ws.getCell(`A${cashCollectionRow + 3}`).font = { bold: true, size: 11 };
       ws.getCell(`A${cashCollectionRow + 3}`).alignment = {
@@ -2729,7 +2774,7 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
         right: { style: 'thin', color: { argb: 'FF000000' } },
       };
 
-      ws.getCell(`H${cashCollectionRow + 3}`).value =
+      ws.getCell(`G${cashCollectionRow + 3}`).value =
         totalShortOrOver > 0
           ? `+${totalShortOrOver.toLocaleString('en-US', {
               minimumFractionDigits: 2,
@@ -2739,12 +2784,25 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             });
-      ws.getCell(`H${cashCollectionRow + 3}`).font = { bold: true, size: 11 };
-      ws.getCell(`H${cashCollectionRow + 3}`).alignment = {
+      if (totalShortOrOver > 0) {
+        ws.getCell(`G${cashCollectionRow + 3}`).font = {
+          bold: true,
+          size: 11,
+          color: { argb: 'FF4A990E' },
+        };
+      } else {
+        ws.getCell(`G${cashCollectionRow + 3}`).font = {
+          bold: true,
+          size: 11,
+          color: { argb: 'FFFF0000' },
+        };
+      }
+      // ws.getCell(`G${cashCollectionRow + 3}`).font = { bold: true, size: 11 };
+      ws.getCell(`G${cashCollectionRow + 3}`).alignment = {
         horizontal: 'right',
         vertical: 'middle',
       };
-      ws.getCell(`H${cashCollectionRow + 3}`).border = {
+      ws.getCell(`G${cashCollectionRow + 3}`).border = {
         top: { style: 'thin', color: { argb: 'FF000000' } },
         bottom: { style: 'thin', color: { argb: 'FF000000' } },
         left: { style: 'thin', color: { argb: 'FF000000' } },
@@ -2753,8 +2811,8 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
 
       // GRAND TOTAL FOR CASH COLLECTED AND PAYMENTS RECIEVED
       if (exportedData.paymentReceived?.length) {
-        ws.mergeCells(`A${cashCollectionRow + 4}:G${cashCollectionRow + 4}`);
-        ws.getCell(`A${cashCollectionRow + 4}`).value = 'Total Oayments';
+        ws.mergeCells(`A${cashCollectionRow + 4}:F${cashCollectionRow + 4}`);
+        ws.getCell(`A${cashCollectionRow + 4}`).value = 'Total Payments';
         ws.getCell(`A${cashCollectionRow + 4}`).font = { bold: true, size: 11 };
         ws.getCell(`A${cashCollectionRow + 4}`).alignment = {
           horizontal: 'left',
@@ -2767,24 +2825,24 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
           right: { style: 'thin', color: { argb: 'FF000000' } },
         };
 
-        ws.getCell(`H${cashCollectionRow + 4}`).value =
+        ws.getCell(`G${cashCollectionRow + 4}`).value =
           paymentsReceivedTotal.toLocaleString('en-US', {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
           });
-        ws.getCell(`H${cashCollectionRow + 4}`).font = { bold: true, size: 11 };
-        ws.getCell(`H${cashCollectionRow + 4}`).alignment = {
+        ws.getCell(`G${cashCollectionRow + 4}`).font = { bold: true, size: 11 };
+        ws.getCell(`G${cashCollectionRow + 4}`).alignment = {
           horizontal: 'right',
           vertical: 'middle',
         };
-        ws.getCell(`H${cashCollectionRow + 4}`).border = {
+        ws.getCell(`G${cashCollectionRow + 4}`).border = {
           top: { style: 'thin', color: { argb: 'FF000000' } },
           bottom: { style: 'thin', color: { argb: 'FF000000' } },
           left: { style: 'thin', color: { argb: 'FF000000' } },
           right: { style: 'thin', color: { argb: 'FF000000' } },
         };
 
-        ws.mergeCells(`A${cashCollectionRow + 5}:G${cashCollectionRow + 5}`);
+        ws.mergeCells(`A${cashCollectionRow + 5}:F${cashCollectionRow + 5}`);
         ws.getCell(`A${cashCollectionRow + 5}`).value =
           'Grand Total (Total Collected + Total Payments Received)';
         ws.getCell(`A${cashCollectionRow + 5}`).font = { bold: true, size: 11 };
@@ -2799,18 +2857,18 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
           right: { style: 'thin', color: { argb: 'FF000000' } },
         };
 
-        ws.getCell(`H${cashCollectionRow + 5}`).value = (
+        ws.getCell(`G${cashCollectionRow + 5}`).value = (
           totalCollectedAmount + paymentsReceivedTotal
         ).toLocaleString('en-US', {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         });
-        ws.getCell(`H${cashCollectionRow + 5}`).font = { bold: true, size: 11 };
-        ws.getCell(`H${cashCollectionRow + 5}`).alignment = {
+        ws.getCell(`G${cashCollectionRow + 5}`).font = { bold: true, size: 11 };
+        ws.getCell(`G${cashCollectionRow + 5}`).alignment = {
           horizontal: 'right',
           vertical: 'middle',
         };
-        ws.getCell(`H${cashCollectionRow + 5}`).border = {
+        ws.getCell(`G${cashCollectionRow + 5}`).border = {
           top: { style: 'thin', color: { argb: 'FF000000' } },
           bottom: { style: 'thin', color: { argb: 'FF000000' } },
           left: { style: 'thin', color: { argb: 'FF000000' } },
