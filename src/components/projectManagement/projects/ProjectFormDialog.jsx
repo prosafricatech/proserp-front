@@ -95,8 +95,16 @@ function ProjectForm({setOpenDialog, project = null, reFetchProjectAfterEdit }) 
                 label="Project Name"
                 size="small"
                 fullWidth
-                error={!!errors.name || !!error?.response.data.validation_errors.name || !!updateError?.response.data.validation_errors.name}
-                helperText={errors.name?.message || error?.response.data.validation_errors.name || updateError?.response.data.validation_errors.name}
+                error={
+                  !!errors.name ||
+                  !!(error && error.response && error.response.data && error.response.data.validation_errors && error.response.data.validation_errors.name) ||
+                  !!(updateError && updateError.response && updateError.response.data && updateError.response.data.validation_errors && updateError.response.data.validation_errors.name)
+                }
+                helperText={
+                  errors.name?.message ||
+                  (error && error.response && error.response.data && error.response.data.validation_errors && error.response.data.validation_errors.name) ||
+                  (updateError && updateError.response && updateError.response.data && updateError.response.data.validation_errors && updateError.response.data.validation_errors.name)
+                }
                 {...register('name')}
               />
             </Div>

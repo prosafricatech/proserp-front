@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Alert, Box, Chip, Dialog, Grid, IconButton, LinearProgress, Skeleton, Tooltip, Typography, useMediaQuery } from '@mui/material';
-import BudgetItemsActionTail from './BudgetItemsActionTail';
 import projectsServices from '../../project-services';
 import { useQuery } from '@tanstack/react-query';
 import { useCurrencySelect } from '@/components/masters/Currencies/CurrencySelectProvider';
@@ -12,7 +11,7 @@ import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 
 function BudgetsAccordionDetails({ budget, expanded }) {
   const { currencies } = useCurrencySelect();
-  const baseCurrency = currencies.find(c => c.is_base === 1);
+  const baseCurrency = currencies?.find(c => c.is_base === 1);
   const [searchQueryNames, setSearchQueryNames] = useState([]);
   const [ledgerDialogOpen, setLedgerDialogOpen] = useState(false);
   const [ledgerFilters, setLedgerFilters] = useState(null);
@@ -74,9 +73,6 @@ function BudgetsAccordionDetails({ budget, expanded }) {
                 onChange={(newValue) => setSearchQueryNames(newValue.map(l => l.name))}
               />
             </Grid>
-            <Grid size={{xs: 12, md: 0.5}} textAlign="end">
-              <BudgetItemsActionTail budget={budgetItemsDetails} />
-            </Grid>
           </Grid>
 
           {/* Summary */}
@@ -104,7 +100,7 @@ function BudgetsAccordionDetails({ budget, expanded }) {
           {/* Expenses */}
           <Grid size={12} paddingTop={1} width={'100%'}>
             {filteredExpenses?.length > 0 ? filteredExpenses.map((item, index) => {
-              const percentageSpent = (item?.spent / item?.budgeted) * 100;
+              const percentageSpent = (item?.budgeted === 0) ? Infinity : (item?.spent / item?.budgeted) * 100;
 
               return (
                 <Grid
@@ -157,8 +153,12 @@ function BudgetsAccordionDetails({ budget, expanded }) {
                   <Grid size={{xs: 4, md: 2}}>
                     <Tooltip title="Percentage Spent">
                       <Chip
-                        label={`${percentageSpent.toFixed(2)}%`}
-                        color={getPercentageColor(percentageSpent)}
+                        label={
+                          percentageSpent === Infinity
+                            ? 'unbudgeted'
+                            : `${percentageSpent.toFixed(2)}%`
+                        }
+                        color={percentageSpent === Infinity ? 'error' : getPercentageColor(percentageSpent)}
                         size="small"
                       />
                     </Tooltip>
@@ -168,9 +168,16 @@ function BudgetsAccordionDetails({ budget, expanded }) {
                       <Box sx={{ width: '100%', textAlign: 'center' }}>
                         <LinearProgress
                           variant="determinate"
-                          value={percentageSpent}
-                          color={getPercentageColor(percentageSpent)}
-                          sx={{ height: 15, borderRadius: 5 }}
+                          value={percentageSpent === Infinity ? 100 : percentageSpent}
+                          color={percentageSpent === Infinity ? 'error' : getPercentageColor(percentageSpent)}
+                          sx={{ height: 15, borderRadius: 5,
+                            ...(percentageSpent === Infinity && {
+                              backgroundColor: (theme) => theme.palette.error.main,
+                              '& .MuiLinearProgress-bar': {
+                                backgroundColor: (theme) => theme.palette.error.main,
+                              },
+                            })
+                          }}
                         />
                       </Box>
                     </Tooltip>

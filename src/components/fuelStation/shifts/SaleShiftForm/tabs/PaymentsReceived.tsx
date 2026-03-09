@@ -10,6 +10,8 @@ import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import { useLedgerSelect } from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
 import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
+import QuickAddLedger from '@/components/accounts/ledgers/forms/QuickAddLedger';
+import LedgerGroupProvider from '@/components/accounts/ledgerGroups/LedgerGroupProvider';
 import { Ledger } from '@/components/accounts/ledgers/LedgerType';
 import { StationFormContext } from '../../SalesShifts';
 
@@ -65,6 +67,8 @@ function PaymentsReceived({
   setPaymentItems 
 }: PaymentsReceivedProps) {
   const [isAdding, setIsAdding] = useState(false);
+  const [openLedgerQuickAdd, setOpenLedgerQuickAdd] = useState(false);
+  const [addedLedger, setAddedLedger] = useState<Ledger | null>(null);
   const { ungroupedLedgerOptions } = useLedgerSelect();
   const contextValue = useContext(StationFormContext) as { activeStation?: { collection_ledgers?: LedgerOption[] } };
   const collection_ledgers: LedgerOption[] = contextValue?.activeStation?.collection_ledgers || [];
@@ -141,6 +145,7 @@ function PaymentsReceived({
     }
 
     reset();
+    setAddedLedger(null);
     setIsAdding(false);
     setShowForm && setShowForm(false);
   };
@@ -153,8 +158,30 @@ function PaymentsReceived({
     }
   }, [submitItemForm]);
 
+  useEffect(() => {
+    if (addedLedger?.id) {
+      setValue('credit_ledger', addedLedger as unknown as LedgerOption);
+      setValue('credit_ledger_id', addedLedger.id, {
+        shouldValidate: true,
+        shouldDirty: true
+      });
+    }
+  }, [addedLedger, setValue]);
+
   if (isAdding) {
     return <LinearProgress />;
+  }
+
+  if (openLedgerQuickAdd) {
+    return (
+      <LedgerGroupProvider>
+        <QuickAddLedger
+          toggleOpen={setOpenLedgerQuickAdd}
+          ledgerType='credit'
+          setAddedLedger={setAddedLedger}
+        />
+      </LedgerGroupProvider>
+    );
   }
 
   return (
@@ -164,6 +191,7 @@ function PaymentsReceived({
           <LedgerSelect
             label="Paid By"
             allowedGroups={['Accounts Receivable', 'Accounts Payable']}
+            addedLedger={addedLedger}
             value={ungroupedLedgerOptions.find(option => option.id === watch('credit_ledger_id')) || null}
             onChange={(newValue: Ledger | null | Ledger[]) => {
               setValue('credit_ledger', newValue as LedgerOption | null);
@@ -174,6 +202,14 @@ function PaymentsReceived({
             }}
             frontError={errors.credit_ledger_id}
             multiple={false}
+            // startAdornment={
+            //   <Tooltip title={'Add New Credit'}>
+            //     <AddOutlined
+            //       onClick={() => setOpenLedgerQuickAdd(true)}
+            //       sx={{ cursor: 'pointer' }}
+            //     />
+            //   </Tooltip>
+            // }
           />
         </Div>
       </Grid>

@@ -1,14 +1,34 @@
 'use client'
 import React, { useState } from 'react';
-import { DeleteOutlined, EditOutlined, MoreHorizOutlined } from '@mui/icons-material';
-import { Dialog, Tooltip, useMediaQuery } from '@mui/material';
+import { DeleteOutlined, EditOutlined } from '@mui/icons-material';
+import { Dialog, Skeleton, Tooltip, useMediaQuery, IconButton, Stack } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
 import BudgetsForm from './BudgetsForm';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import projectsServices from '../../project-services';
-import { JumboDdMenu } from '@jumbo/components';
+
+const EditBudget = ({ budget, setOpenDialog }) => {
+  const { data: budgetDetails, isFetching } = useQuery({
+    queryKey: ['editBudget', { id: budget.id }],
+    queryFn: async () => projectsServices.getbudgetItemsDetails(budget.id),
+  });
+
+  if (isFetching) {
+    return (
+      <div style={{ width: '100%', padding: '16px' }}>
+        <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
+        <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
+        <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+      </div>
+    );
+  }
+
+  return (
+    <BudgetsForm budget={budgetDetails} setOpenDialog={setOpenDialog} />
+  );
+};
 
 const BudgetsItemAction = ({ budget }) => {
   const [openEditDialog, setOpenEditDialog] = useState(false);
@@ -31,31 +51,21 @@ const BudgetsItemAction = ({ budget }) => {
     },
   });
 
-  const menuItems = [
-    { icon: <EditOutlined />, title: 'Edit', action: 'edit' },
-    { icon: <DeleteOutlined color="error" />, title: 'Delete', action: 'delete' },
-  ];
+  const handleEdit = () => {
+    setOpenEditDialog(true);
+  };
 
-  const handleItemAction = (menuItem) => {
-    switch (menuItem.action) {
-      case 'edit':
-        setOpenEditDialog(true);
-        break;
-      case 'delete':
-        showDialog({
-          title: 'Confirm Delete',
-          content: 'Are you sure you want to delete this Budget?',
-          onYes: () => {
-            hideDialog();
-            deleteBudgetMutation.mutate(budget.id);
-          },
-          onNo: () => hideDialog(),
-          variant: 'confirm',
-        });
-        break;
-      default:
-        break;
-    }
+  const handleDelete = () => {
+    showDialog({
+      title: 'Confirm Delete',
+      content: 'Are you sure you want to delete this Budget?',
+      onYes: () => {
+        hideDialog();
+        deleteBudgetMutation.mutate(budget.id);
+      },
+      onNo: () => hideDialog(),
+      variant: 'confirm',
+    });
   };
 
   return (
@@ -64,21 +74,31 @@ const BudgetsItemAction = ({ budget }) => {
         open={openEditDialog}
         fullWidth
         fullScreen={belowLargeScreen}
-        maxWidth="md"
+        maxWidth="lg"
         scroll={belowLargeScreen ? 'body' : 'paper'}
       >
-        <BudgetsForm budget={budget} setOpenDialog={setOpenEditDialog} />
+        <EditBudget budget={budget} setOpenDialog={setOpenEditDialog} />
       </Dialog>
 
-      <JumboDdMenu
-        icon={
-          <Tooltip title="Actions">
-            <MoreHorizOutlined />
-          </Tooltip>
-        }
-        menuItems={menuItems}
-        onClickCallback={handleItemAction}
-      />
+      <Stack textAlign={'end'} direction="row" spacing={1} sx={{ mb: 1 }} justifyContent="flex-end">
+        <Tooltip title="Edit">
+          <IconButton
+            color="primary"
+            size="small"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleEdit();
+            }}
+          >
+            <EditOutlined />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Delete">
+          <IconButton color="error" size="small" onClick={handleDelete}>
+            <DeleteOutlined />
+          </IconButton>
+        </Tooltip>
+      </Stack>
     </>
   );
 };

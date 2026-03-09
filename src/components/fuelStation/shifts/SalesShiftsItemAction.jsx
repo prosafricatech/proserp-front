@@ -32,7 +32,8 @@ import {
 import { Box, Grid } from '@mui/system';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useState } from 'react';
+import dayjs from 'dayjs';
 import PDFContent from '../../pdf/PDFContent';
 import { useProductsSelect } from '../../productAndServices/products/ProductsSelectProvider';
 import fuelStationServices from '../fuelStationServices';
@@ -40,6 +41,7 @@ import SalesShiftOnScreen from './preview/SalesShiftOnScreen';
 import SalesShiftPDF from './preview/SalesShiftPDF';
 import SaleShiftForm from './SaleShiftForm/SaleShiftForm';
 import { StationFormContext } from './SalesShifts';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
 
 const EditShift = ({ ClosedShift, setOpenEditDialog }) => {
   const { data: shiftData, isFetching } = useQuery({
@@ -86,10 +88,6 @@ const DocumentDialog = ({
   const [activeTab, setActiveTab] = useState(0);
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
-
-  useEffect(() => {
-    belowLargeScreen && setActiveTab(1);
-  }, [belowLargeScreen]);
 
   if (isFetching) {
     return <LinearProgress />;
@@ -243,7 +241,6 @@ const DocumentDialog = ({
             fuel_pumps={fuel_pumps}
             shift_teams={shift_teams}
             organization={organization}
-            paymentReceived={paymentReceived}
           />
         )}
         {(!belowLargeScreen || activeTab === 0) && (
@@ -288,6 +285,7 @@ const SalesShiftsItemAction = ({ ClosedShift }) => {
   const [openDocumentDialog, setOpenDocumentDialog] = useState(false);
   const {
     authOrganization: { organization },
+    checkOrganizationPermission
   } = useJumboAuth();
   const { showDialog, hideDialog } = useJumboDialog();
   const { enqueueSnackbar } = useSnackbar();
@@ -313,15 +311,22 @@ const SalesShiftsItemAction = ({ ClosedShift }) => {
     },
   });
 
+  const canBackdate = checkOrganizationPermission([PERMISSIONS.FUEL_SALES_SHIFTS_BACKDATE])
+  const isToday = ClosedShift?.shift_end >= dayjs().startOf('date').toISOString()
+
   const menuItems = [
     { icon: <VisibilityOutlined />, title: 'View', action: 'open' },
-    { icon: <EditOutlined />, title: 'Edit', action: 'edit' },
-    {
-      icon: <DeleteOutlined color='error' />,
-      title: 'Delete',
-      action: 'delete',
-    },
-  ];
+    (canBackdate || isToday)
+      ? { icon: <EditOutlined />, title: 'Edit', action: 'edit' }
+      : null,
+    (canBackdate || isToday)
+      ? {
+          icon: <DeleteOutlined color='error' />,
+          title: 'Delete',
+          action: 'delete',
+        }
+      : null,
+  ].filter(Boolean);
 
   const handleItemAction = (menuItem) => {
     switch (menuItem.action) {
