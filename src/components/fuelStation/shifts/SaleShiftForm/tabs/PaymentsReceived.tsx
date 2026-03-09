@@ -202,14 +202,14 @@ function PaymentsReceived({
             }}
             frontError={errors.credit_ledger_id}
             multiple={false}
-            startAdornment={
-              <Tooltip title={'Add New Credit'}>
-                <AddOutlined
-                  onClick={() => setOpenLedgerQuickAdd(true)}
-                  sx={{ cursor: 'pointer' }}
-                />
-              </Tooltip>
-            }
+            // startAdornment={
+            //   <Tooltip title={'Add New Credit'}>
+            //     <AddOutlined
+            //       onClick={() => setOpenLedgerQuickAdd(true)}
+            //       sx={{ cursor: 'pointer' }}
+            //     />
+            //   </Tooltip>
+            // }
           />
         </Div>
       </Grid>
