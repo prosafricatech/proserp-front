@@ -132,42 +132,44 @@ function Header({ dictionary }: { dictionary: any }) {
   return (
     <React.Fragment>
       <SidebarToggleButton />
-      <Stack direction='row' alignItems='center' gap={0.5} sx={{ mr: 1 }}>
-        {canGoBack && (
-          <Tooltip title='Back'>
+      {smallScreen &&
+        <Stack direction='row' alignItems='center' gap={0.5} sx={{ mr: 1 }}>
+          {canGoBack && (
+            <Tooltip title='Back'>
+              <IconButton
+                color='inherit'
+                size='small'
+                onClick={handleGoBack}
+                sx={headerActionButtonSx}
+              >
+                <ArrowBackIcon fontSize='small' />
+              </IconButton>
+            </Tooltip>
+          )}
+          {canGoForward && (
+            <Tooltip title='Forward'>
+              <IconButton
+                color='inherit'
+                size='small'
+                onClick={handleGoForward}
+                sx={headerActionButtonSx}
+              >
+                <ArrowForwardIcon fontSize='small' />
+              </IconButton>
+            </Tooltip>
+          )}
+          <Tooltip title='Refresh'>
             <IconButton
               color='inherit'
               size='small'
-              onClick={handleGoBack}
+              onClick={handleRefresh}
               sx={headerActionButtonSx}
             >
-              <ArrowBackIcon fontSize='small' />
+              <RefreshIcon fontSize='small' />
             </IconButton>
           </Tooltip>
-        )}
-        {canGoForward && (
-          <Tooltip title='Forward'>
-            <IconButton
-              color='inherit'
-              size='small'
-              onClick={handleGoForward}
-              sx={headerActionButtonSx}
-            >
-              <ArrowForwardIcon fontSize='small' />
-            </IconButton>
-          </Tooltip>
-        )}
-        <Tooltip title='Refresh'>
-          <IconButton
-            color='inherit'
-            size='small'
-            onClick={handleRefresh}
-            sx={headerActionButtonSx}
-          >
-            <RefreshIcon fontSize='small' />
-          </IconButton>
-        </Tooltip>
-      </Stack>
+        </Stack>
+      }
       {isSidebarStyle(SIDEBAR_STYLES.CLIPPED_UNDER_HEADER) && !isBelowLg && (
         <Logo sx={{ mr: 3, minWidth: 150 }} mode={theme.type} />
       )}
