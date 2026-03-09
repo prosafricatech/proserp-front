@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  Grid,
   Paper,
   Typography,
   Divider,
@@ -11,7 +10,6 @@ import {
   TableHead,
   TableRow,
   Chip,
-  Box,
 } from '@mui/material';
 
 function BudgetSummaryTab({
@@ -104,153 +102,54 @@ function BudgetSummaryTab({
 
   return (
     <Paper variant='outlined' sx={{ p: 2, mt: 1 }}>
-      <Typography variant='h6' sx={{ mb: 0.5 }}>Budget Summary</Typography>
-      <Typography variant='body2' color='text.secondary' sx={{ mb: 2 }}>
-        Per-tab breakdown and overall totals
-      </Typography>
+      <Typography variant='h6' sx={{ mb: 0.5 }}>Overall Tabs Total</Typography>
       <Divider sx={{ mb: 2 }} />
 
-      <Grid container spacing={1.5} sx={{ mb: 2 }}>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Paper variant='outlined' sx={{ p: 1.5, height: '100%' }}>
-            <Typography variant='caption' color='text.secondary'>Tabs Included</Typography>
-            <Typography variant='h6' fontWeight={700}>{tabSummaries.length}</Typography>
-          </Paper>
-        </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Paper variant='outlined' sx={{ p: 1.5, height: '100%' }}>
-            <Typography variant='caption' color='text.secondary'>Total Items</Typography>
-            <Typography variant='h6' fontWeight={700}>{totalItems.toLocaleString()}</Typography>
-          </Paper>
-        </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Paper variant='outlined' sx={{ p: 1.5, height: '100%', bgcolor: 'primary.50' }}>
-            <Typography variant='caption' color='text.secondary'>Grand Total</Typography>
-            <Typography variant='h6' fontWeight={700}>{formatAmount(grandTotalAmount)}</Typography>
-          </Paper>
-        </Grid>
-      </Grid>
-
-      <Grid container spacing={2}>
-        {tabSummaries.map((tab) => (
-          <Grid size={{ xs: 12 }} key={tab.key}>
-            <Paper variant='outlined' sx={{ p: 1.5 }}>
-              <Box sx={{ mb: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Typography variant='subtitle1' fontWeight={700}>{tab.title}</Typography>
-                <Chip size='small' label={`${tab.count.toLocaleString()} item(s)`} />
-              </Box>
-
-              <TableContainer>
-                <Table size='small'>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>{tab.itemLabel}</TableCell>
-                      <TableCell align='center'>Count</TableCell>
-                      <TableCell align='right'>Contribution</TableCell>
-                      <TableCell align='right'>Amount</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {tab.groups.length > 0 ? (
-                      tab.groups.map((row) => {
-                        const contribution = tab.total > 0 ? (row.total / tab.total) * 100 : 0;
-                        return (
-                          <TableRow key={row.name} hover>
-                            <TableCell>
-                              <Typography variant='body2'>{row.name}</Typography>
-                            </TableCell>
-                            <TableCell align='center'>
-                              <Chip label={row.count.toLocaleString()} size='small' />
-                            </TableCell>
-                            <TableCell align='right'>
-                              <Typography color='text.secondary'>{contribution.toFixed(1)}%</Typography>
-                            </TableCell>
-                            <TableCell align='right'>
-                              <Typography fontWeight={600}>{formatAmount(row.total)}</Typography>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={4} align='center'>
-                          <Typography variant='body2' color='text.secondary'>No items found</Typography>
-                        </TableCell>
-                      </TableRow>
-                    )}
-
-                    <TableRow sx={{ '& td': { borderTop: '2px solid', borderColor: 'divider' } }}>
-                      <TableCell>
-                        <Typography fontWeight={700}>Total {tab.itemLabel}</Typography>
-                      </TableCell>
-                      <TableCell align='center'>
-                        <Chip label={tab.count.toLocaleString()} size='small' color='primary' />
-                      </TableCell>
-                      <TableCell align='right'>
-                        <Typography fontWeight={700}>100%</Typography>
-                      </TableCell>
-                      <TableCell align='right'>
-                        <Typography fontWeight={700}>{formatAmount(tab.total)}</Typography>
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Paper>
-          </Grid>
-        ))}
-
-        <Grid size={{ xs: 12 }}>
-          <Paper variant='outlined' sx={{ p: 1.5 }}>
-            <Typography variant='subtitle1' fontWeight={700} sx={{ mb: 1 }}>Overall Tabs Total</Typography>
-            <TableContainer>
-              <Table size='small'>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Tab</TableCell>
-                    <TableCell align='center'>Items</TableCell>
-                    <TableCell align='right'>Share of Grand Total</TableCell>
-                    <TableCell align='right'>Total Amount</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {tabSummaries.map((tab) => {
-                    const share = grandTotalAmount > 0 ? (tab.total / grandTotalAmount) * 100 : 0;
-                    return (
-                      <TableRow key={`${tab.key}-overall`} hover>
-                        <TableCell>{tab.title.replace(' Summary', '')}</TableCell>
-                        <TableCell align='center'>
-                          <Chip label={tab.count.toLocaleString()} size='small' />
-                        </TableCell>
-                        <TableCell align='right'>
-                          <Typography color='text.secondary'>{share.toFixed(1)}%</Typography>
-                        </TableCell>
-                        <TableCell align='right'>
-                          <Typography fontWeight={600}>{formatAmount(tab.total)}</Typography>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                  <TableRow sx={{ '& td': { borderTop: '2px solid', borderColor: 'divider' } }}>
-                    <TableCell>
-                      <Typography fontWeight={700}>Grand Total</Typography>
-                    </TableCell>
-                    <TableCell align='center'>
-                      <Chip label={totalItems.toLocaleString()} size='small' color='primary' />
-                    </TableCell>
-                    <TableCell align='right'>
-                      <Typography fontWeight={700}>100%</Typography>
-                    </TableCell>
-                    <TableCell align='right'>
-                      <Typography fontWeight={700}>{formatAmount(grandTotalAmount)}</Typography>
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Paper>
-        </Grid>
-      </Grid>
+      <TableContainer>
+        <Table size='small'>
+          <TableHead>
+            <TableRow>
+              <TableCell>Tab</TableCell>
+              <TableCell align='center'>Items</TableCell>
+              <TableCell align='right'>Share of Grand Total</TableCell>
+              <TableCell align='right'>Total Amount</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {tabSummaries.map((tab) => {
+              const share = grandTotalAmount > 0 ? (tab.total / grandTotalAmount) * 100 : 0;
+              return (
+                <TableRow key={`${tab.key}-overall`} hover>
+                  <TableCell>{tab.title.replace(' Summary', '')}</TableCell>
+                  <TableCell align='center'>
+                    <Chip label={tab.count.toLocaleString()} size='small' />
+                  </TableCell>
+                  <TableCell align='right'>
+                    <Typography color='text.secondary'>{share.toFixed(1)}%</Typography>
+                  </TableCell>
+                  <TableCell align='right'>
+                    <Typography fontWeight={600}>{formatAmount(tab.total)}</Typography>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+            <TableRow sx={{ '& td': { borderTop: '2px solid', borderColor: 'divider' } }}>
+              <TableCell>
+                <Typography fontWeight={700}>Grand Total</Typography>
+              </TableCell>
+              <TableCell align='center'>
+                <Chip label={totalItems.toLocaleString()} size='small' color='primary' />
+              </TableCell>
+              <TableCell align='right'>
+                <Typography fontWeight={700}>100%</Typography>
+              </TableCell>
+              <TableCell align='right'>
+                <Typography fontWeight={700}>{formatAmount(grandTotalAmount)}</Typography>
+              </TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+      </TableContainer>
     </Paper>
   );
 }
