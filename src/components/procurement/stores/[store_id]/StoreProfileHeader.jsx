@@ -1,4 +1,4 @@
-import { Typography, IconButton, Stack, Tooltip } from '@mui/material';
+import { Typography, Stack } from '@mui/material';
 import { useStoreProfile } from './StoreProfileProvider'
 
 function StoreProfileHeader() {
