@@ -36,6 +36,7 @@ export const PERMISSIONS = {
     FUEL_SALES_SHIFT_DELETE: 'FuelSalesShifts:Delete',
     FUEL_SALES_SHIFT_READ: 'FuelSalesShifts:Read',
     FUEL_SALES_SHIFT_UPDATE: 'FuelSalesShifts:Update',
+    FUEL_SALES_SHIFTS_BACKDATE: 'FuelSalesShifts:BackDate',
   
     FUEL_STATIONS_CREATE: 'FuelStations:Create',
     FUEL_STATIONS_DELETE: 'FuelStations:Delete',

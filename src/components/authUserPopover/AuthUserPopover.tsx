@@ -63,22 +63,23 @@ export const AuthUserPopover: React.FC<AuthUserPopoverProps> = ({ dictionary }) 
   const authContext = useJumboAuth();
 
   const [openLogoutDialog, setOpenLogoutDialog] = React.useState<boolean>(false);
+  const hasTriggeredAutoLogout = React.useRef(false);
 
   if (!authContext) {
     console.error('Auth context not available');
     return null;
   }
 
-  const { setAuthValues, authData, authOrganization, resetAuth } = authContext;
+  const { authData, authOrganization, resetAuth, isLoading } = authContext;
 
   const logout = React.useCallback(() => {
     (async () => {
       await signOut({
-        callbackUrl: `http://localhost:3000/${lang}/auth/signin`,
+        callbackUrl: `/${lang}/auth/signin`,
       });
       resetAuth();
     })();
-  }, [setAuthValues, lang, resetAuth]);
+  }, [lang, resetAuth]);
 
   const switchOrganization = React.useCallback(() => {
     router.push(`/${lang}/organizations`);
@@ -86,6 +87,19 @@ export const AuthUserPopover: React.FC<AuthUserPopoverProps> = ({ dictionary }) 
 
   const user: User | undefined = authData?.authUser?.user;
   const organization: Organization | undefined = authOrganization?.organization;
+
+  React.useEffect(() => {
+    if (isLoading || user || hasTriggeredAutoLogout.current) {
+      return;
+    }
+
+    hasTriggeredAutoLogout.current = true;
+    logout();
+  }, [isLoading, user, logout]);
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <ThemeProvider theme={theme}>

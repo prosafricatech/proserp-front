@@ -252,6 +252,11 @@ export async function getMenus(locale: string) {
           icon: icon('currencies'),
           children: [
             {
+              uri: `/${locale}/accounts/budgets`,
+              label: sidebar.menuItem.budgets,
+              type: 'nav-item',
+            },
+            {
               uri: `/${locale}/accounts/ledger_groups`,
               label: sidebar.menuItem.ledgerGroups,
               type: 'nav-item',
