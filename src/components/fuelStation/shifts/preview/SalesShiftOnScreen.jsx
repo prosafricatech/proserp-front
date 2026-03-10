@@ -939,7 +939,7 @@ const SalesShiftOnScreen = ({
                       <>
                         <TableRow hover>
                           <TableCell sx={{ fontWeight: 'bold' }}>
-                            Total Payments
+                            Total Cash Payments
                           </TableCell>
                           <NumberCell value={paymentsReceivedTotal} />
                         </TableRow>
@@ -947,8 +947,7 @@ const SalesShiftOnScreen = ({
                           <TableCell
                             sx={{ color: contrastText, fontWeight: 'bold' }}
                           >
-                            Grand Total (Total Collected + Total Payments
-                            Received)
+                            Grand Total (Total Collected + Total Cash Payments)
                           </TableCell>
                           <TableCell
                             align='right'
