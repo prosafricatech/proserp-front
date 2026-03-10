@@ -39,6 +39,7 @@ export default function CashierAccordion({
   const formAdjustments = watch(`cashiers.${index}.adjustments`) || [];
   const formPumpReadings = watch(`cashiers.${index}.pump_readings`) || [];
   const formSelectedPumps = watch(`cashiers.${index}.selected_pumps`) || [];
+  const prevKey = `${index}-${JSON.stringify(lastClosingReadings || {})}`;
   
   const [localFuelVouchers, setLocalFuelVouchers] = useState(formFuelVouchers);
   const [localAdjustments, setLocalAdjustments] = useState(formAdjustments);
@@ -184,6 +185,8 @@ export default function CashierAccordion({
 
         <div style={{ display: tab === 0 ? 'block' : 'none' }}>
           <PumpReadings
+            key={prevKey}
+            prevKey={prevKey}
             name={`cashiers.${index}.pump_readings`}
             control={control}
             cashierIndex={index}

@@ -54,7 +54,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
   const {authOrganization, checkOrganizationPermission} = useJumboAuth();
 
   const [cashierLedgers, setCashierLedgers] = useState({});
-  const [lastClosingReadings, setLastClosingReadings] = useState({});
+  const [lastClosingReadings, setLastClosingReadings] = useState(null);
   const [lastClosingDipping, setLastClosingDipping] = useState([]);
 
   const isAutoSavingRef = React.useRef(false);
@@ -311,7 +311,9 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
       ).forEach(reading => {
         readingsMap[reading.fuel_pump_id] = reading.closing;
       });
-      setLastClosingReadings(readingsMap);
+      setLastClosingReadings(
+        Object.keys(readingsMap).length > 0 ? readingsMap : null
+      );
 
       // Dipping readings
       if (lastReadings.closing_dipping && Array.isArray(lastReadings.closing_dipping.readings)) {
@@ -330,6 +332,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
         })), { shouldValidate: true, shouldDirty: true });
       }
     } catch (error) {
+      setLastClosingReadings(null);
     }
   }, [activeStation.id, watch, enqueueSnackbar, SalesShift, setValue]);
 
@@ -342,7 +345,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
       }
     }
     
-    return lastClosingReadings[pumpId] || 0;
+    return lastClosingReadings?.[pumpId] || 0;
   }, [SalesShift, selectedCashiers, lastClosingReadings]);
 
   const handleCashierPumpSelection = useCallback((cashierIndex, selectedPumpIds) => {
@@ -797,6 +800,65 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
       return;
     }
 
+    // Validate that total voucher quantity per product does not exceed
+    // total pump readings quantity per product for each cashier.
+    for (const cashier of data.cashiers || []) {
+      const pumpQtyByProduct = new Map();
+      const voucherQtyByProduct = new Map();
+
+      (cashier?.pump_readings || []).forEach((reading) => {
+        const productId = Number(reading?.product_id);
+        if (!Number.isFinite(productId)) return;
+
+        const opening = Number(reading?.opening || 0);
+        const closing = Number(reading?.closing || 0);
+        const pumpedQty = Math.max(closing - opening, 0);
+
+        pumpQtyByProduct.set(
+          productId,
+          (pumpQtyByProduct.get(productId) || 0) + pumpedQty
+        );
+      });
+
+      (cashier?.fuel_vouchers || []).forEach((voucher) => {
+        const productId = Number(voucher?.product_id);
+        if (!Number.isFinite(productId)) return;
+
+        const voucherQty = Number(voucher?.quantity || 0);
+        if (!Number.isFinite(voucherQty) || voucherQty <= 0) return;
+
+        voucherQtyByProduct.set(
+          productId,
+          (voucherQtyByProduct.get(productId) || 0) + voucherQty
+        );
+      });
+
+      for (const [productId, voucherTotalQty] of voucherQtyByProduct.entries()) {
+        const pumpTotalQty = pumpQtyByProduct.get(productId) || 0;
+
+        if (voucherTotalQty > pumpTotalQty + 1e-9) {
+          const productName =
+            (activeStation.products || []).find((product) => Number(product?.id) === productId)?.name ||
+            `Product #${productId}`;
+          const cashierName = cashier?.name || `Cashier #${cashier?.id || ''}`;
+          const message = `Total quantity (${voucherTotalQty}) for product ${productName} in vouchers for cashier ${cashierName} exceeds the pump readings quantity (${pumpTotalQty}).`;
+
+          if (options.silent) {
+            autoSaveDebug('Autosave validation failed: voucher quantity exceeds pump readings', {
+              cashierId: cashier?.id,
+              productId,
+              voucherTotalQty,
+              pumpTotalQty,
+            });
+          } else {
+            enqueueSnackbar(message, { variant: 'error' });
+          }
+
+          return;
+        }
+      }
+    }
+
     data.cashiers = data.cashiers.map(cashier => {
       const { adjustments, ...rest } = cashier;
       return {
@@ -1163,7 +1225,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
                 );
               })()}
 
-              {Object.keys(lastClosingReadings).length > 0 && !SalesShift?.id && (
+              {!!lastClosingReadings && Object.keys(lastClosingReadings).length > 0 && !SalesShift?.id && (
                 <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
                   ✓ Last shift readings loaded for {Object.keys(lastClosingReadings).length} pump(s)
                 </Typography>

@@ -8,6 +8,7 @@ import { Stack } from '@mui/system';
 import { VisibilityOutlined } from '@mui/icons-material';
 import LedgerStatementDialogContent from '@/components/accounts/ledgers/list/ledgerStatement/LedgerStatementDialogContent';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
+import { useLedgerSelect } from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
 
 function BudgetsAccordionDetails({ budget, expanded }) {
   const { currencies } = useCurrencySelect();
@@ -15,6 +16,7 @@ function BudgetsAccordionDetails({ budget, expanded }) {
   const [searchQueryNames, setSearchQueryNames] = useState([]);
   const [ledgerDialogOpen, setLedgerDialogOpen] = useState(false);
   const [ledgerFilters, setLedgerFilters] = useState(null);
+  const { ungroupedLedgerOptions } = useLedgerSelect();
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
@@ -201,6 +203,7 @@ function BudgetsAccordionDetails({ budget, expanded }) {
         >
           <LedgerStatementDialogContent
             commingFilters={ledgerFilters}
+            ledger={ungroupedLedgerOptions?.find(ledger => ledger.id === ledgerFilters?.ledger_id)}
             setOpen={setLedgerDialogOpen}
           />
         </Dialog>

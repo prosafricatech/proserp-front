@@ -1,5 +1,6 @@
 'use client'
-import React, { useState } from 'react';
+
+import { useState } from 'react';
 import { 
   Paper, 
   Table, 
@@ -21,8 +22,10 @@ import {
 } from '@mui/icons-material';
 import LedgerStatementDialogContent from '../../ledgers/list/ledgerStatement/LedgerStatementDialogContent';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
+import { useLedgerSelect } from '../../ledgers/forms/LedgerSelectProvider';
 
 const IncomeStatementOnScreen = ({ reportData }) => {
+    const { ungroupedLedgerOptions } = useLedgerSelect();
     const [openRows, setOpenRows] = useState({
         revenue: false,
         costOfRevenue: false,
@@ -221,6 +224,7 @@ const IncomeStatementOnScreen = ({ reportData }) => {
                 >
                     <LedgerStatementDialogContent 
                         commingFilters={ledgerFilters}
+                        ledger={ungroupedLedgerOptions?.find(ledger => ledger.id === ledgerFilters?.ledger_id)}
                         setOpen={setLedgerDialogOpen}
                     />
                 </Dialog>

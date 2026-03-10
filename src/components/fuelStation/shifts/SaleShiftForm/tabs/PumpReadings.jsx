@@ -20,6 +20,7 @@ import { useContext, useEffect, useMemo } from 'react';
 import { StationFormContext } from '../../SalesShifts';
 
 function PumpReadings({ 
+  prevKey,
   name, 
   cashierIndex, 
   selectedPumps, 
@@ -54,6 +55,43 @@ function PumpReadings({
       });
     }
   }, [cashierData, cashierIndex, formSetValue, localPumpReadings.length, selectedPumps.length]);
+
+  useEffect(() => {
+    if (!selectedPumps?.length || !localPumpReadings?.length || !hasLastReadings) return;
+
+    let hasChanges = false;
+    const syncedReadings = localPumpReadings.map((reading) => {
+      const selected = selectedPumps.some((sel) => (sel.pump_id ?? sel) === reading.fuel_pump_id);
+      if (!selected) return reading;
+
+      const bothZero = Number(reading.opening || 0) === 0 && Number(reading.closing || 0) === 0;
+      if (!bothZero) return reading;
+
+      const lastClosing = lastClosingReadings?.[reading.fuel_pump_id];
+      if (lastClosing === undefined || lastClosing === null) return reading;
+
+      if (Number(lastClosing) === Number(reading.opening || 0)) return reading;
+
+      hasChanges = true;
+      return {
+        ...reading,
+        opening: Number(lastClosing),
+      };
+    });
+
+    if (hasChanges) {
+      setLocalPumpReadings(syncedReadings);
+      formSetValue(name, syncedReadings, { shouldValidate: true, shouldDirty: true });
+    }
+  }, [
+    formSetValue,
+    hasLastReadings,
+    lastClosingReadings,
+    localPumpReadings,
+    name,
+    selectedPumps,
+    setLocalPumpReadings,
+  ]);
 
   const handlePumpReadingChange = (pumpId, field, value) => {
     const updatedReadings = [...localPumpReadings];
@@ -142,7 +180,7 @@ function PumpReadings({
   }, [selectedPumps, fuel_pumps, tanks, products, localPumpReadings, lastClosingReadings]);
 
   return (
-    <Box>
+    <Box data-prev-key={prevKey}>
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid size={{xs: 12}}>
           {hasLastReadings && (
