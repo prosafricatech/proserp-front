@@ -238,7 +238,7 @@ const DocumentDialog = ({
             )}
           </Grid>
         </Grid>
-        {(belowLargeScreen || activeTab === 1) && (
+        {belowLargeScreen && activeTab === 1 && (
           <SalesShiftOnScreen
             stationName={activeStation?.name}
             openDetails={openDetails}

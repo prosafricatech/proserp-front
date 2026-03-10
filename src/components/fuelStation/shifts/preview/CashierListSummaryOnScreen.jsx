@@ -321,6 +321,7 @@ export default function CashierListSummaryOnScreen({
                           <Grid
                             container
                             sx={{ marginTop: '4px', width: '85%' }}
+                            spacing={1}
                           >
                             <Grid
                               size={4}
@@ -386,6 +387,7 @@ export default function CashierListSummaryOnScreen({
                                       key={index}
                                       container
                                       sx={{ marginTop: '4px', width: '85%' }}
+                                      spacing={1}
                                     >
                                       <Grid
                                         size={4}
@@ -771,6 +773,7 @@ export default function CashierListSummaryOnScreen({
                           <Grid
                             container
                             sx={{ marginTop: '4px', width: '85%' }}
+                            spacing={1}
                           >
                             <Grid
                               size={4}
@@ -790,6 +793,7 @@ export default function CashierListSummaryOnScreen({
                                 backgroundColor:
                                   theme.palette.background.default,
                                 padding: '5px',
+                                textAlign: 'center',
                               }}
                             >
                               <Typography sx={{ color: headerColor }}>
@@ -815,6 +819,7 @@ export default function CashierListSummaryOnScreen({
                               key={index}
                               container
                               sx={{ marginTop: '4px', width: '85%' }}
+                              spacing={1}
                             >
                               <Grid
                                 size={4}
@@ -834,6 +839,7 @@ export default function CashierListSummaryOnScreen({
                                   backgroundColor:
                                     theme.palette.background.default,
                                   padding: '5px',
+                                  textAlign: 'right',
                                 }}
                               >
                                 <Typography>{t.count}</Typography>
@@ -893,6 +899,7 @@ export default function CashierListSummaryOnScreen({
                           <Grid
                             container
                             sx={{ marginTop: '4px', width: '85%' }}
+                            spacing={1}
                           >
                             <Grid
                               size={4}
@@ -934,6 +941,7 @@ export default function CashierListSummaryOnScreen({
                           <Grid
                             container
                             sx={{ marginTop: '4px', width: '85%' }}
+                            spacing={1}
                           >
                             <Grid
                               size={4}
@@ -1011,7 +1019,7 @@ export default function CashierListSummaryOnScreen({
       <Card sx={{ mt: 2 }}>
         <CardContent>
           {/* Expected Amount */}
-          <Grid container sx={{ marginTop: '4px' }}>
+          <Grid container sx={{ marginTop: '4px' }} spacing={1}>
             <Grid
               size={8}
               sx={{
@@ -1053,7 +1061,7 @@ export default function CashierListSummaryOnScreen({
           </Grid>
 
           {/* Collected Amount */}
-          <Grid container sx={{ marginTop: '4px' }}>
+          <Grid container sx={{ marginTop: '4px' }} spacing={1}>
             <Grid
               size={8}
               sx={{
@@ -1081,7 +1089,7 @@ export default function CashierListSummaryOnScreen({
           </Grid>
 
           {/* Short/Over */}
-          <Grid container sx={{ marginTop: '4px' }}>
+          <Grid container sx={{ marginTop: '4px' }} spacing={1}>
             <Grid
               size={8}
               sx={{
@@ -1120,7 +1128,7 @@ export default function CashierListSummaryOnScreen({
 
           {/* Payments Received */}
           {paymentReceived?.length > 0 && (
-            <Grid container sx={{ marginTop: '4px' }}>
+            <Grid container sx={{ marginTop: '4px' }} spacing={1}>
               <Grid
                 size={8}
                 sx={{
@@ -1162,7 +1170,7 @@ export default function CashierListSummaryOnScreen({
           )}
 
           {/* Grand Total */}
-          <Grid container sx={{ marginTop: '12px' }}>
+          <Grid container sx={{ marginTop: '12px' }} spacing={1}>
             <Grid
               size={8}
               sx={{
@@ -1253,7 +1261,11 @@ export default function CashierListSummaryOnScreen({
                         <Grid container sx={{ marginTop: '4px', width: '85%' }}>
                           <Grid size={12}>
                             {/* Opening */}
-                            <Grid container sx={{ marginTop: '4px' }}>
+                            <Grid
+                              container
+                              sx={{ marginTop: '4px' }}
+                              spacing={1}
+                            >
                               <Grid
                                 size={6}
                                 sx={{
@@ -1290,7 +1302,11 @@ export default function CashierListSummaryOnScreen({
                               </Grid>
                             </Grid>
                             {/* Purchase */}
-                            <Grid container sx={{ marginTop: '4px' }}>
+                            <Grid
+                              container
+                              sx={{ marginTop: '4px' }}
+                              spacing={1}
+                            >
                               <Grid
                                 size={6}
                                 sx={{
@@ -1324,7 +1340,11 @@ export default function CashierListSummaryOnScreen({
                               </Grid>
                             </Grid>
                             {/* Total */}
-                            <Grid container sx={{ marginTop: '4px' }}>
+                            <Grid
+                              container
+                              sx={{ marginTop: '4px' }}
+                              spacing={1}
+                            >
                               <Grid
                                 size={6}
                                 sx={{
@@ -1361,7 +1381,11 @@ export default function CashierListSummaryOnScreen({
                               </Grid>
                             </Grid>
                             {/* Closing */}
-                            <Grid container sx={{ marginTop: '4px' }}>
+                            <Grid
+                              container
+                              sx={{ marginTop: '4px' }}
+                              spacing={1}
+                            >
                               <Grid
                                 size={6}
                                 sx={{
@@ -1397,7 +1421,11 @@ export default function CashierListSummaryOnScreen({
                               </Grid>
                             </Grid>
                             {/* Tank Difference */}
-                            <Grid container sx={{ marginTop: '4px' }}>
+                            <Grid
+                              container
+                              sx={{ marginTop: '4px' }}
+                              spacing={1}
+                            >
                               <Grid
                                 size={6}
                                 sx={{
@@ -1433,7 +1461,11 @@ export default function CashierListSummaryOnScreen({
                               </Grid>
                             </Grid>
                             {/* Actual Sold */}
-                            <Grid container sx={{ marginTop: '4px' }}>
+                            <Grid
+                              container
+                              sx={{ marginTop: '4px' }}
+                              spacing={1}
+                            >
                               <Grid
                                 size={6}
                                 sx={{
@@ -1469,7 +1501,11 @@ export default function CashierListSummaryOnScreen({
                               </Grid>
                             </Grid>
                             {/* Pos/Neg */}
-                            <Grid container sx={{ marginTop: '4px' }}>
+                            <Grid
+                              container
+                              sx={{ marginTop: '4px' }}
+                              spacing={1}
+                            >
                               <Grid
                                 size={6}
                                 sx={{

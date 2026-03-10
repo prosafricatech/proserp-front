@@ -2812,7 +2812,7 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
       // GRAND TOTAL FOR CASH COLLECTED AND PAYMENTS RECIEVED
       if (exportedData.paymentReceived?.length) {
         ws.mergeCells(`A${cashCollectionRow + 4}:F${cashCollectionRow + 4}`);
-        ws.getCell(`A${cashCollectionRow + 4}`).value = 'Total Payments';
+        ws.getCell(`A${cashCollectionRow + 4}`).value = 'Total Cash Payments';
         ws.getCell(`A${cashCollectionRow + 4}`).font = { bold: true, size: 11 };
         ws.getCell(`A${cashCollectionRow + 4}`).alignment = {
           horizontal: 'left',
@@ -2844,7 +2844,7 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
 
         ws.mergeCells(`A${cashCollectionRow + 5}:F${cashCollectionRow + 5}`);
         ws.getCell(`A${cashCollectionRow + 5}`).value =
-          'Grand Total (Total Collected + Total Payments Received)';
+          'Grand Total (Total Collected + Total Cash Payments)';
         ws.getCell(`A${cashCollectionRow + 5}`).font = { bold: true, size: 11 };
         ws.getCell(`A${cashCollectionRow + 5}`).alignment = {
           horizontal: 'left',

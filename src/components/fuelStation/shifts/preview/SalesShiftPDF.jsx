@@ -1442,7 +1442,7 @@ function SalesShiftPDF({
                           width: '70%',
                         }}
                       >
-                        Total Payments
+                        Total Cash Payments
                       </Text>
                       <Text
                         style={{
@@ -1469,7 +1469,7 @@ function SalesShiftPDF({
                           width: '70%',
                         }}
                       >
-                        Grand Total (Total Collected + Total Payments Received)
+                        Grand Total (Total Collected + Total Cash Payments)
                       </Text>
                       <Text
                         style={{
