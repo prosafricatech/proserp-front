@@ -2,7 +2,7 @@ import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import PageFooter from '@/components/pdf/PageFooter';
 import PdfLogo from '@/components/pdf/PdfLogo';
 import pdfStyles from '@/components/pdf/pdf-styles';
-import { Document, Page, Text, View } from '@react-pdf/renderer';
+import { Document, Font, Page, Text, View } from '@react-pdf/renderer';
 import CashierListSummaryPDF from './CashierListSummaryPDF';
 
 function SalesShiftPDF({
@@ -14,10 +14,13 @@ function SalesShiftPDF({
   tanks,
   productOptions,
   paymentReceived,
+  allPaymentsReceived,
 }) {
   const mainColor = organization.settings?.main_color || '#2113AD';
   const lightColor = organization.settings?.light_color || '#bec5da';
   const contrastText = organization.settings?.contrast_text || '#FFFFFF';
+
+  Font.registerHyphenationCallback((word) => [word]);
 
   // Calculate totals for each cashier
   const calculateCashierTotals = (cashier) => {
@@ -128,6 +131,11 @@ function SalesShiftPDF({
 
   // payments received total
   const paymentsReceivedTotal = paymentReceived.reduce(
+    (sum, pr) => sum + pr.amount,
+    0
+  );
+
+  const allPaymentsTotal = allPaymentsReceived.reduce(
     (sum, pr) => sum + pr.amount,
     0
   );
@@ -1150,7 +1158,7 @@ function SalesShiftPDF({
         )}
 
         {/* ================= PAYMENTS RECEIVED SECTION ================= */}
-        {paymentReceived.length && openDetails && (
+        {allPaymentsReceived.length && openDetails && (
           <View
             wrap={false}
             style={{ marginTop: 20, pageBreakInside: 'avoid' }}
@@ -1224,7 +1232,7 @@ function SalesShiftPDF({
                     Amount
                   </Text>
                 </View>
-                {paymentReceived.map((pr, index) => {
+                {allPaymentsReceived.map((pr, index) => {
                   return (
                     <View key={index} style={pdfStyles.tableRow}>
                       {/* credit */}
@@ -1306,7 +1314,7 @@ function SalesShiftPDF({
                       textAlign: 'right',
                     }}
                   >
-                    {paymentsReceivedTotal?.toLocaleString('en-US', {
+                    {allPaymentsTotal?.toLocaleString('en-US', {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
                     })}

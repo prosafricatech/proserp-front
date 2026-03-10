@@ -39,8 +39,8 @@ import { Controller, useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import PDFContent from '../../../pdf/PDFContent';
 import fuelStationServices from '../../fuelStationServices';
-import FuelVouchersReportPDF from './FuelVouchersReportPDF';
 import FuelVoucherReportOnScreen from './FuelVoucherReportOnScreen';
+import FuelVouchersReportPDF from './FuelVouchersReportPDF';
 dayjs.extend(isSameOrAfter);
 
 interface Station {
@@ -222,17 +222,6 @@ const FuelVouchersReport: React.FC<fvPdfDialog> = ({ closeDialog }) => {
       with_receipts: data.with_receipts ? 1 : 0,
     });
   };
-
-  useEffect(() => {
-    onSubmit({
-      from: dayjs(),
-      to: dayjs(),
-      station: null,
-      stakeholder: null,
-      expense_ledgers: [],
-      with_receipts: false,
-    });
-  }, []);
 
   const handleExcelExport = async () => {
     setIsExporting(true);

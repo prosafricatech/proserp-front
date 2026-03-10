@@ -22,7 +22,7 @@ export async function exportFuelVouchersToExcel(exportedData: any) {
     const baseColumns = [
       { width: 12 }, // Date
       { width: 15 }, // Voucher No
-      { width: 25 }, // Stakeholder/Expense Ledger
+      { width: 25 }, // Client/Expense Ledger
       { width: 15 }, // Reference
       { width: 15 }, // Product
       { width: 25 }, // Narration
@@ -65,7 +65,7 @@ export async function exportFuelVouchersToExcel(exportedData: any) {
         exportedData.filters.stakeholder_name &&
         exportedData.filters.stakeholder_name !== ''
       ) {
-        title = 'Stakeholder Name';
+        title = 'Client Name';
         titleValue = exportedData.filters.stakeholder_name;
       }
 
@@ -112,14 +112,14 @@ export async function exportFuelVouchersToExcel(exportedData: any) {
       stakeholderexpense = ' Expenses';
     }
     if (exportedData.filters.stakeholder_name) {
-      stakeholderexpense = 'Stakeholder';
+      stakeholderexpense = 'Client';
     }
     if (
       !exportedData.filters.stakeholder_name &&
       (exportedData.filters.expense_ledger_ids?.length < 1 ||
         !exportedData.filters.expense_ledger_ids)
     ) {
-      stakeholderexpense = 'Stakeholder/Expense';
+      stakeholderexpense = 'Client/Expense';
     }
     if (
       (!exportedData.filters.stakeholder_name ||

@@ -47,7 +47,7 @@ const FuelVoucherReportOnScreen = ({
 
   let runningBalance: number = 0;
 
-  // Determine if we should show the Stakeholder/Expense column
+  // Determine if we should show the Client/Expense column
   const showStakeholderExpenseColumn =
     filters.stakeholder_name === '' &&
     (filters.expense_ledger_ids?.length !== 1 || !filters.expense_ledger_ids);
@@ -98,7 +98,7 @@ const FuelVoucherReportOnScreen = ({
           <Grid size={{ xs: 12, sm: 6, md: 4 }}>
             <Typography variant='subtitle2' sx={{ color: headerColor }}>
               {filters.stakeholder_name && filters.stakeholder_name !== ''
-                ? 'Stakeholder Name'
+                ? 'Client Name'
                 : 'Expense'}
             </Typography>
             <Typography variant='body1'>
@@ -139,7 +139,7 @@ const FuelVoucherReportOnScreen = ({
                   {!filters.stakeholder_name &&
                   (filters.expense_ledger_ids?.length < 1 ||
                     !filters.expense_ledger_ids)
-                    ? 'Stakeholder/Expense'
+                    ? 'Client/Expense'
                     : (!filters.stakeholder_name ||
                           filters.stakeholder_name === '') &&
                         filters.expense_ledger_ids?.length > 1
