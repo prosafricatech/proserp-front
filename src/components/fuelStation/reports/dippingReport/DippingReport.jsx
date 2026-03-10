@@ -92,12 +92,6 @@ function DippingReport({ closeDialog }) {
       .typeError('End Date is required'),
   });
 
-  useEffect(() => {
-    if (activeStation?.id) {
-      retrieveReport(filters);
-    }
-  }, [activeStation]);
-
   const {
     setValue,
     handleSubmit,

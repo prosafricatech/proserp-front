@@ -77,7 +77,7 @@ function FuelVouchersReportPDF({
                 <Text style={{ ...pdfStyles.majorInfo, color: mainColor }}>
                   {filters.stakeholder_name &&
                     filters.stakeholder_name !== '' &&
-                    'Stakeholder Name'}
+                    'Client Name'}
                   {filters.expense_ledger_ids &&
                     filters.expense_ledger_ids?.length === 1 &&
                     'Expense'}
@@ -173,7 +173,7 @@ function FuelVouchersReportPDF({
                     {!filters.stakeholder_name &&
                       (filters.expense_ledger_ids?.length < 1 ||
                         !filters.expense_ledger_ids) &&
-                      'Stakeholder/Expense'}
+                      'Client/Expense'}
                     {(!filters.stakeholder_name ||
                       filters.stakeholder_name === '') &&
                       filters.expense_ledger_ids?.length > 1 &&
@@ -312,7 +312,7 @@ function FuelVouchersReportPDF({
                     >
                       {rd.voucherNo}
                     </Text>
-                    {/* Stakeholder/Expense Ledger */}
+                    {/* Client/Expense Ledger */}
                     {filters.stakeholder_name === '' &&
                       (filters.expense_ledger_ids?.length !== 1 ||
                         !filters.expense_ledger_ids) && (

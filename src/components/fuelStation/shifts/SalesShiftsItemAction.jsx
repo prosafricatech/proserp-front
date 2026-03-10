@@ -34,7 +34,7 @@ import { Box, Grid } from '@mui/system';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
-import { useContext, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import PDFContent from '../../pdf/PDFContent';
 import { useProductsSelect } from '../../productAndServices/products/ProductsSelectProvider';
 import fuelStationServices from '../fuelStationServices';
@@ -88,6 +88,10 @@ const DocumentDialog = ({
   const [activeTab, setActiveTab] = useState(0);
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
+
+  useEffect(() => {
+    belowLargeScreen && setActiveTab(1);
+  }, [belowLargeScreen]);
 
   if (isFetching) {
     return <LinearProgress />;
@@ -234,7 +238,7 @@ const DocumentDialog = ({
             )}
           </Grid>
         </Grid>
-        {belowLargeScreen && activeTab === 1 && (
+        {(belowLargeScreen || activeTab === 1) && (
           <SalesShiftOnScreen
             stationName={activeStation?.name}
             openDetails={openDetails}
