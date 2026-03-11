@@ -416,8 +416,9 @@ const LedgerStatementDialogContent: React.FC<LedgerStatementDialogContentProps> 
                                 <LedgerStatementOnScreen
                                     transactionsData={transactions}
                                     authOrganization={authOrganization}
-                                    ledger={ledger}
-                                /> :
+                                    increasesWith={ledger?.increasesWith || commingFilters?.increasesWith}
+                                /> 
+                            :
                                 <PDFContent
                                     document={
                                         <ReportDocument increasesWith={ledger?.increasesWith || commingFilters?.increasesWith} transactionsData={transactions} authOrganization={authOrganization} user={user} ledger={ledger} ledgerName={ledgerName} />
