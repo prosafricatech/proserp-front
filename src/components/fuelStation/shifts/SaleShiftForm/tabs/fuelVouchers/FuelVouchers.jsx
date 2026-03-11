@@ -78,9 +78,10 @@ function FuelVouchers({ cashierPumpProducts, index = -1, setShowForm = null, fue
   const updateItems = async (item) => {
     setIsAdding(true);
     if (index > -1) {
+      const nextItem = fuelVoucher?.id ? { ...item, id: fuelVoucher.id } : item;
       // Replace the existing item with the edited item
       let updatedFuelVouchers = [...fuelVouchers];
-      updatedFuelVouchers[index] = item;
+      updatedFuelVouchers[index] = nextItem;
       await setFuelVouchers(updatedFuelVouchers);
     } else {
       // Add the new item to the fuelVouchers array
