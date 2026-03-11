@@ -22,10 +22,8 @@ import {
 } from '@mui/icons-material';
 import LedgerStatementDialogContent from '../../ledgers/list/ledgerStatement/LedgerStatementDialogContent';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
-import { useLedgerSelect } from '../../ledgers/forms/LedgerSelectProvider';
 
 const IncomeStatementOnScreen = ({ reportData }) => {
-    const { ungroupedLedgerOptions } = useLedgerSelect();
     const [openRows, setOpenRows] = useState({
         revenue: false,
         costOfRevenue: false,
@@ -55,13 +53,14 @@ const IncomeStatementOnScreen = ({ reportData }) => {
     const [ledgerDialogOpen, setLedgerDialogOpen] = useState(false);
     const [ledgerFilters, setLedgerFilters] = useState(null);
 
-    const handleViewLedger = (ledgerId, ledger_name) => {
+    const handleViewLedger = (ledgerId, ledger_name, increasesWith) => {
         setLedgerFilters({
             from: reportData.filters.from,
             to: reportData.filters.to,
             cost_center_ids: reportData.filters.cost_centers.map(cc => cc.id),
             ledger_id: ledgerId,
             ledgerName: ledger_name,
+            increasesWith: increasesWith
         });
         setLedgerDialogOpen(true);
     };
@@ -101,7 +100,7 @@ const IncomeStatementOnScreen = ({ reportData }) => {
                                             <IconButton 
                                                 size="small" 
                                                 onClick={(e) => {
-                                                    handleViewLedger(component.ledger_id, component.ledger_name);
+                                                    handleViewLedger(component.ledger_id, component.ledger_name, component.increasesWith);
                                                 }}
                                             >
                                                 <VisibilityOutlined fontSize="small" />
@@ -139,7 +138,7 @@ const IncomeStatementOnScreen = ({ reportData }) => {
                                             <IconButton 
                                                 size="small" 
                                                 onClick={(e) => {
-                                                    handleViewLedger(component.ledger_id, component.ledger_name);
+                                                    handleViewLedger(component.ledger_id, component.ledger_name, component.increasesWith);
                                                 }}
                                             >
                                                 <VisibilityOutlined fontSize="small" />
@@ -187,7 +186,7 @@ const IncomeStatementOnScreen = ({ reportData }) => {
                                             <IconButton 
                                                 size="small" 
                                                 onClick={(e) => {
-                                                    handleViewLedger(component.ledger_id, component.ledger_name);
+                                                    handleViewLedger(component.ledger_id, component.ledger_name, component.increasesWith);
                                                 }}
                                             >
                                                 <VisibilityOutlined fontSize="small" />
@@ -224,7 +223,6 @@ const IncomeStatementOnScreen = ({ reportData }) => {
                 >
                     <LedgerStatementDialogContent 
                         commingFilters={ledgerFilters}
-                        ledger={ungroupedLedgerOptions?.find(ledger => ledger.id === ledgerFilters?.ledger_id)}
                         setOpen={setLedgerDialogOpen}
                     />
                 </Dialog>
