@@ -196,23 +196,9 @@ export async function exportFuelVouchersToExcel(exportedData: any) {
             fv.reference || '',
             fv.product?.name || '',
             fv.narration || '',
-            fv.quantity?.toLocaleString('en-US', {
-              maximumFractionDigits: 2,
-              minimumFractionDigits: 2,
-            }),
-            fv.price?.toLocaleString('en-US', {
-              maximumFractionDigits: 2,
-              minimumFractionDigits: 2,
-            }),
-            exportedData.filters.with_receipts == 0
-              ? fv.amount?.toLocaleString('en-US', {
-                  maximumFractionDigits: 2,
-                  minimumFractionDigits: 2,
-                })
-              : fv.debit?.toLocaleString('en-US', {
-                  maximumFractionDigits: 2,
-                  minimumFractionDigits: 2,
-                }),
+            fv.quantity,
+            fv.price,
+            exportedData.filters.with_receipts == 0 ? fv.amount : fv.debit,
           ];
         } else {
           rowData = [
@@ -221,38 +207,15 @@ export async function exportFuelVouchersToExcel(exportedData: any) {
             fv.reference || '',
             fv.product?.name || '',
             fv.narration || '',
-            fv.quantity?.toLocaleString('en-US', {
-              maximumFractionDigits: 2,
-              minimumFractionDigits: 2,
-            }),
-            fv.price?.toLocaleString('en-US', {
-              maximumFractionDigits: 2,
-              minimumFractionDigits: 2,
-            }),
-            exportedData.filters.with_receipts == 0
-              ? fv.amount?.toLocaleString('en-US', {
-                  maximumFractionDigits: 2,
-                  minimumFractionDigits: 2,
-                })
-              : fv.debit?.toLocaleString('en-US', {
-                  maximumFractionDigits: 2,
-                  minimumFractionDigits: 2,
-                }),
+            fv.quantity,
+            fv.price,
+            exportedData.filters.with_receipts == 0 ? fv.amount : fv.debit,
           ];
         }
 
         // Add conditional columns if with_receipts is enabled
         if (exportedData.filters.with_receipts == 1) {
-          rowData.push(
-            fv.credit.toLocaleString('en-US', {
-              maximumFractionDigits: 2,
-              minimumFractionDigits: 2,
-            }),
-            runningBalance.toLocaleString('en-US', {
-              maximumFractionDigits: 2,
-              minimumFractionDigits: 2,
-            })
-          );
+          rowData.push(fv.credit, runningBalance);
         }
 
         const dataRow = ws.addRow(rowData);
@@ -271,6 +234,7 @@ export async function exportFuelVouchersToExcel(exportedData: any) {
           // Right-align numeric columns (LTS, Price, Amount/Debit, Credit, Running Balance)
           if (colNumber >= ltsColNo) {
             applyCellStyle(cell, CELL_STYLES.dataRowNumeric);
+            cell.numFmt = '#,###.00';
           } else {
             applyCellStyle(cell, CELL_STYLES.dataRowText);
           }
@@ -291,15 +255,9 @@ export async function exportFuelVouchersToExcel(exportedData: any) {
           ' ',
           ' ',
           ' ',
-          totalLts.toLocaleString('en-US', {
-            maximumFractionDigits: 2,
-            minimumFractionDigits: 2,
-          }),
+          totalLts,
           ' ',
-          totalAmount.toLocaleString('en-US', {
-            maximumFractionDigits: 2,
-            minimumFractionDigits: 2,
-          }),
+          totalAmount,
         ];
       } else {
         totalRowData = [
@@ -308,15 +266,9 @@ export async function exportFuelVouchersToExcel(exportedData: any) {
           ' ',
           ' ',
           ' ',
-          totalLts.toLocaleString('en-US', {
-            maximumFractionDigits: 2,
-            minimumFractionDigits: 2,
-          }),
+          totalLts,
           ' ',
-          totalAmount.toLocaleString('en-US', {
-            maximumFractionDigits: 2,
-            minimumFractionDigits: 2,
-          }),
+          totalAmount,
         ];
       }
 
@@ -344,6 +296,7 @@ export async function exportFuelVouchersToExcel(exportedData: any) {
         // Right-align numeric columns
         if (colNumber >= ltsColNo) {
           applyCellStyle(cell, CELL_STYLES.totalRowNumeric);
+          cell.numFmt = '#,###.00';
         } else {
           applyCellStyle(cell, CELL_STYLES.totalRowText);
         }

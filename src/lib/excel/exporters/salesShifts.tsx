@@ -464,12 +464,7 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
       readableDate(exportedData.shiftData.shift_start, true),
       readableDate(exportedData.shiftData.shift_end, true),
       exportedData.shiftData.creator?.name || '',
-      ...fuelPrices.map((p) =>
-        p.price.toLocaleString('en-US', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        })
-      ),
+      ...fuelPrices.map((p) => p.price),
     ]);
 
     dataRow.font = { size: 10 };
@@ -488,6 +483,14 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
         right: { style: 'thin', color: { argb: 'FF000000' } },
       };
     });
+    let col = 69;
+    for (let c = 0; c < fuelPrices.length; c++) {
+      ws.getCell(`${String.fromCharCode(col)}5`).alignment = {
+        horizontal: 'right',
+      };
+      ws.getCell(`${String.fromCharCode(col)}5`).numFmt = '#,###.00';
+      col++;
+    }
 
     if (!exportedData.withDetails) {
       ws.getColumn('G').width = 20;
@@ -750,10 +753,8 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
               right: { style: 'thin', color: { argb: 'FF000000' } },
             };
 
-            ws.getCell(`D${row}`).value = pump.amount.toLocaleString('en-US', {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            });
+            ws.getCell(`D${row}`).value = pump.amount;
+            ws.getCell(`D${row}`).numFmt = '#,###.00';
             ws.getCell(`D${row}`).alignment = {
               horizontal: 'right',
               vertical: 'middle',
@@ -787,13 +788,8 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
             right: { style: 'thin', color: { argb: 'FF000000' } },
           };
 
-          ws.getCell(`D${pumptotalRow}`).value = totalPumoAmount.toLocaleString(
-            'en-US',
-            {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            }
-          );
+          ws.getCell(`D${pumptotalRow}`).value = totalPumoAmount;
+          ws.getCell(`D${pumptotalRow}`).numFmt = '#,###.00';
           ws.getCell(`D${pumptotalRow}`).alignment = { horizontal: 'right' };
           ws.getCell(`D${pumptotalRow}`).fill = {
             type: 'pattern',
@@ -852,13 +848,8 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
               right: { style: 'thin', color: { argb: 'FF000000' } },
             };
 
-            ws.getCell(`G${row}`).value = cd.totalAmount.toLocaleString(
-              'en-US',
-              {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              }
-            );
+            ws.getCell(`G${row}`).value = cd.totalAmount;
+            ws.getCell(`G${row}`).numFmt = '#,###.00';
             ws.getCell(`G${row}`).alignment = {
               horizontal: 'right',
               vertical: 'middle',
@@ -894,10 +885,8 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
           };
 
           ws.getCell(`G${distributionstotalRow}`).value =
-            cashDistributionsTotalSummary.toLocaleString('en-US', {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            });
+            cashDistributionsTotalSummary;
+          ws.getCell(`G${distributionstotalRow}`).numFmt = '#,###.00';
           ws.getCell(`G${distributionstotalRow}`).alignment = {
             horizontal: 'right',
           };
@@ -975,21 +964,12 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
             right: { style: 'thin', color: { argb: 'FF000000' } },
           };
 
-          ws.getCell(`H${startRow}`).value =
-            cashier.cashCollection.expected.toLocaleString('en-US', {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            });
-          ws.getCell(`I${startRow}`).value =
-            cashier.cashCollection.collected.toLocaleString('en-US', {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            });
-          ws.getCell(`J${startRow}`).value =
-            cashier.cashCollection.shortOver.toLocaleString('en-US', {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            });
+          ws.getCell(`H${startRow}`).value = cashier.cashCollection.expected;
+          ws.getCell(`H${startRow}`).numFmt = '#,###.00';
+          ws.getCell(`I${startRow}`).value = cashier.cashCollection.collected;
+          ws.getCell(`I${startRow}`).numFmt = '#,###.00';
+          ws.getCell(`J${startRow}`).value = cashier.cashCollection.shortOver;
+          ws.getCell(`I${startRow}`).numFmt = '#,###.00';
 
           if (parseFloat(cashier.cashCollection.shortOver) > 0) {
             ws.getCell(`J${startRow}`).font = {
@@ -1084,12 +1064,11 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
           right: { style: 'thin', color: { argb: 'FF000000' } },
         };
 
-        ws.getCell(`D${pumpGrandTotals}`).value = pumpSummary
-          ?.reduce((acc: any, pump: any) => acc + pump.totalDifference, 0)
-          .toLocaleString('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          });
+        ws.getCell(`D${pumpGrandTotals}`).value = pumpSummary?.reduce(
+          (acc: any, pump: any) => acc + pump.totalDifference,
+          0
+        );
+        ws.getCell(`D${pumpGrandTotals}`).numFmt = '#,###.00';
         ws.getCell(`D${pumpGrandTotals}`).font = { bold: true, size: 11 };
         ws.getCell(`D${pumpGrandTotals}`).alignment = {
           horizontal: 'right',
@@ -1131,11 +1110,8 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
               right: { style: 'thin', color: { argb: 'FF000000' } },
             };
 
-            ws.getCell(`G${row}`).value =
-              t.totalAmount.toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              }) || 0.0;
+            ws.getCell(`G${row}`).value = t.totalAmount || 0.0;
+            ws.getCell(`G${row}`).numFmt = '#,###.00';
             ws.getCell(`G${row}`).font = { bold: true, size: 11 };
             ws.getCell(`G${row}`).alignment = {
               horizontal: 'right',
@@ -1150,11 +1126,8 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
           });
         }
 
-        ws.getCell(`H${totalsRow + 2}`).value =
-          totalExpectedAmount.toLocaleString('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          });
+        ws.getCell(`H${totalsRow + 2}`).value = totalExpectedAmount;
+        ws.getCell(`H${totalsRow + 2}`).numFmt = '#,###.00';
         ws.getCell(`H${totalsRow + 2}`).font = { bold: true, size: 14 };
         ws.getCell(`H${totalsRow + 2}`).alignment = {
           horizontal: 'right',
@@ -1172,11 +1145,8 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
           right: { style: 'thin', color: { argb: 'FF000000' } },
         };
 
-        ws.getCell(`I${totalsRow + 2}`).value =
-          totalCollectedAmount.toLocaleString('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          });
+        ws.getCell(`I${totalsRow + 2}`).value = totalCollectedAmount;
+        ws.getCell(`I${totalsRow + 2}`).numFmt = '#,###.00';
         ws.getCell(`I${totalsRow + 2}`).font = { bold: true, size: 14 };
         ws.getCell(`I${totalsRow + 2}`).alignment = {
           horizontal: 'right',
@@ -1204,6 +1174,7 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}`;
+        ws.getCell(`J${totalsRow + 2}`).numFmt = '#,###.00';
         ws.getCell(`J${totalsRow + 2}`).font = {
           bold: true,
           size: 14,
@@ -1301,12 +1272,9 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
             right: { style: 'thin', color: { argb: 'FF000000' } },
           };
 
-          ws.getCell(`I${totalsRow + 4}`).value = (
-            paymentsReceivedTotal + totalCollectedAmount
-          ).toLocaleString('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          });
+          ws.getCell(`I${totalsRow + 4}`).value =
+            paymentsReceivedTotal + totalCollectedAmount;
+          ws.getCell(`I${totalsRow + 4}`).numFmt = '#,###.00';
           ws.getCell(`I${totalsRow + 4}`).font = { bold: true, size: 14 };
           ws.getCell(`I${totalsRow + 4}`).alignment = {
             horizontal: 'right',
@@ -1694,12 +1662,8 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
                 };
 
                 // ws.mergeCells(`D${pumpRow}:E${pumpRow}`);
-                ws.getCell(`C${pumpRow}`).value = (
-                  pump.opening || 0
-                ).toLocaleString('en-US', {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                });
+                ws.getCell(`C${pumpRow}`).value = pump.opening || 0;
+                ws.getCell(`C${pumpRow}`).numFmt = '#,###.00';
                 ws.getCell(`C${pumpRow}`).alignment = {
                   horizontal: 'right',
                   vertical: 'middle',
@@ -1712,12 +1676,8 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
                 };
 
                 // ws.mergeCells(`F${pumpRow}:G${pumpRow}`);
-                ws.getCell(`D${pumpRow}`).value = (
-                  pump.closing || 0
-                ).toLocaleString('en-US', {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                });
+                ws.getCell(`D${pumpRow}`).value = pump.closing || 0;
+                ws.getCell(`D${pumpRow}`).numFmt = '#,###.00';
                 ws.getCell(`D${pumpRow}`).alignment = {
                   horizontal: 'right',
                   vertical: 'middle',
@@ -1730,13 +1690,8 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
                 };
 
                 // ws.mergeCells(`I${pumpRow}:J${pumpRow}`);
-                ws.getCell(`E${pumpRow}`).value = difference.toLocaleString(
-                  'en-US',
-                  {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  }
-                );
+                ws.getCell(`E${pumpRow}`).value = difference;
+                ws.getCell(`E${pumpRow}`).numFmt = '#,###.00';
                 ws.getCell(`E${pumpRow}`).alignment = {
                   horizontal: 'right',
                   vertical: 'middle',
@@ -1749,13 +1704,8 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
                 };
 
                 // ws.mergeCells(`I${pumpRow}:J${pumpRow}`);
-                ws.getCell(`F${pumpRow}`).value = price.toLocaleString(
-                  'en-US',
-                  {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  }
-                );
+                ws.getCell(`F${pumpRow}`).value = price;
+                ws.getCell(`F${pumpRow}`).numFmt = '#,###.00';
                 ws.getCell(`F${pumpRow}`).alignment = {
                   horizontal: 'right',
                   vertical: 'middle',
@@ -1768,13 +1718,8 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
                 };
 
                 // ws.mergeCells(`I${pumpRow}:J${pumpRow}`);
-                ws.getCell(`G${pumpRow}`).value = totalAmount.toLocaleString(
-                  'en-US',
-                  {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  }
-                );
+                ws.getCell(`G${pumpRow}`).value = totalAmount;
+                ws.getCell(`G${pumpRow}`).numFmt = '#,###.00';
                 ws.getCell(`G${pumpRow}`).alignment = {
                   horizontal: 'right',
                   vertical: 'middle',
@@ -1810,11 +1755,8 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
               right: { style: 'thin', color: { argb: 'FF000000' } },
             };
 
-            ws.getCell(`G${pumpTotalsRow}`).value =
-              totalPumoAmount.toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              });
+            ws.getCell(`G${pumpTotalsRow}`).value = totalPumoAmount;
+            ws.getCell(`G${pumpTotalsRow}`).numFmt = '#,###.00';
             ws.getCell(`G${pumpTotalsRow}`).alignment = {
               horizontal: 'right',
               vertical: 'middle',
@@ -2022,11 +1964,8 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
                     right: { style: 'thin', color: { argb: 'FF000000' } },
                   };
 
-                  ws.getCell(`F${fvLastRow}`).value =
-                    fv.quantity.toLocaleString('en-US', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    });
+                  ws.getCell(`F${fvLastRow}`).value = fv.quantity;
+                  ws.getCell(`F${fvLastRow}`).numFmt = '#,###.00';
                   ws.getCell(`F${fvLastRow}`).alignment = {
                     horizontal: 'right',
                     vertical: 'middle',
@@ -2038,13 +1977,8 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
                     right: { style: 'thin', color: { argb: 'FF000000' } },
                   };
 
-                  ws.getCell(`G${fvLastRow}`).value = amount.toLocaleString(
-                    'en-US',
-                    {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    }
-                  );
+                  ws.getCell(`G${fvLastRow}`).value = amount;
+                  ws.getCell(`G${fvLastRow}`).numFmt = '#,###.00';
                   ws.getCell(`G${fvLastRow}`).alignment = {
                     horizontal: 'right',
                     vertical: 'middle',
@@ -2078,10 +2012,8 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
               };
 
               ws.getCell(`G${fvLastRow}`).value =
-                cashierTotals.totalFuelVouchersAmount.toLocaleString('en-US', {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                });
+                cashierTotals.totalFuelVouchersAmount;
+              ws.getCell(`G${fvLastRow}`).numFmt = '#,###.00';
               ws.getCell(`G${fvLastRow}`).alignment = {
                 horizontal: 'right',
                 vertical: 'middle',
@@ -2226,12 +2158,9 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
                 ws.mergeCells(
                   `F${cashDistributionsRow + 3}:G${cashDistributionsRow + 3}`
                 );
-                ws.getCell(`G${cashDistributionsRow + 3}`).value = (
-                  cashier.main_ledger.amount || 0
-                ).toLocaleString('en-US', {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                });
+                ws.getCell(`G${cashDistributionsRow + 3}`).value =
+                  cashier.main_ledger.amount || 0;
+                ws.getCell(`G${cashDistributionsRow + 3}`).numFmt = '#,###.00';
                 ws.getCell(`G${cashDistributionsRow + 3}`).alignment = {
                   horizontal: 'right',
                   vertical: 'middle',
@@ -2289,12 +2218,9 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
                   ws.mergeCells(
                     `F${otherTransctionsRow}:G${otherTransctionsRow}`
                   );
-                  ws.getCell(`F${otherTransctionsRow}`).value = (
-                    transaction.amount || 0
-                  ).toLocaleString('en-US', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  });
+                  ws.getCell(`F${otherTransctionsRow}`).value =
+                    transaction.amount || 0;
+                  ws.getCell(`F${otherTransctionsRow}`).numFmt = '#,###.00';
                   ws.getCell(`F${otherTransctionsRow}`).alignment = {
                     horizontal: 'right',
                     vertical: 'middle',
@@ -2337,13 +2263,10 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
               ws.mergeCells(
                 `F${distributionTotalsRow}:G${distributionTotalsRow}`
               );
-              ws.getCell(`F${distributionTotalsRow}`).value = (
+              ws.getCell(`F${distributionTotalsRow}`).value =
                 cashierTotals.otherTransactionsTotal +
-                (cashier.main_ledger?.amount || 0)
-              ).toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              });
+                (cashier.main_ledger?.amount || 0);
+              ws.getCell(`F${distributionTotalsRow}`).numFmt = '#,###.00';
               ws.getCell(`F${distributionTotalsRow}`).alignment = {
                 horizontal: 'right',
                 vertical: 'middle',
@@ -2367,10 +2290,12 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
               // Cash Collected
               let shortOverVal;
               if (shortOrOver > 0) {
-                shortOverVal = shortOrOver.toLocaleString('en-US', {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                });
+                shortOverVal =
+                  '+' +
+                  shortOrOver.toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  });
               } else {
                 shortOverVal = shortOrOver.toLocaleString('en-US', {
                   minimumFractionDigits: 2,
@@ -2405,12 +2330,9 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
               ws.mergeCells(
                 `F${distributionTotalsRow + 1}:G${distributionTotalsRow + 1}`
               );
-              ws.getCell(`F${distributionTotalsRow + 1}`).value = (
-                cashier.collected_amount || 0
-              ).toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              });
+              ws.getCell(`F${distributionTotalsRow + 1}`).value =
+                cashier.collected_amount || 0;
+              ws.getCell(`F${distributionTotalsRow + 1}`).numFmt = '#,###.00';
               ws.getCell(`F${distributionTotalsRow + 1}`).alignment = {
                 horizontal: 'right',
                 vertical: 'middle',
@@ -2464,7 +2386,7 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
                 horizontal: 'right',
                 vertical: 'middle',
               };
-              if (parseFloat(shortOverVal) > 0) {
+              if (shortOrOver > 0) {
                 ws.getCell(`F${distributionTotalsRow + 2}`).font = {
                   bold: true,
                   size: 14,
@@ -2477,6 +2399,7 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
                   color: { argb: 'FFFF0000' },
                 };
               }
+
               ws.getCell(`F${distributionTotalsRow + 2}`).fill = {
                 type: 'pattern',
                 pattern: 'solid',
@@ -2624,12 +2547,8 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
         };
 
         // ws.mergeCells(`G${paymentDataRow}:H${paymentDataRow}`);
-        ws.getCell(`G${paymentDataRow}`).value = (
-          pr.amount || 0
-        ).toLocaleString('en-US', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        });
+        ws.getCell(`G${paymentDataRow}`).value = pr.amount || 0;
+        ws.getCell(`G${paymentDataRow}`).numFmt = '#,###.00';
         ws.getCell(`G${paymentDataRow}`).alignment = {
           horizontal: 'right',
           vertical: 'middle',
@@ -2664,11 +2583,8 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
       };
 
       // ws.mergeCells(`G${paymentsTotalRow}:H${paymentsTotalRow}`);
-      ws.getCell(`G${paymentsTotalRow}`).value =
-        allPaymentsTotal.toLocaleString('en-US', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        });
+      ws.getCell(`G${paymentsTotalRow}`).value = allPaymentsTotal;
+      ws.getCell(`G${paymentsTotalRow}`).numFmt = '#,###.00';
       ws.getCell(`G${paymentsTotalRow}`).font = { bold: true, size: 11 };
       ws.getCell(`G${paymentsTotalRow}`).alignment = {
         horizontal: 'right',
@@ -2712,11 +2628,8 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
         right: { style: 'thin', color: { argb: 'FF000000' } },
       };
 
-      ws.getCell(`G${cashCollectionRow + 1}`).value =
-        totalExpectedAmount.toLocaleString('en-US', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        });
+      ws.getCell(`G${cashCollectionRow + 1}`).value = totalExpectedAmount;
+      ws.getCell(`G${cashCollectionRow + 1}`).numFmt = '#,###.00';
       ws.getCell(`G${cashCollectionRow + 1}`).font = { bold: true, size: 11 };
       ws.getCell(`G${cashCollectionRow + 1}`).alignment = {
         horizontal: 'right',
@@ -2743,11 +2656,8 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
         right: { style: 'thin', color: { argb: 'FF000000' } },
       };
 
-      ws.getCell(`G${cashCollectionRow + 2}`).value =
-        totalCollectedAmount.toLocaleString('en-US', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        });
+      ws.getCell(`G${cashCollectionRow + 2}`).value = totalCollectedAmount;
+      ws.getCell(`G${cashCollectionRow + 2}`).numFmt = '#,###.00';
       ws.getCell(`G${cashCollectionRow + 2}`).font = { bold: true, size: 11 };
       ws.getCell(`G${cashCollectionRow + 2}`).alignment = {
         horizontal: 'right',
@@ -2825,11 +2735,8 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
           right: { style: 'thin', color: { argb: 'FF000000' } },
         };
 
-        ws.getCell(`G${cashCollectionRow + 4}`).value =
-          paymentsReceivedTotal.toLocaleString('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          });
+        ws.getCell(`G${cashCollectionRow + 4}`).value = paymentsReceivedTotal;
+        ws.getCell(`G${cashCollectionRow + 4}`).numFmt = '#,###.00';
         ws.getCell(`G${cashCollectionRow + 4}`).font = { bold: true, size: 11 };
         ws.getCell(`G${cashCollectionRow + 4}`).alignment = {
           horizontal: 'right',
@@ -2857,12 +2764,9 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
           right: { style: 'thin', color: { argb: 'FF000000' } },
         };
 
-        ws.getCell(`G${cashCollectionRow + 5}`).value = (
-          totalCollectedAmount + paymentsReceivedTotal
-        ).toLocaleString('en-US', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        });
+        ws.getCell(`G${cashCollectionRow + 5}`).value =
+          totalCollectedAmount + paymentsReceivedTotal;
+        ws.getCell(`G${cashCollectionRow + 5}`).numFmt = '#,###.00';
         ws.getCell(`G${cashCollectionRow + 5}`).font = { bold: true, size: 11 };
         ws.getCell(`G${cashCollectionRow + 5}`).alignment = {
           horizontal: 'right',

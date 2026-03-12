@@ -129,10 +129,8 @@ export async function exportDebtorsOrCreditorsToExcel(exportedData: any) {
         ws.mergeCells(`B${row}:E${row}`);
         ws.getCell(`B${row}`).value = d.name;
 
-        ws.getCell(`F${row}`).value = d.amount.toLocaleString('en-US', {
-          maximumFractionDigits: 2,
-          minimumFractionDigits: 2,
-        });
+        ws.getCell(`F${row}`).value = d.amount;
+        ws.getCell(`F${row}`).numFmt = '#,###.00';
         ws.getCell(`F${row}`).alignment = {
           horizontal: 'right',
           vertical: 'middle',
@@ -181,10 +179,8 @@ export async function exportDebtorsOrCreditorsToExcel(exportedData: any) {
     ws.getCell(`A${totalRow}`).value = 'Total';
     ws.getCell(`A${totalRow}`).font = { bold: true, size: 11 };
 
-    ws.getCell(`F${totalRow}`).value = total.toLocaleString('en-US', {
-      maximumFractionDigits: 2,
-      minimumFractionDigits: 2,
-    });
+    ws.getCell(`F${totalRow}`).value = total;
+    ws.getCell(`F${totalRow}`).numFmt = '#,###.00';
     ws.getCell(`F${totalRow}`).alignment = {
       horizontal: 'right',
       vertical: 'middle',
