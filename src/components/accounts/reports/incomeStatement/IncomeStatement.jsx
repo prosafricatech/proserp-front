@@ -16,6 +16,8 @@ import {
   FormControlLabel,
   Radio,
   Stack,
+  TextField,
+  MenuItem,
 } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 
@@ -180,7 +182,7 @@ const ReportDocumet = ({reportData,authOrganization,user}) => {
   ) : ''
 }
 
-function IncomeStatement({from, to, cost_center_ids}) {
+function IncomeStatement({from, to, cost_center_ids, aggregate_by}) {
   document.title = 'Income Statement';
   const css = useProsERPStyles();
   const [today] = useState(dayjs());
@@ -200,7 +202,8 @@ function IncomeStatement({from, to, cost_center_ids}) {
     defaultValues: {
       from: dayjs(from).startOf('day').toISOString(),
       to: dayjs(to).toISOString(),
-      cost_center_ids: Array.isArray(cost_center_ids) ? cost_center_ids.map(id => id) : 'all'
+      cost_center_ids: Array.isArray(cost_center_ids) ? cost_center_ids.map(id => id) : 'all',
+      aggregate_by: aggregate_by || null,
     },
   });
   
@@ -215,7 +218,8 @@ function IncomeStatement({from, to, cost_center_ids}) {
       const filters = {
         from: watch('from'),
         to: watch('to'),
-        cost_center_ids: watch('cost_center_ids')
+        cost_center_ids: watch('cost_center_ids'),
+        aggregate_by: watch('aggregate_by')
       };
 
       // Pass all filters to the service
@@ -251,10 +255,11 @@ function IncomeStatement({from, to, cost_center_ids}) {
       retrieveReport({
         from: from,
         to: to,
-        cost_center_ids : Array.isArray(cost_center_ids) ? cost_center_ids.map(id => id) : 'all'
+        cost_center_ids : Array.isArray(cost_center_ids) ? cost_center_ids.map(id => id) : 'all',
+        aggregate_by: aggregate_by ?? null
       });
     }
-  }, [from, to, cost_center_ids]);
+  }, [from, to, cost_center_ids, aggregate_by]);
 
   const downloadFileName = `Income Statement ${readableDate(reportData?.filters?.from)}-${readableDate(reportData?.filters?.to)}`;
 
@@ -327,7 +332,44 @@ function IncomeStatement({from, to, cost_center_ids}) {
                   />
                 </Div>
               </Grid>
-              <Grid size={{xs: 12, md: 2, lg: 12}} textAlign="right">
+              <Grid size={{ xs: 12, md: 4, lg: 3.5 }}>
+                <Div sx={{ mt: 1, mb: 1, display: 'flex' }}>
+                  <TextField
+                    select
+                    label="Aggregate By"
+                    size="small"
+                    value={watch('aggregate_by') ?? ''}
+                    sx={{ width: { xs: '100%', md: 180 }, maxWidth: 180 }}
+                    onChange={(e) => {
+                      const selectedAggregate = e.target.value;
+                      const fromDate = watch('from');
+                      const toDate = watch('to');
+                      const selectedCostCenters = watch('cost_center_ids');
+
+                      setValue('aggregate_by', selectedAggregate, {
+                        shouldValidate: true,
+                        shouldDirty: true,
+                      });
+
+                      if (fromDate && toDate) {
+                        retrieveReport({
+                          from: fromDate,
+                          to: toDate,
+                          cost_center_ids: selectedCostCenters,
+                          aggregate_by: selectedAggregate === '' ? null : selectedAggregate,
+                        });
+                      }
+                    }}
+                  >
+                    <MenuItem value="" disabled>Select period</MenuItem>
+                    <MenuItem value="day">Day</MenuItem>
+                    <MenuItem value="week">Week</MenuItem>
+                    <MenuItem value="month">Month</MenuItem>
+                    <MenuItem value="year">Year</MenuItem>
+                  </TextField>
+                </Div>
+              </Grid>
+              <Grid size={{xs: 12, md: 2, lg: 8.5}} textAlign="right">
                 <Stack direction="row" spacing={0.5} justifyContent="flex-end" alignItems="center">
                   <>                                
                     <LoadingButton
