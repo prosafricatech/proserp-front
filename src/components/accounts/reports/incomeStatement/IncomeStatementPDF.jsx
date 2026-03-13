@@ -1,3 +1,4 @@
+'use client';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import pdfStyles from '@/components/pdf/pdf-styles';
 import PdfLogo from '@/components/pdf/PdfLogo';
