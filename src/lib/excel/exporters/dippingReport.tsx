@@ -298,65 +298,24 @@ export async function exportDippingReportToExcel(exportedData: any) {
           commulativeDeviation += tank.deviation;
 
           ws.getCell(`C${currentRow}`).value = tank.tank;
-          ws.getCell(`D${currentRow}`).value = tank.opening.toLocaleString(
-            'en-US',
-            {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            }
-          );
-          ws.getCell(`E${currentRow}`).value = tank.stock_in.toLocaleString(
-            'en-US',
-            {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            }
-          );
-          ws.getCell(`F${currentRow}`).value = tank.stock_out.toLocaleString(
-            'en-US',
-            {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            }
-          );
-          ws.getCell(`G${currentRow}`).value = tank.reading.toLocaleString(
-            'en-US',
-            {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            }
-          );
-          ws.getCell(`H${currentRow}`).value =
-            tank.tank_difference.toLocaleString('en-US', {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            });
-          ws.getCell(`I${currentRow}`).value = tank.deviation.toLocaleString(
-            'en-US',
-            {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            }
-          );
-          ws.getCell(`J${currentRow}`).value =
-            // commulativeDeviation.toLocaleString('en-US', {
-            //   minimumFractionDigits: 2,
-            //   maximumFractionDigits: 2,
-            // });
-            tank.accumulated_deviation.toLocaleString('en-US', {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            });
-          ws.getCell(`K${currentRow}`).value =
-            tank.calculated_stock.toLocaleString('en-US', {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            });
-          ws.getCell(`L${currentRow}`).value =
-            tank.cummulative_deviation.toLocaleString('en-US', {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            });
+          ws.getCell(`D${currentRow}`).value = tank.opening;
+          ws.getCell(`D${currentRow}`).numFmt = '#,###.00';
+          ws.getCell(`E${currentRow}`).value = tank.stock_in;
+          ws.getCell(`E${currentRow}`).numFmt = '#,###.00';
+          ws.getCell(`F${currentRow}`).value = tank.stock_out;
+          ws.getCell(`F${currentRow}`).numFmt = '#,###.00';
+          ws.getCell(`G${currentRow}`).value = tank.reading;
+          ws.getCell(`G${currentRow}`).numFmt = '#,###.00';
+          ws.getCell(`H${currentRow}`).value = tank.tank_difference;
+          ws.getCell(`H${currentRow}`).numFmt = '#,###.00';
+          ws.getCell(`I${currentRow}`).value = tank.deviation;
+          ws.getCell(`I${currentRow}`).numFmt = '#,###.00';
+          ws.getCell(`J${currentRow}`).value = tank.accumulated_deviation;
+          ws.getCell(`J${currentRow}`).numFmt = '#,###.00';
+          ws.getCell(`K${currentRow}`).value = tank.calculated_stock;
+          ws.getCell(`K${currentRow}`).numFmt = '#,###.00';
+          ws.getCell(`L${currentRow}`).value = tank.cummulative_deviation;
+          ws.getCell(`L${currentRow}`).numFmt = '#,###.00';
 
           for (let col = 67; col <= 76; col++) {
             ws.getCell(`${String.fromCharCode(col)}${currentRow}`).border = {
@@ -378,47 +337,18 @@ export async function exportDippingReportToExcel(exportedData: any) {
           {
             const totalRow = currentRow + 1;
             ws.getCell(`C${totalRow}`).value = 'TOTAL';
-            ws.getCell(`D${totalRow}`).value =
-              readingTotals.opening?.toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              }) || 0;
-            ws.getCell(`E${totalRow}`).value =
-              readingTotals.stockIn?.toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              }) || 0;
-            ws.getCell(`F${totalRow}`).value =
-              readingTotals.stockOut?.toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              }) || 0;
-            ws.getCell(`G${totalRow}`).value =
-              readingTotals.reading?.toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              }) || 0;
+            ws.getCell(`D${totalRow}`).value = readingTotals.opening || 0;
+            ws.getCell(`E${totalRow}`).value = readingTotals.stockIn || 0;
+            ws.getCell(`F${totalRow}`).value = readingTotals.stockOut || 0;
+            ws.getCell(`G${totalRow}`).value = readingTotals.reading || 0;
             ws.getCell(`H${totalRow}`).value =
-              readingTotals.tankDifference?.toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              }) || 0;
-            ws.getCell(`I${totalRow}`).value =
-              readingTotals.deviation?.toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              }) || 0;
+              readingTotals.tankDifference || 0;
+            ws.getCell(`I${totalRow}`).value = readingTotals.deviation || 0;
             ws.getCell(`J${totalRow}`).value = ' ';
             ws.getCell(`K${totalRow}`).value =
-              readingTotals.calculatedStock?.toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              }) || 0;
+              readingTotals.calculatedStock || 0;
             ws.getCell(`L${totalRow}`).value =
-              readingTotals.cumulativeDeviation?.toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              }) || 0;
+              readingTotals.cumulativeDeviation || 0;
 
             for (let col = 67; col <= 76; col++) {
               ws.getCell(`${String.fromCharCode(col)}${totalRow}`).border = {
@@ -433,6 +363,8 @@ export async function exportDippingReportToExcel(exportedData: any) {
                     horizontal: 'right',
                     vertical: 'middle',
                   };
+                ws.getCell(`${String.fromCharCode(col)}${totalRow}`).numFmt =
+                  '#,###.00';
               }
             }
           }
@@ -505,12 +437,9 @@ export async function exportDippingReportToExcel(exportedData: any) {
     // length of tanks for each reding
     const tanksLength =
       reportData.reduce((acc: number, dipping: any) => {
-        return (
-          //   acc +
-          dipping.readings.reduce((acc: number, reading: any) => {
-            return acc + reading.tanks.length;
-          }, 0)
-        );
+        return dipping.readings.reduce((acc: number, reading: any) => {
+          return acc + reading.tanks.length;
+        }, 0);
       }, 0) + 3;
 
     // period cell
@@ -582,51 +511,18 @@ export async function exportDippingReportToExcel(exportedData: any) {
         commulativeTotal += tank.deviation;
 
         ws.getCell(`C${currentRow + tankIndex}`).value = tank.tank;
-        ws.getCell(`D${currentRow + tankIndex}`).value =
-          tank.opening.toLocaleString('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          });
-        ws.getCell(`E${currentRow + tankIndex}`).value =
-          tank.stock_in?.toLocaleString('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          }) || 0;
-        ws.getCell(`F${currentRow + tankIndex}`).value =
-          tank.stock_out?.toLocaleString('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          }) || 0;
-        ws.getCell(`G${currentRow + tankIndex}`).value =
-          tank.reading?.toLocaleString('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          }) || 0;
+        ws.getCell(`D${currentRow + tankIndex}`).value = tank.opening;
+        ws.getCell(`E${currentRow + tankIndex}`).value = tank.stock_in || 0;
+        ws.getCell(`F${currentRow + tankIndex}`).value = tank.stock_out || 0;
+        ws.getCell(`G${currentRow + tankIndex}`).value = tank.reading || 0;
         ws.getCell(`H${currentRow + tankIndex}`).value =
-          tank.tank_difference?.toLocaleString('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          }) || 0;
-        ws.getCell(`I${currentRow + tankIndex}`).value =
-          tank.deviation?.toLocaleString('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          }) || 0;
-        ws.getCell(`J${currentRow + tankIndex}`).value =
-          commulativeTotal?.toLocaleString('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          }) || 0;
+          tank.tank_difference || 0;
+        ws.getCell(`I${currentRow + tankIndex}`).value = tank.deviation || 0;
+        ws.getCell(`J${currentRow + tankIndex}`).value = commulativeTotal || 0;
         ws.getCell(`K${currentRow + tankIndex}`).value =
-          tank.calculated_stock?.toLocaleString('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          }) || 0;
+          tank.calculated_stock || 0;
         ws.getCell(`L${currentRow + tankIndex}`).value =
-          tank.cummulative_deviation?.toLocaleString('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          }) || 0;
+          tank.cummulative_deviation || 0;
 
         for (let col = 67; col <= 76; col++) {
           ws.getCell(
@@ -644,6 +540,9 @@ export async function exportDippingReportToExcel(exportedData: any) {
               horizontal: 'right',
               vertical: 'middle',
             };
+            ws.getCell(
+              `${String.fromCharCode(col)}${currentRow + tankIndex}`
+            ).numFmt = '#,###.00';
           }
         }
       });
@@ -652,47 +551,16 @@ export async function exportDippingReportToExcel(exportedData: any) {
       {
         const totalRow = currentRow + product.tanks.length;
         ws.getCell(`C${totalRow}`).value = 'TOTAL';
-        ws.getCell(`D${totalRow}`).value =
-          productTotals.opening?.toLocaleString('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          }) || 0;
-        ws.getCell(`E${totalRow}`).value =
-          productTotals.stockIn?.toLocaleString('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          }) || 0;
-        ws.getCell(`F${totalRow}`).value =
-          productTotals.stockOut?.toLocaleString('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          }) || 0;
-        ws.getCell(`G${totalRow}`).value =
-          productTotals.reading?.toLocaleString('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          }) || 0;
-        ws.getCell(`H${totalRow}`).value =
-          productTotals.tankDifference?.toLocaleString('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          }) || 0;
-        ws.getCell(`I${totalRow}`).value =
-          productTotals.deviation?.toLocaleString('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          }) || 0;
+        ws.getCell(`D${totalRow}`).value = productTotals.opening || 0;
+        ws.getCell(`E${totalRow}`).value = productTotals.stockIn || 0;
+        ws.getCell(`F${totalRow}`).value = productTotals.stockOut || 0;
+        ws.getCell(`G${totalRow}`).value = productTotals.reading || 0;
+        ws.getCell(`H${totalRow}`).value = productTotals.tankDifference || 0;
+        ws.getCell(`I${totalRow}`).value = productTotals.deviation || 0;
         ws.getCell(`J${totalRow}`).value = ' ';
-        ws.getCell(`K${totalRow}`).value =
-          productTotals.calculatedStock?.toLocaleString('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          }) || 0;
+        ws.getCell(`K${totalRow}`).value = productTotals.calculatedStock || 0;
         ws.getCell(`L${totalRow}`).value =
-          productTotals.cumulativeDeviation?.toLocaleString('en-US', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          }) || 0;
+          productTotals.cumulativeDeviation || 0;
 
         for (let col = 67; col <= 76; col++) {
           ws.getCell(`${String.fromCharCode(col)}${totalRow}`).border = {
@@ -710,6 +578,8 @@ export async function exportDippingReportToExcel(exportedData: any) {
               horizontal: 'right',
               vertical: 'middle',
             };
+            ws.getCell(`${String.fromCharCode(col)}${totalRow}`).numFmt =
+              '#,###.00';
           }
         }
       }
