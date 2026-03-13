@@ -400,7 +400,6 @@ function IncomeStatement({ from, to, cost_center_ids, aggregate_by }) {
     setisFetching(true);
     const report = await financialReportsServices.incomeStatement(filters);
 
-    console.log('report: ', report);
     setReportData(report);
     setisFetching(false);
   };
