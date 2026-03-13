@@ -7,9 +7,94 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
   console.log('reportData: ', reportData);
   const mainColor =
     authOrganization.organization.settings?.main_color || '#2113AD';
-  const totalRevenue = reportData
-    ? reportData.incomes.reduce((total, income) => total + income.amount, 0)
-    : 0;
+  const lightColor =
+    authOrganization.organization.settings?.light_color || '#bec5da';
+
+  const incomes = reportData?.incomes || [];
+  const directExpenses =
+    reportData?.directExpenses || reportData?.direct_expenses || [];
+  const indirectExpenses =
+    reportData?.indirectExpenses || reportData?.indirect_expenses || [];
+
+  const hasRevenue = incomes.length > 0;
+  const hasCostOfRevenue = directExpenses.length > 0;
+  const hasOperatingExpenses = indirectExpenses.length > 0;
+
+  const getLedgerTotal = (ledger) => {
+    if (!Array.isArray(ledger?.amounts)) return 0;
+    return ledger.amounts.reduce(
+      (acc, item) => acc + (Number(item?.amount) || 0),
+      0
+    );
+  };
+
+  const formatDateTime = (value) => {
+    if (!value) return '-';
+    const parsedDate = new Date(value);
+    if (Number.isNaN(parsedDate.getTime())) return value;
+    return parsedDate.toLocaleString('en-GB', {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const allLedgers = [...incomes, ...directExpenses, ...indirectExpenses];
+
+  const periodMeta = allLedgers
+    .flatMap((ledger) => (Array.isArray(ledger.amounts) ? ledger.amounts : []))
+    .reduce((acc, item) => {
+      if (!item?.period) return acc;
+      if (!acc[item.period]) {
+        acc[item.period] = {
+          period: item.period,
+          start_datetime: item.start_datetime,
+          end_datetime: item.end_datetime,
+        };
+      }
+      return acc;
+    }, {});
+
+  const periods = Object.values(periodMeta).sort((a, b) => {
+    const aTime = a.start_datetime ? new Date(a.start_datetime).getTime() : 0;
+    const bTime = b.start_datetime ? new Date(b.start_datetime).getTime() : 0;
+    return aTime - bTime;
+  });
+
+  const getAmountItemByPeriod = (ledger, period) => {
+    if (!Array.isArray(ledger?.amounts)) return null;
+    return ledger.amounts.find((item) => item.period === period) || null;
+  };
+
+  const getAmountByPeriod = (ledger, period) => {
+    const matched = getAmountItemByPeriod(ledger, period);
+    return Number(matched?.amount) || 0;
+  };
+
+  const getSectionPeriodTotal = (items, period) => {
+    if (!Array.isArray(items)) return 0;
+    return items.reduce(
+      (acc, ledger) => acc + getAmountByPeriod(ledger, period),
+      0
+    );
+  };
+
+  // Totals based on new amounts[] response structure
+  const totalRevenue = incomes.reduce(
+    (acc, curr) => acc + getLedgerTotal(curr),
+    0
+  );
+  const totalCostOfRevenue = directExpenses.reduce(
+    (acc, curr) => acc + getLedgerTotal(curr),
+    0
+  );
+  const totalOperatingExpenses = indirectExpenses.reduce(
+    (acc, curr) => acc + getLedgerTotal(curr),
+    0
+  );
+
   const costOfRevenue = reportData
     ? reportData.direct_expenses.reduce(
         (total, expense) => total + expense.amount,
@@ -25,6 +110,14 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
   const reportPeriod = `${readableDate(reportData.filters.from, true)} - ${readableDate(reportData.filters.to, true)}`;
   const costCenters = reportData.filters.cost_centers;
   const organization = authOrganization.organization;
+
+  const numericincomeColWidth = 100 / (incomes.length + 2);
+  const incomeColumnWidth = String(numericincomeColWidth) + '%';
+
+  const numericDirectExpWidth = 100 / (directExpenses.length + 2);
+  const directExpWidth = String(numericDirectExpWidth) + '%';
+
+  const indirectExpWidth = String(100 / indirectExpenses.length + 2) + '%';
 
   return reportData ? (
     <Document
@@ -78,54 +171,156 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
             </Text>
           </View>
         </View>
+
         <View style={pdfStyles.table}>
+          {/* ====== REVENUE ===== */}
           <View style={pdfStyles.tableRow}>
             <View style={{ ...pdfStyles.tableHeader, flex: 1 }}>
-              <Text style={pdfStyles.tableCell}>Revenue</Text>
+              <Text style={{ ...pdfStyles.tableCell, fontSize: 12 }}>
+                Revenue
+              </Text>
             </View>
           </View>
-          {reportData.incomes.map(
-            (income, index) =>
-              income.amount !== 0 && (
-                <View key={index} style={pdfStyles.tableRow}>
-                  <View style={{ ...pdfStyles.tableCell, flex: 2 }}>
-                    <Text style={{ ...pdfStyles.tableCell, marginLeft: 10 }}>
-                      {income.ledger_name}
-                    </Text>
-                  </View>
+          <View
+            style={{
+              ...pdfStyles.tableRow,
+            }}
+          >
+            <View style={{ ...pdfStyles.tableCell, width: incomeColumnWidth }}>
+              <Text
+                style={{
+                  ...pdfStyles.tableCell,
+                  marginLeft: 10,
+                  fontWeight: 'bold',
+                }}
+              >
+                Periods
+              </Text>
+            </View>
+            {incomes.map((income, index) => (
+              <View
+                key={index}
+                style={{ ...pdfStyles.tableCell, width: incomeColumnWidth }}
+              >
+                <Text
+                  style={{
+                    ...pdfStyles.tableCell,
+                    marginLeft: 10,
+                    fontWeight: 'bold',
+                  }}
+                >
+                  {income.ledger_name}
+                </Text>
+              </View>
+            ))}
+            <View style={{ ...pdfStyles.tableCell, width: incomeColumnWidth }}>
+              <Text
+                style={{
+                  ...pdfStyles.tableCell,
+                  marginLeft: 10,
+                  fontWeight: 'bold',
+                }}
+              >
+                TOTALS
+              </Text>
+            </View>
+          </View>
+          {periods.map((period, index) => (
+            <View
+              key={index}
+              style={{
+                ...pdfStyles.tableRow,
+              }}
+            >
+              <View
+                style={{ ...pdfStyles.tableCell, width: incomeColumnWidth }}
+              >
+                <Text>{period.period}</Text>
+                <Text>
+                  {' '}
+                  {period.start_datetime && period.end_datetime
+                    ? `${formatDateTime(period.start_datetime)} - ${formatDateTime(period.end_datetime)}`
+                    : '-'}
+                </Text>
+              </View>
+
+              {incomes.map((income, i) => {
+                return income.income !== 0 ? (
                   <View
+                    key={i}
                     style={{
                       ...pdfStyles.tableCell,
-                      flex: 1,
+                      width: incomeColumnWidth,
                       textAlign: 'right',
                     }}
                   >
-                    <Text style={pdfStyles.tableCell}>
-                      {income.amount?.toLocaleString('en-US', {
-                        maximumFractionDigits: 2,
-                        minimumFractionDigits: 2,
-                      })}
+                    <Text>
+                      {getAmountByPeriod(income, period.period).toLocaleString(
+                        'en-US',
+                        {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        }
+                      )}
                     </Text>
                   </View>
-                </View>
-              )
-          )}
+                ) : null;
+              })}
+              <View
+                style={{
+                  ...pdfStyles.tableCell,
+                  textAlign: 'right',
+                  width: incomeColumnWidth,
+                }}
+              >
+                <Text>
+                  {' '}
+                  {getSectionPeriodTotal(incomes, period.period).toLocaleString(
+                    'en-US',
+                    {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    }
+                  )}
+                </Text>
+              </View>
+            </View>
+          ))}
+
           <View style={pdfStyles.tableRow}>
             <View
               style={{
                 ...pdfStyles.tableHeader,
-                marginLeft: 5,
+                marginLeft: 2,
                 backgroundColor: pdfStyles.shadedBG,
-                flex: 2,
+                width: incomeColumnWidth,
               }}
             >
               <Text style={pdfStyles.tableCell}>Total Revenue</Text>
             </View>
+            {incomes.map((income, index) => (
+              <View
+                key={index}
+                style={{
+                  ...pdfStyles.tableHeader,
+                  marginLeft: 2,
+                  backgroundColor: pdfStyles.shadedBG,
+                  width: incomeColumnWidth,
+                }}
+              >
+                <Text style={{ ...pdfStyles.tableCell, textAlign: 'right' }}>
+                  {getLedgerTotal(income).toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </Text>
+              </View>
+            ))}
             <View
               style={{
                 ...pdfStyles.tableHeader,
                 backgroundColor: pdfStyles.shadedBG,
-                flex: 1,
+                width: incomeColumnWidth,
                 textAlign: 'right',
               }}
             >
@@ -138,152 +333,500 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
             </View>
           </View>
 
-          <View style={{ ...pdfStyles.tableRow, marginLeft: 10 }}>
+          {/* ===== COST OF REVENUE ===== */}
+          <View style={pdfStyles.tableRow}>
             <View style={{ ...pdfStyles.tableHeader, flex: 1 }}>
-              <Text style={pdfStyles.tableCell}>Cost of Revenue</Text>
+              <Text style={{ ...pdfStyles.tableCell, fontSize: 12 }}>
+                Cost Of Revenue
+              </Text>
             </View>
           </View>
-          {reportData.direct_expenses.map(
-            (expense, index) =>
-              expense.amount !== 0 && (
-                <View key={index} style={pdfStyles.tableRow}>
-                  <View style={{ ...pdfStyles.tableCell, flex: 2 }}>
-                    <Text style={{ ...pdfStyles.tableCell, marginLeft: 15 }}>
-                      {expense.ledger_name}
-                    </Text>
-                  </View>
+          <View
+            style={{
+              ...pdfStyles.tableRow,
+            }}
+          >
+            <View style={{ ...pdfStyles.tableCell, width: incomeColumnWidth }}>
+              <Text
+                style={{
+                  ...pdfStyles.tableCell,
+                  marginLeft: 10,
+                  fontWeight: 'bold',
+                }}
+              >
+                Periods
+              </Text>
+            </View>
+            {directExpenses.map((exp, index) => (
+              <View
+                key={index}
+                style={{ ...pdfStyles.tableCell, width: incomeColumnWidth }}
+              >
+                <Text
+                  style={{
+                    ...pdfStyles.tableCell,
+                    marginLeft: 10,
+                    fontWeight: 'bold',
+                  }}
+                >
+                  {exp.ledger_name}
+                </Text>
+              </View>
+            ))}
+            <View style={{ ...pdfStyles.tableCell, width: incomeColumnWidth }}>
+              <Text
+                style={{
+                  ...pdfStyles.tableCell,
+                  marginLeft: 10,
+                  fontWeight: 'bold',
+                }}
+              >
+                TOTALS
+              </Text>
+            </View>
+          </View>
+          {periods.map((period, index) => (
+            <View
+              key={index}
+              style={{
+                ...pdfStyles.tableRow,
+              }}
+            >
+              <View style={{ ...pdfStyles.tableCell, width: directExpWidth }}>
+                <Text>{period.period}</Text>
+                <Text>
+                  {' '}
+                  {period.start_datetime && period.end_datetime
+                    ? `${formatDateTime(period.start_datetime)} - ${formatDateTime(period.end_datetime)}`
+                    : '-'}
+                </Text>
+              </View>
+
+              {directExpenses.map((exp, i) => {
+                return (
                   <View
+                    key={i}
                     style={{
                       ...pdfStyles.tableCell,
-                      flex: 1,
+                      width: directExpWidth,
                       textAlign: 'right',
                     }}
                   >
-                    <Text style={pdfStyles.tableCell}>
-                      {expense.amount?.toLocaleString('en-US', {
-                        maximumFractionDigits: 2,
-                        minimumFractionDigits: 2,
-                      })}
+                    <Text>
+                      {getAmountByPeriod(exp, period.period).toLocaleString(
+                        'en-US',
+                        {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        }
+                      )}
                     </Text>
                   </View>
-                </View>
-              )
-          )}
+                );
+              })}
+              <View
+                style={{
+                  ...pdfStyles.tableCell,
+                  textAlign: 'right',
+                  width: directExpWidth,
+                }}
+              >
+                <Text>
+                  {' '}
+                  {getSectionPeriodTotal(
+                    directExpenses,
+                    period.period
+                  ).toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </Text>
+              </View>
+            </View>
+          ))}
+          {/* === COST OF REVENUE TOTALS */}
           <View style={pdfStyles.tableRow}>
             <View
               style={{
                 ...pdfStyles.tableHeader,
-                marginLeft: 5,
+                marginLeft: 2,
                 backgroundColor: pdfStyles.shadedBG,
-                flex: 2,
+                width: directExpWidth,
               }}
             >
-              <Text style={pdfStyles.tableCell}>Total Cost Of Revenue</Text>
+              <Text style={pdfStyles.tableCell}>Total Cost of Revenue</Text>
             </View>
+            {directExpenses.map((exp, index) => (
+              <View
+                key={index}
+                style={{
+                  ...pdfStyles.tableHeader,
+                  marginLeft: 2,
+                  backgroundColor: pdfStyles.shadedBG,
+                  width: directExpWidth,
+                }}
+              >
+                <Text style={{ ...pdfStyles.tableCell, textAlign: 'right' }}>
+                  {getLedgerTotal(exp).toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </Text>
+              </View>
+            ))}
             <View
               style={{
                 ...pdfStyles.tableHeader,
                 backgroundColor: pdfStyles.shadedBG,
-                flex: 1,
+                width: directExpWidth,
                 textAlign: 'right',
               }}
             >
               <Text style={pdfStyles.tableCell}>
-                {costOfRevenue.toLocaleString('en-US', {
+                {totalCostOfRevenue.toLocaleString('en-US', {
                   maximumFractionDigits: 2,
                   minimumFractionDigits: 2,
                 })}
               </Text>
             </View>
           </View>
+
+          {/* ===== GROSS PROFIT ===== */}
           <View style={pdfStyles.tableRow}>
-            <View style={{ ...pdfStyles.tableCell, marginLeft: 5, flex: 2 }}>
-              <Text style={pdfStyles.tableCell}>Gross Profit</Text>
+            <View style={{ ...pdfStyles.tableHeader, flex: 1 }}>
+              <Text style={{ ...pdfStyles.tableCell, fontSize: 12 }}>
+                Gross Profit
+              </Text>
             </View>
+          </View>
+          {periods.map((period, index) => (
             <View
-              style={{ ...pdfStyles.tableCell, flex: 1, textAlign: 'right' }}
+              key={index}
+              style={{
+                ...pdfStyles.tableRow,
+              }}
+            >
+              <View
+                style={{
+                  ...pdfStyles.tableCell,
+                  backgroundColor: index % 2 !== 0 && lightColor,
+                  width: '80%',
+                }}
+              >
+                <Text>{period.period}</Text>
+                <Text>
+                  {' '}
+                  {period.start_datetime && period.end_datetime
+                    ? `${formatDateTime(period.start_datetime)} - ${formatDateTime(period.end_datetime)}`
+                    : '-'}
+                </Text>
+              </View>
+              <View
+                style={{
+                  ...pdfStyles.tableCell,
+                  backgroundColor: index % 2 !== 0 && lightColor,
+                  width: '20%',
+                }}
+              >
+                <Text style={{ textAlign: 'right' }}>
+                  {(
+                    getSectionPeriodTotal(incomes, period.period) -
+                    getSectionPeriodTotal(directExpenses, period.period)
+                  ).toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </Text>
+              </View>
+            </View>
+          ))}
+          {/* === TOTAL GROSS PROFIT */}
+          <View style={pdfStyles.tableRow}>
+            <View
+              style={{
+                ...pdfStyles.tableHeader,
+                marginLeft: 2,
+                backgroundColor: pdfStyles.shadedBG,
+                width: '80%',
+              }}
+            >
+              <Text style={pdfStyles.tableCell}>Total Gross Profit</Text>
+            </View>
+
+            <View
+              style={{
+                ...pdfStyles.tableHeader,
+                backgroundColor: pdfStyles.shadedBG,
+                width: '20%',
+                textAlign: 'right',
+              }}
             >
               <Text style={pdfStyles.tableCell}>
-                {(totalRevenue - costOfRevenue).toLocaleString('en-US', {
-                  maximumFractionDigits: 2,
+                {(totalRevenue - totalCostOfRevenue).toLocaleString('en-US', {
                   minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
                 })}
               </Text>
             </View>
           </View>
-          <View style={{ ...pdfStyles.tableRow, marginTop: 15 }}>
+
+          {/* ===== OPERATING EXPENSES */}
+          <View style={pdfStyles.tableRow}>
             <View style={{ ...pdfStyles.tableHeader, flex: 1 }}>
-              <Text style={pdfStyles.tableCell}>Operating Expenses</Text>
+              <Text style={{ ...pdfStyles.tableCell, fontSize: 12 }}>
+                Operating Expenses
+              </Text>
             </View>
           </View>
-          {reportData.indirect_expenses.map(
-            (expense, index) =>
-              expense.amount !== 0 && (
-                <View key={index} style={pdfStyles.tableRow}>
-                  <View style={{ ...pdfStyles.tableCell, flex: 2 }}>
-                    <Text style={{ ...pdfStyles.tableCell, marginLeft: 10 }}>
-                      {expense.ledger_name}
-                    </Text>
-                  </View>
-                  <View
+          {indirectExpenses.length && (
+            <View
+              style={{
+                ...pdfStyles.tableRow,
+              }}
+            >
+              <View style={{ ...pdfStyles.tableCell, width: indirectExpWidth }}>
+                <Text
+                  style={{
+                    ...pdfStyles.tableCell,
+                    marginLeft: 10,
+                    fontWeight: 'bold',
+                  }}
+                >
+                  Periods
+                </Text>
+              </View>
+              {indirectExpenses.map((exp, index) => (
+                <View
+                  key={index}
+                  style={{ ...pdfStyles.tableCell, width: indirectExpWidth }}
+                >
+                  <Text
                     style={{
                       ...pdfStyles.tableCell,
-                      flex: 1,
-                      textAlign: 'right',
+                      marginLeft: 10,
+                      fontWeight: 'bold',
                     }}
                   >
-                    <Text style={pdfStyles.tableCell}>
-                      {expense.amount?.toLocaleString('en-US', {
-                        maximumFractionDigits: 2,
-                        minimumFractionDigits: 2,
-                      })}
-                    </Text>
-                  </View>
+                    {exp.ledger_name}
+                  </Text>
                 </View>
-              )
-          )}
-          <View style={pdfStyles.tableRow}>
-            <View
-              style={{
-                ...pdfStyles.tableCell,
-                marginLeft: 10,
-                backgroundColor: pdfStyles.shadedBG,
-                flex: 2,
-              }}
-            >
-              <Text style={pdfStyles.tableCell}>Total Operating Expenses</Text>
+              ))}
+              <View style={{ ...pdfStyles.tableCell, width: indirectExpWidth }}>
+                <Text
+                  style={{
+                    ...pdfStyles.tableCell,
+                    marginLeft: 10,
+                    fontWeight: 'bold',
+                  }}
+                >
+                  TOTALS
+                </Text>
+              </View>
             </View>
-            <View
-              style={{
-                ...pdfStyles.tableCell,
-                backgroundColor: pdfStyles.shadedBG,
-                flex: 1,
-                textAlign: 'right',
-              }}
-            >
-              <Text style={pdfStyles.tableCell}>
-                {operationalExpenseTotal.toLocaleString('en-US', {
-                  maximumFractionDigits: 2,
-                  minimumFractionDigits: 2,
+          )}
+          {indirectExpenses.length &&
+            periods.map((period, index) => (
+              <View
+                key={index}
+                style={{
+                  ...pdfStyles.tableRow,
+                }}
+              >
+                <View
+                  style={{ ...pdfStyles.tableCell, width: indirectExpWidth }}
+                >
+                  <Text>{period.period}</Text>
+                  <Text>
+                    {' '}
+                    {period.start_datetime && period.end_datetime
+                      ? `${formatDateTime(period.start_datetime)} - ${formatDateTime(period.end_datetime)}`
+                      : '-'}
+                  </Text>
+                </View>
+                {indirectExpenses.map((exp, i) => {
+                  return (
+                    <View
+                      key={i}
+                      style={{
+                        ...pdfStyles.tableCell,
+                        width: indirectExpWidth,
+                        textAlign: 'right',
+                      }}
+                    >
+                      <Text>
+                        {getAmountByPeriod(exp, period.period).toLocaleString(
+                          'en-US',
+                          {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          }
+                        )}
+                      </Text>
+                    </View>
+                  );
                 })}
+                <View
+                  style={{
+                    ...pdfStyles.tableCell,
+                    textAlign: 'right',
+                    width: indirectExpWidth,
+                  }}
+                >
+                  <Text>
+                    {getSectionPeriodTotal(
+                      indirectExpenses,
+                      period.period
+                    ).toLocaleString('en-US', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          {/* === TOTAL OPERATING EXPENSES */}
+          {indirectExpenses.length ? (
+            <View style={pdfStyles.tableRow}>
+              <View
+                style={{
+                  ...pdfStyles.tableHeader,
+                  marginLeft: 2,
+                  backgroundColor: pdfStyles.shadedBG,
+                  width: indirectExpWidth,
+                }}
+              >
+                <Text style={pdfStyles.tableCell}>Total Operating Costs</Text>
+              </View>
+              {indirectExpenses.map((exp, index) => (
+                <View
+                  key={index}
+                  style={{
+                    ...pdfStyles.tableHeader,
+                    marginLeft: 2,
+                    backgroundColor: pdfStyles.shadedBG,
+                    width: indirectExpWidth,
+                  }}
+                >
+                  <Text style={{ ...pdfStyles.tableCell, textAlign: 'right' }}>
+                    {getLedgerTotal(exp).toLocaleString('en-US', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </Text>
+                </View>
+              ))}
+              <View
+                style={{
+                  ...pdfStyles.tableHeader,
+                  backgroundColor: pdfStyles.shadedBG,
+                  width: indirectExpWidth,
+                  textAlign: 'right',
+                }}
+              >
+                <Text style={pdfStyles.tableCell}>
+                  {totalOperatingExpenses.toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </Text>
+              </View>
+            </View>
+          ) : (
+            <View style={pdfStyles.tableRow}>
+              <View
+                style={{
+                  ...pdfStyles.tableHeader,
+                  marginLeft: 2,
+                  backgroundColor: pdfStyles.shadedBG,
+                  width: '100%',
+                }}
+              >
+                <Text style={{ textAlign: 'center', fontWeight: 'light' }}>
+                  No Operating Expenses Found
+                </Text>
+              </View>
+            </View>
+          )}
+
+          {/* ===== NET INCOME ===== */}
+          <View style={pdfStyles.tableRow}>
+            <View style={{ ...pdfStyles.tableHeader, flex: 1 }}>
+              <Text style={{ ...pdfStyles.tableCell, fontSize: 12 }}>
+                Net Income
               </Text>
             </View>
           </View>
-          <View style={{ ...pdfStyles.tableRow, marginTop: 15 }}>
-            <View style={{ ...pdfStyles.tableHeader, flex: 2 }}>
-              <Text style={pdfStyles.tableCell}>Net Income</Text>
-            </View>
+          {periods.map((period, index) => (
             <View
-              style={{ ...pdfStyles.tableHeader, flex: 1, textAlign: 'right' }}
+              key={index}
+              style={{
+                ...pdfStyles.tableRow,
+              }}
+            >
+              <View
+                style={{
+                  ...pdfStyles.tableCell,
+                  backgroundColor: index % 2 !== 0 && lightColor,
+                  width: '80%',
+                }}
+              >
+                <Text>{period.period}</Text>
+                <Text>
+                  {' '}
+                  {period.start_datetime && period.end_datetime
+                    ? `${formatDateTime(period.start_datetime)} - ${formatDateTime(period.end_datetime)}`
+                    : '-'}
+                </Text>
+              </View>
+              <View
+                style={{
+                  ...pdfStyles.tableCell,
+                  backgroundColor: index % 2 !== 0 && lightColor,
+                  width: '20%',
+                }}
+              >
+                <Text style={{ textAlign: 'right' }}>
+                  {(
+                    getSectionPeriodTotal(incomes, period.period) -
+                    getSectionPeriodTotal(directExpenses, period.period) -
+                    getSectionPeriodTotal(indirectExpenses, period.period)
+                  ).toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </Text>
+              </View>
+            </View>
+          ))}
+          {/* === TOTAL NET INCOME */}
+          <View style={pdfStyles.tableRow}>
+            <View
+              style={{
+                ...pdfStyles.tableHeader,
+                marginLeft: 2,
+                backgroundColor: pdfStyles.shadedBG,
+                width: '80%',
+              }}
+            >
+              <Text style={pdfStyles.tableCell}>Total Net Income</Text>
+            </View>
+
+            <View
+              style={{
+                ...pdfStyles.tableHeader,
+                backgroundColor: pdfStyles.shadedBG,
+                width: '20%',
+                textAlign: 'right',
+              }}
             >
               <Text style={pdfStyles.tableCell}>
                 {(
                   totalRevenue -
-                  costOfRevenue -
-                  operationalExpenseTotal
+                  totalCostOfRevenue -
+                  totalOperatingExpenses
                 ).toLocaleString('en-US', {
-                  maximumFractionDigits: 2,
                   minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
                 })}
               </Text>
             </View>
