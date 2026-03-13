@@ -1,230 +1,385 @@
-import React, { useEffect, useState } from 'react';
-import { Document, Page, Text, View} from '@react-pdf/renderer';
-import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
-import dayjs from 'dayjs';
-import { DateTimePicker } from '@mui/x-date-pickers';
+import { LoadingButton } from '@mui/lab';
 import {
-  DialogTitle,
   DialogContent,
+  DialogTitle,
+  FormControl,
+  FormControlLabel,
+  FormLabel,
   Grid,
   LinearProgress,
-  Typography,
-  FormControl,
-  FormLabel,
-  RadioGroup,
-  FormControlLabel,
+  MenuItem,
   Radio,
+  RadioGroup,
   Stack,
   TextField,
-  MenuItem,
+  Typography,
 } from '@mui/material';
-import { LoadingButton } from '@mui/lab';
+import { DateTimePicker } from '@mui/x-date-pickers';
+import { Document, Page, Text, View } from '@react-pdf/renderer';
+import dayjs from 'dayjs';
+import React, { useEffect, useState } from 'react';
+import * as yup from 'yup';
 
-import financialReportsServices from '../financial-reports-services';
-import CostCenterSelector from '../../../masters/costCenters/CostCenterSelector';
-import pdfStyles from '../../../pdf/pdf-styles';
-import { useForm } from 'react-hook-form';
-import PdfLogo from '../../../pdf/PdfLogo';
-import PDFContent from '../../../pdf/PDFContent';
-import IncomeStatementOnScreen from './IncomeStatementOnScreen';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import useProsERPStyles from '@/app/helpers/style-helpers';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { Div, Span } from '@jumbo/shared';
 import { useSnackbar } from 'notistack';
+import { useForm } from 'react-hook-form';
+import CostCenterSelector from '../../../masters/costCenters/CostCenterSelector';
+import pdfStyles from '../../../pdf/pdf-styles';
+import PDFContent from '../../../pdf/PDFContent';
+import PdfLogo from '../../../pdf/PdfLogo';
+import financialReportsServices from '../financial-reports-services';
+import IncomeStatementOnScreen from './IncomeStatementOnScreen';
+import IncomeStatementPDF from './IncomeStatementPDF';
 
-const ReportDocumet = ({reportData,authOrganization,user}) => {
-  const mainColor = authOrganization.organization.settings?.main_color || "#2113AD";
-  const totalRevenue = reportData ? reportData.incomes.reduce((total, income) => total + income.amount, 0) : 0;
-  const costOfRevenue = reportData ? reportData.directExpenses.reduce((total, expense) => total + expense.amount, 0) : 0;
-  const operationalExpenseTotal = reportData ? reportData.indirectExpenses.reduce((total, expense) => total + expense.amount, 0) : 0;
-  const reportPeriod = `${readableDate(reportData.filters.from,true)} - ${readableDate(reportData.filters.to,true)}`;
+const ReportDocumet = ({ reportData, authOrganization, user }) => {
+  const mainColor =
+    authOrganization.organization.settings?.main_color || '#2113AD';
+  const totalRevenue = reportData
+    ? reportData.incomes.reduce((total, income) => total + income.amount, 0)
+    : 0;
+  const costOfRevenue = reportData
+    ? reportData.directExpenses.reduce(
+        (total, expense) => total + expense.amount,
+        0
+      )
+    : 0;
+  const operationalExpenseTotal = reportData
+    ? reportData.indirectExpenses.reduce(
+        (total, expense) => total + expense.amount,
+        0
+      )
+    : 0;
+  const reportPeriod = `${readableDate(reportData.filters.from, true)} - ${readableDate(reportData.filters.to, true)}`;
   const costCenters = reportData.filters.cost_centers;
   const organization = authOrganization.organization;
-  
-  return reportData ?
-  (
-    <Document 
-      creator={` ${user.name} | Powered By ProsERP` }
+
+  return reportData ? (
+    <Document
+      creator={` ${user.name} | Powered By ProsERP`}
       producer='ProsERP'
       title={`Income Statement ${reportPeriod}`}
     >
-      <Page size="A4" style={pdfStyles.page}>
+      <Page size='A4' style={pdfStyles.page}>
         <View style={pdfStyles.table}>
           <View style={{ ...pdfStyles.tableRow, marginBottom: 20 }}>
-              <View style={{ flex: 1, maxWidth: (organization?.logo_path ? 130 : 250)}}>
-                  <PdfLogo organization={organization}/>
-              </View>
-              <View style={{ flex: 1, textAlign: 'right' }}>
-                  <Text style={{...pdfStyles.majorInfo, color: mainColor }}>{`Income Statement`}</Text>
-                  <Text style={{ ...pdfStyles.minInfo }}>{reportPeriod}</Text>
-              </View>
+            <View
+              style={{ flex: 1, maxWidth: organization?.logo_path ? 130 : 250 }}
+            >
+              <PdfLogo organization={organization} />
+            </View>
+            <View style={{ flex: 1, textAlign: 'right' }}>
+              <Text
+                style={{ ...pdfStyles.majorInfo, color: mainColor }}
+              >{`Income Statement`}</Text>
+              <Text style={{ ...pdfStyles.minInfo }}>{reportPeriod}</Text>
+            </View>
           </View>
         </View>
-        <View style={{ ...pdfStyles.tableRow, marginTop: 10, marginBottom: 10}}>
-            {
-                costCenters.length !== 0 &&
-                <View style={{ flex: 2, padding: 2}}>
-                    <Text style={{...pdfStyles.minInfo, color: mainColor }}>Cost Centers</Text>
-                    <Text style={{...pdfStyles.minInfo }}>{costCenters.map((cost_centers) => cost_centers.name).join(', ')}</Text>
-                </View>
-            }
-            <View style={{ flex: 1, padding: 2}}>
-                <Text style={{...pdfStyles.minInfo, color: mainColor }}>Printed By</Text>
-                <Text style={{...pdfStyles.minInfo }}>{user.name}</Text>
+        <View
+          style={{ ...pdfStyles.tableRow, marginTop: 10, marginBottom: 10 }}
+        >
+          {costCenters.length !== 0 && (
+            <View style={{ flex: 2, padding: 2 }}>
+              <Text style={{ ...pdfStyles.minInfo, color: mainColor }}>
+                Cost Centers
+              </Text>
+              <Text style={{ ...pdfStyles.minInfo }}>
+                {costCenters
+                  .map((cost_centers) => cost_centers.name)
+                  .join(', ')}
+              </Text>
             </View>
-            <View style={{ flex: 1, padding: 2}}>
-                <Text style={{...pdfStyles.minInfo, color: mainColor }}>Printed On</Text>
-                <Text style={{...pdfStyles.minInfo }}>{readableDate(undefined,true)}</Text>
-            </View>
+          )}
+          <View style={{ flex: 1, padding: 2 }}>
+            <Text style={{ ...pdfStyles.minInfo, color: mainColor }}>
+              Printed By
+            </Text>
+            <Text style={{ ...pdfStyles.minInfo }}>{user.name}</Text>
+          </View>
+          <View style={{ flex: 1, padding: 2 }}>
+            <Text style={{ ...pdfStyles.minInfo, color: mainColor }}>
+              Printed On
+            </Text>
+            <Text style={{ ...pdfStyles.minInfo }}>
+              {readableDate(undefined, true)}
+            </Text>
+          </View>
         </View>
         <View style={pdfStyles.table}>
-            <View style={pdfStyles.tableRow}>
-              <View style={{...pdfStyles.tableHeader, flex : 1}}>
-                  <Text style={pdfStyles.tableCell}>Revenue</Text>
-              </View>
+          <View style={pdfStyles.tableRow}>
+            <View style={{ ...pdfStyles.tableHeader, flex: 1 }}>
+              <Text style={pdfStyles.tableCell}>Revenue</Text>
             </View>
-            {
-              reportData.incomes.map((income, index) => (
-                income.amount !== 0 &&
-                <View  key={index} style={pdfStyles.tableRow}>
-                  <View style={{...pdfStyles.tableCell, flex : 2}}>
-                      <Text style={{ ...pdfStyles.tableCell,marginLeft: 10 }}>{income.ledger_name}</Text>
-                  </View>
-                  <View style={{...pdfStyles.tableCell, flex:1,textAlign : 'right' }}>
-                    <Text style={pdfStyles.tableCell}>{income.amount?.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
-                  </View>
-                </View>
-              ))
-            }
-            <View style={pdfStyles.tableRow}> 
-              <View style={{...pdfStyles.tableHeader, marginLeft: 5, backgroundColor: pdfStyles.shadedBG, flex : 2}}>
-                  <Text style={pdfStyles.tableCell}>Total Revenue</Text>
-              </View>
-              <View style={{...pdfStyles.tableHeader, backgroundColor: pdfStyles.shadedBG, flex:1,textAlign : 'right' }}>
-                <Text style={pdfStyles.tableCell}>{totalRevenue.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
-              </View>
-            </View>
-
-
-            <View style={{ ...pdfStyles.tableRow,marginLeft: 10 }}>
-              <View style={{...pdfStyles.tableHeader, flex : 1}}>
-                  <Text style={pdfStyles.tableCell}>Cost of Revenue</Text>
-              </View>
-            </View>
-            {
-              reportData.directExpenses.map((expense, index) => (
-                expense.amount !== 0 &&
-                <View  key={index} style={pdfStyles.tableRow}>
-                  <View style={{...pdfStyles.tableCell, flex : 2}}>
-                      <Text style={{ ...pdfStyles.tableCell,marginLeft: 15 }}>{expense.ledger_name}</Text>
-                  </View>
-                  <View style={{...pdfStyles.tableCell, flex:1,textAlign : 'right' }}>
-                    <Text style={pdfStyles.tableCell}>{expense.amount?.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
-                  </View>
-                </View>
-              ))
-            }
-            <View style={pdfStyles.tableRow}> 
-              <View style={{...pdfStyles.tableHeader, marginLeft: 5, backgroundColor: pdfStyles.shadedBG, flex : 2}}>
-                  <Text style={pdfStyles.tableCell}>Total Cost Of Revenue</Text>
-              </View>
-              <View style={{...pdfStyles.tableHeader, backgroundColor: pdfStyles.shadedBG, flex:1,textAlign : 'right' }}>
-                <Text style={pdfStyles.tableCell}>{costOfRevenue.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
-              </View>
-            </View>
-            <View style={pdfStyles.tableRow}>
-              <View style={{...pdfStyles.tableCell, marginLeft: 5, flex : 2}}>
-                  <Text style={pdfStyles.tableCell}>Gross Profit</Text>
-              </View>
-              <View style={{...pdfStyles.tableCell, flex:1,textAlign : 'right' }}>
-                <Text style={pdfStyles.tableCell}>{(totalRevenue - costOfRevenue).toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
-              </View>
-            </View>
-            <View style={{ ...pdfStyles.tableRow, marginTop: 15 }}>
-              <View style={{...pdfStyles.tableHeader, flex : 1}}>
-                  <Text style={pdfStyles.tableCell}>Operating Expenses</Text>
-              </View>
-            </View>
-            {
-              reportData.indirectExpenses.map((expense, index) => (
-                expense.amount !== 0 &&
+          </View>
+          {reportData.incomes.map(
+            (income, index) =>
+              income.amount !== 0 && (
                 <View key={index} style={pdfStyles.tableRow}>
-                  <View style={{...pdfStyles.tableCell, flex : 2}}>
-                      <Text style={{ ...pdfStyles.tableCell,marginLeft: 10 }}>{expense.ledger_name}</Text>
+                  <View style={{ ...pdfStyles.tableCell, flex: 2 }}>
+                    <Text style={{ ...pdfStyles.tableCell, marginLeft: 10 }}>
+                      {income.ledger_name}
+                    </Text>
                   </View>
-                  <View style={{...pdfStyles.tableCell, flex:1,textAlign : 'right' }}>
-                    <Text style={pdfStyles.tableCell}>{expense.amount?.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
+                  <View
+                    style={{
+                      ...pdfStyles.tableCell,
+                      flex: 1,
+                      textAlign: 'right',
+                    }}
+                  >
+                    <Text style={pdfStyles.tableCell}>
+                      {income.amount?.toLocaleString('en-US', {
+                        maximumFractionDigits: 2,
+                        minimumFractionDigits: 2,
+                      })}
+                    </Text>
                   </View>
-                </View>                        
-              ))
-            }
-            <View style={pdfStyles.tableRow}>
-              <View style={{...pdfStyles.tableCell,marginLeft: 10, backgroundColor: pdfStyles.shadedBG, flex : 2}}>
-                  <Text style={pdfStyles.tableCell}>Total Operating Expenses</Text>
-              </View>
-              <View style={{...pdfStyles.tableCell, backgroundColor: pdfStyles.shadedBG, flex:1,textAlign : 'right' }}>
-                <Text style={pdfStyles.tableCell}>{operationalExpenseTotal.toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
-              </View>
+                </View>
+              )
+          )}
+          <View style={pdfStyles.tableRow}>
+            <View
+              style={{
+                ...pdfStyles.tableHeader,
+                marginLeft: 5,
+                backgroundColor: pdfStyles.shadedBG,
+                flex: 2,
+              }}
+            >
+              <Text style={pdfStyles.tableCell}>Total Revenue</Text>
             </View>
-            <View style={{ ...pdfStyles.tableRow,marginTop: 15 }}>
-              <View style={{...pdfStyles.tableHeader, flex : 2}}>
-                  <Text style={pdfStyles.tableCell}>Net Income</Text>
-              </View>
-              <View style={{...pdfStyles.tableHeader, flex:1,textAlign : 'right' }}>
-                <Text style={pdfStyles.tableCell}>{(totalRevenue - costOfRevenue - operationalExpenseTotal).toLocaleString('en-US',{maximumFractionDigits:2,minimumFractionDigits:2})}</Text>
-              </View>
+            <View
+              style={{
+                ...pdfStyles.tableHeader,
+                backgroundColor: pdfStyles.shadedBG,
+                flex: 1,
+                textAlign: 'right',
+              }}
+            >
+              <Text style={pdfStyles.tableCell}>
+                {totalRevenue.toLocaleString('en-US', {
+                  maximumFractionDigits: 2,
+                  minimumFractionDigits: 2,
+                })}
+              </Text>
             </View>
+          </View>
+
+          <View style={{ ...pdfStyles.tableRow, marginLeft: 10 }}>
+            <View style={{ ...pdfStyles.tableHeader, flex: 1 }}>
+              <Text style={pdfStyles.tableCell}>Cost of Revenue</Text>
+            </View>
+          </View>
+          {reportData.directExpenses.map(
+            (expense, index) =>
+              expense.amount !== 0 && (
+                <View key={index} style={pdfStyles.tableRow}>
+                  <View style={{ ...pdfStyles.tableCell, flex: 2 }}>
+                    <Text style={{ ...pdfStyles.tableCell, marginLeft: 15 }}>
+                      {expense.ledger_name}
+                    </Text>
+                  </View>
+                  <View
+                    style={{
+                      ...pdfStyles.tableCell,
+                      flex: 1,
+                      textAlign: 'right',
+                    }}
+                  >
+                    <Text style={pdfStyles.tableCell}>
+                      {expense.amount?.toLocaleString('en-US', {
+                        maximumFractionDigits: 2,
+                        minimumFractionDigits: 2,
+                      })}
+                    </Text>
+                  </View>
+                </View>
+              )
+          )}
+          <View style={pdfStyles.tableRow}>
+            <View
+              style={{
+                ...pdfStyles.tableHeader,
+                marginLeft: 5,
+                backgroundColor: pdfStyles.shadedBG,
+                flex: 2,
+              }}
+            >
+              <Text style={pdfStyles.tableCell}>Total Cost Of Revenue</Text>
+            </View>
+            <View
+              style={{
+                ...pdfStyles.tableHeader,
+                backgroundColor: pdfStyles.shadedBG,
+                flex: 1,
+                textAlign: 'right',
+              }}
+            >
+              <Text style={pdfStyles.tableCell}>
+                {costOfRevenue.toLocaleString('en-US', {
+                  maximumFractionDigits: 2,
+                  minimumFractionDigits: 2,
+                })}
+              </Text>
+            </View>
+          </View>
+          <View style={pdfStyles.tableRow}>
+            <View style={{ ...pdfStyles.tableCell, marginLeft: 5, flex: 2 }}>
+              <Text style={pdfStyles.tableCell}>Gross Profit</Text>
+            </View>
+            <View
+              style={{ ...pdfStyles.tableCell, flex: 1, textAlign: 'right' }}
+            >
+              <Text style={pdfStyles.tableCell}>
+                {(totalRevenue - costOfRevenue).toLocaleString('en-US', {
+                  maximumFractionDigits: 2,
+                  minimumFractionDigits: 2,
+                })}
+              </Text>
+            </View>
+          </View>
+          <View style={{ ...pdfStyles.tableRow, marginTop: 15 }}>
+            <View style={{ ...pdfStyles.tableHeader, flex: 1 }}>
+              <Text style={pdfStyles.tableCell}>Operating Expenses</Text>
+            </View>
+          </View>
+          {reportData.indirectExpenses.map(
+            (expense, index) =>
+              expense.amount !== 0 && (
+                <View key={index} style={pdfStyles.tableRow}>
+                  <View style={{ ...pdfStyles.tableCell, flex: 2 }}>
+                    <Text style={{ ...pdfStyles.tableCell, marginLeft: 10 }}>
+                      {expense.ledger_name}
+                    </Text>
+                  </View>
+                  <View
+                    style={{
+                      ...pdfStyles.tableCell,
+                      flex: 1,
+                      textAlign: 'right',
+                    }}
+                  >
+                    <Text style={pdfStyles.tableCell}>
+                      {expense.amount?.toLocaleString('en-US', {
+                        maximumFractionDigits: 2,
+                        minimumFractionDigits: 2,
+                      })}
+                    </Text>
+                  </View>
+                </View>
+              )
+          )}
+          <View style={pdfStyles.tableRow}>
+            <View
+              style={{
+                ...pdfStyles.tableCell,
+                marginLeft: 10,
+                backgroundColor: pdfStyles.shadedBG,
+                flex: 2,
+              }}
+            >
+              <Text style={pdfStyles.tableCell}>Total Operating Expenses</Text>
+            </View>
+            <View
+              style={{
+                ...pdfStyles.tableCell,
+                backgroundColor: pdfStyles.shadedBG,
+                flex: 1,
+                textAlign: 'right',
+              }}
+            >
+              <Text style={pdfStyles.tableCell}>
+                {operationalExpenseTotal.toLocaleString('en-US', {
+                  maximumFractionDigits: 2,
+                  minimumFractionDigits: 2,
+                })}
+              </Text>
+            </View>
+          </View>
+          <View style={{ ...pdfStyles.tableRow, marginTop: 15 }}>
+            <View style={{ ...pdfStyles.tableHeader, flex: 2 }}>
+              <Text style={pdfStyles.tableCell}>Net Income</Text>
+            </View>
+            <View
+              style={{ ...pdfStyles.tableHeader, flex: 1, textAlign: 'right' }}
+            >
+              <Text style={pdfStyles.tableCell}>
+                {(
+                  totalRevenue -
+                  costOfRevenue -
+                  operationalExpenseTotal
+                ).toLocaleString('en-US', {
+                  maximumFractionDigits: 2,
+                  minimumFractionDigits: 2,
+                })}
+              </Text>
+            </View>
+          </View>
         </View>
       </Page>
     </Document>
-  ) : ''
-}
+  ) : (
+    ''
+  );
+};
 
-function IncomeStatement({from, to, cost_center_ids, aggregate_by}) {
+function IncomeStatement({ from, to, cost_center_ids, aggregate_by }) {
   document.title = 'Income Statement';
   const css = useProsERPStyles();
   const [today] = useState(dayjs());
-  const { authOrganization, authUser: {user} } = useJumboAuth();
+  const {
+    authOrganization,
+    authUser: { user },
+  } = useJumboAuth();
   const [displayAs, setDisplayAs] = useState('on screen');
   const [reportData, setReportData] = useState(null);
   const { enqueueSnackbar } = useSnackbar();
-  const [isDownloadingTemplate, setIsDownloadingTemplate] = React.useState(false);
-  const [uploadFieldsKey, setUploadFieldsKey] = useState(0)
+  const [isDownloadingTemplate, setIsDownloadingTemplate] =
+    React.useState(false);
+  const [uploadFieldsKey, setUploadFieldsKey] = useState(0);
 
   const validationSchema = yup.object({
-    from: yup.string().required('Start Date is required').typeError('Start Date is required'),
+    from: yup
+      .string()
+      .required('Start Date is required')
+      .typeError('Start Date is required'),
   });
 
-  const { setValue, watch, handleSubmit} = useForm({
+  const { setValue, watch, handleSubmit } = useForm({
     resolver: yupResolver(validationSchema),
     defaultValues: {
       from: dayjs(from).startOf('day').toISOString(),
       to: dayjs(to).toISOString(),
-      cost_center_ids: Array.isArray(cost_center_ids) ? cost_center_ids.map(id => id) : 'all',
+      cost_center_ids: Array.isArray(cost_center_ids)
+        ? cost_center_ids.map((id) => id)
+        : 'all',
       aggregate_by: aggregate_by || null,
     },
   });
-  
+
   const [isFetching, setisFetching] = useState(false);
 
   const downloadExcelTemplate = async () => {
     try {
       setIsDownloadingTemplate(true);
       setUploadFieldsKey((prevKey) => prevKey + 1);
-      
+
       // Get all current filter parameters
       const filters = {
         from: watch('from'),
         to: watch('to'),
         cost_center_ids: watch('cost_center_ids'),
-        aggregate_by: watch('aggregate_by')
+        aggregate_by: watch('aggregate_by'),
       };
 
       // Pass all filters to the service
-      const responseData = await financialReportsServices.downloadIcomeStatementExcel(filters);
-      
+      const responseData =
+        await financialReportsServices.downloadIcomeStatementExcel(filters);
+
       const blob = new Blob([responseData], {
         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       });
@@ -244,7 +399,8 @@ function IncomeStatement({from, to, cost_center_ids, aggregate_by}) {
   const retrieveReport = async (filters) => {
     setisFetching(true);
     const report = await financialReportsServices.incomeStatement(filters);
-    
+
+    console.log('report: ', report);
     setReportData(report);
     setisFetching(false);
   };
@@ -255,8 +411,10 @@ function IncomeStatement({from, to, cost_center_ids, aggregate_by}) {
       retrieveReport({
         from: from,
         to: to,
-        cost_center_ids : Array.isArray(cost_center_ids) ? cost_center_ids.map(id => id) : 'all',
-        aggregate_by: aggregate_by ?? null
+        cost_center_ids: Array.isArray(cost_center_ids)
+          ? cost_center_ids.map((id) => id)
+          : 'all',
+        aggregate_by: aggregate_by ?? null,
       });
     }
   }, [from, to, cost_center_ids, aggregate_by]);
@@ -267,34 +425,43 @@ function IncomeStatement({from, to, cost_center_ids, aggregate_by}) {
     <>
       <DialogTitle textAlign={'center'}>
         <Grid container>
-          <Grid size={{xs: 12}}>
-            <Typography variant="h3">Income Statement</Typography>
+          <Grid size={{ xs: 12 }}>
+            <Typography variant='h3'>Income Statement</Typography>
           </Grid>
         </Grid>
         <Span className={css.hiddenOnPrint}>
-          <form autoComplete="off" key={uploadFieldsKey} onSubmit={handleSubmit(retrieveReport)}>
+          <form
+            autoComplete='off'
+            key={uploadFieldsKey}
+            onSubmit={handleSubmit(retrieveReport)}
+          >
             <Grid
               container
               columnSpacing={1}
               rowSpacing={1}
-              alignItems="center"
-              justifyContent="center"
+              alignItems='center'
+              justifyContent='center'
             >
-              <Grid size={{xs: 12, md: 10, lg: 5}}>
+              <Grid size={{ xs: 12, md: 10, lg: 5 }}>
                 <CostCenterSelector
-                  label="Cost and Profit Centers"
+                  label='Cost and Profit Centers'
                   multiple={true}
                   allowSameType={true}
                   onChange={(cost_centers) => {
-                    setValue('cost_center_ids', cost_centers.map((cost_center) => cost_center.id));
+                    setValue(
+                      'cost_center_ids',
+                      cost_centers.map((cost_center) => cost_center.id)
+                    );
                   }}
                 />
               </Grid>
-              <Grid size={{xs: 12, md: 4, lg: 3.5}}>
+              <Grid size={{ xs: 12, md: 4, lg: 3.5 }}>
                 <Div sx={{ mt: 1, mb: 1 }}>
                   <DateTimePicker
-                    label="From (MM/DD/YYYY)"
-                    minDate={dayjs(authOrganization?.organization.recording_start_date)}
+                    label='From (MM/DD/YYYY)'
+                    minDate={dayjs(
+                      authOrganization?.organization.recording_start_date
+                    )}
                     defaultValue={from ? dayjs(from) : today.startOf('day')}
                     slotProps={{
                       textField: {
@@ -303,20 +470,26 @@ function IncomeStatement({from, to, cost_center_ids, aggregate_by}) {
                       },
                     }}
                     onChange={(newValue) => {
-                      setValue('from', newValue ? newValue.toISOString() : null, {
-                        shouldValidate: true,
-                        shouldDirty: true,
-                      });
+                      setValue(
+                        'from',
+                        newValue ? newValue.toISOString() : null,
+                        {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                        }
+                      );
                     }}
                   />
                 </Div>
               </Grid>
-              <Grid size={{xs: 12, md: 4, lg: 3.5}}>
+              <Grid size={{ xs: 12, md: 4, lg: 3.5 }}>
                 <Div sx={{ mt: 1, mb: 1 }}>
                   <DateTimePicker
-                    label="To (MM/DD/YYYY)"
+                    label='To (MM/DD/YYYY)'
                     defaultValue={to ? dayjs(to) : dayjs().endOf('day')}
-                    minDate={dayjs(authOrganization?.organization.recording_start_date)}
+                    minDate={dayjs(
+                      authOrganization?.organization.recording_start_date
+                    )}
                     slotProps={{
                       textField: {
                         size: 'small',
@@ -336,8 +509,8 @@ function IncomeStatement({from, to, cost_center_ids, aggregate_by}) {
                 <Div sx={{ mt: 1, mb: 1, display: 'flex' }}>
                   <TextField
                     select
-                    label="Aggregate By"
-                    size="small"
+                    label='Aggregate By'
+                    size='small'
                     value={watch('aggregate_by') ?? ''}
                     sx={{ width: { xs: '100%', md: 180 }, maxWidth: 180 }}
                     onChange={(e) => {
@@ -356,32 +529,45 @@ function IncomeStatement({from, to, cost_center_ids, aggregate_by}) {
                           from: fromDate,
                           to: toDate,
                           cost_center_ids: selectedCostCenters,
-                          aggregate_by: selectedAggregate === '' ? null : selectedAggregate,
+                          aggregate_by:
+                            selectedAggregate === '' ? null : selectedAggregate,
                         });
                       }
                     }}
                   >
-                    <MenuItem value="" disabled>Select period</MenuItem>
-                    <MenuItem value="day">Day</MenuItem>
-                    <MenuItem value="week">Week</MenuItem>
-                    <MenuItem value="month">Month</MenuItem>
-                    <MenuItem value="year">Year</MenuItem>
+                    <MenuItem value='' disabled>
+                      Select period
+                    </MenuItem>
+                    <MenuItem value='day'>Day</MenuItem>
+                    <MenuItem value='week'>Week</MenuItem>
+                    <MenuItem value='month'>Month</MenuItem>
+                    <MenuItem value='year'>Year</MenuItem>
                   </TextField>
                 </Div>
               </Grid>
-              <Grid size={{xs: 12, md: 2, lg: 8.5}} textAlign="right">
-                <Stack direction="row" spacing={0.5} justifyContent="flex-end" alignItems="center">
-                  <>                                
+              <Grid size={{ xs: 12, md: 2, lg: 8.5 }} textAlign='right'>
+                <Stack
+                  direction='row'
+                  spacing={0.5}
+                  justifyContent='flex-end'
+                  alignItems='center'
+                >
+                  <>
                     <LoadingButton
-                      size="small"
+                      size='small'
                       onClick={downloadExcelTemplate}
                       loading={isDownloadingTemplate}
-                      variant="contained"
-                      color="success"
+                      variant='contained'
+                      color='success'
                     >
                       Excel
                     </LoadingButton>
-                    <LoadingButton loading={isFetching} type='submit' size='small' variant='contained'>
+                    <LoadingButton
+                      loading={isFetching}
+                      type='submit'
+                      size='small'
+                      variant='contained'
+                    >
                       Filter
                     </LoadingButton>
                   </>
@@ -389,16 +575,24 @@ function IncomeStatement({from, to, cost_center_ids, aggregate_by}) {
               </Grid>
               <Grid size={12}>
                 <FormControl>
-                  <FormLabel id="display_as_radiobuttons">Display As</FormLabel>
+                  <FormLabel id='display_as_radiobuttons'>Display As</FormLabel>
                   <RadioGroup
                     row
-                    aria-labelledby="display_as_radiobuttons"
-                    name="row-radio-buttons-group"
+                    aria-labelledby='display_as_radiobuttons'
+                    name='row-radio-buttons-group'
                     value={displayAs}
                     onChange={(e) => setDisplayAs(e.target.value)}
                   >
-                    <FormControlLabel value="on screen" control={<Radio />} label="On Screen" />
-                    <FormControlLabel value="pdf" control={<Radio />} label="PDF" />
+                    <FormControlLabel
+                      value='on screen'
+                      control={<Radio />}
+                      label='On Screen'
+                    />
+                    <FormControlLabel
+                      value='pdf'
+                      control={<Radio />}
+                      label='PDF'
+                    />
                   </RadioGroup>
                 </FormControl>
               </Grid>
@@ -407,21 +601,28 @@ function IncomeStatement({from, to, cost_center_ids, aggregate_by}) {
         </Span>
       </DialogTitle>
       <DialogContent>
-          {isFetching ? (
-            <LinearProgress />
-          ) : (
-            reportData && (
-              (displayAs === 'pdf') ? (
-                <PDFContent
-                  document={<ReportDocumet reportData={reportData} authOrganization={authOrganization} user={user}/>}
-                  fileName={downloadFileName}
+        {isFetching ? (
+          <LinearProgress />
+        ) : (
+          reportData &&
+          (displayAs === 'pdf' ? (
+            <PDFContent
+              document={
+                <IncomeStatementPDF
+                  reportData={reportData}
+                  authOrganization={authOrganization}
+                  user={user}
                 />
-              ) : (displayAs === 'on screen') ? (
-                <IncomeStatementOnScreen reportData={reportData}/>
-              ) : ''
-            )
-          )}
-        </DialogContent>
+              }
+              fileName={downloadFileName}
+            />
+          ) : displayAs === 'on screen' ? (
+            <IncomeStatementOnScreen reportData={reportData} />
+          ) : (
+            ''
+          ))
+        )}
+      </DialogContent>
     </>
   );
 }
