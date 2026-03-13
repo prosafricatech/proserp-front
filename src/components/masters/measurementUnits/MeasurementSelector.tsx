@@ -81,7 +81,7 @@ const MeasurementSelector: React.FC<MeasurementSelectorProps> = (props) => {
           return (
             <Chip 
               {...restProps} 
-              key={`${option.id}-${key}`} 
+              key={`${option.id}-${String(key)}`} 
               label={option.name !== option.symbol ? `${option.name} (${option.symbol})` : option.name} 
             />
           );
@@ -91,7 +91,7 @@ const MeasurementSelector: React.FC<MeasurementSelectorProps> = (props) => {
       renderOption={(props, option, { selected }) => {
         const { key, ...restProps } = props;
         return (
-          <li {...restProps} key={`${option.id}-${key}`}>
+          <li {...restProps} key={`${option.id}-${String(key)}`}>
             {multiple && (
               <Checkbox
                 icon={<CheckBoxOutlineBlank fontSize="small" />}
