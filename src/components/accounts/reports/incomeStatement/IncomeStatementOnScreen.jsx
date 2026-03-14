@@ -179,14 +179,22 @@ const IncomeStatementOnScreen = ({ reportData }) => {
                                     <Box sx={{ fontWeight: 'bold' }}>{periodItem.period}</Box>
                                 </TableCell>
                             ))}
-                            <TableCell align="right" sx={{ fontWeight: 'bold', minWidth: 120 }}>TOTAL</TableCell>
+                            {periods.length > 1 && (
+                                <TableCell align="right" sx={{ fontWeight: 'bold', minWidth: 120 }}>TOTAL</TableCell>
+                            )}
                         </TableRow>
                     </TableHead>
                     <TableBody>
                         {/* Revenue Section */}
                         <TableRow 
                             onClick={() => toggleRow('revenue')} 
-                            sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}
+                            sx={{
+                                cursor: 'pointer',
+                                '&:hover': { bgcolor: 'action.hover' },
+                                ...(openRows.revenue && {
+                                    bgcolor: (theme) => theme.type === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)'
+                                })
+                            }}
                         >
                             <TableCell sx={categoryCellSx} style={{ fontWeight: hasRevenue && openRows.revenue ? 'bold' : 'normal' }}>
                                 <IconButton size="small">
@@ -211,9 +219,11 @@ const IncomeStatementOnScreen = ({ reportData }) => {
                                     </TableCell>
                                 );
                             })}
-                            <TableCell align="right" style={{ fontWeight: hasRevenue && openRows.revenue ? 'bold' : 'normal' }}>
-                                {totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </TableCell>
+                            {periods.length > 1 && (
+                                <TableCell align="right" style={{ fontWeight: hasRevenue && openRows.revenue ? 'bold' : 'normal' }}>
+                                    {totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </TableCell>
+                            )}
                         </TableRow>
 
                         {openRows.revenue && incomes.map((component, index) => (
@@ -233,45 +243,55 @@ const IncomeStatementOnScreen = ({ reportData }) => {
                                     return (
                                         <TableCell key={`revenue-ledger-${index}-${periodItem.period}`} align="right">
                                             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 0.5 }}>
-                                                <Tooltip title={<span style={{ whiteSpace: 'pre-line' }}>{amountTooltipTitle}</span>} placement="top" arrow>
-                                                    <span style={{ cursor: 'default' }}>
+                                                <Tooltip
+                                                    title={
+                                                        <span style={{ whiteSpace: 'pre-line' }}>
+                                                            {amountTooltipTitle}
+                                                            {amountItem ? '\nClick to view statement' : ''}
+                                                        </span>
+                                                    }
+                                                    placement="top"
+                                                    arrow
+                                                >
+                                                    <span
+                                                        style={{ cursor: amountItem ? 'pointer' : 'default' }}
+                                                        onClick={amountItem ? (e) => {
+                                                            e.stopPropagation();
+                                                            handleViewLedger(
+                                                                component.ledger_id,
+                                                                component.ledger_name,
+                                                                component.increasesWith,
+                                                                amountItem?.start_datetime,
+                                                                amountItem?.end_datetime,
+                                                            );
+                                                        } : undefined}
+                                                    >
                                                         {getAmountByPeriod(component, periodItem.period).toLocaleString('en-US', {
                                                             minimumFractionDigits: 2,
                                                             maximumFractionDigits: 2,
                                                         })}
                                                     </span>
                                                 </Tooltip>
-                                                {amountItem && (
-                                                    <Tooltip title={`${component.ledger_name} Statement - ${periodItem.period}`} placement="top" arrow>
-                                                        <IconButton
-                                                            size="small"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                handleViewLedger(
-                                                                    component.ledger_id,
-                                                                    component.ledger_name,
-                                                                    component.increasesWith,
-                                                                    amountItem?.start_datetime,
-                                                                    amountItem?.end_datetime,
-                                                                );
-                                                            }}
-                                                        >
-                                                            <VisibilityOutlined fontSize="small" />
-                                                        </IconButton>
-                                                    </Tooltip>
-                                                )}
                                             </Box>
                                         </TableCell>
                                     );
                                 })}
-                                <TableCell align="right">{getLedgerTotal(component).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                                {periods.length > 1 && (
+                                    <TableCell align="right">{getLedgerTotal(component).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                                )}
                             </TableRow>
                         ))}
 
                         {/* Cost of Revenue Section */}
                         <TableRow 
                             onClick={() => toggleRow('costOfRevenue')} 
-                            sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}
+                            sx={{
+                                cursor: 'pointer',
+                                '&:hover': { bgcolor: 'action.hover' },
+                                ...(openRows.costOfRevenue && {
+                                    bgcolor: (theme) => theme.type === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)'
+                                })
+                            }}
                         >
                             <TableCell sx={categoryCellSx} style={{ fontWeight: hasCostOfRevenue && openRows.costOfRevenue ? 'bold' : 'normal' }}>
                                 <IconButton size="small">
@@ -296,9 +316,11 @@ const IncomeStatementOnScreen = ({ reportData }) => {
                                     </TableCell>
                                 );
                             })}
-                            <TableCell align="right" style={{ fontWeight: hasCostOfRevenue && openRows.costOfRevenue ? 'bold' : 'normal' }}>
-                                {totalCostOfRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </TableCell>
+                            {periods.length > 1 && (
+                                <TableCell align="right" style={{ fontWeight: hasCostOfRevenue && openRows.costOfRevenue ? 'bold' : 'normal' }}>
+                                    {totalCostOfRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </TableCell>
+                            )}
                         </TableRow>
 
                         {openRows.costOfRevenue && directExpenses.map((component, index) => (
@@ -318,38 +340,42 @@ const IncomeStatementOnScreen = ({ reportData }) => {
                                     return (
                                         <TableCell key={`cost-ledger-${index}-${periodItem.period}`} align="right">
                                             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 0.5 }}>
-                                                <Tooltip title={<span style={{ whiteSpace: 'pre-line' }}>{amountTooltipTitle}</span>} placement="top" arrow>
-                                                    <span style={{ cursor: 'default' }}>
+                                                <Tooltip
+                                                    title={
+                                                        <span style={{ whiteSpace: 'pre-line' }}>
+                                                            {amountTooltipTitle}
+                                                            {amountItem ? '\nClick to view statement' : ''}
+                                                        </span>
+                                                    }
+                                                    placement="top"
+                                                    arrow
+                                                >
+                                                    <span
+                                                        style={{ cursor: amountItem ? 'pointer' : 'default' }}
+                                                        onClick={amountItem ? (e) => {
+                                                            e.stopPropagation();
+                                                            handleViewLedger(
+                                                                component.ledger_id,
+                                                                component.ledger_name,
+                                                                component.increasesWith,
+                                                                amountItem?.start_datetime,
+                                                                amountItem?.end_datetime,
+                                                            );
+                                                        } : undefined}
+                                                    >
                                                         {getAmountByPeriod(component, periodItem.period).toLocaleString('en-US', {
                                                             minimumFractionDigits: 2,
                                                             maximumFractionDigits: 2,
                                                         })}
                                                     </span>
                                                 </Tooltip>
-                                                {amountItem && (
-                                                    <Tooltip title={`${component.ledger_name} Statement - ${periodItem.period}`} placement="top" arrow>
-                                                        <IconButton
-                                                            size="small"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                handleViewLedger(
-                                                                    component.ledger_id,
-                                                                    component.ledger_name,
-                                                                    component.increasesWith,
-                                                                    amountItem?.start_datetime,
-                                                                    amountItem?.end_datetime,
-                                                                );
-                                                            }}
-                                                        >
-                                                            <VisibilityOutlined fontSize="small" />
-                                                        </IconButton>
-                                                    </Tooltip>
-                                                )}
                                             </Box>
                                         </TableCell>
                                     );
                                 })}
-                                <TableCell align="right">{getLedgerTotal(component).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                                {periods.length > 1 && (
+                                    <TableCell align="right">{getLedgerTotal(component).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                                )}
                             </TableRow>
                         ))}
 
@@ -373,15 +399,23 @@ const IncomeStatementOnScreen = ({ reportData }) => {
                                     </TableCell>
                                 );
                             })}
-                            <TableCell align="right">
-                                {(totalRevenue - totalCostOfRevenue).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </TableCell>
+                            {periods.length > 1 && (
+                                <TableCell align="right">
+                                    {(totalRevenue - totalCostOfRevenue).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </TableCell>
+                            )}
                         </TableRow>
 
                         {/* Operating Expenses Section */}
                         <TableRow 
                             onClick={() => toggleRow('operatingExpenses')} 
-                            sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }}
+                            sx={{
+                                cursor: 'pointer',
+                                '&:hover': { bgcolor: 'action.hover' },
+                                ...(openRows.operatingExpenses && {
+                                    bgcolor: (theme) => theme.type === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)'
+                                })
+                            }}
                         >
                             <TableCell sx={categoryCellSx} style={{ fontWeight: hasOperatingExpenses && openRows.operatingExpenses ? 'bold' : 'normal' }}>
                                 <IconButton size="small">
@@ -404,9 +438,11 @@ const IncomeStatementOnScreen = ({ reportData }) => {
                                     </TableCell>
                                 );
                             })}
-                            <TableCell align="right" style={{ fontWeight: hasOperatingExpenses && openRows.operatingExpenses ? 'bold' : 'normal' }}>
-                                {totalOperatingExpenses.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </TableCell>
+                            {periods.length > 1 && (
+                                <TableCell align="right" style={{ fontWeight: hasOperatingExpenses && openRows.operatingExpenses ? 'bold' : 'normal' }}>
+                                    {totalOperatingExpenses.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </TableCell>
+                            )}
                         </TableRow>
 
                         {openRows.operatingExpenses && indirectExpenses.map((component, index) => (
@@ -426,38 +462,42 @@ const IncomeStatementOnScreen = ({ reportData }) => {
                                     return (
                                         <TableCell key={`expense-ledger-${index}-${periodItem.period}`} align="right">
                                             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 0.5 }}>
-                                                <Tooltip title={<span style={{ whiteSpace: 'pre-line' }}>{amountTooltipTitle}</span>} placement="top" arrow>
-                                                    <span style={{ cursor: 'default' }}>
+                                                <Tooltip
+                                                    title={
+                                                        <span style={{ whiteSpace: 'pre-line' }}>
+                                                            {amountTooltipTitle}
+                                                            {amountItem ? '\nClick to view statement' : ''}
+                                                        </span>
+                                                    }
+                                                    placement="top"
+                                                    arrow
+                                                >
+                                                    <span
+                                                        style={{ cursor: amountItem ? 'pointer' : 'default' }}
+                                                        onClick={amountItem ? (e) => {
+                                                            e.stopPropagation();
+                                                            handleViewLedger(
+                                                                component.ledger_id,
+                                                                component.ledger_name,
+                                                                component.increasesWith,
+                                                                amountItem?.start_datetime,
+                                                                amountItem?.end_datetime,
+                                                            );
+                                                        } : undefined}
+                                                    >
                                                         {getAmountByPeriod(component, periodItem.period).toLocaleString('en-US', {
                                                             minimumFractionDigits: 2,
                                                             maximumFractionDigits: 2,
                                                         })}
                                                     </span>
                                                 </Tooltip>
-                                                {amountItem && (
-                                                    <Tooltip title={`${component.ledger_name} Statement - ${periodItem.period}`} placement="top" arrow>
-                                                        <IconButton
-                                                            size="small"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                handleViewLedger(
-                                                                    component.ledger_id,
-                                                                    component.ledger_name,
-                                                                    component.increasesWith,
-                                                                    amountItem?.start_datetime,
-                                                                    amountItem?.end_datetime,
-                                                                );
-                                                            }}
-                                                        >
-                                                            <VisibilityOutlined fontSize="small" />
-                                                        </IconButton>
-                                                    </Tooltip>
-                                                )}
                                             </Box>
                                         </TableCell>
                                     );
                                 })}
-                                <TableCell align="right">{getLedgerTotal(component).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                                {periods.length > 1 && (
+                                    <TableCell align="right">{getLedgerTotal(component).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                                )}
                             </TableRow>
                         ))}
 
@@ -485,9 +525,11 @@ const IncomeStatementOnScreen = ({ reportData }) => {
                                     </TableCell>
                                 );
                             })}
-                            <TableCell align="right">
-                                {(totalRevenue - totalCostOfRevenue - totalOperatingExpenses).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </TableCell>
+                            {periods.length > 1 && (
+                                <TableCell align="right">
+                                    {(totalRevenue - totalCostOfRevenue - totalOperatingExpenses).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </TableCell>
+                            )}
                         </TableRow>
                     </TableBody>
                 </Table>
