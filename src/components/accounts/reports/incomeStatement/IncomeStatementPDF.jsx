@@ -199,51 +199,11 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
               style={{
                 ...pdfStyles.tableHeader,
                 backgroundColor: pdfStyles.shadedBG,
-                width: colWidth,
+                width: '100%',
               }}
             >
-              <Text style={pdfStyles.tableCell}>Revenue</Text>
+              <Text style={pdfStyles.tableCell}>Revenues</Text>
             </View>
-            {mergedPeriods.map((group, index) => (
-              <View
-                key={index}
-                style={{
-                  ...pdfStyles.tableHeader,
-                  backgroundColor: pdfStyles.shadedBG,
-                  width: colWidth,
-                }}
-              >
-                <Text style={{ ...pdfStyles.tableCell, textAlign: 'right' }}>
-                  {group
-                    .reduce(
-                      (sum, p) =>
-                        sum + getSectionPeriodTotal(incomes, p.period),
-                      0
-                    )
-                    .toLocaleString('en-US', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                </Text>
-              </View>
-            ))}
-            {mergedPeriods.length > 1 && (
-              <View
-                style={{
-                  ...pdfStyles.tableHeader,
-                  backgroundColor: pdfStyles.shadedBG,
-                  width: colWidth,
-                  textAlign: 'right',
-                }}
-              >
-                <Text style={pdfStyles.tableCell}>
-                  {totalRevenue.toLocaleString('en-US', {
-                    maximumFractionDigits: 2,
-                    minimumFractionDigits: 2,
-                  })}
-                </Text>
-              </View>
-            )}
           </View>
           {incomes.map((income, index) => (
             <View
@@ -252,7 +212,13 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
                 ...pdfStyles.tableRow,
               }}
             >
-              <View style={{ ...pdfStyles.tableCell, width: colWidth }}>
+              <View
+                style={{
+                  ...pdfStyles.tableCell,
+                  width: colWidth,
+                  paddingLeft: 12,
+                }}
+              >
                 <Text>{income.ledger_name}</Text>
               </View>
 
@@ -296,26 +262,25 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
               )}
             </View>
           ))}
-
-          {/* ===== COST OF REVENUE ===== */}
-          <View style={{ ...pdfStyles.tableRow, marginTop: 2 }}>
+          <View style={{ ...pdfStyles.tableRow }}>
             <View
               style={{
-                ...pdfStyles.tableHeader,
-                marginLeft: 2,
-                backgroundColor: pdfStyles.shadedBG,
+                ...pdfStyles.tableCell,
+                // backgroundColor: pdfStyles.shadedBG,
+                fontWeight: 'bold',
                 width: colWidth,
+                paddingLeft: 12,
               }}
             >
-              <Text style={pdfStyles.tableCell}>Cost Of Revenue</Text>
+              <Text style={pdfStyles.tableCell}>Totals</Text>
             </View>
             {mergedPeriods.map((group, index) => (
               <View
                 key={index}
                 style={{
-                  ...pdfStyles.tableHeader,
-                  marginLeft: 2,
-                  backgroundColor: pdfStyles.shadedBG,
+                  ...pdfStyles.tableCell,
+                  // backgroundColor: pdfStyles.shadedBG,
+                  fontWeight: 'bold',
                   width: colWidth,
                 }}
               >
@@ -323,7 +288,7 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
                   {group
                     .reduce(
                       (sum, p) =>
-                        sum + getSectionPeriodTotal(directExpenses, p.period),
+                        sum + getSectionPeriodTotal(incomes, p.period),
                       0
                     )
                     .toLocaleString('en-US', {
@@ -336,20 +301,35 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
             {mergedPeriods.length > 1 && (
               <View
                 style={{
-                  ...pdfStyles.tableHeader,
-                  backgroundColor: pdfStyles.shadedBG,
+                  ...pdfStyles.tableCell,
+                  // backgroundColor: pdfStyles.shadedBG,
+                  fontWeight: 'bold',
                   width: colWidth,
                   textAlign: 'right',
                 }}
               >
                 <Text style={pdfStyles.tableCell}>
-                  {totalCostOfRevenue.toLocaleString('en-US', {
+                  {totalRevenue.toLocaleString('en-US', {
                     maximumFractionDigits: 2,
                     minimumFractionDigits: 2,
                   })}
                 </Text>
               </View>
             )}
+          </View>
+
+          {/* ===== COST OF REVENUE ===== */}
+          <View style={{ ...pdfStyles.tableRow, marginTop: 2 }}>
+            <View
+              style={{
+                ...pdfStyles.tableHeader,
+                marginLeft: 2,
+                backgroundColor: pdfStyles.shadedBG,
+                width: '100%',
+              }}
+            >
+              <Text style={pdfStyles.tableCell}>Cost Of Revenue</Text>
+            </View>
           </View>
           {directExpenses.map((exp, index) => (
             <View
@@ -358,7 +338,13 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
                 ...pdfStyles.tableRow,
               }}
             >
-              <View style={{ ...pdfStyles.tableCell, width: colWidth }}>
+              <View
+                style={{
+                  ...pdfStyles.tableCell,
+                  width: colWidth,
+                  paddingLeft: 12,
+                }}
+              >
                 <Text>{exp.ledger_name}</Text>
               </View>
 
@@ -402,6 +388,63 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
               )}
             </View>
           ))}
+          <View style={{ ...pdfStyles.tableRow, marginTop: 2 }}>
+            <View
+              style={{
+                ...pdfStyles.tableCell,
+                marginLeft: 2,
+                // backgroundColor: pdfStyles.shadedBG,
+                fontWeight: 'bold',
+                width: colWidth,
+                paddingLeft: 12,
+              }}
+            >
+              <Text style={pdfStyles.tableCell}>Totals</Text>
+            </View>
+            {mergedPeriods.map((group, index) => (
+              <View
+                key={index}
+                style={{
+                  ...pdfStyles.tableCell,
+                  marginLeft: 2,
+                  // backgroundColor: pdfStyles.shadedBG,
+                  fontWeight: 'bold',
+                  width: colWidth,
+                }}
+              >
+                <Text style={{ ...pdfStyles.tableCell, textAlign: 'right' }}>
+                  {group
+                    .reduce(
+                      (sum, p) =>
+                        sum + getSectionPeriodTotal(directExpenses, p.period),
+                      0
+                    )
+                    .toLocaleString('en-US', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                </Text>
+              </View>
+            ))}
+            {mergedPeriods.length > 1 && (
+              <View
+                style={{
+                  ...pdfStyles.tableCell,
+                  // backgroundColor: pdfStyles.shadedBG,
+                  fontWeight: 'bold',
+                  width: colWidth,
+                  textAlign: 'right',
+                }}
+              >
+                <Text style={pdfStyles.tableCell}>
+                  {totalCostOfRevenue.toLocaleString('en-US', {
+                    maximumFractionDigits: 2,
+                    minimumFractionDigits: 2,
+                  })}
+                </Text>
+              </View>
+            )}
+          </View>
 
           {/* ===== GROSS PROFIT ===== */}
           <View style={{ ...pdfStyles.tableRow, marginTop: 2 }}>
@@ -469,52 +512,11 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
                 ...pdfStyles.tableHeader,
                 marginLeft: 2,
                 backgroundColor: pdfStyles.shadedBG,
-                width: colWidth,
+                width: '100%',
               }}
             >
               <Text style={pdfStyles.tableCell}>Operating Expenses</Text>
             </View>
-            {mergedPeriods.map((group, index) => (
-              <View
-                key={index}
-                style={{
-                  ...pdfStyles.tableHeader,
-                  marginLeft: 2,
-                  backgroundColor: pdfStyles.shadedBG,
-                  width: colWidth,
-                }}
-              >
-                <Text style={{ ...pdfStyles.tableCell, textAlign: 'right' }}>
-                  {group
-                    .reduce(
-                      (sum, p) =>
-                        sum + getSectionPeriodTotal(indirectExpenses, p.period),
-                      0
-                    )
-                    .toLocaleString('en-US', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                </Text>
-              </View>
-            ))}
-            {mergedPeriods.length > 1 && (
-              <View
-                style={{
-                  ...pdfStyles.tableHeader,
-                  backgroundColor: pdfStyles.shadedBG,
-                  width: colWidth,
-                  textAlign: 'right',
-                }}
-              >
-                <Text style={pdfStyles.tableCell}>
-                  {totalOperatingExpenses.toLocaleString('en-US', {
-                    maximumFractionDigits: 2,
-                    minimumFractionDigits: 2,
-                  })}
-                </Text>
-              </View>
-            )}
           </View>
           {indirectExpenses.map((exp, index) => (
             <View
@@ -523,11 +525,17 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
                 ...pdfStyles.tableRow,
               }}
             >
-              <View style={{ ...pdfStyles.tableCell, width: colWidth }}>
+              <View
+                style={{
+                  ...pdfStyles.tableCell,
+                  width: colWidth,
+                  paddingLeft: 12,
+                }}
+              >
                 <Text>{exp.ledger_name}</Text>
               </View>
 
-              {periods.map((period, i) => {
+              {mergedPeriods.map((group, i) => {
                 return (
                   <View
                     key={i}
@@ -538,7 +546,7 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
                     }}
                   >
                     <Text>
-                      {getAmountByPeriod(exp, period.period).toLocaleString(
+                      {getAmountByPeriodGroup(exp, group).toLocaleString(
                         'en-US',
                         {
                           minimumFractionDigits: 2,
@@ -567,6 +575,63 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
               )}
             </View>
           ))}
+          <View style={{ ...pdfStyles.tableRow, marginTop: 2 }}>
+            <View
+              style={{
+                ...pdfStyles.tableCell,
+                marginLeft: 2,
+                // backgroundColor: pdfStyles.shadedBG,
+                fontWeight: 'bold',
+                width: colWidth,
+                paddingLeft: 12,
+              }}
+            >
+              <Text style={pdfStyles.tableCell}>Totals</Text>
+            </View>
+            {mergedPeriods.map((group, index) => (
+              <View
+                key={index}
+                style={{
+                  ...pdfStyles.tableCell,
+                  marginLeft: 2,
+                  // backgroundColor: pdfStyles.shadedBG,
+                  fontWeight: 'bold',
+                  width: colWidth,
+                }}
+              >
+                <Text style={{ ...pdfStyles.tableCell, textAlign: 'right' }}>
+                  {group
+                    .reduce(
+                      (sum, p) =>
+                        sum + getSectionPeriodTotal(indirectExpenses, p.period),
+                      0
+                    )
+                    .toLocaleString('en-US', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                </Text>
+              </View>
+            ))}
+            {mergedPeriods.length > 1 && (
+              <View
+                style={{
+                  ...pdfStyles.tableCell,
+                  // backgroundColor: pdfStyles.shadedBG,
+                  fontWeight: 'bold',
+                  width: colWidth,
+                  textAlign: 'right',
+                }}
+              >
+                <Text style={pdfStyles.tableCell}>
+                  {totalOperatingExpenses.toLocaleString('en-US', {
+                    maximumFractionDigits: 2,
+                    minimumFractionDigits: 2,
+                  })}
+                </Text>
+              </View>
+            )}
+          </View>
 
           {/* ===== NET INCOME ===== */}
           <View style={{ ...pdfStyles.tableRow, marginTop: 2 }}>
