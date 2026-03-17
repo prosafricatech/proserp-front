@@ -1,3 +1,4 @@
+'use client';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { LoadingButton } from '@mui/lab';
 import {
@@ -16,316 +17,20 @@ import {
   Typography,
 } from '@mui/material';
 import { DateTimePicker } from '@mui/x-date-pickers';
-import { Document, Page, Text, View } from '@react-pdf/renderer';
 import dayjs from 'dayjs';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import * as yup from 'yup';
 
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import useProsERPStyles from '@/app/helpers/style-helpers';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { Div, Span } from '@jumbo/shared';
-import { useSnackbar } from 'notistack';
 import { useForm } from 'react-hook-form';
 import CostCenterSelector from '../../../masters/costCenters/CostCenterSelector';
-import pdfStyles from '../../../pdf/pdf-styles';
 import PDFContent from '../../../pdf/PDFContent';
-import PdfLogo from '../../../pdf/PdfLogo';
 import financialReportsServices from '../financial-reports-services';
 import IncomeStatementOnScreen from './IncomeStatementOnScreen';
 import IncomeStatementPDF from './IncomeStatementPDF';
-
-const ReportDocumet = ({ reportData, authOrganization, user }) => {
-  const mainColor =
-    authOrganization.organization.settings?.main_color || '#2113AD';
-  const totalRevenue = reportData
-    ? reportData.incomes.reduce((total, income) => total + income.amount, 0)
-    : 0;
-  const costOfRevenue = reportData
-    ? reportData.directExpenses.reduce(
-        (total, expense) => total + expense.amount,
-        0
-      )
-    : 0;
-  const operationalExpenseTotal = reportData
-    ? reportData.indirectExpenses.reduce(
-        (total, expense) => total + expense.amount,
-        0
-      )
-    : 0;
-  const reportPeriod = `${readableDate(reportData.filters.from, true)} - ${readableDate(reportData.filters.to, true)}`;
-  const costCenters = reportData.filters.cost_centers;
-  const organization = authOrganization.organization;
-
-  return reportData ? (
-    <Document
-      creator={` ${user.name} | Powered By ProsERP`}
-      producer='ProsERP'
-      title={`Income Statement ${reportPeriod}`}
-    >
-      <Page size='A4' style={pdfStyles.page}>
-        <View style={pdfStyles.table}>
-          <View style={{ ...pdfStyles.tableRow, marginBottom: 20 }}>
-            <View
-              style={{ flex: 1, maxWidth: organization?.logo_path ? 130 : 250 }}
-            >
-              <PdfLogo organization={organization} />
-            </View>
-            <View style={{ flex: 1, textAlign: 'right' }}>
-              <Text
-                style={{ ...pdfStyles.majorInfo, color: mainColor }}
-              >{`Income Statement`}</Text>
-              <Text style={{ ...pdfStyles.minInfo }}>{reportPeriod}</Text>
-            </View>
-          </View>
-        </View>
-        <View
-          style={{ ...pdfStyles.tableRow, marginTop: 10, marginBottom: 10 }}
-        >
-          {costCenters.length !== 0 && (
-            <View style={{ flex: 2, padding: 2 }}>
-              <Text style={{ ...pdfStyles.minInfo, color: mainColor }}>
-                Cost Centers
-              </Text>
-              <Text style={{ ...pdfStyles.minInfo }}>
-                {costCenters
-                  .map((cost_centers) => cost_centers.name)
-                  .join(', ')}
-              </Text>
-            </View>
-          )}
-          <View style={{ flex: 1, padding: 2 }}>
-            <Text style={{ ...pdfStyles.minInfo, color: mainColor }}>
-              Printed By
-            </Text>
-            <Text style={{ ...pdfStyles.minInfo }}>{user.name}</Text>
-          </View>
-          <View style={{ flex: 1, padding: 2 }}>
-            <Text style={{ ...pdfStyles.minInfo, color: mainColor }}>
-              Printed On
-            </Text>
-            <Text style={{ ...pdfStyles.minInfo }}>
-              {readableDate(undefined, true)}
-            </Text>
-          </View>
-        </View>
-        <View style={pdfStyles.table}>
-          <View style={pdfStyles.tableRow}>
-            <View style={{ ...pdfStyles.tableHeader, flex: 1 }}>
-              <Text style={pdfStyles.tableCell}>Revenue</Text>
-            </View>
-          </View>
-          {reportData.incomes.map(
-            (income, index) =>
-              income.amount !== 0 && (
-                <View key={index} style={pdfStyles.tableRow}>
-                  <View style={{ ...pdfStyles.tableCell, flex: 2 }}>
-                    <Text style={{ ...pdfStyles.tableCell, marginLeft: 10 }}>
-                      {income.ledger_name}
-                    </Text>
-                  </View>
-                  <View
-                    style={{
-                      ...pdfStyles.tableCell,
-                      flex: 1,
-                      textAlign: 'right',
-                    }}
-                  >
-                    <Text style={pdfStyles.tableCell}>
-                      {income.amount?.toLocaleString('en-US', {
-                        maximumFractionDigits: 2,
-                        minimumFractionDigits: 2,
-                      })}
-                    </Text>
-                  </View>
-                </View>
-              )
-          )}
-          <View style={pdfStyles.tableRow}>
-            <View
-              style={{
-                ...pdfStyles.tableHeader,
-                marginLeft: 5,
-                backgroundColor: pdfStyles.shadedBG,
-                flex: 2,
-              }}
-            >
-              <Text style={pdfStyles.tableCell}>Total Revenue</Text>
-            </View>
-            <View
-              style={{
-                ...pdfStyles.tableHeader,
-                backgroundColor: pdfStyles.shadedBG,
-                flex: 1,
-                textAlign: 'right',
-              }}
-            >
-              <Text style={pdfStyles.tableCell}>
-                {totalRevenue.toLocaleString('en-US', {
-                  maximumFractionDigits: 2,
-                  minimumFractionDigits: 2,
-                })}
-              </Text>
-            </View>
-          </View>
-
-          <View style={{ ...pdfStyles.tableRow, marginLeft: 10 }}>
-            <View style={{ ...pdfStyles.tableHeader, flex: 1 }}>
-              <Text style={pdfStyles.tableCell}>Cost of Revenue</Text>
-            </View>
-          </View>
-          {reportData.directExpenses.map(
-            (expense, index) =>
-              expense.amount !== 0 && (
-                <View key={index} style={pdfStyles.tableRow}>
-                  <View style={{ ...pdfStyles.tableCell, flex: 2 }}>
-                    <Text style={{ ...pdfStyles.tableCell, marginLeft: 15 }}>
-                      {expense.ledger_name}
-                    </Text>
-                  </View>
-                  <View
-                    style={{
-                      ...pdfStyles.tableCell,
-                      flex: 1,
-                      textAlign: 'right',
-                    }}
-                  >
-                    <Text style={pdfStyles.tableCell}>
-                      {expense.amount?.toLocaleString('en-US', {
-                        maximumFractionDigits: 2,
-                        minimumFractionDigits: 2,
-                      })}
-                    </Text>
-                  </View>
-                </View>
-              )
-          )}
-          <View style={pdfStyles.tableRow}>
-            <View
-              style={{
-                ...pdfStyles.tableHeader,
-                marginLeft: 5,
-                backgroundColor: pdfStyles.shadedBG,
-                flex: 2,
-              }}
-            >
-              <Text style={pdfStyles.tableCell}>Total Cost Of Revenue</Text>
-            </View>
-            <View
-              style={{
-                ...pdfStyles.tableHeader,
-                backgroundColor: pdfStyles.shadedBG,
-                flex: 1,
-                textAlign: 'right',
-              }}
-            >
-              <Text style={pdfStyles.tableCell}>
-                {costOfRevenue.toLocaleString('en-US', {
-                  maximumFractionDigits: 2,
-                  minimumFractionDigits: 2,
-                })}
-              </Text>
-            </View>
-          </View>
-          <View style={pdfStyles.tableRow}>
-            <View style={{ ...pdfStyles.tableCell, marginLeft: 5, flex: 2 }}>
-              <Text style={pdfStyles.tableCell}>Gross Profit</Text>
-            </View>
-            <View
-              style={{ ...pdfStyles.tableCell, flex: 1, textAlign: 'right' }}
-            >
-              <Text style={pdfStyles.tableCell}>
-                {(totalRevenue - costOfRevenue).toLocaleString('en-US', {
-                  maximumFractionDigits: 2,
-                  minimumFractionDigits: 2,
-                })}
-              </Text>
-            </View>
-          </View>
-          <View style={{ ...pdfStyles.tableRow, marginTop: 15 }}>
-            <View style={{ ...pdfStyles.tableHeader, flex: 1 }}>
-              <Text style={pdfStyles.tableCell}>Operating Expenses</Text>
-            </View>
-          </View>
-          {reportData.indirectExpenses.map(
-            (expense, index) =>
-              expense.amount !== 0 && (
-                <View key={index} style={pdfStyles.tableRow}>
-                  <View style={{ ...pdfStyles.tableCell, flex: 2 }}>
-                    <Text style={{ ...pdfStyles.tableCell, marginLeft: 10 }}>
-                      {expense.ledger_name}
-                    </Text>
-                  </View>
-                  <View
-                    style={{
-                      ...pdfStyles.tableCell,
-                      flex: 1,
-                      textAlign: 'right',
-                    }}
-                  >
-                    <Text style={pdfStyles.tableCell}>
-                      {expense.amount?.toLocaleString('en-US', {
-                        maximumFractionDigits: 2,
-                        minimumFractionDigits: 2,
-                      })}
-                    </Text>
-                  </View>
-                </View>
-              )
-          )}
-          <View style={pdfStyles.tableRow}>
-            <View
-              style={{
-                ...pdfStyles.tableCell,
-                marginLeft: 10,
-                backgroundColor: pdfStyles.shadedBG,
-                flex: 2,
-              }}
-            >
-              <Text style={pdfStyles.tableCell}>Total Operating Expenses</Text>
-            </View>
-            <View
-              style={{
-                ...pdfStyles.tableCell,
-                backgroundColor: pdfStyles.shadedBG,
-                flex: 1,
-                textAlign: 'right',
-              }}
-            >
-              <Text style={pdfStyles.tableCell}>
-                {operationalExpenseTotal.toLocaleString('en-US', {
-                  maximumFractionDigits: 2,
-                  minimumFractionDigits: 2,
-                })}
-              </Text>
-            </View>
-          </View>
-          <View style={{ ...pdfStyles.tableRow, marginTop: 15 }}>
-            <View style={{ ...pdfStyles.tableHeader, flex: 2 }}>
-              <Text style={pdfStyles.tableCell}>Net Income</Text>
-            </View>
-            <View
-              style={{ ...pdfStyles.tableHeader, flex: 1, textAlign: 'right' }}
-            >
-              <Text style={pdfStyles.tableCell}>
-                {(
-                  totalRevenue -
-                  costOfRevenue -
-                  operationalExpenseTotal
-                ).toLocaleString('en-US', {
-                  maximumFractionDigits: 2,
-                  minimumFractionDigits: 2,
-                })}
-              </Text>
-            </View>
-          </View>
-        </View>
-      </Page>
-    </Document>
-  ) : (
-    ''
-  );
-};
 
 function IncomeStatement({ from, to, cost_center_ids, aggregate_by }) {
   document.title = 'Income Statement';
@@ -337,10 +42,8 @@ function IncomeStatement({ from, to, cost_center_ids, aggregate_by }) {
   } = useJumboAuth();
   const [displayAs, setDisplayAs] = useState('on screen');
   const [reportData, setReportData] = useState(null);
-  const { enqueueSnackbar } = useSnackbar();
-  const [isDownloadingTemplate, setIsDownloadingTemplate] =
-    React.useState(false);
   const [uploadFieldsKey, setUploadFieldsKey] = useState(0);
+  const [isExporting, setIsExporting] = useState(false);
 
   const validationSchema = yup.object({
     from: yup
@@ -349,7 +52,7 @@ function IncomeStatement({ from, to, cost_center_ids, aggregate_by }) {
       .typeError('Start Date is required'),
   });
 
-  const { setValue, watch, handleSubmit } = useForm({
+  const { setValue, watch, handleSubmit, getValues } = useForm({
     resolver: yupResolver(validationSchema),
     defaultValues: {
       from: dayjs(from).startOf('day').toISOString(),
@@ -362,39 +65,6 @@ function IncomeStatement({ from, to, cost_center_ids, aggregate_by }) {
   });
 
   const [isFetching, setisFetching] = useState(false);
-
-  const downloadExcelTemplate = async () => {
-    try {
-      setIsDownloadingTemplate(true);
-      setUploadFieldsKey((prevKey) => prevKey + 1);
-
-      // Get all current filter parameters
-      const filters = {
-        from: watch('from'),
-        to: watch('to'),
-        cost_center_ids: watch('cost_center_ids'),
-        aggregate_by: watch('aggregate_by'),
-      };
-
-      // Pass all filters to the service
-      const responseData =
-        await financialReportsServices.downloadIcomeStatementExcel(filters);
-
-      const blob = new Blob([responseData], {
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      });
-
-      const dateRange = `${readableDate(filters.from)}-${readableDate(filters.to)}`;
-      const link = document.createElement('a');
-      link.href = window.URL.createObjectURL(blob);
-      link.download = `Income Statement ${dateRange}.xlsx`;
-      link.click();
-      setIsDownloadingTemplate(false);
-    } catch (error) {
-      enqueueSnackbar('Error downloading Excel template', { variant: 'error' });
-      setIsDownloadingTemplate(false);
-    }
-  };
 
   const retrieveReport = async (filters) => {
     setisFetching(true);
@@ -419,6 +89,55 @@ function IncomeStatement({ from, to, cost_center_ids, aggregate_by }) {
   }, [from, to, cost_center_ids, aggregate_by]);
 
   const downloadFileName = `Income Statement ${readableDate(reportData?.filters?.from)}-${readableDate(reportData?.filters?.to)}`;
+
+  const exportedData = {
+    reportData: reportData,
+    authOrganization: authOrganization,
+    user: user,
+  };
+
+  const handlExcelExport = async () => {
+    setIsExporting(true);
+    setisFetching(true);
+    const data = getValues();
+    const report = await financialReportsServices.incomeStatement(data);
+    if (
+      !report ||
+      (report.direct_expenses.length < 1 &&
+        report.incomes.length < 1 &&
+        report.indirect_expenses.length < 1)
+    ) {
+      setIsExporting(false);
+      setisFetching(false);
+      return;
+    }
+
+    setReportData(report);
+
+    const exportedData = {
+      reportData: report,
+      authOrganization: authOrganization,
+      user: user,
+    };
+
+    try {
+      const blob =
+        await financialReportsServices.exportIncomeStatementToExcel(
+          exportedData
+        );
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${downloadFileName}.xlsx`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error('an error occurred: ', e);
+    } finally {
+      setIsExporting(false);
+      setisFetching(false);
+    }
+  };
 
   return (
     <>
@@ -554,8 +273,9 @@ function IncomeStatement({ from, to, cost_center_ids, aggregate_by }) {
                   <>
                     <LoadingButton
                       size='small'
-                      onClick={downloadExcelTemplate}
-                      loading={isDownloadingTemplate}
+                      onClick={() => handlExcelExport()}
+                      loading={isExporting}
+                      disabled={isExporting || isFetching}
                       variant='contained'
                       color='success'
                     >

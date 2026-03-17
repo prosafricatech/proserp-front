@@ -7,8 +7,6 @@ import { Document, Page, Text, View } from '@react-pdf/renderer';
 const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
   const mainColor =
     authOrganization.organization.settings?.main_color || '#2113AD';
-  const lightColor =
-    authOrganization.organization.settings?.light_color || '#bec5da';
 
   const incomes = reportData?.incomes || [];
   const directExpenses =

@@ -10,6 +10,14 @@ financialReportsServices.incomeStatement = async (params) => {
   return data;
 }
 
+financialReportsServices.exportIncomeStatementToExcel = async (exportedData) => {
+  const res = await axios.post(`/api/exports/excel/incomeStatement/`, exportedData, {
+    responseType: 'blob',
+  });
+  // const res = await axios.post(`/api/exports/excel/incomeStatement/`, exportedData);
+  return res.data;
+}
+
 financialReportsServices.zReport = async (params) => {
   const { data } = await axios.get(`/api/financialReports/zReport`, {
     params
