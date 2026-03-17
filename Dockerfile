@@ -1,4 +1,4 @@
-FROM node:18-alpine AS base
+FROM node:20-alpine AS base
 
 # Install dependencies only when needed
 FROM base AS deps
@@ -34,13 +34,19 @@ RUN \
   else echo "Lockfile not found." && exit 1; \
   fi
 
+
 # Production image, copy all the files and run next
 FROM base AS runner
 WORKDIR /app
 
+
 ENV NODE_ENV production
 # Uncomment the following line in case you want to disable telemetry during runtime.
 # ENV NEXT_TELEMETRY_DISABLED 1
+
+
+# Copy production environment variables file
+COPY --from=builder /app/.env.production .env.production
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
