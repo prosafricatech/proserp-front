@@ -14,7 +14,6 @@ financialReportsServices.exportIncomeStatementToExcel = async (exportedData) => 
   const res = await axios.post(`/api/exports/excel/incomeStatement/`, exportedData, {
     responseType: 'blob',
   });
-  // const res = await axios.post(`/api/exports/excel/incomeStatement/`, exportedData);
   return res.data;
 }
 

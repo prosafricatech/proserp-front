@@ -98,7 +98,6 @@ function IncomeStatement({ from, to, cost_center_ids, aggregate_by }) {
 
   const handlExcelExport = async () => {
     setIsExporting(true);
-    setisFetching(true);
     const data = getValues();
     const report = await financialReportsServices.incomeStatement(data);
     if (
@@ -108,7 +107,6 @@ function IncomeStatement({ from, to, cost_center_ids, aggregate_by }) {
         report.indirect_expenses.length < 1)
     ) {
       setIsExporting(false);
-      setisFetching(false);
       return;
     }
 
@@ -135,7 +133,6 @@ function IncomeStatement({ from, to, cost_center_ids, aggregate_by }) {
       console.error('an error occurred: ', e);
     } finally {
       setIsExporting(false);
-      setisFetching(false);
     }
   };
 
@@ -283,6 +280,7 @@ function IncomeStatement({ from, to, cost_center_ids, aggregate_by }) {
                     </LoadingButton>
                     <LoadingButton
                       loading={isFetching}
+                      disabled={isExporting}
                       type='submit'
                       size='small'
                       variant='contained'
