@@ -57,6 +57,30 @@ export async function exportIncomeStatementToExcel(exportedData: any) {
       return aTime - bTime;
     });
 
+    const MAX_COLUMNS = 26;
+
+    const mergePeriods = (periods: any) => {
+      if (periods.length <= MAX_COLUMNS) return periods.map((p: any) => [p]);
+
+      const groupSize = Math.ceil(periods.length / MAX_COLUMNS);
+
+      const groups = [];
+
+      for (let i = 0; i < periods.length; i += groupSize) {
+        groups.push(periods.slice(i, i + groupSize));
+      }
+
+      return groups;
+    };
+
+    const mergedPeriods = mergePeriods(periods);
+
+    const getAmountByPeriodGroup = (ledger: any, group: any) => {
+      return group.reduce((total: any, period: any) => {
+        return total + getAmountByPeriod(ledger, period.period);
+      }, 0);
+    };
+
     const getAmountItemByPeriod = (ledger: any, period: any) => {
       if (!Array.isArray(ledger?.amounts)) return null;
       return ledger.amounts.find((item: any) => item.period === period) || null;
@@ -204,10 +228,17 @@ export async function exportIncomeStatementToExcel(exportedData: any) {
 
     let headerCol = 66;
 
-    if (periods.length > 1) {
-      for (let c = 0; c < periods.length; c++) {
+    if (mergedPeriods.length > 1) {
+      for (let c = 0; c < mergedPeriods.length; c++) {
+        const start = mergedPeriods[c][0];
+        const end = mergedPeriods[c][mergedPeriods[c].length - 1];
+
+        const label =
+          mergedPeriods[c].length === 1
+            ? start.period
+            : `${start.period} - ${end.period}`;
         ws.getCell(`${String.fromCharCode(headerCol)}${headerRow}`).value =
-          periods[c].period;
+          label;
 
         ws.getColumn(`${String.fromCharCode(headerCol)}`).width = 25;
 
@@ -262,9 +293,9 @@ export async function exportIncomeStatementToExcel(exportedData: any) {
     applyCellStyle(ws.getCell(`A${revenuesRow}`), {
       ...CELL_STYLES.tableHeader,
     });
-    if (periods.length > 1) {
+    if (mergedPeriods.length > 1) {
       ws.mergeCells(
-        `A${revenuesRow}:${String.fromCharCode(66 + periods.length)}${revenuesRow}`
+        `A${revenuesRow}:${String.fromCharCode(66 + mergedPeriods.length)}${revenuesRow}`
       );
     } else {
       ws.mergeCells(`A${revenuesRow}:B${revenuesRow}`);
@@ -281,9 +312,9 @@ export async function exportIncomeStatementToExcel(exportedData: any) {
         right: { style: 'thin', color: { argb: COLORS.BLACK } },
       };
       let periodCol = 66;
-      periods.forEach((period: any, index: number) => {
+      mergedPeriods.forEach((period: any, index: number) => {
         ws.getCell(`${String.fromCharCode(periodCol)}${revenueDataRow}`).value =
-          getAmountByPeriod(income, period.period);
+          getAmountByPeriodGroup(income, period);
         ws.getCell(
           `${String.fromCharCode(periodCol)}${revenueDataRow}`
         ).numFmt = '#,###.00';
@@ -298,7 +329,7 @@ export async function exportIncomeStatementToExcel(exportedData: any) {
         periodCol++;
       });
 
-      if (periods.length > 1) {
+      if (mergedPeriods.length > 1) {
         let usedColumns = ws.getRow(revenueDataRow).cellCount;
         ws.getCell(
           `${String.fromCharCode(65 + usedColumns)}${revenueDataRow}`
@@ -322,10 +353,16 @@ export async function exportIncomeStatementToExcel(exportedData: any) {
     // revenue totals row
     const revenueTotalsRow = (ws.lastRow?.number ?? 0) + 1;
     ws.getCell(`A${revenueTotalsRow}`).value = 'Totals';
+    ws.getCell(`A${revenueTotalsRow}`).font = {
+      bold: true,
+    };
     let periodCol = 66;
-    periods.forEach((period: any, index: number) => {
+    mergedPeriods.forEach((period: any, index: number) => {
       ws.getCell(`${String.fromCharCode(periodCol)}${revenueTotalsRow}`).value =
-        getSectionPeriodTotal(incomes, period.period);
+        period.reduce(
+          (sum: any, p: any) => sum + getSectionPeriodTotal(incomes, p.period),
+          0
+        );
       ws.getCell(
         `${String.fromCharCode(periodCol)}${revenueTotalsRow}`
       ).numFmt = '#,###.00';
@@ -343,7 +380,7 @@ export async function exportIncomeStatementToExcel(exportedData: any) {
       };
       periodCol++;
     });
-    if (periods.length > 1) {
+    if (mergedPeriods.length > 1) {
       let usedColumns = ws.getRow(revenueTotalsRow).cellCount;
       ws.getCell(
         `${String.fromCharCode(65 + usedColumns)}${revenueTotalsRow}`
@@ -372,9 +409,9 @@ export async function exportIncomeStatementToExcel(exportedData: any) {
     applyCellStyle(ws.getCell(`A${constOfRevenueRow}`), {
       ...CELL_STYLES.tableHeader,
     });
-    if (periods.length > 1) {
+    if (mergedPeriods.length > 1) {
       ws.mergeCells(
-        `A${constOfRevenueRow}:${String.fromCharCode(66 + periods.length)}${constOfRevenueRow}`
+        `A${constOfRevenueRow}:${String.fromCharCode(66 + mergedPeriods.length)}${constOfRevenueRow}`
       );
     } else {
       ws.mergeCells(`A${constOfRevenueRow}:B${constOfRevenueRow}`);
@@ -391,10 +428,10 @@ export async function exportIncomeStatementToExcel(exportedData: any) {
         right: { style: 'thin', color: { argb: COLORS.BLACK } },
       };
       let periodCol = 66;
-      periods.forEach((period: any, index: number) => {
+      mergedPeriods.forEach((period: any, index: number) => {
         ws.getCell(
           `${String.fromCharCode(periodCol)}${constOfRevenueDataRow}`
-        ).value = getAmountByPeriod(exp, period.period);
+        ).value = getAmountByPeriodGroup(exp, period);
         ws.getCell(
           `${String.fromCharCode(periodCol)}${constOfRevenueDataRow}`
         ).numFmt = '#,###.00';
@@ -409,7 +446,7 @@ export async function exportIncomeStatementToExcel(exportedData: any) {
         periodCol++;
       });
 
-      if (periods.length > 1) {
+      if (mergedPeriods.length > 1) {
         let usedColumns = ws.getRow(constOfRevenueDataRow).cellCount;
         ws.getCell(
           `${String.fromCharCode(65 + usedColumns)}${constOfRevenueDataRow}`
@@ -433,11 +470,18 @@ export async function exportIncomeStatementToExcel(exportedData: any) {
     // cost of revenue totals row
     const constOfRevenueTotalsRow = (ws.lastRow?.number ?? 0) + 1;
     ws.getCell(`A${constOfRevenueTotalsRow}`).value = 'Totals';
+    ws.getCell(`A${constOfRevenueTotalsRow}`).font = {
+      bold: true,
+    };
     let costOfRevenueTotalCol = 66;
-    periods.forEach((period: any, index: number) => {
+    mergedPeriods.forEach((period: any, index: number) => {
       ws.getCell(
         `${String.fromCharCode(costOfRevenueTotalCol)}${constOfRevenueTotalsRow}`
-      ).value = getSectionPeriodTotal(directExpenses, period.period);
+      ).value = period.reduce(
+        (sum: any, p: any) =>
+          sum + getSectionPeriodTotal(directExpenses, p.period),
+        0
+      );
       ws.getCell(
         `${String.fromCharCode(costOfRevenueTotalCol)}${constOfRevenueTotalsRow}`
       ).numFmt = '#,###.00';
@@ -457,7 +501,7 @@ export async function exportIncomeStatementToExcel(exportedData: any) {
 
       costOfRevenueTotalCol++;
     });
-    if (periods.length > 1) {
+    if (mergedPeriods.length > 1) {
       let usedColumns = ws.getRow(constOfRevenueTotalsRow).cellCount;
       ws.getCell(
         `${String.fromCharCode(65 + usedColumns)}${constOfRevenueTotalsRow}`
@@ -486,12 +530,19 @@ export async function exportIncomeStatementToExcel(exportedData: any) {
     applyCellStyle(ws.getCell(`A${grossProfitRow}`), CELL_STYLES.tableHeader);
 
     let grossProfitCol = 66;
-    periods.forEach((period: any, index: number) => {
+    mergedPeriods.forEach((period: any, index: number) => {
       ws.getCell(
         `${String.fromCharCode(grossProfitCol)}${grossProfitRow}`
       ).value =
-        getSectionPeriodTotal(incomes, period.period) -
-        getSectionPeriodTotal(directExpenses, period.period);
+        period.reduce(
+          (sum: any, p: any) => sum + getSectionPeriodTotal(incomes, p.period),
+          0
+        ) -
+        period.reduce(
+          (sum: any, p: any) =>
+            sum + getSectionPeriodTotal(directExpenses, p.period),
+          0
+        );
       ws.getCell(
         `${String.fromCharCode(grossProfitCol)}${grossProfitRow}`
       ).numFmt = '#,###.00';
@@ -507,7 +558,7 @@ export async function exportIncomeStatementToExcel(exportedData: any) {
 
       grossProfitCol++;
     });
-    if (periods.length > 1) {
+    if (mergedPeriods.length > 1) {
       let usedColumns = ws.getRow(grossProfitRow).cellCount;
       ws.getCell(
         `${String.fromCharCode(65 + usedColumns)}${grossProfitRow}`
@@ -532,15 +583,15 @@ export async function exportIncomeStatementToExcel(exportedData: any) {
     applyCellStyle(ws.getCell(`A${operatingExpsRow}`), {
       ...CELL_STYLES.tableHeader,
     });
-    if (periods.length > 1) {
+    if (mergedPeriods.length > 1) {
       ws.mergeCells(
-        `A${operatingExpsRow}:${String.fromCharCode(66 + periods.length)}${operatingExpsRow}`
+        `A${operatingExpsRow}:${String.fromCharCode(66 + mergedPeriods.length)}${operatingExpsRow}`
       );
     } else {
       ws.mergeCells(`A${operatingExpsRow}:B${operatingExpsRow}`);
     }
 
-    // opening expenses data rows
+    // operating expenses data rows
     let operatingExpsDataRow = (ws.lastRow?.number ?? 0) + 1;
     indirectExpenses.forEach((exp: any, index: number) => {
       ws.getCell(`A${operatingExpsDataRow}`).value = exp.ledger_name;
@@ -551,10 +602,10 @@ export async function exportIncomeStatementToExcel(exportedData: any) {
         right: { style: 'thin', color: { argb: COLORS.BLACK } },
       };
       let periodCol = 66;
-      periods.forEach((period: any, index: number) => {
+      mergedPeriods.forEach((period: any, index: number) => {
         ws.getCell(
           `${String.fromCharCode(periodCol)}${operatingExpsDataRow}`
-        ).value = getAmountByPeriod(exp, period.period);
+        ).value = getAmountByPeriodGroup(exp, period);
         ws.getCell(
           `${String.fromCharCode(periodCol)}${operatingExpsDataRow}`
         ).numFmt = '#,###.00';
@@ -569,7 +620,7 @@ export async function exportIncomeStatementToExcel(exportedData: any) {
         periodCol++;
       });
 
-      if (periods.length > 1) {
+      if (mergedPeriods.length > 1) {
         let usedColumns = ws.getRow(operatingExpsDataRow).cellCount;
         ws.getCell(
           `${String.fromCharCode(65 + usedColumns)}${operatingExpsDataRow}`
@@ -577,19 +628,34 @@ export async function exportIncomeStatementToExcel(exportedData: any) {
         ws.getCell(
           `${String.fromCharCode(65 + usedColumns)}${operatingExpsDataRow}`
         ).numFmt = '#,###.00';
+        ws.getCell(
+          `${String.fromCharCode(65 + usedColumns)}${operatingExpsDataRow}`
+        ).border = {
+          top: { style: 'thin', color: { argb: COLORS.BLACK } },
+          bottom: { style: 'thin', color: { argb: COLORS.BLACK } },
+          left: { style: 'thin', color: { argb: COLORS.BLACK } },
+          right: { style: 'thin', color: { argb: COLORS.BLACK } },
+        };
       }
 
       operatingExpsDataRow++;
     });
 
-    // opening expenses totals row
+    // operating expenses totals row
     const operatingExpsTotalsRow = (ws.lastRow?.number ?? 0) + 1;
     ws.getCell(`A${operatingExpsTotalsRow}`).value = 'Totals';
+    ws.getCell(`A${operatingExpsTotalsRow}`).font = {
+      bold: true,
+    };
     let openingExpsTotalCol = 66;
-    periods.forEach((period: any, index: number) => {
+    mergedPeriods.forEach((period: any, index: number) => {
       ws.getCell(
         `${String.fromCharCode(openingExpsTotalCol)}${operatingExpsTotalsRow}`
-      ).value = getSectionPeriodTotal(indirectExpenses, period.period);
+      ).value = period.reduce(
+        (sum: any, p: any) =>
+          sum + getSectionPeriodTotal(indirectExpenses, p.period),
+        0
+      );
       ws.getCell(
         `${String.fromCharCode(openingExpsTotalCol)}${operatingExpsTotalsRow}`
       ).numFmt = '#,###.00';
@@ -609,7 +675,7 @@ export async function exportIncomeStatementToExcel(exportedData: any) {
 
       openingExpsTotalCol++;
     });
-    if (periods.length > 1) {
+    if (mergedPeriods.length > 1) {
       let usedColumns = ws.getRow(operatingExpsTotalsRow).cellCount;
       ws.getCell(
         `${String.fromCharCode(65 + usedColumns)}${operatingExpsTotalsRow}`
@@ -638,11 +704,22 @@ export async function exportIncomeStatementToExcel(exportedData: any) {
     applyCellStyle(ws.getCell(`A${netIncomeRow}`), CELL_STYLES.tableHeader);
 
     let netIncomeCol = 66;
-    periods.forEach((period: any, index: number) => {
+    mergedPeriods.forEach((period: any, index: number) => {
       ws.getCell(`${String.fromCharCode(netIncomeCol)}${netIncomeRow}`).value =
-        getSectionPeriodTotal(incomes, period.period) -
-        getSectionPeriodTotal(directExpenses, period.period) -
-        getSectionPeriodTotal(indirectExpenses, period.period);
+        period.reduce(
+          (sum: any, p: any) => sum + getSectionPeriodTotal(incomes, p.period),
+          0
+        ) -
+        period.reduce(
+          (sum: any, p: any) =>
+            sum + getSectionPeriodTotal(directExpenses, p.period),
+          0
+        ) -
+        period.reduce(
+          (sum: any, p: any) =>
+            sum + getSectionPeriodTotal(indirectExpenses, p.period),
+          0
+        );
       ws.getCell(`${String.fromCharCode(netIncomeCol)}${netIncomeRow}`).numFmt =
         '#,###.00';
       applyCellStyle(
@@ -657,7 +734,7 @@ export async function exportIncomeStatementToExcel(exportedData: any) {
 
       netIncomeCol++;
     });
-    if (periods.length > 1) {
+    if (mergedPeriods.length > 1) {
       let usedColumns = ws.getRow(netIncomeRow).cellCount;
       ws.getCell(
         `${String.fromCharCode(65 + usedColumns)}${netIncomeRow}`
