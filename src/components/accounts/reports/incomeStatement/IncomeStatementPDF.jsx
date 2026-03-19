@@ -258,6 +258,7 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
               <View
                 style={{
                   ...pdfStyles.tableCell,
+                  backgroundColor: index % 2 != 0 && lightColor,
                   width: colWidth,
                   paddingLeft: 12,
                 }}
@@ -271,6 +272,7 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
                     key={i}
                     style={{
                       ...pdfStyles.tableCell,
+                      backgroundColor: index % 2 != 0 && lightColor,
                       width: colWidth,
                       textAlign: 'right',
                     }}
@@ -291,6 +293,7 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
                 <View
                   style={{
                     ...pdfStyles.tableCell,
+                    backgroundColor: index % 2 != 0 && lightColor,
                     textAlign: 'right',
                     width: colWidth,
                   }}
@@ -309,7 +312,8 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
             <View
               style={{
                 ...pdfStyles.tableCell,
-                backgroundColor: lightColor,
+                backgroundColor: mainColor,
+                color: contrastText,
                 fontWeight: 'bold',
                 width: colWidth,
                 paddingLeft: 12,
@@ -322,7 +326,8 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
                 key={index}
                 style={{
                   ...pdfStyles.tableCell,
-                  backgroundColor: lightColor,
+                  backgroundColor: mainColor,
+                  color: contrastText,
                   fontWeight: 'bold',
                   width: colWidth,
                 }}
@@ -345,7 +350,8 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
               <View
                 style={{
                   ...pdfStyles.tableCell,
-                  backgroundColor: lightColor,
+                  backgroundColor: mainColor,
+                  color: contrastText,
                   fontWeight: 'bold',
                   width: colWidth,
                   textAlign: 'right',
@@ -385,6 +391,7 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
               <View
                 style={{
                   ...pdfStyles.tableCell,
+                  backgroundColor: index % 2 != 0 && lightColor,
                   width: colWidth,
                   paddingLeft: 12,
                 }}
@@ -398,6 +405,7 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
                     key={i}
                     style={{
                       ...pdfStyles.tableCell,
+                      backgroundColor: index % 2 != 0 && lightColor,
                       width: colWidth,
                       textAlign: 'right',
                     }}
@@ -418,6 +426,7 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
                 <View
                   style={{
                     ...pdfStyles.tableCell,
+                    backgroundColor: index % 2 != 0 && lightColor,
                     textAlign: 'right',
                     width: colWidth,
                   }}
@@ -437,7 +446,8 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
               style={{
                 ...pdfStyles.tableCell,
                 marginLeft: 2,
-                backgroundColor: lightColor,
+                backgroundColor: mainColor,
+                color: contrastText,
                 fontWeight: 'bold',
                 width: colWidth,
                 paddingLeft: 12,
@@ -451,7 +461,8 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
                 style={{
                   ...pdfStyles.tableCell,
                   marginLeft: 2,
-                  backgroundColor: lightColor,
+                  backgroundColor: mainColor,
+                  color: contrastText,
                   fontWeight: 'bold',
                   width: colWidth,
                 }}
@@ -474,7 +485,8 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
               <View
                 style={{
                   ...pdfStyles.tableCell,
-                  backgroundColor: lightColor,
+                  backgroundColor: mainColor,
+                  color: contrastText,
                   fontWeight: 'bold',
                   width: colWidth,
                   textAlign: 'right',
@@ -576,6 +588,7 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
               <View
                 style={{
                   ...pdfStyles.tableCell,
+                  backgroundColor: index % 2 != 0 && lightColor,
                   width: colWidth,
                   paddingLeft: 12,
                 }}
@@ -589,6 +602,7 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
                     key={i}
                     style={{
                       ...pdfStyles.tableCell,
+                      backgroundColor: index % 2 != 0 && lightColor,
                       width: colWidth,
                       textAlign: 'right',
                     }}
@@ -609,6 +623,7 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
                 <View
                   style={{
                     ...pdfStyles.tableCell,
+                    backgroundColor: index % 2 != 0 && lightColor,
                     textAlign: 'right',
                     width: colWidth,
                   }}
@@ -628,7 +643,8 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
               style={{
                 ...pdfStyles.tableCell,
                 marginLeft: 2,
-                backgroundColor: lightColor,
+                backgroundColor: mainColor,
+                color: contrastText,
                 fontWeight: 'bold',
                 width: colWidth,
                 paddingLeft: 12,
@@ -642,7 +658,8 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
                 style={{
                   ...pdfStyles.tableCell,
                   marginLeft: 2,
-                  backgroundColor: lightColor,
+                  backgroundColor: mainColor,
+                  color: contrastText,
                   fontWeight: 'bold',
                   width: colWidth,
                 }}
@@ -665,7 +682,8 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
               <View
                 style={{
                   ...pdfStyles.tableCell,
-                  backgroundColor: lightColor,
+                  backgroundColor: mainColor,
+                  color: contrastText,
                   fontWeight: 'bold',
                   width: colWidth,
                   textAlign: 'right',

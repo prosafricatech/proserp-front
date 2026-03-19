@@ -2,6 +2,7 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import { LoadingButton } from '@mui/lab';
 import {
+  Alert,
   DialogContent,
   DialogTitle,
   FormControl,
@@ -320,9 +321,10 @@ function IncomeStatement({ from, to, cost_center_ids, aggregate_by }) {
       <DialogContent>
         {isFetching ? (
           <LinearProgress />
-        ) : (
-          reportData &&
-          (displayAs === 'pdf' ? (
+        ) : reportData?.direct_expenses.length > 1 ||
+          reportData?.incomes.length > 1 ||
+          reportData?.indirect_expenses.length > 1 ? (
+          displayAs === 'pdf' ? (
             <PDFContent
               document={
                 <IncomeStatementPDF
@@ -337,7 +339,11 @@ function IncomeStatement({ from, to, cost_center_ids, aggregate_by }) {
             <IncomeStatementOnScreen reportData={reportData} />
           ) : (
             ''
-          ))
+          )
+        ) : (
+          <Alert variant='outlined' severity='info'>
+            No data found for the selected filters
+          </Alert>
         )}
       </DialogContent>
     </>
