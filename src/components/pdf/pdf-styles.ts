@@ -57,7 +57,7 @@ const pdfStyles = StyleSheet.create({
     fontSize: '10px',
     padding: 4,
     marginRight: 1,
-    backgroundColor: '#acacac',
+    // backgroundColor: '#acacac',
   },
   majorInfo: {
     fontSize: '12px',
