@@ -114,7 +114,7 @@ export default function CashierListSummaryOnScreen({
           width: width,
           mt: mt,
           py: 1.5,
-          px: 2,
+          px: 0,
           bgcolor: theme.palette.background.default,
           borderBottom: `1px solid ${theme.palette.divider}`,
           '&:hover': { bgcolor: theme.palette.action.hover },
@@ -180,7 +180,7 @@ export default function CashierListSummaryOnScreen({
               flexDirection: 'column',
               alignItems: 'center',
               width: '100%',
-              paddingX: '10px',
+              paddingX: '0px',
             }}
           >
             {/* === cashier === */}
@@ -1016,12 +1016,12 @@ export default function CashierListSummaryOnScreen({
       )}
 
       {/* === Totals Section === */}
-      <Card sx={{ mt: 2 }}>
-        <CardContent>
+      <Card sx={{ mt: 2, p: 0 }}>
+        <CardContent sx={{ padding: 0 }}>
           {/* Expected Amount */}
           <Grid container sx={{ marginTop: '4px' }} spacing={1}>
             <Grid
-              size={8}
+              size={7}
               sx={{
                 backgroundColor: theme.palette.background.default,
                 padding: '8px',
@@ -1038,7 +1038,7 @@ export default function CashierListSummaryOnScreen({
               </Typography>
             </Grid>
             <Grid
-              size={4}
+              size={5}
               sx={{
                 backgroundColor: theme.palette.background.default,
                 padding: '8px',
@@ -1063,7 +1063,7 @@ export default function CashierListSummaryOnScreen({
           {/* Collected Amount */}
           <Grid container sx={{ marginTop: '4px' }} spacing={1}>
             <Grid
-              size={8}
+              size={7}
               sx={{
                 backgroundColor: theme.palette.background.default,
                 padding: '8px',
@@ -1072,7 +1072,7 @@ export default function CashierListSummaryOnScreen({
               <Typography>Total Collected Amount</Typography>
             </Grid>
             <Grid
-              size={4}
+              size={5}
               sx={{
                 backgroundColor: theme.palette.background.default,
                 padding: '8px',
@@ -1091,7 +1091,7 @@ export default function CashierListSummaryOnScreen({
           {/* Short/Over */}
           <Grid container sx={{ marginTop: '4px' }} spacing={1}>
             <Grid
-              size={8}
+              size={7}
               sx={{
                 backgroundColor: theme.palette.background.default,
                 padding: '8px',
@@ -1100,7 +1100,7 @@ export default function CashierListSummaryOnScreen({
               <Typography>Short/Over</Typography>
             </Grid>
             <Grid
-              size={4}
+              size={5}
               sx={{
                 backgroundColor: theme.palette.background.default,
                 padding: '8px',
@@ -1130,7 +1130,7 @@ export default function CashierListSummaryOnScreen({
           {paymentReceived?.length > 0 && (
             <Grid container sx={{ marginTop: '4px' }} spacing={1}>
               <Grid
-                size={8}
+                size={7}
                 sx={{
                   backgroundColor: theme.palette.background.default,
                   padding: '8px',
@@ -1147,7 +1147,7 @@ export default function CashierListSummaryOnScreen({
                 </Typography>
               </Grid>
               <Grid
-                size={4}
+                size={5}
                 sx={{
                   backgroundColor: theme.palette.background.default,
                   padding: '8px',
@@ -1172,7 +1172,7 @@ export default function CashierListSummaryOnScreen({
           {/* Grand Total */}
           <Grid container sx={{ marginTop: '12px' }} spacing={1}>
             <Grid
-              size={8}
+              size={7}
               sx={{
                 backgroundColor: mainColor,
                 color: contrastText,
@@ -1191,7 +1191,7 @@ export default function CashierListSummaryOnScreen({
               </Typography>
             </Grid>
             <Grid
-              size={4}
+              size={5}
               sx={{
                 backgroundColor: mainColor,
                 color: contrastText,

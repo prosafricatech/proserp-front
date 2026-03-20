@@ -272,7 +272,7 @@ const SalesShiftOnScreen = ({
   );
 
   return (
-    <Box sx={{ p: { xs: 0, md: 3 }, width: '100%' }}>
+    <Box sx={{ p: 0, width: '100%' }}>
       {/* Header */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid size={{ xs: 12, md: 8 }}>
