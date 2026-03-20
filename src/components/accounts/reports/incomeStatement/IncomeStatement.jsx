@@ -43,7 +43,6 @@ function IncomeStatement({ from, to, cost_center_ids, aggregate_by }) {
   } = useJumboAuth();
   const [displayAs, setDisplayAs] = useState('on screen');
   const [reportData, setReportData] = useState(null);
-  const [uploadFieldsKey, setUploadFieldsKey] = useState(0);
   const [isExporting, setIsExporting] = useState(false);
 
   const validationSchema = yup.object({
@@ -90,12 +89,6 @@ function IncomeStatement({ from, to, cost_center_ids, aggregate_by }) {
   }, [from, to, cost_center_ids, aggregate_by]);
 
   const downloadFileName = `Income Statement ${readableDate(reportData?.filters?.from)}-${readableDate(reportData?.filters?.to)}`;
-
-  const exportedData = {
-    reportData: reportData,
-    authOrganization: authOrganization,
-    user: user,
-  };
 
   const handlExcelExport = async () => {
     setIsExporting(true);
@@ -148,7 +141,6 @@ function IncomeStatement({ from, to, cost_center_ids, aggregate_by }) {
         <Span className={css.hiddenOnPrint}>
           <form
             autoComplete='off'
-            key={uploadFieldsKey}
             onSubmit={handleSubmit(retrieveReport)}
           >
             <Grid
@@ -158,7 +150,7 @@ function IncomeStatement({ from, to, cost_center_ids, aggregate_by }) {
               alignItems='center'
               justifyContent='center'
             >
-              <Grid size={{ xs: 12, md: 10, lg: 5 }}>
+              <Grid size={{ xs: 12, md: 5, lg: 5 }}>
                 <CostCenterSelector
                   label='Cost and Profit Centers'
                   multiple={true}
@@ -171,7 +163,7 @@ function IncomeStatement({ from, to, cost_center_ids, aggregate_by }) {
                   }}
                 />
               </Grid>
-              <Grid size={{ xs: 12, md: 4, lg: 3.5 }}>
+              <Grid size={{ xs: 12, md: 3.5, lg: 3.5 }}>
                 <Div sx={{ mt: 1, mb: 1 }}>
                   <DateTimePicker
                     label='From (MM/DD/YYYY)'
@@ -198,7 +190,7 @@ function IncomeStatement({ from, to, cost_center_ids, aggregate_by }) {
                   />
                 </Div>
               </Grid>
-              <Grid size={{ xs: 12, md: 4, lg: 3.5 }}>
+              <Grid size={{ xs: 12, md: 3.5, lg: 3.5 }}>
                 <Div sx={{ mt: 1, mb: 1 }}>
                   <DateTimePicker
                     label='To (MM/DD/YYYY)'
@@ -221,12 +213,13 @@ function IncomeStatement({ from, to, cost_center_ids, aggregate_by }) {
                   />
                 </Div>
               </Grid>
-              <Grid size={{ xs: 12, md: 4, lg: 3.5 }}>
+              <Grid size={{ xs: 6, md: 3.5, lg: 3.5 }}>
                 <Div sx={{ mt: 1, mb: 1, display: 'flex' }}>
                   <TextField
                     select
                     label='Aggregate By'
                     size='small'
+                    fullWidth
                     value={watch('aggregate_by') ?? ''}
                     sx={{ width: { xs: '100%', md: 180 }, maxWidth: 180 }}
                     onChange={(e) => {
@@ -251,9 +244,6 @@ function IncomeStatement({ from, to, cost_center_ids, aggregate_by }) {
                       }
                     }}
                   >
-                    <MenuItem value='' disabled>
-                      Select period
-                    </MenuItem>
                     <MenuItem value='day'>Day</MenuItem>
                     <MenuItem value='week'>Week</MenuItem>
                     <MenuItem value='month'>Month</MenuItem>
@@ -261,7 +251,7 @@ function IncomeStatement({ from, to, cost_center_ids, aggregate_by }) {
                   </TextField>
                 </Div>
               </Grid>
-              <Grid size={{ xs: 12, md: 2, lg: 8.5 }} textAlign='right'>
+              <Grid size={{ xs: 6, md: 8.5, lg: 8.5 }} textAlign='right'>
                 <Stack
                   direction='row'
                   spacing={0.5}
