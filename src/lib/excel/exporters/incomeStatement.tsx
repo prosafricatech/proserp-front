@@ -122,7 +122,7 @@ export async function exportIncomeStatementToExcel(exportedData: any) {
 
     // column widths
     const baseColumns = [
-      { width: 25 },
+      { width: 30 },
       { width: 25 },
       { width: 25 },
       { width: 25 },
@@ -138,44 +138,22 @@ export async function exportIncomeStatementToExcel(exportedData: any) {
     ws.columns = baseColumns;
 
     // header section
-    ws.addRow([
-      organization.name,
-      ' ',
-      ' ',
-      ' ',
-      ' ',
-      ' ',
-      ' ',
-      ' ',
-      ' ',
-      'INCOME STATEMENT',
-    ]);
-    ws.addRow([' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', reportPeriod]);
+    ws.addRow([organization.name, ' ', ' ', 'INCOME STATEMENT']);
+    ws.addRow([' ', ' ', ' ', reportPeriod]);
 
     ws.getCell('A1').font = {
       bold: true,
       size: 12,
     };
-    ws.getCell('J1').font = {
+    ws.getCell('D1').font = {
       bold: true,
       size: 12,
     };
 
     ws.addRow([]);
 
-    ws.addRow([
-      'Cost Center',
-      ' ',
-      ' ',
-      ' ',
-      ' ',
-      ' ',
-      'Prepared By',
-      ' ',
-      ' ',
-      'Printed On',
-    ]);
-    for (let c = 0; c < 10; c++) {
+    ws.addRow(['Cost Center', ' ', 'Prepared By', 'Printed On']);
+    for (let c = 0; c < 4; c++) {
       ws.getCell(`${String.fromCharCode(65 + c)}4`).font = {
         bold: true,
         size: 12,
@@ -200,18 +178,19 @@ export async function exportIncomeStatementToExcel(exportedData: any) {
           left: { style: 'thin', color: { argb: 'FF000000' } },
           right: { style: 'thin', color: { argb: 'FF000000' } },
         };
-        col++;
+        ws.getRow(row).height = 20;
+        // col++;
 
-        if (col > 69) {
-          col = 65;
-          row++;
-        }
+        // if (col > 69) {
+        //   col = 65;
+        row++;
+        // }
       }
     }
 
     // DISPLAY USER AND PRINT DATA
-    ws.getCell('G5').value = user.name;
-    ws.getCell('J5').value = readableDate(undefined, true);
+    ws.getCell('C5').value = user.name;
+    ws.getCell('D5').value = readableDate(undefined, true);
 
     /////// TABLE HEADER ///////
     ws.addRow([]);
@@ -352,7 +331,7 @@ export async function exportIncomeStatementToExcel(exportedData: any) {
 
     // revenue totals row
     const revenueTotalsRow = (ws.lastRow?.number ?? 0) + 1;
-    ws.getCell(`A${revenueTotalsRow}`).value = 'Totals';
+    ws.getCell(`A${revenueTotalsRow}`).value = 'Total';
     ws.getCell(`A${revenueTotalsRow}`).font = {
       bold: true,
     };
@@ -469,7 +448,7 @@ export async function exportIncomeStatementToExcel(exportedData: any) {
 
     // cost of revenue totals row
     const constOfRevenueTotalsRow = (ws.lastRow?.number ?? 0) + 1;
-    ws.getCell(`A${constOfRevenueTotalsRow}`).value = 'Totals';
+    ws.getCell(`A${constOfRevenueTotalsRow}`).value = 'Total';
     ws.getCell(`A${constOfRevenueTotalsRow}`).font = {
       bold: true,
     };
@@ -643,7 +622,7 @@ export async function exportIncomeStatementToExcel(exportedData: any) {
 
     // operating expenses totals row
     const operatingExpsTotalsRow = (ws.lastRow?.number ?? 0) + 1;
-    ws.getCell(`A${operatingExpsTotalsRow}`).value = 'Totals';
+    ws.getCell(`A${operatingExpsTotalsRow}`).value = 'Total';
     ws.getCell(`A${operatingExpsTotalsRow}`).font = {
       bold: true,
     };

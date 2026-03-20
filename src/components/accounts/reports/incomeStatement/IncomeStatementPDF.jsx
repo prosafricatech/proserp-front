@@ -319,7 +319,7 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
                 paddingLeft: 12,
               }}
             >
-              <Text style={{ ...pdfStyles.tableCell }}>Totals</Text>
+              <Text style={{ ...pdfStyles.tableCell }}>Total</Text>
             </View>
             {mergedPeriods.map((group, index) => (
               <View
@@ -453,7 +453,7 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
                 paddingLeft: 12,
               }}
             >
-              <Text style={{ ...pdfStyles.tableCell }}>Totals</Text>
+              <Text style={{ ...pdfStyles.tableCell }}>Total</Text>
             </View>
             {mergedPeriods.map((group, index) => (
               <View
@@ -650,7 +650,7 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
                 paddingLeft: 12,
               }}
             >
-              <Text style={{ ...pdfStyles.tableCell }}>Totals</Text>
+              <Text style={{ ...pdfStyles.tableCell }}>Total</Text>
             </View>
             {mergedPeriods.map((group, index) => (
               <View

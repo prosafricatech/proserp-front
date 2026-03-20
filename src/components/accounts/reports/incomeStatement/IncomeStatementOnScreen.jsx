@@ -271,8 +271,9 @@ const IncomeStatementOnScreen = ({ reportData }) => {
                 <TableCell
                   align='right'
                   style={{
-                    fontWeight:
-                      hasRevenue && openRows.revenue ? 'bold' : 'normal',
+                    // fontWeight:
+                    //   hasRevenue && openRows.revenue ? 'bold' : 'normal',
+                    fontWeight: 'bold',
                   }}
                 >
                   {totalRevenue.toLocaleString('en-US', {
@@ -363,7 +364,7 @@ const IncomeStatementOnScreen = ({ reportData }) => {
                     );
                   })}
                   {periods.length > 1 && (
-                    <TableCell align='right'>
+                    <TableCell align='right' style={{ fontWeight: 'bold' }}>
                       {getLedgerTotal(component).toLocaleString('en-US', {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
@@ -434,10 +435,11 @@ const IncomeStatementOnScreen = ({ reportData }) => {
                 <TableCell
                   align='right'
                   style={{
-                    fontWeight:
-                      hasCostOfRevenue && openRows.costOfRevenue
-                        ? 'bold'
-                        : 'normal',
+                    // fontWeight:
+                    //   hasCostOfRevenue && openRows.costOfRevenue
+                    //     ? 'bold'
+                    //     : 'normal',
+                    fontWeight: 'bold',
                   }}
                 >
                   {totalCostOfRevenue.toLocaleString('en-US', {
@@ -528,7 +530,7 @@ const IncomeStatementOnScreen = ({ reportData }) => {
                     );
                   })}
                   {periods.length > 1 && (
-                    <TableCell align='right'>
+                    <TableCell align='right' style={{ fontWeight: 'bold' }}>
                       {getLedgerTotal(component).toLocaleString('en-US', {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
@@ -577,7 +579,7 @@ const IncomeStatementOnScreen = ({ reportData }) => {
                 );
               })}
               {periods.length > 1 && (
-                <TableCell align='right'>
+                <TableCell align='right' style={{ fontWeight: 'bold' }}>
                   {(totalRevenue - totalCostOfRevenue).toLocaleString('en-US', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
@@ -652,10 +654,11 @@ const IncomeStatementOnScreen = ({ reportData }) => {
                 <TableCell
                   align='right'
                   style={{
-                    fontWeight:
-                      hasOperatingExpenses && openRows.operatingExpenses
-                        ? 'bold'
-                        : 'normal',
+                    // fontWeight:
+                    //   hasOperatingExpenses && openRows.operatingExpenses
+                    //     ? 'bold'
+                    //     : 'normal',
+                    fontWeight: 'bold',
                   }}
                 >
                   {totalOperatingExpenses.toLocaleString('en-US', {
@@ -746,7 +749,7 @@ const IncomeStatementOnScreen = ({ reportData }) => {
                     );
                   })}
                   {periods.length > 1 && (
-                    <TableCell align='right'>
+                    <TableCell align='right' style={{ fontWeight: 'bold' }}>
                       {getLedgerTotal(component).toLocaleString('en-US', {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
@@ -799,7 +802,7 @@ const IncomeStatementOnScreen = ({ reportData }) => {
                 );
               })}
               {periods.length > 1 && (
-                <TableCell align='right'>
+                <TableCell align='right' style={{ fontWeight: 'bold' }}>
                   {(
                     totalRevenue -
                     totalCostOfRevenue -
