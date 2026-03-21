@@ -20,19 +20,6 @@ import { useState } from 'react';
 import LedgerStatementDialogContent from '../../ledgers/list/ledgerStatement/LedgerStatementDialogContent';
 
 const IncomeStatementOnScreen = ({ reportData }) => {
-  const categoryCellSx = {
-    minWidth: 280,
-    maxWidth: 340,
-    whiteSpace: 'normal',
-    wordBreak: 'break-word',
-    position: 'sticky',
-    left: 0,
-    zIndex: 20,
-    background: (theme) => theme.palette.background.paper,
-    borderRight: '2px solid',
-    borderColor: 'divider',
-  };
-
   const [openRows, setOpenRows] = useState({
     revenue: false,
     costOfRevenue: false,
@@ -41,6 +28,30 @@ const IncomeStatementOnScreen = ({ reportData }) => {
 
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
+  const smallScreen = useMediaQuery(theme.breakpoints.down('md'));
+
+  const categoryCellSx = (smallScreen
+    ? {
+        minWidth: 280,
+        maxWidth: 340,
+        whiteSpace: 'normal',
+        wordBreak: 'break-word',
+        borderRight: '2px solid',
+        borderColor: 'divider',
+      }
+    : {
+        minWidth: 280,
+        maxWidth: 340,
+        whiteSpace: 'normal',
+        wordBreak: 'break-word',
+        position: 'sticky',
+        left: 0,
+        zIndex: 20,
+        background: (theme) => theme.palette.background.paper,
+        borderRight: '2px solid',
+        borderColor: 'divider',
+      }
+  );
 
   const toggleRow = (rowId) => {
     setOpenRows((prevOpenRows) => ({
