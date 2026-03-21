@@ -48,7 +48,7 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
     return aTime - bTime;
   });
 
-  const MAX_COLUMNS = 8;
+  const MAX_COLUMNS = 6;
 
   const mergePeriods = (periods) => {
     if (periods.length <= MAX_COLUMNS) return periods.map((p) => [p]);
@@ -117,7 +117,7 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
       producer='ProsERP'
       title={`Income Statement ${reportPeriod}`}
     >
-      <Page size='A3' style={pdfStyles.page} orientation='landscape'>
+      <Page size='A4' style={pdfStyles.page} orientation='landscape'>
         <View style={pdfStyles.table}>
           <View style={{ ...pdfStyles.tableRow, marginBottom: 20 }}>
             <View
