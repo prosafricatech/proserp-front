@@ -117,7 +117,11 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
       producer='ProsERP'
       title={`Income Statement ${reportPeriod}`}
     >
-      <Page size='A4' style={pdfStyles.page} orientation='landscape'>
+      <Page
+        size='A4'
+        style={pdfStyles.page}
+        orientation={mergedPeriods.length < 3 ? 'potrait' : 'landscape'}
+      >
         <View style={pdfStyles.table}>
           <View style={{ ...pdfStyles.tableRow, marginBottom: 20 }}>
             <View
