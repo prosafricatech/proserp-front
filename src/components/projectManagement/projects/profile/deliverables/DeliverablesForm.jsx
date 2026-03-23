@@ -121,14 +121,11 @@ const DeliverablesForm = ({ setOpenDialog, group=null, deliverable=null }) => {
                 return true;
             }),
         contract_rate: yup.number()
-            .test('contract-rate-required', 'Contract rate is required when client is selected', function(value) {
-                const client_id = this.parent.client_id;
-                if (client_id) {
-                    return value !== null && value !== undefined;
-                }
-                return true;
-            })
-            .typeError('Contract rate must be a number'),
+            .when('client_id', {
+                is: (client_id) => !!client_id,
+                then: (schema) => schema.required('Contract rate is required when client is selected').typeError('Contract rate must be a number'),
+                otherwise: (schema) => schema.notRequired().nullable(true),
+            }),
     });     
 
     const { register, setValue, watch, clearErrors, handleSubmit, formState: { errors } } = useForm({
@@ -149,8 +146,6 @@ const DeliverablesForm = ({ setOpenDialog, group=null, deliverable=null }) => {
         },
         context: { sameLevelDeliverables, deliverable }
     });
-
-    console.log(errors)
 
     return (
         <> 
