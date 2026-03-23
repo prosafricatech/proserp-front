@@ -150,6 +150,8 @@ const DeliverablesForm = ({ setOpenDialog, group=null, deliverable=null }) => {
         context: { sameLevelDeliverables, deliverable }
     });
 
+    console.log(errors)
+
     return (
         <> 
             <DialogTitle textAlign={'center'}>{deliverable ? `Edit Deliverable` : `Add ${group?.name} Deliverable`}</DialogTitle>
@@ -252,7 +254,16 @@ const DeliverablesForm = ({ setOpenDialog, group=null, deliverable=null }) => {
                                     error={!!errors?.quantity}
                                     helperText={errors?.quantity?.message}
                                     label="Quantity"
-                                    {...register(`quantity`)}
+                                    defaultValue={deliverable?.quantity}
+                                    onChange={(e) => {
+                                        setValue(`quantity`,e.target.value ? sanitizedNumber(e.target.value ): 0,{
+                                            shouldValidate: true,
+                                            shouldDirty: true
+                                        });
+                                    }}
+                                    InputProps={{
+                                        inputComponent: CommaSeparatedField,
+                                    }}
                                 />
                             </Div>
                         </Grid>
