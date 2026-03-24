@@ -76,6 +76,15 @@ const ReportDocument = ({ reportData, authOrganization, user }) => {
           </View>
         </View>
         {reportData?.balanceSheetData?.map((ledger_group, index) => {
+          let ledger_group_children = [];
+          let childIndex = 0;
+          ledger_group.children.forEach((child) => {
+            if (child.amount !== 0) {
+              child.id = childIndex;
+              childIndex++;
+              ledger_group_children.push(child);
+            }
+          });
           return (
             <View style={{ ...pdfStyles.table, marginTop: 15 }} key={index}>
               <View style={{ ...pdfStyles.tableRow }}>
@@ -92,7 +101,7 @@ const ReportDocument = ({ reportData, authOrganization, user }) => {
                   </Text>
                 </View>
               </View>
-              {ledger_group.children?.map((group, index) => {
+              {ledger_group_children?.map((group, index) => {
                 return (
                   <View
                     key={index}
@@ -105,7 +114,6 @@ const ReportDocument = ({ reportData, authOrganization, user }) => {
                             <View
                               style={{
                                 ...pdfStyles.tableHeader,
-                                // backgroundColor: pdfStyles.shadedBG,
                                 backgroundColor: mainColor,
                                 color: contrastText,
                                 marginTop: 2,
@@ -200,6 +208,7 @@ const ReportDocument = ({ reportData, authOrganization, user }) => {
                           <View
                             style={{
                               ...pdfStyles.tableRow,
+                              backgroundColor: group.id % 2 !== 0 && lightColor,
                             }}
                           >
                             <View style={{ ...pdfStyles.tableCell, flex: 1 }}>
@@ -254,7 +263,14 @@ const ReportDocument = ({ reportData, authOrganization, user }) => {
             </View>
           );
         })}
-        <View style={{ ...pdfStyles.tableRow, marginTop: 5 }}>
+        <View
+          style={{
+            ...pdfStyles.tableRow,
+            backgroundColor: mainColor,
+            color: contrastText,
+            marginTop: 5,
+          }}
+        >
           <View style={{ ...pdfStyles.tableHeader, flex: 1.02 }}>
             <Text style={pdfStyles.tableCellText}>
               Total Liabilities and Owner's Equity
