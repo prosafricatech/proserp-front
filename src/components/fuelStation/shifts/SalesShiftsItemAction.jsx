@@ -158,9 +158,22 @@ const DocumentDialog = ({
           direction={'row'}
           justifyContent={'center'}
           alignItems={'center'}
+          position={'relative'}
         >
           <Typography>With More Details</Typography>
           <Checkbox checked={openDetails} onChange={handleDetailsChange} />
+
+          {belowLargeScreen && (
+            <Tooltip title='Close'>
+              <IconButton
+                size='small'
+                onClick={() => setOpenDocumentDialog(false)}
+                sx={{ position: 'absolute', right: 5 }}
+              >
+                <HighlightOff color='primary' />
+              </IconButton>
+            </Tooltip>
+          )}
         </Stack>
       </DialogTitle>
       <DialogContent>
@@ -224,17 +237,6 @@ const DocumentDialog = ({
                 <FontAwesomeIcon icon={faFileExcel} color='green' />
                 {!belowLargeScreen && 'Excel'}
               </IconButton>
-            )}
-
-            {belowLargeScreen && (
-              <Tooltip title='Close'>
-                <IconButton
-                  size='small'
-                  onClick={() => setOpenDocumentDialog(false)}
-                >
-                  <HighlightOff color='primary' />
-                </IconButton>
-              </Tooltip>
             )}
           </Grid>
         </Grid>
