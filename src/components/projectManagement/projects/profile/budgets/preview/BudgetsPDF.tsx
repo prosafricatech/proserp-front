@@ -390,9 +390,8 @@ const renderSubcontractTasksTable = (
   baseCurrency?: { code: string }
 ) => {
   const columns: TableColumn[] = [
-    { key: 'taskName', label: 'Task Name', flex: 2 },
-    { key: 'description', label: 'Description', flex: 1 },
-    { key: 'expenseName', label: 'Expense Name', flex: 1 },
+    { key: 'taskName', label: 'Task', flex: 2 },
+    { key: 'expenseName', label: 'Expense', flex: 1 },
     { key: 'quantity', label: 'Quantity', flex: 1, align: 'right' },
     { key: 'rate', label: 'Rate', flex: 1, align: 'right' },
     { key: 'amount', label: 'Amount', flex: 1, align: 'right' },
@@ -400,10 +399,18 @@ const renderSubcontractTasksTable = (
 
   const renderTaskCell = (item: SubcontractTaskItem, column: TableColumn) => {
     switch (column.key) {
-      case 'taskName':
-        return <Text>{item.project_task?.name || item.project_task?.label || ''}</Text>;
-      case 'description':
-        return <Text>{item.description || ''}</Text>;
+      case 'taskName': {
+        const name = item.project_task?.name || item.project_task?.label || '';
+        const description = item.description || '';
+        return (
+          <View>
+            <Text>{name}</Text>
+            {description && (
+              <Text>{`(${description})`}</Text>
+            )}
+          </View>
+        );
+      }
       case 'expenseName':
         return <Text>{item.expense_ledger?.name || ''}</Text>;
       case 'quantity': {
