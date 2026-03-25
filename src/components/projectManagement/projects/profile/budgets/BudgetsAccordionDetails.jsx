@@ -1,13 +1,131 @@
 import { useState } from 'react';
-import { Alert, Box, Chip, Dialog, Grid, IconButton, LinearProgress, Skeleton, Tooltip, Typography, useMediaQuery } from '@mui/material';
+import {
+  Alert,
+  Box,
+  Chip,
+  Dialog,
+  Grid,
+  IconButton,
+  LinearProgress,
+  Skeleton,
+  Tooltip,
+  Typography,
+  useMediaQuery,
+  DialogActions,
+  Button,
+  DialogContent,
+  DialogTitle,
+  Tabs,
+  Tab,
+  Checkbox,
+  Stack
+} from '@mui/material';
+import { HighlightOff, VisibilityOutlined } from '@mui/icons-material';
+import PDFContent from '@/components/pdf/PDFContent';
 import projectsServices from '../../project-services';
 import { useQuery } from '@tanstack/react-query';
 import { useCurrencySelect } from '@/components/masters/Currencies/CurrencySelectProvider';
 import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
-import { Stack } from '@mui/system';
-import { VisibilityOutlined } from '@mui/icons-material';
 import LedgerStatementDialogContent from '@/components/accounts/ledgers/list/ledgerStatement/LedgerStatementDialogContent';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
+import BudgetsPDF from './preview/BudgetsPDF';
+import BudgetsOnscreen from './preview/BudgetsOnscreen';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { useProjectProfile } from '../ProjectProfileProvider';
+
+function BudgetsDocumentDialog({ openBudgetsDialog, onClose, budgetDetails, baseCurrency, organization }) {
+  const [tab, setTab] = useState(0);
+  const [withDetails, setWithDetails] = useState(false);
+  const [pdfKey, setPdfKey] = useState(0);
+  const { theme } = useJumboTheme();
+  const { project } = useProjectProfile();
+  const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
+
+  const { data: timelineActivitiesData, isFetching: isTimelineActivitiesFetching } = useQuery({
+    queryKey: ['projectTimelineActivities', project?.id],
+    queryFn: () => projectsServices.showProjectTimelineActivities(project?.id),
+    enabled: !!project?.id,
+  });
+
+  const getTaskOptions = (activities, depth = 0) => {
+    if (!Array.isArray(activities)) {
+      return [];
+    }
+  
+    return activities.flatMap(activity => {
+      const { children, tasks } = activity;
+  
+      const tasksOptions = (tasks || []).map(task => ({
+        id: task.id,
+        label: task.name
+      }));
+  
+      const tasksFromgroupChildren = getTaskOptions(children, depth + 1);
+  
+      return [...tasksOptions, ...tasksFromgroupChildren];
+    });
+  };
+
+  const allTasks = getTaskOptions(timelineActivitiesData);
+
+  // When toggling details, force PDF rerender
+  const handleDetailsChange = (e) => {
+    setWithDetails(e.target.checked);
+    setPdfKey((prev) => prev + 1);
+  };
+
+  if (isTimelineActivitiesFetching) { 
+    return (
+      <Grid container width={'100%'}>
+        <Grid size={12}>
+          <Stack spacing={2} sx={{ width: '100%', mb: 2 }}>
+            <Skeleton variant="text" width={180} height={32} sx={{ borderRadius: 1, marginLeft: 'auto' }} />
+            <Skeleton variant="rectangular" width="100%" height={48} sx={{ borderRadius: 1 }} />
+            <Skeleton variant="rectangular" width="100%" height={32} sx={{ borderRadius: 1 }} />
+          </Stack>
+        </Grid>
+      </Grid>
+    );
+  }
+
+  return (
+    <Dialog open={openBudgetsDialog} onClose={onClose} maxWidth="md" fullWidth fullScreen={belowLargeScreen}>
+      <DialogTitle>
+        <Stack direction={'row'} justifyContent={'center'} alignItems={'center'} position={'relative'}>
+          <Typography>With More Details</Typography>
+          <Checkbox checked={withDetails} onChange={handleDetailsChange} />
+          {belowLargeScreen && (
+            <Tooltip title="Close">
+              <IconButton size="small" onClick={onClose} sx={{ position: 'absolute', right: 5 }}>
+                <HighlightOff color="primary" />
+              </IconButton>
+            </Tooltip>
+          )}
+        </Stack>
+      </DialogTitle>
+      <Tabs value={tab} onChange={(_, v) => setTab(v)}>
+        <Tab label="PDF" />
+        <Tab label="On Screen" />
+      </Tabs>
+      <DialogContent>
+        {tab === 0 ? (
+          <PDFContent
+            key={pdfKey}
+            fileName="Budgets"
+            document={<BudgetsPDF allTasks={allTasks} budgetDetails={budgetDetails} baseCurrency={baseCurrency} withDetails={withDetails} organization={organization} />}
+          />
+        ) : (
+          <BudgetsOnscreen organization={organization} budgetDetails={budgetDetails} baseCurrency={baseCurrency} withDetails={withDetails} />
+        )}
+      </DialogContent>
+      {!belowLargeScreen && (
+        <DialogActions>
+          <Button onClick={onClose} variant="outlined" color="primary">Close</Button>
+        </DialogActions>
+      )}
+    </Dialog>
+  );
+}
 
 function BudgetsAccordionDetails({ budget, expanded }) {
   const { currencies } = useCurrencySelect();
@@ -17,6 +135,7 @@ function BudgetsAccordionDetails({ budget, expanded }) {
   const [ledgerFilters, setLedgerFilters] = useState(null);
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
+  const { authOrganization: { organization } } = useJumboAuth();
 
   // React Query v5 syntax
   const { data: budgetItemsDetails, isLoading } = useQuery({
@@ -34,6 +153,9 @@ function BudgetsAccordionDetails({ budget, expanded }) {
   const filteredExpenses = budgetItemsDetails?.expenses_budgeted?.filter(expense =>
     searchQueryNames.length === 0 || searchQueryNames.includes(expense.name)
   );
+
+  // Dialog state for viewing all expenses
+  const [openBudgetsDialog, setOpenBudgetsDialog] = useState(false);
 
   const totalBudgetedAmount = filteredExpenses?.reduce((total, item) => total + item?.budgeted, 0) || 0;
   const totalSpentAmount = filteredExpenses?.reduce((total, item) => total + item?.spent, 0) || 0;
@@ -95,8 +217,19 @@ function BudgetsAccordionDetails({ budget, expanded }) {
               <Typography variant="h5">
                 {(totalBudgetedAmount ? (totalSpentAmount / totalBudgetedAmount * 100).toFixed(2) : 0)}%
               </Typography>
+              <Button size="small" sx={{ mt: 1 }} variant="outlined" onClick={() => setOpenBudgetsDialog(true)}>
+                View Details
+              </Button>
             </Grid>
           </Grid>
+          {/* Budgets Document Dialog */}
+          <BudgetsDocumentDialog
+            openBudgetsDialog={openBudgetsDialog}
+            onClose={() => setOpenBudgetsDialog(false)}
+            budgetDetails={budgetItemsDetails}
+            baseCurrency={baseCurrency}
+            organization={organization}
+          />
 
           {/* Expenses */}
           <Grid size={12} paddingTop={1} width={'100%'}>
