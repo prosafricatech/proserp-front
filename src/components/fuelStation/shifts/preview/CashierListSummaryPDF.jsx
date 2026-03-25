@@ -1029,7 +1029,7 @@ export default function CashierListSummaryPDF({
               ...pdfStyles.tableRow,
             }}
           >
-            <Text style={{ ...pdfStyles.tableCell, width: '10%' }}>TOTALS</Text>
+            <Text style={{ ...pdfStyles.tableCell, width: '10%' }}>TOTAL</Text>
 
             {/* pump details totals */}
             <View
