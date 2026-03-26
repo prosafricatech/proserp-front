@@ -43,13 +43,13 @@ function BudgetsDocumentDialog({
   baseCurrency,
   organization,
 }) {
-  const [tab, setTab] = useState(0);
+  const { theme } = useJumboTheme();
+  const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
+  const [tab, setTab] = useState(belowLargeScreen ? 1 : 0);
   const [withDetails, setWithDetails] = useState(false);
   const [pdfKey, setPdfKey] = useState(0);
   const [isExporting, setIsExporting] = useState(false);
-  const { theme } = useJumboTheme();
   const { project } = useProjectProfile();
-  const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
   const {
     data: timelineActivitiesData,
@@ -136,7 +136,6 @@ function BudgetsDocumentDialog({
       a.click();
       window.URL.revokeObjectURL(url);
 
-      // console.log('blob: ', blob);
     } catch (e) {
       console.error('error exporting excel: ', e);
     } finally {
@@ -153,53 +152,60 @@ function BudgetsDocumentDialog({
       fullScreen={belowLargeScreen}
     >
       <DialogTitle>
-        <Stack
-          direction={'row'}
-          justifyContent={'center'}
-          alignItems={'center'}
-          position={'relative'}
-        >
-          <Typography>With More Details</Typography>
-          <Checkbox checked={withDetails} onChange={handleDetailsChange} />
-          {belowLargeScreen && (
-            <Tooltip title='Close'>
-              <IconButton
+        <Box display='flex' alignItems='center' justifyContent='space-between' position='relative'>
+          <Box display='flex' alignItems='center'>
+            <Typography>With More Details</Typography>
+            <Checkbox checked={withDetails} onChange={handleDetailsChange} />
+          </Box>
+          {belowLargeScreen ? (
+            <Box display='flex' alignItems='center' gap={1}>
+              <LoadingButton
                 size='small'
-                onClick={onClose}
-                sx={{ position: 'absolute', right: 5 }}
+                onClick={() => handleExcelExport(exportedData)}
+                color='success'
+                variant='contained'
+                loading={isExporting}
+                startIcon={<FontAwesomeIcon icon={faFileExcel} />}
               >
-                <HighlightOff color='primary' />
-              </IconButton>
-            </Tooltip>
+                Excel
+              </LoadingButton>
+              <Tooltip title='Close'>
+                <IconButton
+                  size='small'
+                  onClick={onClose}
+                >
+                  <HighlightOff color='primary' />
+                </IconButton>
+              </Tooltip>
+            </Box>
+          ) : (
+            <LoadingButton
+              size='small'
+              onClick={() => handleExcelExport(exportedData)}
+              color='success'
+              variant='contained'
+              loading={isExporting}
+              startIcon={<FontAwesomeIcon icon={faFileExcel} />}
+              sx={{ ml: 2 }}
+            >
+              Excel
+            </LoadingButton>
           )}
-        </Stack>
+        </Box>
       </DialogTitle>
-      <Grid container>
-        <Grid size={10}>
-          <Tabs value={tab} onChange={(_, v) => setTab(v)}>
-            <Tab label='PDF' />
-            <Tab label='On Screen' />
-          </Tabs>
-        </Grid>
-        <Grid size={2}>
-          <LoadingButton
-            size='small'
-            onClick={() => handleExcelExport(exportedData)}
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              padding: '4px',
-              gap: 1,
-            }}
-            color='success'
-            variant='contained'
-            loading={isExporting}
-          >
-            <FontAwesomeIcon icon={faFileExcel} color='white' />
-            Excel
-          </LoadingButton>
+      
+      {/* Tabs Row */}
+      <Grid container alignItems='center' sx={{ px: 3, pb: 1 }}>
+        <Grid item>
+          {belowLargeScreen && (
+            <Tabs value={tab} onChange={(_, v) => setTab(v)}>
+              <Tab label='PDF' />
+              <Tab label='On Screen' />
+            </Tabs>
+          )}
         </Grid>
       </Grid>
+
       <DialogContent>
         {tab === 0 ? (
           <PDFContent
@@ -216,12 +222,14 @@ function BudgetsDocumentDialog({
             }
           />
         ) : (
-          <BudgetsOnscreen
-            organization={organization}
-            budgetDetails={budgetDetails}
-            baseCurrency={baseCurrency}
-            withDetails={withDetails}
-          />
+          belowLargeScreen && (
+            <BudgetsOnscreen
+              organization={organization}
+              budgetDetails={budgetDetails}
+              baseCurrency={baseCurrency}
+              withDetails={withDetails}
+            />
+          )
         )}
       </DialogContent>
       {!belowLargeScreen && (
@@ -364,24 +372,29 @@ function BudgetsAccordionDetails({ budget, expanded }) {
                 })}
               </Typography>
             </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Typography variant='subtitle1' color='textSecondary'>
-                Percentage Spent
-              </Typography>
-              <Typography variant='h5'>
-                {totalBudgetedAmount
-                  ? ((totalSpentAmount / totalBudgetedAmount) * 100).toFixed(2)
-                  : 0}
-                %
-              </Typography>
-              <Button
-                size='small'
-                sx={{ mt: 1 }}
-                variant='outlined'
-                onClick={() => setOpenBudgetsDialog(true)}
-              >
-                View Details
-              </Button>
+            <Grid size={{ xs: 12, md: 3 }} container alignItems='center'>
+              <Grid size={{ xs: 11, md: 11 }}>
+                <Typography variant='subtitle1' color='textSecondary'>
+                  Percentage Spent
+                </Typography>
+                <Typography variant='h5'>
+                  {totalBudgetedAmount
+                    ? ((totalSpentAmount / totalBudgetedAmount) * 100).toFixed(2)
+                    : 0}
+                  %
+                </Typography>
+              </Grid>
+            </Grid>
+            <Grid size={{ xs: 12, md: 1 }} display='flex' justifyContent='flex-end'>
+              <Tooltip title='View Budget Details'>
+                <IconButton
+                  size='small'
+                  sx={{ mt: 1 }}
+                  onClick={() => setOpenBudgetsDialog(true)}
+                >
+                  <VisibilityOutlined fontSize='small' />
+                </IconButton>
+              </Tooltip>
             </Grid>
           </Grid>
           {/* Budgets Document Dialog */}
