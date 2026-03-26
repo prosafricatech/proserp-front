@@ -92,8 +92,6 @@ const ReportDocument = ({ reportData, authOrganization, user }) => {
                   style={{
                     ...pdfStyles.tableHeader,
                     flex: 1,
-                    backgroundColor: mainColor,
-                    color: contrastText,
                   }}
                 >
                   <Text style={pdfStyles.tableCellText}>
@@ -114,8 +112,6 @@ const ReportDocument = ({ reportData, authOrganization, user }) => {
                             <View
                               style={{
                                 ...pdfStyles.tableHeader,
-                                backgroundColor: mainColor,
-                                color: contrastText,
                                 marginTop: 2,
                                 flex: 1,
                               }}
@@ -133,7 +129,7 @@ const ReportDocument = ({ reportData, authOrganization, user }) => {
                             style={{
                               ...pdfStyles.tableRow,
                               marginLeft: 5,
-                              backgroundColor: i % 2 !== 0 && lightColor,
+                              // backgroundColor: i % 2 !== 0 && lightColor,
                             }}
                           >
                             {lg.amount !== 0 && (
@@ -169,8 +165,6 @@ const ReportDocument = ({ reportData, authOrganization, user }) => {
                           <View
                             style={{
                               ...pdfStyles.tableRow,
-                              backgroundColor: mainColor,
-                              color: contrastText,
                             }}
                           >
                             <View
@@ -208,7 +202,7 @@ const ReportDocument = ({ reportData, authOrganization, user }) => {
                           <View
                             style={{
                               ...pdfStyles.tableRow,
-                              backgroundColor: group.id % 2 !== 0 && lightColor,
+                              // backgroundColor: group.id % 2 !== 0 && lightColor,
                             }}
                           >
                             <View style={{ ...pdfStyles.tableCell, flex: 1 }}>
@@ -239,8 +233,6 @@ const ReportDocument = ({ reportData, authOrganization, user }) => {
               <View
                 style={{
                   ...pdfStyles.tableRow,
-                  backgroundColor: mainColor,
-                  color: contrastText,
                   marginTop: 2,
                 }}
               >
@@ -266,8 +258,6 @@ const ReportDocument = ({ reportData, authOrganization, user }) => {
         <View
           style={{
             ...pdfStyles.tableRow,
-            backgroundColor: mainColor,
-            color: contrastText,
             marginTop: 5,
           }}
         >
