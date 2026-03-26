@@ -64,7 +64,7 @@ export async function exportbudgetItemsDetailsExcel(exportedData: any) {
 
     // column widths
     const baseColumns = [
-      { width: 25 },
+      { width: 10 },
       { width: 45 },
       { width: 25 },
       { width: 25 },
@@ -76,14 +76,14 @@ export async function exportbudgetItemsDetailsExcel(exportedData: any) {
     ws.columns = baseColumns;
 
     // header section
-    ws.addRow([organization.name, ' ', 'Budget Details']);
-    ws.addRow([' ', ' ', budgetDetails.name || 'Unnamed Budget']);
+    ws.addRow([' ', organization.name, ' ', 'Budget Details']);
+    ws.addRow([' ', ' ', ' ', budgetDetails.name || 'Unnamed Budget']);
 
-    ws.getCell('A1').font = {
+    ws.getCell('B1').font = {
       bold: true,
       size: 12,
     };
-    ws.getCell('C1').font = {
+    ws.getCell('D1').font = {
       bold: true,
       size: 12,
     };
@@ -92,21 +92,23 @@ export async function exportbudgetItemsDetailsExcel(exportedData: any) {
 
     // info section
     const infoHeaderRow = ws.addRow([
+      ' ',
       'Total Budgeted',
       'Total Spent',
       'Percentage Spent',
     ]);
     const infoDataRow = ws.addRow([
+      ' ',
       formatCurrency(totalBudgetedAmount, baseCurrency?.code),
       formatCurrency(totalSpentAmount, baseCurrency?.code),
       percentageSpent / 100,
     ]);
-    ws.getCell(`C5`).numFmt = '0.00%';
-    ws.getCell(`C5`).alignment = {
+    ws.getCell(`D5`).numFmt = '0.00%';
+    ws.getCell(`D5`).alignment = {
       horizontal: 'left',
     };
 
-    for (let c = 0; c < 3; c++) {
+    for (let c = 0; c < 4; c++) {
       for (let r = 4; r < 6; r++) {
         if (r === 4) {
           ws.getCell(`${String.fromCharCode(65 + c)}${r}`).font = {
@@ -271,32 +273,54 @@ export async function exportbudgetItemsDetailsExcel(exportedData: any) {
 
           if (taskLabel && item.description) {
             ws.getRow(ledgerItemsTableRow + index).height = 80;
-            ws.getCell(`B${ledgerItemsTableRow + index}`).value =
-              `${ledgerName}\n${`bound to\n${taskLabel}`}\n${item.description ?? ` `}`;
-            ws.getCell(`B${ledgerItemsTableRow + index}`).alignment = {
-              wrapText: true,
-              vertical: 'middle',
-              horizontal: 'left',
+            ws.getCell(`B${ledgerItemsTableRow + index}`).value = {
+              richText: [
+                { text: `${ledgerName}\n` },
+
+                ...(taskLabel
+                  ? [
+                      { text: 'bound to\n', font: { bold: true } },
+                      { text: `${taskLabel}\n` },
+                    ]
+                  : []),
+
+                { text: `(${item.description})` },
+              ],
             };
           } else if (taskLabel || item.description) {
             if (taskLabel) {
-              ws.getCell(`B${ledgerItemsTableRow + index}`).value =
-                `${ledgerName}\n${`bound to\n${taskLabel}`}`;
+              ws.getCell(`B${ledgerItemsTableRow + index}`).value = {
+                richText: [
+                  { text: `${ledgerName}\n` },
+
+                  ...(taskLabel
+                    ? [
+                        { text: 'bound to:\n', font: { bold: true } },
+                        { text: `${taskLabel}\n` },
+                      ]
+                    : []),
+                ],
+              };
             }
             if (item.description) {
-              ws.getCell(`B${ledgerItemsTableRow + index}`).value =
-                `${ledgerName}\n${item.description ?? ` `}`;
+              ws.getCell(`B${ledgerItemsTableRow + index}`).value = {
+                richText: [
+                  { text: `${ledgerName}\n` },
+                  { text: `(${item.description})` },
+                ],
+              };
             }
             ws.getRow(ledgerItemsTableRow + index).height = 50;
-            ws.getCell(`B${ledgerItemsTableRow + index}`).alignment = {
-              wrapText: true,
-              vertical: 'middle',
-              horizontal: 'left',
-            };
           } else {
             ws.getCell(`B${ledgerItemsTableRow + index}`).value =
               `${ledgerName}`;
           }
+
+          ws.getCell(`B${ledgerItemsTableRow + index}`).alignment = {
+            wrapText: true,
+            vertical: 'middle',
+            horizontal: 'left',
+          };
 
           for (let itemCell = 0; itemCell < 5; itemCell++) {
             if (itemCell === 0) {
@@ -392,31 +416,46 @@ export async function exportbudgetItemsDetailsExcel(exportedData: any) {
 
           if (taskLabel && item.description) {
             ws.getRow(productsTableRow + index).height = 80;
-            ws.getCell(`B${productsTableRow + index}`).value =
-              `${productName}\n${`bound to\n${taskLabel}`}\n${item.description ?? ` `}`;
-            ws.getCell(`B${productsTableRow + index}`).alignment = {
-              wrapText: true,
-              vertical: 'middle',
-              horizontal: 'left',
+            ws.getCell(`B${productsTableRow + index}`).value = {
+              richText: [
+                { text: `${productName}\n` },
+                ...(taskLabel
+                  ? [
+                      { text: 'bound to:\n', font: { bold: true } },
+                      { text: `${taskLabel}\n` },
+                    ]
+                  : []),
+
+                { text: '(' + item.description + ')' },
+              ],
             };
           } else if (taskLabel || item.description) {
             if (taskLabel) {
-              ws.getCell(`B${productsTableRow + index}`).value =
-                `${productName}\n${`bound to\n${taskLabel}`}`;
+              ws.getCell(`B${productsTableRow + index}`).value = {
+                richText: [
+                  { text: `${productName}\n` },
+                  ...(taskLabel
+                    ? [
+                        { text: 'bound to:\n', font: { bold: true } },
+                        { text: `${taskLabel}\n` },
+                      ]
+                    : []),
+                ],
+              };
             }
             if (item.description) {
               ws.getCell(`B${productsTableRow + index}`).value =
-                `${productName}\n${item.description ?? ` `}`;
+                `${productName}\n(${item.description})`;
             }
             ws.getRow(productsTableRow + index).height = 50;
-            ws.getCell(`B${productsTableRow + index}`).alignment = {
-              wrapText: true,
-              vertical: 'middle',
-              horizontal: 'left',
-            };
           } else {
             ws.getCell(`B${productsTableRow + index}`).value = `${productName}`;
           }
+          ws.getCell(`B${productsTableRow + index}`).alignment = {
+            wrapText: true,
+            vertical: 'middle',
+            horizontal: 'left',
+          };
 
           for (let itemCell = 0; itemCell < 5; itemCell++) {
             if (itemCell === 0) {
@@ -455,14 +494,13 @@ export async function exportbudgetItemsDetailsExcel(exportedData: any) {
         ws.getRow(subcontractsTableRow + 1).values = [
           'S/N',
           'Task Name',
-          'Description',
           'Expense Name',
           'Quantity',
           'Rate',
           'Amount',
         ];
         ws.getRow(subcontractsTableRow + 1).height = 20;
-        for (let headerCell = 0; headerCell < 7; headerCell++) {
+        for (let headerCell = 0; headerCell < 6; headerCell++) {
           ws.getCell(
             `${String.fromCharCode(65 + headerCell)}${subcontractsTableRow + 1}`
           ).font = {
@@ -487,12 +525,9 @@ export async function exportbudgetItemsDetailsExcel(exportedData: any) {
 
         subcontractsTableRow += 2;
         subcontract_task_items.forEach((item: any, index: any) => {
-          const productName =
-            item.product_name || item.product?.name || String(item.id);
-          const boundToTask = allTasks?.find(
-            (task: any) => task.id === item?.budget_itemable_id
-          );
-          const taskLabel = boundToTask ? getTaskLabel(boundToTask) : null;
+          const name =
+            item.project_task?.name || item.project_task?.label || '';
+          const description = item.description || '';
 
           const quantity = Number(item.quantity || 0);
           const unitSymbol = item.project_task?.measurement_unit?.symbol || '';
@@ -505,22 +540,33 @@ export async function exportbudgetItemsDetailsExcel(exportedData: any) {
 
           ws.getRow(subcontractsTableRow + index).values = [
             index + 1,
-            item.project_task?.name || item.project_task?.label || '',
-            item.description || '',
+            ' ',
             item.expense_ledger?.name || '',
             `${quantity} ${unitSymbol}`,
             `${formatCurrency(rate, currencyCode)}`,
             `${formatCurrency(amount, currencyCode)}`,
           ];
+          if (item.description) {
+            ws.getCell(`B${subcontractsTableRow + index}`).value =
+              `${name}\n(${description})`;
+          } else {
+            ws.getCell(`B${subcontractsTableRow + index}`).value = `${name}`;
+          }
 
-          for (let itemCell = 0; itemCell < 7; itemCell++) {
+          ws.getCell(`B${subcontractsTableRow + index}`).alignment = {
+            wrapText: true,
+            vertical: 'middle',
+            horizontal: 'left',
+          };
+
+          for (let itemCell = 0; itemCell < 6; itemCell++) {
             if (itemCell === 0) {
               ws.getCell(
                 `${String.fromCharCode(65 + itemCell)}${subcontractsTableRow + index}`
               ).alignment = {
                 horizontal: 'left',
               };
-            } else if (itemCell > 3) {
+            } else if (itemCell > 2) {
               ws.getCell(
                 `${String.fromCharCode(65 + itemCell)}${subcontractsTableRow + index}`
               ).alignment = {
