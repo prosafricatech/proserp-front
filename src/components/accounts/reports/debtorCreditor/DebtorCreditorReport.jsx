@@ -10,7 +10,6 @@ import { Div, Span } from '@jumbo/shared';
 import { HighlightOff } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 import {
-  Dialog,
   DialogContent,
   DialogTitle,
   FormControl,
@@ -301,7 +300,7 @@ function DebtorCreditorReport({ setOpenDebtorsCreditorsDialog }) {
   const downloadFileName = `${reportData?.debtors ? 'Debtors Report' : 'Creditors Report'} ${readableDate(reportData?.filters?.as_at)}`;
 
   return (
-    <Dialog open fullScreen={belowLargeScreen}>
+    <>
       <DialogTitle textAlign={'center'}>
         <Grid container>
           <Grid size={12} textAlign={'center'}>
@@ -471,7 +470,7 @@ function DebtorCreditorReport({ setOpenDebtorsCreditorsDialog }) {
           )
         )}
       </DialogContent>
-    </Dialog>
+    </>
   );
 }
 

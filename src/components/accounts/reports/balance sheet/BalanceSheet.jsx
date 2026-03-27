@@ -1,8 +1,11 @@
+'use client';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import useProsERPStyles from '@/app/helpers/style-helpers';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { Div, Span } from '@jumbo/shared';
+import { HighlightOff } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 import {
   DialogContent,
@@ -11,11 +14,14 @@ import {
   FormControlLabel,
   FormLabel,
   Grid,
+  IconButton,
   LinearProgress,
   Radio,
   RadioGroup,
   Stack,
+  Tooltip,
   Typography,
+  useMediaQuery,
 } from '@mui/material';
 import { DateTimePicker } from '@mui/x-date-pickers';
 import { Document, Page, Text, View } from '@react-pdf/renderer';
@@ -287,7 +293,7 @@ const ReportDocument = ({ reportData, authOrganization, user }) => {
   );
 };
 
-function BalanceSheet({ as_at }) {
+function BalanceSheet({ as_at, setOpenBalanceSheettDialog }) {
   document.title = 'Balance Sheet';
   const css = useProsERPStyles();
   const [displayAs, setDisplayAs] = useState('on screen');
@@ -302,6 +308,9 @@ function BalanceSheet({ as_at }) {
   const [isDownloadingTemplate, setIsDownloadingTemplate] =
     React.useState(false);
   const [uploadFieldsKey, setUploadFieldsKey] = useState(0);
+
+  const { theme } = useJumboTheme();
+  const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
   const validationSchema = yup.object({
     as_at: yup
@@ -380,6 +389,17 @@ function BalanceSheet({ as_at }) {
           <Grid size={{ xs: 12 }}>
             <Typography variant='h3'>Balance Sheet</Typography>
           </Grid>
+          {belowLargeScreen && (
+            <Tooltip title='Close'>
+              <IconButton
+                size='small'
+                sx={{ position: 'absolute', top: 10, right: 10 }}
+                onClick={() => setOpenBalanceSheettDialog(false)}
+              >
+                <HighlightOff color='primary' />
+              </IconButton>
+            </Tooltip>
+          )}
         </Grid>
         <Span className={css.hiddenOnPrint}>
           <form

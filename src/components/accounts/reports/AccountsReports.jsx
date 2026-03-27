@@ -74,9 +74,20 @@ function AccountsReports() {
         <Dialog
           scroll={belowLargeScreen ? 'body' : 'paper'}
           fullWidth
-          maxWidth={openCashierReport || openIncomeStatement ? 'lg' : 'md'}
+          maxWidth={
+            openCashierReport ||
+            openIncomeStatement ||
+            openDialog ||
+            openTrialBalance
+              ? 'lg'
+              : 'md'
+          }
           fullScreen={
-            (openBalanceSheet || openCashierReport || openIncomeStatement) &&
+            (openBalanceSheet ||
+              openCashierReport ||
+              openIncomeStatement ||
+              openDialog ||
+              openTrialBalance) &&
             belowLargeScreen
           }
           open={
@@ -89,8 +100,8 @@ function AccountsReports() {
           }
         >
           {report}
-          {!openCashierReport && (
-            <DialogActions className={css.hiddenOnPrint}>
+          <DialogActions className={css.hiddenOnPrint}>
+            {!belowLargeScreen && (
               <Button
                 sx={{ m: 1 }}
                 size='small'
@@ -106,8 +117,8 @@ function AccountsReports() {
               >
                 Close
               </Button>
-            </DialogActions>
-          )}
+            )}
+          </DialogActions>
         </Dialog>
         <Typography variant={'h4'} mb={2}>
           Financial Reports
@@ -149,7 +160,11 @@ function AccountsReports() {
               p={1}
               textAlign={'center'}
               onClick={() => {
-                setReport(<IncomeStatement />);
+                setReport(
+                  <IncomeStatement
+                    setOpenIncomeStatementDialog={setOpenIncomeStatement}
+                  />
+                );
                 setOpenIncomeStatement(true);
               }}
             >
@@ -189,7 +204,11 @@ function AccountsReports() {
               p={1}
               textAlign={'center'}
               onClick={() => {
-                setReport(<BalanceSheet />);
+                setReport(
+                  <BalanceSheet
+                    setOpenBalanceSheettDialog={setOpenBalanceSheet}
+                  />
+                );
                 setOpenBalanceSheet(true);
               }}
             >
