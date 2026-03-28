@@ -8,6 +8,8 @@ import { useSpinner } from '@/shared/ProgressIndicators/SpinnerContext';
 import { useRouter, usePathname } from 'next/navigation';
 import { staticMenuItems } from '@/utilities/constants/static-menu-items';
 
+import { entityConfigs } from './entityConfigs';
+
 type SearchGlobalProps = {
   wrapperSx?: SxProps<Theme>;
   sx?: SxProps<Theme>;
@@ -18,46 +20,12 @@ type SearchResult = {
   label: string;
   type: string;
   url: string;
+  description?: string;
 };
-
-const entityConfigs = [
-  {
-    type: 'employee',
-    label: 'Employee',
-    endpoint: '/api/humanResources/employees',
-    getResults: (data: any) => (Array.isArray(data?.results) ? data.results.map((item: any) => ({
-      id: item.id,
-      label: item.name || item.fullName || item.email,
-      type: 'Employee',
-      url: `/humanResources/employees/${item.id}`,
-    })) : []),
-  },
-  {
-    type: 'user',
-    label: 'User',
-    endpoint: '/api/sharedComponents/getUsers',
-    getResults: (data: any) => (Array.isArray(data?.results) ? data.results.map((item: any) => ({
-      id: item.id,
-      label: item.name || item.fullName || item.email,
-      type: 'User',
-      url: `/users/${item.id}`,
-    })) : []),
-  },
-  {
-    type: 'department',
-    label: 'Department',
-    endpoint: '/api/humanResources/departments',
-    getResults: (data: any) => (Array.isArray(data?.results) ? data.results.map((item: any) => ({
-      id: item.id,
-      label: item.name,
-      type: 'Department',
-      url: `/humanResources/departments/${item.id}`,
-    })) : []),
-  },
-];
 
 const SearchGlobal = ({ wrapperSx, sx }: SearchGlobalProps) => {
   const [query, setQuery] = React.useState('');
+  const [searchValue, setSearchValue] = React.useState('');
   const [loading, setLoading] = React.useState(false);
   const [results, setResults] = React.useState<SearchResult[]>([]);
   const [open, setOpen] = React.useState(false);
@@ -66,8 +34,9 @@ const SearchGlobal = ({ wrapperSx, sx }: SearchGlobalProps) => {
   const pathname = usePathname();
   const inputRef = React.useRef<HTMLInputElement>(null);
 
+  // Debounced search effect
   React.useEffect(() => {
-    if (!query) {
+    if (!searchValue) {
       setResults([]);
       setOpen(false);
       return;
@@ -75,9 +44,8 @@ const SearchGlobal = ({ wrapperSx, sx }: SearchGlobalProps) => {
     setLoading(true);
     setOpen(true);
 
-    // Static page search
     const pageMatches: SearchResult[] = staticMenuItems
-      .filter(page => page.label.toLowerCase().includes(query.toLowerCase()))
+      .filter(page => page.label.toLowerCase().includes(searchValue.toLowerCase()))
       .map(page => ({
         id: page.uri,
         label: page.label,
@@ -85,40 +53,65 @@ const SearchGlobal = ({ wrapperSx, sx }: SearchGlobalProps) => {
         url: page.uri,
       }));
 
-    // Search all entities in parallel
     Promise.all(
-      entityConfigs.map(async (entity) => {
-        const url = `${entity.endpoint}?keyword=${encodeURIComponent(query)}&limit=5`;
-        try {
-          const res = await fetch(url);
-          if (!res.ok) return [];
-          const data = await res.json();
-          return entity.getResults(data);
-        } catch {
-          return [];
-        }
-      })
+      entityConfigs.map(async (entity) => entity.search(searchValue))
     ).then((allResults) => {
       setResults([...pageMatches, ...allResults.flat()]);
       setLoading(false);
     });
+  }, [searchValue]);
+
+  // Debounce input
+  React.useEffect(() => {
+    if (!query) {
+      setSearchValue('');
+      return;
+    }
+    const handler = setTimeout(() => {
+      setSearchValue(query);
+    }, 400);
+    return () => clearTimeout(handler);
   }, [query]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(e.target.value);
   };
 
+  // Search immediately on Enter
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      setSearchValue(query);
+    }
+  };
+
   const handleResultClick = (result: SearchResult) => {
-    setShow(true);
-    if (result.type === 'Page') {
-      try {
-        router.push(result.url);
-      } catch (e) {
-        console.error('router.push failed:', e, 'Falling back to window.location.assign');
-        window.location.assign(result.url);
+    // Parse the result.url and add/replace the search param with the clicked label
+    let url = result.url;
+    try {
+      const urlObj = new URL(url, window.location.origin);
+      urlObj.searchParams.set('search', result.label);
+      url = urlObj.pathname + urlObj.search;
+    } catch (e) {
+      // fallback: if URL parsing fails, append/replace manually
+      if (url.includes('?')) {
+        url = url.replace(/([?&])search=[^&]*/, `$1search=${encodeURIComponent(result.label)}`);
+        if (!/([?&])search=/.test(url)) {
+          url += `&search=${encodeURIComponent(result.label)}`;
+        }
+      } else {
+        url += `?search=${encodeURIComponent(result.label)}`;
       }
     }
-    // Optionally, handle other types (entities) here
+    // Only show spinner if navigating to a different route (including search params)
+    if (window.location.pathname + window.location.search !== url) {
+      setShow(true);
+    }
+    try {
+      router.push(url);
+    } catch (e) {
+      console.error('router.push failed:', e, 'Falling back to window.location.assign');
+      window.location.assign(url);
+    }
   };
 
   // Hide spinner after route change (client-side navigation)
@@ -155,6 +148,7 @@ const SearchGlobal = ({ wrapperSx, sx }: SearchGlobalProps) => {
           sx={sx ?? {}}
           value={query}
           onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
           onFocus={() => query && setOpen(true)}
           inputRef={inputRef}
         />
@@ -192,12 +186,22 @@ const SearchGlobal = ({ wrapperSx, sx }: SearchGlobalProps) => {
                 >
                   <ListItemText
                     primary={result.label}
+                    secondary={result.description || result.type}
                     primaryTypographyProps={{
                       sx: {
                         color: (theme) =>
                           theme.type === 'dark'
                             ? 'white'
                             : 'inherit',
+                      },
+                    }}
+                    secondaryTypographyProps={{
+                      sx: {
+                        color: (theme) =>
+                          theme.type === 'dark'
+                            ? 'rgba(255,255,255,0.7)'
+                            : 'text.secondary',
+                        fontSize: 13,
                       },
                     }}
                   />
