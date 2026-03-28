@@ -172,7 +172,7 @@ function BalanceSheetTrend() {
         fullScreen={smallScreen}
         maxWidth="md"
       >
-        <BalanceSheet as_at={to} />
+        <BalanceSheet as_at={to} setOpenBalanceSheettDialog={setOpenDialog} />
         <DialogActions>
           <Button size="small" variant="outlined" onClick={() => setOpenDialog(false)}>
             Close

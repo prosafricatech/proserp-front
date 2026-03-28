@@ -6,7 +6,6 @@ import {
 } from '@jumbo/components/JumboLayout/hooks';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { SIDEBAR_STYLES } from '@jumbo/utilities/constants';
-// import { TranslationPopover } from '@/components/translationPopover';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -17,6 +16,7 @@ import React from 'react';
 import { Logo } from '../logo/Logo';
 import { SidebarToggleButton } from '../sidebarToggleButton';
 import { Search } from './search';
+import { SearchGlobal } from '@/components/searchGlobal';
 import { ThemeModeOption } from './themeModeOptions/ThemeModeOption';
 
 const AuthUserPopover = dynamic(
@@ -39,10 +39,6 @@ function Header({ dictionary }: { dictionary: any }) {
     theme.breakpoints.down(headerOptions?.drawerBreakpoint ?? 'xl')
   );
   const smallScreen = useMediaQuery(theme.breakpoints.down('md'));
-
-  const handleSearchVisibility = React.useCallback((value: boolean) => {
-    setSearchVisibility(value);
-  }, []);
 
   const handleGoBack = React.useCallback(() => {
     router.back();
@@ -173,11 +169,11 @@ function Header({ dictionary }: { dictionary: any }) {
       {isSidebarStyle(SIDEBAR_STYLES.CLIPPED_UNDER_HEADER) && !isBelowLg && (
         <Logo sx={{ mr: 3, minWidth: 150 }} mode={theme.type} />
       )}
-      <Search show={searchVisibility} onClose={handleSearchVisibility} />
-      <Stack direction='row' alignItems='center' gap={1.25} sx={{ ml: 'auto' }}>
+      {/* Always show global search in header */}
+      <Stack direction='row' alignItems='center' gap={1.25} sx={{ ml: 'auto', minWidth: 320 }}>
+        <SearchGlobal sx={{ maxWidth: 320, minWidth: 200 }} />
         <ThemeModeOption />
         {/* <TranslationPopover /> */}
-        {/* <SearchIconButtonOnSmallScreen onClick={handleSearchVisibility} /> */}
         {/* <NotificationsPopover /> */}
         <AuthUserPopover dictionary={dictionary} />
       </Stack>
