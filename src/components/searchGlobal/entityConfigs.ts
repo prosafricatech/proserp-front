@@ -17,6 +17,88 @@ const deepEntityTypes = [
 
 // Add generic configs for all static menu items not already covered
 const reportConfigs = [
+  // Fuel Station Reports
+  {
+    type: 'report',
+    label: 'Dipping Report',
+    search: async (query: string) => {
+      if ('dipping report'.includes(query.toLowerCase()) || query.toLowerCase().includes('dipping report')) {
+        return [{
+          id: 'fuel-dipping-report',
+          label: 'Dipping Report',
+          type: 'Fuel Station Report',
+          url: '/en-US/fuelStations/reports?report=dipping-report',
+          description: 'Fuel Station Report',
+        }];
+      }
+      return [];
+    },
+  },
+  {
+    type: 'report',
+    label: 'FV Report',
+    search: async (query: string) => {
+      if ('fv report'.includes(query.toLowerCase()) || query.toLowerCase().includes('fv report') || query.toLowerCase().includes('fuel vouchers report')) {
+        return [{
+          id: 'fuel-fv-report',
+          label: 'FV Report',
+          type: 'Fuel Station Report',
+          url: '/en-US/fuelStations/reports?report=fv-report',
+          description: 'Fuel Station Report',
+        }];
+      }
+      return [];
+    },
+  },
+  // POS Reports (SalesReports)
+  {
+    type: 'report',
+    label: 'Cashier Report (POS)',
+    search: async (query: string) => {
+      if ('cashier report'.includes(query.toLowerCase()) || query.toLowerCase().includes('cashier report')) {
+        return [{
+          id: 'pos-cashier-report',
+          label: 'Cashier Report',
+          type: 'POS Report',
+          url: '/en-US/pos/reports?report=cashier-report',
+          description: 'POS Sales Report',
+        }];
+      }
+      return [];
+    },
+  },
+  {
+    type: 'report',
+    label: 'Sales Manifest',
+    search: async (query: string) => {
+      if ('sales manifest'.includes(query.toLowerCase()) || query.toLowerCase().includes('sales manifest')) {
+        return [{
+          id: 'pos-sales-manifest',
+          label: 'Sales Manifest',
+          type: 'POS Report',
+          url: '/en-US/pos/reports?report=sales-manifest',
+          description: 'POS Sales Report',
+        }];
+      }
+      return [];
+    },
+  },
+  {
+    type: 'report',
+    label: 'Sales & Cash Summary',
+    search: async (query: string) => {
+      if ('sales & cash summary'.includes(query.toLowerCase()) || query.toLowerCase().includes('sales & cash summary') || query.toLowerCase().includes('sales and cash summary')) {
+        return [{
+          id: 'pos-sales-cash-summary',
+          label: 'Sales & Cash Summary',
+          type: 'POS Report',
+          url: '/en-US/pos/reports?report=sales-cash-summary',
+          description: 'POS Sales Report',
+        }];
+      }
+      return [];
+    },
+  },
   {
     type: 'report',
     label: 'Trial Balance',
