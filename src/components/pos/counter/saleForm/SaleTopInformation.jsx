@@ -42,7 +42,7 @@ function SaleTopInformation() {
                         label='Transaction Date'
                         fullWidth
                         readOnly={majorInfoOnly}
-                        minDate={checkOrganizationPermission(PERMISSIONS.SALES_BACKDATE) ? dayjs(organization.recording_start_date) : dayjs().startOf('day')}
+                        minDate={checkOrganizationPermission(PERMISSIONS.SALES_BACKDATE) ? dayjs(organization?.recording_start_date) : dayjs().startOf('day')}
                         maxDate={checkOrganizationPermission(PERMISSIONS.SALES_POSTDATE) ? dayjs().add(10,'year').endOf('year') : dayjs().endOf('day')}
                         defaultValue={transaction_date}
                         slotProps={{
