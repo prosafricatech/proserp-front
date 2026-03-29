@@ -5,7 +5,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {DateTimePicker} from '@mui/x-date-pickers';
 import {EventAvailableOutlined,FilterAltOffOutlined,FilterAltOutlined} from '@mui/icons-material';
 import dayjs, { Dayjs } from 'dayjs';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import JumboListToolbar from '@jumbo/components/JumboList/components/JumboListToolbar';
 import JumboRqList from '@jumbo/components/JumboReactQuery/JumboRqList';
 import JumboSearch from '@jumbo/components/JumboSearch';
@@ -41,6 +41,7 @@ interface FilterDate {
 
 const TransactionsList: React.FC = () => {
     const params = useParams<{ category?: string; id?: string; keyword?: string }>();
+    const searchParams = useSearchParams();
     const listRef = useRef<any>(null);
     const [openFilters, setOpenFilters] = useState(false);
     const [mounted, setMounted] = useState(false);
@@ -136,8 +137,8 @@ const TransactionsList: React.FC = () => {
       queryKey: "transactions",
       queryParams: {
         id: params.id,
-        keyword: '',
-        type: defaultType,
+        keyword: searchParams?.get('search') || '',
+        type: (searchParams?.get('type') as TransactionTypes) || defaultType,
         cost_center_ids: authOrganization?.costCenters?.map((cost_center: CostCenter) => cost_center.id)
       },
       countKey: "total",
@@ -146,13 +147,15 @@ const TransactionsList: React.FC = () => {
 
     useEffect(() => {
       setQueryOptions(prev => ({
-      ...prev,
-      queryParams: {
-        ...prev.queryParams,
-        id: params.id
-      }
+        ...prev,
+        queryParams: {
+          ...prev.queryParams,
+          id: params.id,
+          keyword: searchParams?.get('search') || '',
+          type: (searchParams?.get('type') as TransactionTypes) || defaultType,
+        }
       }));
-    }, [params.id]);
+    }, [params, searchParams, defaultType]);
 
     useEffect(() => {
       setQueryOptions(prev => ({

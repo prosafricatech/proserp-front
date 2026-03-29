@@ -26,7 +26,7 @@ const Projects = () => {
 
     const [queryOptions, setQueryOptions] = useState({
       queryKey: 'projects',
-      queryParams: { id: params.id, keyword: '', },
+      queryParams: { id: params.id, keyword: searchParams?.get('search') || '', },
       countKey: 'total',
       dataKey: 'data',
     });

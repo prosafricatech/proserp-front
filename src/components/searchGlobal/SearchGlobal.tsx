@@ -5,7 +5,7 @@ import { SxProps, Theme, Paper, List, ListItem, ListItemText, CircularProgress, 
 import { Search, SearchIconWrapper, StyledInputBase } from './style';
 import React from 'react';
 import { useSpinner } from '@/shared/ProgressIndicators/SpinnerContext';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { staticMenuItems } from '@/utilities/constants/static-menu-items';
 
 import { entityConfigs } from './entityConfigs';
@@ -32,6 +32,7 @@ const SearchGlobal = ({ wrapperSx, sx }: SearchGlobalProps) => {
   const router = useRouter();
   const { setShow } = useSpinner();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   // Debounced search effect
@@ -114,11 +115,11 @@ const SearchGlobal = ({ wrapperSx, sx }: SearchGlobalProps) => {
     }
   };
 
-  // Hide spinner after route change (client-side navigation)
+  // Hide spinner after route or query param change (client-side navigation)
   React.useEffect(() => {
     setShow(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname]);
+  }, [pathname, searchParams?.toString()]);
 
   // Close dropdown on outside click
   React.useEffect(() => {
@@ -143,7 +144,7 @@ const SearchGlobal = ({ wrapperSx, sx }: SearchGlobalProps) => {
         </SearchIconWrapper>
         <StyledInputBase
           name='search-globally'
-          placeholder='Go to'
+          placeholder='Search anything'
           inputProps={{ 'aria-label': 'search' }}
           sx={sx ?? {}}
           value={query}

@@ -1,5 +1,6 @@
 'use client'
 
+import { useSearchParams } from 'next/navigation';
 import JumboCardQuick from '@jumbo/components/JumboCardQuick'
 import { InsightsOutlined, ShoppingCartOutlined } from '@mui/icons-material'
 import { Button, Dialog, DialogActions, Grid, Typography, useMediaQuery } from '@mui/material'
@@ -22,6 +23,7 @@ function ProcurementReports() {
   const [openDialog, setOpenDialog] = useState(false);
   const [report, setReport] = useState(null);
   const [mounted, setMounted] = useState(false);
+  const searchParams = useSearchParams();
 
   //Screen handling constants
   const {theme} = useJumboTheme();
@@ -32,6 +34,21 @@ function ProcurementReports() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Auto-open report dialog if ?report= param is present
+  useEffect(() => {
+    if (!mounted) return;
+    const reportParam = searchParams.get('report');
+    if (!reportParam) return;
+    if (reportParam === 'product-insights') {
+      setReport(<ProductInsights/>);
+      setOpenDialog(true);
+    } else if (reportParam === 'purchases-report') {
+      setReport(<PurchasesReport/>);
+      setOpenDialog(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mounted, searchParams]);
 
   if (!mounted) return null; // ⛔ Prevent mismatch during hydration
 
