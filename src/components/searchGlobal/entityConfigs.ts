@@ -720,10 +720,24 @@ const accountingConfigs = [
         const types = ['payments', 'receipts', 'journal_vouchers', 'debit', 'credit'];
         const menuItem = '/en-US/accounts/transactions';
         let allResults: any[] = [];
+
+        // If query matches a type, return a direct result for that type
+        const typeMatch = types.concat('transfers').find(type => type.replace('_', ' ').toLowerCase().includes(query.toLowerCase()) || query.toLowerCase().includes(type.replace('_', ' ')));
+        if (typeMatch) {
+          const label = typeMatch.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+          return [{
+            id: `type-${typeMatch}`,
+            label: label,
+            type: `Transaction Type`,
+            url: `${menuItem}?type=${typeMatch}`,
+            description: `Search all ${label}`,
+          }];
+        }
+
         // Fetch non-transfer types in parallel
         const fetches = types.map(async (type) => {
           const service = (await import('@/components/accounts/transactions/transactions-services')).default;
-          const data = await service.getList({ keyword: query, limit: 5, type });
+          const data = await service.getList({ keyword: query, limit: 10, type });
           let results: any[] = [];
           if (Array.isArray(data?.data)) {
             results = data.data.map((item: any) => ({
@@ -740,7 +754,7 @@ const accountingConfigs = [
         // Start fetching transfers in parallel, but don't block others
         const transferPromise = (async () => {
           const service = (await import('@/components/accounts/transactions/transactions-services')).default;
-          const data = await service.getList({ keyword: query, limit: 5, type: 'transfers' });
+          const data = await service.getList({ keyword: query, limit: 10, type: 'transfers' });
           let results: any[] = [];
           if (Array.isArray(data?.data)) {
             results = data.data.map((item: any) => ({

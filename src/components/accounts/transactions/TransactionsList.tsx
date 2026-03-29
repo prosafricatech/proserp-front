@@ -133,12 +133,19 @@ const TransactionsList: React.FC = () => {
 
     const defaultType = availableTypes[0]?.value ?? 'payments';
 
+    // If the search param is a transaction type and the keyword matches the type, clear the keyword
+    const transactionTypes = ['payments', 'receipts', 'journal_vouchers', 'transfers', 'debit', 'credit'];
+    const urlType = (searchParams?.get('type') as TransactionTypes) || defaultType;
+    let urlKeyword = searchParams?.get('search') || '';
+    if (transactionTypes.includes(urlType) && urlKeyword.toLowerCase().replace(/\s|_/g, '') === urlType.replace(/\s|_/g, '')) {
+      urlKeyword = '';
+    }
     const [queryOptions, setQueryOptions] = useState<QueryOptions>({
       queryKey: "transactions",
       queryParams: {
         id: params.id,
-        keyword: searchParams?.get('search') || '',
-        type: (searchParams?.get('type') as TransactionTypes) || defaultType,
+        keyword: urlKeyword,
+        type: urlType,
         cost_center_ids: authOrganization?.costCenters?.map((cost_center: CostCenter) => cost_center.id)
       },
       countKey: "total",
@@ -146,13 +153,18 @@ const TransactionsList: React.FC = () => {
     });
 
     useEffect(() => {
+      let urlType = (searchParams?.get('type') as TransactionTypes) || defaultType;
+      let urlKeyword = searchParams?.get('search') || '';
+      if (transactionTypes.includes(urlType) && urlKeyword.toLowerCase().replace(/\s|_/g, '') === urlType.replace(/\s|_/g, '')) {
+        urlKeyword = '';
+      }
       setQueryOptions(prev => ({
         ...prev,
         queryParams: {
           ...prev.queryParams,
           id: params.id,
-          keyword: searchParams?.get('search') || '',
-          type: (searchParams?.get('type') as TransactionTypes) || defaultType,
+          keyword: urlKeyword,
+          type: urlType,
         }
       }));
     }, [params, searchParams, defaultType]);
