@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useCounter } from './CounterProvider';
 import JumboRqList from '@jumbo/components/JumboReactQuery/JumboRqList/JumboRqList';
 import { Alert, Box, Grid, IconButton, LinearProgress, Tooltip } from '@mui/material';
@@ -46,6 +47,7 @@ const RqList: React.FC<RqListProps> = ({ activeCounter }) => {
   const listRef = React.useRef<any>(null);
   const { authOrganization, checkOrganizationPermission } = useJumboAuth();
   const [filterDate, setFilterDate] = useState<FilterDate>({});
+  const searchParams = useSearchParams();
 
   const [queryOptions, setQueryOptions] = useState<QueryOptions>({
     queryKey: "counterSales",
@@ -58,13 +60,19 @@ const RqList: React.FC<RqListProps> = ({ activeCounter }) => {
     dataKey: "data",
   });
 
+  // Autofill from global search
   useEffect(() => {
+    const searchValue = searchParams?.get('search') || '';
     setQueryOptions(state => ({
       ...state,
       queryKey: "counterSales",
-      queryParams: { ...state.queryParams, counterId: activeCounter?.id || '' }
+      queryParams: {
+        ...state.queryParams,
+        counterId: activeCounter?.id || '',
+        keyword: searchValue,
+      }
     }));
-  }, [activeCounter]);
+  }, [activeCounter, searchParams]);
 
   const renderSale = useCallback((sale: any) => {
     return <CounterSalesListItem sale={sale} />;
