@@ -1,12 +1,17 @@
 'use client';
 
 import SearchIcon from '@mui/icons-material/Search';
+import CloseIcon from '@mui/icons-material/Close';
 import { SxProps, Theme, Paper, List, ListItem, ListItemText, CircularProgress, Box } from '@mui/material';
 import { Search, SearchIconWrapper, StyledInputBase } from './style';
 import React from 'react';
 import { useSpinner } from '@/shared/ProgressIndicators/SpinnerContext';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+
 import { staticMenuItems } from '@/utilities/constants/static-menu-items';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
+import { MODULES } from '@/utilities/constants/modules';
 
 import { entityConfigs } from './entityConfigs';
 
@@ -35,7 +40,50 @@ const SearchGlobal = ({ wrapperSx, sx }: SearchGlobalProps) => {
   const searchParams = useSearchParams();
   const inputRef = React.useRef<HTMLInputElement>(null);
 
-  // Debounced search effect
+  // Permission/subscription requirements for static menu items (add more as needed)
+  const staticMenuPermissions: Record<string, { permissions?: string[]; orgPermissions?: string[]; modules?: string[] }> = {
+    'Sales Counter': { orgPermissions: [PERMISSIONS.SALES_READ], modules: [MODULES.POINT_OF_SALE] },
+    'Sales Shifts': { orgPermissions: [PERMISSIONS.FUEL_SALES_SHIFT_READ], modules: [MODULES.FUEL_STATION] },
+    'Requisitions': { orgPermissions: [PERMISSIONS.REQUISITIONS_READ], modules: [MODULES.PROCESS_APPROVAL] },
+    'Approvals': { orgPermissions: [PERMISSIONS.REQUISITIONS_READ], modules: [MODULES.PROCESS_APPROVAL] },
+    'Outlets': { orgPermissions: [PERMISSIONS.OUTLETS_READ], modules: [MODULES.POINT_OF_SALE] },
+    'Proformas': { orgPermissions: [PERMISSIONS.PROFORMA_INVOICES_READ], modules: [MODULES.POINT_OF_SALE] },
+    'POS Reports': { orgPermissions: [PERMISSIONS.SALES_REPORTS], modules: [MODULES.POINT_OF_SALE] },
+    'POS Price Lists': { orgPermissions: [PERMISSIONS.PRICE_LISTS_READ], modules: [MODULES.POINT_OF_SALE] },
+    'POS Settings': { orgPermissions: [PERMISSIONS.POS_SETTINGS], modules: [MODULES.POINT_OF_SALE] },
+    'Dippings': { orgPermissions: [PERMISSIONS.FUEL_SALES_SHIFT_READ], modules: [MODULES.FUEL_STATION] },
+    'Fuel Reports': { orgPermissions: [PERMISSIONS.FUEL_SALES_SHIFT_READ], modules: [MODULES.FUEL_STATION] },
+    'Stations': { orgPermissions: [PERMISSIONS.FUEL_STATIONS_READ], modules: [MODULES.FUEL_STATION] },
+    'Fuel Price Lists': { orgPermissions: [PERMISSIONS.PRICE_LISTS_READ], modules: [MODULES.FUEL_STATION] },
+    'Budgets': { orgPermissions: [PERMISSIONS.ACCOUNTS_MASTERS_READ], modules: [MODULES.ACCOUNTS_AND_FINANCE] },
+    'Ledger Groups': { orgPermissions: [PERMISSIONS.ACCOUNTS_MASTERS_READ], modules: [MODULES.ACCOUNTS_AND_FINANCE] },
+    'Ledgers': { orgPermissions: [PERMISSIONS.ACCOUNTS_MASTERS_READ], modules: [MODULES.ACCOUNTS_AND_FINANCE] },
+    'Cost Centers': { orgPermissions: [PERMISSIONS.ACCOUNTS_MASTERS_READ], modules: [MODULES.ACCOUNTS_AND_FINANCE] },
+    'Purchases': { orgPermissions: [PERMISSIONS.PURCHASES_READ], modules: [MODULES.PROCUREMENT_AND_SUPPLY] },
+    'Consumptions': { orgPermissions: [PERMISSIONS.INVENTORY_CONSUMPTIONS_READ], modules: [MODULES.PROCUREMENT_AND_SUPPLY] },
+    'Procurement Reports': { orgPermissions: [PERMISSIONS.PURCHASES_REPORTS], modules: [MODULES.PROCUREMENT_AND_SUPPLY] },
+    'Product Categories': { orgPermissions: [PERMISSIONS.PRODUCT_CATEGORIES_READ], modules: [MODULES.PROCUREMENT_AND_SUPPLY] },
+    'Products': { orgPermissions: [PERMISSIONS.PRODUCTS_READ], modules: [MODULES.PROCUREMENT_AND_SUPPLY] },
+    'Stores': { orgPermissions: [PERMISSIONS.STORES_READ], modules: [MODULES.PROCUREMENT_AND_SUPPLY] },
+    'Files Shelf': { orgPermissions: [PERMISSIONS.FILES_SHELF_BROWSE] },
+    'Stakeholders': { orgPermissions: [PERMISSIONS.STAKEHOLDERS_READ] },
+    'Currencies': { orgPermissions: [PERMISSIONS.ACCOUNTS_MASTERS_READ] },
+    'Measurement Units': { orgPermissions: [PERMISSIONS.MEASUREMENT_UNITS_READ] },
+    // Add more as needed
+  };
+
+  const { checkPermission, checkOrganizationPermission, organizationHasSubscribed } = useJumboAuth();
+
+  // Helper to check if user can access a menu item
+  const canAccessMenu = (label: string) => {
+    const req = staticMenuPermissions[label];
+    if (!req) return true; // If not specified, allow by default
+    if (req.permissions && !checkPermission(req.permissions)) return false;
+    if (req.orgPermissions && !checkOrganizationPermission(req.orgPermissions)) return false;
+    if (req.modules && !organizationHasSubscribed(req.modules)) return false;
+    return true;
+  };
+
   React.useEffect(() => {
     if (!searchValue) {
       setResults([]);
@@ -46,7 +94,9 @@ const SearchGlobal = ({ wrapperSx, sx }: SearchGlobalProps) => {
     setOpen(true);
 
     const pageMatches: SearchResult[] = staticMenuItems
-      .filter(page => page.label.toLowerCase().includes(searchValue.toLowerCase()))
+      .filter(page =>
+        page.label.toLowerCase().includes(searchValue.toLowerCase()) && canAccessMenu(page.label)
+      )
       .map(page => ({
         id: page.uri,
         label: page.label,
@@ -54,12 +104,26 @@ const SearchGlobal = ({ wrapperSx, sx }: SearchGlobalProps) => {
         url: page.uri,
       }));
 
-    Promise.all(
+    // Start with static results
+    setResults(pageMatches);
+
+    // Fetch each entity config individually and update results as they return
+    let isCancelled = false;
+    Promise.allSettled(
       entityConfigs.map(async (entity) => entity.search(searchValue))
     ).then((allResults) => {
-      setResults([...pageMatches, ...allResults.flat()]);
+      if (isCancelled) return;
+      const entityResults = allResults
+        .filter(r => r.status === 'fulfilled')
+        .map(r => (r as PromiseFulfilledResult<SearchResult[]>).value)
+        .flat();
+      // Filter all results (static and entity) by permissions/subscriptions
+      const combined = [...pageMatches, ...entityResults];
+      const filtered = combined.filter(result => canAccessMenu(result.label) || canAccessMenu(result.type));
+      setResults(filtered);
       setLoading(false);
     });
+    return () => { isCancelled = true; };
   }, [searchValue]);
 
   // Debounce input
@@ -138,7 +202,7 @@ const SearchGlobal = ({ wrapperSx, sx }: SearchGlobalProps) => {
 
   return (
     <Box sx={{ position: 'relative', ...wrapperSx }}>
-      <Search>
+      <Search style={{ position: 'relative' }}>
         <SearchIconWrapper>
           <SearchIcon />
         </SearchIconWrapper>
@@ -153,6 +217,34 @@ const SearchGlobal = ({ wrapperSx, sx }: SearchGlobalProps) => {
           onFocus={() => query && setOpen(true)}
           inputRef={inputRef}
         />
+        {query && (
+          <Box
+            sx={{
+              position: 'absolute',
+              right: 8,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              cursor: 'pointer',
+              color: 'text.secondary',
+              zIndex: 2,
+              display: 'flex',
+              alignItems: 'center',
+              background: 'rgba(255,255,255,0.7)',
+              borderRadius: '50%',
+              p: 0.2,
+            }}
+            onClick={() => {
+              setQuery('');
+              setSearchValue('');
+              setResults([]);
+              setOpen(false);
+              inputRef.current?.focus();
+            }}
+            aria-label="Clear search"
+          >
+            <CloseIcon fontSize="small" />
+          </Box>
+        )}
       </Search>
       {open && (
         <Paper sx={{ position: 'absolute', top: 40, left: 0, right: 0, zIndex: 10, maxHeight: 320, overflowY: 'auto' }}>

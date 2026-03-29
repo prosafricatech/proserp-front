@@ -18,7 +18,7 @@ function QuickLinks() {
     const handleNavigation = (path: string) => {
         setIsLoading(true);
         router.push(`/${lang}${path}`);
-        setTimeout(() => setIsLoading(false), 500); // Simulate loading time; adjust as needed
+        setTimeout(() => setIsLoading(false), 500);
     };
 
     return (
@@ -51,7 +51,16 @@ function QuickLinks() {
                     </Grid>
                 }
                 {
-                    organizationHasSubscribed(MODULES.MANUFACTURING_AND_PROCESSING) &&
+                    organizationHasSubscribed(MODULES.MANUFACTURING_AND_PROCESSING) && checkOrganizationPermission([
+                        PERMISSIONS.BOM_READ,
+                        PERMISSIONS.BOM_CREATE,
+                        PERMISSIONS.BOM_EDIT,
+                        PERMISSIONS.BOM_DELETE,
+                        PERMISSIONS.PRODUCTION_BATCHES_CREATE,
+                        PERMISSIONS.PRODUCTION_BATCHES_READ,
+                        PERMISSIONS.PRODUCTION_BATCHES_EDIT,
+                        PERMISSIONS.PRODUCTION_BATCHES_DELETE,
+                    ]) &&
                     <Grid 
                         size={{ xs: 6, md: 2, lg: 1.5 }} 
                         p={1}

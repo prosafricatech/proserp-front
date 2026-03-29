@@ -13,6 +13,9 @@ import posServices from '@/components/pos/pos-services.js';
 import { staticMenuItems } from '@/utilities/constants/static-menu-items';
 import purchaseServices from '../procurement/purchases/purchase-services';
 import stakeholderServices from '../masters/stakeholders/stakeholder-services';
+import { MODULES } from '@/utilities/constants/modules';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 
 // Helper: lowercased entity types already covered by deep search
 const deepEntityTypes = [
@@ -221,6 +224,8 @@ const financialReportsConfigs = [
     type: 'report',
     label: 'Trial Balance',
     search: async (query: string) => {
+      const { checkOrganizationPermission } = useJumboAuth();
+      if (!checkOrganizationPermission || !checkOrganizationPermission(PERMISSIONS.ACCOUNTS_REPORTS)) return [];
       if ('trial balance'.includes(query.toLowerCase()) || query.toLowerCase().includes('trial balance')) {
         return [{
           id: 'trial-balance',
@@ -237,6 +242,8 @@ const financialReportsConfigs = [
     type: 'report',
     label: 'Income Statement',
     search: async (query: string) => {
+      const { checkOrganizationPermission } = useJumboAuth();
+      if (!checkOrganizationPermission || !checkOrganizationPermission(PERMISSIONS.ACCOUNTS_REPORTS)) return [];
       if ('income statement'.includes(query.toLowerCase()) || query.toLowerCase().includes('income statement')) {
         return [{
           id: 'income-statement',
@@ -253,6 +260,8 @@ const financialReportsConfigs = [
     type: 'report',
     label: 'Balance Sheet',
     search: async (query: string) => {
+      const { checkOrganizationPermission } = useJumboAuth();
+      if (!checkOrganizationPermission || !checkOrganizationPermission(PERMISSIONS.ACCOUNTS_REPORTS)) return [];
       if ('balance sheet'.includes(query.toLowerCase()) || query.toLowerCase().includes('balance sheet')) {
         return [{
           id: 'balance-sheet',
@@ -269,6 +278,8 @@ const financialReportsConfigs = [
     type: 'report',
     label: 'Cashier Report',
     search: async (query: string) => {
+      const { checkOrganizationPermission } = useJumboAuth();
+      if (!checkOrganizationPermission || !checkOrganizationPermission(PERMISSIONS.ACCOUNTS_REPORTS)) return [];
       if ('cashier report'.includes(query.toLowerCase()) || query.toLowerCase().includes('cashier report')) {
         return [{
           id: 'cashier-report',
@@ -285,6 +296,8 @@ const financialReportsConfigs = [
     type: 'report',
     label: 'Debtors & Creditors',
     search: async (query: string) => {
+      const { checkOrganizationPermission } = useJumboAuth();
+      if (!checkOrganizationPermission || !checkOrganizationPermission(PERMISSIONS.ACCOUNTS_REPORTS)) return [];
       if ('debtors & creditors'.includes(query.toLowerCase()) || 
           query.toLowerCase().includes('debtors') || 
           query.toLowerCase().includes('creditors')) {
@@ -303,6 +316,8 @@ const financialReportsConfigs = [
     type: 'report',
     label: 'Z Report',
     search: async (query: string) => {
+      const { checkOrganizationPermission } = useJumboAuth();
+      if (!checkOrganizationPermission || !checkOrganizationPermission(PERMISSIONS.ACCOUNTS_REPORTS)) return [];
       if ('z report'.includes(query.toLowerCase()) || query.toLowerCase().includes('z report')) {
         return [{
           id: 'z-report',
@@ -372,6 +387,8 @@ const procurementConfigs = [
     type: 'report',
     label: 'Procurement Reports',
     search: async (query: string) => {
+      const { checkOrganizationPermission } = useJumboAuth();
+      if (!checkOrganizationPermission || !checkOrganizationPermission(PERMISSIONS.PURCHASES_REPORTS)) return [];
       const q = query.toLowerCase();
       if (q.includes('procurement report') || 
           q.includes('procurement & supply report') || 
@@ -591,6 +608,8 @@ const posConfigs = [
     type: 'report',
     label: 'Cashier Report (POS)',
     search: async (query: string) => {
+      const { checkOrganizationPermission } = useJumboAuth();
+      if (!checkOrganizationPermission || !checkOrganizationPermission(PERMISSIONS.SALES_REPORTS)) return [];
       if ('cashier report'.includes(query.toLowerCase()) || query.toLowerCase().includes('cashier report')) {
         return [{
           id: 'pos-cashier-report',
@@ -607,6 +626,8 @@ const posConfigs = [
     type: 'report',
     label: 'Sales Manifest',
     search: async (query: string) => {
+      const { checkOrganizationPermission } = useJumboAuth();
+      if (!checkOrganizationPermission || !checkOrganizationPermission(PERMISSIONS.SALES_REPORTS)) return [];
       if ('sales manifest'.includes(query.toLowerCase()) || query.toLowerCase().includes('sales manifest')) {
         return [{
           id: 'pos-sales-manifest',
@@ -623,6 +644,8 @@ const posConfigs = [
     type: 'report',
     label: 'Sales & Cash Summary',
     search: async (query: string) => {
+      const { checkOrganizationPermission } = useJumboAuth();
+      if (!checkOrganizationPermission || !checkOrganizationPermission(PERMISSIONS.SALES_REPORTS)) return [];
       if ('sales & cash summary'.includes(query.toLowerCase()) || 
           query.toLowerCase().includes('sales & cash summary') || 
           query.toLowerCase().includes('sales and cash summary')) {
@@ -646,6 +669,8 @@ const fuelStationConfigs = [
     type: 'report',
     label: 'Dipping Report',
     search: async (query: string) => {
+      const { checkOrganizationPermission, organizationHasSubscribed } = useJumboAuth();
+      if (!organizationHasSubscribed(MODULES.FUEL_STATION) || !checkOrganizationPermission(PERMISSIONS.SALES_REPORTS)) return [];
       if ('dipping report'.includes(query.toLowerCase()) || query.toLowerCase().includes('dipping report')) {
         return [{
           id: 'fuel-dipping-report',
@@ -662,6 +687,8 @@ const fuelStationConfigs = [
     type: 'report',
     label: 'FV Report',
     search: async (query: string) => {
+      const { checkOrganizationPermission, organizationHasSubscribed } = useJumboAuth();
+      if (!organizationHasSubscribed(MODULES.FUEL_STATION) || !checkOrganizationPermission(PERMISSIONS.SALES_REPORTS)) return [];
       if ('fv report'.includes(query.toLowerCase()) || 
           query.toLowerCase().includes('fv report') || 
           query.toLowerCase().includes('fuel vouchers report')) {
@@ -671,6 +698,45 @@ const fuelStationConfigs = [
           type: 'Fuel Station Report',
           url: '/en-US/fuelStations/reports?report=fv-report',
           description: 'Fuel Station Report',
+        }];
+      }
+      return [];
+    },
+  },
+  {
+    type: 'report',
+    label: 'Sales Manifest',
+    search: async (query: string) => {
+      const { checkOrganizationPermission, organizationHasSubscribed } = useJumboAuth();
+      if (!organizationHasSubscribed(MODULES.POINT_OF_SALE) || !checkOrganizationPermission(PERMISSIONS.SALES_REPORTS)) return [];
+      if ('sales manifest'.includes(query.toLowerCase()) || query.toLowerCase().includes('sales manifest')) {
+        return [{
+          id: 'pos-sales-manifest',
+          label: 'Sales Manifest',
+          type: 'POS Report',
+          url: '/en-US/pos/reports?report=sales-manifest',
+          description: 'POS Sales Report',
+        }];
+      }
+      return [];
+    },
+  },
+  {
+    type: 'report',
+    label: 'Sales & Cash Summary',
+    search: async (query: string) => {
+      const { checkOrganizationPermission, organizationHasSubscribed } = useJumboAuth();
+      if (!organizationHasSubscribed(MODULES.FUEL_STATION) && !organizationHasSubscribed(MODULES.POINT_OF_SALE)) return [];
+      if (!checkOrganizationPermission(PERMISSIONS.SALES_REPORTS)) return [];
+      if ('sales & cash summary'.includes(query.toLowerCase()) || 
+          query.toLowerCase().includes('sales & cash summary') || 
+          query.toLowerCase().includes('sales and cash summary')) {
+        return [{
+          id: 'pos-sales-cash-summary',
+          label: 'Sales & Cash Summary',
+          type: 'POS Report',
+          url: '/en-US/pos/reports?report=sales-cash-summary',
+          description: 'POS Sales Report',
         }];
       }
       return [];
