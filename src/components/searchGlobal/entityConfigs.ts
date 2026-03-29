@@ -59,7 +59,7 @@ const masterDataConfigs = [
     search: async (query: string) => {
       try {
         const service = (await import('@/components/masters/costCenters/cost-center-services')).default;
-        const data = await service.getList({ keyword: query, limit: 1000 });
+        const data = await service.getList({ keyword: query, limit: 5 });
         const menuItem = '/en-US/cost_centers';
         return Array.isArray(data?.data)
           ? data.data.map((item: any) => ({
@@ -80,7 +80,7 @@ const masterDataConfigs = [
     label: 'Currency',
     search: async (query: string) => {
       try {
-        const data = await currencyServices.getList({ keyword: query, limit: 1000 });
+        const data = await currencyServices.getList({ keyword: query, limit: 5 });
         const menuItem = staticMenuItems.find(item => item.label.toLowerCase().includes('currencies'))?.uri;
         return Array.isArray(data?.data)
           ? data.data.map((item: any) => ({
@@ -101,7 +101,7 @@ const masterDataConfigs = [
     label: 'Measurement Unit',
     search: async (query: string) => {
       try {
-        const data = await measurementUnitServices.getList({ keyword: query, limit: 1000 });
+        const data = await measurementUnitServices.getList({ keyword: query, limit: 5 });
         const menuItem = staticMenuItems.find(item => item.label.toLowerCase().includes('measurement units'))?.uri;
         return Array.isArray(data?.data)
           ? data.data.map((item: any) => ({
@@ -122,7 +122,7 @@ const masterDataConfigs = [
     label: 'Department',
     search: async (query: string) => {
       try {
-        const data = await humanResourcesServices.getDepartmentsList({ keyword: query, limit: 1000 });
+        const data = await humanResourcesServices.getDepartmentsList({ keyword: query, limit: 5 });
         const menuItem = staticMenuItems.find(item => item.label.toLowerCase().includes('departments'))?.uri;
         return Array.isArray(data?.data)
           ? data.data.map((item: any) => ({
@@ -133,83 +133,6 @@ const masterDataConfigs = [
               description: 'Department',
             }))
           : [];
-      } catch {
-        return [];
-      }
-    },
-  },
-];
-
-// ==================== ACCOUNTING & FINANCE CONFIGURATIONS ====================
-
-const accountingConfigs = [
-  {
-    type: 'ledger',
-    label: 'Ledger',
-    search: async (query: string) => {
-      try {
-        const data = await ledgerServices.getLedgers({ keyword: query, limit: 1000 });
-        const menuItem = staticMenuItems.find(item => item.label.toLowerCase().includes('ledgers'))?.uri;
-        return Array.isArray(data?.data)
-          ? data.data.map((item: any) => ({
-              id: item.id,
-              label: item.name,
-              type: 'Ledger',
-              url: menuItem ? `${menuItem}?search=${encodeURIComponent(query)}` : undefined,
-              description: 'Ledger',
-            }))
-          : [];
-      } catch {
-        return [];
-      }
-    },
-  },
-  {
-    type: 'budget',
-    label: 'Budget',
-    search: async (query: string) => {
-      try {
-        const data = await budgetsServices.getBudgets({ keyword: query, limit: 1000 });
-        const menuItem = '/en-US/accounts/budgets';
-        return Array.isArray(data?.data)
-          ? data.data.map((item: any) => ({
-              id: item.id,
-              label: item.name,
-              type: 'Budget',
-              url: `${menuItem}?search=${encodeURIComponent(query)}`,
-              description: 'Budget',
-            }))
-          : [];
-      } catch {
-        return [];
-      }
-    },
-  },
-  {
-    type: 'transaction',
-    label: 'Transaction',
-    search: async (query: string) => {
-      try {
-        const types = ['payments', 'receipts', 'journal_vouchers', 'transfers', 'debit', 'credit'];
-        let results: any[] = [];
-        const menuItem = '/en-US/accounts/transactions';
-        
-        for (const type of types) {
-          const service = (await import('@/components/accounts/transactions/transactions-services')).default;
-          const data = await service.getList({ keyword: query, limit: 1000, type });
-          if (Array.isArray(data?.data)) {
-            results = results.concat(
-              data.data.map((item: any) => ({
-                id: item.id,
-                label: item.voucherNo || item.transactionNo || item.reference || item.narration || item.id,
-                type: `Transaction (${type.replace('_', ' ')})`,
-                url: `${menuItem}?type=${type}&search=${encodeURIComponent(query)}`,
-                description: `Transaction - ${type.replace('_', ' ')}`,
-              }))
-            );
-          }
-        }
-        return results;
       } catch {
         return [];
       }
@@ -340,7 +263,7 @@ const procurementConfigs = [
     label: 'Requisition',
     search: async (query: string) => {
       try {
-        const data = await requisitionsServices.getList({ keyword: query, limit: 1000 });
+        const data = await requisitionsServices.getList({ keyword: query, limit: 5 });
         const menuItem = staticMenuItems.find(item => item.label.toLowerCase().includes('requisitions'))?.uri;
         return Array.isArray(data?.data)
           ? data.data.map((item: any) => ({
@@ -423,7 +346,7 @@ const projectConfigs = [
     label: 'Project',
     search: async (query: string) => {
       try {
-        const data = await projectsServices.getList({ keyword: query, limit: 1000 });
+        const data = await projectsServices.getList({ keyword: query, limit: 5 });
         const menuItem = staticMenuItems.find(item => item.label.toLowerCase().includes('projects'))?.uri;
         return Array.isArray(data?.data)
           ? data.data.map((item: any) => ({
@@ -449,7 +372,7 @@ const hrUserConfigs = [
     label: 'Employee',
     search: async (query: string) => {
       try {
-        const data = await humanResourcesServices.getEmployeesList({ keyword: query, limit: 1000 });
+        const data = await humanResourcesServices.getEmployeesList({ keyword: query, limit: 5 });
         const menuItem = staticMenuItems.find(item => item.label.toLowerCase().includes('employees'))?.uri;
         return Array.isArray(data?.data)
           ? data.data.map((item: any) => ({
@@ -470,7 +393,7 @@ const hrUserConfigs = [
     label: 'User',
     search: async (query: string) => {
       try {
-        const data = await userManagementServices.getList({ keyword: query, limit: 1000 });
+        const data = await userManagementServices.getList({ keyword: query, limit: 5 });
         const menuItem = staticMenuItems.find(item => item.label.toLowerCase().includes('users management'))?.uri;
         return Array.isArray(data?.data)
           ? data.data.map((item: any) => ({
@@ -496,7 +419,7 @@ const productConfigs = [
     label: 'Product',
     search: async (query: string) => {
       try {
-        const data = await productServices.getList({ keyword: query, limit: 1000 });
+        const data = await productServices.getList({ keyword: query, limit: 5 });
         const menuItem = staticMenuItems.find(item => item.label.toLowerCase().includes('products'))?.uri;
         return Array.isArray(data?.data)
           ? data.data.map((item: any) => ({
@@ -583,7 +506,7 @@ const posConfigs = [
         const data = await posServices.getCounterSales({
           counterId: 'all',
           keyword: query,
-          limit: 1000,
+          limit: 5,
           page: 1,
           from: undefined,
           to: undefined,
@@ -744,11 +667,107 @@ const fuelStationConfigs = [
   },
 ];
 
+// ==================== ACCOUNTING & FINANCE CONFIGURATIONS ====================
+
+const accountingConfigs = [
+  {
+    type: 'ledger',
+    label: 'Ledger',
+    search: async (query: string) => {
+      try {
+        const data = await ledgerServices.getLedgers({ keyword: query, limit: 5 });
+        const menuItem = staticMenuItems.find(item => item.label.toLowerCase().includes('ledgers'))?.uri;
+        return Array.isArray(data?.data)
+          ? data.data.map((item: any) => ({
+              id: item.id,
+              label: item.name,
+              type: 'Ledger',
+              url: menuItem ? `${menuItem}?search=${encodeURIComponent(query)}` : undefined,
+              description: 'Ledger',
+            }))
+          : [];
+      } catch {
+        return [];
+      }
+    },
+  },
+  {
+    type: 'budget',
+    label: 'Budget',
+    search: async (query: string) => {
+      try {
+        const data = await budgetsServices.getBudgets({ keyword: query, limit: 5 });
+        const menuItem = '/en-US/accounts/budgets';
+        return Array.isArray(data?.data)
+          ? data.data.map((item: any) => ({
+              id: item.id,
+              label: item.name,
+              type: 'Budget',
+              url: `${menuItem}?search=${encodeURIComponent(query)}`,
+              description: 'Budget',
+            }))
+          : [];
+      } catch {
+        return [];
+      }
+    },
+  },
+  {
+    type: 'transaction',
+    label: 'Transaction',
+    search: async (query: string, onPartialResult?: (partial: any[]) => void) => {
+      try {
+        const types = ['payments', 'receipts', 'journal_vouchers', 'debit', 'credit'];
+        const menuItem = '/en-US/accounts/transactions';
+        let allResults: any[] = [];
+        // Fetch non-transfer types in parallel
+        const fetches = types.map(async (type) => {
+          const service = (await import('@/components/accounts/transactions/transactions-services')).default;
+          const data = await service.getList({ keyword: query, limit: 5, type });
+          let results: any[] = [];
+          if (Array.isArray(data?.data)) {
+            results = data.data.map((item: any) => ({
+              id: item.id,
+              label: item.voucherNo || item.transactionNo || item.reference || item.narration || item.id,
+              type: `Transaction (${type.replace('_', ' ')})`,
+              url: `${menuItem}?type=${type}&search=${encodeURIComponent(query)}`,
+              description: `Transaction - ${type.replace('_', ' ')}`,
+            }));
+            allResults = allResults.concat(results);
+            if (onPartialResult) onPartialResult([...allResults]);
+          }
+        });
+        // Start fetching transfers in parallel, but don't block others
+        const transferPromise = (async () => {
+          const service = (await import('@/components/accounts/transactions/transactions-services')).default;
+          const data = await service.getList({ keyword: query, limit: 5, type: 'transfers' });
+          let results: any[] = [];
+          if (Array.isArray(data?.data)) {
+            results = data.data.map((item: any) => ({
+              id: item.id,
+              label: item.voucherNo || item.transactionNo || item.reference || item.narration || item.id,
+              type: `Transaction (transfers)`,
+              url: `${menuItem}?type=transfers&search=${encodeURIComponent(query)}`,
+              description: `Transaction - transfers`,
+            }));
+            allResults = allResults.concat(results);
+            if (onPartialResult) onPartialResult([...allResults]);
+          }
+        })();
+        await Promise.all(fetches);
+        await transferPromise;
+        return allResults;
+      } catch {
+        return [];
+      }
+    },
+  },
+];
+
 // ==================== GENERIC MENU CONFIGURATIONS ====================
 
 const genericMenuConfigs = [
   ...masterDataConfigs,
-  ...accountingConfigs,
   ...financialReportsConfigs,
   ...procurementConfigs,
   ...projectConfigs,
@@ -756,6 +775,7 @@ const genericMenuConfigs = [
   ...productConfigs,
   ...posConfigs,
   ...fuelStationConfigs,
+  ...accountingConfigs,
   ...staticMenuItems
     .filter(item => !deepEntityTypes.some(type => item.label.toLowerCase().includes(type)))
     .map(item => ({
