@@ -69,7 +69,6 @@ const SearchGlobal = ({ wrapperSx, sx }: SearchGlobalProps) => {
     'Stakeholders': { orgPermissions: [PERMISSIONS.STAKEHOLDERS_READ] },
     'Currencies': { orgPermissions: [PERMISSIONS.ACCOUNTS_MASTERS_READ] },
     'Measurement Units': { orgPermissions: [PERMISSIONS.MEASUREMENT_UNITS_READ] },
-    // Add more as needed
   };
 
   const { checkPermission, checkOrganizationPermission, organizationHasSubscribed } = useJumboAuth();
@@ -104,10 +103,10 @@ const SearchGlobal = ({ wrapperSx, sx }: SearchGlobalProps) => {
         url: page.uri,
       }));
 
-    // Start with static results
+    // Show static results instantly and keep them visible
     setResults(pageMatches);
 
-    // Fetch each entity config individually and update results as they return
+    // Fetch each entity config individually and append results when ready
     let isCancelled = false;
     Promise.allSettled(
       entityConfigs.map(async (entity) => entity.search(searchValue))
@@ -118,9 +117,8 @@ const SearchGlobal = ({ wrapperSx, sx }: SearchGlobalProps) => {
         .map(r => (r as PromiseFulfilledResult<SearchResult[]>).value)
         .flat();
       // Filter all results (static and entity) by permissions/subscriptions
-      const combined = [...pageMatches, ...entityResults];
-      const filtered = combined.filter(result => canAccessMenu(result.label) || canAccessMenu(result.type));
-      setResults(filtered);
+      const filteredEntities = entityResults.filter(result => canAccessMenu(result.label) || canAccessMenu(result.type));
+      setResults([...pageMatches, ...filteredEntities]);
       setLoading(false);
     });
     return () => { isCancelled = true; };
@@ -138,8 +136,28 @@ const SearchGlobal = ({ wrapperSx, sx }: SearchGlobalProps) => {
     return () => clearTimeout(handler);
   }, [query]);
 
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setQuery(e.target.value);
+    const value = e.target.value;
+    setQuery(value);
+    // Show static results instantly as user types
+    if (!value) {
+      setResults([]);
+      setOpen(false);
+      return;
+    }
+    setOpen(true);
+    const pageMatches: SearchResult[] = staticMenuItems
+      .filter(page =>
+        page.label.toLowerCase().includes(value.toLowerCase()) && canAccessMenu(page.label)
+      )
+      .map(page => ({
+        id: page.uri,
+        label: page.label,
+        type: 'Page',
+        url: page.uri,
+      }));
+    setResults(pageMatches);
   };
 
   // Search immediately on Enter
@@ -219,20 +237,23 @@ const SearchGlobal = ({ wrapperSx, sx }: SearchGlobalProps) => {
         />
         {query && (
           <Box
-            sx={{
+            sx={(theme) => ({
               position: 'absolute',
               right: 8,
               top: '50%',
               transform: 'translateY(-50%)',
               cursor: 'pointer',
-              color: 'text.secondary',
               zIndex: 2,
               display: 'flex',
               alignItems: 'center',
-              background: 'rgba(255,255,255,0.7)',
               borderRadius: '50%',
               p: 0.2,
-            }}
+              color: theme.type === 'dark' ? theme.palette.grey[300] : theme.palette.text.secondary,
+              transition: 'background 0.2s',
+              '&:hover': {
+                background: theme.type === 'dark' ? 'rgba(60,60,60,1)' : 'rgba(220,220,220,1)',
+              },
+            })}
             onClick={() => {
               setQuery('');
               setSearchValue('');
@@ -248,59 +269,68 @@ const SearchGlobal = ({ wrapperSx, sx }: SearchGlobalProps) => {
       </Search>
       {open && (
         <Paper sx={{ position: 'absolute', top: 40, left: 0, right: 0, zIndex: 10, maxHeight: 320, overflowY: 'auto' }}>
-          {loading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
-              <CircularProgress size={24} />
-            </Box>
-          ) : results.length === 0 ? (
-            <Box sx={{ p: 2, color: 'text.secondary', textAlign: 'center' }}>No results</Box>
+          {results.length === 0 ? (
+            loading ? (
+              <Box sx={{ p: 2, color: 'text.secondary', textAlign: 'center', fontSize: 13 }}>
+                Loading more results...
+              </Box>
+            ) : (
+              <Box sx={{ p: 2, color: 'text.secondary', textAlign: 'center' }}>No results</Box>
+            )
           ) : (
-            <List>
-              {results.map((result) => (
-                <ListItem
-                  component="div"
-                  key={result.type + '-' + result.id}
-                  onMouseDown={() => handleResultClick(result)}
-                  sx={{
-                    cursor: 'pointer',
-                    borderRadius: 1,
-                    transition: 'background 0.2s',
-                    '&:hover': {
-                      backgroundColor: (theme) =>
-                        theme.type === 'dark'
-                          ? 'rgba(255,255,255,0.08)'
-                          : 'rgba(0,0,0,0.04)',
-                      color: (theme) =>
-                        theme.type === 'dark'
-                          ? theme.palette.primary.light
-                          : theme.palette.primary.dark,
-                    },
-                  }}
-                >
-                  <ListItemText
-                    primary={result.label}
-                    secondary={result.description || result.type}
-                    primaryTypographyProps={{
-                      sx: {
+            <>
+              <List>
+                {results.map((result) => (
+                  <ListItem
+                    component="div"
+                    key={result.type + '-' + result.id}
+                    onMouseDown={() => handleResultClick(result)}
+                    sx={{
+                      cursor: 'pointer',
+                      borderRadius: 1,
+                      transition: 'background 0.2s',
+                      '&:hover': {
+                        backgroundColor: (theme) =>
+                          theme.type === 'dark'
+                            ? 'rgba(255,255,255,0.08)'
+                            : 'rgba(0,0,0,0.04)',
                         color: (theme) =>
                           theme.type === 'dark'
-                            ? 'white'
-                            : 'inherit',
+                            ? theme.palette.primary.light
+                            : theme.palette.primary.dark,
                       },
                     }}
-                    secondaryTypographyProps={{
-                      sx: {
-                        color: (theme) =>
-                          theme.type === 'dark'
-                            ? 'rgba(255,255,255,0.7)'
-                            : 'text.secondary',
-                        fontSize: 13,
-                      },
-                    }}
-                  />
-                </ListItem>
-              ))}
-            </List>
+                  >
+                    <ListItemText
+                      primary={result.label}
+                      secondary={result.description || result.type}
+                      primaryTypographyProps={{
+                        sx: {
+                          color: (theme) =>
+                            theme.type === 'dark'
+                              ? 'white'
+                              : 'inherit',
+                        },
+                      }}
+                      secondaryTypographyProps={{
+                        sx: {
+                          color: (theme) =>
+                            theme.type === 'dark'
+                              ? 'rgba(255,255,255,0.7)'
+                              : 'text.secondary',
+                          fontSize: 13,
+                        },
+                      }}
+                    />
+                  </ListItem>
+                ))}
+              </List>
+              {loading && (
+                <Box sx={{ p: 1, color: 'text.secondary', textAlign: 'center', fontSize: 13 }}>
+                  Loading more results...
+                </Box>
+              )}
+            </>
           )}
         </Paper>
       )}
