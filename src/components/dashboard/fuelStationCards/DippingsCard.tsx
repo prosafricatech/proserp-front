@@ -1,17 +1,15 @@
 'use client'
 import JumboCardQuick from '@jumbo/components/JumboCardQuick';
-import { Autocomplete, Grid, LinearProgress, Typography, TextField, Checkbox, Chip, useMediaQuery, FormControl, InputLabel, Select, MenuItem, ButtonGroup, Tooltip, Button, Box } from '@mui/material';
+import { Grid, Skeleton, Typography, useMediaQuery, FormControl, InputLabel, Select, MenuItem, ButtonGroup, Tooltip, Button, Box } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { useDashboardSettings } from '../Dashboard';
 import DippingTrend from './DippingTrend';
 import LatestDippings from './LatestDippings';
-import { CheckBox, CheckBoxOutlineBlank } from '@mui/icons-material';
 import { deviceType } from '@/utilities/helpers/user-agent-helpers';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { useQuery } from '@tanstack/react-query';
-import { Div } from '@jumbo/shared';
-import { CostCenter } from '@/components/masters/costCenters/CostCenterType';
 import fuelStationServices from '@/components/fuelStation/fuelStationServices';
+import { Div } from '@jumbo/shared';
 
 interface DippingReportParams {
   from: string;
@@ -33,7 +31,6 @@ function DippingsCard() {
     const smallScreen = useMediaQuery(theme.breakpoints.down('md')) || isMobile;
     const midScreen = useMediaQuery('(min-width: 960.1px) and (max-width: 1279.9px)');
 
-    const [selectedStations, setSelectedStations] = useState<CostCenter[]>([]);
     const [selectedType, setSelectedType] = useState<'closing' | 'deviation' | 'calculated stock'>('closing');
     const [params, setParams] = useState<DippingReportParams>({
         from,
@@ -50,16 +47,12 @@ function DippingsCard() {
             from,
             to,
             fuel_station_ids:
-            selectedStations.length > 0
-                ? selectedStations
-                    .map(station => station.cost_centerable_id)
-                    .filter((id): id is number => id !== undefined)
-                : fuelStationCostCenters
+                fuelStationCostCenters
                     ?.map(cost_center => cost_center.cost_centerable_id)
                     .filter((id): id is number => id !== undefined),
             with_calculated_stock: selectedType === 'closing' ? 0 : 1,
         }));
-    }, [from, to, selectedStations, fuelStationCostCenters, selectedType]);
+    }, [from, to, fuelStationCostCenters, selectedType]);
 
     const { data: reportData, isLoading } = useQuery({
         queryKey: ['dippingsReport', params],
@@ -74,7 +67,17 @@ function DippingsCard() {
                 height: smallScreen ? 700 : 310
             }}
             title={
-                isLoading ? <LinearProgress/> : (
+                isLoading ? 
+                    <Div sx={{ width: '100%', height: '100%', p: 1 }}>
+                        <Skeleton variant="text" width="40%" height={32} animation="wave" sx={{ mb: 1 }} />
+                        <Skeleton variant="rectangular" width="100%" height={160} animation="wave" sx={{ mb: 1, borderRadius: 2 }} />
+                        <Div sx={{ display: 'flex', gap: 2 }}>
+                            <Skeleton variant="rounded" width={80} height={32} animation="wave" />
+                            <Skeleton variant="rounded" width={80} height={32} animation="wave" />
+                            <Skeleton variant="rounded" width={80} height={32} animation="wave" />
+                        </Div>
+                    </Div>
+                 : (
                     !smallScreen && !midScreen ? 
                     <>
                         <Grid container spacing={1} borderBottom={1} borderColor={'divider'} pb={1}>

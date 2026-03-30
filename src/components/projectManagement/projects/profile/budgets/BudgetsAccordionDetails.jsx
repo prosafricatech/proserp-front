@@ -1,15 +1,22 @@
-import React, { useState } from 'react';
-import { Alert, Box, Chip, Grid, LinearProgress, Tooltip, Typography } from '@mui/material';
-import BudgetItemsActionTail from './BudgetItemsActionTail';
+import { useState } from 'react';
+import { Alert, Box, Chip, Dialog, Grid, IconButton, LinearProgress, Skeleton, Tooltip, Typography, useMediaQuery } from '@mui/material';
 import projectsServices from '../../project-services';
 import { useQuery } from '@tanstack/react-query';
 import { useCurrencySelect } from '@/components/masters/Currencies/CurrencySelectProvider';
 import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
+import { Stack } from '@mui/system';
+import { VisibilityOutlined } from '@mui/icons-material';
+import LedgerStatementDialogContent from '@/components/accounts/ledgers/list/ledgerStatement/LedgerStatementDialogContent';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 
 function BudgetsAccordionDetails({ budget, expanded }) {
   const { currencies } = useCurrencySelect();
-  const baseCurrency = currencies.find(c => c.is_base === 1);
+  const baseCurrency = currencies?.find(c => c.is_base === 1);
   const [searchQueryNames, setSearchQueryNames] = useState([]);
+  const [ledgerDialogOpen, setLedgerDialogOpen] = useState(false);
+  const [ledgerFilters, setLedgerFilters] = useState(null);
+  const { theme } = useJumboTheme();
+  const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
   // React Query v5 syntax
   const { data: budgetItemsDetails, isLoading } = useQuery({
@@ -31,12 +38,27 @@ function BudgetsAccordionDetails({ budget, expanded }) {
   const totalBudgetedAmount = filteredExpenses?.reduce((total, item) => total + item?.budgeted, 0) || 0;
   const totalSpentAmount = filteredExpenses?.reduce((total, item) => total + item?.spent, 0) || 0;
 
+  const handleViewLedger = (item) => {
+    setLedgerFilters({
+      from: budget?.start_date,
+      to: budget?.end_date,
+      cost_center_ids: budget?.cost_center_id ? [budget.cost_center_id] : 'all',
+      ledger_id: item?.ledger_id,
+      ledgerName: item?.name,
+    });
+    setLedgerDialogOpen(true);
+  };
+ 
   return (
     <>
       {isLoading ? (
         <Grid container width={'100%'}>
           <Grid size={12}>
-            <LinearProgress />
+            <Stack spacing={2} sx={{ width: '100%', mb: 2 }}>
+              <Skeleton variant="text" width={180} height={32} sx={{ borderRadius: 1, marginLeft: 'auto' }} />
+              <Skeleton variant="rectangular" width="100%" height={48} sx={{ borderRadius: 1 }} />
+              <Skeleton variant="rectangular" width="100%" height={32} sx={{ borderRadius: 1 }} />
+            </Stack>
           </Grid>
         </Grid>
       ) : (
@@ -50,9 +72,6 @@ function BudgetsAccordionDetails({ budget, expanded }) {
                 allowedGroups={['Expenses']}
                 onChange={(newValue) => setSearchQueryNames(newValue.map(l => l.name))}
               />
-            </Grid>
-            <Grid size={{xs: 12, md: 0.5}} textAlign="end">
-              <BudgetItemsActionTail budget={budgetItemsDetails} />
             </Grid>
           </Grid>
 
@@ -81,7 +100,7 @@ function BudgetsAccordionDetails({ budget, expanded }) {
           {/* Expenses */}
           <Grid size={12} paddingTop={1} width={'100%'}>
             {filteredExpenses?.length > 0 ? filteredExpenses.map((item, index) => {
-              const percentageSpent = (item?.spent / item?.budgeted) * 100;
+              const percentageSpent = (item?.budgeted === 0) ? Infinity : (item?.spent / item?.budgeted) * 100;
 
               return (
                 <Grid
@@ -113,16 +132,33 @@ function BudgetsAccordionDetails({ budget, expanded }) {
                   </Grid>
                   <Grid size={{xs: 8, md: 2}}>
                     <Tooltip title="Spent">
-                      <Typography variant="h6">
-                        {item?.spent.toLocaleString('en-US', { style: 'currency', currency: baseCurrency?.code })}
-                      </Typography>
+                      <Box display="flex" alignItems="center" gap={0.5}>
+                        <Typography variant="h6">
+                          {item?.spent.toLocaleString('en-US', { style: 'currency', currency: baseCurrency?.code })}
+                        </Typography>
+                        <Tooltip title={`View ${item?.name}`}>
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleViewLedger(item);
+                            }}
+                          >
+                            <VisibilityOutlined fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
                     </Tooltip>
                   </Grid>
                   <Grid size={{xs: 4, md: 2}}>
                     <Tooltip title="Percentage Spent">
                       <Chip
-                        label={`${percentageSpent.toFixed(2)}%`}
-                        color={getPercentageColor(percentageSpent)}
+                        label={
+                          percentageSpent === Infinity
+                            ? 'unbudgeted'
+                            : `${percentageSpent.toFixed(2)}%`
+                        }
+                        color={percentageSpent === Infinity ? 'error' : getPercentageColor(percentageSpent)}
                         size="small"
                       />
                     </Tooltip>
@@ -132,9 +168,16 @@ function BudgetsAccordionDetails({ budget, expanded }) {
                       <Box sx={{ width: '100%', textAlign: 'center' }}>
                         <LinearProgress
                           variant="determinate"
-                          value={percentageSpent}
-                          color={getPercentageColor(percentageSpent)}
-                          sx={{ height: 15, borderRadius: 5 }}
+                          value={percentageSpent === Infinity ? 100 : percentageSpent}
+                          color={percentageSpent === Infinity ? 'error' : getPercentageColor(percentageSpent)}
+                          sx={{ height: 15, borderRadius: 5,
+                            ...(percentageSpent === Infinity && {
+                              backgroundColor: (theme) => theme.palette.error.main,
+                              '& .MuiLinearProgress-bar': {
+                                backgroundColor: (theme) => theme.palette.error.main,
+                              },
+                            })
+                          }}
                         />
                       </Box>
                     </Tooltip>
@@ -146,6 +189,21 @@ function BudgetsAccordionDetails({ budget, expanded }) {
             )}
           </Grid>
         </Grid>
+      )}
+
+      {ledgerDialogOpen && (
+        <Dialog
+          open={ledgerDialogOpen}
+          onClose={() => setLedgerDialogOpen(false)}
+          maxWidth="md"
+          fullWidth
+          fullScreen={belowLargeScreen}
+        >
+          <LedgerStatementDialogContent
+            commingFilters={ledgerFilters}
+            setOpen={setLedgerDialogOpen}
+          />
+        </Dialog>
       )}
     </>
   );

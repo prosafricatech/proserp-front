@@ -1,4 +1,4 @@
-import { Divider, Grid, IconButton, Tooltip, Typography } from '@mui/material';
+import { Divider, Grid, IconButton, ListItemText, Tooltip, Typography } from '@mui/material';
 import React, { useState } from 'react';
 import { DisabledByDefault, EditOutlined } from '@mui/icons-material';
 import ProformaItemForm from './ProformaItemForm';
@@ -16,6 +16,7 @@ interface ProformaItem {
     store_id?: number;
     amount?: number;
     vat_amount?: number;
+    description?: string;
 }
 
 interface ProformaItemRowProps {
@@ -84,7 +85,22 @@ function ProformaItemRow({
 
           <Grid size={{ xs: 11, md: 4.5, lg: 4.5 }}>
             <Tooltip title="Product">
-              <Typography noWrap>{product?.name}</Typography>
+              <ListItemText
+                primary={
+                  <Tooltip title={'Product'}>
+                    <Typography variant="h5" fontSize={14} lineHeight={1.25} mb={0} noWrap>
+                      {product?.name}
+                    </Typography>
+                  </Tooltip>
+                }
+                secondary={
+                  <Tooltip title={'Description'}>
+                    <Typography component="span" variant="body2" fontSize={14} lineHeight={1.25} mb={0}>
+                      {item.description}
+                    </Typography>
+                  </Tooltip>
+                }
+              />
             </Tooltip>
           </Grid>
 

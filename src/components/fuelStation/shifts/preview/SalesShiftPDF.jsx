@@ -2,7 +2,7 @@ import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import PageFooter from '@/components/pdf/PageFooter';
 import PdfLogo from '@/components/pdf/PdfLogo';
 import pdfStyles from '@/components/pdf/pdf-styles';
-import { Document, Page, Text, View } from '@react-pdf/renderer';
+import { Document, Font, Page, Text, View } from '@react-pdf/renderer';
 import CashierListSummaryPDF from './CashierListSummaryPDF';
 
 function SalesShiftPDF({
@@ -13,10 +13,14 @@ function SalesShiftPDF({
   fuel_pumps,
   tanks,
   productOptions,
+  paymentReceived,
+  allPaymentsReceived,
 }) {
   const mainColor = organization.settings?.main_color || '#2113AD';
   const lightColor = organization.settings?.light_color || '#bec5da';
   const contrastText = organization.settings?.contrast_text || '#FFFFFF';
+
+  Font.registerHyphenationCallback((word) => [word]);
 
   // Calculate totals for each cashier
   const calculateCashierTotals = (cashier) => {
@@ -74,33 +78,6 @@ function SalesShiftPDF({
     };
   };
 
-  // Calculate overall totals
-  const overallTotals = shiftData.cashiers?.reduce(
-    (acc, cashier) => {
-      const cashierTotals = calculateCashierTotals(cashier);
-      return {
-        totalProductsAmount:
-          acc.totalProductsAmount + cashierTotals.totalProductsAmount,
-        adjustmentsAmount:
-          acc.adjustmentsAmount + cashierTotals.adjustmentsAmount,
-        totalFuelVouchersAmount:
-          acc.totalFuelVouchersAmount + cashierTotals.totalFuelVouchersAmount,
-        otherTransactionsTotal:
-          acc.otherTransactionsTotal + cashierTotals.otherTransactionsTotal,
-        cashRemaining: acc.cashRemaining + cashierTotals.cashRemaining,
-        netSales: acc.netSales + cashierTotals.netSales,
-      };
-    },
-    {
-      totalProductsAmount: 0,
-      adjustmentsAmount: 0,
-      totalFuelVouchersAmount: 0,
-      otherTransactionsTotal: 0,
-      cashRemaining: 0,
-      netSales: 0,
-    }
-  );
-
   // Merge pump readings by product for a specific cashier
   const mergeCashierPumpReadings = (pumpReadings) => {
     const merged = pumpReadings.reduce((acc, pump) => {
@@ -127,6 +104,42 @@ function SalesShiftPDF({
     return st.opening_reading < 1 || st.closing_reading < 1;
   });
 
+  // total expected amount
+  const totalExpectedAmount =
+    shiftData.cashiers?.reduce((sum, c) => {
+      const {
+        totalProductsAmount,
+        adjustmentsAmount,
+        totalFuelVouchersAmount,
+        otherTransactionsTotal,
+      } = calculateCashierTotals(c);
+
+      return (
+        sum +
+        totalProductsAmount +
+        adjustmentsAmount -
+        totalFuelVouchersAmount -
+        otherTransactionsTotal
+      );
+    }, 0) || 0;
+
+  // total collected amount
+  const totalCollectedAmount =
+    shiftData.cashiers?.reduce((sum, c) => sum + c.collected_amount, 0) || 0.0;
+
+  const totalShortOrOver = totalCollectedAmount - totalExpectedAmount;
+
+  // payments received total
+  const paymentsReceivedTotal = paymentReceived.reduce(
+    (sum, pr) => sum + pr.amount,
+    0
+  );
+
+  const allPaymentsTotal = allPaymentsReceived.reduce(
+    (sum, pr) => sum + pr.amount,
+    0
+  );
+
   return (
     <Document
       title={`${shiftData.shiftNo} | ${organization.name}`}
@@ -135,7 +148,11 @@ function SalesShiftPDF({
       creator={`Powered By ProsERP`}
       producer='ProsERP'
     >
-      <Page size='A4' orientation='landscape' style={pdfStyles.page}>
+      <Page
+        size='A4'
+        orientation={`${openDetails ? 'portrait' : 'landscape'}`}
+        style={pdfStyles.page}
+      >
         {/* ================= HEADER ================= */}
         <View style={{ ...pdfStyles.tableRow, marginBottom: 20 }}>
           <View
@@ -213,137 +230,102 @@ function SalesShiftPDF({
             const mergedReadings = mergeCashierPumpReadings(
               cashier.pump_readings || []
             );
+            const totalPumoAmount = cashier.pump_readings.reduce(
+              (acc, pump) => {
+                const difference = (pump.closing || 0) - (pump.opening || 0);
+
+                const fuelPrice = shiftData.fuel_prices.find(
+                  (fp) => fp.product_id === pump.product_id
+                );
+
+                const amount = difference * fuelPrice.price;
+
+                return acc + amount;
+              },
+              0
+            );
+
+            // Calculate total products amount for this cashier
+            const totalProductsAmount =
+              cashier?.pump_readings?.reduce((total, pump) => {
+                const productPrice =
+                  shiftData.fuel_prices.find(
+                    (fp) => fp.product_id === pump.product_id
+                  )?.price || 0;
+                const quantity = (pump.closing || 0) - (pump.opening || 0);
+                return total + quantity * productPrice;
+              }, 0) || 0;
+
+            // Calculate adjustments amount for this cashier
+            const adjustmentsAmount =
+              cashier?.tank_adjustments?.reduce((total, adj) => {
+                const productPrice =
+                  shiftData.fuel_prices.find(
+                    (fp) => fp.product_id === adj.product_id
+                  )?.price || 0;
+                if (adj.operator === '-') {
+                  return total + adj.quantity * productPrice;
+                } else if (adj.operator === '+') {
+                  return total - adj.quantity * productPrice;
+                }
+                return total;
+              }, 0) || 0;
+
+            // Calculate total fuel vouchers amount for this cashier
+            const totalFuelVouchersAmount =
+              cashier?.fuel_vouchers?.reduce((total, fv) => {
+                const productPrice =
+                  shiftData.fuel_prices.find(
+                    (fp) => fp.product_id === fv.product_id
+                  )?.price || 0;
+                return total + fv.quantity * productPrice;
+              }, 0) || 0;
+
+            // Calculate other transactions total for this cashier
+            const otherTransactionsTotal =
+              cashier.other_transactions?.reduce(
+                (total, ot) => total + (ot.amount || 0),
+                0
+              ) || 0;
+
+            // calculate short/over amount
+            const expectedAmount =
+              totalProductsAmount +
+              adjustmentsAmount -
+              totalFuelVouchersAmount -
+              otherTransactionsTotal;
+
+            const collectedAmount = cashier.collected_amount;
+
+            const shortOrOver = collectedAmount - expectedAmount;
 
             return (
               <View
                 key={cashier.id}
                 style={{ marginBottom: 20, pageBreakInside: 'avoid' }}
               >
-                {/* Cashier Header */}
-                <View
-                  style={{
-                    marginBottom: 8,
-                    padding: 8,
-                    backgroundColor: mainColor,
-                    borderRadius: 4,
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      color: contrastText,
-                      fontWeight: 'bold',
-                      textAlign: 'center',
-                    }}
-                  >
-                    {cashier.name} - Summary
-                  </Text>
-                </View>
-
-                {/* Cashier Summary */}
-                <View style={{ marginBottom: 12 }}>
-                  <View style={pdfStyles.table}>
-                    <View style={pdfStyles.tableRow}>
-                      <Text
-                        style={{
-                          ...pdfStyles.tableHeader,
-                          backgroundColor: lightColor,
-                          color: mainColor,
-                          flex: 2,
-                        }}
-                      >
-                        Item
-                      </Text>
-                      <Text
-                        style={{
-                          ...pdfStyles.tableHeader,
-                          backgroundColor: lightColor,
-                          color: mainColor,
-                          flex: 1,
-                          textAlign: 'right',
-                        }}
-                      >
-                        Amount
-                      </Text>
-                    </View>
-                    <View style={pdfStyles.tableRow}>
-                      <Text style={{ ...pdfStyles.tableCell, flex: 2 }}>
-                        Total Sales Amount
-                      </Text>
-                      <Text
-                        style={{
-                          ...pdfStyles.tableCell,
-                          flex: 1,
-                          textAlign: 'right',
-                        }}
-                      >
-                        {cashierTotals.netSales.toLocaleString('en-US', {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </Text>
-                    </View>
-                    <View style={pdfStyles.tableRow}>
-                      <Text style={{ ...pdfStyles.tableCell, flex: 2 }}>
-                        Fuel Vouchers Total
-                      </Text>
-                      <Text
-                        style={{
-                          ...pdfStyles.tableCell,
-                          flex: 1,
-                          textAlign: 'right',
-                        }}
-                      >
-                        {cashierTotals.totalFuelVouchersAmount.toLocaleString(
-                          'en-US',
-                          { minimumFractionDigits: 2, maximumFractionDigits: 2 }
-                        )}
-                      </Text>
-                    </View>
-                    <View style={pdfStyles.tableRow}>
-                      <Text
-                        style={{
-                          ...pdfStyles.tableCell,
-                          flex: 2,
-                          fontWeight: 'bold',
-                        }}
-                      >
-                        Cash Remaining
-                      </Text>
-                      <Text
-                        style={{
-                          ...pdfStyles.tableCell,
-                          flex: 1,
-                          textAlign: 'right',
-                          fontWeight: 'bold',
-                          color:
-                            cashierTotals.cashRemaining < 0
-                              ? '#FF0000'
-                              : '#000000',
-                        }}
-                      >
-                        {cashierTotals.cashRemaining.toLocaleString('en-US', {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-
                 {/* Cashier Pump Readings */}
                 {cashier.pump_readings?.length > 0 && (
                   <View style={{ marginBottom: 12 }}>
-                    <Text
+                    <View
                       style={{
-                        fontSize: 12,
-                        color: mainColor,
-                        marginBottom: 4,
-                        textAlign: 'center',
+                        marginBottom: 8,
+                        padding: 8,
+                        backgroundColor: mainColor,
+                        borderRadius: 4,
                       }}
                     >
-                      {cashier.name} - Pump Readings
-                    </Text>
+                      <Text
+                        style={{
+                          fontSize: 14,
+                          color: contrastText,
+                          fontWeight: 'bold',
+                          textAlign: 'center',
+                        }}
+                      >
+                        {cashier.name} - Pump Readings
+                      </Text>
+                    </View>
                     <View style={pdfStyles.table}>
                       <View style={pdfStyles.tableRow}>
                         <Text
@@ -351,7 +333,7 @@ function SalesShiftPDF({
                             ...pdfStyles.tableHeader,
                             backgroundColor: mainColor,
                             color: contrastText,
-                            flex: 1.5,
+                            width: '12%',
                           }}
                         >
                           Pump
@@ -361,7 +343,7 @@ function SalesShiftPDF({
                             ...pdfStyles.tableHeader,
                             backgroundColor: mainColor,
                             color: contrastText,
-                            flex: 1.5,
+                            width: '13%',
                           }}
                         >
                           Product
@@ -371,7 +353,7 @@ function SalesShiftPDF({
                             ...pdfStyles.tableHeader,
                             backgroundColor: mainColor,
                             color: contrastText,
-                            flex: 1,
+                            width: '15%',
                           }}
                         >
                           Opening
@@ -381,7 +363,7 @@ function SalesShiftPDF({
                             ...pdfStyles.tableHeader,
                             backgroundColor: mainColor,
                             color: contrastText,
-                            flex: 1,
+                            width: '15%',
                           }}
                         >
                           Closing
@@ -391,10 +373,30 @@ function SalesShiftPDF({
                             ...pdfStyles.tableHeader,
                             backgroundColor: mainColor,
                             color: contrastText,
-                            flex: 1,
+                            width: '15%',
                           }}
                         >
                           Difference
+                        </Text>
+                        <Text
+                          style={{
+                            ...pdfStyles.tableHeader,
+                            backgroundColor: mainColor,
+                            color: contrastText,
+                            width: '15%',
+                          }}
+                        >
+                          Price
+                        </Text>
+                        <Text
+                          style={{
+                            ...pdfStyles.tableHeader,
+                            backgroundColor: mainColor,
+                            color: contrastText,
+                            width: '15%',
+                          }}
+                        >
+                          Amount
                         </Text>
                       </View>
                       {cashier.pump_readings.map((pump, index) => {
@@ -407,147 +409,13 @@ function SalesShiftPDF({
                         const difference =
                           (pump.closing || 0) - (pump.opening || 0);
 
-                        return (
-                          <View key={index} style={pdfStyles.tableRow}>
-                            <Text
-                              style={{
-                                ...pdfStyles.tableCell,
-                                backgroundColor:
-                                  index % 2 === 0 ? '#FFFFFF' : lightColor,
-                                flex: 1.5,
-                              }}
-                            >
-                              {pumpInfo?.name || `Pump ${pump.fuel_pump_id}`}
-                            </Text>
-                            <Text
-                              style={{
-                                ...pdfStyles.tableCell,
-                                backgroundColor:
-                                  index % 2 === 0 ? '#FFFFFF' : lightColor,
-                                flex: 1.5,
-                              }}
-                            >
-                              {product?.name || `Product ${pump.product_id}`}
-                            </Text>
-                            <Text
-                              style={{
-                                ...pdfStyles.tableCell,
-                                backgroundColor:
-                                  index % 2 === 0 ? '#FFFFFF' : lightColor,
-                                flex: 1,
-                                textAlign: 'right',
-                              }}
-                            >
-                              {(pump.opening || 0).toLocaleString('en-US', {
-                                minimumFractionDigits: 3,
-                                maximumFractionDigits: 3,
-                              })}
-                            </Text>
-                            <Text
-                              style={{
-                                ...pdfStyles.tableCell,
-                                backgroundColor:
-                                  index % 2 === 0 ? '#FFFFFF' : lightColor,
-                                flex: 1,
-                                textAlign: 'right',
-                              }}
-                            >
-                              {(pump.closing || 0).toLocaleString('en-US', {
-                                minimumFractionDigits: 3,
-                                maximumFractionDigits: 3,
-                              })}
-                            </Text>
-                            <Text
-                              style={{
-                                ...pdfStyles.tableCell,
-                                backgroundColor:
-                                  index % 2 === 0 ? '#FFFFFF' : lightColor,
-                                flex: 1,
-                                textAlign: 'right',
-                              }}
-                            >
-                              {difference.toLocaleString('en-US', {
-                                minimumFractionDigits: 3,
-                                maximumFractionDigits: 3,
-                              })}
-                            </Text>
-                          </View>
-                        );
-                      })}
-                    </View>
-                  </View>
-                )}
-
-                {/* Cashier Products Summary */}
-                {mergedReadings.length > 0 && (
-                  <View style={{ marginBottom: 12 }}>
-                    <Text
-                      style={{
-                        fontSize: 12,
-                        color: mainColor,
-                        marginBottom: 4,
-                        textAlign: 'center',
-                      }}
-                    >
-                      {cashier.name} - Products Summary
-                    </Text>
-                    <View style={pdfStyles.table}>
-                      <View style={pdfStyles.tableRow}>
-                        <Text
-                          style={{
-                            ...pdfStyles.tableHeader,
-                            backgroundColor: mainColor,
-                            color: contrastText,
-                            flex: 1.5,
-                          }}
-                        >
-                          Product
-                        </Text>
-                        <Text
-                          style={{
-                            ...pdfStyles.tableHeader,
-                            backgroundColor: mainColor,
-                            color: contrastText,
-                            flex: 1,
-                          }}
-                        >
-                          Quantity
-                        </Text>
-                        <Text
-                          style={{
-                            ...pdfStyles.tableHeader,
-                            backgroundColor: mainColor,
-                            color: contrastText,
-                            flex: 1,
-                          }}
-                        >
-                          Price
-                        </Text>
-                        <Text
-                          style={{
-                            ...pdfStyles.tableHeader,
-                            backgroundColor: mainColor,
-                            color: contrastText,
-                            flex: 1,
-                          }}
-                        >
-                          Amount
-                        </Text>
-                      </View>
-                      {mergedReadings.map((productSales, index) => {
-                        const product = productOptions?.find(
-                          (p) => p.id === productSales.product_id
-                        );
                         const price =
                           shiftData.fuel_prices.find(
-                            (p) => p.product_id === productSales.product_id
+                            (p) => p.product_id === pump.product.id
                           )?.price || 0;
 
-                        // Adjustments for this product and cashier
                         const adjustmentsQty = (cashier.tank_adjustments || [])
-                          .filter(
-                            (adj) => adj.product_id === productSales.product_id
-                          )
+                          .filter((adj) => adj.product_id === pump.product.id)
                           .reduce((sum, adj) => {
                             if (adj.operator === '+') {
                               return sum - adj.quantity;
@@ -557,7 +425,7 @@ function SalesShiftPDF({
                             return sum;
                           }, 0);
 
-                        const totalQty = productSales.quantity + adjustmentsQty;
+                        const totalQty = difference + adjustmentsQty;
                         const totalAmount = totalQty * price;
 
                         return (
@@ -567,36 +435,31 @@ function SalesShiftPDF({
                                 ...pdfStyles.tableCell,
                                 backgroundColor:
                                   index % 2 === 0 ? '#FFFFFF' : lightColor,
-                                flex: 1.5,
+                                width: '12%',
                               }}
                             >
-                              {product?.name ||
-                                `Product ${productSales.product_id}`}
+                              {pumpInfo?.name || `Pump ${pump.fuel_pump_id}`}
                             </Text>
                             <Text
                               style={{
                                 ...pdfStyles.tableCell,
                                 backgroundColor:
                                   index % 2 === 0 ? '#FFFFFF' : lightColor,
-                                flex: 1,
-                                textAlign: 'right',
+                                width: '13%',
                               }}
                             >
-                              {totalQty.toLocaleString('en-US', {
-                                minimumFractionDigits: 3,
-                                maximumFractionDigits: 3,
-                              })}
+                              {product?.name || `Product ${pump.product_id}`}
                             </Text>
                             <Text
                               style={{
                                 ...pdfStyles.tableCell,
                                 backgroundColor:
                                   index % 2 === 0 ? '#FFFFFF' : lightColor,
-                                flex: 1,
+                                width: '15%',
                                 textAlign: 'right',
                               }}
                             >
-                              {price.toLocaleString('en-US', {
+                              {(pump.opening || 0)?.toLocaleString('en-US', {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2,
                               })}
@@ -606,11 +469,247 @@ function SalesShiftPDF({
                                 ...pdfStyles.tableCell,
                                 backgroundColor:
                                   index % 2 === 0 ? '#FFFFFF' : lightColor,
-                                flex: 1,
+                                width: '15%',
                                 textAlign: 'right',
                               }}
                             >
-                              {totalAmount.toLocaleString('en-US', {
+                              {(pump.closing || 0)?.toLocaleString('en-US', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </Text>
+                            <Text
+                              style={{
+                                ...pdfStyles.tableCell,
+                                backgroundColor:
+                                  index % 2 === 0 ? '#FFFFFF' : lightColor,
+                                width: '15%',
+                                textAlign: 'right',
+                              }}
+                            >
+                              {difference?.toLocaleString('en-US', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </Text>
+                            <Text
+                              style={{
+                                ...pdfStyles.tableCell,
+                                backgroundColor:
+                                  index % 2 === 0 ? '#FFFFFF' : lightColor,
+                                width: '15%',
+                                textAlign: 'right',
+                              }}
+                            >
+                              {price?.toLocaleString('en-US', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </Text>
+                            <Text
+                              style={{
+                                ...pdfStyles.tableCell,
+                                backgroundColor:
+                                  index % 2 === 0 ? '#FFFFFF' : lightColor,
+                                width: '15%',
+                                textAlign: 'right',
+                              }}
+                            >
+                              {totalAmount?.toLocaleString('en-US', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </Text>
+                          </View>
+                        );
+                      })}
+                      {/* Total */}
+                      <View style={pdfStyles.tableRow}>
+                        <Text
+                          style={{
+                            ...pdfStyles.tableHeader,
+                            ...pdfStyles.tableCell,
+                            backgroundColor: mainColor,
+                            color: contrastText,
+                            width: '85%',
+                            fontWeight: 'bold',
+                          }}
+                        >
+                          Total Amount
+                        </Text>
+                        <Text
+                          style={{
+                            ...pdfStyles.tableHeader,
+                            ...pdfStyles.tableCell,
+                            backgroundColor: mainColor,
+                            color: contrastText,
+                            width: '15%',
+                            textAlign: 'right',
+                            fontWeight: 'bold',
+                          }}
+                        >
+                          {totalPumoAmount?.toLocaleString('en-US', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                )}
+
+                {/* Cashier Fuel Vouchers */}
+                {cashier.fuel_vouchers?.length > 0 && (
+                  <View style={{ marginBottom: 12 }}>
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        color: mainColor,
+                        marginBottom: 4,
+                        textAlign: 'center',
+                      }}
+                    >
+                      {cashier.name} - Fuel Vouchers
+                    </Text>
+                    <View style={pdfStyles.table}>
+                      <View style={pdfStyles.tableRow}>
+                        <Text
+                          style={{
+                            ...pdfStyles.tableHeader,
+                            backgroundColor: mainColor,
+                            color: contrastText,
+                            width: '18%',
+                          }}
+                        >
+                          Voucher No
+                        </Text>
+                        <Text
+                          style={{
+                            ...pdfStyles.tableHeader,
+                            backgroundColor: mainColor,
+                            color: contrastText,
+                            width: '18%',
+                          }}
+                        >
+                          Client
+                        </Text>
+                        <Text
+                          style={{
+                            ...pdfStyles.tableHeader,
+                            backgroundColor: mainColor,
+                            color: contrastText,
+                            width: '20%',
+                          }}
+                        >
+                          Narration
+                        </Text>
+                        <Text
+                          style={{
+                            ...pdfStyles.tableHeader,
+                            backgroundColor: mainColor,
+                            color: contrastText,
+                            width: '18%',
+                          }}
+                        >
+                          Product
+                        </Text>
+                        <Text
+                          style={{
+                            ...pdfStyles.tableHeader,
+                            backgroundColor: mainColor,
+                            color: contrastText,
+                            width: '13%',
+                          }}
+                        >
+                          Quantity
+                        </Text>
+                        <Text
+                          style={{
+                            ...pdfStyles.tableHeader,
+                            backgroundColor: mainColor,
+                            color: contrastText,
+                            width: '13%',
+                          }}
+                        >
+                          Amount
+                        </Text>
+                      </View>
+                      {cashier.fuel_vouchers.map((fv, index) => {
+                        const product = productOptions?.find(
+                          (p) => p.id === fv.product_id
+                        );
+                        const price =
+                          shiftData.fuel_prices.find(
+                            (p) => p.product_id === fv.product_id
+                          )?.price || 0;
+                        const amount = fv.quantity * price;
+
+                        return (
+                          <View key={index} style={pdfStyles.tableRow}>
+                            <Text
+                              style={{
+                                ...pdfStyles.tableCell,
+                                backgroundColor:
+                                  index % 2 === 0 ? '#FFFFFF' : lightColor,
+                                width: '18%',
+                              }}
+                            >
+                              {fv.voucherNo || `FV-${index + 1}`}
+                            </Text>
+                            <Text
+                              style={{
+                                ...pdfStyles.tableCell,
+                                backgroundColor:
+                                  index % 2 === 0 ? '#FFFFFF' : lightColor,
+                                width: '18%',
+                              }}
+                            >
+                              {fv.stakeholder?.name || 'Internal Expense'}
+                            </Text>
+                            <Text
+                              style={{
+                                ...pdfStyles.tableCell,
+                                backgroundColor:
+                                  index % 2 === 0 ? '#FFFFFF' : lightColor,
+                                width: '20%',
+                              }}
+                            >
+                              {fv.narration || '-'}
+                            </Text>
+                            <Text
+                              style={{
+                                ...pdfStyles.tableCell,
+                                backgroundColor:
+                                  index % 2 === 0 ? '#FFFFFF' : lightColor,
+                                width: '18%',
+                              }}
+                            >
+                              {product?.name || `Product ${fv.product_id}`}
+                            </Text>
+                            <Text
+                              style={{
+                                ...pdfStyles.tableCell,
+                                backgroundColor:
+                                  index % 2 === 0 ? '#FFFFFF' : lightColor,
+                                width: '13%',
+                                textAlign: 'right',
+                              }}
+                            >
+                              {fv.quantity?.toLocaleString('en-US', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </Text>
+                            <Text
+                              style={{
+                                ...pdfStyles.tableCell,
+                                backgroundColor:
+                                  index % 2 === 0 ? '#FFFFFF' : lightColor,
+                                width: '13%',
+                                textAlign: 'right',
+                              }}
+                            >
+                              {amount?.toLocaleString('en-US', {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2,
                               })}
@@ -625,11 +724,11 @@ function SalesShiftPDF({
                             ...pdfStyles.tableCell,
                             backgroundColor: mainColor,
                             color: contrastText,
-                            flex: 3.5,
+                            width: '87%',
                             fontWeight: 'bold',
                           }}
                         >
-                          Cashier Total
+                          Total Fuel Vouchers
                         </Text>
                         <Text
                           style={{
@@ -637,15 +736,18 @@ function SalesShiftPDF({
                             ...pdfStyles.tableCell,
                             backgroundColor: mainColor,
                             color: contrastText,
-                            flex: 1,
+                            width: '13%',
                             textAlign: 'right',
                             fontWeight: 'bold',
                           }}
                         >
-                          {cashierTotals.netSales.toLocaleString('en-US', {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}
+                          {cashierTotals.totalFuelVouchersAmount?.toLocaleString(
+                            'en-US',
+                            {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            }
+                          )}
                         </Text>
                       </View>
                     </View>
@@ -673,7 +775,7 @@ function SalesShiftPDF({
                             ...pdfStyles.tableHeader,
                             backgroundColor: mainColor,
                             color: contrastText,
-                            flex: 3,
+                            width: '20%',
                           }}
                         >
                           Account
@@ -683,7 +785,18 @@ function SalesShiftPDF({
                             ...pdfStyles.tableHeader,
                             backgroundColor: mainColor,
                             color: contrastText,
-                            flex: 1.5,
+                            width: '50%',
+                            textAlign: 'left',
+                          }}
+                        >
+                          Narration
+                        </Text>
+                        <Text
+                          style={{
+                            ...pdfStyles.tableHeader,
+                            backgroundColor: mainColor,
+                            color: contrastText,
+                            width: '30%',
                             textAlign: 'right',
                           }}
                         >
@@ -698,7 +811,7 @@ function SalesShiftPDF({
                             style={{
                               ...pdfStyles.tableCell,
                               backgroundColor: '#FFFFFF',
-                              flex: 3,
+                              width: '20%',
                             }}
                           >
                             {cashier.main_ledger.name ||
@@ -708,11 +821,19 @@ function SalesShiftPDF({
                             style={{
                               ...pdfStyles.tableCell,
                               backgroundColor: '#FFFFFF',
-                              flex: 1.5,
+                              width: '50%',
+                              textAlign: 'right',
+                            }}
+                          ></Text>
+                          <Text
+                            style={{
+                              ...pdfStyles.tableCell,
+                              backgroundColor: '#FFFFFF',
+                              width: '30%',
                               textAlign: 'right',
                             }}
                           >
-                            {(cashier.main_ledger.amount || 0).toLocaleString(
+                            {(cashier.main_ledger.amount || 0)?.toLocaleString(
                               'en-US',
                               {
                                 minimumFractionDigits: 2,
@@ -740,7 +861,7 @@ function SalesShiftPDF({
                                 ...pdfStyles.tableCell,
                                 backgroundColor:
                                   index % 2 === 0 ? lightColor : '#FFFFFF',
-                                flex: 3,
+                                width: '20%',
                               }}
                             >
                               {transaction.debit_ledger.name}
@@ -750,11 +871,22 @@ function SalesShiftPDF({
                                 ...pdfStyles.tableCell,
                                 backgroundColor:
                                   index % 2 === 0 ? lightColor : '#FFFFFF',
-                                flex: 1.5,
+                                width: '50%',
+                                textAlign: 'left',
+                              }}
+                            >
+                              {transaction.narration}
+                            </Text>
+                            <Text
+                              style={{
+                                ...pdfStyles.tableCell,
+                                backgroundColor:
+                                  index % 2 === 0 ? lightColor : '#FFFFFF',
+                                width: '30%',
                                 textAlign: 'right',
                               }}
                             >
-                              {(transaction.amount || 0).toLocaleString(
+                              {(transaction.amount || 0)?.toLocaleString(
                                 'en-US',
                                 {
                                   minimumFractionDigits: 2,
@@ -774,7 +906,7 @@ function SalesShiftPDF({
                             ...pdfStyles.tableCell,
                             backgroundColor: mainColor,
                             color: contrastText,
-                            flex: 3,
+                            width: '70%',
                             fontWeight: 'bold',
                           }}
                         >
@@ -786,7 +918,7 @@ function SalesShiftPDF({
                             ...pdfStyles.tableCell,
                             backgroundColor: mainColor,
                             color: contrastText,
-                            flex: 1.5,
+                            width: '30%',
                             textAlign: 'right',
                             fontWeight: 'bold',
                           }}
@@ -794,208 +926,87 @@ function SalesShiftPDF({
                           {(
                             cashierTotals.otherTransactionsTotal +
                             (cashier.main_ledger?.amount || 0)
-                          ).toLocaleString('en-US', {
+                          )?.toLocaleString('en-US', {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2,
                           })}
                         </Text>
                       </View>
+                      {/* cash collected */}
+                      <View style={{ ...pdfStyles.tableRow, marginTop: 2 }}>
+                        <Text
+                          style={{
+                            ...pdfStyles.tableHeader,
+                            ...pdfStyles.tableCell,
+                            backgroundColor: lightColor,
+                            color: 'black',
+                            width: '70%',
+                            fontWeight: 'bold',
+                            fontSize: '.7rem',
+                          }}
+                        >
+                          Cash Collected
+                        </Text>
+                        <Text
+                          style={{
+                            ...pdfStyles.tableHeader,
+                            ...pdfStyles.tableCell,
+                            backgroundColor: lightColor,
+                            width: '30%',
+                            textAlign: 'right',
+                            fontWeight: 'bold',
+                            fontSize: '.7rem',
+                          }}
+                        >
+                          {(cashier.collected_amount || 0)?.toLocaleString(
+                            'en-US',
+                            {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            }
+                          )}
+                        </Text>
+                      </View>
+                      <View style={{ ...pdfStyles.tableRow, marginTop: 2 }}>
+                        <Text
+                          style={{
+                            ...pdfStyles.tableHeader,
+                            ...pdfStyles.tableCell,
+                            backgroundColor: lightColor,
+                            color: 'black',
+                            width: '70%',
+                            fontWeight: 'bold',
+                            fontSize: '.7rem',
+                          }}
+                        >
+                          Short/Over
+                        </Text>
+                        <Text
+                          style={{
+                            ...pdfStyles.tableHeader,
+                            ...pdfStyles.tableCell,
+                            backgroundColor: lightColor,
+                            color: shortOrOver > 0 ? '#4a990eff' : 'red',
+                            width: '30%',
+                            textAlign: 'right',
+                            fontWeight: 'bold',
+                            fontSize: '.7rem',
+                          }}
+                        >
+                          {shortOrOver > 0
+                            ? `+${shortOrOver?.toLocaleString('en-US', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}`
+                            : `${shortOrOver?.toLocaleString('en-US', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}`}
+                        </Text>
+                      </View>
                     </View>
                   </View>
                 )}
-
-                {/* Cashier Fuel Vouchers */}
-                {/* {openDetails && cashier.fuel_vouchers?.length > 0 && ( */}
-                <View style={{ marginBottom: 12 }}>
-                  <Text
-                    style={{
-                      fontSize: 12,
-                      color: mainColor,
-                      marginBottom: 4,
-                      textAlign: 'center',
-                    }}
-                  >
-                    {cashier.name} - Fuel Vouchers
-                  </Text>
-                  <View style={pdfStyles.table}>
-                    <View style={pdfStyles.tableRow}>
-                      <Text
-                        style={{
-                          ...pdfStyles.tableHeader,
-                          backgroundColor: mainColor,
-                          color: contrastText,
-                          flex: 1.5,
-                        }}
-                      >
-                        Voucher No
-                      </Text>
-                      <Text
-                        style={{
-                          ...pdfStyles.tableHeader,
-                          backgroundColor: mainColor,
-                          color: contrastText,
-                          flex: 2,
-                        }}
-                      >
-                        Client
-                      </Text>
-                      <Text
-                        style={{
-                          ...pdfStyles.tableHeader,
-                          backgroundColor: mainColor,
-                          color: contrastText,
-                          flex: 1.5,
-                        }}
-                      >
-                        Narration
-                      </Text>
-                      <Text
-                        style={{
-                          ...pdfStyles.tableHeader,
-                          backgroundColor: mainColor,
-                          color: contrastText,
-                          flex: 1.5,
-                        }}
-                      >
-                        Product
-                      </Text>
-                      <Text
-                        style={{
-                          ...pdfStyles.tableHeader,
-                          backgroundColor: mainColor,
-                          color: contrastText,
-                          flex: 1,
-                        }}
-                      >
-                        Quantity
-                      </Text>
-                      <Text
-                        style={{
-                          ...pdfStyles.tableHeader,
-                          backgroundColor: mainColor,
-                          color: contrastText,
-                          flex: 1,
-                        }}
-                      >
-                        Amount
-                      </Text>
-                    </View>
-                    {cashier.fuel_vouchers.map((fv, index) => {
-                      const product = productOptions?.find(
-                        (p) => p.id === fv.product_id
-                      );
-                      const price =
-                        shiftData.fuel_prices.find(
-                          (p) => p.product_id === fv.product_id
-                        )?.price || 0;
-                      const amount = fv.quantity * price;
-
-                      return (
-                        <View key={index} style={pdfStyles.tableRow}>
-                          <Text
-                            style={{
-                              ...pdfStyles.tableCell,
-                              backgroundColor:
-                                index % 2 === 0 ? '#FFFFFF' : lightColor,
-                              flex: 1.5,
-                            }}
-                          >
-                            {fv.voucherNo || `FV-${index + 1}`}
-                          </Text>
-                          <Text
-                            style={{
-                              ...pdfStyles.tableCell,
-                              backgroundColor:
-                                index % 2 === 0 ? '#FFFFFF' : lightColor,
-                              flex: 2,
-                            }}
-                          >
-                            {fv.stakeholder?.name || 'Internal Expense'}
-                          </Text>
-                          <Text
-                            style={{
-                              ...pdfStyles.tableCell,
-                              backgroundColor:
-                                index % 2 === 0 ? '#FFFFFF' : lightColor,
-                              flex: 1.5,
-                            }}
-                          >
-                            {fv.narration || '-'}
-                          </Text>
-                          <Text
-                            style={{
-                              ...pdfStyles.tableCell,
-                              backgroundColor:
-                                index % 2 === 0 ? '#FFFFFF' : lightColor,
-                              flex: 1.5,
-                            }}
-                          >
-                            {product?.name || `Product ${fv.product_id}`}
-                          </Text>
-                          <Text
-                            style={{
-                              ...pdfStyles.tableCell,
-                              backgroundColor:
-                                index % 2 === 0 ? '#FFFFFF' : lightColor,
-                              flex: 1,
-                              textAlign: 'right',
-                            }}
-                          >
-                            {fv.quantity.toLocaleString('en-US', {
-                              minimumFractionDigits: 3,
-                              maximumFractionDigits: 3,
-                            })}
-                          </Text>
-                          <Text
-                            style={{
-                              ...pdfStyles.tableCell,
-                              backgroundColor:
-                                index % 2 === 0 ? '#FFFFFF' : lightColor,
-                              flex: 1,
-                              textAlign: 'right',
-                            }}
-                          >
-                            {amount.toLocaleString('en-US', {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })}
-                          </Text>
-                        </View>
-                      );
-                    })}
-                    <View style={pdfStyles.tableRow}>
-                      <Text
-                        style={{
-                          ...pdfStyles.tableHeader,
-                          ...pdfStyles.tableCell,
-                          backgroundColor: mainColor,
-                          color: contrastText,
-                          flex: 7,
-                          fontWeight: 'bold',
-                        }}
-                      >
-                        Cashier Total Fuel Vouchers
-                      </Text>
-                      <Text
-                        style={{
-                          ...pdfStyles.tableHeader,
-                          ...pdfStyles.tableCell,
-                          backgroundColor: mainColor,
-                          color: contrastText,
-                          flex: 1,
-                          textAlign: 'right',
-                          fontWeight: 'bold',
-                        }}
-                      >
-                        {cashierTotals.totalFuelVouchersAmount.toLocaleString(
-                          'en-US',
-                          { minimumFractionDigits: 2, maximumFractionDigits: 2 }
-                        )}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-                {/* )} */}
 
                 {/* Cashier Adjustments */}
                 {cashier.tank_adjustments?.length > 0 && (
@@ -1120,9 +1131,9 @@ function SalesShiftPDF({
                                 textAlign: 'right',
                               }}
                             >
-                              {adj.quantity.toLocaleString('en-US', {
-                                minimumFractionDigits: 3,
-                                maximumFractionDigits: 3,
+                              {adj.quantity?.toLocaleString('en-US', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
                               })}
                             </Text>
                           </View>
@@ -1142,7 +1153,348 @@ function SalesShiftPDF({
             organization={organization}
             fuel_pumps={fuel_pumps}
             productOptions={productOptions}
+            paymentReceived={paymentReceived}
           />
+        )}
+
+        {/* ================= PAYMENTS RECEIVED SECTION ================= */}
+        {allPaymentsReceived.length && openDetails && (
+          <View
+            wrap={false}
+            style={{ marginTop: 20, pageBreakInside: 'avoid' }}
+          >
+            <View
+              style={{
+                marginBottom: 8,
+                padding: 8,
+                backgroundColor: mainColor,
+                borderRadius: 4,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 14,
+                  color: contrastText,
+                  fontWeight: 'bold',
+                  textAlign: 'center',
+                }}
+              >
+                Payments Received
+              </Text>
+            </View>
+
+            {/* Payments Received */}
+            <View style={{ marginBottom: 12 }}>
+              <View style={pdfStyles.table}>
+                <View style={pdfStyles.tableRow}>
+                  <Text
+                    style={{
+                      ...pdfStyles.tableHeader,
+                      backgroundColor: mainColor,
+                      color: contrastText,
+                      // flex: 1,
+                      width: '20%',
+                    }}
+                  >
+                    Pay From (Credit)
+                  </Text>
+                  <Text
+                    style={{
+                      ...pdfStyles.tableHeader,
+                      backgroundColor: mainColor,
+                      color: contrastText,
+                      // flex: 1,
+                      width: '20%',
+                    }}
+                  >
+                    Pay To (Debit)
+                  </Text>
+                  <Text
+                    style={{
+                      ...pdfStyles.tableHeader,
+                      backgroundColor: mainColor,
+                      color: contrastText,
+                      // flex: 1.5,
+                      width: '30%',
+                    }}
+                  >
+                    Narration
+                  </Text>
+                  <Text
+                    style={{
+                      ...pdfStyles.tableHeader,
+                      backgroundColor: mainColor,
+                      color: contrastText,
+                      // flex: 1,
+                      width: '30%',
+                    }}
+                  >
+                    Amount
+                  </Text>
+                </View>
+                {allPaymentsReceived.map((pr, index) => {
+                  return (
+                    <View key={index} style={pdfStyles.tableRow}>
+                      {/* credit */}
+                      <Text
+                        style={{
+                          ...pdfStyles.tableCell,
+                          backgroundColor:
+                            index % 2 === 0 ? '#FFFFFF' : lightColor,
+                          // flex: 1,
+                          width: '20%',
+                          textAlign: 'left',
+                        }}
+                      >
+                        {pr.creditLedger.name}
+                      </Text>
+                      {/* Debit */}
+                      <Text
+                        style={{
+                          ...pdfStyles.tableCell,
+                          backgroundColor:
+                            index % 2 === 0 ? '#FFFFFF' : lightColor,
+                          // flex: 1,
+                          width: '20%',
+                          textAlign: 'left',
+                        }}
+                      >
+                        {pr.debitLedger.name}
+                      </Text>
+                      {/* Narration */}
+                      <Text
+                        style={{
+                          ...pdfStyles.tableCell,
+                          backgroundColor:
+                            index % 2 === 0 ? '#FFFFFF' : lightColor,
+                          // flex: 1.5,
+                          width: '30%',
+                          textAlign: 'left',
+                        }}
+                      >
+                        {pr.narration}
+                      </Text>
+                      {/* Amount */}
+                      <Text
+                        style={{
+                          ...pdfStyles.tableCell,
+                          backgroundColor:
+                            index % 2 === 0 ? '#FFFFFF' : lightColor,
+                          width: '30%',
+                          textAlign: 'right',
+                        }}
+                      >
+                        {(pr.amount || 0)?.toLocaleString('en-US', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </Text>
+                    </View>
+                  );
+                })}
+                <View style={pdfStyles.tableRow}>
+                  <Text
+                    style={{
+                      ...pdfStyles.tableCell,
+                      backgroundColor: mainColor,
+                      color: contrastText,
+                      width: '70%',
+                      textAlign: 'left',
+                    }}
+                  >
+                    Total Payments
+                  </Text>
+
+                  <Text
+                    style={{
+                      ...pdfStyles.tableCell,
+                      backgroundColor: mainColor,
+                      color: contrastText,
+                      width: '30%',
+                      textAlign: 'right',
+                    }}
+                  >
+                    {allPaymentsTotal?.toLocaleString('en-US', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* ================= CASH COLLECTION SUMMARY============== */}
+        {openDetails && shiftData.cashiers.length && (
+          <View
+            wrap={false}
+            style={{ marginTop: 20, pageBreakInside: 'avoid' }}
+          >
+            <View
+              style={{
+                marginBottom: 8,
+                padding: 8,
+                backgroundColor: mainColor,
+                borderRadius: 4,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 14,
+                  color: contrastText,
+                  fontWeight: 'bold',
+                  textAlign: 'center',
+                }}
+              >
+                Cash Collection Summary
+              </Text>
+            </View>
+
+            <View style={{ marginBottom: 12 }}>
+              <View style={pdfStyles.table}>
+                <View style={pdfStyles.tableRow}>
+                  <Text
+                    style={{
+                      ...pdfStyles.tableCell,
+                      backgroundColor: '#FFFFFF',
+                      width: '70%',
+                    }}
+                  >
+                    Total Expected
+                  </Text>
+                  <Text
+                    style={{
+                      ...pdfStyles.tableCell,
+                      backgroundColor: '#FFFFFF',
+                      width: '30%',
+                      textAlign: 'right',
+                    }}
+                  >
+                    {totalExpectedAmount?.toLocaleString('en-US', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </Text>
+                </View>
+                <View style={pdfStyles.tableRow}>
+                  <Text
+                    style={{
+                      ...pdfStyles.tableCell,
+                      backgroundColor: lightColor,
+                      width: '70%',
+                    }}
+                  >
+                    Total Collected
+                  </Text>
+                  <Text
+                    style={{
+                      ...pdfStyles.tableCell,
+                      backgroundColor: lightColor,
+                      width: '30%',
+                      textAlign: 'right',
+                    }}
+                  >
+                    {totalCollectedAmount?.toLocaleString('en-US', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </Text>
+                </View>
+                <View style={pdfStyles.tableRow}>
+                  <Text
+                    style={{
+                      ...pdfStyles.tableCell,
+                      backgroundColor: '#FFFFFF',
+                      width: '70%',
+                    }}
+                  >
+                    Short/Over
+                  </Text>
+                  <Text
+                    style={{
+                      ...pdfStyles.tableCell,
+                      backgroundColor: '#FFFFFF',
+                      color: totalShortOrOver > 0 ? '#4a990eff' : 'red',
+                      width: '30%',
+                      textAlign: 'right',
+                    }}
+                  >
+                    {totalShortOrOver > 0
+                      ? `+${totalShortOrOver?.toLocaleString('en-US', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}`
+                      : `${totalShortOrOver?.toLocaleString('en-US', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}`}
+                  </Text>
+                </View>
+
+                {paymentReceived.length && (
+                  <>
+                    <View style={pdfStyles.tableRow}>
+                      <Text
+                        style={{
+                          ...pdfStyles.tableCell,
+                          backgroundColor: lightColor,
+                          width: '70%',
+                        }}
+                      >
+                        Total Cash Payments
+                      </Text>
+                      <Text
+                        style={{
+                          ...pdfStyles.tableCell,
+                          backgroundColor: lightColor,
+                          width: '30%',
+                          textAlign: 'right',
+                        }}
+                      >
+                        {paymentsReceivedTotal?.toLocaleString('en-US', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </Text>
+                    </View>
+                    <View style={{ ...pdfStyles.tableRow, marginTop: 4 }}>
+                      <Text
+                        style={{
+                          ...pdfStyles.tableCell,
+                          backgroundColor: mainColor,
+                          color: contrastText,
+                          fontWeight: 'bold',
+                          fontSize: 10,
+                          width: '70%',
+                        }}
+                      >
+                        Grand Total (Total Collected + Total Cash Payments)
+                      </Text>
+                      <Text
+                        style={{
+                          ...pdfStyles.tableCell,
+                          backgroundColor: mainColor,
+                          color: contrastText,
+                          fontWeight: 'bold',
+                          fontSize: 10,
+                          width: '30%',
+                          textAlign: 'right',
+                        }}
+                      >
+                        {(
+                          totalCollectedAmount + paymentsReceivedTotal
+                        )?.toLocaleString('en-US', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </Text>
+                    </View>
+                  </>
+                )}
+              </View>
+            </View>
+          </View>
         )}
 
         {/* ================= DIPPING SECTION ================= */}
@@ -1185,16 +1537,6 @@ function SalesShiftPDF({
                   >
                     Tank
                   </Text>
-                  {/* <Text
-                      style={{
-                        ...pdfStyles.tableHeader,
-                        backgroundColor: mainColor,
-                        color: contrastText,
-                        flex: 1.5,
-                      }}
-                    >
-                      Product
-                    </Text> */}
                   <Text
                     style={{
                       ...pdfStyles.tableHeader,
@@ -1290,7 +1632,7 @@ function SalesShiftPDF({
                           textAlign: 'right',
                         }}
                       >
-                        {(st.opening_reading || 0).toLocaleString('en-US', {
+                        {(st.opening_reading || 0)?.toLocaleString('en-US', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
@@ -1305,7 +1647,7 @@ function SalesShiftPDF({
                           textAlign: 'right',
                         }}
                       >
-                        {(st.incoming || 0).toLocaleString('en-US', {
+                        {(st.incoming || 0)?.toLocaleString('en-US', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
@@ -1322,7 +1664,7 @@ function SalesShiftPDF({
                       >
                         {(
                           (st.opening_reading || 0) + (st.incoming || 0)
-                        ).toLocaleString('en-US', {
+                        )?.toLocaleString('en-US', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
@@ -1337,7 +1679,7 @@ function SalesShiftPDF({
                           textAlign: 'right',
                         }}
                       >
-                        {(st.closing_reading || 0).toLocaleString('en-US', {
+                        {(st.closing_reading || 0)?.toLocaleString('en-US', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
@@ -1352,7 +1694,7 @@ function SalesShiftPDF({
                           textAlign: 'right',
                         }}
                       >
-                        {(st.tank_difference || 0).toLocaleString('en-US', {
+                        {(st.tank_difference || 0)?.toLocaleString('en-US', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
@@ -1367,7 +1709,7 @@ function SalesShiftPDF({
                           textAlign: 'right',
                         }}
                       >
-                        {(st.actual_sold || 0).toLocaleString('en-US', {
+                        {(st.actual_sold || 0)?.toLocaleString('en-US', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
@@ -1382,7 +1724,7 @@ function SalesShiftPDF({
                           textAlign: 'right',
                         }}
                       >
-                        {(st.deviation || 0).toLocaleString('en-US', {
+                        {(st.deviation || 0)?.toLocaleString('en-US', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}

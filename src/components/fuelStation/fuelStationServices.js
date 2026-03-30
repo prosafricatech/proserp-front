@@ -25,6 +25,27 @@ fuelStationServices.dippingReport = async (params) => {
     return data;
 }
 
+fuelStationServices.exportDippingReportToExcel = async (exportedData) => {
+    const res = await axios.post(`/api/exports/excel/dippingReport/`, exportedData, {
+        responseType: 'blob',
+    });
+    return res.data;
+}
+
+fuelStationServices.FuelVouchersReport = async (params) => {
+    const { data } = await axios.get(`/api/fuelStations/stations/fuelVouchersReport`, {
+        params
+    })
+    return data;
+}
+
+fuelStationServices.exportFuelVouchersToExcel = async (exportedData) => {
+    const res = await axios.post(`/api/exports/excel/fuelVouchers/`, exportedData, {
+        responseType: 'blob',
+    });
+    return res.data;
+}
+
 fuelStationServices.getUserStations = async ({ queryKey }) => {
     const { userId } = queryKey[1];
     const { data } = await axios.get(`/api/fuelStations/stations/${userId}/userStations`);
@@ -58,6 +79,7 @@ fuelStationServices.exportSalesShiftsToExcel = async (exportedData) => {
     const res = await axios.post(`/api/exports/excel/salesShifts/`, exportedData, {
         responseType: 'blob',
     });
+    // const res = await axios.post(`/api/exports/excel/salesShifts/`, exportedData);
     return res.data;
 }
 
@@ -67,31 +89,23 @@ fuelStationServices.showDippingDetails = async (id) => {
 }
 
 fuelStationServices.addSalesShifts = async (salesShift) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const { data } = await axios.post('/api/fuelStations/salesShifts/add', salesShift)
-        return data;
-    })
+    const { data } = await axios.post('/api/fuelStations/salesShifts/add', salesShift)
+    return data;
 }
 
 fuelStationServices.updateSalesShifts = async (salesShift) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const { data } = await axios.put(`/api/fuelStations/salesShifts/${salesShift.id}/update`, salesShift)
-        return data;
-    })
+    const { data } = await axios.put(`/api/fuelStations/salesShifts/${salesShift.id}/update`, salesShift)
+    return data;
 }
 
 fuelStationServices.deleteSalesShift = async (id) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const { data } = await axios.delete(`/api/fuelStations/salesShifts/${id}/delete`);
-        return data;
-    })
+    const { data } = await axios.delete(`/api/fuelStations/salesShifts/${id}/delete`);
+    return data;
 };
 
 fuelStationServices.deleteDipping = async (id) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const { data } = await axios.delete(`/api/fuelStations/dippings/${id}/deleteDipping`);
-        return data;
-    })
+    const { data } = await axios.delete(`/api/fuelStations/dippings/${id}/deleteDipping`);
+    return data;
 };
 
 export default fuelStationServices;

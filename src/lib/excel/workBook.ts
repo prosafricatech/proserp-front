@@ -9,6 +9,6 @@ export function createWorkbook() {
 
 export function addHeader(ws: Exceljs.Worksheet, headers: string[]) {
   const row = ws.addRow(headers);
-  row.font = { bold: true };
+  row.font = { bold: true, size: 14 };
   ws.columns = headers.map(() => ({ width: 20 }));
 }

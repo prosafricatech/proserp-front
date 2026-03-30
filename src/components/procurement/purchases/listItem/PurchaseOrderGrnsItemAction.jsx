@@ -16,66 +16,88 @@ import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import AttachmentForm from '@/components/filesShelf/attachments/AttachmentForm';
 
-const DocumentDialog = ({ orderGrn, organization, checkOrganizationPermission, setOpenDocumentDialog }) => {
-    const { currencies } = useCurrencySelect();
-    const baseCurrency = currencies.find((currency) => !!currency?.is_base);
-    
-    const { data: grn, isFetching } = useQuery({
-      queryKey: ['grns', { id: orderGrn.id }],
-      queryFn: () => grnServices.grnDetails(orderGrn.id),
-    });
+const PurchaseOrderReceiveForm = React.lazy(() => import('./receive/PurchaseOrderReceiveForm'));
 
-    //Screen handling constants
-    const {theme} = useJumboTheme();
-    const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
-    
-    const [activeTab, setActiveTab] = useState(0);
+const EditReceive = ({orderGrn, setOpenEditReceive, order}) => {
+  const { data: grn, isFetching } = useQuery({
+    queryKey: ['grns', { id: orderGrn.id }],
+    queryFn: () => grnServices.grnDetails(orderGrn.id),
+  });
+
+  const { data: orderDetails, isFetching: isFetchingOrderDetails } = useQuery({
+    queryKey: ['purchaseOrderDetails', { id: order.id }],
+    queryFn: () => purchaseServices.orderDetails(order.id),
+  });
+
+  if (isFetching || isFetchingOrderDetails) {
+    return <LinearProgress />;
+  }
+
+  return (
+    <PurchaseOrderReceiveForm toggleOpen={setOpenEditReceive} grn={grn} order={orderDetails}/>
+  )
+}
+
+const DocumentDialog = ({ orderGrn, organization, checkOrganizationPermission, setOpenDocumentDialog }) => {
+  const { currencies } = useCurrencySelect();
+  const baseCurrency = currencies.find((currency) => !!currency?.is_base);
   
-    if (isFetching) {
-      return <LinearProgress />;
-    }
+  const { data: grn, isFetching } = useQuery({
+    queryKey: ['grns', { id: orderGrn.id }],
+    queryFn: () => grnServices.grnDetails(orderGrn.id),
+  });
+
+  //Screen handling constants
+  const {theme} = useJumboTheme();
+  const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
   
-    const handleTabChange = (e, newValue) => {
-      setActiveTab(newValue);
-    };
-  
-    return (
-      <DialogContent>
-        {belowLargeScreen && (
-          <Grid container alignItems="center" justifyContent="space-between" marginBottom={2}>
-            <Grid size={11}>
-                <Tabs value={activeTab} onChange={handleTabChange} aria-label="grn tabs">
-                  <Tab label="ONSCREEN" />
-                  <Tab label="PDF" />
-                </Tabs>
-            </Grid>
-            <Grid size={1} textAlign="right">
-              <Tooltip title="Close">
-                <IconButton
-                  size="small"
-                  onClick={() => setOpenDocumentDialog(false)}
-                >
-                  <HighlightOff color="primary" />
-                </IconButton>
-              </Tooltip>
-            </Grid>
-          </Grid>
-        )}
-        { belowLargeScreen && activeTab === 0 ?
-            <GrnOnScreenPreview grn={grn} baseCurrency={baseCurrency} organization={organization} checkOrganizationPermission={checkOrganizationPermission}/>
-          :
-            <PDFContent fileName={grn.grnNo} document={<GrnPDF grn={grn} baseCurrency={baseCurrency} organization={organization} checkOrganizationPermission={checkOrganizationPermission}/>}/>
-          }
-        {belowLargeScreen &&
-          <Box textAlign="right" marginTop={5}>
-            <Button variant="outlined" size='small' color="primary" onClick={() => setOpenDocumentDialog(false)}>
-            Close
-            </Button>
-          </Box>
-        }
-      </DialogContent>
-    );
+  const [activeTab, setActiveTab] = useState(0);
+
+  if (isFetching) {
+    return <LinearProgress />;
+  }
+
+  const handleTabChange = (e, newValue) => {
+    setActiveTab(newValue);
   };
+
+  return (
+    <DialogContent>
+      {belowLargeScreen && (
+        <Grid container alignItems="center" justifyContent="space-between" marginBottom={2}>
+          <Grid size={11}>
+            <Tabs value={activeTab} onChange={handleTabChange} aria-label="grn tabs">
+              <Tab label="ONSCREEN" />
+              <Tab label="PDF" />
+            </Tabs>
+          </Grid>
+          <Grid size={1} textAlign="right">
+            <Tooltip title="Close">
+              <IconButton
+                size="small"
+                onClick={() => setOpenDocumentDialog(false)}
+              >
+                <HighlightOff color="primary" />
+              </IconButton>
+            </Tooltip>
+          </Grid>
+        </Grid>
+      )}
+      { belowLargeScreen && activeTab === 0 ?
+          <GrnOnScreenPreview grn={grn} baseCurrency={baseCurrency} organization={organization} checkOrganizationPermission={checkOrganizationPermission}/>
+        :
+          <PDFContent fileName={grn.grnNo} document={<GrnPDF grn={grn} baseCurrency={baseCurrency} organization={organization} checkOrganizationPermission={checkOrganizationPermission}/>}/>
+        }
+      {belowLargeScreen &&
+        <Box textAlign="right" marginTop={5}>
+          <Button variant="outlined" size='small' color="primary" onClick={() => setOpenDocumentDialog(false)}>
+            Close
+          </Button>
+        </Box>
+      }
+    </DialogContent>
+  );
+};
 
 const AttachDialog = ({orderGrn, setAttachDialog}) => {
     return (
@@ -83,16 +105,25 @@ const AttachDialog = ({orderGrn, setAttachDialog}) => {
     )
 }
 
-function PurchaseOrderGrnsItemAction() {
-    const {authOrganization,checkOrganizationPermission} = useJumboAuth();
-    const {organization} = authOrganization;
-    const { enqueueSnackbar } = useSnackbar();
-    const queryClient = useQueryClient();
-    const {attachDialog, setAttachDialog, setExpanded,expanded,openDialog,setSelectedOrderGrn,selectedOrderGrn,setOpenDialog,openDocumentDialog,setOpenDocumentDialog} = useContext(listItemContext);
+function PurchaseOrderGrnsItemAction({ order }) {
+  const {authOrganization,checkOrganizationPermission} = useJumboAuth();
+  const {organization} = authOrganization;
+  const { enqueueSnackbar } = useSnackbar();
+  const queryClient = useQueryClient();
+  const [editReceiveGrn, setEditReceiveGrn] = React.useState(null);
+  const {attachDialog, setAttachDialog, setExpanded,openDialog,setSelectedOrderGrn,selectedOrderGrn,setOpenDialog,openDocumentDialog,setOpenDocumentDialog, openEditReceive, setOpenEditReceive} = useContext(listItemContext);
 
-    //Screen handling constants
-    const {theme} = useJumboTheme();
-    const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
+  //Screen handling constants
+  const {theme} = useJumboTheme();
+  const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
+
+  React.useEffect(() => {
+    if (openEditReceive && selectedOrderGrn) {
+      setEditReceiveGrn(selectedOrderGrn);
+    } else {
+      setEditReceiveGrn(null);
+    }
+  }, [openEditReceive, selectedOrderGrn]);
 
   const { mutate: unReceiveGrn }  = useMutation({
     mutationFn: purchaseServices.unReceiveOrderGrn,
@@ -111,29 +142,29 @@ function PurchaseOrderGrnsItemAction() {
     <React.Fragment>
       {/* Confirmation Dialog */}
         <Dialog open={openDialog}>
-            <DialogTitle>Unreceive Confirmation</DialogTitle>
-            <DialogContent>
-                <DialogContentText>
-                    Are you sure you want to unreceive this Grn?
-                </DialogContentText>
-            </DialogContent>
-            <DialogActions>
-                <Button onClick={() => { setSelectedOrderGrn(null); setOpenDialog(false); }} color="primary">
-                    Cancel
-                </Button>
-                <Button
-                  onClick={() => {
-                  if (selectedOrderGrn) {
-                    unReceiveGrn(selectedOrderGrn.id);
-                    setSelectedOrderGrn(null);
-                    setOpenDialog(false);
-                  }
-                  }}
-                  color="primary"
-                >
-                  Yes
-                </Button>
-            </DialogActions>
+          <DialogTitle>Unreceive Confirmation</DialogTitle>
+          <DialogContent>
+              <DialogContentText>
+                Are you sure you want to unreceive this Grn?
+              </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => { setSelectedOrderGrn(null); setOpenDialog(false); }} color="primary">
+                Cancel
+            </Button>
+            <Button
+              onClick={() => {
+              if (selectedOrderGrn) {
+                unReceiveGrn(selectedOrderGrn.id);
+                setSelectedOrderGrn(null);
+                setOpenDialog(false);
+              }
+              }}
+              color="primary"
+            >
+              Yes
+            </Button>
+          </DialogActions>
         </Dialog>
 
         {/* PDF Dialog */}
@@ -148,8 +179,15 @@ function PurchaseOrderGrnsItemAction() {
           {selectedOrderGrn && openDocumentDialog && (
             <DocumentDialog orderGrn={selectedOrderGrn} checkOrganizationPermission={checkOrganizationPermission} setOpenDocumentDialog={setOpenDocumentDialog} organization={organization} />
           )}
-          {selectedOrderGrn && attachDialog && <AttachDialog orderGrn={selectedOrderGrn} setAttachDialog={setAttachDialog}/>}
+          {selectedOrderGrn && attachDialog && <AttachDialog orderGrn={selectedOrderGrn} setAttachDialog={setAttachDialog}/>} 
         </Dialog>
+
+        {/* Separate Dialog for EditReceive */}
+        {openEditReceive && editReceiveGrn && (
+          <Dialog open={openEditReceive} onClose={() => setOpenEditReceive(false)} fullScreen={ belowLargeScreen} fullWidth maxWidth="lg">
+            <EditReceive order={order} orderGrn={editReceiveGrn} setOpenEditReceive={setOpenEditReceive} />
+          </Dialog>
+        )}
     </React.Fragment>
   )
 }

@@ -11,7 +11,7 @@ import { CostCenter } from './CostCenterType';
 interface CostCenterSelectorProps {
   frontError?: { message?: string } | null;
   removedCostCenters?: number[];
-  allowAllCostCenters?: boolean;
+  removedCostCentersIds?: boolean;
   disabled?: boolean;
   readOnly?: boolean;
   allowSameType?: boolean;
@@ -27,7 +27,7 @@ function CostCenterSelector(props: CostCenterSelectorProps) {
   const { 
     frontError = null, 
     removedCostCenters = [], 
-    allowAllCostCenters = false, 
+    removedCostCentersIds = false, 
     disabled = false, 
     readOnly = false, 
     allowSameType = false, 
@@ -45,7 +45,7 @@ function CostCenterSelector(props: CostCenterSelectorProps) {
   const { data: fetchedCostCenters, isLoading } = useQuery<CostCenter[]>({
     queryKey: ['allCostCenters'],
     queryFn: costCenterservices.getCostCenters,
-    enabled: !!allowAllCostCenters
+    enabled: !!removedCostCentersIds
   });
 
   // Helper function to create a "Not Specified" option
@@ -80,7 +80,7 @@ function CostCenterSelector(props: CostCenterSelectorProps) {
       (center) => !removedCostCenters.some((removed) => removed === center.id)
     );
 
-  const finalCostCenters = allowAllCostCenters
+  const finalCostCenters = removedCostCentersIds
     ? filteredCostCenters(allCostCenters)
     : filteredCostCenters(authOrganizationCostCenters);
 

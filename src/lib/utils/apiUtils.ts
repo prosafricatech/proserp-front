@@ -1,5 +1,6 @@
 import { getToken } from 'next-auth/jwt';
 import { NextRequest, NextResponse } from 'next/server';
+import axios from '@/lib/services/config';
 
 type GeoData = {
   country?: string;
@@ -27,22 +28,7 @@ export async function getAuthHeaders(
       ),
     };
   }
-
-  /** -------------------------------
-   * Timezone offset
-   * ------------------------------- */
-  const getTimezoneOffset = (): string => {
-    const offset = new Date().getTimezoneOffset();
-    const sign = offset < 0 ? '+' : '-';
-    const hours = Math.abs(Math.floor(offset / 60))
-      .toString()
-      .padStart(2, '0');
-    const minutes = Math.abs(offset % 60)
-      .toString()
-      .padStart(2, '0');
-    return `${sign}${hours}:${minutes}`;
-  };
-
+  
   /** -------------------------------
    * IP Address (proxy aware)
    * ------------------------------- */
@@ -68,10 +54,12 @@ export async function getAuthHeaders(
   /** -------------------------------
    * Headers
    * ------------------------------- */
+  
+  const reqTimezone = req.headers.get('x-timezone') || '';
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     Accept: 'application/json',
-    'X-Timezone': getTimezoneOffset(),
+    'X-Timezone': reqTimezone,
     'X-User-Agent': userAgent,
     'X-Device-IP': ipAddress,
     'X-Country': geo.country ?? '',

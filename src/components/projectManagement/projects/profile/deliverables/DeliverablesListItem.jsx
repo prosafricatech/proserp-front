@@ -10,6 +10,7 @@ import {
   Tabs,
   Tab,
   LinearProgress,
+  Skeleton,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
@@ -19,6 +20,7 @@ import DeliverableTasks from './tab/DeliverableTasks';
 import { useQuery } from '@tanstack/react-query';
 import projectsServices from '../../project-services';
 import DeliverableSummary from './tab/DeliverableSummary';
+import { Stack } from '@mui/system';
 
 function DeliverablesListItem({ filteredDeliverables }) {
   const { activeTab } = useProjectProfile();
@@ -152,7 +154,11 @@ function DeliverablesListItem({ filteredDeliverables }) {
               </Tabs>
               
               {isDetailsLoading ? (
-                <LinearProgress />
+                <Stack spacing={2} sx={{ width: '100%', mb: 2 }}>
+                  <Skeleton variant="text" width={180} height={32} sx={{ borderRadius: 1, marginLeft: 'auto' }} />
+                  <Skeleton variant="rectangular" width="100%" height={48} sx={{ borderRadius: 1 }} />
+                  <Skeleton variant="rectangular" width="100%" height={32} sx={{ borderRadius: 1 }} />
+                </Stack>
               ) : (
                 <>
                   {tabIndex === 0 && (

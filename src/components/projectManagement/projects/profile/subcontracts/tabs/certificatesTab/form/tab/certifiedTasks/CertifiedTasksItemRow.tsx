@@ -11,8 +11,6 @@ import {
 import { DisabledByDefault, EditOutlined } from '@mui/icons-material';
 import CertifiedTasksItemForm from './CertifiedTasksItemForm';
 
-/* ---------- Types ---------- */
-
 interface MeasurementUnit {
   symbol?: string;
 }
@@ -59,8 +57,6 @@ interface CertifiedTasksItemRowProps {
   vat_percentage?: number;
 }
 
-/* ---------- Component ---------- */
-
 const CertifiedTasksItemRow: React.FC<CertifiedTasksItemRowProps> = ({
   setClearFormKey,
   submitMainForm,
@@ -77,8 +73,6 @@ const CertifiedTasksItemRow: React.FC<CertifiedTasksItemRowProps> = ({
   vat_percentage = 0,
 }) => {
   const [showForm, setShowForm] = useState(false);
-
-  /* ---------- Derived values ---------- */
 
   const taskName =
     taskItem.task?.name || taskItem.task_name || '-';

@@ -1,5 +1,8 @@
 'use client';
+import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { useLedgerSelect } from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { faFileExcel } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { JumboDdMenu } from '@jumbo/components';
@@ -14,13 +17,13 @@ import {
 } from '@mui/icons-material';
 import {
   Button,
-  Checkbox,
   Dialog,
   DialogContent,
   DialogTitle,
   IconButton,
   LinearProgress,
   Stack,
+  Switch,
   Tab,
   Tabs,
   Tooltip,
@@ -29,8 +32,9 @@ import {
 } from '@mui/material';
 import { Box, Grid } from '@mui/system';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
-import { useContext, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import PDFContent from '../../pdf/PDFContent';
 import { useProductsSelect } from '../../productAndServices/products/ProductsSelectProvider';
 import fuelStationServices from '../fuelStationServices';
@@ -65,8 +69,10 @@ const DocumentDialog = ({
   const { activeStation } = useContext(StationFormContext);
   const { shift_teams, fuel_pumps, tanks } = activeStation;
   const { productOptions } = useProductsSelect();
+  const { ungroupedLedgerOptions } = useLedgerSelect();
   const [openDetails, setOpenDetails] = useState(false);
   const [pdfKey, setPdfKey] = useState(0);
+  const [isExporting, setIsExporting] = useState(false);
 
   const handleDetailsChange = (e) => {
     const isChecked = e.target.checked;
@@ -83,8 +89,35 @@ const DocumentDialog = ({
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
+  useEffect(() => {
+    belowLargeScreen && setActiveTab(1);
+  }, [belowLargeScreen]);
+
   if (isFetching) {
     return <LinearProgress />;
+  }
+
+  let paymentReceived = [];
+  let allPaymentsReceived = [];
+
+  if (shiftData?.payments_received?.length) {
+    const ledgerMap = new Map(ungroupedLedgerOptions.map((ul) => [ul.id, ul]));
+
+    shiftData.payments_received.forEach((p) => {
+      const creditLedger = ledgerMap.get(p.credit_ledger_id);
+
+      const debitLedger = ledgerMap.get(p.debit_ledger_id);
+
+      p.creditLedger = creditLedger;
+      p.debitLedger = debitLedger;
+    });
+
+    const cashPayments = shiftData.payments_received.filter(
+      (p) => p.debitLedger.ledger_group_id === 13
+    );
+
+    paymentReceived = cashPayments;
+    allPaymentsReceived = shiftData.payments_received;
   }
 
   const exportedData = {
@@ -92,32 +125,59 @@ const DocumentDialog = ({
     organization: organization,
     productOptions: productOptions,
     stationName: activeStation?.name,
+    fuel_pumps: fuel_pumps,
+    tanks: tanks,
+    shift_teams: shift_teams,
+    withDetails: openDetails,
+    paymentReceived: paymentReceived,
+    allPaymentsReceived: allPaymentsReceived,
   };
 
   const handlExcelExport = async (exportedData) => {
-    const blob =
-      await fuelStationServices.exportSalesShiftsToExcel(exportedData);
-
-    console.log('exportedData: ', exportedData);
-
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'sales-shifts.xlsx';
-    a.click();
-    window.URL.revokeObjectURL(url);
+    setIsExporting(true);
+    try {
+      const blob =
+        await fuelStationServices.exportSalesShiftsToExcel(exportedData);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Shift-${exportedData.stationName}-${readableDate(exportedData.shiftData?.shift_end)}-${exportedData.shiftData?.shift?.name}`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      // Optionally show error
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   return (
-    <Dialog open={isOpen} maxWidth='xl' fullWidth>
+    <Dialog open={isOpen} maxWidth='xl' fullWidth fullScreen={belowLargeScreen}>
       <DialogTitle>
         <Stack
           direction={'row'}
           justifyContent={'center'}
           alignItems={'center'}
+          position={'relative'}
         >
-          <Typography>With More Details</Typography>
-          <Checkbox checked={openDetails} onChange={handleDetailsChange} />
+          <Typography>Detailed</Typography>
+          <Switch
+            checked={openDetails}
+            onChange={handleDetailsChange}
+            slotProps={{ input: { 'aria-label': 'controlled' } }}
+          />
+
+          {belowLargeScreen && (
+            <Tooltip title='Close'>
+              <IconButton
+                size='small'
+                onClick={() => setOpenDocumentDialog(false)}
+                sx={{ position: 'absolute', right: 5 }}
+              >
+                <HighlightOff color='primary' />
+              </IconButton>
+            </Tooltip>
+          )}
         </Stack>
       </DialogTitle>
       <DialogContent>
@@ -127,35 +187,64 @@ const DocumentDialog = ({
           justifyContent='space-between'
           mb={2}
         >
-          {belowLargeScreen && (
-            <Grid size={11}>
+          <Grid size={10}>
+            {belowLargeScreen && (
               <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)}>
-                <Tab label='ONSCREEN' />
                 <Tab label='PDF' />
+                <Tab label='ONSCREEN' />
               </Tabs>
-            </Grid>
-          )}
-          {!belowLargeScreen && <Grid size={11}></Grid>}
-          <Grid size={1} textAlign='right'>
-            <Tooltip title='Export file'>
+            )}
+          </Grid>
+          <Grid
+            size={2}
+            textAlign='right'
+            sx={{
+              display: 'flex',
+              flexDirection: 'row',
+              justifyContent: 'space-evenly',
+              gap: 1,
+            }}
+          >
+            {!belowLargeScreen && (
+              <Button
+                size='small'
+                onClick={() => handlExcelExport(exportedData)}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '4px',
+                  gap: 1,
+                }}
+                color='success'
+                variant='contained'
+                disabled={isExporting}
+              >
+                <FontAwesomeIcon icon={faFileExcel} color='green' />
+                {!belowLargeScreen && 'Excel'}
+              </Button>
+            )}
+
+            {belowLargeScreen && (
               <IconButton
                 size='small'
                 onClick={() => handlExcelExport(exportedData)}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '0px',
+                  gap: 1,
+                }}
+                color='success'
+                variant='contained'
+                disabled={isExporting}
               >
                 <FontAwesomeIcon icon={faFileExcel} color='green' />
+                {!belowLargeScreen && 'Excel'}
               </IconButton>
-            </Tooltip>
-            <Tooltip title='Close'>
-              <IconButton
-                size='small'
-                onClick={() => setOpenDocumentDialog(false)}
-              >
-                <HighlightOff color='primary' />
-              </IconButton>
-            </Tooltip>
+            )}
           </Grid>
         </Grid>
-        {belowLargeScreen && activeTab === 0 ? (
+        {belowLargeScreen && activeTab === 1 && (
           <SalesShiftOnScreen
             stationName={activeStation?.name}
             openDetails={openDetails}
@@ -165,8 +254,11 @@ const DocumentDialog = ({
             fuel_pumps={fuel_pumps}
             shift_teams={shift_teams}
             organization={organization}
+            paymentReceived={paymentReceived}
+            allPaymentsReceived={allPaymentsReceived}
           />
-        ) : (
+        )}
+        {(!belowLargeScreen || activeTab === 0) && (
           <PDFContent
             key={pdfKey}
             fileName={shiftData.shiftNo}
@@ -180,11 +272,14 @@ const DocumentDialog = ({
                 fuel_pumps={fuel_pumps}
                 shift_teams={shift_teams}
                 organization={organization}
+                paymentReceived={paymentReceived}
+                allPaymentsReceived={allPaymentsReceived}
               />
             }
           />
         )}
-        {belowLargeScreen && (
+
+        {!belowLargeScreen && (
           <Box textAlign='right' mt={5}>
             <Button
               variant='outlined'
@@ -206,6 +301,7 @@ const SalesShiftsItemAction = ({ ClosedShift }) => {
   const [openDocumentDialog, setOpenDocumentDialog] = useState(false);
   const {
     authOrganization: { organization },
+    checkOrganizationPermission,
   } = useJumboAuth();
   const { showDialog, hideDialog } = useJumboDialog();
   const { enqueueSnackbar } = useSnackbar();
@@ -231,15 +327,25 @@ const SalesShiftsItemAction = ({ ClosedShift }) => {
     },
   });
 
+  const canBackdate = checkOrganizationPermission([
+    PERMISSIONS.FUEL_SALES_SHIFTS_BACKDATE,
+  ]);
+  const isToday =
+    ClosedShift?.shift_end >= dayjs().startOf('date').toISOString();
+
   const menuItems = [
     { icon: <VisibilityOutlined />, title: 'View', action: 'open' },
-    { icon: <EditOutlined />, title: 'Edit', action: 'edit' },
-    {
-      icon: <DeleteOutlined color='error' />,
-      title: 'Delete',
-      action: 'delete',
-    },
-  ];
+    canBackdate || isToday
+      ? { icon: <EditOutlined />, title: 'Edit', action: 'edit' }
+      : null,
+    canBackdate || isToday
+      ? {
+          icon: <DeleteOutlined color='error' />,
+          title: 'Delete',
+          action: 'delete',
+        }
+      : null,
+  ].filter(Boolean);
 
   const handleItemAction = (menuItem) => {
     switch (menuItem.action) {

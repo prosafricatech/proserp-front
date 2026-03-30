@@ -39,7 +39,7 @@ function GrnPDF({grn,organization = null,baseCurrency,checkOrganizationPermissio
     return (
         <Document 
             title={grn.grnNo}
-            author={`${grn.creator.name}`}
+            author={`${grn.creator?.name}`}
             subject='GOODS RECEIVABLE NOTES'
             creator='ProsERP'
             producer='ProsERP'
@@ -115,7 +115,7 @@ function GrnPDF({grn,organization = null,baseCurrency,checkOrganizationPermissio
                         <View style={{ ...pdfStyles.table,flex: 1 }}>
                                 <View>
                                     <Text style={{...pdfStyles.minInfo, color: mainColor}}>Cost Center:</Text>
-                                    <Text style={{ ...pdfStyles.minInfo, }}>{grn.order.cost_centers.map((cc)=> cc.name).join(', ')}</Text>
+                                    <Text style={{ ...pdfStyles.minInfo, }}>{grn?.cost_center?.name}</Text>
                                 </View>
                         </View>
                     }

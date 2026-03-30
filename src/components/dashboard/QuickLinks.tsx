@@ -199,7 +199,11 @@ function QuickLinks() {
                 {
                     (organizationHasSubscribed(MODULES.PROCUREMENT_AND_SUPPLY) && checkOrganizationPermission([
                         PERMISSIONS.STORES_READ,
-                        PERMISSIONS.STORES_CREATE
+                        PERMISSIONS.STORES_CREATE,
+                        PERMISSIONS.INVENTORY_TRANSFERS_READ,
+                        PERMISSIONS.INVENTORY_TRANSFERS_CREATE,
+                        PERMISSIONS.INVENTORY_CONSUMPTIONS_READ,
+                        PERMISSIONS.INVENTORY_CONSUMPTIONS_CREATE
                     ])) &&
                     <Grid 
                         size={{ xs: 6, md: 2, lg: 1.5 }} 

@@ -24,24 +24,18 @@ productionBatchesServices.getUserWorkCenters = async ({ queryKey }) => {
 };
 
 productionBatchesServices.addProduction = async(batch) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.post('/api/manufacturing/batches/addProduction',batch)
-        return data;
-    })
+    const {data} = await axios.post('/api/manufacturing/batches/addProduction',batch)
+    return data;
 }
 
 productionBatchesServices.updateProduction = async(batch) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.put(`/api/manufacturing/batches/${batch.id}/updateProduction`,batch)
-        return data;    
-    })
+    const {data} = await axios.put(`/api/manufacturing/batches/${batch.id}/updateProduction`,batch)
+    return data;    
 }
 
 productionBatchesServices.deleteProduction = async (id) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.delete(`/api/manufacturing/batches/${id}/deleteProduction`);
-        return data;
-    })
+    const {data} = await axios.delete(`/api/manufacturing/batches/${id}/deleteProduction`);
+    return data;
 };
 
 productionBatchesServices.expensesManifest = async(params) => {
@@ -52,10 +46,8 @@ productionBatchesServices.expensesManifest = async(params) => {
 }
 
 productionBatchesServices.deleteProductionBatch = async (id) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.delete(`/api/manufacturing/batches/${id}/deleteProductionBatch`);
-        return data;
-    })
+    const {data} = await axios.delete(`/api/manufacturing/batches/${id}/deleteProductionBatch`);
+    return data;
 };
 
 export default productionBatchesServices;

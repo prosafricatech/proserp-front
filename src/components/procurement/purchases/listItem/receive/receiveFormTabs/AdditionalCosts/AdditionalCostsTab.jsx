@@ -2,7 +2,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { Divider, Grid, IconButton, LinearProgress, TextField, Tooltip } from '@mui/material';
 import React, { useEffect, useState } from 'react'
 import * as yup from 'yup';
-import { useForm, useFormContext } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { AddOutlined, CheckOutlined, DisabledByDefault } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 import { useLedgerSelect } from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
@@ -13,9 +13,8 @@ import CurrencySelector from '@/components/masters/Currencies/CurrencySelector';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 
-function AdditionalCostsTab({index = -1, setShowForm = null, additionalCost, setIsDirty}) {
+function AdditionalCostsTab({index = -1, setShowForm = null, additionalCost, setIsDirty, additionalCosts=[], setAdditionalCosts}) {
   const {ungroupedLedgerOptions} = useLedgerSelect();
-  const {additionalCosts=[], setAdditionalCosts} = useFormContext();
   const [isAdding, setIsAdding] = useState(false);
   const {currencies} = useCurrencySelect();
 
@@ -30,10 +29,10 @@ function AdditionalCostsTab({index = -1, setShowForm = null, additionalCost, set
   const {setValue, handleSubmit, watch, reset, formState: {errors, dirtyFields}} = useForm({
     resolver: yupResolver(validationSchema),
     defaultValues: {
-      credit_ledger_name: additionalCost && additionalCost.credit_ledger_name,
+      credit_ledger_name: additionalCost && (additionalCost.credit_ledger_name || additionalCost.name),
       credit_ledger_id : additionalCost && additionalCost.credit_ledger_id,
-      currency_id: additionalCost ? additionalCost.currency_id : 1,
-      currency_name: additionalCost ? additionalCost.currency_name : currencies.find(currency => currency.id === 1).name_plural,
+      currency_id: additionalCost ? (additionalCost.currency_id || additionalCost.currency.id) : 1,
+      currency_name: additionalCost ? (additionalCost.currency_name || additionalCost.currency?.name) : currencies.find(currency => currency.id === 1).name_plural,
       exchange_rate: additionalCost ? additionalCost.exchange_rate : 1,
       reference: additionalCost && additionalCost.reference,
       amount: additionalCost && additionalCost.amount,

@@ -158,10 +158,12 @@ const ReceiptItemAction: React.FC<ReceiptItemActionProps> = ({ transaction }) =>
       action: "attach" 
     }as MenuItemProps,
     checkOrganizationPermission([PERMISSIONS.ACCOUNTS_TRANSACTIONS_EDIT, PERMISSIONS.RECEIPTS_EDIT]) && 
+      !!transaction.editable &&
       (checkOrganizationPermission([PERMISSIONS.ACCOUNTS_TRANSACTIONS_BACKDATE, PERMISSIONS.RECEIPTS_BACKDATE]) || 
       transaction.transaction_date >= dayjs().startOf('date').toISOString()) ? 
       { icon: <EditOutlined/>, title: 'Edit', action: 'edit' } : null,
     checkOrganizationPermission([PERMISSIONS.ACCOUNTS_TRANSACTIONS_DELETE, PERMISSIONS.RECEIPTS_DELETE]) && 
+      !!transaction.editable &&
       (checkOrganizationPermission([PERMISSIONS.ACCOUNTS_TRANSACTIONS_BACKDATE, PERMISSIONS.RECEIPTS_BACKDATE]) || 
       transaction.transaction_date >= dayjs().startOf('date').toISOString()) ? 
       { icon: <DeleteOutlined color='error'/>, title: 'Delete', action: 'delete' } : null

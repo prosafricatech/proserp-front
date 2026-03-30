@@ -108,178 +108,128 @@ projectsServices.showProjectBudgets = async (params) => {
 };  
 
 projectsServices.addProject = async(project) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.post('/api/projectManagement/project/addProject',project)
-        return data;
-    })
+    const {data} = await axios.post('/api/projectManagement/project/addProject',project)
+    return data;
 }
 
 projectsServices.addSubContractTask = async(tasks) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.post('/api/projectManagement/project/addSubContractTask',tasks)
-        return data;
-    })
+    const {data} = await axios.post('/api/projectManagement/project/addSubContractTask',tasks)
+    return data;
 }
 
 projectsServices.addCertificates = async(certificate) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.post('/api/projectManagement/project/addCertificates',certificate)
-        return data;
-    })
+    const {data} = await axios.post('/api/projectManagement/project/addCertificates',certificate)
+    return data;
 }
 
 projectsServices.addClaim = async(claim) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.post('/api/projectManagement/project/addClaims',claim)
-        return data;
-    })
+    const {data} = await axios.post('/api/projectManagement/project/addClaims',claim)
+    return data;
 }
 
 projectsServices.addSubContractMaterialIssued = async(tasks) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.post('/api/projectManagement/project/addSubContractMaterialIssued',tasks)
-        return data;
-    })
+    const {data} = await axios.post('/api/projectManagement/project/addSubContractMaterialIssued',tasks)
+    return data;
 }
 
 projectsServices.addSubcontract = async(project) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.post('/api/projectManagement/project/addSubcontract',project)
-        return data;
-    })
+    const {data} = await axios.post('/api/projectManagement/project/addSubcontract',project)
+    return data;
 }
 
 projectsServices.addDeliverableGroup = async(group) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.post('/api/projectManagement/project/addDeliverableGroup',group)
-        return data;
-    })
+    const {data} = await axios.post('/api/projectManagement/project/addDeliverableGroup',group)
+    return data;
 }
 
 projectsServices.addTimelineActivity = async(activity) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.post('/api/projectManagement/project/addTimelineActivity',activity)
-        return data;
-    })
+    const {data} = await axios.post('/api/projectManagement/project/addTimelineActivity',activity)
+    return data;
 }
 
 projectsServices.addProjectUpdates = async(updates) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.post('/api/projectManagement/project/addProjectUpdates',updates)
-        return data;
-    })
+    const {data} = await axios.post('/api/projectManagement/project/addProjectUpdates',updates)
+    return data;
 }
 
 projectsServices.addDeliverables = async(deliverable) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.post('/api/projectManagement/project/addDeliverables',deliverable)
-        return data;
-    })
+    const {data} = await axios.post('/api/projectManagement/project/addDeliverables',deliverable)
+    return data;
 }
 
 projectsServices.addTask = async(task) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.post('/api/projectManagement/project/addTask',task)
-        return data;
-    })
+    const {data} = await axios.post('/api/projectManagement/project/addTask',task)
+    return data;
 }
 
 projectsServices.addBudget = async(budget) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.post('/api/projectManagement/project/addBudget',budget)
-        return data;
-    })
+    const {data} = await axios.post('/api/projectManagement/project/addBudget',budget)
+    return data;
 }
 
 projectsServices.addBudgetItems = async(budget) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.post(`/api/projectManagement/project/addBudgetItems`,budget)
-        return data;
-    })
+    const {data} = await axios.post(`/api/projectManagement/project/addBudgetItems`,budget)
+    return data;
 }
 
 projectsServices.updateDeliverableGroup = async(group) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.put(`/api/projectManagement/project/${group.id}/updateDeliverableGroup`,group)
-        return data;    
-    })
+    const {data} = await axios.put(`/api/projectManagement/project/${group.id}/updateDeliverableGroup`,group)
+    return data;    
 }
 
 projectsServices.updateTimelineActivity = async(activity) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.put(`/api/projectManagement/project/${activity.id}/updateTimelineActivity`,activity)
-        return data;    
-    })
+    const {data} = await axios.put(`/api/projectManagement/project/${activity.id}/updateTimelineActivity`,activity)
+    return data;    
 }
 
 projectsServices.updateSubContractTask = async(subContractTask) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.put(`/api/projectManagement/project/${subContractTask.id}/updateSubContractTask`,subContractTask)
-        return data;    
-    })
+    const {data} = await axios.put(`/api/projectManagement/project/${subContractTask.id}/updateSubContractTask`,subContractTask)
+    return data;    
 }
 
 projectsServices.updateCertificates = async(certificate) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.put(`/api/projectManagement/project/${certificate.id}/updateCertificates`,certificate)
-        return data;    
-    })
+    const {data} = await axios.put(`/api/projectManagement/project/${certificate.id}/updateCertificates`,certificate)
+    return data;    
 }
 
 projectsServices.updateDeliverables = async(deliverable) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.put(`/api/projectManagement/project/${deliverable.id}/updateDeliverables`,deliverable)
-        return data;    
-    })
+    const {data} = await axios.put(`/api/projectManagement/project/${deliverable.id}/updateDeliverables`,deliverable)
+    return data;    
 }
 
 projectsServices.updateClaim = async(claim) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.put(`/api/projectManagement/project/${claim.id}/updateClaim`,claim)
-        return data;    
-    })
+    const {data} = await axios.put(`/api/projectManagement/project/${claim.id}/updateClaim`,claim)
+    return data;    
 }
 
 projectsServices.updateProjectUpdates = async(update) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.put(`/api/projectManagement/project/${update.id}/updateProjectUpdates`,update)
-        return data;    
-    })
+    const {data} = await axios.put(`/api/projectManagement/project/${update.id}/updateProjectUpdates`,update)
+    return data;    
 }
 
 projectsServices.updateSubcontract = async(subcontract) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.put(`/api/projectManagement/project/${subcontract.id}/updateSubcontract`,subcontract)
-        return data;    
-    })
+    const {data} = await axios.put(`/api/projectManagement/project/${subcontract.id}/updateSubcontract`,subcontract)
+    return data;    
 }
 
 projectsServices.updateSubContractMaterialIssued = async(material) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.put(`/api/projectManagement/project/${material.id}/updateSubContractMaterialIssued`,material)
-        return data;    
-    })
+    const {data} = await axios.put(`/api/projectManagement/project/${material.id}/updateSubContractMaterialIssued`,material)
+    return data;    
 }
 
 projectsServices.updateProject = async(project) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.put(`/api/projectManagement/project/${project.id}/updateProject`,project)
-        return data;    
-    })
+    const {data} = await axios.put(`/api/projectManagement/project/${project.id}/updateProject`,project)
+    return data;    
 }
 
 projectsServices.EditTask = async(task) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.put(`/api/projectManagement/project/${task.id}/EditTask`,task)
-        return data;    
-    })
+    const {data} = await axios.put(`/api/projectManagement/project/${task.id}/EditTask`,task)
+    return data;    
 }
 
 projectsServices.EditBudget = async(budget) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.put(`/api/projectManagement/project/${budget.id}/EditBudget`,budget)
-        return data;    
-    })
+    const {data} = await axios.put(`/api/projectManagement/project/${budget.id}/EditBudget`,budget)
+    return data;    
 }
 
 projectsServices.showDeliverablesAndGroups = async (id) => {
@@ -337,95 +287,75 @@ projectsServices.showProject = async({queryKey}) => {
     return data;
 }
 
+
+projectsServices.getProjectDashboardFigures = async (projectId) => {
+    const { data } = await axios.get(`/api/projectManagement/project/${projectId}/dashboard-figures`);
+    return data;
+}
+
 projectsServices.deleteProject = async (project_id) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.delete(`/api/projectManagement/project/${project_id}/deleteProject`);
-        return data;
-    })
+    const {data} = await axios.delete(`/api/projectManagement/project/${project_id}/deleteProject`);
+    return data;
 };
 
 projectsServices.deleteExistingBudgetItem = async ({ id, type }) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-      const { data } = await axios.delete(`/api/projectManagement/project/deleteExistingBudgetItem/${type}/${id}`);
-      return data;
-    });
+    const { data } = await axios.delete(`/api/projectManagement/project/deleteExistingBudgetItem/${type}/${id}`);
+    return data;
 };  
 
 projectsServices.deleteDeliverableGroup = async (group) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.delete(`/api/projectManagement/project/${group.id}/deleteDeliverableGroup`);
-        return data;
-    })
+    const {data} = await axios.delete(`/api/projectManagement/project/${group.id}/deleteDeliverableGroup`);
+    return data;
 };
 
 projectsServices.deleteTimelineActivity = async (activity) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.delete(`/api/projectManagement/project/${activity.id}/deleteTimelineActivity`);
-        return data;
-    })
+    const {data} = await axios.delete(`/api/projectManagement/project/${activity.id}/deleteTimelineActivity`);
+    return data;
 };
 
 projectsServices.deleteDeliverable = async (id) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.delete(`/api/projectManagement/project/${id}/deleteDeliverable`);
-        return data;
-    })
+    const {data} = await axios.delete(`/api/projectManagement/project/${id}/deleteDeliverable`);
+    return data;
 };
 
 projectsServices.deleteTask = async (id) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.delete(`/api/projectManagement/project/${id}/deleteTask`);
-        return data;
-    })
+    const {data} = await axios.delete(`/api/projectManagement/project/${id}/deleteTask`);
+    return data;
 };
 
 projectsServices.deleteClaim = async (id) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.delete(`/api/projectManagement/project/${id}/deleteClaim`);
-        return data;
-    })
+    const {data} = await axios.delete(`/api/projectManagement/project/${id}/deleteClaim`);
+    return data;
 };
 
 projectsServices.deleteBudget = async (id) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.delete(`/api/projectManagement/project/${id}/deleteBudget`);
-        return data;
-    })
+    const {data} = await axios.delete(`/api/projectManagement/project/${id}/deleteBudget`);
+    return data;
 };
 
 projectsServices.deleteSubContractTask = async (id) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.delete(`/api/projectManagement/project/${id}/deleteSubContractTask`);
-        return data;
-    })
+    const {data} = await axios.delete(`/api/projectManagement/project/${id}/deleteSubContractTask`);
+    return data;
 };
 
 projectsServices.deleteSubContract = async (id) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.delete(`/api/projectManagement/project/${id}/deleteSubContract`);
-        return data;
-    })
+    const {data} = await axios.delete(`/api/projectManagement/project/${id}/deleteSubContract`);
+    return data;
 };
 
 projectsServices.deleteCertificate = async (id) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.delete(`/api/projectManagement/project/${id}/deleteCertificate`);
-        return data;
-    })
+    const {data} = await axios.delete(`/api/projectManagement/project/${id}/deleteCertificate`);
+    return data;
 };
 
 projectsServices.deleteSubContractMaterialIssued = async (id) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.delete(`/api/projectManagement/project/${id}/deleteSubContractMaterialIssued`);
-        return data;
-    })
+    const {data} = await axios.delete(`/api/projectManagement/project/${id}/deleteSubContractMaterialIssued`);
+    return data;
 };
 
 projectsServices.deleteUpdate = async (id) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.delete(`/api/projectManagement/project/${id}/deleteUpdate`);
-        return data;
-    })
+    const {data} = await axios.delete(`/api/projectManagement/project/${id}/deleteUpdate`);
+    return data;
 };
 
 export default projectsServices;

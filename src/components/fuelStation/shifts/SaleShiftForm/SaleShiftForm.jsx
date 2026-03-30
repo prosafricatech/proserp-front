@@ -51,52 +51,44 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
   const [activeTab, setActiveTab] = useState(0);
   const {activeStation} = useContext(StationFormContext);
   const {fuel_pumps, cashiers, shifts} = activeStation;
-  const {authOrganization : {organization}} = useJumboAuth();
-  const {checkOrganizationPermission} = useJumboAuth();
+  const {authOrganization, checkOrganizationPermission} = useJumboAuth();
 
   const [cashierLedgers, setCashierLedgers] = useState({});
   const [lastClosingReadings, setLastClosingReadings] = useState({});
   const [lastClosingDipping, setLastClosingDipping] = useState([]);
 
-  const { mutate: addSalesShifts, isPending } = useMutation({
+  const isAutoSavingRef = React.useRef(false);
+  const hasPendingAutoSaveRef = React.useRef(false);
+  const lastChangeAtRef = React.useRef(null);
+  const hasMountedRef = React.useRef(false);
+  const isInitializingAutoSaveRef = React.useRef(true);
+  const hasInitializedPaymentItemsRef = React.useRef(false);
+  const hasUserInteractedRef = React.useRef(false);
+  const hasQueuedAutoSaveCycleRef = React.useRef(false);
+  const lastFormSnapshotRef = React.useRef(null);
+  const lastPaymentItemsSnapshotRef = React.useRef(null);
+  const AUTO_SAVE_DEBUG = true;
+  const AUTO_SAVE_INTERVAL = 30 * 1000;
+  const AUTO_SAVE_TICK = 1000;
+
+  const addMutation = useMutation({
     mutationFn: fuelStationServices.addSalesShifts,
     onSuccess: (data) => {
-      setOpenDialog(false);
-      enqueueSnackbar(data.message, { variant: 'success' });
-      queryClient.invalidateQueries({ queryKey: ['salesShifts'] });
-    },
-    onError: (error) => {
-      let message = 'Something went wrong';
-      if (typeof error === 'object' && error !== null && 'response' in error && typeof error.response?.data?.message === 'string') {
-        message = error.response.data.message;
-      } else if (error instanceof Error) {
-        message = error.message;
+
+      if (data?.id) {
+        setValue('id', data.id);
       }
-      enqueueSnackbar(message, { variant: 'error' });
+
+      queryClient.invalidateQueries({ queryKey: ['salesShifts'] });
     },
   });
 
-  const { mutate: updateSalesShifts, isPending: updateLoading } = useMutation({
+  const updateMutation = useMutation({
     mutationFn: fuelStationServices.updateSalesShifts,
     onSuccess: (data) => {
-      setOpenDialog(false);
-      enqueueSnackbar(data.message, { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['salesShifts'] });
     },
-    onError: (error) => {
-      let message = 'Something went wrong';
-      if (typeof error === 'object' && error !== null && 'response' in error && typeof error.response?.data?.message === 'string') {
-        message = error.response.data.message;
-      } else if (error instanceof Error) {
-        message = error.message;
-      }
-      enqueueSnackbar(message, { variant: 'error' });
-    },
   });
-
-  const saveMutation = React.useMemo(() => {
-    return SalesShift?.id ? updateSalesShifts : addSalesShifts;
-  }, [SalesShift, addSalesShifts, updateSalesShifts]);
 
   const validationSchema = yup.object({
     sales_outlet_shift_id: yup.number().required('Sales Outlet Shift is required').typeError('Sales Outlet Shift must be a number'),
@@ -159,7 +151,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
             narration: yup.string().nullable(),
           })
         ),
-        tank_adjustments: yup.array().of(
+        adjustments: yup.array().of(
           yup.object().shape({
             tank_id: yup.number().nullable().typeError('Tank is Required'),
             quantity: yup.number().required('Quantity is required').typeError('Quantity is Required'),
@@ -230,6 +222,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
           selected_pumps: selectedPumps,
           pump_readings: pumpReadings,
           fuel_vouchers: cashier.fuel_vouchers?.map(fv => ({
+            id: fv.id,
             stakeholder_id: fv.stakeholder_id || fv.stakeholder?.id,
             stakeholder: fv.stakeholder || null,
             quantity: fv.quantity,
@@ -241,7 +234,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
           })) || [],
           collected_amount: cashier.collected_amount || 0,
           collection_ledger_id: cashier.collection_ledger_id || null,
-          tank_adjustments: cashier.tank_adjustments?.map(adj => ({
+          adjustments: cashier.tank_adjustments?.map(adj => ({
             tank_id: adj.tank_id,
             quantity: adj.quantity,
             operator: adj.operator,
@@ -352,15 +345,10 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
     return lastClosingReadings[pumpId] || 0;
   }, [SalesShift, selectedCashiers, lastClosingReadings]);
 
-  const handlePumpSelection = useCallback((cashierIndex, selectedPumpIds) => {
+  const handleCashierPumpSelection = useCallback((cashierIndex, selectedPumpIds) => {
     const currentCashier = selectedCashiers[cashierIndex];
     if (!currentCashier) return;
-    
-    setValue(`cashiers.${cashierIndex}.selected_pumps`, selectedPumpIds, {
-      shouldValidate: true,
-      shouldDirty: true
-    });
-    
+
     const currentReadings = currentCashier.pump_readings || [];
     
     let updatedReadings = currentReadings.filter(reading => 
@@ -512,7 +500,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
           selected_pumps: [],
           pump_readings: [],
           fuel_vouchers: [],
-          tank_adjustments: [],
+          adjustments: [],
           other_transactions: [],
           main_ledger: null,
         };
@@ -562,7 +550,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
     );
   };
 
-    // Retrieve product prices for the station at a specific date/time
+  // Retrieve product prices for the station at a specific date/time
   const retrieveProductPrices = useCallback(async (as_at) => {
     try {
       const product_ids = Array.from(new Set((fuel_pumps || []).map(p => p.product_id)));
@@ -586,27 +574,169 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
     } catch (error) {
       setValue('product_prices', [], { shouldValidate: true, shouldDirty: true });
     }
-  }, [fuel_pumps, activeStation.id, setValue]);
+  }, [fuel_pumps, activeStation.id, setValue, SalesShift]);
+
+  useEffect(() => {
+    if (!SalesShift?.id) return;
+    const shiftStart = SalesShift?.shift_start;
+    retrieveProductPrices(shiftStart);
+  }, [SalesShift]);
 
   const getCashierLedgers = (cashierIndex) => {
     return cashierLedgers[cashierIndex] || [];
   };
 
-  const handleSubmitForm = async (data) => {
-      const allProductIds = (activeStation.products || []).map(p => p.id);
-      const pricedProductIds = (data.product_prices || []).map(p => p.product_id);
-      const missingPriceProducts = allProductIds.filter(pid => !pricedProductIds.includes(pid));
-      if (missingPriceProducts.length > 0) {
-        const missingNames = (activeStation.products || [])
-          .filter(p => missingPriceProducts.includes(p.id))
-          .map(p => p.name)
-          .join(', ');
-        enqueueSnackbar(
-          `Cannot proceed: The following products are missing prices: ${missingNames}`,
-          { variant: 'error' }
-        );
-        return;
+  const autoSaveDebug = useCallback((message, meta = {}) => {
+    if (!AUTO_SAVE_DEBUG) return;
+    console.log('[SaleShiftForm][autosave]', message, meta);
+  }, [AUTO_SAVE_DEBUG]);
+
+  const toSnapshot = useCallback((value) => {
+    try {
+      return JSON.stringify(value ?? null);
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const syncFuelVoucherIdsFromResponse = useCallback((responseData) => {
+    const serverCashiers = responseData?.salesShift?.cashiers || responseData?.cashiers;
+    if (!Array.isArray(serverCashiers) || serverCashiers.length === 0) return;
+
+    const currentCashiers = watch('cashiers') || [];
+    if (!Array.isArray(currentCashiers) || currentCashiers.length === 0) return;
+
+    const buildSignature = (voucher) => {
+      const quantity = Number(voucher?.quantity || 0);
+      return [
+        voucher?.product_id ?? '',
+        voucher?.expense_ledger_id ?? '',
+        voucher?.stakeholder_id ?? '',
+        Number.isFinite(quantity) ? quantity.toFixed(6) : '0.000000',
+        voucher?.reference ?? '',
+        voucher?.narration ?? '',
+      ].join('|');
+    };
+
+    const updatedCashiers = currentCashiers.map((cashier) => {
+      const serverCashier = serverCashiers.find((sc) => Number(sc?.id) === Number(cashier?.id));
+      if (!serverCashier) return cashier;
+
+      const localVouchers = Array.isArray(cashier?.fuel_vouchers) ? cashier.fuel_vouchers : [];
+      const serverVouchers = Array.isArray(serverCashier?.fuel_vouchers) ? serverCashier.fuel_vouchers : [];
+
+      if (localVouchers.length === 0 || serverVouchers.length === 0) return cashier;
+
+      const usedServerVoucherIds = new Set();
+
+      const mergedFuelVouchers = localVouchers.map((localVoucher) => {
+        let matchedServerVoucher = null;
+
+        if (localVoucher?.id) {
+          matchedServerVoucher = serverVouchers.find((serverVoucher) => Number(serverVoucher?.id) === Number(localVoucher.id));
+        }
+
+        if (!matchedServerVoucher) {
+          const localSignature = buildSignature(localVoucher);
+          matchedServerVoucher = serverVouchers.find((serverVoucher) => {
+            if (usedServerVoucherIds.has(serverVoucher?.id)) return false;
+            return buildSignature(serverVoucher) === localSignature;
+          });
+        }
+
+        if (matchedServerVoucher?.id) {
+          usedServerVoucherIds.add(matchedServerVoucher.id);
+          return {
+            ...localVoucher,
+            id: matchedServerVoucher.id,
+          };
+        }
+
+        return localVoucher;
+      });
+
+      return {
+        ...cashier,
+        fuel_vouchers: mergedFuelVouchers,
+      };
+    });
+
+    setValue('cashiers', updatedCashiers, { shouldValidate: false, shouldDirty: false });
+  }, [setValue, watch]);
+
+  const syncPaymentsReceivedIdsFromResponse = useCallback((responseData) => {
+    const serverPayments = responseData?.salesShift?.payments_received || responseData?.payments_received;
+    if (!Array.isArray(serverPayments) || serverPayments.length === 0) return;
+
+    const buildPaymentSignature = (payment) => {
+      const amount = Number(payment?.amount || 0);
+      return [
+        payment?.debit_ledger_id ?? '',
+        payment?.credit_ledger_id ?? '',
+        Number.isFinite(amount) ? amount.toFixed(6) : '0.000000',
+        payment?.narration ?? '',
+      ].join('|');
+    };
+
+    setPaymentItems((prevItems) => {
+      if (!Array.isArray(prevItems) || prevItems.length === 0) return prevItems;
+
+      const usedServerPaymentIds = new Set();
+      let hasChanged = false;
+
+      const mergedPayments = prevItems.map((localPayment) => {
+        let matchedServerPayment = null;
+
+        if (localPayment?.id) {
+          matchedServerPayment = serverPayments.find((serverPayment) => Number(serverPayment?.id) === Number(localPayment.id));
+        }
+
+        if (!matchedServerPayment) {
+          const localSignature = buildPaymentSignature(localPayment);
+          matchedServerPayment = serverPayments.find((serverPayment) => {
+            if (usedServerPaymentIds.has(serverPayment?.id)) return false;
+            return buildPaymentSignature(serverPayment) === localSignature;
+          });
+        }
+
+        if (matchedServerPayment?.id) {
+          usedServerPaymentIds.add(matchedServerPayment.id);
+          if (Number(localPayment?.id) !== Number(matchedServerPayment.id)) {
+            hasChanged = true;
+            return {
+              ...localPayment,
+              id: matchedServerPayment.id,
+            };
+          }
+        }
+
+        return localPayment;
+      });
+
+      if (hasChanged) {
+        lastPaymentItemsSnapshotRef.current = toSnapshot(mergedPayments);
+        return mergedPayments;
       }
+
+      return prevItems;
+    });
+  }, [setPaymentItems, toSnapshot]);
+
+  const handleSubmitForm = async (data, options = { silent: false }) => {
+    const allProductIds = (activeStation.products || []).map(p => p.id);
+    const pricedProductIds = (data.product_prices || []).map(p => p.product_id);
+    const missingPriceProducts = allProductIds.filter(pid => !pricedProductIds.includes(pid));
+    if (missingPriceProducts.length > 0) {
+      const missingNames = (activeStation.products || [])
+        .filter(p => missingPriceProducts.includes(p.id))
+        .map(p => p.name)
+        .join(', ');
+      enqueueSnackbar(
+        `Cannot proceed: The following products are missing prices: ${missingNames}`,
+        { variant: 'error' }
+      );
+      return;
+    }
     if (data.cashiers.length === 0) {
       enqueueSnackbar('Please add at least one cashier', { variant: 'error' });
       return;
@@ -667,27 +797,197 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
       return;
     }
 
-    data.cashiers = data.cashiers.map(cashier => ({
-      ...cashier,
-      fuel_vouchers: Array.isArray(cashier.fuel_vouchers)
-        ? cashier.fuel_vouchers.map(fuelVoucher => ({
-            stakeholder_id: fuelVoucher.stakeholder_id ?? (fuelVoucher.stakeholder?.id ?? null),
-            expense_ledger_id: fuelVoucher.expense_ledger_id ?? (fuelVoucher.expense_ledger?.id ?? null),
-            product_id: fuelVoucher.product_id,
-            quantity: fuelVoucher.quantity,
-            amount: fuelVoucher.amount,
-            reference: fuelVoucher.reference,
-            narration: fuelVoucher.narration,
-          })
-        )
-        : [],
-    }));
+    data.cashiers = data.cashiers.map(cashier => {
+      const { adjustments, ...rest } = cashier;
+      return {
+        ...rest,
+        tank_adjustments: adjustments || [],
+        selected_pumps: Array.isArray(cashier.selected_pumps)
+          ? cashier.selected_pumps.map(sel => {
+              const id = sel.pump_id ?? sel;
+              return typeof id === 'string' ? Number(id) : id;
+            })
+          : [],
+        fuel_vouchers: Array.isArray(cashier.fuel_vouchers)
+          ? cashier.fuel_vouchers.map(fuelVoucher => ({
+              ...(fuelVoucher.id ? { id: fuelVoucher.id } : {}),
+              stakeholder_id: fuelVoucher.stakeholder_id ?? (fuelVoucher.stakeholder?.id ?? null),
+              expense_ledger_id: fuelVoucher.expense_ledger_id ?? (fuelVoucher.expense_ledger?.id ?? null),
+              product_id: fuelVoucher.product_id,
+              quantity: fuelVoucher.quantity,
+              amount: fuelVoucher.amount,
+              reference: fuelVoucher.reference,
+              narration: fuelVoucher.narration,
+            })
+          )
+          : [],
+      };
+    });
     data.payments_received = paymentItems;
-    await saveMutation(data);
+
+    // Decide add or update at submit time
+    const isUpdate = !!data.id || !!SalesShift?.id;
+    let serverResponse;
+    try {
+      if (isUpdate) {
+        serverResponse = await updateMutation.mutateAsync(data);
+      } else {
+        const created = await addMutation.mutateAsync(data);
+        serverResponse = created;
+        if (created?.id) {
+          setValue('id', created.id, { shouldValidate: false, shouldDirty: false });
+        }
+      }
+      syncFuelVoucherIdsFromResponse(serverResponse);
+      syncPaymentsReceivedIdsFromResponse(serverResponse);
+    } catch (err) {
+      enqueueSnackbar('Error saving shift', { variant: 'error' });
+      return;
+    }
+
+    if (!options.silent) {
+      enqueueSnackbar('Saved successfully', { variant: 'success' });
+      setOpenDialog(false);
+    }
   };
 
+  const markAutoSaveChange = useCallback(() => {
+    if (!hasMountedRef.current) return;
+    if (!hasUserInteractedRef.current) {
+      autoSaveDebug('Change ignored (no user interaction yet)');
+      return;
+    }
+    if (hasPendingAutoSaveRef.current) {
+      hasQueuedAutoSaveCycleRef.current = true;
+      autoSaveDebug('Change detected while countdown active (keeping existing countdown)');
+      return;
+    }
+    hasPendingAutoSaveRef.current = true;
+    lastChangeAtRef.current = Date.now();
+    autoSaveDebug('Countdown started', {
+      saveInMs: AUTO_SAVE_INTERVAL,
+    });
+  }, [AUTO_SAVE_INTERVAL, autoSaveDebug]);
+
+  const markUserInteraction = useCallback(() => {
+    if (!hasUserInteractedRef.current) {
+      autoSaveDebug('User interaction detected (autosave can start tracking changes)');
+    }
+    hasUserInteractedRef.current = true;
+  }, [autoSaveDebug]);
+
+  const resetAutoSaveTracking = useCallback(() => {
+    hasPendingAutoSaveRef.current = false;
+    lastChangeAtRef.current = null;
+    hasQueuedAutoSaveCycleRef.current = false;
+    autoSaveDebug('Countdown reset/cleared');
+  }, [autoSaveDebug]);
+
+  useEffect(() => {
+    const subscription = watch((value) => {
+      if (isInitializingAutoSaveRef.current) return;
+
+      const nextSnapshot = toSnapshot(value);
+      if (nextSnapshot === null) return;
+
+      if (lastFormSnapshotRef.current === null) {
+        lastFormSnapshotRef.current = nextSnapshot;
+        autoSaveDebug('Initial form snapshot captured');
+        return;
+      }
+
+      if (lastFormSnapshotRef.current === nextSnapshot) {
+        return;
+      }
+
+      lastFormSnapshotRef.current = nextSnapshot;
+      markAutoSaveChange();
+    });
+
+    hasMountedRef.current = true;
+    lastFormSnapshotRef.current = toSnapshot(watch());
+
+    const initTimer = setTimeout(() => {
+      isInitializingAutoSaveRef.current = false;
+    }, 0);
+
+    return () => {
+      clearTimeout(initTimer);
+      isInitializingAutoSaveRef.current = true;
+      lastFormSnapshotRef.current = null;
+      subscription.unsubscribe();
+      resetAutoSaveTracking();
+    };
+  }, [watch, markAutoSaveChange, resetAutoSaveTracking, toSnapshot, autoSaveDebug]);
+
+  useEffect(() => {
+    if (!hasInitializedPaymentItemsRef.current) {
+      hasInitializedPaymentItemsRef.current = true;
+      lastPaymentItemsSnapshotRef.current = toSnapshot(paymentItems);
+      return;
+    }
+
+    const nextSnapshot = toSnapshot(paymentItems);
+    if (nextSnapshot === null) return;
+    if (lastPaymentItemsSnapshotRef.current === nextSnapshot) return;
+
+    lastPaymentItemsSnapshotRef.current = nextSnapshot;
+    markAutoSaveChange();
+  }, [paymentItems, markAutoSaveChange, toSnapshot]);
+
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      if (!hasPendingAutoSaveRef.current) return;
+      if (!lastChangeAtRef.current) return;
+      if (isAutoSavingRef.current) return;
+
+      const elapsed = Date.now() - lastChangeAtRef.current;
+      if (elapsed < AUTO_SAVE_INTERVAL) return;
+
+      const saveStartedAt = Date.now();
+      isAutoSavingRef.current = true;
+      autoSaveDebug('Autosave started', { elapsedMs: elapsed });
+
+      try {
+        const data = watch();
+
+        let filteredCashiers = [];
+        if (data.cashiers && data.cashiers.length > 0) {
+          filteredCashiers = data.cashiers.filter(cashier => cashier.selected_pumps && cashier.selected_pumps.length > 0);
+        }
+
+        if (filteredCashiers.length === 0) {
+          autoSaveDebug('Autosave skipped (no cashier with selected pump)');
+          resetAutoSaveTracking();
+          return;
+        }
+
+        const partialData = {
+          ...data,
+          cashiers: filteredCashiers,
+          payments_received: paymentItems,
+          submit_type: 'suspend'
+        };
+
+        await handleSubmitForm(partialData, { silent: true });
+        autoSaveDebug('Autosave completed');
+
+        // After successful autosave, update the snapshot
+        const nextSnapshot = toSnapshot(watch());
+        lastFormSnapshotRef.current = nextSnapshot;
+        hasQueuedAutoSaveCycleRef.current = false;
+        resetAutoSaveTracking();
+      } finally {
+        isAutoSavingRef.current = false;
+      }
+    }, AUTO_SAVE_TICK);
+
+    return () => clearInterval(interval);
+  }, [AUTO_SAVE_INTERVAL, AUTO_SAVE_TICK, watch, paymentItems, resetAutoSaveTracking, toSnapshot]);
+
   return (
-    <FormProvider {...{
+    <div onChangeCapture={markUserInteraction} onInputCapture={markUserInteraction}>
+      <FormProvider {...{
       register, 
       handleSubmit, 
       setError, 
@@ -738,7 +1038,13 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
                   label='Shift Start'
                   fullWidth
                   value={watch('shift_start') ? dayjs(watch('shift_start')) : null}
-                  minDate={dayjs(organization.recording_start_date)}
+                  minDate={
+                    checkOrganizationPermission([
+                      PERMISSIONS.FUEL_SALES_SHIFTS_BACKDATE,
+                    ])
+                      ? dayjs(authOrganization?.organization.recording_start_date)
+                      : dayjs().startOf('day')
+                  }
                   slotProps={{
                     textField: {
                       size: 'small',
@@ -789,7 +1095,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
                   label='Shift End'
                   fullWidth
                   value={watch('shift_end') ? dayjs(watch('shift_end')) : null}
-                  minDate={dayjs(organization.recording_start_date)}
+                  minDate={dayjs(authOrganization.organization.recording_start_date)}
                   slotProps={{
                     textField: {
                       size: 'small',
@@ -909,7 +1215,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
                   control={control}
                   watch={watch}
                   lastClosingReadings={lastClosingReadings}
-                  handlePumpSelection={handlePumpSelection}
+                  handleCashierPumpSelection={handleCashierPumpSelection}
                   getCashierLedgers={getCashierLedgers}
                   getAvailablePumpsForCashier={getAvailablePumpsForCashier}
                   setValue={setValue}
@@ -992,7 +1298,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
           </Button>
         )}
         <LoadingButton
-          loading={isPending || updateLoading}
+          loading={addMutation.isPending || updateMutation.isPending}
           size='small'
           variant='contained'
           onClick={() => setShowHoldDialog(true)}
@@ -1014,10 +1320,12 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
               Cancel
             </Button>
             <LoadingButton
-              loading={isPending || updateLoading}
+              loading={addMutation.isPending || updateMutation.isPending}
               variant="contained"
               color="warning"
               onClick={(e) => {
+                isAutoSavingRef.current = false;
+                resetAutoSaveTracking();
                 setShowHoldDialog(false);
                 setValue('submit_type', 'suspend');
                 handleSubmit(handleSubmitForm)(e);
@@ -1031,11 +1339,13 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
           <>
             {checkOrganizationPermission([PERMISSIONS.FUEL_SALES_SHIFT_CLOSE]) && (
               <LoadingButton
-                loading={isPending || updateLoading}
+                loading={addMutation.isPending || updateMutation.isPending}
                 size='small'
                 variant='contained'
                 color='success'
                 onClick={(e) => {
+                  isAutoSavingRef.current = false;
+                  resetAutoSaveTracking();
                   setValue('submit_type', 'close');
                   handleSubmit(handleSubmitForm)(e);
                 }}
@@ -1047,6 +1357,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
         )}
       </DialogActions>
     </FormProvider>
+    </div>
   );
 }
 

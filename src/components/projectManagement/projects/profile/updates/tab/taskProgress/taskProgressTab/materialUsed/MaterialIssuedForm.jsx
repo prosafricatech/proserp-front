@@ -20,7 +20,7 @@ function MaterialIssuedForm({projectTaskIndex, taskProgressItem, material = null
   const { productOptions } = useProductsSelect();
   const { taskProgressItems, setTaskProgressItems} = useUpdateFormContext();
   const nonInventoryIds = productOptions.filter(product => product.type !== 'Inventory').map(product => product.id);
-
+  
   const validationSchema = yup.object({
     product: yup
       .object()
@@ -30,10 +30,20 @@ function MaterialIssuedForm({projectTaskIndex, taskProgressItem, material = null
     quantity: yup
       .number()
       .transform((value) =>
-        isNaN(value) || value === null ? undefined : value
+        isNaN(value) || value === null || value === '' ? undefined : value
       )
       .required('Quantity is required')
-      .positive('Quantity must be a positive number')
+      .typeError('Quantity must be a number')
+      .test(
+        'positive-check',
+        'Quantity must be greater than 0',
+        function (value) {
+          if (value === undefined || value === null) {
+            return false;
+          }
+          return value > 0;
+        }
+      )
       .test(
         'inventory-balance-check',
         'Quantity exceeds available balance',
@@ -79,10 +89,14 @@ function MaterialIssuedForm({projectTaskIndex, taskProgressItem, material = null
   const {setValue, handleSubmit, register, watch, clearErrors, reset, formState: {errors}} = useForm({
     resolver: yupResolver(validationSchema),
     defaultValues: {
+      id: material?.id,
+      execution_date: material?.execution_date || taskProgressItem?.execution_date,
       product: material && productOptions.find(product => product.id === material.product?.id),
+      product_id: material?.product?.id,
       available_balance: 'N/A',
       projectTaskIndex: material?.projectTaskIndex,
       store_id: material?.store?.id,
+      remarks: material?.remarks,
       store: material?.store,
       quantity: material ? material.quantity : null,
       conversion_factor: material ? material.conversion_factor : 1,
@@ -94,6 +108,7 @@ function MaterialIssuedForm({projectTaskIndex, taskProgressItem, material = null
   const product = watch('product');
   const measurement_unit_id = watch('measurement_unit_id');
   const store_id = watch('store_id');
+  const store = watch('store');
 
   const [isAdding, setIsAdding] = useState(false);
   
@@ -214,7 +229,19 @@ function MaterialIssuedForm({projectTaskIndex, taskProgressItem, material = null
                 await setValue(`product_id`,newValue.id);
                 setValue(`projectTaskIndex`, projectTaskIndex)
 
-                await retrieveBalances(store_id, newValue, newValue.primary_unit?.id);
+                // Auto-select store if available from project_subcontract
+                let selectedStoreId = store_id;
+                if (taskProgressItem?.project_subcontract?.store && !material) {
+                  const autoStore = taskProgressItem.project_subcontract.store;
+                  await setValue('store', autoStore);
+                  await setValue('store_id', autoStore.id, {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                  });
+                  selectedStoreId = autoStore.id;
+                }
+
+                await retrieveBalances(selectedStoreId, newValue, newValue.primary_unit?.id);
               } else {
                 await setValue(`available_balance`,'N/A');
                 await setValue(`product`,null, {
@@ -227,9 +254,10 @@ function MaterialIssuedForm({projectTaskIndex, taskProgressItem, material = null
         </Grid>
         <Grid size={{xs: 12, md: !!product && !!store_id ? 2 : 3}}>
           <StoreSelector
+            key={store_id || 'no-store'}
             allowSubStores={true}
             proposedOptions={taskProgressItem?.project_subcontract?.store ? [taskProgressItem?.project_subcontract?.store] : project?.stores}
-            defaultValue={material?.store}
+            defaultValue={store || material?.store}
             onChange={(newValue) => {
               newValue !== null && retrieveBalances(newValue.id, product, measurement_unit_id);
                 setValue(`store`, newValue);
@@ -264,8 +292,12 @@ function MaterialIssuedForm({projectTaskIndex, taskProgressItem, material = null
             size='small'
             error={!!errors?.quantity}
             helperText={errors?.quantity?.message}
+            value={watch('quantity') || ''}
+            type="number"
+            inputProps={{ step: 'any', min: 0 }}
             onChange={(e)=> {
-              setValue(`quantity`, e.target.value ? sanitizedNumber(e.target.value) : null, {
+              const sanitized = e.target.value ? sanitizedNumber(e.target.value) : null;
+              setValue(`quantity`, sanitized, {
                 shouldValidate: true,
                 shouldDirty: true
               });
@@ -307,7 +339,6 @@ function MaterialIssuedForm({projectTaskIndex, taskProgressItem, material = null
                 </div>
               ),
             }}
-            defaultValue={material ? material?.quantity : null}
           />
         </Grid>
         <Grid size={{xs: 12, md: 3}}>

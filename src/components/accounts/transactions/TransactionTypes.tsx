@@ -24,6 +24,7 @@ export type BaseTransaction = {
   voucherNo: string;
   requisitionNo?: number;
   requisition_approval_id?: number;
+  editable?: boolean;
 };
 
 export type PaymentTransaction = BaseTransaction & {
@@ -36,6 +37,7 @@ export type PaymentTransaction = BaseTransaction & {
 export type ReceiptTransaction = BaseTransaction & {
   type: "receipt";
   amount: number;
+  editable?: boolean;
   journals_sum_amount: number;
   receiptable_id: number | null;
   receiptable_type: string | null;
@@ -45,6 +47,7 @@ export type ReceiptTransaction = BaseTransaction & {
 export type JournalVoucherTransaction = BaseTransaction & {
   type: "journal_voucher";
   amount: number;
+  editable?: boolean;
   journals_sum_amount: number;
 };
 

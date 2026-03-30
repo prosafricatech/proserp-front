@@ -22,24 +22,18 @@ stationServices.getUserStations = async (params) => {
 };
 
 stationServices.add = async(station) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.post(`/api/fuelStations/stations/add`,station)
-        return data;
-    })
+    const {data} = await axios.post(`/api/fuelStations/stations/add`,station)
+    return data;
 };
 
 stationServices.update = async(station) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const { data } = await axios.put(`/api/fuelStations/stations/${station.id}/update`, station);
-        return data;
-    })
+    const { data } = await axios.put(`/api/fuelStations/stations/${station.id}/update`, station);
+    return data;
 };
 
 stationServices.delete = async ({ id }) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const { data } = await axios.delete(`/api/fuelStations/stations/${id}/delete`);
-        return data;
-    });
+    const { data } = await axios.delete(`/api/fuelStations/stations/${id}/delete`);
+    return data;
 };
 
 export default stationServices;

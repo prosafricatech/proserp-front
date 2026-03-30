@@ -174,7 +174,9 @@ const QuickAddLedger = ({
     <>
       <Divider />
       <Typography textAlign={'center'} variant='h4' marginTop={2}>
-        {ledgerType === 'credit' ? 'Create New Credit' : 'Create New Debit'}
+        {ledgerType === 'credit'
+          ? 'Quick Add Credit Ledger'
+          : 'Quick Add Debit Ledger'}
       </Typography>
       <DialogContent>
         <form autoComplete='off'>
@@ -392,6 +394,6 @@ const QuickAddLedger = ({
       </DialogActions>
     </>
   );
-}
+};
 
 export default QuickAddLedger;

@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Grid, Stack, Tab,Tabs, TextField, Typography } from '@mui/material';
+import { Button, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle, Grid, Stack, Tab,Tabs, TextField, Typography } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useSnackbar } from 'notistack';
 import dayjs from 'dayjs';
-import { DateTimePicker } from '@mui/x-date-pickers';
 import {  KeyboardArrowLeftOutlined, KeyboardArrowRightOutlined } from '@mui/icons-material';
 import purchaseServices from '../../purchase-services';
 import StoreSelector from '../../../stores/StoreSelector';
@@ -17,14 +16,22 @@ import ItemsTab from './receiveFormTabs/ItemsTab';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCurrencySelect } from '@/components/masters/Currencies/CurrencySelectProvider';
-import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { Div } from '@jumbo/shared';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
+import CostCenterSelector from '@/components/masters/costCenters/CostCenterSelector';
+import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
+import { DateTimePicker } from '@mui/x-date-pickers';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
+import { useLedgerSelect } from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
 
-function PurchaseOrderReceiveForm({ toggleOpen, order }) {
-  const [additionalCosts, setAdditionalCosts] = useState([]);
-  const { purchase_order_items } = order;
+function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
+  const [additionalCosts, setAdditionalCosts] = useState(grn ? grn?.additional_costs.map(cost => ({ 
+    ...cost,
+    credit_ledger_name: cost.credit_ledger_name || cost.name,
+    currency_id: cost.currency_id || cost.currency?.id,
+    currency_name: cost.currency_name || cost.currency?.name,
+   })) : []);
   const [date_received] = useState(dayjs());
   const [activeTab, setActiveTab] = useState(0);
   const { enqueueSnackbar } = useSnackbar();
@@ -34,11 +41,29 @@ function PurchaseOrderReceiveForm({ toggleOpen, order }) {
   const {authOrganization,checkOrganizationPermission} = useJumboAuth();
   const [totalReceivedAmount, setTotalReceivedAmount] = useState(0);
   const [totalAmount, setTotalAmount] = useState(0);
+  const { ungroupedLedgerOptions } = useLedgerSelect();
+
+  // Calculate correct unreceived_quantity for edit mode
+  let purchase_order_items = order?.purchase_order_items?.map((item) => {
+    let grnItem = grn?.items.find(i => i.purchase_order_item_id === item.id);
+    let unreceived_quantity = item.unreceived_quantity;
+    if (grnItem) {
+      unreceived_quantity += (grnItem.quantity || 0);
+    }
+    return {
+      ...item,
+      grn_quantity: grnItem ? (grnItem.quantity || 0) : 0,
+      unreceived_quantity,
+    };
+  }) || [];
+
+  const initialItems = React.useMemo(() =>
+    purchase_order_items?.filter(item => item.product.type === 'Inventory' && item.unreceived_quantity > 0) || []
+  , [order]);
 
   const [nextTab, setNextTab] = useState(null);
   const [showWarning, setShowWarning] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
-
 
   const handleTabChange = (event, newTab) => {
     if (isDirty) {
@@ -55,13 +80,14 @@ function PurchaseOrderReceiveForm({ toggleOpen, order }) {
     setActiveTab(nextTab); 
   };
 
+
   const receiveOrder = useMutation({
     mutationFn: purchaseServices.receive,
     onSuccess: (data) => {
       toggleOpen(false);
       enqueueSnackbar(data.message, { variant: 'success' });
-      queryClient.invalidateQueries({ queryKey: ['purchaseOrderDetails'] });
       queryClient.invalidateQueries({ queryKey: ['purchaseOrders'] });
+      queryClient.invalidateQueries({ queryKey: ['purchaseOrderDetails'] });
       queryClient.invalidateQueries({ queryKey: ['purchaseOrderGrns'] });
     },
     onError: (error) => {
@@ -69,9 +95,30 @@ function PurchaseOrderReceiveForm({ toggleOpen, order }) {
     },
   });
 
+  // Mutation for editing GRN
+  const editGrnMutation = useMutation({
+    mutationFn: ({ grnId, data }) => purchaseServices.editGrn(grnId, data),
+    onSuccess: (response) => {
+      toggleOpen(false);
+      enqueueSnackbar(response.message || 'GRN updated successfully', { variant: 'success' });
+      queryClient.invalidateQueries({ queryKey: ['purchaseOrders'] });
+      queryClient.invalidateQueries({ queryKey: ['purchaseOrderDetails'] });
+      queryClient.invalidateQueries({ queryKey: ['purchaseOrderGrns'] });
+    },
+    onError: (error) => {
+      enqueueSnackbar(error?.response?.data?.message || 'Failed to update GRN', { variant: 'error' });
+    },
+  });
+
   const saveMutation = React.useMemo(() => {
-    return receiveOrder.mutate
-  }, [receiveOrder]);
+    return (data) => {
+      if (grn) {
+        editGrnMutation.mutate({ grnId: grn.id, data });
+      } else {
+        receiveOrder.mutate(data);
+      }
+    };
+  }, [receiveOrder, editGrnMutation, grn]);
 
   const validationSchema = yup.object({
     date_received: yup.string().required('Receive Date is required'),
@@ -85,6 +132,17 @@ function PurchaseOrderReceiveForm({ toggleOpen, order }) {
       .typeError('Exchange rate is required')
       .positive('Exchange rate is required')
       .required('Exchange rate is required'),
+    change_cost_center: yup.boolean(),
+    destination_cost_center_id: yup.number().when('change_cost_center', {
+      is: true,
+      then: (schema) => schema.required('Destination Cost Center is required').typeError('Destination Cost Center is required'),
+      otherwise: (schema) => schema.nullable(),
+    }),
+    receivable_ledger_id: yup.number().when('change_cost_center', {
+      is: true,
+      then: (schema) => schema.required('Receivable Ledger is required').typeError('Receivable Ledger is required'),
+      otherwise: (schema) => schema.nullable(),
+    }),
     items: yup.array().of(
       yup.object().shape({
         quantity: yup
@@ -137,18 +195,41 @@ function PurchaseOrderReceiveForm({ toggleOpen, order }) {
   
   const {register, getValues, watch, setValue, clearErrors, handleSubmit, formState: { errors } } = useForm({
     resolver: yupResolver(validationSchema),
-    defaultValues: {
+    defaultValues: grn ? {
+      id: grn.id,
+      date_received: grn.date_received || date_received.toISOString(),
+      cost_factor: grn.cost_factor || '',
+      reference: grn.reference || order?.orderNo,
+      destination_cost_center_id: grn.destination_cost_center_id || null,
+      exchange_rate: grn.exchange_rate || order?.exchange_rate || 1,
+      store_id: grn.store.id,
+      change_cost_center: Boolean(grn.change_cost_center),
+      receivable_ledger_id: grn.receivable_ledger_id || null,
+      items: purchase_order_items
+        ?.filter(item => item.product.type === 'Inventory' && item.unreceived_quantity > 0)
+        .map(item => {
+          return {
+            unreceived_quantity: item.unreceived_quantity,
+            quantity: item.grn_quantity,
+            purchase_order_item_id: item.id,
+            rate: item.rate,
+          };
+        }) || [],
+      additional_costs: grn.additional_costs || [],
+    } : {
       id: order?.id,
       date_received: date_received.toISOString(),
       cost_factor: '',
       reference: order?.orderNo,
       exchange_rate: order?.exchange_rate ? order.exchange_rate : 1,
-      items: purchase_order_items?.filter(item => item.product.type === 'Inventory' && item.unreceived_quantity > 0).map(item => ({
-        unreceived_quantity : item.unreceived_quantity,
-        quantity : item.unreceived_quantity,
-        purchase_order_item_id: item.id,
-        rate: item.rate,
-      })),
+      items: purchase_order_items
+        ?.filter(item => item.product.type === 'Inventory' && item.unreceived_quantity > 0)
+        .map(item => ({
+          unreceived_quantity: item.unreceived_quantity,
+          quantity: item.unreceived_quantity,
+          purchase_order_item_id: item.id,
+          rate: item.rate,
+        })),
     },
   });
 
@@ -157,21 +238,12 @@ function PurchaseOrderReceiveForm({ toggleOpen, order }) {
     setValue('additional_costs', additionalCosts?.map(additionalCost => ({
       credit_ledger_name: additionalCost.credit_ledger_name,
       credit_ledger_id : additionalCost.credit_ledger_id,
-      currency_id: additionalCost.currency_id,
+      currency_id: additionalCost.currency_id || additionalCost.currency?.id,
       exchange_rate: additionalCost.exchange_rate,
       reference: additionalCost.reference,
       amount: additionalCost.amount,
     })));
   }, [additionalCosts, setValue]); 
-
-  // Update the quantity field whenever unreceived_quantity changes
-  useEffect(() => {
-    purchase_order_items
-      .filter(item => item.unreceived_quantity !== 0)
-      .forEach((item, index) => {
-        setValue(`items.${index}.quantity`, item.unreceived_quantity);
-      });
-  }, [purchase_order_items]);
 
   //total for items and its respectful rate
   useEffect(() => {
@@ -221,6 +293,34 @@ function PurchaseOrderReceiveForm({ toggleOpen, order }) {
       }));
   };
 
+  const [itemsState, setItemsState] = useState(initialItems);
+  // Handler to reset items
+  const handleResetItems = () => {
+    setItemsState(initialItems);
+    setValue('items', initialItems.map(item => ({
+      unreceived_quantity: item.unreceived_quantity,
+      quantity: item.grn_quantity || item.unreceived_quantity,
+      purchase_order_item_id: item.id,
+      rate: item.rate,
+    })));
+  };
+
+  // Handler to remove item
+  const handleRemoveItem = (index) => {
+    if (itemsState.length > 1) {
+      const newItems = [...itemsState];
+      newItems.splice(index, 1);
+      setItemsState(newItems);
+      // Also update form values
+      setValue('items', newItems.map(item => ({
+        unreceived_quantity: item.unreceived_quantity,
+        quantity: item.grn_quantity || item.unreceived_quantity,
+        purchase_order_item_id: item.id,
+        rate: item.rate,
+      })));
+    }
+  };
+
   const getAdditionalCostsSummary = () => {
     return additionalCosts.filter(item => item.amount > 0).map((item, index) => {
       const itemCurrency = currencies.find((currency) => currency.id === item.currency_id);
@@ -259,134 +359,226 @@ function PurchaseOrderReceiveForm({ toggleOpen, order }) {
 
   const handleSubmitForm = async (data) => {
     const validItems = validateItems(data);
-    const validAdditionalItems = data.additional_costs.every(item => item.credit_ledger_id === null) ? [] : data.additional_costs;// Check if additional costs is filled
-    const updatedData = { ...data, items: validItems, additional_costs: validAdditionalItems }
-    
-    await saveMutation(updatedData);
+    const validAdditionalItems = data.additional_costs.every(item => item.credit_ledger_id === null) ? [] : data.additional_costs;
+    const updatedData = { ...data, items: validItems, additional_costs: validAdditionalItems };
+    saveMutation(updatedData);
   };
 
   return (
-    <FormProvider {...{additionalCosts, setAdditionalCosts, purchase_order_items, totalAmount, order, getReceivedItemsSummary, gettotalAmount, getTotalCostAmount, getTotalAdditionalCostsAmount, getAdditionalCostsSummary,errors, register, setValue, watch, clearErrors,authOrganization}}>
+    <FormProvider {...{ errors, register, setValue, watch, clearErrors}}>
       <DialogTitle>
-        <form autoComplete='off'>
-          <Grid container spacing={1}>
-            <Grid size={12} textAlign={"center"} mb={1}> 
-              {`Receive ${order.orderNo}`}
-            </Grid>
-            <Grid size={{xs: 12, md: 6, lg: 4}}>
-              <Div sx={{ mt: 1}}>
-                <DateTimePicker
-                  fullWidth
-                  label="Receive Date"
-                  defaultValue={date_received}
-                  minDate={checkOrganizationPermission(PERMISSIONS.PURCHASES_BACKDATE) ? dayjs(authOrganization.organization.recording_start_date) : dayjs().startOf('day')}
-                  maxDate={checkOrganizationPermission(PERMISSIONS.PURCHASES_POSTDATE) ? dayjs().add(10,'year').endOf('year') : dayjs().endOf('day')}
-                  slotProps={{
-                    textField: {
-                      size: 'small',
-                      fullWidth: true,
-                      readOnly: true,
-                    }
-                  }}
-                  onChange={(newValue) => {
-                    setValue(`date_received`, newValue ? newValue.toISOString() : null, {
-                      shouldValidate: true,
-                      shouldDirty: true
-                    });
-                  }}
-                />
-              </Div>
-            </Grid>
-            <Grid size={{xs: 12, md: 6, lg: 4}}>
-              <Div sx={{ mt: 1}}>
-                <StoreSelector
-                  allowSubStores={true}
-                  frontError={errors.store_id}
-                  proposedOptions={authOrganization?.stores}
-                  onChange={(newValue) => {
-                    setValue(`store_id`, newValue ? newValue.id : null, {
-                      shouldValidate: true,
-                      shouldDirty: true,
-                    });
-                  }}
-                />
-              </Div>
-            </Grid>
-            <Grid size={{xs: 12, md: 6, lg: 3}} sx={{ mt: 2, mb: 2 }}>
-              <Stack direction="row" spacing={2}>
-                <Typography sx={{ fontWeight: 'bold'}}>Order Currency:</Typography>
-                <Typography>{order.currency?.name}</Typography>
-              </Stack>
-            </Grid>
-            {
-              order_currency_id > 1 &&
-              <Grid size={{xs: 12, md: 6, lg: 4}}>
-                <Div sx={{mt: 1}}>
-                  <TextField
-                    label="Order Exchange Rate"
-                    fullWidth
-                    size='small'
-                    error={!!errors?.exchange_rate}
-                    helperText={errors?.exchange_rate?.message}
-                    InputProps={{
-                      inputComponent: CommaSeparatedField,
-                    }}
-                    value={watch('exchange_rate')}
-                    onChange={(e) => {
-                      setValue(`exchange_rate`,e.target.value ? sanitizedNumber(e.target.value ): null,{
-                        shouldValidate: true,
-                        shouldDirty: true
-                      });
-                    }}
-                  />
-                </Div>
-              </Grid>
-            }
-              <Grid size={{xs: 12, md: 6, lg: 4}}>
-                <Div sx={{mt: 1}}>
-                  <TextField
-                    label="Order Reference"
-                    fullWidth
-                    size="small"
-                    defaultValue={watch('reference')}
-                    onChange={(e) => {
-                      setValue(`reference`,e.target.value,{
-                        shouldValidate: true,
-                        shouldDirty: true
-                      });
-                    }}
-                  />
-                </Div>
-              </Grid>
-              <Grid size={{xs: 12, md: 6, lg: 4}}>
-                <Div sx={{mt: 1}}>
-                  <TextField
-                    label="Cost Factor"
-                    fullWidth
-                    size='small'
-                    disabled
-                    InputProps={{
-                      inputComponent: CommaSeparatedField,
-                    }}
-                    value={watch('cost_factor')}
-                  />
-                </Div>
-              </Grid>
+        <Grid container spacing={1}>
+          <Grid size={12} textAlign={"center"} mb={1}>
+            {grn
+                ? `Edit ${grn.grnNo}`
+                : `Receive ${order.orderNo}`}
           </Grid>
-        </form>
+          <Grid size={12}>
+            <form autoComplete='off'>
+              <Grid container spacing={1}>
+                <Grid size={{xs: 12, md: 6, lg: 4}}>
+                  <Div sx={{ mt: 1}}>
+                    <DateTimePicker
+                      fullWidth
+                      label="Receive Date"
+                      defaultValue={grn && grn.date_received ? dayjs(grn.date_received) : date_received}
+                      minDate={checkOrganizationPermission(PERMISSIONS.PURCHASES_BACKDATE) ? dayjs(authOrganization.organization.recording_start_date) : dayjs().startOf('day')}
+                      maxDate={checkOrganizationPermission(PERMISSIONS.PURCHASES_POSTDATE) ? dayjs().add(10,'year').endOf('year') : dayjs().endOf('day')}
+                      slotProps={{
+                        textField: {
+                          size: 'small',
+                          fullWidth: true,
+                          readOnly: true,
+                        }
+                      }}
+                      onChange={(newValue) => {
+                        setValue(`date_received`, newValue ? newValue.toISOString() : null, {
+                          shouldValidate: true,
+                          shouldDirty: true
+                        });
+                      }}
+                    />
+                  </Div>
+                </Grid>
+                <Grid size={{xs: 12, md: 6, lg: 4}}>
+                  <Div sx={{ mt: 1}}>
+                    <StoreSelector
+                      allowSubStores={true}
+                      frontError={errors.store_id}
+                      defaultValue={grn?.store}
+                      proposedOptions={authOrganization?.stores}
+                      onChange={(newValue) => {
+                        setValue(`store_id`, newValue ? newValue.id : null, {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                        });
+                      }}
+                    />
+                  </Div>
+                </Grid>
+                  <Grid size={{xs: 12, md: 6, lg: 4}}>
+                    <Div sx={{mt: 1}}>
+                      <TextField
+                        label="Order Reference"
+                        fullWidth
+                        size="small"
+                        defaultValue={watch('reference')}
+                        onChange={(e) => {
+                          setValue(`reference`,e.target.value,{
+                            shouldValidate: true,
+                            shouldDirty: true
+                          });
+                        }}
+                      />
+                    </Div>
+                  </Grid>
+                  <Grid size={{xs: 12, md: 6, lg: 4}}>
+                    <Div sx={{mt: 1}}>
+                      <TextField
+                        label="Cost Factor"
+                        fullWidth
+                        size='small'
+                        disabled
+                        InputProps={{
+                          inputComponent: CommaSeparatedField,
+                        }}
+                        value={watch('cost_factor')}
+                      />
+                    </Div>
+                  </Grid>
+                  <Grid size={{xs: 12, md: 6, lg: 4}}>
+                    <Div sx={{mt: 1, display: 'flex', alignItems: 'center'}}>
+                      <Checkbox
+                        checked={Boolean(watch('change_cost_center'))}
+                        onChange={e => {
+                          setValue('change_cost_center', e.target.checked, {
+                            shouldValidate: true,
+                            shouldDirty: true
+                          });
+                          if (!e.target.checked) {
+                            setValue('destination_cost_center_id', null);
+                            setValue('receivable_ledger_id', null);
+                          }
+                        }}
+                        size="small"
+                      />
+                      <Typography>Change Cost Center</Typography>
+                    </Div>
+                  </Grid>
+                  {watch('change_cost_center') && (
+                    <>
+                      <Grid size={{xs: 12, md: 6, lg: 4}}>
+                        <Div sx={{mt: 1}}>
+                          <CostCenterSelector
+                            label="Destination Cost Center"
+                            multiple={false}
+                            defaultValue={grn?.receivable_ledger_id && grn?.cost_center}
+                            removedCostCentersIds={grn?.order?.cost_centers?.map(c => c.id)}
+                            frontError={errors.destination_cost_center_id}
+                            onChange={newValue => {
+                              setValue('destination_cost_center_id', newValue ? newValue.id : null, {
+                                shouldValidate: true,
+                                shouldDirty: true
+                              });
+                            }}
+                          />
+                        </Div>
+                      </Grid>
+                      <Grid size={{xs: 12, md: 6, lg: 4}}>
+                        <Div sx={{mt: 1}}>
+                          <LedgerSelect
+                            label="Receivable Ledger"
+                            allowedGroups={['Accounts Receivable']}
+                            multiple={false}
+                            defaultValue={ungroupedLedgerOptions.find(
+                              (ledger) => ledger.id === watch('receivable_ledger_id')
+                            )}
+                            frontError={errors.receivable_ledger_id}
+                            onChange={newValue => {
+                              setValue('receivable_ledger_id', newValue ? newValue.id : null, {
+                                shouldValidate: true,
+                                shouldDirty: true
+                              });
+                            }}
+                          />
+                        </Div>
+                      </Grid>
+                    </>
+                  )}
+                  <Grid size={{xs: 12, md: 6, lg: 4}} sx={{ mt: 2, mb: 2 }}>
+                    <Stack direction="row" spacing={2}>
+                      <Typography sx={{ fontWeight: 'bold', color: 'primary.main' }}>Order Currency:</Typography>
+                      <Typography>{order.currency?.name}</Typography>
+                    </Stack>
+                  </Grid>
+                  {
+                    order_currency_id > 1 &&
+                    <Grid size={{xs: 12, md: 6, lg: 4}}>
+                      <Div sx={{mt: 1}}>
+                        <TextField
+                          label="Order Exchange Rate"
+                          fullWidth
+                          size='small'
+                          error={!!errors?.exchange_rate}
+                          helperText={errors?.exchange_rate?.message}
+                          InputProps={{
+                            inputComponent: CommaSeparatedField,
+                          }}
+                          value={watch('exchange_rate')}
+                          onChange={(e) => {
+                            setValue(`exchange_rate`,e.target.value ? sanitizedNumber(e.target.value ): null,{
+                              shouldValidate: true,
+                              shouldDirty: true
+                            });
+                          }}
+                        />
+                      </Div>
+                    </Grid>
+                  }
+              </Grid>
+            </form>
+          </Grid>
+          <Grid size={12}>
+            <Tabs
+              value={activeTab}
+              onChange={(e, newValue) => handleTabChange(e, newValue)}
+              variant="scrollable"
+              scrollButtons='auto'
+              allowScrollButtonsMobile
+              sx={{ mt: 1 }}
+            >
+              <Tab label="Items"/>
+              <Tab label="Additional Costs"/>
+              <Tab label="Summary Preview"/>
+            </Tabs>
+          </Grid>
+        </Grid>
       </DialogTitle>  
       <DialogContent>
-        {activeTab === 0 && <ItemsTab/>}
+        {activeTab === 0 && (
+          <ItemsTab
+            purchase_order_items={itemsState}
+            onRemoveItem={handleRemoveItem}
+            onResetItems={handleResetItems}
+            canReset={itemsState.length < initialItems.length}
+          />
+        )}
 
-        {activeTab === 1 && <AdditionalCostsTab setIsDirty={setIsDirty}/>}
+        {activeTab === 1 && <AdditionalCostsTab setIsDirty={setIsDirty} additionalCosts={additionalCosts} setAdditionalCosts={setAdditionalCosts} />}
 
-        {activeTab === 2 && <SummaryTab/>}
+        {activeTab === 2 && 
+          <SummaryTab 
+            authOrganization={authOrganization} order={order} getReceivedItemsSummary={getReceivedItemsSummary} gettotalAmount={gettotalAmount}
+            getTotalCostAmount={getTotalCostAmount} getTotalAdditionalCostsAmount={getTotalAdditionalCostsAmount} getAdditionalCostsSummary={getAdditionalCostsSummary}
+          />
+        }
 
         {activeTab === 1 &&
           additionalCosts.map((additionalCost, index) => {
-            return <AdditionalCostsTabRow key={index} setIsDirty={setIsDirty} additionalCost={additionalCost} index={index}/>
+            return <AdditionalCostsTabRow additionalCosts={additionalCosts} setAdditionalCosts={setAdditionalCosts} key={index} setIsDirty={setIsDirty} additionalCost={additionalCost} index={index}/>
           })
         }
+
         <Dialog open={showWarning} onClose={() => setShowWarning(false)}>
           <DialogTitle>Unsaved Additional Cost</DialogTitle>
           <DialogContent>
@@ -400,31 +592,17 @@ function PurchaseOrderReceiveForm({ toggleOpen, order }) {
       </DialogContent>
       <DialogActions>
         <Grid container spacing={1}>
-          <Grid size={{xs: 12, md: 8}}>
-            <Div sx={{ mt: 1, mb: 1 }}>
-              <Tabs
-                value={activeTab}
-                onChange={(e, newValue) => handleTabChange(e, newValue)}
-                variant="scrollable"
-                scrollButtons='auto'
-                allowScrollButtonsMobile
-              >
-                <Tab label="Items"/>
-                <Tab label="Additional Costs"/>
-                <Tab label="Summary Preview"/>
-              </Tabs>
-            </Div>
-          </Grid>
-          <Grid size={{xs: 12, md: 4}}>
+          <Grid size={{ xs: 12, md: 8 }}></Grid>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Stack spacing={1} direction={'row'} justifyContent={'end'} sx={{ mt: 1, mb: 1 }}>
               <Button size='small' onClick={() => toggleOpen(false)}>
-                  Cancel
+                Cancel
               </Button>
               {
                 activeTab > 0 &&
                 <Button size='small' variant='outlined' onClick={() => handleTabChange(null, activeTab - 1)}>
                   <KeyboardArrowLeftOutlined/>
-                  Previous
+                  Prev
                 </Button>
               }
               {
@@ -437,7 +615,7 @@ function PurchaseOrderReceiveForm({ toggleOpen, order }) {
               {
                 activeTab === 2 &&
                 <LoadingButton
-                  loading={receiveOrder.isPending}
+                  loading={grn ? editGrnMutation.isPending : receiveOrder.isPending}
                   variant='contained'
                   size='small'
                   onClick={handleSubmit(() => handleSubmitForm(getValues()))}

@@ -177,10 +177,12 @@ const TransferItemAction: React.FC<TransferItemActionProps> = ({ transaction }) 
       action: "attach" 
     } as MenuItemProps,
     checkOrganizationPermission([PERMISSIONS.ACCOUNTS_TRANSACTIONS_EDIT, PERMISSIONS.FUND_TRANSFERS_EDIT]) && 
+      !!transaction.editable &&
       (checkOrganizationPermission([PERMISSIONS.ACCOUNTS_TRANSACTIONS_BACKDATE, PERMISSIONS.FUND_TRANSFERS_BACKDATE]) || 
       transaction.transaction_date >= dayjs().startOf('date').toISOString()) ? 
       { icon: <EditOutlined/>, title: 'Edit', action: 'edit' } : null,
     checkOrganizationPermission([PERMISSIONS.ACCOUNTS_TRANSACTIONS_DELETE, PERMISSIONS.FUND_TRANSFERS_DELETE]) && 
+      !!transaction.editable &&
       (checkOrganizationPermission([PERMISSIONS.ACCOUNTS_TRANSACTIONS_BACKDATE, PERMISSIONS.FUND_TRANSFERS_BACKDATE]) || 
       transaction.transaction_date >= dayjs().startOf('date').toISOString()) ? 
       { icon: <DeleteOutlined color='error'/>, title: 'Delete', action: 'delete' } : null

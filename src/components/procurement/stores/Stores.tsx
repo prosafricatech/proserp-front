@@ -73,7 +73,7 @@ const Stores: React.FC = () => {
         return <UnsubscribedAccess modules={'Procurement & Supply'}/>;
     }
 
-    if (!checkOrganizationPermission([PERMISSIONS.STORES_READ])) {
+    if (!checkOrganizationPermission([PERMISSIONS.STORES_READ, PERMISSIONS.INVENTORY_TRANSFERS_READ, PERMISSIONS.INVENTORY_TRANSFERS_CREATE,])) {
         return <UnauthorizedAccess/>;
     }
     
@@ -86,7 +86,7 @@ const Stores: React.FC = () => {
                 service={storeServices.getList}
                 primaryKey={"id"}
                 queryOptions={queryOptions}
-                itemsPerPage={8}
+                itemsPerPage={10}
                 itemsPerPageOptions={[8, 10, 15, 20]}
                 renderItem={renderStore}
                 componentElement={"div"}

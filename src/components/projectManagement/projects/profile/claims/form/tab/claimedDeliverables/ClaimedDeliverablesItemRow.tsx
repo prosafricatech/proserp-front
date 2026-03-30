@@ -100,10 +100,19 @@ const ClaimedDeliverablesItemRow: React.FC<ClaimedDeliverablesItemRowProps> = ({
             <Typography variant="body2">{index + 1}.</Typography>
           </Grid>
 
-          <Grid size={{ xs: 11, md: vat_factor ? 2.5 : 3.5 }}>
+          <Grid size={{ xs: 11, md: vat_factor ? 5 : 6.5 }}>
             <Tooltip title="Project Deliverable" arrow placement="top-start">
-              <Typography variant="body2" noWrap>
+              <Typography
+                variant="body2"
+                sx={{ whiteSpace: 'normal', wordBreak: 'break-word' }}
+              >
                 {deliverableName}
+              </Typography>
+            </Tooltip>
+
+            <Tooltip title="Revenue Ledger">
+              <Typography variant="caption" color="text.secondary">
+                {revenueLedger?.name || '-'}
               </Typography>
             </Tooltip>
 
@@ -111,19 +120,11 @@ const ClaimedDeliverablesItemRow: React.FC<ClaimedDeliverablesItemRowProps> = ({
               <Typography
                 variant="caption"
                 color="text.secondary"
-                noWrap
+                sx={{ display: 'block' }}
               >
                 {remarks}
               </Typography>
             )}
-          </Grid>
-
-          <Grid size={{ xs: 6, md: vat_factor ? 2.5 : 3 }}>
-            <Tooltip title="Revenue Ledger">
-              <Typography variant="body2">
-                {revenueLedger?.name || '-'}
-              </Typography>
-            </Tooltip>
           </Grid>
 
           <Grid size={{ xs: 6, md: 2 }} textAlign={'end'} paddingLeft={{ xs: 3, md: 0 }}>

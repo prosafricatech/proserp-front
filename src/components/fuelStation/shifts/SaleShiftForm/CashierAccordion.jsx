@@ -54,11 +54,33 @@ export default function CashierAccordion({
     setLocalPumpReadings(currentPumpReadings);
   }, [watch, index]);
 
-  const cashierPumpProducts = products?.filter(product =>
-    formSelectedPumps?.some(
-      pumpId => fuel_pumps.find(p => p.id === pumpId && p.product_id === product.id)
-    )
-  );
+  // formSelectedPumps is now array of objects { pump_id, tank_id }
+  // cashierPumpProducts: [{ product, tankIds: [id, ...] }]
+  const cashierPumpProducts = products
+    ?.map(product => {
+      // Find all selected pumps for this product
+      const selectedPumpsForProduct = formSelectedPumps?.filter(sel => {
+        const pumpId = sel.pump_id ?? sel;
+        const pump = fuel_pumps.find(p => p.id === pumpId && p.product_id === product.id);
+        return !!pump;
+      }) || [];
+      if (selectedPumpsForProduct.length > 0) {
+        // Collect all tank ids for this product from selected pumps
+        const tankIds = selectedPumpsForProduct
+          .map(sel => {
+            const pumpId = sel.pump_id ?? sel;
+            const pump = fuel_pumps.find(p => p.id === pumpId && p.product_id === product.id);
+            return sel.tank_id ?? pump?.tank_id ?? null;
+          })
+          .filter(Boolean);
+        return {
+          ...product,
+          tankIds,
+        };
+      }
+      return null;
+    })
+    .filter(Boolean);
 
   const updateFuelVouchers = (newVouchers) => {
     setLocalFuelVouchers(newVouchers);

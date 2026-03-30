@@ -19,6 +19,7 @@ export default function CashierListSummaryOnScreen({
   fuel_pumps = [],
   tanks = [],
   productOptions = [],
+  paymentReceived = [],
   openDetails = true,
 }) {
   const theme = useTheme();
@@ -113,7 +114,7 @@ export default function CashierListSummaryOnScreen({
           width: width,
           mt: mt,
           py: 1.5,
-          px: 2,
+          px: 0,
           bgcolor: theme.palette.background.default,
           borderBottom: `1px solid ${theme.palette.divider}`,
           '&:hover': { bgcolor: theme.palette.action.hover },
@@ -138,6 +139,36 @@ export default function CashierListSummaryOnScreen({
     return st.opening_reading < 1 || st.closing_reading < 1;
   });
 
+  // Calculate totals
+  const totalExpectedAmount =
+    shiftData.cashiers?.reduce((sum, c) => {
+      const {
+        totalProductsAmount,
+        adjustmentsAmount,
+        totalFuelVouchersAmount,
+        otherTransactionsTotal,
+      } = calculateCashierTotals(c);
+
+      return (
+        sum +
+        totalProductsAmount +
+        adjustmentsAmount -
+        totalFuelVouchersAmount -
+        otherTransactionsTotal
+      );
+    }, 0) || 0;
+
+  const totalCollectedAmount =
+    shiftData.cashiers?.reduce((sum, c) => sum + c.collected_amount, 0) || 0.0;
+
+  const totalShortOrOver = totalCollectedAmount - totalExpectedAmount;
+
+  // payments received total
+  const paymentsReceivedTotal = paymentReceived.reduce(
+    (sum, pr) => sum + pr.amount,
+    0
+  );
+
   return (
     <>
       <SectionHeader title='Cashiers Summary' sectionKey='cashiersSection' />
@@ -149,7 +180,7 @@ export default function CashierListSummaryOnScreen({
               flexDirection: 'column',
               alignItems: 'center',
               width: '100%',
-              paddingX: '10px',
+              paddingX: '0px',
             }}
           >
             {/* === cashier === */}
@@ -227,7 +258,7 @@ export default function CashierListSummaryOnScreen({
               const mainLedgerObj = {
                 type: c.main_ledger?.name,
                 count: 1,
-                totalAmount: c.main_ledger?.amount,
+                totalAmount: c.main_ledger?.amount + adjustmentsAmount,
               };
 
               // fuel vouchers object
@@ -290,6 +321,7 @@ export default function CashierListSummaryOnScreen({
                           <Grid
                             container
                             sx={{ marginTop: '4px', width: '85%' }}
+                            spacing={1}
                           >
                             <Grid
                               size={4}
@@ -328,75 +360,382 @@ export default function CashierListSummaryOnScreen({
                               </Typography>
                             </Grid>
                           </Grid>
-                          {c.pump_readings.map((pump, index) => {
-                            const pumpInfo = fuel_pumps?.find(
-                              (p) => p.id === pump.fuel_pump_id
-                            );
-                            const product = productOptions?.find(
-                              (p) => p.id === pump.product_id
-                            );
-                            const difference =
-                              (pump.closing || 0) - (pump.opening || 0);
-
-                            const fuelPrice = shiftData.fuel_prices.find(
-                              (fp) => fp.product_id === pump.product_id
-                            );
-
-                            const amount = difference * fuelPrice.price;
+                          {(() => {
+                            let pumpReadingsSubTotal = 0;
 
                             return (
-                              <Grid
-                                key={index}
-                                container
-                                sx={{ marginTop: '4px', width: '85%' }}
-                              >
+                              <>
+                                {c.pump_readings.map((pump, index) => {
+                                  const pumpInfo = fuel_pumps?.find(
+                                    (p) => p.id === pump.fuel_pump_id
+                                  );
+                                  const product = productOptions?.find(
+                                    (p) => p.id === pump.product_id
+                                  );
+                                  const difference =
+                                    (pump.closing || 0) - (pump.opening || 0);
+
+                                  const fuelPrice = shiftData.fuel_prices.find(
+                                    (fp) => fp.product_id === pump.product_id
+                                  );
+
+                                  const amount = difference * fuelPrice.price;
+                                  pumpReadingsSubTotal += amount;
+
+                                  return (
+                                    <Grid
+                                      key={index}
+                                      container
+                                      sx={{ marginTop: '4px', width: '85%' }}
+                                      spacing={1}
+                                    >
+                                      <Grid
+                                        size={4}
+                                        sx={{
+                                          backgroundColor:
+                                            theme.palette.background.default,
+                                          borderRightColor: 'white',
+                                          borderRightWidth: 2,
+                                          padding: '5px',
+                                        }}
+                                      >
+                                        <Typography>
+                                          {pumpInfo?.name ||
+                                            `Pump ${pump.fuel_pump_id}`}
+                                        </Typography>
+                                      </Grid>
+                                      <Grid
+                                        size={4}
+                                        sx={{
+                                          backgroundColor:
+                                            theme.palette.background.default,
+                                          padding: '5px',
+                                        }}
+                                      >
+                                        <Typography>
+                                          {product?.name ||
+                                            `Product ${pump.product_id}`}
+                                        </Typography>
+                                      </Grid>
+                                      <Grid
+                                        size={4}
+                                        sx={{
+                                          backgroundColor:
+                                            theme.palette.background.default,
+                                          padding: '5px',
+                                          textAlign: 'right',
+                                        }}
+                                      >
+                                        <Typography>
+                                          {amount.toLocaleString('en-US', {
+                                            minimumFractionDigits: 2,
+                                            maximumFractionDigits: 2,
+                                          })}
+                                        </Typography>
+                                      </Grid>
+                                    </Grid>
+                                  );
+                                })}
+
+                                {/* Sub-total if there are adjustments */}
+                                {c.tank_adjustments?.length > 0 && (
+                                  <Grid
+                                    container
+                                    sx={{ marginTop: '8px', width: '85%' }}
+                                  >
+                                    <Grid
+                                      size={8}
+                                      sx={{
+                                        backgroundColor: mainColor,
+                                        color: contrastText,
+                                        padding: '5px',
+                                        fontWeight: 'bold',
+                                      }}
+                                    >
+                                      <Typography
+                                        sx={{
+                                          color: contrastText,
+                                          fontWeight: 'bold',
+                                        }}
+                                      >
+                                        Sub-total
+                                      </Typography>
+                                    </Grid>
+                                    <Grid
+                                      size={4}
+                                      sx={{
+                                        backgroundColor: mainColor,
+                                        color: contrastText,
+                                        padding: '5px',
+                                        textAlign: 'right',
+                                        fontWeight: 'bold',
+                                      }}
+                                    >
+                                      <Typography
+                                        sx={{
+                                          color: contrastText,
+                                          fontWeight: 'bold',
+                                        }}
+                                      >
+                                        {pumpReadingsSubTotal.toLocaleString(
+                                          'en-US',
+                                          {
+                                            minimumFractionDigits: 2,
+                                            maximumFractionDigits: 2,
+                                          }
+                                        )}
+                                      </Typography>
+                                    </Grid>
+                                  </Grid>
+                                )}
+
+                                {/* Tank Adjustments Section */}
+                                {c.tank_adjustments?.length > 0 && (
+                                  <>
+                                    <Grid
+                                      container
+                                      sx={{ marginTop: '8px', width: '85%' }}
+                                    >
+                                      <Grid
+                                        size={12}
+                                        sx={{
+                                          backgroundColor: mainColor,
+                                          color: contrastText,
+                                          padding: '5px',
+                                          textAlign: 'center',
+                                        }}
+                                      >
+                                        <Typography
+                                          sx={{
+                                            color: contrastText,
+                                            fontWeight: 'bold',
+                                          }}
+                                        >
+                                          Tank Adjustments
+                                        </Typography>
+                                      </Grid>
+                                    </Grid>
+
+                                    {(() => {
+                                      // Group adjustments by tank
+                                      const groupedAdjustments =
+                                        c.tank_adjustments.reduce(
+                                          (acc, adj) => {
+                                            if (!acc[adj.tank_id]) {
+                                              acc[adj.tank_id] = 0;
+                                            }
+                                            const qty =
+                                              adj.operator === '-'
+                                                ? adj.quantity
+                                                : -adj.quantity;
+                                            acc[adj.tank_id] += qty;
+                                            return acc;
+                                          },
+                                          {}
+                                        );
+
+                                      return Object.entries(
+                                        groupedAdjustments
+                                      ).map(([tankId, totalQty], idx) => {
+                                        const tank = shiftData.shift_tanks.find(
+                                          (t) => t.id === Number(tankId)
+                                        );
+                                        if (!tank) return null;
+
+                                        const productId = tank.product.id;
+                                        const priceObj =
+                                          shiftData.fuel_prices.find(
+                                            (p) => p.product_id === productId
+                                          );
+                                        const price = priceObj
+                                          ? priceObj.price
+                                          : 0;
+                                        const totalAmount = totalQty * price;
+
+                                        return (
+                                          <Grid
+                                            key={idx}
+                                            container
+                                            sx={{
+                                              marginTop: '4px',
+                                              width: '85%',
+                                            }}
+                                          >
+                                            <Grid
+                                              size={4}
+                                              sx={{
+                                                backgroundColor:
+                                                  theme.palette.background
+                                                    .default,
+                                                borderRightColor: 'white',
+                                                borderRightWidth: 2,
+                                                padding: '5px',
+                                              }}
+                                            >
+                                              <Typography>
+                                                {tank.name}
+                                              </Typography>
+                                            </Grid>
+                                            <Grid
+                                              size={4}
+                                              sx={{
+                                                backgroundColor:
+                                                  theme.palette.background
+                                                    .default,
+                                                padding: '5px',
+                                                textAlign: 'right',
+                                              }}
+                                            >
+                                              <Typography>
+                                                {totalQty > 0
+                                                  ? `+${totalQty.toLocaleString()}`
+                                                  : totalQty.toLocaleString()}
+                                              </Typography>
+                                            </Grid>
+                                            <Grid
+                                              size={4}
+                                              sx={{
+                                                backgroundColor:
+                                                  theme.palette.background
+                                                    .default,
+                                                padding: '5px',
+                                                textAlign: 'right',
+                                              }}
+                                            >
+                                              <Typography>
+                                                {totalAmount > 0
+                                                  ? `+${totalAmount.toLocaleString(
+                                                      'en-US',
+                                                      {
+                                                        minimumFractionDigits: 2,
+                                                        maximumFractionDigits: 2,
+                                                      }
+                                                    )}`
+                                                  : totalAmount.toLocaleString(
+                                                      'en-US',
+                                                      {
+                                                        minimumFractionDigits: 2,
+                                                        maximumFractionDigits: 2,
+                                                      }
+                                                    )}
+                                              </Typography>
+                                            </Grid>
+                                          </Grid>
+                                        );
+                                      });
+                                    })()}
+
+                                    {/* Adjustments Sub-total */}
+                                    <Grid
+                                      container
+                                      sx={{ marginTop: '8px', width: '85%' }}
+                                    >
+                                      <Grid
+                                        size={8}
+                                        sx={{
+                                          backgroundColor: mainColor,
+                                          color: contrastText,
+                                          padding: '5px',
+                                          fontWeight: 'bold',
+                                        }}
+                                      >
+                                        <Typography
+                                          sx={{
+                                            color: contrastText,
+                                            fontWeight: 'bold',
+                                          }}
+                                        >
+                                          Sub-total (+/-)
+                                        </Typography>
+                                      </Grid>
+                                      <Grid
+                                        size={4}
+                                        sx={{
+                                          backgroundColor: mainColor,
+                                          color: contrastText,
+                                          padding: '5px',
+                                          textAlign: 'right',
+                                          fontWeight: 'bold',
+                                        }}
+                                      >
+                                        <Typography
+                                          sx={{
+                                            color: contrastText,
+                                            fontWeight: 'bold',
+                                          }}
+                                        >
+                                          {adjustmentsAmount > 0
+                                            ? `+${adjustmentsAmount.toLocaleString(
+                                                'en-US',
+                                                {
+                                                  minimumFractionDigits: 2,
+                                                  maximumFractionDigits: 2,
+                                                }
+                                              )}`
+                                            : adjustmentsAmount.toLocaleString(
+                                                'en-US',
+                                                {
+                                                  minimumFractionDigits: 2,
+                                                  maximumFractionDigits: 2,
+                                                }
+                                              )}
+                                        </Typography>
+                                      </Grid>
+                                    </Grid>
+                                  </>
+                                )}
+
+                                {/* TOTAL Row */}
                                 <Grid
-                                  size={4}
-                                  sx={{
-                                    backgroundColor:
-                                      theme.palette.background.default,
-                                    borderRightColor: 'white',
-                                    borderRightWidth: 2,
-                                    padding: '5px',
-                                  }}
+                                  container
+                                  sx={{ marginTop: '8px', width: '85%' }}
                                 >
-                                  <Typography>
-                                    {pumpInfo?.name ||
-                                      `Pump ${pump.fuel_pump_id}`}
-                                  </Typography>
+                                  <Grid
+                                    size={8}
+                                    sx={{
+                                      backgroundColor: mainColor,
+                                      color: contrastText,
+                                      padding: '5px',
+                                      fontWeight: 'bold',
+                                    }}
+                                  >
+                                    <Typography
+                                      sx={{
+                                        color: contrastText,
+                                        fontWeight: 'bold',
+                                      }}
+                                    >
+                                      TOTAL
+                                    </Typography>
+                                  </Grid>
+                                  <Grid
+                                    size={4}
+                                    sx={{
+                                      backgroundColor: mainColor,
+                                      color: contrastText,
+                                      padding: '5px',
+                                      textAlign: 'right',
+                                      fontWeight: 'bold',
+                                    }}
+                                  >
+                                    <Typography
+                                      sx={{
+                                        color: contrastText,
+                                        fontWeight: 'bold',
+                                      }}
+                                    >
+                                      {(
+                                        pumpReadingsSubTotal + adjustmentsAmount
+                                      ).toLocaleString('en-US', {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                      })}
+                                    </Typography>
+                                  </Grid>
                                 </Grid>
-                                <Grid
-                                  size={4}
-                                  sx={{
-                                    backgroundColor:
-                                      theme.palette.background.default,
-                                    padding: '5px',
-                                  }}
-                                >
-                                  <Typography>
-                                    {product?.name ||
-                                      `Product ${pump.product_id}`}
-                                  </Typography>
-                                </Grid>
-                                <Grid
-                                  size={4}
-                                  sx={{
-                                    backgroundColor:
-                                      theme.palette.background.default,
-                                    padding: '5px',
-                                    textAlign: 'right',
-                                  }}
-                                >
-                                  <Typography>
-                                    {amount.toLocaleString('en-US', {
-                                      minimumFractionDigits: 2,
-                                      maximumFractionDigits: 2,
-                                    })}
-                                  </Typography>
-                                </Grid>
-                              </Grid>
+                              </>
                             );
-                          })}
+                          })()}
                         </>
                       )}
 
@@ -434,6 +773,7 @@ export default function CashierListSummaryOnScreen({
                           <Grid
                             container
                             sx={{ marginTop: '4px', width: '85%' }}
+                            spacing={1}
                           >
                             <Grid
                               size={4}
@@ -453,6 +793,7 @@ export default function CashierListSummaryOnScreen({
                                 backgroundColor:
                                   theme.palette.background.default,
                                 padding: '5px',
+                                textAlign: 'center',
                               }}
                             >
                               <Typography sx={{ color: headerColor }}>
@@ -478,6 +819,7 @@ export default function CashierListSummaryOnScreen({
                               key={index}
                               container
                               sx={{ marginTop: '4px', width: '85%' }}
+                              spacing={1}
                             >
                               <Grid
                                 size={4}
@@ -497,6 +839,7 @@ export default function CashierListSummaryOnScreen({
                                   backgroundColor:
                                     theme.palette.background.default,
                                   padding: '5px',
+                                  textAlign: 'right',
                                 }}
                               >
                                 <Typography>{t.count}</Typography>
@@ -556,6 +899,7 @@ export default function CashierListSummaryOnScreen({
                           <Grid
                             container
                             sx={{ marginTop: '4px', width: '85%' }}
+                            spacing={1}
                           >
                             <Grid
                               size={4}
@@ -597,6 +941,7 @@ export default function CashierListSummaryOnScreen({
                           <Grid
                             container
                             sx={{ marginTop: '4px', width: '85%' }}
+                            spacing={1}
                           >
                             <Grid
                               size={4}
@@ -670,6 +1015,211 @@ export default function CashierListSummaryOnScreen({
         </Card>
       )}
 
+      {/* === Totals Section === */}
+      <Card sx={{ mt: 2, p: 0 }}>
+        <CardContent sx={{ padding: 0 }}>
+          {/* Expected Amount */}
+          <Grid container sx={{ marginTop: '4px' }} spacing={1}>
+            <Grid
+              size={7}
+              sx={{
+                backgroundColor: theme.palette.background.default,
+                padding: '8px',
+                fontWeight: 'bold',
+              }}
+            >
+              <Typography
+                sx={{
+                  color: contrastText,
+                  fontWeight: 'bold',
+                }}
+              >
+                Total Expected Amount
+              </Typography>
+            </Grid>
+            <Grid
+              size={5}
+              sx={{
+                backgroundColor: theme.palette.background.default,
+                padding: '8px',
+                textAlign: 'right',
+                fontWeight: 'bold',
+              }}
+            >
+              <Typography
+                sx={{
+                  color: contrastText,
+                  fontWeight: 'bold',
+                }}
+              >
+                {totalExpectedAmount.toLocaleString('en-US', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </Typography>
+            </Grid>
+          </Grid>
+
+          {/* Collected Amount */}
+          <Grid container sx={{ marginTop: '4px' }} spacing={1}>
+            <Grid
+              size={7}
+              sx={{
+                backgroundColor: theme.palette.background.default,
+                padding: '8px',
+              }}
+            >
+              <Typography>Total Collected Amount</Typography>
+            </Grid>
+            <Grid
+              size={5}
+              sx={{
+                backgroundColor: theme.palette.background.default,
+                padding: '8px',
+                textAlign: 'right',
+              }}
+            >
+              <Typography>
+                {totalCollectedAmount.toLocaleString('en-US', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </Typography>
+            </Grid>
+          </Grid>
+
+          {/* Short/Over */}
+          <Grid container sx={{ marginTop: '4px' }} spacing={1}>
+            <Grid
+              size={7}
+              sx={{
+                backgroundColor: theme.palette.background.default,
+                padding: '8px',
+              }}
+            >
+              <Typography>Short/Over</Typography>
+            </Grid>
+            <Grid
+              size={5}
+              sx={{
+                backgroundColor: theme.palette.background.default,
+                padding: '8px',
+                textAlign: 'right',
+              }}
+            >
+              <Typography
+                sx={{
+                  color: totalShortOrOver >= 0 ? '#4caf50' : '#f44336',
+                  fontWeight: 'bold',
+                }}
+              >
+                {totalShortOrOver > 0
+                  ? `+${totalShortOrOver.toLocaleString('en-US', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}`
+                  : totalShortOrOver.toLocaleString('en-US', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+              </Typography>
+            </Grid>
+          </Grid>
+
+          {/* Payments Received */}
+          {paymentReceived?.length > 0 && (
+            <Grid container sx={{ marginTop: '4px' }} spacing={1}>
+              <Grid
+                size={7}
+                sx={{
+                  backgroundColor: theme.palette.background.default,
+                  padding: '8px',
+                  textAlign: 'left',
+                }}
+              >
+                <Typography
+                  sx={{
+                    color: contrastText,
+                    fontWeight: 'bold',
+                  }}
+                >
+                  Total Cash Payments Received
+                </Typography>
+              </Grid>
+              <Grid
+                size={5}
+                sx={{
+                  backgroundColor: theme.palette.background.default,
+                  padding: '8px',
+                  textAlign: 'right',
+                }}
+              >
+                <Typography
+                  sx={{
+                    color: contrastText,
+                    fontWeight: 'bold',
+                  }}
+                >
+                  {paymentsReceivedTotal.toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </Typography>
+              </Grid>
+            </Grid>
+          )}
+
+          {/* Grand Total */}
+          <Grid container sx={{ marginTop: '12px' }} spacing={1}>
+            <Grid
+              size={7}
+              sx={{
+                backgroundColor: mainColor,
+                color: contrastText,
+                padding: '10px',
+                fontWeight: 'bold',
+              }}
+            >
+              <Typography
+                sx={{
+                  color: contrastText,
+                  fontWeight: 'bold',
+                  fontSize: '1.1rem',
+                }}
+              >
+                GRAND TOTAL
+              </Typography>
+            </Grid>
+            <Grid
+              size={5}
+              sx={{
+                backgroundColor: mainColor,
+                color: contrastText,
+                padding: '10px',
+                textAlign: 'right',
+                fontWeight: 'bold',
+              }}
+            >
+              <Typography
+                sx={{
+                  color: contrastText,
+                  fontWeight: 'bold',
+                  fontSize: '1.1rem',
+                }}
+              >
+                {(totalCollectedAmount + paymentsReceivedTotal).toLocaleString(
+                  'en-US',
+                  {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  }
+                )}
+              </Typography>
+            </Grid>
+          </Grid>
+        </CardContent>
+      </Card>
+
       {/* === Dipping Summary === */}
       {!hideDippingTable && (
         <>
@@ -711,7 +1261,11 @@ export default function CashierListSummaryOnScreen({
                         <Grid container sx={{ marginTop: '4px', width: '85%' }}>
                           <Grid size={12}>
                             {/* Opening */}
-                            <Grid container sx={{ marginTop: '4px' }}>
+                            <Grid
+                              container
+                              sx={{ marginTop: '4px' }}
+                              spacing={1}
+                            >
                               <Grid
                                 size={6}
                                 sx={{
@@ -748,7 +1302,11 @@ export default function CashierListSummaryOnScreen({
                               </Grid>
                             </Grid>
                             {/* Purchase */}
-                            <Grid container sx={{ marginTop: '4px' }}>
+                            <Grid
+                              container
+                              sx={{ marginTop: '4px' }}
+                              spacing={1}
+                            >
                               <Grid
                                 size={6}
                                 sx={{
@@ -782,7 +1340,11 @@ export default function CashierListSummaryOnScreen({
                               </Grid>
                             </Grid>
                             {/* Total */}
-                            <Grid container sx={{ marginTop: '4px' }}>
+                            <Grid
+                              container
+                              sx={{ marginTop: '4px' }}
+                              spacing={1}
+                            >
                               <Grid
                                 size={6}
                                 sx={{
@@ -819,7 +1381,11 @@ export default function CashierListSummaryOnScreen({
                               </Grid>
                             </Grid>
                             {/* Closing */}
-                            <Grid container sx={{ marginTop: '4px' }}>
+                            <Grid
+                              container
+                              sx={{ marginTop: '4px' }}
+                              spacing={1}
+                            >
                               <Grid
                                 size={6}
                                 sx={{
@@ -855,7 +1421,11 @@ export default function CashierListSummaryOnScreen({
                               </Grid>
                             </Grid>
                             {/* Tank Difference */}
-                            <Grid container sx={{ marginTop: '4px' }}>
+                            <Grid
+                              container
+                              sx={{ marginTop: '4px' }}
+                              spacing={1}
+                            >
                               <Grid
                                 size={6}
                                 sx={{
@@ -891,7 +1461,11 @@ export default function CashierListSummaryOnScreen({
                               </Grid>
                             </Grid>
                             {/* Actual Sold */}
-                            <Grid container sx={{ marginTop: '4px' }}>
+                            <Grid
+                              container
+                              sx={{ marginTop: '4px' }}
+                              spacing={1}
+                            >
                               <Grid
                                 size={6}
                                 sx={{
@@ -927,7 +1501,11 @@ export default function CashierListSummaryOnScreen({
                               </Grid>
                             </Grid>
                             {/* Pos/Neg */}
-                            <Grid container sx={{ marginTop: '4px' }}>
+                            <Grid
+                              container
+                              sx={{ marginTop: '4px' }}
+                              spacing={1}
+                            >
                               <Grid
                                 size={6}
                                 sx={{

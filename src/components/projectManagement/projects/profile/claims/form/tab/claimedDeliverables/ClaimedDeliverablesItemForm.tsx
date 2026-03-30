@@ -298,7 +298,7 @@ const ClaimedDeliverablesItemForm: React.FC<ClaimedDeliverablesItemFormProps> = 
           multiple={false}
           label="Revenue Ledger"
           defaultValue={ungroupedLedgerOptions?.find((l) => l.id === watch('revenue_ledger_id'))}
-          allowedGroups={['Revenue']}
+          allowedGroups={['Revenue', 'Accounts Receivable']}
           frontError={errors.revenue_ledger_id}
           onChange={(newValue: any) => {
             setValue('revenue_ledger_id', newValue?.id || undefined, {
