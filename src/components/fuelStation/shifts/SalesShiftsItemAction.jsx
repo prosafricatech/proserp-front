@@ -17,13 +17,13 @@ import {
 } from '@mui/icons-material';
 import {
   Button,
-  Checkbox,
   Dialog,
   DialogContent,
   DialogTitle,
   IconButton,
   LinearProgress,
   Stack,
+  Switch,
   Tab,
   Tabs,
   Tooltip,
@@ -160,8 +160,12 @@ const DocumentDialog = ({
           alignItems={'center'}
           position={'relative'}
         >
-          <Typography>With More Details</Typography>
-          <Checkbox checked={openDetails} onChange={handleDetailsChange} />
+          <Typography>Detailed</Typography>
+          <Switch
+            checked={openDetails}
+            onChange={handleDetailsChange}
+            slotProps={{ input: { 'aria-label': 'controlled' } }}
+          />
 
           {belowLargeScreen && (
             <Tooltip title='Close'>
