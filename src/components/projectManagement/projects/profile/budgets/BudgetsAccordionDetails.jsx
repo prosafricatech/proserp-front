@@ -12,7 +12,6 @@ import {
   Alert,
   Box,
   Button,
-  Checkbox,
   Chip,
   Dialog,
   DialogActions,
@@ -23,6 +22,7 @@ import {
   LinearProgress,
   Skeleton,
   Stack,
+  Switch,
   Tab,
   Tabs,
   Tooltip,
@@ -135,7 +135,6 @@ function BudgetsDocumentDialog({
       a.download = `${budgetDetails?.name || 'budget'}-details.xlsx`;
       a.click();
       window.URL.revokeObjectURL(url);
-
     } catch (e) {
       console.error('error exporting excel: ', e);
     } finally {
@@ -152,10 +151,19 @@ function BudgetsDocumentDialog({
       fullScreen={belowLargeScreen}
     >
       <DialogTitle>
-        <Box display='flex' alignItems='center' justifyContent='space-between' position='relative'>
+        <Box
+          display='flex'
+          alignItems='center'
+          justifyContent='space-between'
+          position='relative'
+        >
           <Box display='flex' alignItems='center'>
-            <Typography>With More Details</Typography>
-            <Checkbox checked={withDetails} onChange={handleDetailsChange} />
+            <Typography>Detailed</Typography>
+            <Switch
+              checked={withDetails}
+              onChange={handleDetailsChange}
+              slotProps={{ input: { 'aria-label': 'controlled' } }}
+            />
           </Box>
           {belowLargeScreen ? (
             <Box display='flex' alignItems='center' gap={1}>
@@ -170,10 +178,7 @@ function BudgetsDocumentDialog({
                 Excel
               </LoadingButton>
               <Tooltip title='Close'>
-                <IconButton
-                  size='small'
-                  onClick={onClose}
-                >
+                <IconButton size='small' onClick={onClose}>
                   <HighlightOff color='primary' />
                 </IconButton>
               </Tooltip>
@@ -193,7 +198,7 @@ function BudgetsDocumentDialog({
           )}
         </Box>
       </DialogTitle>
-      
+
       {/* Tabs Row */}
       <Grid container alignItems='center' sx={{ px: 3, pb: 1 }}>
         <Grid item>
@@ -379,13 +384,19 @@ function BudgetsAccordionDetails({ budget, expanded }) {
                 </Typography>
                 <Typography variant='h5'>
                   {totalBudgetedAmount
-                    ? ((totalSpentAmount / totalBudgetedAmount) * 100).toFixed(2)
+                    ? ((totalSpentAmount / totalBudgetedAmount) * 100).toFixed(
+                        2
+                      )
                     : 0}
                   %
                 </Typography>
               </Grid>
             </Grid>
-            <Grid size={{ xs: 12, md: 1 }} display='flex' justifyContent='flex-end'>
+            <Grid
+              size={{ xs: 12, md: 1 }}
+              display='flex'
+              justifyContent='flex-end'
+            >
               <Tooltip title='View Budget Details'>
                 <IconButton
                   size='small'
