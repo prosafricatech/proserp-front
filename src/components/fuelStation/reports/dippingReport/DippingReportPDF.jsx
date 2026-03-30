@@ -1,5 +1,4 @@
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
-import { Document, Page, Text, View } from '@react-pdf/renderer';
 import pdfStyles from '@/components/pdf/pdf-styles';
 import PdfLogo from '@/components/pdf/PdfLogo';
 import { Document, Font, Page, Text, View } from '@react-pdf/renderer';
