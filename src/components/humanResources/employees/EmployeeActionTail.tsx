@@ -8,6 +8,7 @@ import {
   useMediaQuery,
 } from '@mui/material';
 import { useState } from 'react';
+import { DepartmentsProvider } from '../departments/DepartmentsProvider';
 import EmployeeForm from './EmployeeForm';
 
 const EmployeeActionTail = () => {
@@ -19,7 +20,9 @@ const EmployeeActionTail = () => {
   return (
     <>
       <Dialog maxWidth='md' fullScreen={belowLargeScreen} open={openDialog}>
-        <EmployeeForm setOpenDialog={setOpenDialog} />
+        <DepartmentsProvider>
+          <EmployeeForm setOpenDialog={setOpenDialog} />
+        </DepartmentsProvider>
       </Dialog>
       <ButtonGroup
         variant='outlined'

@@ -84,7 +84,10 @@ const LeaveTypeForm = ({ setOpenDialog, leaveType }: LeaveTypeFormProp) => {
 
   const validationSchema = yup.object({
     id: yup.number().optional(),
-    name: yup.string().required('name is required'),
+    name: yup
+      .string()
+      .required('name is required')
+      .max(255, 'The name cannot exceed 255 characters'),
     days_per_year: yup
       .number()
       .required('days per year is required')

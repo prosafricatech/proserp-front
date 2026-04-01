@@ -86,8 +86,8 @@ const DepartmentForm = ({
 
   const validationSchema = yup.object({
     id: yup.number().optional(),
-    name: yup.string().required('name is required'),
-    code: yup.string(),
+    name: yup.string().required('name is required').max(255),
+    code: yup.string().max(50),
     description: yup.string(),
   });
 

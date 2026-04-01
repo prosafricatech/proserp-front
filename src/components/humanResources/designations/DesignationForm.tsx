@@ -89,9 +89,9 @@ const DesignationForm = ({
 
   const validationSchema = yup.object({
     id: yup.number().optional(),
-    title: yup.string().required('Title is required'),
-    code: yup.string(),
-    description: yup.string(),
+    title: yup.string().required('Title is required').max(255),
+    code: yup.string().max(50),
+    description: yup.string().max(500),
   });
 
   const {

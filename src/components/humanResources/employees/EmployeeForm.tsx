@@ -1,5 +1,6 @@
 'use client';
 
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Div } from '@jumbo/shared';
 import { LoadingButton } from '@mui/lab';
@@ -10,6 +11,7 @@ import {
   DialogContent,
   DialogTitle,
   Grid,
+  LinearProgress,
   SelectChangeEvent,
   TextField,
 } from '@mui/material';
@@ -17,9 +19,11 @@ import { DatePicker } from '@mui/x-date-pickers';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import dayjs, { Dayjs } from 'dayjs';
 import { useSnackbar } from 'notistack';
-import React, { useEffect, useState } from 'react';
+import React, { FormEvent, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
+import { useDepartments } from '../departments/DepartmentsProvider';
+import { Department } from '../departments/DepartmentsType';
 import humanResourcesServices from '../humanResourcesServices';
 import { Employee } from './EmployeesType';
 
@@ -40,35 +44,59 @@ interface ApiResponse {
   };
 }
 
+interface empTypesOpt {
+  label: string;
+  value: string;
+}
+
 const EmployeeForm = ({
   setOpenDialog,
   employee = null,
 }: EmployeeFormProps) => {
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
+  const { authUser } = useJumboAuth();
+  const { departments, isFetching } = useDepartments();
+  const [departmentsData, setDepartmentsData] = useState<Department[] | []>([]);
+  const [selectedDpt, setSelectedDpt] = useState<Department | null>(null);
+
+  useEffect(() => {
+    if (departments?.data.length) {
+      setDepartmentsData(departments.data);
+    }
+  }, [departments, isFetching]);
 
   const genderOptions = [
     { label: 'Male', value: 'male' },
     { label: 'Female', value: 'female' },
   ];
 
+  const employmentTypesOptions: empTypesOpt[] = [
+    { label: 'Full Time', value: 'full_time' },
+    { label: 'Part Time', value: 'part_time' },
+    { label: 'Casual', value: 'casual' },
+  ];
+
   useEffect(() => {
     const date = new Date();
     const dayjsDate = dayjs(date).toISOString().split('T')[0];
     setEmployeeDoB(dayjsDate);
+    setJoinDate(dayjsDate);
   }, []);
 
   const [employeeDoB, setEmployeeDoB] = useState<string | undefined>('');
+  const [joinDate, setJoinDate] = useState<string | undefined>('');
   const [employeeGender, setEmployeeGender] = useState(genderOptions[0].value);
+  const [selectedemploymentType, setSelectedEmploymentType] =
+    useState<empTypesOpt | null>(null);
 
   const handleChange = (event: SelectChangeEvent) => {
     setEmployeeGender(event.target.value as string);
   };
 
   useEffect(() => {
-    setValue('date_of_birth', new Date().toISOString().split('T')[0]);
     setValue('gender', employeeGender);
-  }, [employeeDoB, employeeGender]);
+  }, [employeeGender]);
 
   const {
     mutate: addEmployee,
@@ -112,24 +140,44 @@ const EmployeeForm = ({
   });
 
   const validationSchema = yup.object({
-    first_name: yup.string().required('First name is required'),
-    middle_name: yup.string().required('Middle name is required'),
-    last_name: yup.string().required('Last name is required'),
+    employee_number: yup.string(),
+    first_name: yup
+      .string()
+      .required('First name is required')
+      .max(100, 'First name should not exceed 50 characters'),
+    middle_name: yup
+      .string()
+      .max(100, 'Middle name should not exceed 50 characters'),
+    last_name: yup
+      .string()
+      .required('Last name is required')
+      .max(100, 'Last name should not exceed 50 characters'),
     gender: yup.string().required('Gender is required'),
     email: yup.string().email().required('email is required'),
     phone_number: yup.string().required('Phone number is required'),
     address: yup.string().required('Address is required'),
     date_of_birth: yup.date().required('Date of birth is required'),
+    national_id: yup
+      .string()
+      .max(50, 'National ID should not exceed 50 characters'),
+    passport_number: yup
+      .string()
+      .max(50, 'Passport number should not exceed 50 characters'),
+    department_id: yup.number(),
+    employment_type: yup.string(),
+    join_date: yup.date(),
   });
 
   const {
     register,
     handleSubmit,
     setValue,
+    getValues,
     formState: { errors },
   } = useForm<FormData>({
     resolver: yupResolver(validationSchema) as any,
     defaultValues: {
+      employee_number: employee?.employee_number || '',
       first_name: employee?.first_name || '',
       middle_name: employee?.middle_name || '',
       last_name: employee?.last_name || '',
@@ -138,6 +186,11 @@ const EmployeeForm = ({
       phone_number: employee?.phone_number || '',
       address: employee?.address || '',
       date_of_birth: employee?.date_of_birth || employeeDoB,
+      national_id: employee?.national_id || '',
+      passport_number: employee?.passport_number || '',
+      department_id: employee?.department_id || undefined,
+      employment_type: employee?.employment_type || '',
+      join_date: employee?.join_date || '',
     },
   });
 
@@ -147,6 +200,14 @@ const EmployeeForm = ({
 
   const onSubmit = (data: FormData) => {
     saveMutation(data);
+  };
+
+  const submitForm = (e: FormEvent) => {
+    e.preventDefault();
+    const formdata = getValues();
+    const user_id = authUser?.user.id;
+    const newData = { ...formdata, user_id: user_id };
+    console.log('newData: ', newData);
   };
 
   return (
@@ -159,13 +220,36 @@ const EmployeeForm = ({
         </Grid>
       </DialogTitle>
       <DialogContent>
-        <form autoComplete='off' onSubmit={handleSubmit(onSubmit)}>
+        {/* <form autoComplete='off' onSubmit={handleSubmit(onSubmit)}> */}
+        <form autoComplete='off' onSubmit={(e) => submitForm(e)}>
           <Grid container rowSpacing={{ xs: 1, md: 2 }} spacing={2}>
             <Grid size={{ xs: 12, md: 4 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
+                  label='Employee Number'
+                  size='small'
+                  fullWidth
+                  error={
+                    !!errors?.employee_number ||
+                    !!error?.response?.data?.validation_errors
+                      ?.employee_number ||
+                    !!updateError?.response?.data?.validation_errors
+                      ?.employee_number
+                  }
+                  helperText={
+                    errors.employee_number?.message ||
+                    error?.response?.data?.validation_errors?.employee_number ||
+                    updateError?.response?.data?.validation_errors
+                      ?.employee_number
+                  }
+                  {...register('employee_number')}
+                />
+              </Div>
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Div sx={{ mt: 1, mb: 1 }}>
+                <TextField
                   label='First Name'
-                  placeholder='John'
                   size='small'
                   fullWidth
                   error={
@@ -186,7 +270,6 @@ const EmployeeForm = ({
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='Middle Name'
-                  placeholder='James'
                   size='small'
                   fullWidth
                   error={
@@ -204,11 +287,11 @@ const EmployeeForm = ({
                 />
               </Div>
             </Grid>
+
             <Grid size={{ xs: 12, md: 4 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='Last Name'
-                  placeholder='Doe'
                   size='small'
                   fullWidth
                   error={
@@ -225,7 +308,6 @@ const EmployeeForm = ({
                 />
               </Div>
             </Grid>
-
             <Grid size={{ xs: 12, md: 4 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <Autocomplete
@@ -268,6 +350,7 @@ const EmployeeForm = ({
                 />
               </Div>
             </Grid>
+
             <Grid size={{ xs: 12, md: 4 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
@@ -290,7 +373,6 @@ const EmployeeForm = ({
                 />
               </Div>
             </Grid>
-
             <Grid size={{ xs: 12, md: 4 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <DatePicker
@@ -298,7 +380,11 @@ const EmployeeForm = ({
                   value={dayjs(employeeDoB)}
                   onChange={(value: Dayjs | null) => {
                     if (value) {
-                      setEmployeeDoB(value.toISOString().split('T')[0]);
+                      const formatted = value.format('YYYY-MM-DD');
+                      console.log('formatted: ', formatted);
+
+                      setEmployeeDoB(formatted);
+                      setValue('date_of_birth', formatted);
                     }
                   }}
                   slotProps={{
@@ -310,7 +396,7 @@ const EmployeeForm = ({
                 />
               </Div>
             </Grid>
-            <Grid size={{ xs: 12, md: 8 }}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='Adress'
@@ -328,6 +414,128 @@ const EmployeeForm = ({
                     updateError?.response?.data?.validation_errors?.address
                   }
                   {...register('address')}
+                />
+              </Div>
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Div sx={{ mt: 1, mb: 1 }}>
+                <TextField
+                  label='National ID'
+                  size='small'
+                  fullWidth
+                  error={
+                    !!errors?.national_id ||
+                    !!error?.response?.data?.validation_errors?.national_id ||
+                    !!updateError?.response?.data?.validation_errors
+                      ?.national_id
+                  }
+                  helperText={
+                    errors.national_id?.message ||
+                    error?.response?.data?.validation_errors?.national_id ||
+                    updateError?.response?.data?.validation_errors?.national_id
+                  }
+                  {...register('national_id')}
+                />
+              </Div>
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Div sx={{ mt: 1, mb: 1 }}>
+                <TextField
+                  label='Passport Number'
+                  size='small'
+                  fullWidth
+                  error={
+                    !!errors?.passport_number ||
+                    !!error?.response?.data?.validation_errors
+                      ?.passport_number ||
+                    !!updateError?.response?.data?.validation_errors
+                      ?.passport_number
+                  }
+                  helperText={
+                    errors.passport_number?.message ||
+                    error?.response?.data?.validation_errors?.passport_number ||
+                    updateError?.response?.data?.validation_errors
+                      ?.passport_number
+                  }
+                  {...register('passport_number')}
+                />
+              </Div>
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Div>
+                {isFetching ? (
+                  <LinearProgress />
+                ) : (
+                  <Autocomplete
+                    size='small'
+                    options={departmentsData}
+                    isOptionEqualToValue={(option, value) =>
+                      option.id === value.id
+                    }
+                    getOptionLabel={(option) => option?.name || ''}
+                    value={selectedDpt}
+                    onChange={(event, newValue) => {
+                      setSelectedDpt(newValue);
+                      if (newValue !== null) {
+                        setValue('department_id', newValue.id || null);
+                      } else {
+                        setValue('department_id', undefined);
+                      }
+                    }}
+                    renderInput={(params) => (
+                      <TextField {...params} label='Department' />
+                    )}
+                  />
+                )}
+              </Div>
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Div sx={{ mt: 1, mb: 1 }}>
+                <Autocomplete
+                  size='small'
+                  options={employmentTypesOptions}
+                  isOptionEqualToValue={(option, value) =>
+                    option.label === value.label
+                  }
+                  getOptionLabel={(option) => option.label}
+                  value={selectedemploymentType}
+                  onChange={(event, newValue) => {
+                    if (newValue) {
+                      setSelectedEmploymentType(newValue);
+                      setValue('employment_type', newValue.value);
+                    } else {
+                      setSelectedEmploymentType(null);
+                      setValue('employment_type', '');
+                    }
+                  }}
+                  renderInput={(params) => (
+                    <TextField {...params} label='Employment Type' />
+                  )}
+                />
+              </Div>
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Div sx={{ mt: 1, mb: 1 }}>
+                <DatePicker
+                  label='Join Date'
+                  value={dayjs(joinDate)}
+                  onChange={(value: Dayjs | null) => {
+                    if (value) {
+                      const formatted = value.format('YYYY-MM-DD');
+                      console.log('formatted: ', formatted);
+
+                      setJoinDate(formatted);
+                      setValue('join_date', formatted);
+                    }
+                  }}
+                  slotProps={{
+                    textField: {
+                      size: 'small',
+                      fullWidth: true,
+                    },
+                  }}
                 />
               </Div>
             </Grid>
