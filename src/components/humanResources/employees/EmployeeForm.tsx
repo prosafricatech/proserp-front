@@ -12,14 +12,13 @@ import {
   DialogTitle,
   Grid,
   LinearProgress,
-  SelectChangeEvent,
   TextField,
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import dayjs, { Dayjs } from 'dayjs';
 import { useSnackbar } from 'notistack';
-import React, { FormEvent, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import { useDepartments } from '../departments/DepartmentsProvider';
@@ -86,16 +85,12 @@ const EmployeeForm = ({
 
   const [employeeDoB, setEmployeeDoB] = useState<string | undefined>('');
   const [joinDate, setJoinDate] = useState<string | undefined>('');
-  const [employeeGender, setEmployeeGender] = useState(genderOptions[0].value);
+  const [employeeGender, setEmployeeGender] = useState(genderOptions[0]);
   const [selectedemploymentType, setSelectedEmploymentType] =
     useState<empTypesOpt | null>(null);
 
-  const handleChange = (event: SelectChangeEvent) => {
-    setEmployeeGender(event.target.value as string);
-  };
-
   useEffect(() => {
-    setValue('gender', employeeGender);
+    setValue('gender', employeeGender.value);
   }, [employeeGender]);
 
   const {
@@ -103,7 +98,13 @@ const EmployeeForm = ({
     isPending,
     error,
   } = useMutation<ApiResponse, any, FormData>({
-    mutationFn: humanResourcesServices.addEmployee,
+    mutationFn: async (data) => {
+      const user_id = authUser?.user.id;
+      const newData = { ...data, user_id: user_id };
+      const response = await humanResourcesServices.addEmployee(newData);
+      console.log('newData: ', newData);
+      return response;
+    },
     onSuccess: (data) => {
       setOpenDialog(false);
       enqueueSnackbar('Success Adding Employee', {
@@ -153,10 +154,10 @@ const EmployeeForm = ({
       .required('Last name is required')
       .max(100, 'Last name should not exceed 50 characters'),
     gender: yup.string().required('Gender is required'),
-    email: yup.string().email().required('email is required'),
-    phone_number: yup.string().required('Phone number is required'),
-    address: yup.string().required('Address is required'),
-    date_of_birth: yup.date().required('Date of birth is required'),
+    email: yup.string().email(),
+    phone_number: yup.string(),
+    address: yup.string(),
+    date_of_birth: yup.date(),
     national_id: yup
       .string()
       .max(50, 'National ID should not exceed 50 characters'),
@@ -181,7 +182,7 @@ const EmployeeForm = ({
       first_name: employee?.first_name || '',
       middle_name: employee?.middle_name || '',
       last_name: employee?.last_name || '',
-      gender: employee?.gender || employeeGender,
+      gender: employee?.gender || employeeGender.value,
       email: employee?.email || '',
       phone_number: employee?.phone_number || '',
       address: employee?.address || '',
@@ -199,16 +200,16 @@ const EmployeeForm = ({
   }, [employee, updateEmployee, addEmployee]);
 
   const onSubmit = (data: FormData) => {
-    saveMutation(data);
+    saveMutation?.(data);
   };
 
-  const submitForm = (e: FormEvent) => {
-    e.preventDefault();
-    const formdata = getValues();
-    const user_id = authUser?.user.id;
-    const newData = { ...formdata, user_id: user_id };
-    console.log('newData: ', newData);
-  };
+  // const submitForm = (e: FormEvent) => {
+  //   e.preventDefault();
+  //   const formdata = getValues();
+  //   const user_id = authUser?.user.id;
+  //   const newData = { ...formdata, user_id: user_id };
+  //   console.log('newData: ', newData);
+  // };
 
   return (
     <>
@@ -220,8 +221,14 @@ const EmployeeForm = ({
         </Grid>
       </DialogTitle>
       <DialogContent>
-        {/* <form autoComplete='off' onSubmit={handleSubmit(onSubmit)}> */}
-        <form autoComplete='off' onSubmit={(e) => submitForm(e)}>
+        <form
+          autoComplete='off'
+          onSubmit={(e) => {
+            console.log('form subitted');
+            handleSubmit(onSubmit)(e);
+          }}
+        >
+          {/* <form autoComplete='off' onSubmit={(e) => submitForm(e)}> */}
           <Grid container rowSpacing={{ xs: 1, md: 2 }} spacing={2}>
             <Grid size={{ xs: 12, md: 4 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
@@ -317,10 +324,10 @@ const EmployeeForm = ({
                     option.label === value.label
                   }
                   getOptionLabel={(option) => option.label}
-                  value={genderOptions[0]}
+                  value={employeeGender}
                   onChange={(event, newValue) => {
                     if (newValue) {
-                      setEmployeeGender(newValue.value);
+                      setEmployeeGender(newValue);
                     }
                   }}
                   renderInput={(params) => (
@@ -333,7 +340,6 @@ const EmployeeForm = ({
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='Email'
-                  placeholder='example@gmail.com'
                   size='small'
                   fullWidth
                   error={
@@ -355,7 +361,6 @@ const EmployeeForm = ({
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='Phone Number'
-                  placeholder='0712345678'
                   size='small'
                   fullWidth
                   error={
@@ -400,7 +405,6 @@ const EmployeeForm = ({
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='Adress'
-                  placeholder='Dar es salaam, Tanzania'
                   size='small'
                   fullWidth
                   error={

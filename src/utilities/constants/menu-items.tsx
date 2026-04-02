@@ -201,6 +201,12 @@ export async function getMenus(locale: string) {
           icon: icon('employees'),
         },
         {
+          uri: `/${locale}/humanResources/employees-contracts`,
+          label: sidebar.menuItem.employee_contracts,
+          type: 'nav-item',
+          icon: icon('employee_contracts'),
+        },
+        {
           label: sidebar.menuItem.masters,
           type: 'collapsible',
           icon: icon('businessCenter'),
@@ -218,6 +224,16 @@ export async function getMenus(locale: string) {
             {
               uri: `/${locale}/humanResources/designations`,
               label: sidebar.menuItem.designations,
+              type: 'nav-item',
+            },
+            {
+              uri: `/${locale}/humanResources/bank-accounts`,
+              label: sidebar.menuItem.employee_bank_accounts,
+              type: 'nav-item',
+            },
+            {
+              uri: `/${locale}/humanResources/next-of-kins`,
+              label: sidebar.menuItem.employee_next_of_kins,
               type: 'nav-item',
             },
           ],

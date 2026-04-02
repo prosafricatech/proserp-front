@@ -1,7 +1,7 @@
 export interface ContractType {
   id: number;
-  employee_id: number;
-  designation_id: number;
+  employee_id?: number;
+  designation_id?: number;
   contract_type: string;
   start_date: string;
   end_date?: string;

@@ -31,6 +31,16 @@ humanResourcesServices.deleteEmployee = async (id) => {
     return data;
 }
 
+// employees contracts
+humanResourcesServices.getEmployeesContactList = async (params = {}) => {
+    const { page = 1, limit = 10, ...queryParams } = params;
+    const { data } = await axios.get("/api/humanResources/employeesContracts", {
+        params: { page, limit, ...queryParams }
+    });
+    return data;
+};
+
+
 // departments methods
 humanResourcesServices.getDepartmentsList = async (params = {}) => {
     const { page = 1, limit = 10, ...queryParams } = params;

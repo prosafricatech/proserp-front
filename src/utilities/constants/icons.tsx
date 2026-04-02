@@ -10,6 +10,7 @@ import {
   BusinessCenterOutlined,
   CardMembershipOutlined,
   ChecklistRtlOutlined,
+  ContactPage,
   CorporateFareOutlined,
   CurrencyExchangeOutlined,
   DashboardCustomizeOutlined,
@@ -76,6 +77,7 @@ export const ICONS = {
   editAttributes: EditAttributesOutlined,
   accountTree: AccountTreeOutlined,
   employees: PeopleAltOutlined,
+  employee_contracts: ContactPage,
   businessCenter: BusinessCenterOutlined,
 } as const;
 
