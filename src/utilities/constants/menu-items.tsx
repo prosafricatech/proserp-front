@@ -271,11 +271,6 @@ export async function getMenus(locale: string) {
               label: sidebar.menuItem.paye_tax_bands,
               type: 'nav-item',
             },
-            {
-              uri: `/${locale}/humanResources/tax-reliefs`,
-              label: sidebar.menuItem.tax_reliefs,
-              type: 'nav-item',
-            },
           ],
         },
       ],

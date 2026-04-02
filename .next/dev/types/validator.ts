@@ -308,15 +308,6 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
-// Validate ../../../src/app/[lang]/(common)/humanResources/tax-reliefs/page.tsx
-{
-  type __IsExpected<Specific extends AppPageConfig<"/[lang]/humanResources/tax-reliefs">> = Specific
-  const handler = {} as typeof import("../../../src/app/[lang]/(common)/humanResources/tax-reliefs/page.js")
-  type __Check = __IsExpected<typeof handler>
-  // @ts-ignore
-  type __Unused = __Check
-}
-
 // Validate ../../../src/app/[lang]/(common)/invitations/page.tsx
 {
   type __IsExpected<Specific extends AppPageConfig<"/[lang]/invitations">> = Specific
@@ -2094,42 +2085,6 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/humanResources/payeTaxBands">> = Specific
   const handler = {} as typeof import("../../../src/app/api/humanResources/payeTaxBands/route.js")
-  type __Check = __IsExpected<typeof handler>
-  // @ts-ignore
-  type __Unused = __Check
-}
-
-// Validate ../../../src/app/api/humanResources/taxReliefs/[id]/delete/route.ts
-{
-  type __IsExpected<Specific extends RouteHandlerConfig<"/api/humanResources/taxReliefs/[id]/delete">> = Specific
-  const handler = {} as typeof import("../../../src/app/api/humanResources/taxReliefs/[id]/delete/route.js")
-  type __Check = __IsExpected<typeof handler>
-  // @ts-ignore
-  type __Unused = __Check
-}
-
-// Validate ../../../src/app/api/humanResources/taxReliefs/[id]/update/route.ts
-{
-  type __IsExpected<Specific extends RouteHandlerConfig<"/api/humanResources/taxReliefs/[id]/update">> = Specific
-  const handler = {} as typeof import("../../../src/app/api/humanResources/taxReliefs/[id]/update/route.js")
-  type __Check = __IsExpected<typeof handler>
-  // @ts-ignore
-  type __Unused = __Check
-}
-
-// Validate ../../../src/app/api/humanResources/taxReliefs/add/route.ts
-{
-  type __IsExpected<Specific extends RouteHandlerConfig<"/api/humanResources/taxReliefs/add">> = Specific
-  const handler = {} as typeof import("../../../src/app/api/humanResources/taxReliefs/add/route.js")
-  type __Check = __IsExpected<typeof handler>
-  // @ts-ignore
-  type __Unused = __Check
-}
-
-// Validate ../../../src/app/api/humanResources/taxReliefs/route.ts
-{
-  type __IsExpected<Specific extends RouteHandlerConfig<"/api/humanResources/taxReliefs">> = Specific
-  const handler = {} as typeof import("../../../src/app/api/humanResources/taxReliefs/route.js")
   type __Check = __IsExpected<typeof handler>
   // @ts-ignore
   type __Unused = __Check

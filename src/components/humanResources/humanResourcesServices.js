@@ -349,28 +349,4 @@ humanResourcesServices.deletePayeTaxBand = async (id) => {
     return data;
 }
 
-// tax reliefs methods
-humanResourcesServices.getTaxReliefsList = async (params = {}) => {
-    const { page = 1, limit = 50, ...queryParams } = params;
-    const { data } = await axios.get('/api/humanResources/taxReliefs', {
-        params: { page, limit, ...queryParams }
-    });
-    return data;
-};
-
-humanResourcesServices.addTaxRelief = async (taxRelief) => {
-    const { data } = await axios.post('/api/humanResources/taxReliefs/add', taxRelief);
-    return data;
-}
-
-humanResourcesServices.updateTaxRelief = async (taxRelief) => {
-    const { data } = await axios.put(`/api/humanResources/taxReliefs/${taxRelief.id}/update`, taxRelief);
-    return data;
-}
-
-humanResourcesServices.deleteTaxRelief = async (id) => {
-    const { data } = await axios.delete(`/api/humanResources/taxReliefs/${id}/delete`);
-    return data;
-}
-
 export default humanResourcesServices;
