@@ -11,7 +11,7 @@ import {
   Grid,
   TextField,
 } from '@mui/material';
-import { DateTimePicker } from '@mui/x-date-pickers';
+import { DatePicker } from '@mui/x-date-pickers';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
@@ -118,7 +118,7 @@ const PayeTaxBandForm = ({
       .typeError('Rate must be a number')
       .required('Rate is required')
       .min(0, 'Rate must be 0 or greater')
-      .max(100, 'Rate cannot exceed 100'),
+      .max(1, 'Rate must be a decimal (e.g. 0.30 for 30%)'),
     fixed_tax: yup
       .number()
       .typeError('Fixed tax must be a number')
@@ -142,13 +142,13 @@ const PayeTaxBandForm = ({
     resolver: yupResolver(validationSchema) as any,
     defaultValues: {
       id: payeTaxBand?.id,
-      country_code: payeTaxBand?.country_code || 'KE',
+      country_code: payeTaxBand?.country_code,
       region: payeTaxBand?.region ?? null,
-      min_income: payeTaxBand?.min_income ?? 0,
+      min_income: payeTaxBand?.min_income,
       max_income: payeTaxBand?.max_income ?? null,
-      rate: payeTaxBand?.rate ?? 0,
-      fixed_tax: payeTaxBand?.fixed_tax ?? 0,
-      excess_over: payeTaxBand?.excess_over ?? 0,
+      rate: payeTaxBand?.rate,
+      fixed_tax: payeTaxBand?.fixed_tax,
+      excess_over: payeTaxBand?.excess_over,
       effective_from: payeTaxBand?.effective_from || '',
       effective_to: payeTaxBand?.effective_to ?? null,
     },
@@ -255,7 +255,7 @@ const PayeTaxBandForm = ({
             <Grid size={{ xs: 12, md: 4 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
-                  label='Rate (%)'
+                  label='Rate (decimal, e.g. 0.30 = 30%)'
                   size='small'
                   fullWidth
                   error={
@@ -315,11 +315,11 @@ const PayeTaxBandForm = ({
                   name='effective_from'
                   control={control}
                   render={({ field }) => (
-                    <DateTimePicker
-                      label='Effective From'
+                    <DatePicker
+                      label='Effective From *'
                       value={field.value ? dayjs(field.value) : null}
                       onChange={(v) =>
-                        field.onChange(v ? v.toISOString() : '')
+                        field.onChange(v ? v.format('YYYY-MM-DD') : '')
                       }
                       slotProps={{
                         textField: {
@@ -351,11 +351,11 @@ const PayeTaxBandForm = ({
                   name='effective_to'
                   control={control}
                   render={({ field }) => (
-                    <DateTimePicker
+                    <DatePicker
                       label='Effective To'
                       value={field.value ? dayjs(field.value) : null}
                       onChange={(v) =>
-                        field.onChange(v ? v.toISOString() : null)
+                        field.onChange(v ? v.format('YYYY-MM-DD') : null)
                       }
                       slotProps={{
                         textField: {
