@@ -227,7 +227,7 @@ export async function getMenus(locale: string) {
               type: 'nav-item',
             },
             {
-              uri: `/${locale}/humanResources/bank-accounts`,
+              uri: `/${locale}/humanResources/employee-bank-accounts`,
               label: sidebar.menuItem.employee_bank_accounts,
               type: 'nav-item',
             },

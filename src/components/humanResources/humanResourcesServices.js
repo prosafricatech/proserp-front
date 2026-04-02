@@ -133,4 +133,28 @@ humanResourcesServices.deleteLeaveType = async (id) => {
     return data;
 }
 
+// employee bank accounts methods
+humanResourcesServices.getEmployeeBankAccountsList = async (params = {}) => {
+    const { page = 1, limit = 20, ...queryParams } = params;
+    const { data } = await axios.get('/api/humanResources/employeesBankAccounts', {
+        params: { page, limit, ...queryParams }
+    });
+    return data;
+};
+
+humanResourcesServices.addEmployeeBankAccount = async (bankAccount) => {
+    const { data } = await axios.post('/api/humanResources/employeesBankAccounts/add', bankAccount);
+    return data;
+}
+
+humanResourcesServices.updateEmployeeBankAccount = async (bankAccount) => {
+    const { data } = await axios.put(`/api/humanResources/employeesBankAccounts/${bankAccount.id}/update`, bankAccount);
+    return data;
+}
+
+humanResourcesServices.deleteEmployeeBankAccount = async (id) => {
+    const { data } = await axios.delete(`/api/humanResources/employeesBankAccounts/${id}/delete`);
+    return data;
+}
+
 export default humanResourcesServices;
