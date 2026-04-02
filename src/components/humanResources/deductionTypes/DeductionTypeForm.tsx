@@ -272,7 +272,7 @@ const DeductionTypeForm = ({
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='Default Value'
-                  type='number'
+                  
                   size='small'
                   fullWidth
                   error={

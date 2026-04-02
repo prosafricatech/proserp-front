@@ -263,7 +263,7 @@ const LeaveAllocationForm = ({
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='Year'
-                  type='number'
+                  
                   size='small'
                   fullWidth
                   error={
@@ -283,7 +283,6 @@ const LeaveAllocationForm = ({
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='Allocated Days'
-                  type='number'
                   size='small'
                   fullWidth
                   error={

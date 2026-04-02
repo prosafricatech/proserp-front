@@ -169,7 +169,7 @@ const TaxReliefForm = ({
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='Amount'
-                  type='number'
+                  
                   size='small'
                   fullWidth
                   error={

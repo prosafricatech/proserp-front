@@ -13,7 +13,9 @@ import {
   LinearProgress,
   TextField,
 } from '@mui/material';
+import { DateTimePicker } from '@mui/x-date-pickers';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -267,7 +269,6 @@ const EmployeeAllowanceForm = ({
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='Amount'
-                  type='number'
                   size='small'
                   fullWidth
                   error={
@@ -285,42 +286,60 @@ const EmployeeAllowanceForm = ({
 
             <Grid size={{ xs: 12, md: 4 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
-                <TextField
-                  label='Effective From'
-                  type='date'
-                  size='small'
-                  fullWidth
-                  InputLabelProps={{ shrink: true }}
-                  error={
-                    !!errors?.effective_from ||
-                    !!getValidationMessage(validationErrors, 'effective_from')
-                  }
-                  helperText={
-                    errors.effective_from?.message ||
-                    getValidationMessage(validationErrors, 'effective_from')
-                  }
-                  {...register('effective_from')}
+                <Controller
+                  name='effective_from'
+                  control={control}
+                  render={({ field }) => (
+                    <DateTimePicker
+                      label='Effective From'
+                      value={field.value ? dayjs(field.value) : null}
+                      onChange={(newValue) => {
+                        field.onChange(newValue ? newValue.toISOString() : '');
+                      }}
+                      slotProps={{
+                        textField: {
+                          size: 'small',
+                          fullWidth: true,
+                          error:
+                            !!errors?.effective_from ||
+                            !!getValidationMessage(validationErrors, 'effective_from'),
+                          helperText:
+                            errors.effective_from?.message ||
+                            getValidationMessage(validationErrors, 'effective_from'),
+                        },
+                      }}
+                    />
+                  )}
                 />
               </Div>
             </Grid>
 
             <Grid size={{ xs: 12, md: 4 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
-                <TextField
-                  label='Effective To'
-                  type='date'
-                  size='small'
-                  fullWidth
-                  InputLabelProps={{ shrink: true }}
-                  error={
-                    !!errors?.effective_to ||
-                    !!getValidationMessage(validationErrors, 'effective_to')
-                  }
-                  helperText={
-                    errors.effective_to?.message ||
-                    getValidationMessage(validationErrors, 'effective_to')
-                  }
-                  {...register('effective_to')}
+                <Controller
+                  name='effective_to'
+                  control={control}
+                  render={({ field }) => (
+                    <DateTimePicker
+                      label='Effective To'
+                      value={field.value ? dayjs(field.value) : null}
+                      onChange={(newValue) => {
+                        field.onChange(newValue ? newValue.toISOString() : '');
+                      }}
+                      slotProps={{
+                        textField: {
+                          size: 'small',
+                          fullWidth: true,
+                          error:
+                            !!errors?.effective_to ||
+                            !!getValidationMessage(validationErrors, 'effective_to'),
+                          helperText:
+                            errors.effective_to?.message ||
+                            getValidationMessage(validationErrors, 'effective_to'),
+                        },
+                      }}
+                    />
+                  )}
                 />
               </Div>
             </Grid>

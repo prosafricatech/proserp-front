@@ -11,10 +11,11 @@ import {
   DialogTitle,
   Grid,
   LinearProgress,
-  MenuItem,
   TextField,
 } from '@mui/material';
+import { DateTimePicker } from '@mui/x-date-pickers';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -30,8 +31,14 @@ interface LeaveRequestFormProps {
   leaveRequest?: LeaveRequestType | null;
 }
 
-interface FormData extends Omit<LeaveRequestType, 'id' | 'created_by'> {
+interface FormData {
   id?: number;
+  employee_id: number;
+  leave_type_id: number;
+  start_date: string;
+  end_date: string;
+  days_requested: number;
+  reason?: string;
 }
 
 interface ApiResponse {
@@ -126,10 +133,6 @@ const LeaveRequestForm = ({
       .required('Days requested is required')
       .min(0.5, 'Days requested must be at least 0.5'),
     reason: yup.string().max(1000, 'Reason cannot exceed 1000 characters'),
-    status: yup
-      .string()
-      .oneOf(['pending', 'approved', 'rejected', 'cancelled'])
-      .required('Status is required'),
   });
 
   const {
@@ -147,7 +150,6 @@ const LeaveRequestForm = ({
       end_date: leaveRequest?.end_date || '',
       days_requested: leaveRequest?.days_requested ?? 1,
       reason: leaveRequest?.reason || '',
-      status: leaveRequest?.status || 'pending',
     },
   });
 
@@ -266,51 +268,68 @@ const LeaveRequestForm = ({
 
             <Grid size={{ xs: 12, md: 3 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
-                <TextField
-                  label='Start Date'
-                  type='date'
-                  size='small'
-                  fullWidth
-                  InputLabelProps={{ shrink: true }}
-                  error={
-                    !!errors?.start_date ||
-                    !!getValidationMessage(validationErrors, 'start_date')
-                  }
-                  helperText={
-                    errors.start_date?.message ||
-                    getValidationMessage(validationErrors, 'start_date')
-                  }
-                  {...register('start_date')}
+                <Controller
+                  name='start_date'
+                  control={control}
+                  render={({ field }) => (
+                    <DateTimePicker
+                      label='Start Date'
+                      value={field.value ? dayjs(field.value) : null}
+                      onChange={(newValue) => {
+                        field.onChange(newValue ? newValue.toISOString() : '');
+                      }}
+                      slotProps={{
+                        textField: {
+                          size: 'small',
+                          fullWidth: true,
+                          error:
+                            !!errors?.start_date ||
+                            !!getValidationMessage(validationErrors, 'start_date'),
+                          helperText:
+                            errors.start_date?.message ||
+                            getValidationMessage(validationErrors, 'start_date'),
+                        },
+                      }}
+                    />
+                  )}
                 />
               </Div>
             </Grid>
 
             <Grid size={{ xs: 12, md: 3 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
-                <TextField
-                  label='End Date'
-                  type='date'
-                  size='small'
-                  fullWidth
-                  InputLabelProps={{ shrink: true }}
-                  error={
-                    !!errors?.end_date ||
-                    !!getValidationMessage(validationErrors, 'end_date')
-                  }
-                  helperText={
-                    errors.end_date?.message ||
-                    getValidationMessage(validationErrors, 'end_date')
-                  }
-                  {...register('end_date')}
+                <Controller
+                  name='end_date'
+                  control={control}
+                  render={({ field }) => (
+                    <DateTimePicker
+                      label='End Date'
+                      value={field.value ? dayjs(field.value) : null}
+                      onChange={(newValue) => {
+                        field.onChange(newValue ? newValue.toISOString() : '');
+                      }}
+                      slotProps={{
+                        textField: {
+                          size: 'small',
+                          fullWidth: true,
+                          error:
+                            !!errors?.end_date ||
+                            !!getValidationMessage(validationErrors, 'end_date'),
+                          helperText:
+                            errors.end_date?.message ||
+                            getValidationMessage(validationErrors, 'end_date'),
+                        },
+                      }}
+                    />
+                  )}
                 />
               </Div>
             </Grid>
 
-            <Grid size={{ xs: 12, md: 3 }}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='Days Requested'
-                  type='number'
                   size='small'
                   fullWidth
                   error={
@@ -322,38 +341,6 @@ const LeaveRequestForm = ({
                     getValidationMessage(validationErrors, 'days_requested')
                   }
                   {...register('days_requested')}
-                />
-              </Div>
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 3 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
-                <Controller
-                  name='status'
-                  control={control}
-                  render={({ field }) => (
-                    <TextField
-                      select
-                      label='Status'
-                      size='small'
-                      fullWidth
-                      value={field.value}
-                      onChange={field.onChange}
-                      error={
-                        !!errors?.status ||
-                        !!getValidationMessage(validationErrors, 'status')
-                      }
-                      helperText={
-                        errors.status?.message ||
-                        getValidationMessage(validationErrors, 'status')
-                      }
-                    >
-                      <MenuItem value='pending'>Pending</MenuItem>
-                      <MenuItem value='approved'>Approved</MenuItem>
-                      <MenuItem value='rejected'>Rejected</MenuItem>
-                      <MenuItem value='cancelled'>Cancelled</MenuItem>
-                    </TextField>
-                  )}
                 />
               </Div>
             </Grid>

@@ -165,7 +165,6 @@ const PayeTaxBandForm = ({
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='Minimum Income'
-                  type='number'
                   size='small'
                   fullWidth
                   error={
@@ -185,7 +184,6 @@ const PayeTaxBandForm = ({
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='Maximum Income'
-                  type='number'
                   size='small'
                   fullWidth
                   error={
@@ -205,7 +203,6 @@ const PayeTaxBandForm = ({
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='Rate Percent'
-                  type='number'
                   size='small'
                   fullWidth
                   error={
@@ -225,7 +222,6 @@ const PayeTaxBandForm = ({
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='Fixed Amount'
-                  type='number'
                   size='small'
                   fullWidth
                   error={
