@@ -236,6 +236,46 @@ export async function getMenus(locale: string) {
               label: sidebar.menuItem.employee_next_of_kins,
               type: 'nav-item',
             },
+            {
+              uri: `/${locale}/humanResources/allowance-types`,
+              label: sidebar.menuItem.allowance_types,
+              type: 'nav-item',
+            },
+            {
+              uri: `/${locale}/humanResources/deduction-types`,
+              label: sidebar.menuItem.deduction_types,
+              type: 'nav-item',
+            },
+            {
+              uri: `/${locale}/humanResources/employee-allowances`,
+              label: sidebar.menuItem.employee_allowances,
+              type: 'nav-item',
+            },
+            {
+              uri: `/${locale}/humanResources/employee-deductions`,
+              label: sidebar.menuItem.employee_deductions,
+              type: 'nav-item',
+            },
+            {
+              uri: `/${locale}/humanResources/leave-allocations`,
+              label: sidebar.menuItem.leave_allocations,
+              type: 'nav-item',
+            },
+            {
+              uri: `/${locale}/humanResources/leave-requests`,
+              label: sidebar.menuItem.leave_requests,
+              type: 'nav-item',
+            },
+            {
+              uri: `/${locale}/humanResources/paye-tax-bands`,
+              label: sidebar.menuItem.paye_tax_bands,
+              type: 'nav-item',
+            },
+            {
+              uri: `/${locale}/humanResources/tax-reliefs`,
+              label: sidebar.menuItem.tax_reliefs,
+              type: 'nav-item',
+            },
           ],
         },
       ],

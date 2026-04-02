@@ -1,0 +1,403 @@
+'use client';
+
+import { yupResolver } from '@hookform/resolvers/yup';
+import { Div } from '@jumbo/shared';
+import { LoadingButton } from '@mui/lab';
+import {
+  Autocomplete,
+  Button,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Grid,
+  LinearProgress,
+  MenuItem,
+  TextField,
+} from '@mui/material';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useSnackbar } from 'notistack';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import * as yup from 'yup';
+import { LeaveType } from '../leaveTypes/LeaveTypesType';
+import { useEmployees } from '../employees/EmployeesProvider';
+import { Employee } from '../employees/EmployeesType';
+import humanResourcesServices from '../humanResourcesServices';
+import { LeaveRequestType } from './LeaveRequestType';
+
+interface LeaveRequestFormProps {
+  setOpenDialog: (open: boolean) => void;
+  leaveRequest?: LeaveRequestType | null;
+}
+
+interface FormData extends Omit<LeaveRequestType, 'id' | 'created_by'> {
+  id?: number;
+}
+
+interface ApiResponse {
+  message: string;
+  validation_errors?: Record<string, string[] | string>;
+}
+
+const getValidationMessage = (
+  validationErrors: Record<string, string[] | string> | undefined,
+  field: string
+) => {
+  const message = validationErrors?.[field];
+  if (!message) return undefined;
+  return Array.isArray(message) ? message[0] : message;
+};
+
+const LeaveRequestForm = ({
+  setOpenDialog,
+  leaveRequest = null,
+}: LeaveRequestFormProps) => {
+  const queryClient = useQueryClient();
+  const { enqueueSnackbar } = useSnackbar();
+  const { employees, isFetching: fetchingEmployees } = useEmployees();
+
+  const { data: leaveTypesResponse, isFetching: fetchingLeaveTypes } = useQuery({
+    queryKey: ['fetchLeaveTypesForLeaveRequestForm'],
+    queryFn: async () => {
+      return humanResourcesServices.getLeaveTypesList({ page: 1, limit: 200 });
+    },
+  });
+
+  const leaveTypes = (leaveTypesResponse?.data || []) as LeaveType[];
+  const [employeesData, setEmployeesData] = useState<Employee[] | []>([]);
+
+  useEffect(() => {
+    if (employees?.length) {
+      setEmployeesData(employees);
+    }
+  }, [employees]);
+
+  const {
+    mutate: addLeaveRequest,
+    isPending,
+    error,
+  } = useMutation<ApiResponse, any, FormData>({
+    mutationFn: humanResourcesServices.addLeaveRequest,
+    onSuccess: () => {
+      setOpenDialog(false);
+      enqueueSnackbar('Leave Request Added Successfully', {
+        variant: 'success',
+      });
+      queryClient.invalidateQueries({ queryKey: ['leaveRequests'] });
+    },
+    onError: (mutationError) => {
+      enqueueSnackbar('Error Adding Leave Request', {
+        variant: 'error',
+      });
+      console.log('error adding leave request: ', mutationError);
+    },
+  });
+
+  const {
+    mutate: updateLeaveRequest,
+    isPending: updateIsPending,
+    error: updateError,
+  } = useMutation<ApiResponse, any, FormData>({
+    mutationFn: humanResourcesServices.updateLeaveRequest,
+    onSuccess: () => {
+      setOpenDialog(false);
+      enqueueSnackbar('Leave Request Updated Successfully', {
+        variant: 'success',
+      });
+      queryClient.invalidateQueries({ queryKey: ['leaveRequests'] });
+    },
+    onError: (mutationError) => {
+      enqueueSnackbar('Error Updating Leave Request', {
+        variant: 'error',
+      });
+      console.log('error updating leave request: ', mutationError);
+    },
+  });
+
+  const validationSchema = yup.object({
+    id: yup.number().optional(),
+    employee_id: yup.number().required('Employee is required'),
+    leave_type_id: yup.number().required('Leave type is required'),
+    start_date: yup.string().required('Start date is required'),
+    end_date: yup.string().required('End date is required'),
+    days_requested: yup
+      .number()
+      .typeError('Days requested must be a number')
+      .required('Days requested is required')
+      .min(0.5, 'Days requested must be at least 0.5'),
+    reason: yup.string().max(1000, 'Reason cannot exceed 1000 characters'),
+    status: yup
+      .string()
+      .oneOf(['pending', 'approved', 'rejected', 'cancelled'])
+      .required('Status is required'),
+  });
+
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors },
+  } = useForm<FormData>({
+    resolver: yupResolver(validationSchema) as any,
+    defaultValues: {
+      id: leaveRequest?.id,
+      employee_id: leaveRequest?.employee_id,
+      leave_type_id: leaveRequest?.leave_type_id,
+      start_date: leaveRequest?.start_date || '',
+      end_date: leaveRequest?.end_date || '',
+      days_requested: leaveRequest?.days_requested ?? 1,
+      reason: leaveRequest?.reason || '',
+      status: leaveRequest?.status || 'pending',
+    },
+  });
+
+  const saveMutation = useMemo(() => {
+    return leaveRequest?.id ? updateLeaveRequest : addLeaveRequest;
+  }, [leaveRequest?.id, updateLeaveRequest, addLeaveRequest]);
+
+  const validationErrors =
+    error?.response?.data?.validation_errors ||
+    updateError?.response?.data?.validation_errors;
+
+  const onSubmit = (data: FormData) => {
+    saveMutation(data);
+  };
+
+  return (
+    <>
+      <DialogTitle>
+        <Grid size={12} textAlign={'center'}>
+          {!leaveRequest?.id ? 'Add Leave Request' : 'Edit Leave Request'}
+        </Grid>
+      </DialogTitle>
+      <DialogContent>
+        <form autoComplete='off' onSubmit={handleSubmit(onSubmit)}>
+          <Grid container rowSpacing={{ xs: 1, md: 2 }} spacing={2}>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Div sx={{ mt: 1, mb: 1 }}>
+                {fetchingEmployees ? (
+                  <LinearProgress />
+                ) : (
+                  <Controller
+                    name='employee_id'
+                    control={control}
+                    rules={{ required: 'Employee is required' }}
+                    render={({ field, fieldState }) => (
+                      <Autocomplete
+                        size='small'
+                        options={employeesData}
+                        isOptionEqualToValue={(option, value) =>
+                          option.id === value.id
+                        }
+                        getOptionLabel={(option) =>
+                          `${option?.first_name || ''} ${option?.middle_name || ''} ${option?.last_name || ''}`
+                        }
+                        value={
+                          employeesData.find((employee) => employee.id === field.value) ||
+                          null
+                        }
+                        onChange={(event, newValue) => {
+                          field.onChange(newValue?.id || null);
+                        }}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            label='Employee'
+                            error={
+                              !!fieldState.error ||
+                              !!getValidationMessage(validationErrors, 'employee_id')
+                            }
+                            helperText={
+                              fieldState.error?.message ||
+                              getValidationMessage(validationErrors, 'employee_id')
+                            }
+                          />
+                        )}
+                      />
+                    )}
+                  />
+                )}
+              </Div>
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Div sx={{ mt: 1, mb: 1 }}>
+                {fetchingLeaveTypes ? (
+                  <LinearProgress />
+                ) : (
+                  <Controller
+                    name='leave_type_id'
+                    control={control}
+                    rules={{ required: 'Leave type is required' }}
+                    render={({ field, fieldState }) => (
+                      <Autocomplete
+                        size='small'
+                        options={leaveTypes}
+                        isOptionEqualToValue={(option, value) =>
+                          option.id === value.id
+                        }
+                        getOptionLabel={(option) => option.name || ''}
+                        value={
+                          leaveTypes.find((type) => type.id === field.value) || null
+                        }
+                        onChange={(event, newValue) => {
+                          field.onChange(newValue?.id || null);
+                        }}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            label='Leave Type'
+                            error={
+                              !!fieldState.error ||
+                              !!getValidationMessage(validationErrors, 'leave_type_id')
+                            }
+                            helperText={
+                              fieldState.error?.message ||
+                              getValidationMessage(validationErrors, 'leave_type_id')
+                            }
+                          />
+                        )}
+                      />
+                    )}
+                  />
+                )}
+              </Div>
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 3 }}>
+              <Div sx={{ mt: 1, mb: 1 }}>
+                <TextField
+                  label='Start Date'
+                  type='date'
+                  size='small'
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                  error={
+                    !!errors?.start_date ||
+                    !!getValidationMessage(validationErrors, 'start_date')
+                  }
+                  helperText={
+                    errors.start_date?.message ||
+                    getValidationMessage(validationErrors, 'start_date')
+                  }
+                  {...register('start_date')}
+                />
+              </Div>
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 3 }}>
+              <Div sx={{ mt: 1, mb: 1 }}>
+                <TextField
+                  label='End Date'
+                  type='date'
+                  size='small'
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                  error={
+                    !!errors?.end_date ||
+                    !!getValidationMessage(validationErrors, 'end_date')
+                  }
+                  helperText={
+                    errors.end_date?.message ||
+                    getValidationMessage(validationErrors, 'end_date')
+                  }
+                  {...register('end_date')}
+                />
+              </Div>
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 3 }}>
+              <Div sx={{ mt: 1, mb: 1 }}>
+                <TextField
+                  label='Days Requested'
+                  type='number'
+                  size='small'
+                  fullWidth
+                  error={
+                    !!errors?.days_requested ||
+                    !!getValidationMessage(validationErrors, 'days_requested')
+                  }
+                  helperText={
+                    errors.days_requested?.message ||
+                    getValidationMessage(validationErrors, 'days_requested')
+                  }
+                  {...register('days_requested')}
+                />
+              </Div>
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 3 }}>
+              <Div sx={{ mt: 1, mb: 1 }}>
+                <Controller
+                  name='status'
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      select
+                      label='Status'
+                      size='small'
+                      fullWidth
+                      value={field.value}
+                      onChange={field.onChange}
+                      error={
+                        !!errors?.status ||
+                        !!getValidationMessage(validationErrors, 'status')
+                      }
+                      helperText={
+                        errors.status?.message ||
+                        getValidationMessage(validationErrors, 'status')
+                      }
+                    >
+                      <MenuItem value='pending'>Pending</MenuItem>
+                      <MenuItem value='approved'>Approved</MenuItem>
+                      <MenuItem value='rejected'>Rejected</MenuItem>
+                      <MenuItem value='cancelled'>Cancelled</MenuItem>
+                    </TextField>
+                  )}
+                />
+              </Div>
+            </Grid>
+
+            <Grid size={{ xs: 12 }}>
+              <Div sx={{ mt: 1, mb: 1 }}>
+                <TextField
+                  label='Reason'
+                  size='small'
+                  fullWidth
+                  multiline
+                  minRows={2}
+                  error={
+                    !!errors?.reason ||
+                    !!getValidationMessage(validationErrors, 'reason')
+                  }
+                  helperText={
+                    errors.reason?.message ||
+                    getValidationMessage(validationErrors, 'reason')
+                  }
+                  {...register('reason')}
+                />
+              </Div>
+            </Grid>
+          </Grid>
+
+          <DialogActions>
+            <Button size='small' onClick={() => setOpenDialog(false)}>
+              Cancel
+            </Button>
+            <LoadingButton
+              type='submit'
+              variant='contained'
+              size='small'
+              sx={{ display: 'flex' }}
+              loading={isPending || updateIsPending}
+            >
+              Submit
+            </LoadingButton>
+          </DialogActions>
+        </form>
+      </DialogContent>
+    </>
+  );
+};
+
+export default LeaveRequestForm;

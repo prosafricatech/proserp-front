@@ -69,7 +69,15 @@
       "designations": "Designations",
       "employee_contracts": "Employee Contracts",
       "employee_bank_accounts": "Bank Accounts",
-      "employee_next_of_kins": "Next of Kins"
+      "employee_next_of_kins": "Next of Kins",
+      "allowance_types": "Allowance Types",
+      "deduction_types": "Deduction Types",
+      "employee_allowances": "Employee Allowances",
+      "employee_deductions": "Employee Deductions",
+      "leave_allocations": "Leave Allocations",
+      "leave_requests": "Leave Requests",
+      "paye_tax_bands": "PAYE Tax Bands",
+      "tax_reliefs": "Tax Reliefs"
     }
   },
 

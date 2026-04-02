@@ -157,4 +157,220 @@ humanResourcesServices.deleteEmployeeBankAccount = async (id) => {
     return data;
 }
 
+// employee next of kins methods
+humanResourcesServices.getEmployeeNextOfKinsList = async (params = {}) => {
+    const { page = 1, limit = 20, ...queryParams } = params;
+    const { data } = await axios.get('/api/humanResources/employeesNextOfKins', {
+        params: { page, limit, ...queryParams }
+    });
+    return data;
+};
+
+humanResourcesServices.addEmployeeNextOfKin = async (nextOfKin) => {
+    const { data } = await axios.post('/api/humanResources/employeesNextOfKins/add', nextOfKin);
+    return data;
+}
+
+humanResourcesServices.updateEmployeeNextOfKin = async (nextOfKin) => {
+    const { data } = await axios.put(`/api/humanResources/employeesNextOfKins/${nextOfKin.id}/update`, nextOfKin);
+    return data;
+}
+
+humanResourcesServices.deleteEmployeeNextOfKin = async (id) => {
+    const { data } = await axios.delete(`/api/humanResources/employeesNextOfKins/${id}/delete`);
+    return data;
+}
+
+// allowance types methods
+humanResourcesServices.getAllowanceTypesList = async (params = {}) => {
+    const { page = 1, limit = 50, ...queryParams } = params;
+    const { data } = await axios.get('/api/humanResources/allowanceTypes', {
+        params: { page, limit, ...queryParams }
+    });
+    return data;
+};
+
+humanResourcesServices.addAllowanceType = async (allowanceType) => {
+    const { data } = await axios.post('/api/humanResources/allowanceTypes/add', allowanceType);
+    return data;
+}
+
+humanResourcesServices.updateAllowanceType = async (allowanceType) => {
+    const { data } = await axios.put(`/api/humanResources/allowanceTypes/${allowanceType.id}/update`, allowanceType);
+    return data;
+}
+
+humanResourcesServices.deleteAllowanceType = async (id) => {
+    const { data } = await axios.delete(`/api/humanResources/allowanceTypes/${id}/delete`);
+    return data;
+}
+
+// deduction types methods
+humanResourcesServices.getDeductionTypesList = async (params = {}) => {
+    const { page = 1, limit = 50, ...queryParams } = params;
+    const { data } = await axios.get('/api/humanResources/deductionTypes', {
+        params: { page, limit, ...queryParams }
+    });
+    return data;
+};
+
+humanResourcesServices.addDeductionType = async (deductionType) => {
+    const { data } = await axios.post('/api/humanResources/deductionTypes/add', deductionType);
+    return data;
+}
+
+humanResourcesServices.updateDeductionType = async (deductionType) => {
+    const { data } = await axios.put(`/api/humanResources/deductionTypes/${deductionType.id}/update`, deductionType);
+    return data;
+}
+
+humanResourcesServices.deleteDeductionType = async (id) => {
+    const { data } = await axios.delete(`/api/humanResources/deductionTypes/${id}/delete`);
+    return data;
+}
+
+// employee allowances methods
+humanResourcesServices.getEmployeeAllowancesList = async (params = {}) => {
+    const { page = 1, limit = 20, ...queryParams } = params;
+    const { data } = await axios.get('/api/humanResources/employeeAllowances', {
+        params: { page, limit, ...queryParams }
+    });
+    return data;
+};
+
+humanResourcesServices.addEmployeeAllowance = async (employeeAllowance) => {
+    const { data } = await axios.post('/api/humanResources/employeeAllowances/add', employeeAllowance);
+    return data;
+}
+
+humanResourcesServices.updateEmployeeAllowance = async (employeeAllowance) => {
+    const { data } = await axios.put(`/api/humanResources/employeeAllowances/${employeeAllowance.id}/update`, employeeAllowance);
+    return data;
+}
+
+humanResourcesServices.deleteEmployeeAllowance = async (id) => {
+    const { data } = await axios.delete(`/api/humanResources/employeeAllowances/${id}/delete`);
+    return data;
+}
+
+// employee deductions methods
+humanResourcesServices.getEmployeeDeductionsList = async (params = {}) => {
+    const { page = 1, limit = 20, ...queryParams } = params;
+    const { data } = await axios.get('/api/humanResources/employeeDeductions', {
+        params: { page, limit, ...queryParams }
+    });
+    return data;
+};
+
+humanResourcesServices.addEmployeeDeduction = async (employeeDeduction) => {
+    const { data } = await axios.post('/api/humanResources/employeeDeductions/add', employeeDeduction);
+    return data;
+}
+
+humanResourcesServices.updateEmployeeDeduction = async (employeeDeduction) => {
+    const { data } = await axios.put(`/api/humanResources/employeeDeductions/${employeeDeduction.id}/update`, employeeDeduction);
+    return data;
+}
+
+humanResourcesServices.deleteEmployeeDeduction = async (id) => {
+    const { data } = await axios.delete(`/api/humanResources/employeeDeductions/${id}/delete`);
+    return data;
+}
+
+// leave allocations methods
+humanResourcesServices.getLeaveAllocationsList = async (params = {}) => {
+    const { page = 1, limit = 20, ...queryParams } = params;
+    const { data } = await axios.get('/api/humanResources/leaveAllocations', {
+        params: { page, limit, ...queryParams }
+    });
+    return data;
+};
+
+humanResourcesServices.addLeaveAllocation = async (leaveAllocation) => {
+    const { data } = await axios.post('/api/humanResources/leaveAllocations/add', leaveAllocation);
+    return data;
+}
+
+humanResourcesServices.updateLeaveAllocation = async (leaveAllocation) => {
+    const { data } = await axios.put(`/api/humanResources/leaveAllocations/${leaveAllocation.id}/update`, leaveAllocation);
+    return data;
+}
+
+humanResourcesServices.deleteLeaveAllocation = async (id) => {
+    const { data } = await axios.delete(`/api/humanResources/leaveAllocations/${id}/delete`);
+    return data;
+}
+
+// leave requests methods
+humanResourcesServices.getLeaveRequestsList = async (params = {}) => {
+    const { page = 1, limit = 20, ...queryParams } = params;
+    const { data } = await axios.get('/api/humanResources/leaveRequests', {
+        params: { page, limit, ...queryParams }
+    });
+    return data;
+};
+
+humanResourcesServices.addLeaveRequest = async (leaveRequest) => {
+    const { data } = await axios.post('/api/humanResources/leaveRequests/add', leaveRequest);
+    return data;
+}
+
+humanResourcesServices.updateLeaveRequest = async (leaveRequest) => {
+    const { data } = await axios.put(`/api/humanResources/leaveRequests/${leaveRequest.id}/update`, leaveRequest);
+    return data;
+}
+
+humanResourcesServices.deleteLeaveRequest = async (id) => {
+    const { data } = await axios.delete(`/api/humanResources/leaveRequests/${id}/delete`);
+    return data;
+}
+
+// PAYE tax bands methods
+humanResourcesServices.getPayeTaxBandsList = async (params = {}) => {
+    const { page = 1, limit = 50, ...queryParams } = params;
+    const { data } = await axios.get('/api/humanResources/payeTaxBands', {
+        params: { page, limit, ...queryParams }
+    });
+    return data;
+};
+
+humanResourcesServices.addPayeTaxBand = async (payeTaxBand) => {
+    const { data } = await axios.post('/api/humanResources/payeTaxBands/add', payeTaxBand);
+    return data;
+}
+
+humanResourcesServices.updatePayeTaxBand = async (payeTaxBand) => {
+    const { data } = await axios.put(`/api/humanResources/payeTaxBands/${payeTaxBand.id}/update`, payeTaxBand);
+    return data;
+}
+
+humanResourcesServices.deletePayeTaxBand = async (id) => {
+    const { data } = await axios.delete(`/api/humanResources/payeTaxBands/${id}/delete`);
+    return data;
+}
+
+// tax reliefs methods
+humanResourcesServices.getTaxReliefsList = async (params = {}) => {
+    const { page = 1, limit = 50, ...queryParams } = params;
+    const { data } = await axios.get('/api/humanResources/taxReliefs', {
+        params: { page, limit, ...queryParams }
+    });
+    return data;
+};
+
+humanResourcesServices.addTaxRelief = async (taxRelief) => {
+    const { data } = await axios.post('/api/humanResources/taxReliefs/add', taxRelief);
+    return data;
+}
+
+humanResourcesServices.updateTaxRelief = async (taxRelief) => {
+    const { data } = await axios.put(`/api/humanResources/taxReliefs/${taxRelief.id}/update`, taxRelief);
+    return data;
+}
+
+humanResourcesServices.deleteTaxRelief = async (id) => {
+    const { data } = await axios.delete(`/api/humanResources/taxReliefs/${id}/delete`);
+    return data;
+}
+
 export default humanResourcesServices;
