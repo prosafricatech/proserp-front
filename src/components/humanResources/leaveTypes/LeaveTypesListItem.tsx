@@ -23,7 +23,7 @@ const LeaveTypesListItem = ({ leaveType }: { leaveType: LeaveType }) => {
         alignItems={'center'}
         container
       >
-        <Grid size={{ xs: 12, md: 8 }}>
+        <Grid size={{ xs: 6, md: 8 }}>
           <Tooltip title='Leave Type Name'>
             <Typography
               variant='h5'
@@ -36,12 +36,12 @@ const LeaveTypesListItem = ({ leaveType }: { leaveType: LeaveType }) => {
             </Typography>
           </Tooltip>
         </Grid>
-        <Grid size={{ xs: 12, md: 2 }}>
+        <Grid size={{ xs: 5, md: 2 }}>
           <Tooltip title='Days Per Year'>
             <Typography>{leaveType.days_per_year}</Typography>
           </Tooltip>
         </Grid>
-        <Grid size={{ xs: 1, md: 0.5, lg: 1 }} textAlign={'end'}>
+        <Grid size={{ xs: 1, md: 2 }} textAlign={'end'}>
           <LeaveTypeItemAction leaveType={leaveType} />
         </Grid>
       </Grid>
