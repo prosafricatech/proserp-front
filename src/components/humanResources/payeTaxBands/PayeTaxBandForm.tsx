@@ -18,6 +18,7 @@ import { useSnackbar } from 'notistack';
 import React, { useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import * as yup from 'yup';
+import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import humanResourcesServices from '../humanResourcesServices';
 import { PayeTaxBandType } from './PayeTaxBandType';
 
@@ -104,13 +105,19 @@ const PayeTaxBandForm = ({
       .number()
       .typeError('Minimum income must be a number')
       .required('Minimum income is required')
+      .transform((value, originalValue) => {
+        if (typeof originalValue === 'string') return parseFloat(originalValue.replace(/,/g, ''));
+        return value;
+      })
       .min(0, 'Minimum income must be 0 or greater'),
     max_income: yup
       .number()
       .nullable()
-      .transform((value, originalValue) =>
-        originalValue === '' || originalValue === null ? null : value
-      )
+      .transform((value, originalValue) => {
+        if (originalValue === '' || originalValue === null) return null;
+        if (typeof originalValue === 'string') return parseFloat(originalValue.replace(/,/g, ''));
+        return value;
+      })
       .min(0, 'Maximum income must be 0 or greater')
       .optional(),
     rate: yup
@@ -123,11 +130,19 @@ const PayeTaxBandForm = ({
       .number()
       .typeError('Fixed tax must be a number')
       .required('Fixed tax is required')
+      .transform((value, originalValue) => {
+        if (typeof originalValue === 'string') return parseFloat(originalValue.replace(/,/g, ''));
+        return value;
+      })
       .min(0, 'Fixed tax must be 0 or greater'),
     excess_over: yup
       .number()
       .typeError('Excess over must be a number')
       .required('Excess over is required')
+      .transform((value, originalValue) => {
+        if (typeof originalValue === 'string') return parseFloat(originalValue.replace(/,/g, ''));
+        return value;
+      })
       .min(0, 'Excess over must be 0 or greater'),
     effective_from: yup.string().required('Effective from is required'),
     effective_to: yup.string().nullable().optional(),
@@ -228,6 +243,7 @@ const PayeTaxBandForm = ({
                     errors.min_income?.message ||
                     getValidationMessage(validationErrors, 'min_income')
                   }
+                  InputProps={{ inputComponent: CommaSeparatedField as any }}
                   {...register('min_income')}
                 />
               </Div>
@@ -247,6 +263,7 @@ const PayeTaxBandForm = ({
                     errors.max_income?.message ||
                     getValidationMessage(validationErrors, 'max_income')
                   }
+                  InputProps={{ inputComponent: CommaSeparatedField as any }}
                   {...register('max_income')}
                 />
               </Div>
@@ -285,6 +302,7 @@ const PayeTaxBandForm = ({
                     errors.fixed_tax?.message ||
                     getValidationMessage(validationErrors, 'fixed_tax')
                   }
+                  InputProps={{ inputComponent: CommaSeparatedField as any }}
                   {...register('fixed_tax')}
                 />
               </Div>
@@ -304,6 +322,7 @@ const PayeTaxBandForm = ({
                     errors.excess_over?.message ||
                     getValidationMessage(validationErrors, 'excess_over')
                   }
+                  InputProps={{ inputComponent: CommaSeparatedField as any }}
                   {...register('excess_over')}
                 />
               </Div>
