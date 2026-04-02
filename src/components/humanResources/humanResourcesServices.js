@@ -349,4 +349,28 @@ humanResourcesServices.deletePayeTaxBand = async (id) => {
     return data;
 }
 
+// payroll periods methods
+humanResourcesServices.getPayrollPeriodsList = async (params = {}) => {
+    const { page = 1, limit = 50, ...queryParams } = params;
+    const { data } = await axios.get('/api/humanResources/payrollPeriods', {
+        params: { page, limit, ...queryParams }
+    });
+    return data;
+};
+
+humanResourcesServices.addPayrollPeriod = async (payrollPeriod) => {
+    const { data } = await axios.post('/api/humanResources/payrollPeriods/add', payrollPeriod);
+    return data;
+}
+
+humanResourcesServices.updatePayrollPeriod = async (payrollPeriod) => {
+    const { data } = await axios.put(`/api/humanResources/payrollPeriods/${payrollPeriod.id}/update`, payrollPeriod);
+    return data;
+}
+
+humanResourcesServices.deletePayrollPeriod = async (id) => {
+    const { data } = await axios.delete(`/api/humanResources/payrollPeriods/${id}/delete`);
+    return data;
+}
+
 export default humanResourcesServices;

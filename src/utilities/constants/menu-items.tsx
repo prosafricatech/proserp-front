@@ -271,6 +271,11 @@ export async function getMenus(locale: string) {
               label: sidebar.menuItem.paye_tax_bands,
               type: 'nav-item',
             },
+            {
+              uri: `/${locale}/humanResources/payroll-periods`,
+              label: sidebar.menuItem.payroll_periods,
+              type: 'nav-item',
+            },
           ],
         },
       ],
