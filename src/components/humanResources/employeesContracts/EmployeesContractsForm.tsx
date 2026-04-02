@@ -63,7 +63,6 @@ const EmployeesContractsForm = ({
   const [selectedDesignation, setSelectedDesignation] =
     useState<Designation | null>(null);
 
-  console.log('designations: ', designations);
   useEffect(() => {
     if (employees?.length) {
       setEmployeesData(employees);
@@ -79,7 +78,7 @@ const EmployeesContractsForm = ({
     { label: 'Probation', value: 'probation' },
   ];
 
-  const [startDate, setStartDate] = useState<string | undefined>('');
+  const [startDate, setStartDate] = useState<string | undefined>(undefined);
   const [endDate, setEndDate] = useState<string | undefined>(undefined);
   const [probationEnd, setProbationENd] = useState<string | undefined>(
     undefined
@@ -89,7 +88,7 @@ const EmployeesContractsForm = ({
   useEffect(() => {
     const date = new Date();
     const dayjsDate = dayjs(date).toISOString().split('T')[0];
-    setStartDate(dayjsDate);
+    // setStartDate(dayjsDate);
     // setEndDate(dayjsDate);
     // setProbationENd(dayjsDate);
   }, []);
@@ -107,7 +106,6 @@ const EmployeesContractsForm = ({
       const user_id = authUser?.user.id;
       const newData = { ...data, user_id: user_id };
       const response = await humanResourcesServices.addEmployee(newData);
-      console.log('newData: ', newData);
       return response;
     },
     onSuccess: (data) => {
@@ -149,20 +147,20 @@ const EmployeesContractsForm = ({
     employee_id: yup.number().required('Employee is required'),
     designation_id: yup.number().required('Designation is required'),
     contract_type: yup.string().required('Contract type is required'),
-    start_date: yup.date().required('Start date is required'),
-    end_date: yup
-      .date()
-      .nullable()
-      .when('contract_type', {
-        is: 'fixed_term',
-        then: (schema) =>
-          schema
-            .required('End date is required')
-            .min(yup.ref('start_date'), 'End date must be after start date'),
-        otherwise: (schema) => schema.notRequired(),
-      }),
-    probation_end_date: yup.date().nullable().min(yup.ref('start_date')),
-    basic_salary: yup.number().required('Basic salary is required').min(0),
+    start_date: yup.string().required('Start date is required'),
+    end_date: yup.string().when('contract_type', {
+      is: 'fixed_term',
+      then: (schema) =>
+        schema
+          .required('End date is required')
+          .min(yup.ref('start_date'), 'End date must be after start date'),
+      otherwise: (schema) => schema.notRequired(),
+    }),
+    probation_end_date: yup.string().min(yup.ref('start_date')),
+    basic_salary: yup
+      .number()
+      .required('Basic salary is required')
+      .min(0, 'Basic salary cannot be less than 0'),
     remarks: yup
       .string()
       .max(1000, 'Remarks should not exceed 1000 characters'),
@@ -289,92 +287,135 @@ const EmployeesContractsForm = ({
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
-                <Autocomplete
-                  size='small'
-                  options={contractOptions}
-                  isOptionEqualToValue={(option, value) =>
-                    option.label === value.label
-                  }
-                  getOptionLabel={(option) => option.label}
-                  value={contractType}
-                  onChange={(event, newValue) => {
-                    if (newValue) {
-                      setContractType(newValue);
-                    }
-                  }}
-                  renderInput={(params) => (
-                    <TextField {...params} label='Coontract Type' />
+                <Controller
+                  name='contract_type'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field, fieldState }) => (
+                    <Autocomplete
+                      size='small'
+                      options={contractOptions}
+                      isOptionEqualToValue={(option, value) =>
+                        option.label === value.label
+                      }
+                      getOptionLabel={(option) => option.label}
+                      {...field}
+                      value={contractType}
+                      onChange={(event, newValue) => {
+                        if (newValue) {
+                          setContractType(newValue);
+                        }
+                        field.onChange(newValue?.value);
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label='Coontract Type'
+                          error={!!fieldState.error}
+                          helperText={fieldState.error?.message}
+                        />
+                      )}
+                    />
                   )}
-                  //   {...register('contract_type')}
                 />
               </Div>
             </Grid>
 
             <Grid size={{ xs: 12, md: 4 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
-                <DatePicker
-                  label='Start Date'
-                  value={dayjs(startDate)}
-                  onChange={(value: Dayjs | null) => {
-                    if (value) {
-                      const formatted = value.format('YYYY-MM-DD');
+                <Controller
+                  name='start_date'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field, fieldState }) => (
+                    <DatePicker
+                      label='Start Date'
+                      value={
+                        startDate !== undefined ? dayjs(startDate) : undefined
+                      }
+                      onChange={(value: Dayjs | null) => {
+                        if (value) {
+                          const formatted = value.format('YYYY-MM-DD');
 
-                      setStartDate(formatted);
-                      setValue('start_date', formatted);
-                    }
-                  }}
-                  slotProps={{
-                    textField: {
-                      size: 'small',
-                      fullWidth: true,
-                    },
-                  }}
+                          setStartDate(formatted);
+                          field.onChange(formatted);
+                        }
+                      }}
+                      slotProps={{
+                        textField: {
+                          size: 'small',
+                          fullWidth: true,
+                          error: !!fieldState.error,
+                          helperText: fieldState.error?.message,
+                        },
+                      }}
+                    />
+                  )}
                 />
               </Div>
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
-                <DatePicker
-                  label='End Date'
-                  value={endDate !== undefined ? dayjs(endDate) : undefined}
-                  onChange={(value: Dayjs | null) => {
-                    if (value) {
-                      const formatted = value.format('YYYY-MM-DD');
+                <Controller
+                  name='end_date'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field, fieldState }) => (
+                    <DatePicker
+                      label='End Date'
+                      value={endDate !== undefined ? dayjs(endDate) : undefined}
+                      onChange={(value: Dayjs | null) => {
+                        if (value) {
+                          const formatted = value.format('YYYY-MM-DD');
 
-                      setEndDate(formatted);
-                      setValue('end_date', formatted);
-                    }
-                  }}
-                  slotProps={{
-                    textField: {
-                      size: 'small',
-                      fullWidth: true,
-                    },
-                  }}
+                          setEndDate(formatted);
+                          field.onChange(formatted);
+                        }
+                      }}
+                      slotProps={{
+                        textField: {
+                          size: 'small',
+                          fullWidth: true,
+                          error: !!fieldState.error,
+                          helperText: fieldState.error?.message,
+                        },
+                      }}
+                    />
+                  )}
                 />
               </Div>
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
-                <DatePicker
-                  label='Probation End Date'
-                  value={
-                    probationEnd !== undefined ? dayjs(probationEnd) : undefined
-                  }
-                  onChange={(value: Dayjs | null) => {
-                    if (value) {
-                      const formatted = value.format('YYYY-MM-DD');
+                <Controller
+                  name='probation_end_date'
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <DatePicker
+                      label='Probation End Date'
+                      value={
+                        probationEnd !== undefined
+                          ? dayjs(probationEnd)
+                          : undefined
+                      }
+                      onChange={(value: Dayjs | null) => {
+                        if (value) {
+                          const formatted = value.format('YYYY-MM-DD');
 
-                      setProbationENd(formatted);
-                      setValue('probation_end_date', formatted);
-                    }
-                  }}
-                  slotProps={{
-                    textField: {
-                      size: 'small',
-                      fullWidth: true,
-                    },
-                  }}
+                          setProbationENd(formatted);
+                          field.onChange(formatted);
+                        }
+                      }}
+                      slotProps={{
+                        textField: {
+                          size: 'small',
+                          fullWidth: true,
+                          error: !!fieldState.error,
+                          helperText: fieldState.error?.message,
+                        },
+                      }}
+                    />
+                  )}
                 />
               </Div>
             </Grid>

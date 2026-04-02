@@ -18,8 +18,8 @@ import { DatePicker } from '@mui/x-date-pickers';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import dayjs, { Dayjs } from 'dayjs';
 import { useSnackbar } from 'notistack';
-import React, { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useEffect, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import { useDepartments } from '../departments/DepartmentsProvider';
 import { Department } from '../departments/DepartmentsType';
@@ -76,15 +76,15 @@ const EmployeeForm = ({
     { label: 'Casual', value: 'casual' },
   ];
 
-  useEffect(() => {
-    const date = new Date();
-    const dayjsDate = dayjs(date).toISOString().split('T')[0];
-    setEmployeeDoB(dayjsDate);
-    setJoinDate(dayjsDate);
-  }, []);
+  // useEffect(() => {
+  //   const date = new Date();
+  //   const dayjsDate = dayjs(date).toISOString().split('T')[0];
+  //   setEmployeeDoB(dayjsDate);
+  //   setJoinDate(dayjsDate);
+  // }, []);
 
-  const [employeeDoB, setEmployeeDoB] = useState<string | undefined>('');
-  const [joinDate, setJoinDate] = useState<string | undefined>('');
+  const [employeeDoB, setEmployeeDoB] = useState<string | undefined>(undefined);
+  const [joinDate, setJoinDate] = useState<string | undefined>(undefined);
   const [employeeGender, setEmployeeGender] = useState(genderOptions[0]);
   const [selectedemploymentType, setSelectedEmploymentType] =
     useState<empTypesOpt | null>(null);
@@ -157,7 +157,7 @@ const EmployeeForm = ({
     email: yup.string().email(),
     phone_number: yup.string(),
     address: yup.string(),
-    date_of_birth: yup.date(),
+    date_of_birth: yup.string(),
     national_id: yup
       .string()
       .max(50, 'National ID should not exceed 50 characters'),
@@ -165,8 +165,8 @@ const EmployeeForm = ({
       .string()
       .max(50, 'Passport number should not exceed 50 characters'),
     department_id: yup.number(),
-    employment_type: yup.string(),
-    join_date: yup.date(),
+    employment_type: yup.string().required('Employment type is required'),
+    join_date: yup.string(),
   });
 
   const {
@@ -174,6 +174,7 @@ const EmployeeForm = ({
     handleSubmit,
     setValue,
     getValues,
+    control,
     formState: { errors },
   } = useForm<FormData>({
     resolver: yupResolver(validationSchema) as any,
@@ -195,12 +196,13 @@ const EmployeeForm = ({
     },
   });
 
-  const saveMutation = React.useMemo(() => {
-    return employee?.id ? updateEmployee : addEmployee;
-  }, [employee, updateEmployee, addEmployee]);
-
   const onSubmit = (data: FormData) => {
-    saveMutation?.(data);
+    // saveMutation?.(data);
+    if (employee?.id) {
+      updateEmployee(data);
+    } else {
+      addEmployee(data);
+    }
   };
 
   // const submitForm = (e: FormEvent) => {
@@ -221,14 +223,7 @@ const EmployeeForm = ({
         </Grid>
       </DialogTitle>
       <DialogContent>
-        <form
-          autoComplete='off'
-          onSubmit={(e) => {
-            console.log('form subitted');
-            handleSubmit(onSubmit)(e);
-          }}
-        >
-          {/* <form autoComplete='off' onSubmit={(e) => submitForm(e)}> */}
+        <form autoComplete='off' onSubmit={handleSubmit(onSubmit)}>
           <Grid container rowSpacing={{ xs: 1, md: 2 }} spacing={2}>
             <Grid size={{ xs: 12, md: 4 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
@@ -317,21 +312,28 @@ const EmployeeForm = ({
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
-                <Autocomplete
-                  size='small'
-                  options={genderOptions}
-                  isOptionEqualToValue={(option, value) =>
-                    option.label === value.label
-                  }
-                  getOptionLabel={(option) => option.label}
-                  value={employeeGender}
-                  onChange={(event, newValue) => {
-                    if (newValue) {
-                      setEmployeeGender(newValue);
-                    }
-                  }}
-                  renderInput={(params) => (
-                    <TextField {...params} label='Gender' />
+                <Controller
+                  name='gender'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field, fieldState }) => (
+                    <Autocomplete
+                      size='small'
+                      options={genderOptions}
+                      isOptionEqualToValue={(option, value) =>
+                        option.label === value.label
+                      }
+                      getOptionLabel={(option) => option.label}
+                      {...field}
+                      value={employeeGender}
+                      onChange={(event, newValue) => {
+                        field.onChange(newValue?.value);
+                        newValue && setEmployeeGender(newValue);
+                      }}
+                      renderInput={(params) => (
+                        <TextField {...params} label='Gender' />
+                      )}
+                    />
                   )}
                 />
               </Div>
@@ -380,24 +382,37 @@ const EmployeeForm = ({
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
-                <DatePicker
-                  label='Date of Birth'
-                  value={dayjs(employeeDoB)}
-                  onChange={(value: Dayjs | null) => {
-                    if (value) {
-                      const formatted = value.format('YYYY-MM-DD');
-                      console.log('formatted: ', formatted);
+                <Controller
+                  name='date_of_birth'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field, fieldState }) => (
+                    <DatePicker
+                      label='Date of Birth'
+                      {...field}
+                      value={
+                        employeeDoB !== undefined
+                          ? dayjs(employeeDoB)
+                          : undefined
+                      }
+                      onChange={(value: Dayjs | null) => {
+                        if (value) {
+                          const formatted = value.format('YYYY-MM-DD');
 
-                      setEmployeeDoB(formatted);
-                      setValue('date_of_birth', formatted);
-                    }
-                  }}
-                  slotProps={{
-                    textField: {
-                      size: 'small',
-                      fullWidth: true,
-                    },
-                  }}
+                          setEmployeeDoB(formatted);
+                          field.onChange(formatted);
+                        }
+                      }}
+                      slotProps={{
+                        textField: {
+                          size: 'small',
+                          fullWidth: true,
+                          error: !!fieldState.error,
+                          helperText: fieldState.error?.message,
+                        },
+                      }}
+                    />
+                  )}
                 />
               </Div>
             </Grid>
@@ -471,24 +486,33 @@ const EmployeeForm = ({
                 {isFetching ? (
                   <LinearProgress />
                 ) : (
-                  <Autocomplete
-                    size='small'
-                    options={departmentsData}
-                    isOptionEqualToValue={(option, value) =>
-                      option.id === value.id
-                    }
-                    getOptionLabel={(option) => option?.name || ''}
-                    value={selectedDpt}
-                    onChange={(event, newValue) => {
-                      setSelectedDpt(newValue);
-                      if (newValue !== null) {
-                        setValue('department_id', newValue.id || null);
-                      } else {
-                        setValue('department_id', undefined);
-                      }
-                    }}
-                    renderInput={(params) => (
-                      <TextField {...params} label='Department' />
+                  <Controller
+                    name='department_id'
+                    control={control}
+                    rules={{ required: true }}
+                    render={({ field, fieldState }) => (
+                      <Autocomplete
+                        size='small'
+                        options={departmentsData}
+                        isOptionEqualToValue={(option, value) =>
+                          option.id === value.id
+                        }
+                        getOptionLabel={(option) => option?.name || ''}
+                        {...field}
+                        value={selectedDpt}
+                        onChange={(event, newValue) => {
+                          setSelectedDpt(newValue);
+                          field.onChange(newValue ? newValue.id : null);
+                        }}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            label='Department'
+                            error={!!fieldState.error}
+                            helperText={fieldState.error?.message}
+                          />
+                        )}
+                      />
                     )}
                   />
                 )}
@@ -497,49 +521,72 @@ const EmployeeForm = ({
 
             <Grid size={{ xs: 12, md: 4 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
-                <Autocomplete
-                  size='small'
-                  options={employmentTypesOptions}
-                  isOptionEqualToValue={(option, value) =>
-                    option.label === value.label
-                  }
-                  getOptionLabel={(option) => option.label}
-                  value={selectedemploymentType}
-                  onChange={(event, newValue) => {
-                    if (newValue) {
-                      setSelectedEmploymentType(newValue);
-                      setValue('employment_type', newValue.value);
-                    } else {
-                      setSelectedEmploymentType(null);
-                      setValue('employment_type', '');
-                    }
-                  }}
-                  renderInput={(params) => (
-                    <TextField {...params} label='Employment Type' />
+                <Controller
+                  name='employment_type'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field, fieldState }) => (
+                    <Autocomplete
+                      size='small'
+                      options={employmentTypesOptions}
+                      isOptionEqualToValue={(option, value) =>
+                        option.label === value.label
+                      }
+                      getOptionLabel={(option) => option.label}
+                      {...field}
+                      value={selectedemploymentType}
+                      onChange={(event, newValue) => {
+                        if (newValue) {
+                          setSelectedEmploymentType(newValue);
+                        } else {
+                          setSelectedEmploymentType(null);
+                        }
+                        field.onChange(newValue ? newValue.value : '');
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label='Employment Type'
+                          error={!!fieldState.error}
+                          helperText={fieldState.error?.message}
+                        />
+                      )}
+                    />
                   )}
                 />
               </Div>
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
-                <DatePicker
-                  label='Join Date'
-                  value={dayjs(joinDate)}
-                  onChange={(value: Dayjs | null) => {
-                    if (value) {
-                      const formatted = value.format('YYYY-MM-DD');
-                      console.log('formatted: ', formatted);
+                <Controller
+                  name='join_date'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field, fieldState }) => (
+                    <DatePicker
+                      label='Join Date'
+                      {...field}
+                      value={
+                        joinDate !== undefined ? dayjs(joinDate) : undefined
+                      }
+                      onChange={(value: Dayjs | null) => {
+                        if (value) {
+                          const formatted = value.format('YYYY-MM-DD');
 
-                      setJoinDate(formatted);
-                      setValue('join_date', formatted);
-                    }
-                  }}
-                  slotProps={{
-                    textField: {
-                      size: 'small',
-                      fullWidth: true,
-                    },
-                  }}
+                          setJoinDate(formatted);
+                          field.onChange(formatted);
+                        }
+                      }}
+                      slotProps={{
+                        textField: {
+                          size: 'small',
+                          fullWidth: true,
+                          error: !!fieldState.error,
+                          helperText: fieldState.error?.message,
+                        },
+                      }}
+                    />
+                  )}
                 />
               </Div>
             </Grid>
