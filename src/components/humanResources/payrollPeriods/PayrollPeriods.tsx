@@ -7,34 +7,34 @@ import { Card, Stack, Typography } from '@mui/material';
 import { useParams, useSearchParams } from 'next/navigation';
 import React, { useEffect, useRef, useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
-import TaxReliefActionTail from './TaxReliefActionTail';
-import { TaxReliefType } from './TaxReliefType';
-import TaxReliefsListItem from './TaxReliefsListItem';
+import { PayrollPeriodType } from './PayrollPeriodType';
+import PayrollPeriodActionTail from './PayrollPeriodActionTail';
+import PayrollPeriodsListItem from './PayrollPeriodsListItem';
 
-const TaxReliefs = () => {
+const PayrollPeriods = () => {
   const params = useParams<{ keyword?: string }>();
   const searchParams = useSearchParams();
   const listRef = useRef<any>(null);
   const [mounted, setMounted] = useState(false);
 
   const [queryOptions, setQueryOptions] = React.useState({
-    queryKey: 'taxReliefs',
+    queryKey: 'payrollPeriods',
     queryParams: { keyword: params.keyword || '' },
     countKey: 'total',
     dataKey: 'data',
   });
 
-  const renderTaxReliefs = React.useCallback((taxRelief: TaxReliefType) => {
-    return <TaxReliefsListItem taxRelief={taxRelief} />;
-  }, []);
+  const renderPayrollPeriods = React.useCallback(
+    (payrollPeriod: PayrollPeriodType) => {
+      return <PayrollPeriodsListItem payrollPeriod={payrollPeriod} />;
+    },
+    []
+  );
 
   const handleOnChange = React.useCallback((keyword: string) => {
     setQueryOptions((state) => ({
       ...state,
-      queryParams: {
-        ...state.queryParams,
-        keyword,
-      },
+      queryParams: { ...state.queryParams, keyword },
     }));
   }, []);
 
@@ -54,23 +54,19 @@ const TaxReliefs = () => {
   return (
     <>
       <Typography variant={'h4'} mb={2}>
-        Tax Reliefs
+        Payroll Periods
       </Typography>
       <JumboRqList
         ref={listRef}
         wrapperComponent={Card}
-        service={humanResourcesServices.getTaxReliefsList}
+        service={humanResourcesServices.getPayrollPeriodsList}
         primaryKey='id'
         queryOptions={queryOptions}
         itemsPerPage={50}
         itemsPerPageOptions={[10, 20, 30, 50]}
-        renderItem={renderTaxReliefs}
+        renderItem={renderPayrollPeriods}
         componentElement='div'
-        wrapperSx={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-        }}
+        wrapperSx={{ flex: 1, display: 'flex', flexDirection: 'column' }}
         toolbar={
           <JumboListToolbar
             hideItemsPerPage={true}
@@ -80,14 +76,14 @@ const TaxReliefs = () => {
                   onChange={handleOnChange}
                   value={queryOptions.queryParams.keyword}
                 />
-                <TaxReliefActionTail />
+                <PayrollPeriodActionTail />
               </Stack>
             }
-          ></JumboListToolbar>
+          />
         }
       />
     </>
   );
 };
 
-export default TaxReliefs;
+export default PayrollPeriods;

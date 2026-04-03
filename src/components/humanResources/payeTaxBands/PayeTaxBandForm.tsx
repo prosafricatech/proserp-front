@@ -11,11 +11,14 @@ import {
   Grid,
   TextField,
 } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
 import React, { useMemo } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import * as yup from 'yup';
+import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import humanResourcesServices from '../humanResourcesServices';
 import { PayeTaxBandType } from './PayeTaxBandType';
 
@@ -93,49 +96,76 @@ const PayeTaxBandForm = ({
 
   const validationSchema = yup.object({
     id: yup.number().optional(),
+    country_code: yup
+      .string()
+      .required('Country code is required')
+      .max(10, 'Country code cannot exceed 10 characters'),
+    region: yup.string().nullable().optional(),
     min_income: yup
       .number()
       .typeError('Minimum income must be a number')
       .required('Minimum income is required')
+      .transform((value, originalValue) => {
+        if (typeof originalValue === 'string') return parseFloat(originalValue.replace(/,/g, ''));
+        return value;
+      })
       .min(0, 'Minimum income must be 0 or greater'),
     max_income: yup
       .number()
       .nullable()
-      .transform((value, originalValue) =>
-        originalValue === '' || originalValue === null ? null : value
-      )
+      .transform((value, originalValue) => {
+        if (originalValue === '' || originalValue === null) return null;
+        if (typeof originalValue === 'string') return parseFloat(originalValue.replace(/,/g, ''));
+        return value;
+      })
       .min(0, 'Maximum income must be 0 or greater')
       .optional(),
-    rate_percent: yup
+    rate: yup
       .number()
-      .typeError('Rate percent must be a number')
-      .required('Rate percent is required')
-      .min(0, 'Rate percent must be 0 or greater')
-      .max(100, 'Rate percent cannot exceed 100'),
-    fixed_amount: yup
+      .typeError('Rate must be a number')
+      .required('Rate is required')
+      .min(0, 'Rate must be 0 or greater')
+      .max(1, 'Rate must be a decimal (e.g. 0.30 for 30%)'),
+    fixed_tax: yup
       .number()
-      .nullable()
-      .transform((value, originalValue) =>
-        originalValue === '' || originalValue === null ? null : value
-      )
-      .min(0, 'Fixed amount must be 0 or greater')
-      .optional(),
-    description: yup.string().max(500, 'Description cannot exceed 500 characters'),
+      .typeError('Fixed tax must be a number')
+      .required('Fixed tax is required')
+      .transform((value, originalValue) => {
+        if (typeof originalValue === 'string') return parseFloat(originalValue.replace(/,/g, ''));
+        return value;
+      })
+      .min(0, 'Fixed tax must be 0 or greater'),
+    excess_over: yup
+      .number()
+      .typeError('Excess over must be a number')
+      .required('Excess over is required')
+      .transform((value, originalValue) => {
+        if (typeof originalValue === 'string') return parseFloat(originalValue.replace(/,/g, ''));
+        return value;
+      })
+      .min(0, 'Excess over must be 0 or greater'),
+    effective_from: yup.string().required('Effective from is required'),
+    effective_to: yup.string().nullable().optional(),
   });
 
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm<FormData>({
     resolver: yupResolver(validationSchema) as any,
     defaultValues: {
       id: payeTaxBand?.id,
-      min_income: payeTaxBand?.min_income ?? 0,
+      country_code: payeTaxBand?.country_code,
+      region: payeTaxBand?.region ?? null,
+      min_income: payeTaxBand?.min_income,
       max_income: payeTaxBand?.max_income ?? null,
-      rate_percent: payeTaxBand?.rate_percent ?? 0,
-      fixed_amount: payeTaxBand?.fixed_amount ?? null,
-      description: payeTaxBand?.description || '',
+      rate: payeTaxBand?.rate,
+      fixed_tax: payeTaxBand?.fixed_tax,
+      excess_over: payeTaxBand?.excess_over,
+      effective_from: payeTaxBand?.effective_from || '',
+      effective_to: payeTaxBand?.effective_to ?? null,
     },
   });
 
@@ -164,8 +194,45 @@ const PayeTaxBandForm = ({
             <Grid size={{ xs: 12, md: 6 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
+                  label='Country Code'
+                  size='small'
+                  fullWidth
+                  error={
+                    !!errors?.country_code ||
+                    !!getValidationMessage(validationErrors, 'country_code')
+                  }
+                  helperText={
+                    errors.country_code?.message ||
+                    getValidationMessage(validationErrors, 'country_code')
+                  }
+                  {...register('country_code')}
+                />
+              </Div>
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Div sx={{ mt: 1, mb: 1 }}>
+                <TextField
+                  label='Region'
+                  size='small'
+                  fullWidth
+                  error={
+                    !!errors?.region ||
+                    !!getValidationMessage(validationErrors, 'region')
+                  }
+                  helperText={
+                    errors.region?.message ||
+                    getValidationMessage(validationErrors, 'region')
+                  }
+                  {...register('region')}
+                />
+              </Div>
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Div sx={{ mt: 1, mb: 1 }}>
+                <TextField
                   label='Minimum Income'
-                  type='number'
                   size='small'
                   fullWidth
                   error={
@@ -176,6 +243,7 @@ const PayeTaxBandForm = ({
                     errors.min_income?.message ||
                     getValidationMessage(validationErrors, 'min_income')
                   }
+                  InputProps={{ inputComponent: CommaSeparatedField as any }}
                   {...register('min_income')}
                 />
               </Div>
@@ -185,7 +253,6 @@ const PayeTaxBandForm = ({
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='Maximum Income'
-                  type='number'
                   size='small'
                   fullWidth
                   error={
@@ -196,68 +263,139 @@ const PayeTaxBandForm = ({
                     errors.max_income?.message ||
                     getValidationMessage(validationErrors, 'max_income')
                   }
+                  InputProps={{ inputComponent: CommaSeparatedField as any }}
                   {...register('max_income')}
                 />
               </Div>
             </Grid>
 
-            <Grid size={{ xs: 12, md: 6 }}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
-                  label='Rate Percent'
-                  type='number'
+                  label='Rate (decimal, e.g. 0.30 = 30%)'
                   size='small'
                   fullWidth
                   error={
-                    !!errors?.rate_percent ||
-                    !!getValidationMessage(validationErrors, 'rate_percent')
+                    !!errors?.rate ||
+                    !!getValidationMessage(validationErrors, 'rate')
                   }
                   helperText={
-                    errors.rate_percent?.message ||
-                    getValidationMessage(validationErrors, 'rate_percent')
+                    errors.rate?.message ||
+                    getValidationMessage(validationErrors, 'rate')
                   }
-                  {...register('rate_percent')}
+                  {...register('rate')}
+                />
+              </Div>
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Div sx={{ mt: 1, mb: 1 }}>
+                <TextField
+                  label='Fixed Tax'
+                  size='small'
+                  fullWidth
+                  error={
+                    !!errors?.fixed_tax ||
+                    !!getValidationMessage(validationErrors, 'fixed_tax')
+                  }
+                  helperText={
+                    errors.fixed_tax?.message ||
+                    getValidationMessage(validationErrors, 'fixed_tax')
+                  }
+                  InputProps={{ inputComponent: CommaSeparatedField as any }}
+                  {...register('fixed_tax')}
+                />
+              </Div>
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Div sx={{ mt: 1, mb: 1 }}>
+                <TextField
+                  label='Excess Over'
+                  size='small'
+                  fullWidth
+                  error={
+                    !!errors?.excess_over ||
+                    !!getValidationMessage(validationErrors, 'excess_over')
+                  }
+                  helperText={
+                    errors.excess_over?.message ||
+                    getValidationMessage(validationErrors, 'excess_over')
+                  }
+                  InputProps={{ inputComponent: CommaSeparatedField as any }}
+                  {...register('excess_over')}
                 />
               </Div>
             </Grid>
 
             <Grid size={{ xs: 12, md: 6 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
-                <TextField
-                  label='Fixed Amount'
-                  type='number'
-                  size='small'
-                  fullWidth
-                  error={
-                    !!errors?.fixed_amount ||
-                    !!getValidationMessage(validationErrors, 'fixed_amount')
-                  }
-                  helperText={
-                    errors.fixed_amount?.message ||
-                    getValidationMessage(validationErrors, 'fixed_amount')
-                  }
-                  {...register('fixed_amount')}
+                <Controller
+                  name='effective_from'
+                  control={control}
+                  render={({ field }) => (
+                    <DatePicker
+                      label='Effective From *'
+                      value={field.value ? dayjs(field.value) : null}
+                      onChange={(v) =>
+                        field.onChange(v ? v.format('YYYY-MM-DD') : '')
+                      }
+                      slotProps={{
+                        textField: {
+                          size: 'small',
+                          fullWidth: true,
+                          error:
+                            !!errors?.effective_from ||
+                            !!getValidationMessage(
+                              validationErrors,
+                              'effective_from'
+                            ),
+                          helperText:
+                            errors.effective_from?.message ||
+                            getValidationMessage(
+                              validationErrors,
+                              'effective_from'
+                            ),
+                        },
+                      }}
+                    />
+                  )}
                 />
               </Div>
             </Grid>
 
-            <Grid size={{ xs: 12 }}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
-                <TextField
-                  label='Description'
-                  size='small'
-                  fullWidth
-                  multiline
-                  minRows={2}
-                  error={
-                    !!errors?.description ||
-                    !!getValidationMessage(validationErrors, 'description')
-                  }
-                  helperText={
-                    errors.description?.message ||
-                    getValidationMessage(validationErrors, 'description')
-                  }
-                  {...register('description')}
+                <Controller
+                  name='effective_to'
+                  control={control}
+                  render={({ field }) => (
+                    <DatePicker
+                      label='Effective To'
+                      value={field.value ? dayjs(field.value) : null}
+                      onChange={(v) =>
+                        field.onChange(v ? v.format('YYYY-MM-DD') : null)
+                      }
+                      slotProps={{
+                        textField: {
+                          size: 'small',
+                          fullWidth: true,
+                          error:
+                            !!errors?.effective_to ||
+                            !!getValidationMessage(
+                              validationErrors,
+                              'effective_to'
+                            ),
+                          helperText:
+                            errors.effective_to?.message ||
+                            getValidationMessage(
+                              validationErrors,
+                              'effective_to'
+                            ),
+                        },
+                      }}
+                    />
+                  )}
                 />
               </Div>
             </Grid>

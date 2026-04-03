@@ -14,13 +14,13 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import { useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
-import TaxReliefForm from './TaxReliefForm';
-import { TaxReliefType } from './TaxReliefType';
+import { PayrollPeriodType } from './PayrollPeriodType';
+import PayrollPeriodForm from './PayrollPeriodForm';
 
-const TaxReliefItemAction = ({
-  taxRelief,
+const PayrollPeriodItemAction = ({
+  payrollPeriod,
 }: {
-  taxRelief: TaxReliefType;
+  payrollPeriod: PayrollPeriodType;
 }) => {
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const { showDialog, hideDialog } = useJumboDialog();
@@ -29,33 +29,23 @@ const TaxReliefItemAction = ({
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
-  const { mutate: deleteTaxRelief } = useMutation({
-    mutationFn: humanResourcesServices.deleteTaxRelief,
+  const { mutate: deletePayrollPeriod } = useMutation({
+    mutationFn: humanResourcesServices.deletePayrollPeriod,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['taxReliefs'] });
-      enqueueSnackbar('Tax Relief Deleted Successfully', {
+      queryClient.invalidateQueries({ queryKey: ['payrollPeriods'] });
+      enqueueSnackbar('Payroll Period Deleted Successfully', {
         variant: 'success',
       });
     },
     onError: (error: any) => {
-      enqueueSnackbar('Error Deleting Tax Relief', {
-        variant: 'error',
-      });
-      console.log('error deleting tax relief: ', error);
+      enqueueSnackbar('Error Deleting Payroll Period', { variant: 'error' });
+      console.log('error deleting payroll period: ', error);
     },
   });
 
   const menuItems = [
-    {
-      icon: <EditOutlined />,
-      title: 'Edit',
-      action: 'edit',
-    },
-    {
-      icon: <DeleteOutlined color='error' />,
-      title: 'Delete',
-      action: 'delete',
-    },
+    { icon: <EditOutlined />, title: 'Edit', action: 'edit' },
+    { icon: <DeleteOutlined color='error' />, title: 'Delete', action: 'delete' },
   ];
 
   const handleItemAction = (menuItem: MenuItemProps) => {
@@ -66,10 +56,10 @@ const TaxReliefItemAction = ({
       case 'delete':
         showDialog({
           title: 'Confirm Delete',
-          content: 'Are you sure you want to delete this Tax Relief?',
+          content: 'Are you sure you want to delete this Payroll Period?',
           onYes: () => {
             hideDialog();
-            deleteTaxRelief(taxRelief.id);
+            deletePayrollPeriod(payrollPeriod.id);
           },
           onNo: () => hideDialog(),
           variant: 'confirm',
@@ -88,7 +78,10 @@ const TaxReliefItemAction = ({
         maxWidth='md'
         fullScreen={belowLargeScreen}
       >
-        <TaxReliefForm taxRelief={taxRelief} setOpenDialog={setOpenEditDialog} />
+        <PayrollPeriodForm
+          payrollPeriod={payrollPeriod}
+          setOpenDialog={setOpenEditDialog}
+        />
       </Dialog>
       <JumboDdMenu
         icon={
@@ -103,4 +96,4 @@ const TaxReliefItemAction = ({
   );
 };
 
-export default TaxReliefItemAction;
+export default PayrollPeriodItemAction;

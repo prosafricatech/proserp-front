@@ -369,27 +369,27 @@ humanResourcesServices.deletePayeTaxBand = async (id) => {
     return data;
 }
 
-// tax reliefs methods
-humanResourcesServices.getTaxReliefsList = async (params = {}) => {
+// payroll periods methods
+humanResourcesServices.getPayrollPeriodsList = async (params = {}) => {
     const { page = 1, limit = 50, ...queryParams } = params;
-    const { data } = await axios.get('/api/humanResources/taxReliefs', {
+    const { data } = await axios.get('/api/humanResources/payrollPeriods', {
         params: { page, limit, ...queryParams }
     });
     return data;
 };
 
-humanResourcesServices.addTaxRelief = async (taxRelief) => {
-    const { data } = await axios.post('/api/humanResources/taxReliefs/add', taxRelief);
+humanResourcesServices.addPayrollPeriod = async (payrollPeriod) => {
+    const { data } = await axios.post('/api/humanResources/payrollPeriods/add', payrollPeriod);
     return data;
 }
 
-humanResourcesServices.updateTaxRelief = async (taxRelief) => {
-    const { data } = await axios.put(`/api/humanResources/taxReliefs/${taxRelief.id}/update`, taxRelief);
+humanResourcesServices.updatePayrollPeriod = async (payrollPeriod) => {
+    const { data } = await axios.put(`/api/humanResources/payrollPeriods/${payrollPeriod.id}/update`, payrollPeriod);
     return data;
 }
 
-humanResourcesServices.deleteTaxRelief = async (id) => {
-    const { data } = await axios.delete(`/api/humanResources/taxReliefs/${id}/delete`);
+humanResourcesServices.deletePayrollPeriod = async (id) => {
+    const { data } = await axios.delete(`/api/humanResources/payrollPeriods/${id}/delete`);
     return data;
 }
 

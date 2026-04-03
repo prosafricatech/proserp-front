@@ -27,35 +27,49 @@ const PayeTaxBandsListItem = ({
         alignItems={'center'}
         container
       >
-        <Grid size={{ xs: 12, md: 2.2 }}>
-          <Tooltip title='Minimum Income'>
+        <Grid size={{ xs: 12, md: 1.5 }}>
+          <Tooltip title='Country Code'>
             <Typography variant='h6' fontSize={14} lineHeight={1.25} mb={0}>
-              {payeTaxBand.min_income}
+              {payeTaxBand.country_code}
             </Typography>
           </Tooltip>
         </Grid>
 
-        <Grid size={{ xs: 12, md: 2.2 }}>
+        <Grid size={{ xs: 12, md: 1.5 }}>
+          <Tooltip title='Minimum Income'>
+            <Typography variant='h6' fontSize={14} lineHeight={1.25} mb={0}>
+              {payeTaxBand.min_income.toLocaleString()}
+            </Typography>
+          </Tooltip>
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 1.5 }}>
           <Tooltip title='Maximum Income'>
-            <Typography>{payeTaxBand.max_income ?? 'Open-ended'}</Typography>
+            <Typography>{payeTaxBand.max_income != null ? payeTaxBand.max_income.toLocaleString() : 'Open-ended'}</Typography>
           </Tooltip>
         </Grid>
 
-        <Grid size={{ xs: 12, md: 2.0 }}>
-          <Tooltip title='Rate %'>
-            <Typography>{payeTaxBand.rate_percent}</Typography>
+        <Grid size={{ xs: 12, md: 1.5 }}>
+          <Tooltip title='Rate (%)'>
+            <Typography>{payeTaxBand.rate}%</Typography>
           </Tooltip>
         </Grid>
 
-        <Grid size={{ xs: 12, md: 2.0 }}>
-          <Tooltip title='Fixed Amount'>
-            <Typography>{payeTaxBand.fixed_amount ?? 0}</Typography>
+        <Grid size={{ xs: 12, md: 1.5 }}>
+          <Tooltip title='Fixed Tax'>
+            <Typography>{payeTaxBand.fixed_tax.toLocaleString()}</Typography>
           </Tooltip>
         </Grid>
 
-        <Grid size={{ xs: 12, md: 2.6 }}>
-          <Tooltip title='Description'>
-            <Typography noWrap>{payeTaxBand.description || '-'}</Typography>
+        <Grid size={{ xs: 12, md: 1.5 }}>
+          <Tooltip title='Excess Over'>
+            <Typography>{payeTaxBand.excess_over.toLocaleString()}</Typography>
+          </Tooltip>
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 1.5 }}>
+          <Tooltip title='Effective From'>
+            <Typography>{payeTaxBand.effective_from ? new Date(payeTaxBand.effective_from).toLocaleDateString() : '-'}</Typography>
           </Tooltip>
         </Grid>
 

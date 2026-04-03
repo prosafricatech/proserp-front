@@ -10,18 +10,17 @@ import {
   useMediaQuery,
 } from '@mui/material';
 import { useState } from 'react';
-import TaxReliefForm from './TaxReliefForm';
+import PayrollPeriodForm from './PayrollPeriodForm';
 
-const TaxReliefActionTail = () => {
+const PayrollPeriodActionTail = () => {
   const [openDialog, setOpenDialog] = useState(false);
-
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
   return (
     <>
       <Dialog maxWidth='md' fullScreen={belowLargeScreen} open={openDialog}>
-        <TaxReliefForm setOpenDialog={setOpenDialog} />
+        <PayrollPeriodForm setOpenDialog={setOpenDialog} />
       </Dialog>
       <ButtonGroup
         variant='outlined'
@@ -29,7 +28,7 @@ const TaxReliefActionTail = () => {
         disableElevation
         sx={{ '& .MuiButton-root': { px: 1 } }}
       >
-        <Tooltip title='Add Tax Relief'>
+        <Tooltip title='Add Payroll Period'>
           <IconButton onClick={() => setOpenDialog(true)}>
             <AddOutlined />
           </IconButton>
@@ -39,4 +38,4 @@ const TaxReliefActionTail = () => {
   );
 };
 
-export default TaxReliefActionTail;
+export default PayrollPeriodActionTail;

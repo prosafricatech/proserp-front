@@ -5,29 +5,30 @@ import { Div } from '@jumbo/shared';
 import { LoadingButton } from '@mui/lab';
 import {
   Button,
-  Checkbox,
   DialogActions,
   DialogContent,
   DialogTitle,
-  FormControlLabel,
   Grid,
   TextField,
 } from '@mui/material';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import React, { useMemo } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import humanResourcesServices from '../humanResourcesServices';
-import { TaxReliefType } from './TaxReliefType';
+import { PayrollPeriodType } from './PayrollPeriodType';
 
-interface TaxReliefFormProps {
+interface PayrollPeriodFormProps {
   setOpenDialog: (open: boolean) => void;
-  taxRelief?: TaxReliefType | null;
+  payrollPeriod?: PayrollPeriodType | null;
 }
 
-interface FormData extends Omit<TaxReliefType, 'id' | 'created_by'> {
+interface FormData {
   id?: number;
+  year: number;
+  month: number;
+  remarks?: string | null;
 }
 
 interface ApiResponse {
@@ -44,89 +45,87 @@ const getValidationMessage = (
   return Array.isArray(message) ? message[0] : message;
 };
 
-const TaxReliefForm = ({
+const PayrollPeriodForm = ({
   setOpenDialog,
-  taxRelief = null,
-}: TaxReliefFormProps) => {
+  payrollPeriod = null,
+}: PayrollPeriodFormProps) => {
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
 
   const {
-    mutate: addTaxRelief,
+    mutate: addPayrollPeriod,
     isPending,
     error,
   } = useMutation<ApiResponse, any, FormData>({
-    mutationFn: humanResourcesServices.addTaxRelief,
+    mutationFn: humanResourcesServices.addPayrollPeriod,
     onSuccess: () => {
       setOpenDialog(false);
-      enqueueSnackbar('Tax Relief Added Successfully', {
-        variant: 'success',
-      });
-      queryClient.invalidateQueries({ queryKey: ['taxReliefs'] });
+      enqueueSnackbar('Payroll Period Added Successfully', { variant: 'success' });
+      queryClient.invalidateQueries({ queryKey: ['payrollPeriods'] });
     },
     onError: (mutationError) => {
-      enqueueSnackbar('Error Adding Tax Relief', {
-        variant: 'error',
-      });
-      console.log('error adding tax relief: ', mutationError);
+      enqueueSnackbar('Error Adding Payroll Period', { variant: 'error' });
+      console.log('error adding payroll period: ', mutationError);
     },
   });
 
   const {
-    mutate: updateTaxRelief,
+    mutate: updatePayrollPeriod,
     isPending: updateIsPending,
     error: updateError,
   } = useMutation<ApiResponse, any, FormData>({
-    mutationFn: humanResourcesServices.updateTaxRelief,
+    mutationFn: humanResourcesServices.updatePayrollPeriod,
     onSuccess: () => {
       setOpenDialog(false);
-      enqueueSnackbar('Tax Relief Updated Successfully', {
-        variant: 'success',
-      });
-      queryClient.invalidateQueries({ queryKey: ['taxReliefs'] });
+      enqueueSnackbar('Payroll Period Updated Successfully', { variant: 'success' });
+      queryClient.invalidateQueries({ queryKey: ['payrollPeriods'] });
     },
     onError: (mutationError) => {
-      enqueueSnackbar('Error Updating Tax Relief', {
-        variant: 'error',
-      });
-      console.log('error updating tax relief: ', mutationError);
+      enqueueSnackbar('Error Updating Payroll Period', { variant: 'error' });
+      console.log('error updating payroll period: ', mutationError);
     },
   });
 
   const validationSchema = yup.object({
     id: yup.number().optional(),
-    name: yup
-      .string()
-      .required('Name is required')
-      .max(255, 'Name cannot exceed 255 characters'),
-    amount: yup
+    year: yup
       .number()
-      .typeError('Amount must be a number')
-      .required('Amount is required')
-      .min(0, 'Amount must be 0 or greater'),
-    is_active: yup.boolean().required(),
-    description: yup.string().max(500, 'Description cannot exceed 500 characters'),
+      .typeError('Year must be a number')
+      .required('Year is required')
+      .min(2000, 'Year must be 2000 or greater')
+      .max(2100, 'Year must be 2100 or less'),
+    month: yup
+      .number()
+      .typeError('Month must be a number')
+      .required('Month is required')
+      .min(1, 'Month must be between 1 and 12')
+      .max(12, 'Month must be between 1 and 12'),
+    remarks: yup
+      .string()
+      .nullable()
+      .transform((value) => (value === '' ? null : value))
+      .max(500, 'Remarks cannot exceed 500 characters')
+      .optional(),
   });
 
   const {
     register,
     handleSubmit,
-    control,
     formState: { errors },
   } = useForm<FormData>({
     resolver: yupResolver(validationSchema) as any,
     defaultValues: {
-      id: taxRelief?.id,
-      name: taxRelief?.name || '',
-      amount: taxRelief?.amount ?? 0,
-      is_active: taxRelief?.is_active ?? true,
-      description: taxRelief?.description || '',
+      id: payrollPeriod?.id,
+      year: payrollPeriod?.year,
+      month: payrollPeriod?.month,
+      remarks: payrollPeriod?.remarks ?? null,
     },
   });
 
-  const saveMutation = useMemo(() => {
-    return taxRelief?.id ? updateTaxRelief : addTaxRelief;
-  }, [taxRelief?.id, updateTaxRelief, addTaxRelief]);
+  const saveMutation = useMemo(
+    () => (payrollPeriod?.id ? updatePayrollPeriod : addPayrollPeriod),
+    [payrollPeriod?.id, updatePayrollPeriod, addPayrollPeriod]
+  );
 
   const validationErrors =
     error?.response?.data?.validation_errors ||
@@ -140,7 +139,7 @@ const TaxReliefForm = ({
     <>
       <DialogTitle>
         <Grid size={12} textAlign={'center'}>
-          {!taxRelief?.id ? 'Add Tax Relief' : 'Edit Tax Relief'}
+          {!payrollPeriod?.id ? 'Add Payroll Period' : 'Edit Payroll Period'}
         </Grid>
       </DialogTitle>
       <DialogContent>
@@ -149,18 +148,18 @@ const TaxReliefForm = ({
             <Grid size={{ xs: 12, md: 6 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
-                  label='Name'
+                  label='Year'
                   size='small'
                   fullWidth
                   error={
-                    !!errors?.name ||
-                    !!getValidationMessage(validationErrors, 'name')
+                    !!errors?.year ||
+                    !!getValidationMessage(validationErrors, 'year')
                   }
                   helperText={
-                    errors.name?.message ||
-                    getValidationMessage(validationErrors, 'name')
+                    errors.year?.message ||
+                    getValidationMessage(validationErrors, 'year')
                   }
-                  {...register('name')}
+                  {...register('year')}
                 />
               </Div>
             </Grid>
@@ -168,19 +167,18 @@ const TaxReliefForm = ({
             <Grid size={{ xs: 12, md: 6 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
-                  label='Amount'
-                  type='number'
+                  label='Month'
                   size='small'
                   fullWidth
                   error={
-                    !!errors?.amount ||
-                    !!getValidationMessage(validationErrors, 'amount')
+                    !!errors?.month ||
+                    !!getValidationMessage(validationErrors, 'month')
                   }
                   helperText={
-                    errors.amount?.message ||
-                    getValidationMessage(validationErrors, 'amount')
+                    errors.month?.message ||
+                    getValidationMessage(validationErrors, 'month')
                   }
-                  {...register('amount')}
+                  {...register('month')}
                 />
               </Div>
             </Grid>
@@ -188,40 +186,20 @@ const TaxReliefForm = ({
             <Grid size={{ xs: 12 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
-                  label='Description'
+                  label='Remarks'
                   size='small'
                   fullWidth
                   multiline
                   minRows={2}
                   error={
-                    !!errors?.description ||
-                    !!getValidationMessage(validationErrors, 'description')
+                    !!errors?.remarks ||
+                    !!getValidationMessage(validationErrors, 'remarks')
                   }
                   helperText={
-                    errors.description?.message ||
-                    getValidationMessage(validationErrors, 'description')
+                    errors.remarks?.message ||
+                    getValidationMessage(validationErrors, 'remarks')
                   }
-                  {...register('description')}
-                />
-              </Div>
-            </Grid>
-
-            <Grid size={{ xs: 12 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
-                <Controller
-                  name='is_active'
-                  control={control}
-                  render={({ field }) => (
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          checked={Boolean(field.value)}
-                          onChange={(event) => field.onChange(event.target.checked)}
-                        />
-                      }
-                      label='Is Active'
-                    />
-                  )}
+                  {...register('remarks')}
                 />
               </Div>
             </Grid>
@@ -247,4 +225,4 @@ const TaxReliefForm = ({
   );
 };
 
-export default TaxReliefForm;
+export default PayrollPeriodForm;

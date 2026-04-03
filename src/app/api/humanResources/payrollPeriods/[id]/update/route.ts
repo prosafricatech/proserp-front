@@ -13,7 +13,7 @@ export async function PUT(
   if (response) return response;
 
   const body = await req.json();
-  const res = await fetch(`${API_BASE}/tax-reliefs/${id}`, {
+  const res = await fetch(`${API_BASE}/payroll-periods/${id}`, {
     method: 'PUT',
     headers,
     body: JSON.stringify(body),

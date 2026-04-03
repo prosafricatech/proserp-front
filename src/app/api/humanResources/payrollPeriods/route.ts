@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const query = searchParams.toString();
 
-  const res = await fetch(`${API_BASE}/tax-reliefs?${query}`, {
+  const res = await fetch(`${API_BASE}/payroll-periods?${query}`, {
     headers,
     credentials: 'include',
   });

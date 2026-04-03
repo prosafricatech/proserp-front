@@ -69,7 +69,7 @@ const EmployeeDeductions = () => {
         service={humanResourcesServices.getEmployeeDeductionsList}
         primaryKey='id'
         queryOptions={queryOptions}
-        itemsPerPage={20}
+        itemsPerPage={10}
         itemsPerPageOptions={[10, 20, 30, 50]}
         renderItem={renderEmployeeDeductions}
         componentElement='div'

@@ -272,8 +272,8 @@ export async function getMenus(locale: string) {
               type: 'nav-item',
             },
             {
-              uri: `/${locale}/humanResources/tax-reliefs`,
-              label: sidebar.menuItem.tax_reliefs,
+              uri: `/${locale}/humanResources/payroll-periods`,
+              label: sidebar.menuItem.payroll_periods,
               type: 'nav-item',
             },
           ],
