@@ -13,7 +13,7 @@ import { DesignationsProvider } from '../designations/DesignationsProvider';
 import { EmployeesProvider } from '../employees/EmployeesProvider';
 import EmployeesContractsForm from './EmployeesContractsForm';
 
-const EmployeesContractsActionTail = () => {
+const EmployeesContractsActionTail = ({ employeeId }: { employeeId?: number }) => {
   const [openDialog, setOpenDialog] = useState(false);
 
   //Screen handling constants
@@ -24,7 +24,7 @@ const EmployeesContractsActionTail = () => {
       <Dialog maxWidth='md' fullScreen={belowLargeScreen} open={openDialog}>
         <EmployeesProvider>
           <DesignationsProvider>
-            <EmployeesContractsForm setOpenDialog={setOpenDialog} />
+            <EmployeesContractsForm setOpenDialog={setOpenDialog} employeeId={employeeId} />
           </DesignationsProvider>
         </EmployeesProvider>
       </Dialog>

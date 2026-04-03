@@ -10,15 +10,18 @@ import { ContractType } from './ContractType';
 import EmployeesContractsActionTail from './EmployeesContractsActionTail';
 import EmployeesContractsListItem from './EmployeesContractsListItem';
 
-const EmployeesContracts = () => {
+const EmployeesContracts = ({ employeeId }: { employeeId?: number }) => {
   const listRef = useRef<any>(null);
   const params = useParams<{ employee_id?: string; keyword?: string }>();
   const searchParams = useSearchParams();
   const [mounted, setMounted] = useState(false);
 
+  const resolvedEmployeeId =
+    employeeId ?? (params.employee_id ? Number(params.employee_id) : undefined);
+
   const [queryOptions, setQueryOptions] = useState({
     queryKey: 'employeesContracts',
-    queryParams: { employee_id: params.employee_id, keyword: '' },
+    queryParams: { employee_id: resolvedEmployeeId, keyword: '' },
     countKey: 'total',
     dataKey: 'data',
   });
@@ -45,12 +48,12 @@ const EmployeesContracts = () => {
       ...state,
       queryParams: {
         ...state.queryParams,
-        id: params.employee_id,
+        employee_id: resolvedEmployeeId,
         keyword: searchParams?.get('search') || '',
       },
     }));
     setMounted(true);
-  }, [params, searchParams]);
+  }, [params, searchParams, resolvedEmployeeId]);
 
   if (!mounted) return null; // ⛔ Prevent mismatch during hydration
 
@@ -83,7 +86,7 @@ const EmployeesContracts = () => {
                   onChange={handleOnChange}
                   value={queryOptions.queryParams.keyword}
                 />
-                <EmployeesContractsActionTail />
+                <EmployeesContractsActionTail employeeId={resolvedEmployeeId} />
               </Stack>
             }
           ></JumboListToolbar>

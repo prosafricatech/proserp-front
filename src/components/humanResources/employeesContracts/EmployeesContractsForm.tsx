@@ -30,6 +30,7 @@ import { ContractType } from './ContractType';
 interface EmployeesContractsFormProps {
   setOpenDialog: (open: boolean) => void;
   contract?: ContractType | null;
+  employeeId?: number;
 }
 
 interface FormData extends Omit<ContractType, 'id'> {
@@ -47,6 +48,7 @@ interface ApiResponse {
 const EmployeesContractsForm = ({
   setOpenDialog,
   contract,
+  employeeId,
 }: EmployeesContractsFormProps) => {
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
@@ -226,6 +228,13 @@ const EmployeesContractsForm = ({
     },
   });
   
+  // Pre-fill employee_id when rendered inside the Employee Profile
+  useEffect(() => {
+    if (employeeId) {
+      setValue('employee_id', employeeId);
+    }
+  }, [employeeId, setValue]);
+  
   useEffect(() => {
     setValue('contract_type', contractType.value);
   }, [contractType, setValue]);
@@ -249,47 +258,49 @@ const EmployeesContractsForm = ({
       <DialogContent>
         <form autoComplete='off' onSubmit={handleSubmit(onSubmit)}>
           <Grid container rowSpacing={{ xs: 1, md: 2 }} spacing={2}>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Div>
-                {fetchingEmployees ? (
-                  <LinearProgress />
-                ) : (
-                  <Controller
-                    name='employee_id'
-                    control={control}
-                    rules={{ required: 'Employee is required' }}
-                    render={({ field, fieldState }) => (
-                      <Autocomplete
-                        size='small'
-                        options={employeesData}
-                        isOptionEqualToValue={(option, value) =>
-                          option.id === value.id
-                        }
-                        getOptionLabel={(option) =>
-                          `${option?.first_name || ''} ${option?.middle_name || ''} ${option?.last_name || ''}`
-                        }
-                        value={
-                          employeesData.find((e) => e.id === field.value) ||
-                          null
-                        }
-                        onChange={(event, newValue) => {
-                          field.onChange(newValue?.id || null);
-                          setSelectedEmployee(newValue);
-                        }}
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            label='Employee'
-                            error={!!fieldState.error}
-                            helperText={fieldState.error?.message}
-                          />
-                        )}
-                      />
-                    )}
-                  />
-                )}
-              </Div>
-            </Grid>
+            {!employeeId && (
+              <Grid size={{ xs: 12, md: 4 }}>
+                <Div>
+                  {fetchingEmployees ? (
+                    <LinearProgress />
+                  ) : (
+                    <Controller
+                      name='employee_id'
+                      control={control}
+                      rules={{ required: 'Employee is required' }}
+                      render={({ field, fieldState }) => (
+                        <Autocomplete
+                          size='small'
+                          options={employeesData}
+                          isOptionEqualToValue={(option, value) =>
+                            option.id === value.id
+                          }
+                          getOptionLabel={(option) =>
+                            `${option?.first_name || ''} ${option?.middle_name || ''} ${option?.last_name || ''}`
+                          }
+                          value={
+                            employeesData.find((e) => e.id === field.value) ||
+                            null
+                          }
+                          onChange={(event, newValue) => {
+                            field.onChange(newValue?.id || null);
+                            setSelectedEmployee(newValue);
+                          }}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              label='Employee'
+                              error={!!fieldState.error}
+                              helperText={fieldState.error?.message}
+                            />
+                          )}
+                        />
+                      )}
+                    />
+                  )}
+                </Div>
+              </Grid>
+            )}
             <Grid size={{ xs: 12, md: 4 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 {fetchingDesignations ? (

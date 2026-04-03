@@ -12,7 +12,7 @@ import {
 import { useState } from 'react';
 import NextOfKinForm from './NextOfKinForm';
 
-const NextOfKinActionTail = () => {
+const NextOfKinActionTail = ({ employeeId }: { employeeId?: number }) => {
   const [openDialog, setOpenDialog] = useState(false);
 
   const { theme } = useJumboTheme();
@@ -21,7 +21,7 @@ const NextOfKinActionTail = () => {
   return (
     <>
       <Dialog maxWidth='md' fullScreen={belowLargeScreen} open={openDialog}>
-        <NextOfKinForm setOpenDialog={setOpenDialog} />
+        <NextOfKinForm setOpenDialog={setOpenDialog} employeeId={employeeId} />
       </Dialog>
       <ButtonGroup
         variant='outlined'

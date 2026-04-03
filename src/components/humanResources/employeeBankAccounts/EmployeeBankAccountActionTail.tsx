@@ -12,7 +12,7 @@ import {
 import { useState } from 'react';
 import EmployeeBankAccountForm from './EmployeeBankAccountForm';
 
-const EmployeeBankAccountActionTail = () => {
+const EmployeeBankAccountActionTail = ({ employeeId }: { employeeId?: number }) => {
   const [openDialog, setOpenDialog] = useState(false);
 
   const { theme } = useJumboTheme();
@@ -21,7 +21,7 @@ const EmployeeBankAccountActionTail = () => {
   return (
     <>
       <Dialog maxWidth='md' fullScreen={belowLargeScreen} open={openDialog}>
-        <EmployeeBankAccountForm setOpenDialog={setOpenDialog} />
+        <EmployeeBankAccountForm setOpenDialog={setOpenDialog} employeeId={employeeId} />
       </Dialog>
       <ButtonGroup
         variant='outlined'

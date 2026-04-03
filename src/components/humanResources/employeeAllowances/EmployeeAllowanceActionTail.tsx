@@ -12,7 +12,7 @@ import {
 import { useState } from 'react';
 import EmployeeAllowanceForm from './EmployeeAllowanceForm';
 
-const EmployeeAllowanceActionTail = () => {
+const EmployeeAllowanceActionTail = ({ employeeId }: { employeeId?: number }) => {
   const [openDialog, setOpenDialog] = useState(false);
 
   const { theme } = useJumboTheme();

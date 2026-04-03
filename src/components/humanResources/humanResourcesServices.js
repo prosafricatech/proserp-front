@@ -26,6 +26,11 @@ humanResourcesServices.updateEmployee = async (employee) => {
     return data;
 }
 
+humanResourcesServices.showEmployee = async (id) => {
+    const { data } = await axios.get(`/api/humanResources/employees/${id}`);
+    return data;
+};
+
 humanResourcesServices.deleteEmployee = async (id) => {
     const { data } = await axios.delete(`/api/humanResources/employees/${id}/delete`);
     return data;

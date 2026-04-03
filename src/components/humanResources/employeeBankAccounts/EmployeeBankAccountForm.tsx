@@ -28,6 +28,7 @@ import { EmployeeBankAccountType } from './EmployeeBankAccountType';
 interface EmployeeBankAccountFormProps {
   setOpenDialog: (open: boolean) => void;
   account?: EmployeeBankAccountType | null;
+  employeeId?: number;
 }
 
 interface FormData extends Omit<EmployeeBankAccountType, 'id' | 'created_by'> {
@@ -51,6 +52,7 @@ const getValidationMessage = (
 const EmployeeBankAccountForm = ({
   setOpenDialog,
   account = null,
+  employeeId,
 }: EmployeeBankAccountFormProps) => {
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
@@ -129,6 +131,7 @@ const EmployeeBankAccountForm = ({
   const {
     register,
     handleSubmit,
+    setValue,
     control,
     formState: { errors },
   } = useForm<FormData>({
@@ -144,6 +147,13 @@ const EmployeeBankAccountForm = ({
       is_primary: account?.is_primary || false,
     },
   });
+
+  // Pre-fill employee_id when rendered inside the Employee Profile
+  useEffect(() => {
+    if (employeeId) {
+      setValue('employee_id', employeeId);
+    }
+  }, [employeeId, setValue]);
 
   const saveMutation = useMemo(() => {
     return account?.id ? updateEmployeeBankAccount : addEmployeeBankAccount;
@@ -167,52 +177,54 @@ const EmployeeBankAccountForm = ({
       <DialogContent>
         <form autoComplete='off' onSubmit={handleSubmit(onSubmit)}>
           <Grid container rowSpacing={{ xs: 1, md: 2 }} spacing={2}>
-            <Grid size={{ xs: 12 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
-                {fetchingEmployees ? (
-                  <LinearProgress />
-                ) : (
-                  <Controller
-                    name='employee_id'
-                    control={control}
-                    rules={{ required: 'Employee is required' }}
-                    render={({ field, fieldState }) => (
-                      <Autocomplete
-                        size='small'
-                        options={employeesData}
-                        isOptionEqualToValue={(option, value) =>
-                          option.id === value.id
-                        }
-                        getOptionLabel={(option) =>
-                          `${option?.first_name || ''} ${option?.middle_name || ''} ${option?.last_name || ''}`
-                        }
-                        value={
-                          employeesData.find((employee) => employee.id === field.value) ||
-                          null
-                        }
-                        onChange={(event, newValue) => {
-                          field.onChange(newValue?.id || null);
-                        }}
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            label='Employee'
-                            error={
-                              !!fieldState.error ||
-                              !!getValidationMessage(validationErrors, 'employee_id')
-                            }
-                            helperText={
-                              fieldState.error?.message ||
-                              getValidationMessage(validationErrors, 'employee_id')
-                            }
-                          />
-                        )}
-                      />
-                    )}
-                  />
-                )}
-              </Div>
-            </Grid>
+            {!employeeId && (
+              <Grid size={{ xs: 12 }}>
+                <Div sx={{ mt: 1, mb: 1 }}>
+                  {fetchingEmployees ? (
+                    <LinearProgress />
+                  ) : (
+                    <Controller
+                      name='employee_id'
+                      control={control}
+                      rules={{ required: 'Employee is required' }}
+                      render={({ field, fieldState }) => (
+                        <Autocomplete
+                          size='small'
+                          options={employeesData}
+                          isOptionEqualToValue={(option, value) =>
+                            option.id === value.id
+                          }
+                          getOptionLabel={(option) =>
+                            `${option?.first_name || ''} ${option?.middle_name || ''} ${option?.last_name || ''}`
+                          }
+                          value={
+                            employeesData.find((employee) => employee.id === field.value) ||
+                            null
+                          }
+                          onChange={(event, newValue) => {
+                            field.onChange(newValue?.id || null);
+                          }}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              label='Employee'
+                              error={
+                                !!fieldState.error ||
+                                !!getValidationMessage(validationErrors, 'employee_id')
+                              }
+                              helperText={
+                                fieldState.error?.message ||
+                                getValidationMessage(validationErrors, 'employee_id')
+                              }
+                            />
+                          )}
+                        />
+                      )}
+                    />
+                  )}
+                </Div>
+              </Grid>
+            )}
 
             <Grid size={{ xs: 12, md: 6 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
