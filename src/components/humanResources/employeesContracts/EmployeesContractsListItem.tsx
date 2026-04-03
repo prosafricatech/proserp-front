@@ -1,9 +1,10 @@
 'use client';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
-import { Divider, Tooltip, Typography } from '@mui/material';
+import { Chip, Divider, Tooltip, Typography } from '@mui/material';
 import { Grid } from '@mui/system';
 import { ContractType } from './ContractType';
 import EmployeesContractsItemAction from './EmployeesContractsItemAction';
+import { useState } from 'react';
 
 const EmployeesContractsListItem = ({
   contract,
@@ -73,7 +74,10 @@ const EmployeesContractsListItem = ({
           justifyContent={'start'}
         >
           <Tooltip title='Contract Status'>
-            <Typography>{contract.status}</Typography>
+            {contract.status === 'active' ? (
+              <Chip label={contract.status} color='success' size='small' variant='outlined' />
+            ) : <Chip label={contract.status} color='primary' size='small' variant='outlined' />}
+            
           </Tooltip>
         </Grid>
 

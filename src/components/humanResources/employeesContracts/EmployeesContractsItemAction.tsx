@@ -17,6 +17,7 @@ import { EmployeesProvider } from '../employees/EmployeesProvider';
 import humanResourcesServices from '../humanResourcesServices';
 import { ContractType } from './ContractType';
 import EmployeesContractsForm from './EmployeesContractsForm';
+import EmployeesContractsTerminateForm from './EmployeesContractsTerminateForm';
 
 const EmployeesContractsItemAction = ({
   contract,
@@ -24,6 +25,7 @@ const EmployeesContractsItemAction = ({
   contract: ContractType;
 }) => {
   const [openEditDialog, setOpenEditDialog] = useState(false);
+  const [openTerminateDialog, setOpenTerminateDialog] = useState(false);
   const { showDialog, hideDialog } = useJumboDialog();
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
@@ -31,38 +33,22 @@ const EmployeesContractsItemAction = ({
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
   const { mutate: deleteEmployeeContract } = useMutation({
-    mutationFn: humanResourcesServices.deleteEmployee,
+    mutationFn: humanResourcesServices.deleteEmployeeContract,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employeesContracts'] });
-      enqueueSnackbar('Employee Deleted Successfully', {
+      enqueueSnackbar('Employee Contract Deleted Successfully', {
         variant: 'success',
       });
     },
     onError: (error: any) => {
-      enqueueSnackbar('Error Deleting Employee', {
+      enqueueSnackbar('Error Deleting Employee Contract', {
         variant: 'error',
       });
-      console.log('error deleting employee: ', error);
+      console.log('error deleting employee contract: ', error);
     },
   });
 
-  const { mutate: terminateEmployeeContract } = useMutation({
-    mutationFn: async (data: ContractType) => {
-      return humanResourcesServices.terminateEmployeeContract(data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['employeesContracts'] });
-      enqueueSnackbar('Employee Contract Terminated Successfully', {
-        variant: 'success',
-      });
-    },
-    onError: (error: any) => {
-      enqueueSnackbar('Error Terminating Employee Contract', {
-        variant: 'error',
-      });
-      console.log('error terminating employee contract: ', error);
-    },
-  });
+  const isTerminated = contract.status === 'terminated';
 
   const menuItems = [
     {
@@ -70,11 +56,15 @@ const EmployeesContractsItemAction = ({
       title: 'Edit',
       action: 'edit',
     },
-    {
-      icon: <InsertPageBreak />,
-      title: 'Terminate',
-      action: 'terminate',
-    },
+    ...(!isTerminated
+      ? [
+          {
+            icon: <InsertPageBreak />,
+            title: 'Terminate',
+            action: 'terminate',
+          },
+        ]
+      : []),
     {
       icon: <DeleteOutlined color='error' />,
       title: 'Delete',
@@ -85,19 +75,17 @@ const EmployeesContractsItemAction = ({
   const handleItemAction = (menuItem: MenuItemProps) => {
     switch (menuItem.action) {
       case 'edit':
+        if (isTerminated) {
+          enqueueSnackbar(
+            'This contract has been terminated and cannot be edited.',
+            { variant: 'warning' }
+          );
+          return;
+        }
         setOpenEditDialog(true);
         break;
       case 'terminate':
-        showDialog({
-          title: 'Confirm Termination',
-          content: 'Are you sure you want to terminate this Contract?',
-          onYes: () => {
-            hideDialog();
-            terminateEmployeeContract(contract);
-          },
-          onNo: () => hideDialog(),
-          variant: 'confirm',
-        });
+        setOpenTerminateDialog(true);
         break;
       case 'delete':
         showDialog({
@@ -118,6 +106,7 @@ const EmployeesContractsItemAction = ({
 
   return (
     <>
+      {/* Edit Dialog */}
       <Dialog
         open={openEditDialog}
         fullWidth
@@ -133,6 +122,20 @@ const EmployeesContractsItemAction = ({
           </DesignationsProvider>
         </EmployeesProvider>
       </Dialog>
+
+      {/* Terminate Dialog */}
+      <Dialog
+        open={openTerminateDialog}
+        fullWidth
+        maxWidth='sm'
+        fullScreen={belowLargeScreen}
+      >
+        <EmployeesContractsTerminateForm
+          contract={contract}
+          setOpenDialog={setOpenTerminateDialog}
+        />
+      </Dialog>
+
       <JumboDdMenu
         icon={
           <Tooltip title='Actions'>

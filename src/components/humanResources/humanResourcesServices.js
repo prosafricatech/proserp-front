@@ -50,8 +50,11 @@ humanResourcesServices.updateEmployeeContract = async (contract) => {
     return data;
 }
 
-humanResourcesServices.terminateEmployeeContract = async (contract) => {
-    const { data } = await axios.post(`/api/humanResources/employeesContracts/${contract.id}/terminate`, contract)
+humanResourcesServices.terminateEmployeeContract = async ({ id, termination_date, remarks }) => {
+    const { data } = await axios.post(`/api/humanResources/employeesContracts/${id}/terminate`, {
+        termination_date,
+        remarks,
+    })
     return data;
 }
 

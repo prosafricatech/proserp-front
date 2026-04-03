@@ -74,7 +74,7 @@ const EmployeesContractsForm = ({
 
   const contractOptions = [
     { label: 'Permanent', value: 'permanent' },
-    { label: 'fixed Ferm', value: 'fixed_term' },
+    { label: 'Fixed Term', value: 'fixed_term' },
     { label: 'Probation', value: 'probation' },
   ];
 
@@ -106,10 +106,6 @@ const EmployeesContractsForm = ({
     }
   }, []);
 
-  useEffect(() => {
-    setValue('contract_type', contractType.value);
-  }, [contractType]);
-
   const {
     mutate: addEmployeeContract,
     isPending,
@@ -127,7 +123,7 @@ const EmployeesContractsForm = ({
       queryClient.invalidateQueries({ queryKey: ['employeesContracts'] });
     },
     onError: (error) => {
-      enqueueSnackbar('Error Adding Employee', {
+      enqueueSnackbar('Error Adding Employee Contract', {
         variant: 'error',
       });
       console.log('error adding employee Contract: ', error);
@@ -140,13 +136,6 @@ const EmployeesContractsForm = ({
     error: updateError,
   } = useMutation<ApiResponse, any, FormData>({
     mutationFn: async (data) => {
-      if (contract?.status === 'terminated') {
-        // throw new Error('Cannot edit a terminated contract');
-        enqueueSnackbar('Cannot edit a terminated contract', {
-          variant: 'error',
-        });
-        return;
-      }
       const newData = { ...data, id: contract?.id };
       return humanResourcesServices.updateEmployeeContract(newData);
     },
@@ -171,16 +160,26 @@ const EmployeesContractsForm = ({
     contract_type: yup.string().required('Contract type is required'),
     start_date: yup.string().required('Start date is required'),
     end_date: yup
-      .string()
-      .nullable()
-      .when('contract_type', {
-        is: 'fixed_term',
-        then: (schema) =>
-          schema
-            .required('End date is required')
-            .min(yup.ref('start_date'), 'End date must be after start date'),
-        otherwise: (schema) => schema.notRequired(),
-      }),
+  .string()
+  .nullable()
+  .when('contract_type', {
+    is: 'fixed_term',
+    then: (schema) =>
+      schema
+        .required('End date is required')
+        .test(
+          'is-after-start-date',
+          'End date must be after start date',
+          function (value) {
+            const { start_date } = this.parent;
+
+            if (!value || !start_date) return true; // skip if empty
+
+            return value >= start_date; // YYYY-MM-DD string compare
+          }
+        ),
+    otherwise: (schema) => schema.notRequired(),
+  }),
     probation_end_date: yup
       .string()
       .nullable()
@@ -226,6 +225,11 @@ const EmployeesContractsForm = ({
       remarks: contract?.remarks || '',
     },
   });
+  
+  useEffect(() => {
+    setValue('contract_type', contractType.value);
+  }, [contractType, setValue]);
+
 
   const saveMutation = React.useMemo(() => {
     return contract?.id ? updateEmployeeContract : addEmployeeContract;
@@ -350,7 +354,7 @@ const EmployeesContractsForm = ({
                       renderInput={(params) => (
                         <TextField
                           {...params}
-                          label='Coontract Type'
+                          label='Contract Type'
                           error={!!fieldState.error}
                           helperText={fieldState.error?.message}
                         />
