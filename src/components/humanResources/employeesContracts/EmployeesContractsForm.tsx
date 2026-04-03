@@ -88,9 +88,22 @@ const EmployeesContractsForm = ({
   useEffect(() => {
     const date = new Date();
     const dayjsDate = dayjs(date).toISOString().split('T')[0];
-    // setStartDate(dayjsDate);
-    // setEndDate(dayjsDate);
-    // setProbationENd(dayjsDate);
+    if (contract?.id) {
+      contract.start_date && setStartDate(contract.start_date);
+      contract.end_date && setEndDate(contract.end_date);
+      contract.probation_end_date &&
+        setProbationENd(contract.probation_end_date);
+      let newLabel;
+      if (contract.contract_type === 'permanent') {
+        newLabel = 'Permanent';
+      } else if (contract.contract_type === 'fixed_term') {
+        newLabel = 'fixed Ferm';
+      } else {
+        newLabel = 'Probation';
+      }
+      contract.contract_type &&
+        setContractType({ label: newLabel, value: contract.contract_type });
+    }
   }, []);
 
   useEffect(() => {
@@ -98,46 +111,55 @@ const EmployeesContractsForm = ({
   }, [contractType]);
 
   const {
-    mutate: addEmployee,
+    mutate: addEmployeeContract,
     isPending,
     error,
   } = useMutation<ApiResponse, any, FormData>({
     mutationFn: async (data) => {
-      const user_id = authUser?.user.id;
-      const newData = { ...data, user_id: user_id };
-      const response = await humanResourcesServices.addEmployee(newData);
+      const response = await humanResourcesServices.addEmployeeContract(data);
       return response;
     },
     onSuccess: (data) => {
       setOpenDialog(false);
-      enqueueSnackbar('Success Adding Employee', {
+      enqueueSnackbar('Success Adding Employee Contract', {
         variant: 'success',
       });
-      queryClient.invalidateQueries({ queryKey: ['employees'] });
+      queryClient.invalidateQueries({ queryKey: ['employeesContracts'] });
     },
     onError: (error) => {
       enqueueSnackbar('Error Adding Employee', {
         variant: 'error',
       });
-      console.log('error adding employee: ', error);
+      console.log('error adding employee Contract: ', error);
     },
   });
 
   const {
-    mutate: updateEmployee,
+    mutate: updateEmployeeContract,
     isPending: updateIsLoading,
     error: updateError,
   } = useMutation<ApiResponse, any, FormData>({
-    mutationFn: humanResourcesServices.updateEmployee,
+    mutationFn: async (data) => {
+      if (contract?.status === 'terminated') {
+        // throw new Error('Cannot edit a terminated contract');
+        enqueueSnackbar('Cannot edit a terminated contract', {
+          variant: 'error',
+        });
+        return;
+      }
+      const newData = { ...data, id: contract?.id };
+      return humanResourcesServices.updateEmployeeContract(newData);
+    },
     onSuccess: (data) => {
       setOpenDialog(false);
-      enqueueSnackbar('Employee update success', {
+      enqueueSnackbar('Employee Contract update success', {
         variant: 'success',
       });
-      queryClient.invalidateQueries({ queryKey: ['employees'] });
+      queryClient.invalidateQueries({ queryKey: ['employeesContracts'] });
     },
     onError: (error) => {
-      enqueueSnackbar('Error Updating Employee', {
+      console.log('error: ', error);
+      enqueueSnackbar('Error Updating Employee Contract', {
         variant: 'error',
       });
     },
@@ -148,15 +170,33 @@ const EmployeesContractsForm = ({
     designation_id: yup.number().required('Designation is required'),
     contract_type: yup.string().required('Contract type is required'),
     start_date: yup.string().required('Start date is required'),
-    end_date: yup.string().when('contract_type', {
-      is: 'fixed_term',
-      then: (schema) =>
-        schema
-          .required('End date is required')
-          .min(yup.ref('start_date'), 'End date must be after start date'),
-      otherwise: (schema) => schema.notRequired(),
-    }),
-    probation_end_date: yup.string().min(yup.ref('start_date')),
+    end_date: yup
+      .string()
+      .nullable()
+      .when('contract_type', {
+        is: 'fixed_term',
+        then: (schema) =>
+          schema
+            .required('End date is required')
+            .min(yup.ref('start_date'), 'End date must be after start date'),
+        otherwise: (schema) => schema.notRequired(),
+      }),
+    probation_end_date: yup
+      .string()
+      .nullable()
+      .notRequired()
+      .transform((value) => (value === undefined ? null : value))
+      .test(
+        'is-after-start-date',
+        'Probation End Date must be after start date',
+        function (value) {
+          const { start_date } = this.parent;
+
+          if (!value || !start_date) return true; // skip validation if empty
+
+          return value >= start_date; // string compare works for YYYY-MM-DD
+        }
+      ),
     basic_salary: yup
       .number()
       .required('Basic salary is required')
@@ -188,8 +228,8 @@ const EmployeesContractsForm = ({
   });
 
   const saveMutation = React.useMemo(() => {
-    return contract?.id ? updateEmployee : addEmployee;
-  }, [contract, updateEmployee, addEmployee]);
+    return contract?.id ? updateEmployeeContract : addEmployeeContract;
+  }, [contract, updateEmployeeContract, addEmployeeContract]);
 
   const onSubmit = (data: FormData) => {
     saveMutation?.(data);
@@ -347,6 +387,20 @@ const EmployeesContractsForm = ({
                           fullWidth: true,
                           error: !!fieldState.error,
                           helperText: fieldState.error?.message,
+                          // InputProps: {
+                          //   endAdornment: field.value && (
+                          //     <InputAdornment position='end'>
+                          //       <IconButton
+                          //         onClick={() => {
+                          //           setStartDate(undefined);
+                          //           field.onChange(undefined);
+                          //         }}
+                          //       >
+                          //         <ClearIcon />
+                          //       </IconButton>
+                          //     </InputAdornment>
+                          //   ),
+                          // },
                         },
                       }}
                     />

@@ -62,6 +62,7 @@ const EmployeeForm = ({
   useEffect(() => {
     if (departments?.data.length) {
       setDepartmentsData(departments.data);
+      setSelectedDpt(departments.data[0]);
     }
   }, [departments, isFetching]);
 
@@ -75,13 +76,6 @@ const EmployeeForm = ({
     { label: 'Part Time', value: 'part_time' },
     { label: 'Casual', value: 'casual' },
   ];
-
-  // useEffect(() => {
-  //   const date = new Date();
-  //   const dayjsDate = dayjs(date).toISOString().split('T')[0];
-  //   setEmployeeDoB(dayjsDate);
-  //   setJoinDate(dayjsDate);
-  // }, []);
 
   const [employeeDoB, setEmployeeDoB] = useState<string | undefined>(undefined);
   const [joinDate, setJoinDate] = useState<string | undefined>(undefined);
@@ -125,7 +119,10 @@ const EmployeeForm = ({
     isPending: updateIsLoading,
     error: updateError,
   } = useMutation<ApiResponse, any, FormData>({
-    mutationFn: humanResourcesServices.updateEmployee,
+    mutationFn: async (data) => {
+      const newData = { ...data, id: employee?.id };
+      return humanResourcesServices.updateEmployee(newData);
+    },
     onSuccess: (data) => {
       setOpenDialog(false);
       enqueueSnackbar('Employee update success', {
@@ -204,14 +201,6 @@ const EmployeeForm = ({
       addEmployee(data);
     }
   };
-
-  // const submitForm = (e: FormEvent) => {
-  //   e.preventDefault();
-  //   const formdata = getValues();
-  //   const user_id = authUser?.user.id;
-  //   const newData = { ...formdata, user_id: user_id };
-  //   console.log('newData: ', newData);
-  // };
 
   return (
     <>

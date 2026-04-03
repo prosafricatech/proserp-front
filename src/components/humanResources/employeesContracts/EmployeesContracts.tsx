@@ -17,7 +17,7 @@ const EmployeesContracts = () => {
   const [mounted, setMounted] = useState(false);
 
   const [queryOptions, setQueryOptions] = useState({
-    queryKey: 'employeesContract',
+    queryKey: 'employeesContracts',
     queryParams: { employee_id: params.employee_id, keyword: '' },
     countKey: 'total',
     dataKey: 'data',
@@ -25,7 +25,7 @@ const EmployeesContracts = () => {
 
   const renderEmployeesContracts = useCallback(
     (employeeContract: ContractType) => {
-      return <EmployeesContractsListItem employeeContract={employeeContract} />;
+      return <EmployeesContractsListItem contract={employeeContract} />;
     },
     []
   );

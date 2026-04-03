@@ -1,6 +1,7 @@
 'use client';
 
 import { Divider, Grid, Tooltip, Typography } from '@mui/material';
+import EmployeeItemAction from './EmployeeItemAction';
 import { Employee } from './EmployeesType';
 
 const EmployeesListItem = ({ employee }: { employee: Employee }) => {
@@ -46,7 +47,9 @@ const EmployeesListItem = ({ employee }: { employee: Employee }) => {
           </Tooltip>
         </Grid>
 
-        <Grid size={{ xs: 1, md: 0.5, lg: 1 }} textAlign={'end'}></Grid>
+        <Grid size={{ xs: 1, md: 0.5, lg: 1 }} textAlign={'end'}>
+          <EmployeeItemAction employee={employee} />
+        </Grid>
       </Grid>
     </>
   );
