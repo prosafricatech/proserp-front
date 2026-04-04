@@ -27,6 +27,7 @@ import { LeaveAllocationType } from './LeaveAllocationType';
 interface LeaveAllocationFormProps {
   setOpenDialog: (open: boolean) => void;
   leaveAllocation?: LeaveAllocationType | null;
+  employeeId?: number;
 }
 
 interface FormData extends Omit<LeaveAllocationType, 'id' | 'created_by'> {
@@ -50,6 +51,7 @@ const getValidationMessage = (
 const LeaveAllocationForm = ({
   setOpenDialog,
   leaveAllocation = null,
+  employeeId,
 }: LeaveAllocationFormProps) => {
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
@@ -134,6 +136,7 @@ const LeaveAllocationForm = ({
     register,
     handleSubmit,
     control,
+    setValue,
     formState: { errors },
   } = useForm<FormData>({
     resolver: yupResolver(validationSchema) as any,
@@ -145,6 +148,10 @@ const LeaveAllocationForm = ({
       allocated_days: leaveAllocation?.allocated_days ?? 1,
     },
   });
+
+  useEffect(() => {
+    if (employeeId) setValue('employee_id', employeeId);
+  }, [employeeId, setValue]);
 
   const saveMutation = useMemo(() => {
     return leaveAllocation?.id ? updateLeaveAllocation : addLeaveAllocation;
@@ -168,6 +175,7 @@ const LeaveAllocationForm = ({
       <DialogContent>
         <form autoComplete='off' onSubmit={handleSubmit(onSubmit)}>
           <Grid container rowSpacing={{ xs: 1, md: 2 }} spacing={2}>
+            {!employeeId && (
             <Grid size={{ xs: 12, md: 6 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 {fetchingEmployees ? (
@@ -214,6 +222,7 @@ const LeaveAllocationForm = ({
                 )}
               </Div>
             </Grid>
+            )}
 
             <Grid size={{ xs: 12, md: 6 }}>
               <Div sx={{ mt: 1, mb: 1 }}>

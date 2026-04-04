@@ -11,16 +11,24 @@ import EmployeeDeductionActionTail from './EmployeeDeductionActionTail';
 import { EmployeeDeductionType } from './EmployeeDeductionType';
 import EmployeeDeductionsListItem from './EmployeeDeductionsListItem';
 
-const EmployeeDeductions = () => {
+const EmployeeDeductions = ({ employeeId }: { employeeId?: number }) => {
   const params = useParams<{ employee_id?: string }>();
   const searchParams = useSearchParams();
   const listRef = useRef<any>(null);
   const [mounted, setMounted] = useState(false);
 
+  const resolvedEmployeeId =
+    employeeId ??
+    (searchParams?.get('employee_id')
+      ? Number(searchParams.get('employee_id'))
+      : params.employee_id
+        ? Number(params.employee_id)
+        : undefined);
+
   const [queryOptions, setQueryOptions] = React.useState({
     queryKey: 'employeeDeductions',
     queryParams: {
-      employee_id: searchParams?.get('employee_id') || params.employee_id,
+      employee_id: resolvedEmployeeId,
       keyword: '',
     },
     countKey: 'total',
@@ -49,12 +57,12 @@ const EmployeeDeductions = () => {
       ...state,
       queryParams: {
         ...state.queryParams,
-        employee_id: searchParams?.get('employee_id') || params.employee_id,
+        employee_id: resolvedEmployeeId,
         keyword: searchParams?.get('search') || '',
       },
     }));
     setMounted(true);
-  }, [params, searchParams]);
+  }, [params, searchParams, resolvedEmployeeId]);
 
   if (!mounted) return null;
 
@@ -87,7 +95,7 @@ const EmployeeDeductions = () => {
                   onChange={handleOnChange}
                   value={queryOptions.queryParams.keyword}
                 />
-                <EmployeeDeductionActionTail />
+                <EmployeeDeductionActionTail employeeId={resolvedEmployeeId} />
               </Stack>
             }
           ></JumboListToolbar>

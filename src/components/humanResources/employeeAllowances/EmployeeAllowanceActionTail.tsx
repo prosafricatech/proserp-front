@@ -21,7 +21,7 @@ const EmployeeAllowanceActionTail = ({ employeeId }: { employeeId?: number }) =>
   return (
     <>
       <Dialog maxWidth='md' fullScreen={belowLargeScreen} open={openDialog}>
-        <EmployeeAllowanceForm setOpenDialog={setOpenDialog} />
+        <EmployeeAllowanceForm setOpenDialog={setOpenDialog} employeeId={employeeId} />
       </Dialog>
       <ButtonGroup
         variant='outlined'

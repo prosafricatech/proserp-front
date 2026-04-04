@@ -12,7 +12,7 @@ import {
 import { useState } from 'react';
 import EmployeeDeductionForm from './EmployeeDeductionForm';
 
-const EmployeeDeductionActionTail = () => {
+const EmployeeDeductionActionTail = ({ employeeId }: { employeeId?: number }) => {
   const [openDialog, setOpenDialog] = useState(false);
 
   const { theme } = useJumboTheme();
@@ -21,7 +21,7 @@ const EmployeeDeductionActionTail = () => {
   return (
     <>
       <Dialog maxWidth='md' fullScreen={belowLargeScreen} open={openDialog}>
-        <EmployeeDeductionForm setOpenDialog={setOpenDialog} />
+        <EmployeeDeductionForm setOpenDialog={setOpenDialog} employeeId={employeeId} />
       </Dialog>
       <ButtonGroup
         variant='outlined'

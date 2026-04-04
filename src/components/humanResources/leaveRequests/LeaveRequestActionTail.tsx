@@ -12,7 +12,7 @@ import {
 import { useState } from 'react';
 import LeaveRequestForm from './LeaveRequestForm';
 
-const LeaveRequestActionTail = () => {
+const LeaveRequestActionTail = ({ employeeId }: { employeeId?: number }) => {
   const [openDialog, setOpenDialog] = useState(false);
 
   const { theme } = useJumboTheme();
@@ -21,7 +21,7 @@ const LeaveRequestActionTail = () => {
   return (
     <>
       <Dialog maxWidth='md' fullScreen={belowLargeScreen} open={openDialog}>
-        <LeaveRequestForm setOpenDialog={setOpenDialog} />
+        <LeaveRequestForm setOpenDialog={setOpenDialog} employeeId={employeeId} />
       </Dialog>
       <ButtonGroup
         variant='outlined'

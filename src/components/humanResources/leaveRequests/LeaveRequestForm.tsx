@@ -17,18 +17,19 @@ import { DateTimePicker } from '@mui/x-date-pickers';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import * as yup from 'yup';
-import { LeaveType } from '../leaveTypes/LeaveTypesType';
 import { useEmployees } from '../employees/EmployeesProvider';
 import { Employee } from '../employees/EmployeesType';
 import humanResourcesServices from '../humanResourcesServices';
+import { LeaveType } from '../leaveTypes/LeaveTypesType';
 import { LeaveRequestType } from './LeaveRequestType';
 
 interface LeaveRequestFormProps {
   setOpenDialog: (open: boolean) => void;
   leaveRequest?: LeaveRequestType | null;
+  employeeId?: number;
 }
 
 interface FormData {
@@ -58,17 +59,23 @@ const getValidationMessage = (
 const LeaveRequestForm = ({
   setOpenDialog,
   leaveRequest = null,
+  employeeId,
 }: LeaveRequestFormProps) => {
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
   const { employees, isFetching: fetchingEmployees } = useEmployees();
 
-  const { data: leaveTypesResponse, isFetching: fetchingLeaveTypes } = useQuery({
-    queryKey: ['fetchLeaveTypesForLeaveRequestForm'],
-    queryFn: async () => {
-      return humanResourcesServices.getLeaveTypesList({ page: 1, limit: 200 });
-    },
-  });
+  const { data: leaveTypesResponse, isFetching: fetchingLeaveTypes } = useQuery(
+    {
+      queryKey: ['fetchLeaveTypesForLeaveRequestForm'],
+      queryFn: async () => {
+        return humanResourcesServices.getLeaveTypesList({
+          page: 1,
+          limit: 200,
+        });
+      },
+    }
+  );
 
   const leaveTypes = (leaveTypesResponse?.data || []) as LeaveType[];
   const [employeesData, setEmployeesData] = useState<Employee[] | []>([]);
@@ -139,6 +146,7 @@ const LeaveRequestForm = ({
     register,
     handleSubmit,
     control,
+    setValue,
     formState: { errors },
   } = useForm<FormData>({
     resolver: yupResolver(validationSchema) as any,
@@ -152,6 +160,10 @@ const LeaveRequestForm = ({
       reason: leaveRequest?.reason || '',
     },
   });
+
+  useEffect(() => {
+    if (employeeId) setValue('employee_id', employeeId);
+  }, [employeeId, setValue]);
 
   const saveMutation = useMemo(() => {
     return leaveRequest?.id ? updateLeaveRequest : addLeaveRequest;
@@ -175,52 +187,61 @@ const LeaveRequestForm = ({
       <DialogContent>
         <form autoComplete='off' onSubmit={handleSubmit(onSubmit)}>
           <Grid container rowSpacing={{ xs: 1, md: 2 }} spacing={2}>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
-                {fetchingEmployees ? (
-                  <LinearProgress />
-                ) : (
-                  <Controller
-                    name='employee_id'
-                    control={control}
-                    rules={{ required: 'Employee is required' }}
-                    render={({ field, fieldState }) => (
-                      <Autocomplete
-                        size='small'
-                        options={employeesData}
-                        isOptionEqualToValue={(option, value) =>
-                          option.id === value.id
-                        }
-                        getOptionLabel={(option) =>
-                          `${option?.first_name || ''} ${option?.middle_name || ''} ${option?.last_name || ''}`
-                        }
-                        value={
-                          employeesData.find((employee) => employee.id === field.value) ||
-                          null
-                        }
-                        onChange={(event, newValue) => {
-                          field.onChange(newValue?.id || null);
-                        }}
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            label='Employee'
-                            error={
-                              !!fieldState.error ||
-                              !!getValidationMessage(validationErrors, 'employee_id')
-                            }
-                            helperText={
-                              fieldState.error?.message ||
-                              getValidationMessage(validationErrors, 'employee_id')
-                            }
-                          />
-                        )}
-                      />
-                    )}
-                  />
-                )}
-              </Div>
-            </Grid>
+            {!employeeId && (
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Div sx={{ mt: 1, mb: 1 }}>
+                  {fetchingEmployees ? (
+                    <LinearProgress />
+                  ) : (
+                    <Controller
+                      name='employee_id'
+                      control={control}
+                      rules={{ required: 'Employee is required' }}
+                      render={({ field, fieldState }) => (
+                        <Autocomplete
+                          size='small'
+                          options={employeesData}
+                          isOptionEqualToValue={(option, value) =>
+                            option.id === value.id
+                          }
+                          getOptionLabel={(option) =>
+                            `${option?.first_name || ''} ${option?.middle_name || ''} ${option?.last_name || ''}`
+                          }
+                          value={
+                            employeesData.find(
+                              (employee) => employee.id === field.value
+                            ) || null
+                          }
+                          onChange={(_event, newValue) => {
+                            field.onChange(newValue?.id || null);
+                          }}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              label='Employee'
+                              error={
+                                !!fieldState.error ||
+                                !!getValidationMessage(
+                                  validationErrors,
+                                  'employee_id'
+                                )
+                              }
+                              helperText={
+                                fieldState.error?.message ||
+                                getValidationMessage(
+                                  validationErrors,
+                                  'employee_id'
+                                )
+                              }
+                            />
+                          )}
+                        />
+                      )}
+                    />
+                  )}
+                </Div>
+              </Grid>
+            )}
 
             <Grid size={{ xs: 12, md: 6 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
@@ -240,9 +261,10 @@ const LeaveRequestForm = ({
                         }
                         getOptionLabel={(option) => option.name || ''}
                         value={
-                          leaveTypes.find((type) => type.id === field.value) || null
+                          leaveTypes.find((type) => type.id === field.value) ||
+                          null
                         }
-                        onChange={(event, newValue) => {
+                        onChange={(_event, newValue) => {
                           field.onChange(newValue?.id || null);
                         }}
                         renderInput={(params) => (
@@ -251,11 +273,17 @@ const LeaveRequestForm = ({
                             label='Leave Type'
                             error={
                               !!fieldState.error ||
-                              !!getValidationMessage(validationErrors, 'leave_type_id')
+                              !!getValidationMessage(
+                                validationErrors,
+                                'leave_type_id'
+                              )
                             }
                             helperText={
                               fieldState.error?.message ||
-                              getValidationMessage(validationErrors, 'leave_type_id')
+                              getValidationMessage(
+                                validationErrors,
+                                'leave_type_id'
+                              )
                             }
                           />
                         )}
@@ -284,10 +312,16 @@ const LeaveRequestForm = ({
                           fullWidth: true,
                           error:
                             !!errors?.start_date ||
-                            !!getValidationMessage(validationErrors, 'start_date'),
+                            !!getValidationMessage(
+                              validationErrors,
+                              'start_date'
+                            ),
                           helperText:
                             errors.start_date?.message ||
-                            getValidationMessage(validationErrors, 'start_date'),
+                            getValidationMessage(
+                              validationErrors,
+                              'start_date'
+                            ),
                         },
                       }}
                     />
@@ -314,7 +348,10 @@ const LeaveRequestForm = ({
                           fullWidth: true,
                           error:
                             !!errors?.end_date ||
-                            !!getValidationMessage(validationErrors, 'end_date'),
+                            !!getValidationMessage(
+                              validationErrors,
+                              'end_date'
+                            ),
                           helperText:
                             errors.end_date?.message ||
                             getValidationMessage(validationErrors, 'end_date'),

@@ -12,7 +12,7 @@ import {
 import { useState } from 'react';
 import LeaveAllocationForm from './LeaveAllocationForm';
 
-const LeaveAllocationActionTail = () => {
+const LeaveAllocationActionTail = ({ employeeId }: { employeeId?: number }) => {
   const [openDialog, setOpenDialog] = useState(false);
 
   const { theme } = useJumboTheme();
@@ -21,7 +21,7 @@ const LeaveAllocationActionTail = () => {
   return (
     <>
       <Dialog maxWidth='md' fullScreen={belowLargeScreen} open={openDialog}>
-        <LeaveAllocationForm setOpenDialog={setOpenDialog} />
+        <LeaveAllocationForm setOpenDialog={setOpenDialog} employeeId={employeeId} />
       </Dialog>
       <ButtonGroup
         variant='outlined'

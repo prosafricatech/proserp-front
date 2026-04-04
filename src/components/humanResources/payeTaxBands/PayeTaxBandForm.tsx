@@ -1,5 +1,6 @@
 'use client';
 
+import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Div } from '@jumbo/shared';
 import { LoadingButton } from '@mui/lab';
@@ -15,10 +16,9 @@ import { DatePicker } from '@mui/x-date-pickers';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import * as yup from 'yup';
-import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import humanResourcesServices from '../humanResourcesServices';
 import { PayeTaxBandType } from './PayeTaxBandType';
 
@@ -96,17 +96,18 @@ const PayeTaxBandForm = ({
 
   const validationSchema = yup.object({
     id: yup.number().optional(),
-    country_code: yup
-      .string()
-      .required('Country code is required')
-      .max(10, 'Country code cannot exceed 10 characters'),
-    region: yup.string().nullable().optional(),
+    // country_code: yup
+    //   .string()
+    //   .required('Country code is required')
+    //   .max(10, 'Country code cannot exceed 10 characters'),
+    // region: yup.string().nullable().optional(),
     min_income: yup
       .number()
       .typeError('Minimum income must be a number')
       .required('Minimum income is required')
       .transform((value, originalValue) => {
-        if (typeof originalValue === 'string') return parseFloat(originalValue.replace(/,/g, ''));
+        if (typeof originalValue === 'string')
+          return parseFloat(originalValue.replace(/,/g, ''));
         return value;
       })
       .min(0, 'Minimum income must be 0 or greater'),
@@ -115,7 +116,8 @@ const PayeTaxBandForm = ({
       .nullable()
       .transform((value, originalValue) => {
         if (originalValue === '' || originalValue === null) return null;
-        if (typeof originalValue === 'string') return parseFloat(originalValue.replace(/,/g, ''));
+        if (typeof originalValue === 'string')
+          return parseFloat(originalValue.replace(/,/g, ''));
         return value;
       })
       .min(0, 'Maximum income must be 0 or greater')
@@ -131,7 +133,8 @@ const PayeTaxBandForm = ({
       .typeError('Fixed tax must be a number')
       .required('Fixed tax is required')
       .transform((value, originalValue) => {
-        if (typeof originalValue === 'string') return parseFloat(originalValue.replace(/,/g, ''));
+        if (typeof originalValue === 'string')
+          return parseFloat(originalValue.replace(/,/g, ''));
         return value;
       })
       .min(0, 'Fixed tax must be 0 or greater'),
@@ -140,7 +143,8 @@ const PayeTaxBandForm = ({
       .typeError('Excess over must be a number')
       .required('Excess over is required')
       .transform((value, originalValue) => {
-        if (typeof originalValue === 'string') return parseFloat(originalValue.replace(/,/g, ''));
+        if (typeof originalValue === 'string')
+          return parseFloat(originalValue.replace(/,/g, ''));
         return value;
       })
       .min(0, 'Excess over must be 0 or greater'),
@@ -157,8 +161,8 @@ const PayeTaxBandForm = ({
     resolver: yupResolver(validationSchema) as any,
     defaultValues: {
       id: payeTaxBand?.id,
-      country_code: payeTaxBand?.country_code,
-      region: payeTaxBand?.region ?? null,
+      // country_code: payeTaxBand?.country_code,
+      // region: payeTaxBand?.region ?? null,
       min_income: payeTaxBand?.min_income,
       max_income: payeTaxBand?.max_income ?? null,
       rate: payeTaxBand?.rate,
@@ -191,7 +195,7 @@ const PayeTaxBandForm = ({
       <DialogContent>
         <form autoComplete='off' onSubmit={handleSubmit(onSubmit)}>
           <Grid container rowSpacing={{ xs: 1, md: 2 }} spacing={2}>
-            <Grid size={{ xs: 12, md: 6 }}>
+            {/* <Grid size={{ xs: 12, md: 6 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='Country Code'
@@ -208,9 +212,9 @@ const PayeTaxBandForm = ({
                   {...register('country_code')}
                 />
               </Div>
-            </Grid>
+            </Grid> */}
 
-            <Grid size={{ xs: 12, md: 6 }}>
+            {/* <Grid size={{ xs: 12, md: 6 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='Region'
@@ -227,7 +231,7 @@ const PayeTaxBandForm = ({
                   {...register('region')}
                 />
               </Div>
-            </Grid>
+            </Grid> */}
 
             <Grid size={{ xs: 12, md: 6 }}>
               <Div sx={{ mt: 1, mb: 1 }}>

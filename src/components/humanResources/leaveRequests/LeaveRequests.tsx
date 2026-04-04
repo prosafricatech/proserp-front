@@ -11,25 +11,36 @@ import LeaveRequestActionTail from './LeaveRequestActionTail';
 import { LeaveRequestType } from './LeaveRequestType';
 import LeaveRequestsListItem from './LeaveRequestsListItem';
 
-const LeaveRequests = () => {
+const LeaveRequests = ({ employeeId }: { employeeId?: number }) => {
   const params = useParams<{ employee_id?: string }>();
   const searchParams = useSearchParams();
   const listRef = useRef<any>(null);
   const [mounted, setMounted] = useState(false);
 
+  const resolvedEmployeeId =
+    employeeId ??
+    (searchParams?.get('employee_id')
+      ? Number(searchParams.get('employee_id'))
+      : params.employee_id
+        ? Number(params.employee_id)
+        : undefined);
+
   const [queryOptions, setQueryOptions] = React.useState({
     queryKey: 'leaveRequests',
     queryParams: {
-      employee_id: searchParams?.get('employee_id') || params.employee_id,
+      employee_id: resolvedEmployeeId,
       keyword: '',
     },
     countKey: 'total',
     dataKey: 'data',
   });
 
-  const renderLeaveRequests = React.useCallback((leaveRequest: LeaveRequestType) => {
-    return <LeaveRequestsListItem leaveRequest={leaveRequest} />;
-  }, []);
+  const renderLeaveRequests = React.useCallback(
+    (leaveRequest: LeaveRequestType) => {
+      return <LeaveRequestsListItem leaveRequest={leaveRequest} />;
+    },
+    []
+  );
 
   const handleOnChange = React.useCallback((keyword: string) => {
     setQueryOptions((state) => ({
@@ -46,12 +57,12 @@ const LeaveRequests = () => {
       ...state,
       queryParams: {
         ...state.queryParams,
-        employee_id: searchParams?.get('employee_id') || params.employee_id,
+        employee_id: resolvedEmployeeId,
         keyword: searchParams?.get('search') || '',
       },
     }));
     setMounted(true);
-  }, [params, searchParams]);
+  }, [params, searchParams, resolvedEmployeeId]);
 
   if (!mounted) return null;
 
@@ -84,7 +95,7 @@ const LeaveRequests = () => {
                   onChange={handleOnChange}
                   value={queryOptions.queryParams.keyword}
                 />
-                <LeaveRequestActionTail />
+                <LeaveRequestActionTail employeeId={resolvedEmployeeId} />
               </Stack>
             }
           ></JumboListToolbar>

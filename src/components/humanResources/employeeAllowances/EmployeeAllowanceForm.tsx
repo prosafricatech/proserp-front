@@ -29,6 +29,7 @@ import { EmployeeAllowanceType } from './EmployeeAllowanceType';
 interface EmployeeAllowanceFormProps {
   setOpenDialog: (open: boolean) => void;
   employeeAllowance?: EmployeeAllowanceType | null;
+  employeeId?: number;
 }
 
 interface FormData extends Omit<EmployeeAllowanceType, 'id' | 'created_by'> {
@@ -52,6 +53,7 @@ const getValidationMessage = (
 const EmployeeAllowanceForm = ({
   setOpenDialog,
   employeeAllowance = null,
+  employeeId,
 }: EmployeeAllowanceFormProps) => {
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
@@ -133,6 +135,7 @@ const EmployeeAllowanceForm = ({
     register,
     handleSubmit,
     control,
+    setValue,
     formState: { errors },
   } = useForm<FormData>({
     resolver: yupResolver(validationSchema) as any,
@@ -145,6 +148,11 @@ const EmployeeAllowanceForm = ({
       effective_to: employeeAllowance?.effective_to || '',
     },
   });
+
+
+  useEffect(() => {
+    if (employeeId) setValue('employee_id', employeeId);
+  }, [employeeId, setValue]);
 
   const saveMutation = useMemo(() => {
     return employeeAllowance?.id ? updateEmployeeAllowance : addEmployeeAllowance;
@@ -170,6 +178,7 @@ const EmployeeAllowanceForm = ({
       <DialogContent>
         <form autoComplete='off' onSubmit={handleSubmit(onSubmit)}>
           <Grid container rowSpacing={{ xs: 1, md: 2 }} spacing={2}>
+            {!employeeId && (
             <Grid size={{ xs: 12, md: 6 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 {fetchingEmployees ? (
@@ -216,6 +225,7 @@ const EmployeeAllowanceForm = ({
                 )}
               </Div>
             </Grid>
+            )}
 
             <Grid size={{ xs: 12, md: 6 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
