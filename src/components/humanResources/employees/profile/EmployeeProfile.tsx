@@ -3,16 +3,16 @@
 import JumboContentLayout from '@jumbo/components/JumboContentLayout';
 import { Card, Skeleton, Stack, Tab, Tabs, Typography } from '@mui/material';
 import { useEffect, useMemo, useState } from 'react';
-import EmployeeAllowances from '../../employeeAllowances/EmployeeAllowances';
-import EmployeeBankAccounts from '../../employeeBankAccounts/EmployeeBankAccounts';
-import EmployeeDeductions from '../../employeeDeductions/EmployeeDeductions';
-import EmployeesContracts from '../../employeesContracts/EmployeesContracts';
-import LeaveAllocations from '../../leaveAllocations/LeaveAllocations';
-import LeaveRequests from '../../leaveRequests/LeaveRequests';
-import NextOfKins from '../../nextOfKins/NextOfKins';
 import { EmployeesProvider } from '../EmployeesProvider';
 import { DesignationsProvider } from '../../designations/DesignationsProvider';
 import EmployeeProfileProvider, { useEmployeeProfile } from './EmployeeProfileProvider';
+import EmployeesContracts from './employeesContracts/EmployeesContracts';
+import EmployeeBankAccounts from './employeeBankAccounts/EmployeeBankAccounts';
+import NextOfKins from './nextOfKins/NextOfKins';
+import EmployeeAllowances from './employeeAllowances/EmployeeAllowances';
+import EmployeeDeductions from './employeeDeductions/EmployeeDeductions';
+import LeaveAllocations from './leaveAllocations/LeaveAllocations';
+import LeaveRequests from './leaveRequests/LeaveRequests';
 
 type TabKey =
   | 'contracts'

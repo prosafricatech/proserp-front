@@ -201,12 +201,6 @@ export async function getMenus(locale: string) {
           icon: icon('employees'),
         },
         {
-          uri: `/${locale}/humanResources/employees-contracts`,
-          label: sidebar.menuItem.employee_contracts,
-          type: 'nav-item',
-          icon: icon('employee_contracts'),
-        },
-        {
           label: sidebar.menuItem.masters,
           type: 'collapsible',
           icon: icon('businessCenter'),
@@ -226,16 +220,6 @@ export async function getMenus(locale: string) {
               label: sidebar.menuItem.designations,
               type: 'nav-item',
             },
-            // {
-            //   uri: `/${locale}/humanResources/employee-bank-accounts`,
-            //   label: sidebar.menuItem.employee_bank_accounts,
-            //   type: 'nav-item',
-            // },
-            // {
-            //   uri: `/${locale}/humanResources/next-of-kins`,
-            //   label: sidebar.menuItem.employee_next_of_kins,
-            //   type: 'nav-item',
-            // },
             {
               uri: `/${locale}/humanResources/allowance-types`,
               label: sidebar.menuItem.allowance_types,
@@ -246,26 +230,6 @@ export async function getMenus(locale: string) {
               label: sidebar.menuItem.deduction_types,
               type: 'nav-item',
             },
-            // {
-            //   uri: `/${locale}/humanResources/employee-allowances`,
-            //   label: sidebar.menuItem.employee_allowances,
-            //   type: 'nav-item',
-            // },
-            // {
-            //   uri: `/${locale}/humanResources/employee-deductions`,
-            //   label: sidebar.menuItem.employee_deductions,
-            //   type: 'nav-item',
-            // },
-            // {
-            //   uri: `/${locale}/humanResources/leave-allocations`,
-            //   label: sidebar.menuItem.leave_allocations,
-            //   type: 'nav-item',
-            // },
-            // {
-            //   uri: `/${locale}/humanResources/leave-requests`,
-            //   label: sidebar.menuItem.leave_requests,
-            //   type: 'nav-item',
-            // },
             {
               uri: `/${locale}/humanResources/paye-tax-bands`,
               label: sidebar.menuItem.paye_tax_bands,
