@@ -162,26 +162,26 @@ const EmployeesContractsForm = ({
     contract_type: yup.string().required('Contract type is required'),
     start_date: yup.string().required('Start date is required'),
     end_date: yup
-  .string()
-  .nullable()
-  .when('contract_type', {
-    is: 'fixed_term',
-    then: (schema) =>
-      schema
-        .required('End date is required')
-        .test(
-          'is-after-start-date',
-          'End date must be after start date',
-          function (value) {
-            const { start_date } = this.parent;
+      .string()
+      .nullable()
+      .when('contract_type', {
+        is: 'fixed_term',
+        then: (schema) =>
+          schema
+            .required('End date is required')
+            .test(
+              'is-after-start-date',
+              'End date must be after start date',
+              function (value) {
+                const { start_date } = this.parent;
 
-            if (!value || !start_date) return true; // skip if empty
+                if (!value || !start_date) return true; // skip if empty
 
-            return value >= start_date; // YYYY-MM-DD string compare
-          }
-        ),
-    otherwise: (schema) => schema.notRequired(),
-  }),
+                return value >= start_date; // YYYY-MM-DD string compare
+              }
+            ),
+        otherwise: (schema) => schema.notRequired(),
+      }),
     probation_end_date: yup
       .string()
       .nullable()
@@ -227,18 +227,17 @@ const EmployeesContractsForm = ({
       remarks: contract?.remarks || '',
     },
   });
-  
+
   // Pre-fill employee_id when rendered inside the Employee Profile
   useEffect(() => {
     if (employeeId) {
       setValue('employee_id', employeeId);
     }
   }, [employeeId, setValue]);
-  
+
   useEffect(() => {
     setValue('contract_type', contractType.value);
   }, [contractType, setValue]);
-
 
   const saveMutation = React.useMemo(() => {
     return contract?.id ? updateEmployeeContract : addEmployeeContract;
@@ -260,7 +259,7 @@ const EmployeesContractsForm = ({
           <Grid container rowSpacing={{ xs: 1, md: 2 }} spacing={2}>
             {!employeeId && (
               <Grid size={{ xs: 12, md: 4 }}>
-                <Div>
+                <Div sx={{ mt: 1, mb: 1 }}>
                   {fetchingEmployees ? (
                     <LinearProgress />
                   ) : (

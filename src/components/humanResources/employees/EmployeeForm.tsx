@@ -217,29 +217,6 @@ const EmployeeForm = ({
             <Grid size={{ xs: 12, md: 4 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
-                  label='Employee Number'
-                  size='small'
-                  fullWidth
-                  error={
-                    !!errors?.employee_number ||
-                    !!error?.response?.data?.validation_errors
-                      ?.employee_number ||
-                    !!updateError?.response?.data?.validation_errors
-                      ?.employee_number
-                  }
-                  helperText={
-                    errors.employee_number?.message ||
-                    error?.response?.data?.validation_errors?.employee_number ||
-                    updateError?.response?.data?.validation_errors
-                      ?.employee_number
-                  }
-                  {...register('employee_number')}
-                />
-              </Div>
-            </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
-                <TextField
                   label='First Name'
                   size='small'
                   fullWidth
@@ -278,7 +255,6 @@ const EmployeeForm = ({
                 />
               </Div>
             </Grid>
-
             <Grid size={{ xs: 12, md: 4 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
@@ -296,6 +272,30 @@ const EmployeeForm = ({
                     updateError?.response?.data?.validation_errors?.last_name
                   }
                   {...register('last_name')}
+                />
+              </Div>
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Div sx={{ mt: 1, mb: 1 }}>
+                <TextField
+                  label='Employee Number'
+                  size='small'
+                  fullWidth
+                  error={
+                    !!errors?.employee_number ||
+                    !!error?.response?.data?.validation_errors
+                      ?.employee_number ||
+                    !!updateError?.response?.data?.validation_errors
+                      ?.employee_number
+                  }
+                  helperText={
+                    errors.employee_number?.message ||
+                    error?.response?.data?.validation_errors?.employee_number ||
+                    updateError?.response?.data?.validation_errors
+                      ?.employee_number
+                  }
+                  {...register('employee_number')}
                 />
               </Div>
             </Grid>
@@ -471,7 +471,7 @@ const EmployeeForm = ({
               </Div>
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
-              <Div>
+              <Div sx={{ mt: 1, mb: 1 }}>
                 {isFetching ? (
                   <LinearProgress />
                 ) : (
