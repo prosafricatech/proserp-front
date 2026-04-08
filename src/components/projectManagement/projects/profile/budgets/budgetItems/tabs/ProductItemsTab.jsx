@@ -119,10 +119,13 @@ function ProductItemsTab({
             setTriggerKey(prev => prev + 1);
         }
 
+        // Reset form to blank/default values and force rerender
         reset({
             type: 'product',
+            product: null,
             product_id: null,
-            currency_id: 1,
+            currency_id: currencies?.find(c => c.is_base === 1)?.id ?? 1,
+            currency: currencies?.find(c => c.is_base === 1) ?? null,
             exchange_rate: 1,
             rate: '',
             quantity: '',
@@ -130,9 +133,13 @@ function ProductItemsTab({
             description: '',
             unit_symbol: '',
             measurement_unit_id: null,
+            budget_itemable_id: null,
+            selectedItemable: null,
         });
         setAddedProduct(null);
         setSelectedUnit(null);
+        setSelectedItemable(null);
+        setTriggerKey(prev => prev + 1);
         setIsDirty?.(false);
         setIsAdding(false);
         setShowForm && setShowForm(false);
