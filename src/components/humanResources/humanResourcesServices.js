@@ -164,24 +164,24 @@ humanResourcesServices.deleteLeaveType = async (id) => {
 // banks methods
 humanResourcesServices.getBanksList = async (params = {}) => {
     const { page = 1, limit = 50, ...queryParams } = params;
-    const { data } = await axios.get('/api/humanResources/banks', {
+    const { data } = await axios.get('/api/masters/banks', {
         params: { page, limit, ...queryParams }
     });
     return data;
 };
 
 humanResourcesServices.addBank = async (bank) => {
-    const { data } = await axios.post('/api/humanResources/banks/add', bank);
+    const { data } = await axios.post('/api/masters/banks', bank);
     return data;
 }
 
 humanResourcesServices.updateBank = async (bank) => {
-    const { data } = await axios.put(`/api/humanResources/banks/${bank.id}/update`, bank);
+    const { data } = await axios.put(`/api/masters/banks/${bank.id}`, bank);
     return data;
 }
 
 humanResourcesServices.deleteBank = async (id) => {
-    const { data } = await axios.delete(`/api/humanResources/banks/${id}/delete`);
+    const { data } = await axios.delete(`/api/masters/banks/${id}`);
     return data;
 }
 
