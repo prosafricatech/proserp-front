@@ -240,6 +240,11 @@ export async function getMenus(locale: string) {
               label: sidebar.menuItem.payroll_periods,
               type: 'nav-item',
             },
+            {
+              uri: `/${locale}/humanResources/payroll-runs`,
+              label: sidebar.menuItem.payroll_runs,
+              type: 'nav-item',
+            },
           ],
         },
       ],

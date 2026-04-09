@@ -77,7 +77,8 @@
       "leave_allocations": "Leave Allocations",
       "leave_requests": "Leave Requests",
       "paye_tax_bands": "PAYE Tax Bands",
-      "payroll_periods": "Payroll Periods"
+      "payroll_periods": "Payroll Periods",
+      "payroll_runs": "Payroll Runs"
     }
   },
 

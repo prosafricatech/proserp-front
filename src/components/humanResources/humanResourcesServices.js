@@ -401,4 +401,23 @@ humanResourcesServices.deletePayrollPeriod = async (id) => {
     return data;
 }
 
+// payroll runs methods
+humanResourcesServices.getPayrollRunsList = async (params = {}) => {
+    const { page = 1, limit = 20, ...queryParams } = params;
+    const { data } = await axios.get('/api/humanResources/payrollRuns', {
+        params: { page, limit, ...queryParams }
+    });
+    return data;
+};
+
+humanResourcesServices.showPayrollRun = async (id) => {
+    const { data } = await axios.get(`/api/humanResources/payrollRuns/${id}`);
+    return data;
+}
+
+humanResourcesServices.finalizePayrollRun = async (id) => {
+    const { data } = await axios.post(`/api/humanResources/payrollRuns/${id}/finalize`);
+    return data;
+}
+
 export default humanResourcesServices;
