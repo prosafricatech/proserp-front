@@ -64,7 +64,7 @@ const DeductionTypesListItem = ({
 
         <Grid size={{ xs: 12, md: 1.2 }}>
           <Tooltip title='Default Value'>
-            <Typography>{deductionType.default_value}</Typography>
+            <Typography>{Number(deductionType.default_value || 0).toLocaleString('en-US')}</Typography>
           </Tooltip>
         </Grid>
 

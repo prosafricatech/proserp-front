@@ -50,6 +50,12 @@ const getValidationMessage = (
   return Array.isArray(message) ? message[0] : message;
 };
 
+const formatCommaSeparatedValue = (value: string | number | null | undefined) => {
+  if (value === null || value === undefined || value === '') return '';
+  const numericValue = Number(String(value).replace(/,/g, ''));
+  return Number.isNaN(numericValue) ? '' : numericValue.toLocaleString('en-US');
+};
+
 const EmployeeAllowanceForm = ({
   setOpenDialog,
   employeeAllowance = null,
@@ -121,7 +127,6 @@ const EmployeeAllowanceForm = ({
   });
 
   const {
-    register,
     handleSubmit,
     control,
     setValue,
@@ -218,19 +223,29 @@ const EmployeeAllowanceForm = ({
 
             <Grid size={{ xs: 12, md: 6 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
-                <TextField
-                  label='Amount'
-                  size='small'
-                  fullWidth
-                  error={
-                    !!errors?.amount ||
-                    !!getValidationMessage(validationErrors, 'amount')
-                  }
-                  helperText={
-                    errors.amount?.message ||
-                    getValidationMessage(validationErrors, 'amount')
-                  }
-                  {...register('amount')}
+                <Controller
+                  name='amount'
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      label='Amount'
+                      size='small'
+                      fullWidth
+                      value={formatCommaSeparatedValue(field.value)}
+                      onChange={(event) => {
+                        const raw = event.target.value.replace(/,/g, '');
+                        field.onChange(raw === '' ? '' : Number(raw));
+                      }}
+                      error={
+                        !!errors?.amount ||
+                        !!getValidationMessage(validationErrors, 'amount')
+                      }
+                      helperText={
+                        errors.amount?.message ||
+                        getValidationMessage(validationErrors, 'amount')
+                      }
+                    />
+                  )}
                 />
               </Div>
             </Grid>

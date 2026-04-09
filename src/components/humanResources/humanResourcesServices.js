@@ -161,6 +161,30 @@ humanResourcesServices.deleteLeaveType = async (id) => {
     return data;
 }
 
+// banks methods
+humanResourcesServices.getBanksList = async (params = {}) => {
+    const { page = 1, limit = 50, ...queryParams } = params;
+    const { data } = await axios.get('/api/humanResources/banks', {
+        params: { page, limit, ...queryParams }
+    });
+    return data;
+};
+
+humanResourcesServices.addBank = async (bank) => {
+    const { data } = await axios.post('/api/humanResources/banks/add', bank);
+    return data;
+}
+
+humanResourcesServices.updateBank = async (bank) => {
+    const { data } = await axios.put(`/api/humanResources/banks/${bank.id}/update`, bank);
+    return data;
+}
+
+humanResourcesServices.deleteBank = async (id) => {
+    const { data } = await axios.delete(`/api/humanResources/banks/${id}/delete`);
+    return data;
+}
+
 // employee bank accounts methods
 humanResourcesServices.getEmployeeBankAccountsList = async (params = {}) => {
     const { page = 1, limit = 20, ...queryParams } = params;
@@ -401,14 +425,21 @@ humanResourcesServices.deletePayrollPeriod = async (id) => {
     return data;
 }
 
-humanResourcesServices.processPayrollPeriodAllEmployees = async (id) => {
-    const { data } = await axios.post(`/api/humanResources/payrollPeriods/${id}/process`);
+humanResourcesServices.processPayrollPeriodAllEmployees = async (payload = {}) => {
+    const { id, country_code, region } = payload;
+    const { data } = await axios.post(`/api/humanResources/payrollPeriods/${id}/process`, {
+        country_code,
+        region,
+    });
     return data;
 }
 
-humanResourcesServices.processPayrollPeriodSingleEmployee = async ({ id, employee_id }) => {
+humanResourcesServices.processPayrollPeriodSingleEmployee = async (payload = {}) => {
+    const { id, employee_id, country_code, region } = payload;
     const { data } = await axios.post(`/api/humanResources/payrollPeriods/${id}/process-employee`, {
         employee_id,
+        country_code,
+        region,
     });
     return data;
 }

@@ -2,7 +2,6 @@
 
 import { Divider, Grid, Tooltip, Typography } from '@mui/material';
 import dayjs from 'dayjs';
-import { useEmployees } from '../../EmployeesProvider';
 import EmployeeAllowanceItemAction from '@/components/humanResources/employees/profile/employeeAllowances/EmployeeAllowanceItemAction';
 import { EmployeeAllowanceType } from './EmployeeAllowanceType';
 
@@ -11,13 +10,6 @@ const EmployeeAllowancesListItem = ({
 }: {
   employeeAllowance: EmployeeAllowanceType;
 }) => {
-  const { employees } = useEmployees();
-  const employee = employees?.find((item) => item.id === employeeAllowance.employee_id);
-  const employeeName = employee
-    ? `${employee.first_name || ''} ${employee.middle_name || ''} ${employee.last_name || ''}`.trim()
-    : `${employeeAllowance.employee?.first_name || ''} ${employeeAllowance.employee?.last_name || ''}`.trim() ||
-      `Employee #${employeeAllowance.employee_id}`;
-
   return (
     <>
       <Divider />
@@ -36,15 +28,7 @@ const EmployeeAllowancesListItem = ({
         alignItems={'center'}
         container
       >
-        <Grid size={{ xs: 12, md: 2.4 }}>
-          <Tooltip title='Employee'>
-            <Typography variant='h6' fontSize={14} lineHeight={1.25} mb={0}>
-              {employeeName}
-            </Typography>
-          </Tooltip>
-        </Grid>
-
-        <Grid size={{ xs: 12, md: 2.3 }}>
+        <Grid size={{ xs: 12, md: 3.0 }}>
           <Tooltip title='Allowance Type'>
             <Typography>{employeeAllowance.allowance_type?.name || `Type #${employeeAllowance.allowance_type_id}`}</Typography>
           </Tooltip>
@@ -52,17 +36,17 @@ const EmployeeAllowancesListItem = ({
 
         <Grid size={{ xs: 12, md: 2.0 }}>
           <Tooltip title='Amount'>
-            <Typography>{employeeAllowance.amount}</Typography>
+            <Typography>{employeeAllowance.amount.toLocaleString()}</Typography>
           </Tooltip>
         </Grid>
 
-        <Grid size={{ xs: 12, md: 2.0 }}>
+        <Grid size={{ xs: 12, md: 2.5 }}>
           <Tooltip title='Effective From'>
             <Typography>{employeeAllowance.effective_from ? dayjs(employeeAllowance.effective_from).format('YYYY-MM-DD') : '-'}</Typography>
           </Tooltip>
         </Grid>
 
-        <Grid size={{ xs: 12, md: 2.3 }}>
+        <Grid size={{ xs: 12, md: 3.5 }}>
           <Tooltip title='Effective To'>
             <Typography>{employeeAllowance.effective_to ? dayjs(employeeAllowance.effective_to).format('YYYY-MM-DD') : 'Open-ended'}</Typography>
           </Tooltip>

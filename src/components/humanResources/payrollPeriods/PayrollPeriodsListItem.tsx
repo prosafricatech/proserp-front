@@ -8,15 +8,14 @@ const statusColor = (
   status: string
 ): 'success' | 'warning' | 'error' | 'default' => {
   switch (status?.toLowerCase()) {
+    case 'paid':
+      return 'success';
     case 'approved':
       return 'success';
-    case 'pending':
-      return 'success';
-    case 'closed':
-    case 'rejected':
-      return 'error';
-    case 'processed':
+    case 'processing':
       return 'warning';
+    case 'draft':
+      return 'default';
     default:
       return 'default';
   }

@@ -2,7 +2,6 @@
 
 import { Divider, Grid, Tooltip, Typography } from '@mui/material';
 import dayjs from 'dayjs';
-import { useEmployees } from '../../EmployeesProvider';
 import EmployeeDeductionItemAction from './EmployeeDeductionItemAction';
 import { EmployeeDeductionType } from './EmployeeDeductionType';
 
@@ -11,13 +10,6 @@ const EmployeeDeductionsListItem = ({
 }: {
   employeeDeduction: EmployeeDeductionType;
 }) => {
-  const { employees } = useEmployees();
-  const employee = employees?.find((item) => item.id === employeeDeduction.employee_id);
-  const employeeName = employee
-    ? `${employee.first_name || ''} ${employee.middle_name || ''} ${employee.last_name || ''}`.trim()
-    : `${employeeDeduction.employee?.first_name || ''} ${employeeDeduction.employee?.last_name || ''}`.trim() ||
-      `Employee #${employeeDeduction.employee_id}`;
-
   return (
     <>
       <Divider />
@@ -36,15 +28,7 @@ const EmployeeDeductionsListItem = ({
         alignItems={'center'}
         container
       >
-        <Grid size={{ xs: 12, md: 2.4 }}>
-          <Tooltip title='Employee'>
-            <Typography variant='h6' fontSize={14} lineHeight={1.25} mb={0}>
-              {employeeName}
-            </Typography>
-          </Tooltip>
-        </Grid>
-
-        <Grid size={{ xs: 12, md: 2.3 }}>
+        <Grid size={{ xs: 12, md: 3.0 }}>
           <Tooltip title='Deduction Type'>
             <Typography>{employeeDeduction.deduction_type?.name || `Type #${employeeDeduction.deduction_type_id}`}</Typography>
           </Tooltip>
@@ -52,17 +36,17 @@ const EmployeeDeductionsListItem = ({
 
         <Grid size={{ xs: 12, md: 2.0 }}>
           <Tooltip title='Value'>
-            <Typography>{employeeDeduction.value}</Typography>
+            <Typography>{Number(employeeDeduction.value || 0).toLocaleString('en-US')}</Typography>
           </Tooltip>
         </Grid>
 
-        <Grid size={{ xs: 12, md: 2.0 }}>
+        <Grid size={{ xs: 12, md: 2.5 }}>
           <Tooltip title='Effective From'>
             <Typography>{employeeDeduction.effective_from ? dayjs(employeeDeduction.effective_from).format('YYYY-MM-DD') : '-'}</Typography>
           </Tooltip>
         </Grid>
 
-        <Grid size={{ xs: 12, md: 2.3 }}>
+        <Grid size={{ xs: 12, md: 3.5 }}>
           <Tooltip title='Effective To'>
             <Typography>{employeeDeduction.effective_to ? dayjs(employeeDeduction.effective_to).format('YYYY-MM-DD') : 'Open-ended'}</Typography>
           </Tooltip>

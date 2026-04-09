@@ -1,5 +1,4 @@
 'use client';
-import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Div } from '@jumbo/shared';
 import { LoadingButton } from '@mui/lab';
@@ -17,7 +16,7 @@ import { DatePicker } from '@mui/x-date-pickers';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import dayjs, { Dayjs } from 'dayjs';
 import { useSnackbar } from 'notistack';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import { useDesignations } from '../../../designations/DesignationsProvider';
@@ -25,6 +24,7 @@ import { Designation } from '../../../designations/DesignationsType';
 import humanResourcesServices from '../../../humanResourcesServices';
 import { ContractType } from './ContractType';
 import { Employee } from '../../EmployeesType';
+import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 
 interface EmployeesContractsFormProps {
   setOpenDialog: (open: boolean) => void;
@@ -51,18 +51,8 @@ const EmployeesContractsForm = ({
 }: EmployeesContractsFormProps) => {
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
-  const { authUser } = useJumboAuth();
   const { designations, isFetching: fetchingDesignations } = useDesignations();
-  const [employeesData, setEmployeesData] = useState<Employee[] | []>([]);
-  const [designationsData, setDesignationsData] = useState<Designation[] | []>(
-    []
-  );
-
-  useEffect(() => {
-    if (designations?.length) {
-      setDesignationsData(designations);
-    }
-  }, [designations, fetchingDesignations]);
+  const designationsData = (designations || []) as Designation[];
 
   const contractOptions = [
     { label: 'Permanent', value: 'permanent' },
@@ -70,33 +60,15 @@ const EmployeesContractsForm = ({
     { label: 'Probation', value: 'probation' },
   ];
 
-  const [startDate, setStartDate] = useState<string | undefined>(undefined);
-  const [endDate, setEndDate] = useState<string | undefined>(undefined);
-  const [probationEnd, setProbationENd] = useState<string | undefined>(
-    undefined
-  );
-  const [contractType, setContractType] = useState(contractOptions[0]);
-
-  useEffect(() => {
-    const date = new Date();
-    const dayjsDate = dayjs(date).toISOString().split('T')[0];
-    if (contract?.id) {
-      contract.start_date && setStartDate(contract.start_date);
-      contract.end_date && setEndDate(contract.end_date);
-      contract.probation_end_date &&
-        setProbationENd(contract.probation_end_date);
-      let newLabel;
-      if (contract.contract_type === 'permanent') {
-        newLabel = 'Permanent';
-      } else if (contract.contract_type === 'fixed_term') {
-        newLabel = 'fixed Ferm';
-      } else {
-        newLabel = 'Probation';
-      }
-      contract.contract_type &&
-        setContractType({ label: newLabel, value: contract.contract_type });
-    }
-  }, []);
+  const formatCommaSeparatedValue = (
+    value: string | number | null | undefined
+  ) => {
+    if (value === null || value === undefined || value === '') return '';
+    const numericValue = Number(String(value).replace(/,/g, ''));
+    return Number.isNaN(numericValue)
+      ? ''
+      : numericValue.toLocaleString('en-US');
+  };
 
   const {
     mutate: addEmployeeContract,
@@ -201,7 +173,6 @@ const EmployeesContractsForm = ({
     register,
     handleSubmit,
     setValue,
-    getValues,
     control,
     formState: { errors },
   } = useForm<FormData>({
@@ -225,11 +196,6 @@ const EmployeesContractsForm = ({
     }
   }, [employeeId, setValue]);
   
-  useEffect(() => {
-    setValue('contract_type', contractType.value);
-  }, [contractType, setValue]);
-
-
   const saveMutation = React.useMemo(() => {
     return contract?.id ? updateEmployeeContract : addEmployeeContract;
   }, [contract, updateEmployeeContract, addEmployeeContract]);
@@ -300,13 +266,13 @@ const EmployeesContractsForm = ({
                         option.label === value.label
                       }
                       getOptionLabel={(option) => option.label}
-                      {...field}
-                      value={contractType}
+                      value={
+                        contractOptions.find(
+                          (option) => option.value === field.value
+                        ) || null
+                      }
                       onChange={(event, newValue) => {
-                        if (newValue) {
-                          setContractType(newValue);
-                        }
-                        field.onChange(newValue?.value);
+                        field.onChange(newValue?.value || '');
                       }}
                       renderInput={(params) => (
                         <TextField
@@ -323,22 +289,33 @@ const EmployeesContractsForm = ({
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
-                <TextField
-                  label='Basic Salary'
-                  size='small'
-                  fullWidth
-                  error={
-                    !!errors?.basic_salary ||
-                    !!error?.response?.data?.validation_errors?.basic_salary ||
-                    !!updateError?.response?.data?.validation_errors
-                      ?.basic_salary
-                  }
-                  helperText={
-                    errors.basic_salary?.message ||
-                    error?.response?.data?.validation_errors?.basic_salary ||
-                    updateError?.response?.data?.validation_errors?.basic_salary
-                  }
-                  {...register('basic_salary')}
+                <Controller
+                  name='basic_salary'
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      label='Basic Salary'
+                      size='small'
+                      fullWidth
+                      value={formatCommaSeparatedValue(field.value)}
+                      onChange={(event) => {
+                        const raw = event.target.value.replace(/,/g, '');
+                        field.onChange(raw === '' ? '' : Number(raw));
+                      }}
+                      error={
+                        !!errors?.basic_salary ||
+                        !!error?.response?.data?.validation_errors?.basic_salary ||
+                        !!updateError?.response?.data?.validation_errors
+                          ?.basic_salary
+                      }
+                      helperText={
+                        errors.basic_salary?.message ||
+                        error?.response?.data?.validation_errors?.basic_salary ||
+                        updateError?.response?.data?.validation_errors
+                          ?.basic_salary
+                      }
+                    />
+                  )}
                 />
               </Div>
             </Grid>
@@ -351,16 +328,9 @@ const EmployeesContractsForm = ({
                   render={({ field, fieldState }) => (
                     <DatePicker
                       label='Start Date'
-                      value={
-                        startDate !== undefined ? dayjs(startDate) : undefined
-                      }
+                      value={field.value ? dayjs(field.value) : null}
                       onChange={(value: Dayjs | null) => {
-                        if (value) {
-                          const formatted = value.format('YYYY-MM-DD');
-
-                          setStartDate(formatted);
-                          field.onChange(formatted);
-                        }
+                        field.onChange(value ? value.format('YYYY-MM-DD') : '');
                       }}
                       slotProps={{
                         textField: {
@@ -384,14 +354,9 @@ const EmployeesContractsForm = ({
                   render={({ field, fieldState }) => (
                     <DatePicker
                       label='End Date'
-                      value={endDate !== undefined ? dayjs(endDate) : undefined}
+                      value={field.value ? dayjs(field.value) : null}
                       onChange={(value: Dayjs | null) => {
-                        if (value) {
-                          const formatted = value.format('YYYY-MM-DD');
-
-                          setEndDate(formatted);
-                          field.onChange(formatted);
-                        }
+                        field.onChange(value ? value.format('YYYY-MM-DD') : '');
                       }}
                       slotProps={{
                         textField: {
@@ -414,18 +379,9 @@ const EmployeesContractsForm = ({
                   render={({ field, fieldState }) => (
                     <DatePicker
                       label='Probation End Date'
-                      value={
-                        probationEnd !== undefined
-                          ? dayjs(probationEnd)
-                          : undefined
-                      }
+                      value={field.value ? dayjs(field.value) : null}
                       onChange={(value: Dayjs | null) => {
-                        if (value) {
-                          const formatted = value.format('YYYY-MM-DD');
-
-                          setProbationENd(formatted);
-                          field.onChange(formatted);
-                        }
+                        field.onChange(value ? value.format('YYYY-MM-DD') : '');
                       }}
                       slotProps={{
                         textField: {

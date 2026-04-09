@@ -39,8 +39,11 @@ const PayrollPeriodItemAction = ({
   payrollPeriod: PayrollPeriodType;
 }) => {
   const [openEditDialog, setOpenEditDialog] = useState(false);
-  const [openSingleProcessDialog, setOpenSingleProcessDialog] = useState(false);
+  const [openProcessDialog, setOpenProcessDialog] = useState(false);
+  const [processMode, setProcessMode] = useState<'all' | 'single'>('all');
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  const [countryCode, setCountryCode] = useState('TZ');
+  const [region, setRegion] = useState('');
   const { showDialog, hideDialog } = useJumboDialog();
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
@@ -118,31 +121,50 @@ const PayrollPeriodItemAction = ({
 
   const status = (payrollPeriod.status || '').toLowerCase();
   const isPaid = status === 'paid';
-  const isClosed = status === 'closed';
-  const isActionDisabled = isPaid || isClosed;
+  const isApproved = status === 'approved';
+  const isDeleteDisabled = isApproved || isPaid;
+  const isMarkPaidDisabled = !isApproved || isPaid;
+  const isProcessDisabled = isPaid;
 
   const menuItems = [
     { icon: <EditOutlined />, title: 'Edit', action: 'edit' },
     {
-      icon: <PlayCircleOutline color={isActionDisabled ? 'disabled' : 'primary'} />,
+      icon: <PlayCircleOutline color={isProcessDisabled ? 'disabled' : 'primary'} />,
       title: 'Process All Employees',
       action: 'process-all',
-      disabled: isActionDisabled,
+      disabled: isProcessDisabled,
     },
     {
-      icon: <PersonOutline color={isActionDisabled ? 'disabled' : 'primary'} />,
+      icon: <PersonOutline color={isProcessDisabled ? 'disabled' : 'primary'} />,
       title: 'Process Single Employee',
       action: 'process-single',
-      disabled: isActionDisabled,
+      disabled: isProcessDisabled,
     },
     {
-      icon: <PaidOutlined color={isActionDisabled ? 'disabled' : 'success'} />,
+      icon: <PaidOutlined color={isMarkPaidDisabled ? 'disabled' : 'success'} />,
       title: isPaid ? 'Already Paid' : 'Mark Paid',
       action: 'mark-paid',
-      disabled: isActionDisabled,
+      disabled: isMarkPaidDisabled,
     },
-    { icon: <DeleteOutlined color='error' />, title: 'Delete', action: 'delete' },
+    {
+      icon: <DeleteOutlined color={isDeleteDisabled ? 'disabled' : 'error'} />,
+      title: 'Delete',
+      action: 'delete',
+      disabled: isDeleteDisabled,
+    },
   ];
+
+  const resetProcessForm = () => {
+    setSelectedEmployee(null);
+    setCountryCode('TZ');
+    setRegion('');
+  };
+
+  const openProcessPayrollDialog = (mode: 'all' | 'single') => {
+    setProcessMode(mode);
+    resetProcessForm();
+    setOpenProcessDialog(true);
+  };
 
   const handleItemAction = (menuItem: MenuItemProps) => {
     switch (menuItem.action) {
@@ -150,6 +172,7 @@ const PayrollPeriodItemAction = ({
         setOpenEditDialog(true);
         break;
       case 'delete':
+        if (isDeleteDisabled) return;
         showDialog({
           title: 'Confirm Delete',
           content: 'Are you sure you want to delete this Payroll Period?',
@@ -162,28 +185,18 @@ const PayrollPeriodItemAction = ({
         });
         break;
       case 'process-all':
-        if (isActionDisabled) return;
-        showDialog({
-          title: 'Process Payroll',
-          content: 'Process payroll for all employees in this payroll period?',
-          onYes: () => {
-            hideDialog();
-            processPayrollPeriodAllEmployees(payrollPeriod.id);
-          },
-          onNo: () => hideDialog(),
-          variant: 'confirm',
-        });
+        if (isProcessDisabled) return;
+        openProcessPayrollDialog('all');
         break;
       case 'process-single':
-        if (isActionDisabled) return;
-        setSelectedEmployee(null);
-        setOpenSingleProcessDialog(true);
+        if (isProcessDisabled) return;
+        openProcessPayrollDialog('single');
         break;
       case 'mark-paid':
-        if (isActionDisabled) return;
+        if (isMarkPaidDisabled) return;
         showDialog({
           title: 'Mark Payroll as Paid',
-          content: 'Mark all payroll runs in this period as paid?',
+          content: 'Mark this approved payroll period as paid?',
           onYes: () => {
             hideDialog();
             markPayrollPeriodPaid(payrollPeriod.id);
@@ -197,21 +210,45 @@ const PayrollPeriodItemAction = ({
     }
   };
 
-  const handleSingleProcess = () => {
-    if (!selectedEmployee?.id) {
+  const handleProcessPayroll = () => {
+    if (!countryCode.trim()) {
+      enqueueSnackbar('Country code is required', { variant: 'warning' });
+      return;
+    }
+
+    if (processMode === 'single' && !selectedEmployee?.id) {
       enqueueSnackbar('Please select an employee', { variant: 'warning' });
+      return;
+    }
+
+    if (processMode === 'all') {
+      processPayrollPeriodAllEmployees(
+        {
+          id: payrollPeriod.id,
+          country_code: countryCode.trim(),
+          region: region.trim() || null,
+        },
+        {
+          onSuccess: () => {
+            setOpenProcessDialog(false);
+            resetProcessForm();
+          },
+        }
+      );
       return;
     }
 
     processPayrollPeriodSingleEmployee(
       {
         id: payrollPeriod.id,
-        employee_id: selectedEmployee.id,
+        employee_id: selectedEmployee!.id,
+        country_code: countryCode.trim(),
+        region: region.trim() || null,
       },
       {
         onSuccess: () => {
-          setOpenSingleProcessDialog(false);
-          setSelectedEmployee(null);
+          setOpenProcessDialog(false);
+          resetProcessForm();
         },
       }
     );
@@ -232,39 +269,59 @@ const PayrollPeriodItemAction = ({
       </Dialog>
 
       <Dialog
-        open={openSingleProcessDialog}
-        onClose={() => setOpenSingleProcessDialog(false)}
+        open={openProcessDialog}
+        onClose={() => setOpenProcessDialog(false)}
         fullWidth
         maxWidth='sm'
       >
-        <DialogTitle>Process Single Employee</DialogTitle>
+        <DialogTitle>
+          {processMode === 'all' ? 'Process Payroll' : 'Process Single Employee'}
+        </DialogTitle>
         <DialogContent>
           <Stack spacing={2} mt={1}>
             <Typography variant='body2' color='text.secondary'>
-              Select one employee to process payroll for {payrollPeriod.month}/{payrollPeriod.year}.
+              {processMode === 'all'
+                ? `Process payroll for all employees in ${payrollPeriod.month}/${payrollPeriod.year}.`
+                : `Select one employee to process payroll for ${payrollPeriod.month}/${payrollPeriod.year}.`}
             </Typography>
-            <Autocomplete
-              options={employees}
-              value={selectedEmployee}
-              onChange={(_, value) => setSelectedEmployee(value)}
-              isOptionEqualToValue={(option, value) => option.id === value?.id}
-              getOptionLabel={(option) =>
-                `${option.first_name || ''} ${option.middle_name || ''} ${option.last_name || ''}`.trim() ||
-                `Employee #${option.id}`
-              }
-              renderInput={(params) => (
-                <TextField {...params} label='Employee' fullWidth />
-              )}
+            <TextField
+              label='Country Code'
+              value={countryCode}
+              onChange={(event) => setCountryCode(event.target.value.toUpperCase())}
+              fullWidth
+              required
             />
+            <TextField
+              label='Region'
+              value={region}
+              onChange={(event) => setRegion(event.target.value)}
+              fullWidth
+            />
+            {processMode === 'single' && (
+              <Autocomplete
+                options={employees}
+                value={selectedEmployee}
+                onChange={(_, value) => setSelectedEmployee(value)}
+                isOptionEqualToValue={(option, value) => option.id === value?.id}
+                getOptionLabel={(option) =>
+                  `${option.first_name || ''} ${option.middle_name || ''} ${option.last_name || ''}`.trim() ||
+                  `Employee #${option.id}`
+                }
+                renderInput={(params) => (
+                  <TextField {...params} label='Employee' fullWidth />
+                )}
+              />
+            )}
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenSingleProcessDialog(false)}>Cancel</Button>
+          <Button onClick={() => setOpenProcessDialog(false)}>Cancel</Button>
           <Button
             variant='contained'
-            onClick={handleSingleProcess}
+            onClick={handleProcessPayroll}
             disabled={
-              !selectedEmployee ||
+              !countryCode.trim() ||
+              (processMode === 'single' && !selectedEmployee) ||
               isProcessingAllPayroll ||
               isProcessingSinglePayroll ||
               isMarkingPaid

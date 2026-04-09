@@ -12,14 +12,14 @@ import {
   DialogTitle,
   FormControlLabel,
   Grid,
-  LinearProgress,
   TextField,
 } from '@mui/material';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import { useEffect, useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import * as yup from 'yup';
+import { BankType } from '../../../banks/BankType';
 import humanResourcesServices from '../../../humanResourcesServices';
 import { EmployeeBankAccountType } from './EmployeeBankAccountType';
 
@@ -54,6 +54,14 @@ const EmployeeBankAccountForm = ({
 }: EmployeeBankAccountFormProps) => {
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
+
+  const { data: banksResponse, isFetching: isBanksFetching } = useQuery({
+    queryKey: ['banksForEmployeeAccounts'],
+    queryFn: () => humanResourcesServices.getBanksList({ page: 1, limit: 200 }),
+    staleTime: 1000 * 60 * 10,
+  });
+
+  const banks: BankType[] = banksResponse?.data || [];
 
   const {
     mutate: addEmployeeBankAccount,
@@ -97,10 +105,10 @@ const EmployeeBankAccountForm = ({
 
   const validationSchema = yup.object({
     id: yup.number().optional(),
-    bank_name: yup
-      .string()
-      .required('Bank name is required')
-      .max(100, 'Bank name cannot exceed 100 characters'),
+    bank_id: yup
+      .number()
+      .typeError('Bank is required')
+      .required('Bank is required'),
     branch: yup.string().max(100, 'Branch cannot exceed 100 characters'),
     account_number: yup
       .string()
@@ -110,7 +118,6 @@ const EmployeeBankAccountForm = ({
       .string()
       .required('Account name is required')
       .max(200, 'Account name cannot exceed 200 characters'),
-    swift_code: yup.string().max(20, 'Swift code cannot exceed 20 characters'),
     is_primary: yup.boolean().required(),
   });
 
@@ -125,11 +132,10 @@ const EmployeeBankAccountForm = ({
     defaultValues: {
       id: account?.id,
       employee_id: account?.employee_id,
-      bank_name: account?.bank_name || '',
+      bank_id: account?.bank_id,
       branch: account?.branch || '',
       account_number: account?.account_number || '',
       account_name: account?.account_name || '',
-      swift_code: account?.swift_code || '',
       is_primary: account?.is_primary || false,
     },
   });
@@ -164,19 +170,39 @@ const EmployeeBankAccountForm = ({
           <Grid container rowSpacing={{ xs: 1, md: 2 }} spacing={1}>
             <Grid size={{ xs: 12, md: 6 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
-                <TextField
-                  label='Bank Name'
-                  size='small'
-                  fullWidth
-                  error={
-                    !!errors?.bank_name ||
-                    !!getValidationMessage(validationErrors, 'bank_name')
-                  }
-                  helperText={
-                    errors.bank_name?.message ||
-                    getValidationMessage(validationErrors, 'bank_name')
-                  }
-                  {...register('bank_name')}
+                <Controller
+                  name='bank_id'
+                  control={control}
+                  render={({ field }) => (
+                    <Autocomplete
+                      size='small'
+                      loading={isBanksFetching}
+                      options={banks}
+                      value={banks.find((bank) => bank.id === field.value) || null}
+                      onChange={(_, newValue) => field.onChange(newValue?.id || null)}
+                      isOptionEqualToValue={(option, value) => option.id === value.id}
+                      getOptionLabel={(option) =>
+                        option.short_name
+                          ? `${option.name} (${option.short_name})`
+                          : option.name
+                      }
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label='Bank'
+                          fullWidth
+                          error={
+                            !!errors?.bank_id ||
+                            !!getValidationMessage(validationErrors, 'bank_id')
+                          }
+                          helperText={
+                            errors.bank_id?.message ||
+                            getValidationMessage(validationErrors, 'bank_id')
+                          }
+                        />
+                      )}
+                    />
+                  )}
                 />
               </Div>
             </Grid>
@@ -237,26 +263,6 @@ const EmployeeBankAccountForm = ({
                 />
               </Div>
             </Grid>
-
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
-                <TextField
-                  label='SWIFT Code'
-                  size='small'
-                  fullWidth
-                  error={
-                    !!errors?.swift_code ||
-                    !!getValidationMessage(validationErrors, 'swift_code')
-                  }
-                  helperText={
-                    errors.swift_code?.message ||
-                    getValidationMessage(validationErrors, 'swift_code')
-                  }
-                  {...register('swift_code')}
-                />
-              </Div>
-            </Grid>
-
             <Grid size={{ xs: 12, md: 6 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <Controller

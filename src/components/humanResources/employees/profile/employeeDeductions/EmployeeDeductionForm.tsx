@@ -48,6 +48,12 @@ const getValidationMessage = (
   return Array.isArray(message) ? message[0] : message;
 };
 
+const formatCommaSeparatedValue = (value: string | number | null | undefined) => {
+  if (value === null || value === undefined || value === '') return '';
+  const numericValue = Number(String(value).replace(/,/g, ''));
+  return Number.isNaN(numericValue) ? '' : numericValue.toLocaleString('en-US');
+};
+
 const EmployeeDeductionForm = ({
   setOpenDialog,
   employeeDeduction = null,
@@ -218,19 +224,29 @@ const EmployeeDeductionForm = ({
 
             <Grid size={{ xs: 12, md: 6 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
-                <TextField
-                  label='Value'
-                  size='small'
-                  fullWidth
-                  error={
-                    !!errors?.value ||
-                    !!getValidationMessage(validationErrors, 'value')
-                  }
-                  helperText={
-                    errors.value?.message ||
-                    getValidationMessage(validationErrors, 'value')
-                  }
-                  {...register('value')}
+                <Controller
+                  name='value'
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      label='Value'
+                      size='small'
+                      fullWidth
+                      value={formatCommaSeparatedValue(field.value)}
+                      onChange={(event) => {
+                        const raw = event.target.value.replace(/,/g, '');
+                        field.onChange(raw === '' ? '' : Number(raw));
+                      }}
+                      error={
+                        !!errors?.value ||
+                        !!getValidationMessage(validationErrors, 'value')
+                      }
+                      helperText={
+                        errors.value?.message ||
+                        getValidationMessage(validationErrors, 'value')
+                      }
+                    />
+                  )}
                 />
               </Div>
             </Grid>

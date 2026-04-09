@@ -5,13 +5,13 @@ import { Div } from '@jumbo/shared';
 import { LoadingButton } from '@mui/lab';
 import {
   Button,
-  Checkbox,
   DialogActions,
   DialogContent,
   DialogTitle,
   FormControlLabel,
   Grid,
   MenuItem,
+  Switch,
   TextField,
 } from '@mui/material';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -43,6 +43,12 @@ const getValidationMessage = (
   const message = validationErrors?.[field];
   if (!message) return undefined;
   return Array.isArray(message) ? message[0] : message;
+};
+
+const formatCommaSeparatedValue = (value: string | number | null | undefined) => {
+  if (value === null || value === undefined || value === '') return '';
+  const numericValue = Number(String(value).replace(/,/g, ''));
+  return Number.isNaN(numericValue) ? '' : numericValue.toLocaleString('en-US');
 };
 
 const DeductionTypeForm = ({
@@ -270,20 +276,29 @@ const DeductionTypeForm = ({
 
             <Grid size={{ xs: 12, md: 6 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
-                <TextField
-                  label='Default Value'
-                  
-                  size='small'
-                  fullWidth
-                  error={
-                    !!errors?.default_value ||
-                    !!getValidationMessage(validationErrors, 'default_value')
-                  }
-                  helperText={
-                    errors.default_value?.message ||
-                    getValidationMessage(validationErrors, 'default_value')
-                  }
-                  {...register('default_value')}
+                <Controller
+                  name='default_value'
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      label='Default Value'
+                      size='small'
+                      fullWidth
+                      value={formatCommaSeparatedValue(field.value)}
+                      onChange={(event) => {
+                        const raw = event.target.value.replace(/,/g, '');
+                        field.onChange(raw === '' ? '' : Number(raw));
+                      }}
+                      error={
+                        !!errors?.default_value ||
+                        !!getValidationMessage(validationErrors, 'default_value')
+                      }
+                      helperText={
+                        errors.default_value?.message ||
+                        getValidationMessage(validationErrors, 'default_value')
+                      }
+                    />
+                  )}
                 />
               </Div>
             </Grid>
@@ -296,7 +311,7 @@ const DeductionTypeForm = ({
                   render={({ field }) => (
                     <FormControlLabel
                       control={
-                        <Checkbox
+                        <Switch
                           checked={Boolean(field.value)}
                           onChange={(event) => field.onChange(event.target.checked)}
                         />

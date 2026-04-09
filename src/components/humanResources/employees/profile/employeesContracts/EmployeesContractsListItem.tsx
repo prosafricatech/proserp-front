@@ -4,7 +4,6 @@ import { Chip, Divider, Tooltip, Typography } from '@mui/material';
 import { Grid } from '@mui/system';
 import { ContractType } from './ContractType';
 import EmployeesContractsItemAction from './EmployeesContractsItemAction';
-import { useState } from 'react';
 
 const EmployeesContractsListItem = ({
   contract,
@@ -29,21 +28,7 @@ const EmployeesContractsListItem = ({
         alignItems={'center'}
         container
       >
-        <Grid size={{ xs: 12, md: 2 }}>
-          <Tooltip title='Employee name'>
-            <Typography
-              variant='h5'
-              fontSize={14}
-              lineHeight={1.25}
-              mb={0}
-              noWrap
-            >
-              {contract?.employee?.first_name || '-'}{' '}
-              {contract?.employee?.last_name || '-'}
-            </Typography>
-          </Tooltip>
-        </Grid>
-        <Grid size={{ xs: 12, md: 2 }}>
+        <Grid size={{ xs: 12, md: 2.5 }}>
           <Tooltip title='Contract Type'>
             <Typography>{contract?.contract_type}</Typography>
           </Tooltip>
@@ -55,7 +40,7 @@ const EmployeesContractsListItem = ({
             </Typography>
           </Tooltip>
         </Grid>
-        <Grid size={{ xs: 12, md: 2 }}>
+        <Grid size={{ xs: 12, md: 2.5 }}>
           <Tooltip title='Basic Salary'>
             <Typography>
               {contract.basic_salary
@@ -68,7 +53,7 @@ const EmployeesContractsListItem = ({
           </Tooltip>
         </Grid>
         <Grid
-          size={{ xs: 12, md: 2 }}
+          size={{ xs: 12, md: 3 }}
           display={`flex`}
           flexDirection={`row`}
           justifyContent={'start'}
@@ -81,7 +66,7 @@ const EmployeesContractsListItem = ({
           </Tooltip>
         </Grid>
 
-        <Grid size={{ xs: 1, md: 0.5, lg: 1 }} textAlign={'end'}>
+        <Grid size={{ xs: 1, md: 1 }} textAlign={'end'}>
           <EmployeesContractsItemAction contract={contract} />
         </Grid>
       </Grid>

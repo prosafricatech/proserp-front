@@ -1,7 +1,6 @@
 'use client';
 
 import { Divider, Grid, Tooltip, Typography } from '@mui/material';
-import { useEmployees } from '../../EmployeesProvider';
 import { LeaveAllocationType } from './LeaveAllocationType';
 import LeaveAllocationItemAction from './LeaveAllocationItemAction';
 
@@ -10,13 +9,6 @@ const LeaveAllocationsListItem = ({
 }: {
   leaveAllocation: LeaveAllocationType;
 }) => {
-  const { employees } = useEmployees();
-  const employee = employees?.find((item) => item.id === leaveAllocation.employee_id);
-  const employeeName = employee
-    ? `${employee.first_name || ''} ${employee.middle_name || ''} ${employee.last_name || ''}`.trim()
-    : `${leaveAllocation.employee?.first_name || ''} ${leaveAllocation.employee?.last_name || ''}`.trim() ||
-      `Employee #${leaveAllocation.employee_id}`;
-
   return (
     <>
       <Divider />
@@ -35,21 +27,13 @@ const LeaveAllocationsListItem = ({
         alignItems={'center'}
         container
       >
-        <Grid size={{ xs: 12, md: 2.4 }}>
-          <Tooltip title='Employee'>
-            <Typography variant='h6' fontSize={14} lineHeight={1.25} mb={0}>
-              {employeeName}
-            </Typography>
-          </Tooltip>
-        </Grid>
-
-        <Grid size={{ xs: 12, md: 2.3 }}>
+        <Grid size={{ xs: 12, md: 3.0 }}>
           <Tooltip title='Leave Type'>
             <Typography>{leaveAllocation.leave_type?.name || `Type #${leaveAllocation.leave_type_id}`}</Typography>
           </Tooltip>
         </Grid>
 
-        <Grid size={{ xs: 12, md: 1.2 }}>
+        <Grid size={{ xs: 12, md: 1.5 }}>
           <Tooltip title='Year'>
             <Typography>{leaveAllocation.year}</Typography>
           </Tooltip>
@@ -61,13 +45,13 @@ const LeaveAllocationsListItem = ({
           </Tooltip>
         </Grid>
 
-        <Grid size={{ xs: 12, md: 1.4 }}>
+        <Grid size={{ xs: 12, md: 1.5 }}>
           <Tooltip title='Used Days'>
             <Typography>{leaveAllocation.used_days ?? 0}</Typography>
           </Tooltip>
         </Grid>
 
-        <Grid size={{ xs: 12, md: 1.7 }}>
+        <Grid size={{ xs: 12, md: 3.0 }}>
           <Tooltip title='Remaining Days'>
             <Typography>{leaveAllocation.remaining_days ?? leaveAllocation.allocated_days}</Typography>
           </Tooltip>

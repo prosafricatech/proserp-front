@@ -2,7 +2,6 @@
 
 import { Chip, Divider, Grid, Tooltip, Typography } from '@mui/material';
 import EmployeeBankItemAction from './EmployeeBankItemAction';
-import { useEmployees } from '../../EmployeesProvider';
 import { EmployeeBankAccountType } from './EmployeeBankAccountType';
 
 const EmployeeBankAccountsListItem = ({
@@ -10,12 +9,10 @@ const EmployeeBankAccountsListItem = ({
 }: {
   account: EmployeeBankAccountType;
 }) => {
-  const { employees } = useEmployees();
-  const employee = employees?.find((item) => item.id === account.employee_id);
-  const employeeName = employee
-    ? `${employee.first_name || ''} ${employee.middle_name || ''} ${employee.last_name || ''}`.trim()
-    : `${account.employee?.first_name || ''} ${account.employee?.last_name || ''}`.trim() ||
-      `Employee #${account.employee_id}`;
+  const bankDisplayName =
+    account.bank?.short_name
+      ? `${account.bank.name} (${account.bank.short_name})`
+      : account.bank?.name || account.bank_name || '-';
 
   return (
     <>
@@ -35,21 +32,13 @@ const EmployeeBankAccountsListItem = ({
         alignItems={'center'}
         container
       >
-        <Grid size={{ xs: 12, md: 2.5 }}>
-          <Tooltip title='Employee'>
-            <Typography variant='h6' fontSize={14} lineHeight={1.25} mb={0}>
-              {employeeName}
-            </Typography>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <Tooltip title='Bank'>
+            <Typography>{bankDisplayName}</Typography>
           </Tooltip>
         </Grid>
 
-        <Grid size={{ xs: 12, md: 2.5 }}>
-          <Tooltip title='Bank Name'>
-            <Typography>{account.bank_name}</Typography>
-          </Tooltip>
-        </Grid>
-
-        <Grid size={{ xs: 12, md: 2.5 }}>
+        <Grid size={{ xs: 12, md: 3 }}>
           <Tooltip title='Account Name'>
             <Typography noWrap>{account.account_name}</Typography>
           </Tooltip>
@@ -61,7 +50,7 @@ const EmployeeBankAccountsListItem = ({
           </Tooltip>
         </Grid>
 
-        <Grid size={{ xs: 10, md: 1.5 }}>
+        <Grid size={{ xs: 10, md: 2 }}>
           {account.is_primary ? (
             <Chip label='Primary' size='small' color='success' variant='outlined' />
           ) : (

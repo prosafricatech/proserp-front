@@ -52,7 +52,7 @@ const EmployeeDeductionsListItem = ({
 
         <Grid size={{ xs: 12, md: 2.0 }}>
           <Tooltip title='Value'>
-            <Typography>{employeeDeduction.value}</Typography>
+            <Typography>{Number(employeeDeduction.value || 0).toLocaleString('en-US')}</Typography>
           </Tooltip>
         </Grid>
 

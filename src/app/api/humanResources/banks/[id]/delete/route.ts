@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server';
 
 const API_BASE = process.env.API_BASE_URL;
 
-export async function POST(
+export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -12,12 +12,9 @@ export async function POST(
   const { headers, response } = await getAuthHeaders(req);
   if (response) return response;
 
-  const body = await req.text();
-
-  const res = await fetch(`${API_BASE}/payroll-periods/${id}/process`, {
-    method: 'POST',
+  const res = await fetch(`${API_BASE}/masters/banks/${id}`, {
+    method: 'DELETE',
     headers,
-    body,
     credentials: 'include',
   });
 
