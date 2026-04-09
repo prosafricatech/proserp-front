@@ -221,11 +221,6 @@ export async function getMenus(locale: string) {
               type: 'nav-item',
             },
             {
-              uri: `/${locale}/humanResources/banks`,
-              label: sidebar.menuItem.banks,
-              type: 'nav-item',
-            },
-            {
               uri: `/${locale}/humanResources/allowance-types`,
               label: sidebar.menuItem.allowance_types,
               type: 'nav-item',
@@ -390,6 +385,12 @@ export async function getMenus(locale: string) {
           label: sidebar.menuItem.measurement_units,
           type: 'nav-item',
           icon: icon('measurement_units'),
+        },
+        {
+          uri: `/${locale}/humanResources/banks`,
+          label: sidebar.menuItem.banks,
+          type: 'nav-item',
+          icon: icon('banks'),
         },
       ],
     },
