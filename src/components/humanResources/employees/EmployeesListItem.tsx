@@ -36,9 +36,7 @@ const EmployeesListItem = ({ employee }: { employee: Employee }) => {
               lineHeight={1.25}
               mb={0}
               noWrap
-              onClick={() =>
-                router.push(`/${lang}/humanResources/employees/${employee.id}`)
-              }
+              onClick={() => router.push(`/${lang}/hr/employees/${employee.id}`)}
               sx={{
                 cursor: 'pointer',
                 '&:hover': { color: 'primary.main', textDecoration: 'underline' },

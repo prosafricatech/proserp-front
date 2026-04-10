@@ -1,44 +1,25 @@
-import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
+import { useLanguage } from '@/app/[lang]/contexts/LanguageContext';
 import { AddOutlined } from '@mui/icons-material';
-import {
-  ButtonGroup,
-  Dialog,
-  IconButton,
-  Tooltip,
-  useMediaQuery,
-} from '@mui/material';
-import { useState } from 'react';
-import { DepartmentsProvider } from '../departments/DepartmentsProvider';
-import EmployeeForm from './EmployeeForm';
+import { ButtonGroup, IconButton, Tooltip } from '@mui/material';
+import { useRouter } from 'next/navigation';
 
 const EmployeeActionTail = () => {
-  const [openDialog, setOpenDialog] = useState(false);
+  const router = useRouter();
+  const lang = useLanguage();
 
-  //Screen handling constants
-  const { theme } = useJumboTheme();
-  const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
   return (
-    <>
-      <Dialog maxWidth='md' fullScreen={belowLargeScreen} open={openDialog}>
-        <DepartmentsProvider>
-          <EmployeeForm setOpenDialog={setOpenDialog} />
-        </DepartmentsProvider>
-      </Dialog>
-      <ButtonGroup
-        variant='outlined'
-        size='small'
-        disableElevation
-        sx={{ '& .MuiButton-root': { px: 1 } }}
-      >
-        {/* {checkOrganizationPermission(PERMISSIONS.USERS_INVITE) && ( */}
-        <Tooltip title='Add Employee'>
-          <IconButton onClick={() => setOpenDialog(true)}>
-            <AddOutlined />
-          </IconButton>
-        </Tooltip>
-        {/* )} */}
-      </ButtonGroup>
-    </>
+    <ButtonGroup
+      variant='outlined'
+      size='small'
+      disableElevation
+      sx={{ '& .MuiButton-root': { px: 1 } }}
+    >
+      <Tooltip title='Add Employee'>
+        <IconButton onClick={() => router.push(`/${lang}/hr/employees/new`)}>
+          <AddOutlined />
+        </IconButton>
+      </Tooltip>
+    </ButtonGroup>
   );
 };
 

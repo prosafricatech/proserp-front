@@ -64,6 +64,8 @@
       "organizations": "Organizations",
 
       "employees": "Employees",
+      "setup": "Setup",
+      "payroll": "Payroll",
       "departments": "Departments",
       "leave_types": "Leave Types",
       "designations": "Designations",

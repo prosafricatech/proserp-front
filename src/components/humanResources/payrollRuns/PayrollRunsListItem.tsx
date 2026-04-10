@@ -1,6 +1,8 @@
 'use client';
 
+import { useLanguage } from '@/app/[lang]/contexts/LanguageContext';
 import { Chip, Divider, Grid, Tooltip, Typography } from '@mui/material';
+import { useRouter } from 'next/navigation';
 import PayrollRunItemAction from './PayrollRunItemAction';
 import { PayrollRunType } from './PayrollRunType';
 
@@ -23,6 +25,8 @@ const statusColor = (
 };
 
 const PayrollRunsListItem = ({ payrollRun }: { payrollRun: PayrollRunType }) => {
+  const router = useRouter();
+  const lang = useLanguage();
   const employeeName = `${payrollRun.employee?.first_name || ''} ${payrollRun.employee?.last_name || ''}`.trim();
 
   return (
@@ -35,6 +39,9 @@ const PayrollRunsListItem = ({ payrollRun }: { payrollRun: PayrollRunType }) => 
           cursor: 'pointer',
           '&:hover': { bgcolor: 'action.hover' },
         }}
+        onClick={() =>
+          router.push(`/${lang}/hr/payroll/${payrollRun.payroll_period_id}/runs/${payrollRun.id}`)
+        }
         paddingLeft={2}
         paddingRight={2}
         columnSpacing={1}
@@ -88,7 +95,11 @@ const PayrollRunsListItem = ({ payrollRun }: { payrollRun: PayrollRunType }) => 
           </Tooltip>
         </Grid>
 
-        <Grid size={{ xs: 2, md: 2 }} textAlign={'end'}>
+        <Grid
+          size={{ xs: 2, md: 2 }}
+          textAlign={'end'}
+          onClick={(event) => event.stopPropagation()}
+        >
           <PayrollRunItemAction payrollRun={payrollRun} />
         </Grid>
       </Grid>

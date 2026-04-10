@@ -1,6 +1,8 @@
 'use client';
 
+import { useLanguage } from '@/app/[lang]/contexts/LanguageContext';
 import { Chip, Divider, Grid, Tooltip, Typography } from '@mui/material';
+import { useRouter } from 'next/navigation';
 import { PayrollPeriodType } from './PayrollPeriodType';
 import PayrollPeriodItemAction from './PayrollPeriodItemAction';
 
@@ -26,6 +28,9 @@ const PayrollPeriodsListItem = ({
 }: {
   payrollPeriod: PayrollPeriodType;
 }) => {
+  const router = useRouter();
+  const lang = useLanguage();
+
   return (
     <>
       <Divider />
@@ -36,6 +41,7 @@ const PayrollPeriodsListItem = ({
           cursor: 'pointer',
           '&:hover': { bgcolor: 'action.hover' },
         }}
+        onClick={() => router.push(`/${lang}/hr/payroll/${payrollPeriod.id}`)}
         paddingLeft={2}
         paddingRight={2}
         columnSpacing={1}
@@ -79,7 +85,11 @@ const PayrollPeriodsListItem = ({
           </Tooltip>
         </Grid>
 
-        <Grid size={{ xs: 2, md: 1.5 }} textAlign={'end'}>
+        <Grid
+          size={{ xs: 2, md: 1.5 }}
+          textAlign={'end'}
+          onClick={(event) => event.stopPropagation()}
+        >
           <PayrollPeriodItemAction payrollPeriod={payrollPeriod} />
         </Grid>
       </Grid>

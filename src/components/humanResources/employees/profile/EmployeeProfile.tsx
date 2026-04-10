@@ -1,47 +1,126 @@
 'use client';
 
 import JumboContentLayout from '@jumbo/components/JumboContentLayout';
-import { Card, Skeleton, Stack, Tab, Tabs, Typography } from '@mui/material';
+import { EditOutlined } from '@mui/icons-material';
+import {
+  Avatar,
+  Box,
+  Button,
+  Card,
+  Chip,
+  Dialog,
+  Skeleton,
+  Stack,
+  Tab,
+  Tabs,
+  Tooltip,
+  Typography,
+  useMediaQuery,
+} from '@mui/material';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
+import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
 import { useEffect, useMemo, useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useSnackbar } from 'notistack';
+import { useRouter } from 'next/navigation';
+import { useLanguage } from '@/app/[lang]/contexts/LanguageContext';
+import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import { EmployeesProvider } from '../EmployeesProvider';
 import { DesignationsProvider } from '../../designations/DesignationsProvider';
+import { DepartmentsProvider } from '../../departments/DepartmentsProvider';
 import EmployeeProfileProvider, { useEmployeeProfile } from './EmployeeProfileProvider';
 import EmployeesContracts from './employeesContracts/EmployeesContracts';
 import EmployeeBankAccounts from './employeeBankAccounts/EmployeeBankAccounts';
 import NextOfKins from './nextOfKins/NextOfKins';
 import EmployeeAllowances from './employeeAllowances/EmployeeAllowances';
 import EmployeeDeductions from './employeeDeductions/EmployeeDeductions';
-import LeaveAllocations from './leaveAllocations/LeaveAllocations';
-import LeaveRequests from './leaveRequests/LeaveRequests';
+import EmployeeLeaveTab from './EmployeeLeaveTab';
+import EmployeeForm from '../EmployeeForm';
+import humanResourcesServices from '../../humanResourcesServices';
 
 type TabKey =
+  | 'personalInfo'
   | 'contracts'
   | 'bankAccounts'
   | 'nextOfKin'
   | 'allowances'
   | 'deductions'
-  | 'leaveAllocations'
-  | 'leaveRequests';
+  | 'leave';
 
 const VALID_TABS: TabKey[] = [
+  'personalInfo',
   'contracts',
   'bankAccounts',
   'nextOfKin',
   'allowances',
   'deductions',
-  'leaveAllocations',
-  'leaveRequests',
+  'leave',
 ];
 
-function ProfileContent() {
+const formatEmploymentType = (employmentType?: string | null) => {
+  if (!employmentType) return '';
+  return employmentType
+    .replace(/_/g, ' ')
+    .split(' ')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+};
+
+function PersonalInfoTab() {
   const { employee } = useEmployeeProfile();
+  if (!employee) return null;
+
+  const rows: { label: string; value?: string | null }[] = [
+    { label: 'First Name', value: employee.first_name },
+    { label: 'Middle Name', value: employee.middle_name },
+    { label: 'Last Name', value: employee.last_name },
+    { label: 'Gender', value: employee.gender },
+    {
+      label: 'Date of Birth',
+      value: employee.date_of_birth ? readableDate(employee.date_of_birth, false) : undefined,
+    },
+    { label: 'National ID', value: employee.national_id },
+    { label: 'Passport Number', value: employee.passport_number },
+    { label: 'Phone Number', value: employee.phone_number },
+    { label: 'Email', value: employee.email },
+    { label: 'Address', value: employee.address },
+    { label: 'Department', value: employee.department?.name },
+    { label: 'Employment Type', value: formatEmploymentType(employee.employment_type) },
+    {
+      label: 'Join Date',
+      value: employee.join_date ? readableDate(employee.join_date, false) : undefined,
+    },
+  ];
+
+  return (
+    <Stack spacing={1} sx={{ mt: 1 }}>
+      {rows.map(({ label, value }) => (
+        <Box key={label} display='flex' gap={2}>
+          <Typography variant='body2' color='text.secondary' minWidth={160}>{label}:</Typography>
+          <Typography variant='body2'>{value || '—'}</Typography>
+        </Box>
+      ))}
+    </Stack>
+  );
+}
+
+function ProfileContent() {
+  const { employee, reFetchEmployee } = useEmployeeProfile();
+  const [openEditDialog, setOpenEditDialog] = useState(false);
+  const { showDialog, hideDialog } = useJumboDialog();
+  const { enqueueSnackbar } = useSnackbar();
+  const queryClient = useQueryClient();
+  const router = useRouter();
+  const lang = useLanguage();
+  const { theme } = useJumboTheme();
+  const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
   const [activeTab, setActiveTab] = useState<TabKey>(() => {
     if (typeof window !== 'undefined') {
       const saved = sessionStorage.getItem('employeeProfileActiveTab') as TabKey;
-      return saved && VALID_TABS.includes(saved) ? saved : 'contracts';
+      return saved && VALID_TABS.includes(saved) ? saved : 'personalInfo';
     }
-    return 'contracts';
+    return 'personalInfo';
   });
 
   useEffect(() => {
@@ -50,11 +129,43 @@ function ProfileContent() {
     }
   }, [activeTab]);
 
+  const { mutate: deleteEmployee } = useMutation({
+    mutationFn: humanResourcesServices.deleteEmployee,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['employees'] });
+      enqueueSnackbar('Employee deleted successfully', { variant: 'success' });
+      router.push(`/${lang}/hr/employees`);
+    },
+    onError: () => {
+      enqueueSnackbar('Error deleting employee', { variant: 'error' });
+    },
+  });
+
   const handleTabChange = (_: React.SyntheticEvent, newValue: TabKey) => {
     setActiveTab(newValue);
   };
 
+  const handleDelete = () => {
+    if (!employee) return;
+    showDialog({
+      title: 'Delete Employee',
+      content: 'Are you sure you want to delete this employee?',
+      onYes: () => {
+        hideDialog();
+        deleteEmployee(employee.id);
+      },
+      onNo: () => hideDialog(),
+      variant: 'confirm',
+    });
+  };
+
   const employeeId = employee?.id;
+
+  const fullName = employee
+    ? `${employee.first_name ?? ''} ${employee.middle_name ?? ''} ${employee.last_name ?? ''}`.trim()
+    : '';
+
+  const empTypeBadge = formatEmploymentType(employee?.employment_type);
 
   const renderTabContent = useMemo(() => {
     if (!employeeId) {
@@ -68,6 +179,8 @@ function ProfileContent() {
     }
 
     switch (activeTab) {
+      case 'personalInfo':
+        return <PersonalInfoTab />;
       case 'contracts':
         return (
           <DesignationsProvider>
@@ -82,54 +195,101 @@ function ProfileContent() {
         return <EmployeeAllowances employeeId={employeeId} />;
       case 'deductions':
         return <EmployeeDeductions employeeId={employeeId} />;
-      case 'leaveAllocations':
-        return <LeaveAllocations employeeId={employeeId} />;
-      case 'leaveRequests':
-        return <LeaveRequests employeeId={employeeId} />;
+      case 'leave':
+        return <EmployeeLeaveTab employeeId={employeeId} />;
       default:
         return null;
     }
   }, [activeTab, employeeId]);
 
-  const fullName = employee
-    ? `${employee.first_name ?? ''} ${employee.middle_name ?? ''} ${employee.last_name ?? ''}`.trim()
-    : '';
-
   return (
-    <JumboContentLayout
-      header={
-        <Stack direction='row' alignItems='center' spacing={1}>
-          <Stack>
-            <Typography variant='h4'>{fullName}</Typography>
-            <Typography variant='body1' color='text.secondary'>
-              {employee?.email}
-            </Typography>
-          </Stack>
-        </Stack>
-      }
-    >
-      <Card sx={{ height: '100%', p: 1 }}>
-        <Stack spacing={1}>
-          <Tabs
-            value={activeTab}
-            onChange={handleTabChange}
-            variant='scrollable'
-            scrollButtons='auto'
-            allowScrollButtonsMobile
-          >
-            <Tab label='Contracts' value='contracts' />
-            <Tab label='Bank Accounts' value='bankAccounts' />
-            <Tab label='Next of Kin' value='nextOfKin' />
-            <Tab label='Allowances' value='allowances' />
-            <Tab label='Deductions' value='deductions' />
-            <Tab label='Leave Allocations' value='leaveAllocations' />
-            <Tab label='Leave Requests' value='leaveRequests' />
-          </Tabs>
+    <>
+      <Dialog open={openEditDialog} fullWidth maxWidth='md' fullScreen={belowLargeScreen}>
+        <DepartmentsProvider>
+          <EmployeeForm
+            employee={employee ?? undefined}
+            setOpenDialog={(v) => {
+              setOpenEditDialog(v);
+              if (!v) reFetchEmployee();
+            }}
+          />
+        </DepartmentsProvider>
+      </Dialog>
 
-          {renderTabContent}
-        </Stack>
-      </Card>
-    </JumboContentLayout>
+      <JumboContentLayout
+        header={
+          <Stack direction='row' alignItems='flex-start' spacing={2} flexWrap='wrap'>
+            <Avatar sx={{ width: 64, height: 64, bgcolor: 'primary.main', fontSize: 24 }}>
+              {employee?.first_name?.[0] ?? '?'}
+            </Avatar>
+            <Stack flex={1} spacing={0.25}>
+              <Typography variant='h4'>{fullName}</Typography>
+              <Typography variant='body2' color='text.secondary'>
+                {employee?.employee_number}
+                {employee?.department?.name ? ` · ${employee.department.name}` : ''}
+                {employee?.active_contract?.designation?.title
+                  ? ` · ${employee.active_contract.designation.title}`
+                  : ''}
+              </Typography>
+              <Stack direction='row' spacing={1} alignItems='center' mt={0.5}>
+                {empTypeBadge && (
+                  <Chip label={empTypeBadge} size='small' color='primary' variant='outlined' />
+                )}
+                {employee?.join_date && (
+                  <Typography variant='body2' color='text.secondary'>
+                    Joined {readableDate(employee.join_date, false)}
+                  </Typography>
+                )}
+              </Stack>
+            </Stack>
+            <Stack direction='row' spacing={1}>
+              <Tooltip title='Edit Employee'>
+                <Button
+                  size='small'
+                  variant='outlined'
+                  startIcon={<EditOutlined />}
+                  onClick={() => setOpenEditDialog(true)}
+                >
+                  Edit
+                </Button>
+              </Tooltip>
+              <Tooltip title='Delete Employee'>
+                <Button
+                  size='small'
+                  variant='outlined'
+                  color='error'
+                  onClick={handleDelete}
+                >
+                  Delete
+                </Button>
+              </Tooltip>
+            </Stack>
+          </Stack>
+        }
+      >
+        <Card sx={{ height: '100%', p: 1 }}>
+          <Stack spacing={1}>
+            <Tabs
+              value={activeTab}
+              onChange={handleTabChange}
+              variant='scrollable'
+              scrollButtons='auto'
+              allowScrollButtonsMobile
+            >
+              <Tab label='Personal Info' value='personalInfo' />
+              <Tab label='Contracts' value='contracts' />
+              <Tab label='Bank Accounts' value='bankAccounts' />
+              <Tab label='Next of Kin' value='nextOfKin' />
+              <Tab label='Allowances' value='allowances' />
+              <Tab label='Deductions' value='deductions' />
+              <Tab label='Leave' value='leave' />
+            </Tabs>
+
+            {renderTabContent}
+          </Stack>
+        </Card>
+      </JumboContentLayout>
+    </>
   );
 }
 
