@@ -100,7 +100,7 @@ const PayrollRuns = () => {
       <Typography variant={'h4'} mb={2}>
         Payroll Runs
       </Typography>
-      <Grid container spacing={2} mb={2} justifyContent='center'>
+      <Grid container spacing={2} mb={2} mt={2} justifyContent='center'>
         <Grid size={{ xs: 12, md: 4 }}>
           <Autocomplete
             size='small'

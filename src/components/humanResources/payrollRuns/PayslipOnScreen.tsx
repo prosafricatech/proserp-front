@@ -3,8 +3,6 @@
 import React from 'react';
 import {
   Box,
-  Card,
-  CardContent,
   Divider,
   Paper,
   Table,
@@ -17,6 +15,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
+import { getPayslipCalculations } from './payslipCalculations';
 
 interface PayrollRun {
   id: string;
@@ -60,13 +59,17 @@ const PayslipOnScreen: React.FC<PayslipOnScreenProps> = ({ payrollRun }) => {
         .join(' ')
     : '';
 
-  const gross = payrollRun?.basic_salary ?? 0;
-  const paye = payrollRun?.paye ?? 0;
-  const net = gross - paye;
-
-  const earningsRows = [{ label: 'Basic Salary', value: gross }];
-
-  const deductionsRows = [{ label: 'PAYE Tax', value: paye }];
+  const {
+    paye,
+    earningsRows,
+    deductionRows,
+    grossSalary,
+    preTaxDeductions,
+    taxableIncome,
+    otherDeductions,
+    totalDeductions,
+    netSalary,
+  } = getPayslipCalculations(payrollRun);
 
   return (
     <Box sx={{ p: 3 }}>
@@ -100,10 +103,13 @@ const PayslipOnScreen: React.FC<PayslipOnScreenProps> = ({ payrollRun }) => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {earningsRows.map(({ label, value }) => (
+            {earningsRows.map(({ label, amount, taxable }) => (
               <TableRow key={label}>
-                <TableCell>{label}</TableCell>
-                <TableCell align="right">{fmt(value)}</TableCell>
+                <TableCell>
+                  {label}
+                  {!taxable && ' (non-taxable)'}
+                </TableCell>
+                <TableCell align="right">{fmt(amount)}</TableCell>
               </TableRow>
             ))}
             <TableRow
@@ -113,7 +119,7 @@ const PayslipOnScreen: React.FC<PayslipOnScreenProps> = ({ payrollRun }) => {
             >
               <TableCell sx={{ fontWeight: 700 }}>Total Earnings</TableCell>
               <TableCell align="right" sx={{ fontWeight: 700 }}>
-                {fmt(gross)}
+                {fmt(grossSalary)}
               </TableCell>
             </TableRow>
           </TableBody>
@@ -131,16 +137,23 @@ const PayslipOnScreen: React.FC<PayslipOnScreenProps> = ({ payrollRun }) => {
           <TableHead>
             <TableRow sx={{ backgroundColor: mainColor }}>
               <TableCell sx={{ color: 'white', fontWeight: 600 }}>Description</TableCell>
+              <TableCell sx={{ color: 'white', fontWeight: 600 }}>Category</TableCell>
               <TableCell align="right" sx={{ color: 'white', fontWeight: 600 }}>
                 Amount
               </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {deductionsRows.map(({ label, value }) => (
-              <TableRow key={label}>
+            <TableRow>
+              <TableCell>PAYE</TableCell>
+              <TableCell>Tax</TableCell>
+              <TableCell align="right">{fmt(paye)}</TableCell>
+            </TableRow>
+            {deductionRows.map(({ label, category, amount }) => (
+              <TableRow key={`${label}-${category}`}>
                 <TableCell>{label}</TableCell>
-                <TableCell align="right">{fmt(value)}</TableCell>
+                <TableCell sx={{ textTransform: 'capitalize' }}>{category}</TableCell>
+                <TableCell align="right">{fmt(amount)}</TableCell>
               </TableRow>
             ))}
             <TableRow
@@ -149,8 +162,9 @@ const PayslipOnScreen: React.FC<PayslipOnScreenProps> = ({ payrollRun }) => {
               }}
             >
               <TableCell sx={{ fontWeight: 700 }}>Total Deductions</TableCell>
+              <TableCell />
               <TableCell align="right" sx={{ fontWeight: 700 }}>
-                {fmt(paye)}
+                {fmt(totalDeductions)}
               </TableCell>
             </TableRow>
           </TableBody>
@@ -159,17 +173,37 @@ const PayslipOnScreen: React.FC<PayslipOnScreenProps> = ({ payrollRun }) => {
 
       <Divider sx={{ my: 2 }} />
 
-      {/* Net Pay */}
+      {/* Net Pay Summary */}
       <TableContainer component={Paper}>
         <Table size="small">
-          <TableHead>
+          <TableBody>
+            <TableRow>
+              <TableCell>Gross Salary</TableCell>
+              <TableCell align="right">{fmt(grossSalary)}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>Pre-Tax Deductions</TableCell>
+              <TableCell align="right">- {fmt(preTaxDeductions)}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>Taxable Income</TableCell>
+              <TableCell align="right">{fmt(taxableIncome)}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>PAYE</TableCell>
+              <TableCell align="right">- {fmt(paye)}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>Other Deductions</TableCell>
+              <TableCell align="right">- {fmt(otherDeductions)}</TableCell>
+            </TableRow>
             <TableRow sx={{ backgroundColor: mainColor }}>
-              <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '1rem' }}>Net Pay</TableCell>
+              <TableCell sx={{ color: 'white', fontWeight: 700, fontSize: '1rem' }}>Net Salary</TableCell>
               <TableCell align="right" sx={{ color: 'white', fontWeight: 700, fontSize: '1rem' }}>
-                {fmt(net)}
+                {fmt(netSalary)}
               </TableCell>
             </TableRow>
-          </TableHead>
+          </TableBody>
         </Table>
       </TableContainer>
     </Box>

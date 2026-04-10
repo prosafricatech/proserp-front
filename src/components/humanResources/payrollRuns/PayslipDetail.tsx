@@ -4,6 +4,7 @@ import JumboContentLayout from '@jumbo/components/JumboContentLayout';
 import { ArrowBackOutlined } from '@mui/icons-material';
 import {
   Box,
+  Button,
   Card,
   CardContent,
   Chip,
@@ -14,6 +15,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableHead,
   TableRow,
   Tooltip,
   Typography,
@@ -24,6 +26,7 @@ import { useSnackbar } from 'notistack';
 import { LoadingButton } from '@mui/lab';
 import { useLanguage } from '@/app/[lang]/contexts/LanguageContext';
 import humanResourcesServices from '../humanResourcesServices';
+import { getPayslipCalculations } from './payslipCalculations';
 
 function fmt(value: number) {
   return value.toLocaleString(undefined, {
@@ -67,17 +70,17 @@ export default function PayslipDetail() {
     ? [run.employee?.first_name, run.employee?.last_name].filter(Boolean).join(' ')
     : '';
 
-  const gross = run?.basic_salary ?? 0;
-  const paye = run?.paye ?? 0;
-  const net = gross - paye;
-
-  const earningsRows = [
-    { label: 'Basic Salary', value: gross },
-  ];
-
-  const deductionsRows = [
-    { label: 'PAYE Tax', value: paye },
-  ];
+  const {
+    paye,
+    earningsRows,
+    deductionRows,
+    grossSalary,
+    preTaxDeductions,
+    taxableIncome,
+    otherDeductions,
+    totalDeductions,
+    netSalary,
+  } = getPayslipCalculations(run);
 
   if (isLoading) {
     return (
@@ -125,27 +128,44 @@ export default function PayslipDetail() {
               Finalize
             </LoadingButton>
           )}
+          <Button
+            variant='outlined'
+            color='primary'
+            size='small'
+            onClick={() => window.print()}
+          >
+            Print / Export
+          </Button>
         </Stack>
       }
     >
-      <Card sx={{ maxWidth: 640 }}>
+      <Card sx={{ maxWidth: 900 }}>
         <CardContent>
           {/* Earnings */}
           <Typography variant='h6' gutterBottom>
             Earnings
           </Typography>
           <Table size='small'>
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 600 }}>Description</TableCell>
+                <TableCell align='right' sx={{ fontWeight: 600 }}>Amount</TableCell>
+              </TableRow>
+            </TableHead>
             <TableBody>
-              {earningsRows.map(({ label, value }) => (
+              {earningsRows.map(({ label, amount, taxable }) => (
                 <TableRow key={label}>
-                  <TableCell>{label}</TableCell>
-                  <TableCell align='right'>{fmt(value)}</TableCell>
+                  <TableCell>
+                    {label}
+                    {!taxable && ' (non-taxable)'}
+                  </TableCell>
+                  <TableCell align='right'>{fmt(amount)}</TableCell>
                 </TableRow>
               ))}
               <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>Total Earnings</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>Gross Salary</TableCell>
                 <TableCell align='right' sx={{ fontWeight: 600 }}>
-                  {fmt(gross)}
+                  {fmt(grossSalary)}
                 </TableCell>
               </TableRow>
             </TableBody>
@@ -158,17 +178,31 @@ export default function PayslipDetail() {
             Deductions
           </Typography>
           <Table size='small'>
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 600 }}>Description</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>Category</TableCell>
+                <TableCell align='right' sx={{ fontWeight: 600 }}>Amount</TableCell>
+              </TableRow>
+            </TableHead>
             <TableBody>
-              {deductionsRows.map(({ label, value }) => (
-                <TableRow key={label}>
+              <TableRow>
+                <TableCell>PAYE</TableCell>
+                <TableCell>Tax</TableCell>
+                <TableCell align='right'>{fmt(paye)}</TableCell>
+              </TableRow>
+              {deductionRows.map(({ label, category, amount }) => (
+                <TableRow key={`${label}-${category}`}>
                   <TableCell>{label}</TableCell>
-                  <TableCell align='right'>{fmt(value)}</TableCell>
+                  <TableCell sx={{ textTransform: 'capitalize' }}>{category}</TableCell>
+                  <TableCell align='right'>{fmt(amount)}</TableCell>
                 </TableRow>
               ))}
               <TableRow>
                 <TableCell sx={{ fontWeight: 600 }}>Total Deductions</TableCell>
+                <TableCell />
                 <TableCell align='right' sx={{ fontWeight: 600 }}>
-                  {fmt(paye)}
+                  {fmt(totalDeductions)}
                 </TableCell>
               </TableRow>
             </TableBody>
@@ -176,13 +210,36 @@ export default function PayslipDetail() {
 
           <Divider sx={{ my: 2 }} />
 
-          {/* Net */}
+          {/* Net Summary */}
+          <Typography variant='h6' gutterBottom>
+            Net Pay Summary
+          </Typography>
           <Table size='small'>
             <TableBody>
               <TableRow>
-                <TableCell sx={{ fontWeight: 700, fontSize: '1rem' }}>Net Pay</TableCell>
+                <TableCell>Gross Salary</TableCell>
+                <TableCell align='right'>{fmt(grossSalary)}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>Pre-Tax Deductions</TableCell>
+                <TableCell align='right'>- {fmt(preTaxDeductions)}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>Taxable Income</TableCell>
+                <TableCell align='right'>{fmt(taxableIncome)}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>PAYE</TableCell>
+                <TableCell align='right'>- {fmt(paye)}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell>Other Deductions</TableCell>
+                <TableCell align='right'>- {fmt(otherDeductions)}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 700, fontSize: '1rem' }}>Net Salary</TableCell>
                 <TableCell align='right' sx={{ fontWeight: 700, fontSize: '1rem' }}>
-                  {fmt(net)}
+                  {fmt(netSalary)}
                 </TableCell>
               </TableRow>
             </TableBody>

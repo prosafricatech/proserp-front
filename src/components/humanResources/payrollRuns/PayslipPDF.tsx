@@ -6,6 +6,7 @@ import pdfStyles from '@/components/pdf/pdf-styles';
 import PageFooter from '@/components/pdf/PageFooter';
 import PdfLogo from '@/components/pdf/PdfLogo';
 import { Organization } from '@/types/auth-types';
+import { getPayslipCalculations } from './payslipCalculations';
 
 interface PayrollRun {
   id: string;
@@ -52,9 +53,17 @@ const PayslipPDF: React.FC<PayslipPDFProps> = ({ payrollRun, organization }) => 
         .join(' ')
     : 'Unknown Employee';
 
-  const gross = payrollRun?.basic_salary ?? 0;
-  const paye = payrollRun?.paye ?? 0;
-  const net = gross - paye;
+  const {
+    paye,
+    earningsRows,
+    deductionRows,
+    grossSalary,
+    preTaxDeductions,
+    taxableIncome,
+    otherDeductions,
+    totalDeductions,
+    netSalary,
+  } = getPayslipCalculations(payrollRun);
 
   return (
     <Document
@@ -129,10 +138,17 @@ const PayslipPDF: React.FC<PayslipPDFProps> = ({ payrollRun, organization }) => 
             </Text>
           </View>
 
-          <View style={pdfStyles.tableRow}>
-            <Text style={{ ...pdfStyles.tableCell, flex: 2 }}>Basic Salary</Text>
-            <Text style={{ ...pdfStyles.tableCell, flex: 1, textAlign: 'right' }}>{fmt(gross)}</Text>
-          </View>
+          {earningsRows.map((row) => (
+            <View style={pdfStyles.tableRow} key={row.label}>
+              <Text style={{ ...pdfStyles.tableCell, flex: 2 }}>
+                {row.label}
+                {!row.taxable ? ' (non-taxable)' : ''}
+              </Text>
+              <Text style={{ ...pdfStyles.tableCell, flex: 1, textAlign: 'right' }}>
+                {fmt(row.amount)}
+              </Text>
+            </View>
+          ))}
 
           <View
             style={{
@@ -147,7 +163,7 @@ const PayslipPDF: React.FC<PayslipPDFProps> = ({ payrollRun, organization }) => 
                 fontWeight: 'bold',
               }}
             >
-              Total Earnings
+              Gross Salary
             </Text>
             <Text
               style={{
@@ -157,7 +173,7 @@ const PayslipPDF: React.FC<PayslipPDFProps> = ({ payrollRun, organization }) => 
                 fontWeight: 'bold',
               }}
             >
-              {fmt(gross)}
+              {fmt(grossSalary)}
             </Text>
           </View>
         </View>
@@ -186,14 +202,35 @@ const PayslipPDF: React.FC<PayslipPDFProps> = ({ payrollRun, organization }) => 
                 flex: 1,
               }}
             >
+              Category
+            </Text>
+            <Text
+              style={{
+                ...pdfStyles.tableHeader,
+                backgroundColor: mainColor,
+                color: contrastText,
+                flex: 1,
+              }}
+            >
               Amount
             </Text>
           </View>
 
           <View style={pdfStyles.tableRow}>
-            <Text style={{ ...pdfStyles.tableCell, flex: 2 }}>PAYE Tax</Text>
+            <Text style={{ ...pdfStyles.tableCell, flex: 2 }}>PAYE</Text>
+            <Text style={{ ...pdfStyles.tableCell, flex: 1 }}>Tax</Text>
             <Text style={{ ...pdfStyles.tableCell, flex: 1, textAlign: 'right' }}>{fmt(paye)}</Text>
           </View>
+
+          {deductionRows.map((row) => (
+            <View style={pdfStyles.tableRow} key={`${row.label}-${row.category}`}>
+              <Text style={{ ...pdfStyles.tableCell, flex: 2 }}>{row.label}</Text>
+              <Text style={{ ...pdfStyles.tableCell, flex: 1 }}>{row.category}</Text>
+              <Text style={{ ...pdfStyles.tableCell, flex: 1, textAlign: 'right' }}>
+                {fmt(row.amount)}
+              </Text>
+            </View>
+          ))}
 
           <View
             style={{
@@ -214,17 +251,45 @@ const PayslipPDF: React.FC<PayslipPDFProps> = ({ payrollRun, organization }) => 
               style={{
                 ...pdfStyles.tableCell,
                 flex: 1,
+              }}
+            >
+              
+            </Text>
+            <Text
+              style={{
+                ...pdfStyles.tableCell,
+                flex: 1,
                 textAlign: 'right',
                 fontWeight: 'bold',
               }}
             >
-              {fmt(paye)}
+              {fmt(totalDeductions)}
             </Text>
           </View>
         </View>
 
-        {/* Net Pay Section */}
+        {/* Net Pay Summary */}
         <View style={{ marginTop: 15 }}>
+          <View style={pdfStyles.tableRow}>
+            <Text style={{ ...pdfStyles.tableCell, flex: 2 }}>Gross Salary</Text>
+            <Text style={{ ...pdfStyles.tableCell, flex: 1, textAlign: 'right' }}>{fmt(grossSalary)}</Text>
+          </View>
+          <View style={pdfStyles.tableRow}>
+            <Text style={{ ...pdfStyles.tableCell, flex: 2 }}>Pre-Tax Deductions</Text>
+            <Text style={{ ...pdfStyles.tableCell, flex: 1, textAlign: 'right' }}>- {fmt(preTaxDeductions)}</Text>
+          </View>
+          <View style={pdfStyles.tableRow}>
+            <Text style={{ ...pdfStyles.tableCell, flex: 2 }}>Taxable Income</Text>
+            <Text style={{ ...pdfStyles.tableCell, flex: 1, textAlign: 'right' }}>{fmt(taxableIncome)}</Text>
+          </View>
+          <View style={pdfStyles.tableRow}>
+            <Text style={{ ...pdfStyles.tableCell, flex: 2 }}>PAYE</Text>
+            <Text style={{ ...pdfStyles.tableCell, flex: 1, textAlign: 'right' }}>- {fmt(paye)}</Text>
+          </View>
+          <View style={pdfStyles.tableRow}>
+            <Text style={{ ...pdfStyles.tableCell, flex: 2 }}>Other Deductions</Text>
+            <Text style={{ ...pdfStyles.tableCell, flex: 1, textAlign: 'right' }}>- {fmt(otherDeductions)}</Text>
+          </View>
           <View
             style={{
               ...pdfStyles.tableRow,
@@ -239,7 +304,7 @@ const PayslipPDF: React.FC<PayslipPDFProps> = ({ payrollRun, organization }) => 
                 flex: 1,
               }}
             >
-              NET PAY
+              NET SALARY
             </Text>
             <Text
               style={{
@@ -249,7 +314,7 @@ const PayslipPDF: React.FC<PayslipPDFProps> = ({ payrollRun, organization }) => 
                 textAlign: 'right',
               }}
             >
-              {fmt(net)}
+              {fmt(netSalary)}
             </Text>
           </View>
         </View>
