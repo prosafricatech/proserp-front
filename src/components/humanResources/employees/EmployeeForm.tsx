@@ -59,13 +59,6 @@ const EmployeeForm = ({
   const [departmentsData, setDepartmentsData] = useState<Department[] | []>([]);
   const [selectedDpt, setSelectedDpt] = useState<Department | null>(null);
 
-  useEffect(() => {
-    if (departments?.data.length) {
-      setDepartmentsData(departments.data);
-      setSelectedDpt(departments.data[0]);
-    }
-  }, [departments, isFetching]);
-
   const genderOptions = [
     { label: 'Male', value: 'male' },
     { label: 'Female', value: 'female' },
@@ -82,6 +75,28 @@ const EmployeeForm = ({
   const [employeeGender, setEmployeeGender] = useState(genderOptions[0]);
   const [selectedemploymentType, setSelectedEmploymentType] =
     useState<empTypesOpt | null>(null);
+  const normalizedDateOfBirth = employee?.date_of_birth
+    ? dayjs(employee.date_of_birth).format('YYYY-MM-DD')
+    : '';
+  const normalizedJoinDate = employee?.join_date
+    ? dayjs(employee.join_date).format('YYYY-MM-DD')
+    : '';
+
+  useEffect(() => {
+    if (departments?.data.length) {
+      setDepartmentsData(departments.data);
+
+      if (employee?.department_id) {
+        setSelectedDpt(
+          departments.data.find(
+            (department: Department) => department.id === employee.department_id
+          ) ?? null
+        );
+      } else {
+        setSelectedDpt(null);
+      }
+    }
+  }, [departments, isFetching, employee?.department_id]);
 
   useEffect(() => {
     setValue('gender', employeeGender.value);
@@ -169,29 +184,61 @@ const EmployeeForm = ({
   const {
     register,
     handleSubmit,
+    reset,
     setValue,
-    getValues,
     control,
     formState: { errors },
   } = useForm<FormData>({
     resolver: yupResolver(validationSchema) as any,
     defaultValues: {
+      employee_number: '',
+      first_name: '',
+      middle_name: '',
+      last_name: '',
+      gender: employeeGender.value,
+      email: '',
+      phone_number: '',
+      address: '',
+      date_of_birth: '',
+      national_id: '',
+      passport_number: '',
+      department_id: undefined,
+      employment_type: '',
+      join_date: '',
+    },
+  });
+
+  useEffect(() => {
+    const resolvedGender =
+      genderOptions.find((option) => option.value === employee?.gender) ??
+      genderOptions[0];
+    const resolvedEmploymentType =
+      employmentTypesOptions.find(
+        (option) => option.value === employee?.employment_type
+      ) ?? null;
+
+    setEmployeeGender(resolvedGender);
+    setSelectedEmploymentType(resolvedEmploymentType);
+    setEmployeeDoB(normalizedDateOfBirth || undefined);
+    setJoinDate(normalizedJoinDate || undefined);
+
+    reset({
       employee_number: employee?.employee_number || '',
       first_name: employee?.first_name || '',
       middle_name: employee?.middle_name || '',
       last_name: employee?.last_name || '',
-      gender: employee?.gender || employeeGender.value,
+      gender: resolvedGender.value,
       email: employee?.email || '',
       phone_number: employee?.phone_number || '',
       address: employee?.address || '',
-      date_of_birth: employee?.date_of_birth || employeeDoB,
+      date_of_birth: normalizedDateOfBirth,
       national_id: employee?.national_id || '',
       passport_number: employee?.passport_number || '',
       department_id: employee?.department_id || undefined,
-      employment_type: employee?.employment_type || '',
-      join_date: employee?.join_date || '',
-    },
-  });
+      employment_type: resolvedEmploymentType?.value || '',
+      join_date: normalizedJoinDate,
+    });
+  }, [employee, normalizedDateOfBirth, normalizedJoinDate, reset]);
 
   const onSubmit = (data: FormData) => {
     // saveMutation?.(data);
@@ -379,17 +426,16 @@ const EmployeeForm = ({
                     <DatePicker
                       label='Date of Birth'
                       {...field}
-                      value={
-                        employeeDoB !== undefined
-                          ? dayjs(employeeDoB)
-                          : undefined
-                      }
+                      value={employeeDoB ? dayjs(employeeDoB) : null}
                       onChange={(value: Dayjs | null) => {
                         if (value) {
                           const formatted = value.format('YYYY-MM-DD');
 
                           setEmployeeDoB(formatted);
                           field.onChange(formatted);
+                        } else {
+                          setEmployeeDoB(undefined);
+                          field.onChange('');
                         }
                       }}
                       slotProps={{
@@ -555,15 +601,16 @@ const EmployeeForm = ({
                     <DatePicker
                       label='Join Date'
                       {...field}
-                      value={
-                        joinDate !== undefined ? dayjs(joinDate) : undefined
-                      }
+                      value={joinDate ? dayjs(joinDate) : null}
                       onChange={(value: Dayjs | null) => {
                         if (value) {
                           const formatted = value.format('YYYY-MM-DD');
 
                           setJoinDate(formatted);
                           field.onChange(formatted);
+                        } else {
+                          setJoinDate(undefined);
+                          field.onChange('');
                         }
                       }}
                       slotProps={{

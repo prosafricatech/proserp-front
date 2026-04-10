@@ -19,6 +19,7 @@ import { Employee } from './EmployeesType';
 
 const EmployeeItemAction = ({ employee }: { employee: Employee }) => {
   const [openEditDialog, setOpenEditDialog] = useState(false);
+  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const { showDialog, hideDialog } = useJumboDialog();
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
@@ -41,6 +42,19 @@ const EmployeeItemAction = ({ employee }: { employee: Employee }) => {
     },
   });
 
+  const { mutate: fetchEmployeeForEdit } = useMutation({
+    mutationFn: (id: number) => humanResourcesServices.showEmployee(id),
+    onSuccess: (fullEmployee: Employee) => {
+      setEditingEmployee(fullEmployee);
+      setOpenEditDialog(true);
+    },
+    onError: () => {
+      enqueueSnackbar('Error loading employee details', {
+        variant: 'error',
+      });
+    },
+  });
+
   const menuItems = [
     {
       icon: <EditOutlined />,
@@ -57,7 +71,7 @@ const EmployeeItemAction = ({ employee }: { employee: Employee }) => {
   const handleItemAction = (menuItem: MenuItemProps) => {
     switch (menuItem.action) {
       case 'edit':
-        setOpenEditDialog(true);
+        fetchEmployeeForEdit(employee.id);
         break;
       case 'delete':
         showDialog({
@@ -84,7 +98,16 @@ const EmployeeItemAction = ({ employee }: { employee: Employee }) => {
         fullScreen={belowLargeScreen}
       >
         <DepartmentsProvider>
-          <EmployeeForm setOpenDialog={setOpenEditDialog} employee={employee} />
+          <EmployeeForm
+            setOpenDialog={(v) => {
+              setOpenEditDialog(v);
+              if (!v) {
+                setEditingEmployee(null);
+                queryClient.invalidateQueries({ queryKey: ['employees'] });
+              }
+            }}
+            employee={editingEmployee ?? employee}
+          />
         </DepartmentsProvider>
       </Dialog>
       <JumboDdMenu

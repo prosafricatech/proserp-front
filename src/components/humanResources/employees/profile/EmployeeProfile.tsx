@@ -4,10 +4,10 @@ import JumboContentLayout from '@jumbo/components/JumboContentLayout';
 import { EditOutlined } from '@mui/icons-material';
 import {
   Avatar,
-  Box,
   Button,
   Card,
   Chip,
+  CircularProgress,
   Dialog,
   Skeleton,
   Stack,
@@ -29,6 +29,7 @@ import { EmployeesProvider } from '../EmployeesProvider';
 import { DesignationsProvider } from '../../designations/DesignationsProvider';
 import { DepartmentsProvider } from '../../departments/DepartmentsProvider';
 import EmployeeProfileProvider, { useEmployeeProfile } from './EmployeeProfileProvider';
+import PersonalInfoTab from './PersonalInfoTab';
 import EmployeesContracts from './employeesContracts/EmployeesContracts';
 import EmployeeBankAccounts from './employeeBankAccounts/EmployeeBankAccounts';
 import NextOfKins from './nextOfKins/NextOfKins';
@@ -37,6 +38,7 @@ import EmployeeDeductions from './employeeDeductions/EmployeeDeductions';
 import EmployeeLeaveTab from './EmployeeLeaveTab';
 import EmployeeForm from '../EmployeeForm';
 import humanResourcesServices from '../../humanResourcesServices';
+import { Employee } from '../EmployeesType';
 
 type TabKey =
   | 'personalInfo'
@@ -66,47 +68,10 @@ const formatEmploymentType = (employmentType?: string | null) => {
     .join(' ');
 };
 
-function PersonalInfoTab() {
-  const { employee } = useEmployeeProfile();
-  if (!employee) return null;
-
-  const rows: { label: string; value?: string | null }[] = [
-    { label: 'First Name', value: employee.first_name },
-    { label: 'Middle Name', value: employee.middle_name },
-    { label: 'Last Name', value: employee.last_name },
-    { label: 'Gender', value: employee.gender },
-    {
-      label: 'Date of Birth',
-      value: employee.date_of_birth ? readableDate(employee.date_of_birth, false) : undefined,
-    },
-    { label: 'National ID', value: employee.national_id },
-    { label: 'Passport Number', value: employee.passport_number },
-    { label: 'Phone Number', value: employee.phone_number },
-    { label: 'Email', value: employee.email },
-    { label: 'Address', value: employee.address },
-    { label: 'Department', value: employee.department?.name },
-    { label: 'Employment Type', value: formatEmploymentType(employee.employment_type) },
-    {
-      label: 'Join Date',
-      value: employee.join_date ? readableDate(employee.join_date, false) : undefined,
-    },
-  ];
-
-  return (
-    <Stack spacing={1} sx={{ mt: 1 }}>
-      {rows.map(({ label, value }) => (
-        <Box key={label} display='flex' gap={2}>
-          <Typography variant='body2' color='text.secondary' minWidth={160}>{label}:</Typography>
-          <Typography variant='body2'>{value || '—'}</Typography>
-        </Box>
-      ))}
-    </Stack>
-  );
-}
-
 function ProfileContent() {
   const { employee, reFetchEmployee } = useEmployeeProfile();
   const [openEditDialog, setOpenEditDialog] = useState(false);
+  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const { showDialog, hideDialog } = useJumboDialog();
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
@@ -141,6 +106,17 @@ function ProfileContent() {
     },
   });
 
+  const { mutate: fetchEmployeeForEdit, isPending: isLoadingEditEmployee } = useMutation({
+    mutationFn: (id: number) => humanResourcesServices.showEmployee(id),
+    onSuccess: (fullEmployee: Employee) => {
+      setEditingEmployee(fullEmployee);
+      setOpenEditDialog(true);
+    },
+    onError: () => {
+      enqueueSnackbar('Error loading employee details', { variant: 'error' });
+    },
+  });
+
   const handleTabChange = (_: React.SyntheticEvent, newValue: TabKey) => {
     setActiveTab(newValue);
   };
@@ -157,6 +133,11 @@ function ProfileContent() {
       onNo: () => hideDialog(),
       variant: 'confirm',
     });
+  };
+
+  const handleEdit = () => {
+    if (!employee?.id) return;
+    fetchEmployeeForEdit(employee.id);
   };
 
   const employeeId = employee?.id;
@@ -207,10 +188,13 @@ function ProfileContent() {
       <Dialog open={openEditDialog} fullWidth maxWidth='md' fullScreen={belowLargeScreen}>
         <DepartmentsProvider>
           <EmployeeForm
-            employee={employee ?? undefined}
+            employee={editingEmployee ?? employee ?? undefined}
             setOpenDialog={(v) => {
               setOpenEditDialog(v);
-              if (!v) reFetchEmployee();
+              if (!v) {
+                setEditingEmployee(null);
+                reFetchEmployee();
+              }
             }}
           />
         </DepartmentsProvider>
@@ -247,8 +231,11 @@ function ProfileContent() {
                 <Button
                   size='small'
                   variant='outlined'
-                  startIcon={<EditOutlined />}
-                  onClick={() => setOpenEditDialog(true)}
+                  startIcon={
+                    isLoadingEditEmployee ? <CircularProgress size={16} /> : <EditOutlined />
+                  }
+                  disabled={isLoadingEditEmployee}
+                  onClick={handleEdit}
                 >
                   Edit
                 </Button>
