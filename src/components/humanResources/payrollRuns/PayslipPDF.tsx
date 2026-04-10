@@ -108,8 +108,6 @@ const PayslipPDF: React.FC<PayslipPDFProps> = ({ payrollRun, organization }) => 
           )}
         </View>
 
-        <View style={{ height: 1, backgroundColor: lightColor, marginBottom: 15 }} />
-
         {/* Earnings Section */}
         <Text style={{ ...pdfStyles.majorInfo, color: mainColor, marginBottom: 8 }}>
           EARNINGS
