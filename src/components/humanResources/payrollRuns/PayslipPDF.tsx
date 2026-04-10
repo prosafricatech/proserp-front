@@ -42,6 +42,14 @@ function fmt(value: number) {
   });
 }
 
+function fmtStatus(value?: string) {
+  if (!value) return '-';
+  return value
+    .split('_')
+    .join(' ')
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
 const PayslipPDF: React.FC<PayslipPDFProps> = ({ payrollRun, organization }) => {
   const mainColor = organization.settings?.main_color || '#2113AD';
   const lightColor = organization.settings?.light_color || '#bec5da';
@@ -64,6 +72,29 @@ const PayslipPDF: React.FC<PayslipPDFProps> = ({ payrollRun, organization }) => 
     totalDeductions,
     netSalary,
   } = getPayslipCalculations(payrollRun);
+
+  const netPaySummaryRows = [
+    { label: 'Gross Salary', amount: fmt(grossSalary) },
+    { label: 'Pre-Tax Deductions', amount: `- ${fmt(preTaxDeductions)}` },
+    { label: 'Taxable Income', amount: fmt(taxableIncome) },
+    { label: 'PAYE', amount: `- ${fmt(paye)}` },
+    { label: 'Other Deductions', amount: `- ${fmt(otherDeductions)}` },
+    { label: 'Net Salary', amount: fmt(netSalary), isTotal: true },
+  ];
+
+  const deductionTableRows = [
+    { label: 'PAYE', category: 'Tax', amount: fmt(paye) },
+    ...deductionRows.map((row) => ({
+      label: row.label,
+      category: row.category,
+      amount: fmt(row.amount),
+    })),
+  ];
+
+  const getRowColors = (index: number) => ({
+    backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
+    color: '#111111',
+  });
 
   return (
     <Document
@@ -109,7 +140,7 @@ const PayslipPDF: React.FC<PayslipPDFProps> = ({ payrollRun, organization }) => 
         </View>
 
         {/* Earnings Section */}
-        <Text style={{ ...pdfStyles.majorInfo, color: mainColor, marginBottom: 8 }}>
+        <Text style={{ ...pdfStyles.majorInfo, color: mainColor, marginBottom: 0, textAlign: 'center' }}>
           EARNINGS
         </Text>
         <View style={pdfStyles.table}>
@@ -136,22 +167,24 @@ const PayslipPDF: React.FC<PayslipPDFProps> = ({ payrollRun, organization }) => 
             </Text>
           </View>
 
-          {earningsRows.map((row) => (
+          {earningsRows.map((row, index) => {
+            const { backgroundColor, color } = getRowColors(index);
+            return (
             <View style={pdfStyles.tableRow} key={row.label}>
-              <Text style={{ ...pdfStyles.tableCell, flex: 2 }}>
+              <Text style={{ ...pdfStyles.tableCell, flex: 2, backgroundColor, color }}>
                 {row.label}
                 {!row.taxable ? ' (non-taxable)' : ''}
               </Text>
-              <Text style={{ ...pdfStyles.tableCell, flex: 1, textAlign: 'right' }}>
+              <Text style={{ ...pdfStyles.tableCell, flex: 1, textAlign: 'right', backgroundColor, color }}>
                 {fmt(row.amount)}
               </Text>
             </View>
-          ))}
+          )})}
 
           <View
             style={{
               ...pdfStyles.tableRow,
-              backgroundColor: lightColor,
+              backgroundColor: mainColor,
             }}
           >
             <Text
@@ -159,6 +192,7 @@ const PayslipPDF: React.FC<PayslipPDFProps> = ({ payrollRun, organization }) => 
                 ...pdfStyles.tableCell,
                 flex: 2,
                 fontWeight: 'bold',
+                color: contrastText,
               }}
             >
               Gross Salary
@@ -169,6 +203,7 @@ const PayslipPDF: React.FC<PayslipPDFProps> = ({ payrollRun, organization }) => 
                 flex: 1,
                 textAlign: 'right',
                 fontWeight: 'bold',
+                color: contrastText,
               }}
             >
               {fmt(grossSalary)}
@@ -177,7 +212,7 @@ const PayslipPDF: React.FC<PayslipPDFProps> = ({ payrollRun, organization }) => 
         </View>
 
         {/* Deductions Section */}
-        <Text style={{ ...pdfStyles.majorInfo, color: mainColor, marginTop: 15, marginBottom: 8 }}>
+        <Text style={{ ...pdfStyles.majorInfo, color: mainColor, marginTop: 15, marginBottom: 0, textAlign: 'center' }}>
           DEDUCTIONS
         </Text>
         <View style={pdfStyles.table}>
@@ -214,26 +249,23 @@ const PayslipPDF: React.FC<PayslipPDFProps> = ({ payrollRun, organization }) => 
             </Text>
           </View>
 
-          <View style={pdfStyles.tableRow}>
-            <Text style={{ ...pdfStyles.tableCell, flex: 2 }}>PAYE</Text>
-            <Text style={{ ...pdfStyles.tableCell, flex: 1 }}>Tax</Text>
-            <Text style={{ ...pdfStyles.tableCell, flex: 1, textAlign: 'right' }}>{fmt(paye)}</Text>
-          </View>
-
-          {deductionRows.map((row) => (
-            <View style={pdfStyles.tableRow} key={`${row.label}-${row.category}`}>
-              <Text style={{ ...pdfStyles.tableCell, flex: 2 }}>{row.label}</Text>
-              <Text style={{ ...pdfStyles.tableCell, flex: 1 }}>{row.category}</Text>
-              <Text style={{ ...pdfStyles.tableCell, flex: 1, textAlign: 'right' }}>
-                {fmt(row.amount)}
-              </Text>
-            </View>
-          ))}
+          {deductionTableRows.map((row, index) => {
+            const { backgroundColor, color } = getRowColors(index);
+            return (
+              <View style={pdfStyles.tableRow} key={`${row.label}-${row.category}-${index}`}>
+                <Text style={{ ...pdfStyles.tableCell, flex: 2, backgroundColor, color }}>{row.label}</Text>
+                <Text style={{ ...pdfStyles.tableCell, flex: 1, backgroundColor, color }}>{row.category}</Text>
+                <Text style={{ ...pdfStyles.tableCell, flex: 1, textAlign: 'right', backgroundColor, color }}>
+                  {row.amount}
+                </Text>
+              </View>
+            );
+          })}
 
           <View
             style={{
               ...pdfStyles.tableRow,
-              backgroundColor: lightColor,
+              backgroundColor: mainColor,
             }}
           >
             <Text
@@ -241,6 +273,7 @@ const PayslipPDF: React.FC<PayslipPDFProps> = ({ payrollRun, organization }) => 
                 ...pdfStyles.tableCell,
                 flex: 2,
                 fontWeight: 'bold',
+                color: contrastText,
               }}
             >
               Total Deductions
@@ -249,6 +282,7 @@ const PayslipPDF: React.FC<PayslipPDFProps> = ({ payrollRun, organization }) => 
               style={{
                 ...pdfStyles.tableCell,
                 flex: 1,
+                color: contrastText,
               }}
             >
               
@@ -259,6 +293,7 @@ const PayslipPDF: React.FC<PayslipPDFProps> = ({ payrollRun, organization }) => 
                 flex: 1,
                 textAlign: 'right',
                 fontWeight: 'bold',
+                color: contrastText,
               }}
             >
               {fmt(totalDeductions)}
@@ -267,53 +302,70 @@ const PayslipPDF: React.FC<PayslipPDFProps> = ({ payrollRun, organization }) => 
         </View>
 
         {/* Net Pay Summary */}
-        <View style={{ marginTop: 15 }}>
+        <Text style={{ ...pdfStyles.majorInfo, color: mainColor, marginTop: 15, marginBottom: 0, textAlign: 'center' }}>
+          NET PAY SUMMARY
+        </Text>
+        <View style={pdfStyles.table}>
           <View style={pdfStyles.tableRow}>
-            <Text style={{ ...pdfStyles.tableCell, flex: 2 }}>Gross Salary</Text>
-            <Text style={{ ...pdfStyles.tableCell, flex: 1, textAlign: 'right' }}>{fmt(grossSalary)}</Text>
-          </View>
-          <View style={pdfStyles.tableRow}>
-            <Text style={{ ...pdfStyles.tableCell, flex: 2 }}>Pre-Tax Deductions</Text>
-            <Text style={{ ...pdfStyles.tableCell, flex: 1, textAlign: 'right' }}>- {fmt(preTaxDeductions)}</Text>
-          </View>
-          <View style={pdfStyles.tableRow}>
-            <Text style={{ ...pdfStyles.tableCell, flex: 2 }}>Taxable Income</Text>
-            <Text style={{ ...pdfStyles.tableCell, flex: 1, textAlign: 'right' }}>{fmt(taxableIncome)}</Text>
-          </View>
-          <View style={pdfStyles.tableRow}>
-            <Text style={{ ...pdfStyles.tableCell, flex: 2 }}>PAYE</Text>
-            <Text style={{ ...pdfStyles.tableCell, flex: 1, textAlign: 'right' }}>- {fmt(paye)}</Text>
-          </View>
-          <View style={pdfStyles.tableRow}>
-            <Text style={{ ...pdfStyles.tableCell, flex: 2 }}>Other Deductions</Text>
-            <Text style={{ ...pdfStyles.tableCell, flex: 1, textAlign: 'right' }}>- {fmt(otherDeductions)}</Text>
-          </View>
-          <View
-            style={{
-              ...pdfStyles.tableRow,
-              backgroundColor: mainColor,
-              padding: 8,
-            }}
-          >
             <Text
               style={{
-                ...pdfStyles.majorInfo,
+                ...pdfStyles.tableHeader,
+                backgroundColor: mainColor,
+                color: contrastText,
+                flex: 2,
+              }}
+            >
+              Description
+            </Text>
+            <Text
+              style={{
+                ...pdfStyles.tableHeader,
+                backgroundColor: mainColor,
                 color: contrastText,
                 flex: 1,
               }}
             >
-              NET SALARY
+              Amount
             </Text>
-            <Text
+          </View>
+
+          {netPaySummaryRows.map((row, index) => (
+            <View
+              key={`${row.label}-${index}`}
               style={{
-                ...pdfStyles.majorInfo,
-                color: contrastText,
-                flex: 1,
-                textAlign: 'right',
+                ...pdfStyles.tableRow,
+                ...(row.isTotal ? { backgroundColor: mainColor } : getRowColors(index)),
               }}
             >
-              {fmt(netSalary)}
-            </Text>
+              <Text
+                style={{
+                  ...pdfStyles.tableCell,
+                  flex: 2,
+                  ...(!row.isTotal ? getRowColors(index) : {}),
+                  ...(row.isTotal ? { fontWeight: 'bold', color: contrastText } : {}),
+                }}
+              >
+                {row.label}
+              </Text>
+              <Text
+                style={{
+                  ...pdfStyles.tableCell,
+                  flex: 1,
+                  textAlign: 'right',
+                  ...(!row.isTotal ? getRowColors(index) : {}),
+                  ...(row.isTotal ? { fontWeight: 'bold', color: contrastText } : {}),
+                }}
+              >
+                {row.amount}
+              </Text>
+            </View>
+          ))}
+        </View>
+
+        <View style={{ ...pdfStyles.tableRow, marginTop: 40 }}>
+          <View style={{ flex: 1, padding: 2 }}>
+            <Text style={{ ...pdfStyles.minInfo, color: mainColor }}>Status</Text>
+            <Text style={{ ...pdfStyles.minInfo }}>{fmtStatus(payrollRun?.status)}</Text>
           </View>
         </View>
 

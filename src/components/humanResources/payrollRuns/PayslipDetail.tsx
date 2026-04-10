@@ -1,13 +1,16 @@
 'use client';
 
 import JumboContentLayout from '@jumbo/components/JumboContentLayout';
-import { ArrowBackOutlined } from '@mui/icons-material';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { ArrowBackOutlined, HighlightOff } from '@mui/icons-material';
 import {
   Box,
   Button,
   Card,
   CardContent,
   Chip,
+  Dialog,
+  DialogContent,
   Divider,
   IconButton,
   Skeleton,
@@ -19,20 +22,33 @@ import {
   TableRow,
   Tooltip,
   Typography,
+  useMediaQuery,
 } from '@mui/material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams, useRouter } from 'next/navigation';
 import { useSnackbar } from 'notistack';
 import { LoadingButton } from '@mui/lab';
+import { useState } from 'react';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { useLanguage } from '@/app/[lang]/contexts/LanguageContext';
 import humanResourcesServices from '../humanResourcesServices';
 import { getPayslipCalculations } from './payslipCalculations';
+import PayslipPDF from './PayslipPDF';
+import PDFContent from '@/components/pdf/PDFContent';
 
 function fmt(value: number) {
   return value.toLocaleString(undefined, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
+}
+
+function fmtStatus(value?: string) {
+  if (!value) return '-';
+  return value
+    .split('_')
+    .join(' ')
+    .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
 function statusColor(status?: string): 'default' | 'warning' | 'success' | 'info' | 'error' {
@@ -47,8 +63,12 @@ export default function PayslipDetail() {
   const { id, runId } = useParams<{ id: string; runId: string }>();
   const router = useRouter();
   const lang = useLanguage();
+  const authObject = useJumboAuth() as any;
+  const { theme } = useJumboTheme();
+  const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
+  const [openExportDialog, setOpenExportDialog] = useState(false);
 
   const { data: run, isLoading } = useQuery({
     queryKey: ['showPayrollRun', runId],
@@ -82,6 +102,31 @@ export default function PayslipDetail() {
     netSalary,
   } = getPayslipCalculations(run);
 
+  const getRowSx = (index: number) => ({
+    backgroundColor:
+      index % 2 === 0
+        ? theme.palette.background.paper
+        : theme.palette.action.hover,
+  });
+
+  const deductionsTableRows = [
+    { label: 'PAYE', category: 'Tax', amount: paye },
+    ...deductionRows.map((row) => ({
+      label: row.label,
+      category: row.category,
+      amount: row.amount,
+    })),
+  ];
+
+  const netSummaryRows = [
+    { label: 'Gross Salary', amount: fmt(grossSalary) },
+    { label: 'Pre-Tax Deductions', amount: `- ${fmt(preTaxDeductions)}` },
+    { label: 'Taxable Income', amount: fmt(taxableIncome) },
+    { label: 'PAYE', amount: `- ${fmt(paye)}` },
+    { label: 'Other Deductions', amount: `- ${fmt(otherDeductions)}` },
+    { label: 'Net Salary', amount: fmt(netSalary), isTotal: true },
+  ];
+
   if (isLoading) {
     return (
       <Box p={4}>
@@ -97,7 +142,7 @@ export default function PayslipDetail() {
   return (
     <JumboContentLayout
       header={
-        <Stack direction='row' alignItems='center' spacing={2} flexWrap='wrap'>
+        <Stack direction='row' alignItems='center' spacing={2} flexWrap='wrap' paddingTop={belowLargeScreen ? 5 : 0}>
           <Tooltip title='Back to Period'>
             <IconButton onClick={() => router.push(`/${lang}/hr/payroll/${id}`)}>
               <ArrowBackOutlined />
@@ -132,18 +177,18 @@ export default function PayslipDetail() {
             variant='outlined'
             color='primary'
             size='small'
-            onClick={() => window.print()}
+            onClick={() => setOpenExportDialog(true)}
           >
-            Print / Export
+            Export
           </Button>
         </Stack>
       }
     >
-      <Card sx={{ maxWidth: 900 }}>
+      <Card sx={{ maxWidth: 900 }} style={{ paddingTop: 2 }}>
         <CardContent>
           {/* Earnings */}
-          <Typography variant='h6' gutterBottom>
-            Earnings
+          <Typography variant='h6' sx={{ textAlign: 'center', mb: 0 }}>
+            EARNINGS
           </Typography>
           <Table size='small'>
             <TableHead>
@@ -153,8 +198,8 @@ export default function PayslipDetail() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {earningsRows.map(({ label, amount, taxable }) => (
-                <TableRow key={label}>
+              {earningsRows.map(({ label, amount, taxable }, index) => (
+                <TableRow key={label} sx={getRowSx(index)}>
                   <TableCell>
                     {label}
                     {!taxable && ' (non-taxable)'}
@@ -174,8 +219,8 @@ export default function PayslipDetail() {
           <Divider sx={{ my: 2 }} />
 
           {/* Deductions */}
-          <Typography variant='h6' gutterBottom>
-            Deductions
+          <Typography variant='h6' sx={{ textAlign: 'center', mb: 0 }}>
+            DEDUCTIONS
           </Typography>
           <Table size='small'>
             <TableHead>
@@ -186,13 +231,8 @@ export default function PayslipDetail() {
               </TableRow>
             </TableHead>
             <TableBody>
-              <TableRow>
-                <TableCell>PAYE</TableCell>
-                <TableCell>Tax</TableCell>
-                <TableCell align='right'>{fmt(paye)}</TableCell>
-              </TableRow>
-              {deductionRows.map(({ label, category, amount }) => (
-                <TableRow key={`${label}-${category}`}>
+              {deductionsTableRows.map(({ label, category, amount }, index) => (
+                <TableRow key={`${label}-${category}-${index}`} sx={getRowSx(index)}>
                   <TableCell>{label}</TableCell>
                   <TableCell sx={{ textTransform: 'capitalize' }}>{category}</TableCell>
                   <TableCell align='right'>{fmt(amount)}</TableCell>
@@ -211,41 +251,74 @@ export default function PayslipDetail() {
           <Divider sx={{ my: 2 }} />
 
           {/* Net Summary */}
-          <Typography variant='h6' gutterBottom>
-            Net Pay Summary
+          <Typography variant='h6' sx={{ textAlign: 'center', mb: 0 }}>
+            NET PAY SUMMARY
           </Typography>
           <Table size='small'>
             <TableBody>
+              {netSummaryRows.map((row, index) => (
+                <TableRow
+                  key={`${row.label}-${index}`}
+                  sx={row.isTotal ? undefined : getRowSx(index)}
+                >
+                  <TableCell
+                    sx={
+                      row.isTotal
+                        ? { fontWeight: 700, fontSize: '1rem' }
+                        : undefined
+                    }
+                  >
+                    {row.label}
+                  </TableCell>
+                  <TableCell
+                    align='right'
+                    sx={
+                      row.isTotal
+                        ? { fontWeight: 700, fontSize: '1rem' }
+                        : undefined
+                    }
+                  >
+                    {row.amount}
+                  </TableCell>
+                </TableRow>
+              ))}
               <TableRow>
-                <TableCell>Gross Salary</TableCell>
-                <TableCell align='right'>{fmt(grossSalary)}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>Pre-Tax Deductions</TableCell>
-                <TableCell align='right'>- {fmt(preTaxDeductions)}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>Taxable Income</TableCell>
-                <TableCell align='right'>{fmt(taxableIncome)}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>PAYE</TableCell>
-                <TableCell align='right'>- {fmt(paye)}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell>Other Deductions</TableCell>
-                <TableCell align='right'>- {fmt(otherDeductions)}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 700, fontSize: '1rem' }}>Net Salary</TableCell>
-                <TableCell align='right' sx={{ fontWeight: 700, fontSize: '1rem' }}>
-                  {fmt(netSalary)}
-                </TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell align='right'>{fmtStatus(run?.status)}</TableCell>
               </TableRow>
             </TableBody>
           </Table>
         </CardContent>
       </Card>
+
+      <Dialog
+        open={openExportDialog}
+        scroll='paper'
+        fullWidth
+        maxWidth='md'
+        onClose={() => setOpenExportDialog(false)}
+      >
+        <DialogContent>
+          {belowLargeScreen && (
+            <Box display='flex' justifyContent='flex-end' mb={1}>
+              <Tooltip title='Close'>
+                <IconButton size='small' onClick={() => setOpenExportDialog(false)}>
+                  <HighlightOff color='primary' />
+                </IconButton>
+              </Tooltip>
+            </Box>
+          )}
+          <PDFContent
+            document={
+              <PayslipPDF
+                payrollRun={run as any}
+                organization={authObject?.authOrganization?.organization}
+              />
+            }
+            fileName={`Payslip-${run?.employee?.first_name || 'Employee'}-${run?.employee?.last_name || ''}`}
+          />
+        </DialogContent>
+      </Dialog>
     </JumboContentLayout>
   );
 }
