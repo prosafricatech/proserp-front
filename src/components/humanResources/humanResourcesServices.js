@@ -426,20 +426,15 @@ humanResourcesServices.deletePayrollPeriod = async (id) => {
 }
 
 humanResourcesServices.processPayrollPeriodAllEmployees = async (payload = {}) => {
-    const { id, country_code, region } = payload;
-    const { data } = await axios.post(`/api/humanResources/payrollPeriods/${id}/process`, {
-        country_code,
-        region,
-    });
+    const { id } = payload;
+    const { data } = await axios.post(`/api/humanResources/payrollPeriods/${id}/process`);
     return data;
 }
 
 humanResourcesServices.processPayrollPeriodSingleEmployee = async (payload = {}) => {
-    const { id, employee_id, country_code, region } = payload;
+    const { id, employee_id } = payload;
     const { data } = await axios.post(`/api/humanResources/payrollPeriods/${id}/process-employee`, {
         employee_id,
-        country_code,
-        region,
     });
     return data;
 }

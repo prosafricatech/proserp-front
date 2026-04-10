@@ -42,8 +42,6 @@ const PayrollPeriodItemAction = ({
   const [openProcessDialog, setOpenProcessDialog] = useState(false);
   const [processMode, setProcessMode] = useState<'all' | 'single'>('all');
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
-  const [countryCode, setCountryCode] = useState('TZ');
-  const [region, setRegion] = useState('');
   const { showDialog, hideDialog } = useJumboDialog();
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
@@ -156,8 +154,6 @@ const PayrollPeriodItemAction = ({
 
   const resetProcessForm = () => {
     setSelectedEmployee(null);
-    setCountryCode('TZ');
-    setRegion('');
   };
 
   const openProcessPayrollDialog = (mode: 'all' | 'single') => {
@@ -211,11 +207,6 @@ const PayrollPeriodItemAction = ({
   };
 
   const handleProcessPayroll = () => {
-    if (!countryCode.trim()) {
-      enqueueSnackbar('Country code is required', { variant: 'warning' });
-      return;
-    }
-
     if (processMode === 'single' && !selectedEmployee?.id) {
       enqueueSnackbar('Please select an employee', { variant: 'warning' });
       return;
@@ -223,11 +214,7 @@ const PayrollPeriodItemAction = ({
 
     if (processMode === 'all') {
       processPayrollPeriodAllEmployees(
-        {
-          id: payrollPeriod.id,
-          country_code: countryCode.trim(),
-          region: region.trim() || null,
-        },
+        { id: payrollPeriod.id },
         {
           onSuccess: () => {
             setOpenProcessDialog(false);
@@ -242,8 +229,6 @@ const PayrollPeriodItemAction = ({
       {
         id: payrollPeriod.id,
         employee_id: selectedEmployee!.id,
-        country_code: countryCode.trim(),
-        region: region.trim() || null,
       },
       {
         onSuccess: () => {
@@ -284,19 +269,6 @@ const PayrollPeriodItemAction = ({
                 ? `Process payroll for all employees in ${payrollPeriod.month}/${payrollPeriod.year}.`
                 : `Select one employee to process payroll for ${payrollPeriod.month}/${payrollPeriod.year}.`}
             </Typography>
-            <TextField
-              label='Country Code'
-              value={countryCode}
-              onChange={(event) => setCountryCode(event.target.value.toUpperCase())}
-              fullWidth
-              required
-            />
-            <TextField
-              label='Region'
-              value={region}
-              onChange={(event) => setRegion(event.target.value)}
-              fullWidth
-            />
             {processMode === 'single' && (
               <Autocomplete
                 options={employees}
@@ -320,7 +292,6 @@ const PayrollPeriodItemAction = ({
             variant='contained'
             onClick={handleProcessPayroll}
             disabled={
-              !countryCode.trim() ||
               (processMode === 'single' && !selectedEmployee) ||
               isProcessingAllPayroll ||
               isProcessingSinglePayroll ||
