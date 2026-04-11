@@ -6,6 +6,22 @@ import { useRouter } from 'next/navigation';
 import { PayrollPeriodType } from './PayrollPeriodType';
 import PayrollPeriodItemAction from './PayrollPeriodItemAction';
 
+const MONTH_NAMES = [
+  '',
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
+
 const statusColor = (
   status: string
 ): 'success' | 'warning' | 'error' | 'default' => {
@@ -41,7 +57,9 @@ const PayrollPeriodsListItem = ({
           cursor: 'pointer',
           '&:hover': { bgcolor: 'action.hover' },
         }}
-        onClick={() => router.push(`/${lang}/hr/payroll/${payrollPeriod.id}`)}
+        onClick={() =>
+          router.push(`/${lang}/humanResources/payroll/${payrollPeriod.id}`)
+        }
         paddingLeft={2}
         paddingRight={2}
         columnSpacing={1}
@@ -58,7 +76,9 @@ const PayrollPeriodsListItem = ({
 
         <Grid size={{ xs: 12, md: 1.5 }}>
           <Tooltip title='Month'>
-            <Typography>{payrollPeriod.month}</Typography>
+            <Typography>
+              {MONTH_NAMES[payrollPeriod.month] ?? payrollPeriod.month}
+            </Typography>
           </Tooltip>
         </Grid>
 

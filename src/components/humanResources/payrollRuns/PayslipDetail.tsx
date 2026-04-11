@@ -144,7 +144,7 @@ export default function PayslipDetail() {
       header={
         <Stack direction='row' alignItems='center' spacing={2} flexWrap='wrap' paddingTop={belowLargeScreen ? 5 : 0}>
           <Tooltip title='Back to Period'>
-            <IconButton onClick={() => router.push(`/${lang}/hr/payroll/${id}`)}>
+            <IconButton onClick={() => router.push(`/${lang}/humanResources/payroll/${id}`)}>
               <ArrowBackOutlined />
             </IconButton>
           </Tooltip>

@@ -102,7 +102,7 @@ export default function PayrollPeriodDetail() {
       header={
         <Stack direction='row' alignItems='center' spacing={2} flexWrap='wrap'>
           <Tooltip title='Back to Payroll'>
-            <IconButton onClick={() => router.push(`/${lang}/hr/payroll`)}>
+            <IconButton onClick={() => router.push(`/${lang}/humanResources/payroll`)}>
               <ArrowBackOutlined />
             </IconButton>
           </Tooltip>
@@ -219,7 +219,7 @@ export default function PayrollPeriodDetail() {
                         hover
                         sx={{ cursor: 'pointer' }}
                         onClick={() =>
-                          router.push(`/${lang}/hr/payroll/${id}/runs/${run.id}`)
+                          router.push(`/${lang}/humanResources/payroll/${id}/runs/${run.id}`)
                         }
                       >
                         <TableCell>{idx + 1}</TableCell>

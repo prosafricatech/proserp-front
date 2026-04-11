@@ -19,7 +19,7 @@ const PayrollPeriodActionTail = () => {
 
   return (
     <>
-      <Dialog maxWidth='md' fullScreen={belowLargeScreen} open={openDialog}>
+      <Dialog maxWidth='md' fullWidth fullScreen={belowLargeScreen} open={openDialog}>
         <PayrollPeriodForm setOpenDialog={setOpenDialog} />
       </Dialog>
       <ButtonGroup

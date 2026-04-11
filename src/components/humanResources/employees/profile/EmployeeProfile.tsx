@@ -99,7 +99,7 @@ function ProfileContent() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employees'] });
       enqueueSnackbar('Employee deleted successfully', { variant: 'success' });
-      router.push(`/${lang}/hr/employees`);
+      router.push(`/${lang}/humanResources/employees`);
     },
     onError: () => {
       enqueueSnackbar('Error deleting employee', { variant: 'error' });
