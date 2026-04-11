@@ -19,6 +19,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  LinearProgress,
   Stack,
   TextField,
   Tooltip,
@@ -32,6 +33,36 @@ import { Employee } from '../employees/EmployeesType';
 import humanResourcesServices from '../humanResourcesServices';
 import { PayrollPeriodType } from './PayrollPeriodType';
 import PayrollPeriodForm from './PayrollPeriodForm';
+
+const EditPayrollPeriod = ({
+  payrollPeriod,
+  setOpenEditDialog,
+}: {
+  payrollPeriod: PayrollPeriodType;
+  setOpenEditDialog: (open: boolean) => void;
+}) => {
+  const { data: payrollPeriodData, isFetching } = useQuery({
+    queryKey: ['showPayrollPeriod', payrollPeriod.id],
+    queryFn: () => humanResourcesServices.showPayrollPeriod(payrollPeriod.id),
+  });
+  const queryClient = useQueryClient();
+
+  if (isFetching) {
+    return <LinearProgress />;
+  }
+
+  return (
+    <PayrollPeriodForm
+      payrollPeriod={payrollPeriodData || payrollPeriod}
+      setOpenDialog={(v) => {
+        setOpenEditDialog(v);
+        if (!v) {
+          queryClient.invalidateQueries({ queryKey: ['payrollPeriods'] });
+        }
+      }}
+    />
+  );
+};
 
 const PayrollPeriodItemAction = ({
   payrollPeriod,
@@ -247,10 +278,12 @@ const PayrollPeriodItemAction = ({
         maxWidth='md'
         fullScreen={belowLargeScreen}
       >
-        <PayrollPeriodForm
-          payrollPeriod={payrollPeriod}
-          setOpenDialog={setOpenEditDialog}
-        />
+        {openEditDialog && (
+          <EditPayrollPeriod
+            payrollPeriod={payrollPeriod}
+            setOpenEditDialog={setOpenEditDialog}
+          />
+        )}
       </Dialog>
 
       <Dialog

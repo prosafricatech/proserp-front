@@ -129,6 +129,7 @@ const EmployeeAllowanceForm = ({
   const {
     handleSubmit,
     control,
+    reset,
     setValue,
     formState: { errors },
   } = useForm<FormData>({
@@ -143,6 +144,16 @@ const EmployeeAllowanceForm = ({
     },
   });
 
+  useEffect(() => {
+    reset({
+      id: employeeAllowance?.id,
+      employee_id: employeeAllowance?.employee_id,
+      allowance_type_id: employeeAllowance?.allowance_type_id,
+      amount: employeeAllowance?.amount ?? 0,
+      effective_from: employeeAllowance?.effective_from || '',
+      effective_to: employeeAllowance?.effective_to || '',
+    });
+  }, [employeeAllowance, reset]);
 
   useEffect(() => {
     if (employeeId) setValue('employee_id', employeeId);

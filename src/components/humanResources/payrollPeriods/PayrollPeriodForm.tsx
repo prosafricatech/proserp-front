@@ -16,7 +16,7 @@ import {
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import humanResourcesServices from '../humanResourcesServices';
@@ -152,6 +152,7 @@ const PayrollPeriodForm = ({
     register,
     control,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm<FormData>({
     resolver: yupResolver(validationSchema) as any,
@@ -162,6 +163,15 @@ const PayrollPeriodForm = ({
       remarks: payrollPeriod?.remarks ?? null,
     },
   });
+
+  useEffect(() => {
+    reset({
+      id: payrollPeriod?.id,
+      year: payrollPeriod?.year,
+      month: payrollPeriod?.month,
+      remarks: payrollPeriod?.remarks ?? null,
+    });
+  }, [payrollPeriod, reset]);
 
   const saveMutation = useMemo(
     () => (payrollPeriod?.id ? updatePayrollPeriod : addPayrollPeriod),

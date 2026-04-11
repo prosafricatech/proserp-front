@@ -16,7 +16,7 @@ import { DatePicker } from '@mui/x-date-pickers';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import humanResourcesServices from '../humanResourcesServices';
@@ -96,11 +96,6 @@ const PayeTaxBandForm = ({
 
   const validationSchema = yup.object({
     id: yup.number().optional(),
-    // country_code: yup
-    //   .string()
-    //   .required('Country code is required')
-    //   .max(10, 'Country code cannot exceed 10 characters'),
-    // region: yup.string().nullable().optional(),
     min_income: yup
       .number()
       .typeError('Minimum income must be a number')
@@ -156,13 +151,12 @@ const PayeTaxBandForm = ({
     register,
     handleSubmit,
     control,
+    reset,
     formState: { errors },
   } = useForm<FormData>({
     resolver: yupResolver(validationSchema) as any,
     defaultValues: {
       id: payeTaxBand?.id,
-      // country_code: payeTaxBand?.country_code,
-      // region: payeTaxBand?.region ?? null,
       min_income: payeTaxBand?.min_income,
       max_income: payeTaxBand?.max_income ?? null,
       rate: payeTaxBand?.rate,
@@ -172,6 +166,19 @@ const PayeTaxBandForm = ({
       effective_to: payeTaxBand?.effective_to ?? null,
     },
   });
+
+  useEffect(() => {
+    reset({
+      id: payeTaxBand?.id,
+      min_income: payeTaxBand?.min_income,
+      max_income: payeTaxBand?.max_income ?? null,
+      rate: payeTaxBand?.rate,
+      fixed_tax: payeTaxBand?.fixed_tax,
+      excess_over: payeTaxBand?.excess_over,
+      effective_from: payeTaxBand?.effective_from || '',
+      effective_to: payeTaxBand?.effective_to ?? null,
+    });
+  }, [payeTaxBand, reset]);
 
   const saveMutation = useMemo(() => {
     return payeTaxBand?.id ? updatePayeTaxBand : addPayeTaxBand;
@@ -195,43 +202,6 @@ const PayeTaxBandForm = ({
       <DialogContent>
         <form autoComplete='off' onSubmit={handleSubmit(onSubmit)}>
           <Grid container rowSpacing={{ xs: 1, md: 2 }} spacing={2}>
-            {/* <Grid size={{ xs: 12, md: 6 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
-                <TextField
-                  label='Country Code'
-                  size='small'
-                  fullWidth
-                  error={
-                    !!errors?.country_code ||
-                    !!getValidationMessage(validationErrors, 'country_code')
-                  }
-                  helperText={
-                    errors.country_code?.message ||
-                    getValidationMessage(validationErrors, 'country_code')
-                  }
-                  {...register('country_code')}
-                />
-              </Div>
-            </Grid> */}
-
-            {/* <Grid size={{ xs: 12, md: 6 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
-                <TextField
-                  label='Region'
-                  size='small'
-                  fullWidth
-                  error={
-                    !!errors?.region ||
-                    !!getValidationMessage(validationErrors, 'region')
-                  }
-                  helperText={
-                    errors.region?.message ||
-                    getValidationMessage(validationErrors, 'region')
-                  }
-                  {...register('region')}
-                />
-              </Div>
-            </Grid> */}
 
             <Grid size={{ xs: 12, md: 6 }}>
               <Div sx={{ mt: 1, mb: 1 }}>

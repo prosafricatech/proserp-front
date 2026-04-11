@@ -20,12 +20,13 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams, useRouter } from 'next/navigation';
 import { useSnackbar } from 'notistack';
 import { useLanguage } from '@/app/[lang]/contexts/LanguageContext';
 import humanResourcesServices from '../humanResourcesServices';
 import { PayrollRunType } from '../payrollRuns/PayrollRunType';
+import { getPayslipCalculations } from '../payrollRuns/payslipCalculations';
 import PayrollPeriodItemAction from '../payrollPeriods/PayrollPeriodItemAction';
 
 const MONTH_NAMES = [
@@ -69,6 +70,22 @@ export default function PayrollPeriodDetail() {
 
   const runs: PayrollRunType[] = runsResponse?.data || [];
 
+  const runDetailsQueries = useQueries({
+    queries: runs.map((run) => ({
+      queryKey: ['showPayrollRun', run.id],
+      queryFn: () => humanResourcesServices.showPayrollRun(String(run.id)),
+      enabled: Boolean(run.id),
+      staleTime: 1000 * 60,
+    })),
+  });
+
+  const runDetailsById = new Map<string, any>();
+  runDetailsQueries.forEach((query, index) => {
+    const runId = String(runs[index]?.id ?? '');
+    if (!runId) return;
+    runDetailsById.set(runId, query.data ?? runs[index]);
+  });
+
   const { mutate: approve, isPending: isApproving } = useMutation({
     mutationFn: () => humanResourcesServices.approvePayrollPeriod(id),
     onSuccess: () => {
@@ -93,9 +110,17 @@ export default function PayrollPeriodDetail() {
     ? `${MONTH_NAMES[period.month] ?? period.month} ${period.year}`
     : '';
 
-  const totalGross = runs.reduce((sum, r) => sum + (r.basic_salary ?? 0), 0);
-  const totalPaye = runs.reduce((sum, r) => sum + (r.paye ?? 0), 0);
-  const totalNet = totalGross - totalPaye;
+  const runComputed = runs.map((run) => {
+    const detailedRun = runDetailsById.get(String(run.id)) ?? run;
+    return {
+      run,
+      computed: getPayslipCalculations(detailedRun),
+    };
+  });
+
+  const totalGross = runComputed.reduce((sum, entry) => sum + entry.computed.grossSalary, 0);
+  const totalPaye = runComputed.reduce((sum, entry) => sum + entry.computed.paye, 0);
+  const totalNet = runComputed.reduce((sum, entry) => sum + entry.computed.netSalary, 0);
 
   return (
     <JumboContentLayout
@@ -186,7 +211,7 @@ export default function PayrollPeriodDetail() {
             <Table size='small'>
               <TableHead>
                 <TableRow>
-                  <TableCell>#</TableCell>
+                  <TableCell>S/N</TableCell>
                   <TableCell>Employee</TableCell>
                   <TableCell>Employee No.</TableCell>
                   <TableCell>Designation</TableCell>
@@ -206,10 +231,10 @@ export default function PayrollPeriodDetail() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  runs.map((run, idx) => {
-                    const gross = run.basic_salary ?? 0;
-                    const paye = run.paye ?? 0;
-                    const net = gross - paye;
+                  runComputed.map(({ run, computed }, idx) => {
+                    const gross = computed.grossSalary;
+                    const paye = computed.paye;
+                    const net = computed.netSalary;
                     const name = [run.employee?.first_name, run.employee?.last_name]
                       .filter(Boolean)
                       .join(' ');
@@ -222,7 +247,7 @@ export default function PayrollPeriodDetail() {
                           router.push(`/${lang}/humanResources/payroll/${id}/runs/${run.id}`)
                         }
                       >
-                        <TableCell>{idx + 1}</TableCell>
+                        <TableCell>{idx + 1}.</TableCell>
                         <TableCell>{name || '—'}</TableCell>
                         <TableCell>{run.employee?.employee_number || '—'}</TableCell>
                         <TableCell>{run.contract?.designation?.title || '—'}</TableCell>

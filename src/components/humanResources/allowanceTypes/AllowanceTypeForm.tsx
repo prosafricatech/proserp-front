@@ -15,7 +15,7 @@ import {
 } from '@mui/material';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import humanResourcesServices from '../humanResourcesServices';
@@ -108,6 +108,7 @@ const AllowanceTypeForm = ({
     register,
     handleSubmit,
     control,
+    reset,
     formState: { errors },
   } = useForm<FormData>({
     resolver: yupResolver(validationSchema) as any,
@@ -119,6 +120,16 @@ const AllowanceTypeForm = ({
       description: allowanceType?.description || '',
     },
   });
+
+  useEffect(() => {
+    reset({
+      id: allowanceType?.id,
+      name: allowanceType?.name || '',
+      code: allowanceType?.code || '',
+      is_taxable: allowanceType?.is_taxable || false,
+      description: allowanceType?.description || '',
+    });
+  }, [allowanceType, reset]);
 
   const saveMutation = useMemo(() => {
     return allowanceType?.id ? updateAllowanceType : addAllowanceType;

@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
-import React from 'react';
+import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import humanResourcesServices from '../humanResourcesServices';
@@ -97,6 +97,7 @@ const DesignationForm = ({
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm<FormData>({
     resolver: yupResolver(validationSchema) as any,
@@ -108,7 +109,16 @@ const DesignationForm = ({
     },
   });
 
-  const saveMutation = React.useMemo(() => {
+  useEffect(() => {
+    reset({
+      id: designation?.id,
+      title: designation?.title || '',
+      code: designation?.code || '',
+      description: designation?.description || '',
+    });
+  }, [designation, reset]);
+
+  const saveMutation = useMemo(() => {
     return designation?.id ? updateDesignation : addDesignation;
   }, [designation, updateDesignation, addDesignation]);
 

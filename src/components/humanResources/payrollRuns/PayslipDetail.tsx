@@ -282,10 +282,6 @@ export default function PayslipDetail() {
                   </TableCell>
                 </TableRow>
               ))}
-              <TableRow>
-                <TableCell>Status</TableCell>
-                <TableCell align='right'>{fmtStatus(run?.status)}</TableCell>
-              </TableRow>
             </TableBody>
           </Table>
         </CardContent>

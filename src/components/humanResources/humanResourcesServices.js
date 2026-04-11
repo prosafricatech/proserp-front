@@ -55,6 +55,11 @@ humanResourcesServices.updateEmployeeContract = async (contract) => {
     return data;
 }
 
+humanResourcesServices.showEmployeeContract = async (id) => {
+    const { data } = await axios.get(`/api/humanResources/employeesContracts/${id}`);
+    return data;
+}
+
 humanResourcesServices.terminateEmployeeContract = async ({ id, termination_date, remarks }) => {
     const { data } = await axios.post(`/api/humanResources/employeesContracts/${id}/terminate`, {
         termination_date,
@@ -93,6 +98,11 @@ humanResourcesServices.updateDepartment = async (department) => {
     return data;
 }
 
+humanResourcesServices.showDepartment = async (id) => {
+    const { data } = await axios.get(`/api/humanResources/departments/${id}`);
+    return data;
+}
+
 humanResourcesServices.deleteDepartment = async (id) => {
     const { data } = await axios.delete(`/api/humanResources/departments/${id}/delete`);
     return data;
@@ -127,6 +137,11 @@ humanResourcesServices.updateDesignation = async (designation) => {
     return data;
 }
 
+humanResourcesServices.showDesignation = async (id) => {
+    const { data } = await axios.get(`/api/humanResources/designations/${id}`);
+    return data;
+}
+
 humanResourcesServices.deleteDesignation = async (id) => {
     const { data } = await axios.delete(`/api/humanResources/designations/${id}/delete`);
     return data;
@@ -156,6 +171,11 @@ humanResourcesServices.updateLeaveType = async (leaveType) => {
     return data;
 }
 
+humanResourcesServices.showLeaveType = async (id) => {
+    const { data } = await axios.get(`/api/humanResources/leave_types/${id}`);
+    return data;
+}
+
 humanResourcesServices.deleteLeaveType = async (id) => {
     const { data } = await axios.delete(`/api/humanResources/leave_types/${id}/delete`);
     return data;
@@ -177,6 +197,11 @@ humanResourcesServices.addBank = async (bank) => {
 
 humanResourcesServices.updateBank = async (bank) => {
     const { data } = await axios.put(`/api/masters/banks/${bank.id}`, bank);
+    return data;
+}
+
+humanResourcesServices.showBank = async (id) => {
+    const { data } = await axios.get(`/api/masters/banks/${id}`);
     return data;
 }
 
@@ -204,6 +229,11 @@ humanResourcesServices.updateEmployeeBankAccount = async (bankAccount) => {
     return data;
 }
 
+humanResourcesServices.showEmployeeBankAccount = async (id) => {
+    const { data } = await axios.get(`/api/humanResources/employeesBankAccounts/${id}`);
+    return data;
+}
+
 humanResourcesServices.deleteEmployeeBankAccount = async (id) => {
     const { data } = await axios.delete(`/api/humanResources/employeesBankAccounts/${id}/delete`);
     return data;
@@ -225,6 +255,11 @@ humanResourcesServices.addEmployeeNextOfKin = async (nextOfKin) => {
 
 humanResourcesServices.updateEmployeeNextOfKin = async (nextOfKin) => {
     const { data } = await axios.put(`/api/humanResources/employeesNextOfKins/${nextOfKin.id}/update`, nextOfKin);
+    return data;
+}
+
+humanResourcesServices.showEmployeeNextOfKin = async (id) => {
+    const { data } = await axios.get(`/api/humanResources/employeesNextOfKins/${id}`);
     return data;
 }
 
@@ -252,6 +287,11 @@ humanResourcesServices.updateAllowanceType = async (allowanceType) => {
     return data;
 }
 
+humanResourcesServices.showAllowanceType = async (id) => {
+    const { data } = await axios.get(`/api/humanResources/allowanceTypes/${id}`);
+    return data;
+}
+
 humanResourcesServices.deleteAllowanceType = async (id) => {
     const { data } = await axios.delete(`/api/humanResources/allowanceTypes/${id}/delete`);
     return data;
@@ -273,6 +313,11 @@ humanResourcesServices.addDeductionType = async (deductionType) => {
 
 humanResourcesServices.updateDeductionType = async (deductionType) => {
     const { data } = await axios.put(`/api/humanResources/deductionTypes/${deductionType.id}/update`, deductionType);
+    return data;
+}
+
+humanResourcesServices.showDeductionType = async (id) => {
+    const { data } = await axios.get(`/api/humanResources/deductionTypes/${id}`);
     return data;
 }
 
@@ -300,6 +345,11 @@ humanResourcesServices.updateEmployeeAllowance = async (employeeAllowance) => {
     return data;
 }
 
+humanResourcesServices.showEmployeeAllowance = async (id) => {
+    const { data } = await axios.get(`/api/humanResources/employeeAllowances/${id}`);
+    return data;
+}
+
 humanResourcesServices.deleteEmployeeAllowance = async (id) => {
     const { data } = await axios.delete(`/api/humanResources/employeeAllowances/${id}/delete`);
     return data;
@@ -321,6 +371,11 @@ humanResourcesServices.addEmployeeDeduction = async (employeeDeduction) => {
 
 humanResourcesServices.updateEmployeeDeduction = async (employeeDeduction) => {
     const { data } = await axios.put(`/api/humanResources/employeeDeductions/${employeeDeduction.id}/update`, employeeDeduction);
+    return data;
+}
+
+humanResourcesServices.showEmployeeDeduction = async (id) => {
+    const { data } = await axios.get(`/api/humanResources/employeeDeductions/${id}`);
     return data;
 }
 
@@ -348,6 +403,11 @@ humanResourcesServices.updateLeaveAllocation = async (leaveAllocation) => {
     return data;
 }
 
+humanResourcesServices.showLeaveAllocation = async (id) => {
+    const { data } = await axios.get(`/api/humanResources/leaveAllocations/${id}`);
+    return data;
+}
+
 humanResourcesServices.deleteLeaveAllocation = async (id) => {
     const { data } = await axios.delete(`/api/humanResources/leaveAllocations/${id}/delete`);
     return data;
@@ -372,6 +432,11 @@ humanResourcesServices.updateLeaveRequest = async (leaveRequest) => {
     return data;
 }
 
+humanResourcesServices.showLeaveRequest = async (id) => {
+    const { data } = await axios.get(`/api/humanResources/leaveRequests/${id}`);
+    return data;
+}
+
 humanResourcesServices.deleteLeaveRequest = async (id) => {
     const { data } = await axios.delete(`/api/humanResources/leaveRequests/${id}/delete`);
     return data;
@@ -393,6 +458,11 @@ humanResourcesServices.addPayeTaxBand = async (payeTaxBand) => {
 
 humanResourcesServices.updatePayeTaxBand = async (payeTaxBand) => {
     const { data } = await axios.put(`/api/humanResources/payeTaxBands/${payeTaxBand.id}/update`, payeTaxBand);
+    return data;
+}
+
+humanResourcesServices.showPayeTaxBand = async (id) => {
+    const { data } = await axios.get(`/api/humanResources/payeTaxBands/${id}`);
     return data;
 }
 

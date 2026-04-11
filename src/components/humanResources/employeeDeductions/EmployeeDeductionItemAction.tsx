@@ -9,13 +9,43 @@ import {
   EditOutlined,
   MoreHorizOutlined,
 } from '@mui/icons-material';
-import { Dialog, Tooltip, useMediaQuery } from '@mui/material';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Dialog, LinearProgress, Tooltip, useMediaQuery } from '@mui/material';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import { useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
 import EmployeeDeductionForm from './EmployeeDeductionForm';
 import { EmployeeDeductionType } from './EmployeeDeductionType';
+
+const EditEmployeeDeduction = ({
+  employeeDeduction,
+  setOpenEditDialog,
+}: {
+  employeeDeduction: EmployeeDeductionType;
+  setOpenEditDialog: (open: boolean) => void;
+}) => {
+  const { data: employeeDeductionData, isFetching } = useQuery({
+    queryKey: ['showEmployeeDeduction', employeeDeduction.id],
+    queryFn: () => humanResourcesServices.showEmployeeDeduction(employeeDeduction.id),
+  });
+  const queryClient = useQueryClient();
+
+  if (isFetching) {
+    return <LinearProgress />;
+  }
+
+  return (
+    <EmployeeDeductionForm
+      employeeDeduction={employeeDeductionData || employeeDeduction}
+      setOpenDialog={(v) => {
+        setOpenEditDialog(v);
+        if (!v) {
+          queryClient.invalidateQueries({ queryKey: ['employeeDeductions'] });
+        }
+      }}
+    />
+  );
+};
 
 const EmployeeDeductionItemAction = ({
   employeeDeduction,
@@ -88,10 +118,12 @@ const EmployeeDeductionItemAction = ({
         maxWidth='md'
         fullScreen={belowLargeScreen}
       >
-        <EmployeeDeductionForm
-          employeeDeduction={employeeDeduction}
-          setOpenDialog={setOpenEditDialog}
-        />
+        {openEditDialog && (
+          <EditEmployeeDeduction
+            employeeDeduction={employeeDeduction}
+            setOpenEditDialog={setOpenEditDialog}
+          />
+        )}
       </Dialog>
       <JumboDdMenu
         icon={

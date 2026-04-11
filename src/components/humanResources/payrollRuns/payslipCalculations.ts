@@ -1,6 +1,7 @@
 export interface PayslipAllowance {
   amount?: number | string;
   value?: number | string;
+  label: string;
   name?: string;
   taxable?: boolean;
   is_taxable?: boolean;
@@ -106,10 +107,7 @@ export const getPayslipCalculations = (run?: PayrollRunLike | null): PayslipComp
             : true;
 
     earningsRows.push({
-      label:
-        allowance.allowance_type?.name ||
-        allowance.name ||
-        `Allowance ${index + 1}`,
+      label: allowance.label,
       amount,
       taxable,
     });

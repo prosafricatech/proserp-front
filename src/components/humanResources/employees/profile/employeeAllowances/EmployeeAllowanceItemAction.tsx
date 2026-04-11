@@ -9,13 +9,43 @@ import {
   EditOutlined,
   MoreHorizOutlined,
 } from '@mui/icons-material';
-import { Dialog, Tooltip, useMediaQuery } from '@mui/material';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Dialog, LinearProgress, Tooltip, useMediaQuery } from '@mui/material';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import { useState } from 'react';
 import EmployeeAllowanceForm from '@/components/humanResources/employees/profile/employeeAllowances/EmployeeAllowanceForm';
 import humanResourcesServices from '../../../humanResourcesServices';
 import { EmployeeAllowanceType } from './EmployeeAllowanceType';
+
+const EditEmployeeAllowance = ({
+  employeeAllowance,
+  setOpenEditDialog,
+}: {
+  employeeAllowance: EmployeeAllowanceType;
+  setOpenEditDialog: (open: boolean) => void;
+}) => {
+  const { data: employeeAllowanceData, isFetching } = useQuery({
+    queryKey: ['showEmployeeAllowance', employeeAllowance.id],
+    queryFn: () => humanResourcesServices.showEmployeeAllowance(employeeAllowance.id),
+  });
+  const queryClient = useQueryClient();
+
+  if (isFetching) {
+    return <LinearProgress />;
+  }
+
+  return (
+    <EmployeeAllowanceForm
+      employeeAllowance={employeeAllowanceData || employeeAllowance}
+      setOpenDialog={(v) => {
+        setOpenEditDialog(v);
+        if (!v) {
+          queryClient.invalidateQueries({ queryKey: ['employeeAllowances'] });
+        }
+      }}
+    />
+  );
+};
 
 const EmployeeAllowanceItemAction = ({
   employeeAllowance,
@@ -88,10 +118,12 @@ const EmployeeAllowanceItemAction = ({
         maxWidth='md'
         fullScreen={belowLargeScreen}
       >
-        <EmployeeAllowanceForm
-          employeeAllowance={employeeAllowance}
-          setOpenDialog={setOpenEditDialog}
-        />
+        {openEditDialog && (
+          <EditEmployeeAllowance
+            employeeAllowance={employeeAllowance}
+            setOpenEditDialog={setOpenEditDialog}
+          />
+        )}
       </Dialog>
       <JumboDdMenu
         icon={

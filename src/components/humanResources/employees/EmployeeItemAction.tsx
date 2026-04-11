@@ -8,8 +8,8 @@ import {
   EditOutlined,
   MoreHorizOutlined,
 } from '@mui/icons-material';
-import { Dialog, Tooltip, useMediaQuery } from '@mui/material';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Dialog, LinearProgress, Tooltip, useMediaQuery } from '@mui/material';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import { useState } from 'react';
 import { DepartmentsProvider } from '../departments/DepartmentsProvider';
@@ -17,9 +17,40 @@ import humanResourcesServices from '../humanResourcesServices';
 import EmployeeForm from './EmployeeForm';
 import { Employee } from './EmployeesType';
 
+const EditEmployee = ({
+  employee,
+  setOpenEditDialog,
+}: {
+  employee: Employee;
+  setOpenEditDialog: (open: boolean) => void;
+}) => {
+  const { data: employeeData, isFetching } = useQuery({
+    queryKey: ['showEmployee', employee.id],
+    queryFn: () => humanResourcesServices.showEmployee(employee.id),
+  });
+  const queryClient = useQueryClient();
+
+  if (isFetching) {
+    return <LinearProgress />;
+  }
+
+  return (
+    <DepartmentsProvider>
+      <EmployeeForm
+        employee={employeeData || employee}
+        setOpenDialog={(v) => {
+          setOpenEditDialog(v);
+          if (!v) {
+            queryClient.invalidateQueries({ queryKey: ['employees'] });
+          }
+        }}
+      />
+    </DepartmentsProvider>
+  );
+};
+
 const EmployeeItemAction = ({ employee }: { employee: Employee }) => {
   const [openEditDialog, setOpenEditDialog] = useState(false);
-  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const { showDialog, hideDialog } = useJumboDialog();
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
@@ -42,19 +73,6 @@ const EmployeeItemAction = ({ employee }: { employee: Employee }) => {
     },
   });
 
-  const { mutate: fetchEmployeeForEdit } = useMutation({
-    mutationFn: (id: number) => humanResourcesServices.showEmployee(id),
-    onSuccess: (fullEmployee: Employee) => {
-      setEditingEmployee(fullEmployee);
-      setOpenEditDialog(true);
-    },
-    onError: () => {
-      enqueueSnackbar('Error loading employee details', {
-        variant: 'error',
-      });
-    },
-  });
-
   const menuItems = [
     {
       icon: <EditOutlined />,
@@ -71,7 +89,7 @@ const EmployeeItemAction = ({ employee }: { employee: Employee }) => {
   const handleItemAction = (menuItem: MenuItemProps) => {
     switch (menuItem.action) {
       case 'edit':
-        fetchEmployeeForEdit(employee.id);
+        setOpenEditDialog(true);
         break;
       case 'delete':
         showDialog({
@@ -97,18 +115,12 @@ const EmployeeItemAction = ({ employee }: { employee: Employee }) => {
         maxWidth='md'
         fullScreen={belowLargeScreen}
       >
-        <DepartmentsProvider>
-          <EmployeeForm
-            setOpenDialog={(v) => {
-              setOpenEditDialog(v);
-              if (!v) {
-                setEditingEmployee(null);
-                queryClient.invalidateQueries({ queryKey: ['employees'] });
-              }
-            }}
-            employee={editingEmployee ?? employee}
+        {openEditDialog && (
+          <EditEmployee
+            employee={employee}
+            setOpenEditDialog={setOpenEditDialog}
           />
-        </DepartmentsProvider>
+        )}
       </Dialog>
       <JumboDdMenu
         icon={

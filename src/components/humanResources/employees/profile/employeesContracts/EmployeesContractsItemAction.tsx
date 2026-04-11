@@ -8,8 +8,8 @@ import {
   InsertPageBreak,
   MoreHorizOutlined,
 } from '@mui/icons-material';
-import { Dialog, Tooltip, useMediaQuery } from '@mui/material';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Dialog, LinearProgress, Tooltip, useMediaQuery } from '@mui/material';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import { useState } from 'react';
 import { DesignationsProvider } from '../../../designations/DesignationsProvider';
@@ -18,6 +18,40 @@ import humanResourcesServices from '../../../humanResourcesServices';
 import { ContractType } from './ContractType';
 import EmployeesContractsForm from './EmployeesContractsForm';
 import EmployeesContractsTerminateForm from './EmployeesContractsTerminateForm';
+
+const EditEmployeesContract = ({
+  contract,
+  setOpenEditDialog,
+}: {
+  contract: ContractType;
+  setOpenEditDialog: (open: boolean) => void;
+}) => {
+  const { data: contractData, isFetching } = useQuery({
+    queryKey: ['showEmployeeContract', contract.id],
+    queryFn: () => humanResourcesServices.showEmployeeContract(contract.id),
+  });
+  const queryClient = useQueryClient();
+
+  if (isFetching) {
+    return <LinearProgress />;
+  }
+
+  return (
+    <EmployeesProvider>
+      <DesignationsProvider>
+        <EmployeesContractsForm
+          contract={contractData || contract}
+          setOpenDialog={(v) => {
+            setOpenEditDialog(v);
+            if (!v) {
+              queryClient.invalidateQueries({ queryKey: ['employeesContracts'] });
+            }
+          }}
+        />
+      </DesignationsProvider>
+    </EmployeesProvider>
+  );
+};
 
 const EmployeesContractsItemAction = ({
   contract,
@@ -113,14 +147,12 @@ const EmployeesContractsItemAction = ({
         maxWidth='md'
         fullScreen={belowLargeScreen}
       >
-        <EmployeesProvider>
-          <DesignationsProvider>
-            <EmployeesContractsForm
-              setOpenDialog={setOpenEditDialog}
-              contract={contract}
-            />
-          </DesignationsProvider>
-        </EmployeesProvider>
+        {openEditDialog && (
+          <EditEmployeesContract
+            contract={contract}
+            setOpenEditDialog={setOpenEditDialog}
+          />
+        )}
       </Dialog>
 
       {/* Terminate Dialog */}

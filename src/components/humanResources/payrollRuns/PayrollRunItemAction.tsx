@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { useLanguage } from '@/app/[lang]/contexts/LanguageContext';
 import { JumboDdMenu } from '@jumbo/components';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';

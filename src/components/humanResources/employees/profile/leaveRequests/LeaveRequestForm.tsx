@@ -134,6 +134,7 @@ const LeaveRequestForm = ({
     register,
     handleSubmit,
     control,
+    reset,
     setValue,
     formState: { errors },
   } = useForm<FormData>({
@@ -148,6 +149,18 @@ const LeaveRequestForm = ({
       reason: leaveRequest?.reason || '',
     },
   });
+
+  useEffect(() => {
+    reset({
+      id: leaveRequest?.id,
+      employee_id: leaveRequest?.employee_id,
+      leave_type_id: leaveRequest?.leave_type_id,
+      start_date: leaveRequest?.start_date || '',
+      end_date: leaveRequest?.end_date || '',
+      days_requested: leaveRequest?.days_requested ?? 1,
+      reason: leaveRequest?.reason || '',
+    });
+  }, [leaveRequest, reset]);
 
   useEffect(() => {
     if (employeeId) setValue('employee_id', employeeId);
