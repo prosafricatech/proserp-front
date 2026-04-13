@@ -17,12 +17,14 @@ import {
   TableHead,
   TableRow,
   Typography,
+  useMediaQuery,
 } from '@mui/material';
 import { useState } from 'react';
 import PDFContent from '@/components/pdf/PDFContent';
 import { PayrollRunType } from '../payrollRuns/PayrollRunType';
 import { PayslipComputed } from '../payrollRuns/payslipCalculations';
 import SalarySheetPDF from './SalarySheetPDF';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 
 type SalarySheetRow = {
   run: PayrollRunType;
@@ -53,6 +55,9 @@ const findContribution = (computed: PayslipComputed, label: string) => {
 const SalarySheetDialog = ({ open, onClose, periodLabel, rows }: SalarySheetDialogProps) => {
   const authObject = useJumboAuth() as any;
   const [openPdfDialog, setOpenPdfDialog] = useState(false);
+
+    const { theme } = useJumboTheme();
+    const smallScreen = useMediaQuery(theme.breakpoints.down('md'));
 
   const totals = rows.reduce(
     (sum, entry) => {
@@ -88,7 +93,7 @@ const SalarySheetDialog = ({ open, onClose, periodLabel, rows }: SalarySheetDial
 
   return (
     <>
-      <Dialog open={open} onClose={onClose} fullScreen>
+      <Dialog open={open} onClose={onClose} fullWidth maxWidth='xl' fullScreen={smallScreen}>
         <DialogTitle>
           <Stack direction='row' justifyContent='space-between' alignItems='center'>
             <Box>

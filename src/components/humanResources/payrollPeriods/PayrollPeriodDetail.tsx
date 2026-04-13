@@ -414,7 +414,7 @@ export default function PayrollPeriodDetail() {
     <>
       <JumboContentLayout
         header={
-          <Stack direction='row' alignItems='center' spacing={2} flexWrap='wrap'>
+          <Stack direction='row' alignItems='center' spacing={2} flexWrap='wrap' paddingBottom={3}>
             <Tooltip title='Back to Payroll'>
               <IconButton onClick={() => router.push(`/${lang}/humanResources/payroll`)}>
                 <ArrowBackOutlined />
