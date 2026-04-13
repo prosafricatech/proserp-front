@@ -8,13 +8,37 @@ import {
   EditOutlined,
   MoreHorizOutlined,
 } from '@mui/icons-material';
-import { Dialog, Tooltip, useMediaQuery } from '@mui/material';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Dialog, LinearProgress, Tooltip, useMediaQuery } from '@mui/material';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import { useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
 import DepartmentForm from './DepartmentForm';
 import { Department } from './DepartmentsType';
+
+const EditDepartment = ({ department, setOpenEditDialog }: { department: Department; setOpenEditDialog: (open: boolean) => void }) => {
+  const { data: departmentData, isFetching } = useQuery({
+    queryKey: ['showDepartment', department.id],
+    queryFn: () => humanResourcesServices.showDepartment(department.id),
+  });
+  const queryClient = useQueryClient();
+
+  if (isFetching) {
+    return <LinearProgress />;
+  }
+
+  return (
+    <DepartmentForm
+      department={departmentData || department}
+      setOpenDialog={(v) => {
+        setOpenEditDialog(v);
+        if (!v) {
+          queryClient.invalidateQueries({ queryKey: ['departments'] });
+        }
+      }}
+    />
+  );
+};
 
 const DepartmentItemAction = ({ department }: { department: Department }) => {
   const [openEditDialog, setOpenEditDialog] = useState(false);
@@ -84,10 +108,12 @@ const DepartmentItemAction = ({ department }: { department: Department }) => {
         maxWidth='md'
         fullScreen={belowLargeScreen}
       >
-        <DepartmentForm
-          department={department}
-          setOpenDialog={setOpenEditDialog}
-        />
+        {openEditDialog && (
+          <EditDepartment
+            department={department}
+            setOpenEditDialog={setOpenEditDialog}
+          />
+        )}
       </Dialog>
       <JumboDdMenu
         icon={

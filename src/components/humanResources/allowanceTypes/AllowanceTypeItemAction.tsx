@@ -9,13 +9,43 @@ import {
   EditOutlined,
   MoreHorizOutlined,
 } from '@mui/icons-material';
-import { Dialog, Tooltip, useMediaQuery } from '@mui/material';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Dialog, LinearProgress, Tooltip, useMediaQuery } from '@mui/material';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import { useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
 import { AllowanceType } from './AllowanceType';
 import AllowanceTypeForm from '@/components/humanResources/allowanceTypes/AllowanceTypeForm';
+
+const EditAllowanceType = ({
+  allowanceType,
+  setOpenEditDialog,
+}: {
+  allowanceType: AllowanceType;
+  setOpenEditDialog: (open: boolean) => void;
+}) => {
+  const { data: allowanceTypeData, isFetching } = useQuery({
+    queryKey: ['showAllowanceType', allowanceType.id],
+    queryFn: () => humanResourcesServices.showAllowanceType(allowanceType.id),
+  });
+  const queryClient = useQueryClient();
+
+  if (isFetching) {
+    return <LinearProgress />;
+  }
+
+  return (
+    <AllowanceTypeForm
+      allowanceType={allowanceTypeData || allowanceType}
+      setOpenDialog={(v) => {
+        setOpenEditDialog(v);
+        if (!v) {
+          queryClient.invalidateQueries({ queryKey: ['allowanceTypes'] });
+        }
+      }}
+    />
+  );
+};
 
 const AllowanceTypeItemAction = ({
   allowanceType,
@@ -88,10 +118,12 @@ const AllowanceTypeItemAction = ({
         maxWidth='md'
         fullScreen={belowLargeScreen}
       >
-        <AllowanceTypeForm
-          allowanceType={allowanceType}
-          setOpenDialog={setOpenEditDialog}
-        />
+        {openEditDialog && (
+          <EditAllowanceType
+            allowanceType={allowanceType}
+            setOpenEditDialog={setOpenEditDialog}
+          />
+        )}
       </Dialog>
       <JumboDdMenu
         icon={

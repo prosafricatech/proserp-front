@@ -9,13 +9,43 @@ import {
   EditOutlined,
   MoreHorizOutlined,
 } from '@mui/icons-material';
-import { Dialog, Tooltip, useMediaQuery } from '@mui/material';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Dialog, LinearProgress, Tooltip, useMediaQuery } from '@mui/material';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import { useState } from 'react';
 import humanResourcesServices from '../../../humanResourcesServices';
 import NextOfKinForm from './NextOfKinForm';
 import { NextOfKinType } from './NextOfKinType';
+
+const EditNextOfKin = ({
+  nextOfKin,
+  setOpenEditDialog,
+}: {
+  nextOfKin: NextOfKinType;
+  setOpenEditDialog: (open: boolean) => void;
+}) => {
+  const { data: nextOfKinData, isFetching } = useQuery({
+    queryKey: ['showEmployeeNextOfKin', nextOfKin.id],
+    queryFn: () => humanResourcesServices.showEmployeeNextOfKin(nextOfKin.id),
+  });
+  const queryClient = useQueryClient();
+
+  if (isFetching) {
+    return <LinearProgress />;
+  }
+
+  return (
+    <NextOfKinForm
+      nextOfKin={nextOfKinData || nextOfKin}
+      setOpenDialog={(v) => {
+        setOpenEditDialog(v);
+        if (!v) {
+          queryClient.invalidateQueries({ queryKey: ['employeeNextOfKins'] });
+        }
+      }}
+    />
+  );
+};
 
 const NextOfKinItemAction = ({
   nextOfKin,
@@ -88,10 +118,12 @@ const NextOfKinItemAction = ({
         maxWidth='md'
         fullScreen={belowLargeScreen}
       >
-        <NextOfKinForm
-          nextOfKin={nextOfKin}
-          setOpenDialog={setOpenEditDialog}
-        />
+        {openEditDialog && (
+          <EditNextOfKin
+            nextOfKin={nextOfKin}
+            setOpenEditDialog={setOpenEditDialog}
+          />
+        )}
       </Dialog>
       <JumboDdMenu
         icon={

@@ -121,6 +121,7 @@ const NextOfKinForm = ({
     register,
     handleSubmit,
     control,
+    reset,
     setValue,
     formState: { errors },
   } = useForm<FormData>({
@@ -136,6 +137,19 @@ const NextOfKinForm = ({
       is_primary: nextOfKin?.is_primary || false,
     },
   });
+
+  useEffect(() => {
+    reset({
+      id: nextOfKin?.id,
+      employee_id: nextOfKin?.employee_id,
+      name: nextOfKin?.name || '',
+      relationship: nextOfKin?.relationship || '',
+      phone: nextOfKin?.phone || '',
+      email: nextOfKin?.email || '',
+      address: nextOfKin?.address || '',
+      is_primary: nextOfKin?.is_primary || false,
+    });
+  }, [nextOfKin, reset]);
 
   // Pre-fill employee_id when rendered inside the Employee Profile
   useEffect(() => {

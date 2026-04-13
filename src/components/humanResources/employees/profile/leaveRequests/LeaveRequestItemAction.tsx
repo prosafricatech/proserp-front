@@ -18,16 +18,47 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  LinearProgress,
   TextField,
   Tooltip,
   useMediaQuery,
 } from '@mui/material';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import { useState } from 'react';
 import humanResourcesServices from '../../../humanResourcesServices';
 import LeaveRequestForm from './LeaveRequestForm';
 import { LeaveRequestType } from './LeaveRequestType';
+
+const EditLeaveRequest = ({
+  leaveRequest,
+  setOpenEditDialog,
+}: {
+  leaveRequest: LeaveRequestType;
+  setOpenEditDialog: (open: boolean) => void;
+}) => {
+  const { data: leaveRequestData, isFetching } = useQuery({
+    queryKey: ['showLeaveRequest', leaveRequest.id],
+    queryFn: () => humanResourcesServices.showLeaveRequest(leaveRequest.id),
+  });
+  const queryClient = useQueryClient();
+
+  if (isFetching) {
+    return <LinearProgress />;
+  }
+
+  return (
+    <LeaveRequestForm
+      leaveRequest={leaveRequestData || leaveRequest}
+      setOpenDialog={(v) => {
+        setOpenEditDialog(v);
+        if (!v) {
+          queryClient.invalidateQueries({ queryKey: ['leaveRequests'] });
+        }
+      }}
+    />
+  );
+};
 
 const LeaveRequestItemAction = ({
   leaveRequest,
@@ -176,10 +207,12 @@ const LeaveRequestItemAction = ({
         maxWidth='md'
         fullScreen={belowLargeScreen}
       >
-        <LeaveRequestForm
-          leaveRequest={leaveRequest}
-          setOpenDialog={setOpenEditDialog}
-        />
+        {openEditDialog && (
+          <EditLeaveRequest
+            leaveRequest={leaveRequest}
+            setOpenEditDialog={setOpenEditDialog}
+          />
+        )}
       </Dialog>
 
       <Dialog

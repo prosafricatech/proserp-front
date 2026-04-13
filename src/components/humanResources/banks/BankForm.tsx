@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
-import React from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import humanResourcesServices from '../humanResourcesServices';
@@ -90,6 +90,7 @@ const BankForm = ({ setOpenDialog, bank = null }: BankFormProps) => {
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm<FormData>({
     resolver: yupResolver(validationSchema) as any,
@@ -101,7 +102,16 @@ const BankForm = ({ setOpenDialog, bank = null }: BankFormProps) => {
     },
   });
 
-  const saveMutation = React.useMemo(() => {
+  useEffect(() => {
+    reset({
+      id: bank?.id,
+      name: bank?.name || '',
+      short_name: bank?.short_name || '',
+      swift_code: bank?.swift_code || '',
+    });
+  }, [bank, reset]);
+
+  const saveMutation = useMemo(() => {
     return bank?.id ? updateBank : addBank;
   }, [addBank, bank?.id, updateBank]);
 

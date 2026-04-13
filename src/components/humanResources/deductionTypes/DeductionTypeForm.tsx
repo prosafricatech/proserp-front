@@ -16,7 +16,7 @@ import {
 } from '@mui/material';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import humanResourcesServices from '../humanResourcesServices';
@@ -47,8 +47,18 @@ const getValidationMessage = (
 
 const formatCommaSeparatedValue = (value: string | number | null | undefined) => {
   if (value === null || value === undefined || value === '') return '';
-  const numericValue = Number(String(value).replace(/,/g, ''));
-  return Number.isNaN(numericValue) ? '' : numericValue.toLocaleString('en-US');
+  const raw = String(value).replace(/,/g, '');
+  if (!/^\d*\.?\d*$/.test(raw)) return '';
+
+  const hasDecimal = raw.includes('.');
+  const [intPart, decimalPart = ''] = raw.split('.');
+
+  const formattedInt = intPart
+    ? Number(intPart).toLocaleString('en-US')
+    : '0';
+
+  if (!hasDecimal) return formattedInt;
+  return `${formattedInt}.${decimalPart}`;
 };
 
 const DeductionTypeForm = ({
@@ -128,6 +138,7 @@ const DeductionTypeForm = ({
     register,
     handleSubmit,
     control,
+    reset,
     formState: { errors },
   } = useForm<FormData>({
     resolver: yupResolver(validationSchema) as any,
@@ -142,6 +153,19 @@ const DeductionTypeForm = ({
       description: deductionType?.description || '',
     },
   });
+
+  useEffect(() => {
+    reset({
+      id: deductionType?.id,
+      name: deductionType?.name || '',
+      code: deductionType?.code || '',
+      category: deductionType?.category || 'statutory',
+      computation_method: deductionType?.computation_method || 'fixed',
+      default_value: deductionType?.default_value ?? 0,
+      is_pre_tax: deductionType?.is_pre_tax || false,
+      description: deductionType?.description || '',
+    });
+  }, [deductionType, reset]);
 
   const saveMutation = useMemo(() => {
     return deductionType?.id ? updateDeductionType : addDeductionType;
@@ -287,8 +311,11 @@ const DeductionTypeForm = ({
                       value={formatCommaSeparatedValue(field.value)}
                       onChange={(event) => {
                         const raw = event.target.value.replace(/,/g, '');
-                        field.onChange(raw === '' ? '' : Number(raw));
+                        if (raw === '' || /^\d*\.?\d*$/.test(raw)) {
+                          field.onChange(raw);
+                        }
                       }}
+                      inputProps={{ inputMode: 'decimal', pattern: '^\\d*\\.?\\d*$' }}
                       error={
                         !!errors?.default_value ||
                         !!getValidationMessage(validationErrors, 'default_value')

@@ -1,5 +1,6 @@
 'use client';
 
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Div } from '@jumbo/shared';
 import { LoadingButton } from '@mui/lab';
@@ -9,12 +10,14 @@ import {
   DialogContent,
   DialogTitle,
   Grid,
+  MenuItem,
   TextField,
 } from '@mui/material';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
-import React, { useMemo } from 'react';
-import { useForm } from 'react-hook-form';
+import React, { useEffect, useMemo } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import humanResourcesServices from '../humanResourcesServices';
 import { PayrollPeriodType } from './PayrollPeriodType';
@@ -51,6 +54,43 @@ const PayrollPeriodForm = ({
 }: PayrollPeriodFormProps) => {
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
+  const { authOrganization } = useJumboAuth();
+
+  const currentYear = dayjs().year();
+  const recordingStartYear = dayjs(
+    authOrganization?.organization?.recording_start_date
+  ).isValid()
+    ? dayjs(authOrganization?.organization?.recording_start_date).year()
+    : currentYear;
+
+  const yearOptions = useMemo(() => {
+    const startYear = Math.min(recordingStartYear, currentYear);
+    const years: number[] = [];
+
+    for (let year = startYear; year <= currentYear; year++) {
+      years.push(year);
+    }
+
+    return years;
+  }, [recordingStartYear, currentYear]);
+
+  const monthOptions = useMemo(
+    () => [
+      { label: 'January', value: 1 },
+      { label: 'February', value: 2 },
+      { label: 'March', value: 3 },
+      { label: 'April', value: 4 },
+      { label: 'May', value: 5 },
+      { label: 'June', value: 6 },
+      { label: 'July', value: 7 },
+      { label: 'August', value: 8 },
+      { label: 'September', value: 9 },
+      { label: 'October', value: 10 },
+      { label: 'November', value: 11 },
+      { label: 'December', value: 12 },
+    ],
+    []
+  );
 
   const {
     mutate: addPayrollPeriod,
@@ -92,8 +132,8 @@ const PayrollPeriodForm = ({
       .number()
       .typeError('Year must be a number')
       .required('Year is required')
-      .min(2000, 'Year must be 2000 or greater')
-      .max(2100, 'Year must be 2100 or less'),
+      .min(recordingStartYear, `Year must be ${recordingStartYear} or greater`)
+      .max(currentYear, `Year cannot be greater than ${currentYear}`),
     month: yup
       .number()
       .typeError('Month must be a number')
@@ -110,7 +150,9 @@ const PayrollPeriodForm = ({
 
   const {
     register,
+    control,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm<FormData>({
     resolver: yupResolver(validationSchema) as any,
@@ -121,6 +163,15 @@ const PayrollPeriodForm = ({
       remarks: payrollPeriod?.remarks ?? null,
     },
   });
+
+  useEffect(() => {
+    reset({
+      id: payrollPeriod?.id,
+      year: payrollPeriod?.year,
+      month: payrollPeriod?.month,
+      remarks: payrollPeriod?.remarks ?? null,
+    });
+  }, [payrollPeriod, reset]);
 
   const saveMutation = useMemo(
     () => (payrollPeriod?.id ? updatePayrollPeriod : addPayrollPeriod),
@@ -147,38 +198,66 @@ const PayrollPeriodForm = ({
           <Grid container rowSpacing={{ xs: 1, md: 2 }} spacing={2}>
             <Grid size={{ xs: 12, md: 6 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
-                <TextField
-                  label='Year'
-                  size='small'
-                  fullWidth
-                  error={
-                    !!errors?.year ||
-                    !!getValidationMessage(validationErrors, 'year')
-                  }
-                  helperText={
-                    errors.year?.message ||
-                    getValidationMessage(validationErrors, 'year')
-                  }
-                  {...register('year')}
+                <Controller
+                  name='year'
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      select
+                      label='Year'
+                      size='small'
+                      fullWidth
+                      value={field.value ?? ''}
+                      onChange={(event) => field.onChange(Number(event.target.value))}
+                      error={
+                        !!errors?.year ||
+                        !!getValidationMessage(validationErrors, 'year')
+                      }
+                      helperText={
+                        errors.year?.message ||
+                        getValidationMessage(validationErrors, 'year')
+                      }
+                    >
+                      {yearOptions.map((year) => (
+                        <MenuItem key={year} value={year}>
+                          {year}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  )}
                 />
               </Div>
             </Grid>
 
             <Grid size={{ xs: 12, md: 6 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
-                <TextField
-                  label='Month'
-                  size='small'
-                  fullWidth
-                  error={
-                    !!errors?.month ||
-                    !!getValidationMessage(validationErrors, 'month')
-                  }
-                  helperText={
-                    errors.month?.message ||
-                    getValidationMessage(validationErrors, 'month')
-                  }
-                  {...register('month')}
+                <Controller
+                  name='month'
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      select
+                      label='Month'
+                      size='small'
+                      fullWidth
+                      value={field.value ?? ''}
+                      onChange={(event) => field.onChange(Number(event.target.value))}
+                      error={
+                        !!errors?.month ||
+                        !!getValidationMessage(validationErrors, 'month')
+                      }
+                      helperText={
+                        errors.month?.message ||
+                        getValidationMessage(validationErrors, 'month')
+                      }
+                    >
+                      {monthOptions.map((month) => (
+                        <MenuItem key={month.value} value={month.value}>
+                          {month.label}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  )}
                 />
               </Div>
             </Grid>

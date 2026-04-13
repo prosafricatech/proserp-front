@@ -9,13 +9,43 @@ import {
   EditOutlined,
   MoreHorizOutlined,
 } from '@mui/icons-material';
-import { Dialog, Tooltip, useMediaQuery } from '@mui/material';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Dialog, LinearProgress, Tooltip, useMediaQuery } from '@mui/material';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import { useState } from 'react';
 import DeductionTypeForm from '@/components/humanResources/deductionTypes/DeductionTypeForm';
 import humanResourcesServices from '../humanResourcesServices';
 import { DeductionType } from './DeductionType';
+
+const EditDeductionType = ({
+  deductionType,
+  setOpenEditDialog,
+}: {
+  deductionType: DeductionType;
+  setOpenEditDialog: (open: boolean) => void;
+}) => {
+  const { data: deductionTypeData, isFetching } = useQuery({
+    queryKey: ['showDeductionType', deductionType.id],
+    queryFn: () => humanResourcesServices.showDeductionType(deductionType.id),
+  });
+  const queryClient = useQueryClient();
+
+  if (isFetching) {
+    return <LinearProgress />;
+  }
+
+  return (
+    <DeductionTypeForm
+      deductionType={deductionTypeData || deductionType}
+      setOpenDialog={(v) => {
+        setOpenEditDialog(v);
+        if (!v) {
+          queryClient.invalidateQueries({ queryKey: ['deductionTypes'] });
+        }
+      }}
+    />
+  );
+};
 
 const DeductionTypeItemAction = ({
   deductionType,
@@ -88,10 +118,12 @@ const DeductionTypeItemAction = ({
         maxWidth='md'
         fullScreen={belowLargeScreen}
       >
-        <DeductionTypeForm
-          deductionType={deductionType}
-          setOpenDialog={setOpenEditDialog}
-        />
+        {openEditDialog && (
+          <EditDeductionType
+            deductionType={deductionType}
+            setOpenEditDialog={setOpenEditDialog}
+          />
+        )}
       </Dialog>
       <JumboDdMenu
         icon={

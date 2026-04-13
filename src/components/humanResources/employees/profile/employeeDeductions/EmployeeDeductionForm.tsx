@@ -50,8 +50,18 @@ const getValidationMessage = (
 
 const formatCommaSeparatedValue = (value: string | number | null | undefined) => {
   if (value === null || value === undefined || value === '') return '';
-  const numericValue = Number(String(value).replace(/,/g, ''));
-  return Number.isNaN(numericValue) ? '' : numericValue.toLocaleString('en-US');
+  const raw = String(value).replace(/,/g, '');
+  if (!/^\d*\.?\d*$/.test(raw)) return '';
+
+  const hasDecimal = raw.includes('.');
+  const [intPart, decimalPart = ''] = raw.split('.');
+
+  const formattedInt = intPart
+    ? Number(intPart).toLocaleString('en-US')
+    : '0';
+
+  if (!hasDecimal) return formattedInt;
+  return `${formattedInt}.${decimalPart}`;
 };
 
 const EmployeeDeductionForm = ({
@@ -128,9 +138,9 @@ const EmployeeDeductionForm = ({
   });
 
   const {
-    register,
     handleSubmit,
     control,
+    reset,
     setValue,
     formState: { errors },
   } = useForm<FormData>({
@@ -139,12 +149,22 @@ const EmployeeDeductionForm = ({
       id: employeeDeduction?.id,
       employee_id: employeeDeduction?.employee_id,
       deduction_type_id: employeeDeduction?.deduction_type_id,
-      value: employeeDeduction?.value ?? 0,
+      value: employeeDeduction?.value,
       effective_from: employeeDeduction?.effective_from || '',
       effective_to: employeeDeduction?.effective_to || '',
     },
   });
 
+  useEffect(() => {
+    reset({
+      id: employeeDeduction?.id,
+      employee_id: employeeDeduction?.employee_id,
+      deduction_type_id: employeeDeduction?.deduction_type_id,
+      value: employeeDeduction?.value,
+      effective_from: employeeDeduction?.effective_from || '',
+      effective_to: employeeDeduction?.effective_to || '',
+    });
+  }, [employeeDeduction, reset]);
 
   useEffect(() => {
     if (employeeId) setValue('employee_id', employeeId);
@@ -197,6 +217,13 @@ const EmployeeDeductionForm = ({
                         }
                         onChange={(event, newValue) => {
                           field.onChange(newValue?.id || null);
+
+                          if (newValue) {
+                            setValue('value', Number(newValue.default_value ?? ''), {
+                              shouldDirty: true,
+                              shouldValidate: true,
+                            });
+                          }
                         }}
                         renderInput={(params) => (
                           <TextField
@@ -235,8 +262,11 @@ const EmployeeDeductionForm = ({
                       value={formatCommaSeparatedValue(field.value)}
                       onChange={(event) => {
                         const raw = event.target.value.replace(/,/g, '');
-                        field.onChange(raw === '' ? '' : Number(raw));
+                        if (raw === '' || /^\d*\.?\d*$/.test(raw)) {
+                          field.onChange(raw);
+                        }
                       }}
+                      inputProps={{ inputMode: 'decimal', pattern: '^\\d*\\.?\\d*$' }}
                       error={
                         !!errors?.value ||
                         !!getValidationMessage(validationErrors, 'value')

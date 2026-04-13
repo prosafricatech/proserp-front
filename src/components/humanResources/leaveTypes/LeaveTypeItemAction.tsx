@@ -8,13 +8,43 @@ import {
   EditOutlined,
   MoreHorizOutlined,
 } from '@mui/icons-material';
-import { Dialog, Tooltip, useMediaQuery } from '@mui/material';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Dialog, LinearProgress, Tooltip, useMediaQuery } from '@mui/material';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import { useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
 import LeaveTypeForm from './LeaveTypeForm';
 import { LeaveType } from './LeaveTypesType';
+
+const EditLeaveType = ({
+  leaveType,
+  setOpenEditDialog,
+}: {
+  leaveType: LeaveType;
+  setOpenEditDialog: (open: boolean) => void;
+}) => {
+  const { data: leaveTypeData, isFetching } = useQuery({
+    queryKey: ['showLeaveType', leaveType.id],
+    queryFn: () => humanResourcesServices.showLeaveType(leaveType.id),
+  });
+  const queryClient = useQueryClient();
+
+  if (isFetching) {
+    return <LinearProgress />;
+  }
+
+  return (
+    <LeaveTypeForm
+      leaveType={leaveTypeData || leaveType}
+      setOpenDialog={(v) => {
+        setOpenEditDialog(v);
+        if (!v) {
+          queryClient.invalidateQueries({ queryKey: ['leaveTypes'] });
+        }
+      }}
+    />
+  );
+};
 
 const LeaveTypeItemAction = ({ leaveType }: { leaveType: LeaveType }) => {
   const [openEditDialog, setOpenEditDialog] = useState(false);
@@ -84,10 +114,12 @@ const LeaveTypeItemAction = ({ leaveType }: { leaveType: LeaveType }) => {
         maxWidth='md'
         fullScreen={belowLargeScreen}
       >
-        <LeaveTypeForm
-          leaveType={leaveType}
-          setOpenDialog={setOpenEditDialog}
-        />
+        {openEditDialog && (
+          <EditLeaveType
+            leaveType={leaveType}
+            setOpenEditDialog={setOpenEditDialog}
+          />
+        )}
       </Dialog>
       <JumboDdMenu
         icon={

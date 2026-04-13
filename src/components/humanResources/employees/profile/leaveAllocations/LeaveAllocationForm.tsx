@@ -123,6 +123,7 @@ const LeaveAllocationForm = ({
     register,
     handleSubmit,
     control,
+    reset,
     setValue,
     formState: { errors },
   } = useForm<FormData>({
@@ -135,6 +136,16 @@ const LeaveAllocationForm = ({
       allocated_days: leaveAllocation?.allocated_days ?? 1,
     },
   });
+
+  useEffect(() => {
+    reset({
+      id: leaveAllocation?.id,
+      employee_id: leaveAllocation?.employee_id,
+      leave_type_id: leaveAllocation?.leave_type_id,
+      year: leaveAllocation?.year ?? new Date().getFullYear(),
+      allocated_days: leaveAllocation?.allocated_days ?? 1,
+    });
+  }, [leaveAllocation, reset]);
 
   useEffect(() => {
     if (employeeId) setValue('employee_id', employeeId);

@@ -141,6 +141,7 @@ const EmployeeDeductionForm = ({
     register,
     handleSubmit,
     control,
+    reset,
     setValue,
     formState: { errors },
   } = useForm<FormData>({
@@ -155,6 +156,16 @@ const EmployeeDeductionForm = ({
     },
   });
 
+  useEffect(() => {
+    reset({
+      id: employeeDeduction?.id,
+      employee_id: employeeDeduction?.employee_id,
+      deduction_type_id: employeeDeduction?.deduction_type_id,
+      value: employeeDeduction?.value ?? 0,
+      effective_from: employeeDeduction?.effective_from || '',
+      effective_to: employeeDeduction?.effective_to || '',
+    });
+  }, [employeeDeduction, reset]);
 
   useEffect(() => {
     if (employeeId) setValue('employee_id', employeeId);

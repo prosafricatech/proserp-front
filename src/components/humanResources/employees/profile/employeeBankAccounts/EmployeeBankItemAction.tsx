@@ -9,13 +9,43 @@ import {
   EditOutlined,
   MoreHorizOutlined,
 } from '@mui/icons-material';
-import { Dialog, Tooltip, useMediaQuery } from '@mui/material';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Dialog, LinearProgress, Tooltip, useMediaQuery } from '@mui/material';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import { useState } from 'react';
 import humanResourcesServices from '../../../humanResourcesServices';
 import EmployeeBankAccountForm from './EmployeeBankAccountForm';
 import { EmployeeBankAccountType } from './EmployeeBankAccountType';
+
+const EditEmployeeBank = ({
+  account,
+  setOpenEditDialog,
+}: {
+  account: EmployeeBankAccountType;
+  setOpenEditDialog: (open: boolean) => void;
+}) => {
+  const { data: accountData, isFetching } = useQuery({
+    queryKey: ['showEmployeeBankAccount', account.id],
+    queryFn: () => humanResourcesServices.showEmployeeBankAccount(account.id),
+  });
+  const queryClient = useQueryClient();
+
+  if (isFetching) {
+    return <LinearProgress />;
+  }
+
+  return (
+    <EmployeeBankAccountForm
+      account={accountData || account}
+      setOpenDialog={(v) => {
+        setOpenEditDialog(v);
+        if (!v) {
+          queryClient.invalidateQueries({ queryKey: ['employeeBankAccounts'] });
+        }
+      }}
+    />
+  );
+};
 
 const EmployeeBankItemAction = ({
   account,
@@ -88,10 +118,12 @@ const EmployeeBankItemAction = ({
         maxWidth='md'
         fullScreen={belowLargeScreen}
       >
-        <EmployeeBankAccountForm
-          account={account}
-          setOpenDialog={setOpenEditDialog}
-        />
+        {openEditDialog && (
+          <EditEmployeeBank
+            account={account}
+            setOpenEditDialog={setOpenEditDialog}
+          />
+        )}
       </Dialog>
       <JumboDdMenu
         icon={

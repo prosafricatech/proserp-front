@@ -195,44 +195,7 @@ export async function getMenus(locale: string) {
       type: 'section',
       children: [
         {
-          label: sidebar.menuItem.setup,
-          type: 'collapsible',
-          icon: icon('businessCenter'),
-          children: [
-            {
-              uri: `/${locale}/hr/setup/departments`,
-              label: sidebar.menuItem.departments,
-              type: 'nav-item',
-            },
-            {
-              uri: `/${locale}/hr/setup/designations`,
-              label: sidebar.menuItem.designations,
-              type: 'nav-item',
-            },
-            {
-              uri: `/${locale}/hr/setup/leave-types`,
-              label: sidebar.menuItem.leave_types,
-              type: 'nav-item',
-            },
-            {
-              uri: `/${locale}/hr/setup/allowance-types`,
-              label: sidebar.menuItem.allowance_types,
-              type: 'nav-item',
-            },
-            {
-              uri: `/${locale}/hr/setup/deduction-types`,
-              label: sidebar.menuItem.deduction_types,
-              type: 'nav-item',
-            },
-            {
-              uri: `/${locale}/hr/setup/paye-tax-bands`,
-              label: sidebar.menuItem.paye_tax_bands,
-              type: 'nav-item',
-            },
-          ],
-        },
-        {
-          uri: `/${locale}/hr/employees`,
+          uri: `/${locale}/humanResources/employees`,
           label: sidebar.menuItem.employees,
           type: 'nav-item',
           icon: icon('employees'),
@@ -243,18 +206,60 @@ export async function getMenus(locale: string) {
           icon: icon('reports'),
           children: [
             {
-              uri: `/${locale}/hr/leave-requests`,
+              uri: `/${locale}/humanResources/leave-requests`,
               label: sidebar.menuItem.leave_requests,
               type: 'nav-item',
             },
             {
-              uri: `/${locale}/hr/payroll`,
+              uri: `/${locale}/humanResources/payroll`,
               label: sidebar.menuItem.payroll_periods,
               type: 'nav-item',
             },
             {
-              uri: `/${locale}/hr/payroll-runs`,
+              uri: `/${locale}/humanResources/payroll-runs`,
               label: sidebar.menuItem.payroll_runs,
+              type: 'nav-item',
+            },
+          ],
+        },
+        {
+          label: sidebar.menuItem.masters,
+          type: 'collapsible',
+          icon: icon('businessCenter'),
+          children: [
+            {
+              uri: `/${locale}/humanResources/departments`,
+              label: sidebar.menuItem.departments,
+              type: 'nav-item',
+            },
+            {
+              uri: `/${locale}/humanResources/designations`,
+              label: sidebar.menuItem.designations,
+              type: 'nav-item',
+            },
+            {
+              uri: `/${locale}/humanResources/leave_types`,
+              label: sidebar.menuItem.leave_types,
+              type: 'nav-item',
+            },
+            {
+              uri: `/${locale}/humanResources/allowance-types`,
+              label: sidebar.menuItem.allowance_types,
+              type: 'nav-item',
+            },
+            {
+              uri: `/${locale}/humanResources/deduction-types`,
+              label: sidebar.menuItem.deduction_types,
+              type: 'nav-item',
+            },
+            {
+              uri: `/${locale}/humanResources/employer-contribution-types`,
+              label: 'Employer Contribution Types',
+              type: 'nav-item',
+            },
+            {
+              uri: `/${locale}/humanResources/paye-tax-bands`,
+              label: sidebar.menuItem.paye_tax_bands,
               type: 'nav-item',
             },
           ],
@@ -399,7 +404,7 @@ export async function getMenus(locale: string) {
           icon: icon('measurement_units'),
         },
         {
-          uri: `/${locale}/humanResources/banks`,
+          uri: `/${locale}/masters/banks`,
           label: sidebar.menuItem.banks,
           type: 'nav-item',
           icon: icon('banks'),

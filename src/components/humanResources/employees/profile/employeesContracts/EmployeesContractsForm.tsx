@@ -16,7 +16,7 @@ import { DatePicker } from '@mui/x-date-pickers';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import dayjs, { Dayjs } from 'dayjs';
 import { useSnackbar } from 'notistack';
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import { useDesignations } from '../../../designations/DesignationsProvider';
@@ -172,6 +172,7 @@ const EmployeesContractsForm = ({
   const {
     register,
     handleSubmit,
+    reset,
     setValue,
     control,
     formState: { errors },
@@ -188,7 +189,20 @@ const EmployeesContractsForm = ({
       remarks: contract?.remarks || '',
     },
   });
-  
+
+  useEffect(() => {
+    reset({
+      employee_id: contract?.employee_id || undefined,
+      designation_id: contract?.designation_id || undefined,
+      contract_type: contract?.contract_type || '',
+      start_date: contract?.start_date || '',
+      end_date: contract?.end_date || '',
+      probation_end_date: contract?.probation_end_date || '',
+      basic_salary: contract?.basic_salary || undefined,
+      remarks: contract?.remarks || '',
+    });
+  }, [contract, reset]);
+
   // Pre-fill employee_id when rendered inside the Employee Profile
   useEffect(() => {
     if (employeeId) {
@@ -196,7 +210,7 @@ const EmployeesContractsForm = ({
     }
   }, [employeeId, setValue]);
   
-  const saveMutation = React.useMemo(() => {
+  const saveMutation = useMemo(() => {
     return contract?.id ? updateEmployeeContract : addEmployeeContract;
   }, [contract, updateEmployeeContract, addEmployeeContract]);
 

@@ -1,6 +1,8 @@
 'use client';
 
+import { useLanguage } from '@/app/[lang]/contexts/LanguageContext';
 import { Chip, Divider, Grid, Tooltip, Typography } from '@mui/material';
+import { useRouter } from 'next/navigation';
 import PayrollRunItemAction from './PayrollRunItemAction';
 import { PayrollRunType } from './PayrollRunType';
 
@@ -31,6 +33,8 @@ const formatMoney = (value: number) =>
 const formatPercent = (value: number) => `${value.toFixed(2)}%`;
 
 const PayrollRunsListItem = ({ payrollRun }: { payrollRun: PayrollRunType }) => {
+  const router = useRouter();
+  const lang = useLanguage();
   const employeeName = `${payrollRun.employee?.first_name || ''} ${payrollRun.employee?.last_name || ''}`.trim();
   const grossPay = Number(payrollRun.basic_salary || 0);
   const totalDeductions = Number(payrollRun.paye || 0);
@@ -44,8 +48,12 @@ const PayrollRunsListItem = ({ payrollRun }: { payrollRun: PayrollRunType }) => 
         mt={1}
         mb={1}
         sx={{
+          cursor: 'pointer',
           '&:hover': { bgcolor: 'action.hover' },
         }}
+        onClick={() =>
+          router.push(`/${lang}/humanResources/payroll/${payrollRun.payroll_period_id}/runs/${payrollRun.id}`)
+        }
         paddingLeft={2}
         paddingRight={2}
         columnSpacing={1}
@@ -104,7 +112,11 @@ const PayrollRunsListItem = ({ payrollRun }: { payrollRun: PayrollRunType }) => 
           </Tooltip>
         </Grid>
 
-        <Grid size={{ xs: 12, md: 2 }} textAlign={'end'}>
+        <Grid
+          size={{ xs: 12, md: 2 }}
+          textAlign={'end'}
+          onClick={(event) => event.stopPropagation()}
+        >
           <PayrollRunItemAction payrollRun={payrollRun} />
         </Grid>
       </Grid>

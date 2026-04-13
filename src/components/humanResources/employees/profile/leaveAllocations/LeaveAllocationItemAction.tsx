@@ -9,13 +9,43 @@ import {
   EditOutlined,
   MoreHorizOutlined,
 } from '@mui/icons-material';
-import { Dialog, Tooltip, useMediaQuery } from '@mui/material';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Dialog, LinearProgress, Tooltip, useMediaQuery } from '@mui/material';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import { useState } from 'react';
 import humanResourcesServices from '../../../humanResourcesServices';
 import LeaveAllocationForm from './LeaveAllocationForm';
 import { LeaveAllocationType } from './LeaveAllocationType';
+
+const EditLeaveAllocation = ({
+  leaveAllocation,
+  setOpenEditDialog,
+}: {
+  leaveAllocation: LeaveAllocationType;
+  setOpenEditDialog: (open: boolean) => void;
+}) => {
+  const { data: leaveAllocationData, isFetching } = useQuery({
+    queryKey: ['showLeaveAllocation', leaveAllocation.id],
+    queryFn: () => humanResourcesServices.showLeaveAllocation(leaveAllocation.id),
+  });
+  const queryClient = useQueryClient();
+
+  if (isFetching) {
+    return <LinearProgress />;
+  }
+
+  return (
+    <LeaveAllocationForm
+      leaveAllocation={leaveAllocationData || leaveAllocation}
+      setOpenDialog={(v) => {
+        setOpenEditDialog(v);
+        if (!v) {
+          queryClient.invalidateQueries({ queryKey: ['leaveAllocations'] });
+        }
+      }}
+    />
+  );
+};
 
 const LeaveAllocationItemAction = ({
   leaveAllocation,
@@ -88,10 +118,12 @@ const LeaveAllocationItemAction = ({
         maxWidth='md'
         fullScreen={belowLargeScreen}
       >
-        <LeaveAllocationForm
-          leaveAllocation={leaveAllocation}
-          setOpenDialog={setOpenEditDialog}
-        />
+        {openEditDialog && (
+          <EditLeaveAllocation
+            leaveAllocation={leaveAllocation}
+            setOpenEditDialog={setOpenEditDialog}
+          />
+        )}
       </Dialog>
       <JumboDdMenu
         icon={

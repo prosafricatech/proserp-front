@@ -1,6 +1,7 @@
 export interface PayslipAllowance {
   amount?: number | string;
   value?: number | string;
+  label: string;
   name?: string;
   taxable?: boolean;
   is_taxable?: boolean;
@@ -14,6 +15,7 @@ export interface PayslipAllowance {
 export interface PayslipDeduction {
   amount?: number | string;
   value?: number | string;
+  label: string;
   name?: string;
   category?: string;
   is_pre_tax?: boolean;
@@ -106,10 +108,7 @@ export const getPayslipCalculations = (run?: PayrollRunLike | null): PayslipComp
             : true;
 
     earningsRows.push({
-      label:
-        allowance.allowance_type?.name ||
-        allowance.name ||
-        `Allowance ${index + 1}`,
+      label: allowance.label,
       amount,
       taxable,
     });
@@ -133,7 +132,7 @@ export const getPayslipCalculations = (run?: PayrollRunLike | null): PayslipComp
 
   const deductionRows: PayslipDeductionRow[] = [];
 
-  rawDeductions.forEach((deduction, index) => {
+  rawDeductions.forEach((deduction) => {
     const amount = toNumber(deduction.amount ?? deduction.value);
     if (amount <= 0) return;
 
@@ -146,10 +145,7 @@ export const getPayslipCalculations = (run?: PayrollRunLike | null): PayslipComp
     const isPreTax = Boolean(deduction.is_pre_tax ?? deduction.deduction_type?.is_pre_tax);
 
     deductionRows.push({
-      label:
-        deduction.deduction_type?.name ||
-        deduction.name ||
-        `Deduction ${index + 1}`,
+      label: deduction.label,
       category,
       amount,
       isPreTax,

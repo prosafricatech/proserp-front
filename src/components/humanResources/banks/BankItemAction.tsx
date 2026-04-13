@@ -9,13 +9,37 @@ import {
   EditOutlined,
   MoreHorizOutlined,
 } from '@mui/icons-material';
-import { Dialog, Tooltip, useMediaQuery } from '@mui/material';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Dialog, LinearProgress, Tooltip, useMediaQuery } from '@mui/material';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import { useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
 import BankForm from './BankForm';
 import { BankType } from './BankType';
+
+const EditBank = ({ bank, setOpenEditDialog }: { bank: BankType; setOpenEditDialog: (open: boolean) => void }) => {
+  const { data: bankData, isFetching } = useQuery({
+    queryKey: ['showBank', bank.id],
+    queryFn: () => humanResourcesServices.showBank(bank.id),
+  });
+  const queryClient = useQueryClient();
+
+  if (isFetching) {
+    return <LinearProgress />;
+  }
+
+  return (
+    <BankForm
+      bank={bankData || bank}
+      setOpenDialog={(v) => {
+        setOpenEditDialog(v);
+        if (!v) {
+          queryClient.invalidateQueries({ queryKey: ['banks'] });
+        }
+      }}
+    />
+  );
+};
 
 const BankItemAction = ({ bank }: { bank: BankType }) => {
   const [openEditDialog, setOpenEditDialog] = useState(false);
@@ -76,7 +100,12 @@ const BankItemAction = ({ bank }: { bank: BankType }) => {
         maxWidth='md'
         fullScreen={belowLargeScreen}
       >
-        <BankForm bank={bank} setOpenDialog={setOpenEditDialog} />
+        {openEditDialog && (
+          <EditBank
+            bank={bank}
+            setOpenEditDialog={setOpenEditDialog}
+          />
+        )}
       </Dialog>
       <JumboDdMenu
         icon={

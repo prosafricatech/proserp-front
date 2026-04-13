@@ -124,6 +124,7 @@ const EmployeeBankAccountForm = ({
   const {
     register,
     handleSubmit,
+    reset,
     setValue,
     control,
     formState: { errors },
@@ -139,6 +140,18 @@ const EmployeeBankAccountForm = ({
       is_primary: account?.is_primary || false,
     },
   });
+
+  useEffect(() => {
+    reset({
+      id: account?.id,
+      employee_id: account?.employee_id,
+      bank_id: account?.bank_id,
+      branch: account?.branch || '',
+      account_number: account?.account_number || '',
+      account_name: account?.account_name || '',
+      is_primary: account?.is_primary || false,
+    });
+  }, [account, reset]);
 
   useEffect(() => {
     if (employeeId) {

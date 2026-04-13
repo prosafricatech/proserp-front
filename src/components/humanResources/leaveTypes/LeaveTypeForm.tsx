@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
-import React from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import humanResourcesServices from '../humanResourcesServices';
@@ -97,6 +97,7 @@ const LeaveTypeForm = ({ setOpenDialog, leaveType }: LeaveTypeFormProp) => {
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm<FormData>({
     resolver: yupResolver(validationSchema) as any,
@@ -107,7 +108,15 @@ const LeaveTypeForm = ({ setOpenDialog, leaveType }: LeaveTypeFormProp) => {
     },
   });
 
-  const saveMutation = React.useMemo(() => {
+  useEffect(() => {
+    reset({
+      id: leaveType?.id,
+      name: leaveType?.name || '',
+      days_per_year: leaveType?.days_per_year || 1,
+    });
+  }, [leaveType, reset]);
+
+  const saveMutation = useMemo(() => {
     return leaveType?.id ? updateLeaveType : addLeaveType;
   }, [leaveType, updateLeaveType, addLeaveType]);
 
