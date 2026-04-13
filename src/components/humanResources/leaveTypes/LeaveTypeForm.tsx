@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
-import React, { useEffect, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import humanResourcesServices from '../humanResourcesServices';
@@ -54,10 +54,19 @@ const LeaveTypeForm = ({ setOpenDialog, leaveType }: LeaveTypeFormProp) => {
       queryClient.invalidateQueries({ queryKey: ['leaveTypes'] });
     },
     onError: (error) => {
-      enqueueSnackbar('Error Adding Leave Type', {
-        variant: 'error',
-      });
-      console.log('error adding leave type: ', error);
+      let message = 'Something went wrong';
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as any).response?.data?.message === 'string'
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 
@@ -75,10 +84,19 @@ const LeaveTypeForm = ({ setOpenDialog, leaveType }: LeaveTypeFormProp) => {
       queryClient.invalidateQueries({ queryKey: ['leaveTypes'] });
     },
     onError: (error) => {
-      enqueueSnackbar('Error Updating Leave Type', {
-        variant: 'error',
-      });
-      console.log('error updating leave type: ', error);
+      let message = 'Something went wrong';
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as any).response?.data?.message === 'string'
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 

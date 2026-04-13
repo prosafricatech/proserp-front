@@ -69,10 +69,19 @@ const DesignationItemAction = ({
       });
     },
     onError: (error: any) => {
-      enqueueSnackbar('Error Deleting Designation', {
-        variant: 'error',
-      });
-      console.log('error deleting designation: ', error);
+      let message = 'Something went wrong';
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as any).response?.data?.message === 'string'
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 

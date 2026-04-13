@@ -48,7 +48,9 @@ const getValidationMessage = (
   return Array.isArray(message) ? message[0] : message;
 };
 
-const formatCommaSeparatedValue = (value: string | number | null | undefined) => {
+const formatCommaSeparatedValue = (
+  value: string | number | null | undefined
+) => {
   if (value === null || value === undefined || value === '') return '';
   const raw = String(value).replace(/,/g, '');
   if (!/^\d*\.?\d*$/.test(raw)) return '';
@@ -56,9 +58,7 @@ const formatCommaSeparatedValue = (value: string | number | null | undefined) =>
   const hasDecimal = raw.includes('.');
   const [intPart, decimalPart = ''] = raw.split('.');
 
-  const formattedInt = intPart
-    ? Number(intPart).toLocaleString('en-US')
-    : '0';
+  const formattedInt = intPart ? Number(intPart).toLocaleString('en-US') : '0';
 
   if (!hasDecimal) return formattedInt;
   return `${formattedInt}.${decimalPart}`;
@@ -76,11 +76,15 @@ const EmployeeDeductionForm = ({
     useQuery({
       queryKey: ['fetchDeductionTypesForEmployeeDeductionForm'],
       queryFn: async () => {
-        return humanResourcesServices.getDeductionTypesList({ page: 1, limit: 200 });
+        return humanResourcesServices.getDeductionTypesList({
+          page: 1,
+          limit: 200,
+        });
       },
     });
 
-  const deductionTypes = (deductionTypesResponse?.data || []) as DeductionType[];
+  const deductionTypes = (deductionTypesResponse?.data ||
+    []) as DeductionType[];
 
   const {
     mutate: addEmployeeDeduction,
@@ -96,10 +100,19 @@ const EmployeeDeductionForm = ({
       queryClient.invalidateQueries({ queryKey: ['employeeDeductions'] });
     },
     onError: (mutationError) => {
-      enqueueSnackbar('Error Adding Employee Deduction', {
-        variant: 'error',
-      });
-      console.log('error adding employee deduction: ', mutationError);
+      let message = 'Something went wrong';
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as any).response?.data?.message === 'string'
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 
@@ -117,10 +130,19 @@ const EmployeeDeductionForm = ({
       queryClient.invalidateQueries({ queryKey: ['employeeDeductions'] });
     },
     onError: (mutationError) => {
-      enqueueSnackbar('Error Updating Employee Deduction', {
-        variant: 'error',
-      });
-      console.log('error updating employee deduction: ', mutationError);
+      let message = 'Something went wrong';
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as any).response?.data?.message === 'string'
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 
@@ -171,7 +193,9 @@ const EmployeeDeductionForm = ({
   }, [employeeId, setValue]);
 
   const saveMutation = useMemo(() => {
-    return employeeDeduction?.id ? updateEmployeeDeduction : addEmployeeDeduction;
+    return employeeDeduction?.id
+      ? updateEmployeeDeduction
+      : addEmployeeDeduction;
   }, [employeeDeduction?.id, updateEmployeeDeduction, addEmployeeDeduction]);
 
   const validationErrors =
@@ -212,17 +236,22 @@ const EmployeeDeductionForm = ({
                         }
                         getOptionLabel={(option) => option.name || ''}
                         value={
-                          deductionTypes.find((type) => type.id === field.value) ||
-                          null
+                          deductionTypes.find(
+                            (type) => type.id === field.value
+                          ) || null
                         }
                         onChange={(event, newValue) => {
                           field.onChange(newValue?.id || null);
 
                           if (newValue) {
-                            setValue('value', Number(newValue.default_value ?? ''), {
-                              shouldDirty: true,
-                              shouldValidate: true,
-                            });
+                            setValue(
+                              'value',
+                              Number(newValue.default_value ?? ''),
+                              {
+                                shouldDirty: true,
+                                shouldValidate: true,
+                              }
+                            );
                           }
                         }}
                         renderInput={(params) => (
@@ -231,7 +260,10 @@ const EmployeeDeductionForm = ({
                             label='Deduction Type'
                             error={
                               !!fieldState.error ||
-                              !!getValidationMessage(validationErrors, 'deduction_type_id')
+                              !!getValidationMessage(
+                                validationErrors,
+                                'deduction_type_id'
+                              )
                             }
                             helperText={
                               fieldState.error?.message ||
@@ -266,7 +298,10 @@ const EmployeeDeductionForm = ({
                           field.onChange(raw);
                         }
                       }}
-                      inputProps={{ inputMode: 'decimal', pattern: '^\\d*\\.?\\d*$' }}
+                      inputProps={{
+                        inputMode: 'decimal',
+                        pattern: '^\\d*\\.?\\d*$',
+                      }}
                       error={
                         !!errors?.value ||
                         !!getValidationMessage(validationErrors, 'value')
@@ -299,10 +334,16 @@ const EmployeeDeductionForm = ({
                           fullWidth: true,
                           error:
                             !!errors?.effective_from ||
-                            !!getValidationMessage(validationErrors, 'effective_from'),
+                            !!getValidationMessage(
+                              validationErrors,
+                              'effective_from'
+                            ),
                           helperText:
                             errors.effective_from?.message ||
-                            getValidationMessage(validationErrors, 'effective_from'),
+                            getValidationMessage(
+                              validationErrors,
+                              'effective_from'
+                            ),
                         },
                       }}
                     />
@@ -329,10 +370,16 @@ const EmployeeDeductionForm = ({
                           fullWidth: true,
                           error:
                             !!errors?.effective_to ||
-                            !!getValidationMessage(validationErrors, 'effective_to'),
+                            !!getValidationMessage(
+                              validationErrors,
+                              'effective_to'
+                            ),
                           helperText:
                             errors.effective_to?.message ||
-                            getValidationMessage(validationErrors, 'effective_to'),
+                            getValidationMessage(
+                              validationErrors,
+                              'effective_to'
+                            ),
                         },
                       }}
                     />

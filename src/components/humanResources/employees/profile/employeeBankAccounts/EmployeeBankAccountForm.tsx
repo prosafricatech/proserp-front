@@ -77,9 +77,19 @@ const EmployeeBankAccountForm = ({
       queryClient.invalidateQueries({ queryKey: ['employeeBankAccounts'] });
     },
     onError: (mutationError) => {
-      enqueueSnackbar('Error Adding Bank Account', {
-        variant: 'error',
-      });
+      let message = 'Something went wrong';
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as any).response?.data?.message === 'string'
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 
@@ -97,9 +107,19 @@ const EmployeeBankAccountForm = ({
       queryClient.invalidateQueries({ queryKey: ['employeeBankAccounts'] });
     },
     onError: (mutationError) => {
-      enqueueSnackbar('Error Updating Bank Account', {
-        variant: 'error',
-      });
+      let message = 'Something went wrong';
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as any).response?.data?.message === 'string'
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 
@@ -191,9 +211,15 @@ const EmployeeBankAccountForm = ({
                       size='small'
                       loading={isBanksFetching}
                       options={banks}
-                      value={banks.find((bank) => bank.id === field.value) || null}
-                      onChange={(_, newValue) => field.onChange(newValue?.id || null)}
-                      isOptionEqualToValue={(option, value) => option.id === value.id}
+                      value={
+                        banks.find((bank) => bank.id === field.value) || null
+                      }
+                      onChange={(_, newValue) =>
+                        field.onChange(newValue?.id || null)
+                      }
+                      isOptionEqualToValue={(option, value) =>
+                        option.id === value.id
+                      }
                       getOptionLabel={(option) =>
                         option.short_name
                           ? `${option.name} (${option.short_name})`
@@ -286,7 +312,9 @@ const EmployeeBankAccountForm = ({
                       control={
                         <Checkbox
                           checked={Boolean(field.value)}
-                          onChange={(event) => field.onChange(event.target.checked)}
+                          onChange={(event) =>
+                            field.onChange(event.target.checked)
+                          }
                         />
                       }
                       label='Set as Primary Account'

@@ -56,10 +56,19 @@ const DepartmentForm = ({
       queryClient.invalidateQueries({ queryKey: ['departments'] });
     },
     onError: (error) => {
-      enqueueSnackbar('Error Adding Department', {
-        variant: 'error',
-      });
-      console.log('error adding department: ', error);
+      let message = 'Something went wrong';
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as any).response?.data?.message === 'string'
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 
@@ -77,10 +86,19 @@ const DepartmentForm = ({
       queryClient.invalidateQueries({ queryKey: ['departments'] });
     },
     onError: (error) => {
-      enqueueSnackbar('Error Updating Department', {
-        variant: 'error',
-      });
-      console.log('error updating department: ', error);
+      let message = 'Something went wrong';
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as any).response?.data?.message === 'string'
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 

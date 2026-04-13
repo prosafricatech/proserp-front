@@ -25,7 +25,10 @@ const EditEmployeeEmployerContribution = ({
   setOpenEditDialog: (open: boolean) => void;
 }) => {
   const { data: employeeEmployerContributionData, isFetching } = useQuery({
-    queryKey: ['showEmployeeEmployerContribution', employeeEmployerContribution.id],
+    queryKey: [
+      'showEmployeeEmployerContribution',
+      employeeEmployerContribution.id,
+    ],
     queryFn: () =>
       humanResourcesServices.showEmployeeEmployerContribution(
         employeeEmployerContribution.id
@@ -77,13 +80,19 @@ const EmployeeEmployerContributionItemAction = ({
       });
     },
     onError: (error: any) => {
-      enqueueSnackbar('Error Deleting Employee Employer Contribution', {
-        variant: 'error',
-      });
-      console.log(
-        'error deleting employee employer contribution: ',
-        error
-      );
+      let message = 'Something went wrong';
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as any).response?.data?.message === 'string'
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 

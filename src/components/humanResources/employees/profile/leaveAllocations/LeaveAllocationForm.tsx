@@ -18,8 +18,8 @@ import { useSnackbar } from 'notistack';
 import { useEffect, useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import * as yup from 'yup';
-import { LeaveType } from '../../../leaveTypes/LeaveTypesType';
 import humanResourcesServices from '../../../humanResourcesServices';
+import { LeaveType } from '../../../leaveTypes/LeaveTypesType';
 import { LeaveAllocationType } from './LeaveAllocationType';
 
 interface LeaveAllocationFormProps {
@@ -54,12 +54,17 @@ const LeaveAllocationForm = ({
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
 
-  const { data: leaveTypesResponse, isFetching: fetchingLeaveTypes } = useQuery({
-    queryKey: ['fetchLeaveTypesForLeaveAllocationForm'],
-    queryFn: async () => {
-      return humanResourcesServices.getLeaveTypesList({ page: 1, limit: 200 });
-    },
-  });
+  const { data: leaveTypesResponse, isFetching: fetchingLeaveTypes } = useQuery(
+    {
+      queryKey: ['fetchLeaveTypesForLeaveAllocationForm'],
+      queryFn: async () => {
+        return humanResourcesServices.getLeaveTypesList({
+          page: 1,
+          limit: 200,
+        });
+      },
+    }
+  );
 
   const leaveTypes = (leaveTypesResponse?.data || []) as LeaveType[];
 
@@ -77,9 +82,19 @@ const LeaveAllocationForm = ({
       queryClient.invalidateQueries({ queryKey: ['leaveAllocations'] });
     },
     onError: (mutationError) => {
-      enqueueSnackbar('Error Adding Leave Allocation', {
-        variant: 'error',
-      });
+      let message = 'Something went wrong';
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as any).response?.data?.message === 'string'
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 
@@ -97,9 +112,19 @@ const LeaveAllocationForm = ({
       queryClient.invalidateQueries({ queryKey: ['leaveAllocations'] });
     },
     onError: (mutationError) => {
-      enqueueSnackbar('Error Updating Leave Allocation', {
-        variant: 'error',
-      });
+      let message = 'Something went wrong';
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as any).response?.data?.message === 'string'
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 
@@ -167,7 +192,9 @@ const LeaveAllocationForm = ({
     <>
       <DialogTitle>
         <Grid size={12} textAlign={'center'}>
-          {!leaveAllocation?.id ? 'Add Leave Allocation' : 'Edit Leave Allocation'}
+          {!leaveAllocation?.id
+            ? 'Add Leave Allocation'
+            : 'Edit Leave Allocation'}
         </Grid>
       </DialogTitle>
       <DialogContent>
@@ -191,7 +218,8 @@ const LeaveAllocationForm = ({
                         }
                         getOptionLabel={(option) => option.name || ''}
                         value={
-                          leaveTypes.find((type) => type.id === field.value) || null
+                          leaveTypes.find((type) => type.id === field.value) ||
+                          null
                         }
                         onChange={(event, newValue) => {
                           field.onChange(newValue?.id || null);
@@ -202,11 +230,17 @@ const LeaveAllocationForm = ({
                             label='Leave Type'
                             error={
                               !!fieldState.error ||
-                              !!getValidationMessage(validationErrors, 'leave_type_id')
+                              !!getValidationMessage(
+                                validationErrors,
+                                'leave_type_id'
+                              )
                             }
                             helperText={
                               fieldState.error?.message ||
-                              getValidationMessage(validationErrors, 'leave_type_id')
+                              getValidationMessage(
+                                validationErrors,
+                                'leave_type_id'
+                              )
                             }
                           />
                         )}

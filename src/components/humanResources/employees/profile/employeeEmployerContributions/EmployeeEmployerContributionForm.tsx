@@ -30,8 +30,10 @@ interface EmployeeEmployerContributionFormProps {
   employeeId?: number;
 }
 
-interface FormData
-  extends Omit<EmployeeEmployerContributionType, 'id' | 'created_by'> {
+interface FormData extends Omit<
+  EmployeeEmployerContributionType,
+  'id' | 'created_by'
+> {
   id?: number;
 }
 
@@ -86,8 +88,8 @@ const EmployeeEmployerContributionForm = ({
     },
   });
 
-  const contributionTypes =
-    (contributionTypesResponse?.data || []) as EmployerContributionType[];
+  const contributionTypes = (contributionTypesResponse?.data ||
+    []) as EmployerContributionType[];
 
   const {
     mutate: addEmployeeEmployerContribution,
@@ -100,16 +102,24 @@ const EmployeeEmployerContributionForm = ({
       enqueueSnackbar('Employee Employer Contribution Added Successfully', {
         variant: 'success',
       });
-      queryClient.invalidateQueries({ queryKey: ['employeeEmployerContributions'] });
+      queryClient.invalidateQueries({
+        queryKey: ['employeeEmployerContributions'],
+      });
     },
     onError: (mutationError) => {
-      enqueueSnackbar('Error Adding Employee Employer Contribution', {
-        variant: 'error',
-      });
-      console.log(
-        'error adding employee employer contribution: ',
-        mutationError
-      );
+      let message = 'Something went wrong';
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as any).response?.data?.message === 'string'
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 
@@ -124,16 +134,24 @@ const EmployeeEmployerContributionForm = ({
       enqueueSnackbar('Employee Employer Contribution Updated Successfully', {
         variant: 'success',
       });
-      queryClient.invalidateQueries({ queryKey: ['employeeEmployerContributions'] });
+      queryClient.invalidateQueries({
+        queryKey: ['employeeEmployerContributions'],
+      });
     },
     onError: (mutationError) => {
-      enqueueSnackbar('Error Updating Employee Employer Contribution', {
-        variant: 'error',
-      });
-      console.log(
-        'error updating employee employer contribution: ',
-        mutationError
-      );
+      let message = 'Something went wrong';
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as any).response?.data?.message === 'string'
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 
@@ -243,10 +261,14 @@ const EmployeeEmployerContributionForm = ({
                           field.onChange(newValue?.id || null);
 
                           if (newValue) {
-                            setValue('value', Number(newValue.default_value ?? ''), {
-                              shouldDirty: true,
-                              shouldValidate: true,
-                            });
+                            setValue(
+                              'value',
+                              Number(newValue.default_value ?? ''),
+                              {
+                                shouldDirty: true,
+                                shouldValidate: true,
+                              }
+                            );
                           }
                         }}
                         renderInput={(params) => (
@@ -293,7 +315,10 @@ const EmployeeEmployerContributionForm = ({
                           field.onChange(raw);
                         }
                       }}
-                      inputProps={{ inputMode: 'decimal', pattern: '^\\d*\\.?\\d*$' }}
+                      inputProps={{
+                        inputMode: 'decimal',
+                        pattern: '^\\d*\\.?\\d*$',
+                      }}
                       error={
                         !!errors?.value ||
                         !!getValidationMessage(validationErrors, 'value')

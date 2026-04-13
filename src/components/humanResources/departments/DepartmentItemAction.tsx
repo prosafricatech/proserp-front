@@ -16,7 +16,13 @@ import humanResourcesServices from '../humanResourcesServices';
 import DepartmentForm from './DepartmentForm';
 import { Department } from './DepartmentsType';
 
-const EditDepartment = ({ department, setOpenEditDialog }: { department: Department; setOpenEditDialog: (open: boolean) => void }) => {
+const EditDepartment = ({
+  department,
+  setOpenEditDialog,
+}: {
+  department: Department;
+  setOpenEditDialog: (open: boolean) => void;
+}) => {
   const { data: departmentData, isFetching } = useQuery({
     queryKey: ['showDepartment', department.id],
     queryFn: () => humanResourcesServices.showDepartment(department.id),
@@ -58,10 +64,19 @@ const DepartmentItemAction = ({ department }: { department: Department }) => {
       });
     },
     onError: (error: any) => {
-      enqueueSnackbar('Error Deleting Department', {
-        variant: 'error',
-      });
-      console.log('error deleting department: ', error);
+      let message = 'Something went wrong';
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as any).response?.data?.message === 'string'
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 

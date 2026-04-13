@@ -82,10 +82,19 @@ const EmployerContributionTypeForm = ({
       });
     },
     onError: (mutationError) => {
-      enqueueSnackbar('Error Adding Employer Contribution Type', {
-        variant: 'error',
-      });
-      console.error('error adding employer contribution type: ', mutationError);
+      let message = 'Something went wrong';
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as any).response?.data?.message === 'string'
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 
@@ -105,10 +114,19 @@ const EmployerContributionTypeForm = ({
       });
     },
     onError: (mutationError) => {
-      enqueueSnackbar('Error Updating Employer Contribution Type', {
-        variant: 'error',
-      });
-      console.log('error updating employer contribution type: ', mutationError);
+      let message = 'Something went wrong';
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as any).response?.data?.message === 'string'
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 
