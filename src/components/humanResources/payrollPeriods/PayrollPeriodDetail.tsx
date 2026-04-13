@@ -185,16 +185,15 @@ export default function PayrollPeriodDetail() {
         id='payroll-period-summary'
         direction='row'
         spacing={2}
-        flexWrap='wrap'
         mb={3}
-        sx={{ scrollMarginTop: 96 }}
+        sx={{ scrollMarginTop: 96, width: '100%' }}
       >
         {[
           { label: 'Total Gross', value: totalGross },
           { label: 'Total PAYE', value: totalPaye },
           { label: 'Total Net', value: totalNet },
         ].map(({ label, value }) => (
-          <Card key={label} sx={{ p: 2, minWidth: 160 }}>
+          <Card key={label} sx={{ p: 2, flex: 1 }}>
             <Typography variant='body2' color='text.secondary'>{label}</Typography>
             <Typography variant='h5'>
               {value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
