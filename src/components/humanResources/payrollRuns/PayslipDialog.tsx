@@ -32,8 +32,10 @@ import { KeyboardArrowDownOutlined, KeyboardArrowUpOutlined } from '@mui/icons-m
 import { useSnackbar } from 'notistack';
 import { useState } from 'react';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
+import PDFContent from '@/components/pdf/PDFContent';
 import humanResourcesServices from '../humanResourcesServices';
 import { getPayslipCalculations } from './payslipCalculations';
+import PayslipPDF from './PayslipPDF';
 
 type PayslipDialogProps = {
   open: boolean;
@@ -67,6 +69,7 @@ const PayslipDialog = ({ open, onClose, runId, periodId }: PayslipDialogProps) =
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
   const [showTaxBreakdown, setShowTaxBreakdown] = useState(false);
+  const [openPdfDialog, setOpenPdfDialog] = useState(false);
 
   const { data: run, isLoading } = useQuery({
     queryKey: ['showPayrollRun', String(runId)],
@@ -114,37 +117,8 @@ const PayslipDialog = ({ open, onClose, runId, periodId }: PayslipDialogProps) =
     })),
   ];
 
-  const handlePrint = () => {
-    window.print();
-  };
-
   return (
     <>
-      <GlobalStyles
-        styles={{
-          '@media print': {
-            body: { background: '#fff' },
-            '.MuiDialog-root': { position: 'static !important' },
-            '.MuiBackdrop-root, .MuiDialogTitle-root, .MuiDialogActions-root': {
-              display: 'none !important',
-            },
-            '.MuiDialog-paper': {
-              boxShadow: 'none !important',
-              maxWidth: '100% !important',
-              width: '100% !important',
-              margin: '0 !important',
-            },
-            '#payslip-print-area': {
-              display: 'block !important',
-            },
-          },
-          '@page': {
-            size: 'portrait',
-            margin: '15mm',
-          },
-        }}
-      />
-
       <Dialog open={open} onClose={onClose} fullWidth maxWidth='md' fullScreen={belowLargeScreen}>
         <DialogTitle>
           <Stack direction='row' alignItems='center' spacing={2}>
@@ -351,10 +325,30 @@ const PayslipDialog = ({ open, onClose, runId, periodId }: PayslipDialogProps) =
               Finalize
             </LoadingButton>
           )}
-          <Button variant='outlined' onClick={handlePrint}>
+          <Button variant='outlined' onClick={() => setOpenPdfDialog(true)} disabled={!run}>
             Print Payslip
           </Button>
           <Button onClick={onClose}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={openPdfDialog} onClose={() => setOpenPdfDialog(false)} fullWidth maxWidth='lg'>
+        <DialogTitle>PDF Preview</DialogTitle>
+        <DialogContent>
+          {run && (
+            <PDFContent
+              document={
+                <PayslipPDF
+                  payrollRun={run as any}
+                  organization={authObject?.authOrganization?.organization}
+                />
+              }
+              fileName={`Payslip-${run?.employee?.first_name || 'Employee'}-${run?.employee?.last_name || ''}`}
+            />
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenPdfDialog(false)}>Close</Button>
         </DialogActions>
       </Dialog>
     </>

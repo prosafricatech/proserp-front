@@ -65,12 +65,15 @@ const PayslipPDF: React.FC<PayslipPDFProps> = ({ payrollRun, organization }) => 
     paye,
     earningsRows,
     deductionRows,
+    employerContributionRows,
     grossSalary,
     preTaxDeductions,
     taxableIncome,
     otherDeductions,
     totalDeductions,
     netSalary,
+    totalEmployerContributions,
+    totalEmployerCost,
   } = getPayslipCalculations(payrollRun);
 
   const netPaySummaryRows = [
@@ -360,6 +363,87 @@ const PayslipPDF: React.FC<PayslipPDFProps> = ({ payrollRun, organization }) => 
               </Text>
             </View>
           ))}
+        </View>
+
+        <Text style={{ ...pdfStyles.majorInfo, color: mainColor, marginTop: 15, marginBottom: 0, textAlign: 'center' }}>
+          EMPLOYER CONTRIBUTIONS
+        </Text>
+        <View style={pdfStyles.table}>
+          <View style={pdfStyles.tableRow}>
+            <Text
+              style={{
+                ...pdfStyles.tableHeader,
+                backgroundColor: mainColor,
+                color: contrastText,
+                flex: 2,
+              }}
+            >
+              Description
+            </Text>
+            <Text
+              style={{
+                ...pdfStyles.tableHeader,
+                backgroundColor: mainColor,
+                color: contrastText,
+                flex: 1,
+              }}
+            >
+              Category
+            </Text>
+            <Text
+              style={{
+                ...pdfStyles.tableHeader,
+                backgroundColor: mainColor,
+                color: contrastText,
+                flex: 1,
+              }}
+            >
+              Amount
+            </Text>
+          </View>
+
+          {employerContributionRows.length === 0 ? (
+            <View style={pdfStyles.tableRow}>
+              <Text style={{ ...pdfStyles.tableCell, flex: 4 }}>No employer contributions</Text>
+            </View>
+          ) : (
+            employerContributionRows.map((row, index) => {
+              const { backgroundColor, color } = getRowColors(index);
+              return (
+                <View style={pdfStyles.tableRow} key={`${row.label}-${row.category}-${index}`}>
+                  <Text style={{ ...pdfStyles.tableCell, flex: 2, backgroundColor, color }}>{row.label}</Text>
+                  <Text style={{ ...pdfStyles.tableCell, flex: 1, backgroundColor, color }}>{row.category}</Text>
+                  <Text style={{ ...pdfStyles.tableCell, flex: 1, textAlign: 'right', backgroundColor, color }}>
+                    {fmt(row.amount)}
+                  </Text>
+                </View>
+              );
+            })
+          )}
+
+          <View style={{ ...pdfStyles.tableRow, backgroundColor: mainColor }}>
+            <Text style={{ ...pdfStyles.tableCell, flex: 2, fontWeight: 'bold', color: contrastText }}>
+              Total Employer Contributions
+            </Text>
+            <Text style={{ ...pdfStyles.tableCell, flex: 1, color: contrastText }}>
+              
+            </Text>
+            <Text style={{ ...pdfStyles.tableCell, flex: 1, textAlign: 'right', fontWeight: 'bold', color: contrastText }}>
+              {fmt(totalEmployerContributions)}
+            </Text>
+          </View>
+
+          <View style={{ ...pdfStyles.tableRow, backgroundColor: mainColor }}>
+            <Text style={{ ...pdfStyles.tableCell, flex: 2, fontWeight: 'bold', color: contrastText }}>
+              Total Employer Cost
+            </Text>
+            <Text style={{ ...pdfStyles.tableCell, flex: 1, color: contrastText }}>
+              
+            </Text>
+            <Text style={{ ...pdfStyles.tableCell, flex: 1, textAlign: 'right', fontWeight: 'bold', color: contrastText }}>
+              {fmt(totalEmployerCost)}
+            </Text>
+          </View>
         </View>
 
         <View style={{ ...pdfStyles.tableRow, marginTop: 40 }}>

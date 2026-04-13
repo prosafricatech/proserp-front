@@ -18,8 +18,11 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
+import { useState } from 'react';
+import PDFContent from '@/components/pdf/PDFContent';
 import { PayrollRunType } from '../payrollRuns/PayrollRunType';
 import { PayslipComputed } from '../payrollRuns/payslipCalculations';
+import SalarySheetPDF from './SalarySheetPDF';
 
 type SalarySheetRow = {
   run: PayrollRunType;
@@ -49,6 +52,7 @@ const findContribution = (computed: PayslipComputed, label: string) => {
 
 const SalarySheetDialog = ({ open, onClose, periodLabel, rows }: SalarySheetDialogProps) => {
   const authObject = useJumboAuth() as any;
+  const [openPdfDialog, setOpenPdfDialog] = useState(false);
 
   const totals = rows.reduce(
     (sum, entry) => {
@@ -84,35 +88,6 @@ const SalarySheetDialog = ({ open, onClose, periodLabel, rows }: SalarySheetDial
 
   return (
     <>
-      <GlobalStyles
-        styles={{
-          '@media print': {
-            '.MuiBackdrop-root, .MuiDialogTitle-root, .MuiDialogActions-root': {
-              display: 'none !important',
-            },
-            '.MuiDialog-paper': {
-              boxShadow: 'none !important',
-              maxWidth: '100% !important',
-              width: '100% !important',
-              margin: '0 !important',
-            },
-            '#salary-sheet-print-area': {
-              display: 'block !important',
-            },
-            '.salary-sheet-print-footer': {
-              display: 'block !important',
-            },
-            thead: {
-              display: 'table-header-group',
-            },
-          },
-          '@page': {
-            size: 'landscape',
-            margin: '10mm',
-          },
-        }}
-      />
-
       <Dialog open={open} onClose={onClose} fullScreen>
         <DialogTitle>
           <Stack direction='row' justifyContent='space-between' alignItems='center'>
@@ -200,10 +175,29 @@ const SalarySheetDialog = ({ open, onClose, periodLabel, rows }: SalarySheetDial
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button variant='outlined' onClick={() => window.print()}>
+          <Button variant='outlined' onClick={() => setOpenPdfDialog(true)}>
             Print
           </Button>
           <Button onClick={onClose}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={openPdfDialog} onClose={() => setOpenPdfDialog(false)} fullWidth maxWidth='xl'>
+        <DialogTitle>PDF Preview</DialogTitle>
+        <DialogContent>
+          <PDFContent
+            document={
+              <SalarySheetPDF
+                organization={authObject?.authOrganization?.organization}
+                periodLabel={periodLabel}
+                rows={rows}
+              />
+            }
+            fileName={`Salary-Sheet-${periodLabel}`}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenPdfDialog(false)}>Close</Button>
         </DialogActions>
       </Dialog>
     </>
