@@ -9,6 +9,7 @@ import {
   EditOutlined,
   MoreHorizOutlined,
   PaidOutlined,
+  ReceiptLongOutlined,
   PersonOutline,
   PlayCircleOutline,
 } from '@mui/icons-material';
@@ -26,13 +27,32 @@ import {
   Typography,
   useMediaQuery,
 } from '@mui/material';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import { useState } from 'react';
 import { Employee } from '../employees/EmployeesType';
 import humanResourcesServices from '../humanResourcesServices';
+import { getPayslipCalculations } from '../payrollRuns/payslipCalculations';
+import { PayrollRunType } from '../payrollRuns/PayrollRunType';
+import SalarySheetDialog from './SalarySheetDialog';
 import { PayrollPeriodType } from './PayrollPeriodType';
 import PayrollPeriodForm from './PayrollPeriodForm';
+
+const MONTH_NAMES = [
+  '',
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
 
 const EditPayrollPeriod = ({
   payrollPeriod,
@@ -71,6 +91,7 @@ const PayrollPeriodItemAction = ({
 }) => {
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [openProcessDialog, setOpenProcessDialog] = useState(false);
+  const [openSalarySheetDialog, setOpenSalarySheetDialog] = useState(false);
   const [processMode, setProcessMode] = useState<'all' | 'single'>('all');
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const { showDialog, hideDialog } = useJumboDialog();
@@ -151,12 +172,54 @@ const PayrollPeriodItemAction = ({
   const status = (payrollPeriod.status || '').toLowerCase();
   const isPaid = status === 'paid';
   const isApproved = status === 'approved';
+  const canViewSalarySheet = isApproved || isPaid;
   const isDeleteDisabled = isApproved || isPaid;
   const isMarkPaidDisabled = !isApproved || isPaid;
   const isProcessDisabled = isPaid;
 
+  const { data: runsResponse } = useQuery({
+    queryKey: ['payrollRunsForSalarySheet', payrollPeriod.id],
+    queryFn: () =>
+      humanResourcesServices.getPayrollRunsList({
+        payroll_period_id: payrollPeriod.id,
+        page: 1,
+        limit: 500,
+      }),
+    enabled: openSalarySheetDialog,
+  });
+
+  const runs: PayrollRunType[] = runsResponse?.data || [];
+
+  const runDetailsQueries = useQueries({
+    queries: runs.map((run) => ({
+      queryKey: ['showPayrollRun', run.id],
+      queryFn: () => humanResourcesServices.showPayrollRun(String(run.id)),
+      enabled: openSalarySheetDialog && Boolean(run.id),
+      staleTime: 1000 * 60,
+    })),
+  });
+
+  const salarySheetRows = runs.map((run, index) => {
+    const detailedRun = runDetailsQueries[index]?.data ?? run;
+    return {
+      run,
+      computed: getPayslipCalculations(detailedRun),
+    };
+  });
+
+  const periodLabel = `${MONTH_NAMES[payrollPeriod.month] ?? payrollPeriod.month} ${payrollPeriod.year}`;
+
   const menuItems = [
     { icon: <EditOutlined />, title: 'Edit', action: 'edit' },
+    ...(canViewSalarySheet
+      ? [
+          {
+            icon: <ReceiptLongOutlined color='primary' />,
+            title: 'Salary Sheet',
+            action: 'salary-sheet',
+          },
+        ]
+      : []),
     ...(!isProcessDisabled
       ? [
           {
@@ -239,6 +302,10 @@ const PayrollPeriodItemAction = ({
           onNo: () => hideDialog(),
           variant: 'confirm',
         });
+        break;
+      case 'salary-sheet':
+        if (!canViewSalarySheet) return;
+        setOpenSalarySheetDialog(true);
         break;
       default:
         break;
@@ -352,6 +419,13 @@ const PayrollPeriodItemAction = ({
         }
         menuItems={menuItems}
         onClickCallback={handleItemAction}
+      />
+
+      <SalarySheetDialog
+        open={openSalarySheetDialog}
+        onClose={() => setOpenSalarySheetDialog(false)}
+        periodLabel={periodLabel}
+        rows={salarySheetRows}
       />
     </>
   );

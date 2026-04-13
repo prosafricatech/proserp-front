@@ -567,6 +567,14 @@ humanResourcesServices.processPayrollPeriodSingleEmployee = async (payload = {})
     return data;
 }
 
+humanResourcesServices.processPayrollPeriodEmployees = async (payload = {}) => {
+    const { id, employee_ids = [] } = payload;
+    const { data } = await axios.post(`/api/humanResources/payrollPeriods/${id}/process-employees`, {
+        employee_ids,
+    });
+    return data;
+}
+
 humanResourcesServices.showPayrollPeriod = async (id) => {
     const { data } = await axios.get(`/api/humanResources/payrollPeriods/${id}`);
     return data;

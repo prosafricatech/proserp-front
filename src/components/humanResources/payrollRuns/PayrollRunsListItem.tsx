@@ -52,7 +52,7 @@ const PayrollRunsListItem = ({ payrollRun }: { payrollRun: PayrollRunType }) => 
           '&:hover': { bgcolor: 'action.hover' },
         }}
         onClick={() =>
-          router.push(`/${lang}/humanResources/payroll/${payrollRun.payroll_period_id}/runs/${payrollRun.id}`)
+          router.push(`/${lang}/humanResources/payroll/${payrollRun.payroll_period_id}?run_id=${payrollRun.id}`)
         }
         paddingLeft={2}
         paddingRight={2}

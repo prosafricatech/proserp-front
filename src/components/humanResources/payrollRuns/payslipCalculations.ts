@@ -26,6 +26,18 @@ export interface PayslipDeduction {
   };
 }
 
+export interface PayslipEmployerContribution {
+  amount?: number | string;
+  value?: number | string;
+  label?: string;
+  name?: string;
+  category?: string;
+  contribution_type?: {
+    name?: string;
+    category?: string;
+  };
+}
+
 export interface PayrollRunLike {
   basic_salary?: number | string;
   paye?: number | string;
@@ -33,6 +45,8 @@ export interface PayrollRunLike {
   employee_allowances?: PayslipAllowance[];
   deductions?: PayslipDeduction[];
   employee_deductions?: PayslipDeduction[];
+  employer_contributions?: PayslipEmployerContribution[];
+  employee_employer_contributions?: PayslipEmployerContribution[];
 }
 
 export interface PayslipEarningRow {
@@ -48,11 +62,18 @@ export interface PayslipDeductionRow {
   isPreTax: boolean;
 }
 
+export interface PayslipEmployerContributionRow {
+  label: string;
+  category: string;
+  amount: number;
+}
+
 export interface PayslipComputed {
   basicSalary: number;
   paye: number;
   earningsRows: PayslipEarningRow[];
   deductionRows: PayslipDeductionRow[];
+  employerContributionRows: PayslipEmployerContributionRow[];
   totalAllowances: number;
   taxableAllowances: number;
   grossSalary: number;
@@ -61,6 +82,8 @@ export interface PayslipComputed {
   otherDeductions: number;
   totalDeductions: number;
   netSalary: number;
+  totalEmployerContributions: number;
+  totalEmployerCost: number;
 }
 
 const toNumber = (value: unknown): number => {
@@ -162,11 +185,40 @@ export const getPayslipCalculations = (run?: PayrollRunLike | null): PayslipComp
   const totalDeductions = paye + otherDeductions;
   const netSalary = grossSalary - paye - otherDeductions;
 
+  const rawEmployerContributions = [
+    ...asArray<PayslipEmployerContribution>(run?.employer_contributions),
+    ...asArray<PayslipEmployerContribution>(run?.employee_employer_contributions),
+  ];
+
+  const employerContributionRows: PayslipEmployerContributionRow[] = [];
+
+  rawEmployerContributions.forEach((contribution, index) => {
+    const amount = toNumber(contribution.amount ?? contribution.value);
+    if (amount <= 0) return;
+
+    employerContributionRows.push({
+      label:
+        contribution.label ||
+        contribution.contribution_type?.name ||
+        contribution.name ||
+        `Employer Contribution ${index + 1}`,
+      category: (contribution.category || contribution.contribution_type?.category || 'other').toLowerCase(),
+      amount,
+    });
+  });
+
+  const totalEmployerContributions = employerContributionRows.reduce(
+    (sum, row) => sum + row.amount,
+    0
+  );
+  const totalEmployerCost = grossSalary + totalEmployerContributions;
+
   return {
     basicSalary,
     paye,
     earningsRows,
     deductionRows,
+    employerContributionRows,
     totalAllowances,
     taxableAllowances,
     grossSalary,
@@ -175,5 +227,7 @@ export const getPayslipCalculations = (run?: PayrollRunLike | null): PayslipComp
     otherDeductions,
     totalDeductions,
     netSalary,
+    totalEmployerContributions,
+    totalEmployerCost,
   };
 };

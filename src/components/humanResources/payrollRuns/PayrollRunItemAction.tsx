@@ -59,7 +59,7 @@ const PayrollRunItemAction = ({ payrollRun }: { payrollRun: PayrollRunType }) =>
   const handleItemAction = (menuItem: MenuItemProps) => {
     switch (menuItem.action) {
       case 'viewPayslip':
-        router.push(`/${lang}/humanResources/payroll/${payrollRun.payroll_period_id}/runs/${payrollRun.id}`);
+        router.push(`/${lang}/humanResources/payroll/${payrollRun.payroll_period_id}?run_id=${payrollRun.id}`);
         break;
       case 'finalize':
         if (isFinalized) return;
