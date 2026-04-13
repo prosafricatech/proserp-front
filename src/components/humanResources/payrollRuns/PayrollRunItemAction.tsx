@@ -45,12 +45,15 @@ const PayrollRunItemAction = ({ payrollRun }: { payrollRun: PayrollRunType }) =>
       title: 'Full Payslip Detail',
       action: 'viewPayslip',
     },
-    {
-      icon: <CheckCircleOutline color={isFinalized ? 'disabled' : 'success'} />,
-      title: isFinalized ? 'Already Finalized' : 'Finalize',
-      action: 'finalize',
-      disabled: isFinalized,
-    },
+    ...(!isFinalized
+      ? [
+          {
+            icon: <CheckCircleOutline color='success' />,
+            title: 'Finalize',
+            action: 'finalize',
+          },
+        ]
+      : []),
   ];
 
   const handleItemAction = (menuItem: MenuItemProps) => {

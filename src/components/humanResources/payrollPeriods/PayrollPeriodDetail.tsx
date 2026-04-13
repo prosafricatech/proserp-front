@@ -181,13 +181,19 @@ export default function PayrollPeriodDetail() {
       }
     >
       {/* Summary cards */}
-      <Stack direction='row' spacing={2} flexWrap='wrap' mb={3}>
+      <Stack
+        id='payroll-period-summary'
+        direction='row'
+        spacing={2}
+        mb={3}
+        sx={{ scrollMarginTop: 96, width: '100%' }}
+      >
         {[
           { label: 'Total Gross', value: totalGross },
           { label: 'Total PAYE', value: totalPaye },
           { label: 'Total Net', value: totalNet },
         ].map(({ label, value }) => (
-          <Card key={label} sx={{ p: 2, minWidth: 160 }}>
+          <Card key={label} sx={{ p: 2, flex: 1 }}>
             <Typography variant='body2' color='text.secondary'>{label}</Typography>
             <Typography variant='h5'>
               {value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -197,7 +203,7 @@ export default function PayrollPeriodDetail() {
       </Stack>
 
       {/* Runs table */}
-      <Card>
+      <Card id='payroll-period-runs' sx={{ scrollMarginTop: 96 }}>
         {isRunsLoading ? (
           <Box p={2}>
             <Stack spacing={1}>

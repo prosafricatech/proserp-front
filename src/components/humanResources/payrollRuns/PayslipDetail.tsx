@@ -174,6 +174,7 @@ export default function PayslipDetail() {
             </LoadingButton>
           )}
           <Button
+            id='payslip-export'
             variant='outlined'
             color='primary'
             size='small'
@@ -187,7 +188,11 @@ export default function PayslipDetail() {
       <Card sx={{ maxWidth: 900 }} style={{ paddingTop: 2 }}>
         <CardContent>
           {/* Earnings */}
-          <Typography variant='h6' sx={{ textAlign: 'center', mb: 0 }}>
+          <Typography
+            id='payslip-earnings'
+            variant='h6'
+            sx={{ textAlign: 'center', mb: 0, scrollMarginTop: 96 }}
+          >
             EARNINGS
           </Typography>
           <Table size='small'>
@@ -219,7 +224,11 @@ export default function PayslipDetail() {
           <Divider sx={{ my: 2 }} />
 
           {/* Deductions */}
-          <Typography variant='h6' sx={{ textAlign: 'center', mb: 0 }}>
+          <Typography
+            id='payslip-deductions'
+            variant='h6'
+            sx={{ textAlign: 'center', mb: 0, scrollMarginTop: 96 }}
+          >
             DEDUCTIONS
           </Typography>
           <Table size='small'>
@@ -251,7 +260,11 @@ export default function PayslipDetail() {
           <Divider sx={{ my: 2 }} />
 
           {/* Net Summary */}
-          <Typography variant='h6' sx={{ textAlign: 'center', mb: 0 }}>
+          <Typography
+            id='payslip-net-summary'
+            variant='h6'
+            sx={{ textAlign: 'center', mb: 0, scrollMarginTop: 96 }}
+          >
             NET PAY SUMMARY
           </Typography>
           <Table size='small'>
