@@ -253,6 +253,11 @@ export async function getMenus(locale: string) {
               type: 'nav-item',
             },
             {
+              uri: `/${locale}/humanResources/employer-contribution-types`,
+              label: 'Employer Contribution Types',
+              type: 'nav-item',
+            },
+            {
               uri: `/${locale}/humanResources/paye-tax-bands`,
               label: sidebar.menuItem.paye_tax_bands,
               type: 'nav-item',
@@ -399,7 +404,7 @@ export async function getMenus(locale: string) {
           icon: icon('measurement_units'),
         },
         {
-          uri: `/${locale}/humanResources/banks`,
+          uri: `/${locale}/masters/banks`,
           label: sidebar.menuItem.banks,
           type: 'nav-item',
           icon: icon('banks'),

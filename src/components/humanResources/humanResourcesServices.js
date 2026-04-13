@@ -326,6 +326,35 @@ humanResourcesServices.deleteDeductionType = async (id) => {
     return data;
 }
 
+// employer contribution types methods
+humanResourcesServices.getEmployerContributionTypesList = async (params = {}) => {
+    const { page = 1, limit = 50, ...queryParams } = params;
+    const { data } = await axios.get('/api/humanResources/employerContributionTypes', {
+        params: { page, limit, ...queryParams }
+    });
+    return data;
+};
+
+humanResourcesServices.addEmployerContributionType = async (contributionType) => {
+    const { data } = await axios.post('/api/humanResources/employerContributionTypes/add', contributionType);
+    return data;
+}
+
+humanResourcesServices.updateEmployerContributionType = async (contributionType) => {
+    const { data } = await axios.put(`/api/humanResources/employerContributionTypes/${contributionType.id}/update`, contributionType);
+    return data;
+}
+
+humanResourcesServices.showEmployerContributionType = async (id) => {
+    const { data } = await axios.get(`/api/humanResources/employerContributionTypes/${id}`);
+    return data;
+}
+
+humanResourcesServices.deleteEmployerContributionType = async (id) => {
+    const { data } = await axios.delete(`/api/humanResources/employerContributionTypes/${id}/delete`);
+    return data;
+}
+
 // employee allowances methods
 humanResourcesServices.getEmployeeAllowancesList = async (params = {}) => {
     const { page = 1, limit = 20, ...queryParams } = params;
@@ -381,6 +410,35 @@ humanResourcesServices.showEmployeeDeduction = async (id) => {
 
 humanResourcesServices.deleteEmployeeDeduction = async (id) => {
     const { data } = await axios.delete(`/api/humanResources/employeeDeductions/${id}/delete`);
+    return data;
+}
+
+// employee employer contributions methods
+humanResourcesServices.getEmployeeEmployerContributionsList = async (params = {}) => {
+    const { page = 1, limit = 20, ...queryParams } = params;
+    const { data } = await axios.get('/api/humanResources/employeeEmployerContributions', {
+        params: { page, limit, ...queryParams }
+    });
+    return data;
+};
+
+humanResourcesServices.addEmployeeEmployerContribution = async (employeeEmployerContribution) => {
+    const { data } = await axios.post('/api/humanResources/employeeEmployerContributions/add', employeeEmployerContribution);
+    return data;
+}
+
+humanResourcesServices.updateEmployeeEmployerContribution = async (employeeEmployerContribution) => {
+    const { data } = await axios.put(`/api/humanResources/employeeEmployerContributions/${employeeEmployerContribution.id}/update`, employeeEmployerContribution);
+    return data;
+}
+
+humanResourcesServices.showEmployeeEmployerContribution = async (id) => {
+    const { data } = await axios.get(`/api/humanResources/employeeEmployerContributions/${id}`);
+    return data;
+}
+
+humanResourcesServices.deleteEmployeeEmployerContribution = async (id) => {
+    const { data } = await axios.delete(`/api/humanResources/employeeEmployerContributions/${id}/delete`);
     return data;
 }
 

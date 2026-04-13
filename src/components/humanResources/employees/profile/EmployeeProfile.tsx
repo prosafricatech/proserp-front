@@ -35,8 +35,10 @@ import EmployeeBankAccounts from './employeeBankAccounts/EmployeeBankAccounts';
 import NextOfKins from './nextOfKins/NextOfKins';
 import EmployeeAllowances from './employeeAllowances/EmployeeAllowances';
 import EmployeeDeductions from './employeeDeductions/EmployeeDeductions';
+import EmployeeEmployerContributions from './employeeEmployerContributions/EmployeeEmployerContributions';
 import EmployeeLeaveTab from './EmployeeLeaveTab';
 import EmployeeForm from '../EmployeeForm';
+import AttachmentForm from '@/components/filesShelf/attachments/AttachmentForm';
 import humanResourcesServices from '../../humanResourcesServices';
 import { Employee } from '../EmployeesType';
 
@@ -47,7 +49,9 @@ type TabKey =
   | 'nextOfKin'
   | 'allowances'
   | 'deductions'
-  | 'leave';
+  | 'employerContributions'
+  | 'leave'
+  | 'attachments';
 
 const VALID_TABS: TabKey[] = [
   'personalInfo',
@@ -56,7 +60,9 @@ const VALID_TABS: TabKey[] = [
   'nextOfKin',
   'allowances',
   'deductions',
+  'employerContributions',
   'leave',
+  'attachments',
 ];
 
 const formatEmploymentType = (employmentType?: string | null) => {
@@ -176,12 +182,24 @@ function ProfileContent() {
         return <EmployeeAllowances employeeId={employeeId} />;
       case 'deductions':
         return <EmployeeDeductions employeeId={employeeId} />;
+      case 'employerContributions':
+        return <EmployeeEmployerContributions employeeId={employeeId} />;
       case 'leave':
         return <EmployeeLeaveTab employeeId={employeeId} />;
+      case 'attachments':
+        return (
+          <AttachmentForm
+            hideFeatures
+            attachment_name='Employee'
+            attachment_sourceNo={employee?.employee_number || String(employeeId)}
+            attachmentable_type='employee'
+            attachmentable_id={employeeId}
+          />
+        );
       default:
         return null;
     }
-  }, [activeTab, employeeId]);
+  }, [activeTab, employee?.employee_number, employeeId]);
 
   return (
     <>
@@ -269,7 +287,9 @@ function ProfileContent() {
               <Tab label='Next of Kin' value='nextOfKin' />
               <Tab label='Allowances' value='allowances' />
               <Tab label='Deductions' value='deductions' />
+              <Tab label='Employer Contributions' value='employerContributions' />
               <Tab label='Leave' value='leave' />
+              <Tab label='Attachments' value='attachments' />
             </Tabs>
 
             {renderTabContent}
