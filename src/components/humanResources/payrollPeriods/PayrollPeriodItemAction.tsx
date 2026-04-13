@@ -157,30 +157,38 @@ const PayrollPeriodItemAction = ({
 
   const menuItems = [
     { icon: <EditOutlined />, title: 'Edit', action: 'edit' },
-    {
-      icon: <PlayCircleOutline color={isProcessDisabled ? 'disabled' : 'primary'} />,
-      title: 'Process All Employees',
-      action: 'process-all',
-      disabled: isProcessDisabled,
-    },
-    {
-      icon: <PersonOutline color={isProcessDisabled ? 'disabled' : 'primary'} />,
-      title: 'Process Single Employee',
-      action: 'process-single',
-      disabled: isProcessDisabled,
-    },
-    {
-      icon: <PaidOutlined color={isMarkPaidDisabled ? 'disabled' : 'success'} />,
-      title: isPaid ? 'Already Paid' : 'Mark Paid',
-      action: 'mark-paid',
-      disabled: isMarkPaidDisabled,
-    },
-    {
-      icon: <DeleteOutlined color={isDeleteDisabled ? 'disabled' : 'error'} />,
-      title: 'Delete',
-      action: 'delete',
-      disabled: isDeleteDisabled,
-    },
+    ...(!isProcessDisabled
+      ? [
+          {
+            icon: <PlayCircleOutline color='primary' />,
+            title: 'Process All Employees',
+            action: 'process-all',
+          },
+          {
+            icon: <PersonOutline color='primary' />,
+            title: 'Process Single Employee',
+            action: 'process-single',
+          },
+        ]
+      : []),
+    ...(!isMarkPaidDisabled
+      ? [
+          {
+            icon: <PaidOutlined color='success' />,
+            title: 'Mark Paid',
+            action: 'mark-paid',
+          },
+        ]
+      : []),
+    ...(!isDeleteDisabled
+      ? [
+          {
+            icon: <DeleteOutlined color='error' />,
+            title: 'Delete',
+            action: 'delete',
+          },
+        ]
+      : []),
   ];
 
   const resetProcessForm = () => {

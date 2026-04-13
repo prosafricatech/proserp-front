@@ -181,7 +181,14 @@ export default function PayrollPeriodDetail() {
       }
     >
       {/* Summary cards */}
-      <Stack direction='row' spacing={2} flexWrap='wrap' mb={3}>
+      <Stack
+        id='payroll-period-summary'
+        direction='row'
+        spacing={2}
+        flexWrap='wrap'
+        mb={3}
+        sx={{ scrollMarginTop: 96 }}
+      >
         {[
           { label: 'Total Gross', value: totalGross },
           { label: 'Total PAYE', value: totalPaye },
@@ -197,7 +204,7 @@ export default function PayrollPeriodDetail() {
       </Stack>
 
       {/* Runs table */}
-      <Card>
+      <Card id='payroll-period-runs' sx={{ scrollMarginTop: 96 }}>
         {isRunsLoading ? (
           <Box p={2}>
             <Stack spacing={1}>
