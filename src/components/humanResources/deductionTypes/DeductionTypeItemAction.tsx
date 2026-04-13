@@ -1,5 +1,6 @@
 'use client';
 
+import DeductionTypeForm from '@/components/humanResources/deductionTypes/DeductionTypeForm';
 import { JumboDdMenu } from '@jumbo/components';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
@@ -13,7 +14,6 @@ import { Dialog, LinearProgress, Tooltip, useMediaQuery } from '@mui/material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import { useState } from 'react';
-import DeductionTypeForm from '@/components/humanResources/deductionTypes/DeductionTypeForm';
 import humanResourcesServices from '../humanResourcesServices';
 import { DeductionType } from './DeductionType';
 
@@ -68,10 +68,19 @@ const DeductionTypeItemAction = ({
       });
     },
     onError: (error: any) => {
-      enqueueSnackbar('Error Deleting Deduction Type', {
-        variant: 'error',
-      });
-      console.log('error deleting deduction type: ', error);
+      let message = 'Something went wrong';
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as any).response?.data?.message === 'string'
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 

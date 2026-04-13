@@ -13,8 +13,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import { useState } from 'react';
 import { DesignationsProvider } from '../../../designations/DesignationsProvider';
-import { EmployeesProvider } from '../../EmployeesProvider';
 import humanResourcesServices from '../../../humanResourcesServices';
+import { EmployeesProvider } from '../../EmployeesProvider';
 import { ContractType } from './ContractType';
 import EmployeesContractsForm from './EmployeesContractsForm';
 import EmployeesContractsTerminateForm from './EmployeesContractsTerminateForm';
@@ -44,7 +44,9 @@ const EditEmployeesContract = ({
           setOpenDialog={(v) => {
             setOpenEditDialog(v);
             if (!v) {
-              queryClient.invalidateQueries({ queryKey: ['employeesContracts'] });
+              queryClient.invalidateQueries({
+                queryKey: ['employeesContracts'],
+              });
             }
           }}
         />
@@ -75,10 +77,19 @@ const EmployeesContractsItemAction = ({
       });
     },
     onError: (error: any) => {
-      enqueueSnackbar('Error Deleting Employee Contract', {
-        variant: 'error',
-      });
-      console.log('error deleting employee contract: ', error);
+      let message = 'Something went wrong';
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as any).response?.data?.message === 'string'
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 

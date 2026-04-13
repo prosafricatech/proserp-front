@@ -1,5 +1,6 @@
 'use client';
 
+import EmployeeAllowanceForm from '@/components/humanResources/employees/profile/employeeAllowances/EmployeeAllowanceForm';
 import { JumboDdMenu } from '@jumbo/components';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
@@ -13,7 +14,6 @@ import { Dialog, LinearProgress, Tooltip, useMediaQuery } from '@mui/material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import { useState } from 'react';
-import EmployeeAllowanceForm from '@/components/humanResources/employees/profile/employeeAllowances/EmployeeAllowanceForm';
 import humanResourcesServices from '../../../humanResourcesServices';
 import { EmployeeAllowanceType } from './EmployeeAllowanceType';
 
@@ -26,7 +26,8 @@ const EditEmployeeAllowance = ({
 }) => {
   const { data: employeeAllowanceData, isFetching } = useQuery({
     queryKey: ['showEmployeeAllowance', employeeAllowance.id],
-    queryFn: () => humanResourcesServices.showEmployeeAllowance(employeeAllowance.id),
+    queryFn: () =>
+      humanResourcesServices.showEmployeeAllowance(employeeAllowance.id),
   });
   const queryClient = useQueryClient();
 
@@ -68,10 +69,19 @@ const EmployeeAllowanceItemAction = ({
       });
     },
     onError: (error: any) => {
-      enqueueSnackbar('Error Deleting Employee Allowance', {
-        variant: 'error',
-      });
-      console.log('error deleting employee allowance: ', error);
+      let message = 'Something went wrong';
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as any).response?.data?.message === 'string'
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 

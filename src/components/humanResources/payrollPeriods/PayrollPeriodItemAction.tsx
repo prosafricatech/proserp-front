@@ -93,7 +93,9 @@ const PayrollPeriodItemAction = ({
   const [openProcessDialog, setOpenProcessDialog] = useState(false);
   const [openSalarySheetDialog, setOpenSalarySheetDialog] = useState(false);
   const [processMode, setProcessMode] = useState<'all' | 'single'>('all');
-  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
+    null
+  );
   const { showDialog, hideDialog } = useJumboDialog();
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
@@ -117,57 +119,106 @@ const PayrollPeriodItemAction = ({
       });
     },
     onError: (error: any) => {
-      enqueueSnackbar('Error Deleting Payroll Period', { variant: 'error' });
-      console.log('error deleting payroll period: ', error);
+      let message = 'Something went wrong';
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as any).response?.data?.message === 'string'
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 
-  const { mutate: processPayrollPeriodAllEmployees, isPending: isProcessingAllPayroll } =
-    useMutation({
-      mutationFn: humanResourcesServices.processPayrollPeriodAllEmployees,
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['payrollPeriods'] });
-        queryClient.invalidateQueries({ queryKey: ['payrollRuns'] });
-        enqueueSnackbar('Payroll Processed Successfully', {
-          variant: 'success',
-        });
-      },
-      onError: (error: any) => {
-        enqueueSnackbar('Error Processing Payroll', { variant: 'error' });
-        console.log('error processing payroll: ', error);
-      },
-    });
-
-  const { mutate: processPayrollPeriodSingleEmployee, isPending: isProcessingSinglePayroll } =
-    useMutation({
-      mutationFn: humanResourcesServices.processPayrollPeriodSingleEmployee,
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['payrollPeriods'] });
-        queryClient.invalidateQueries({ queryKey: ['payrollRuns'] });
-        enqueueSnackbar('Payroll Processed Successfully', {
-          variant: 'success',
-        });
-      },
-      onError: (error: any) => {
-        enqueueSnackbar('Error Processing Payroll', { variant: 'error' });
-        console.log('error processing payroll: ', error);
-      },
-    });
-
-  const { mutate: markPayrollPeriodPaid, isPending: isMarkingPaid } = useMutation({
-    mutationFn: humanResourcesServices.markPayrollPeriodPaid,
+  const {
+    mutate: processPayrollPeriodAllEmployees,
+    isPending: isProcessingAllPayroll,
+  } = useMutation({
+    mutationFn: humanResourcesServices.processPayrollPeriodAllEmployees,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['payrollPeriods'] });
       queryClient.invalidateQueries({ queryKey: ['payrollRuns'] });
-      enqueueSnackbar('Payroll Marked as Paid Successfully', {
+      enqueueSnackbar('Payroll Processed Successfully', {
         variant: 'success',
       });
     },
     onError: (error: any) => {
-      enqueueSnackbar('Error Marking Payroll as Paid', { variant: 'error' });
-      console.log('error marking payroll as paid: ', error);
+      let message = 'Something went wrong';
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as any).response?.data?.message === 'string'
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
+
+  const {
+    mutate: processPayrollPeriodSingleEmployee,
+    isPending: isProcessingSinglePayroll,
+  } = useMutation({
+    mutationFn: humanResourcesServices.processPayrollPeriodSingleEmployee,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['payrollPeriods'] });
+      queryClient.invalidateQueries({ queryKey: ['payrollRuns'] });
+      enqueueSnackbar('Payroll Processed Successfully', {
+        variant: 'success',
+      });
+    },
+    onError: (error: any) => {
+      let message = 'Something went wrong';
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as any).response?.data?.message === 'string'
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
+    },
+  });
+
+  const { mutate: markPayrollPeriodPaid, isPending: isMarkingPaid } =
+    useMutation({
+      mutationFn: humanResourcesServices.markPayrollPeriodPaid,
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['payrollPeriods'] });
+        queryClient.invalidateQueries({ queryKey: ['payrollRuns'] });
+        enqueueSnackbar('Payroll Marked as Paid Successfully', {
+          variant: 'success',
+        });
+      },
+      onError: (error: any) => {
+        let message = 'Something went wrong';
+
+        if (
+          typeof error === 'object' &&
+          error !== null &&
+          'response' in error &&
+          typeof (error as any).response?.data?.message === 'string'
+        ) {
+          message = (error as any).response.data.message;
+        } else if (error instanceof Error) {
+          message = error.message;
+        }
+        enqueueSnackbar(message, { variant: 'error' });
+      },
+    });
 
   const status = (payrollPeriod.status || '').toLowerCase();
   const isPaid = status === 'paid';
@@ -368,7 +419,9 @@ const PayrollPeriodItemAction = ({
         maxWidth='sm'
       >
         <DialogTitle>
-          {processMode === 'all' ? 'Process Payroll' : 'Process Single Employee'}
+          {processMode === 'all'
+            ? 'Process Payroll'
+            : 'Process Single Employee'}
         </DialogTitle>
         <DialogContent>
           <Stack spacing={2} mt={1}>
@@ -382,7 +435,9 @@ const PayrollPeriodItemAction = ({
                 options={employees}
                 value={selectedEmployee}
                 onChange={(_, value) => setSelectedEmployee(value)}
-                isOptionEqualToValue={(option, value) => option.id === value?.id}
+                isOptionEqualToValue={(option, value) =>
+                  option.id === value?.id
+                }
                 getOptionLabel={(option) =>
                   `${option.first_name || ''} ${option.middle_name || ''} ${option.last_name || ''}`.trim() ||
                   `Employee #${option.id}`

@@ -66,10 +66,19 @@ const PayeTaxBandForm = ({
       queryClient.invalidateQueries({ queryKey: ['payeTaxBands'] });
     },
     onError: (mutationError) => {
-      enqueueSnackbar('Error Adding PAYE Tax Band', {
-        variant: 'error',
-      });
-      console.log('error adding paye tax band: ', mutationError);
+      let message = 'Something went wrong';
+
+      if (
+        typeof mutationError === 'object' &&
+        mutationError !== null &&
+        'response' in mutationError &&
+        typeof (mutationError as any).response?.data?.message === 'string'
+      ) {
+        message = (mutationError as any).response.data.message;
+      } else if (mutationError instanceof Error) {
+        message = mutationError.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 
@@ -87,10 +96,19 @@ const PayeTaxBandForm = ({
       queryClient.invalidateQueries({ queryKey: ['payeTaxBands'] });
     },
     onError: (mutationError) => {
-      enqueueSnackbar('Error Updating PAYE Tax Band', {
-        variant: 'error',
-      });
-      console.log('error updating paye tax band: ', mutationError);
+      let message = 'Something went wrong';
+
+      if (
+        typeof mutationError === 'object' &&
+        mutationError !== null &&
+        'response' in mutationError &&
+        typeof (mutationError as any).response?.data?.message === 'string'
+      ) {
+        message = (mutationError as any).response.data.message;
+      } else if (mutationError instanceof Error) {
+        message = mutationError.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 
@@ -202,7 +220,6 @@ const PayeTaxBandForm = ({
       <DialogContent>
         <form autoComplete='off' onSubmit={handleSubmit(onSubmit)}>
           <Grid container rowSpacing={{ xs: 1, md: 2 }} spacing={2}>
-
             <Grid size={{ xs: 12, md: 6 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField

@@ -64,10 +64,19 @@ const LeaveTypeItemAction = ({ leaveType }: { leaveType: LeaveType }) => {
       });
     },
     onError: (error: any) => {
-      enqueueSnackbar('Error Deleting Leave Type', {
-        variant: 'error',
-      });
-      console.log('error deleting leave type: ', error);
+      let message = 'Something went wrong';
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as any).response?.data?.message === 'string'
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 

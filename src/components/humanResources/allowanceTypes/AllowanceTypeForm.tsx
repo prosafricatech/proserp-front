@@ -15,7 +15,7 @@ import {
 } from '@mui/material';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
-import React, { useEffect, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import humanResourcesServices from '../humanResourcesServices';
@@ -65,10 +65,19 @@ const AllowanceTypeForm = ({
       queryClient.invalidateQueries({ queryKey: ['allowanceTypes'] });
     },
     onError: (mutationError) => {
-      enqueueSnackbar('Error Adding Allowance Type', {
-        variant: 'error',
-      });
-      console.log('error adding allowance type: ', mutationError);
+      let message = 'Something went wrong';
+
+      if (
+        typeof mutationError === 'object' &&
+        mutationError !== null &&
+        'response' in mutationError &&
+        typeof (mutationError as any).response?.data?.message === 'string'
+      ) {
+        message = (mutationError as any).response.data.message;
+      } else if (mutationError instanceof Error) {
+        message = mutationError.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 
@@ -86,10 +95,19 @@ const AllowanceTypeForm = ({
       queryClient.invalidateQueries({ queryKey: ['allowanceTypes'] });
     },
     onError: (mutationError) => {
-      enqueueSnackbar('Error Updating Allowance Type', {
-        variant: 'error',
-      });
-      console.log('error updating allowance type: ', mutationError);
+      let message = 'Something went wrong';
+
+      if (
+        typeof mutationError === 'object' &&
+        mutationError !== null &&
+        'response' in mutationError &&
+        typeof (mutationError as any).response?.data?.message === 'string'
+      ) {
+        message = (mutationError as any).response.data.message;
+      } else if (mutationError instanceof Error) {
+        message = mutationError.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 
@@ -101,7 +119,9 @@ const AllowanceTypeForm = ({
       .max(255, 'Name cannot exceed 255 characters'),
     code: yup.string().max(50, 'Code cannot exceed 50 characters'),
     is_taxable: yup.boolean().required(),
-    description: yup.string().max(500, 'Description cannot exceed 500 characters'),
+    description: yup
+      .string()
+      .max(500, 'Description cannot exceed 500 characters'),
   });
 
   const {
@@ -222,7 +242,9 @@ const AllowanceTypeForm = ({
                       control={
                         <Checkbox
                           checked={Boolean(field.value)}
-                          onChange={(event) => field.onChange(event.target.checked)}
+                          onChange={(event) =>
+                            field.onChange(event.target.checked)
+                          }
                         />
                       }
                       label='Is Taxable'

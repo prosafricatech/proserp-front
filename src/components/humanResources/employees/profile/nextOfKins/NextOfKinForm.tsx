@@ -4,7 +4,6 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { Div } from '@jumbo/shared';
 import { LoadingButton } from '@mui/lab';
 import {
-  Autocomplete,
   Button,
   Checkbox,
   DialogActions,
@@ -12,16 +11,13 @@ import {
   DialogTitle,
   FormControlLabel,
   Grid,
-  LinearProgress,
   TextField,
 } from '@mui/material';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import * as yup from 'yup';
-import { useEmployees } from '../../EmployeesProvider';
-import { Employee } from '../../EmployeesType';
 import humanResourcesServices from '../../../humanResourcesServices';
 import { NextOfKinType } from './NextOfKinType';
 
@@ -71,9 +67,19 @@ const NextOfKinForm = ({
       queryClient.invalidateQueries({ queryKey: ['employeeNextOfKins'] });
     },
     onError: (mutationError) => {
-      enqueueSnackbar('Error Adding Next Of Kin', {
-        variant: 'error',
-      });
+      let message = 'Something went wrong';
+
+      if (
+        typeof mutationError === 'object' &&
+        mutationError !== null &&
+        'response' in mutationError &&
+        typeof (mutationError as any).response?.data?.message === 'string'
+      ) {
+        message = (mutationError as any).response.data.message;
+      } else if (mutationError instanceof Error) {
+        message = mutationError.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 
@@ -91,9 +97,19 @@ const NextOfKinForm = ({
       queryClient.invalidateQueries({ queryKey: ['employeeNextOfKins'] });
     },
     onError: (mutationError) => {
-      enqueueSnackbar('Error Updating Next Of Kin', {
-        variant: 'error',
-      });
+      let message = 'Something went wrong';
+
+      if (
+        typeof mutationError === 'object' &&
+        mutationError !== null &&
+        'response' in mutationError &&
+        typeof (mutationError as any).response?.data?.message === 'string'
+      ) {
+        message = (mutationError as any).response.data.message;
+      } else if (mutationError instanceof Error) {
+        message = mutationError.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 
@@ -174,7 +190,9 @@ const NextOfKinForm = ({
     <>
       <DialogTitle>
         <Grid size={12} textAlign={'center'}>
-          {!nextOfKin?.id ? 'Add Employee Next Of Kin' : 'Edit Employee Next Of Kin'}
+          {!nextOfKin?.id
+            ? 'Add Employee Next Of Kin'
+            : 'Edit Employee Next Of Kin'}
         </Grid>
       </DialogTitle>
       <DialogContent>
@@ -287,7 +305,9 @@ const NextOfKinForm = ({
                       control={
                         <Checkbox
                           checked={Boolean(field.value)}
-                          onChange={(event) => field.onChange(event.target.checked)}
+                          onChange={(event) =>
+                            field.onChange(event.target.checked)
+                          }
                         />
                       }
                       label='Set as Primary Contact'

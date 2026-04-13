@@ -41,7 +41,9 @@ const EditEmployerContributionType = ({
       setOpenDialog={(v) => {
         setOpenEditDialog(v);
         if (!v) {
-          queryClient.invalidateQueries({ queryKey: ['employerContributionTypes'] });
+          queryClient.invalidateQueries({
+            queryKey: ['employerContributionTypes'],
+          });
         }
       }}
     />
@@ -63,16 +65,27 @@ const EmployerContributionTypeItemAction = ({
   const { mutate: deleteEmployerContributionType } = useMutation({
     mutationFn: humanResourcesServices.deleteEmployerContributionType,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['employerContributionTypes'] });
+      queryClient.invalidateQueries({
+        queryKey: ['employerContributionTypes'],
+      });
       enqueueSnackbar('Employer Contribution Type Deleted Successfully', {
         variant: 'success',
       });
     },
     onError: (error: any) => {
-      enqueueSnackbar('Error Deleting Employer Contribution Type', {
-        variant: 'error',
-      });
-      console.log('error deleting employer contribution type: ', error);
+      let message = 'Something went wrong';
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as any).response?.data?.message === 'string'
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 

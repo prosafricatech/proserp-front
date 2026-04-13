@@ -47,11 +47,7 @@ const EditNextOfKin = ({
   );
 };
 
-const NextOfKinItemAction = ({
-  nextOfKin,
-}: {
-  nextOfKin: NextOfKinType;
-}) => {
+const NextOfKinItemAction = ({ nextOfKin }: { nextOfKin: NextOfKinType }) => {
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const { showDialog, hideDialog } = useJumboDialog();
   const { enqueueSnackbar } = useSnackbar();
@@ -68,10 +64,19 @@ const NextOfKinItemAction = ({
       });
     },
     onError: (error: any) => {
-      enqueueSnackbar('Error Deleting Next Of Kin', {
-        variant: 'error',
-      });
-      console.log('error deleting next of kin: ', error);
+      let message = 'Something went wrong';
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as any).response?.data?.message === 'string'
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 

@@ -16,7 +16,7 @@ import {
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
-import React, { useEffect, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import humanResourcesServices from '../humanResourcesServices';
@@ -100,12 +100,25 @@ const PayrollPeriodForm = ({
     mutationFn: humanResourcesServices.addPayrollPeriod,
     onSuccess: () => {
       setOpenDialog(false);
-      enqueueSnackbar('Payroll Period Added Successfully', { variant: 'success' });
+      enqueueSnackbar('Payroll Period Added Successfully', {
+        variant: 'success',
+      });
       queryClient.invalidateQueries({ queryKey: ['payrollPeriods'] });
     },
     onError: (mutationError) => {
-      enqueueSnackbar('Error Adding Payroll Period', { variant: 'error' });
-      console.log('error adding payroll period: ', mutationError);
+      let message = 'Something went wrong';
+
+      if (
+        typeof mutationError === 'object' &&
+        mutationError !== null &&
+        'response' in mutationError &&
+        typeof (mutationError as any).response?.data?.message === 'string'
+      ) {
+        message = (mutationError as any).response.data.message;
+      } else if (mutationError instanceof Error) {
+        message = mutationError.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 
@@ -117,12 +130,25 @@ const PayrollPeriodForm = ({
     mutationFn: humanResourcesServices.updatePayrollPeriod,
     onSuccess: () => {
       setOpenDialog(false);
-      enqueueSnackbar('Payroll Period Updated Successfully', { variant: 'success' });
+      enqueueSnackbar('Payroll Period Updated Successfully', {
+        variant: 'success',
+      });
       queryClient.invalidateQueries({ queryKey: ['payrollPeriods'] });
     },
     onError: (mutationError) => {
-      enqueueSnackbar('Error Updating Payroll Period', { variant: 'error' });
-      console.log('error updating payroll period: ', mutationError);
+      let message = 'Something went wrong';
+
+      if (
+        typeof mutationError === 'object' &&
+        mutationError !== null &&
+        'response' in mutationError &&
+        typeof (mutationError as any).response?.data?.message === 'string'
+      ) {
+        message = (mutationError as any).response.data.message;
+      } else if (mutationError instanceof Error) {
+        message = mutationError.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 
@@ -208,7 +234,9 @@ const PayrollPeriodForm = ({
                       size='small'
                       fullWidth
                       value={field.value ?? ''}
-                      onChange={(event) => field.onChange(Number(event.target.value))}
+                      onChange={(event) =>
+                        field.onChange(Number(event.target.value))
+                      }
                       error={
                         !!errors?.year ||
                         !!getValidationMessage(validationErrors, 'year')
@@ -241,7 +269,9 @@ const PayrollPeriodForm = ({
                       size='small'
                       fullWidth
                       value={field.value ?? ''}
-                      onChange={(event) => field.onChange(Number(event.target.value))}
+                      onChange={(event) =>
+                        field.onChange(Number(event.target.value))
+                      }
                       error={
                         !!errors?.month ||
                         !!getValidationMessage(validationErrors, 'month')

@@ -86,29 +86,50 @@ const LeaveRequestItemAction = ({
       });
     },
     onError: (error: any) => {
-      enqueueSnackbar('Error Deleting Leave Request', {
-        variant: 'error',
-      });
+      let message = 'Something went wrong';
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as any).response?.data?.message === 'string'
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 
-  const { mutate: updateLeaveRequest, isPending: isUpdatingStatus } = useMutation({
-    mutationFn: humanResourcesServices.updateLeaveRequest,
-    onSuccess: () => {
-      setOpenStatusDialog(false);
-      setStatusAction(null);
-      setRemarks('');
-      queryClient.invalidateQueries({ queryKey: ['leaveRequests'] });
-      enqueueSnackbar('Leave Request Status Updated Successfully', {
-        variant: 'success',
-      });
-    },
-    onError: (error: any) => {
-      enqueueSnackbar('Error Updating Leave Request Status', {
-        variant: 'error',
-      });
-    },
-  });
+  const { mutate: updateLeaveRequest, isPending: isUpdatingStatus } =
+    useMutation({
+      mutationFn: humanResourcesServices.updateLeaveRequest,
+      onSuccess: () => {
+        setOpenStatusDialog(false);
+        setStatusAction(null);
+        setRemarks('');
+        queryClient.invalidateQueries({ queryKey: ['leaveRequests'] });
+        enqueueSnackbar('Leave Request Status Updated Successfully', {
+          variant: 'success',
+        });
+      },
+      onError: (error: any) => {
+        let message = 'Something went wrong';
+
+        if (
+          typeof error === 'object' &&
+          error !== null &&
+          'response' in error &&
+          typeof (error as any).response?.data?.message === 'string'
+        ) {
+          message = (error as any).response.data.message;
+        } else if (error instanceof Error) {
+          message = error.message;
+        }
+        enqueueSnackbar(message, { variant: 'error' });
+      },
+    });
 
   const menuItems = [
     {
@@ -189,15 +210,15 @@ const LeaveRequestItemAction = ({
     statusAction === 'approved'
       ? 'Approve'
       : statusAction === 'rejected'
-      ? 'Reject'
-      : 'Cancel';
+        ? 'Reject'
+        : 'Cancel';
 
   const actionButtonColor =
     statusAction === 'approved'
       ? 'success'
       : statusAction === 'rejected'
-      ? 'error'
-      : 'error';
+        ? 'error'
+        : 'error';
 
   return (
     <>
@@ -231,8 +252,8 @@ const LeaveRequestItemAction = ({
           {statusAction === 'approved'
             ? 'Approve'
             : statusAction === 'rejected'
-            ? 'Reject'
-            : 'Cancel'}
+              ? 'Reject'
+              : 'Cancel'}
         </DialogTitle>
         <DialogContent>
           <TextField

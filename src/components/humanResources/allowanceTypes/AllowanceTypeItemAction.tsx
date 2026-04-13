@@ -1,5 +1,6 @@
 'use client';
 
+import AllowanceTypeForm from '@/components/humanResources/allowanceTypes/AllowanceTypeForm';
 import { JumboDdMenu } from '@jumbo/components';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
@@ -15,7 +16,6 @@ import { useSnackbar } from 'notistack';
 import { useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
 import { AllowanceType } from './AllowanceType';
-import AllowanceTypeForm from '@/components/humanResources/allowanceTypes/AllowanceTypeForm';
 
 const EditAllowanceType = ({
   allowanceType,
@@ -68,10 +68,19 @@ const AllowanceTypeItemAction = ({
       });
     },
     onError: (error: any) => {
-      enqueueSnackbar('Error Deleting Allowance Type', {
-        variant: 'error',
-      });
-      console.log('error deleting allowance type: ', error);
+      let message = 'Something went wrong';
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as any).response?.data?.message === 'string'
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 

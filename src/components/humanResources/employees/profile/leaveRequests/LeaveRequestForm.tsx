@@ -90,9 +90,19 @@ const LeaveRequestForm = ({
       queryClient.invalidateQueries({ queryKey: ['leaveRequests'] });
     },
     onError: (mutationError) => {
-      enqueueSnackbar('Error Adding Leave Request', {
-        variant: 'error',
-      });
+      let message = 'Something went wrong';
+
+      if (
+        typeof mutationError === 'object' &&
+        mutationError !== null &&
+        'response' in mutationError &&
+        typeof (mutationError as any).response?.data?.message === 'string'
+      ) {
+        message = (mutationError as any).response.data.message;
+      } else if (mutationError instanceof Error) {
+        message = mutationError.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 
@@ -110,9 +120,19 @@ const LeaveRequestForm = ({
       queryClient.invalidateQueries({ queryKey: ['leaveRequests'] });
     },
     onError: (mutationError) => {
-      enqueueSnackbar('Error Updating Leave Request', {
-        variant: 'error',
-      });
+      let message = 'Something went wrong';
+
+      if (
+        typeof mutationError === 'object' &&
+        mutationError !== null &&
+        'response' in mutationError &&
+        typeof (mutationError as any).response?.data?.message === 'string'
+      ) {
+        message = (mutationError as any).response.data.message;
+      } else if (mutationError instanceof Error) {
+        message = mutationError.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 

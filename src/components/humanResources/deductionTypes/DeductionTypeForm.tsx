@@ -16,7 +16,7 @@ import {
 } from '@mui/material';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
-import React, { useEffect, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import humanResourcesServices from '../humanResourcesServices';
@@ -45,7 +45,9 @@ const getValidationMessage = (
   return Array.isArray(message) ? message[0] : message;
 };
 
-const formatCommaSeparatedValue = (value: string | number | null | undefined) => {
+const formatCommaSeparatedValue = (
+  value: string | number | null | undefined
+) => {
   if (value === null || value === undefined || value === '') return '';
   const raw = String(value).replace(/,/g, '');
   if (!/^\d*\.?\d*$/.test(raw)) return '';
@@ -53,9 +55,7 @@ const formatCommaSeparatedValue = (value: string | number | null | undefined) =>
   const hasDecimal = raw.includes('.');
   const [intPart, decimalPart = ''] = raw.split('.');
 
-  const formattedInt = intPart
-    ? Number(intPart).toLocaleString('en-US')
-    : '0';
+  const formattedInt = intPart ? Number(intPart).toLocaleString('en-US') : '0';
 
   if (!hasDecimal) return formattedInt;
   return `${formattedInt}.${decimalPart}`;
@@ -82,10 +82,19 @@ const DeductionTypeForm = ({
       queryClient.invalidateQueries({ queryKey: ['deductionTypes'] });
     },
     onError: (mutationError) => {
-      enqueueSnackbar('Error Adding Deduction Type', {
-        variant: 'error',
-      });
-      console.log('error adding deduction type: ', mutationError);
+      let message = 'Something went wrong';
+
+      if (
+        typeof mutationError === 'object' &&
+        mutationError !== null &&
+        'response' in mutationError &&
+        typeof (mutationError as any).response?.data?.message === 'string'
+      ) {
+        message = (mutationError as any).response.data.message;
+      } else if (mutationError instanceof Error) {
+        message = mutationError.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 
@@ -103,10 +112,19 @@ const DeductionTypeForm = ({
       queryClient.invalidateQueries({ queryKey: ['deductionTypes'] });
     },
     onError: (mutationError) => {
-      enqueueSnackbar('Error Updating Deduction Type', {
-        variant: 'error',
-      });
-      console.log('error updating deduction type: ', mutationError);
+      let message = 'Something went wrong';
+
+      if (
+        typeof mutationError === 'object' &&
+        mutationError !== null &&
+        'response' in mutationError &&
+        typeof (mutationError as any).response?.data?.message === 'string'
+      ) {
+        message = (mutationError as any).response.data.message;
+      } else if (mutationError instanceof Error) {
+        message = mutationError.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 
@@ -131,7 +149,9 @@ const DeductionTypeForm = ({
       .required('Default value is required')
       .min(0, 'Default value must be 0 or greater'),
     is_pre_tax: yup.boolean().required(),
-    description: yup.string().max(500, 'Description cannot exceed 500 characters'),
+    description: yup
+      .string()
+      .max(500, 'Description cannot exceed 500 characters'),
   });
 
   const {
@@ -315,10 +335,16 @@ const DeductionTypeForm = ({
                           field.onChange(raw);
                         }
                       }}
-                      inputProps={{ inputMode: 'decimal', pattern: '^\\d*\\.?\\d*$' }}
+                      inputProps={{
+                        inputMode: 'decimal',
+                        pattern: '^\\d*\\.?\\d*$',
+                      }}
                       error={
                         !!errors?.default_value ||
-                        !!getValidationMessage(validationErrors, 'default_value')
+                        !!getValidationMessage(
+                          validationErrors,
+                          'default_value'
+                        )
                       }
                       helperText={
                         errors.default_value?.message ||
@@ -340,7 +366,9 @@ const DeductionTypeForm = ({
                       control={
                         <Switch
                           checked={Boolean(field.value)}
-                          onChange={(event) => field.onChange(event.target.checked)}
+                          onChange={(event) =>
+                            field.onChange(event.target.checked)
+                          }
                         />
                       }
                       label='Is Pre-tax'

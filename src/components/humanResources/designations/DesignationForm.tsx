@@ -59,10 +59,19 @@ const DesignationForm = ({
       queryClient.invalidateQueries({ queryKey: ['designations'] });
     },
     onError: (error) => {
-      enqueueSnackbar('Error Adding Designation', {
-        variant: 'error',
-      });
-      console.log('error adding designation: ', error);
+      let message = 'Something went wrong';
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as any).response?.data?.message === 'string'
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 
@@ -80,10 +89,19 @@ const DesignationForm = ({
       queryClient.invalidateQueries({ queryKey: ['designations'] });
     },
     onError: (error) => {
-      enqueueSnackbar('Error Updating Designation', {
-        variant: 'error',
-      });
-      console.log('error updating designation: ', error);
+      let message = 'Something went wrong';
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as any).response?.data?.message === 'string'
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 

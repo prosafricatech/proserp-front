@@ -17,12 +17,10 @@ import { DateTimePicker } from '@mui/x-date-pickers';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import { AllowanceType } from '../../../allowanceTypes/AllowanceType';
-import { useEmployees } from '../../EmployeesProvider';
-import { Employee } from '../../EmployeesType';
 import humanResourcesServices from '../../../humanResourcesServices';
 import { EmployeeAllowanceType } from './EmployeeAllowanceType';
 
@@ -50,7 +48,9 @@ const getValidationMessage = (
   return Array.isArray(message) ? message[0] : message;
 };
 
-const formatCommaSeparatedValue = (value: string | number | null | undefined) => {
+const formatCommaSeparatedValue = (
+  value: string | number | null | undefined
+) => {
   if (value === null || value === undefined || value === '') return '';
   const numericValue = Number(String(value).replace(/,/g, ''));
   return Number.isNaN(numericValue) ? '' : numericValue.toLocaleString('en-US');
@@ -68,11 +68,15 @@ const EmployeeAllowanceForm = ({
     useQuery({
       queryKey: ['fetchAllowanceTypesForEmployeeAllowanceForm'],
       queryFn: async () => {
-        return humanResourcesServices.getAllowanceTypesList({ page: 1, limit: 200 });
+        return humanResourcesServices.getAllowanceTypesList({
+          page: 1,
+          limit: 200,
+        });
       },
     });
 
-  const allowanceTypes = (allowanceTypesResponse?.data || []) as AllowanceType[];
+  const allowanceTypes = (allowanceTypesResponse?.data ||
+    []) as AllowanceType[];
 
   const {
     mutate: addEmployeeAllowance,
@@ -88,9 +92,19 @@ const EmployeeAllowanceForm = ({
       queryClient.invalidateQueries({ queryKey: ['employeeAllowances'] });
     },
     onError: (mutationError) => {
-      enqueueSnackbar('Error Adding Employee Allowance', {
-        variant: 'error',
-      });
+      let message = 'Something went wrong';
+
+      if (
+        typeof mutationError === 'object' &&
+        mutationError !== null &&
+        'response' in mutationError &&
+        typeof (mutationError as any).response?.data?.message === 'string'
+      ) {
+        message = (mutationError as any).response.data.message;
+      } else if (mutationError instanceof Error) {
+        message = mutationError.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 
@@ -108,9 +122,19 @@ const EmployeeAllowanceForm = ({
       queryClient.invalidateQueries({ queryKey: ['employeeAllowances'] });
     },
     onError: (mutationError) => {
-      enqueueSnackbar('Error Updating Employee Allowance', {
-        variant: 'error',
-      });
+      let message = 'Something went wrong';
+
+      if (
+        typeof mutationError === 'object' &&
+        mutationError !== null &&
+        'response' in mutationError &&
+        typeof (mutationError as any).response?.data?.message === 'string'
+      ) {
+        message = (mutationError as any).response.data.message;
+      } else if (mutationError instanceof Error) {
+        message = mutationError.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 
@@ -160,7 +184,9 @@ const EmployeeAllowanceForm = ({
   }, [employeeId, setValue]);
 
   const saveMutation = useMemo(() => {
-    return employeeAllowance?.id ? updateEmployeeAllowance : addEmployeeAllowance;
+    return employeeAllowance?.id
+      ? updateEmployeeAllowance
+      : addEmployeeAllowance;
   }, [employeeAllowance?.id, updateEmployeeAllowance, addEmployeeAllowance]);
 
   const validationErrors =
@@ -175,15 +201,12 @@ const EmployeeAllowanceForm = ({
     <>
       <DialogTitle>
         <Grid size={12} textAlign={'center'}>
-          {!employeeAllowance?.id
-            ? 'Add Allowance'
-            : 'Edit Allowance'}
+          {!employeeAllowance?.id ? 'Add Allowance' : 'Edit Allowance'}
         </Grid>
       </DialogTitle>
       <DialogContent>
         <form autoComplete='off' onSubmit={handleSubmit(onSubmit)}>
           <Grid container rowSpacing={{ xs: 1, md: 2 }} spacing={1}>
-
             <Grid size={{ xs: 12, md: 6 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 {fetchingAllowanceTypes ? (
@@ -202,8 +225,9 @@ const EmployeeAllowanceForm = ({
                         }
                         getOptionLabel={(option) => option.name || ''}
                         value={
-                          allowanceTypes.find((type) => type.id === field.value) ||
-                          null
+                          allowanceTypes.find(
+                            (type) => type.id === field.value
+                          ) || null
                         }
                         onChange={(event, newValue) => {
                           field.onChange(newValue?.id || null);
@@ -214,7 +238,10 @@ const EmployeeAllowanceForm = ({
                             label='Allowance Type'
                             error={
                               !!fieldState.error ||
-                              !!getValidationMessage(validationErrors, 'allowance_type_id')
+                              !!getValidationMessage(
+                                validationErrors,
+                                'allowance_type_id'
+                              )
                             }
                             helperText={
                               fieldState.error?.message ||
@@ -279,10 +306,16 @@ const EmployeeAllowanceForm = ({
                           fullWidth: true,
                           error:
                             !!errors?.effective_from ||
-                            !!getValidationMessage(validationErrors, 'effective_from'),
+                            !!getValidationMessage(
+                              validationErrors,
+                              'effective_from'
+                            ),
                           helperText:
                             errors.effective_from?.message ||
-                            getValidationMessage(validationErrors, 'effective_from'),
+                            getValidationMessage(
+                              validationErrors,
+                              'effective_from'
+                            ),
                         },
                       }}
                     />
@@ -309,10 +342,16 @@ const EmployeeAllowanceForm = ({
                           fullWidth: true,
                           error:
                             !!errors?.effective_to ||
-                            !!getValidationMessage(validationErrors, 'effective_to'),
+                            !!getValidationMessage(
+                              validationErrors,
+                              'effective_to'
+                            ),
                           helperText:
                             errors.effective_to?.message ||
-                            getValidationMessage(validationErrors, 'effective_to'),
+                            getValidationMessage(
+                              validationErrors,
+                              'effective_to'
+                            ),
                         },
                       }}
                     />

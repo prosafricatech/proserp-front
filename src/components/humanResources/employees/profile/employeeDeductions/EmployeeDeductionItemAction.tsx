@@ -26,7 +26,8 @@ const EditEmployeeDeduction = ({
 }) => {
   const { data: employeeDeductionData, isFetching } = useQuery({
     queryKey: ['showEmployeeDeduction', employeeDeduction.id],
-    queryFn: () => humanResourcesServices.showEmployeeDeduction(employeeDeduction.id),
+    queryFn: () =>
+      humanResourcesServices.showEmployeeDeduction(employeeDeduction.id),
   });
   const queryClient = useQueryClient();
 
@@ -68,10 +69,19 @@ const EmployeeDeductionItemAction = ({
       });
     },
     onError: (error: any) => {
-      enqueueSnackbar('Error Deleting Employee Deduction', {
-        variant: 'error',
-      });
-      console.log('error deleting employee deduction: ', error);
+      let message = 'Something went wrong';
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as any).response?.data?.message === 'string'
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 

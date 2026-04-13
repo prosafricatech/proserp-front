@@ -16,15 +16,13 @@ import { DatePicker } from '@mui/x-date-pickers';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import dayjs, { Dayjs } from 'dayjs';
 import { useSnackbar } from 'notistack';
-import React, { useEffect, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import { useDesignations } from '../../../designations/DesignationsProvider';
 import { Designation } from '../../../designations/DesignationsType';
 import humanResourcesServices from '../../../humanResourcesServices';
 import { ContractType } from './ContractType';
-import { Employee } from '../../EmployeesType';
-import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 
 interface EmployeesContractsFormProps {
   setOpenDialog: (open: boolean) => void;
@@ -87,10 +85,19 @@ const EmployeesContractsForm = ({
       queryClient.invalidateQueries({ queryKey: ['employeesContracts'] });
     },
     onError: (error) => {
-      enqueueSnackbar('Error Adding Employee Contract', {
-        variant: 'error',
-      });
-      console.log('error adding employee Contract: ', error);
+      let message = 'Something went wrong';
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as any).response?.data?.message === 'string'
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 
@@ -111,10 +118,19 @@ const EmployeesContractsForm = ({
       queryClient.invalidateQueries({ queryKey: ['employeesContracts'] });
     },
     onError: (error) => {
-      console.log('error: ', error);
-      enqueueSnackbar('Error Updating Employee Contract', {
-        variant: 'error',
-      });
+      let message = 'Something went wrong';
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as any).response?.data?.message === 'string'
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 
@@ -124,26 +140,26 @@ const EmployeesContractsForm = ({
     contract_type: yup.string().required('Contract type is required'),
     start_date: yup.string().required('Start date is required'),
     end_date: yup
-  .string()
-  .nullable()
-  .when('contract_type', {
-    is: 'fixed_term',
-    then: (schema) =>
-      schema
-        .required('End date is required')
-        .test(
-          'is-after-start-date',
-          'End date must be after start date',
-          function (value) {
-            const { start_date } = this.parent;
+      .string()
+      .nullable()
+      .when('contract_type', {
+        is: 'fixed_term',
+        then: (schema) =>
+          schema
+            .required('End date is required')
+            .test(
+              'is-after-start-date',
+              'End date must be after start date',
+              function (value) {
+                const { start_date } = this.parent;
 
-            if (!value || !start_date) return true; // skip if empty
+                if (!value || !start_date) return true; // skip if empty
 
-            return value >= start_date;
-          }
-        ),
-    otherwise: (schema) => schema.notRequired(),
-  }),
+                return value >= start_date;
+              }
+            ),
+        otherwise: (schema) => schema.notRequired(),
+      }),
     probation_end_date: yup
       .string()
       .nullable()
@@ -209,7 +225,7 @@ const EmployeesContractsForm = ({
       setValue('employee_id', employeeId);
     }
   }, [employeeId, setValue]);
-  
+
   const saveMutation = useMemo(() => {
     return contract?.id ? updateEmployeeContract : addEmployeeContract;
   }, [contract, updateEmployeeContract, addEmployeeContract]);
@@ -318,13 +334,15 @@ const EmployeesContractsForm = ({
                       }}
                       error={
                         !!errors?.basic_salary ||
-                        !!error?.response?.data?.validation_errors?.basic_salary ||
+                        !!error?.response?.data?.validation_errors
+                          ?.basic_salary ||
                         !!updateError?.response?.data?.validation_errors
                           ?.basic_salary
                       }
                       helperText={
                         errors.basic_salary?.message ||
-                        error?.response?.data?.validation_errors?.basic_salary ||
+                        error?.response?.data?.validation_errors
+                          ?.basic_salary ||
                         updateError?.response?.data?.validation_errors
                           ?.basic_salary
                       }
@@ -351,7 +369,7 @@ const EmployeesContractsForm = ({
                           size: 'small',
                           fullWidth: true,
                           error: !!fieldState.error,
-                          helperText: fieldState.error?.message
+                          helperText: fieldState.error?.message,
                         },
                       }}
                     />
