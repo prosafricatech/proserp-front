@@ -15,6 +15,7 @@ export interface PayslipAllowance {
 export interface PayslipDeduction {
   amount?: number | string;
   value?: number | string;
+  label: string;
   name?: string;
   category?: string;
   is_pre_tax?: boolean;
@@ -131,7 +132,7 @@ export const getPayslipCalculations = (run?: PayrollRunLike | null): PayslipComp
 
   const deductionRows: PayslipDeductionRow[] = [];
 
-  rawDeductions.forEach((deduction, index) => {
+  rawDeductions.forEach((deduction) => {
     const amount = toNumber(deduction.amount ?? deduction.value);
     if (amount <= 0) return;
 
@@ -144,10 +145,7 @@ export const getPayslipCalculations = (run?: PayrollRunLike | null): PayslipComp
     const isPreTax = Boolean(deduction.is_pre_tax ?? deduction.deduction_type?.is_pre_tax);
 
     deductionRows.push({
-      label:
-        deduction.deduction_type?.name ||
-        deduction.name ||
-        `Deduction ${index + 1}`,
+      label: deduction.label,
       category,
       amount,
       isPreTax,
