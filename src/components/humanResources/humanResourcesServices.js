@@ -590,6 +590,15 @@ humanResourcesServices.markPayrollPeriodPaid = async (id) => {
     return data;
 }
 
+// export payroll
+humanResourcesServices.ExportPayrollToExcel = async (exportedData) => {
+    const res = await axios.post(`/api/exports/excel/payrolls/`, exportedData, {
+        responseType: 'blob',
+    });
+    // const res = await axios.post(`/api/exports/excel/payrolls/`, exportedData);
+    return res.data;
+}
+
 // payroll runs methods
 humanResourcesServices.getPayrollRunsList = async (params = {}) => {
     const { page = 1, limit = 20, ...queryParams } = params;

@@ -1,5 +1,9 @@
 'use client';
 
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { Organization } from '@/types/auth-types';
+import { faFileExcel } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { JumboDdMenu } from '@jumbo/components';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
 import { MenuItemProps } from '@jumbo/types';
@@ -9,14 +13,19 @@ import {
   ReceiptLongOutlined,
 } from '@mui/icons-material';
 import { Tooltip } from '@mui/material';
-import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  useMutation,
+  useQueries,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import { useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
-import { getPayslipCalculations } from '../payrollRuns/payslipCalculations';
 import { PayrollRunType } from '../payrollRuns/PayrollRunType';
-import SalarySheetDialog from './SalarySheetDialog';
+import { getPayslipCalculations } from '../payrollRuns/payslipCalculations';
 import { PayrollPeriodType } from './PayrollPeriodType';
+import SalarySheetDialog from './SalarySheetDialog';
 
 const MONTH_NAMES = [
   '',
@@ -43,6 +52,10 @@ const PayrollPeriodItemAction = ({
   const { showDialog, hideDialog } = useJumboDialog();
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
+  const { authOrganization } = useJumboAuth();
+  const organization = authOrganization?.organization;
+
+  const [isExporting, setIsExporting] = useState(false);
 
   const { mutate: deletePayrollPeriod } = useMutation({
     mutationFn: humanResourcesServices.deletePayrollPeriod,
@@ -107,6 +120,32 @@ const PayrollPeriodItemAction = ({
 
   const periodLabel = `${MONTH_NAMES[payrollPeriod.month] ?? payrollPeriod.month} ${payrollPeriod.year}`;
 
+  const downloadFileName = `Payroll`;
+
+  const exportedData = {
+    organization: organization as Organization,
+  };
+
+  const handleExcelExport = async (exportedData: any) => {
+    try {
+      setIsExporting(true);
+      const blob =
+        await humanResourcesServices.ExportPayrollToExcel(exportedData);
+      // console.log('blob: ', blob);
+
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${downloadFileName}.xlsx`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      setIsExporting(false);
+    } catch (e: any) {
+      console.log('error exporting excel: ', e);
+      setIsExporting(false);
+    }
+  };
+
   const menuItems = [
     ...(canViewSalarySheet
       ? [
@@ -126,6 +165,13 @@ const PayrollPeriodItemAction = ({
           },
         ]
       : []),
+    ...[
+      {
+        icon: <FontAwesomeIcon icon={faFileExcel} color='green' />,
+        title: 'Excel',
+        action: 'export',
+      },
+    ],
   ];
 
   const handleItemAction = (menuItem: MenuItemProps) => {
@@ -146,6 +192,9 @@ const PayrollPeriodItemAction = ({
       case 'salary-sheet':
         if (!canViewSalarySheet) return;
         setOpenSalarySheetDialog(true);
+        break;
+      case 'export':
+        handleExcelExport(exportedData);
         break;
       default:
         break;
