@@ -324,7 +324,7 @@ export async function ExportPayrollToExcel(exportedData: any) {
       cell.numFmt = NUM_FMT;
       applyCellStyle(cell, CELL_STYLES.totalRowNumeric);
     };
-    setTotalTxt(COL_SN, 'TOTALS');
+    setTotalTxt(COL_SN, 'TOTAL');
     setTotalNum(COL_BASIC, totals.basicSalary);
     totals.allowanceByType.forEach((amount: number, i: number) =>
       setTotalNum(5 + i, amount)
@@ -463,10 +463,10 @@ export async function ExportPayrollToExcel(exportedData: any) {
 
     // ---- Signatures ----
     const addSig = (label: string) => {
-      ws.mergeCells(`A${summaryRow}:H${summaryRow}`);
-      ws.mergeCells(`I${summaryRow}:M${summaryRow}`);
+      ws.mergeCells(`A${summaryRow}:C${summaryRow}`);
+      ws.mergeCells(`D${summaryRow}:F${summaryRow}`);
       const labelCell = ws.getCell(`A${summaryRow}`);
-      const sigCell = ws.getCell(`I${summaryRow}`);
+      const sigCell = ws.getCell(`D${summaryRow}`);
       labelCell.value = label;
       labelCell.font = { size: 10 };
       sigCell.value = 'Signature..................................';
