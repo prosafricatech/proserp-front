@@ -297,17 +297,6 @@ const SalarySheetPDF = ({
   const payrollTaxesAndBenefits = totals.paye + totals.totalEmployerContributions;
   const summaryTotal = grossByEmployer + netEmployeePayment + payrollTaxesAndBenefits;
 
-  const contributionTotalByName = (needle: string) => {
-    const key = needle.toLowerCase();
-    const index = contributionTypes.findIndex((type) => (type.name || '').toLowerCase().includes(key));
-    return index >= 0 ? totals.contributionByType[index] || 0 : 0;
-  };
-
-  const nssfPayment = contributionTotalByName('nssf');
-  const nhifPayment = contributionTotalByName('nhif');
-  const sdlPayment = contributionTotalByName('sdl');
-  const wcfPayment = contributionTotalByName('wcf');
-
   return (
     <Document title={`Salary Sheet ${periodLabel}`} author={organization.name} subject='Salary Sheet'>
       <Page size='A3' orientation='landscape' style={styles.page}>
@@ -539,35 +528,19 @@ const SalarySheetPDF = ({
             <Text style={styles.summaryPercent}>{percentOf(payrollTaxesAndBenefits, grossByEmployer)}</Text>
           </View>
           <View style={styles.summaryRow}>
-            <Text style={styles.summarySubLabel}>NSSF Payment</Text>
-            <Text style={styles.summarySubAmount}>{fmt(nssfPayment)}</Text>
-            <Text style={styles.summaryBlank}></Text>
-            <Text style={styles.summaryPercent}>{percentOf(nssfPayment, grossByEmployer)}</Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summarySubLabel}>NHIF Payment</Text>
-            <Text style={styles.summarySubAmount}>{fmt(nhifPayment)}</Text>
-            <Text style={styles.summaryBlank}></Text>
-            <Text style={styles.summaryPercent}>{percentOf(nhifPayment, grossByEmployer)}</Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summarySubLabel}>P.A.Y.E Payment</Text>
+            <Text style={styles.summarySubLabel}>P.A.Y.E</Text>
             <Text style={styles.summarySubAmount}>{fmt(totals.paye)}</Text>
             <Text style={styles.summaryBlank}></Text>
             <Text style={styles.summaryPercent}>{percentOf(totals.paye, grossByEmployer)}</Text>
           </View>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summarySubLabel}>SDL Payment</Text>
-            <Text style={styles.summarySubAmount}>{fmt(sdlPayment)}</Text>
-            <Text style={styles.summaryBlank}></Text>
-            <Text style={styles.summaryPercent}>{percentOf(sdlPayment, grossByEmployer)}</Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summarySubLabel}>WCF Payment</Text>
-            <Text style={styles.summarySubAmount}>{fmt(wcfPayment)}</Text>
-            <Text style={styles.summaryBlank}></Text>
-            <Text style={styles.summaryPercent}>{percentOf(wcfPayment, grossByEmployer)}</Text>
-          </View>
+          {contributionTypes.map((type, index) => (
+            <View key={`pdf-contribution-summary-${type.id || type.name}`} style={styles.summaryRow}>
+              <Text style={styles.summarySubLabel}>{type.name}</Text>
+              <Text style={styles.summarySubAmount}>{fmt(totals.contributionByType[index] || 0)}</Text>
+              <Text style={styles.summaryBlank}></Text>
+              <Text style={styles.summaryPercent}>{percentOf(totals.contributionByType[index] || 0, grossByEmployer)}</Text>
+            </View>
+          ))}
           <View style={[styles.summaryRow, { borderTopWidth: 1, borderTopColor: '#000' }]}>
             <Text style={styles.summaryLabel}></Text>
             <Text style={styles.summaryBlank}></Text>
