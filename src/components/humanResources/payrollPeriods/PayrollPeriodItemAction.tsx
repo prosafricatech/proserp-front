@@ -1,9 +1,6 @@
 'use client';
 
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
-import { Organization } from '@/types/auth-types';
-import { faFileExcel } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { JumboDdMenu } from '@jumbo/components';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
 import { MenuItemProps } from '@jumbo/types';
@@ -26,6 +23,19 @@ import { PayrollRunType } from '../payrollRuns/PayrollRunType';
 import { getPayslipCalculations } from '../payrollRuns/payslipCalculations';
 import { PayrollPeriodType } from './PayrollPeriodType';
 import SalarySheetDialog from './SalarySheetDialog';
+
+type SalaryTypeItem = {
+  id?: number;
+  name?: string;
+  category?: string;
+};
+
+const extractList = (payload: any): SalaryTypeItem[] => {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.data?.data)) return payload.data.data;
+  return [];
+};
 
 const MONTH_NAMES = [
   '',
@@ -101,50 +111,55 @@ const PayrollPeriodItemAction = ({
 
   const runs: PayrollRunType[] = runsResponse?.data || [];
 
+  const { data: allowanceTypesResponse } = useQuery({
+    queryKey: ['allowanceTypesForSalarySheet'],
+    queryFn: () =>
+      humanResourcesServices.getAllowanceTypesList({ page: 1, limit: 500 }),
+    enabled: openSalarySheetDialog,
+    staleTime: 1000 * 60,
+  });
+
+  const { data: deductionTypesResponse } = useQuery({
+    queryKey: ['deductionTypesForSalarySheet'],
+    queryFn: () =>
+      humanResourcesServices.getDeductionTypesList({ page: 1, limit: 500 }),
+    enabled: openSalarySheetDialog,
+    staleTime: 1000 * 60,
+  });
+
+  const { data: contributionTypesResponse } = useQuery({
+    queryKey: ['contributionTypesForSalarySheet'],
+    queryFn: () =>
+      humanResourcesServices.getEmployerContributionTypesList({
+        page: 1,
+        limit: 500,
+      }),
+    enabled: openSalarySheetDialog,
+    staleTime: 1000 * 60,
+  });
+
+  const allowanceTypes = extractList(allowanceTypesResponse);
+  const deductionTypes = extractList(deductionTypesResponse);
+  const contributionTypes = extractList(contributionTypesResponse);
+
   const runDetailsQueries = useQueries({
     queries: runs.map((run) => ({
       queryKey: ['showPayrollRun', run.id],
       queryFn: () => humanResourcesServices.showPayrollRun(String(run.id)),
       enabled: openSalarySheetDialog && Boolean(run.id),
-      staleTime: 1000 * 60,
     })),
   });
 
   const salarySheetRows = runs.map((run, index) => {
-    const detailedRun = runDetailsQueries[index]?.data ?? run;
+    const queryData = runDetailsQueries[index]?.data as any;
+    const detailedRun = queryData?.data ?? queryData ?? run;
     return {
-      run,
+      run: detailedRun,
       computed: getPayslipCalculations(detailedRun),
     };
   });
 
   const periodLabel = `${MONTH_NAMES[payrollPeriod.month] ?? payrollPeriod.month} ${payrollPeriod.year}`;
-
-  const downloadFileName = `Payroll`;
-
-  const exportedData = {
-    organization: organization as Organization,
-  };
-
-  const handleExcelExport = async (exportedData: any) => {
-    try {
-      setIsExporting(true);
-      const blob =
-        await humanResourcesServices.ExportPayrollToExcel(exportedData);
-      // console.log('blob: ', blob);
-
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${downloadFileName}.xlsx`;
-      a.click();
-      window.URL.revokeObjectURL(url);
-      setIsExporting(false);
-    } catch (e: any) {
-      console.log('error exporting excel: ', e);
-      setIsExporting(false);
-    }
-  };
 
   const menuItems = [
     ...(canViewSalarySheet
@@ -165,13 +180,6 @@ const PayrollPeriodItemAction = ({
           },
         ]
       : []),
-    ...[
-      {
-        icon: <FontAwesomeIcon icon={faFileExcel} color='green' />,
-        title: 'Excel',
-        action: 'export',
-      },
-    ],
   ];
 
   const handleItemAction = (menuItem: MenuItemProps) => {
@@ -192,9 +200,6 @@ const PayrollPeriodItemAction = ({
       case 'salary-sheet':
         if (!canViewSalarySheet) return;
         setOpenSalarySheetDialog(true);
-        break;
-      case 'export':
-        handleExcelExport(exportedData);
         break;
       default:
         break;
@@ -218,6 +223,9 @@ const PayrollPeriodItemAction = ({
         onClose={() => setOpenSalarySheetDialog(false)}
         periodLabel={periodLabel}
         rows={salarySheetRows}
+        allowanceTypes={allowanceTypes}
+        deductionTypes={deductionTypes}
+        contributionTypes={contributionTypes}
       />
     </>
   );
