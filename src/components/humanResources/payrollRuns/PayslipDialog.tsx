@@ -333,7 +333,6 @@ const PayslipDialog = ({ open, onClose, runId, periodId }: PayslipDialogProps) =
       </Dialog>
 
       <Dialog open={openPdfDialog} onClose={() => setOpenPdfDialog(false)} fullWidth maxWidth='lg'>
-        <DialogTitle>PDF Preview</DialogTitle>
         <DialogContent>
           {run && (
             <PDFContent

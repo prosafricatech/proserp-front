@@ -142,7 +142,7 @@ const SalarySheetPDF = ({ organization, periodLabel, rows }: SalarySheetPDFProps
 
         <View style={styles.table}>
           <View style={{ ...styles.tableRow, backgroundColor: mainColor }}>
-            <Text style={{ ...styles.headerCell, width: widths.index, color: contrastText }}>#</Text>
+            <Text style={{ ...styles.headerCell, width: widths.index, color: contrastText }}>S/N</Text>
             <Text style={{ ...styles.headerCell, width: widths.employee, color: contrastText }}>Employee</Text>
             <Text style={{ ...styles.headerCell, width: widths.employeeNo, color: contrastText }}>Emp No.</Text>
             <Text style={{ ...styles.headerCell, width: widths.designation, color: contrastText }}>Designation</Text>

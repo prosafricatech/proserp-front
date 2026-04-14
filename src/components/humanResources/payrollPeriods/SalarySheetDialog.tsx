@@ -112,7 +112,7 @@ const SalarySheetDialog = ({ open, onClose, periodLabel, rows }: SalarySheetDial
               <Table size='small'>
                 <TableHead>
                   <TableRow>
-                    <TableCell>#</TableCell>
+                    <TableCell>S/N</TableCell>
                     <TableCell>Employee</TableCell>
                     <TableCell>Employee No.</TableCell>
                     <TableCell>Designation</TableCell>
@@ -188,7 +188,6 @@ const SalarySheetDialog = ({ open, onClose, periodLabel, rows }: SalarySheetDial
       </Dialog>
 
       <Dialog open={openPdfDialog} onClose={() => setOpenPdfDialog(false)} fullWidth maxWidth='xl'>
-        <DialogTitle>PDF Preview</DialogTitle>
         <DialogContent>
           <PDFContent
             document={
