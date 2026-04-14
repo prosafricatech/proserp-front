@@ -68,7 +68,7 @@ const LeaveRequestItemAction = ({
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [openStatusDialog, setOpenStatusDialog] = useState(false);
   const [statusAction, setStatusAction] = useState<
-    'approved' | 'rejected' | 'cancelled' | null
+    'approve' | 'reject' | 'cancel' | null
   >(null);
   const [remarks, setRemarks] = useState('');
   const { showDialog, hideDialog } = useJumboDialog();
@@ -127,7 +127,12 @@ const LeaveRequestItemAction = ({
         } else if (error instanceof Error) {
           message = error.message;
         }
-        enqueueSnackbar(message, { variant: 'error' });
+        error.response?.data?.validation_errors
+          ? enqueueSnackbar(
+              error.response?.data?.validation_errors?.remarks[0],
+              { variant: 'error' }
+            )
+          : enqueueSnackbar(message, { variant: 'error' });
       },
     });
 
@@ -177,17 +182,17 @@ const LeaveRequestItemAction = ({
         });
         break;
       case 'approve':
-        setStatusAction('approved');
+        setStatusAction('approve');
         setRemarks('');
         setOpenStatusDialog(true);
         break;
       case 'reject':
-        setStatusAction('rejected');
+        setStatusAction('reject');
         setRemarks('');
         setOpenStatusDialog(true);
         break;
       case 'cancel':
-        setStatusAction('cancelled');
+        setStatusAction('cancel');
         setRemarks('');
         setOpenStatusDialog(true);
         break;
@@ -202,21 +207,21 @@ const LeaveRequestItemAction = ({
     updateLeaveRequest({
       id: leaveRequest.id,
       status: statusAction,
-      review_remarks: remarks,
+      remarks: remarks,
     });
   };
 
   const actionButtonLabel =
-    statusAction === 'approved'
+    statusAction === 'approve'
       ? 'Approve'
-      : statusAction === 'rejected'
+      : statusAction === 'reject'
         ? 'Reject'
         : 'Cancel';
 
   const actionButtonColor =
-    statusAction === 'approved'
+    statusAction === 'approve'
       ? 'success'
-      : statusAction === 'rejected'
+      : statusAction === 'reject'
         ? 'error'
         : 'error';
 
@@ -249,9 +254,9 @@ const LeaveRequestItemAction = ({
         }}
       >
         <DialogTitle sx={{ textAlign: 'center' }}>
-          {statusAction === 'approved'
+          {statusAction === 'approve'
             ? 'Approve'
-            : statusAction === 'rejected'
+            : statusAction === 'reject'
               ? 'Reject'
               : 'Cancel'}
         </DialogTitle>

@@ -8,13 +8,15 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+
   const { headers, response } = await getAuthHeaders(req);
   if (response) return response;
 
   const body = await req.json();
-  const res = await fetch(`${API_BASE}/leave-requests/${id}`, {
-    method: 'PUT',
+  const res = await fetch(`${API_BASE}/leave-requests/${id}/${body.status}`, {
+    method: 'POST',
     headers,
+    credentials: 'include',
     body: JSON.stringify(body),
   });
 
