@@ -324,7 +324,7 @@ export async function ExportPayrollToExcel(exportedData: any) {
       cell.numFmt = NUM_FMT;
       applyCellStyle(cell, CELL_STYLES.totalRowNumeric);
     };
-    setTotalTxt(COL_SN, 'TOTAL');
+    setTotalTxt(COL_SN, ' ');
     setTotalNum(COL_BASIC, totals.basicSalary);
     totals.allowanceByType.forEach((amount: number, i: number) =>
       setTotalNum(5 + i, amount)
