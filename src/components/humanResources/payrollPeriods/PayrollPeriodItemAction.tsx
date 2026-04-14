@@ -15,8 +15,21 @@ import { useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
 import { getPayslipCalculations } from '../payrollRuns/payslipCalculations';
 import { PayrollRunType } from '../payrollRuns/PayrollRunType';
-import SalarySheetDialog from './SalarySheetDialog';
 import { PayrollPeriodType } from './PayrollPeriodType';
+import SalarySheetDialog from './SalarySheetDialog';
+
+type SalaryTypeItem = {
+  id?: number;
+  name?: string;
+  category?: string;
+};
+
+const extractList = (payload: any): SalaryTypeItem[] => {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.data?.data)) return payload.data.data;
+  return [];
+};
 
 const MONTH_NAMES = [
   '',
@@ -88,19 +101,44 @@ const PayrollPeriodItemAction = ({
 
   const runs: PayrollRunType[] = runsResponse?.data || [];
 
+  const { data: allowanceTypesResponse } = useQuery({
+    queryKey: ['allowanceTypesForSalarySheet'],
+    queryFn: () => humanResourcesServices.getAllowanceTypesList({ page: 1, limit: 500 }),
+    enabled: openSalarySheetDialog,
+    staleTime: 1000 * 60,
+  });
+
+  const { data: deductionTypesResponse } = useQuery({
+    queryKey: ['deductionTypesForSalarySheet'],
+    queryFn: () => humanResourcesServices.getDeductionTypesList({ page: 1, limit: 500 }),
+    enabled: openSalarySheetDialog,
+    staleTime: 1000 * 60,
+  });
+
+  const { data: contributionTypesResponse } = useQuery({
+    queryKey: ['contributionTypesForSalarySheet'],
+    queryFn: () => humanResourcesServices.getEmployerContributionTypesList({ page: 1, limit: 500 }),
+    enabled: openSalarySheetDialog,
+    staleTime: 1000 * 60,
+  });
+
+  const allowanceTypes = extractList(allowanceTypesResponse);
+  const deductionTypes = extractList(deductionTypesResponse);
+  const contributionTypes = extractList(contributionTypesResponse);
+
   const runDetailsQueries = useQueries({
     queries: runs.map((run) => ({
       queryKey: ['showPayrollRun', run.id],
       queryFn: () => humanResourcesServices.showPayrollRun(String(run.id)),
       enabled: openSalarySheetDialog && Boolean(run.id),
-      staleTime: 1000 * 60,
     })),
   });
 
   const salarySheetRows = runs.map((run, index) => {
-    const detailedRun = runDetailsQueries[index]?.data ?? run;
+    const queryData = runDetailsQueries[index]?.data as any;
+    const detailedRun = queryData?.data ?? queryData ?? run;
     return {
-      run,
+      run: detailedRun,
       computed: getPayslipCalculations(detailedRun),
     };
   });
@@ -169,6 +207,9 @@ const PayrollPeriodItemAction = ({
         onClose={() => setOpenSalarySheetDialog(false)}
         periodLabel={periodLabel}
         rows={salarySheetRows}
+        allowanceTypes={allowanceTypes}
+        deductionTypes={deductionTypes}
+        contributionTypes={contributionTypes}
       />
     </>
   );

@@ -601,7 +601,7 @@ humanResourcesServices.getPayrollRunsList = async (params = {}) => {
 
 humanResourcesServices.showPayrollRun = async (id) => {
     const { data } = await axios.get(`/api/humanResources/payrollRuns/${id}`);
-    return data;
+    return data?.data || data;
 }
 
 humanResourcesServices.finalizePayrollRun = async (id) => {

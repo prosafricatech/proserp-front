@@ -34,10 +34,23 @@ import { useSnackbar } from 'notistack';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLanguage } from '@/app/[lang]/contexts/LanguageContext';
 import humanResourcesServices from '../humanResourcesServices';
-import SalarySheetDialog from './SalarySheetDialog';
 import PayslipDialog from '../payrollRuns/PayslipDialog';
 import { PayrollRunType } from '../payrollRuns/PayrollRunType';
 import { getPayslipCalculations } from '../payrollRuns/payslipCalculations';
+import SalarySheetDialog from './SalarySheetDialog';
+
+type SalaryTypeItem = {
+  id?: number;
+  name?: string;
+  category?: string;
+};
+
+const extractList = (payload: any): SalaryTypeItem[] => {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.data?.data)) return payload.data.data;
+  return [];
+};
 
 const MONTH_NAMES = [
   '', 'January', 'February', 'March', 'April', 'May', 'June',
@@ -189,11 +202,37 @@ export default function PayrollPeriodDetail() {
     })),
   });
 
+  const { data: allowanceTypesResponse } = useQuery({
+    queryKey: ['allowanceTypesForSalarySheet'],
+    queryFn: () => humanResourcesServices.getAllowanceTypesList({ page: 1, limit: 500 }),
+    enabled: openSalarySheetDialog,
+    staleTime: 1000 * 60,
+  });
+
+  const { data: deductionTypesResponse } = useQuery({
+    queryKey: ['deductionTypesForSalarySheet'],
+    queryFn: () => humanResourcesServices.getDeductionTypesList({ page: 1, limit: 500 }),
+    enabled: openSalarySheetDialog,
+    staleTime: 1000 * 60,
+  });
+
+  const { data: contributionTypesResponse } = useQuery({
+    queryKey: ['contributionTypesForSalarySheet'],
+    queryFn: () => humanResourcesServices.getEmployerContributionTypesList({ page: 1, limit: 500 }),
+    enabled: openSalarySheetDialog,
+    staleTime: 1000 * 60,
+  });
+
+  const allowanceTypes = extractList(allowanceTypesResponse);
+  const deductionTypes = extractList(deductionTypesResponse);
+  const contributionTypes = extractList(contributionTypesResponse);
+
   const detailedRuns = useMemo(() => {
     return runs.map((run, index) => {
-      const detailedRun = runDetailsQueries[index]?.data ?? run;
+      const queryData = runDetailsQueries[index]?.data as any;
+      const detailedRun = queryData?.data ?? queryData ?? run;
       return {
-        run,
+        run: detailedRun,
         detailedRun,
         computed: getPayslipCalculations(detailedRun),
       };
@@ -790,6 +829,9 @@ export default function PayrollPeriodDetail() {
         onClose={() => setOpenSalarySheetDialog(false)}
         periodLabel={periodLabel}
         rows={detailedRuns}
+        allowanceTypes={allowanceTypes}
+        deductionTypes={deductionTypes}
+        contributionTypes={contributionTypes}
       />
     </>
   );
