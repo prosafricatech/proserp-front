@@ -57,6 +57,7 @@ const PayrollPeriodForm = ({
   const { authOrganization } = useJumboAuth();
 
   const currentYear = dayjs().year();
+  const currentMonth = dayjs().month() + 1;
   const recordingStartYear = dayjs(
     authOrganization?.organization?.recording_start_date
   ).isValid()
@@ -73,6 +74,8 @@ const PayrollPeriodForm = ({
 
     return years;
   }, [recordingStartYear, currentYear]);
+
+  console.log(recordingStartYear, currentYear);
 
   const monthOptions = useMemo(
     () => [
@@ -179,6 +182,7 @@ const PayrollPeriodForm = ({
     control,
     handleSubmit,
     reset,
+    watch,
     formState: { errors },
   } = useForm<FormData>({
     resolver: yupResolver(validationSchema) as any,
@@ -198,6 +202,15 @@ const PayrollPeriodForm = ({
       remarks: payrollPeriod?.remarks ?? null,
     });
   }, [payrollPeriod, reset]);
+
+  const selectedYear = watch('year');
+  const filteredMonthOptions = useMemo(
+    () =>
+      selectedYear === currentYear
+        ? monthOptions.filter((m) => m.value <= currentMonth)
+        : monthOptions,
+    [selectedYear, currentYear, currentMonth, monthOptions]
+  );
 
   const saveMutation = useMemo(
     () => (payrollPeriod?.id ? updatePayrollPeriod : addPayrollPeriod),
@@ -281,7 +294,7 @@ const PayrollPeriodForm = ({
                         getValidationMessage(validationErrors, 'month')
                       }
                     >
-                      {monthOptions.map((month) => (
+                      {filteredMonthOptions.map((month) => (
                         <MenuItem key={month.value} value={month.value}>
                           {month.label}
                         </MenuItem>
