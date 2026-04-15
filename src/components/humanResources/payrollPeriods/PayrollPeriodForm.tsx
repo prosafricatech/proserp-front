@@ -75,8 +75,6 @@ const PayrollPeriodForm = ({
     return years;
   }, [recordingStartYear, currentYear]);
 
-  console.log(recordingStartYear, currentYear);
-
   const monthOptions = useMemo(
     () => [
       { label: 'January', value: 1 },
