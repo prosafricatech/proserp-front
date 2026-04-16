@@ -231,162 +231,180 @@ function SaleDialogForm({toggleOpen,sale = null}) {
         await saveMutation.mutate(updatedData);
     };
 
-  return (
-    <FormProvider {...{ setValue, register, handleSubmit, watch, clearErrors, errors }}>
-        <DialogTitle>
-            <Grid container columnSpacing={2}>
-                <Grid textAlign={'center'} size={12} mb={3}>
-                    {!sale ? 'New Sale' : `Edit: ${sale.saleNo} `}
-                </Grid>
-
-                <Grid size={{xs: 12, md: 9}} mb={2}>
-                    <SaleTopInformation
-                        sale={sale}
-                        counterLedgers={counterLedgers}
-                        debitLedger={debitLedger}
-                        setDebitLedger={setDebitLedger}
-                        isLoadingReceivableLedgers={isLoadingReceivableLedgers}
-                        stakeholderReceivableLedgers={stakeholderReceivableLedgers}
-                        addedStakeholder={addedStakeholder}
-                        setAddedStakeholder={setAddedStakeholder}
-                        stakeholderQuickAddDisplay={stakeholderQuickAddDisplay}
-                        setStakeholderQuickAddDisplay={setStakeholderQuickAddDisplay}
-                        organization={organization}
-                    />
-                </Grid>
-                
-                <Grid size={{xs: 12, md: 3}}>
-                    <ProductsSaleSummary
-                        items={items}
-                        checkedForSuggestPrice={checkedForSuggestPrice}
-                        setCheckedForSuggestPrice={setCheckedForSuggestPrice}
-                        checkedForInstantSale={checkedForInstantSale}
-                        setCheckedForInstantSale={setCheckedForInstantSale}
-                        sale={sale}
-                        vat_percentage={vat_percentage}
-                        organization={organization}
-                    />
-                </Grid>
-                
-                {
-                    !majorInfoOnly &&
-                    <Grid size={12}>
-                        <SaleItemForm setClearFormKey={setClearFormKey} submitMainForm={handleSubmit((data) => saveMutation.mutate(data))} submitItemForm={submitItemForm} setSubmitItemForm={setSubmitItemForm} key={clearFormKey} setIsDirty={setIsDirty} vat_percentage={vat_percentage} />
+    return (
+        <>
+            <DialogTitle>
+                <Grid container columnSpacing={2}>
+                    <Grid textAlign={'center'} size={12} mb={3}>
+                        {!sale ? 'New Sale' : `Edit: ${sale.saleNo} `}
                     </Grid>
-                }
-            </Grid>
-        </DialogTitle>
-        {
-            !majorInfoOnly &&
-            <DialogContent>
-                {
-                    errors?.items?.message && items.length < 1 && <Alert severity='error'>{errors.items.message}</Alert>
-                }
-                {
-                    items.map((item,index) => {
-                        return <SaleItemRow setClearFormKey={setClearFormKey} submitMainForm={handleSubmit((data) => saveMutation.mutate(data))} submitItemForm={submitItemForm} setSubmitItemForm={setSubmitItemForm} setIsDirty={setIsDirty} key={index} item={item} index={index} vat_percentage={vat_percentage} />
-                    })
-                }
 
-                <Dialog open={showWarning} onClose={() => setShowWarning(false)}>
-                    <DialogTitle>            
-                        <Grid container alignItems="center" justifyContent="space-between">
-                            <Grid size={11}>
-                                Unsaved Changes
-                            </Grid>
-                            <Grid size={1} textAlign="right">
-                                <Tooltip title="Close">
-                                    <IconButton
-                                        size="small" 
-                                        onClick={() => setShowWarning(false)}
-                                    >
-                                        <HighlightOff color="primary" />
-                                    </IconButton>
-                                </Tooltip>
-                            </Grid>
+                    <Grid size={{ xs: 12, md: 9 }} mb={2}>
+                        <SaleTopInformation
+                            setCheckedForInstantSale={setCheckedForInstantSale}
+                            counterLedgers={counterLedgers}
+                            setAddedStakeholder={setAddedStakeholder}
+                            debitLedger={debitLedger}
+                            setDebitLedger={setDebitLedger}
+                            isLoadingReceivableLedgers={isLoadingReceivableLedgers}
+                            stakeholderReceivableLedgers={stakeholderReceivableLedgers}
+                            addedStakeholder={addedStakeholder}
+                            sale={sale}
+                            organization={organization}
+                            stakeholderQuickAddDisplay={stakeholderQuickAddDisplay}
+                            setStakeholderQuickAddDisplay={setStakeholderQuickAddDisplay}
+                            setValue={setValue}
+                            watch={watch}
+                            errors={errors}
+                            clearErrors={clearErrors}
+                            register={register}
+                        />
+                    </Grid>
+
+                    <Grid size={{ xs: 12, md: 3 }}>
+                        <ProductsSaleSummary
+                            items={items}
+                            sale={sale}
+                            checkedForSuggestPrice={checkedForSuggestPrice}
+                            setCheckedForSuggestPrice={setCheckedForSuggestPrice}
+                            vat_percentage={vat_percentage}
+                            organization={organization}
+                            checkedForInstantSale={checkedForInstantSale}
+                            setCheckedForInstantSale={setCheckedForInstantSale}
+                            setValue={setValue}
+                            watch={watch}
+                        />
+                    </Grid>
+
+                    {!majorInfoOnly && (
+                        <Grid size={12}>
+                            <SaleItemForm
+                                setClearFormKey={setClearFormKey}
+                                submitMainForm={handleSubmit((data) => saveMutation.mutate(data))}
+                                submitItemForm={submitItemForm}
+                                setSubmitItemForm={setSubmitItemForm}
+                                key={clearFormKey}
+                                setIsDirty={setIsDirty}
+                                vat_percentage={vat_percentage}
+                                items={items}
+                                setItems={setItems}
+                                salesDate={salesDate}
+                                checkedForInstantSale={checkedForInstantSale}
+                                getLastPriceItems={getLastPriceItems}
+                                checkedForSuggestPrice={checkedForSuggestPrice}
+                            />
                         </Grid>
-                    </DialogTitle>
-                    <DialogContent>
-                        Last item was not added to the list
-                    </DialogContent>
-                    <DialogActions>
-                        <Button size="small" onClick={() => {setSubmitItemForm(true); setShowWarning(false);}}>
-                            Add and Submit
-                        </Button>
-                        <Button size="small" onClick={handleConfirmSubmitWithoutAdd} color="secondary">
-                            Submit without add
-                        </Button>
-                    </DialogActions>
-                </Dialog>
-            </DialogContent>
-        }
-        
-        <DialogActions sx={{ display: "flex", width: "100%", alignItems: "center", justifyContent: "space-between" }}>
-            <Box>
-                {!isBelowLargeScreen && (
-                    <Tooltip
-                        title={
-                            connected 
-                                ? "Connected - Click to disconnect"
-                                : "Serial Display Not Connected - Click to connect"
-                        }
-                    >
-                        {connected ? (
-                            <Link
-                                sx={{ color: 'green', cursor: 'pointer' }} 
-                                onClick={() => sendZero().then(() => disconnect())} 
-                            />
-                        ) : (
-                            <LinkOff
-                                sx={{ color: 'gray', cursor: 'pointer' }} 
-                                onClick={connect} 
-                            />
-                        )}
-                    </Tooltip>
-                )}
-            </Box>
-            <Box sx={{ display: "flex", gap: 1, marginLeft: "auto" }}>
-                <Button size='small' onClick={() => toggleOpen(false)}>
-                    Cancel
-                </Button>
+                    )}
+                </Grid>
+            </DialogTitle>
+            {!majorInfoOnly && (
+                <DialogContent>
+                    {errors?.items?.message && items.length < 1 && (
+                        <Alert severity='error'>{errors.items.message}</Alert>
+                    )}
+                    {items.map((item, index) => (
+                        <SaleItemRow
+                            setClearFormKey={setClearFormKey}
+                            submitMainForm={handleSubmit((data) => saveMutation.mutate(data))}
+                            submitItemForm={submitItemForm}
+                            setSubmitItemForm={setSubmitItemForm}
+                            setIsDirty={setIsDirty}
+                            key={index}
+                            item={item}
+                            index={index}
+                            vat_percentage={vat_percentage}
+                            items={items}
+                            setItems={setItems}
+                            checkedForSuggestPrice={checkedForSuggestPrice}
+                            getLastPriceItems={getLastPriceItems}
+                            salesDate={salesDate}
+                            checkedForInstantSale={checkedForInstantSale}
+                        />
+                    ))}
 
-                {!stakeholderQuickAddDisplay && (
-                    <>
-                        {!majorInfoOnly && (
-                            <LoadingButton
-                                loading={addSale.isPending || updateSale.isPending}
-                                size='small'
-                                variant='contained'
-                                onClick={(e) => {
-                                    setValue('submitType','pending');
-                                    handleSubmit(onSubmit)(e);
-                                }}
-                            >
-                                Suspend
-                            </LoadingButton>
-                        )}
+                    <Dialog open={showWarning} onClose={() => setShowWarning(false)}>
+                        <DialogTitle>
+                            <Grid container alignItems='center' justifyContent='space-between'>
+                                <Grid size={11}>Unsaved Changes</Grid>
+                                <Grid size={1} textAlign='right'>
+                                    <Tooltip title='Close'>
+                                        <IconButton size='small' onClick={() => setShowWarning(false)}>
+                                            <HighlightOff color='primary' />
+                                        </IconButton>
+                                    </Tooltip>
+                                </Grid>
+                            </Grid>
+                        </DialogTitle>
+                        <DialogContent>Last item was not added to the list</DialogContent>
+                        <DialogActions>
+                            <Button size='small' onClick={() => { setSubmitItemForm(true); setShowWarning(false); }}>
+                                Add and Submit
+                            </Button>
+                            <Button size='small' onClick={handleConfirmSubmitWithoutAdd} color='secondary'>
+                                Submit without add
+                            </Button>
+                        </DialogActions>
+                    </Dialog>
+                </DialogContent>
+            )}
 
-                        {checkOrganizationPermission(PERMISSIONS.SALES_COMPLETE) && (
-                            <LoadingButton
-                                loading={addSale.isPending || updateSale.isPending}
-                                size='small'
-                                type='submit'
-                                color='success'
-                                variant='contained'
-                                onClick={handleSubmit(onSubmit)}
-                            >
-                                Checkout
-                            </LoadingButton>
-                        )}
-                    </>
-                )}
-            </Box>
+            <DialogActions sx={{ display: 'flex', width: '100%', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                    {!isBelowLargeScreen && (
+                        <Tooltip
+                            title={
+                                connected
+                                    ? 'Connected - Click to disconnect'
+                                    : 'Serial Display Not Connected - Click to connect'
+                            }
+                        >
+                            {connected ? (
+                                <Link sx={{ color: 'green', cursor: 'pointer' }} onClick={() => sendZero().then(() => disconnect())} />
+                            ) : (
+                                <LinkOff sx={{ color: 'gray', cursor: 'pointer' }} onClick={connect} />
+                            )}
+                        </Tooltip>
+                    )}
+                </Box>
+                <Box sx={{ display: 'flex', gap: 1, marginLeft: 'auto' }}>
+                    <Button size='small' onClick={() => toggleOpen(false)}>
+                        Cancel
+                    </Button>
 
-        </DialogActions>
-    </FormProvider>
+                    {!stakeholderQuickAddDisplay && (
+                        <>
+                            {!majorInfoOnly && (
+                                <LoadingButton
+                                    loading={addSale.isPending || updateSale.isPending}
+                                    size='small'
+                                    variant='contained'
+                                    onClick={(e) => {
+                                        setValue('submitType', 'pending');
+                                        handleSubmit(onSubmit)(e);
+                                    }}
+                                >
+                                    Suspend
+                                </LoadingButton>
+                            )}
 
-
-  )
+                            {checkOrganizationPermission(PERMISSIONS.SALES_COMPLETE) && (
+                                <LoadingButton
+                                    loading={addSale.isPending || updateSale.isPending}
+                                    size='small'
+                                    type='submit'
+                                    color='success'
+                                    variant='contained'
+                                    onClick={handleSubmit(onSubmit)}
+                                >
+                                    Checkout
+                                </LoadingButton>
+                            )}
+                        </>
+                    )}
+                </Box>
+            </DialogActions>
+        </>
+    );
 }
 
 export default SaleDialogForm

@@ -96,20 +96,26 @@ function ProductSelect(props) {
 
   useEffect(() => {
     if (defaultValue !== null) {
+      // Only update if different and not already set
       if (JSON.stringify(selectedItems) !== JSON.stringify(defaultValue)) {
         setSelectedItems(defaultValue);
       }
     }
-  }, [defaultValue]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(defaultValue)]);
 
   useEffect(() => {
     if (!addedProduct) return;
     const value = multiple ? [addedProduct] : addedProduct;
     if (JSON.stringify(selectedItems) !== JSON.stringify(value)) {
       setSelectedItems(value);
-      onChange?.(value);
+      // Only call onChange if value is different from selectedItems and from defaultValue
+      if (JSON.stringify(defaultValue) !== JSON.stringify(value)) {
+        onChange?.(value);
+      }
     }
-  }, [addedProduct, multiple, onChange]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(addedProduct), multiple]);
 
   const finalOptions = useMemo(() => {
     let opts = productOptions.filter(

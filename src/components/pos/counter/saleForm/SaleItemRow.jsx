@@ -2,7 +2,6 @@ import { DisabledByDefault, EditOutlined } from '@mui/icons-material'
 import { Divider, Grid, IconButton, ListItemText, Tooltip, Typography } from '@mui/material'
 import React, { useState } from 'react'
 import SaleItemForm from './SaleItemForm';
-import { useFormContext } from 'react-hook-form';
 
 function SaleItemRow({
     setClearFormKey,
@@ -14,13 +13,13 @@ function SaleItemRow({
     index,
     vat_percentage = 0,
     items = [],
-    setItems,
+    setItems = () => {},
     getLastPriceItems,
-    checkedForSuggestPrice
+    checkedForSuggestPrice,
 }) {
-        const product = item.product;
-        const [showForm, setShowForm] = useState(false);
-        const vat_factor = vat_percentage*0.01;
+    const product = item.product;
+    const [showForm, setShowForm] = useState(false);
+    const vat_factor = vat_percentage*0.01;
 
   return (
          <React.Fragment>

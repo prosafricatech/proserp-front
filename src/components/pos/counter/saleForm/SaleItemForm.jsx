@@ -1,5 +1,5 @@
 import { FormControl, Grid, IconButton, LinearProgress, MenuItem, Select, TextField, Tooltip, Typography, useMediaQuery } from '@mui/material'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import * as yup  from "yup";
 import {yupResolver} from '@hookform/resolvers/yup'
@@ -29,7 +29,7 @@ function SaleItemForm({
     setShowForm = null,
     vat_percentage = 0,
     items = [],
-    setItems,
+    setItems = () => {},
     salesDate,
     checkedForInstantSale,
     getLastPriceItems,
@@ -107,7 +107,7 @@ function SaleItemForm({
         });
     });
 
-    const { setValue, handleSubmit, register, watch, clearErrors, reset, getValues, formState: { errors, dirtyFields } } = useForm({
+    const { setValue, handleSubmit, register, watch, clearErrors, reset, formState: { errors, dirtyFields } } = useForm({
         resolver: yupResolver(validationSchema),
         defaultValues: {
             product: item && productOptions.find(product => product.id === item.product_id),
@@ -123,9 +123,12 @@ function SaleItemForm({
     });
 
     useEffect(() => {
-        // Use snapshot pattern to avoid infinite update loop
-        setIsDirty(Object.keys(dirtyFields).length > 0);
-    }, [setIsDirty, dirtyFields]);
+        const subscription = watch(() => {
+            const hasDirtyFields = Object.keys(dirtyFields).length > 0;
+            setIsDirty(hasDirtyFields);
+        });
+        return () => subscription.unsubscribe();
+    }, [watch, dirtyFields, setIsDirty]);
 
     const product = watch('product');
     const isInventory = product?.type === 'Inventory';
@@ -139,8 +142,6 @@ function SaleItemForm({
         } else {
             clearErrors(`rate`);
         }
-        // Only run when checkedForSuggestPrice changes, not on every render
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [checkedForSuggestPrice]);
     
     const amount = () => { 
@@ -182,17 +183,15 @@ function SaleItemForm({
         setShowForm && setShowForm(false);
     };
 
-        useEffect(() => {
-            if (submitItemForm) {
-                handleSubmit(updateItems, () => {
-                    setSubmitItemForm(false); // Reset submitItemForm if there are errors
-                })();
-            }
-            // Only run when submitItemForm changes
-            // eslint-disable-next-line react-hooks/exhaustive-deps
-        }, [submitItemForm]);
+    useEffect(() => {
+      if (submitItemForm) {
+        handleSubmit(updateItems, () => {
+          setSubmitItemForm(false); // Reset submitItemForm if there are errors
+        })();
+      }
+    }, [submitItemForm]);
 
-    const combinedUnits = product?.secondary_units.concat(product?.primary_unit);
+    const combinedUnits = React.useMemo(() => product?.secondary_units.concat(product?.primary_unit), [product]);
 
     const retrieveBalances = async(storeId = null, product, measurement_unit_id) => {
         setValue(`product_id`,product.id);
@@ -217,54 +216,72 @@ function SaleItemForm({
             };
             setValue(`available_balance`,'N/A');
             clearErrors(`rate`);    
-            //Manage Price change permission
             setCanChangePrice(!watch('rate') || !notAllowedToChangePrice);
         }
     }
     
+    const lastSetRateRef = useRef();
     useEffect(() => {
+        const currentRate = watch('rate');
         if (item && item.product) {
-            setValue(`rate`, item.rate)
+            if (currentRate !== item.rate && lastSetRateRef.current !== item.rate) {
+                setValue(`rate`, item.rate);
+                lastSetRateRef.current = item.rate;
+            }
         }
     }, [item]);
 
-    // Set store_id to null when a non-inventory product is selected
+    const lastSetStoreIdRef = useRef();
     useEffect(() => {
-        if (product && product.type !== 'Inventory') {
+        const currentStoreId = watch('store_id');
+        if (product && product.type !== 'Inventory' && currentStoreId !== null && lastSetStoreIdRef.current !== null) {
             setValue('store_id', null);
+            lastSetStoreIdRef.current = null;
         }
-    }, [product, setValue]);
+    }, [product]);
     
+    const lastSetSellingPriceRef = useRef();
+    const productRef = useRef(product);
+    const storeIdRef = useRef(store_id);
+    const measurementUnitIdRef = useRef(measurement_unit_id);
+    useEffect(() => {
+        productRef.current = product;
+        storeIdRef.current = store_id;
+        measurementUnitIdRef.current = measurement_unit_id;
+    }, [product, store_id, measurement_unit_id]);
+
     useEffect(() => {
         const priceFilling = async () => {
+            const currentRate = watch('rate');
             clearErrors('rate');
-            if (!item && !checkedForSuggestPrice) {
-               await setValue(`rate`, 0);
+            if (!item && !checkedForSuggestPrice && currentRate !== 0 && lastSetRateRef.current !== 0) {
+                await setValue(`rate`, 0);
+                lastSetRateRef.current = 0;
             }
             const balance = storeBalances?.stock_balances.find(storeBalance => storeBalance.cost_center_id === outlet?.cost_center?.id)?.balance;
             const currentBalance = storeBalances?.stock_balances.find(storeBalance => storeBalance.cost_center_id === outlet?.cost_center?.id)?.current_balance;
-    
+
             // Deduct the quantity from the available balance
-            if ({balance, currentBalance, item}) {
-                const productId = product?.id;
-                const storeId = store_id;
-                const pickedUnit = combinedUnits?.find(unit => unit.id === measurement_unit_id);
-    
+            if (balance !== undefined && currentBalance !== undefined) {
+                const productId = productRef.current?.id;
+                const storeId = storeIdRef.current;
+                const pickedUnit = combinedUnits?.find(unit => unit.id === measurementUnitIdRef.current);
+
                 const existingItems = items.filter((existingItem, itemIndex) => {
                     return existingItem.store_id === storeId && existingItem.product.id === productId && itemIndex !== index && !item?.id;
                 });
-    
+
                 // Calculate existing quantity
                 const existingQuantity = existingItems.reduce((total, existingItem) => {
                     const pickedUnitFactor = combinedUnits.find(unit => unit.id === pickedUnit?.id)?.conversion_factor || 1;
-    
+
                     let conversionFactor = existingItem.conversion_factor / pickedUnitFactor;
 
                     const quantity = (existingItem.quantity / conversionFactor);
-    
+
                     return total + quantity;
                 }, 0);
-    
+
                 const updatedBalance = parseFloat((balance - existingQuantity).toFixed(6));
 
                 setValue('available_balance', !balance ? 0 : updatedBalance);
@@ -272,33 +289,25 @@ function SaleItemForm({
             } else {
                 setValue('available_balance', 0);
             }
-    
+
             // Check if there is a selling price
             const selling_price = storeBalances && storeBalances.selling_price;
-            if(!!selling_price && !checkedForSuggestPrice){
+            if(!!selling_price && !checkedForSuggestPrice && currentRate !== selling_price?.price && lastSetSellingPriceRef.current !== selling_price?.price){
                 await setValue(`rate`, selling_price?.price, {
                     shouldDirty: true,
                     shouldValidate: true
                 });
-
+                lastSetSellingPriceRef.current = selling_price?.price;
                 setPriceFieldKey(key => key + 1)
                 setVatPriceFieldKey(key => key + 1)
             }
-    
-            if (!isRetrieving && watch(`available_balance`) && watch(`quantity`) > 0) {
-                setValue(`quantity`, watch(`quantity`), {
-                    shouldValidate: true,
-                    shouldDirty: true
-                });
-            }
-    
-            // Manage Price change permission
-            setCanChangePrice(!watch('rate') || !notAllowedToChangePrice);
+
+            setCanChangePrice(!currentRate || !notAllowedToChangePrice);
         }
 
         priceFilling();
-    
-    }, [product, storeBalances, store_id, measurement_unit_id]);
+
+    }, [product, storeBalances, checkedForSuggestPrice, item, index, items, isRetrieving, notAllowedToChangePrice, outlet?.cost_center?.id]);
 
     const retrieveLastPrice = async (product, measurement_unit_id) => {
         if(!!checkedForSuggestPrice && !!product && !!getLastPriceItems.stakeholder_id){
@@ -412,6 +421,7 @@ function SaleItemForm({
                         size='small'
                         error={!!errors?.quantity}
                         helperText={errors?.quantity?.message}
+                        value={watch('quantity') || ''}
                         onChange={(e)=> {
                             setValue(`quantity`,e.target.value ? sanitizedNumber(e.target.value ) : 0,{
                                 shouldValidate: true,
@@ -457,7 +467,6 @@ function SaleItemForm({
                                 </div>
                             ),
                         }}
-                        defaultValue={item ? item?.quantity : null}
                     />
                 </Grid>
                 <Grid size={{xs: 12, md: 6, lg: !!checkedForInstantSale && isInventory ? 2.5 : (!vat_factor ? 3 : 2)}}>
@@ -474,15 +483,18 @@ function SaleItemForm({
                                     inputComponent: CommaSeparatedField,
                                     readOnly: !canChangePrice
                                 }}
-                                defaultValue={Math.round(watch(`rate`) * 100000) / 100000}
+                                value={watch('rate') || ''}
                                 onChange={(e) => {
                                     setIsVatfieldChange(false);
                                     setPriceInclusiveVAT(0);
-                                    setValue(`rate`,e.target.value ? sanitizedNumber(e.target.value ) : 0, {
-                                        shouldValidate: true,
-                                        shouldDirty: true
-                                    });
-                                    setVatPriceFieldKey(key => key + 1)
+                                    const newValue = e.target.value ? sanitizedNumber(e.target.value ) : 0;
+                                    if (watch('rate') !== newValue) {
+                                        setValue(`rate`, newValue, {
+                                            shouldValidate: true,
+                                            shouldDirty: true
+                                        });
+                                        setVatPriceFieldKey(key => key + 1)
+                                    }
                                 }}
                             />
                     }
@@ -501,18 +513,21 @@ function SaleItemForm({
                                 inputComponent: CommaSeparatedField,
                                 readOnly: !canChangePrice
                             }}
-                            defaultValue={isVatfieldChange ? 
+                            value={isVatfieldChange ? 
                                 (Math.round(priceInclusiveVAT * 100000) / 100000) : 
                                 Math.round((watch('rate') * (1+(!product?.vat_exempted ? vat_factor : 0))) * 100000) / 100000
                             }
                             onChange={(e) => {
                                 setIsVatfieldChange(e.target.value && true);
                                 setPriceInclusiveVAT(e.target.value ? sanitizedNumber(e.target.value) : 0);
-                                setValue(`rate`,e.target.value ? sanitizedNumber(e.target.value )/(1+(product?.vat_exempted !== 1 ? vat_factor : 0)): 0,{
-                                    shouldValidate: true,
-                                    shouldDirty: true
-                                });
-                                setPriceFieldKey(key => key + 1)
+                                const newValue = e.target.value ? sanitizedNumber(e.target.value )/(1+(product?.vat_exempted !== 1 ? vat_factor : 0)): 0;
+                                if (watch('rate') !== newValue) {
+                                    setValue(`rate`, newValue,{
+                                        shouldValidate: true,
+                                        shouldDirty: true
+                                    });
+                                    setPriceFieldKey(key => key + 1)
+                                }
                             }}
                         />
                     </Grid>
@@ -534,7 +549,8 @@ function SaleItemForm({
                         label="Description"
                         fullWidth
                         size="small"
-                        defaultValue={item?.description ?? ''}
+                        value={watch('description') || ''}
+                        onChange={e => setValue('description', e.target.value, { shouldDirty: true })}
                         {...register('description')}
                     />
                 </Grid>
