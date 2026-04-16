@@ -1,9 +1,8 @@
-import { FormControl, Grid, IconButton, LinearProgress, MenuItem, Select, TextField, Tooltip, Typography, useMediaQuery } from '@mui/material'
+import { Button, FormControl, Grid, IconButton, LinearProgress, MenuItem, Select, TextField, Tooltip, Typography, useMediaQuery } from '@mui/material'
 import React, { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import * as yup  from "yup";
 import {yupResolver} from '@hookform/resolvers/yup'
-import { LoadingButton } from '@mui/lab';
 import { AddOutlined, CheckOutlined, DisabledByDefault } from '@mui/icons-material';
 import { useCounter } from '../CounterProvider';
 import posServices from '../../pos-services';
@@ -539,7 +538,7 @@ function SaleItemForm({
                     />
                 </Grid>
                 <Grid textAlign={'end'} size={{xs: 12, lg: 1}}>
-                    <LoadingButton
+                    <Button
                         loading={false}
                         variant='contained'
                         size='small'
@@ -552,7 +551,7 @@ function SaleItemForm({
                                 <><AddOutlined fontSize='small' /> Add</>
                             )
                         }
-                    </LoadingButton>
+                    </Button>
                     {
                         item && 
                         <Tooltip title='Close Edit'>

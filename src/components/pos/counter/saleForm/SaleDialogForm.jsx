@@ -1,5 +1,4 @@
 'use client'
-import { LoadingButton } from '@mui/lab';
 import { Button, DialogActions, DialogContent, DialogTitle, Grid, Alert, Dialog, Tooltip, IconButton, Box, useMediaQuery} from '@mui/material'
 import React, { useEffect, useState } from 'react'
 import { useSnackbar } from 'notistack';
@@ -121,6 +120,10 @@ function SaleDialogForm({toggleOpen,sale = null}) {
     const majorInfoOnly = watch('major_info_only');
     const currencyId = watch('currency_id');
 
+    useEffect(() => {
+        setValue('items', items, { shouldValidate: false });
+    }, [items]);
+
     const getLastPriceItems = {
         stakeholder_id : stakeholder_id,
         currency_id: currencyId,
@@ -193,6 +196,7 @@ function SaleDialogForm({toggleOpen,sale = null}) {
     },[updateSale,addSale]);
 
     useEffect(() => {
+      console.log(sale);
         if (!!sale?.sale_items) {
             setItems(sale.sale_items.map(item => {
                 return {...item, store_id: item?.inventory_movement?.store_id}
@@ -252,6 +256,7 @@ function SaleDialogForm({toggleOpen,sale = null}) {
                         stakeholderQuickAddDisplay={stakeholderQuickAddDisplay}
                         setStakeholderQuickAddDisplay={setStakeholderQuickAddDisplay}
                         organization={organization}
+                        setCheckedForInstantSale={setCheckedForInstantSale}
                     />
                 </Grid>
                 
@@ -271,7 +276,7 @@ function SaleDialogForm({toggleOpen,sale = null}) {
                 {
                     !majorInfoOnly &&
                     <Grid size={12}>
-                        <SaleItemForm setClearFormKey={setClearFormKey} submitMainForm={handleSubmit((data) => saveMutation.mutate(data))} submitItemForm={submitItemForm} setSubmitItemForm={setSubmitItemForm} key={clearFormKey} setIsDirty={setIsDirty} vat_percentage={vat_percentage} />
+                        <SaleItemForm setClearFormKey={setClearFormKey} submitMainForm={handleSubmit((data) => saveMutation.mutate(data))} submitItemForm={submitItemForm} setSubmitItemForm={setSubmitItemForm} key={clearFormKey} setIsDirty={setIsDirty} vat_percentage={vat_percentage} items={items} setItems={setItems} salesDate={salesDate} checkedForInstantSale={checkedForInstantSale} getLastPriceItems={getLastPriceItems} checkedForSuggestPrice={checkedForSuggestPrice} />
                     </Grid>
                 }
             </Grid>
@@ -284,7 +289,7 @@ function SaleDialogForm({toggleOpen,sale = null}) {
                 }
                 {
                     items.map((item,index) => {
-                        return <SaleItemRow setClearFormKey={setClearFormKey} submitMainForm={handleSubmit((data) => saveMutation.mutate(data))} submitItemForm={submitItemForm} setSubmitItemForm={setSubmitItemForm} setIsDirty={setIsDirty} key={index} item={item} index={index} vat_percentage={vat_percentage} />
+                        return <SaleItemRow setClearFormKey={setClearFormKey} submitMainForm={handleSubmit((data) => saveMutation.mutate(data))} submitItemForm={submitItemForm} setSubmitItemForm={setSubmitItemForm} setIsDirty={setIsDirty} key={index} item={item} index={index} vat_percentage={vat_percentage} items={items} setItems={setItems} getLastPriceItems={getLastPriceItems} checkedForSuggestPrice={checkedForSuggestPrice} />
                     })
                 }
 
@@ -353,7 +358,7 @@ function SaleDialogForm({toggleOpen,sale = null}) {
                 {!stakeholderQuickAddDisplay && (
                     <>
                         {!majorInfoOnly && (
-                            <LoadingButton
+                            <Button
                                 loading={addSale.isPending || updateSale.isPending}
                                 size='small'
                                 variant='contained'
@@ -363,11 +368,11 @@ function SaleDialogForm({toggleOpen,sale = null}) {
                                 }}
                             >
                                 Suspend
-                            </LoadingButton>
+                            </Button>
                         )}
 
                         {checkOrganizationPermission(PERMISSIONS.SALES_COMPLETE) && (
-                            <LoadingButton
+                            <Button
                                 loading={addSale.isPending || updateSale.isPending}
                                 size='small'
                                 type='submit'
@@ -376,7 +381,7 @@ function SaleDialogForm({toggleOpen,sale = null}) {
                                 onClick={handleSubmit(onSubmit)}
                             >
                                 Checkout
-                            </LoadingButton>
+                            </Button>
                         )}
                     </>
                 )}

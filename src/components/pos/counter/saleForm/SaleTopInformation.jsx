@@ -38,6 +38,7 @@ function SaleTopInformation({
   organization,
   stakeholderQuickAddDisplay,
   setStakeholderQuickAddDisplay,
+  setCheckedForInstantSale,
 }) {
   const wc = { id: null, name: 'Walk-in Customer' };
   const { setValue, watch, errors, clearErrors, register } = useFormContext();
