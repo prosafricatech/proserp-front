@@ -124,7 +124,7 @@ const getGroupHeading = (group: TaskItemGroup<unknown>): React.ReactNode => {
 
   return (
     <Typography variant='body2'>
-      <Box component='span' sx={{ fontWeight: 700 }}>Bound To: </Box>
+      <Box component='span'>Bound To: </Box>
       <Box component='span'>{group.title}</Box>
     </Typography>
   );
@@ -330,11 +330,11 @@ const BudgetsOnscreen: React.FC<BudgetsOnscreenProps> = ({
             );
           })}
           <TableRow sx={{ backgroundColor: theme.palette.action.hover }}>
-            <TableCell />
-            <TableCell sx={{ fontWeight: 700 }}>Total</TableCell>
-            <TableCell />
-            <TableCell />
-            <TableCell align="right" sx={{ fontWeight: 700 }}>
+            <TableCell sx={{ backgroundColor: mainColor, color: contrastText }} />
+            <TableCell sx={{ backgroundColor: mainColor, color: contrastText }}>Total</TableCell>
+            <TableCell sx={{ backgroundColor: mainColor, color: contrastText }} />
+            <TableCell sx={{ backgroundColor: mainColor, color: contrastText }} />
+            <TableCell sx={{ backgroundColor: mainColor, color: contrastText }} align="right">
               {formatCurrency(
                 products.reduce((total, item) => {
                   const quantity = Number(item.quantity || 0);
@@ -403,11 +403,11 @@ const BudgetsOnscreen: React.FC<BudgetsOnscreenProps> = ({
             );
           })}
           <TableRow sx={{ backgroundColor: theme.palette.action.hover }}>
-            <TableCell />
-            <TableCell sx={{ fontWeight: 700 }}>Total</TableCell>
-            <TableCell />
-            <TableCell />
-            <TableCell align="right" sx={{ fontWeight: 700 }}>
+            <TableCell sx={{ backgroundColor: mainColor, color: contrastText }} />
+            <TableCell sx={{ backgroundColor: mainColor, color: contrastText }}>Total</TableCell>
+            <TableCell sx={{ backgroundColor: mainColor, color: contrastText }} />
+            <TableCell sx={{ backgroundColor: mainColor, color: contrastText }} />
+            <TableCell sx={{ backgroundColor: mainColor, color: contrastText }} align="right">
               {formatCurrency(
                 ledgerItems.reduce((total, item) => {
                   const quantity = Number(item.quantity || 0);
@@ -474,12 +474,12 @@ const BudgetsOnscreen: React.FC<BudgetsOnscreenProps> = ({
             );
           })}
           <TableRow sx={{ backgroundColor: theme.palette.action.hover }}>
-            <TableCell />
-            <TableCell sx={{ fontWeight: 700 }}>Total</TableCell>
-            <TableCell />
-            <TableCell />
-            <TableCell />
-            <TableCell align="right" sx={{ fontWeight: 700 }}>
+            <TableCell sx={{ backgroundColor: mainColor, color: contrastText }} />
+            <TableCell sx={{ backgroundColor: mainColor, color: contrastText }}>Total</TableCell>
+            <TableCell sx={{ backgroundColor: mainColor, color: contrastText }} />
+            <TableCell sx={{ backgroundColor: mainColor, color: contrastText }} />
+            <TableCell sx={{ backgroundColor: mainColor, color: contrastText }} />
+            <TableCell sx={{ backgroundColor: mainColor, color: contrastText }} align="right">
               {formatCurrency(
                 tasks.reduce((total, item) => {
                   const quantity = Number(item.quantity || 0);
