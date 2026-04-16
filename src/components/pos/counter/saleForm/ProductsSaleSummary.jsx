@@ -30,35 +30,23 @@ function ProductsSaleSummary() {
     let total = 0;
     let vatable = 0;
 
-    async function loopItems() {
-      await setValue(`items`, null);
-      await items.forEach((item, index) => {
-        total += item.rate * item.quantity;
+    items.forEach((item, index) => {
+      total += item.rate * item.quantity;
+      // Only update if changed (optional, for performance)
+      setValue(`items.${index}.product_id`, item?.product?.id ? item.product.id : item.product_id);
+      setValue(`items.${index}.quantity`, item.quantity);
+      setValue(`items.${index}.rate`, item.rate);
+      setValue(`items.${index}.store_id`, item.store_id);
+    });
+    settotalAmount(total);
 
-        setValue(`items.${index}.product_id`, item?.product?.id ? item.product.id : item.product_id);
-        setValue(`items.${index}.quantity`, item.quantity);
-        setValue(`items.${index}.rate`, item.rate);
-        setValue(`items.${index}.store_id`, item.store_id);
+    items
+      .filter(item => item.product.vat_exempted !== 1)
+      .forEach(item => {
+        vatable += item.rate * item.quantity;
       });
-
-      settotalAmount(total);
-    }
-
-    async function loopItemsForVAT() {
-      await setValue(`items`, null);
-
-      await items
-        .filter(item => item.product.vat_exempted !== 1)
-        .forEach(item => {
-          vatable += item.rate * item.quantity;
-        });
-
-      setvatableAmount(vatable);
-    }
-
-    loopItems();
-    loopItemsForVAT();
-  }, [items]);
+    setvatableAmount(vatable);
+  }, [items, setValue]);
 
   const grandTotal = totalAmount + vatAmount;
 
