@@ -388,6 +388,7 @@ function RequisitionsForm({ toggleOpen, requisition }: RequisitionsFormProps) {
                         label='Exchange Rate'
                         fullWidth
                         size='small'
+                        defaultValue={requisition?.currency.exchangeRate}
                         error={!!errors?.exchange_rate}
                         helperText={errors?.exchange_rate?.message}
                         InputProps={{
