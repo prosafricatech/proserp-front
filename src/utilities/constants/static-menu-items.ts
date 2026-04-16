@@ -46,4 +46,15 @@ export const staticMenuItems = [
   { label: 'SMS', uri: '/en-US/prosControl/nextSMS' },
   { label: 'Organizations', uri: '/en-US/organizations' },
   { label: 'Invitations', uri: '/en-US/invitations' },
+  // Human Resources
+  { label: 'Employees', uri: '/en-US/humanResources/employees' },
+  { label: 'Leave Requests', uri: '/en-US/humanResources/leave-requests' },
+  { label: 'Payroll Periods', uri: '/en-US/humanResources/payroll' },
+  { label: 'Departments', uri: '/en-US/humanResources/departments' },
+  { label: 'Designations', uri: '/en-US/humanResources/designations' },
+  { label: 'Leave Types', uri: '/en-US/humanResources/leave_types' },
+  { label: 'Allowance Types', uri: '/en-US/humanResources/allowance-types' },
+  { label: 'Deduction Types', uri: '/en-US/humanResources/deduction-types' },
+  { label: 'Employer Contribution Types', uri: '/en-US/humanResources/employer-contribution-types' },
+  { label: 'PAYE Tax Bands', uri: '/en-US/humanResources/paye-tax-bands' },
 ];
