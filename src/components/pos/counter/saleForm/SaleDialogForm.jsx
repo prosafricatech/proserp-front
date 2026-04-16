@@ -232,14 +232,7 @@ function SaleDialogForm({toggleOpen,sale = null}) {
     };
 
   return (
-    <FormProvider {...{ 
-        salesDate, getLastPriceItems, checkedForSuggestPrice, items, setItems, counterLedgers,
-        setAddedStakeholder, debitLedger, setDebitLedger, isLoadingReceivableLedgers, 
-        stakeholderReceivableLedgers, addedStakeholder, stakeholderQuickAddDisplay, 
-        setStakeholderQuickAddDisplay, sale, setCheckedForSuggestPrice, vat_percentage, organization,
-        checkedForInstantSale, setCheckedForInstantSale,setValue,register, handleSubmit, 
-        watch, clearErrors, errors
-    }}>
+    <FormProvider {...{ setValue, register, handleSubmit, watch, clearErrors, errors }}>
         <DialogTitle>
             <Grid container columnSpacing={2}>
                 <Grid textAlign={'center'} size={12} mb={3}>
@@ -247,11 +240,32 @@ function SaleDialogForm({toggleOpen,sale = null}) {
                 </Grid>
 
                 <Grid size={{xs: 12, md: 9}} mb={2}>
-                    <SaleTopInformation />
+                    <SaleTopInformation
+                        sale={sale}
+                        counterLedgers={counterLedgers}
+                        debitLedger={debitLedger}
+                        setDebitLedger={setDebitLedger}
+                        isLoadingReceivableLedgers={isLoadingReceivableLedgers}
+                        stakeholderReceivableLedgers={stakeholderReceivableLedgers}
+                        addedStakeholder={addedStakeholder}
+                        setAddedStakeholder={setAddedStakeholder}
+                        stakeholderQuickAddDisplay={stakeholderQuickAddDisplay}
+                        setStakeholderQuickAddDisplay={setStakeholderQuickAddDisplay}
+                        organization={organization}
+                    />
                 </Grid>
                 
                 <Grid size={{xs: 12, md: 3}}>
-                    <ProductsSaleSummary />
+                    <ProductsSaleSummary
+                        items={items}
+                        checkedForSuggestPrice={checkedForSuggestPrice}
+                        setCheckedForSuggestPrice={setCheckedForSuggestPrice}
+                        checkedForInstantSale={checkedForInstantSale}
+                        setCheckedForInstantSale={setCheckedForInstantSale}
+                        sale={sale}
+                        vat_percentage={vat_percentage}
+                        organization={organization}
+                    />
                 </Grid>
                 
                 {

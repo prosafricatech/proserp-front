@@ -4,11 +4,23 @@ import React, { useState } from 'react'
 import SaleItemForm from './SaleItemForm';
 import { useFormContext } from 'react-hook-form';
 
-function SaleItemRow({setClearFormKey, submitMainForm, setSubmitItemForm, submitItemForm, setIsDirty, item, index, vat_percentage = 0 }) {
-    const product = item.product;
-    const [showForm, setShowForm] = useState(false);
-    const vat_factor = vat_percentage*0.01;
-    const {items=[], setItems, getLastPriceItems, checkedForSuggestPrice} = useFormContext();
+function SaleItemRow({
+    setClearFormKey,
+    submitMainForm,
+    setSubmitItemForm,
+    submitItemForm,
+    setIsDirty,
+    item,
+    index,
+    vat_percentage = 0,
+    items = [],
+    setItems,
+    getLastPriceItems,
+    checkedForSuggestPrice
+}) {
+        const product = item.product;
+        const [showForm, setShowForm] = useState(false);
+        const vat_factor = vat_percentage*0.01;
 
   return (
          <React.Fragment>

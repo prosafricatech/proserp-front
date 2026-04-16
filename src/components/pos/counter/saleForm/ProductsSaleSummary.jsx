@@ -4,23 +4,20 @@ import { useFormContext } from 'react-hook-form';
 import { useVFD } from "@/components/vfd/VFDProvider";
 import { debounce } from 'lodash';
 
-function ProductsSaleSummary() {
+
+function ProductsSaleSummary({
+  items = [],
+  checkedForSuggestPrice,
+  setCheckedForSuggestPrice,
+  checkedForInstantSale,
+  setCheckedForInstantSale,
+  sale,
+  vat_percentage,
+  organization
+}) {
   const [totalAmount, settotalAmount] = useState(0);
   const [vatableAmount, setvatableAmount] = useState(0);
-
-  const {
-    items,
-    sale,
-    checkedForSuggestPrice,
-    setCheckedForSuggestPrice,
-    vat_percentage,
-    organization,
-    checkedForInstantSale,
-    setCheckedForInstantSale,
-    setValue,
-    watch
-  } = useFormContext();
-
+  const { setValue, watch } = useFormContext();
   const majorInfoOnly = watch('major_info_only');
   const { displayTotal, connected } = useVFD();
   const vatAmount = (vatableAmount * vat_percentage) / 100;
@@ -30,23 +27,20 @@ function ProductsSaleSummary() {
     let total = 0;
     let vatable = 0;
 
-    items.forEach((item, index) => {
+    const safeItems = Array.isArray(items) ? items : [];
+
+    safeItems.forEach((item) => {
       total += item.rate * item.quantity;
-      // Only update if changed (optional, for performance)
-      setValue(`items.${index}.product_id`, item?.product?.id ? item.product.id : item.product_id);
-      setValue(`items.${index}.quantity`, item.quantity);
-      setValue(`items.${index}.rate`, item.rate);
-      setValue(`items.${index}.store_id`, item.store_id);
     });
     settotalAmount(total);
 
-    items
-      .filter(item => item.product.vat_exempted !== 1)
+    safeItems
+      .filter(item => item.product && item.product.vat_exempted !== 1)
       .forEach(item => {
         vatable += item.rate * item.quantity;
       });
     setvatableAmount(vatable);
-  }, [items, setValue]);
+  }, [items]);
 
   const grandTotal = totalAmount + vatAmount;
 

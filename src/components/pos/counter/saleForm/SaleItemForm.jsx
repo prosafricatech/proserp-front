@@ -1,6 +1,6 @@
 import { FormControl, Grid, IconButton, LinearProgress, MenuItem, Select, TextField, Tooltip, Typography, useMediaQuery } from '@mui/material'
 import React, { useEffect, useState } from 'react'
-import { useForm, useFormContext } from 'react-hook-form'
+import { useForm } from 'react-hook-form'
 import * as yup  from "yup";
 import {yupResolver} from '@hookform/resolvers/yup'
 import { LoadingButton } from '@mui/lab';
@@ -18,14 +18,29 @@ import StoreSelector from '@/components/procurement/stores/StoreSelector';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 
-function SaleItemForm({ setClearFormKey, submitMainForm, submitItemForm, setSubmitItemForm, setIsDirty, item = null,index = -1, setShowForm = null, vat_percentage = 0}) {
+function SaleItemForm({
+    setClearFormKey,
+    submitMainForm,
+    submitItemForm,
+    setSubmitItemForm,
+    setIsDirty,
+    item = null,
+    index = -1,
+    setShowForm = null,
+    vat_percentage = 0,
+    items = [],
+    setItems,
+    salesDate,
+    checkedForInstantSale,
+    getLastPriceItems,
+    checkedForSuggestPrice
+}) {
     const {outlet} = useCounter();//From counter provider
     const { stores, cost_center } = outlet; //Destructure outlet to get needed content
     const [storeBalances, setStoreBalances] = useState(null);
     const [isRetrieving, setIsRetrieving] = useState(false);
     const vat_factor = vat_percentage*0.01;
     const [selectedUnit, setSelectedUnit] = useState(item && item.measurement_unit_id);
-    const {items=[], setItems, salesDate, checkedForInstantSale, getLastPriceItems, checkedForSuggestPrice} = useFormContext();
     const { productOptions } = useProductsSelect();
     const { authOrganization,checkOrganizationPermission} = useJumboAuth();
     const {theme} = useJumboTheme();
@@ -92,7 +107,7 @@ function SaleItemForm({ setClearFormKey, submitMainForm, submitItemForm, setSubm
         });
     });
 
-    const { setValue, handleSubmit, register, watch, clearErrors, reset, formState: { errors, dirtyFields } } = useForm({
+    const { setValue, handleSubmit, register, watch, clearErrors, reset, getValues, formState: { errors, dirtyFields } } = useForm({
         resolver: yupResolver(validationSchema),
         defaultValues: {
             product: item && productOptions.find(product => product.id === item.product_id),
@@ -108,12 +123,9 @@ function SaleItemForm({ setClearFormKey, submitMainForm, submitItemForm, setSubm
     });
 
     useEffect(() => {
-        const subscription = watch(() => {
-            const hasDirtyFields = Object.keys(dirtyFields).length > 0;
-            setIsDirty(hasDirtyFields);
-        });
-        return () => subscription.unsubscribe();
-    }, [watch, dirtyFields, setIsDirty]);
+        // Use snapshot pattern to avoid infinite update loop
+        setIsDirty(Object.keys(dirtyFields).length > 0);
+    }, [setIsDirty, dirtyFields]);
 
     const product = watch('product');
     const isInventory = product?.type === 'Inventory';
@@ -127,6 +139,8 @@ function SaleItemForm({ setClearFormKey, submitMainForm, submitItemForm, setSubm
         } else {
             clearErrors(`rate`);
         }
+        // Only run when checkedForSuggestPrice changes, not on every render
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [checkedForSuggestPrice]);
     
     const amount = () => { 
@@ -168,13 +182,15 @@ function SaleItemForm({ setClearFormKey, submitMainForm, submitItemForm, setSubm
         setShowForm && setShowForm(false);
     };
 
-    useEffect(() => {
-      if (submitItemForm) {
-        handleSubmit(updateItems, () => {
-          setSubmitItemForm(false); // Reset submitItemForm if there are errors
-        })();
-      }
-    }, [submitItemForm]);
+        useEffect(() => {
+            if (submitItemForm) {
+                handleSubmit(updateItems, () => {
+                    setSubmitItemForm(false); // Reset submitItemForm if there are errors
+                })();
+            }
+            // Only run when submitItemForm changes
+            // eslint-disable-next-line react-hooks/exhaustive-deps
+        }, [submitItemForm]);
 
     const combinedUnits = product?.secondary_units.concat(product?.primary_unit);
 
