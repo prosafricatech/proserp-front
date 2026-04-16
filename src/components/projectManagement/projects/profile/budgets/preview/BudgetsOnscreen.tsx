@@ -508,24 +508,6 @@ const BudgetsOnscreen: React.FC<BudgetsOnscreenProps> = ({
         </Grid>
       </Grid>
 
-      {/* Summary Section */}
-      {!hideSummary && (
-        <Grid container spacing={1} mb={2}>
-          <Grid size={12}>
-            <Typography variant="subtitle2" color={headerColor}>Total Budgeted</Typography>
-            <Typography>{formatCurrency(totalBudgetedAmount, baseCurrency?.code)}</Typography>
-          </Grid>
-          <Grid size={12}>
-            <Typography variant="subtitle2" color={headerColor}>Total Spent</Typography>
-            <Typography>{formatCurrency(totalSpentAmount, baseCurrency?.code)}</Typography>
-          </Grid>
-          <Grid size={12}>
-            <Typography variant="subtitle2" color={headerColor}>Percentage Spent</Typography>
-            <Typography>{percentageSpent.toFixed(2)}%</Typography>
-          </Grid>
-        </Grid>
-      )}
-
       {/* Details Section */}
       {!withDetails && expenses.length > 0 && renderExpensesTable(expenses)}
       {withDetails && groupingMode !== 'task' && (
