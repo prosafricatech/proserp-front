@@ -3,6 +3,7 @@ import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import MeasurementUnitForm from '@/components/masters/measurementUnits/MeasurementUnitForm';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { Div } from '@jumbo/shared';
 import { AddOutlined } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
@@ -10,6 +11,7 @@ import {
   Autocomplete,
   Button,
   Checkbox,
+  Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
@@ -17,6 +19,7 @@ import {
   TextField,
   Tooltip,
   Typography,
+  useMediaQuery,
 } from '@mui/material';
 import { DateTimePicker } from '@mui/x-date-pickers';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -54,6 +57,23 @@ const ProductFormDialogContent = ({
     const [isVatExempt, setIsVatExempt] = useState(
       product ? product.vat_exempted === 1 : false
     );
+
+    //Screen handling constants
+    const { theme } = useJumboTheme();
+    const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
+
+    const [measurementUnitFormOpen, setMeasurementUnitFormOpen] =
+      useState(false);
+    const [newUnit, setNewUnit] = useState(undefined);
+
+    useEffect(() => {
+      if (newUnit !== undefined) {
+        setValue('measurement_unit_id', newUnit ? newUnit.id : 0, {
+          shouldValidate: true,
+          shouldDirty: true,
+        });
+      }
+    }, [newUnit]);
 
     const validationObject = {
       item_name: yup.string().required('Item name is required'),
@@ -196,395 +216,59 @@ const ProductFormDialogContent = ({
     }, [updateProduct, addProduct]);
 
     return (
-      <form autoComplete='false' onSubmit={handleSubmit(saveMutation)}>
-        <DialogTitle sx={{ textAlign: 'center' }}>{title}</DialogTitle>
-        <DialogContent>
-          <Grid container spacing={1}>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
-                <Autocomplete
-                  size='small'
-                  getOptionLabel={(option) => option.name}
-                  isOptionEqualToValue={(option, value) =>
-                    option.id === value.id
-                  }
-                  options={productCategories}
-                  defaultValue={
-                    product?.id &&
-                    productCategories.find(
-                      (category) => category.id === product.product_category_id
-                    )
-                  }
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label='Category'
-                      InputProps={{
-                        ...params.InputProps,
-                        startAdornment: (
-                          <Tooltip title={'Quick Add Category'}>
-                            <AddOutlined
-                              sx={{ cursor: 'pointer' }}
-                              onClick={() => {
-                                setContent(
-                                  <ProductCategoryFormDialogContent
-                                    productCategories={productCategories}
-                                    onClose={() =>
-                                      setContent(<DefaultContent />)
-                                    }
-                                  />
-                                );
-                              }}
-                            />
-                          </Tooltip>
-                        ),
-                      }}
-                      error={!!errors.product_category_id}
-                      helperText={errors.product_category_id?.message}
-                    />
-                  )}
-                  onChange={(event, newValue) => {
-                    setValue(
-                      'product_category_id',
-                      newValue ? newValue.id : 0,
-                      {
-                        shouldValidate: true,
-                        shouldDirty: true,
-                      }
-                    );
-                  }}
-                />
-              </Div>
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
-                <Autocomplete
-                  size='small'
-                  getOptionLabel={(option) => option.name}
-                  isOptionEqualToValue={(option, value) =>
-                    option.name === value.name
-                  }
-                  options={[
-                    { name: 'Inventory' },
-                    { name: 'Non-Inventory' },
-                    { name: 'Service' },
-                    // { name: 'Individually-Tracked' }
-                  ]}
-                  defaultValue={product?.id && { name: product.type }}
-                  disabled={!!product?.id}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label='Type'
-                      error={!!errors.type}
-                      helperText={errors.type?.message}
-                    />
-                  )}
-                  onChange={(event, newValue) => {
-                    setValue('type', newValue ? newValue.name : '', {
-                      shouldValidate: true,
-                      shouldDirty: true,
-                    });
-                    if (newValue?.name === 'Inventory') {
-                      setIsInventory(true);
-                    } else {
-                      setIsInventory(false);
-                    }
-                  }}
-                />
-              </Div>
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
-                <Autocomplete
-                  size='small'
-                  freeSolo
-                  getOptionLabel={(option) => option}
-                  isOptionEqualToValue={(option, value) => option === value}
-                  options={item_names}
-                  defaultValue={product?.id && product.item_name}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label='Item Name'
-                      error={!!errors.item_name}
-                      helperText={errors.item_name?.message}
-                    />
-                  )}
-                  onChange={(event, newValue) => {
-                    setValue('item_name', newValue, {
-                      shouldValidate: true,
-                      shouldDirty: true,
-                    });
-                  }}
-                  onInputChange={(event, newValue) => {
-                    setValue('item_name', newValue ? newValue : '', {
-                      shouldValidate: true,
-                      shouldDirty: true,
-                    });
-                  }}
-                />
-              </Div>
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
-                <Autocomplete
-                  size='small'
-                  freeSolo
-                  getOptionLabel={(option) => option}
-                  isOptionEqualToValue={(option, value) => option === value}
-                  options={brands}
-                  defaultValue={product?.id && product.brand}
-                  renderInput={(params) => (
-                    <TextField {...params} label='Brand (Optional)' />
-                  )}
-                  onChange={(event, newValue) => {
-                    setValue('brand', newValue, {
-                      shouldValidate: true,
-                      shouldDirty: true,
-                    });
-                  }}
-                  onInputChange={(event, newValue) => {
-                    setValue('brand', newValue, {
-                      shouldValidate: true,
-                      shouldDirty: true,
-                    });
-                  }}
-                />
-              </Div>
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
-                <Autocomplete
-                  size='small'
-                  freeSolo
-                  getOptionLabel={(option) => option}
-                  isOptionEqualToValue={(option, value) => option === value}
-                  options={models}
-                  defaultValue={product?.id && product.model}
-                  renderInput={(params) => (
-                    <TextField {...params} label='Model (Optional)' />
-                  )}
-                  onChange={(event, newValue) => {
-                    setValue('model', newValue, {
-                      shouldValidate: true,
-                      shouldDirty: true,
-                    });
-                  }}
-                  onInputChange={(event, newValue) => {
-                    setValue('model', newValue, {
-                      shouldValidate: true,
-                      shouldDirty: true,
-                    });
-                  }}
-                />
-              </Div>
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
-                <TextField
-                  size='small'
-                  fullWidth
-                  autoComplete='off'
-                  label='SKU (Optional)'
-                  defaultValue={product?.id && product.sku}
-                  {...register('sku')}
-                  error={
-                    !!errors.sku ||
-                    !!addProduct.error?.response.data.validation_errors.sku ||
-                    !!updateProduct.error?.response.data.validation_errors.sku
-                  }
-                  helperText={
-                    errors.sku?.message ||
-                    addProduct.error?.response.data.validation_errors.sku ||
-                    updateProduct.error?.response.data.validation_errors.sku
-                  }
-                />
-              </Div>
-            </Grid>
-            <Grid size={12}>
-              <Div sx={{ mt: 1, mb: 1 }}>
-                <Autocomplete
-                  size='small'
-                  freeSolo
-                  getOptionLabel={(option) => option}
-                  isOptionEqualToValue={(option, value) => option === value}
-                  options={specifications}
-                  defaultValue={product?.id && product.specifications}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      rows={2}
-                      label='Specifications (Optional)'
-                    />
-                  )}
-                  onChange={(event, newValue) => {
-                    setValue('specifications', newValue, {
-                      shouldValidate: true,
-                      shouldDirty: true,
-                    });
-                  }}
-                  onInputChange={(event, newValue) => {
-                    setValue('specifications', newValue, {
-                      shouldValidate: true,
-                      shouldDirty: true,
-                    });
-                  }}
-                />
-              </Div>
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
-                <Autocomplete
-                  size='small'
-                  getOptionLabel={(option) =>
-                    option.name !== option.symbol
-                      ? `${option.name} (${option.symbol})`
-                      : option.name
-                  }
-                  isOptionEqualToValue={(option, value) =>
-                    option.id === value.id
-                  }
-                  options={measurementUnits}
-                  defaultValue={
-                    product?.id &&
-                    measurementUnits.find(
-                      (unit) => unit.id === product.measurement_unit_id
-                    )
-                  }
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label='Primary Measurement Unit'
-                      InputProps={{
-                        ...params.InputProps,
-                        startAdornment: (
-                          <Tooltip title={'Quick Add Measurement Unit'}>
-                            <AddOutlined
-                              sx={{ cursor: 'pointer' }}
-                              onClick={() => {
-                                setContent(
-                                  <MeasurementUnitForm
-                                    setOpenDialog={() =>
-                                      setContent(<DefaultContent />)
-                                    }
-                                  />
-                                );
-                              }}
-                            />
-                          </Tooltip>
-                        ),
-                      }}
-                      error={!!errors.measurement_unit_id}
-                      helperText={errors.measurement_unit_id?.message}
-                    />
-                  )}
-                  onChange={(event, newValue) => {
-                    setValue(
-                      'measurement_unit_id',
-                      newValue ? newValue.id : 0,
-                      {
-                        shouldValidate: true,
-                        shouldDirty: true,
-                      }
-                    );
-                  }}
-                />
-              </Div>
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
-                <Checkbox
-                  checked={isVatExempt}
-                  onChange={(e) => {
-                    const isChecked = e.target.checked;
-                    setIsVatExempt(isChecked);
-                    setValue('vat_exempted', isChecked, {
-                      shouldValidate: true,
-                      shouldDirty: true,
-                    });
-                  }}
-                />
-                VAT Exempted
-              </Div>
-            </Grid>
-            <Grid size={12}>
-              <Div sx={{ mt: 1, mb: 1 }}>
-                <TextField
-                  size='small'
-                  fullWidth
-                  multiline={true}
-                  rows={2}
-                  label='Description (Optional)'
-                  defaultValue={product?.id && product.description}
-                  {...register('description')}
-                />
-              </Div>
-            </Grid>
-          </Grid>
-          {!product && isInventory && (
+      <>
+        <form autoComplete='false' onSubmit={handleSubmit(saveMutation)}>
+          <DialogTitle sx={{ textAlign: 'center' }}>{title}</DialogTitle>
+          <DialogContent>
             <Grid container spacing={1}>
-              <Grid size={12} mt={1}>
-                <Typography variant='h5'>Opening Balance Details</Typography>
-              </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
                 <Div sx={{ mt: 1, mb: 1 }}>
-                  <CostCenterSelector
-                    label='Cost Center'
-                    multiple={false}
-                    defaultValue={
-                      costCenters.length === 1 ? costCenters[0] : null
+                  <Autocomplete
+                    size='small'
+                    getOptionLabel={(option) => option.name}
+                    isOptionEqualToValue={(option, value) =>
+                      option.id === value.id
                     }
-                    frontError={errors.cost_center_id}
-                    onChange={(newValue) => {
-                      setValue('cost_center_id', newValue?.id || null, {
-                        shouldValidate: true,
-                        shouldDirty: true,
-                      });
-                    }}
-                  />
-                </Div>
-              </Grid>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <Div sx={{ mt: 1, mb: 1 }}>
-                  <LedgerSelect
-                    label={'Stock Complement Ledger'}
-                    allowedGroups={['Capital', 'Expenses', 'Accounts Payable']}
-                    frontError={errors.stock_complement_ledger_id}
-                    onChange={(newValue) =>
-                      setValue(
-                        'stock_complement_ledger_id',
-                        !!newValue ? newValue.id : null,
-                        {
-                          shouldValidate: true,
-                          shouldDirty: true,
-                        }
+                    options={productCategories}
+                    defaultValue={
+                      product?.id &&
+                      productCategories.find(
+                        (category) =>
+                          category.id === product.product_category_id
                       )
                     }
-                  />
-                </Div>
-              </Grid>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <Div sx={{ mt: 1, mb: 1 }}>
-                  <DateTimePicker
-                    label='As of'
-                    fullWidth
-                    minDate={dayjs(
-                      authOrganization.organization.recording_start_date
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label='Category'
+                        InputProps={{
+                          ...params.InputProps,
+                          startAdornment: (
+                            <Tooltip title={'Quick Add Category'}>
+                              <AddOutlined
+                                sx={{ cursor: 'pointer' }}
+                                onClick={() => {
+                                  setContent(
+                                    <ProductCategoryFormDialogContent
+                                      productCategories={productCategories}
+                                      onClose={() =>
+                                        setContent(<DefaultContent />)
+                                      }
+                                    />
+                                  );
+                                }}
+                              />
+                            </Tooltip>
+                          ),
+                        }}
+                        error={!!errors.product_category_id}
+                        helperText={errors.product_category_id?.message}
+                      />
                     )}
-                    slotProps={{
-                      textField: {
-                        size: 'small',
-                        fullWidth: true,
-                        readOnly: true,
-                        error: !!errors?.opening_balance_date,
-                        helperText: errors?.opening_balance_date?.message,
-                      },
-                    }}
-                    onChange={(newValue) => {
+                    onChange={(event, newValue) => {
                       setValue(
-                        'opening_balance_date',
-                        newValue ? newValue.toISOString() : null,
+                        'product_category_id',
+                        newValue ? newValue.id : 0,
                         {
                           shouldValidate: true,
                           shouldDirty: true,
@@ -598,20 +282,119 @@ const ProductFormDialogContent = ({
                 <Div sx={{ mt: 1, mb: 1 }}>
                   <Autocomplete
                     size='small'
-                    options={storeOptions}
                     getOptionLabel={(option) => option.name}
+                    isOptionEqualToValue={(option, value) =>
+                      option.name === value.name
+                    }
+                    options={[
+                      { name: 'Inventory' },
+                      { name: 'Non-Inventory' },
+                      { name: 'Service' },
+                      // { name: 'Individually-Tracked' }
+                    ]}
+                    defaultValue={product?.id && { name: product.type }}
+                    disabled={!!product?.id}
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label='Store'
-                        error={!!errors?.store_id}
-                        helperText={errors?.store_id?.message}
+                        label='Type'
+                        error={!!errors.type}
+                        helperText={errors.type?.message}
                       />
                     )}
                     onChange={(event, newValue) => {
-                      !newValue && clearErrors('opening_balance');
-                      !newValue && clearErrors('unit_cost');
-                      setValue('store_id', newValue ? newValue.id : null, {
+                      setValue('type', newValue ? newValue.name : '', {
+                        shouldValidate: true,
+                        shouldDirty: true,
+                      });
+                      if (newValue?.name === 'Inventory') {
+                        setIsInventory(true);
+                      } else {
+                        setIsInventory(false);
+                      }
+                    }}
+                  />
+                </Div>
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Div sx={{ mt: 1, mb: 1 }}>
+                  <Autocomplete
+                    size='small'
+                    freeSolo
+                    getOptionLabel={(option) => option}
+                    isOptionEqualToValue={(option, value) => option === value}
+                    options={item_names}
+                    defaultValue={product?.id && product.item_name}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label='Item Name'
+                        error={!!errors.item_name}
+                        helperText={errors.item_name?.message}
+                      />
+                    )}
+                    onChange={(event, newValue) => {
+                      setValue('item_name', newValue, {
+                        shouldValidate: true,
+                        shouldDirty: true,
+                      });
+                    }}
+                    onInputChange={(event, newValue) => {
+                      setValue('item_name', newValue ? newValue : '', {
+                        shouldValidate: true,
+                        shouldDirty: true,
+                      });
+                    }}
+                  />
+                </Div>
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Div sx={{ mt: 1, mb: 1 }}>
+                  <Autocomplete
+                    size='small'
+                    freeSolo
+                    getOptionLabel={(option) => option}
+                    isOptionEqualToValue={(option, value) => option === value}
+                    options={brands}
+                    defaultValue={product?.id && product.brand}
+                    renderInput={(params) => (
+                      <TextField {...params} label='Brand (Optional)' />
+                    )}
+                    onChange={(event, newValue) => {
+                      setValue('brand', newValue, {
+                        shouldValidate: true,
+                        shouldDirty: true,
+                      });
+                    }}
+                    onInputChange={(event, newValue) => {
+                      setValue('brand', newValue, {
+                        shouldValidate: true,
+                        shouldDirty: true,
+                      });
+                    }}
+                  />
+                </Div>
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Div sx={{ mt: 1, mb: 1 }}>
+                  <Autocomplete
+                    size='small'
+                    freeSolo
+                    getOptionLabel={(option) => option}
+                    isOptionEqualToValue={(option, value) => option === value}
+                    options={models}
+                    defaultValue={product?.id && product.model}
+                    renderInput={(params) => (
+                      <TextField {...params} label='Model (Optional)' />
+                    )}
+                    onChange={(event, newValue) => {
+                      setValue('model', newValue, {
+                        shouldValidate: true,
+                        shouldDirty: true,
+                      });
+                    }}
+                    onInputChange={(event, newValue) => {
+                      setValue('model', newValue, {
                         shouldValidate: true,
                         shouldDirty: true,
                       });
@@ -622,30 +405,101 @@ const ProductFormDialogContent = ({
               <Grid size={{ xs: 12, md: 6 }}>
                 <Div sx={{ mt: 1, mb: 1 }}>
                   <TextField
-                    label='Opening Balance'
-                    fullWidth
                     size='small'
-                    error={!!errors?.opening_balance}
-                    helperText={errors?.opening_balance?.message}
-                    {...register('opening_balance')}
+                    fullWidth
+                    autoComplete='off'
+                    label='SKU (Optional)'
+                    defaultValue={product?.id && product.sku}
+                    {...register('sku')}
+                    error={
+                      !!errors.sku ||
+                      !!addProduct.error?.response.data.validation_errors.sku ||
+                      !!updateProduct.error?.response.data.validation_errors.sku
+                    }
+                    helperText={
+                      errors.sku?.message ||
+                      addProduct.error?.response.data.validation_errors.sku ||
+                      updateProduct.error?.response.data.validation_errors.sku
+                    }
+                  />
+                </Div>
+              </Grid>
+              <Grid size={12}>
+                <Div sx={{ mt: 1, mb: 1 }}>
+                  <Autocomplete
+                    size='small'
+                    freeSolo
+                    getOptionLabel={(option) => option}
+                    isOptionEqualToValue={(option, value) => option === value}
+                    options={specifications}
+                    defaultValue={product?.id && product.specifications}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        rows={2}
+                        label='Specifications (Optional)'
+                      />
+                    )}
+                    onChange={(event, newValue) => {
+                      setValue('specifications', newValue, {
+                        shouldValidate: true,
+                        shouldDirty: true,
+                      });
+                    }}
+                    onInputChange={(event, newValue) => {
+                      setValue('specifications', newValue, {
+                        shouldValidate: true,
+                        shouldDirty: true,
+                      });
+                    }}
                   />
                 </Div>
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
                 <Div sx={{ mt: 1, mb: 1 }}>
-                  <TextField
-                    label='Unit Cost'
-                    fullWidth
+                  <Autocomplete
                     size='small'
-                    InputProps={{
-                      inputComponent: CommaSeparatedField,
-                    }}
-                    error={!!errors?.unit_cost}
-                    helperText={errors?.unit_cost?.message}
-                    onChange={(e) => {
+                    getOptionLabel={(option) =>
+                      option.name !== option.symbol
+                        ? `${option.name} (${option.symbol})`
+                        : option.name
+                    }
+                    isOptionEqualToValue={(option, value) =>
+                      option.id === value.id
+                    }
+                    options={measurementUnits}
+                    value={newUnit ?? null}
+                    defaultValue={
+                      product?.id &&
+                      measurementUnits.find(
+                        (unit) => unit.id === product.measurement_unit_id
+                      )
+                    }
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label='Primary Measurement Unit'
+                        InputProps={{
+                          ...params.InputProps,
+                          startAdornment: (
+                            <Tooltip title={'Quick Add Measurement Unit'}>
+                              <AddOutlined
+                                sx={{ cursor: 'pointer' }}
+                                onClick={() => {
+                                  setMeasurementUnitFormOpen((prev) => !prev);
+                                }}
+                              />
+                            </Tooltip>
+                          ),
+                        }}
+                        error={!!errors.measurement_unit_id}
+                        helperText={errors.measurement_unit_id?.message}
+                      />
+                    )}
+                    onChange={(event, newValue) => {
                       setValue(
-                        'unit_cost',
-                        e.target.value ? sanitizedNumber(e.target.value) : 0,
+                        'measurement_unit_id',
+                        newValue ? newValue.id : 0,
                         {
                           shouldValidate: true,
                           shouldDirty: true,
@@ -655,21 +509,204 @@ const ProductFormDialogContent = ({
                   />
                 </Div>
               </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Div sx={{ mt: 1, mb: 1 }}>
+                  <Checkbox
+                    checked={isVatExempt}
+                    onChange={(e) => {
+                      const isChecked = e.target.checked;
+                      setIsVatExempt(isChecked);
+                      setValue('vat_exempted', isChecked, {
+                        shouldValidate: true,
+                        shouldDirty: true,
+                      });
+                    }}
+                  />
+                  VAT Exempted
+                </Div>
+              </Grid>
+              <Grid size={12}>
+                <Div sx={{ mt: 1, mb: 1 }}>
+                  <TextField
+                    size='small'
+                    fullWidth
+                    multiline={true}
+                    rows={2}
+                    label='Description (Optional)'
+                    defaultValue={product?.id && product.description}
+                    {...register('description')}
+                  />
+                </Div>
+              </Grid>
             </Grid>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => toggleOpen(false)}>Cancel</Button>
-          <LoadingButton
-            type='submit'
-            loading={addProduct.isPending || updateProduct.isPending}
-            variant='contained'
-            size='small'
+            {!product && isInventory && (
+              <Grid container spacing={1}>
+                <Grid size={12} mt={1}>
+                  <Typography variant='h5'>Opening Balance Details</Typography>
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Div sx={{ mt: 1, mb: 1 }}>
+                    <CostCenterSelector
+                      label='Cost Center'
+                      multiple={false}
+                      defaultValue={
+                        costCenters.length === 1 ? costCenters[0] : null
+                      }
+                      frontError={errors.cost_center_id}
+                      onChange={(newValue) => {
+                        setValue('cost_center_id', newValue?.id || null, {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                        });
+                      }}
+                    />
+                  </Div>
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Div sx={{ mt: 1, mb: 1 }}>
+                    <LedgerSelect
+                      label={'Stock Complement Ledger'}
+                      allowedGroups={[
+                        'Capital',
+                        'Expenses',
+                        'Accounts Payable',
+                      ]}
+                      frontError={errors.stock_complement_ledger_id}
+                      onChange={(newValue) =>
+                        setValue(
+                          'stock_complement_ledger_id',
+                          !!newValue ? newValue.id : null,
+                          {
+                            shouldValidate: true,
+                            shouldDirty: true,
+                          }
+                        )
+                      }
+                    />
+                  </Div>
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Div sx={{ mt: 1, mb: 1 }}>
+                    <DateTimePicker
+                      label='As of'
+                      fullWidth
+                      minDate={dayjs(
+                        authOrganization.organization.recording_start_date
+                      )}
+                      slotProps={{
+                        textField: {
+                          size: 'small',
+                          fullWidth: true,
+                          readOnly: true,
+                          error: !!errors?.opening_balance_date,
+                          helperText: errors?.opening_balance_date?.message,
+                        },
+                      }}
+                      onChange={(newValue) => {
+                        setValue(
+                          'opening_balance_date',
+                          newValue ? newValue.toISOString() : null,
+                          {
+                            shouldValidate: true,
+                            shouldDirty: true,
+                          }
+                        );
+                      }}
+                    />
+                  </Div>
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Div sx={{ mt: 1, mb: 1 }}>
+                    <Autocomplete
+                      size='small'
+                      options={storeOptions}
+                      getOptionLabel={(option) => option.name}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label='Store'
+                          error={!!errors?.store_id}
+                          helperText={errors?.store_id?.message}
+                        />
+                      )}
+                      onChange={(event, newValue) => {
+                        !newValue && clearErrors('opening_balance');
+                        !newValue && clearErrors('unit_cost');
+                        setValue('store_id', newValue ? newValue.id : null, {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                        });
+                      }}
+                    />
+                  </Div>
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Div sx={{ mt: 1, mb: 1 }}>
+                    <TextField
+                      label='Opening Balance'
+                      fullWidth
+                      size='small'
+                      error={!!errors?.opening_balance}
+                      helperText={errors?.opening_balance?.message}
+                      {...register('opening_balance')}
+                    />
+                  </Div>
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Div sx={{ mt: 1, mb: 1 }}>
+                    <TextField
+                      label='Unit Cost'
+                      fullWidth
+                      size='small'
+                      InputProps={{
+                        inputComponent: CommaSeparatedField,
+                      }}
+                      error={!!errors?.unit_cost}
+                      helperText={errors?.unit_cost?.message}
+                      onChange={(e) => {
+                        setValue(
+                          'unit_cost',
+                          e.target.value ? sanitizedNumber(e.target.value) : 0,
+                          {
+                            shouldValidate: true,
+                            shouldDirty: true,
+                          }
+                        );
+                      }}
+                    />
+                  </Div>
+                </Grid>
+              </Grid>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => toggleOpen(false)}>Cancel</Button>
+            <LoadingButton
+              type='submit'
+              loading={addProduct.isPending || updateProduct.isPending}
+              variant='contained'
+              size='small'
+            >
+              Save
+            </LoadingButton>
+          </DialogActions>
+        </form>
+
+        {measurementUnitFormOpen && (
+          <Dialog
+            maxWidth='md'
+            fullScreen={belowLargeScreen}
+            open={measurementUnitFormOpen}
           >
-            Save
-          </LoadingButton>
-        </DialogActions>
-      </form>
+            <MeasurementUnitForm
+              setOpenDialog={() => setMeasurementUnitFormOpen((prev) => !prev)}
+              addNewUnit={(unit) => {
+                setNewUnit(unit?.measurementUnit);
+              }}
+            />
+          </Dialog>
+        )}
+      </>
     );
   };
 

@@ -21,6 +21,7 @@ import { MeasurementUnit } from './MeasurementUnitType';
 interface MeasurementUnitFormProps {
   setOpenDialog: (open: boolean) => void;
   measurementUnit?: MeasurementUnit | null;
+  addNewUnit?: (value: any) => void;
 }
 
 interface FormData extends Omit<MeasurementUnit, 'id'> {
@@ -38,6 +39,7 @@ interface ApiResponse {
 const MeasurementUnitForm: React.FC<MeasurementUnitFormProps> = ({
   setOpenDialog,
   measurementUnit = null,
+  addNewUnit = () => {},
 }) => {
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
@@ -51,6 +53,7 @@ const MeasurementUnitForm: React.FC<MeasurementUnitFormProps> = ({
     mutationFn: measurementUnitServices.add,
     onSuccess: (data) => {
       setOpenDialog(false);
+      addNewUnit?.(data);
       enqueueSnackbar(dictionary.measurementUnits.form.messages.createSuccess, {
         variant: 'success',
       });

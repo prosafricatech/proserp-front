@@ -26,6 +26,7 @@ interface MeasurementSelectorProps {
   frontError?: { message: string } | null;
   showQuickAdd?: boolean;
   onQuickAddClick?: () => void;
+  value?: MeasurementUnit | MeasurementUnit[] | null;
 }
 
 const MeasurementSelector: React.FC<MeasurementSelectorProps> = (props) => {
@@ -78,6 +79,12 @@ const MeasurementSelector: React.FC<MeasurementSelectorProps> = (props) => {
     }
   }, [defaultValue, measurementUnits]);
 
+  useEffect(() => {
+    if (props.value !== undefined) {
+      setSelectedMeasurementUnits(props.value ?? (multiple ? [] : null));
+    }
+  }, [props.value]);
+
   if (isLoading) {
     return <LinearProgress />;
   }
@@ -89,7 +96,7 @@ const MeasurementSelector: React.FC<MeasurementSelectorProps> = (props) => {
       isOptionEqualToValue={(option, value) => option.id === value.id}
       options={measurementUnits || []}
       disableCloseOnSelect={multiple}
-      value={selectedMeasurementUnits}
+      value={props.value ?? selectedMeasurementUnits}
       getOptionLabel={(option: any) =>
         option.name !== option.symbol
           ? `${option.name} (${option.symbol})`

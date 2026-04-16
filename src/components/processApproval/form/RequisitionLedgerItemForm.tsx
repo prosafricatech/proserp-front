@@ -4,6 +4,7 @@ import {
 } from '@/app/helpers/input-sanitization-helpers';
 import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
 import MeasurementUnitForm from '@/components/masters/measurementUnits/MeasurementUnitForm';
+import { MeasurementUnit } from '@/components/masters/measurementUnits/MeasurementUnitType';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
@@ -76,6 +77,9 @@ function RequisitionLedgerItemForm({
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
   const [measurementUnitFormOpen, setMeasurementUnitFormOpen] = useState(false);
+  const [newUnit, setNewUnit] = useState<MeasurementUnit | undefined>(
+    undefined
+  );
 
   const relatableTypes = [
     {
@@ -83,6 +87,16 @@ function RequisitionLedgerItemForm({
       label: 'Purchase',
     },
   ];
+
+  useEffect(() => {
+    if (newUnit !== undefined) {
+      setValue('unit_symbol', newUnit?.symbol);
+      setValue('measurement_unit_id', newUnit?.id ?? null, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    }
+  }, [newUnit]);
 
   const validationSchema = yup.object({
     ledger_id: yup
@@ -308,6 +322,7 @@ function RequisitionLedgerItemForm({
                 onQuickAddClick={() =>
                   setMeasurementUnitFormOpen((prev) => !prev)
                 }
+                value={newUnit}
               />
             </Div>
           </Grid>
@@ -516,6 +531,9 @@ function RequisitionLedgerItemForm({
         >
           <MeasurementUnitForm
             setOpenDialog={() => setMeasurementUnitFormOpen((prev) => !prev)}
+            addNewUnit={(unit) => {
+              setNewUnit(unit?.measurementUnit);
+            }}
           />
         </Dialog>
       )}
