@@ -232,6 +232,7 @@ interface TableProps {
     label: string;
     value: string;
     valueColumnKey?: string;
+    valuesByColumn?: Record<string, string>;
   };
 }
 
@@ -331,6 +332,7 @@ const PDFTable: React.FC<TableProps> = ({
               const valueColumnKey = total.valueColumnKey || 'amount';
               const isLabelCell = idx === 0;
               const isValueCell = col.key === valueColumnKey;
+              const explicitColumnValue = total.valuesByColumn?.[col.key];
 
               return (
                 <Text
@@ -341,10 +343,13 @@ const PDFTable: React.FC<TableProps> = ({
                     color: contrastText,
                     flex: col.flex,
                     textAlign: col.align || 'left',
-                    fontWeight: isLabelCell || isValueCell ? 700 : 400,
+                    fontWeight:
+                      isLabelCell || isValueCell || !!explicitColumnValue ? 700 : 400,
                   }}
                 >
-                  {isLabelCell ? total.label : isValueCell ? total.value : ' '}
+                  {isLabelCell
+                    ? total.label
+                    : explicitColumnValue || (isValueCell ? total.value : ' ')}
                 </Text>
               );
             })}
@@ -364,6 +369,15 @@ const renderExpensesTable = (
   contrastText: string,
   baseCurrency?: { code: string }
 ) => {
+  const totalBudgeted = expenses.reduce(
+    (total, item) => total + Number(item.budgeted || 0),
+    0
+  );
+  const totalSpent = expenses.reduce(
+    (total, item) => total + Number(item.spent || 0),
+    0
+  );
+
   const columns: TableColumn[] = [
     { key: 'name', label: 'Expense Name', flex: 2 },
     { key: 'budgeted', label: 'Budgeted', flex: 1.5, align: 'right' },
@@ -378,6 +392,15 @@ const renderExpensesTable = (
       mainColor={mainColor}
       lightColor={lightColor}
       contrastText={contrastText}
+      total={{
+        label: 'Total',
+        value: '',
+        valuesByColumn: {
+          budgeted: formatCurrency(totalBudgeted, baseCurrency?.code),
+          spent: formatCurrency(totalSpent, baseCurrency?.code),
+          percent: formatPercentage(totalBudgeted, totalSpent),
+        },
+      }}
       renderCell={(item: Expense, column) => {
         switch (column.key) {
           case 'name':
@@ -678,28 +701,12 @@ const BudgetsPDF: React.FC<BudgetsPDFProps> = ({
   baseCurrency,
   withDetails,
   groupingMode = 'default',
-  hideSummary = false,
   organization,
 }) => {
   const mainColor = organization.settings?.main_color || '#2113AD';
   const lightColor = organization.settings?.light_color || '#bec5da';
   const contrastText = organization.settings?.contrast_text || '#FFFFFF';
 
-  const totalBudgetedAmount =
-    budgetDetails?.expenses_budgeted?.reduce(
-      (total, item) => total + (item?.budgeted || 0),
-      0
-    ) || 0;
-
-  const totalSpentAmount =
-    budgetDetails?.expenses_budgeted?.reduce(
-      (total, item) => total + (item?.spent || 0),
-      0
-    ) || 0;
-
-  const percentageSpent = totalBudgetedAmount
-    ? (totalSpentAmount / totalBudgetedAmount) * 100
-    : 0;
   const ledgerGroups = buildGroupsByTask(
     budgetDetails.ledger_items || [],
     allTasks || [],
@@ -740,36 +747,6 @@ const BudgetsPDF: React.FC<BudgetsPDFProps> = ({
             </View>
           </View>
         </View>
-
-        {/* Summary Section */}
-        {!hideSummary && (
-          <View style={{ ...pdfStyles.tableRow, marginTop: 10 }}>
-            <View style={{ flex: 1, padding: 2 }}>
-              <Text style={{ ...pdfStyles.minInfo, color: mainColor }}>
-                Total Budgeted
-              </Text>
-              <Text style={pdfStyles.minInfo}>
-                {formatCurrency(totalBudgetedAmount, baseCurrency?.code)}
-              </Text>
-            </View>
-            <View style={{ flex: 1, padding: 2 }}>
-              <Text style={{ ...pdfStyles.minInfo, color: mainColor }}>
-                Total Spent
-              </Text>
-              <Text style={pdfStyles.minInfo}>
-                {formatCurrency(totalSpentAmount, baseCurrency?.code)}
-              </Text>
-            </View>
-            <View style={{ flex: 1, padding: 2 }}>
-              <Text style={{ ...pdfStyles.minInfo, color: mainColor }}>
-                Percentage Spent
-              </Text>
-              <Text style={pdfStyles.minInfo}>
-                {percentageSpent.toFixed(2)}%
-              </Text>
-            </View>
-          </View>
-        )}
 
         {/* Details Section */}
         {!withDetails &&
