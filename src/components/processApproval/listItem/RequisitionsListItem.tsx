@@ -121,7 +121,14 @@ const RequisitionsListItem = ({ requisition }: RequisitionsListItemProps) => {
                     variant="body2"
                     fontSize={14}
                     mb={0}
-                    sx={{ flexWrap: 'wrap' }}
+                    sx={{
+                      display: '-webkit-box',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      WebkitBoxOrient: 'vertical',
+                      WebkitLineClamp: 2,
+                      wordBreak: 'break-word',
+                    }}
                   >
                     {requisition.remarks}
                   </Typography>

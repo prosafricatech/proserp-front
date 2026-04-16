@@ -1,15 +1,27 @@
+import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
+import { yupResolver } from '@hookform/resolvers/yup';
 import { LoadingButton } from '@mui/lab';
-import { Autocomplete, DialogContent, DialogTitle, DialogActions, Grid, TextField, Button } from '@mui/material';
+import {
+  Autocomplete,
+  Button,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Grid,
+  TextField,
+} from '@mui/material';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import React from 'react';
-import { useForm, SubmitHandler } from 'react-hook-form';
+import { SubmitHandler, useForm } from 'react-hook-form';
 import * as yup from 'yup';
-import { yupResolver } from '@hookform/resolvers/yup';
 import LedgerSelect from '../../accounts/ledgers/forms/LedgerSelect';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import productCategoryServices from './productCategoryServices';
-import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
-import { ProductCategory, ProductCategoryFormData, productCategoryOption } from './ProductCategoryType';
+import {
+  ProductCategory,
+  ProductCategoryFormData,
+  productCategoryOption,
+} from './ProductCategoryType';
 
 interface ProductCategoryFormDialogContentProps {
   title?: string;
@@ -18,7 +30,9 @@ interface ProductCategoryFormDialogContentProps {
   productCategories: productCategoryOption[];
 }
 
-const ProductCategoryFormDialogContent: React.FC<ProductCategoryFormDialogContentProps> = ({
+const ProductCategoryFormDialogContent: React.FC<
+  ProductCategoryFormDialogContentProps
+> = ({
   title = 'New Category',
   onClose,
   productCategory = null,
@@ -32,11 +46,18 @@ const ProductCategoryFormDialogContent: React.FC<ProductCategoryFormDialogConten
     mutationFn: productCategoryServices.add,
     onSuccess: (data) => {
       onClose();
-      enqueueSnackbar(dictionary.productCategories.form.messages.createSuccess, { variant: 'success' });
+      enqueueSnackbar(
+        dictionary.productCategories.form.messages.createSuccess,
+        { variant: 'success' }
+      );
+      queryClient.invalidateQueries({ queryKey: ['productCategoryOptions'] });
       queryClient.invalidateQueries({ queryKey: ['productCategories'] });
     },
     onError: (error: any) => {
-      enqueueSnackbar(dictionary.productCategories.form.errors.messages.createResponse, { variant: 'error' });
+      enqueueSnackbar(
+        dictionary.productCategories.form.errors.messages.createResponse,
+        { variant: 'error' }
+      );
     },
   });
 
@@ -44,36 +65,50 @@ const ProductCategoryFormDialogContent: React.FC<ProductCategoryFormDialogConten
     mutationFn: productCategoryServices.update,
     onSuccess: (data) => {
       onClose();
-      enqueueSnackbar(dictionary.productCategories.form.messages.updateSuccess, { variant: 'success' });
+      enqueueSnackbar(
+        dictionary.productCategories.form.messages.updateSuccess,
+        { variant: 'success' }
+      );
       queryClient.invalidateQueries({ queryKey: ['productCategoryOptions'] });
       queryClient.invalidateQueries({ queryKey: ['productCategories'] });
     },
     onError: (error: any) => {
-      enqueueSnackbar(dictionary.productCategories.form.errors.messages.updateResponse, { variant: 'error' });
+      enqueueSnackbar(
+        dictionary.productCategories.form.errors.messages.updateResponse,
+        { variant: 'error' }
+      );
     },
   });
 
   const validationSchema = yup.object({
     name: yup
       .string()
-      .required(dictionary.productCategories.form.errors.validation.name.required),
-    parent_id: yup
-      .number()
-      .nullable(),
+      .required(
+        dictionary.productCategories.form.errors.validation.name.required
+      ),
+    parent_id: yup.number().nullable(),
     income_ledger_id: yup
       .number()
-      .required(dictionary.productCategories.form.errors.validation.income_ledger_id.required)
-      .positive(dictionary.productCategories.form.errors.validation.income_ledger_id.positive),
+      .required(
+        dictionary.productCategories.form.errors.validation.income_ledger_id
+          .required
+      )
+      .positive(
+        dictionary.productCategories.form.errors.validation.income_ledger_id
+          .positive
+      ),
     expense_ledger_id: yup
       .number()
-      .required(dictionary.productCategories.form.errors.validation.expense_ledger_id.required)
-      .positive(dictionary.productCategories.form.errors.validation.expense_ledger_id.positive),
-    description: yup
-      .string()
-      .optional(),
-    id: yup
-      .number()
-      .optional(),
+      .required(
+        dictionary.productCategories.form.errors.validation.expense_ledger_id
+          .required
+      )
+      .positive(
+        dictionary.productCategories.form.errors.validation.expense_ledger_id
+          .positive
+      ),
+    description: yup.string().optional(),
+    id: yup.number().optional(),
   });
 
   const {
@@ -104,39 +139,55 @@ const ProductCategoryFormDialogContent: React.FC<ProductCategoryFormDialogConten
   };
 
   return (
-    <form autoComplete="off" onSubmit={handleSubmit(onSubmit)}> {/* ✅ Now onSubmit exists */}
+    <form autoComplete='off' onSubmit={handleSubmit(onSubmit)}>
+      {' '}
+      {/* ✅ Now onSubmit exists */}
       <DialogTitle>{dictionary.productCategories.form.title}</DialogTitle>
       <DialogContent>
         <Grid container p={1} spacing={1} rowGap={1}>
-          <Grid size={{xs: 12, md: 6}}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               fullWidth
               label={dictionary.productCategories.form.labels.categoryName}
-              size="small"
+              size='small'
               error={Boolean(
-                errors.name || 
-                addProductCategory.error?.response?.data?.validation_errors?.name || 
-                updateProductCategory.error?.response?.data?.validation_errors?.name
+                errors.name ||
+                addProductCategory.error?.response?.data?.validation_errors
+                  ?.name ||
+                updateProductCategory.error?.response?.data?.validation_errors
+                  ?.name
               )}
               helperText={
-                errors.name?.message || 
-                addProductCategory.error?.response?.data?.validation_errors?.name || 
-                updateProductCategory.error?.response?.data?.validation_errors?.name
+                errors.name?.message ||
+                addProductCategory.error?.response?.data?.validation_errors
+                  ?.name ||
+                updateProductCategory.error?.response?.data?.validation_errors
+                  ?.name
               }
               {...register('name')}
             />
           </Grid>
-          <Grid size={{xs: 12, md: 6}}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Autocomplete
-              size="small"
-              isOptionEqualToValue={(option: productCategoryOption, value: productCategoryOption) => option.id === value.id}
+              size='small'
+              isOptionEqualToValue={(
+                option: productCategoryOption,
+                value: productCategoryOption
+              ) => option.id === value.id}
               options={productCategories}
               getOptionLabel={(option: productCategoryOption) => option.name}
-              defaultValue={productCategories.find((parent: productCategoryOption) => parent.id === productCategory?.parent_id) || null}
+              defaultValue={
+                productCategories.find(
+                  (parent: productCategoryOption) =>
+                    parent.id === productCategory?.parent_id
+                ) || null
+              }
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  label={dictionary.productCategories.form.labels.parentCategory}
+                  label={
+                    dictionary.productCategories.form.labels.parentCategory
+                  }
                   error={Boolean(errors.parent_id)}
                   helperText={errors.parent_id?.message}
                 />
@@ -144,7 +195,9 @@ const ProductCategoryFormDialogContent: React.FC<ProductCategoryFormDialogConten
               onChange={(event, newValue: productCategoryOption | null) => {
                 if (productCategory && productCategory?.id === newValue?.id) {
                   setValue('parent_id', null);
-                  setError('parent_id', { message: "Cannot be a parent of its own" });
+                  setError('parent_id', {
+                    message: 'Cannot be a parent of its own',
+                  });
                 } else {
                   setValue('parent_id', newValue ? newValue.id : null, {
                     shouldValidate: true,
@@ -154,7 +207,7 @@ const ProductCategoryFormDialogContent: React.FC<ProductCategoryFormDialogConten
               }}
             />
           </Grid>
-          <Grid size={{xs: 12, md: 6}}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <LedgerSelect
               label={dictionary.productCategories.form.labels.incomeLedger}
               allowedGroups={['Sales and Revenue']}
@@ -175,7 +228,7 @@ const ProductCategoryFormDialogContent: React.FC<ProductCategoryFormDialogConten
               }}
             />
           </Grid>
-          <Grid size={{xs: 12, md: 6}}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <LedgerSelect
               label={dictionary.productCategories.form.labels.expenseLedger}
               allowedGroups={['Direct Expenses', 'Indirect Expenses']}
@@ -201,7 +254,7 @@ const ProductCategoryFormDialogContent: React.FC<ProductCategoryFormDialogConten
               multiline
               label={dictionary.productCategories.form.labels.description}
               fullWidth
-              size="small"
+              size='small'
               rows={2}
               {...register('description')}
             />
@@ -209,14 +262,16 @@ const ProductCategoryFormDialogContent: React.FC<ProductCategoryFormDialogConten
         </Grid>
       </DialogContent>
       <DialogActions>
-        <Button size="small" onClick={onClose}>
-        {dictionary.productCategories.form.buttons.cancel}
+        <Button size='small' onClick={onClose}>
+          {dictionary.productCategories.form.buttons.cancel}
         </Button>
         <LoadingButton
-          variant="contained"
-          type="submit"
-          loading={addProductCategory.isPending || updateProductCategory.isPending}
-          size="small"
+          variant='contained'
+          type='submit'
+          loading={
+            addProductCategory.isPending || updateProductCategory.isPending
+          }
+          size='small'
         >
           {dictionary.productCategories.form.buttons.save}
         </LoadingButton>

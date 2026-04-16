@@ -1,6 +1,6 @@
 'use client'
 import { ShoppingCartOutlined } from "@mui/icons-material";
-import { ButtonGroup, Dialog, IconButton, LinearProgress, Tooltip, useMediaQuery } from "@mui/material";
+import { ButtonGroup, Dialog, IconButton, LinearProgress, Skeleton, Tooltip, useMediaQuery } from "@mui/material";
 import React, { useState } from "react";
 import requisitionsServices from "../../requisitionsServices";
 import ApprovedPurchaseForm from "./form/ApprovedPurchaseForm";
@@ -28,7 +28,13 @@ const ApprovedPurchaseActionTail: React.FC<ApprovedPurchaseActionTailProps> = ({
   });
 
   if (isFetching) {
-    return <LinearProgress />;
+        return (
+      <div style={{ width: '100%', padding: '16px' }}>
+        <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
+        <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
+        <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+      </div>
+    );
   }
 
   if (error) {

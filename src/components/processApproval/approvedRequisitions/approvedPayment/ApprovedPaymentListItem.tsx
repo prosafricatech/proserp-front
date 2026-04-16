@@ -14,7 +14,8 @@ import {
   DialogContent, 
   Button, 
   Box, 
-  ListItemText 
+  ListItemText, 
+  Skeleton
 } from '@mui/material';
 import { HighlightOff } from '@mui/icons-material';
 import requisitionsServices from '../../requisitionsServices';
@@ -64,7 +65,13 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
   if (isFetching) {
-    return <LinearProgress />;
+        return (
+      <div style={{ width: '100%', padding: '16px' }}>
+        <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
+        <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
+        <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+      </div>
+    );
   }
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
@@ -138,7 +145,13 @@ const ApprovedPaymentListItem: React.FC<ApprovedPaymentListItemProps> = ({
   });
 
   if (isFetching) {
-    return <LinearProgress />;
+        return (
+      <div style={{ width: '100%', padding: '16px' }}>
+        <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
+        <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
+        <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+      </div>
+    );
   }
 
   if (!approvedPayments || approvedPayments.length === 0) {

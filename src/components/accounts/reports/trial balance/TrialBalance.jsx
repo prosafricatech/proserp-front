@@ -9,7 +9,6 @@ import { Div, Span } from '@jumbo/shared';
 import { HighlightOff } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 import {
-  Dialog,
   DialogContent,
   DialogTitle,
   Grid,
@@ -335,7 +334,7 @@ function TrialBalance({ setOpenTrialBalanceDialog }) {
   const downloadFileName = `Trial Balance as of ${readableDate(watch('as_at'), true)}`;
 
   return (
-    <Dialog open fullScreen={belowLargeScreen}>
+    <>
       <DialogTitle textAlign={'center'}>
         <Grid container>
           <Grid size={{ xs: 12 }} textAlign={'center'}>
@@ -476,7 +475,7 @@ function TrialBalance({ setOpenTrialBalanceDialog }) {
           )
         )}
       </DialogContent>
-    </Dialog>
+    </>
   );
 }
 

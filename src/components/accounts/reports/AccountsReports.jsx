@@ -74,9 +74,20 @@ function AccountsReports() {
         <Dialog
           scroll={belowLargeScreen ? 'body' : 'paper'}
           fullWidth
-          maxWidth={openCashierReport || openIncomeStatement ? 'lg' : 'md'}
+          maxWidth={
+            openCashierReport ||
+            openIncomeStatement ||
+            openDialog ||
+            openTrialBalance
+              ? 'lg'
+              : 'md'
+          }
           fullScreen={
-            (openBalanceSheet || openCashierReport || openIncomeStatement) &&
+            (openBalanceSheet ||
+              openCashierReport ||
+              openIncomeStatement ||
+              openDialog ||
+              openTrialBalance) &&
             belowLargeScreen
           }
           open={
@@ -89,25 +100,27 @@ function AccountsReports() {
           }
         >
           {report}
-          {!openCashierReport && (
+          {!openCashierReport &&
             <DialogActions className={css.hiddenOnPrint}>
-              <Button
-                sx={{ m: 1 }}
-                size='small'
-                variant='outlined'
-                onClick={() => {
-                  setOpenDialog(false);
-                  setOpenReceiptDialog(false);
-                  setOpenBalanceSheet(false);
-                  setOpenTrialBalance(false);
-                  setOpenCashierReport(false);
-                  setOpenIncomeStatement(false);
-                }}
-              >
-                Close
-              </Button>
+              {!belowLargeScreen && (
+                <Button
+                  sx={{ m: 1 }}
+                  size='small'
+                  variant='outlined'
+                  onClick={() => {
+                    setOpenDialog(false);
+                    setOpenReceiptDialog(false);
+                    setOpenBalanceSheet(false);
+                    setOpenTrialBalance(false);
+                    setOpenCashierReport(false);
+                    setOpenIncomeStatement(false);
+                  }}
+                >
+                  Close
+                </Button>
+              )}
             </DialogActions>
-          )}
+          }
         </Dialog>
         <Typography variant={'h4'} mb={2}>
           Financial Reports
@@ -149,7 +162,11 @@ function AccountsReports() {
               p={1}
               textAlign={'center'}
               onClick={() => {
-                setReport(<IncomeStatement />);
+                setReport(
+                  <IncomeStatement
+                    setOpenIncomeStatementDialog={setOpenIncomeStatement}
+                  />
+                );
                 setOpenIncomeStatement(true);
               }}
             >
@@ -189,7 +206,11 @@ function AccountsReports() {
               p={1}
               textAlign={'center'}
               onClick={() => {
-                setReport(<BalanceSheet />);
+                setReport(
+                  <BalanceSheet
+                    setOpenBalanceSheettDialog={setOpenBalanceSheet}
+                  />
+                );
                 setOpenBalanceSheet(true);
               }}
             >
@@ -205,9 +226,7 @@ function AccountsReports() {
                       bgcolor: 'action.hover',
                     },
                   }}
-                  xs={6}
-                  md={3}
-                  lg={2}
+                  size={{ xs: 6, md: 3, lg: 2 }}
                   p={1}
                   textAlign={'center'}
                   onClick={() => {

@@ -9,13 +9,16 @@ import {
   FormControlLabel,
   FormLabel,
   Grid,
+  IconButton,
   LinearProgress,
   MenuItem,
   Radio,
   RadioGroup,
   Stack,
   TextField,
+  Tooltip,
   Typography,
+  useMediaQuery,
 } from '@mui/material';
 import { DateTimePicker } from '@mui/x-date-pickers';
 import dayjs from 'dayjs';
@@ -25,7 +28,9 @@ import * as yup from 'yup';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import useProsERPStyles from '@/app/helpers/style-helpers';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { Div, Span } from '@jumbo/shared';
+import { HighlightOff } from '@mui/icons-material';
 import { useForm } from 'react-hook-form';
 import CostCenterSelector from '../../../masters/costCenters/CostCenterSelector';
 import PDFContent from '../../../pdf/PDFContent';
@@ -33,7 +38,13 @@ import financialReportsServices from '../financial-reports-services';
 import IncomeStatementOnScreen from './IncomeStatementOnScreen';
 import IncomeStatementPDF from './IncomeStatementPDF';
 
-function IncomeStatement({ from, to, cost_center_ids, aggregate_by }) {
+function IncomeStatement({
+  from,
+  to,
+  cost_center_ids,
+  aggregate_by,
+  setOpenIncomeStatementDialog,
+}) {
   document.title = 'Income Statement';
   const css = useProsERPStyles();
   const [today] = useState(dayjs());
@@ -44,6 +55,9 @@ function IncomeStatement({ from, to, cost_center_ids, aggregate_by }) {
   const [displayAs, setDisplayAs] = useState('on screen');
   const [reportData, setReportData] = useState(null);
   const [isExporting, setIsExporting] = useState(false);
+
+  const { theme } = useJumboTheme();
+  const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
   const validationSchema = yup.object({
     from: yup
@@ -137,12 +151,20 @@ function IncomeStatement({ from, to, cost_center_ids, aggregate_by }) {
           <Grid size={{ xs: 12 }}>
             <Typography variant='h3'>Income Statement</Typography>
           </Grid>
+          {belowLargeScreen && (
+            <Tooltip title='Close'>
+              <IconButton
+                size='small'
+                sx={{ position: 'absolute', top: 10, right: 10 }}
+                onClick={() => setOpenIncomeStatementDialog(false)}
+              >
+                <HighlightOff color='primary' />
+              </IconButton>
+            </Tooltip>
+          )}
         </Grid>
         <Span className={css.hiddenOnPrint}>
-          <form
-            autoComplete='off'
-            onSubmit={handleSubmit(retrieveReport)}
-          >
+          <form autoComplete='off' onSubmit={handleSubmit(retrieveReport)}>
             <Grid
               container
               columnSpacing={1}

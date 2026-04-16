@@ -92,7 +92,25 @@ function LedgerItemsTab({
         setTriggerKey((prev) => prev + 1);
       }
 
-      reset();
+      // Reset form to blank/default values and force rerender
+      reset({
+        type: 'ledger',
+        ledger_id: null,
+        ledger: null,
+        currency_id: currencies?.find(c => c.is_base === 1)?.id ?? 1,
+        currency: currencies?.find(c => c.is_base === 1) ?? null,
+        exchange_rate: 1,
+        rate: '',
+        quantity: '',
+        budget_itemable_id: null,
+        selectedItemable: null,
+        measurement_unit_id: null,
+        measurement_unit: null,
+        description: '',
+      });
+      setSelectedItemable(null);
+      setBoundToOption('');
+      setTriggerKey(prev => prev + 1);
       setIsDirty?.(false);
       setIsAdding(false);
       setShowForm && setShowForm(false);

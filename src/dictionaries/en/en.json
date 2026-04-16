@@ -64,9 +64,24 @@
       "organizations": "Organizations",
 
       "employees": "Employees",
+      "setup": "Setup",
+      "payroll": "Payroll",
       "departments": "Departments",
       "leave_types": "Leave Types",
-      "designations": "Designations"
+      "designations": "Designations",
+      "banks": "Banks",
+      "employee_contracts": "Employee Contracts",
+      "employee_bank_accounts": "Bank Accounts",
+      "employee_next_of_kins": "Next of Kins",
+      "allowance_types": "Allowance Types",
+      "deduction_types": "Deduction Types",
+      "employee_allowances": "Employee Allowances",
+      "employee_deductions": "Employee Deductions",
+      "leave_allocations": "Leave Allocations",
+      "leave_requests": "Leave Requests",
+      "paye_tax_bands": "PAYE Tax Bands",
+      "payroll_periods": "Payroll Periods",
+      "payroll_runs": "Payroll Runs"
     }
   },
 

@@ -71,6 +71,28 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
   const AUTO_SAVE_INTERVAL = 1 * 60 * 1000;
   const AUTO_SAVE_TICK = 1000;
 
+  const getApiErrorMessage = useCallback((error) => {
+    const responseMessage = error?.response?.data?.message;
+    if (typeof responseMessage === 'string' && responseMessage.trim()) {
+      return responseMessage;
+    }
+
+    if (error?.message && typeof error.message === 'string') {
+      return error.message;
+    }
+
+    return 'Error saving shift';
+  }, []);
+
+  const getApiSuccessMessage = useCallback((responseData) => {
+    const responseMessage = responseData?.message;
+    if (typeof responseMessage === 'string' && responseMessage.trim()) {
+      return responseMessage;
+    }
+
+    return 'Saved successfully';
+  }, []);
+
   const addMutation = useMutation({
     mutationFn: fuelStationServices.addSalesShifts,
     onSuccess: (data) => {
@@ -935,15 +957,53 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
       syncFuelVoucherIdsFromResponse(serverResponse);
       syncPaymentsReceivedIdsFromResponse(serverResponse);
     } catch (err) {
-      enqueueSnackbar('Error saving shift', { variant: 'error' });
+      const message = getApiErrorMessage(err);
+      if (!options.silent) {
+        enqueueSnackbar(message, { variant: 'error' });
+      } else {
+        autoSaveDebug('Autosave failed', { message });
+      }
       return;
     }
 
     if (!options.silent) {
-      enqueueSnackbar('Saved successfully', { variant: 'success' });
+      enqueueSnackbar(getApiSuccessMessage(serverResponse), { variant: 'success' });
       setOpenDialog(false);
     }
   };
+
+  const handleInvalidSubmit = useCallback(() => {
+    const data = watch();
+    const invalidPumpReadings = [];
+
+    (data?.cashiers || []).forEach((cashier) => {
+      (cashier?.pump_readings || []).forEach((reading) => {
+        const opening = Number(reading?.opening);
+        const closing = Number(reading?.closing);
+
+        if (Number.isFinite(opening) && Number.isFinite(closing) && closing < opening) {
+          const pumpLabel = fuel_pumps?.find((pump) => pump.id === reading?.fuel_pump_id)?.name || `Pump #${reading?.fuel_pump_id}`;
+          invalidPumpReadings.push(`${cashier?.name || 'Cashier'} - ${pumpLabel}`);
+        }
+      });
+    });
+
+    if (invalidPumpReadings.length > 0) {
+      const examples = invalidPumpReadings.slice(0, 3).join(', ');
+      const suffix = invalidPumpReadings.length > 3 ? ` and ${invalidPumpReadings.length - 3} more` : '';
+      setActiveTab(0);
+      enqueueSnackbar(
+        `Please check pump readings. Closing reading must be greater than or equal to opening reading (${examples}${suffix}).`,
+        { variant: 'error' }
+      );
+      return;
+    }
+
+    setActiveTab(0);
+    enqueueSnackbar('Please review required fields in Cashiers Records before submitting.', {
+      variant: 'error',
+    });
+  }, [watch, fuel_pumps, enqueueSnackbar]);
 
   const markAutoSaveChange = useCallback(() => {
     if (!hasMountedRef.current) return;
@@ -1421,7 +1481,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
                 resetAutoSaveTracking();
                 setShowHoldDialog(false);
                 setValue('submit_type', 'suspend');
-                handleSubmit(handleSubmitForm)(e);
+                handleSubmit(handleSubmitForm, handleInvalidSubmit)(e);
               }}
             >
               Confirm Hold
@@ -1440,7 +1500,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
                   isAutoSavingRef.current = false;
                   resetAutoSaveTracking();
                   setValue('submit_type', 'close');
-                  handleSubmit(handleSubmitForm)(e);
+                  handleSubmit(handleSubmitForm, handleInvalidSubmit)(e);
                 }}
               >
                 Close Shift

@@ -193,14 +193,14 @@ function RequisitionPDF({ requisition, organization }: RequisitionPDFProps) {
                     </>
                 }
 
-                <View style={{ ...pdfStyles.tableRow, marginBottom: 10 }}>
-                    {requisition?.remarks && (
-                        <View style={{ flex: 1, padding: 0.5 }}>
-                            <Text style={{ ...pdfStyles.minInfo, color: mainColor }}>Remarks</Text>
-                            <Text style={{ ...pdfStyles.minInfo }}>{requisition.remarks}</Text>
-                        </View>
-                    )}
-                    <View style={{ flex: 1, padding: 0.5 }}>
+                {requisition?.remarks && (
+                    <View style={{ marginBottom: 8 }}>
+                        <Text style={{ ...pdfStyles.minInfo, color: mainColor }}>Remarks</Text>
+                        <Text style={{ ...pdfStyles.minInfo }}>{requisition.remarks}</Text>
+                    </View>
+                )}
+                <View style={{ ...pdfStyles.tableRow, marginBottom: 10, justifyContent: 'flex-end' }}>
+                    <View style={{ width: '45%' }}>
                         <Text style={{ ...pdfStyles.minInfo, color: mainColor }}>Requested By</Text>
                         <Text style={{ ...pdfStyles.minInfo }}>{requisition.creator?.name}</Text>
                     </View>

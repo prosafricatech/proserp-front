@@ -982,7 +982,7 @@ export async function exportSalesShiftsToExcel(exportedData: any) {
 
         // TOTALS
         let totalsRow = (ws.lastRow?.number ?? 0) - 1;
-        ws.getCell(`A${totalsRow + 2}`).value = 'Totals';
+        ws.getCell(`A${totalsRow + 2}`).value = 'Total';
         ws.getCell(`A${totalsRow + 2}`).font = { bold: true, size: 11 };
         ws.getCell(`A${totalsRow + 2}`).alignment = {
           horizontal: 'left',

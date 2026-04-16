@@ -248,7 +248,7 @@ const UpdatesAccordion = ({ accordionExpanded, handleChange, update }) => {
                 </Grid>
               )}
               {tabValue === 1 && (
-                <Grid item xs={12}>
+                <Grid size={12}>
                   {renderTaskProgress()}
                 </Grid>
               )}

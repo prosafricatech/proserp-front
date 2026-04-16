@@ -22,6 +22,8 @@ import { MeasurementUnit } from '@/components/masters/measurementUnits/Measureme
 import { Currency } from '@/components/masters/Currencies/CurrencyType';
 import { CostCenter } from '@/components/masters/costCenters/CostCenterType';
 import { Stakeholder } from '@/components/masters/stakeholders/StakeholderType';
+import { View } from '@react-pdf/renderer';
+import pdfStyles from '@/components/pdf/pdf-styles';
 
 interface PurchaseOrderItem {
     id: number;
@@ -248,7 +250,6 @@ function RelatableOrderDetails({ order, toggleOpen }: RelatableOrderDetailsProps
                                 </Typography>
                             </Grid>
                         </Grid>
-            
                         {vatAmount > 0 && (
                             <>
                                 <Grid container sx={{ mt: 1 }}>
@@ -280,6 +281,18 @@ function RelatableOrderDetails({ order, toggleOpen }: RelatableOrderDetailsProps
                             </>
                         )}
                     </>
+                )}
+                {!!order?.terms_of_payment && (
+                    <Grid container sx={{ mt: 2 }}>
+                        <Grid size={{ xs: 12 }}>
+                            <Typography variant="h6" color={mainColor} fontWeight="bold">
+                                Payment Terms
+                            </Typography>
+                            <Typography variant="body2">
+                                {order.terms_of_payment}
+                            </Typography>
+                        </Grid>
+                    </Grid>
                 )}
             </DialogContent>
             <DialogActions>
