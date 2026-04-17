@@ -25,7 +25,7 @@ import { DateTimePicker } from '@mui/x-date-pickers';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import LedgerSelect from '../../accounts/ledgers/forms/LedgerSelect';
@@ -65,6 +65,13 @@ const ProductFormDialogContent = ({
     const [measurementUnitFormOpen, setMeasurementUnitFormOpen] =
       useState(false);
     const [newUnit, setNewUnit] = useState(undefined);
+    const [selectedUnit, setSelectedUnit] = useState(() =>
+      product?.id
+        ? measurementUnits.find(
+            (unit) => unit.id === product.measurement_unit_id
+          )
+        : null
+    );
 
     useEffect(() => {
       if (newUnit !== undefined) {
@@ -211,9 +218,12 @@ const ProductFormDialogContent = ({
       },
     });
 
-    const saveMutation = React.useMemo(() => {
-      return product?.id ? updateProduct.mutate : addProduct.mutate;
-    }, [updateProduct, addProduct]);
+    const saveMutation = React.useMemo(
+      (data) => {
+        return product?.id ? updateProduct.mutate : addProduct.mutate;
+      },
+      [updateProduct, addProduct]
+    );
 
     return (
       <>
@@ -468,7 +478,7 @@ const ProductFormDialogContent = ({
                       option.id === value.id
                     }
                     options={measurementUnits}
-                    value={newUnit ?? null}
+                    value={selectedUnit}
                     defaultValue={
                       product?.id &&
                       measurementUnits.find(
@@ -505,6 +515,7 @@ const ProductFormDialogContent = ({
                           shouldDirty: true,
                         }
                       );
+                      setSelectedUnit(newValue);
                     }}
                   />
                 </Div>
@@ -702,6 +713,7 @@ const ProductFormDialogContent = ({
               setOpenDialog={() => setMeasurementUnitFormOpen((prev) => !prev)}
               addNewUnit={(unit) => {
                 setNewUnit(unit?.measurementUnit);
+                setSelectedUnit(unit?.measurementUnit);
               }}
             />
           </Dialog>
