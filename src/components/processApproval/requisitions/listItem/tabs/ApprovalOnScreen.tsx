@@ -22,7 +22,7 @@ import { useQuery } from '@tanstack/react-query';
 import purchaseServices from '@/components/procurement/purchases/purchase-services';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import { Organization } from '@/types/auth-types';
-import { Approval, RequisitionItem } from '../../RequisitionType';
+import { Approval, RequisitionItem } from '../../../RequisitionType';
 
 interface FetchRelatableDetailsProps {
   approval: Approval;
@@ -37,6 +37,44 @@ interface ApprovalOnScreenProps {
   organization: Organization;
   belowLargeScreen: boolean;
 }
+
+type LeaveViewItem = {
+    id?: number;
+    employee_id?: number;
+    start_date?: string;
+    end_date?: string;
+    days_requested?: number;
+    reason?: string;
+    employee?: {
+        employee_number?: string;
+        first_name?: string;
+        last_name?: string;
+    };
+    leave_type?: {
+        name?: string;
+    };
+};
+
+const normalizeLeaveItem = (item: any): LeaveViewItem => ({
+    ...item,
+    days_requested: Number(item?.days_requested || 0),
+    employee:
+        item?.employee ||
+        (item?.employee_number || item?.first_name || item?.last_name
+            ? {
+                    employee_number: item?.employee_number,
+                    first_name: item?.first_name,
+                    last_name: item?.last_name,
+                }
+            : undefined),
+    leave_type:
+        item?.leave_type ||
+        (item?.leave_type_name
+            ? {
+                    name: item.leave_type_name,
+                }
+            : undefined),
+});
 
 const FetchRelatableDetails = ({ relatable, toggleOpen }: FetchRelatableDetailsProps) => {
     const { data: orderDetails, isFetching } = useQuery({
@@ -63,6 +101,15 @@ function ApprovalOnScreen({ approval, organization, belowLargeScreen }: Approval
     const contrastText = organization.settings?.contrast_text || "#FFFFFF";
 
     const isPurchase = approval.requisition?.process_type?.toLowerCase() === 'purchase';
+    const isLeaveRequest = approval.requisition?.process_type?.toLowerCase() === 'leave_request';
+    const requisitionItems: RequisitionItem[] = approval?.requisition && 'items' in approval.requisition ? (approval.requisition.items || []) : [];
+    const leaveSource =
+        (approval.requisition?.leave_items && approval.requisition.leave_items.length
+            ? approval.requisition.leave_items
+            : requisitionItems.length
+              ? requisitionItems
+              : approval.items) || [];
+    const leaveItems: LeaveViewItem[] = (leaveSource as any[]).map(normalizeLeaveItem);
 
     const totalVAT = approval.items
         ?.filter((item: RequisitionItem) => (item.vat_percentage ?? 0) > 0)
@@ -74,6 +121,7 @@ function ApprovalOnScreen({ approval, organization, belowLargeScreen }: Approval
             total + (item.quantity * item.rate * (1 + (item.vat_percentage ?? 0) * 0.01)), 0);
 
     const subtotal = approval?.items?.reduce((total, item) => total + (item.quantity || 0) * (item.rate || 0), 0);
+    const totalLeaveDays = leaveItems.reduce((sum, item) => sum + Number(item.days_requested || 0), 0);
 
     const formatCurrency = (amount: number) => {
         return amount?.toLocaleString('en-US', { 
@@ -108,7 +156,7 @@ function ApprovalOnScreen({ approval, organization, belowLargeScreen }: Approval
                             }}
                         >
                             <Typography variant="h4" sx={{ color: headerColor }}>
-                                {isPurchase ? 'PURCHASE REQUISITION APPROVAL' : 'PAYMENT REQUISITION APPROVAL'}
+                                {isLeaveRequest ? 'LEAVE REQUEST APPROVAL' : isPurchase ? 'PURCHASE REQUISITION APPROVAL' : 'PAYMENT REQUISITION APPROVAL'}
                             </Typography>
                             <Typography variant="h6">
                                 {approval.requisition?.requisitionNo}
@@ -132,6 +180,38 @@ function ApprovalOnScreen({ approval, organization, belowLargeScreen }: Approval
 
                     {/* Items Table */}
                     <Grid size={12}>
+                        {isLeaveRequest && (
+                            <TableContainer component={Paper} sx={{ boxShadow: theme.shadows[2], mb: 2 }}>
+                                <Table>
+                                    <TableHead>
+                                        <TableRow>
+                                            <TableCell sx={{ backgroundColor: mainColor, color: contrastText }}>S/N</TableCell>
+                                            <TableCell sx={{ backgroundColor: mainColor, color: contrastText }}>Employee</TableCell>
+                                            <TableCell sx={{ backgroundColor: mainColor, color: contrastText }}>Leave Type</TableCell>
+                                            <TableCell sx={{ backgroundColor: mainColor, color: contrastText }}>Start Date</TableCell>
+                                            <TableCell sx={{ backgroundColor: mainColor, color: contrastText }}>End Date</TableCell>
+                                            <TableCell sx={{ backgroundColor: mainColor, color: contrastText }} align="right">Days</TableCell>
+                                            <TableCell sx={{ backgroundColor: mainColor, color: contrastText }}>Reason</TableCell>
+                                        </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                        {leaveItems.map((item, index) => (
+                                            <TableRow key={item.id || `${index}-${item.start_date}`}>
+                                                <TableCell>{index + 1}</TableCell>
+                                                <TableCell>{[item.employee?.first_name, item.employee?.last_name, item.employee?.employee_number].filter(Boolean).join(' ')}</TableCell>
+                                                <TableCell>{item.leave_type?.name || '-'}</TableCell>
+                                                <TableCell>{readableDate(item.start_date, false)}</TableCell>
+                                                <TableCell>{readableDate(item.end_date, false)}</TableCell>
+                                                <TableCell align="right">{Number(item.days_requested || 0).toLocaleString()}</TableCell>
+                                                <TableCell>{item.reason || '-'}</TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </TableContainer>
+                        )}
+
+                   {!isLeaveRequest && (
                         <TableContainer 
                             component={Paper}
                             sx={{
@@ -270,73 +350,80 @@ function ApprovalOnScreen({ approval, organization, belowLargeScreen }: Approval
                                 </TableBody>
                             </Table>
                         </TableContainer>
+                        )}
                     </Grid>
 
                     {/* Totals Section */}
-                    <Grid size={12}>
-                        <Box 
-                            sx={{ 
-                                mt: 3, 
-                                p: 2, 
-                                backgroundColor: theme.palette.background.default,
-                                border: `1px solid ${theme.palette.divider}`,
-                                borderRadius: 1
-                            }}
-                        >
-                            <Grid container spacing={1}>
-                                <Grid size={7}>
-                                    <Typography variant="body1">
-                                        Subtotal
-                                    </Typography>
-                                </Grid>
-                                <Grid size={5} sx={{ textAlign: 'right' }}>
-                                    <Typography variant="body1" fontFamily="monospace">
-                                        {formatCurrency(subtotal)}
-                                    </Typography>
-                                </Grid>
+                    {!isLeaveRequest &&
+                        <Grid size={12}>
+                            <Box 
+                                sx={{ 
+                                    mt: 3, 
+                                    p: 2, 
+                                    backgroundColor: theme.palette.background.default,
+                                    border: `1px solid ${theme.palette.divider}`,
+                                    borderRadius: 1
+                                }}
+                            >
+                                <Grid container spacing={1}>
+                                    {
+                                        <>
+                                            <Grid size={7}>
+                                                <Typography variant="body1">
+                                                    Subtotal
+                                                </Typography>
+                                            </Grid>
+                                            <Grid size={5} sx={{ textAlign: 'right' }}>
+                                                <Typography variant="body1" fontFamily="monospace">
+                                                    {formatCurrency(subtotal)}
+                                                </Typography>
+                                            </Grid>
 
-                                {isPurchase && (totalVAT ?? 0) > 0 && (
-                                    <>
-                                        <Grid size={7}>
-                                            <Typography variant="body1">
-                                                VAT
-                                            </Typography>
-                                        </Grid>
-                                        <Grid size={5} sx={{ textAlign: 'right' }}>
-                                            <Typography variant="body1" fontFamily="monospace">
-                                                {formatCurrency(totalVAT ?? 0)}
-                                            </Typography>
-                                        </Grid>
-                                        <Grid size={7}>
-                                            <Typography variant="h6" color={headerColor}>
-                                                Grand Total
-                                            </Typography>
-                                        </Grid>
-                                        <Grid size={5} sx={{ textAlign: 'right' }}>
-                                            <Typography variant="h6" color={headerColor} fontFamily="monospace">
-                                                {formatCurrency(grandTotal ?? 0)}
-                                            </Typography>
-                                        </Grid>
-                                    </>
-                                )}
+                                            {isPurchase && (totalVAT ?? 0) > 0 && (
+                                                <>
+                                                    <Grid size={7}>
+                                                        <Typography variant="body1">
+                                                            VAT
+                                                        </Typography>
+                                                    </Grid>
+                                                    <Grid size={5} sx={{ textAlign: 'right' }}>
+                                                        <Typography variant="body1" fontFamily="monospace">
+                                                            {formatCurrency(totalVAT ?? 0)}
+                                                        </Typography>
+                                                    </Grid>
+                                                    <Grid size={7}>
+                                                        <Typography variant="h6" color={headerColor}>
+                                                            Grand Total
+                                                        </Typography>
+                                                    </Grid>
+                                                    <Grid size={5} sx={{ textAlign: 'right' }}>
+                                                        <Typography variant="h6" color={headerColor} fontFamily="monospace">
+                                                            {formatCurrency(grandTotal ?? 0)}
+                                                        </Typography>
+                                                    </Grid>
+                                                </>
+                                            )}
 
-                                {!isPurchase && (
-                                    <>
-                                        <Grid size={7}>
-                                            <Typography variant="h6" color={headerColor}>
-                                                Total
-                                            </Typography>
-                                        </Grid>
-                                        <Grid size={5} sx={{ textAlign: 'right' }}>
-                                            <Typography variant="h6" color={headerColor} fontFamily="monospace">
-                                                {formatCurrency(subtotal)}
-                                            </Typography>
-                                        </Grid>
-                                    </>
-                                )}
-                            </Grid>
-                        </Box>
-                    </Grid>
+                                            {!isPurchase && (
+                                                <>
+                                                    <Grid size={7}>
+                                                        <Typography variant="h6" color={headerColor}>
+                                                            Total
+                                                        </Typography>
+                                                    </Grid>
+                                                    <Grid size={5} sx={{ textAlign: 'right' }}>
+                                                        <Typography variant="h6" color={headerColor} fontFamily="monospace">
+                                                            {formatCurrency(subtotal)}
+                                                        </Typography>
+                                                    </Grid>
+                                                </>
+                                            )}
+                                        </>
+                                    }
+                                </Grid>
+                            </Box>
+                        </Grid>
+                    }
 
                     {/* Remarks Section */}
                     {approval.remarks && (

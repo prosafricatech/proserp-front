@@ -4,18 +4,18 @@ import { DeleteOutlined, EditOutlined, HighlightOff, VisibilityOutlined } from '
 import { Box, Button, Dialog, DialogActions, DialogContent, Grid, IconButton, LinearProgress, Tab, Tabs, Tooltip, useMediaQuery } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import RequisitionsForm from '../form/RequisitionsForm';
-import RequisitionsOnScreen from '../RequisitionsOnScreen';
-import RequisitionPDF from '../RequisitionPDF';
-import requisitionsServices from '../requisitionsServices';
-import PDFContent from '../../pdf/PDFContent';
-import { requisitionContext } from '../Requisitions';
+import RequisitionsOnScreen from '../../RequisitionsOnScreen';
+import RequisitionPDF from '../../RequisitionPDF';
+import requisitionsServices from '../../requisitionsServices';
+import PDFContent from '../../../pdf/PDFContent';
+import { requisitionContext } from '../../Requisitions';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
 import dayjs from 'dayjs';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
-import { Requisition } from '../RequisitionType';
+import { Requisition } from '../../RequisitionType';
 import { Organization } from '@/types/auth-types';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 
@@ -24,6 +24,7 @@ dayjs.extend(isSameOrAfter);
 interface EditRequisitionProps {
   requisition: Requisition;
   setOpenEditDialog: (value: boolean) => void;
+  openEditDialog: boolean;
 }
 
 interface DocumentDialogProps {
@@ -37,11 +38,12 @@ interface RequisitionsItemActionProps {
   requisition: Requisition;
 }
 
-const EditRequisition: React.FC<EditRequisitionProps> = ({ requisition, setOpenEditDialog }) => {
+const EditRequisition: React.FC<EditRequisitionProps> = ({ requisition, setOpenEditDialog, openEditDialog }) => {
   const { data: requisitionDetails, isFetching } = useQuery({
     queryKey: ['requisitionDetails', { id: requisition.id }],
     queryFn: async () => await requisitionsServices.getRequisitionDetails(requisition.id),
-    refetchOnWindowFocus: true
+    refetchOnWindowFocus: true,
+    enabled: openEditDialog && !!requisition?.id,
   });
 
   if (isFetching) {
@@ -64,7 +66,8 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
 }) => {
   const { data: requisitionDetails, isFetching } = useQuery({
     queryKey: ['requisitionDetails', { id: requisition.id }],
-    queryFn: async () => await requisitionsServices.getRequisitionDetails(requisition.id)
+    queryFn: async () => await requisitionsServices.getRequisitionDetails(requisition.id),
+    enabled: openDocumentDialog && !!requisition?.id,
   });
 
   const [selectedTab, setSelectedTab] = useState(0);
@@ -216,7 +219,13 @@ const RequisitionsItemAction: React.FC<RequisitionsItemActionProps> = ({ requisi
         fullScreen={belowLargeScreen}
         maxWidth={openEditDialog ? 'lg' : 'md'}
       >
-        {openEditDialog && <EditRequisition requisition={requisition} setOpenEditDialog={setOpenEditDialog} />}
+        {openEditDialog && (
+          <EditRequisition
+            requisition={requisition}
+            setOpenEditDialog={setOpenEditDialog}
+            openEditDialog={openEditDialog}
+          />
+        )}
         {openDocumentDialog && (
           <DocumentDialog 
             requisition={requisition} 

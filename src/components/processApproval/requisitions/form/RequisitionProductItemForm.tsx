@@ -4,7 +4,6 @@ import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { AddOutlined, CheckOutlined, DisabledByDefault } from '@mui/icons-material';
-import ProductQuickAdd from '../../productAndServices/products/ProductQuickAdd';
 import { useProductsSelect } from '@/components/productAndServices/products/ProductsSelectProvider';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import ProductSelect from '@/components/productAndServices/products/ProductSelect';
@@ -13,6 +12,7 @@ import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { Product } from '@/components/productAndServices/products/ProductType';
 import { Organization } from '@/types/auth-types';
+import ProductQuickAdd from '@/components/productAndServices/products/ProductQuickAdd';
 
 export interface RequisitionProductItem {
   product_id?: number;

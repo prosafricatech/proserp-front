@@ -5,7 +5,6 @@ import {
   AccordionDetails,
   Divider,
   Grid,
-  IconButton,
   Tooltip,
   Typography,
   Box,
@@ -18,7 +17,7 @@ import RequisitionProductItemForm, { RequisitionProductItem } from './Requisitio
 import ProductVendor from './productVendor/ProductVendor';
 import ProductVendorRow from './productVendor/ProductVendorRow';
 import { Currency } from '@/utilities/constants/countries';
-import { Vendor } from '../RequisitionType';
+import { Vendor } from '../../RequisitionType';
 
 interface RequisitionProductItemRowProps {
   setClearFormKey: (value: React.SetStateAction<number>) => void;

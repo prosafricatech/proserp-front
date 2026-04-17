@@ -1,8 +1,8 @@
 import { DisabledByDefault, EditOutlined } from '@mui/icons-material';
 import { Divider, Grid, IconButton, Tooltip, Typography } from '@mui/material';
 import React, { useState, Dispatch, SetStateAction } from 'react';
+import { Vendor } from '@/components/processApproval/RequisitionType';
 import ProductVendor from './ProductVendor';
-import { Vendor } from '../../RequisitionType';
 
 interface ProductVendorRowProps {
   index: number;

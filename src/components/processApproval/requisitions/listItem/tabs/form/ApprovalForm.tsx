@@ -14,9 +14,10 @@ import { useForm, SubmitHandler } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { useSnackbar } from 'notistack';
-import requisitionsServices from '../../../requisitionsServices';
+import requisitionsServices from '../../../../requisitionsServices';
 import ApprovalRequisitionProductItem from './ApprovalRequisitionProductItem';
 import ApprovalRequisitionLedgerItem from './ApprovalRequisitionLedgerItem';
+import ApprovalLeaveItemsSummary from './ApprovalLeaveItemsSummary';
 import { DateTimePicker } from '@mui/x-date-pickers';
 import dayjs, { Dayjs } from 'dayjs';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -56,9 +57,10 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
   const { checkOrganizationPermission } = useJumboAuth();
+  const requisitionItems: RequisitionItem[] = 'items' in requisition ? (requisition.items || []) : [];
 
   const getInitialProductItems = (): RequisitionItem[] => {
-    const items = approval?.items || requisition.items || [];
+    const items = approval?.items || requisitionItems;
     return items.map((item: RequisitionItem) => ({
       ...item,
       id: item.requisition_product?.id || item.id,
@@ -74,7 +76,7 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
   };
 
   const getInitialLedgerItems = (): RequisitionItem[] => {
-    const items = approval?.items || requisition.items || [];
+    const items = approval?.items || requisitionItems;
     return items.map((item: RequisitionItem) => ({
       ...item,
       id: item.requisition_ledger_item?.id || item.id,
@@ -95,7 +97,12 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
   }, [requisition, approval]);
 
   const isPurchaseType = requisition?.approval_chain?.process_type?.toLowerCase() === 'purchase';
+  const isLeaveType = requisition?.approval_chain?.process_type?.toLowerCase() === 'leave_request';
   const isFinal = isEdit ? approval?.is_final === 1 : requisition?.next_approval_level?.is_final;
+  const approvalRequisitionItems: RequisitionItem[] =
+    approval?.requisition && 'items' in approval.requisition ? (approval.requisition.items || []) : [];
+  const leaveSummaryItems =
+    requisition.leave_items || approval?.requisition?.leave_items || requisitionItems || approvalRequisitionItems || [];
 
   const validationSchema = yup.object().shape({
     approval_date: yup.string().required('Approval Date is required').typeError('Approval Date is required'),
@@ -117,7 +124,7 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
           })
         )
       : yup.array().nullable(),
-    ledger_items: !isPurchaseType
+    ledger_items: !isPurchaseType && !isLeaveType
       ? yup.array().of(
           yup.object().shape({
             rate: yup.number()
@@ -146,8 +153,8 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
       approval_date: approvalDate.toISOString(),
       process_type: requisition?.approval_chain?.process_type,
       remarks: approval?.remarks || requisition?.remarks || '',
-      product_items: isPurchaseType ? (approval?.items || requisition.items) : [],
-      ledger_items: !isPurchaseType ? (approval?.items || requisition.items) : [],
+      product_items: isPurchaseType ? (approval?.items || requisitionItems) : [],
+      ledger_items: !isPurchaseType && !isLeaveType ? (approval?.items || requisitionItems) : [],
       chain_level_id: approval && isEdit ? approval.approval_chain_level_id : requisition?.next_approval_level?.id,
     }
   });
@@ -215,7 +222,7 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
         shouldValidate: true,
         shouldDirty: true,
       });
-    } else {
+    } else if (!isLeaveType) {
       const ledger_items = requisitionLedgerItem?.map((item) => ({
         requisition_ledger_item_id: item.id,
         quantity: item.quantity,
@@ -229,14 +236,19 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
         shouldDirty: true,
       });
     }
-  }, [requisitionProductItem, requisitionLedgerItem, setValue, isPurchaseType]);
+  }, [requisitionProductItem, requisitionLedgerItem, setValue, isPurchaseType, isLeaveType]);
 
   const saveMutation = React.useMemo(() => {
     return isEdit ? editApprovalRequisition.mutate : approveRequisition.mutate;
   }, [isEdit, editApprovalRequisition, approveRequisition]);
 
   const onSubmit: SubmitHandler<FormValues> = (formData) => {
-    saveMutation(formData);
+    const payload = {
+      ...formData,
+      product_items: isPurchaseType ? formData.product_items : undefined,
+      ledger_items: !isPurchaseType && !isLeaveType ? formData.ledger_items : undefined,
+    };
+    saveMutation(payload as FormValues);
   };
 
   return (
@@ -302,7 +314,11 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
         </Grid>
       </DialogTitle>
       <DialogContent>
-        {isPurchaseType ? 
+        {isLeaveType ? (
+            <ApprovalLeaveItemsSummary
+              items={leaveSummaryItems as any}
+            />
+          ) : isPurchaseType ? 
             <ApprovalRequisitionProductItem 
               approval={approval} 
               requisition={requisition} 

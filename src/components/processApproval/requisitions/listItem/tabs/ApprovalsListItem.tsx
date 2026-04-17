@@ -1,8 +1,7 @@
 import { Alert, Chip, Grid, Tooltip, Typography } from '@mui/material';
-import React from 'react';
 import ApprovalItemAction from './ApprovalItemAction';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
-import { Approval, Requisition } from '../../RequisitionType';
+import { Approval, Requisition } from '../../../RequisitionType';
 
 interface ApprovalsListItemProps {
   approvals: Approval[];

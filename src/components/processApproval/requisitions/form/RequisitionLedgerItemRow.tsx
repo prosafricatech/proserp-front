@@ -1,13 +1,13 @@
 import { DisabledByDefault, EditOutlined, VisibilityOutlined } from '@mui/icons-material';
 import { Dialog, Divider, Grid, IconButton, LinearProgress, ListItemText, Tooltip, Typography } from '@mui/material';
 import React, { useState, Dispatch, SetStateAction } from 'react';
-import RequisitionLedgerItemForm from './RequisitionLedgerItemForm';
-import RelatableOrderDetails from '../listItem/tabs/form/RelatableOrderDetails';
-import purchaseServices from '../../procurement/purchases/purchase-services';
 import { useQuery } from '@tanstack/react-query';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
-import { RequisitionLedgerItem } from '../RequisitionType';
+import { RequisitionLedgerItem } from '../../RequisitionType';
 import { Currency } from '@/utilities/constants/countries';
+import purchaseServices from '@/components/procurement/purchases/purchase-services';
+import RelatableOrderDetails from '../listItem/tabs/form/RelatableOrderDetails';
+import RequisitionLedgerItemForm from './RequisitionLedgerItemForm';
 
 interface FetchRelatableDetailsProps {
   relatable: any;
@@ -183,7 +183,7 @@ function RequisitionLedgerItemRow({
           </Grid>
         </Grid>
       ) : (
-        <RequisitionLedgerItemForm 
+        <RequisitionLedgerItemForm
           setClearFormKey={setClearFormKey} 
           submitMainForm={submitMainForm} 
           setSubmitItemForm={setSubmitItemForm} 

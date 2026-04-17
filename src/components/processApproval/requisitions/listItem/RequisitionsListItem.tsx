@@ -16,11 +16,12 @@ import {
 import RemoveIcon from '@mui/icons-material/Remove';
 import AddIcon from '@mui/icons-material/Add';
 import RequisitionsItemAction from './RequisitionsItemAction';
-import AttachmentForm from '../../filesShelf/attachments/AttachmentForm';
+import AttachmentForm from '../../../filesShelf/attachments/AttachmentForm';
 import ApprovalsTab from './tabs/ApprovalsTab';
 import { Attachment, VerifiedRounded } from '@mui/icons-material';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
-import { Requisition } from '../RequisitionType';
+import { Requisition } from '../../RequisitionType';
+import { processTypeConfig, requisitionAmountDisplay } from '../../utils/requisition';
 
 interface RequisitionsListItemProps {
   requisition: Requisition;
@@ -40,6 +41,13 @@ const RequisitionsListItem = ({ requisition }: RequisitionsListItemProps) => {
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
   };
+
+  const processConfig = processTypeConfig[requisition.process_type as keyof typeof processTypeConfig] || {
+    label: requisition.process_type,
+    color: 'default' as const,
+  };
+
+  const isLeaveRequest = requisition.process_type === 'LEAVE_REQUEST';
   
   return (
     <Accordion
@@ -101,9 +109,7 @@ const RequisitionsListItem = ({ requisition }: RequisitionsListItemProps) => {
           </Grid>
           <Grid size={{xs: 12, md: 2.5}}>
             <Tooltip title='Process'>
-              <Typography>
-                {requisition.process_type}
-              </Typography>
+              <Chip size='small' color={processConfig.color} label={processConfig.label} />
             </Tooltip>
             <Tooltip title={'Cost Center'}>
               <Chip
@@ -132,12 +138,7 @@ const RequisitionsListItem = ({ requisition }: RequisitionsListItemProps) => {
           <Grid size={{xs: 8, md: 2.5, lg: 2}}>
             <Tooltip title='Amount'>
               <Typography>
-                {(requisition.amount + requisition.vat_amount)?.toLocaleString('en-US', 
-                  {
-                    style: 'currency',
-                    currency: requisition.currency?.code,
-                  })
-                }
+                {requisitionAmountDisplay(requisition, requisition.currency?.code)}
               </Typography>
             </Tooltip>
             <Tooltip title='Status'>
@@ -173,7 +174,7 @@ const RequisitionsListItem = ({ requisition }: RequisitionsListItemProps) => {
                   </Badge>
                 </Tooltip>
               )}
-              {(requisition.process_type === 'PAYMENT'
+              {!isLeaveRequest && (requisition.process_type === 'PAYMENT'
                 ? requisition.is_fully_paid
                 : requisition.is_fully_ordered) && (
                 <Tooltip

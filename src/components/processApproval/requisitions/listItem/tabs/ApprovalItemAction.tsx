@@ -8,15 +8,15 @@ import { useSnackbar } from 'notistack';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
 import ApprovalPDF from './ApprovalPDF';
 import ApprovalOnScreen from './ApprovalOnScreen';
-import requisitionsServices from '../../requisitionsServices';
 import dayjs from 'dayjs';
 import { Organization } from '@/types/auth-types';
-import { Approval, Requisition } from '../../RequisitionType';
+import { Approval, Requisition } from '../../../RequisitionType';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import PDFContent from '@/components/pdf/PDFContent';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
+import requisitionsServices from '@/components/processApproval/requisitionsServices';
 dayjs.extend(isSameOrAfter);
 
 interface EditApprovalProps {

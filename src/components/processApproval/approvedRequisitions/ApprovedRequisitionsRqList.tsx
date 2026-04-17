@@ -46,7 +46,7 @@ interface QueryOptions {
 }
 
 interface ApprovedRequisitionsRqListProps {
-  processType: 'purchase' | 'payment' | 'all';
+  processType: 'purchase' | 'payment' | 'leave_request' | 'all';
 }
 
 const ApprovedRequisitionsRqList: React.FC<ApprovedRequisitionsRqListProps> = ({ processType }) => {
