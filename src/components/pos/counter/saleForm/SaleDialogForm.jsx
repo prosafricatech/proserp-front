@@ -1,5 +1,4 @@
 'use client'
-import { LoadingButton } from '@mui/lab';
 import { Button, DialogActions, DialogContent, DialogTitle, Grid, Alert, Dialog, Tooltip, IconButton, Box, useMediaQuery} from '@mui/material'
 import React, { useEffect, useState } from 'react'
 import { useSnackbar } from 'notistack';
@@ -121,6 +120,10 @@ function SaleDialogForm({toggleOpen,sale = null}) {
     const majorInfoOnly = watch('major_info_only');
     const currencyId = watch('currency_id');
 
+    useEffect(() => {
+        setValue('items', items, { shouldValidate: false });
+    }, [items]);
+
     const getLastPriceItems = {
         stakeholder_id : stakeholder_id,
         currency_id: currencyId,
@@ -193,6 +196,7 @@ function SaleDialogForm({toggleOpen,sale = null}) {
     },[updateSale,addSale]);
 
     useEffect(() => {
+      console.log(sale);
         if (!!sale?.sale_items) {
             setItems(sale.sale_items.map(item => {
                 return {...item, store_id: item?.inventory_movement?.store_id}
