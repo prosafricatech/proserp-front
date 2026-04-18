@@ -66,6 +66,7 @@ function RequisitionPDF({ requisition, organization }: RequisitionPDFProps) {
     const grandTotal = requisitionItems
         ?.reduce((total: number, item: RequisitionItem) => 
             total + (item.quantity * item.rate * (1 + (item.vat_percentage || 0) * 0.01)), 0) || 0;
+    const totalLeaveDays = leaveItems.reduce((sum, item) => sum + Number(item.days_requested || 0), 0);
 
 
     return (
@@ -230,7 +231,17 @@ function RequisitionPDF({ requisition, organization }: RequisitionPDFProps) {
                     )}
                 </View>
 
-                                {!isLeaveRequest && (
+                                {isLeaveRequest ? (
+                                    <View style={{ ...pdfStyles.tableRow, marginBottom: 4 }}>
+                                        <Text style={{ textAlign: 'center', flex : 4.5 }}></Text>
+                                        <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2, textAlign: 'right' }}>
+                                            Total Leave Days
+                                        </Text>
+                                        <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2.2, textAlign: 'right' }}>
+                                            {`${totalLeaveDays.toLocaleString()} day(s)`}
+                                        </Text>
+                                    </View>
+                                ) : (
                   <>
                     <View style={{ ...pdfStyles.tableRow, marginBottom: 4 }}>
                       <Text style={{ textAlign: 'center', flex : 4.5 }}></Text>

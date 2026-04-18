@@ -236,7 +236,17 @@ function ApprovalPDF({ approval, organization }: ApprovalPDFProps) {
           )}
         </View>
         
-        {!isLeaveRequest && 
+        {isLeaveRequest ? (
+          <View style={{ ...pdfStyles.tableRow, marginBottom: 4 }}>
+            <Text style={{ flex: 4.5 }}></Text>
+            <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2, textAlign: 'right' }}>
+              Total Leave Days
+            </Text>
+            <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2.2, textAlign: 'right' }}>
+              {`${totalLeaveDays.toLocaleString()} day(s)`}
+            </Text>
+          </View>
+        ) : 
           <View style={{ ...pdfStyles.tableRow, marginBottom: 4 }}>
             <Text style={{ flex: 4.5 }}></Text>
             <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2, textAlign: 'right' }}>
