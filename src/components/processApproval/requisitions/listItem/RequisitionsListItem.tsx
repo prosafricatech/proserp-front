@@ -3,12 +3,21 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
+  Alert,
   Badge,
+  Box,
   Chip,
   Grid,
   ListItemText,
+  Paper,
   Stack,
   Tab,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   Tabs,
   Tooltip,
   Typography,
@@ -21,7 +30,7 @@ import ApprovalsTab from './tabs/ApprovalsTab';
 import { Attachment, VerifiedRounded } from '@mui/icons-material';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import { Requisition } from '../../RequisitionType';
-import { processTypeConfig, requisitionAmountDisplay } from '../../utils/requisition';
+import { getLeaveItems, processTypeConfig, requisitionAmountDisplay } from '../../utils/requisition';
 
 interface RequisitionsListItemProps {
   requisition: Requisition;
@@ -48,6 +57,8 @@ const RequisitionsListItem = ({ requisition }: RequisitionsListItemProps) => {
   };
 
   const isLeaveRequest = requisition.process_type === 'LEAVE_REQUEST';
+  const leaveItems = isLeaveRequest ? getLeaveItems(requisition as any) : [];
+  const leaveTypesSummary = Array.from(new Set(leaveItems.map((item) => item.leave_type?.name).filter(Boolean))).join(', ');
   
   return (
     <Accordion
@@ -107,33 +118,32 @@ const RequisitionsListItem = ({ requisition }: RequisitionsListItemProps) => {
               <Typography variant='caption'>{readableDate(requisition.requisition_date)}</Typography>
             </Tooltip>
           </Grid>
-          <Grid size={{xs: 12, md: 2.5}}>
+          <Grid size={{xs: 12, md: 3}}>
             <Tooltip title='Process'>
               <Chip size='small' color={processConfig.color} label={processConfig.label} />
             </Tooltip>
             <Tooltip title={'Cost Center'}>
-              <Chip
-                size="small"
-                label={requisition.cost_center?.name}
-              />
+              <Typography
+                variant='caption'
+                color='text.secondary'
+                sx={{ display: 'block', mt: 0.5 }}
+              >
+                {requisition.cost_center?.name || '-'}
+              </Typography>
             </Tooltip>
           </Grid>
-          <Grid size={{xs: 12, md: 4, lg: 4.5}}>
-            <ListItemText
-              secondary={
-                <Tooltip title={'Remarks'}>
-                  <Typography
-                    component="span"
-                    variant="body2"
-                    fontSize={14}
-                    mb={0}
-                    sx={{ flexWrap: 'wrap' }}
-                  >
-                    {requisition.remarks}
-                  </Typography>
-                </Tooltip>
-              }
-            />
+          <Grid size={{xs: 12, md: 4, lg: 4}}>
+            <Tooltip title={'Remarks'}>
+              <Typography
+                component="span"
+                variant="body2"
+                fontSize={14}
+                mb={0}
+                sx={{ flexWrap: 'wrap' }}
+              >
+                {requisition.remarks}
+              </Typography>
+            </Tooltip>
           </Grid>
           <Grid size={{xs: 8, md: 2.5, lg: 2}}>
             <Tooltip title='Amount'>
@@ -174,6 +184,13 @@ const RequisitionsListItem = ({ requisition }: RequisitionsListItemProps) => {
                   </Badge>
                 </Tooltip>
               )}
+              {isLeaveRequest && leaveItems.length > 0 && (
+                <Tooltip title="Leave Items Count">
+                  <Badge badgeContent={leaveItems.length} color="secondary">
+                    <Chip size="small" label="LR" color="info" />
+                  </Badge>
+                </Tooltip>
+              )}
               {!isLeaveRequest && (requisition.process_type === 'PAYMENT'
                 ? requisition.is_fully_paid
                 : requisition.is_fully_ordered) && (
@@ -197,6 +214,45 @@ const RequisitionsListItem = ({ requisition }: RequisitionsListItemProps) => {
           <Grid size={{xs: 12}} textAlign={'end'}>
             <RequisitionsItemAction requisition={requisition} />
           </Grid>
+          {isLeaveRequest && (
+            <Grid size={{ xs: 12 }}>
+              {leaveItems.length ? (
+                <TableContainer component={Paper} variant="outlined">
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>S/N</TableCell>
+                        <TableCell>Employee</TableCell>
+                        <TableCell>Leave Type</TableCell>
+                        <TableCell>Start Date</TableCell>
+                        <TableCell>End Date</TableCell>
+                        <TableCell align="right">Days</TableCell>
+                        <TableCell>Reason</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {leaveItems.map((item, index) => (
+                        <TableRow key={item.id || `${index}-${item.start_date}`}>
+                          <TableCell>{index + 1}</TableCell>
+                          <TableCell>
+                            {[item.employee?.first_name, item.employee?.last_name].filter(Boolean).join(' ').trim() || '-'}
+                            {item.employee?.employee_number ? ` (${item.employee.employee_number})` : ''}
+                          </TableCell>
+                          <TableCell>{item.leave_type?.name || '-'}</TableCell>
+                          <TableCell>{readableDate(item.start_date, false)}</TableCell>
+                          <TableCell>{readableDate(item.end_date, false)}</TableCell>
+                          <TableCell align="right">{Number(item.days_requested || 0).toLocaleString()}</TableCell>
+                          <TableCell>{item.reason || '-'}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              ) : (
+                <Alert severity="info" variant="outlined">No leave items found for this requisition.</Alert>
+              )}
+            </Grid>
+          )}
           <Grid size={{xs: 12}}>
             <Tabs
               value={activeTab}
