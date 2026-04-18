@@ -115,6 +115,7 @@ const RequisitionsOnScreen: React.FC<Props> = ({
     .reduce((total: number, item: RequisitionItem) => total + item.quantity * item.rate * (1 + (item.vat_percentage || 0) / 100), 0) || 0;
 
   const subtotal = requisitionItems.reduce((total: number, item: RequisitionItem) => total + (item.quantity || 0) * (item.rate || 0), 0);
+  const totalLeaveDays = leaveItems.reduce((sum, item) => sum + Number(item.days_requested || 0), 0);
 
   const formatCurrency = (amount: number) => {
     return amount?.toLocaleString('en-US', {
@@ -359,7 +360,7 @@ const RequisitionsOnScreen: React.FC<Props> = ({
           </Grid>
 
           {/* Totals Section */}
-          {!isLeaveRequest && <Grid size={12}>
+          <Grid size={12}>
             <Box 
               sx={{ 
                 mt: 3, 
@@ -369,6 +370,20 @@ const RequisitionsOnScreen: React.FC<Props> = ({
                 borderRadius: 1
               }}
             >
+              {isLeaveRequest ? (
+                <Grid container spacing={1}>
+                  <Grid size={7}>
+                    <Typography variant="h6" color={headerColor}>
+                      Total Leave Days
+                    </Typography>
+                  </Grid>
+                  <Grid size={5} sx={{ textAlign: 'right' }}>
+                    <Typography variant="h6" color={headerColor} fontFamily="monospace">
+                      {totalLeaveDays.toLocaleString()} day(s)
+                    </Typography>
+                  </Grid>
+                </Grid>
+              ) : (
                 <Grid container spacing={1}>
                   <Grid size={7}>
                     <Typography variant="body1">
@@ -421,8 +436,9 @@ const RequisitionsOnScreen: React.FC<Props> = ({
                     </>
                   )}
                 </Grid>
+              )}
             </Box>
-          </Grid>}
+          </Grid>
 
           {/* Remarks Section */}
           {requisition.remarks && (

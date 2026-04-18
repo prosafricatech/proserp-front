@@ -354,8 +354,7 @@ function ApprovalOnScreen({ approval, organization, belowLargeScreen }: Approval
                     </Grid>
 
                     {/* Totals Section */}
-                    {!isLeaveRequest &&
-                        <Grid size={12}>
+                    <Grid size={12}>
                             <Box 
                                 sx={{ 
                                     mt: 3, 
@@ -365,8 +364,21 @@ function ApprovalOnScreen({ approval, organization, belowLargeScreen }: Approval
                                     borderRadius: 1
                                 }}
                             >
+                                {isLeaveRequest ? (
+                                    <Grid container spacing={1}>
+                                        <Grid size={7}>
+                                            <Typography variant="h6" color={headerColor}>
+                                                Total Leave Days
+                                            </Typography>
+                                        </Grid>
+                                        <Grid size={5} sx={{ textAlign: 'right' }}>
+                                            <Typography variant="h6" color={headerColor} fontFamily="monospace">
+                                                {totalLeaveDays.toLocaleString()} day(s)
+                                            </Typography>
+                                        </Grid>
+                                    </Grid>
+                                ) : (
                                 <Grid container spacing={1}>
-                                    {
                                         <>
                                             <Grid size={7}>
                                                 <Typography variant="body1">
@@ -419,11 +431,10 @@ function ApprovalOnScreen({ approval, organization, belowLargeScreen }: Approval
                                                 </>
                                             )}
                                         </>
-                                    }
                                 </Grid>
+                                )}
                             </Box>
                         </Grid>
-                    }
 
                     {/* Remarks Section */}
                     {approval.remarks && (

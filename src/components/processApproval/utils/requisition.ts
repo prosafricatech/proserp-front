@@ -1,4 +1,4 @@
-import { Requisition } from '../RequisitionType';
+import { LeaveRequisitionItem, Requisition } from '../RequisitionType';
 
 export const processTypeConfig = {
   PURCHASE: { label: 'Purchase', color: 'primary' as const },
@@ -6,9 +6,35 @@ export const processTypeConfig = {
   LEAVE_REQUEST: { label: 'Leave Request', color: 'info' as const },
 } as const;
 
-export function getLeaveItemsTotalDays(requisition: Pick<Requisition, 'process_type' | 'leave_items'>): number {
-  if (requisition.process_type !== 'LEAVE_REQUEST') return 0;
-  return (requisition.leave_items || []).reduce((sum, item) => sum + Number(item.days_requested || 0), 0);
+type LeaveLikeRequisition = Pick<Requisition, 'process_type' | 'leave_items'> & {
+  items?: LeaveRequisitionItem[];
+};
+
+export function getLeaveItems(requisition: LeaveLikeRequisition): LeaveRequisitionItem[] {
+  if (requisition.process_type !== 'LEAVE_REQUEST') return [];
+  const leaveItems = requisition.leave_items || ('items' in requisition ? requisition.items : []) || [];
+  return leaveItems.map((item) => ({
+    ...item,
+    employee: item.employee || (item.employee_number || item.first_name || item.last_name
+      ? {
+          id: item.employee_id,
+          employee_number: item.employee_number,
+          first_name: item.first_name,
+          last_name: item.last_name,
+        }
+      : undefined),
+    leave_type: item.leave_type || (item.leave_type_name
+      ? {
+          id: item.leave_type_id,
+          name: item.leave_type_name,
+        }
+      : undefined),
+    days_requested: Number(item.days_requested || 0),
+  }));
+}
+
+export function getLeaveItemsTotalDays(requisition: LeaveLikeRequisition): number {
+  return getLeaveItems(requisition).reduce((sum, item) => sum + Number(item.days_requested || 0), 0);
 }
 
 export function requisitionAmountDisplay(requisition: Requisition, currencyCode?: string): string {

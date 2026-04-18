@@ -1,4 +1,4 @@
-import { Autocomplete, Button, Dialog, DialogActions, DialogContent, DialogTitle, Grid, IconButton, TextField, Tooltip } from '@mui/material'
+import { Autocomplete, Button, Dialog, DialogActions, DialogContent, DialogTitle, Divider, Grid, IconButton, TextField, Tooltip, Typography } from '@mui/material'
 import React, { useContext, useEffect, useState } from 'react'
 import { LoadingButton } from '@mui/lab';
 import * as yup from "yup";
@@ -473,13 +473,38 @@ function RequisitionsForm({ toggleOpen, requisition }: RequisitionsFormProps) {
               </Grid>
             </form>
           </Grid>
-          <Grid size={{xs: 12, md: 4, lg: 3}}>
-            <RequisitionSummary 
-              isPurchase={selectedProcessType === 'PURCHASE'} 
-              vatableAmount={vatableAmount} 
-              totalAmount={totalAmount} 
-            />
-          </Grid>
+          {selectedProcessType === 'LEAVE_REQUEST' ? (
+            <Grid size={{xs: 12, md: 4, lg: 3}}>
+              <Grid container columnSpacing={1}>
+                <Grid size={{xs: 12}}>
+                  <Typography align='center' variant='h3'>Summary</Typography>
+                  <Divider />
+                </Grid>
+                <Grid size={{xs: 7}}>
+                  <Typography align='left' variant='body2'>Leave Items:</Typography>
+                </Grid>
+                <Grid size={{xs: 5}}>
+                  <Typography align='right' variant='h5'>{requisition_leave_items.length}</Typography>
+                </Grid>
+                <Grid size={{xs: 7}}>
+                  <Typography align='left' variant='body2'>Total Days:</Typography>
+                </Grid>
+                <Grid size={{xs: 5}}>
+                  <Typography align='right' variant='h5'>
+                    {requisition_leave_items.reduce((sum, item) => sum + (Number(item.days_requested) || 0), 0)}
+                  </Typography>
+                </Grid>
+              </Grid>
+            </Grid>
+          ) : (
+            <Grid size={{xs: 12, md: 4, lg: 3}}>
+              <RequisitionSummary 
+                isPurchase={selectedProcessType === 'PURCHASE'} 
+                vatableAmount={vatableAmount} 
+                totalAmount={totalAmount} 
+              />
+            </Grid>
+          )}
           <Grid size={{xs: 12}}>
             {
               selectedProcessType === 'PAYMENT' ?
