@@ -73,7 +73,7 @@ const Requisitions = () => {
         queryKey: 'requisitions',
         queryParams: {
             id: params.id as string,
-            keyword: getSanitizedSearchKeyword('Requisitions', searchParams),
+            keyword: '',
             process_type: 'all',
             next_approval_role_id: null,
             cost_center_ids: authOrganization?.costCenters?.map((cost_center: CostCenter) => cost_center.id) || [],
@@ -81,17 +81,6 @@ const Requisitions = () => {
         countKey: 'total',
         dataKey: 'data',
     });
-    // Sync in-page search with global search param
-    useEffect(() => {
-        const search = getSanitizedSearchKeyword('Requisitions', searchParams);
-        setQueryOptions((state) => ({
-            ...state,
-            queryParams: {
-                ...state.queryParams,
-                keyword: search,
-            },
-        }));
-    }, [searchParams]);
 
     const [mounted, setMounted] = React.useState(false);
     React.useEffect(() => {

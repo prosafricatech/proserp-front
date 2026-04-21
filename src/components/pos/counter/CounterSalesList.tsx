@@ -1,6 +1,4 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { getSanitizedSearchKeyword } from '@/utilities/getSanitizedSearchKeyword';
 import { useCounter } from './CounterProvider';
 import JumboRqList from '@jumbo/components/JumboReactQuery/JumboRqList/JumboRqList';
 import { Alert, Box, Grid, IconButton, LinearProgress, Skeleton, Tooltip } from '@mui/material';
@@ -61,7 +59,6 @@ const RqList: React.FC<RqListProps> = ({ activeCounter }) => {
   });
 
   useEffect(() => {
-    const searchValue = getSanitizedSearchKeyword('Sales Counter', searchParams);
     setQueryOptions(state => ({
       ...state,
       queryKey: "counterSales",
