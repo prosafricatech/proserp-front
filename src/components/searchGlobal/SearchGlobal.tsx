@@ -7,12 +7,10 @@ import { Search, SearchIconWrapper, StyledInputBase } from './style';
 import React from 'react';
 import { useSpinner } from '@/shared/ProgressIndicators/SpinnerContext';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-
 import { staticMenuItems } from '@/utilities/constants/static-menu-items';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { MODULES } from '@/utilities/constants/modules';
-
 import { entityConfigs } from './entityConfigs';
 
 type SearchGlobalProps = {
@@ -47,7 +45,7 @@ const SearchGlobal = ({ wrapperSx, sx }: SearchGlobalProps) => {
     'Requisitions': { orgPermissions: [PERMISSIONS.REQUISITIONS_READ], modules: [MODULES.PROCESS_APPROVAL] },
     'Approvals': { orgPermissions: [PERMISSIONS.REQUISITIONS_READ], modules: [MODULES.PROCESS_APPROVAL] },
     'Outlets': { orgPermissions: [PERMISSIONS.OUTLETS_READ], modules: [MODULES.POINT_OF_SALE] },
-    'Proformas': { orgPermissions: [PERMISSIONS.PROFORMA_INVOICES_READ], modules: [MODULES.POINT_OF_SALE] },
+    'Proforma Invoices': { orgPermissions: [PERMISSIONS.PROFORMA_INVOICES_READ], modules: [MODULES.POINT_OF_SALE] },
     'POS Reports': { orgPermissions: [PERMISSIONS.SALES_REPORTS], modules: [MODULES.POINT_OF_SALE] },
     'POS Price Lists': { orgPermissions: [PERMISSIONS.PRICE_LISTS_READ], modules: [MODULES.POINT_OF_SALE] },
     'POS Settings': { orgPermissions: [PERMISSIONS.POS_SETTINGS], modules: [MODULES.POINT_OF_SALE] },
@@ -69,6 +67,16 @@ const SearchGlobal = ({ wrapperSx, sx }: SearchGlobalProps) => {
     'Stakeholders': { orgPermissions: [PERMISSIONS.STAKEHOLDERS_READ] },
     'Currencies': { orgPermissions: [PERMISSIONS.ACCOUNTS_MASTERS_READ] },
     'Measurement Units': { orgPermissions: [PERMISSIONS.MEASUREMENT_UNITS_READ] },
+    'Employees': { modules: [MODULES.HUMAN_RESOURCES] },
+    'Leave Requests': { modules: [MODULES.HUMAN_RESOURCES] },
+    'Payroll Periods': { modules: [MODULES.HUMAN_RESOURCES] },
+    'Departments': { modules: [MODULES.HUMAN_RESOURCES] },
+    'Designations': { modules: [MODULES.HUMAN_RESOURCES] },
+    'Leave Types': { modules: [MODULES.HUMAN_RESOURCES] },
+    'Allowance Types': { modules: [MODULES.HUMAN_RESOURCES] },
+    'Deduction Types': { modules: [MODULES.HUMAN_RESOURCES] },
+    'Employer Contribution Types': { modules: [MODULES.HUMAN_RESOURCES] },
+    'PAYE Tax Bands': { modules: [MODULES.HUMAN_RESOURCES] },
   };
 
   const { checkPermission, checkOrganizationPermission, organizationHasSubscribed } = useJumboAuth();
@@ -168,21 +176,24 @@ const SearchGlobal = ({ wrapperSx, sx }: SearchGlobalProps) => {
   };
 
   const handleResultClick = (result: SearchResult) => {
-    // Parse the result.url and add/replace the search param with the clicked label
+    // Prevent adding ?search=PageName for static menu items
+    const isStaticMenu = staticMenuItems.some(item => item.label === result.label);
     let url = result.url;
-    try {
-      const urlObj = new URL(url, window.location.origin);
-      urlObj.searchParams.set('search', result.label);
-      url = urlObj.pathname + urlObj.search;
-    } catch (e) {
-      // fallback: if URL parsing fails, append/replace manually
-      if (url.includes('?')) {
-        url = url.replace(/([?&])search=[^&]*/, `$1search=${encodeURIComponent(result.label)}`);
-        if (!/([?&])search=/.test(url)) {
-          url += `&search=${encodeURIComponent(result.label)}`;
+    if (!isStaticMenu) {
+      try {
+        const urlObj = new URL(url, window.location.origin);
+        urlObj.searchParams.set('search', result.label);
+        url = urlObj.pathname + urlObj.search;
+      } catch (e) {
+        // fallback: if URL parsing fails, append/replace manually
+        if (url.includes('?')) {
+          url = url.replace(/([?&])search=[^&]*/, `$1search=${encodeURIComponent(result.label)}`);
+          if (!/([?&])search=/.test(url)) {
+            url += `&search=${encodeURIComponent(result.label)}`;
+          }
+        } else {
+          url += `?search=${encodeURIComponent(result.label)}`;
         }
-      } else {
-        url += `?search=${encodeURIComponent(result.label)}`;
       }
     }
     // Only show spinner if navigating to a different route (including search params)

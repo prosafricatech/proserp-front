@@ -7,7 +7,7 @@ export const staticMenuItems = [
   { label: 'Approvals', uri: '/en-US/requisition-approvals' },
   { label: 'Approval Chains', uri: '/en-US/approval-chains' },
   { label: 'Sales Counter', uri: '/en-US/pos/sales-counters' },
-  { label: 'Proformas', uri: '/en-US/pos/proformas' },
+  { label: 'Proforma Invoices', uri: '/en-US/pos/proformas' },
   { label: 'POS Reports', uri: '/en-US/pos/reports' },
   { label: 'Outlets', uri: '/en-US/pos/outlets' },
   { label: 'POS Price Lists', uri: '/en-US/pos/price_lists' },

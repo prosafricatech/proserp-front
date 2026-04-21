@@ -340,6 +340,8 @@ const procurementConfigs = [
 
 // ==================== PROJECT MANAGEMENT CONFIGURATIONS ====================
 
+import projectCategoryServices from '@/components/projectManagement/projectCategories/project-category-services';
+
 const projectConfigs = [
   {
     type: 'project',
@@ -355,6 +357,27 @@ const projectConfigs = [
               type: 'Project',
               url: menuItem ? `${menuItem}?search=${encodeURIComponent(query)}` : undefined,
               description: 'Project',
+            }))
+          : [];
+      } catch {
+        return [];
+      }
+    },
+  },
+  {
+    type: 'projectCategory',
+    label: 'Project Category',
+    search: async (query: string) => {
+      try {
+        const data = await projectCategoryServices.getList({ keyword: query, limit: 5 });
+        const menuItem = staticMenuItems.find(item => item.label.toLowerCase().includes('project categories'))?.uri;
+        return Array.isArray(data?.data)
+          ? data.data.map((item: any) => ({
+              id: item.id,
+              label: item.name,
+              type: 'Project Category',
+              url: menuItem ? `${menuItem}?search=${encodeURIComponent(item.name || query)}` : undefined,
+              description: 'Project Category',
             }))
           : [];
       } catch {

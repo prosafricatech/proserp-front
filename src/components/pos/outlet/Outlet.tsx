@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Card, Stack, Typography } from '@mui/material';
 import { useParams, useSearchParams } from 'next/navigation';
+import { getSanitizedSearchKeyword } from '@/utilities/getSanitizedSearchKeyword';
 import JumboListToolbar from '@jumbo/components/JumboList/components/JumboListToolbar';
 import JumboRqList from '@jumbo/components/JumboReactQuery/JumboRqList';
 import JumboSearch from '@jumbo/components/JumboSearch';
@@ -26,13 +27,13 @@ import outletServices from './outlet-services';
 
     const [queryOptions, setQueryOptions] = useState({
       queryKey: 'Outlets',
-      queryParams: { id: params.id, keyword: searchParams.get('search') || '' },
+      queryParams: { id: params.id, keyword: getSanitizedSearchKeyword('Outlets', searchParams) },
       countKey: 'total',
       dataKey: 'data',
     });
     // Sync in-page search with global search param
     useEffect(() => {
-      const search = searchParams.get('search') || '';
+      const search = getSanitizedSearchKeyword('Outlets', searchParams);
       setQueryOptions((state) => ({
         ...state,
         queryParams: {
