@@ -17,7 +17,8 @@ import ProductsSelectProvider from '../../productAndServices/products/ProductsSe
 import CurrencySelectProvider from '../../masters/Currencies/CurrencySelectProvider';
 import LedgerSelectProvider from '../../accounts/ledgers/forms/LedgerSelectProvider';
 import StakeholderSelectProvider from '../../masters/stakeholders/StakeholderSelectProvider';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
+import { getSanitizedSearchKeyword } from '@/utilities/getSanitizedSearchKeyword';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 import UnauthorizedAccess from '@/shared/Information/UnauthorizedAccess';
@@ -51,6 +52,7 @@ interface ApprovedRequisitionsRqListProps {
 
 const ApprovedRequisitionsRqList: React.FC<ApprovedRequisitionsRqListProps> = ({ processType }) => {
   const params = useParams();
+  const searchParams = useSearchParams();
   const listRef = useRef<any>(null);
   const { checkOrganizationPermission, authOrganization } = useJumboAuth();
   const [openFilters, setOpenFilters] = useState(false);
@@ -66,7 +68,7 @@ const ApprovedRequisitionsRqList: React.FC<ApprovedRequisitionsRqListProps> = ({
     queryKey: 'approvedRequisitions',
     queryParams: { 
       id: params.id as string,
-      keyword: '',
+      keyword: getSanitizedSearchKeyword('Approved Requisitions', searchParams),
       process_type: processType,
       cost_center_ids: authOrganization?.costCenters?.map((cost_center: CostCenter) => cost_center.id) || []   
     },

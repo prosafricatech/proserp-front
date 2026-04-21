@@ -6,6 +6,7 @@ import JumboSearch from "@jumbo/components/JumboSearch";
 import { Card, Grid } from "@mui/material";
 import { useRef, useEffect, useCallback, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
+import { getSanitizedSearchKeyword } from '@/utilities/getSanitizedSearchKeyword';
 import LedgerSelectProvider from "../ledgers/forms/LedgerSelectProvider";
 import BudgetsListItemInMaters from "./BudgetsListItemInMaters";
 import budgetsServices from "./budgets-services";
@@ -70,7 +71,7 @@ const Budgets = () => {
         cost_center_ids: checkOrganizationPermission(PERMISSIONS.COST_CENTERS_ALL)
                         ? 'all'
                         : authOrganization?.costCenters?.map((cost_center: any) => cost_center.id) || [],
-        keyword: searchParams?.get('search') || '',
+        keyword: getSanitizedSearchKeyword('Budgets', searchParams),
       },
     }));
   }, [params, searchParams]);

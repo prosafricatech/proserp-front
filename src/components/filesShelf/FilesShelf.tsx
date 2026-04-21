@@ -7,7 +7,8 @@ import {
 import { DateTimePicker } from '@mui/x-date-pickers';
 import dayjs, { Dayjs } from 'dayjs';
 import { EventAvailableOutlined } from '@mui/icons-material';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
+import { getSanitizedSearchKeyword } from '@/utilities/getSanitizedSearchKeyword';
 import JumboSearch from '@jumbo/components/JumboSearch';
 import JumboListToolbar from '@jumbo/components/JumboList/components/JumboListToolbar';
 import JumboRqList from '@jumbo/components/JumboReactQuery/JumboRqList';
@@ -22,6 +23,7 @@ import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
 
 function FilesShelf() {
   const params = useParams<{ category?: string; id?: string; keyword?: string }>();
+  const searchParams = useSearchParams();
   const listRef = useRef<any>(null);
   const { authOrganization } = useJumboAuth();
   const [mounted, setMounted] = useState(false);
@@ -44,7 +46,7 @@ function FilesShelf() {
     queryKey: 'filesShelf',
     queryParams: {
       id: params.id,
-      keyword: '',
+      keyword: getSanitizedSearchKeyword('Files Shelf', searchParams),
       attachmentables: [],
       extensions: [],
     },

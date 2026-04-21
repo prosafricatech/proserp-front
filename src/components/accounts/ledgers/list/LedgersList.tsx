@@ -10,6 +10,7 @@ import LedgerSelectProvider from "../forms/LedgerSelectProvider";
 import LedgerActionTail from "./LedgerActionTail";
 import LedgerListItem from "./LedgerListItem";
 import { useParams, useSearchParams } from "next/navigation";
+import { getSanitizedSearchKeyword } from '@/utilities/getSanitizedSearchKeyword';
 
 interface LedgerItem {
   id: number;
@@ -67,7 +68,7 @@ const LedgersList = () => {
         ...prev.queryParams,
         category: params?.category,
         id: params?.id,
-        keyword: searchParams?.get('search') || '',
+        keyword: getSanitizedSearchKeyword('Ledgers', searchParams),
       },
     }));
   }, [params, searchParams]);
