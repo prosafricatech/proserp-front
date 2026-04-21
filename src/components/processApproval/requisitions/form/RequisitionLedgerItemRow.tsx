@@ -15,11 +15,6 @@ interface FetchRelatableDetailsProps {
 }
 
 interface RequisitionLedgerItemRowProps {
-  setClearFormKey: Dispatch<SetStateAction<number>>;
-  submitMainForm?: () => void;
-  setSubmitItemForm: Dispatch<SetStateAction<boolean>>;
-  submitItemForm: boolean;
-  setIsDirty: Dispatch<SetStateAction<boolean>>;
   currencyDetails?: Currency;
   ledger_item: RequisitionLedgerItem;
   index: number;
@@ -43,11 +38,6 @@ const FetchRelatableDetails = ({ relatable, toggleOpen }: FetchRelatableDetailsP
 };
 
 function RequisitionLedgerItemRow({
-  setClearFormKey,
-  submitMainForm,
-  setSubmitItemForm,
-  submitItemForm,
-  setIsDirty,
   currencyDetails,
   ledger_item,
   index,
@@ -184,11 +174,6 @@ function RequisitionLedgerItemRow({
         </Grid>
       ) : (
         <RequisitionLedgerItemForm
-          setClearFormKey={setClearFormKey} 
-          submitMainForm={submitMainForm} 
-          setSubmitItemForm={setSubmitItemForm} 
-          submitItemForm={submitItemForm} 
-          setIsDirty={setIsDirty} 
           ledger_item={ledger_item} 
           setShowForm={setShowForm} 
           index={index} 

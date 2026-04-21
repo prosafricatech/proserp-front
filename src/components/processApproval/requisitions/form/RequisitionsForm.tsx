@@ -509,23 +509,11 @@ function RequisitionsForm({ toggleOpen, requisition }: RequisitionsFormProps) {
             {
               selectedProcessType === 'PAYMENT' ?
                 <RequisitionLedgerItemForm 
-                  setClearFormKey={setClearFormKey} 
-                  submitMainForm={handleSubmit((data) => saveMutation.mutate(data))} 
-                  submitItemForm={submitItemForm} 
-                  setSubmitItemForm={setSubmitItemForm} 
-                  key={clearFormKey} 
-                  setIsDirty={setIsDirty} 
                   setRequisition_ledger_items={setRequisition_ledger_items} 
                   requisition_ledger_items={requisition_ledger_items} 
                 />
                 : selectedProcessType === 'PURCHASE' ?
                   <RequisitionProductItemForm 
-                    setClearFormKey={setClearFormKey} 
-                    submitMainForm={handleSubmit((data) => saveMutation.mutate(data))} 
-                    submitItemForm={submitItemForm} 
-                    setSubmitItemForm={setSubmitItemForm} 
-                    key={clearFormKey} 
-                    setIsDirty={setIsDirty} 
                     setRequisition_product_items={setRequisition_product_items} 
                     requisition_product_items={requisition_product_items} 
                   />
@@ -534,7 +522,6 @@ function RequisitionsForm({ toggleOpen, requisition }: RequisitionsFormProps) {
                     employeeOptions={employeeOptions}
                     leaveTypeOptions={leaveTypes}
                     setLeaveItems={setLeaveItems}
-                    setIsDirty={setIsDirty}
                   />
                   : null
             }
@@ -545,11 +532,6 @@ function RequisitionsForm({ toggleOpen, requisition }: RequisitionsFormProps) {
         {selectedProcessType === 'PAYMENT' &&
           requisition_ledger_items.map((ledger_item, index) => (
             <RequisitionLedgerItemRow 
-              setClearFormKey={setClearFormKey} 
-              submitMainForm={handleSubmit((data) => saveMutation.mutate(data))} 
-              submitItemForm={submitItemForm} 
-              setSubmitItemForm={setSubmitItemForm} 
-              setIsDirty={setIsDirty} 
               key={index} 
               index={index} 
               currencyDetails={currencyDetails} 
@@ -561,9 +543,7 @@ function RequisitionsForm({ toggleOpen, requisition }: RequisitionsFormProps) {
         }
         {selectedProcessType === 'PURCHASE' &&
           requisition_product_items.map((product_item, index) => (
-            <RequisitionProductItemRow 
-              setClearFormKey={setClearFormKey} 
-              setIsDirty={setIsDirty} 
+            <RequisitionProductItemRow
               key={index} 
               index={index} 
               currencyDetails={currencyDetails} 
@@ -582,7 +562,6 @@ function RequisitionsForm({ toggleOpen, requisition }: RequisitionsFormProps) {
               index={index}
               leaveItems={requisition_leave_items as LeaveItemFormValue[]}
               setLeaveItems={setLeaveItems}
-              setIsDirty={setIsDirty}
               employeeOptions={employeeOptions}
               leaveTypeOptions={leaveTypes}
             />

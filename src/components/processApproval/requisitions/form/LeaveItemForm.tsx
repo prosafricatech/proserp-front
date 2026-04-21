@@ -21,7 +21,6 @@ interface LeaveItemFormProps {
   employeeOptions: EmployeeOption[];
   leaveTypeOptions: LeaveTypeOption[];
   setLeaveItems: (items: React.SetStateAction<LeaveItemFormValue[]>) => void;
-  setIsDirty: (value: React.SetStateAction<boolean>) => void;
   leaveItem?: LeaveItemFormValue | null;
   index?: number;
   setShowForm?: (value: React.SetStateAction<boolean>) => void;
@@ -79,7 +78,6 @@ function LeaveItemForm({
   employeeOptions,
   leaveTypeOptions,
   setLeaveItems,
-  setIsDirty,
   leaveItem = null,
   index = -1,
   setShowForm,
@@ -165,7 +163,6 @@ function LeaveItemForm({
       setForm(createEmptyLeaveItem());
     }
 
-    setIsDirty(true);
     setErrors({});
   };
 
@@ -179,7 +176,6 @@ function LeaveItemForm({
           isOptionEqualToValue={(option, value) => option.id === value.id}
           onChange={(_, value) => {
             setForm((prev) => ({ ...prev, employee_id: value?.id }));
-            setIsDirty(true);
             if (errors.employee_id) setErrors((prev) => ({ ...prev, employee_id: undefined }));
           }}
           disabled={disabled}
@@ -204,7 +200,6 @@ function LeaveItemForm({
           isOptionEqualToValue={(option, value) => option.id === value.id}
           onChange={(_, value) => {
             setForm((prev) => ({ ...prev, leave_type_id: value?.id }));
-            setIsDirty(true);
             if (errors.leave_type_id) setErrors((prev) => ({ ...prev, leave_type_id: undefined }));
           }}
           disabled={disabled}
@@ -227,7 +222,6 @@ function LeaveItemForm({
           value={form.start_date ? dayjs(form.start_date) : null}
           onChange={(value) => {
             updateDates(asYmd(value), undefined);
-            setIsDirty(true);
             if (errors.start_date) setErrors((prev) => ({ ...prev, start_date: undefined }));
           }}
           disabled={disabled}
@@ -249,7 +243,6 @@ function LeaveItemForm({
           minDate={form.start_date ? dayjs(form.start_date) : undefined}
           onChange={(value) => {
             updateDates(undefined, asYmd(value));
-            setIsDirty(true);
             if (errors.end_date) setErrors((prev) => ({ ...prev, end_date: undefined }));
           }}
           disabled={disabled}
@@ -273,7 +266,6 @@ function LeaveItemForm({
           value={form.days_requested ?? ''}
           onChange={(event) => {
             setForm((prev) => ({ ...prev, days_requested: Number(event.target.value || 0) }));
-            setIsDirty(true);
           }}
           disabled={disabled}
           inputProps={{ min: 0, step: 0.5 }}
@@ -288,7 +280,6 @@ function LeaveItemForm({
           value={form.reason || ''}
           onChange={(event) => {
             setForm((prev) => ({ ...prev, reason: event.target.value }));
-            setIsDirty(true);
           }}
           disabled={disabled}
         />

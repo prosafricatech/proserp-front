@@ -34,11 +34,6 @@ export interface RequisitionProductItem {
 }
 
 interface RequisitionProductItemFormProps {
-  setClearFormKey: (value: React.SetStateAction<number>) => void;
-  submitMainForm?: () => void;
-  submitItemForm: boolean;
-  setSubmitItemForm: (value: React.SetStateAction<boolean>) => void;
-  setIsDirty: (value: React.SetStateAction<boolean>) => void;
   product_item?: RequisitionProductItem | null;
   index?: number;
   setRequisition_product_items: (items: React.SetStateAction<RequisitionProductItem[]>) => void;
@@ -47,11 +42,6 @@ interface RequisitionProductItemFormProps {
 }
 
 function RequisitionProductItemForm({
-  setClearFormKey,
-  submitMainForm,
-  submitItemForm,
-  setSubmitItemForm,
-  setIsDirty,
   product_item = null,
   index = -1,
   setRequisition_product_items,
@@ -60,7 +50,6 @@ function RequisitionProductItemForm({
 }: RequisitionProductItemFormProps) {
     const { productOptions } = useProductsSelect();
     const { checkOrganizationPermission, authOrganization } = useJumboAuth();
-    const nonInventoryIds = productOptions.filter(product => product.type !== 'Inventory').map(product => product.id);
     const [openProductQuickAdd, setOpenProductQuickAdd] = useState(false);
     const [addedProduct, setAddedProduct] = useState<Product | null>(null);
     const [calculatedAmount, setCalculatedAmount] = useState<number>(0);
@@ -102,14 +91,6 @@ function RequisitionProductItemForm({
         unit_symbol: product_item?.measurement_unit?.symbol ?? product_item?.unit_symbol,
       },
     });
-
-    useEffect(() => {
-        const subscription = watch(() => {
-            const hasDirtyFields = Object.keys(dirtyFields).length > 0;
-            setIsDirty(hasDirtyFields);
-        });
-        return () => subscription.unsubscribe();
-    }, [watch, dirtyFields, setIsDirty]);
 
     const product: Product | undefined | null = watch('product');
     const vat_percentage: number = watch('vat_percentage') || 0;
@@ -158,14 +139,8 @@ function RequisitionProductItemForm({
       const updatedItems = [...requisition_product_items];
       updatedItems[index] = newItem;
       await setRequisition_product_items(updatedItems);
-      setClearFormKey(prevKey => prevKey + 1);
     } else {
       await setRequisition_product_items(prevItems => [...prevItems, newItem]);
-      if (submitItemForm && submitMainForm) {
-        submitMainForm();
-        setClearFormKey(prevKey => prevKey + 1);
-      }
-      setSubmitItemForm(false);
     }
 
     setPreservedValues({
@@ -182,14 +157,6 @@ function RequisitionProductItemForm({
     setIsAdding(false);
     setShowForm?.(false);
   };
-
-  useEffect(() => {
-    if (submitItemForm) {
-      handleSubmit(updateItems as any, () => {
-        setSubmitItemForm(false);
-      })();
-    }
-  }, [submitItemForm]);
 
   useEffect(() => {
     setValue('vat_percentage', product_item?.vat_percentage ?? preservedValues?.vat_percentage ?? 0);
@@ -414,7 +381,6 @@ function RequisitionProductItemForm({
                 type='submit'
                 onClick={() => {
                   setAddedProduct(null);
-                  setIsDirty(false);
                   setPriceInclusiveVAT(0);
                 }}
               >
@@ -434,7 +400,8 @@ function RequisitionProductItemForm({
                     size='small'
                     onClick={() => {
                       setShowForm?.(false);
-                      setIsDirty(false);
+                      setAddedProduct(null);
+                      setPriceInclusiveVAT(0);
                     }}
                   >
                     <DisabledByDefault fontSize='small' color='success' />

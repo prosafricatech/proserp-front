@@ -13,11 +13,6 @@ import requisitionsServices from '../../requisitionsServices';
 import MeasurementSelector from '@/components/masters/measurementUnits/MeasurementSelector';
 
 interface RequisitionLedgerItemFormProps {
-  setClearFormKey: Dispatch<SetStateAction<number>>;
-  submitMainForm?: () => void;
-  submitItemForm: boolean;
-  setSubmitItemForm: Dispatch<SetStateAction<boolean>>;
-  setIsDirty: Dispatch<SetStateAction<boolean>>;
   requisition_ledger_items: RequisitionLedgerItem[];
   setRequisition_ledger_items: Dispatch<SetStateAction<RequisitionLedgerItem[]>>;
   ledger_item?: RequisitionLedgerItem | null;
@@ -26,11 +21,6 @@ interface RequisitionLedgerItemFormProps {
 }
 
 function RequisitionLedgerItemForm({
-  setClearFormKey,
-  submitMainForm,
-  submitItemForm,
-  setSubmitItemForm,
-  setIsDirty,
   requisition_ledger_items,
   setRequisition_ledger_items,
   ledger_item = null,
@@ -89,10 +79,6 @@ function RequisitionLedgerItemForm({
     }
   });
 
-  useEffect(() => {
-    setIsDirty(Object.keys(dirtyFields).length > 0);
-  }, [dirtyFields, setIsDirty]);
-
   const calculateAmount = () => {
     const quantity = parseFloat(Number(watch('quantity'))?.toString() ?? ledger_item?.quantity ?? 0);
     const rate = parseFloat(Number(watch('rate'))?.toString() ?? ledger_item?.rate ?? 0);
@@ -122,28 +108,14 @@ function RequisitionLedgerItemForm({
       const updatedItems = [...requisition_ledger_items];
       updatedItems[index] = newItem;
       await setRequisition_ledger_items(updatedItems);
-      setClearFormKey(prevKey => prevKey + 1);
     } else {
       await setRequisition_ledger_items(prevItems => [...prevItems, newItem]);
-      if (submitItemForm && submitMainForm) {
-        submitMainForm();
-      }
-      setSubmitItemForm(false);
-      setClearFormKey(prevKey => prevKey + 1);
     }
 
     reset();
     setIsAdding(false);
     setShowForm?.(false);
   };
-
-  useEffect(() => {
-    if (submitItemForm) {
-      handleSubmit(updateItems, () => {
-        setSubmitItemForm(false);
-      })();
-    }
-  }, [submitItemForm]);
 
   const getRelatedTransactions = async () => {
     const ledgerId = watch('ledger_id');
@@ -371,7 +343,6 @@ function RequisitionLedgerItemForm({
             variant='contained'
             size='small'
             type='submit'
-            onClick={() => setIsDirty(false)}
           >
             {ledger_item ? (
               <>
@@ -389,7 +360,6 @@ function RequisitionLedgerItemForm({
                 size='small'
                 onClick={() => {
                   setShowForm?.(false);
-                  setIsDirty(false);
                 }}
               >
                 <DisabledByDefault fontSize='small' color='success' />

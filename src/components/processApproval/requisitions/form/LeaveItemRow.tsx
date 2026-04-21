@@ -42,7 +42,6 @@ interface LeaveItemRowProps {
   index: number;
   leaveItems: LeaveItemFormValue[];
   setLeaveItems: (items: React.SetStateAction<LeaveItemFormValue[]>) => void;
-  setIsDirty: (value: React.SetStateAction<boolean>) => void;
   employeeOptions: EmployeeOption[];
   leaveTypeOptions: LeaveTypeOption[];
   readOnly?: boolean;
@@ -52,7 +51,6 @@ function LeaveItemRow({
   row,
   index,
   setLeaveItems,
-  setIsDirty,
   employeeOptions,
   leaveTypeOptions,
   readOnly = false,
@@ -70,7 +68,6 @@ function LeaveItemRow({
       next.splice(index, 1);
       return next;
     });
-    setIsDirty(true);
   };
 
   return (
@@ -145,7 +142,6 @@ function LeaveItemRow({
             employeeOptions={employeeOptions}
             leaveTypeOptions={leaveTypeOptions}
             setLeaveItems={setLeaveItems}
-            setIsDirty={setIsDirty}
             leaveItem={row}
             index={index}
             setShowForm={setShowForm}
