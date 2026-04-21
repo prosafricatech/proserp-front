@@ -1,6 +1,6 @@
 'use client'
 import { DeleteOutlined, DownloadOutlined, EditOutlined, MoreHorizOutlined, VisibilityOutlined } from '@mui/icons-material';
-import { Dialog, DialogContent, LinearProgress, Skeleton, Tooltip, useMediaQuery } from '@mui/material';
+import { Dialog, DialogContent, LinearProgress, Tooltip, useMediaQuery } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import React, { lazy, useState } from 'react';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
@@ -41,13 +41,7 @@ const EditForm: React.FC<EditFormProps & { fuelPriceLists?: boolean }> = ({ fuel
   });
 
   if (isFetching) {
-        return (
-      <div style={{ width: '100%', padding: '16px' }}>
-        <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-        <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-        <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
-      </div>
-    );
+    return <LinearProgress />;
   }
 
   return <PriceListForm fuelPriceLists={fuelPriceLists} priceList={data} toggleOpen={toggleOpen} />;
@@ -60,13 +54,7 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({ priceList, authObject }
   });
 
   if (isLoading) {
-        return (
-      <div style={{ width: '100%', padding: '16px' }}>
-        <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-        <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-        <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
-      </div>
-    );
+    return <LinearProgress />;
   }
 
   return (

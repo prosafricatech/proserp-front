@@ -2,7 +2,7 @@
 
 import * as yup from "yup";
 import React, { useState } from 'react';
-import { Grid, LinearProgress, Skeleton, TextField } from '@mui/material';
+import { Grid, LinearProgress, TextField } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 import { useSnackbar } from 'notistack';
 import { InvitationQueue } from './InvitationQueue';
@@ -116,13 +116,7 @@ export const InvitationForm: React.FC<InvitationFormProps> = ({ organization }) 
   };
 
   if (isRolesLoading) {
-        return (
-      <div style={{ width: '100%', padding: '16px' }}>
-        <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-        <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-        <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
-      </div>
-    );
+    return <LinearProgress />;
   }
 
   return (

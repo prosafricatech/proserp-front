@@ -478,7 +478,6 @@ interface ParamMap {
   "/api/processApproval/getRolesOptions": {}
   "/api/processApproval/product-budget-check": {}
   "/api/projectManagement/project": {}
-  "/api/projectManagement/project/[id]/budgeted-cost-items": { "id": string; }
   "/api/projectManagement/project/[id]/dashboard-figures": { "id": string; }
   "/api/projectManagement/project/[id]/deleteBudget": { "id": string; }
   "/api/projectManagement/project/[id]/deleteCertificate": { "id": string; }

@@ -22,28 +22,30 @@ import { DateTimePicker } from '@mui/x-date-pickers';
 import { useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
+import { useFormContext } from 'react-hook-form';
 import posServices from '../../pos-services';
 
-function SaleTopInformation({
-  setCheckedForInstantSale,
-  counterLedgers,
-  setAddedStakeholder,
-  debitLedger,
-  setDebitLedger,
-  isLoadingReceivableLedgers,
-  stakeholderReceivableLedgers,
-  addedStakeholder,
-  sale,
-  organization,
-  stakeholderQuickAddDisplay,
-  setStakeholderQuickAddDisplay,
-  setValue,
-  watch,
-  errors,
-  clearErrors,
-  register
-}) {
+function SaleTopInformation() {
   const wc = { id: null, name: 'Walk-in Customer' };
+  const {
+    setCheckedForInstantSale,
+    counterLedgers,
+    setAddedStakeholder,
+    debitLedger,
+    setDebitLedger,
+    isLoadingReceivableLedgers,
+    stakeholderReceivableLedgers,
+    addedStakeholder,
+    sale,
+    organization,
+    stakeholderQuickAddDisplay,
+    setStakeholderQuickAddDisplay,
+    setValue,
+    watch,
+    errors,
+    clearErrors,
+    register,
+  } = useFormContext();
   const [transaction_date] = useState(
     sale ? dayjs(sale.transaction_date) : dayjs()
   );

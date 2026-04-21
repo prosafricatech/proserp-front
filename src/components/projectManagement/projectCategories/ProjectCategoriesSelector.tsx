@@ -6,8 +6,8 @@ import {
   TextField,
 } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
-import projectCategoryServices from "./project-category-services";
-import { ProjectCategory } from "./ProjectCategoriesType";
+import projectCategoryServices from "../projectCategories/project-category-services";
+import { ProjectCategory } from "../projectCategories/ProjectCategoriesType";
 
 interface ProjectCategoriesSelectorProps {
   onChange: (value: ProjectCategory | null) => void;

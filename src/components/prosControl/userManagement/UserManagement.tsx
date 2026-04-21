@@ -18,6 +18,7 @@ import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
 
 const UserManagement = () => {
     const params = useParams<{ id?: string }>();
+    const searchParams = useSearchParams();
     const listRef = useRef<any>(null);
     const { checkPermission } = useJumboAuth();
     const [mounted, setMounted] = useState(false);

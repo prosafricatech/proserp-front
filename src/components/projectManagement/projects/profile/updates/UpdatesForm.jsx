@@ -46,7 +46,6 @@ function UpdatesForm({ setOpenDialog, update, setIsUpdateFormOpen = () => {} }) 
         }))
       : []
   );
-  const [removedTaskProgressItems, setRemovedTaskProgressItems] = useState([]);
 
   const [isSaving, setIsSaving] = useState(false);
 
@@ -187,8 +186,6 @@ function UpdatesForm({ setOpenDialog, update, setIsUpdateFormOpen = () => {} }) 
       value={{
         taskProgressItems,
         setTaskProgressItems,
-        removedTaskProgressItems,
-        setRemovedTaskProgressItems,
         activeTab
       }}
     >

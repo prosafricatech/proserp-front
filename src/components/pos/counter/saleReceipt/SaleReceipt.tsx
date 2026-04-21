@@ -5,7 +5,6 @@ import {
   DialogTitle, 
   Grid, 
   LinearProgress, 
-  Skeleton, 
   TextField, 
   Typography 
 } from '@mui/material';
@@ -183,11 +182,7 @@ const SaleReceipt: React.FC<SaleReceiptProps> = ({
         ) : !sale.vfd_receipt ? (
           <SaleReceiptOnScreen organization={organization} sale={sale} />
         ) : postSalesReceiptToVFD.isPending ? (
-          <div style={{ width: '100%', padding: '16px' }}>
-            <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-            <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-            <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
-          </div>
+          <LinearProgress />
         ) : (
           <PDFContent
             fileName={`Receipt ${sale.vfd_receipt.verification_code}`}

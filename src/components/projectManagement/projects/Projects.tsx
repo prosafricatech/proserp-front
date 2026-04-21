@@ -20,6 +20,7 @@ import StakeholderSelectProvider from '@/components/masters/stakeholders/Stakeho
 
 const Projects = () => {
     const params = useParams<{ project?: string; id?: string; keyword?: string }>();
+    const searchParams = useSearchParams();
     const listRef = useRef<any>(null);
     const { organizationHasSubscribed, checkOrganizationPermission } = useJumboAuth();
     const [mounted, setMounted] = useState(false);
@@ -40,7 +41,7 @@ const Projects = () => {
           keyword: getSanitizedSearchKeyword('Projects', searchParams),
         },
       }));
-    }, [params]);
+    }, [params, searchParams]);
 
     const renderProject = useCallback((project:Project) => (
         <ProjectListItem project={project} />

@@ -8,7 +8,6 @@ import {
   Grid,
   IconButton,
   LinearProgress,
-  Skeleton,
   Tab,
   Tabs,
   Tooltip,
@@ -64,13 +63,7 @@ const DocumentDialog = ({ transaction, type, authObject, setOpenDocumentDialog }
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
   if (isFetching) {
-        return (
-      <div style={{ width: '100%', padding: '16px' }}>
-        <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-        <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-        <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
-      </div>
-    );
+    return <LinearProgress />;
   }
 
   const handleTabChange = (event: any, newValue: any) => {
@@ -128,13 +121,7 @@ const EditAdjustment: React.FC<EditAdjustmentProps> = ({ transaction, toggleOpen
   });
 
   if (isFetching) {
-        return (
-      <div style={{ width: '100%', padding: '16px' }}>
-        <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-        <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-        <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
-      </div>
-    );
+    return <LinearProgress />;
   }
 
   return( 

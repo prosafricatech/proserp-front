@@ -1,7 +1,7 @@
 'use client'
 import React, { useState } from 'react';
 import { DeleteOutlined, EditOutlined, HighlightOff, MoreHorizOutlined, SellOutlined, VisibilityOutlined } from '@mui/icons-material';
-import { Box, Button, Dialog, DialogContent, Grid, IconButton, LinearProgress, Skeleton, Tab, Tabs, Tooltip, useMediaQuery } from '@mui/material';
+import { Box, Button, Dialog, DialogContent, Grid, IconButton, LinearProgress, Tab, Tabs, Tooltip, useMediaQuery } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import proformaServices from './proforma-services';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
@@ -44,13 +44,7 @@ const EditProforma: React.FC<EditProformaProps> = ({ proforma, setOpenEditDialog
   });
 
   if (isPending) {
-        return (
-      <div style={{ width: '100%', padding: '16px' }}>
-        <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-        <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-        <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
-      </div>
-    );
+    return <LinearProgress />;
   }
 
   return (
@@ -65,13 +59,7 @@ const SaleProforma: React.FC<SaleProformaProps> = ({ proforma, setOpenSaleDialog
   });
 
   if (isPending) {
-        return (
-      <div style={{ width: '100%', padding: '16px' }}>
-        <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-        <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-        <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
-      </div>
-    );
+    return <LinearProgress />;
   }
 
   return (
@@ -99,13 +87,7 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
   };
 
   if (isPending) {
-        return (
-      <div style={{ width: '100%', padding: '16px' }}>
-        <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-        <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-        <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
-      </div>
-    );
+    return <LinearProgress />;
   }
 
   return (

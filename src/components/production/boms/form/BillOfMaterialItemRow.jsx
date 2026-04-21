@@ -113,7 +113,7 @@ function BillOfMaterialItemRow({
               />
             </Grid>
 
-            <Grid size={{ xs: 6, md: 3 }} textAlign={'end'}>
+            <Grid size={{ xs: 6, md: 3 }}>
               <Tooltip title="Quantity">
                 <Typography>
                   {item.quantity.toLocaleString()}{' '}

@@ -1,6 +1,6 @@
 'use client'
 import { DeleteOutlined, EditOutlined, HighlightOff, MoreHorizOutlined, VisibilityOutlined } from '@mui/icons-material';
-import { Box, Button, Dialog, DialogContent, Grid, IconButton, LinearProgress, Skeleton, Tab, Tabs, Tooltip, useMediaQuery } from '@mui/material';
+import { Box, Button, Dialog, DialogContent, Grid, IconButton, LinearProgress, Tab, Tabs, Tooltip, useMediaQuery } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import React, { useState } from 'react';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
@@ -26,13 +26,7 @@ const DocumentDialog = ({ billOfMaterial, organization, setOpenDocumentDialog })
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
   if (isFetching) {
-    return (
-      <div style={{ width: '100%', padding: '16px' }}>
-        <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-        <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-        <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
-      </div>
-    );
+    return <LinearProgress />;
   }
 
   const handleTabChange = (event, newValue) => {

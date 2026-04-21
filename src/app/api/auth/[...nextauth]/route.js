@@ -47,12 +47,7 @@ const authOptions = {
   ],
 
 callbacks: {
-  async jwt({ token, user, trigger, session }) {
-    if (trigger === 'update' && session) {
-      if (session.accessToken) token.accessToken = session.accessToken;
-      if (session.organization_id) token.organization_id = session.organization_id;
-      if (session.organization_name) token.organization_name = session.organization_name;
-    }
+  async jwt({ token, user }) {
     if (user) {
       token.accessToken = user.token;
       token.organization_id = user.organization_id;

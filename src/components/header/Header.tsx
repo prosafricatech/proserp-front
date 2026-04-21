@@ -6,17 +6,16 @@ import {
 } from '@jumbo/components/JumboLayout/hooks';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { SIDEBAR_STYLES } from '@jumbo/utilities/constants';
-// import { TranslationPopover } from '@/components/translationPopover';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import { IconButton, Stack, Tooltip, useMediaQuery } from '@mui/material';
+import { IconButton, Stack, Tooltip, useMediaQuery, Grid, Box } from '@mui/material';
 import dynamic from 'next/dynamic';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import React from 'react';
 import { Logo } from '../logo/Logo';
 import { SidebarToggleButton } from '../sidebarToggleButton';
-import { Search } from './search';
+import { SearchGlobal } from '@/components/searchGlobal';
 import { ThemeModeOption } from './themeModeOptions/ThemeModeOption';
 
 const AuthUserPopover = dynamic(
@@ -39,10 +38,7 @@ function Header({ dictionary }: { dictionary: any }) {
     theme.breakpoints.down(headerOptions?.drawerBreakpoint ?? 'xl')
   );
   const smallScreen = useMediaQuery(theme.breakpoints.down('md'));
-
-  const handleSearchVisibility = React.useCallback((value: boolean) => {
-    setSearchVisibility(value);
-  }, []);
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const handleGoBack = React.useCallback(() => {
     router.back();
@@ -129,59 +125,76 @@ function Header({ dictionary }: { dictionary: any }) {
     },
   };
 
-  return (
-    <React.Fragment>
-      <SidebarToggleButton />
-      {smallScreen &&
-        <Stack direction='row' alignItems='center' gap={0.5} sx={{ mr: 1 }}>
-          {canGoBack && (
-            <Tooltip title='Back'>
-              <IconButton
-                color='inherit'
-                size='small'
-                onClick={handleGoBack}
-                sx={headerActionButtonSx}
-              >
-                <ArrowBackIcon fontSize='small' />
-              </IconButton>
-            </Tooltip>
-          )}
-          {canGoForward && (
-            <Tooltip title='Forward'>
-              <IconButton
-                color='inherit'
-                size='small'
-                onClick={handleGoForward}
-                sx={headerActionButtonSx}
-              >
-                <ArrowForwardIcon fontSize='small' />
-              </IconButton>
-            </Tooltip>
-          )}
-          <Tooltip title='Refresh'>
-            <IconButton
-              color='inherit'
-              size='small'
-              onClick={handleRefresh}
-              sx={headerActionButtonSx}
-            >
-              <RefreshIcon fontSize='small' />
-            </IconButton>
-          </Tooltip>
+  // For large screens - keep original layout
+  if (!smallScreen) {
+    return (
+      <React.Fragment>
+        <SidebarToggleButton />
+        {isSidebarStyle(SIDEBAR_STYLES.CLIPPED_UNDER_HEADER) && !isBelowLg && (
+          <Logo sx={{ mr: 3, minWidth: 150 }} mode={theme.type} />
+        )}
+        <Stack direction='row' alignItems='center' gap={1.25} sx={{ ml: 'auto', minWidth: 320 }}>
+          <SearchGlobal sx={{ maxWidth: 320, minWidth: 200 }} />
+          <ThemeModeOption />
+          <AuthUserPopover dictionary={dictionary} />
         </Stack>
-      }
-      {isSidebarStyle(SIDEBAR_STYLES.CLIPPED_UNDER_HEADER) && !isBelowLg && (
-        <Logo sx={{ mr: 3, minWidth: 150 }} mode={theme.type} />
-      )}
-      <Search show={searchVisibility} onClose={handleSearchVisibility} />
-      <Stack direction='row' alignItems='center' gap={1.25} sx={{ ml: 'auto' }}>
-        <ThemeModeOption />
-        {/* <TranslationPopover /> */}
-        {/* <SearchIconButtonOnSmallScreen onClick={handleSearchVisibility} /> */}
-        {/* <NotificationsPopover /> */}
-        <AuthUserPopover dictionary={dictionary} />
-      </Stack>
-    </React.Fragment>
+      </React.Fragment>
+    );
+  }
+
+  // For small screens - grid layout
+  return (
+    <Grid container alignItems="center" spacing={1} sx={{ width: '100%' }}>
+      {/* First Row: Navigation Buttons and Sidebar Toggle */}
+      <Grid size={12}>
+        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ width: '100%' }}>
+          <Stack direction="row" alignItems="center" gap={0.5}>
+            <SidebarToggleButton />
+            {canGoBack && (
+              <Tooltip title='Back'>
+                <IconButton
+                  color='inherit'
+                  size='small'
+                  onClick={handleGoBack}
+                  sx={headerActionButtonSx}
+                >
+                  <ArrowBackIcon fontSize='small' />
+                </IconButton>
+              </Tooltip>
+            )}
+            {canGoForward && (
+              <Tooltip title='Forward'>
+                <IconButton
+                  color='inherit'
+                  size='small'
+                  onClick={handleGoForward}
+                  sx={headerActionButtonSx}
+                >
+                  <ArrowForwardIcon fontSize='small' />
+                </IconButton>
+              </Tooltip>
+            )}
+            <Tooltip title='Refresh'>
+              <IconButton
+                color='inherit'
+                size='small'
+                onClick={handleRefresh}
+                sx={headerActionButtonSx}
+              >
+                <RefreshIcon fontSize='small' />
+              </IconButton>
+            </Tooltip>
+          </Stack>
+          <ThemeModeOption />
+          <AuthUserPopover dictionary={dictionary} />
+        </Stack>
+      </Grid>
+
+      {/* Second Row: Search Global */}
+      <Grid size={12} paddingBottom={5}>
+        <SearchGlobal sx={{ width: '100%' }} />
+      </Grid>
+    </Grid>
   );
 }
 

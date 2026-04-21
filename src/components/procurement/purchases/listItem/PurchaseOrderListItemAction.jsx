@@ -14,7 +14,6 @@ import {
   useMediaQuery,
   DialogTitle,
   Grid,
-  Skeleton,
 } from '@mui/material';
 import {
   AssignmentTurnedInOutlined,
@@ -58,13 +57,7 @@ const PurchaseGrnsReport = ({ organization, order, setOpenPurchasesGrnsReport })
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
   if (isFetching) {
-        return (
-          <div style={{ width: '100%', padding: '16px' }}>
-            <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-            <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-            <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
-          </div>
-        );
+    return <LinearProgress />;
   }
 
   const handleChange = (event, newValue) => {
@@ -220,13 +213,7 @@ function PurchaseOrderListItemAction({ order }) {
       queryFn: () => purchaseServices.orderDetails(order.id),
     });
 
-    if (isLoading)     return (
-      <div style={{ width: '100%', padding: '16px' }}>
-        <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-        <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-        <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
-      </div>
-    );
+    if (isLoading) return <LinearProgress />;
 
     return (
       <PurchaseOrderReceiveForm order={orderDetails} toggleOpen={setOpenReceiveDialog} />

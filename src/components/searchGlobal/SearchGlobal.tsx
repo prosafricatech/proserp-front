@@ -1,6 +1,8 @@
 'use client';
+
 import SearchIcon from '@mui/icons-material/Search';
-import { SxProps, Theme } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
+import { SxProps, Theme, Paper, List, ListItem, ListItemText, CircularProgress, Box } from '@mui/material';
 import { Search, SearchIconWrapper, StyledInputBase } from './style';
 import React from 'react';
 import { useSpinner } from '@/shared/ProgressIndicators/SpinnerContext';
@@ -14,6 +16,14 @@ import { entityConfigs } from './entityConfigs';
 type SearchGlobalProps = {
   wrapperSx?: SxProps<Theme>;
   sx?: SxProps<Theme>;
+};
+
+type SearchResult = {
+  id: string | number;
+  label: string;
+  type: string;
+  url: string;
+  description?: string;
 };
 
 const SearchGlobal = ({ wrapperSx, sx }: SearchGlobalProps) => {
@@ -248,18 +258,122 @@ const SearchGlobal = ({ wrapperSx, sx }: SearchGlobalProps) => {
   }, [open]);
 
   return (
-    <Search sx={wrapperSx ?? {}}>
-      <SearchIconWrapper>
-        <SearchIcon />
-      </SearchIconWrapper>
-
-      <StyledInputBase
-        name='search-globally'
-        placeholder='Search anything'
-        inputProps={{ 'aria-label': 'search' }}
-        sx={sx ?? {}}
-      />
-    </Search>
+    <Box sx={{ position: 'relative', ...wrapperSx }}>
+      <Search style={{ position: 'relative' }}>
+        <SearchIconWrapper>
+          <SearchIcon />
+        </SearchIconWrapper>
+        <StyledInputBase
+          name='search-globally'
+          placeholder='Search anything'
+          inputProps={{ 'aria-label': 'search' }}
+          sx={sx ?? {}}
+          value={query}
+          onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
+          onFocus={() => query && setOpen(true)}
+          inputRef={inputRef}
+        />
+        {query && (
+          <Box
+            sx={(theme) => ({
+              position: 'absolute',
+              right: 8,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              cursor: 'pointer',
+              zIndex: 2,
+              display: 'flex',
+              alignItems: 'center',
+              borderRadius: '50%',
+              p: 0.2,
+              color: theme.type === 'dark' ? theme.palette.grey[300] : theme.palette.text.secondary,
+              transition: 'background 0.2s',
+              '&:hover': {
+                background: theme.type === 'dark' ? 'rgba(60,60,60,1)' : 'rgba(220,220,220,1)',
+              },
+            })}
+            onClick={() => {
+              setQuery('');
+              setSearchValue('');
+              setResults([]);
+              setOpen(false);
+              inputRef.current?.focus();
+            }}
+            aria-label="Clear search"
+          >
+            <CloseIcon fontSize="small" />
+          </Box>
+        )}
+      </Search>
+      {open && (
+        <Paper sx={{ position: 'absolute', top: 40, left: 0, right: 0, zIndex: 10, maxHeight: 320, overflowY: 'auto' }}>
+          {results.length === 0 ? (
+            loading ? (
+              <Box sx={{ p: 2, color: 'text.secondary', textAlign: 'center', fontSize: 13 }}>
+                Loading more results...
+              </Box>
+            ) : (
+              <Box sx={{ p: 2, color: 'text.secondary', textAlign: 'center' }}>No results</Box>
+            )
+          ) : (
+            <>
+              <List>
+                {results.map((result) => (
+                  <ListItem
+                    component="div"
+                    key={result.type + '-' + result.id}
+                    onMouseDown={() => handleResultClick(result)}
+                    sx={{
+                      cursor: 'pointer',
+                      borderRadius: 1,
+                      transition: 'background 0.2s',
+                      '&:hover': {
+                        backgroundColor: (theme) =>
+                          theme.type === 'dark'
+                            ? 'rgba(255,255,255,0.08)'
+                            : 'rgba(0,0,0,0.04)',
+                        color: (theme) =>
+                          theme.type === 'dark'
+                            ? theme.palette.primary.light
+                            : theme.palette.primary.dark,
+                      },
+                    }}
+                  >
+                    <ListItemText
+                      primary={result.label}
+                      secondary={result.description || result.type}
+                      primaryTypographyProps={{
+                        sx: {
+                          color: (theme) =>
+                            theme.type === 'dark'
+                              ? 'white'
+                              : 'inherit',
+                        },
+                      }}
+                      secondaryTypographyProps={{
+                        sx: {
+                          color: (theme) =>
+                            theme.type === 'dark'
+                              ? 'rgba(255,255,255,0.7)'
+                              : 'text.secondary',
+                          fontSize: 13,
+                        },
+                      }}
+                    />
+                  </ListItem>
+                ))}
+              </List>
+              {loading && (
+                <Box sx={{ p: 1, color: 'text.secondary', textAlign: 'center', fontSize: 13 }}>
+                  Loading more results...
+                </Box>
+              )}
+            </>
+          )}
+        </Paper>
+      )}
+    </Box>
   );
 };
 

@@ -51,7 +51,6 @@ function ProjectDashboard() {
   const { currencies } = useCurrencySelect();
   const baseCurrency = currencies?.find(c => c.is_base === 1);
   const currencyCode = baseCurrency?.code;
-  const hasClient = !!(project?.client_id || project?.client?.id);
 
   // Fetch all dashboard figures in one call
   const { data: dashboardFigures, isLoading: isLoadingDashboard } = useQuery({
@@ -103,53 +102,51 @@ function ProjectDashboard() {
         </Grid>
 
         {/* Revenue Card */}
-        {hasClient && (
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Card elevation={3} sx={{ borderRadius: 3, height: '100%' }}>
-              <CardContent>
-                <Box display="flex" alignItems="center" mb={2}>
-                  <PaidOutlined color="primary" sx={{ mr: 1 }} />
-                  <Typography variant="h6" fontWeight={600}>
-                    Revenue
-                  </Typography>
-                </Box>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Card elevation={3} sx={{ borderRadius: 3, height: '100%' }}>
+            <CardContent>
+              <Box display="flex" alignItems="center" mb={2}>
+                <PaidOutlined color="primary" sx={{ mr: 1 }} />
+                <Typography variant="h6" fontWeight={600}>
+                  Revenue
+                </Typography>
+              </Box>
 
-                {isLoadingDashboard ? (
-                  <>
-                    <Skeleton variant="text" height={80} />
-                    <Skeleton variant="text" height={80} />
-                    <Skeleton variant="rectangular" height={8} sx={{ mt: 2 }} />
-                    <Skeleton variant="text" height={80} />
-                    <Skeleton variant="rectangular" height={8} sx={{ mt: 2 }} />
-                  </>
-                ) : (
-                  <>
-                    <StatItem label="Contract Sum" value={formatCurrency(dashboardFigures?.contract_sum)} />
-                    <StatItem label="Certified Revenue" value={formatCurrency(dashboardFigures?.certified_revenue)} />
-                    <StatItem label="Progressive Revenue" value={formatCurrency(dashboardFigures?.progressive_revenue)} />
-                    <Box mt={2} mb={2}>
-                      <Box display="flex" alignItems="center" gap={1}>
-                        <LinearProgress
-                          variant="determinate"
-                          value={parseFloat(progressiveRevenuePercent)}
-                          sx={{ height: 8, borderRadius: 5, mt: 1, flex: 1 }}
-                        />
-                        <Typography variant="body2" color="text.secondary">
-                          {parseFloat(progressiveRevenuePercent).toFixed(2)}%
-                        </Typography>
-                      </Box>
+              {isLoadingDashboard ? (
+                <>
+                  <Skeleton variant="text" height={80} />
+                  <Skeleton variant="text" height={80} />
+                  <Skeleton variant="rectangular" height={8} sx={{ mt: 2 }} />
+                  <Skeleton variant="text" height={80} />
+                  <Skeleton variant="rectangular" height={8} sx={{ mt: 2 }} />
+                </>
+              ) : (
+                <>
+                  <StatItem label="Contract Sum" value={formatCurrency(dashboardFigures?.contract_sum)} />
+                  <StatItem label="Certified Revenue" value={formatCurrency(dashboardFigures?.certified_revenue)} />
+                  <StatItem label="Progressive Revenue" value={formatCurrency(dashboardFigures?.progressive_revenue)} />
+                  <Box mt={2} mb={2}>
+                    <Box display="flex" alignItems="center" gap={1}>
+                      <LinearProgress
+                        variant="determinate"
+                        value={parseFloat(progressiveRevenuePercent)}
+                        sx={{ height: 8, borderRadius: 5, mt: 1, flex: 1 }}
+                      />
+                      <Typography variant="body2" color="text.secondary">
+                        {parseFloat(progressiveRevenuePercent).toFixed(2)}%
+                      </Typography>
                     </Box>
-                    <StatItem label="Gross Profit to Date" value={formatCurrency(dashboardFigures?.gross_profit_to_date)} />
-                  </>
-                )}
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
+                  </Box>
+                  <StatItem label="Gross Profit to Date" value={formatCurrency(dashboardFigures?.gross_profit_to_date)} />
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
 
         {/* Budgets Card */}
-        <Grid size={{ xs: 12, md: 6 }} display="flex">
-          <Card elevation={3} sx={{ borderRadius: 3, height: '100%', width: '100%' }}>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Card elevation={3} sx={{ borderRadius: 3, height: '100%' }}>
             <CardContent>
               <Box display="flex" alignItems="center" mb={2}>
                 <AccountBalanceWalletOutlined color="success" sx={{ mr: 1 }} />
@@ -168,24 +165,23 @@ function ProjectDashboard() {
                 <>
                   <StatItem label="Total Budget" value={formatCurrency(dashboardFigures?.budget)} />
                   <StatItem label="Cost to Date" value={formatCurrency(dashboardFigures?.cost_to_date)} />
-                  <Box mt={2} paddingBottom={3}>
-                    <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
-                      <Typography variant="body2" color="text.secondary">
-                        % Spent
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {parseFloat(budgetSpentPercent).toFixed(2)}%
-                      </Typography>
-                    </Box>
+                  <StatItem label="Remaining Budget" value={formatCurrency(dashboardFigures?.remaining_budget)} />
+
+                  <Box mt={2}>
                     <Box display="flex" alignItems="center" gap={1}>
                       <LinearProgress
                         variant="determinate"
                         value={parseFloat(budgetSpentPercent)}
                         sx={{ height: 8, borderRadius: 5, mt: 1, flex: 1 }}
                       />
+                      <Typography variant="body2" color="text.secondary">
+                        {parseFloat(budgetSpentPercent).toFixed(2)}%
+                      </Typography>
                     </Box>
+                    <Typography variant="body2" color="text.secondary">
+                      % Spent
+                    </Typography>
                   </Box>
-                  <StatItem label="Remaining Budget" value={formatCurrency(dashboardFigures?.remaining_budget)} />
                 </>
               )}
             </CardContent>
@@ -193,8 +189,8 @@ function ProjectDashboard() {
         </Grid>
 
         {/* Progress Card */}
-        <Grid size={{ xs: 12, md: hasClient ? 12 : 6 }} display="flex">
-          <Card elevation={3} sx={{ borderRadius: 3, height: '100%', width: '100%' }}>
+        <Grid size={{ xs: 12 }}>
+          <Card elevation={3} sx={{ borderRadius: 3 }}>
             <CardContent>
               <Box display="flex" alignItems="center" mb={3}>
                 <TimelineOutlined color="warning" sx={{ mr: 1 }} />
@@ -221,35 +217,31 @@ function ProjectDashboard() {
               ) : (
                 <Grid container spacing={3}>
                   <Grid size={{ xs: 12, md: 6 }}>
-                    <Box display="flex" alignItems="center" justifyContent="space-between" mb={0.75} paddingTop={hasClient ? 0 : 14}>
-                      <Typography variant="body2" color="text.secondary">Time Progress</Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {dashboardFigures?.time_progress_percentage ? parseFloat(dashboardFigures.time_progress_percentage).toFixed(2) : '0.00'}%
-                      </Typography>
-                    </Box>
+                    <StatItem label="Time %" value={dashboardFigures?.time_progress_percentage ? `${parseFloat(dashboardFigures.time_progress_percentage).toFixed(2)}%` : ''} />
                     <Box display="flex" alignItems="center" gap={1}>
                       <LinearProgress 
                         variant="determinate" 
                         value={dashboardFigures?.time_progress_percentage || 0} 
-                        sx={{ flex: 1, height: 8, borderRadius: 5 }} 
+                        sx={{ flex: 1 }} 
                       />
+                      <Typography variant="body2" color="text.secondary">
+                        {dashboardFigures?.time_progress_percentage ? parseFloat(dashboardFigures.time_progress_percentage).toFixed(2) : '0.00'}%
+                      </Typography>
                     </Box>
                   </Grid>
 
                   <Grid size={{ xs: 12, md: 6 }}>
-                    <Box display="flex" alignItems="center" justifyContent="space-between" mb={0.75} paddingTop={hasClient ? 0 : 14}>
-                      <Typography variant="body2" color="text.secondary">WBS Progress</Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {dashboardFigures?.execution_percentage ? parseFloat(dashboardFigures.execution_percentage).toFixed(2) : '0.00'}%
-                      </Typography>
-                    </Box>
+                    <StatItem label="WBS Progress %" value={dashboardFigures?.execution_percentage ? `${parseFloat(dashboardFigures.execution_percentage).toFixed(2)}%` : ''} />
                     <Box display="flex" alignItems="center" gap={1}>
                       <LinearProgress 
                         variant="determinate" 
                         value={dashboardFigures?.execution_percentage || 0} 
                         color="warning" 
-                        sx={{ flex: 1, height: 8, borderRadius: 5 }} 
+                        sx={{ flex: 1 }} 
                       />
+                      <Typography variant="body2" color="text.secondary">
+                        {dashboardFigures?.execution_percentage ? parseFloat(dashboardFigures.execution_percentage).toFixed(2) : '0.00'}%
+                      </Typography>
                     </Box>
                   </Grid>
                 </Grid>

@@ -8,7 +8,6 @@ import {
   Grid, 
   LinearProgress, 
   ListItemText, 
-  Skeleton, 
   TextField, 
   Tooltip, 
   Typography 
@@ -135,13 +134,7 @@ const SalesInvoiceEditForm: React.FC<SalesInvoiceEditFormProps> = ({ invoiceData
     });
   
     if (isFetching) {
-            return (
-      <div style={{ width: '100%', padding: '16px' }}>
-        <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-        <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-        <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
-      </div>
-    );
+        return <LinearProgress />;
     }
 
     return (

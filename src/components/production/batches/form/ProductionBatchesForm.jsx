@@ -154,28 +154,15 @@ function ProductionBatchesForm({ toggleOpen, production, setIsConsumptionDeleted
         return production ? updateProduction : addProduction
     },[production, addProduction, updateProduction]);
 
-
     useEffect(() => {
-        // Only update if values have changed (snapshot guards)
-        const currentInputs = watch('inventory_inputs');
-        const currentByProducts = watch('by_products');
-        const currentOutputs = watch('outputs');
-        const currentLedgerExpenses = watch('ledger_expenses');
-
-        if (JSON.stringify(currentInputs) !== JSON.stringify(combinedInputsConsumptions)) {
-            setValue('inventory_inputs', combinedInputsConsumptions);
-        }
-        if (JSON.stringify(currentByProducts) !== JSON.stringify(by_products)) {
-            setValue('by_products', by_products);
-        }
-        if (JSON.stringify(currentOutputs) !== JSON.stringify(outputs)) {
-            setValue('outputs', outputs, { shouldValidate: true, shouldDirty: true });
-        }
-        if (JSON.stringify(currentLedgerExpenses) !== JSON.stringify(otherExpenses)) {
-            setValue('ledger_expenses', otherExpenses);
-        }
-        // eslint-disable-next-line
-    }, [JSON.stringify(combinedInputsConsumptions), JSON.stringify(by_products), JSON.stringify(outputs), JSON.stringify(otherExpenses)]);
+        setValue(`inventory_inputs`, combinedInputsConsumptions);
+        setValue(`by_products`, by_products);
+        setValue(`outputs`, outputs,{
+            shouldValidate: true,
+            shouldDirty: true
+        });
+        setValue(`ledger_expenses`, otherExpenses);
+    }, [production, combinedInputsConsumptions, by_products, outputs, otherExpenses])
 
     const submitType = watch(`submit_type`);
 

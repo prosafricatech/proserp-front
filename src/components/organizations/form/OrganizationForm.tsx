@@ -237,7 +237,7 @@ const OrganizationForm: React.FC<OrganizationFormProps> = ({ organization = null
 
     const addOrganization = useMutation<any, Error, FormValues>({
         mutationFn: organizationServices.create,
-        onSuccess: async (data) => {
+        onSuccess: (data) => {
         if (configAuth) {
             configAuth({
             currentOrganization: data.newOrganization,

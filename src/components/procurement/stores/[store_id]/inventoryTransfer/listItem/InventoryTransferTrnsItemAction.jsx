@@ -2,7 +2,7 @@
 import React, { useContext, useState } from 'react';
 import {
   Box, Button, Dialog, DialogActions, DialogContent, DialogContentText,
-  DialogTitle, Grid, IconButton, LinearProgress, Skeleton, Tab, Tabs, Tooltip, useMediaQuery
+  DialogTitle, Grid, IconButton, LinearProgress, Tab, Tabs, Tooltip, useMediaQuery
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import { HighlightOff } from '@mui/icons-material';
@@ -53,13 +53,8 @@ const DocumentDialog = ({ transferTrn, onClose }) => {
 
       <DialogContent>
         {isPending ? (
-              <div style={{ width: '100%', padding: '16px' }}>
-                <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-                <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-                <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
-              </div>
-              )
-        : belowLargeScreen && activeTab === 0 ? (
+          <LinearProgress />
+        ) : belowLargeScreen && activeTab === 0 ? (
           <InventoryTransferTrnOnScreen trn={trn} organization={authOrganization.organization} />
         ) : (
           <PDFContent

@@ -9,7 +9,7 @@ import ProformaActionTail from './ProformaActionTail';
 import { DateTimePicker } from '@mui/x-date-pickers';
 import dayjs, { Dayjs } from 'dayjs';
 import { EventAvailableOutlined, FilterAltOffOutlined, FilterAltOutlined } from '@mui/icons-material';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import { getSanitizedSearchKeyword } from '@/utilities/getSanitizedSearchKeyword';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { OutletType, useSalesOutlet } from '../outlet/OutletProvider';
@@ -43,12 +43,24 @@ const RqList: React.FC<RqListProps> = ({ activeOutlet }) => {
   const { authOrganization } = useJumboAuth();
   const [filterDate, setFilterDate] = useState<FilterDate>({});
 
+  const searchParams = useSearchParams();
   const [queryOptions, setQueryOptions] = useState<QueryOptions>({
     queryKey: 'proformaInvoices',
-    queryParams: { id: params.id as string, keyword: '', sales_outlet_id: activeOutlet.id },
+    queryParams: { id: params.id as string, keyword: getSanitizedSearchKeyword('Proforma Invoices', searchParams), sales_outlet_id: activeOutlet.id },
     countKey: 'total',
     dataKey: 'data',
   });
+  // Sync in-page search with global search param
+  useEffect(() => {
+    const search = getSanitizedSearchKeyword('Proforma Invoices', searchParams);
+    setQueryOptions((state) => ({
+      ...state,
+      queryParams: {
+        ...state.queryParams,
+        keyword: search,
+      },
+    }));
+  }, [searchParams]);
 
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => {

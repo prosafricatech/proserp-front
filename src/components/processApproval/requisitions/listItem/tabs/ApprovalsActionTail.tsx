@@ -5,7 +5,6 @@ import {
   Dialog, 
   IconButton, 
   LinearProgress, 
-  Skeleton, 
   Tooltip, 
   useMediaQuery 
 } from "@mui/material";
@@ -41,13 +40,7 @@ const ApprovalsActionTail: React.FC<ApprovalsActionTailProps> = ({
   });
 
   if (isPending) {
-        return (
-      <div style={{ width: '100%', padding: '16px' }}>
-        <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-        <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-        <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
-      </div>
-    );
+    return <LinearProgress />;
   }
 
   const canApprove = hasOrganizationRole(requisition?.next_approval_level?.role?.name as string) &&

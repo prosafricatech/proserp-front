@@ -24,7 +24,6 @@ import {
   Grid,
   IconButton,
   LinearProgress,
-  Skeleton,
   Stack,
   Tab,
   Tabs,
@@ -80,11 +79,7 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
   if (isFetching) {
     return (
       <Dialog open fullWidth fullScreen={belowLargeScreen} maxWidth='md'>
-        <div style={{ width: '100%', padding: '16px' }}>
-          <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-          <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-          <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
-        </div>
+        <LinearProgress />
       </Dialog>
     );
   }
@@ -169,14 +164,7 @@ const EditClaim: React.FC<EditClaimProps> = ({ claim, setOpenDialog }) => {
     enabled: !!claim?.id,
   });
 
-  if (isFetching) 
-        return (
-          <div style={{ width: '100%', padding: '16px' }}>
-            <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-            <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-            <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
-          </div>
-        );
+  if (isFetching) return <LinearProgress />;
 
   return (
     <ProjectClaimsForm claim={claimDetails} setOpenDialog={setOpenDialog} />

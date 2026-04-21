@@ -1,4 +1,4 @@
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Grid, IconButton, TextField, Tooltip, Tabs, Tab, Box, LinearProgress, Autocomplete, Chip, Skeleton } from '@mui/material';
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Grid, IconButton, TextField, Tooltip, Tabs, Tab, Box, LinearProgress, Autocomplete, Chip } from '@mui/material';
 import React, { useContext, useEffect, useState } from 'react';
 import { LoadingButton } from '@mui/lab';
 import * as yup from "yup";
@@ -57,8 +57,8 @@ function ProductionBatchesForm2({ toggleOpen, production }) {
             .typeError('Start Date is required'),
         end_date: yup
             .string()
-            .required('End Date is required')
-            .typeError('End Date is required'),
+            .required('Start Date is required')
+            .typeError('Start Date is required'),
         // end_date: yup
         //     .string()
         //     .when('submit_type', {
@@ -140,26 +140,14 @@ function ProductionBatchesForm2({ toggleOpen, production }) {
     },[production, addProduction, updateProduction]);
 
     useEffect(() => {
-        // Only update if values have changed (snapshot guards)
-        const currentInputs = watch('inventory_inputs');
-        const currentByProducts = watch('by_products');
-        const currentOutputs = watch('outputs');
-        const currentLedgerExpenses = watch('ledger_expenses');
-
-        if (JSON.stringify(currentInputs) !== JSON.stringify(inventoryInputs)) {
-            setValue('inventory_inputs', inventoryInputs);
-        }
-        if (JSON.stringify(currentByProducts) !== JSON.stringify(by_products)) {
-            setValue('by_products', by_products);
-        }
-        if (JSON.stringify(currentOutputs) !== JSON.stringify(outputs)) {
-            setValue('outputs', outputs, { shouldValidate: true, shouldDirty: true });
-        }
-        if (JSON.stringify(currentLedgerExpenses) !== JSON.stringify(otherExpenses)) {
-            setValue('ledger_expenses', otherExpenses);
-        }
-        // eslint-disable-next-line
-    }, [JSON.stringify(inventoryInputs), JSON.stringify(by_products), JSON.stringify(outputs), JSON.stringify(otherExpenses)]);
+        setValue(`inventory_inputs`, inventoryInputs);
+        setValue(`by_products`, by_products);
+        setValue(`outputs`, outputs,{
+            shouldValidate: true,
+            shouldDirty: true
+        });
+        setValue(`ledger_expenses`, otherExpenses);
+    }, [production, inventoryInputs, by_products, outputs, otherExpenses])
 
     const submitType = watch(`submit_type`);
 
@@ -226,13 +214,7 @@ function ProductionBatchesForm2({ toggleOpen, production }) {
     };
 
     if (isFetchingBOMs) {
-            return (
-              <div style={{ width: '100%', padding: '16px' }}>
-                <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-                <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-                <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
-              </div>
-            );
+        return <LinearProgress />;
     }
 
     return (

@@ -52,9 +52,6 @@ function RequisitionProductItemForm({
     const { checkOrganizationPermission, authOrganization } = useJumboAuth();
     const [openProductQuickAdd, setOpenProductQuickAdd] = useState(false);
     const [addedProduct, setAddedProduct] = useState<Product | null>(null);
-    // Memoize addedProduct and defaultValue to avoid unnecessary re-renders
-    const memoizedAddedProduct = React.useMemo(() => addedProduct, [addedProduct]);
-    const memoizedDefaultValue = React.useMemo(() => product_item?.product, [product_item?.product]);
     const [calculatedAmount, setCalculatedAmount] = useState<number>(0);
     const [selectedUnit, setSelectedUnit] = useState<number | null>(product_item ? (product_item.measurement_unit_id ?? product_item.measurement_unit?.id ?? null) : null);
     const [preservedValues, setPreservedValues] = useState<{ vat_percentage?: number } | null>(null);
@@ -188,10 +185,9 @@ function RequisitionProductItemForm({
               <ProductSelect
                 label='Product'
                 frontError={errors.product}
-                addedProduct={memoizedAddedProduct}
-                defaultValue={memoizedDefaultValue}
+                addedProduct={addedProduct}
+                defaultValue={product_item?.product}
                 // excludeIds={nonInventoryIds}
-                disableClearable
                 onChange={async (newValue: Product | null) => {
                   if (newValue) {
                     await setSelectedUnit(null);

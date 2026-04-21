@@ -24,30 +24,8 @@ import { Stack } from '@mui/system';
 
 function DeliverablesListItem({ filteredDeliverables }) {
   const { activeTab } = useProjectProfile();
-  const [expandedIndex, setExpandedIndex] = React.useState(-1);
-  const [tabIndex, setTabIndex] = React.useState(0);
-
-  const LOCAL_STORAGE_KEY = 'deliverablesExpandedIndex';
-
-  // Restore expandedIndex from localStorage and reset if out of bounds when filteredDeliverables changes
-  React.useEffect(() => {
-    const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-    let parsed = -1;
-    if (stored !== null) {
-      parsed = parseInt(stored, 10);
-      if (isNaN(parsed)) parsed = -1;
-    }
-    if (parsed >= filteredDeliverables.length || parsed < 0) {
-      setExpandedIndex(-1);
-    } else {
-      setExpandedIndex(parsed);
-    }
-  }, [filteredDeliverables]);
-
-  // Persist expandedIndex to localStorage
-  React.useEffect(() => {
-    localStorage.setItem(LOCAL_STORAGE_KEY, expandedIndex);
-  }, [expandedIndex]);
+  const [expandedIndex, setExpandedIndex] = useState(-1);
+  const [tabIndex, setTabIndex] = useState(0); 
 
   const { data: deliverableDetails, isLoading: isDetailsLoading } = useQuery({
     queryKey: ['deliverableDetails', expandedIndex],
@@ -55,8 +33,8 @@ function DeliverablesListItem({ filteredDeliverables }) {
       const deliverableId = filteredDeliverables[expandedIndex]?.id;
       return projectsServices.showDeliverableDetails(deliverableId);
     },
-    enabled: expandedIndex !== -1,
-    staleTime: activeTab,
+    enabled: expandedIndex !== -1, 
+    staleTime: activeTab, 
     cacheTime: activeTab,
   });
 

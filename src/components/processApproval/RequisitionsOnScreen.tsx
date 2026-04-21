@@ -14,8 +14,7 @@ import {
   Tooltip,
   IconButton,
   Dialog,
-  useTheme,
-  Skeleton
+  useTheme
 } from '@mui/material';
 import { VisibilityOutlined } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
@@ -83,14 +82,7 @@ const FetchRelatableDetails: React.FC<{
     enabled: !!relatable?.id
   });
 
-  if (isPending) 
-        return (
-          <div style={{ width: '100%', padding: '16px' }}>
-            <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-            <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-            <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
-          </div>
-        );
+  if (isPending) return <LinearProgress />;
   return <RelatableOrderDetails order={orderDetails} toggleOpen={toggleOpen} />;
 };
 
@@ -160,28 +152,41 @@ const RequisitionsOnScreen: React.FC<Props> = ({
               <Typography variant="h4" sx={{ color: headerColor }}>
                 {isLeaveRequest ? 'LEAVE REQUEST' : isPurchase ? 'PURCHASE REQUISITION' : 'PAYMENT REQUISITION'}
               </Typography>
-              <Typography variant="body1">
-                {readableDate(requisition.requisition_date)}
+              <Typography variant="h6">
+                {requisition.requisitionNo}
               </Typography>
             </Box>
           </Grid>
-          <Grid size={{xs: 12, sm: 6, md: 4}}>
-            <Box>
-              <Typography variant="subtitle2" sx={{ color: headerColor }}>
-                Cost Center
-              </Typography>
-              <Typography variant="body1">{requisition.cost_center.name}</Typography>
-            </Box>
+
+          {/* Meta Information */}
+          <Grid container spacing={2} sx={{ mb: 3 }} width={'100%'}>
+            <Grid size={{xs: 12, sm: 6, md: 4}}>
+              <Box>
+                <Typography variant="subtitle2" sx={{ color: headerColor }}>
+                  Requisition Date
+                </Typography>
+                <Typography variant="body1">
+                  {readableDate(requisition.requisition_date)}
+                </Typography>
+              </Box>
+            </Grid>
+            <Grid size={{xs: 12, sm: 6, md: 4}}>
+              <Box>
+                <Typography variant="subtitle2" sx={{ color: headerColor }}>
+                  Cost Center
+                </Typography>
+                <Typography variant="body1">{requisition.cost_center.name}</Typography>
+              </Box>
+            </Grid>
+            <Grid size={{xs: 12, sm: 6, md: 4}}>
+              <Box>
+                <Typography variant="subtitle2" sx={{ color: headerColor }}>
+                  Requested By
+                </Typography>
+                <Typography variant="body1">{requisition.creator.name}</Typography>
+              </Box>
+            </Grid>
           </Grid>
-          <Grid size={{xs: 12, sm: 6, md: 4}}>
-            <Box>
-              <Typography variant="subtitle2" sx={{ color: headerColor }}>
-                Requested By
-              </Typography>
-              <Typography variant="body1">{requisition.creator.name}</Typography>
-            </Box>
-          </Grid>
-        </Grid>
 
           {/* Items Table */}
           <Grid size={12}>
@@ -354,81 +359,12 @@ const RequisitionsOnScreen: React.FC<Props> = ({
             </TableContainer>
           </Grid>
 
-        {/* Totals Section */}
-        <Grid size={12}>
-          <Box 
-            sx={{ 
-              mt: 3, 
-              p: 1, 
-              backgroundColor: theme.palette.background.default,
-              border: `1px solid ${theme.palette.divider}`,
-              borderRadius: 1
-            }}
-          >
-            <Grid container spacing={1}>
-              <Grid size={7}>
-                <Typography variant="body1">
-                  Subtotal
-                </Typography>
-              </Grid>
-              <Grid size={5} sx={{ textAlign: 'right' }}>
-                <Typography variant="body1" fontFamily="monospace">
-                  {formatCurrency(subtotal)}
-                </Typography>
-              </Grid>
-
-              {isPurchase && (
-                <>
-                  <Grid size={7}>
-                    <Typography variant="body1">
-                      VAT
-                    </Typography>
-                  </Grid>
-                  <Grid size={5} sx={{ textAlign: 'right' }}>
-                    <Typography variant="body1" fontFamily="monospace">
-                      {formatCurrency(totalVAT)}
-                    </Typography>
-                  </Grid>
-                  <Grid size={7}>
-                    <Typography variant="h6" color={headerColor}>
-                      Grand Total
-                    </Typography>
-                  </Grid>
-                  <Grid size={5} sx={{ textAlign: 'right' }}>
-                    <Typography variant="h6" color={headerColor} fontFamily="monospace">
-                      {formatCurrency(grandTotal)}
-                    </Typography>
-                  </Grid>
-                </>
-              )}
-
-              {!isPurchase && (
-                <>
-                  <Grid size={7}>
-                    <Typography variant="h6" color={headerColor}>
-                      Total
-                    </Typography>
-                  </Grid>
-                  <Grid size={5} sx={{ textAlign: 'right' }}>
-                    <Typography variant="h6" color={headerColor} fontFamily="monospace">
-                      {formatCurrency(subtotal)}
-                    </Typography>
-                  </Grid>
-                </>
-              )}
-            </Grid>
-          </Box>
-        </Grid>
-
-        {/* Remarks Section */}
-        {requisition.remarks && (
-          <Grid size={12} sx={{ mt: 2 }}>
-            <Box>
-              <Typography variant="subtitle2" sx={{ color: headerColor }}>
-                Remarks
-              </Typography>
-              <Typography variant="body1" sx={{ 
-                p: 1, 
+          {/* Totals Section */}
+          <Grid size={12}>
+            <Box 
+              sx={{ 
+                mt: 3, 
+                p: 2, 
                 backgroundColor: theme.palette.background.default,
                 border: `1px solid ${theme.palette.divider}`,
                 borderRadius: 1
@@ -503,8 +439,28 @@ const RequisitionsOnScreen: React.FC<Props> = ({
               )}
             </Box>
           </Grid>
-        )}
-      </Grid>
+
+          {/* Remarks Section */}
+          {requisition.remarks && (
+            <Grid size={12} sx={{ mt: 2 }}>
+              <Box>
+                <Typography variant="subtitle2" sx={{ color: headerColor }}>
+                  Remarks
+                </Typography>
+                <Typography variant="body1" sx={{ 
+                  p: 2, 
+                  backgroundColor: theme.palette.background.default,
+                  border: `1px solid ${theme.palette.divider}`,
+                  borderRadius: 1,
+                  lineHeight: 1.5
+                }}>
+                  {requisition.remarks}
+                </Typography>
+              </Box>
+            </Grid>
+          )}
+        </Grid>
+      </Box>
 
       {/* Relatable Details Dialog */}
       <Dialog

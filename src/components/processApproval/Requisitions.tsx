@@ -62,6 +62,7 @@ export const requisitionContext = createContext<RequisitionContextType>({
 
 const Requisitions = () => {
     const params = useParams();
+    const searchParams = useSearchParams();
     const listRef = useRef<any>(null);
     const { checkOrganizationPermission, authOrganization } = useJumboAuth();
     const [isEditAction, setIsEditAction] = useState(false);
@@ -73,7 +74,7 @@ const Requisitions = () => {
         queryKey: 'requisitions',
         queryParams: {
             id: params.id as string,
-            keyword: '',
+            keyword: getSanitizedSearchKeyword('Requisitions', searchParams),
             process_type: 'all',
             next_approval_role_id: null,
             cost_center_ids: authOrganization?.costCenters?.map((cost_center: CostCenter) => cost_center.id) || [],
@@ -81,6 +82,17 @@ const Requisitions = () => {
         countKey: 'total',
         dataKey: 'data',
     });
+    // Sync in-page search with global search param
+    useEffect(() => {
+        const search = getSanitizedSearchKeyword('Requisitions', searchParams);
+        setQueryOptions((state) => ({
+            ...state,
+            queryParams: {
+                ...state.queryParams,
+                keyword: search,
+            },
+        }));
+    }, [searchParams]);
 
     const [mounted, setMounted] = React.useState(false);
     React.useEffect(() => {
@@ -282,10 +294,10 @@ const Requisitions = () => {
                                             actionTail={
                                               <Grid container spacing={1}>
                                                 <Grid size={{xs: 11, lg: 11}}>
-                                                  <JumboSearch
-                                                    onChange={handleOnChange}
-                                                    value={queryOptions.queryParams.keyword}
-                                                  />
+                                                                                                    <JumboSearch
+                                                                                                        onChange={handleOnChange}
+                                                                                                        value={queryOptions.queryParams.keyword}
+                                                                                                    />
                                                 </Grid>
                                                 <Grid size={{xs: 1, lg: 1}}>
                                                     <RequisitionsActionTail />

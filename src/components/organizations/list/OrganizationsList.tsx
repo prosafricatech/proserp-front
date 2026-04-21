@@ -106,7 +106,7 @@ const OrganizationsList: React.FC<OrganizationsListProps> = ({ user }) => {
   React.useEffect(() => {
     if (authUser?.user === null) {
       signOut({
-        callbackUrl: `/${lang}/auth/signin`,
+        callbackUrl: `http://localhost:3000/${lang}/auth/signin`,
       });
       resetAuth();
     }

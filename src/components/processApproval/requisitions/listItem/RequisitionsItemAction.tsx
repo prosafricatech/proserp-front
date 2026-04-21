@@ -1,7 +1,7 @@
 'use client'
 import React, { useContext, useState } from 'react';
 import { DeleteOutlined, EditOutlined, HighlightOff, VisibilityOutlined } from '@mui/icons-material';
-import { Box, Button, Dialog, DialogActions, DialogContent, Grid, IconButton, LinearProgress, Skeleton, Tab, Tabs, Tooltip, useMediaQuery } from '@mui/material';
+import { Box, Button, Dialog, DialogActions, DialogContent, Grid, IconButton, LinearProgress, Tab, Tabs, Tooltip, useMediaQuery } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import RequisitionsForm from '../form/RequisitionsForm';
 import RequisitionsOnScreen from '../../RequisitionsOnScreen';
@@ -47,13 +47,7 @@ const EditRequisition: React.FC<EditRequisitionProps> = ({ requisition, setOpenE
   });
 
   if (isFetching) {
-        return (
-      <div style={{ width: '100%', padding: '16px' }}>
-        <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-        <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-        <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
-      </div>
-    );
+    return <LinearProgress />;
   }
 
   return (
@@ -89,13 +83,7 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
   const showTabs = !isPurchaseProcess || (isPurchaseProcess && belowLargeScreen);
 
   if (isFetching) {
-        return (
-      <div style={{ width: '100%', padding: '16px' }}>
-        <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-        <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-        <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
-      </div>
-    );
+    return <LinearProgress />;
   }
 
   return (
