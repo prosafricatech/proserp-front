@@ -40,23 +40,33 @@ const SearchGlobal = ({ wrapperSx, sx }: SearchGlobalProps) => {
 
   // Permission/subscription requirements for static menu items (add more as needed)
   const staticMenuPermissions: Record<string, { permissions?: string[]; orgPermissions?: string[]; modules?: string[] }> = {
-    'Sales Counter': { orgPermissions: [PERMISSIONS.SALES_READ], modules: [MODULES.POINT_OF_SALE] },
-    'Sales Shifts': { orgPermissions: [PERMISSIONS.FUEL_SALES_SHIFT_READ], modules: [MODULES.FUEL_STATION] },
+    'Dashboard': {},
     'Requisitions': { orgPermissions: [PERMISSIONS.REQUISITIONS_READ], modules: [MODULES.PROCESS_APPROVAL] },
     'Approvals': { orgPermissions: [PERMISSIONS.REQUISITIONS_READ], modules: [MODULES.PROCESS_APPROVAL] },
-    'Outlets': { orgPermissions: [PERMISSIONS.OUTLETS_READ], modules: [MODULES.POINT_OF_SALE] },
+    'Approval Chains': { orgPermissions: [PERMISSIONS.APPROVAL_CHAINS_READ], modules: [MODULES.PROCESS_APPROVAL] },
+    'Sales Counter': { orgPermissions: [PERMISSIONS.SALES_READ], modules: [MODULES.POINT_OF_SALE] },
     'Proforma Invoices': { orgPermissions: [PERMISSIONS.PROFORMA_INVOICES_READ], modules: [MODULES.POINT_OF_SALE] },
     'POS Reports': { orgPermissions: [PERMISSIONS.SALES_REPORTS], modules: [MODULES.POINT_OF_SALE] },
+    'Outlets': { orgPermissions: [PERMISSIONS.OUTLETS_READ], modules: [MODULES.POINT_OF_SALE] },
     'POS Price Lists': { orgPermissions: [PERMISSIONS.PRICE_LISTS_READ], modules: [MODULES.POINT_OF_SALE] },
     'POS Settings': { orgPermissions: [PERMISSIONS.POS_SETTINGS], modules: [MODULES.POINT_OF_SALE] },
+    'Sales Shifts': { orgPermissions: [PERMISSIONS.FUEL_SALES_SHIFT_READ], modules: [MODULES.FUEL_STATION] },
     'Dippings': { orgPermissions: [PERMISSIONS.FUEL_SALES_SHIFT_READ], modules: [MODULES.FUEL_STATION] },
     'Fuel Reports': { orgPermissions: [PERMISSIONS.FUEL_SALES_SHIFT_READ], modules: [MODULES.FUEL_STATION] },
     'Stations': { orgPermissions: [PERMISSIONS.FUEL_STATIONS_READ], modules: [MODULES.FUEL_STATION] },
     'Fuel Price Lists': { orgPermissions: [PERMISSIONS.PRICE_LISTS_READ], modules: [MODULES.FUEL_STATION] },
+    'Production Batches': { orgPermissions: [PERMISSIONS.BOM_READ], modules: [MODULES.MANUFACTURING_AND_PROCESSING] },
+    'BOMs': { orgPermissions: [PERMISSIONS.BOM_READ], modules: [MODULES.MANUFACTURING_AND_PROCESSING] },
+    'Projects': { orgPermissions: [PERMISSIONS.PROJECTS_READ], modules: [MODULES.PROJECT_MANAGEMENT] },
+    'Project Categories': { orgPermissions: [PERMISSIONS.PROJECT_CATEGORIES_READ], modules: [MODULES.PROJECT_MANAGEMENT] },
+    'Approved Payments': { orgPermissions: [PERMISSIONS.APPROVED_REQUISITIONS_READ], modules: [MODULES.ACCOUNTS_AND_FINANCE] },
+    'Transactions': { orgPermissions: [PERMISSIONS.ACCOUNTS_TRANSACTIONS_READ], modules: [MODULES.ACCOUNTS_AND_FINANCE] },
+    'Accounts Reports': { orgPermissions: [PERMISSIONS.ACCOUNTS_REPORTS], modules: [MODULES.ACCOUNTS_AND_FINANCE] },
     'Budgets': { orgPermissions: [PERMISSIONS.ACCOUNTS_MASTERS_READ], modules: [MODULES.ACCOUNTS_AND_FINANCE] },
     'Ledger Groups': { orgPermissions: [PERMISSIONS.ACCOUNTS_MASTERS_READ], modules: [MODULES.ACCOUNTS_AND_FINANCE] },
     'Ledgers': { orgPermissions: [PERMISSIONS.ACCOUNTS_MASTERS_READ], modules: [MODULES.ACCOUNTS_AND_FINANCE] },
     'Cost Centers': { orgPermissions: [PERMISSIONS.ACCOUNTS_MASTERS_READ], modules: [MODULES.ACCOUNTS_AND_FINANCE] },
+    'Approved Purchases': { orgPermissions: [PERMISSIONS.APPROVED_REQUISITIONS_READ], modules: [MODULES.PROCUREMENT_AND_SUPPLY] },
     'Purchases': { orgPermissions: [PERMISSIONS.PURCHASES_READ], modules: [MODULES.PROCUREMENT_AND_SUPPLY] },
     'Consumptions': { orgPermissions: [PERMISSIONS.INVENTORY_CONSUMPTIONS_READ], modules: [MODULES.PROCUREMENT_AND_SUPPLY] },
     'Procurement Reports': { orgPermissions: [PERMISSIONS.PURCHASES_REPORTS], modules: [MODULES.PROCUREMENT_AND_SUPPLY] },
@@ -67,6 +77,14 @@ const SearchGlobal = ({ wrapperSx, sx }: SearchGlobalProps) => {
     'Stakeholders': { orgPermissions: [PERMISSIONS.STAKEHOLDERS_READ] },
     'Currencies': { orgPermissions: [PERMISSIONS.ACCOUNTS_MASTERS_READ] },
     'Measurement Units': { orgPermissions: [PERMISSIONS.MEASUREMENT_UNITS_READ] },
+    'ProsAfricans': { permissions: ['ProsAfricans:Read', 'ProsAfricans:Manage'] },
+    'Subscriptions': { permissions: ['ProsAfricans:Read', 'ProsAfricans:Manage'] },
+    'Troubleshooting': { permissions: ['ProsAfricans:Read', 'ProsAfricans:Manage'] },
+    'Users Management': { permissions: ['ProsAfricans:Read', 'ProsAfricans:Manage'] },
+    'SMS': { permissions: ['ProsAfricans:Read', 'ProsAfricans:Manage'] },
+    'Organizations': {},
+    'Invitations': {},
+    // Human Resources
     'Employees': { modules: [MODULES.HUMAN_RESOURCES] },
     'Leave Requests': { modules: [MODULES.HUMAN_RESOURCES] },
     'Payroll Periods': { modules: [MODULES.HUMAN_RESOURCES] },
@@ -107,6 +125,7 @@ const SearchGlobal = ({ wrapperSx, sx }: SearchGlobalProps) => {
     setLoading(true);
     setOpen(true);
 
+    // Only show static menu items the user can access
     const pageMatches: SearchResult[] = staticMenuItems
       .filter(page =>
         page.label.toLowerCase().includes(searchValue.toLowerCase()) && canAccessMenu(page.label)
@@ -121,19 +140,21 @@ const SearchGlobal = ({ wrapperSx, sx }: SearchGlobalProps) => {
     // Show static results instantly and keep them visible
     setResults(pageMatches);
 
-    // Fetch each entity config individually and append results when ready
+    // Fetch only entity configs the user can access
     let isCancelled = false;
     Promise.allSettled(
-      entityConfigs.map(async (entity) => entity.search(searchValue))
+      entityConfigs
+        .filter(entity => canAccessMenu(entity.label) || canAccessMenu(entity.type))
+        .map(async (entity) => entity.search(searchValue))
     ).then((allResults) => {
       if (isCancelled) return;
+      // Only keep entity results for which the user has permission (by label or type)
       const entityResults = allResults
         .filter(r => r.status === 'fulfilled')
         .map(r => (r as PromiseFulfilledResult<SearchResult[]>).value)
-        .flat();
-      // Filter all results (static and entity) by permissions/subscriptions
-      const filteredEntities = entityResults.filter(result => canAccessMenu(result.label) || canAccessMenu(result.type));
-      setResults([...pageMatches, ...filteredEntities]);
+        .flat()
+        .filter(result => canAccessMenu(result.label) || canAccessMenu(result.type));
+      setResults([...pageMatches, ...entityResults]);
       setLoading(false);
     });
     return () => { isCancelled = true; };
