@@ -79,7 +79,7 @@ const SearchGlobal = ({ wrapperSx, sx }: SearchGlobalProps) => {
     'PAYE Tax Bands': { modules: [MODULES.HUMAN_RESOURCES] },
   };
 
-  const { checkPermission, checkOrganizationPermission, organizationHasSubscribed } = useJumboAuth();
+  const { checkPermission, checkOrganizationPermission, organizationHasSubscribed, authOrganization } = useJumboAuth();
 
   // Helper to check if user can access a menu item
   const canAccessMenu = (label: string) => {
@@ -92,6 +92,13 @@ const SearchGlobal = ({ wrapperSx, sx }: SearchGlobalProps) => {
   };
 
   React.useEffect(() => {
+    // If user is unauthorized to any organization, do not search
+    if (!authOrganization || !authOrganization.organization || authOrganization.organization.status === 'Unauthorized') {
+      setResults([]);
+      setOpen(false);
+      setLoading(false);
+      return;
+    }
     if (!searchValue) {
       setResults([]);
       setOpen(false);
@@ -130,7 +137,7 @@ const SearchGlobal = ({ wrapperSx, sx }: SearchGlobalProps) => {
       setLoading(false);
     });
     return () => { isCancelled = true; };
-  }, [searchValue]);
+  }, [searchValue, authOrganization]);
 
   // Debounce input
   React.useEffect(() => {
