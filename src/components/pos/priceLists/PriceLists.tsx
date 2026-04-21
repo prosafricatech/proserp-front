@@ -9,17 +9,19 @@ import PriceListsItem from './PriceListsItem';
 import priceListservices from './priceLists-services';
 import PriceListsActionTail from './PriceListsActionTail';
 import ProductsSelectProvider from '../../productAndServices/products/ProductsSelectProvider';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
+import { getSanitizedSearchKeyword } from '@/utilities/getSanitizedSearchKeyword';
 import { PriceList } from './PriceListType';
 
 function PriceLists({fuelPriceLists = false}: {fuelPriceLists?: boolean}) {
     const params = useParams<{ id?: string }>();
+    const searchParams = useSearchParams();
     const listRef = React.useRef<any>(null);
     const [mounted, setMounted] = React.useState(false);
 
     const [queryOptions, setQueryOptions] = React.useState({
         queryKey: 'priceLists',
-        queryParams: { id: params?.id, keyword: '', fuelPriceLists },
+        queryParams: { id: params?.id, keyword: getSanitizedSearchKeyword('Price Lists', searchParams), fuelPriceLists },
         countKey: 'total',
         dataKey: 'data',
     });

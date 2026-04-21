@@ -30,7 +30,7 @@ const IncomeStatementOnScreen = ({ reportData }) => {
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
   const smallScreen = useMediaQuery(theme.breakpoints.down('md'));
 
-  const categoryCellSx = (smallScreen
+  const categoryCellSx = smallScreen
     ? {
         minWidth: 280,
         maxWidth: 340,
@@ -50,8 +50,7 @@ const IncomeStatementOnScreen = ({ reportData }) => {
         background: (theme) => theme.palette.background.paper,
         borderRight: '2px solid',
         borderColor: 'divider',
-      }
-  );
+      };
 
   const toggleRow = (rowId) => {
     setOpenRows((prevOpenRows) => ({
@@ -212,7 +211,7 @@ const IncomeStatementOnScreen = ({ reportData }) => {
                   <Box sx={{ fontWeight: 'bold' }}>{periodItem.period}</Box>
                 </TableCell>
               ))}
-              {periods.length > 1 && (
+              {periods.length > 0 && (
                 <TableCell
                   align='right'
                   sx={{ fontWeight: 'bold', minWidth: 120 }}
@@ -278,7 +277,7 @@ const IncomeStatementOnScreen = ({ reportData }) => {
                   </TableCell>
                 );
               })}
-              {periods.length > 1 && (
+              {periods.length > 0 && (
                 <TableCell
                   align='right'
                   style={{
@@ -374,7 +373,7 @@ const IncomeStatementOnScreen = ({ reportData }) => {
                       </TableCell>
                     );
                   })}
-                  {periods.length > 1 && (
+                  {periods.length > 0 && (
                     <TableCell align='right' style={{ fontWeight: 'bold' }}>
                       {getLedgerTotal(component).toLocaleString('en-US', {
                         minimumFractionDigits: 2,
@@ -442,7 +441,7 @@ const IncomeStatementOnScreen = ({ reportData }) => {
                   </TableCell>
                 );
               })}
-              {periods.length > 1 && (
+              {periods.length > 0 && (
                 <TableCell
                   align='right'
                   style={{
@@ -540,7 +539,7 @@ const IncomeStatementOnScreen = ({ reportData }) => {
                       </TableCell>
                     );
                   })}
-                  {periods.length > 1 && (
+                  {periods.length > 0 && (
                     <TableCell align='right' style={{ fontWeight: 'bold' }}>
                       {getLedgerTotal(component).toLocaleString('en-US', {
                         minimumFractionDigits: 2,
@@ -589,7 +588,7 @@ const IncomeStatementOnScreen = ({ reportData }) => {
                   </TableCell>
                 );
               })}
-              {periods.length > 1 && (
+              {periods.length > 0 && (
                 <TableCell align='right' style={{ fontWeight: 'bold' }}>
                   {(totalRevenue - totalCostOfRevenue).toLocaleString('en-US', {
                     minimumFractionDigits: 2,
@@ -661,7 +660,7 @@ const IncomeStatementOnScreen = ({ reportData }) => {
                   </TableCell>
                 );
               })}
-              {periods.length > 1 && (
+              {periods.length > 0 && (
                 <TableCell
                   align='right'
                   style={{
@@ -759,7 +758,7 @@ const IncomeStatementOnScreen = ({ reportData }) => {
                       </TableCell>
                     );
                   })}
-                  {periods.length > 1 && (
+                  {periods.length > 0 && (
                     <TableCell align='right' style={{ fontWeight: 'bold' }}>
                       {getLedgerTotal(component).toLocaleString('en-US', {
                         minimumFractionDigits: 2,
@@ -812,7 +811,7 @@ const IncomeStatementOnScreen = ({ reportData }) => {
                   </TableCell>
                 );
               })}
-              {periods.length > 1 && (
+              {periods.length > 0 && (
                 <TableCell align='right' style={{ fontWeight: 'bold' }}>
                   {(
                     totalRevenue -

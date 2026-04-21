@@ -1,12 +1,5 @@
-import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
-import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
-import { useCurrencySelect } from '@/components/masters/Currencies/CurrencySelectProvider';
-import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
-import { PERMISSIONS } from '@/utilities/constants/permissions';
-import { PROCESS_TYPES } from '@/utilities/constants/processTypes';
-import { yupResolver } from '@hookform/resolvers/yup';
-import { Div } from '@jumbo/shared';
-import { HighlightOff } from '@mui/icons-material';
+import { Autocomplete, Button, Dialog, DialogActions, DialogContent, DialogTitle, Divider, Grid, IconButton, TextField, Tooltip, Typography } from '@mui/material'
+import React, { useContext, useEffect, useState } from 'react'
 import { LoadingButton } from '@mui/lab';
 import {
   Autocomplete,
@@ -35,16 +28,82 @@ import RequisitionLedgerItemForm from './RequisitionLedgerItemForm';
 import RequisitionLedgerItemRow from './RequisitionLedgerItemRow';
 import RequisitionProductItemForm from './RequisitionProductItemForm';
 import RequisitionProductItemRow from './RequisitionProductItemRow';
+import LeaveItemForm from './LeaveItemForm';
+import LeaveItemRow, { LeaveItemFormValue } from './LeaveItemRow';
+import requisitionsServices from '../../requisitionsServices';
+import CostCenterSelector from '../../../masters/costCenters/CostCenterSelector';
+import CurrencySelector from '../../../masters/Currencies/CurrencySelector';
+import dayjs from 'dayjs';
+import { DateTimePicker } from '@mui/x-date-pickers';
+import { requisitionContext } from '../../Requisitions';
+import { HighlightOff } from '@mui/icons-material';
 import RequisitionSummary from './RequisitionSummary';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
+import { PROCESS_TYPES } from '@/utilities/constants/processTypes';
+import { MODULES } from '@/utilities/constants/modules';
+import { Div } from '@jumbo/shared';
+import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
+import { useCurrencySelect } from '@/components/masters/Currencies/CurrencySelectProvider';
+import humanResourcesServices from '@/components/humanResources/humanResourcesServices';
+import useLeaveTypes from '@/hooks/useLeaveTypes';
+
+type EmployeeOption = {
+  id: number;
+  employee_number?: string;
+  first_name?: string;
+  last_name?: string;
+};
+
+const extractList = (payload: any) => {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.data?.data)) return payload.data.data;
+  return [];
+};
+
+const normalizeLeaveDate = (value?: string) => {
+  if (!value) return value;
+  const parsed = dayjs(value);
+  return parsed.isValid() ? parsed.format('YYYY-MM-DD') : value;
+};
+
+const normalizeLeaveItem = (item: RequisitionItem) => ({
+  ...item,
+  employee_id: item.employee_id ?? item.employee?.id,
+  leave_type_id: item.leave_type_id ?? item.leave_type?.id,
+  start_date: normalizeLeaveDate(item.start_date),
+  end_date: normalizeLeaveDate(item.end_date),
+  days_requested: Number(item.days_requested ?? 0),
+  reason: item.reason || '',
+});
 
 interface RequisitionItem {
   id?: number;
+  employee_id?: number;
+  leave_type_id?: number;
+  start_date?: string;
+  end_date?: string;
+  days_requested?: number;
+  reason?: string;
   ledger_id?: number;
   measurement_unit_id?: number;
   product_id?: number;
   rate?: number;
   quantity?: number;
   vat_percentage?: number;
+  employee?: {
+    id?: number;
+    employee_number?: string;
+    first_name?: string;
+    last_name?: string;
+  };
+  leave_type?: {
+    id?: number;
+    name?: string;
+  };
   ledger?: any;
   measurement_unit?: any;
   product?: any;
@@ -61,6 +120,7 @@ interface Requisition {
   exchange_rate?: number;
   remarks?: string;
   items?: RequisitionItem[];
+  leave_items?: RequisitionItem[];
 }
 
 interface RequisitionsFormProps {
@@ -78,7 +138,7 @@ function RequisitionsForm({ toggleOpen, requisition }: RequisitionsFormProps) {
   const { currencies } = useCurrencySelect();
   const [totalAmount, setTotalAmount] = useState(0);
   const [vatableAmount, setVatableAmount] = useState(0);
-  const { authOrganization, checkOrganizationPermission } = useJumboAuth();
+  const { authOrganization, checkOrganizationPermission, organizationHasSubscribed } = useJumboAuth();
 
   const [showWarning, setShowWarning] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
@@ -108,6 +168,23 @@ function RequisitionsForm({ toggleOpen, requisition }: RequisitionsFormProps) {
         })) || []
       : []
   );
+
+  const [requisition_leave_items, setRequisition_leave_items] = useState<RequisitionItem[]>(
+    requisition?.approval_chain?.process_type?.toUpperCase() === 'LEAVE_REQUEST'
+      ? (requisition?.leave_items || requisition?.items || []).map(normalizeLeaveItem) || []
+      : []
+  );
+
+  const { data: leaveTypes = [] } = useLeaveTypes();
+  const { data: employeeResponse } = useQuery({
+    queryKey: ['employees-for-requisition-leave-items'],
+    queryFn: () => humanResourcesServices.getEmployeesList({ page: 1, limit: 500 }),
+  });
+  const employeeOptions = React.useMemo(() => extractList(employeeResponse) as EmployeeOption[], [employeeResponse]);
+  const setLeaveItems = (items: React.SetStateAction<LeaveItemFormValue[]>) => {
+    const nextRows = typeof items === 'function' ? items(requisition_leave_items as LeaveItemFormValue[]) : items;
+    setRequisition_leave_items(nextRows as RequisitionItem[]);
+  };
 
   const validationSchema = yup.object({
     requisition_date: yup
@@ -142,18 +219,11 @@ function RequisitionsForm({ toggleOpen, requisition }: RequisitionsFormProps) {
       cost_center_id: requisition?.cost_center?.id,
       exchange_rate: requisition ? requisition?.exchange_rate : 1,
       remarks: requisition?.remarks,
-      product_items:
-        requisition?.approval_chain?.process_type?.toUpperCase() === 'PURCHASE'
-          ? requisition?.items
-          : null,
-      ledger_items:
-        requisition?.approval_chain?.process_type?.toUpperCase() === 'PAYMENT'
-          ? requisition?.items
-          : null,
-      currencyDetails: requisition
-        ? requisition.currency
-        : currencies?.find((c) => c.is_base === 1),
-    },
+      product_items: requisition?.approval_chain?.process_type?.toUpperCase() === 'PURCHASE' ? requisition?.items : null,
+      ledger_items: requisition?.approval_chain?.process_type?.toUpperCase() === 'PAYMENT' ? requisition?.items : null,
+      leave_items: requisition?.approval_chain?.process_type?.toUpperCase() === 'LEAVE_REQUEST' ? (requisition?.leave_items || requisition?.items || []) : [],
+      currencyDetails: requisition ? requisition.currency : currencies?.find(c => c.is_base === 1),
+    }
   });
 
   const addRequisition = useMutation({
@@ -188,6 +258,10 @@ function RequisitionsForm({ toggleOpen, requisition }: RequisitionsFormProps) {
 
   const selectedProcessType = watch('process_type');
   const currencyDetails = watch('currencyDetails');
+  const processTypeOptions = React.useMemo(
+    () => PROCESS_TYPES.filter((type) => type !== 'LEAVE_REQUEST' || organizationHasSubscribed(MODULES.HUMAN_RESOURCES)),
+    [organizationHasSubscribed]
+  );
 
   const saveMutation = React.useMemo(() => {
     return requisition ? updateRequisition : addRequisition;
@@ -218,25 +292,60 @@ function RequisitionsForm({ toggleOpen, requisition }: RequisitionsFormProps) {
     } else if (selectedProcessType === 'PAYMENT') {
       setValue('ledger_items', requisition_ledger_items);
       setTotalAmount(total || 0);
+    } else if (selectedProcessType === 'LEAVE_REQUEST') {
+      setValue('leave_items', requisition_leave_items);
+      setTotalAmount(0);
+      setVatableAmount(0);
     } else {
       setTotalAmount(0);
       setVatableAmount(0);
     }
-  }, [
-    selectedProcessType,
-    requisition,
-    requisition_ledger_items,
-    requisition_product_items,
-    setValue,
-  ]);
+  }, [selectedProcessType, requisition, requisition_ledger_items, requisition_product_items, requisition_leave_items, setValue]);
 
   const onSubmit = () => {
+    if (selectedProcessType === 'LEAVE_REQUEST') {
+      if (!requisition_leave_items.length) {
+        enqueueSnackbar('At least one leave item is required', { variant: 'error' });
+        return;
+      }
+
+      const invalidRow = requisition_leave_items.find((item) => {
+        const start = item.start_date ? dayjs(item.start_date) : null;
+        const end = item.end_date ? dayjs(item.end_date) : null;
+        return (
+          !item.employee_id ||
+          !item.leave_type_id ||
+          !start ||
+          !end ||
+          !start.isValid() ||
+          !end.isValid() ||
+          end.isBefore(start, 'day')
+        );
+      });
+
+      if (invalidRow) {
+        enqueueSnackbar('Please complete all leave item required fields correctly', { variant: 'error' });
+        return;
+      }
+    }
+
     if (isDirty) {
       setShowWarning(true);
     } else {
       handleSubmit((data) => {
+        const normalizedLeaveItems =
+          selectedProcessType === 'LEAVE_REQUEST'
+            ? requisition_leave_items.map((item) => ({
+                ...item,
+                start_date: normalizeLeaveDate(item.start_date),
+                end_date: normalizeLeaveDate(item.end_date),
+              }))
+            : [];
         const updatedData = {
           ...data,
+          product_items: selectedProcessType === 'PURCHASE' ? requisition_product_items : null,
+          ledger_items: selectedProcessType === 'PAYMENT' ? requisition_ledger_items : null,
+          leave_items: normalizedLeaveItems,
         };
         saveMutation.mutate(updatedData);
       })();
@@ -245,8 +354,19 @@ function RequisitionsForm({ toggleOpen, requisition }: RequisitionsFormProps) {
 
   const handleConfirmSubmitWithoutAdd = async () => {
     handleSubmit((data) => {
+      const normalizedLeaveItems =
+        selectedProcessType === 'LEAVE_REQUEST'
+          ? requisition_leave_items.map((item) => ({
+              ...item,
+              start_date: normalizeLeaveDate(item.start_date),
+              end_date: normalizeLeaveDate(item.end_date),
+            }))
+          : [];
       const updatedData = {
         ...data,
+        product_items: selectedProcessType === 'PURCHASE' ? requisition_product_items : null,
+        ledger_items: selectedProcessType === 'PAYMENT' ? requisition_ledger_items : null,
+        leave_items: normalizedLeaveItems,
       };
       saveMutation.mutate(updatedData);
     })();
@@ -314,11 +434,11 @@ function RequisitionsForm({ toggleOpen, requisition }: RequisitionsFormProps) {
                 <Grid size={{ xs: 12, md: 4 }}>
                   <Div sx={{ mt: 0.3 }}>
                     <Autocomplete
-                      id='checkboxes-process_type'
-                      options={PROCESS_TYPES}
+                      id="checkboxes-process_type"
+                      options={processTypeOptions}
                       defaultValue={requisition?.approval_chain?.process_type}
                       isOptionEqualToValue={(option, value) => option === value}
-                      getOptionLabel={(option) => option}
+                      getOptionLabel={(option) => option.replace(/_/g, ' ')}
                       renderInput={(params) => (
                         <TextField
                           {...params}
@@ -330,7 +450,24 @@ function RequisitionsForm({ toggleOpen, requisition }: RequisitionsFormProps) {
                         />
                       )}
                       onChange={(e, newValue: any) => {
+                        setRequisition_product_items([]);
+                        setRequisition_ledger_items([]);
+                        setRequisition_leave_items([]);
+
                         setValue('process_type', newValue ? newValue : null, {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                        });
+
+                        setValue('product_items', null as any, {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                        });
+                        setValue('ledger_items', null as any, {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                        });
+                        setValue('leave_items', [] as any, {
                           shouldValidate: true,
                           shouldDirty: true,
                         });
@@ -414,75 +551,106 @@ function RequisitionsForm({ toggleOpen, requisition }: RequisitionsFormProps) {
               </Grid>
             </form>
           </Grid>
-          <Grid size={{ xs: 12, md: 4, lg: 3 }}>
-            <RequisitionSummary
-              isPurchase={selectedProcessType === 'PURCHASE'}
-              vatableAmount={vatableAmount}
-              totalAmount={totalAmount}
-            />
-          </Grid>
-          <Grid size={{ xs: 12 }}>
-            {selectedProcessType === 'PAYMENT' ? (
-              <RequisitionLedgerItemForm
-                setClearFormKey={setClearFormKey}
-                submitMainForm={handleSubmit((data) =>
-                  saveMutation.mutate(data)
-                )}
-                submitItemForm={submitItemForm}
-                setSubmitItemForm={setSubmitItemForm}
-                key={clearFormKey}
-                setIsDirty={setIsDirty}
-                setRequisition_ledger_items={setRequisition_ledger_items}
-                requisition_ledger_items={requisition_ledger_items}
+          {selectedProcessType === 'LEAVE_REQUEST' ? (
+            <Grid size={{xs: 12, md: 4, lg: 3}}>
+              <Grid container columnSpacing={1}>
+                <Grid size={{xs: 12}}>
+                  <Typography align='center' variant='h3'>Summary</Typography>
+                  <Divider />
+                </Grid>
+                <Grid size={{xs: 7}}>
+                  <Typography align='left' variant='body2'>Leave Items:</Typography>
+                </Grid>
+                <Grid size={{xs: 5}}>
+                  <Typography align='right' variant='h5'>{requisition_leave_items.length}</Typography>
+                </Grid>
+                <Grid size={{xs: 7}}>
+                  <Typography align='left' variant='body2'>Total Days:</Typography>
+                </Grid>
+                <Grid size={{xs: 5}}>
+                  <Typography align='right' variant='h5'>
+                    {requisition_leave_items.reduce((sum, item) => sum + (Number(item.days_requested) || 0), 0)}
+                  </Typography>
+                </Grid>
+              </Grid>
+            </Grid>
+          ) : (
+            <Grid size={{xs: 12, md: 4, lg: 3}}>
+              <RequisitionSummary 
+                isPurchase={selectedProcessType === 'PURCHASE'} 
+                vatableAmount={vatableAmount} 
+                totalAmount={totalAmount} 
               />
-            ) : selectedProcessType === 'PURCHASE' ? (
-              <RequisitionProductItemForm
-                setClearFormKey={setClearFormKey}
-                submitMainForm={handleSubmit((data) =>
-                  saveMutation.mutate(data)
-                )}
-                submitItemForm={submitItemForm}
-                setSubmitItemForm={setSubmitItemForm}
-                key={clearFormKey}
-                setIsDirty={setIsDirty}
-                setRequisition_product_items={setRequisition_product_items}
-                requisition_product_items={requisition_product_items}
-              />
-            ) : null}
+            </Grid>
+          )}
+          <Grid size={{xs: 12}}>
+            {
+              selectedProcessType === 'PAYMENT' ?
+                <RequisitionLedgerItemForm 
+                  setRequisition_ledger_items={setRequisition_ledger_items} 
+                  requisition_ledger_items={requisition_ledger_items} 
+                />
+                : selectedProcessType === 'PURCHASE' ?
+                  <RequisitionProductItemForm 
+                    setRequisition_product_items={setRequisition_product_items} 
+                    requisition_product_items={requisition_product_items} 
+                  />
+                  : selectedProcessType === 'LEAVE_REQUEST' ?
+                  <LeaveItemForm
+                    employeeOptions={employeeOptions}
+                    leaveTypeOptions={leaveTypes}
+                    setLeaveItems={setLeaveItems}
+                  />
+                  : null
+            }
           </Grid>
         </Grid>
       </DialogTitle>
       <DialogContent>
         {selectedProcessType === 'PAYMENT' &&
           requisition_ledger_items.map((ledger_item, index) => (
-            <RequisitionLedgerItemRow
-              setClearFormKey={setClearFormKey}
-              submitMainForm={handleSubmit((data) => saveMutation.mutate(data))}
-              submitItemForm={submitItemForm}
-              setSubmitItemForm={setSubmitItemForm}
-              setIsDirty={setIsDirty}
-              key={index}
-              index={index}
-              currencyDetails={currencyDetails}
-              setRequisition_ledger_items={setRequisition_ledger_items}
-              requisition_ledger_items={requisition_ledger_items}
-              ledger_item={ledger_item}
+            <RequisitionLedgerItemRow 
+              key={index} 
+              index={index} 
+              currencyDetails={currencyDetails} 
+              setRequisition_ledger_items={setRequisition_ledger_items} 
+              requisition_ledger_items={requisition_ledger_items} 
+              ledger_item={ledger_item} 
             />
           ))}
         {selectedProcessType === 'PURCHASE' &&
           requisition_product_items.map((product_item, index) => (
             <RequisitionProductItemRow
-              setClearFormKey={setClearFormKey}
-              setIsDirty={setIsDirty}
-              key={index}
-              index={index}
-              currencyDetails={currencyDetails}
-              setRequisition_product_items={setRequisition_product_items}
-              requisition_product_items={requisition_product_items}
-              product_item={product_item}
+              key={index} 
+              index={index} 
+              currencyDetails={currencyDetails} 
+              setRequisition_product_items={setRequisition_product_items} 
+              requisition_product_items={requisition_product_items} 
+              product_item={product_item} 
             />
-          ))}
-        <Grid size={{ xs: 12 }} paddingTop={2}>
+          ))
+        }
+
+        {selectedProcessType === 'LEAVE_REQUEST' &&
+          requisition_leave_items.map((leave_item, index) => (
+            <LeaveItemRow
+              key={index}
+              row={leave_item as LeaveItemFormValue}
+              index={index}
+              leaveItems={requisition_leave_items as LeaveItemFormValue[]}
+              setLeaveItems={setLeaveItems}
+              employeeOptions={employeeOptions}
+              leaveTypeOptions={leaveTypes}
+            />
+          ))
+        }
+
+        {selectedProcessType === 'LEAVE_REQUEST' && requisition_leave_items.length === 0 && (
+          <Grid size={{ xs: 12 }}>
+            No leave item added yet.
+          </Grid>
+        )}
+        <Grid size={{xs: 12}} paddingTop={2}>
           <Div sx={{ mt: 0.3 }}>
             <TextField
               label='Remarks'

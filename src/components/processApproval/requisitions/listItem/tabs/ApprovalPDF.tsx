@@ -5,7 +5,7 @@ import PdfLogo from '@/components/pdf/PdfLogo';
 import { Organization } from '@/types/auth-types';
 import { Document, Page, Text, View } from '@react-pdf/renderer';
 import React from 'react';
-import { Requisition, RequisitionItem } from '../../RequisitionType';
+import { Requisition, RequisitionItem } from '../../../RequisitionType';
 
 interface Creator {
   name: string;
@@ -28,10 +28,56 @@ interface ApprovalPDFProps {
   organization: Organization;
 }
 
+type LeaveViewItem = {
+  id?: number;
+  employee_id?: number;
+  start_date?: string;
+  end_date?: string;
+  days_requested?: number;
+  employee?: {
+    employee_number?: string;
+    first_name?: string;
+    last_name?: string;
+  };
+  leave_type?: {
+    name?: string;
+  };
+};
+
+const normalizeLeaveItem = (item: any): LeaveViewItem => ({
+  ...item,
+  days_requested: Number(item?.days_requested || 0),
+  employee:
+    item?.employee ||
+    (item?.employee_number || item?.first_name || item?.last_name
+      ? {
+          employee_number: item?.employee_number,
+          first_name: item?.first_name,
+          last_name: item?.last_name,
+        }
+      : undefined),
+  leave_type:
+    item?.leave_type ||
+    (item?.leave_type_name
+      ? {
+          name: item.leave_type_name,
+        }
+      : undefined),
+});
+
 function ApprovalPDF({ approval, organization }: ApprovalPDFProps) {
   const mainColor = organization.settings?.main_color || "#2113AD";
   const lightColor = organization.settings?.light_color || "#bec5da";
   const contrastText = organization.settings?.contrast_text || "#FFFFFF";
+  const isLeaveRequest = approval.requisition.process_type?.toLowerCase() === 'leave_request';
+  const requisitionItems: RequisitionItem[] = approval?.requisition && 'items' in approval.requisition ? (approval.requisition.items || []) : [];
+  const leaveSource =
+    (approval.requisition?.leave_items && approval.requisition.leave_items.length
+      ? approval.requisition.leave_items
+      : requisitionItems.length
+        ? requisitionItems
+        : approval.items) || [];
+  const leaveItems: LeaveViewItem[] = (leaveSource as any[]).map(normalizeLeaveItem);
 
   const totalVAT = approval.items
     ?.filter((item: RequisitionItem) => (item.vat_percentage || 0) > 0)
@@ -41,6 +87,7 @@ function ApprovalPDF({ approval, organization }: ApprovalPDFProps) {
   const grandTotal = approval.items
     ?.reduce((total: number, item: RequisitionItem) => 
       total + (item.quantity * item.rate * (1 + (item.vat_percentage || 0) * 0.01)), 0) || 0;
+  const totalLeaveDays = leaveItems.reduce((sum, item) => sum + Number(item.days_requested || 0), 0);
 
   return (
     <Document 
@@ -61,7 +108,9 @@ function ApprovalPDF({ approval, organization }: ApprovalPDFProps) {
           </View>
           <View style={{ flex: 1, textAlign: 'right' }}>
             <Text style={{...pdfStyles.majorInfo, color: mainColor }}>
-              {approval.requisition.process_type?.toLowerCase() === 'purchase' 
+              {isLeaveRequest
+                ? 'Leave Request Approval'
+                : approval.requisition.process_type?.toLowerCase() === 'purchase' 
                 ? 'Purchase Requisition Approval' 
                 : 'Payment Requisition Approval'}
             </Text>
@@ -77,18 +126,43 @@ function ApprovalPDF({ approval, organization }: ApprovalPDFProps) {
         </View>
         
         <View style={{...pdfStyles.table, minHeight: 150, marginBottom: 50}}>
-          <View style={pdfStyles.tableRow}>
-            <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.05 }}>S/N</Text>
-            <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.35 }}>
-                {approval.requisition.process_type?.toLowerCase() === 'purchase' ? 'Product' : 'Ledger'}
-            </Text>
-            <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.2 }}>Quantity</Text>
-            <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.2 }}>Rate</Text>
-            {approval.requisition.process_type?.toLowerCase() === 'purchase' && approval.vat_amount > 0 && (
-                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.2 }}>VAT</Text>
-            )}
-            <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.2 }}>Amount</Text>
-          </View>
+          {isLeaveRequest ? (
+            <>
+              <View style={pdfStyles.tableRow}>
+                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.08 }}>S/N</Text>
+                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.26 }}>Employee</Text>
+                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.2 }}>Leave Type</Text>
+                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.16 }}>Start</Text>
+                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.16 }}>End</Text>
+                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.14 }}>Days</Text>
+              </View>
+              {leaveItems.map((item, index) => (
+                <View key={item.id || `${index}-${item.start_date}`} style={pdfStyles.tableRow}>
+                  <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 0.08 }}>{index + 1}</Text>
+                  <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 0.26 }}>
+                    {[item.employee?.first_name, item.employee?.last_name, item.employee?.employee_number].filter(Boolean).join(' ')}
+                  </Text>
+                  <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 0.2 }}>{item.leave_type?.name || '-'}</Text>
+                  <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 0.16 }}>{readableDate(item.start_date, false)}</Text>
+                  <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 0.16 }}>{readableDate(item.end_date, false)}</Text>
+                  <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 0.14, textAlign: 'right' }}>{Number(item.days_requested || 0).toLocaleString()}</Text>
+                </View>
+              ))}
+            </>
+          ) : (
+            <>
+              <View style={pdfStyles.tableRow}>
+                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.05 }}>S/N</Text>
+                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.35 }}>
+                    {approval.requisition.process_type?.toLowerCase() === 'purchase' ? 'Product' : 'Ledger'}
+                </Text>
+                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.2 }}>Quantity</Text>
+                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.2 }}>Rate</Text>
+                {approval.requisition.process_type?.toLowerCase() === 'purchase' && approval.vat_amount > 0 && (
+                    <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.2 }}>VAT</Text>
+                )}
+                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.2 }}>Amount</Text>
+              </View>
           
           {approval.items?.map((item, index) => (
             <React.Fragment key={item.id}>
@@ -158,22 +232,36 @@ function ApprovalPDF({ approval, organization }: ApprovalPDFProps) {
               )}
             </React.Fragment>
           ))}
+            </>
+          )}
         </View>
         
-        <View style={{ ...pdfStyles.tableRow, marginBottom: 4 }}>
-          <Text style={{ flex: 4.5 }}></Text>
-          <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2, textAlign: 'right' }}>
-            Total
-          </Text>
-          <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2.2, textAlign: 'right' }}>
-            {approval?.items?.reduce((total, item) =>total + (item.quantity || 0) * (item.rate || 0),0).toLocaleString('en-US', { 
-              style: 'currency', 
-              currency: approval.requisition.currency?.code 
-            })}
-          </Text>
-        </View>
+        {isLeaveRequest ? (
+          <View style={{ ...pdfStyles.tableRow, marginBottom: 4 }}>
+            <Text style={{ flex: 4.5 }}></Text>
+            <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2, textAlign: 'right' }}>
+              Total Leave Days
+            </Text>
+            <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2.2, textAlign: 'right' }}>
+              {`${totalLeaveDays.toLocaleString()} day(s)`}
+            </Text>
+          </View>
+        ) : 
+          <View style={{ ...pdfStyles.tableRow, marginBottom: 4 }}>
+            <Text style={{ flex: 4.5 }}></Text>
+            <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2, textAlign: 'right' }}>
+              Total
+            </Text>
+            <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2.2, textAlign: 'right' }}>
+              {approval?.items?.reduce((total, item) =>total + (item.quantity || 0) * (item.rate || 0),0).toLocaleString('en-US', { 
+                style: 'currency', 
+                currency: approval.requisition.currency?.code 
+              })}
+            </Text>
+          </View>
+        }
         
-        {approval.requisition.process_type?.toLowerCase() === 'purchase' && totalVAT > 0 && (
+        {!isLeaveRequest && approval.requisition.process_type?.toLowerCase() === 'purchase' && totalVAT > 0 && (
           <>
             <View style={{ ...pdfStyles.tableRow, marginBottom: 4 }}>
               <Text style={{ flex: 4.5 }}></Text>

@@ -2,7 +2,8 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Card, Stack, Typography } from '@mui/material';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
+import { getSanitizedSearchKeyword } from '@/utilities/getSanitizedSearchKeyword';
 import JumboListToolbar from '@jumbo/components/JumboList/components/JumboListToolbar';
 import JumboRqList from '@jumbo/components/JumboReactQuery/JumboRqList';
 import JumboSearch from '@jumbo/components/JumboSearch';
@@ -25,7 +26,7 @@ const Projects = () => {
 
     const [queryOptions, setQueryOptions] = useState({
       queryKey: 'projects',
-      queryParams: { id: params.id, keyword: '' },
+      queryParams: { id: params.id, keyword: getSanitizedSearchKeyword('Projects', searchParams) },
       countKey: 'total',
       dataKey: 'data',
     });
@@ -33,7 +34,11 @@ const Projects = () => {
     useEffect(() => {
       setQueryOptions((state) => ({
         ...state,
-        queryParams: { ...state.queryParams, id: params.id },
+        queryParams: {
+          ...state.queryParams,
+          id: params.id,
+          keyword: getSanitizedSearchKeyword('Projects', searchParams),
+        },
       }));
     }, [params]);
 

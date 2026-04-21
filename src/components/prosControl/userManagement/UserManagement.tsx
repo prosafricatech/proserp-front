@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
+import { getSanitizedSearchKeyword } from '@/utilities/getSanitizedSearchKeyword';
 import { Card, Stack, Typography } from '@mui/material';
 import JumboRqList from '@jumbo/components/JumboReactQuery/JumboRqList';
 import JumboListToolbar from '@jumbo/components/JumboList/components/JumboListToolbar';
@@ -28,6 +29,18 @@ const UserManagement = () => {
       countKey: 'total',
       dataKey: 'data',
     });
+
+    // Sync search param to in-page search reactively
+    useEffect(() => {
+      const keyword = getSanitizedSearchKeyword('User Management', searchParams);
+      setQueryOptions((prev) => ({
+        ...prev,
+        queryParams: {
+          ...prev.queryParams,
+          keyword,
+        },
+      }));
+    }, [searchParams]);
 
     useEffect(() => {
       setMounted(true);

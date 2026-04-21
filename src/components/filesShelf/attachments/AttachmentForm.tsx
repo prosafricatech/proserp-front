@@ -50,7 +50,7 @@ const validationSchema = yup.object({
       'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-      'audio/mpeg'
+      'audio/mpeg', 'audio/wav', 'audio/x-wav', 'audio/aac', 'audio/ogg'
     ];
     return allowedFormats.includes(file?.type);
   })

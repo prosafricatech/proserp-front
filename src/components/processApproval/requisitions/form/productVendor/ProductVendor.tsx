@@ -10,9 +10,9 @@ import StakeholderSelector from '@/components/masters/stakeholders/StakeholderSe
 import StakeholderQuickAdd from '@/components/masters/stakeholders/StakeholderQuickAdd';
 import { Div } from '@jumbo/shared';
 import { Stakeholder } from '@/components/masters/stakeholders/StakeholderType';
-import { Vendor } from '../../RequisitionType';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { Vendor } from '@/components/processApproval/RequisitionType';
 
 interface FormValues {
   stakeholder_id: number;

@@ -44,6 +44,7 @@ function ApprovalRequisitionProductItem({
     const [fieldKeys, setFieldKeys] = useState<Record<number, ItemState>>({});
     const [openProductBudgetDialog, setOpenProductBudgetDialog] = useState(false);
     const [productDialogData, setProductDialogData] = useState<{ productId: number, costCenterId: number, productName: string, measurementUnit: MeasurementUnit, currency: Currency } | null>(null);
+    const sourceItemsCount = (approval?.items || ('items' in requisition ? requisition.items : []) || []).length;
 
     useEffect(() => {
         setInitialItems([...requisitionProductItem]);
@@ -318,7 +319,7 @@ function ApprovalRequisitionProductItem({
                 );
             })}
 
-            {(approval ? approval : requisition)?.items?.length > 1 && requisitionProductItem.length < initialItems.length && (
+            {sourceItemsCount > 1 && requisitionProductItem.length < initialItems.length && (
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2, mb: 2 }}>
                     <Tooltip title="Restore all deleted items" arrow placement="top">
                         <Button

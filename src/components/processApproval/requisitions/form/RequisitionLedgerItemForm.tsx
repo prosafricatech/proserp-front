@@ -7,41 +7,20 @@ import MeasurementUnitForm from '@/components/masters/measurementUnits/Measureme
 import { MeasurementUnit } from '@/components/masters/measurementUnits/MeasurementUnitType';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
-import { Div } from '@jumbo/shared';
-import {
-  AddOutlined,
-  CheckOutlined,
-  DisabledByDefault,
-} from '@mui/icons-material';
-import {
-  Autocomplete,
-  Button,
-  Dialog,
-  Divider,
-  Grid,
-  IconButton,
-  LinearProgress,
-  TextField,
-  Tooltip,
-  useMediaQuery,
-} from '@mui/material';
-import { Dispatch, SetStateAction, useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { Autocomplete, Button, Divider, Grid, IconButton, LinearProgress, TextField, Tooltip } from '@mui/material';
+import { useEffect, useState, Dispatch, SetStateAction } from 'react';
 import * as yup from 'yup';
-import MeasurementSelector from '../../masters/measurementUnits/MeasurementSelector';
-import requisitionsServices from '../requisitionsServices';
-import {
-  RelatableTransaction,
-  RequisitionLedgerItem,
-} from '../RequisitionType';
+import { useForm } from 'react-hook-form';
+import { AddOutlined, CheckOutlined, DisabledByDefault } from '@mui/icons-material';
+import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
+import { Div } from '@jumbo/shared';
+import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
+import { readableDate, sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
+import { RelatableTransaction, RequisitionLedgerItem } from '../../RequisitionType';
+import requisitionsServices from '../../requisitionsServices';
+import MeasurementSelector from '@/components/masters/measurementUnits/MeasurementSelector';
 
 interface RequisitionLedgerItemFormProps {
-  setClearFormKey: Dispatch<SetStateAction<number>>;
-  submitMainForm?: () => void;
-  submitItemForm: boolean;
-  setSubmitItemForm: Dispatch<SetStateAction<boolean>>;
-  setIsDirty: Dispatch<SetStateAction<boolean>>;
   requisition_ledger_items: RequisitionLedgerItem[];
   setRequisition_ledger_items: Dispatch<
     SetStateAction<RequisitionLedgerItem[]>
@@ -52,11 +31,6 @@ interface RequisitionLedgerItemFormProps {
 }
 
 function RequisitionLedgerItemForm({
-  setClearFormKey,
-  submitMainForm,
-  submitItemForm,
-  setSubmitItemForm,
-  setIsDirty,
   requisition_ledger_items,
   setRequisition_ledger_items,
   ledger_item = null,
@@ -161,10 +135,6 @@ function RequisitionLedgerItemForm({
     },
   });
 
-  useEffect(() => {
-    setIsDirty(Object.keys(dirtyFields).length > 0);
-  }, [dirtyFields, setIsDirty]);
-
   const calculateAmount = () => {
     const quantity = parseFloat(
       Number(watch('quantity'))?.toString() ?? ledger_item?.quantity ?? 0
@@ -198,28 +168,14 @@ function RequisitionLedgerItemForm({
       const updatedItems = [...requisition_ledger_items];
       updatedItems[index] = newItem;
       await setRequisition_ledger_items(updatedItems);
-      setClearFormKey((prevKey) => prevKey + 1);
     } else {
-      await setRequisition_ledger_items((prevItems) => [...prevItems, newItem]);
-      if (submitItemForm && submitMainForm) {
-        submitMainForm();
-      }
-      setSubmitItemForm(false);
-      setClearFormKey((prevKey) => prevKey + 1);
+      await setRequisition_ledger_items(prevItems => [...prevItems, newItem]);
     }
 
     reset();
     setIsAdding(false);
     setShowForm?.(false);
   };
-
-  useEffect(() => {
-    if (submitItemForm) {
-      handleSubmit(updateItems, () => {
-        setSubmitItemForm(false);
-      })();
-    }
-  }, [submitItemForm]);
 
   const getRelatedTransactions = async () => {
     const ledgerId = watch('ledger_id');
@@ -298,25 +254,39 @@ function RequisitionLedgerItemForm({
               />
             </Div>
           </Grid>
-          <Grid size={{ xs: 12, md: 2 }}>
-            <Div sx={{ mt: 0.3 }}>
-              <MeasurementSelector
-                label='Unit'
-                frontError={
-                  errors.measurement_unit_id
-                    ? { message: errors.measurement_unit_id.message || '' }
-                    : undefined
-                }
-                defaultValue={
-                  ledger_item?.measurement_unit_id ??
-                  ledger_item?.measurement_unit?.id
-                }
-                onChange={(newValue: any) => {
-                  setValue('unit_symbol', newValue?.symbol);
-                  setValue('measurement_unit_id', newValue?.id ?? null, {
-                    shouldDirty: true,
-                    shouldValidate: true,
-                  });
+        )}
+        <Grid size={{xs: 12, md: 7}}>
+          <Div sx={{ mt: 0.3 }}>
+            <TextField
+              label="Remarks"
+              fullWidth
+              size="small"
+              {...register('remarks')}
+            />
+          </Div>
+        </Grid>
+        <Grid size={12} textAlign={'end'} paddingBottom={0.5}>
+          <Button
+            variant='contained'
+            size='small'
+            type='submit'
+          >
+            {ledger_item ? (
+              <>
+                <CheckOutlined fontSize='small' /> Done
+              </>
+            ) : (
+              <>
+                <AddOutlined fontSize='small' /> Add
+              </>
+            )}
+          </Button>
+          {ledger_item && (
+            <Tooltip title='Close Edit'>
+              <IconButton
+                size='small'
+                onClick={() => {
+                  setShowForm?.(false);
                 }}
                 showQuickAdd
                 onQuickAddClick={() =>

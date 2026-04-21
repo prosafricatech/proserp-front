@@ -2,7 +2,7 @@ import { Grid } from '@mui/material';
 import React from 'react';
 import ApprovalsActionTail from './ApprovalsActionTail';
 import ApprovalsListItem from './ApprovalsListItem';
-import { Requisition } from '../../RequisitionType';
+import { Requisition } from '../../../RequisitionType';
 
 interface ApprovalsTabProps {
   requisition: Requisition;

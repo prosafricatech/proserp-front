@@ -52,6 +52,7 @@ interface OrderItem {
   product_id?: number;
   quantity: number;
   rate: number;
+  entered_rate?: number;
   measurement_unit: MeasurementUnit;
   vat_percentage: number;
   unordered_quantity: number;
@@ -77,6 +78,7 @@ interface FormValues {
     product_id: number;
     quantity: number;
     rate: number;
+    entered_rate?: number;
     measurement_unit_id: number;
     vat_percentage: number;
   }>;
@@ -99,7 +101,6 @@ const ApprovedPurchaseForm: React.FC<ApprovedPurchaseFormProps> = ({
   prevApprovedDetails
 }) => {
   const { authOrganization } = useJumboAuth();
-  const costCenters = authOrganization;
   const [totalAmount, setTotalAmount] = useState(0);
   const [vatableAmount, setVatableAmount] = useState(0);
   const [order_date] = useState(order?.order_date ? dayjs(order.order_date) : dayjs());
@@ -162,6 +163,15 @@ const ApprovedPurchaseForm: React.FC<ApprovedPurchaseFormProps> = ({
     }),
   });
 
+  // Defensive: ensure instant_pay and instant_receive are always boolean
+  const getBool = (val: any, fallback: boolean) => {
+    if (typeof val === 'boolean') return val;
+    if (val === undefined || val === null) return fallback;
+    if (typeof val === 'object') return fallback;
+    if (typeof val === 'string') return val === 'true';
+    return !!val;
+  };
+
   const formMethods = useForm<FormValues>({
     resolver: yupResolver(validationSchema) as any,
     defaultValues: {
@@ -175,8 +185,8 @@ const ApprovedPurchaseForm: React.FC<ApprovedPurchaseFormProps> = ({
       stakeholder_id: order?.stakeholder?.id || null,
       store_id: (order?.instant_receive && order?.store) ? order.store.id : null,
       date_required: order?.date_required,
-      instant_pay: order?.instant_pay ?? true,
-      instant_receive: order?.instant_receive ?? false,
+      instant_pay: getBool(order?.instant_pay, true),
+      instant_receive: getBool(order?.instant_receive, false),
       credit_ledger_id: (order?.instant_pay && order?.credit_ledger) ? order.credit_ledger.id : null,
       cost_centers: approvedRequisition ? [approvedRequisition.requisition.cost_center] : order?.cost_centers || [],
       items: items
@@ -184,6 +194,7 @@ const ApprovedPurchaseForm: React.FC<ApprovedPurchaseFormProps> = ({
   });
 
   const { setValue, handleSubmit, watch, formState: { errors } } = formMethods;
+  console.log('form errors', errors, order);
 
   const orderTotalAmount = () => {
     let total = 0;
@@ -199,7 +210,7 @@ const ApprovedPurchaseForm: React.FC<ApprovedPurchaseFormProps> = ({
           setValue(`items.${index}.product_id`, item.product?.id ?? item.product_id as number);
           setValue(`items.${index}.quantity`, sanitizedNumber(item.quantity));
           setValue(`items.${index}.measurement_unit_id`, item.measurement_unit.id);
-          setValue(`items.${index}.rate`, item.rate);
+          setValue(`items.${index}.rate`, item?.entered_rate ?? item.rate);
           setValue(`items.${index}.vat_percentage`, item.vat_percentage);
         });
       setTotalAmount(total);
@@ -354,6 +365,7 @@ const ApprovedPurchaseForm: React.FC<ApprovedPurchaseFormProps> = ({
         <ApprovedPurchaseItemForm 
           approvedDetails={approvedDetails} 
           items={items} 
+          prevApprovedDetails={prevApprovedDetails}
           handleItemChange={handleItemChange}
         />
       </DialogContent>

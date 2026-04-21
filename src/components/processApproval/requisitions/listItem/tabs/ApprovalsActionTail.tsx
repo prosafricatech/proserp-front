@@ -11,8 +11,8 @@ import {
 } from "@mui/material";
 import React, { useContext, useState } from "react";
 import ApprovalForm from "./form/ApprovalForm";
-import { requisitionContext } from "../../Requisitions";
-import requisitionsServices from "../../requisitionsServices";
+import { requisitionContext } from "../../../Requisitions";
+import requisitionsServices from "../../../requisitionsServices";
 import { useJumboTheme } from "@jumbo/components/JumboTheme/hooks";
 import { useJumboAuth } from "@/app/providers/JumboAuthProvider";
 import { useQuery } from "@tanstack/react-query";

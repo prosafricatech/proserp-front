@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { AddOutlined } from '@mui/icons-material';
 import { ButtonGroup, Tooltip, IconButton, Dialog, useMediaQuery} from '@mui/material';
-import RequisitionsForm from './form/RequisitionsForm';
+import RequisitionsForm from './requisitions/form/RequisitionsForm';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { PERMISSIONS } from '@/utilities/constants/permissions';

@@ -5,7 +5,6 @@ import {
   AccordionDetails,
   Divider,
   Grid,
-  IconButton,
   Tooltip,
   Typography,
   Box,
@@ -18,11 +17,9 @@ import RequisitionProductItemForm, { RequisitionProductItem } from './Requisitio
 import ProductVendor from './productVendor/ProductVendor';
 import ProductVendorRow from './productVendor/ProductVendorRow';
 import { Currency } from '@/utilities/constants/countries';
-import { Vendor } from '../RequisitionType';
+import { Vendor } from '../../RequisitionType';
 
 interface RequisitionProductItemRowProps {
-  setClearFormKey: (value: React.SetStateAction<number>) => void;
-  setIsDirty: (value: React.SetStateAction<boolean>) => void;
   currencyDetails?: Currency;
   requisition_product_items: RequisitionProductItem[];
   setRequisition_product_items: (items: React.SetStateAction<RequisitionProductItem[]>) => void;
@@ -31,8 +28,6 @@ interface RequisitionProductItemRowProps {
 }
 
 function RequisitionProductItemRow({
-  setClearFormKey,
-  setIsDirty,
   currencyDetails,
   requisition_product_items,
   setRequisition_product_items,
@@ -227,16 +222,11 @@ function RequisitionProductItemRow({
         ) : (
           <Box sx={{ width: '100%' }}>
             <RequisitionProductItemForm 
-              setClearFormKey={setClearFormKey} 
-              setIsDirty={setIsDirty} 
               product_item={product_item} 
               setShowForm={setShowForm} 
               index={index} 
               requisition_product_items={requisition_product_items} 
               setRequisition_product_items={setRequisition_product_items}
-              submitItemForm={false}
-              setSubmitItemForm={() => {}}
-              submitMainForm={() => {}}
             />
           </Box>
         )}

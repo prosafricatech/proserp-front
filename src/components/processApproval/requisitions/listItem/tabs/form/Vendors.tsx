@@ -4,7 +4,7 @@ import ProductVendorRow from '../../../form/productVendor/ProductVendorRow';
 import { Vendor } from '@/components/processApproval/RequisitionType';
 
 interface ProductItem {
-  id: number;
+  id?: number;
   vendors?: Vendor[];
   [key: string]: any;
 }

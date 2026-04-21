@@ -67,6 +67,7 @@ function ApprovalRequisitionLedgerItem({
     const [initialItems, setInitialItems] = useState<RequisitionItem[]>([]);
     const [openLedgerBudgetDialog, setOpenLedgerBudgetDialog] = useState(false);
     const [ledgerDialogData, setLedgerDialogData] = useState<{ ledgerId: number, ledgerName: string, costCenterId: number, currency: Currency } | null>(null);
+    const sourceItemsCount = (approval?.items || ('items' in requisition ? requisition.items : []) || []).length;
 
     useEffect(() => {
         setInitialItems([...requisitionLedgerItem]);
@@ -242,7 +243,7 @@ function ApprovalRequisitionLedgerItem({
                 </Grid>
             ))}
 
-            {(approval ? approval : requisition)?.items?.length > 1 && requisitionLedgerItem.length < initialItems.length && (
+            {sourceItemsCount > 1 && requisitionLedgerItem.length < initialItems.length && (
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2, mb: 2 }}>
                     <Tooltip title="Restore all deleted items" arrow placement="top">
                         <Button
