@@ -2594,15 +2594,6 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
-// Validate ../../../src/app/api/organizations/[id]/roles/[role_id]/update/route.ts
-{
-  type __IsExpected<Specific extends RouteHandlerConfig<"/api/organizations/[id]/roles/[role_id]/update">> = Specific
-  const handler = {} as typeof import("../../../src/app/api/organizations/[id]/roles/[role_id]/update/route.js")
-  type __Check = __IsExpected<typeof handler>
-  // @ts-ignore
-  type __Unused = __Check
-}
-
 // Validate ../../../src/app/api/organizations/[id]/roles/route.ts
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/organizations/[id]/roles">> = Specific
