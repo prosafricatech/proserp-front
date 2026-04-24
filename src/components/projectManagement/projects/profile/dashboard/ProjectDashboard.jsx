@@ -24,6 +24,8 @@ import ProjectFormDialog from '../../ProjectFormDialog';
 import { useQuery } from '@tanstack/react-query';
 import projectsServices from '../../project-services';
 import { useCurrencySelect } from '@/components/masters/Currencies/CurrencySelectProvider';
+import InventoryValueTrend from '@/components/dashboard/procurementCards/InventoryValueTrend';
+import dayjs from 'dayjs';
 
 const EditProject = ({ project, setOpenEditDialog }) => {
   return (
@@ -51,6 +53,7 @@ function ProjectDashboard() {
   const { currencies } = useCurrencySelect();
   const baseCurrency = currencies?.find(c => c.is_base === 1);
   const currencyCode = baseCurrency?.code;
+  const hasClient = !!(project?.client_id || project?.client?.id);
 
   // Fetch all dashboard figures in one call
   const { data: dashboardFigures, isLoading: isLoadingDashboard } = useQuery({
@@ -84,7 +87,6 @@ function ProjectDashboard() {
   return (
     <>
       <Grid container spacing={3} width={'100%'}>
-
         {/* Edit Button */}
         <Grid size={12} display="flex" justifyContent="flex-end">
           <Tooltip title="Edit Project">
@@ -102,51 +104,53 @@ function ProjectDashboard() {
         </Grid>
 
         {/* Revenue Card */}
-        <Grid size={{ xs: 12, md: 6 }}>
-          <Card elevation={3} sx={{ borderRadius: 3, height: '100%' }}>
-            <CardContent>
-              <Box display="flex" alignItems="center" mb={2}>
-                <PaidOutlined color="primary" sx={{ mr: 1 }} />
-                <Typography variant="h6" fontWeight={600}>
-                  Revenue
-                </Typography>
-              </Box>
+        {hasClient && (
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Card elevation={3} sx={{ borderRadius: 3, height: '100%' }}>
+              <CardContent>
+                <Box display="flex" alignItems="center" mb={2}>
+                  <PaidOutlined color="primary" sx={{ mr: 1 }} />
+                  <Typography variant="h6" fontWeight={600}>
+                    Revenue
+                  </Typography>
+                </Box>
 
-              {isLoadingDashboard ? (
-                <>
-                  <Skeleton variant="text" height={80} />
-                  <Skeleton variant="text" height={80} />
-                  <Skeleton variant="rectangular" height={8} sx={{ mt: 2 }} />
-                  <Skeleton variant="text" height={80} />
-                  <Skeleton variant="rectangular" height={8} sx={{ mt: 2 }} />
-                </>
-              ) : (
-                <>
-                  <StatItem label="Contract Sum" value={formatCurrency(dashboardFigures?.contract_sum)} />
-                  <StatItem label="Certified Revenue" value={formatCurrency(dashboardFigures?.certified_revenue)} />
-                  <StatItem label="Progressive Revenue" value={formatCurrency(dashboardFigures?.progressive_revenue)} />
-                  <Box mt={2} mb={2}>
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <LinearProgress
-                        variant="determinate"
-                        value={parseFloat(progressiveRevenuePercent)}
-                        sx={{ height: 8, borderRadius: 5, mt: 1, flex: 1 }}
-                      />
-                      <Typography variant="body2" color="text.secondary">
-                        {parseFloat(progressiveRevenuePercent).toFixed(2)}%
-                      </Typography>
+                {isLoadingDashboard ? (
+                  <>
+                    <Skeleton variant="text" height={80} />
+                    <Skeleton variant="text" height={80} />
+                    <Skeleton variant="rectangular" height={8} sx={{ mt: 2 }} />
+                    <Skeleton variant="text" height={80} />
+                    <Skeleton variant="rectangular" height={8} sx={{ mt: 2 }} />
+                  </>
+                ) : (
+                  <>
+                    <StatItem label="Contract Sum" value={formatCurrency(dashboardFigures?.contract_sum)} />
+                    <StatItem label="Certified Revenue" value={formatCurrency(dashboardFigures?.certified_revenue)} />
+                    <StatItem label="Progressive Revenue" value={formatCurrency(dashboardFigures?.progressive_revenue)} />
+                    <Box mt={2} mb={2}>
+                      <Box display="flex" alignItems="center" gap={1}>
+                        <LinearProgress
+                          variant="determinate"
+                          value={parseFloat(progressiveRevenuePercent)}
+                          sx={{ height: 8, borderRadius: 5, mt: 1, flex: 1 }}
+                        />
+                        <Typography variant="body2" color="text.secondary">
+                          {parseFloat(progressiveRevenuePercent).toFixed(2)}%
+                        </Typography>
+                      </Box>
                     </Box>
-                  </Box>
-                  <StatItem label="Gross Profit to Date" value={formatCurrency(dashboardFigures?.gross_profit_to_date)} />
-                </>
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
+                    <StatItem label="Gross Profit to Date" value={formatCurrency(dashboardFigures?.gross_profit_to_date)} />
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
 
         {/* Budgets Card */}
-        <Grid size={{ xs: 12, md: 6 }}>
-          <Card elevation={3} sx={{ borderRadius: 3, height: '100%' }}>
+        <Grid size={{ xs: 12, md: 6 }} display="flex">
+          <Card elevation={3} sx={{ borderRadius: 3, height: '100%', width: '100%' }}>
             <CardContent>
               <Box display="flex" alignItems="center" mb={2}>
                 <AccountBalanceWalletOutlined color="success" sx={{ mr: 1 }} />
@@ -165,23 +169,24 @@ function ProjectDashboard() {
                 <>
                   <StatItem label="Total Budget" value={formatCurrency(dashboardFigures?.budget)} />
                   <StatItem label="Cost to Date" value={formatCurrency(dashboardFigures?.cost_to_date)} />
-                  <StatItem label="Remaining Budget" value={formatCurrency(dashboardFigures?.remaining_budget)} />
-
-                  <Box mt={2}>
+                  <Box mt={2} paddingBottom={3}>
+                    <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
+                      <Typography variant="body2" color="text.secondary">
+                        % Spent
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {parseFloat(budgetSpentPercent).toFixed(2)}%
+                      </Typography>
+                    </Box>
                     <Box display="flex" alignItems="center" gap={1}>
                       <LinearProgress
                         variant="determinate"
                         value={parseFloat(budgetSpentPercent)}
                         sx={{ height: 8, borderRadius: 5, mt: 1, flex: 1 }}
                       />
-                      <Typography variant="body2" color="text.secondary">
-                        {parseFloat(budgetSpentPercent).toFixed(2)}%
-                      </Typography>
                     </Box>
-                    <Typography variant="body2" color="text.secondary">
-                      % Spent
-                    </Typography>
                   </Box>
+                  <StatItem label="Remaining Budget" value={formatCurrency(dashboardFigures?.remaining_budget)} />
                 </>
               )}
             </CardContent>
@@ -189,8 +194,8 @@ function ProjectDashboard() {
         </Grid>
 
         {/* Progress Card */}
-        <Grid size={{ xs: 12 }}>
-          <Card elevation={3} sx={{ borderRadius: 3 }}>
+        <Grid size={{ xs: 12, md: hasClient ? 12 : 12 }} display="flex">
+          <Card elevation={3} sx={{ borderRadius: 3, height: '100%', width: '100%' }}>
             <CardContent>
               <Box display="flex" alignItems="center" mb={3}>
                 <TimelineOutlined color="warning" sx={{ mr: 1 }} />
@@ -217,37 +222,49 @@ function ProjectDashboard() {
               ) : (
                 <Grid container spacing={3}>
                   <Grid size={{ xs: 12, md: 6 }}>
-                    <StatItem label="Time %" value={dashboardFigures?.time_progress_percentage ? `${parseFloat(dashboardFigures.time_progress_percentage).toFixed(2)}%` : ''} />
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <LinearProgress 
-                        variant="determinate" 
-                        value={dashboardFigures?.time_progress_percentage || 0} 
-                        sx={{ flex: 1 }} 
-                      />
+                    <Box display="flex" alignItems="center" justifyContent="space-between" mb={0.75} paddingTop={hasClient ? 0 : 14}>
+                      <Typography variant="body2" color="text.secondary">Time Progress</Typography>
                       <Typography variant="body2" color="text.secondary">
                         {dashboardFigures?.time_progress_percentage ? parseFloat(dashboardFigures.time_progress_percentage).toFixed(2) : '0.00'}%
                       </Typography>
                     </Box>
+                    <Box display="flex" alignItems="center" gap={1}>
+                      <LinearProgress 
+                        variant="determinate" 
+                        value={dashboardFigures?.time_progress_percentage || 0} 
+                        sx={{ flex: 1, height: 8, borderRadius: 5 }} 
+                      />
+                    </Box>
                   </Grid>
 
                   <Grid size={{ xs: 12, md: 6 }}>
-                    <StatItem label="WBS Progress %" value={dashboardFigures?.execution_percentage ? `${parseFloat(dashboardFigures.execution_percentage).toFixed(2)}%` : ''} />
+                    <Box display="flex" alignItems="center" justifyContent="space-between" mb={0.75} paddingTop={hasClient ? 0 : 14}>
+                      <Typography variant="body2" color="text.secondary">WBS Progress</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {dashboardFigures?.execution_percentage ? parseFloat(dashboardFigures.execution_percentage).toFixed(2) : '0.00'}%
+                      </Typography>
+                    </Box>
                     <Box display="flex" alignItems="center" gap={1}>
                       <LinearProgress 
                         variant="determinate" 
                         value={dashboardFigures?.execution_percentage || 0} 
                         color="warning" 
-                        sx={{ flex: 1 }} 
+                        sx={{ flex: 1, height: 8, borderRadius: 5 }} 
                       />
-                      <Typography variant="body2" color="text.secondary">
-                        {dashboardFigures?.execution_percentage ? parseFloat(dashboardFigures.execution_percentage).toFixed(2) : '0.00'}%
-                      </Typography>
                     </Box>
                   </Grid>
                 </Grid>
               )}
             </CardContent>
           </Card>
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 12 }}>
+          <InventoryValueTrend
+            from={project?.commencement_date ? dayjs(project.commencement_date).toISOString() : undefined}
+            to={project?.completion_date ? dayjs(project.completion_date).toISOString() : undefined}
+            cost_center_ids={project?.cost_center?.id ? [project.cost_center.id] : undefined}
+          />
         </Grid>
 
       </Grid>
