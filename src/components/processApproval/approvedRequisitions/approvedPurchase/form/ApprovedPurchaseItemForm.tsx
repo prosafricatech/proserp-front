@@ -36,7 +36,6 @@ function ApprovedPurchaseItemForm({ handleItemChange, items, approvedDetails, pr
 
     // Helper to get approved rate from prevApprovedDetails if available
     const getApprovedRate = (item: OrderItem) => {
-        console.log('Getting approved rate for item:', item);
         if (prevApprovedDetails && Array.isArray(prevApprovedDetails.items)) {
             const match = prevApprovedDetails.items.find((prev: any) => prev.id === item.requisition_approval_product_item_id);
             if (match) {
