@@ -5,10 +5,8 @@ import {
   AccordionSummary,
   Alert,
   Badge,
-  Box,
   Chip,
   Grid,
-  ListItemText,
   Paper,
   Stack,
   Tab,
@@ -58,7 +56,6 @@ const RequisitionsListItem = ({ requisition }: RequisitionsListItemProps) => {
 
   const isLeaveRequest = requisition.process_type === 'LEAVE_REQUEST';
   const leaveItems = isLeaveRequest ? getLeaveItems(requisition as any) : [];
-  const leaveTypesSummary = Array.from(new Set(leaveItems.map((item) => item.leave_type?.name).filter(Boolean))).join(', ');
   
   return (
     <Accordion

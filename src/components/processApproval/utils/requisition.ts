@@ -2,8 +2,8 @@ import { LeaveRequisitionItem, Requisition } from '../RequisitionType';
 
 export const processTypeConfig = {
   PURCHASE: { label: 'Purchase', color: 'primary' as const },
-  PAYMENT: { label: 'Payment', color: 'warning' as const },
-  LEAVE_REQUEST: { label: 'Leave Request', color: 'info' as const },
+  PAYMENT: { label: 'Payment', color: 'primary' as const },
+  LEAVE_REQUEST: { label: 'Leave Request', color: 'primary' as const },
 } as const;
 
 type LeaveLikeRequisition = Pick<Requisition, 'process_type' | 'leave_items'> & {
