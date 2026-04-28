@@ -379,6 +379,7 @@ function WBSListItem() {
   };
 
   const { theme } = useJumboTheme();
+
   const isLargeScreen = useMediaQuery(theme.breakpoints.up('md'));
 
   return (
