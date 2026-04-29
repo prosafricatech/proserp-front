@@ -1,6 +1,6 @@
 'use client'
 import { lazy, useState } from 'react';
-import { Alert, Grid, ListItemText, Stack, Typography, Divider, Tooltip, useMediaQuery, Chip, LinearProgress, Box } from '@mui/material';
+import { Alert, Grid, ListItemText, Stack, Typography, Divider, Tooltip, useMediaQuery, Chip, LinearProgress, Box, Card } from '@mui/material';
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
@@ -18,25 +18,35 @@ import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 
 const GanttChartActionTail = lazy(() => import('./ganttChart/GanttChartActionTail'));
 
-function LinearProgressWithLabel({ value, label, color }) {
+function LinearProgressWithLabel({ value, color, execPercent, timePercent }) {
   return (
     <Box sx={{ width: '100%' }}>
-      <Stack direction="row" alignItems="center" spacing={1}>
-        <Typography variant="body2" color="text.secondary" sx={{ minWidth: 80 }}>
-          {label}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+        <Typography variant="body2" color="text.secondary" fontWeight={500}>
+          Execution: {Math.min(100, Number(execPercent).toFixed(2))}%
         </Typography>
-        <Box sx={{ flexGrow: 1 }}>
-          <LinearProgress
-            variant="determinate"
-            value={Math.min(Number(value) || 0, 100)}
-            color={color}
-            sx={{ height: 8, borderRadius: 2 }}
-          />
-        </Box>
-        <Typography variant="caption" color="text.secondary">
-          {`${Math.min(Number(value) || 0, 100)}%`}
+        <Typography variant="body2" color="text.secondary" fontWeight={500}>
+          Time Elapsed: {Math.min(100, Number(timePercent).toFixed(2))}%
         </Typography>
-      </Stack>
+      </Box>
+      <Tooltip
+        title={
+          color === 'success'
+            ? 'Execution is on track with time elapsed.'
+            : color === 'warning'
+            ? 'Execution is lagging behind time elapsed. Monitor closely.'
+            : color === 'error'
+            ? 'Execution is significantly behind schedule.'
+            : 'Progress status.'
+        }
+      >
+        <LinearProgress
+          variant="determinate"
+          value={Math.min(Number(value) || 0, 100)}
+          color={color}
+          sx={{ height: 8, borderRadius: 2 }}
+        />
+      </Tooltip>
     </Box>
   );
 }
@@ -84,19 +94,24 @@ const TimelineActivityAccordion = ({ activity, expanded, handleChange }) => {
     }));
   };
 
-  // --- Color Logic ---
+
+  // --- Improved Color Logic: execution vs time ---
   const execPercent = activity.executed_percentage ?? 0;
-  const timePercent = activity.percentage_time_elapsed ?? 0;
+  // Clamp timePercent to 100 for display and calculation
+  const rawTimePercent = activity.percentage_time_elapsed ?? 0;
+  const timePercent = Math.min(100, rawTimePercent);
 
-  let execColor = 'primary';
-  if (execPercent >= 100) execColor = 'success';
-  else if (execPercent >= 70) execColor = 'warning';
-  else if (execPercent < 30) execColor = 'error';
-
-  let timeColor = 'primary';
-  if (timePercent >= 100) timeColor = 'error';     
-  else if (timePercent >= 80) timeColor = 'warning'; 
-  else if (timePercent < 30) timeColor = 'success';
+  let execColor = 'success';
+  let timeColor = 'success';
+  // Use clamped timePercent for diff calculation
+  const diff = timePercent - execPercent;
+  if (diff >= 10) {
+    execColor = 'error';
+    timeColor = 'error';
+  } else if (diff >= 5) {
+    execColor = 'warning';
+    timeColor = 'warning';
+  }
 
   return (
     <Accordion
@@ -150,7 +165,7 @@ const TimelineActivityAccordion = ({ activity, expanded, handleChange }) => {
               primary={
                 <>
                   <Tooltip title="Activity Name">
-                    <Typography component="span" fontWeight={500}>
+                    <Typography component="span" color="text.primary">
                       {activity.name}
                     </Typography>
                   </Tooltip>
@@ -159,7 +174,8 @@ const TimelineActivityAccordion = ({ activity, expanded, handleChange }) => {
                       <Typography
                         component="h4"
                         variant="body2"
-                        color="text.secondary"
+                        color="text.disabled"
+                        fontWeight={400}
                       >
                         {activity.code}
                       </Typography>
@@ -169,7 +185,7 @@ const TimelineActivityAccordion = ({ activity, expanded, handleChange }) => {
               }
               secondary={
                 <Tooltip title="Description">
-                  <Typography component="span">
+                  <Typography component="span" color="text.secondary" fontSize={14}>
                     {activity.description}
                   </Typography>
                 </Tooltip>
@@ -212,7 +228,7 @@ const TimelineActivityAccordion = ({ activity, expanded, handleChange }) => {
                     }
                   >
                     <strong>Remaining:</strong>{' '}
-                    {activity.days_remaining ?? '—'}
+                    {activity.days_remaining < 0 ? 0 : activity.days_remaining ?? '—'}
                   </Typography>
                 }
               />
@@ -220,18 +236,15 @@ const TimelineActivityAccordion = ({ activity, expanded, handleChange }) => {
           </Grid>
 
           <Grid size={{xs: 12, md: 8}}>
-            <Stack spacing={2.5} direction="column">
-              <LinearProgressWithLabel
-                value={execPercent}
-                label="Execution"
-                color={execColor}
-              />
-              <LinearProgressWithLabel
-                value={timePercent}
-                label="Time"
-                color={timeColor}
-              />
-            </Stack>
+                <Box>
+                  <LinearProgressWithLabel
+                    value={Math.min(100, Number(execPercent).toFixed(2))}
+                    label={`Progress (${Number(execPercent).toFixed(2)}%)`}
+                    color={execColor}
+                    execPercent={execPercent}
+                    timePercent={timePercent}
+                  />
+                </Box>
           </Grid>
 
           <Grid size={{xs: 12, md: 4}} textAlign="end">
@@ -244,7 +257,7 @@ const TimelineActivityAccordion = ({ activity, expanded, handleChange }) => {
               <Tooltip title="Weighted Percentage">
                 <Chip
                   size="small"
-                  label={`${activity.weighted_percentage?.toLocaleString() ?? 0}% Weight`}
+                  label={`${typeof activity.weighted_percentage === 'number' ? activity.weighted_percentage.toFixed(2) : 0}% Weight`}
                   color="default"
                 />
               </Tooltip>

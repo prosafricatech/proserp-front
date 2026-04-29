@@ -220,40 +220,47 @@ function ProjectDashboard() {
                   </Grid>
                 </Grid>
               ) : (
-                <Grid container spacing={3}>
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <Box display="flex" alignItems="center" justifyContent="space-between" mb={0.75} paddingTop={hasClient ? 0 : 14}>
-                      <Typography variant="body2" color="text.secondary">Time Progress</Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {dashboardFigures?.time_progress_percentage ? parseFloat(dashboardFigures.time_progress_percentage).toFixed(2) : '0.00'}%
-                      </Typography>
+                (() => {
+                  const execPercent = dashboardFigures?.execution_percentage ?? 0;
+                  const timePercent = dashboardFigures?.time_progress_percentage ?? 0;
+                  let execColor = 'success';
+                  const diff = timePercent - execPercent;
+                  if (diff >= 10) {
+                    execColor = 'error';
+                  } else if (diff >= 5) {
+                    execColor = 'warning';
+                  }
+                  return (
+                    <Box>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+                        <Typography variant="body2" color="text.secondary" fontWeight={500}>
+                          Execution: {Math.min(100, Number(execPercent).toFixed(2))}%
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" fontWeight={500}>
+                          Time Elapsed: {Math.min(100, Number(timePercent).toFixed(2))}%
+                        </Typography>
+                      </Box>
+                      <Tooltip
+                        title={
+                          execColor === 'success'
+                            ? 'Execution is on track with time elapsed.'
+                            : execColor === 'warning'
+                            ? 'Execution is lagging behind time elapsed. Monitor closely.'
+                            : execColor === 'error'
+                            ? 'Execution is significantly behind schedule.'
+                            : 'Progress status.'
+                        }
+                      >
+                        <LinearProgress
+                          variant="determinate"
+                          value={Math.min(Number(execPercent) || 0, 100)}
+                          color={execColor}
+                          sx={{ flex: 1, height: 8, borderRadius: 5 }}
+                        />
+                      </Tooltip>
                     </Box>
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <LinearProgress 
-                        variant="determinate" 
-                        value={dashboardFigures?.time_progress_percentage || 0} 
-                        sx={{ flex: 1, height: 8, borderRadius: 5 }} 
-                      />
-                    </Box>
-                  </Grid>
-
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <Box display="flex" alignItems="center" justifyContent="space-between" mb={0.75} paddingTop={hasClient ? 0 : 14}>
-                      <Typography variant="body2" color="text.secondary">WBS Progress</Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {dashboardFigures?.execution_percentage ? parseFloat(dashboardFigures.execution_percentage).toFixed(2) : '0.00'}%
-                      </Typography>
-                    </Box>
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <LinearProgress 
-                        variant="determinate" 
-                        value={dashboardFigures?.execution_percentage || 0} 
-                        color="warning" 
-                        sx={{ flex: 1, height: 8, borderRadius: 5 }} 
-                      />
-                    </Box>
-                  </Grid>
-                </Grid>
+                  );
+                })()
               )}
             </CardContent>
           </Card>
