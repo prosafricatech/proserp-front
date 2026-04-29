@@ -25,6 +25,7 @@ import {
   DialogActions,
   Grid,
   LinearProgress,
+  Skeleton,
   Typography,
   useMediaQuery,
 } from '@mui/material';
@@ -129,7 +130,9 @@ function QuickReports() {
             setOpenSalesAndCashSummary={setOpenSalesAndCashSummary}
           />
         )}
-        {debtorsCreditorsDialogOpen && <DebtorCreditorReport />}
+        {debtorsCreditorsDialogOpen && (
+          <DebtorCreditorReport setOpenDebtorsCreditorsDialog={setDebtorsCreditorsDialogOpen} />
+        )}
         {openCashierReport && (
           <LedgerSelectProvider>
             <CashierReport setOpenCashierReport={setOpenCashierReport} />
@@ -188,7 +191,11 @@ function QuickReports() {
       </Dialog>
       <JumboCardQuick title={'Quick Reports'}>
         {isLoading ? (
-          <LinearProgress />
+          <div style={{ width: '100%', padding: '16px' }}>
+            <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
+            <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
+            <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+          </div>
         ) : (
           <Grid
             container

@@ -7,10 +7,11 @@ import { StationFormContext } from '../../SalesShifts';
 
 function Dipping({SalesShift, lastClosingDipping}) {
     const { setValue, watch } = useFormContext();
-    const [openSwitch, setOpenSwitch] = useState(!!watch('isOpenSwitchON') || !!SalesShift?.opening_dipping);
-    const [closingSwitch, setClosingSwitch] = useState(!!watch('isCloseSwitchON') || !!SalesShift?.closing_dipping);
+    const [openSwitch, setOpenSwitch] = useState(!!SalesShift?.opening_dipping);
+    const [closingSwitch, setClosingSwitch] = useState(!!SalesShift?.closing_dipping);
     const {activeStation} = useContext(StationFormContext);
     const { fuel_pumps, tanks } = activeStation;
+    const isOpeningDippingLocked = Array.isArray(lastClosingDipping) && lastClosingDipping.length > 0;
 
     useEffect(() => {
         if (SalesShift?.closing_dipping) {
@@ -25,7 +26,7 @@ function Dipping({SalesShift, lastClosingDipping}) {
             });
         }
         
-        if (SalesShift?.opening_dipping || lastClosingDipping) {
+        if (SalesShift?.opening_dipping || (Array.isArray(lastClosingDipping) && lastClosingDipping.length > 0)) {
             setOpenSwitch(true);
             (SalesShift?.opening_dipping?.readings || lastClosingDipping).forEach((reading, index) => {
                 setValue(`dipping_before.${index}`, {
@@ -67,6 +68,7 @@ function Dipping({SalesShift, lastClosingDipping}) {
                                     label={`${tankInfo.name}`}
                                     size="small"
                                     value={readingValue}
+                                    disabled={type === 'before' && isOpeningDippingLocked}
                                     InputProps={{
                                         inputComponent: CommaSeparatedField,
                                     }}
@@ -107,7 +109,6 @@ function Dipping({SalesShift, lastClosingDipping}) {
                         onChange={(e) => {
                             const checked = e.target.checked;
                             setClosingSwitch(checked);
-                            setValue('isCloseSwitchON', checked);
                             if (!checked) {
                                 setValue('dipping_after', []);
                             }
@@ -126,10 +127,10 @@ function Dipping({SalesShift, lastClosingDipping}) {
                     <Switch
                         checked={openSwitch}
                         size='small'
+                        disabled={isOpeningDippingLocked}
                         onChange={(e) => {
                             const checked = e.target.checked;
                             setOpenSwitch(checked);
-                            setValue('isOpenSwitchON', checked);
                             if (!checked) {
                                 setValue('dipping_before', []);
                             }

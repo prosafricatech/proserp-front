@@ -50,6 +50,7 @@ interface ReportDocumentProps {
     increasesWith?: 'DR' | 'CR';
   };
   ledgerName?: string;
+  increasesWith?: 'DR' | 'CR';
 }
 
 interface LedgerStatementDialogContentProps {
@@ -57,6 +58,7 @@ interface LedgerStatementDialogContentProps {
   ledger?: {
     id: number;
     name: string;
+    increasesWith?: 'DR' | 'CR';
   };
   commingFilters?: {
     from: string;
@@ -65,6 +67,7 @@ interface LedgerStatementDialogContentProps {
     cost_center_ids: number[] | 'all';
     with_item_description: boolean;
     ledgerName?: string;
+    increasesWith?: 'DR' | 'CR';
   };
 }
 
@@ -73,7 +76,8 @@ const ReportDocument: React.FC<ReportDocumentProps> = ({
   authOrganization, 
   user, 
   ledger, 
-  ledgerName 
+  ledgerName,
+  increasesWith
 }) => {
   const totalCredits = transactionsData.transactions.reduce((total: number, transaction) => total + transaction.credit, 0);
   const totalDebits = transactionsData.transactions.reduce((total: number, transaction) => total + transaction.debit, 0);
@@ -138,7 +142,7 @@ const ReportDocument: React.FC<ReportDocumentProps> = ({
                 </View>
                 {transactionsData.transactions.map((transaction: any, index: number) => {
                     cumulativeBalance +=
-                        ledger?.increasesWith === 'DR'
+                        increasesWith === 'DR'
                             ? transaction.debit - transaction.credit
                             : transaction.credit - transaction.debit;
 
@@ -412,11 +416,12 @@ const LedgerStatementDialogContent: React.FC<LedgerStatementDialogContentProps> 
                                 <LedgerStatementOnScreen
                                     transactionsData={transactions}
                                     authOrganization={authOrganization}
-                                    ledger={ledger}
-                                /> :
+                                    increasesWith={ledger?.increasesWith || commingFilters?.increasesWith}
+                                /> 
+                            :
                                 <PDFContent
                                     document={
-                                        <ReportDocument transactionsData={transactions} authOrganization={authOrganization} user={user} ledger={ledger} ledgerName={ledgerName} />
+                                        <ReportDocument increasesWith={ledger?.increasesWith || commingFilters?.increasesWith} transactionsData={transactions} authOrganization={authOrganization} user={user} ledger={ledger} ledgerName={ledgerName} />
                                     }
                                     fileName={downloadFileName}
                                 />

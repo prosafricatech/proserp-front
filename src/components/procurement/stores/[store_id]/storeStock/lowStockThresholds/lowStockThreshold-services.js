@@ -4,7 +4,7 @@ const lowStockThresholdServices = {};
 
 lowStockThresholdServices.getList = async ({ store_id, type, keyword, page, limit }) => {
     const response = await axios.get(`/api/lowStockThreshold/${store_id}`, {
-      params: { store_id, type, keyword, page, limit },
+            params: { page, limit, store_id, keyword, type },
     });
     return response.data;
 },

@@ -16,12 +16,6 @@ interface Transaction {
   credit: number;
 }
 
-interface Ledger {
-  id?: number;
-  name?: string;
-  increasesWith?: 'DR' | 'CR';
-}
-
 interface TransactionsData {
   transactions: Transaction[];
     filters: {
@@ -33,13 +27,13 @@ interface TransactionsData {
 interface LedgerStatementOnScreenProps {
   transactionsData: TransactionsData;
   authOrganization: AuthOrganization;
-  ledger?: Ledger;
+  increasesWith?: 'DR' | 'CR';
 }
 
 const LedgerStatementOnScreen: React.FC<LedgerStatementOnScreenProps> = ({ 
   transactionsData, 
   authOrganization, 
-  ledger 
+  increasesWith
 }) => {
   const theme = useTheme();
   const mainColor = authOrganization.organization.settings?.main_color || "#2113AD";
@@ -87,7 +81,7 @@ const LedgerStatementOnScreen: React.FC<LedgerStatementOnScreenProps> = ({
         <TableBody>
           {transactionsData.transactions.map((transaction, index) => {
             cumulativeBalance +=
-              ledger?.increasesWith === 'DR'
+              increasesWith === 'DR'
                 ? transaction.debit - transaction.credit
                 : transaction.credit - transaction.debit;
 

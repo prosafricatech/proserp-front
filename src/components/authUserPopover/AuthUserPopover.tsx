@@ -130,24 +130,39 @@ export const AuthUserPopover: React.FC<AuthUserPopoverProps> = ({ dictionary }) 
           </Typography>
 
           <Stack direction="row" alignItems="center" spacing={1} mt={1}>
-            <Chip
-              label={organization?.name}
-              size="small"
-              color="primary"
-              variant="outlined"
-              clickable
-              onClick={() => {
-                if (organization?.id) {
+            {organization?.id ? (
+              <Chip
+                label={organization?.name}
+                size="small"
+                color="primary"
+                variant="outlined"
+                clickable
+                onClick={() => {
                   router.push(`/${lang}/organizations/profile/${organization.id}`);
-                }
-              }}
-              sx={{
-                cursor: 'pointer',
-                '&:hover': {
-                  backgroundColor: 'rgba(56, 13, 250, 0.1)',
-                },
-              }}
-            />
+                }}
+                sx={{
+                  cursor: 'pointer',
+                  '&:hover': {
+                    backgroundColor: 'rgba(56, 13, 250, 0.1)',
+                  },
+                }}
+              />
+            ) : (
+              <Typography
+                variant="body2"
+                color="warning.main"
+                onClick={switchOrganization}
+                sx={{
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                  '&:hover': {
+                    opacity: 0.8,
+                  },
+                }}
+              >
+                No organization selected. Click here to select one.
+              </Typography>
+            )}
           </Stack>
         </Div>
 
