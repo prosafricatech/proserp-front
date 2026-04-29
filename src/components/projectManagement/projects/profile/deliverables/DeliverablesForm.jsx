@@ -26,6 +26,7 @@ const DeliverablesForm = ({ setOpenDialog, group=null, deliverable=null }) => {
     const queryClient = useQueryClient();
     const { enqueueSnackbar } = useSnackbar();
     const {project, deliverable_groups} = useProjectProfile();
+    const hasClient = !!project?.client_id;
 
     const { mutate: addDeliverables, isPending } = useMutation({
         mutationFn: projectsServices.addDeliverables,
@@ -121,14 +122,11 @@ const DeliverablesForm = ({ setOpenDialog, group=null, deliverable=null }) => {
                 return true;
             }),
         contract_rate: yup.number()
-            .test('contract-rate-required', 'Contract rate is required when client is selected', function(value) {
-                const client_id = this.parent.client_id;
-                if (client_id) {
-                    return value !== null && value !== undefined;
-                }
-                return true;
-            })
-            .typeError('Contract rate must be a number'),
+            .when('client_id', {
+                is: (client_id) => !!client_id,
+                then: (schema) => schema.required('Contract rate is required when client is selected').typeError('Contract rate must be a number'),
+                otherwise: (schema) => schema.notRequired().nullable(true),
+            }),
     });     
 
     const { register, setValue, watch, clearErrors, handleSubmit, formState: { errors } } = useForm({
@@ -140,6 +138,7 @@ const DeliverablesForm = ({ setOpenDialog, group=null, deliverable=null }) => {
             measurement_unit_id: deliverable?.measurement_unit_id,
             quantity: deliverable?.quantity,
             contract_rate: deliverable?.contract_rate,
+            amount: deliverable?.amount ?? ((Number(deliverable?.quantity) || 0) * (Number(deliverable?.contract_rate) || 0)),
             currency_id: deliverable ? deliverable?.currency_id : 1,
             exchange_rate: deliverable ? deliverable?.exchange_rate : 1,
             weighted_percentage: deliverable?.weighted_percentage,
@@ -149,6 +148,16 @@ const DeliverablesForm = ({ setOpenDialog, group=null, deliverable=null }) => {
         },
         context: { sameLevelDeliverables, deliverable }
     });
+
+    const quantityValue = Number(watch('quantity')) || 0;
+    const contractRateValue = Number(watch('contract_rate')) || 0;
+    const computedAmount = quantityValue * contractRateValue;
+
+    React.useEffect(() => {
+        setValue('amount', computedAmount, {
+            shouldDirty: true,
+        });
+    }, [computedAmount, setValue]);
 
     return (
         <> 
@@ -181,7 +190,7 @@ const DeliverablesForm = ({ setOpenDialog, group=null, deliverable=null }) => {
                                 />
                             </Div>
                         </Grid>
-                        {!!project.client_id &&
+                        {hasClient &&
                             <>
                                 <Grid size={{xs: 12, md: 4}}>
                                     <Div sx={{ mt: 1}}>
@@ -252,11 +261,20 @@ const DeliverablesForm = ({ setOpenDialog, group=null, deliverable=null }) => {
                                     error={!!errors?.quantity}
                                     helperText={errors?.quantity?.message}
                                     label="Quantity"
-                                    {...register(`quantity`)}
+                                    defaultValue={deliverable?.quantity}
+                                    onChange={(e) => {
+                                        setValue(`quantity`,e.target.value ? sanitizedNumber(e.target.value ): 0,{
+                                            shouldValidate: true,
+                                            shouldDirty: true
+                                        });
+                                    }}
+                                    InputProps={{
+                                        inputComponent: CommaSeparatedField,
+                                    }}
                                 />
                             </Div>
                         </Grid>
-                        {!!project.client_id &&
+                        {hasClient &&
                             <Grid size={{xs: 12, md: 4}}>
                                 <Div sx={{ mt: 1}}>
                                     <TextField
@@ -274,6 +292,24 @@ const DeliverablesForm = ({ setOpenDialog, group=null, deliverable=null }) => {
                                                 shouldValidate: true,
                                                 shouldDirty: true
                                             });
+                                        }}
+                                    />
+                                </Div>
+                            </Grid>
+                        }
+                        {hasClient &&
+                            <Grid size={{xs: 12, md: 4}}>
+                                <Div sx={{ mt: 1}}>
+                                    <TextField
+                                        size="small"
+                                        fullWidth
+                                        label="Amount"
+                                        value={computedAmount.toLocaleString(undefined, {
+                                            minimumFractionDigits: 2,
+                                            maximumFractionDigits: 2,
+                                        })}
+                                        InputProps={{
+                                            readOnly: true,
                                         }}
                                     />
                                 </Div>
@@ -302,7 +338,7 @@ const DeliverablesForm = ({ setOpenDialog, group=null, deliverable=null }) => {
                                 />
                             </Div>
                         </Grid>
-                        <Grid size={{xs: 12, md: watch('currency_id') > 1 ? 8 : !project.client_id && 8 }}>
+                        <Grid size={{xs: 12, md: 4}}>
                             <Div sx={{ mt: 1}}>
                                 <Autocomplete
                                     options={deliverable ? 

@@ -17,6 +17,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControl,
   Grid,
   IconButton,
   LinearProgress,
@@ -30,7 +31,7 @@ import {
   useMediaQuery,
 } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import projectsServices from '../../project-services';
 import { useProjectProfile } from '../ProjectProfileProvider';
 import BudgetsOnscreen from './preview/BudgetsOnscreen';
@@ -42,14 +43,24 @@ function BudgetsDocumentDialog({
   budgetDetails,
   baseCurrency,
   organization,
+  forceWithDetails = false,
 }) {
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
-  const [tab, setTab] = useState(belowLargeScreen ? 1 : 0);
-  const [withDetails, setWithDetails] = useState(false);
+  const canShowOnScreen = belowLargeScreen;
+  const [tab, setTab] = useState(forceWithDetails && canShowOnScreen ? 0 : belowLargeScreen ? 1 : 0);
+  const [withDetails, setWithDetails] = useState(forceWithDetails);
+  const [groupingMode, setGroupingMode] = useState('default');
   const [pdfKey, setPdfKey] = useState(0);
   const [isExporting, setIsExporting] = useState(false);
   const { project } = useProjectProfile();
+
+  useEffect(() => {
+    if (forceWithDetails) {
+      setWithDetails(true);
+      setTab(canShowOnScreen ? 0 : 0);
+    }
+  }, [forceWithDetails, canShowOnScreen]);
 
   const {
     data: timelineActivitiesData,
@@ -83,7 +94,16 @@ function BudgetsDocumentDialog({
 
   // When toggling details, force PDF rerender
   const handleDetailsChange = (e) => {
+    if (forceWithDetails) return;
     setWithDetails(e.target.checked);
+    if (!e.target.checked) {
+      setGroupingMode('default');
+    }
+    setPdfKey((prev) => prev + 1);
+  };
+
+  const handleGroupingModeChange = (e) => {
+    setGroupingMode(e.target.value);
     setPdfKey((prev) => prev + 1);
   };
 
@@ -121,6 +141,7 @@ function BudgetsDocumentDialog({
     budgetDetails: budgetDetails,
     baseCurrency: baseCurrency,
     withDetails: withDetails,
+    grouping_mode: withDetails ? groupingMode : 'default',
     organization: organization,
   };
 
@@ -158,25 +179,47 @@ function BudgetsDocumentDialog({
           position='relative'
         >
           <Box display='flex' alignItems='center'>
-            <Typography>Detailed</Typography>
-            <Switch
-              checked={withDetails}
-              onChange={handleDetailsChange}
-              slotProps={{ input: { 'aria-label': 'controlled' } }}
-            />
+            {!forceWithDetails && (
+              <>
+                <Typography>Detailed</Typography>
+                <Switch
+                  checked={withDetails}
+                  onChange={handleDetailsChange}
+                  slotProps={{ input: { 'aria-label': 'controlled' } }}
+                />
+              </>
+            )}
+            {(withDetails || forceWithDetails) && (
+              <FormControl size='small' sx={{ ml: 2 }}>
+                <Box display='flex' alignItems='center'>
+                  <Typography>Group By Task</Typography>
+                  <Switch
+                    checked={groupingMode === 'task'}
+                    onChange={(e) => {
+                      handleGroupingModeChange({
+                        target: { value: e.target.checked ? 'task' : 'default' },
+                      });
+                    }}
+                    slotProps={{ input: { 'aria-label': 'group by task' } }}
+                  />
+                </Box>
+              </FormControl>
+            )}
           </Box>
           {belowLargeScreen ? (
             <Box display='flex' alignItems='center' gap={1}>
-              <LoadingButton
-                size='small'
-                onClick={() => handleExcelExport(exportedData)}
-                color='success'
-                variant='contained'
-                loading={isExporting}
-                startIcon={<FontAwesomeIcon icon={faFileExcel} />}
-              >
-                Excel
-              </LoadingButton>
+              {!forceWithDetails && (
+                <LoadingButton
+                  size='small'
+                  onClick={() => handleExcelExport(exportedData)}
+                  color='success'
+                  variant='contained'
+                  loading={isExporting}
+                  startIcon={<FontAwesomeIcon icon={faFileExcel} />}
+                >
+                  Excel
+                </LoadingButton>
+              )}
               <Tooltip title='Close'>
                 <IconButton size='small' onClick={onClose}>
                   <HighlightOff color='primary' />
@@ -184,17 +227,19 @@ function BudgetsDocumentDialog({
               </Tooltip>
             </Box>
           ) : (
-            <LoadingButton
-              size='small'
-              onClick={() => handleExcelExport(exportedData)}
-              color='success'
-              variant='contained'
-              loading={isExporting}
-              startIcon={<FontAwesomeIcon icon={faFileExcel} />}
-              sx={{ ml: 2 }}
-            >
-              Excel
-            </LoadingButton>
+            !forceWithDetails && (
+              <LoadingButton
+                size='small'
+                onClick={() => handleExcelExport(exportedData)}
+                color='success'
+                variant='contained'
+                loading={isExporting}
+                startIcon={<FontAwesomeIcon icon={faFileExcel} />}
+                sx={{ ml: 2 }}
+              >
+                Excel
+              </LoadingButton>
+            )
           )}
         </Box>
       </DialogTitle>
@@ -202,17 +247,54 @@ function BudgetsDocumentDialog({
       {/* Tabs Row */}
       <Grid container alignItems='center' sx={{ px: 3, pb: 1 }}>
         <Grid item>
-          {belowLargeScreen && (
+          {canShowOnScreen && (
             <Tabs value={tab} onChange={(_, v) => setTab(v)}>
-              <Tab label='PDF' />
-              <Tab label='On Screen' />
+              {forceWithDetails ? (
+                [
+                  <Tab key='onscreen' label='On Screen' />,
+                  <Tab key='pdf' label='PDF' />,
+                ]
+              ) : (
+                [
+                  <Tab key='pdf' label='PDF' />,
+                  <Tab key='onscreen' label='On Screen' />,
+                ]
+              )}
             </Tabs>
           )}
         </Grid>
       </Grid>
 
       <DialogContent>
-        {tab === 0 ? (
+        {forceWithDetails ? (
+          canShowOnScreen && tab === 0 ? (
+            <BudgetsOnscreen
+              allTasks={allTasks}
+              organization={organization}
+              budgetDetails={budgetDetails}
+              baseCurrency={baseCurrency}
+              withDetails={withDetails}
+              groupingMode={withDetails ? groupingMode : 'default'}
+              hideSummary={forceWithDetails}
+            />
+          ) : (
+            <PDFContent
+              key={pdfKey}
+              fileName='Budgets'
+              document={
+                <BudgetsPDF
+                  allTasks={allTasks}
+                  budgetDetails={budgetDetails}
+                  baseCurrency={baseCurrency}
+                  withDetails={withDetails}
+                  groupingMode={withDetails ? groupingMode : 'default'}
+                  hideSummary={forceWithDetails}
+                  organization={organization}
+                />
+              }
+            />
+          )
+        ) : tab === 0 ? (
           <PDFContent
             key={pdfKey}
             fileName='Budgets'
@@ -222,18 +304,23 @@ function BudgetsDocumentDialog({
                 budgetDetails={budgetDetails}
                 baseCurrency={baseCurrency}
                 withDetails={withDetails}
+                groupingMode={withDetails ? groupingMode : 'default'}
+                hideSummary={forceWithDetails}
                 organization={organization}
               />
             }
           />
         ) : (
-          belowLargeScreen && (
-            <BudgetsOnscreen
-              organization={organization}
-              budgetDetails={budgetDetails}
-              baseCurrency={baseCurrency}
-              withDetails={withDetails}
-            />
+          canShowOnScreen && (
+          <BudgetsOnscreen
+            allTasks={allTasks}
+            organization={organization}
+            budgetDetails={budgetDetails}
+            baseCurrency={baseCurrency}
+            withDetails={withDetails}
+            groupingMode={withDetails ? groupingMode : 'default'}
+            hideSummary={forceWithDetails}
+          />
           )
         )}
       </DialogContent>
@@ -254,6 +341,8 @@ function BudgetsAccordionDetails({ budget, expanded }) {
   const [searchQueryNames, setSearchQueryNames] = useState([]);
   const [ledgerDialogOpen, setLedgerDialogOpen] = useState(false);
   const [ledgerFilters, setLedgerFilters] = useState(null);
+  const [budgetedPdfDialogOpen, setBudgetedPdfDialogOpen] = useState(false);
+  const [budgetedPdfDetails, setBudgetedPdfDetails] = useState(null);
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
   const {
@@ -296,6 +385,67 @@ function BudgetsAccordionDetails({ budget, expanded }) {
       increasesWith: item?.increasesWith,
     });
     setLedgerDialogOpen(true);
+  };
+
+  const handleViewBudgeted = async (item) => {
+    try {
+      const response = await projectsServices.getBudgetedCostItems(
+        budget?.id,
+        item?.ledger_id
+      );
+
+      const normalizeBudgetDetails = (payload, fallbackName) => {
+        const rawPayload = payload?.budgetDetails || payload?.budget_details || payload;
+
+        if (Array.isArray(rawPayload)) {
+          const hasSubcontractItems = rawPayload.some(
+            (entry) => entry?.project_task_id || entry?.expense_ledger_id
+          );
+          const hasProductItems = rawPayload.some(
+            (entry) => entry?.product_name || entry?.product || entry?.unit_symbol
+          );
+
+          if (hasSubcontractItems) {
+            return {
+              name: fallbackName,
+              subcontract_task_items: rawPayload,
+            };
+          }
+
+          if (hasProductItems) {
+            return {
+              name: fallbackName,
+              product_items: rawPayload,
+            };
+          }
+
+          return {
+            name: fallbackName,
+            ledger_items: rawPayload,
+          };
+        }
+
+        if (rawPayload && typeof rawPayload === 'object') {
+          return {
+            ...rawPayload,
+            name: rawPayload.name || fallbackName,
+          };
+        }
+
+        return {
+          name: fallbackName,
+          ledger_items: [],
+          product_items: [],
+          subcontract_task_items: [],
+        };
+      };
+
+      const normalized = normalizeBudgetDetails(response, item?.name);
+      setBudgetedPdfDetails(normalized);
+      setBudgetedPdfDialogOpen(true);
+    } catch (error) {
+      console.error('error fetching budgeted cost items: ', error);
+    }
   };
 
   return (
@@ -448,8 +598,18 @@ function BudgetsAccordionDetails({ budget, expanded }) {
                       </Tooltip>
                     </Grid>
                     <Grid size={{ xs: 5, md: 2.3 }}>
-                      <Tooltip title='Budgeted'>
-                        <Typography variant='h6'>
+                      <Tooltip title='Budgeted, click to view'>
+                        <Typography
+                          variant='h6'
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleViewBudgeted(item);
+                          }}
+                          sx={{
+                            cursor: 'pointer',
+                            '&:hover': { color: 'primary.main' },
+                          }}
+                        >
                           {item?.budgeted.toLocaleString('en-US', {
                             style: 'currency',
                             currency: baseCurrency?.code,
@@ -458,25 +618,24 @@ function BudgetsAccordionDetails({ budget, expanded }) {
                       </Tooltip>
                     </Grid>
                     <Grid size={{ xs: 8, md: 2 }}>
-                      <Tooltip title='Spent'>
+                      <Tooltip title='Spent, click to view'>
                         <Box display='flex' alignItems='center' gap={0.5}>
-                          <Typography variant='h6'>
+                          <Typography
+                            variant='h6'
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleViewLedger(item);
+                            }}
+                            sx={{
+                              cursor: 'pointer',
+                              '&:hover': { color: 'primary.main' },
+                            }}
+                          >
                             {item?.spent.toLocaleString('en-US', {
                               style: 'currency',
                               currency: baseCurrency?.code,
                             })}
                           </Typography>
-                          <Tooltip title={`View ${item?.name}`}>
-                            <IconButton
-                              size='small'
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleViewLedger(item);
-                              }}
-                            >
-                              <VisibilityOutlined fontSize='small' />
-                            </IconButton>
-                          </Tooltip>
                         </Box>
                       </Tooltip>
                     </Grid>
@@ -553,6 +712,17 @@ function BudgetsAccordionDetails({ budget, expanded }) {
             setOpen={setLedgerDialogOpen}
           />
         </Dialog>
+      )}
+
+      {budgetedPdfDialogOpen && budgetedPdfDetails && (
+        <BudgetsDocumentDialog
+          openBudgetsDialog={budgetedPdfDialogOpen}
+          onClose={() => setBudgetedPdfDialogOpen(false)}
+          budgetDetails={budgetedPdfDetails}
+          baseCurrency={baseCurrency}
+          organization={organization}
+          forceWithDetails={true}
+        />
       )}
     </>
   );

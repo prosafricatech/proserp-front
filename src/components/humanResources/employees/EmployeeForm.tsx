@@ -1,5 +1,6 @@
 'use client';
 
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Div } from '@jumbo/shared';
 import { LoadingButton } from '@mui/lab';
@@ -10,16 +11,18 @@ import {
   DialogContent,
   DialogTitle,
   Grid,
-  SelectChangeEvent,
+  LinearProgress,
   TextField,
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import dayjs, { Dayjs } from 'dayjs';
 import { useSnackbar } from 'notistack';
-import React, { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useEffect, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import * as yup from 'yup';
+import { useDepartments } from '../departments/DepartmentsProvider';
+import { Department } from '../departments/DepartmentsType';
 import humanResourcesServices from '../humanResourcesServices';
 import { Employee } from './EmployeesType';
 
@@ -40,42 +43,77 @@ interface ApiResponse {
   };
 }
 
+interface empTypesOpt {
+  label: string;
+  value: string;
+}
+
 const EmployeeForm = ({
   setOpenDialog,
   employee = null,
 }: EmployeeFormProps) => {
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
+  const { authUser } = useJumboAuth();
+  const { departments, isFetching } = useDepartments();
+  const [departmentsData, setDepartmentsData] = useState<Department[] | []>([]);
+  const [selectedDpt, setSelectedDpt] = useState<Department | null>(null);
 
   const genderOptions = [
     { label: 'Male', value: 'male' },
     { label: 'Female', value: 'female' },
   ];
 
+  const employmentTypesOptions: empTypesOpt[] = [
+    { label: 'Full Time', value: 'full_time' },
+    { label: 'Part Time', value: 'part_time' },
+    { label: 'Casual', value: 'casual' },
+  ];
+
+  const [employeeDoB, setEmployeeDoB] = useState<string | undefined>(undefined);
+  const [joinDate, setJoinDate] = useState<string | undefined>(undefined);
+  const [employeeGender, setEmployeeGender] = useState(genderOptions[0]);
+  const [selectedemploymentType, setSelectedEmploymentType] =
+    useState<empTypesOpt | null>(null);
+  const normalizedDateOfBirth = employee?.date_of_birth
+    ? dayjs(employee.date_of_birth).format('YYYY-MM-DD')
+    : '';
+  const normalizedJoinDate = employee?.join_date
+    ? dayjs(employee.join_date).format('YYYY-MM-DD')
+    : '';
+
   useEffect(() => {
-    const date = new Date();
-    const dayjsDate = dayjs(date).toISOString().split('T')[0];
-    setEmployeeDoB(dayjsDate);
-  }, []);
+    if (departments?.data.length) {
+      setDepartmentsData(departments.data);
 
-  const [employeeDoB, setEmployeeDoB] = useState<string | undefined>('');
-  const [employeeGender, setEmployeeGender] = useState(genderOptions[0].value);
-
-  const handleChange = (event: SelectChangeEvent) => {
-    setEmployeeGender(event.target.value as string);
-  };
+      if (employee?.department_id) {
+        setSelectedDpt(
+          departments.data.find(
+            (department: Department) => department.id === employee.department_id
+          ) ?? null
+        );
+      } else {
+        setSelectedDpt(null);
+      }
+    }
+  }, [departments, isFetching, employee?.department_id]);
 
   useEffect(() => {
-    setValue('date_of_birth', new Date().toISOString().split('T')[0]);
-    setValue('gender', employeeGender);
-  }, [employeeDoB, employeeGender]);
+    setValue('gender', employeeGender.value);
+  }, [employeeGender]);
 
   const {
     mutate: addEmployee,
     isPending,
     error,
   } = useMutation<ApiResponse, any, FormData>({
-    mutationFn: humanResourcesServices.addEmployee,
+    mutationFn: async (data) => {
+      const user_id = authUser?.user.id;
+      const newData = { ...data, user_id: user_id };
+      const response = await humanResourcesServices.addEmployee(newData);
+      console.log('newData: ', newData);
+      return response;
+    },
     onSuccess: (data) => {
       setOpenDialog(false);
       enqueueSnackbar('Success Adding Employee', {
@@ -84,10 +122,19 @@ const EmployeeForm = ({
       queryClient.invalidateQueries({ queryKey: ['employees'] });
     },
     onError: (error) => {
-      enqueueSnackbar('Error Adding Employee', {
-        variant: 'error',
-      });
-      console.log('error adding employee: ', error);
+      let message = 'Something went wrong';
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as any).response?.data?.message === 'string'
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 
@@ -96,7 +143,10 @@ const EmployeeForm = ({
     isPending: updateIsLoading,
     error: updateError,
   } = useMutation<ApiResponse, any, FormData>({
-    mutationFn: humanResourcesServices.updateEmployee,
+    mutationFn: async (data) => {
+      const newData = { ...data, id: employee?.id };
+      return humanResourcesServices.updateEmployee(newData);
+    },
     onSuccess: (data) => {
       setOpenDialog(false);
       enqueueSnackbar('Employee update success', {
@@ -105,48 +155,117 @@ const EmployeeForm = ({
       queryClient.invalidateQueries({ queryKey: ['employees'] });
     },
     onError: (error) => {
-      enqueueSnackbar('Error Updating Employee', {
-        variant: 'error',
-      });
+      let message = 'Something went wrong';
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as any).response?.data?.message === 'string'
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 
   const validationSchema = yup.object({
-    first_name: yup.string().required('First name is required'),
-    middle_name: yup.string().required('Middle name is required'),
-    last_name: yup.string().required('Last name is required'),
+    employee_number: yup.string(),
+    first_name: yup
+      .string()
+      .required('First name is required')
+      .max(100, 'First name should not exceed 50 characters'),
+    middle_name: yup
+      .string()
+      .max(100, 'Middle name should not exceed 50 characters'),
+    last_name: yup
+      .string()
+      .required('Last name is required')
+      .max(100, 'Last name should not exceed 50 characters'),
     gender: yup.string().required('Gender is required'),
-    email: yup.string().email().required('email is required'),
-    phone_number: yup.string().required('Phone number is required'),
-    address: yup.string().required('Address is required'),
-    date_of_birth: yup.date().required('Date of birth is required'),
+    email: yup.string().email(),
+    phone_number: yup.string(),
+    address: yup.string(),
+    date_of_birth: yup.string(),
+    national_id: yup
+      .string()
+      .max(50, 'National ID should not exceed 50 characters'),
+    passport_number: yup
+      .string()
+      .max(50, 'Passport number should not exceed 50 characters'),
+    department_id: yup.number(),
+    employment_type: yup.string().required('Employment type is required'),
+    join_date: yup.string(),
   });
 
   const {
     register,
     handleSubmit,
+    reset,
     setValue,
+    control,
     formState: { errors },
   } = useForm<FormData>({
     resolver: yupResolver(validationSchema) as any,
     defaultValues: {
-      first_name: employee?.first_name || '',
-      middle_name: employee?.middle_name || '',
-      last_name: employee?.last_name || '',
-      gender: employee?.gender || employeeGender,
-      email: employee?.email || '',
-      phone_number: employee?.phone_number || '',
-      address: employee?.address || '',
-      date_of_birth: employee?.date_of_birth || employeeDoB,
+      employee_number: '',
+      first_name: '',
+      middle_name: '',
+      last_name: '',
+      gender: employeeGender.value,
+      email: '',
+      phone_number: '',
+      address: '',
+      date_of_birth: '',
+      national_id: '',
+      passport_number: '',
+      department_id: undefined,
+      employment_type: '',
+      join_date: '',
     },
   });
 
-  const saveMutation = React.useMemo(() => {
-    return employee?.id ? updateEmployee : addEmployee;
-  }, [employee, updateEmployee, addEmployee]);
+  useEffect(() => {
+    const resolvedGender =
+      genderOptions.find((option) => option.value === employee?.gender) ??
+      genderOptions[0];
+    const resolvedEmploymentType =
+      employmentTypesOptions.find(
+        (option) => option.value === employee?.employment_type
+      ) ?? null;
+
+    setEmployeeGender(resolvedGender);
+    setSelectedEmploymentType(resolvedEmploymentType);
+    setEmployeeDoB(normalizedDateOfBirth || undefined);
+    setJoinDate(normalizedJoinDate || undefined);
+
+    reset({
+      employee_number: employee?.employee_number || '',
+      first_name: employee?.first_name || '',
+      middle_name: employee?.middle_name || '',
+      last_name: employee?.last_name || '',
+      gender: resolvedGender.value,
+      email: employee?.email || '',
+      phone_number: employee?.phone_number || '',
+      address: employee?.address || '',
+      date_of_birth: normalizedDateOfBirth,
+      national_id: employee?.national_id || '',
+      passport_number: employee?.passport_number || '',
+      department_id: employee?.department_id || undefined,
+      employment_type: resolvedEmploymentType?.value || '',
+      join_date: normalizedJoinDate,
+    });
+  }, [employee, normalizedDateOfBirth, normalizedJoinDate, reset]);
 
   const onSubmit = (data: FormData) => {
-    saveMutation(data);
+    // saveMutation?.(data);
+    if (employee?.id) {
+      updateEmployee(data);
+    } else {
+      addEmployee(data);
+    }
   };
 
   return (
@@ -165,7 +284,6 @@ const EmployeeForm = ({
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='First Name'
-                  placeholder='John'
                   size='small'
                   fullWidth
                   error={
@@ -186,7 +304,6 @@ const EmployeeForm = ({
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='Middle Name'
-                  placeholder='James'
                   size='small'
                   fullWidth
                   error={
@@ -208,7 +325,6 @@ const EmployeeForm = ({
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='Last Name'
-                  placeholder='Doe'
                   size='small'
                   fullWidth
                   error={
@@ -228,21 +344,51 @@ const EmployeeForm = ({
 
             <Grid size={{ xs: 12, md: 4 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
-                <Autocomplete
+                <TextField
+                  label='Employee Number'
                   size='small'
-                  options={genderOptions}
-                  isOptionEqualToValue={(option, value) =>
-                    option.label === value.label
+                  fullWidth
+                  error={
+                    !!errors?.employee_number ||
+                    !!error?.response?.data?.validation_errors
+                      ?.employee_number ||
+                    !!updateError?.response?.data?.validation_errors
+                      ?.employee_number
                   }
-                  getOptionLabel={(option) => option.label}
-                  value={genderOptions[0]}
-                  onChange={(event, newValue) => {
-                    if (newValue) {
-                      setEmployeeGender(newValue.value);
-                    }
-                  }}
-                  renderInput={(params) => (
-                    <TextField {...params} label='Gender' />
+                  helperText={
+                    errors.employee_number?.message ||
+                    error?.response?.data?.validation_errors?.employee_number ||
+                    updateError?.response?.data?.validation_errors
+                      ?.employee_number
+                  }
+                  {...register('employee_number')}
+                />
+              </Div>
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Div sx={{ mt: 1, mb: 1 }}>
+                <Controller
+                  name='gender'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field, fieldState }) => (
+                    <Autocomplete
+                      size='small'
+                      options={genderOptions}
+                      isOptionEqualToValue={(option, value) =>
+                        option.label === value.label
+                      }
+                      getOptionLabel={(option) => option.label}
+                      {...field}
+                      value={employeeGender}
+                      onChange={(event, newValue) => {
+                        field.onChange(newValue?.value);
+                        newValue && setEmployeeGender(newValue);
+                      }}
+                      renderInput={(params) => (
+                        <TextField {...params} label='Gender' />
+                      )}
+                    />
                   )}
                 />
               </Div>
@@ -251,7 +397,6 @@ const EmployeeForm = ({
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='Email'
-                  placeholder='example@gmail.com'
                   size='small'
                   fullWidth
                   error={
@@ -268,11 +413,11 @@ const EmployeeForm = ({
                 />
               </Div>
             </Grid>
+
             <Grid size={{ xs: 12, md: 4 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='Phone Number'
-                  placeholder='0712345678'
                   size='small'
                   fullWidth
                   error={
@@ -290,31 +435,45 @@ const EmployeeForm = ({
                 />
               </Div>
             </Grid>
-
             <Grid size={{ xs: 12, md: 4 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
-                <DatePicker
-                  label='Date of Birth'
-                  value={dayjs(employeeDoB)}
-                  onChange={(value: Dayjs | null) => {
-                    if (value) {
-                      setEmployeeDoB(value.toISOString().split('T')[0]);
-                    }
-                  }}
-                  slotProps={{
-                    textField: {
-                      size: 'small',
-                      fullWidth: true,
-                    },
-                  }}
+                <Controller
+                  name='date_of_birth'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field, fieldState }) => (
+                    <DatePicker
+                      label='Date of Birth'
+                      {...field}
+                      value={employeeDoB ? dayjs(employeeDoB) : null}
+                      onChange={(value: Dayjs | null) => {
+                        if (value) {
+                          const formatted = value.format('YYYY-MM-DD');
+
+                          setEmployeeDoB(formatted);
+                          field.onChange(formatted);
+                        } else {
+                          setEmployeeDoB(undefined);
+                          field.onChange('');
+                        }
+                      }}
+                      slotProps={{
+                        textField: {
+                          size: 'small',
+                          fullWidth: true,
+                          error: !!fieldState.error,
+                          helperText: fieldState.error?.message,
+                        },
+                      }}
+                    />
+                  )}
                 />
               </Div>
             </Grid>
-            <Grid size={{ xs: 12, md: 8 }}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='Adress'
-                  placeholder='Dar es salaam, Tanzania'
                   size='small'
                   fullWidth
                   error={
@@ -328,6 +487,161 @@ const EmployeeForm = ({
                     updateError?.response?.data?.validation_errors?.address
                   }
                   {...register('address')}
+                />
+              </Div>
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Div sx={{ mt: 1, mb: 1 }}>
+                <TextField
+                  label='National ID'
+                  size='small'
+                  fullWidth
+                  error={
+                    !!errors?.national_id ||
+                    !!error?.response?.data?.validation_errors?.national_id ||
+                    !!updateError?.response?.data?.validation_errors
+                      ?.national_id
+                  }
+                  helperText={
+                    errors.national_id?.message ||
+                    error?.response?.data?.validation_errors?.national_id ||
+                    updateError?.response?.data?.validation_errors?.national_id
+                  }
+                  {...register('national_id')}
+                />
+              </Div>
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Div sx={{ mt: 1, mb: 1 }}>
+                <TextField
+                  label='Passport Number'
+                  size='small'
+                  fullWidth
+                  error={
+                    !!errors?.passport_number ||
+                    !!error?.response?.data?.validation_errors
+                      ?.passport_number ||
+                    !!updateError?.response?.data?.validation_errors
+                      ?.passport_number
+                  }
+                  helperText={
+                    errors.passport_number?.message ||
+                    error?.response?.data?.validation_errors?.passport_number ||
+                    updateError?.response?.data?.validation_errors
+                      ?.passport_number
+                  }
+                  {...register('passport_number')}
+                />
+              </Div>
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Div sx={{ mt: 1, mb: 1 }}>
+                {isFetching ? (
+                  <LinearProgress />
+                ) : (
+                  <Controller
+                    name='department_id'
+                    control={control}
+                    rules={{ required: true }}
+                    render={({ field, fieldState }) => (
+                      <Autocomplete
+                        size='small'
+                        options={departmentsData}
+                        isOptionEqualToValue={(option, value) =>
+                          option.id === value.id
+                        }
+                        getOptionLabel={(option) => option?.name || ''}
+                        {...field}
+                        value={selectedDpt}
+                        onChange={(event, newValue) => {
+                          setSelectedDpt(newValue);
+                          field.onChange(newValue ? newValue.id : null);
+                        }}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            label='Department'
+                            error={!!fieldState.error}
+                            helperText={fieldState.error?.message}
+                          />
+                        )}
+                      />
+                    )}
+                  />
+                )}
+              </Div>
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Div sx={{ mt: 1, mb: 1 }}>
+                <Controller
+                  name='employment_type'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field, fieldState }) => (
+                    <Autocomplete
+                      size='small'
+                      options={employmentTypesOptions}
+                      isOptionEqualToValue={(option, value) =>
+                        option.label === value.label
+                      }
+                      getOptionLabel={(option) => option.label}
+                      {...field}
+                      value={selectedemploymentType}
+                      onChange={(event, newValue) => {
+                        if (newValue) {
+                          setSelectedEmploymentType(newValue);
+                        } else {
+                          setSelectedEmploymentType(null);
+                        }
+                        field.onChange(newValue ? newValue.value : '');
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label='Employment Type'
+                          error={!!fieldState.error}
+                          helperText={fieldState.error?.message}
+                        />
+                      )}
+                    />
+                  )}
+                />
+              </Div>
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Div sx={{ mt: 1, mb: 1 }}>
+                <Controller
+                  name='join_date'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field, fieldState }) => (
+                    <DatePicker
+                      label='Join Date'
+                      {...field}
+                      value={joinDate ? dayjs(joinDate) : null}
+                      onChange={(value: Dayjs | null) => {
+                        if (value) {
+                          const formatted = value.format('YYYY-MM-DD');
+
+                          setJoinDate(formatted);
+                          field.onChange(formatted);
+                        } else {
+                          setJoinDate(undefined);
+                          field.onChange('');
+                        }
+                      }}
+                      slotProps={{
+                        textField: {
+                          size: 'small',
+                          fullWidth: true,
+                          error: !!fieldState.error,
+                          helperText: fieldState.error?.message,
+                        },
+                      }}
+                    />
+                  )}
                 />
               </Div>
             </Grid>

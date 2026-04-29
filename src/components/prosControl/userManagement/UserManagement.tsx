@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
+import { getSanitizedSearchKeyword } from '@/utilities/getSanitizedSearchKeyword';
 import { Card, Stack, Typography } from '@mui/material';
 import JumboRqList from '@jumbo/components/JumboReactQuery/JumboRqList';
 import JumboListToolbar from '@jumbo/components/JumboList/components/JumboListToolbar';
@@ -32,7 +33,7 @@ const UserManagement = () => {
 
     // Sync search param to in-page search reactively
     useEffect(() => {
-      const keyword = searchParams?.get('search') || '';
+      const keyword = getSanitizedSearchKeyword('User Management', searchParams);
       setQueryOptions((prev) => ({
         ...prev,
         queryParams: {

@@ -12,7 +12,7 @@ import ProductsSelectProvider from '../productAndServices/products/ProductsSelec
 import ProductsProvider from '../productAndServices/products/ProductsProvider';
 import LedgerSelectProvider from '../accounts/ledgers/forms/LedgerSelectProvider';
 import StakeholderSelectProvider from '../masters/stakeholders/StakeholderSelectProvider';
-import RequisitionsListItem from './listItem/RequisitionsListItem';
+import RequisitionsListItem from './requisitions/listItem/RequisitionsListItem';
 import CurrencySelectProvider from '../masters/Currencies/CurrencySelectProvider';
 import { EventAvailableOutlined, FilterAltOffOutlined, FilterAltOutlined } from '@mui/icons-material';
 import { DateTimePicker } from '@mui/x-date-pickers';
@@ -21,6 +21,7 @@ import RequisitionsTypeSelector from './RequisitionsTypeSelector';
 import CostCenterSelector from '../masters/costCenters/CostCenterSelector';
 import RequisitionsWaitingForSelector from './RequisitionsWaitingForSelector';
 import { useParams, useSearchParams } from 'next/navigation';
+import { getSanitizedSearchKeyword } from '@/utilities/getSanitizedSearchKeyword';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import UnauthorizedAccess from '@/shared/Information/UnauthorizedAccess';
 import { Requisition } from './RequisitionType';
@@ -73,7 +74,7 @@ const Requisitions = () => {
         queryKey: 'requisitions',
         queryParams: {
             id: params.id as string,
-            keyword: searchParams.get('search') || '',
+            keyword: getSanitizedSearchKeyword('Requisitions', searchParams),
             process_type: 'all',
             next_approval_role_id: null,
             cost_center_ids: authOrganization?.costCenters?.map((cost_center: CostCenter) => cost_center.id) || [],
@@ -83,7 +84,7 @@ const Requisitions = () => {
     });
     // Sync in-page search with global search param
     useEffect(() => {
-        const search = searchParams.get('search') || '';
+        const search = getSanitizedSearchKeyword('Requisitions', searchParams);
         setQueryOptions((state) => ({
             ...state,
             queryParams: {

@@ -20,7 +20,7 @@ function Sidebar({ menus }) {
     React.useEffect(() => {
         let updatedMenus = [...menus.filter(menu => menu.label === dictionary.sidebar.menu.home)];
 
-        if (authOrganization?.organization?.name) { 
+        if (authOrganization?.organization?.name) {
 
             if (organizationHasSubscribed(MODULES.PROCESS_APPROVAL)) {
                 //Process Approval sections
@@ -140,9 +140,9 @@ function Sidebar({ menus }) {
                     }
                 }
 
-//PoS > Masters > PriceLists
-if (!checkOrganizationPermission([PERMISSIONS.PRICE_LISTS_READ, PERMISSIONS.PRICE_LISTS_CREATE, PERMISSIONS.PRICE_LISTS_EDIT, PERMISSIONS.PRICE_LISTS_DELETE])) {
-    const posMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.pos);
+                //PoS > Masters > PriceLists
+                if (!checkOrganizationPermission([PERMISSIONS.PRICE_LISTS_READ, PERMISSIONS.PRICE_LISTS_CREATE, PERMISSIONS.PRICE_LISTS_EDIT, PERMISSIONS.PRICE_LISTS_DELETE])) {
+                    const posMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.pos);
                     if (posMenuIndex >= 0) {
                         const mastersIndex = updatedMenus[posMenuIndex].children.findIndex(child => child.label === dictionary.sidebar.menuItem.masters);
                         if (mastersIndex >= 0) {
@@ -167,9 +167,9 @@ if (!checkOrganizationPermission([PERMISSIONS.PRICE_LISTS_READ, PERMISSIONS.PRIC
                 }
             }
 
-            if(organizationHasSubscribed(MODULES.FUEL_STATION)){
+            if (organizationHasSubscribed(MODULES.FUEL_STATION)) {
                 //Fuel Station
-                if(checkOrganizationPermission(
+                if (checkOrganizationPermission(
                     [
                         PERMISSIONS.FUEL_STATIONS_READ,
                         PERMISSIONS.FUEL_STATIONS_CREATE,
@@ -180,8 +180,8 @@ if (!checkOrganizationPermission([PERMISSIONS.PRICE_LISTS_READ, PERMISSIONS.PRIC
                         PERMISSIONS.FUEL_SALES_SHIFT_UPDATE,
                         PERMISSIONS.FUEL_SALES_SHIFT_CLOSE,
                         PERMISSIONS.FUEL_SALES_SHIFT_DELETE,
-                    ])){
-                    updatedMenus = [...updatedMenus,...menus.filter(menu => menu.label === dictionary.sidebar.menu.fuelStations)];
+                    ])) {
+                    updatedMenus = [...updatedMenus, ...menus.filter(menu => menu.label === dictionary.sidebar.menu.fuelStations)];
                 }
 
                 // Fuel Station > Sales Shift
@@ -228,7 +228,7 @@ if (!checkOrganizationPermission([PERMISSIONS.PRICE_LISTS_READ, PERMISSIONS.PRIC
                     const fuelStationMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.fuelStations);
                     if (fuelStationMenuIndex >= 0) {
                         const mastersIndex = updatedMenus[fuelStationMenuIndex].children.findIndex(child => child.label === dictionary.sidebar.menuItem.masters);
-                        if(mastersIndex >= 0){
+                        if (mastersIndex >= 0) {
                             updatedMenus[fuelStationMenuIndex].children[mastersIndex].children = updatedMenus[fuelStationMenuIndex].children[mastersIndex].children.filter(
                                 child => child.label !== dictionary.sidebar.menuItem.stations
                             );
@@ -237,15 +237,15 @@ if (!checkOrganizationPermission([PERMISSIONS.PRICE_LISTS_READ, PERMISSIONS.PRIC
                 }
 
                 //fuelStations > Masters > PriceLists
-                if (!checkOrganizationPermission([PERMISSIONS.PRICE_LISTS_READ,PERMISSIONS.PRICE_LISTS_CREATE, PERMISSIONS.PRICE_LISTS_EDIT, PERMISSIONS.PRICE_LISTS_DELETE])) {
+                if (!checkOrganizationPermission([PERMISSIONS.PRICE_LISTS_READ, PERMISSIONS.PRICE_LISTS_CREATE, PERMISSIONS.PRICE_LISTS_EDIT, PERMISSIONS.PRICE_LISTS_DELETE])) {
                     const fuelStationMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.fuelStations);
                     if (fuelStationMenuIndex >= 0) {
-                    const mastersIndex = updatedMenus[fuelStationMenuIndex].children.findIndex(child => child.label === dictionary.sidebar.menuItem.masters);
-                    if (mastersIndex >= 0) {
-                        updatedMenus[fuelStationMenuIndex].children[mastersIndex].children = updatedMenus[fuelStationMenuIndex].children[mastersIndex].children.filter(
-                            item => item.label !== dictionary.sidebar.menuItem.priceLists
-                        );
-                    }
+                        const mastersIndex = updatedMenus[fuelStationMenuIndex].children.findIndex(child => child.label === dictionary.sidebar.menuItem.masters);
+                        if (mastersIndex >= 0) {
+                            updatedMenus[fuelStationMenuIndex].children[mastersIndex].children = updatedMenus[fuelStationMenuIndex].children[mastersIndex].children.filter(
+                                item => item.label !== dictionary.sidebar.menuItem.priceLists
+                            );
+                        }
                     }
                 }
             }
@@ -372,8 +372,10 @@ if (!checkOrganizationPermission([PERMISSIONS.PRICE_LISTS_READ, PERMISSIONS.PRIC
                 }
             }
 
-            // Human Resources
-            updatedMenus = [...updatedMenus, ...menus.filter(menu => menu.label === dictionary.sidebar.menu.humanResources)];
+            if (organizationHasSubscribed(MODULES.HUMAN_RESOURCES)) {
+                // Human Resources
+                updatedMenus = [...updatedMenus, ...menus.filter(menu => menu.label === dictionary.sidebar.menu.humanResources)];
+            }
 
             if (organizationHasSubscribed(MODULES.ACCOUNTS_AND_FINANCE)) {
 

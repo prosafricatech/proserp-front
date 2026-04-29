@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
-import React from 'react';
+import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import humanResourcesServices from '../humanResourcesServices';
@@ -54,10 +54,19 @@ const LeaveTypeForm = ({ setOpenDialog, leaveType }: LeaveTypeFormProp) => {
       queryClient.invalidateQueries({ queryKey: ['leaveTypes'] });
     },
     onError: (error) => {
-      enqueueSnackbar('Error Adding Leave Type', {
-        variant: 'error',
-      });
-      console.log('error adding leave type: ', error);
+      let message = 'Something went wrong';
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as any).response?.data?.message === 'string'
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 
@@ -75,16 +84,28 @@ const LeaveTypeForm = ({ setOpenDialog, leaveType }: LeaveTypeFormProp) => {
       queryClient.invalidateQueries({ queryKey: ['leaveTypes'] });
     },
     onError: (error) => {
-      enqueueSnackbar('Error Updating Leave Type', {
-        variant: 'error',
-      });
-      console.log('error updating leave type: ', error);
+      let message = 'Something went wrong';
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as any).response?.data?.message === 'string'
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 
   const validationSchema = yup.object({
     id: yup.number().optional(),
-    name: yup.string().required('name is required'),
+    name: yup
+      .string()
+      .required('name is required')
+      .max(255, 'The name cannot exceed 255 characters'),
     days_per_year: yup
       .number()
       .required('days per year is required')
@@ -94,6 +115,7 @@ const LeaveTypeForm = ({ setOpenDialog, leaveType }: LeaveTypeFormProp) => {
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm<FormData>({
     resolver: yupResolver(validationSchema) as any,
@@ -104,7 +126,15 @@ const LeaveTypeForm = ({ setOpenDialog, leaveType }: LeaveTypeFormProp) => {
     },
   });
 
-  const saveMutation = React.useMemo(() => {
+  useEffect(() => {
+    reset({
+      id: leaveType?.id,
+      name: leaveType?.name || '',
+      days_per_year: leaveType?.days_per_year || 1,
+    });
+  }, [leaveType, reset]);
+
+  const saveMutation = useMemo(() => {
     return leaveType?.id ? updateLeaveType : addLeaveType;
   }, [leaveType, updateLeaveType, addLeaveType]);
 

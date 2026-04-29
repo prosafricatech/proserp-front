@@ -7,12 +7,10 @@ import { Search, SearchIconWrapper, StyledInputBase } from './style';
 import React from 'react';
 import { useSpinner } from '@/shared/ProgressIndicators/SpinnerContext';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-
 import { staticMenuItems } from '@/utilities/constants/static-menu-items';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { MODULES } from '@/utilities/constants/modules';
-
 import { entityConfigs } from './entityConfigs';
 
 type SearchGlobalProps = {
@@ -42,23 +40,33 @@ const SearchGlobal = ({ wrapperSx, sx }: SearchGlobalProps) => {
 
   // Permission/subscription requirements for static menu items (add more as needed)
   const staticMenuPermissions: Record<string, { permissions?: string[]; orgPermissions?: string[]; modules?: string[] }> = {
-    'Sales Counter': { orgPermissions: [PERMISSIONS.SALES_READ], modules: [MODULES.POINT_OF_SALE] },
-    'Sales Shifts': { orgPermissions: [PERMISSIONS.FUEL_SALES_SHIFT_READ], modules: [MODULES.FUEL_STATION] },
+    'Dashboard': {},
     'Requisitions': { orgPermissions: [PERMISSIONS.REQUISITIONS_READ], modules: [MODULES.PROCESS_APPROVAL] },
     'Approvals': { orgPermissions: [PERMISSIONS.REQUISITIONS_READ], modules: [MODULES.PROCESS_APPROVAL] },
-    'Outlets': { orgPermissions: [PERMISSIONS.OUTLETS_READ], modules: [MODULES.POINT_OF_SALE] },
-    'Proformas': { orgPermissions: [PERMISSIONS.PROFORMA_INVOICES_READ], modules: [MODULES.POINT_OF_SALE] },
+    'Approval Chains': { orgPermissions: [PERMISSIONS.APPROVAL_CHAINS_READ], modules: [MODULES.PROCESS_APPROVAL] },
+    'Sales Counter': { orgPermissions: [PERMISSIONS.SALES_READ], modules: [MODULES.POINT_OF_SALE] },
+    'Proforma Invoices': { orgPermissions: [PERMISSIONS.PROFORMA_INVOICES_READ], modules: [MODULES.POINT_OF_SALE] },
     'POS Reports': { orgPermissions: [PERMISSIONS.SALES_REPORTS], modules: [MODULES.POINT_OF_SALE] },
+    'Outlets': { orgPermissions: [PERMISSIONS.OUTLETS_READ], modules: [MODULES.POINT_OF_SALE] },
     'POS Price Lists': { orgPermissions: [PERMISSIONS.PRICE_LISTS_READ], modules: [MODULES.POINT_OF_SALE] },
     'POS Settings': { orgPermissions: [PERMISSIONS.POS_SETTINGS], modules: [MODULES.POINT_OF_SALE] },
+    'Sales Shifts': { orgPermissions: [PERMISSIONS.FUEL_SALES_SHIFT_READ], modules: [MODULES.FUEL_STATION] },
     'Dippings': { orgPermissions: [PERMISSIONS.FUEL_SALES_SHIFT_READ], modules: [MODULES.FUEL_STATION] },
     'Fuel Reports': { orgPermissions: [PERMISSIONS.FUEL_SALES_SHIFT_READ], modules: [MODULES.FUEL_STATION] },
     'Stations': { orgPermissions: [PERMISSIONS.FUEL_STATIONS_READ], modules: [MODULES.FUEL_STATION] },
     'Fuel Price Lists': { orgPermissions: [PERMISSIONS.PRICE_LISTS_READ], modules: [MODULES.FUEL_STATION] },
+    'Production Batches': { orgPermissions: [PERMISSIONS.BOM_READ], modules: [MODULES.MANUFACTURING_AND_PROCESSING] },
+    'BOMs': { orgPermissions: [PERMISSIONS.BOM_READ], modules: [MODULES.MANUFACTURING_AND_PROCESSING] },
+    'Projects': { orgPermissions: [PERMISSIONS.PROJECTS_READ], modules: [MODULES.PROJECT_MANAGEMENT] },
+    'Project Categories': { orgPermissions: [PERMISSIONS.PROJECT_CATEGORIES_READ], modules: [MODULES.PROJECT_MANAGEMENT] },
+    'Approved Payments': { orgPermissions: [PERMISSIONS.APPROVED_REQUISITIONS_READ], modules: [MODULES.ACCOUNTS_AND_FINANCE] },
+    'Transactions': { orgPermissions: [PERMISSIONS.ACCOUNTS_TRANSACTIONS_READ], modules: [MODULES.ACCOUNTS_AND_FINANCE] },
+    'Accounts Reports': { orgPermissions: [PERMISSIONS.ACCOUNTS_REPORTS], modules: [MODULES.ACCOUNTS_AND_FINANCE] },
     'Budgets': { orgPermissions: [PERMISSIONS.ACCOUNTS_MASTERS_READ], modules: [MODULES.ACCOUNTS_AND_FINANCE] },
     'Ledger Groups': { orgPermissions: [PERMISSIONS.ACCOUNTS_MASTERS_READ], modules: [MODULES.ACCOUNTS_AND_FINANCE] },
     'Ledgers': { orgPermissions: [PERMISSIONS.ACCOUNTS_MASTERS_READ], modules: [MODULES.ACCOUNTS_AND_FINANCE] },
     'Cost Centers': { orgPermissions: [PERMISSIONS.ACCOUNTS_MASTERS_READ], modules: [MODULES.ACCOUNTS_AND_FINANCE] },
+    'Approved Purchases': { orgPermissions: [PERMISSIONS.APPROVED_REQUISITIONS_READ], modules: [MODULES.PROCUREMENT_AND_SUPPLY] },
     'Purchases': { orgPermissions: [PERMISSIONS.PURCHASES_READ], modules: [MODULES.PROCUREMENT_AND_SUPPLY] },
     'Consumptions': { orgPermissions: [PERMISSIONS.INVENTORY_CONSUMPTIONS_READ], modules: [MODULES.PROCUREMENT_AND_SUPPLY] },
     'Procurement Reports': { orgPermissions: [PERMISSIONS.PURCHASES_REPORTS], modules: [MODULES.PROCUREMENT_AND_SUPPLY] },
@@ -69,9 +77,27 @@ const SearchGlobal = ({ wrapperSx, sx }: SearchGlobalProps) => {
     'Stakeholders': { orgPermissions: [PERMISSIONS.STAKEHOLDERS_READ] },
     'Currencies': { orgPermissions: [PERMISSIONS.ACCOUNTS_MASTERS_READ] },
     'Measurement Units': { orgPermissions: [PERMISSIONS.MEASUREMENT_UNITS_READ] },
+    'ProsAfricans': { permissions: ['ProsAfricans:Read', 'ProsAfricans:Manage'] },
+    'Subscriptions': { permissions: ['ProsAfricans:Read', 'ProsAfricans:Manage'] },
+    'Troubleshooting': { permissions: ['ProsAfricans:Read', 'ProsAfricans:Manage'] },
+    'Users Management': { permissions: ['ProsAfricans:Read', 'ProsAfricans:Manage'] },
+    'SMS': { permissions: ['ProsAfricans:Read', 'ProsAfricans:Manage'] },
+    'Organizations': {},
+    'Invitations': {},
+    // Human Resources
+    'Employees': { modules: [MODULES.HUMAN_RESOURCES] },
+    'Leave Requests': { modules: [MODULES.HUMAN_RESOURCES] },
+    'Payroll Periods': { modules: [MODULES.HUMAN_RESOURCES] },
+    'Departments': { modules: [MODULES.HUMAN_RESOURCES] },
+    'Designations': { modules: [MODULES.HUMAN_RESOURCES] },
+    'Leave Types': { modules: [MODULES.HUMAN_RESOURCES] },
+    'Allowance Types': { modules: [MODULES.HUMAN_RESOURCES] },
+    'Deduction Types': { modules: [MODULES.HUMAN_RESOURCES] },
+    'Employer Contribution Types': { modules: [MODULES.HUMAN_RESOURCES] },
+    'PAYE Tax Bands': { modules: [MODULES.HUMAN_RESOURCES] },
   };
 
-  const { checkPermission, checkOrganizationPermission, organizationHasSubscribed } = useJumboAuth();
+  const { checkPermission, checkOrganizationPermission, organizationHasSubscribed, authOrganization } = useJumboAuth();
 
   // Helper to check if user can access a menu item
   const canAccessMenu = (label: string) => {
@@ -84,6 +110,13 @@ const SearchGlobal = ({ wrapperSx, sx }: SearchGlobalProps) => {
   };
 
   React.useEffect(() => {
+    // If user is unauthorized to any organization, do not search
+    if (!authOrganization || !authOrganization.organization || authOrganization.organization.status === 'Unauthorized') {
+      setResults([]);
+      setOpen(false);
+      setLoading(false);
+      return;
+    }
     if (!searchValue) {
       setResults([]);
       setOpen(false);
@@ -92,6 +125,7 @@ const SearchGlobal = ({ wrapperSx, sx }: SearchGlobalProps) => {
     setLoading(true);
     setOpen(true);
 
+    // Only show static menu items the user can access
     const pageMatches: SearchResult[] = staticMenuItems
       .filter(page =>
         page.label.toLowerCase().includes(searchValue.toLowerCase()) && canAccessMenu(page.label)
@@ -106,23 +140,25 @@ const SearchGlobal = ({ wrapperSx, sx }: SearchGlobalProps) => {
     // Show static results instantly and keep them visible
     setResults(pageMatches);
 
-    // Fetch each entity config individually and append results when ready
+    // Fetch only entity configs the user can access
     let isCancelled = false;
     Promise.allSettled(
-      entityConfigs.map(async (entity) => entity.search(searchValue))
+      entityConfigs
+        .filter(entity => canAccessMenu(entity.label) || canAccessMenu(entity.type))
+        .map(async (entity) => entity.search(searchValue))
     ).then((allResults) => {
       if (isCancelled) return;
+      // Only keep entity results for which the user has permission (by label or type)
       const entityResults = allResults
         .filter(r => r.status === 'fulfilled')
         .map(r => (r as PromiseFulfilledResult<SearchResult[]>).value)
-        .flat();
-      // Filter all results (static and entity) by permissions/subscriptions
-      const filteredEntities = entityResults.filter(result => canAccessMenu(result.label) || canAccessMenu(result.type));
-      setResults([...pageMatches, ...filteredEntities]);
+        .flat()
+        .filter(result => canAccessMenu(result.label) || canAccessMenu(result.type));
+      setResults([...pageMatches, ...entityResults]);
       setLoading(false);
     });
     return () => { isCancelled = true; };
-  }, [searchValue]);
+  }, [searchValue, authOrganization]);
 
   // Debounce input
   React.useEffect(() => {
@@ -168,21 +204,24 @@ const SearchGlobal = ({ wrapperSx, sx }: SearchGlobalProps) => {
   };
 
   const handleResultClick = (result: SearchResult) => {
-    // Parse the result.url and add/replace the search param with the clicked label
+    // Prevent adding ?search=PageName for static menu items
+    const isStaticMenu = staticMenuItems.some(item => item.label === result.label);
     let url = result.url;
-    try {
-      const urlObj = new URL(url, window.location.origin);
-      urlObj.searchParams.set('search', result.label);
-      url = urlObj.pathname + urlObj.search;
-    } catch (e) {
-      // fallback: if URL parsing fails, append/replace manually
-      if (url.includes('?')) {
-        url = url.replace(/([?&])search=[^&]*/, `$1search=${encodeURIComponent(result.label)}`);
-        if (!/([?&])search=/.test(url)) {
-          url += `&search=${encodeURIComponent(result.label)}`;
+    if (!isStaticMenu) {
+      try {
+        const urlObj = new URL(url, window.location.origin);
+        urlObj.searchParams.set('search', result.label);
+        url = urlObj.pathname + urlObj.search;
+      } catch (e) {
+        // fallback: if URL parsing fails, append/replace manually
+        if (url.includes('?')) {
+          url = url.replace(/([?&])search=[^&]*/, `$1search=${encodeURIComponent(result.label)}`);
+          if (!/([?&])search=/.test(url)) {
+            url += `&search=${encodeURIComponent(result.label)}`;
+          }
+        } else {
+          url += `?search=${encodeURIComponent(result.label)}`;
         }
-      } else {
-        url += `?search=${encodeURIComponent(result.label)}`;
       }
     }
     // Only show spinner if navigating to a different route (including search params)

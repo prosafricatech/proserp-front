@@ -85,31 +85,7 @@ export async function exportDippingReportToExcel(exportedData: any) {
 
     const finalReport = processedReports(reportData);
 
-    // const processedReports = (reportData: any) => {
-    //   if (!reportData) return [];
-
-    //   const cumulativeMap: any = {};
-
-    //   return [...reportData].map((report) => ({
-    //     ...report,
-    //     readings: report.readings.map((reading: any) => ({
-    //       ...reading,
-    //       tanks: reading.tanks.map((tank: any) => {
-    //         const key = tank.tank;
-
-    //         cumulativeMap[key] = (cumulativeMap[key] || 0) + tank.deviation;
-
-    //         return {
-    //           ...tank,
-    //           accumulated_deviation: cumulativeMap[key],
-    //         };
-    //       }),
-    //     })),
-    //   }));
-    // };
-
     // create workbook and worksheet
-
     const wb = createWorkbook();
     const ws = wb.addWorksheet('Dipping Report');
 

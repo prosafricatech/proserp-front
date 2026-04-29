@@ -26,6 +26,7 @@ import {
   Grid,
   IconButton,
   LinearProgress,
+  Skeleton,
   Stack,
   Tab,
   Tabs,
@@ -75,7 +76,11 @@ const DocumentDialog: React.FC<{
     return (
       <Dialog open fullWidth fullScreen={belowLargeScreen} maxWidth='md'>
         <DialogContent>
-          <LinearProgress />
+          <div style={{ width: '100%', padding: '16px' }}>
+            <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
+            <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
+            <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+          </div>
         </DialogContent>
       </Dialog>
     );
@@ -169,7 +174,13 @@ const EditCertificate: React.FC<{
     queryFn: () => projectsServices.getCertificateDetails(certificate.id),
   });
 
-  if (isFetching) return <LinearProgress />;
+  if (isFetching)     return (
+      <div style={{ width: '100%', padding: '16px' }}>
+        <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
+        <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
+        <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+      </div>
+    );
 
   return (
     <CertificateForm

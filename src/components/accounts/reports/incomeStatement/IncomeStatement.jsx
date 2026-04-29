@@ -333,9 +333,9 @@ function IncomeStatement({
       <DialogContent>
         {isFetching ? (
           <LinearProgress />
-        ) : reportData?.direct_expenses.length > 1 ||
-          reportData?.incomes.length > 1 ||
-          reportData?.indirect_expenses.length > 1 ? (
+        ) : reportData?.direct_expenses.length > 0 ||
+          reportData?.incomes.length > 0 ||
+          reportData?.indirect_expenses.length > 0 ? (
           displayAs === 'pdf' ? (
             <PDFContent
               document={

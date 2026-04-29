@@ -1,9 +1,24 @@
 'use client';
 
-import { Divider, Grid, Tooltip, Typography } from '@mui/material';
+import { useLanguage } from '@/app/[lang]/contexts/LanguageContext';
+import { Chip, Divider, Grid, Tooltip, Typography } from '@mui/material';
+import { useRouter } from 'next/navigation';
+import EmployeeItemAction from './EmployeeItemAction';
 import { Employee } from './EmployeesType';
 
+const formatEmploymentType = (value?: string) =>
+  (value || '')
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+
 const EmployeesListItem = ({ employee }: { employee: Employee }) => {
+  const router = useRouter();
+  const lang = useLanguage();
+
+  const fullName = [employee.first_name, employee.middle_name, employee.last_name]
+    .filter(Boolean)
+    .join(' ');
+
   return (
     <>
       <Divider />
@@ -18,35 +33,77 @@ const EmployeesListItem = ({ employee }: { employee: Employee }) => {
         }}
         paddingLeft={2}
         paddingRight={2}
-        columnSpacing={1}
+        spacing={1}
         alignItems={'center'}
         container
       >
-        <Grid size={{ xs: 12, md: 5 }}>
-          <Tooltip title='Employee name'>
-            <Typography
-              variant='h5'
-              fontSize={14}
-              lineHeight={1.25}
-              mb={0}
-              noWrap
-            >
-              {employee.first_name} {employee.middle_name} {employee.last_name}
-            </Typography>
-          </Tooltip>
-        </Grid>
-        <Grid size={{ xs: 12, md: 3 }}>
-          <Tooltip title='Employee EMail'>
-            <Typography>{employee.email}</Typography>
-          </Tooltip>
-        </Grid>
-        <Grid size={{ xs: 12, md: 3 }}>
-          <Tooltip title='Employee Phone Number'>
-            <Typography>{employee.phone_number}</Typography>
+        <Grid size={{ xs: 12, md: 3.5 }}>
+          <Tooltip title='View Employee Profile'>
+            <div>
+              <Typography
+                variant='h5'
+                fontSize={14}
+                lineHeight={1.25}
+                mb={0}
+                noWrap
+                onClick={() =>
+                  router.push(`/${lang}/humanResources/employees/${employee.id}`)
+                }
+                sx={{
+                  cursor: 'pointer',
+                  '&:hover': { color: 'primary.main', textDecoration: 'underline' },
+                }}
+              >
+                {fullName}
+              </Typography>
+              <Typography variant='body2' color='text.secondary' noWrap>
+                {employee.employee_number}
+              </Typography>
+            </div>
           </Tooltip>
         </Grid>
 
-        <Grid size={{ xs: 1, md: 0.5, lg: 1 }} textAlign={'end'}></Grid>
+        <Grid size={{ xs: 12, md: 2.5 }}>
+          <Tooltip title='Department and Designation'>
+            <div>
+              <Typography noWrap>{employee.department?.name}</Typography>
+              <Typography variant='body2' color='text.secondary' noWrap>
+                {employee.active_contract?.designation?.title}
+              </Typography>
+            </div>
+          </Tooltip>
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 3 }}>
+          <Tooltip title='Contact'>
+            <div>
+              <Typography noWrap>{employee.email}</Typography>
+              <Typography variant='body2' color='text.secondary' noWrap>
+                {employee.phone_number}
+              </Typography>
+            </div>
+          </Tooltip>
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 2 }}>
+          <Tooltip title='Employment'>
+            <div>
+              <Chip
+                size='small'
+                label={formatEmploymentType(employee.employment_type)}
+                color='default'
+                sx={{ textTransform: 'capitalize', mb: 0.5 }}
+              />
+              <Typography variant='body2' color='text.secondary' noWrap>
+                Joined: {employee.join_date ? new Date(employee.join_date).toLocaleDateString() : '-'}
+              </Typography>
+            </div>
+          </Tooltip>
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 1 }} textAlign={'end'}>
+          <EmployeeItemAction employee={employee} />
+        </Grid>
       </Grid>
     </>
   );
