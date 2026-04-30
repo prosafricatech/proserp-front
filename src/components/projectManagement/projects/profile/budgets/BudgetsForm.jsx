@@ -122,9 +122,12 @@ const BudgetsForm = ({
         : addBudgetMutation.mutate,
     [budget, editBudgetMutation.mutate, addBudgetMutation.mutate]
   );
-  const isPending = budget
-    ? editBudgetMutation.isPending
-    : addBudgetMutation.isPending;
+  
+  const isPending = isDuplicate
+    ? addBudgetMutation.isPending
+    : budget
+      ? editBudgetMutation.isPending
+      : addBudgetMutation.isPending;
 
   useEffect(() => {
     setLedgerItems(budget?.ledger_items || []);

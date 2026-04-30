@@ -75,6 +75,7 @@ const BudgetsItemAction = ({ budget }) => {
     mutationFn: (id) => projectsServices.deleteBudget(id),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['projectBudgets'] });
+      queryClient.invalidateQueries({ queryKey: ['budgets-list'] });
       enqueueSnackbar(data.message, { variant: 'success' });
     },
     onError: (error) => {
