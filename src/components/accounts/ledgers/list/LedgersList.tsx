@@ -9,7 +9,7 @@ import ledgerServices from "../ledger-services";
 import LedgerSelectProvider from "../forms/LedgerSelectProvider";
 import LedgerActionTail from "./LedgerActionTail";
 import LedgerListItem from "./LedgerListItem";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams } from "next/navigation";
 
 interface LedgerItem {
   id: number;
@@ -46,7 +46,6 @@ interface JumboRqListRef {
 
 const LedgersList = () => {
   const params = useParams<{ category?: string; id?: string; keyword?: string }>();
-  const searchParams = useSearchParams();
   const listRef = useRef<JumboRqListRef>(null);
 
   const [queryOptions, setQueryOptions] = useState<QueryOptions>({
@@ -54,7 +53,7 @@ const LedgersList = () => {
     queryParams: {
       category: params?.category,
       id: params?.id,
-      keyword: '',
+      keyword: params?.keyword || '',
     },
     countKey: 'total',
     dataKey: 'data',
@@ -67,10 +66,10 @@ const LedgersList = () => {
         ...prev.queryParams,
         category: params?.category,
         id: params?.id,
-        keyword: searchParams?.get('search') || '',
+        keyword: params?.keyword || '',
       },
     }));
-  }, [params, searchParams]);
+  }, [params]);
 
   const handleOnChange = useCallback((keyword: string) => {
     setQueryOptions(prev => ({

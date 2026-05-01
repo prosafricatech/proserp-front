@@ -60,6 +60,7 @@ export default function CashierAccordion({
     setLocalFuelVouchers((prev) => {
       return toSnapshot(prev) === toSnapshot(formFuelVouchers) ? prev : formFuelVouchers;
     });
+    // Only update localAdjustments if snapshot is different
     setLocalAdjustments((prev) => {
       return toSnapshot(prev) === toSnapshot(formAdjustments) ? prev : formAdjustments;
     });
@@ -67,9 +68,9 @@ export default function CashierAccordion({
       return toSnapshot(prev) === toSnapshot(formPumpReadings) ? prev : formPumpReadings;
     });
   }, [
-    formFuelVouchers,
-    formAdjustments,
-    formPumpReadings,
+    toSnapshot(formFuelVouchers),
+    toSnapshot(formAdjustments),
+    toSnapshot(formPumpReadings),
   ]);
 
   // formSelectedPumps is now array of objects { pump_id, tank_id }

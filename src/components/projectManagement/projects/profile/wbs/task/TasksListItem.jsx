@@ -13,15 +13,18 @@ import {
 import TasksItemAction from './TasksItemAction';
 
 function LinearProgressWithLabel({ value, execPercent, timePercent, color }) {
+  // Responsive: stack labels vertically on xs screens
   return (
     <Box sx={{ width: '100%' }}>
       <Box
-        sx={{
+        sx={(theme) => ({
           display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
+          flexDirection: { xs: 'column', sm: 'row' },
+          justifyContent: { xs: 'flex-start', sm: 'space-between' },
+          alignItems: { xs: 'flex-start', sm: 'center' },
           mb: 0.5,
-        }}
+          gap: { xs: 0.5, sm: 0 },
+        })}
       >
         <Typography variant='body2' color='text.secondary' fontWeight={500}>
           Execution: {Math.min(100, Math.round(execPercent))}%

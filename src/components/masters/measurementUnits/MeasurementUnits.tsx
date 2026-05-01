@@ -8,7 +8,7 @@ import JumboSearch from '@jumbo/components/JumboSearch';
 import measurementUnitServices from './measurement-unit-services';
 import MeasurementUnitActionTail from './MeasurementUnitActionTail';
 import MeasurementUnitListItem from './MeasurementUnitListItem';
-import { useParams, useSearchParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import UnauthorizedAccess from '@/shared/Information/UnauthorizedAccess';
 import { MeasurementUnit } from './MeasurementUnitType';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
@@ -17,7 +17,6 @@ import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
 
 const MeasurementUnits = () => {
   const params = useParams<{ category?: string; id?: string; keyword?: string }>();
-  const searchParams = useSearchParams();
   const listRef = useRef<any>(null);
   const [mounted, setMounted] = useState(false);
   const {checkOrganizationPermission} = useJumboAuth();
@@ -25,7 +24,7 @@ const MeasurementUnits = () => {
 
   const [queryOptions, setQueryOptions] = React.useState({
     queryKey: 'measurementUnits',
-    queryParams: { id: params.id, keyword: searchParams.get('search') || '' },
+    queryParams: { id: params.id, keyword: '' },
     countKey: 'total',
     dataKey: 'data',
   });
@@ -33,13 +32,9 @@ const MeasurementUnits = () => {
   React.useEffect(() => {
     setQueryOptions((state) => ({
       ...state,
-      queryParams: {
-        ...state.queryParams,
-        id: params.id,
-        keyword: searchParams.get('search') || '',
-      },
+      queryParams: { ...state.queryParams, id: params.id },
     }));
-  }, [params, searchParams]);
+  }, [params]);
 
   const renderMeasurementUnit = React.useCallback((measurementUnit: MeasurementUnit) => {
     return <MeasurementUnitListItem measurementUnit={measurementUnit} />;

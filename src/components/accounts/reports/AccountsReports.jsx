@@ -26,7 +26,6 @@ import {
   useMediaQuery,
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
 import LedgerSelectProvider from '../ledgers/forms/LedgerSelectProvider';
 import BalanceSheet from './balance sheet/BalanceSheet';
 import CashierReport from './cashierReport/CashierReport';
@@ -36,7 +35,6 @@ import TrialBalance from './trial balance/TrialBalance';
 import XReport from './zReport/ZReport';
 
 function AccountsReports() {
-  const searchParams = useSearchParams();
   const css = useProsERPStyles();
   const [openDialog, setOpenDialog] = useState(false);
   const [openBalanceSheet, setOpenBalanceSheet] = useState(false);
@@ -60,33 +58,6 @@ function AccountsReports() {
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  // Auto-open report dialog if ?report= param is present
-  useEffect(() => {
-    if (!mounted) return;
-    const reportParam = searchParams.get('report');
-    if (!reportParam) return;
-    if (reportParam === 'trial-balance') {
-      setReport(<TrialBalance setOpenTrialBalanceDialog={setOpenTrialBalance} />);
-      setOpenTrialBalance(true);
-    } else if (reportParam === 'income-statement') {
-      setReport(<IncomeStatement setOpenIncomeStatementDialog={setOpenIncomeStatement} />);
-      setOpenIncomeStatement(true);
-    } else if (reportParam === 'cashier-report') {
-      setReport(<CashierReport setOpenCashierReport={setOpenCashierReport} />);
-      setOpenCashierReport(true);
-    } else if (reportParam === 'balance-sheet') {
-      setReport(<BalanceSheet setOpenBalanceSheettDialog={setOpenBalanceSheet} />);
-      setOpenBalanceSheet(true);
-    } else if (reportParam === 'debtors-creditors') {
-      setReport(<DebtorCreditorReport setOpenDebtorsCreditorsDialog={setOpenDialog} />);
-      setOpenDialog(true);
-    } else if (reportParam === 'z-report') {
-      setReport(<XReport />);
-      setOpenReceiptDialog(true);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mounted, searchParams]);
 
   if (!mounted) return null;
 
@@ -129,25 +100,27 @@ function AccountsReports() {
           }
         >
           {report}
-          <DialogActions className={css.hiddenOnPrint}>
-            {!belowLargeScreen && (
-              <Button
-                sx={{ m: 1 }}
-                size='small'
-                variant='outlined'
-                onClick={() => {
-                  setOpenDialog(false);
-                  setOpenReceiptDialog(false);
-                  setOpenBalanceSheet(false);
-                  setOpenTrialBalance(false);
-                  setOpenCashierReport(false);
-                  setOpenIncomeStatement(false);
-                }}
-              >
-                Close
-              </Button>
-            )}
-          </DialogActions>
+          {!openCashierReport &&
+            <DialogActions className={css.hiddenOnPrint}>
+              {!belowLargeScreen && (
+                <Button
+                  sx={{ m: 1 }}
+                  size='small'
+                  variant='outlined'
+                  onClick={() => {
+                    setOpenDialog(false);
+                    setOpenReceiptDialog(false);
+                    setOpenBalanceSheet(false);
+                    setOpenTrialBalance(false);
+                    setOpenCashierReport(false);
+                    setOpenIncomeStatement(false);
+                  }}
+                >
+                  Close
+                </Button>
+              )}
+            </DialogActions>
+          }
         </Dialog>
         <Typography variant={'h4'} mb={2}>
           Financial Reports
@@ -253,9 +226,7 @@ function AccountsReports() {
                       bgcolor: 'action.hover',
                     },
                   }}
-                  xs={6}
-                  md={3}
-                  lg={2}
+                  size={{ xs: 6, md: 3, lg: 2 }}
                   p={1}
                   textAlign={'center'}
                   onClick={() => {

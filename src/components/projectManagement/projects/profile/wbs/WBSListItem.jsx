@@ -35,13 +35,18 @@ const GanttChartActionTail = lazy(
 function LinearProgressWithLabel({ value, label, color }) {
   return (
     <Box sx={{ width: '100%' }}>
-      <Stack direction='row' alignItems='center' spacing={1}>
-        <Typography
-          variant='body2'
-          color='text.secondary'
-          sx={{ minWidth: 80 }}
-        >
-          {label}
+      <Box
+        sx={(theme) => ({
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          justifyContent: { xs: 'flex-start', sm: 'space-between' },
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          mb: 0.5,
+          gap: { xs: 0.5, sm: 0 },
+        })}
+      >
+        <Typography variant='body2' color='text.secondary' fontWeight={500}>
+          Execution: {Math.min(100, Number(execPercent).toFixed(2))}%
         </Typography>
         <Box sx={{ flexGrow: 1 }}>
           <LinearProgress
@@ -57,7 +62,7 @@ function LinearProgressWithLabel({ value, label, color }) {
             maximumFractionDigits: 2,
           })}%`}
         </Typography>
-      </Stack>
+      </Box>
     </Box>
   );
 }

@@ -21,7 +21,6 @@ const attachmentableOptions: Option[] = [
   { label: "Sale", value: "sale" },
   { label: "Project", value: "project" },
   { label: "Sub Contracts", value: "project_subcontract" },
-  { label: "Employee", value: "employee" },
   { label: "Delivery Note", value: "delivery_note" },
   { label: "Requisitions", value: "requisition" },
 ].sort((a, b) => a.label.localeCompare(b.label));

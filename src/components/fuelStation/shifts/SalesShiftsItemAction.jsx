@@ -327,20 +327,28 @@ const SalesShiftsItemAction = ({ ClosedShift }) => {
     },
   });
 
+  const canUpdate = checkOrganizationPermission([
+    PERMISSIONS.FUEL_SALES_SHIFTS_UPDATE,
+  ]);
+  const canDelete = checkOrganizationPermission([
+    PERMISSIONS.FUEL_SALES_SHIFTS_DELETE,
+  ]);
   const canBackdate = checkOrganizationPermission([
     PERMISSIONS.FUEL_SALES_SHIFTS_BACKDATE,
   ]);
-  const isToday =
-    ClosedShift?.shift_end >= dayjs().startOf('date').toISOString();
+
+  const isToday = ClosedShift?.shift_end && dayjs(ClosedShift.shift_end).isSame(dayjs(), 'day');
+  const canEdit = canUpdate || isToday || canBackdate;
+  const canDeleteAction = canDelete || isToday || canBackdate;
 
   const menuItems = [
     { icon: <VisibilityOutlined />, title: 'View', action: 'open' },
-    canBackdate || isToday
+    canEdit
       ? { icon: <EditOutlined />, title: 'Edit', action: 'edit' }
       : null,
-    canBackdate || isToday
+    canDeleteAction
       ? {
-          icon: <DeleteOutlined color='error' />,
+          icon: <DeleteOutlined color='error' />, 
           title: 'Delete',
           action: 'delete',
         }

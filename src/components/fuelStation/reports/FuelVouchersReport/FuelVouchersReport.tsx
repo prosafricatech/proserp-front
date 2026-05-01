@@ -22,6 +22,7 @@ import {
   Grid,
   IconButton,
   LinearProgress,
+  Skeleton,
   Stack,
   Tab,
   Tabs,
@@ -275,7 +276,13 @@ const FuelVouchersReport: React.FC<fvPdfDialog> = ({ closeDialog }) => {
     }
   };
 
-  if (isFetchingStations) return <LinearProgress />;
+  if (isFetchingStations)     return (
+      <div style={{ width: '100%', padding: '16px' }}>
+        <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
+        <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
+        <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+      </div>
+    );
 
   const hasData = !!reportData && reportData.length > 0 && !!pdfFilters;
 
@@ -485,7 +492,11 @@ const FuelVouchersReport: React.FC<fvPdfDialog> = ({ closeDialog }) => {
 
       <DialogContent>
         {isFetchingReport ? (
-          <LinearProgress />
+          <div style={{ width: '100%', padding: '16px' }}>
+            <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
+            <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
+            <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+          </div>
         ) : hasData ? (
           <>
             {belowLargeScreen && (

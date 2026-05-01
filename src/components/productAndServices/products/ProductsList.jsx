@@ -6,7 +6,7 @@ import { Card, Grid } from '@mui/material';
 import React, { lazy } from 'react'
 import { useProductApp } from './ProductsProvider';
 import ProductListItem from './productsListItem/ProductListItem';
-import { useParams, useSearchParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 import productServices from './productServices';
@@ -15,14 +15,13 @@ const ProductActionTail = lazy(() => import('./ProductActionTail'));
 
 const ProductList = () => {
     const params = useParams();
-    const searchParams = useSearchParams();
     const listRef = React.useRef();
     const {setSelectedProducts,setProductsListRefresh,refreshProductsList} = useProductApp();
     const {checkOrganizationPermission} = useJumboAuth();
 
     const [queryOptions, setQueryOptions] = React.useState({
         queryKey: "products",
-        queryParams: {id: params.id, keyword : searchParams.get('search') || ''},
+        queryParams: {id: params.id, keyword : ''},
         countKey: "total",
         dataKey: "data",
     });
@@ -30,13 +29,9 @@ const ProductList = () => {
     React.useEffect(() => {
         setQueryOptions(state => ({
             ...state,
-            queryParams: {
-                ...state.queryParams,
-                id: params.id,
-                keyword: searchParams.get('search') || '',
-            }
+            queryParams: {...state.queryParams, id: params.id}
         }))
-    }, [params, searchParams]);
+    }, [params]);
 
     React.useEffect(() => {
         if (refreshProductsList) {
@@ -87,7 +82,7 @@ const ProductList = () => {
                             <JumboSearch
                                 onChange={handleOnChange}
                                 value={queryOptions.queryParams.keyword}
-                            />
+                            /> 
                         </Grid>
                         {
                             canCreate &&

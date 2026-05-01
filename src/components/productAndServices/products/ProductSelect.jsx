@@ -5,9 +5,7 @@ import {
   Chip,
   TextField,
   Box,
-  Typography,
-  Avatar,
-  useTheme,
+  Typography
 } from "@mui/material";
 import { CheckBox, CheckBoxOutlineBlank } from "@mui/icons-material";
 import { useProductsSelect } from "./ProductsSelectProvider";
@@ -98,16 +96,19 @@ function ProductSelect(props) {
 
   useEffect(() => {
     if (defaultValue !== null) {
-      setSelectedItems(defaultValue);
+      if (JSON.stringify(selectedItems) !== JSON.stringify(defaultValue)) {
+        setSelectedItems(defaultValue);
+      }
     }
   }, [defaultValue]);
 
   useEffect(() => {
     if (!addedProduct) return;
-
     const value = multiple ? [addedProduct] : addedProduct;
-    setSelectedItems(value);
-    onChange?.(value);
+    if (JSON.stringify(selectedItems) !== JSON.stringify(value)) {
+      setSelectedItems(value);
+      onChange?.(value);
+    }
   }, [addedProduct, multiple, onChange]);
 
   const finalOptions = useMemo(() => {

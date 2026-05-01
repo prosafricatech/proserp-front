@@ -117,7 +117,9 @@ const RequisitionsListItem = ({ requisition }: RequisitionsListItemProps) => {
           </Grid>
           <Grid size={{xs: 12, md: 3}}>
             <Tooltip title='Process'>
-              <Chip size='small' color={processConfig.color} label={processConfig.label} />
+              <Typography variant='body2'>
+                {processConfig.label}
+              </Typography>
             </Tooltip>
             <Tooltip title={'Cost Center'}>
               <Typography

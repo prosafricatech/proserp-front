@@ -15,7 +15,6 @@ import {
 } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import { useParams, useSearchParams } from 'next/navigation';
-import { getSanitizedSearchKeyword } from '@/utilities/getSanitizedSearchKeyword';
 import React, { useEffect, useRef, useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
 import { PayrollPeriodType } from '../payrollPeriods/PayrollPeriodType';
@@ -66,7 +65,7 @@ const PayrollRuns = () => {
       ...state,
       queryParams: {
         ...state.queryParams,
-        keyword: getSanitizedSearchKeyword('Payroll Runs', searchParams),
+        keyword: searchParams?.get('search') || '',
       },
     }));
     setMounted(true);

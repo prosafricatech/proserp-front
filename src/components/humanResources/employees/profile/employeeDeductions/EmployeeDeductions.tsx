@@ -5,7 +5,6 @@ import JumboRqList from '@jumbo/components/JumboReactQuery/JumboRqList';
 import JumboSearch from '@jumbo/components/JumboSearch';
 import { Card, Stack, Typography } from '@mui/material';
 import { useParams, useSearchParams } from 'next/navigation';
-import { getSanitizedSearchKeyword } from '@/utilities/getSanitizedSearchKeyword';
 import React, { useEffect, useRef, useState } from 'react';
 import humanResourcesServices from '../../../humanResourcesServices';
 import EmployeeDeductionActionTail from './EmployeeDeductionActionTail';
@@ -59,7 +58,7 @@ const EmployeeDeductions = ({ employeeId }: { employeeId?: number }) => {
       queryParams: {
         ...state.queryParams,
         employee_id: resolvedEmployeeId,
-        keyword: getSanitizedSearchKeyword('Employee Deductions', searchParams),
+        keyword: searchParams?.get('search') || '',
       },
     }));
     setMounted(true);
