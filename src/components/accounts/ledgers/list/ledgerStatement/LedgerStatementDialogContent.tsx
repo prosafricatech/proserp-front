@@ -79,14 +79,51 @@ const ReportDocument: React.FC<ReportDocumentProps> = ({
   ledgerName,
   increasesWith
 }) => {
-  const totalCredits = transactionsData.transactions.reduce((total: number, transaction) => total + transaction.credit, 0);
-  const totalDebits = transactionsData.transactions.reduce((total: number, transaction) => total + transaction.debit, 0);
+  const [openingBalanceTx, ...restTransactions] = transactionsData.transactions;
+
+  // Opening balance seeds cumulative balance but is excluded from DR/CR totals
+  const openingBalance = openingBalanceTx
+    ? increasesWith === 'DR'
+      ? openingBalanceTx.debit - openingBalanceTx.credit
+      : openingBalanceTx.credit - openingBalanceTx.debit
+    : 0;
+
+  const totalCredits = restTransactions.reduce((total: number, transaction) => total + transaction.credit, 0);
+  const totalDebits = restTransactions.reduce((total: number, transaction) => total + transaction.debit, 0);
   const mainColor = authOrganization.organization.settings?.main_color || "#2113AD";
   const lightColor = authOrganization.organization.settings?.light_color || "#bec5da";
   const contrastText = authOrganization.organization.settings?.contrast_text || "#FFFFFF";
   const costCenters = transactionsData.filters.cost_centers;
 
-  let cumulativeBalance = 0;
+    let runningBalance = openingBalance;
+
+    const tableRows = [
+        ...(openingBalanceTx
+            ? [{
+                    transactionDate: openingBalanceTx.transactionDate,
+                    reference: '',
+                    description: openingBalanceTx.description,
+                    debit: null as number | null,
+                    credit: null as number | null,
+                    balance: openingBalance,
+                }]
+            : []),
+        ...restTransactions.map((transaction) => {
+            runningBalance +=
+                increasesWith === 'DR'
+                    ? transaction.debit - transaction.credit
+                    : transaction.credit - transaction.debit;
+
+            return {
+                transactionDate: transaction.transactionDate,
+                reference: `${transaction.voucherNo ? transaction.voucherNo : ''} ${transaction.reference ? transaction.reference : ''}`.trim(),
+                description: transaction.description,
+                debit: transaction.debit,
+                credit: transaction.credit,
+                balance: runningBalance,
+            };
+        }),
+    ];
 
   return transactionsData ? (
     <Document
@@ -140,30 +177,23 @@ const ReportDocument: React.FC<ReportDocumentProps> = ({
                     <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1 }}>Credit</Text>
                     <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.5 }}>Balance</Text>
                 </View>
-                {transactionsData.transactions.map((transaction: any, index: number) => {
-                    cumulativeBalance +=
-                        increasesWith === 'DR'
-                            ? transaction.debit - transaction.credit
-                            : transaction.credit - transaction.debit;
-
-                    // Fix for -0.00 display issue
-                    const formattedBalance = cumulativeBalance.toLocaleString('en-US', {
-                        maximumFractionDigits: 2,
-                        minimumFractionDigits: 2,
-                    });
-                    const displayBalance = formattedBalance === "-0.00" ? "0.00" : formattedBalance;
-
-                    return (
-                        <View key={index} style={pdfStyles.tableRow}>
-                            <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1.5 }}>{readableDate(transaction.transactionDate)}</Text>
-                            <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1 }}>{transaction.voucherNo ? transaction.voucherNo : ''}{' '}{transaction.reference ? transaction.reference : ''}</Text>
-                            <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 2 }}>{transaction.description}</Text>
-                            <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1, textAlign: 'right' }}>{transaction.debit !== 0 && transaction.debit.toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}</Text>
-                            <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1, textAlign: 'right' }}>{transaction.credit !== 0 && transaction.credit.toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}</Text>
-                            <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1.5, textAlign: 'right' }}>{displayBalance}</Text>
-                        </View>
-                    );
-                })}
+                {tableRows.map((row, index) => (
+                    <View key={`${row.transactionDate}-${index}`} style={pdfStyles.tableRow}>
+                        <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1.5 }}>{readableDate(row.transactionDate)}</Text>
+                        <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1 }}>{row.reference}</Text>
+                        <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 2 }}>{row.description}</Text>
+                        <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1, textAlign: 'right' }}>{row.debit && row.debit !== 0 ? row.debit.toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 }) : '-'}</Text>
+                        <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1, textAlign: 'right' }}>{row.credit && row.credit !== 0 ? row.credit.toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 }) : '-'}</Text>
+                        <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1.5, textAlign: 'right' }}>{row.balance.toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 }) === "-0.00" ? "0.00" : row.balance.toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}</Text>
+                    </View>
+                ))}
+                {/* TOTAL row */}
+                <View style={pdfStyles.tableRow}>
+                    <Text style={{ ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', textAlign: 'center', flex: 4.7 }}>TOTAL</Text>
+                    <Text style={{ ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', flex: 1, textAlign: 'right' }}>{totalDebits.toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}</Text>
+                    <Text style={{ ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', flex: 1, textAlign: 'right' }}>{totalCredits.toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}</Text>
+                    <Text style={{ ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, flex: 1.5 }}></Text>
+                </View>
             </View>
             <PageFooter />
         </Page>
@@ -233,7 +263,6 @@ const LedgerStatementDialogContent: React.FC<LedgerStatementDialogContentProps> 
                 with_item_description: watch('with_item_description')
             };
 
-            // Pass all filters to the service
             const responseData = await ledgerServices.downloadExcelTemplate(filters);
             
             const blob = new Blob([responseData], {
@@ -251,7 +280,6 @@ const LedgerStatementDialogContent: React.FC<LedgerStatementDialogContentProps> 
         }
     };
 
-  // Initial data load
   useEffect(() => {
     if (commingFilters) {
             const initialFilters = {
