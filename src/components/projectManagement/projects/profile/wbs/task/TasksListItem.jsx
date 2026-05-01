@@ -13,8 +13,16 @@ import { FlagOutlined } from '@mui/icons-material';
 import TasksItemAction from './TasksItemAction';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 
-function LinearProgressWithLabel({ value, execPercent, timePercent, color }) {
-  // Responsive: stack labels vertically on xs screens
+function LinearProgressWithLabel({ value, execPercent, timePercent, color, hasTimeDates }) {
+  const tooltipMsg = !hasTimeDates
+    ? 'No start/end dates set — execution progress only.'
+    : color === 'success'
+    ? 'Execution is on track with time elapsed.'
+    : color === 'warning'
+    ? 'Execution is lagging behind time elapsed. Monitor closely.'
+    : color === 'error'
+    ? 'Execution is significantly behind schedule.'
+    : 'Progress status.';
   return (
     <Box sx={{ width: '100%' }}>
       <Box
@@ -30,21 +38,15 @@ function LinearProgressWithLabel({ value, execPercent, timePercent, color }) {
         <Typography variant="body2" color="text.secondary" fontWeight={500}>
           Execution: {Math.min(100, Math.round(execPercent))}%
         </Typography>
-        <Typography variant="body2" color="text.secondary" fontWeight={500}>
-          Time Elapsed: {Math.min(100, Math.round(timePercent))}%
-        </Typography>
+        {hasTimeDates ? (
+          <Typography variant="body2" color="text.secondary" fontWeight={500}>
+            Time Elapsed: {Math.min(100, Math.round(timePercent))}%
+          </Typography>
+        ) : (
+          <Chip size="small" label="Time: Not Set" variant="outlined" sx={{ fontSize: '0.7rem', height: 20 }} />
+        )}
       </Box>
-      <Tooltip
-        title={
-          color === 'success'
-            ? 'Execution is on track with time elapsed.'
-            : color === 'warning'
-            ? 'Execution is lagging behind time elapsed. Monitor closely.'
-            : color === 'error'
-            ? 'Execution is significantly behind schedule.'
-            : 'Progress status.'
-        }
-      >
+      <Tooltip title={tooltipMsg}>
         <LinearProgress
           variant="determinate"
           value={Math.min(Number(value) || 0, 100)}
@@ -70,12 +72,16 @@ function TasksListItem({ filteredTasks, activity }) {
         const execPercent = task.executed_percentage ?? 0;
         const rawTimePercent = task.percentage_time_elapsed ?? 0;
         const timePercent = Math.min(100, rawTimePercent);
-        let execColor = 'success';
-        const diff = timePercent - execPercent;
-        if (diff >= 10) {
-          execColor = 'error';
-        } else if (diff >= 5) {
-          execColor = 'warning';
+        const hasTimeDates = Boolean(task.start_date && task.end_date);
+        let execColor = 'primary';
+        if (hasTimeDates) {
+          execColor = 'success';
+          const diff = timePercent - execPercent;
+          if (diff >= 10) {
+            execColor = 'error';
+          } else if (diff >= 5) {
+            execColor = 'warning';
+          }
         }
 
         return (
@@ -164,7 +170,7 @@ function TasksListItem({ filteredTasks, activity }) {
                   <Tooltip title="Remaining Days">
                     <Typography
                       variant="caption"
-                      color={task.days_remaining < 0 ? 'error.main' : 'text.secondary'}
+                      color={task.days_remaining < 0 && execColor !== 'success' ? 'error.main' : 'text.secondary'}
                     >
                       <strong>Remaining:</strong> {task.days_remaining < 0 ? 0 : task.days_remaining ?? '—'} days
                     </Typography>
@@ -185,6 +191,7 @@ function TasksListItem({ filteredTasks, activity }) {
                     execPercent={execPercent}
                     timePercent={timePercent}
                     color={execColor}
+                    hasTimeDates={hasTimeDates}
                   />
                 </Grid>
                 <Grid size={{ xs: 4 }} textAlign={'end'}>

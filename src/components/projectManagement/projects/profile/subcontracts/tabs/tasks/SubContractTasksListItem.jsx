@@ -14,25 +14,30 @@ import {
 import SubContractTaskItemAction from './SubContractTaskItemAction';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 
-function LinearProgressWithLabel({ value, color, execPercent, timePercent }) {
+function LinearProgressWithLabel({ value, color, execPercent, timePercent, hasTimeDates }) {
   const safeValue = Math.min(Number(value) || 0, 100);
-  let tooltipMsg =
-    color === 'success'
-      ? 'Execution is on track with time elapsed.'
-      : color === 'warning'
-      ? 'Execution is lagging behind time elapsed. Monitor closely.'
-      : color === 'error'
-      ? 'Execution is significantly behind schedule.'
-      : 'Progress status.';
+  let tooltipMsg = !hasTimeDates
+    ? 'No start/end dates set — execution progress only.'
+    : color === 'success'
+    ? 'Execution is on track with time elapsed.'
+    : color === 'warning'
+    ? 'Execution is lagging behind time elapsed. Monitor closely.'
+    : color === 'error'
+    ? 'Execution is significantly behind schedule.'
+    : 'Progress status.';
   return (
     <Box sx={{ width: '100%' }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
         <Typography variant="body2" color="text.secondary" fontWeight={500}>
           Execution: {typeof execPercent === 'number' ? Math.min(100, Number(execPercent).toFixed(2)) : ''}%
         </Typography>
-        <Typography variant="body2" color="text.secondary" fontWeight={500}>
-          Time Elapsed: {typeof timePercent === 'number' ? Math.min(100, Number(timePercent).toFixed(2)) : ''}%
-        </Typography>
+        {hasTimeDates ? (
+          <Typography variant="body2" color="text.secondary" fontWeight={500}>
+            Time Elapsed: {typeof timePercent === 'number' ? Math.min(100, Number(timePercent).toFixed(2)) : ''}%
+          </Typography>
+        ) : (
+          <Chip size="small" label="Time: Not Set" variant="outlined" sx={{ fontSize: '0.7rem', height: 20 }} />
+        )}
       </Box>
       <Tooltip title={tooltipMsg}>
         <LinearProgress
@@ -72,19 +77,20 @@ function SubContractTasksListItem({
           const amount = qty * rate;
 
           const execPercent = task.executed_percentage ?? 0;
-          const timePercent = task.percentage_time_elapsed ?? 0;
+          const timePercent = Math.min(Number(task.percentage_time_elapsed) || 0, 100);
 
           const hasTimeDates = Boolean(task.start_date && task.end_date);
 
           let execColor = 'primary';
-          if (execPercent >= 100) execColor = 'success';
-          else if (execPercent >= 70) execColor = 'warning';
-          else if (execPercent < 30) execColor = 'error';
-
-          let timeColor = 'primary';
-          if (timePercent >= 100) timeColor = 'error';
-          else if (timePercent >= 80) timeColor = 'warning';
-          else if (timePercent < 30) timeColor = 'success';
+          if (hasTimeDates) {
+            execColor = 'success';
+            const diff = timePercent - execPercent;
+            if (diff >= 10) {
+              execColor = 'error';
+            } else if (diff >= 5) {
+              execColor = 'warning';
+            }
+          }
 
           return (
             <Grid
@@ -179,6 +185,7 @@ function SubContractTasksListItem({
                     color={execColor}
                     execPercent={execPercent}
                     timePercent={Math.min(100, Number(timePercent).toFixed(2))}
+                    hasTimeDates={hasTimeDates}
                   />
                 </Stack>
               </Grid>

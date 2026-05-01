@@ -18,7 +18,16 @@ import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 
 const GanttChartActionTail = lazy(() => import('./ganttChart/GanttChartActionTail'));
 
-function LinearProgressWithLabel({ value, color, execPercent, timePercent }) {
+function LinearProgressWithLabel({ value, color, execPercent, timePercent, hasTimeDates }) {
+  const tooltipMsg = !hasTimeDates
+    ? 'No start/end dates set — execution progress only.'
+    : color === 'success'
+    ? 'Execution is on track with time elapsed.'
+    : color === 'warning'
+    ? 'Execution is lagging behind time elapsed. Monitor closely.'
+    : color === 'error'
+    ? 'Execution is significantly behind schedule.'
+    : 'Progress status.';
   return (
     <Box sx={{ width: '100%' }}>
       <Box
@@ -34,21 +43,15 @@ function LinearProgressWithLabel({ value, color, execPercent, timePercent }) {
         <Typography variant="body2" color="text.secondary" fontWeight={500}>
           Execution: {Math.min(100, Number(execPercent).toFixed(2))}%
         </Typography>
-        <Typography variant="body2" color="text.secondary" fontWeight={500}>
-          Time Elapsed: {Math.min(100, Number(timePercent).toFixed(2))}%
-        </Typography>
+        {hasTimeDates ? (
+          <Typography variant="body2" color="text.secondary" fontWeight={500}>
+            Time Elapsed: {Math.min(100, Number(timePercent).toFixed(2))}%
+          </Typography>
+        ) : (
+          <Chip size="small" label="Time: Not Set" variant="outlined" sx={{ fontSize: '0.7rem', height: 20 }} />
+        )}
       </Box>
-      <Tooltip
-        title={
-          color === 'success'
-            ? 'Execution is on track with time elapsed.'
-            : color === 'warning'
-            ? 'Execution is lagging behind time elapsed. Monitor closely.'
-            : color === 'error'
-            ? 'Execution is significantly behind schedule.'
-            : 'Progress status.'
-        }
-      >
+      <Tooltip title={tooltipMsg}>
         <LinearProgress
           variant="determinate"
           value={Math.min(Number(value) || 0, 100)}
@@ -109,17 +112,17 @@ const TimelineActivityAccordion = ({ activity, expanded, handleChange }) => {
   // Clamp timePercent to 100 for display and calculation
   const rawTimePercent = activity.percentage_time_elapsed ?? 0;
   const timePercent = Math.min(100, rawTimePercent);
+  const hasTimeDates = Boolean(activity.start_date && activity.end_date);
 
-  let execColor = 'success';
-  let timeColor = 'success';
-  // Use clamped timePercent for diff calculation
-  const diff = timePercent - execPercent;
-  if (diff >= 10) {
-    execColor = 'error';
-    timeColor = 'error';
-  } else if (diff >= 5) {
-    execColor = 'warning';
-    timeColor = 'warning';
+  let execColor = 'primary';
+  if (hasTimeDates) {
+    execColor = 'success';
+    const diff = timePercent - execPercent;
+    if (diff >= 10) {
+      execColor = 'error';
+    } else if (diff >= 5) {
+      execColor = 'warning';
+    }
   }
 
   return (
@@ -231,7 +234,7 @@ const TimelineActivityAccordion = ({ activity, expanded, handleChange }) => {
                   <Typography
                     variant="caption"
                     color={
-                      activity.days_remaining < 0
+                      activity.days_remaining < 0 && execColor !== 'success'
                         ? 'error.main'
                         : 'text.secondary'
                     }
@@ -252,6 +255,7 @@ const TimelineActivityAccordion = ({ activity, expanded, handleChange }) => {
                     color={execColor}
                     execPercent={execPercent}
                     timePercent={timePercent}
+                    hasTimeDates={hasTimeDates}
                   />
                 </Box>
           </Grid>
