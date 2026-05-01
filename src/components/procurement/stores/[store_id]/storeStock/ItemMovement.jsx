@@ -35,8 +35,63 @@ const ReportDocument = ({movementsData,authObject,store, baseCurrency, financePe
     const contrastText = authOrganization.organization.settings?.contrast_text || "#FFFFFF";
     const reportPeriod = `${readableDate(from, true)} - ${readableDate(to, true)}`
 
-    let cumulativeBalance = 0;
     const {movements} = movementsData;
+    const [openingBalanceTx, ...restTransactions] = movements;
+
+    const openingQty = openingBalanceTx?.quantity_in ?? 0;
+    const openingAvgCost = openingBalanceTx?.average_cost ?? 0;
+    const openingAmount = openingQty * openingAvgCost;
+
+    let cumulativeQty = openingQty;
+    let cumulativeAmount = openingAmount;
+
+    const tableRows = [
+        ...(openingBalanceTx
+            ? [{
+                date: openingBalanceTx.movement_date,
+                description: openingBalanceTx.description,
+                inQty: null,
+                inRate: null,
+                inAmount: null,
+                outQty: null,
+                outRate: null,
+                outAmount: null,
+                balanceQty: openingQty,
+                avgCost: openingAvgCost || null,
+                balanceAmount: openingAmount,
+                isOpeningBalance: true,
+            }]
+            : []),
+        ...restTransactions.map((tx) => {
+            const inAmt = tx.quantity_in * (tx.average_cost || 0);
+            const outAmt = tx.quantity_out * (tx.average_cost || 0);
+            cumulativeQty += tx.quantity_in - tx.quantity_out;
+            cumulativeAmount += inAmt - outAmt;
+            return {
+                date: tx.movement_date,
+                description: tx.description,
+                inQty: tx.quantity_in || null,
+                inRate: tx.quantity_in ? tx.average_cost : null,
+                inAmount: tx.quantity_in ? inAmt : null,
+                outQty: tx.quantity_out || null,
+                outRate: tx.quantity_out ? tx.average_cost : null,
+                outAmount: tx.quantity_out ? outAmt : null,
+                balanceQty: cumulativeQty,
+                avgCost: tx.average_cost || null,
+                balanceAmount: cumulativeAmount,
+                isOpeningBalance: false,
+            };
+        }),
+    ];
+
+    const totalInQty = restTransactions.reduce((s, tx) => s + tx.quantity_in, 0);
+    const totalInAmount = restTransactions.reduce((s, tx) => s + tx.quantity_in * (tx.average_cost || 0), 0);
+    const totalOutQty = restTransactions.reduce((s, tx) => s + tx.quantity_out, 0);
+    const totalOutAmount = restTransactions.reduce((s, tx) => s + tx.quantity_out * (tx.average_cost || 0), 0);
+
+    const fmtQty = (v) => (v == null || v === 0) ? '-' : v.toLocaleString('en-US', { maximumFractionDigits: 5 });
+    const fmtAmtRow = (v) => (v == null || v === 0) ? '-' : v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const fmtAmtTotal = (v) => (v == null || v === 0) ? '-' : v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     
     return movementsData ?
     (
@@ -45,7 +100,7 @@ const ReportDocument = ({movementsData,authObject,store, baseCurrency, financePe
             title={`${product.name} movement ${reportPeriod}`}
             producer='ProsERP'
         >
-            <Page size="A4" style={pdfStyles.page}>
+            <Page size="A4" style={pdfStyles.page} orientation='landscape'>
                 <View style={pdfStyles.table}>
                     <View style={{ ...pdfStyles.tableRow, marginBottom: 20 }}>
                         <View style={{ flex: 1, maxWidth: 120}}>
@@ -83,40 +138,89 @@ const ReportDocument = ({movementsData,authObject,store, baseCurrency, financePe
                     </View>
                 </View>
                 <View style={pdfStyles.table}>
+                    {/* Header row 1 – group labels */}
                     <View style={pdfStyles.tableRow}>
-                        <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.5 }}>Date</Text>
-                        <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2 }}>Description</Text>
-                        <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2 }}>Reference</Text>
-                        <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1 }}>In</Text>
-                        <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1 }}>Out</Text>
-                        <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.5 }}>Balance</Text>
-                        {financePersonnel &&
+                        <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.37 }}>Date</Text>
+                        <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2.35 }}>Details</Text>
+                        {financePersonnel ? (
                             <>
-                                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2 }}>Avg Cost</Text>
-                                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2 }}>Selling Price</Text>
+                                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 3, textAlign: 'center' }}>INWARD</Text>
+                                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 3, textAlign: 'center' }}>OUTWARD</Text>
+                                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 3, textAlign: 'center' }}>BALANCE</Text>
                             </>
-                        }
+                        ) : (
+                            <>
+                                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1, textAlign: 'right' }}>Qty In</Text>
+                                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1, textAlign: 'right' }}>Qty Out</Text>
+                                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.5, textAlign: 'right' }}>Balance</Text>
+                            </>
+                        )}
                     </View>
-                    {movements.map((movement, index) => {
-                        const balance = movement.quantity_in - movement.quantity_out;
-                        cumulativeBalance += balance;
-                        return (
-                        <View key={index} style={pdfStyles.tableRow}>
-                            <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1.5 }}>{readableDate(movement.movement_date)}</Text>
-                            <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 2 }}>{movement.description}</Text>
-                            <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 2 }}>{movement.reference}</Text>
-                            <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1, textAlign: 'right' }}>{(movement.quantity_in !== 0 && index > 0) && movement.quantity_in.toLocaleString('en-US',{maximumFractionDigits:5})}</Text>
-                            <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1, textAlign: 'right' }}>{(movement.quantity_out !== 0 && index > 0) && movement.quantity_out.toLocaleString('en-US',{maximumFractionDigits:5})}</Text>
-                            <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1.5, textAlign: 'right' }}>{cumulativeBalance.toLocaleString('en-US',{maximumFractionDigits:5})}</Text>
-                            {financePersonnel &&
-                                <>
-                                    <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 2, textAlign: 'right' }}>{movement.average_cost?.toLocaleString()}</Text>
-                                    <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 2, textAlign: 'right' }}>{movement.selling_price?.toLocaleString()}</Text>
-                                </>
-                            }
+                    {/* Header row 2 – sub-labels (finance only) */}
+                    {financePersonnel && (
+                        <View style={pdfStyles.tableRow}>
+                            <Text style={{ ...pdfStyles.tableCell, backgroundColor: lightColor, flex: 1.5, fontWeight: 'bold' }}></Text>
+                            <Text style={{ ...pdfStyles.tableCell, backgroundColor: lightColor, flex: 2.5, fontWeight: 'bold' }}></Text>
+                            <Text style={{ ...pdfStyles.tableCell, backgroundColor: lightColor, flex: 1, textAlign: 'right', fontWeight: 'bold' }}>QNTY</Text>
+                            <Text style={{ ...pdfStyles.tableCell, backgroundColor: lightColor, flex: 1, textAlign: 'right', fontWeight: 'bold' }}>RATE</Text>
+                            <Text style={{ ...pdfStyles.tableCell, backgroundColor: lightColor, flex: 1, textAlign: 'right', fontWeight: 'bold' }}>AMOUNT</Text>
+                            <Text style={{ ...pdfStyles.tableCell, backgroundColor: lightColor, flex: 1, textAlign: 'right', fontWeight: 'bold' }}>QNTY</Text>
+                            <Text style={{ ...pdfStyles.tableCell, backgroundColor: lightColor, flex: 1, textAlign: 'right', fontWeight: 'bold' }}>RATE</Text>
+                            <Text style={{ ...pdfStyles.tableCell, backgroundColor: lightColor, flex: 1, textAlign: 'right', fontWeight: 'bold' }}>AMOUNT</Text>
+                            <Text style={{ ...pdfStyles.tableCell, backgroundColor: lightColor, flex: 1, textAlign: 'right', fontWeight: 'bold' }}>QNTY</Text>
+                            <Text style={{ ...pdfStyles.tableCell, backgroundColor: lightColor, flex: 1, textAlign: 'right', fontWeight: 'bold' }}>Avg Cost</Text>
+                            <Text style={{ ...pdfStyles.tableCell, backgroundColor: lightColor, flex: 1, textAlign: 'right', fontWeight: 'bold' }}>AMOUNT</Text>
                         </View>
-                        );
-                    })}
+                    )}
+                    {/* Data rows */}
+                    {tableRows.map((row, index) => (
+                        <View key={index} style={pdfStyles.tableRow}>
+                            <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1.5 }}>{readableDate(row.date)}</Text>
+                            <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 2.5 }}>{row.description}</Text>
+                            {financePersonnel ? (
+                                <>
+                                    <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1, textAlign: 'right' }}>{row.isOpeningBalance ? '-' : fmtQty(row.inQty)}</Text>
+                                    <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1, textAlign: 'right' }}>{row.isOpeningBalance ? '-' : fmtAmtRow(row.inRate)}</Text>
+                                    <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1, textAlign: 'right' }}>{row.isOpeningBalance ? '-' : fmtAmtRow(row.inAmount)}</Text>
+                                    <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1, textAlign: 'right' }}>{row.isOpeningBalance ? '-' : fmtQty(row.outQty)}</Text>
+                                    <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1, textAlign: 'right' }}>{row.isOpeningBalance ? '-' : fmtAmtRow(row.outRate)}</Text>
+                                    <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1, textAlign: 'right' }}>{row.isOpeningBalance ? '-' : fmtAmtRow(row.outAmount)}</Text>
+                                    <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1, textAlign: 'right' }}>{fmtQty(row.balanceQty)}</Text>
+                                    <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1, textAlign: 'right' }}>{fmtAmtRow(row.avgCost)}</Text>
+                                    <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1, textAlign: 'right' }}>{fmtAmtRow(row.balanceAmount)}</Text>
+                                </>
+                            ) : (
+                                <>
+                                    <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1, textAlign: 'right' }}>{row.isOpeningBalance ? '-' : fmtQty(row.inQty)}</Text>
+                                    <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1, textAlign: 'right' }}>{row.isOpeningBalance ? '-' : fmtQty(row.outQty)}</Text>
+                                    <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1.5, textAlign: 'right', fontWeight: 'bold' }}>{fmtQty(row.balanceQty)}</Text>
+                                </>
+                            )}
+                        </View>
+                    ))}
+                    {/* TOTAL row */}
+                    <View style={pdfStyles.tableRow}>
+                        <Text style={{ ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', flex: 4.15 }}>TOTAL</Text>
+                        {financePersonnel ? (
+                            <>
+                                <Text style={{ ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', flex: 1, textAlign: 'right' }}>{fmtQty(totalInQty)}</Text>
+                                <Text style={{ ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, flex: 1 }}></Text>
+                                <Text style={{ ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', flex: 1, textAlign: 'right' }}>{fmtAmtTotal(totalInAmount)}</Text>
+                                <Text style={{ ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', flex: 1, textAlign: 'right' }}>{fmtQty(totalOutQty)}</Text>
+                                <Text style={{ ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, flex: 1 }}></Text>
+                                <Text style={{ ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', flex: 1, textAlign: 'right' }}>{fmtAmtTotal(totalOutAmount)}</Text>
+                                <Text style={{ ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, flex: 1 }}></Text>
+                                <Text style={{ ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, flex: 1 }}></Text>
+                                <Text style={{ ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, flex: 1 }}></Text>
+                            </>
+                        ) : (
+                            <>
+                                <Text style={{ ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', flex: 1, textAlign: 'right' }}>{fmtQty(totalInQty)}</Text>
+                                <Text style={{ ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', flex: 1, textAlign: 'right' }}>{fmtQty(totalOutQty)}</Text>
+                                <Text style={{ ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, flex: 1.5 }}></Text>
+                            </>
+                        )}
+                    </View>
                 </View>
             </Page>
     </Document>
