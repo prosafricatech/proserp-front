@@ -1,53 +1,48 @@
-import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
-import CostCenterSelector from '@/components/masters/costCenters/CostCenterSelector';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { Div } from '@jumbo/shared';
-import { LoadingButton } from '@mui/lab';
+import * as yup from 'yup';
 import {
-  Alert,
-  Autocomplete,
+  Grid,
+  TextField,
+  DialogActions,
   Button,
   Dialog,
-  DialogActions,
   DialogContent,
   DialogContentText,
   DialogTitle,
-  FormControl,
-  FormControlLabel,
-  Grid,
-  InputLabel,
-  MenuItem,
-  Paper,
-  Select,
-  Switch,
-  Tab,
+  Alert,
   Tabs,
-  TextField,
+  Tab,
+  Paper,
   Typography,
+  InputLabel,
+  FormControlLabel,
+  FormControl,
+  Select,
+  MenuItem,
+  Autocomplete,
+  Switch,
 } from '@mui/material';
-import { DateTimePicker } from '@mui/x-date-pickers';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import dayjs from 'dayjs';
+import { LoadingButton } from '@mui/lab';
 import { useSnackbar } from 'notistack';
-import React, { useEffect, useMemo, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import * as yup from 'yup';
-import projectsServices from '../../project-services';
+import { DateTimePicker } from '@mui/x-date-pickers';
+import dayjs from 'dayjs';
 import { useProjectProfile } from '../ProjectProfileProvider';
-import BudgetSummaryTab from './budgetItems/tabs/BudgetSummaryTab';
-import LedgerItemsRow from './budgetItems/tabs/LedgerItemsRow';
+import { Div } from '@jumbo/shared';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import projectsServices from '../../project-services';
 import LedgerItemsTab from './budgetItems/tabs/LedgerItemsTab';
-import ProductItemsRow from './budgetItems/tabs/ProductItemsRow';
+import LedgerItemsRow from './budgetItems/tabs/LedgerItemsRow';
 import ProductItemsTab from './budgetItems/tabs/ProductItemsTab';
-import SubContractTasksRow from './budgetItems/tabs/SubContractTasksRow';
+import ProductItemsRow from './budgetItems/tabs/ProductItemsRow';
+import CostCenterSelector from '@/components/masters/costCenters/CostCenterSelector';
 import SubContractTasksTab from './budgetItems/tabs/SubContractTasksTab';
+import SubContractTasksRow from './budgetItems/tabs/SubContractTasksRow';
+import BudgetSummaryTab from './budgetItems/tabs/BudgetSummaryTab';
 
-const BudgetsForm = ({
-  setOpenDialog,
-  budget = null,
-  isProjectBudget = true,
-  isDuplicate = false,
-}) => {
+const BudgetsForm = ({ setOpenDialog, budget=null, isProjectBudget=true }) => {
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
   const { authOrganization } = useJumboAuth();
@@ -56,24 +51,16 @@ const BudgetsForm = ({
   const { project } = useProjectProfile();
   const [activeTab, setActiveTab] = useState(0);
   const [serverError, setServerError] = useState(null);
-  const [ledgerItems, setLedgerItems] = useState(
-    budget ? budget.ledger_items : []
-  );
-  const [productItems, setProductItems] = useState(
-    budget ? budget.product_items : []
-  );
-  const [subContractItems, setSubContractItems] = useState(
-    budget ? budget.subcontract_task_items : []
-  );
+  const [ledgerItems, setLedgerItems] = useState(budget ? budget.ledger_items : []);
+  const [productItems, setProductItems] = useState(budget ? budget.product_items : []);
+  const [subContractItems, setSubContractItems] = useState(budget ? budget.subcontract_task_items : []);
 
-  const [subContractItemsByCostCenter, setSubContractItemsByCostCenter] =
-    useState({});
+  const [subContractItemsByCostCenter, setSubContractItemsByCostCenter] = useState({});
   const [showRestoreDialog, setShowRestoreDialog] = useState(false);
   const [restoreTargetCostCenter, setRestoreTargetCostCenter] = useState(null);
 
   const [showWarning, setShowWarning] = useState(false);
-  const [showSubcontractLossDialog, setShowSubcontractLossDialog] =
-    useState(false);
+  const [showSubcontractLossDialog, setShowSubcontractLossDialog] = useState(false);
   const [pendingCostCenter, setPendingCostCenter] = useState(null);
   const [isDirty, setIsDirty] = useState(false);
   const [submitItemForm, setSubmitItemForm] = useState(false);
@@ -94,8 +81,7 @@ const BudgetsForm = ({
       queryClient.invalidateQueries({ queryKey: ['budgets-list'] });
     },
     onError: (err) => {
-      if (err.response?.status === 400)
-        setServerError(err.response?.data?.validation_errors);
+      if (err.response?.status === 400) setServerError(err.response?.data?.validation_errors);
       else enqueueSnackbar(err.response?.data?.message, { variant: 'error' });
     },
   });
@@ -109,25 +95,13 @@ const BudgetsForm = ({
       queryClient.invalidateQueries({ queryKey: ['budgets-list'] });
     },
     onError: (err) => {
-      if (err.response?.status === 400)
-        setServerError(err.response?.data?.validation_errors);
+      if (err.response?.status === 400) setServerError(err.response?.data?.validation_errors);
       else enqueueSnackbar(err.response?.data?.message, { variant: 'error' });
     },
   });
 
-  const saveMutation = useMemo(
-    () =>
-      budget && !isDuplicate
-        ? editBudgetMutation.mutate
-        : addBudgetMutation.mutate,
-    [budget, editBudgetMutation.mutate, addBudgetMutation.mutate]
-  );
-  
-  const isPending = isDuplicate
-    ? addBudgetMutation.isPending
-    : budget
-      ? editBudgetMutation.isPending
-      : addBudgetMutation.isPending;
+  const saveMutation = useMemo(() => (budget ? editBudgetMutation.mutate : addBudgetMutation.mutate), [budget, editBudgetMutation.mutate, addBudgetMutation.mutate]);
+  const isPending = budget ? editBudgetMutation.isPending : addBudgetMutation.isPending;
 
   useEffect(() => {
     setLedgerItems(budget?.ledger_items || []);
@@ -146,49 +120,32 @@ const BudgetsForm = ({
       .typeError('Cost Center is Required'),
   });
 
-  const {
-    register,
-    setValue,
-    watch,
-    handleSubmit,
-    formState: { errors },
-  } = useForm({
+  const { register, setValue, watch, handleSubmit, formState: { errors } } = useForm({
     resolver: yupResolver(validationSchema),
     defaultValues: {
       id: budget?.id,
-      name: isDuplicate ? '' : budget?.name,
-      start_date: !isDuplicate ? budget?.start_date : null,
-      end_date: !isDuplicate ? budget?.end_date : null,
-      cost_center_id:
-        !isDuplicate && (project?.cost_center?.id || budget?.cost_center_id),
-      remarks: isDuplicate ? '' : budget?.remarks || '',
+      name: budget?.name,
+      start_date: budget?.start_date,
+      end_date: budget?.end_date,
+      cost_center_id: project?.cost_center?.id || budget?.cost_center_id ,
+      remarks: budget?.remarks || '',
     },
   });
 
   // Determine the project id to use for timeline activities
   const selectedCostCenterId = watch('cost_center_id');
-  const selectedCostCenter = useMemo(
-    () => costCenters?.find((c) => c.id === selectedCostCenterId),
-    [costCenters, selectedCostCenterId]
-  );
-  const timelineProjectId =
-    selectedCostCenter?.cost_centerable_id || project?.id;
+  const selectedCostCenter = useMemo(() => costCenters?.find(c => c.id === selectedCostCenterId), [costCenters, selectedCostCenterId]);
+  const timelineProjectId = selectedCostCenter?.cost_centerable_id || project?.id;
 
-  // Track previous project-typed cost center for dialog logic
-  const prevProjectCostCenterRef = React.useRef(
-    selectedCostCenter?.cost_centerable_id
-  );
+    // Track previous project-typed cost center for dialog logic
+  const prevProjectCostCenterRef = React.useRef(selectedCostCenter?.cost_centerable_id);
   useEffect(() => {
     prevProjectCostCenterRef.current = selectedCostCenter?.cost_centerable_id;
   }, [selectedCostCenter?.cost_centerable_id]);
 
-  const {
-    data: timelineActivitiesData,
-    isFetching: isTimelineActivitiesFetching,
-  } = useQuery({
+  const { data: timelineActivitiesData, isFetching: isTimelineActivitiesFetching } = useQuery({
     queryKey: ['projectTimelineActivities', timelineProjectId],
-    queryFn: () =>
-      projectsServices.showProjectTimelineActivities(timelineProjectId),
+    queryFn: () => projectsServices.showProjectTimelineActivities(timelineProjectId),
     enabled: !!timelineProjectId,
   });
 
@@ -196,11 +153,11 @@ const BudgetsForm = ({
     if (!Array.isArray(activities)) {
       return [];
     }
-
-    return activities.flatMap((activity) => {
+  
+    return activities.flatMap(activity => {
       const { children, tasks } = activity;
-
-      const tasksOptions = (tasks || []).map((task) => ({
+  
+      const tasksOptions = (tasks || []).map(task => ({
         id: task.id,
         label: task.name,
         handlers: task.handlers,
@@ -210,19 +167,18 @@ const BudgetsForm = ({
         start_date: dayjs(task.start_date).format('YYYY-MM-DD'),
         end_date: dayjs(task.end_date).format('YYYY-MM-DD'),
         weighted_percentage: task.weighted_percentage,
-        project_deliverable_id: task.project_deliverable_id,
+        project_deliverable_id: task.project_deliverable_id
       }));
-
+  
       const tasksFromgroupChildren = getTaskOptions(children, depth + 1);
-
+  
       return [...tasksOptions, ...tasksFromgroupChildren];
     });
   };
 
   const allTasks = getTaskOptions(timelineActivitiesData);
 
-  const hasSubcontractTab =
-    !!isProjectBudget && !!selectedCostCenter?.cost_centerable_id;
+  const hasSubcontractTab = !!isProjectBudget && !!selectedCostCenter?.cost_centerable_id;
   const subcontractTabIndex = hasSubcontractTab ? 2 : -1;
   const summaryTabIndex = hasSubcontractTab ? 3 : 2;
   const tabsCount = hasSubcontractTab ? 4 : 3;
@@ -245,8 +201,7 @@ const BudgetsForm = ({
   const expenseFilterOptions = useMemo(() => {
     const expenseMap = new Map();
     (ledgerItems || []).forEach((item) => {
-      const id =
-        item?.ledger_id || item?.ledger?.id || item?.expense_ledger?.id;
+      const id = item?.ledger_id || item?.ledger?.id || item?.expense_ledger?.id;
       const label = item?.ledger?.name || item?.expense_ledger?.name;
       if (id && label && !expenseMap.has(id)) {
         expenseMap.set(id, { id, label });
@@ -280,58 +235,36 @@ const BudgetsForm = ({
   }, [subContractItems]);
 
   const filteredLedgerEntries = useMemo(() => {
-    const selectedExpenseIds = selectedExpenseFilters.map((option) =>
-      Number(option.id)
-    );
+    const selectedExpenseIds = selectedExpenseFilters.map((option) => Number(option.id));
     return (ledgerItems || [])
       .map((item, index) => ({ item, index }))
       .filter(({ item }) => {
-        const matchesBoundTo =
-          !selectedItemable?.id ||
-          (item?.bound_to === selectedBoundTo &&
-            Number(item?.budget_itemable_id) === Number(selectedItemable?.id));
-        const expenseId = Number(
-          item?.ledger_id || item?.ledger?.id || item?.expense_ledger?.id
-        );
-        const matchesExpense =
-          selectedExpenseIds.length === 0 ||
-          selectedExpenseIds.includes(expenseId);
+        const matchesBoundTo = !selectedItemable?.id || (item?.bound_to === selectedBoundTo && Number(item?.budget_itemable_id) === Number(selectedItemable?.id));
+        const expenseId = Number(item?.ledger_id || item?.ledger?.id || item?.expense_ledger?.id);
+        const matchesExpense = selectedExpenseIds.length === 0 || selectedExpenseIds.includes(expenseId);
         return matchesBoundTo && matchesExpense;
       });
   }, [ledgerItems, selectedItemable, selectedBoundTo, selectedExpenseFilters]);
 
   const filteredProductEntries = useMemo(() => {
-    const selectedProductIds = selectedProductFilters.map((option) =>
-      Number(option.id)
-    );
+    const selectedProductIds = selectedProductFilters.map((option) => Number(option.id));
     return (productItems || [])
       .map((item, index) => ({ item, index }))
       .filter(({ item }) => {
-        const matchesBoundTo =
-          !selectedItemable?.id ||
-          (item?.bound_to === selectedBoundTo &&
-            Number(item?.budget_itemable_id) === Number(selectedItemable?.id));
+        const matchesBoundTo = !selectedItemable?.id || (item?.bound_to === selectedBoundTo && Number(item?.budget_itemable_id) === Number(selectedItemable?.id));
         const productId = Number(item?.product_id || item?.product?.id);
-        const matchesProduct =
-          selectedProductIds.length === 0 ||
-          selectedProductIds.includes(productId);
+        const matchesProduct = selectedProductIds.length === 0 || selectedProductIds.includes(productId);
         return matchesBoundTo && matchesProduct;
       });
   }, [productItems, selectedItemable, selectedBoundTo, selectedProductFilters]);
 
   const filteredSubContractEntries = useMemo(() => {
-    const selectedTaskIds = selectedSubTaskFilters.map((option) =>
-      Number(option.id)
-    );
+    const selectedTaskIds = selectedSubTaskFilters.map((option) => Number(option.id));
     return (subContractItems || [])
       .map((item, index) => ({ item, index }))
       .filter(({ item }) => {
-        const matchesGlobalTask =
-          !selectedItemable?.id ||
-          Number(item?.project_task_id) === Number(selectedItemable?.id);
-        const matchesTaskFilter =
-          selectedTaskIds.length === 0 ||
-          selectedTaskIds.includes(Number(item?.project_task_id));
+        const matchesGlobalTask = !selectedItemable?.id || Number(item?.project_task_id) === Number(selectedItemable?.id);
+        const matchesTaskFilter = selectedTaskIds.length === 0 || selectedTaskIds.includes(Number(item?.project_task_id));
         return matchesGlobalTask && matchesTaskFilter;
       });
   }, [subContractItems, selectedItemable, selectedSubTaskFilters]);
@@ -372,85 +305,54 @@ const BudgetsForm = ({
 
   return (
     <>
-      <DialogTitle textAlign='center' sx={{ pb: 1 }}>
-        {budget
-          ? `${isDuplicate ? `Duplicate` : `Edit`} ${' '} ${budget?.name} Budget`
-          : isProjectBudget
-            ? 'New Project Budget'
-            : 'New Budget'}
+      <DialogTitle textAlign="center" sx={{ pb: 1 }}>
+        {budget ? `Edit ${budget?.name} Budget` : isProjectBudget ? 'New Project Budget' : 'New Budget'}
       </DialogTitle>
       <DialogContent>
         {/* Restore dialog should be rendered at the top level, not inside Grid */}
-        <Dialog
-          open={showRestoreDialog}
-          onClose={() => setShowRestoreDialog(false)}
-        >
+        <Dialog open={showRestoreDialog} onClose={() => setShowRestoreDialog(false)}>
           <DialogTitle>Restore Previous Subcontract Tasks?</DialogTitle>
           <DialogContent>
             <DialogContentText>
-              You have previous Subcontract Tasks for this cost center. Would
-              you like to restore them or start with a blank list?
+              You have previous Subcontract Tasks for this cost center. Would you like to restore them or start with a blank list?
             </DialogContentText>
           </DialogContent>
           <DialogActions>
-            <Button
-              onClick={() => {
-                setShowRestoreDialog(false);
-                setValue('cost_center_id', restoreTargetCostCenter?.id, {
-                  shouldValidate: true,
-                  shouldDirty: true,
-                });
-                setSubContractItems([]);
-                setRestoreTargetCostCenter(null);
-                if (
-                  activeTab === subcontractTabIndex &&
-                  !restoreTargetCostCenter?.cost_centerable_id
-                ) {
-                  setActiveTab(0);
-                }
-              }}
-              color='inherit'
-            >
+            <Button onClick={() => {
+              setShowRestoreDialog(false);
+              setValue('cost_center_id', restoreTargetCostCenter?.id, {
+                shouldValidate: true,
+                shouldDirty: true,
+              });
+              setSubContractItems([]);
+              setRestoreTargetCostCenter(null);
+              if (activeTab === subcontractTabIndex && !restoreTargetCostCenter?.cost_centerable_id) {
+                setActiveTab(0);
+              }
+            }} color="inherit">
               Start New
             </Button>
-            <Button
-              onClick={() => {
-                setShowRestoreDialog(false);
-                setValue('cost_center_id', restoreTargetCostCenter?.id, {
-                  shouldValidate: true,
-                  shouldDirty: true,
-                });
-                setSubContractItems(
-                  subContractItemsByCostCenter[
-                    restoreTargetCostCenter.cost_centerable_id
-                  ] || []
-                );
-                setRestoreTargetCostCenter(null);
-                if (
-                  activeTab === subcontractTabIndex &&
-                  !restoreTargetCostCenter?.cost_centerable_id
-                ) {
-                  setActiveTab(0);
-                }
-              }}
-              color='primary'
-              variant='contained'
-            >
+            <Button onClick={() => {
+              setShowRestoreDialog(false);
+              setValue('cost_center_id', restoreTargetCostCenter?.id, {
+                shouldValidate: true,
+                shouldDirty: true,
+              });
+              setSubContractItems(subContractItemsByCostCenter[restoreTargetCostCenter.cost_centerable_id] || []);
+              setRestoreTargetCostCenter(null);
+              if (activeTab === subcontractTabIndex && !restoreTargetCostCenter?.cost_centerable_id) {
+                setActiveTab(0);
+              }
+            }} color="primary" variant="contained">
               Restore Previous
             </Button>
           </DialogActions>
         </Dialog>
-        <Grid
-          container
-          spacing={1.5}
-          alignItems='start'
-          justifyContent='center'
-          sx={{ mt: 1 }}
-        >
-          <Grid size={{ xs: 12, md: 4 }}>
+        <Grid container spacing={1.5} alignItems="center" justifyContent="center" sx={{ mt: 1 }}>
+          <Grid size={{xs: 12, md: 4}}>
             <TextField
-              label='Budget Name'
-              size='small'
+              label="Budget Name"
+              size="small"
               fullWidth
               error={!!errors?.name}
               helperText={errors?.name?.message}
@@ -458,14 +360,12 @@ const BudgetsForm = ({
             />
           </Grid>
 
-          <Grid size={{ xs: 12, md: 4 }}>
+          <Grid size={{xs: 12, md: 4}}>
             <DateTimePicker
-              label='Start Date'
+              label="Start Date"
               fullWidth
               minDate={dayjs(organization.recording_start_date)}
-              defaultValue={
-                budget && !isDuplicate ? dayjs(budget.start_date) : null
-              }
+              defaultValue={budget ? dayjs(budget.start_date) : null}
               slotProps={{
                 textField: {
                   size: 'small',
@@ -477,23 +377,17 @@ const BudgetsForm = ({
               }}
               onChange={(newValue) => {
                 setServerError(null);
-                setValue(
-                  'start_date',
-                  newValue ? newValue.toISOString() : null,
-                  { shouldValidate: true, shouldDirty: true }
-                );
+                setValue('start_date', newValue ? newValue.toISOString() : null, { shouldValidate: true, shouldDirty: true });
               }}
             />
           </Grid>
 
-          <Grid size={{ xs: 12, md: 4 }}>
+          <Grid size={{xs: 12, md: 4}}>
             <DateTimePicker
-              label='End Date'
+              label="End Date"
               fullWidth
               minDate={dayjs(watch('start_date'))}
-              defaultValue={
-                budget && !isDuplicate ? dayjs(budget.end_date) : null
-              }
+              defaultValue={budget ? dayjs(budget.end_date) : null}
               slotProps={{
                 textField: {
                   size: 'small',
@@ -505,63 +399,46 @@ const BudgetsForm = ({
               }}
               onChange={(newValue) => {
                 setServerError(null);
-                setValue('end_date', newValue ? newValue.toISOString() : null, {
-                  shouldValidate: true,
-                  shouldDirty: true,
-                });
+                setValue('end_date', newValue ? newValue.toISOString() : null, { shouldValidate: true, shouldDirty: true });
               }}
             />
           </Grid>
 
           {serverError?.date_overlap && (
             <Grid size={12}>
-              <Alert severity='error' variant='outlined' sx={{ color: 'red' }}>
-                {serverError.date_overlap[0]}
-              </Alert>
+              <Alert severity="error" variant="outlined">{serverError.date_overlap[0]}</Alert>
             </Grid>
           )}
 
-          {!project && (
+          {!project &&
             <Grid size={{ xs: 12, md: 4 }}>
               <CostCenterSelector
                 label='Cost Center'
                 frontError={errors.cost_center_id}
                 defaultValue={
-                  (budget && !isDuplicate && budget.cost_center) ||
+                  (budget && budget.cost_center) ||
                   (costCenters.length === 1 ? costCenters[0] : null)
                 }
                 multiple={false}
                 onChange={(newValue) => {
                   // Always update subContractItemsByCostCenter before dialog logic
-                  let updatedSubContractItemsByCostCenter = {
-                    ...subContractItemsByCostCenter,
-                  };
+                  let updatedSubContractItemsByCostCenter = { ...subContractItemsByCostCenter };
                   if (selectedCostCenter?.cost_centerable_id) {
-                    updatedSubContractItemsByCostCenter[
-                      selectedCostCenter.cost_centerable_id
-                    ] = subContractItems;
+                    updatedSubContractItemsByCostCenter[selectedCostCenter.cost_centerable_id] = subContractItems;
                   }
                   // If switching from project to non-project, save current tasks and clear
-                  if (
-                    !newValue?.cost_centerable_id &&
-                    selectedCostCenter?.cost_centerable_id
-                  ) {
-                    setSubContractItemsByCostCenter(
-                      updatedSubContractItemsByCostCenter
-                    );
+                  if (!newValue?.cost_centerable_id && selectedCostCenter?.cost_centerable_id) {
+                    setSubContractItemsByCostCenter(updatedSubContractItemsByCostCenter);
                     setSubContractItems([]);
                   }
                   // If switching between two project cost centers and there is data, show dialog
                   else if (
                     newValue?.cost_centerable_id &&
                     selectedCostCenter?.cost_centerable_id &&
-                    newValue?.cost_centerable_id !==
-                      selectedCostCenter?.cost_centerable_id &&
+                    newValue?.cost_centerable_id !== selectedCostCenter?.cost_centerable_id &&
                     subContractItems.length > 0
                   ) {
-                    setSubContractItemsByCostCenter(
-                      updatedSubContractItemsByCostCenter
-                    );
+                    setSubContractItemsByCostCenter(updatedSubContractItemsByCostCenter);
                     setPendingCostCenter(newValue);
                     setShowSubcontractLossDialog(true);
                     return;
@@ -569,122 +446,72 @@ const BudgetsForm = ({
                   // If switching to a project cost center with saved tasks, prompt to restore
                   if (
                     newValue?.cost_centerable_id &&
-                    updatedSubContractItemsByCostCenter[
-                      newValue.cost_centerable_id
-                    ]?.length > 0
+                    updatedSubContractItemsByCostCenter[newValue.cost_centerable_id]?.length > 0
                   ) {
-                    setSubContractItemsByCostCenter(
-                      updatedSubContractItemsByCostCenter
-                    );
+                    setSubContractItemsByCostCenter(updatedSubContractItemsByCostCenter);
                     setRestoreTargetCostCenter(newValue);
                     setShowRestoreDialog(true);
                     return;
                   }
-                  setSubContractItemsByCostCenter(
-                    updatedSubContractItemsByCostCenter
-                  );
+                  setSubContractItemsByCostCenter(updatedSubContractItemsByCostCenter);
                   setValue('cost_center_id', newValue?.id, {
                     shouldValidate: true,
                     shouldDirty: true,
                   });
-                  if (
-                    activeTab === subcontractTabIndex &&
-                    !newValue?.cost_centerable_id
-                  ) {
+                  if (activeTab === subcontractTabIndex && !newValue?.cost_centerable_id) {
                     setActiveTab(0);
                   }
-                  {
-                    /* Dialog for restoring previous subcontract tasks */
-                  }
-                  <Dialog
-                    open={showRestoreDialog}
-                    onClose={() => setShowRestoreDialog(false)}
-                  >
-                    <DialogTitle>
-                      Restore Previous Subcontract Tasks?
-                    </DialogTitle>
+                  {/* Dialog for restoring previous subcontract tasks */}
+                  <Dialog open={showRestoreDialog} onClose={() => setShowRestoreDialog(false)}>
+                    <DialogTitle>Restore Previous Subcontract Tasks?</DialogTitle>
                     <DialogContent>
                       <DialogContentText>
-                        You have previous Subcontract Tasks for this cost
-                        center. Would you like to restore them or start with a
-                        blank list?
+                        You have previous Subcontract Tasks for this cost center. Would you like to restore them or start with a blank list?
                       </DialogContentText>
                     </DialogContent>
                     <DialogActions>
-                      <Button
-                        onClick={() => {
-                          setShowRestoreDialog(false);
-                          setValue(
-                            'cost_center_id',
-                            restoreTargetCostCenter?.id,
-                            {
-                              shouldValidate: true,
-                              shouldDirty: true,
-                            }
-                          );
-                          setSubContractItems([]);
-                          setRestoreTargetCostCenter(null);
-                          if (
-                            activeTab === subcontractTabIndex &&
-                            !restoreTargetCostCenter?.cost_centerable_id
-                          ) {
-                            setActiveTab(0);
-                          }
-                        }}
-                        color='inherit'
-                      >
+                      <Button onClick={() => {
+                        setShowRestoreDialog(false);
+                        setValue('cost_center_id', restoreTargetCostCenter?.id, {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                        });
+                        setSubContractItems([]);
+                        setRestoreTargetCostCenter(null);
+                        if (activeTab === subcontractTabIndex && !restoreTargetCostCenter?.cost_centerable_id) {
+                          setActiveTab(0);
+                        }
+                      }} color="inherit">
                         Start New
                       </Button>
-                      <Button
-                        onClick={() => {
-                          setShowRestoreDialog(false);
-                          setValue(
-                            'cost_center_id',
-                            restoreTargetCostCenter?.id,
-                            {
-                              shouldValidate: true,
-                              shouldDirty: true,
-                            }
-                          );
-                          setSubContractItems(
-                            subContractItemsByCostCenter[
-                              restoreTargetCostCenter.cost_centerable_id
-                            ] || []
-                          );
-                          setRestoreTargetCostCenter(null);
-                          if (
-                            activeTab === subcontractTabIndex &&
-                            !restoreTargetCostCenter?.cost_centerable_id
-                          ) {
-                            setActiveTab(0);
-                          }
-                        }}
-                        color='primary'
-                        variant='contained'
-                      >
+                      <Button onClick={() => {
+                        setShowRestoreDialog(false);
+                        setValue('cost_center_id', restoreTargetCostCenter?.id, {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                        });
+                        setSubContractItems(subContractItemsByCostCenter[restoreTargetCostCenter.cost_centerable_id] || []);
+                        setRestoreTargetCostCenter(null);
+                        if (activeTab === subcontractTabIndex && !restoreTargetCostCenter?.cost_centerable_id) {
+                          setActiveTab(0);
+                        }
+                      }} color="primary" variant="contained">
                         Restore Previous
                       </Button>
                     </DialogActions>
-                  </Dialog>;
+                  </Dialog>
                 }}
               />
               {/* Dialog for subcontract task data loss warning */}
-              <Dialog
-                open={showSubcontractLossDialog}
-                onClose={() => setShowSubcontractLossDialog(false)}
-              >
+              <Dialog open={showSubcontractLossDialog} onClose={() => setShowSubcontractLossDialog(false)}>
                 <DialogTitle>Subcontract Tasks Will Be Lost</DialogTitle>
                 <DialogContent>
                   <DialogContentText>
-                    Changing the cost center will clear all current Subcontract
-                    Tasks. Do you want to continue?
+                    Changing the cost center will clear all current Subcontract Tasks. Do you want to continue?
                   </DialogContentText>
                 </DialogContent>
                 <DialogActions>
-                  <Button
-                    onClick={() => setShowSubcontractLossDialog(false)}
-                    color='inherit'
-                  >
+                  <Button onClick={() => setShowSubcontractLossDialog(false)} color="inherit">
                     Cancel
                   </Button>
                   <Button
@@ -695,29 +522,26 @@ const BudgetsForm = ({
                         shouldValidate: true,
                         shouldDirty: true,
                       });
-                      if (
-                        activeTab === subcontractTabIndex &&
-                        !pendingCostCenter?.cost_centerable_id
-                      ) {
+                      if (activeTab === subcontractTabIndex && !pendingCostCenter?.cost_centerable_id) {
                         setActiveTab(0);
                       }
                       setPendingCostCenter(null);
                     }}
-                    color='warning'
-                    variant='contained'
+                    color="warning"
+                    variant="contained"
                   >
                     Continue
                   </Button>
                 </DialogActions>
               </Dialog>
-            </Grid>
-          )}
+            </Grid> 
+          }
 
           <Grid size={{ xs: 12, md: project ? 12 : 8 }}>
             <Div>
               <TextField
-                label='Remarks'
-                size='small'
+                label="Remarks"
+                size="small"
                 fullWidth
                 multiline
                 rows={2}
@@ -728,22 +552,14 @@ const BudgetsForm = ({
 
           <Grid size={12}>
             <Paper variant='outlined' sx={{ p: 1.5, mt: 0.5 }}>
-              <Grid
-                container
-                alignItems='center'
-                justifyContent='space-between'
-              >
+              <Grid container alignItems='center' justifyContent='space-between'>
                 <Grid size={{ xs: 12, md: 8 }}>
                   <Typography variant='subtitle2'>Optional Filters</Typography>
                   <Typography variant='caption' color='text.secondary'>
-                    Use these filters to narrow down listed items. Leave blank
-                    to show all.
+                    Use these filters to narrow down listed items. Leave blank to show all.
                   </Typography>
                 </Grid>
-                <Grid
-                  size={{ xs: 12, md: 4 }}
-                  textAlign={{ xs: 'left', md: 'right' }}
-                >
+                <Grid size={{ xs: 12, md: 4 }} textAlign={{ xs: 'left', md: 'right' }}>
                   <FormControlLabel
                     sx={{ m: 0 }}
                     control={
@@ -762,67 +578,57 @@ const BudgetsForm = ({
                 <Grid container spacing={1} sx={{ mt: 0.5 }}>
                   {hasSubcontractTab && (
                     <>
-                      <Grid size={{ xs: 12, md: 4 }}>
-                        <FormControl fullWidth>
-                          <InputLabel id='budget-bound-to-filter-label'>
-                            Filter by Bound To (Optional)
-                          </InputLabel>
-                          <Select
-                            labelId='budget-bound-to-filter-label'
-                            value={boundToOption}
-                            label='Filter by Bound To (Optional)'
-                            size='small'
-                            onChange={(e) => {
-                              setSelectedItemable(null);
-                              setSelectedBoundTo(null);
-                              setBoundToOption(e.target.value);
-                            }}
-                          >
-                            <MenuItem value=''>All</MenuItem>
-                            <MenuItem value='Task'>Task</MenuItem>
-                          </Select>
-                        </FormControl>
-                      </Grid>
+                  <Grid size={{ xs: 12, md: 4 }}>
+                    <FormControl fullWidth>
+                      <InputLabel id="budget-bound-to-filter-label">Filter by Bound To (Optional)</InputLabel>
+                      <Select
+                        labelId="budget-bound-to-filter-label"
+                        value={boundToOption}
+                        label="Filter by Bound To (Optional)"
+                        size='small'
+                        onChange={(e) => {
+                          setSelectedItemable(null);
+                          setSelectedBoundTo(null);
+                          setBoundToOption(e.target.value);
+                        }}
+                      >
+                        <MenuItem value="">All</MenuItem>
+                        <MenuItem value="Task">Task</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
 
-                      <Grid size={{ xs: 12, md: 8 }}>
-                        <Autocomplete
-                          options={boundToOption === 'Task' ? allTasks : []}
-                          isOptionEqualToValue={(option, value) =>
-                            option.id === value?.id
-                          }
-                          getOptionLabel={(option) => option.label}
-                          value={selectedItemable}
-                          disabled={boundToOption !== 'Task'}
-                          renderInput={(params) => (
-                            <TextField
-                              {...params}
-                              label={
-                                boundToOption === 'Task'
-                                  ? 'Filter by Task (Optional)'
-                                  : 'Select Bound To to enable Task filter'
-                              }
-                              size='small'
-                              fullWidth
-                            />
-                          )}
-                          onChange={(e, newValue) => {
-                            if (newValue) {
-                              setSelectedItemable(newValue);
-                              setSelectedBoundTo(
-                                boundToOption === 'Task' ? 'ProjectTask' : null
-                              );
-                            } else {
-                              setSelectedItemable(null);
-                              setSelectedBoundTo(null);
-                            }
-                          }}
-                          renderOption={(props, option) => (
-                            <li {...props} key={option.id}>
-                              {option.label}
-                            </li>
-                          )}
+                  <Grid size={{ xs: 12, md: 8 }}>
+                    <Autocomplete
+                      options={boundToOption === 'Task' ? allTasks : []}
+                      isOptionEqualToValue={(option, value) => option.id === value?.id}
+                      getOptionLabel={(option) => option.label}
+                      value={selectedItemable}
+                      disabled={boundToOption !== 'Task'}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label={boundToOption === 'Task' ? 'Filter by Task (Optional)' : 'Select Bound To to enable Task filter'}
+                          size='small'
+                          fullWidth
                         />
-                      </Grid>
+                      )}
+                      onChange={(e, newValue) => {
+                        if (newValue) {
+                          setSelectedItemable(newValue);
+                          setSelectedBoundTo(boundToOption === 'Task' ? 'ProjectTask' : null);
+                        } else {
+                          setSelectedItemable(null);
+                          setSelectedBoundTo(null);
+                        }
+                      }}
+                      renderOption={(props, option) => (
+                        <li {...props} key={option.id}>
+                          {option.label}
+                        </li>
+                      )}
+                    />
+                  </Grid>
                     </>
                   )}
 
@@ -831,14 +637,10 @@ const BudgetsForm = ({
                       <Autocomplete
                         multiple
                         options={expenseFilterOptions}
-                        isOptionEqualToValue={(option, value) =>
-                          option.id === value?.id
-                        }
+                        isOptionEqualToValue={(option, value) => option.id === value?.id}
                         getOptionLabel={(option) => option.label}
                         value={selectedExpenseFilters}
-                        onChange={(e, newValue) =>
-                          setSelectedExpenseFilters(newValue || [])
-                        }
+                        onChange={(e, newValue) => setSelectedExpenseFilters(newValue || [])}
                         renderInput={(params) => (
                           <TextField
                             {...params}
@@ -856,14 +658,10 @@ const BudgetsForm = ({
                       <Autocomplete
                         multiple
                         options={productFilterOptions}
-                        isOptionEqualToValue={(option, value) =>
-                          option.id === value?.id
-                        }
+                        isOptionEqualToValue={(option, value) => option.id === value?.id}
                         getOptionLabel={(option) => option.label}
                         value={selectedProductFilters}
-                        onChange={(e, newValue) =>
-                          setSelectedProductFilters(newValue || [])
-                        }
+                        onChange={(e, newValue) => setSelectedProductFilters(newValue || [])}
                         renderInput={(params) => (
                           <TextField
                             {...params}
@@ -881,14 +679,10 @@ const BudgetsForm = ({
                       <Autocomplete
                         multiple
                         options={subTaskFilterOptions}
-                        isOptionEqualToValue={(option, value) =>
-                          option.id === value?.id
-                        }
+                        isOptionEqualToValue={(option, value) => option.id === value?.id}
                         getOptionLabel={(option) => option.label}
                         value={selectedSubTaskFilters}
-                        onChange={(e, newValue) =>
-                          setSelectedSubTaskFilters(newValue || [])
-                        }
+                        onChange={(e, newValue) => setSelectedSubTaskFilters(newValue || [])}
                         renderInput={(params) => (
                           <TextField
                             {...params}
@@ -912,16 +706,16 @@ const BudgetsForm = ({
               onChange={(e, newValue) => {
                 setActiveTab(newValue);
               }}
-              variant='scrollable'
-              scrollButtons='auto'
+              variant="scrollable"
+              scrollButtons="auto"
               allowScrollButtonsMobile
             >
-              <Tab label='Expense Items' />
-              <Tab label='Product Items' />
-              {selectedCostCenter?.cost_centerable_id && (
-                <Tab label='Subcontract Task' />
-              )}
-              <Tab label='Summary' />
+              <Tab label="Expense Items" />
+              <Tab label="Product Items" />
+              {selectedCostCenter?.cost_centerable_id && 
+                <Tab label="Subcontract Task" />
+              }
+              <Tab label="Summary" />
             </Tabs>
           </Grid>
 
@@ -984,45 +778,40 @@ const BudgetsForm = ({
                 ))}
               </>
             )}
-            {activeTab === subcontractTabIndex &&
-              selectedCostCenter?.cost_centerable_id && (
-                <>
-                  <SubContractTasksTab
+            {activeTab === subcontractTabIndex && selectedCostCenter?.cost_centerable_id && (
+              <>
+                <SubContractTasksTab
+                  subContractItems={subContractItems}
+                  setSubContractItems={setSubContractItems}
+                  submitMainForm={submitMainForm}
+                  submitItemForm={submitItemForm}
+                  setSubmitItemForm={setSubmitItemForm}
+                  setIsDirty={setIsDirty}
+                  allTasks={allTasks}
+                  selectedCostCenter={selectedCostCenter}
+                />
+                {filteredSubContractEntries?.map(({ item: subContractItem, index }) => (
+                  <SubContractTasksRow
+                    key={`${subContractItem?.id ?? 'new'}-${index}`}
+                    subContractItem={subContractItem}
+                    index={index}
                     subContractItems={subContractItems}
                     setSubContractItems={setSubContractItems}
-                    submitMainForm={submitMainForm}
-                    submitItemForm={submitItemForm}
-                    setSubmitItemForm={setSubmitItemForm}
-                    setIsDirty={setIsDirty}
                     allTasks={allTasks}
+                    submitMainForm={submitMainForm}
+                    setSubmitItemForm={setSubmitItemForm}
+                    submitItemForm={submitItemForm}
+                    setIsDirty={setIsDirty}
                     selectedCostCenter={selectedCostCenter}
                   />
-                  {filteredSubContractEntries?.map(
-                    ({ item: subContractItem, index }) => (
-                      <SubContractTasksRow
-                        key={`${subContractItem?.id ?? 'new'}-${index}`}
-                        subContractItem={subContractItem}
-                        index={index}
-                        subContractItems={subContractItems}
-                        setSubContractItems={setSubContractItems}
-                        allTasks={allTasks}
-                        submitMainForm={submitMainForm}
-                        setSubmitItemForm={setSubmitItemForm}
-                        submitItemForm={submitItemForm}
-                        setIsDirty={setIsDirty}
-                        selectedCostCenter={selectedCostCenter}
-                      />
-                    )
-                  )}
-                </>
-              )}
+                ))}
+              </>
+            )}
             {activeTab === summaryTabIndex && (
               <BudgetSummaryTab
                 ledgerItems={filteredLedgerEntries.map(({ item }) => item)}
                 productItems={filteredProductEntries.map(({ item }) => item)}
-                subContractItems={filteredSubContractEntries.map(
-                  ({ item }) => item
-                )}
+                subContractItems={filteredSubContractEntries.map(({ item }) => item)}
                 hasSubcontractTab={hasSubcontractTab}
               />
             )}
@@ -1030,14 +819,12 @@ const BudgetsForm = ({
         </Grid>
       </DialogContent>
       <DialogActions>
-        <Button size='small' onClick={() => setOpenDialog(false)}>
-          Cancel
-        </Button>
+        <Button size="small" onClick={() => setOpenDialog(false)}>Cancel</Button>
         <LoadingButton
-          type='submit'
+          type="submit"
           onClick={handleSubmit(onSubmit)}
-          variant='contained'
-          size='small'
+          variant="contained"
+          size="small"
           sx={{ display: 'flex' }}
           loading={isPending}
         >
@@ -1048,19 +835,14 @@ const BudgetsForm = ({
         <DialogTitle>Unsaved Expense Item</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            You have unsaved changes in Expense Items form. Do you want to add
-            the item first, or submit without adding it?
+            You have unsaved changes in Expense Items form. Do you want to add the item first, or submit without adding it?
           </DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setShowWarning(false)} color='inherit'>
             Cancel
           </Button>
-          <Button
-            onClick={handleConfirmSubmitWithoutAdd}
-            color='warning'
-            variant='outlined'
-          >
+          <Button onClick={handleConfirmSubmitWithoutAdd} color='warning' variant='outlined'>
             Submit Without Add
           </Button>
           <LoadingButton onClick={handleAddAndSubmit} variant='contained'>

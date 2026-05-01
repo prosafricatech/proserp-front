@@ -21,7 +21,16 @@ const GanttChartActionTail = lazy(() => import('./ganttChart/GanttChartActionTai
 function LinearProgressWithLabel({ value, color, execPercent, timePercent }) {
   return (
     <Box sx={{ width: '100%' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+      <Box
+        sx={theme => ({
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          justifyContent: { xs: 'flex-start', sm: 'space-between' },
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          mb: 0.5,
+          gap: { xs: 0.5, sm: 0 },
+        })}
+      >
         <Typography variant="body2" color="text.secondary" fontWeight={500}>
           Execution: {Math.min(100, Number(execPercent).toFixed(2))}%
         </Typography>

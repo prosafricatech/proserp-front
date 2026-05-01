@@ -14,9 +14,19 @@ import TasksItemAction from './TasksItemAction';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 
 function LinearProgressWithLabel({ value, execPercent, timePercent, color }) {
+  // Responsive: stack labels vertically on xs screens
   return (
     <Box sx={{ width: '100%' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+      <Box
+        sx={theme => ({
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          justifyContent: { xs: 'flex-start', sm: 'space-between' },
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          mb: 0.5,
+          gap: { xs: 0.5, sm: 0 },
+        })}
+      >
         <Typography variant="body2" color="text.secondary" fontWeight={500}>
           Execution: {Math.min(100, Math.round(execPercent))}%
         </Typography>

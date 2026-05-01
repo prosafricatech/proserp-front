@@ -16,8 +16,7 @@ import {
   Tooltip,
 } from '@mui/material';
 import Link from 'next/link';
-import { useParams, useSearchParams } from 'next/navigation';
-import { getSanitizedSearchKeyword } from '@/utilities/getSanitizedSearchKeyword';
+import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import InvitationListItem from './InvitationListItem';
 import invitationsServices from './invitationsServices';
@@ -39,10 +38,9 @@ function OrganizationInvitations() {
   const [mounted, setMounted] = useState(false);
   const lang = useLanguage();
 
-  const searchParams = useSearchParams();
   const [queryOptions, setQueryOptions] = useState<QueryOptions>({
     queryKey: 'invitations',
-    queryParams: { id: params?.id || '', keyword: getSanitizedSearchKeyword('Invitations', searchParams) },
+    queryParams: { id: params?.id || '', keyword: '' },
     countKey: 'invitations.total',
     dataKey: 'invitations.data',
   });

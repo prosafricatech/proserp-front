@@ -16,7 +16,6 @@ import {
   useMediaQuery,
 } from '@mui/material';
 import React, { ReactNode, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
 import DippingReport from './dippingReport/DippingReport';
 import FuelVouchersReport from './FuelVouchersReport/FuelVouchersReport';
 
@@ -24,12 +23,10 @@ interface ReportProps {
   closeDialog: () => void;
 }
 const FuelStationReports: React.FC = () => {
-  const searchParams = useSearchParams();
   const css = useProsERPStyles();
 
   const [openReportDialog, setOpenReportDialog] = useState<boolean>(false);
   const [report, setReport] = useState<ReactNode | null>(null);
-  const [mounted, setMounted] = useState(false);
 
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
@@ -38,23 +35,6 @@ const FuelStationReports: React.FC = () => {
     setReport(<Component closeDialog={() => setOpenReportDialog(false)} />);
     setOpenReportDialog(true);
   };
-
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Auto-open report dialog if ?report= param is present
-  React.useEffect(() => {
-    if (!mounted) return;
-    const reportParam = searchParams.get('report');
-    if (!reportParam) return;
-    if (reportParam === 'dipping-report') {
-      openReport(DippingReport);
-    } else if (reportParam === 'fv-report') {
-      openReport(FuelVouchersReport);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mounted, searchParams]);
 
   return (
     <StakeholderSelectProvider>

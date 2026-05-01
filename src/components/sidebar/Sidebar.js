@@ -175,21 +175,21 @@ function Sidebar({ menus }) {
                         PERMISSIONS.FUEL_STATIONS_CREATE,
                         PERMISSIONS.FUEL_STATIONS_UPDATE,
                         PERMISSIONS.FUEL_STATIONS_DELETE,
-                        PERMISSIONS.FUEL_SALES_SHIFT_READ,
-                        PERMISSIONS.FUEL_SALES_SHIFT_CREATE,
-                        PERMISSIONS.FUEL_SALES_SHIFT_UPDATE,
-                        PERMISSIONS.FUEL_SALES_SHIFT_CLOSE,
-                        PERMISSIONS.FUEL_SALES_SHIFT_DELETE,
+                        PERMISSIONS.FUEL_SALES_SHIFTS_READ,
+                        PERMISSIONS.FUEL_SALES_SHIFTS_CREATE,
+                        PERMISSIONS.FUEL_SALES_SHIFTS_UPDATE,
+                        PERMISSIONS.FUEL_SALES_SHIFTS_CLOSE,
+                        PERMISSIONS.FUEL_SALES_SHIFTS_DELETE,
                     ])) {
                     updatedMenus = [...updatedMenus, ...menus.filter(menu => menu.label === dictionary.sidebar.menu.fuelStations)];
                 }
 
                 // Fuel Station > Sales Shift
                 if (!checkOrganizationPermission([
-                    PERMISSIONS.FUEL_SALES_SHIFT_READ,
-                    PERMISSIONS.FUEL_SALES_SHIFT_CREATE,
-                    PERMISSIONS.FUEL_SALES_SHIFT_UPDATE,
-                    PERMISSIONS.FUEL_SALES_SHIFT_DELETE,
+                    PERMISSIONS.FUEL_SALES_SHIFTS_READ,
+                    PERMISSIONS.FUEL_SALES_SHIFTS_CREATE,
+                    PERMISSIONS.FUEL_SALES_SHIFTS_UPDATE,
+                    PERMISSIONS.FUEL_SALES_SHIFTS_DELETE,
                 ])) {
                     const fuelStationMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.fuelStations);
                     if (fuelStationMenuIndex >= 0) {

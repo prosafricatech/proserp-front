@@ -19,6 +19,11 @@ export const activeLocale = match(
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Redirect only GET requests to /api/auth/signout to /auth/signin to avoid confirmation page
+  if (pathname === '/api/auth/signout' && request.method === 'GET') {
+    return NextResponse.redirect(new URL('/auth/signin', request.url));
+  }
+
   // 1. Handle locale redirection
   const localeResponse = prefixLocale(request);
   if (localeResponse) {

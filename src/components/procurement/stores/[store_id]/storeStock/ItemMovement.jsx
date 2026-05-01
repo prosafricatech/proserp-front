@@ -1,6 +1,6 @@
 'use client'
 import { LoadingButton } from '@mui/lab'
-import { Button, DialogActions, DialogContent, DialogTitle, Grid, IconButton, LinearProgress, Stack, Tab, Tabs, Tooltip, Typography, useMediaQuery } from '@mui/material'
+import { Button, DialogActions, DialogContent, DialogTitle, Grid, IconButton, LinearProgress, Skeleton, Stack, Tab, Tabs, Tooltip, Typography, useMediaQuery } from '@mui/material'
 import { DateTimePicker } from '@mui/x-date-pickers'
 import dayjs from 'dayjs'
 import React, { useState } from 'react'
@@ -371,7 +371,13 @@ function ItemMovement({productStock = null, toggleOpen, isFromDashboard}) {
             </Span>
         </DialogTitle>
         <DialogContent>
-              {isFetching && <LinearProgress />}
+              {isFetching && 
+                    <div style={{ width: '100%', padding: '16px' }}>
+                      <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
+                      <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
+                      <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+                    </div>
+                  }
               {!isFetching && movements?.movements?.length > 0 && (
                 <React.Fragment>
                     {

@@ -1,26 +1,15 @@
-'use client';
-import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
-import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
-import {
-  ContentCopyOutlined,
-  DeleteOutlined,
-  EditOutlined,
-} from '@mui/icons-material';
-import {
-  Dialog,
-  IconButton,
-  Skeleton,
-  Stack,
-  Tooltip,
-  useMediaQuery,
-} from '@mui/material';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+'use client'
+import React, { useState } from 'react';
+import { DeleteOutlined, EditOutlined } from '@mui/icons-material';
+import { Dialog, Skeleton, Tooltip, useMediaQuery, IconButton, Stack } from '@mui/material';
 import { useSnackbar } from 'notistack';
-import { useState } from 'react';
-import projectsServices from '../../project-services';
+import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
 import BudgetsForm from './BudgetsForm';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
+import projectsServices from '../../project-services';
 
-const EditBudget = ({ budget, setOpenDialog, isDuplicate }) => {
+const EditBudget = ({ budget, setOpenDialog }) => {
   const { data: budgetDetails, isFetching } = useQuery({
     queryKey: ['editBudget', { id: budget.id }],
     queryFn: async () => projectsServices.getbudgetItemsDetails(budget.id),
@@ -29,34 +18,15 @@ const EditBudget = ({ budget, setOpenDialog, isDuplicate }) => {
   if (isFetching) {
     return (
       <div style={{ width: '100%', padding: '16px' }}>
-        <Skeleton
-          variant='text'
-          width={180}
-          height={32}
-          style={{ borderRadius: 4, marginLeft: 'auto' }}
-        />
-        <Skeleton
-          variant='rectangular'
-          width='100%'
-          height={48}
-          style={{ borderRadius: 4 }}
-        />
-        <Skeleton
-          variant='rectangular'
-          width='100%'
-          height={32}
-          style={{ borderRadius: 4 }}
-        />
+        <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
+        <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
+        <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
       </div>
     );
   }
 
   return (
-    <BudgetsForm
-      budget={budgetDetails}
-      setOpenDialog={setOpenDialog}
-      isDuplicate={isDuplicate}
-    />
+    <BudgetsForm budget={budgetDetails} setOpenDialog={setOpenDialog} />
   );
 };
 
@@ -65,7 +35,6 @@ const BudgetsItemAction = ({ budget }) => {
   const { showDialog, hideDialog } = useJumboDialog();
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
-  const [duplicateBudget, setDuplicateBudget] = useState(false);
 
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
@@ -106,51 +75,27 @@ const BudgetsItemAction = ({ budget }) => {
         open={openEditDialog}
         fullWidth
         fullScreen={belowLargeScreen}
-        maxWidth='lg'
+        maxWidth="lg"
         scroll={belowLargeScreen ? 'body' : 'paper'}
       >
-        <EditBudget
-          budget={budget}
-          setOpenDialog={setOpenEditDialog}
-          isDuplicate={duplicateBudget}
-        />
+        <EditBudget budget={budget} setOpenDialog={setOpenEditDialog} />
       </Dialog>
 
-      <Stack
-        textAlign={'end'}
-        direction='row'
-        spacing={1}
-        sx={{ mb: 1 }}
-        justifyContent='flex-end'
-      >
-        <Tooltip title='Edit'>
+      <Stack textAlign={'end'} direction="row" spacing={1} sx={{ mb: 1 }} justifyContent="flex-end">
+        <Tooltip title="Edit">
           <IconButton
-            color='primary'
-            size='small'
+            color="primary"
+            size="small"
             onClick={(e) => {
               e.stopPropagation();
-              setDuplicateBudget(false);
               handleEdit();
             }}
           >
             <EditOutlined />
           </IconButton>
         </Tooltip>
-        <Tooltip title='Duplicate'>
-          <IconButton
-            color='primary'
-            size='small'
-            onClick={(e) => {
-              e.stopPropagation();
-              setDuplicateBudget(true);
-              handleEdit();
-            }}
-          >
-            <ContentCopyOutlined />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title='Delete'>
-          <IconButton color='error' size='small' onClick={handleDelete}>
+        <Tooltip title="Delete">
+          <IconButton color="error" size="small" onClick={handleDelete}>
             <DeleteOutlined />
           </IconButton>
         </Tooltip>

@@ -12,7 +12,17 @@ export async function GET(request: NextRequest) {
   // Just forward all incoming query parameters exactly as they are
   const queryString = searchParams.toString();
 
-  const res = await fetch(`${API_BASE}/inventory-consumptions?${queryString}`, {
+  // If storeId is present, use /stores/{id}/inventory-consumptions
+  const storeId = searchParams.get('storeId');
+  let url;
+  if (storeId) {
+    url = `${API_BASE}/stores/${storeId}/inventory-consumptions?${queryString}`;
+    console.log('Constructed URL for store-specific inventory consumptions:', url);
+  } else {
+    url = `${API_BASE}/inventory-consumptions?${queryString}`;
+  }
+
+  const res = await fetch(url, {
     headers,
     credentials: 'include',
   });

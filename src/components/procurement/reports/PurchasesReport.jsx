@@ -131,8 +131,8 @@ const ReportDocument = ({reportData,authOrganization,user,checkOrganizationPermi
                     )}
                     <View style={pdfStyles.tableRow}>
                         <Text style={{ ...pdfStyles.tableCell, ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: currency?.is_base !== 1 ? 11.7 : 5.8, textAlign: 'center' }}>TOTAL</Text>
-                        <Text style={{ ...pdfStyles.tableCell, ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.5, textAlign: 'right' }}>{baseCurrency.symbol} {totalOrderamount?.toLocaleString()}</Text>
-                        <Text style={{ ...pdfStyles.tableCell, ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.5, textAlign: 'right' }}>{baseCurrency.symbol} {totalReceivedamount?.toLocaleString()}</Text>
+                        <Text style={{ ...pdfStyles.tableCell, ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.5, textAlign: 'right' }}>{baseCurrency.symbol} {totalOrderAmount?.toLocaleString()}</Text>
+                        <Text style={{ ...pdfStyles.tableCell, ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.5, textAlign: 'right' }}>{baseCurrency.symbol} {totalReceivedAmount?.toLocaleString()}</Text>
                         <Text style={{ ...pdfStyles.tableCell, ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.5, textAlign: 'right' }}>{baseCurrency.symbol} {totalBalance.toLocaleString()}</Text>
                     </View>
                 </View>

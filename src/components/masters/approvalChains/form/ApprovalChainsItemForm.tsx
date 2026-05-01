@@ -78,6 +78,8 @@ function ApprovalChainsItemForm({
     }
   });
 
+  console.log(dirtyFields)
+
   useEffect(() => {
       const subscription = watch(() => {
           const hasDirtyFields = Object.keys(dirtyFields).length > 0;
@@ -110,9 +112,10 @@ function ApprovalChainsItemForm({
       setClearFormKey(prevKey => prevKey + 1);
     }
 
-    reset();
+    reset(undefined, { keepValues: false, keepDirty: false });
     setIsAdding(false);
     setShowForm?.(false);
+    setIsDirty(false);
   };
 
   useEffect(() => {

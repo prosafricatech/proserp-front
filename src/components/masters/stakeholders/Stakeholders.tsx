@@ -13,12 +13,11 @@ import { Stakeholder } from './StakeholderType';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import UnauthorizedAccess from '@/shared/Information/UnauthorizedAccess';
-import { useParams, useSearchParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
 
 function Stakeholders() {
     const params = useParams<{ category?: string; id?: string; keyword?: string }>();
-    const searchParams = useSearchParams();
     const listRef = useRef<any>(null);
     const [mounted, setMounted] = useState(false);
     const {checkOrganizationPermission} = useJumboAuth();
@@ -28,8 +27,8 @@ function Stakeholders() {
         queryKey: "stakeholders",
         queryParams: {
             id: params.id,
-            type: 'all',
-            keyword: searchParams.get('search') || ''
+            type:'all', 
+            keyword : ''
         },
         countKey: "total",
         dataKey: "data",
@@ -38,13 +37,9 @@ function Stakeholders() {
     React.useEffect(() => {
         setQueryOptions(state => ({
             ...state,
-            queryParams: {
-                ...state.queryParams,
-                id: params.id,
-                keyword: searchParams.get('search') || state.queryParams.keyword
-            }
+            queryParams: {...state.queryParams, id: params.id}
         }))
-    }, [params, searchParams]);
+    }, [params]);
 
     const renderStakeholder = React.useCallback((stakeholder: Stakeholder) => {
         return (<StakeholderListItem stakeholder={stakeholder} />)
