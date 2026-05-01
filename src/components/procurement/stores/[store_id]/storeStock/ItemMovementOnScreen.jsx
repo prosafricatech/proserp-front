@@ -1,6 +1,6 @@
+'use client';
 import React from 'react';
 import {
-  Grid,
   Typography,
   Table,
   TableBody,
@@ -10,7 +10,7 @@ import {
   Paper,
   useTheme,
   Box,
-  TableContainer
+  TableContainer,
 } from '@mui/material';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
@@ -19,403 +19,276 @@ function ItemMovementOnScreen({ movementsData, authObject, baseCurrency }) {
   const theme = useTheme();
   const { authOrganization, checkOrganizationPermission } = authObject;
   const financePersonnel = checkOrganizationPermission([PERMISSIONS.ACCOUNTS_REPORTS]);
-  
-  const mainColor = authOrganization.organization.settings?.main_color || "#2113AD";
-  const headerColor = theme.type === 'dark' ? '#29f096' : (authOrganization.organization.settings?.main_color || "#2113AD");
-  const contrastText = authOrganization.organization.settings?.contrast_text || "#FFFFFF";
-  
-  let cumulativeBalance = 0;
+
+  const mainColor = authOrganization.organization.settings?.main_color || '#2113AD';
+  const contrastText = authOrganization.organization.settings?.contrast_text || '#FFFFFF';
+  const headerColor =
+    theme.type === 'dark'
+      ? '#29f096'
+      : authOrganization.organization.settings?.main_color || '#2113AD';
+
   const { movements } = movementsData;
+  const [openingBalanceTx, ...restTransactions] = movements;
 
-  // Helper function to determine balance color and style
-  const getBalanceStyle = (balance) => {
-    if (balance < 0) {
+  const openingQty = openingBalanceTx?.quantity_in ?? 0;
+  const openingAvgCost = openingBalanceTx?.average_cost ?? 0;
+  const openingAmount = openingQty * openingAvgCost;
+
+  let cumulativeQty = openingQty;
+  let cumulativeAmount = openingAmount;
+
+  const tableRows = [
+    ...(openingBalanceTx
+      ? [
+          {
+            date: openingBalanceTx.movement_date,
+            description: openingBalanceTx.description,
+            reference: openingBalanceTx.reference,
+            inQty: null,
+            inRate: null,
+            inAmount: null,
+            outQty: null,
+            outRate: null,
+            outAmount: null,
+            balanceQty: openingQty,
+            avgCost: openingAvgCost || null,
+            balanceAmount: openingAmount,
+            isOpeningBalance: true,
+          },
+        ]
+      : []),
+    ...restTransactions.map((tx) => {
+      const inAmt = tx.quantity_in * (tx.average_cost || 0);
+      const outAmt = tx.quantity_out * (tx.average_cost || 0);
+      cumulativeQty += tx.quantity_in - tx.quantity_out;
+      cumulativeAmount += inAmt - outAmt;
       return {
-        backgroundColor: theme.type === 'dark' 
-          ? 'rgba(244, 67, 54, 0.1)' 
-          : 'rgba(244, 67, 54, 0.05)'
+        date: tx.movement_date,
+        description: tx.description,
+        reference: tx.reference,
+        inQty: tx.quantity_in || null,
+        inRate: tx.quantity_in ? tx.average_cost : null,
+        inAmount: tx.quantity_in ? inAmt : null,
+        outQty: tx.quantity_out || null,
+        outRate: tx.quantity_out ? tx.average_cost : null,
+        outAmount: tx.quantity_out ? outAmt : null,
+        balanceQty: cumulativeQty,
+        avgCost: tx.average_cost || null,
+        balanceAmount: cumulativeAmount,
+        isOpeningBalance: false,
       };
-    } else if (balance > 0) {
-      return {
-        color: theme.palette.success.main,
-      };
-    }
-    return {
-      color: theme.palette.text.primary
-    };
-  };
+    }),
+  ];
 
-  // Format number with consistent decimal places
-  const formatQuantity = (value) => {
-    if (value === 0 || value === null || value === undefined) return '';
-    return value.toLocaleString('en-US', { 
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 5 
-    });
-  };
+  const totalInQty = restTransactions.reduce((s, tx) => s + tx.quantity_in, 0);
+  const totalInAmount = restTransactions.reduce(
+    (s, tx) => s + tx.quantity_in * (tx.average_cost || 0),
+    0
+  );
+  const totalOutQty = restTransactions.reduce((s, tx) => s + tx.quantity_out, 0);
+  const totalOutAmount = restTransactions.reduce(
+    (s, tx) => s + tx.quantity_out * (tx.average_cost || 0),
+    0
+  );
 
-  // Column width styles
-  const columnStyles = {
-    header: {
-      backgroundColor: mainColor, 
-      color: contrastText, 
-      fontSize: '0.875rem',
-      fontWeight: 600,
-      py: 1.5
-    },
-    serial: {
-      width: '60px',
-      minWidth: '60px',
-      maxWidth: '60px'
-    },
-    date: {
-      width: '130px',
-      minWidth: '130px',
-      maxWidth: '130px'
-    },
-    description: {
-      minWidth: '200px',
-      maxWidth: '250px',
-      whiteSpace: 'normal',
-      wordWrap: 'break-word',
-      overflowWrap: 'break-word',
-      lineHeight: 1.3
-    },
-    reference: {
-      width: '140px',
-      minWidth: '140px',
-      maxWidth: '140px'
-    },
-    quantity: {
-      width: '110px',
-      minWidth: '110px',
-      maxWidth: '110px',
-      textAlign: 'right'
-    },
-    finance: {
-      width: '120px',
-      minWidth: '120px',
-      maxWidth: '120px',
-      textAlign: 'right'
-    }
+  const fmtQty = (v) =>
+    v == null || v === 0
+      ? '-'
+      : v.toLocaleString('en-US', { maximumFractionDigits: 5 });
+  const fmtAmtRow = (v) =>
+    v == null || v === 0
+      ? '-'
+      : v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmtAmtTotal = (v) =>
+    v == null || v === 0
+      ? '-'
+      : v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  const headerSx = {
+    backgroundColor: mainColor,
+    color: contrastText,
+    fontWeight: 700,
+    py: 1.5,
+    whiteSpace: 'nowrap',
   };
+  const subHeaderSx = {
+    backgroundColor: mainColor,
+    color: contrastText,
+    fontWeight: 600,
+    fontSize: '0.75rem',
+    py: 1,
+    borderTop: `1px solid ${contrastText}33`,
+  };
+  const totalSx = { color: contrastText, fontWeight: 700, borderBottom: 'none' };
+  const dividerBorder = `2px solid ${contrastText}55`;
 
   return (
-    <>
-      {/* Header Section */}
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid size={12}>
-          <Box 
-            sx={{ 
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              textAlign: 'center',
-              width: '100%'
-            }}
-          >
-            <Typography 
-              variant="h4" 
-              sx={{ color: headerColor}} 
-              gutterBottom
-            >
-              ITEM MOVEMENT REPORT
-            </Typography>
-            <Typography 
-              variant="h6" 
-              fontWeight="bold"
-              gutterBottom
-            >
-              {movementsData?.filters?.product?.name}
-            </Typography>
-          </Box>
-        </Grid>
-      </Grid>
-
-      <Box sx={{ mb: 3 }}>
-        <Typography 
-          variant="h6" 
-          sx={{ 
-            color: headerColor, 
-            textAlign: 'center',
-            mb: 2
-          }}
-        >
-          MOVEMENT DETAILS
+    <Box>
+      <Typography
+        variant="h5"
+        fontWeight={700}
+        sx={{ color: headerColor, textAlign: 'center', mb: 0.5 }}
+      >
+        {movementsData?.filters?.product?.name?.toUpperCase()} MOVEMENT
+      </Typography>
+      {financePersonnel && baseCurrency?.code && (
+        <Typography variant="body2" sx={{ textAlign: 'center', mb: 2, color: 'text.secondary' }}>
+          Currency: {baseCurrency.code}
         </Typography>
+      )}
 
-        {financePersonnel && (
-          <Typography 
-            variant="h6" 
-            sx={{
-              textAlign: 'center', 
-              mb: 2
-            }}
-          >
-            {baseCurrency?.code}
-          </Typography>
-        )}
-        
-        <TableContainer 
-          component={Paper}
-          sx={{
-            boxShadow: theme.shadows[2],
-            overflowX: 'auto',
-            '& .MuiTable-root': {
-              minWidth: financePersonnel ? '1100px' : '900px',
-              tableLayout: 'fixed'
-            },
-            '& .MuiTableRow-root:hover': {
-              backgroundColor: theme.palette.action.hover,
-            }
-          }}
-        >
-          <Table>
-            <TableHead>
+      <TableContainer
+        component={Paper}
+        sx={{
+          boxShadow: theme.shadows[2],
+          overflowX: 'auto',
+          '& .MuiTableRow-root:hover': { backgroundColor: theme.palette.action.hover },
+        }}
+      >
+        <Table size="small" sx={{ minWidth: financePersonnel ? 1100 : 700 }}>
+          <TableHead>
+            <TableRow>
+              <TableCell rowSpan={financePersonnel ? 2 : 1} sx={headerSx}>DATE</TableCell>
+              <TableCell rowSpan={financePersonnel ? 2 : 1} sx={headerSx}>DETAILS</TableCell>
+              {financePersonnel ? (
+                <>
+                  <TableCell colSpan={3} align="center" sx={{ ...headerSx, borderLeft: dividerBorder }}>INWARD</TableCell>
+                  <TableCell colSpan={3} align="center" sx={{ ...headerSx, borderLeft: dividerBorder }}>OUTWARD</TableCell>
+                  <TableCell colSpan={3} align="center" sx={{ ...headerSx, borderLeft: dividerBorder }}>BALANCE</TableCell>
+                </>
+              ) : (
+                <>
+                  <TableCell align="right" sx={headerSx}>QNTY In</TableCell>
+                  <TableCell align="right" sx={headerSx}>QNTY Out</TableCell>
+                  <TableCell align="right" sx={headerSx}>Balance</TableCell>
+                </>
+              )}
+            </TableRow>
+            {financePersonnel && (
               <TableRow>
-                {/* Serial Number */}
-                <TableCell sx={{ 
-                  ...columnStyles.header,
-                  ...columnStyles.serial
-                }}>
-                  S/N
+                <TableCell align="right" sx={{ ...subHeaderSx, borderLeft: dividerBorder }}>QNTY</TableCell>
+                <TableCell align="right" sx={subHeaderSx}>RATE</TableCell>
+                <TableCell align="right" sx={subHeaderSx}>AMOUNT</TableCell>
+                <TableCell align="right" sx={{ ...subHeaderSx, borderLeft: dividerBorder }}>QNTY</TableCell>
+                <TableCell align="right" sx={subHeaderSx}>RATE</TableCell>
+                <TableCell align="right" sx={subHeaderSx}>AMOUNT</TableCell>
+                <TableCell align="right" sx={{ ...subHeaderSx, borderLeft: dividerBorder }}>QNTY</TableCell>
+                <TableCell align="right" sx={subHeaderSx}>Avg Cost</TableCell>
+                <TableCell align="right" sx={subHeaderSx}>AMOUNT</TableCell>
+              </TableRow>
+            )}
+          </TableHead>
+
+          <TableBody>
+            {tableRows.map((row, index) => (
+              <TableRow
+                key={`${row.date}-${index}`}
+                sx={{
+                  backgroundColor:
+                    index % 2 === 0
+                      ? theme.palette.background.paper
+                      : theme.palette.action.hover,
+                }}
+              >
+                <TableCell sx={{ whiteSpace: 'nowrap' }}>{readableDate(row.date)}</TableCell>
+                <TableCell>
+                  <Typography variant="body2" fontWeight={row.isOpeningBalance ? 700 : 400}>
+                    {row.description}
+                  </Typography>
+                  {row.reference && (
+                    <Typography variant="caption" color="text.secondary">
+                      {row.reference}
+                    </Typography>
+                  )}
                 </TableCell>
-                
-                {/* Date */}
-                <TableCell sx={{ 
-                  ...columnStyles.header,
-                  ...columnStyles.date
-                }}>
-                  Date
-                </TableCell>
-                
-                {/* Description */}
-                <TableCell sx={{ 
-                  ...columnStyles.header,
-                  ...columnStyles.description
-                }}>
-                  Description
-                </TableCell>
-                
-                {/* Reference */}
-                <TableCell sx={{ 
-                  ...columnStyles.header,
-                  ...columnStyles.reference
-                }}>
-                  Reference
-                </TableCell>
-                
-                {/* Quantity In */}
-                <TableCell sx={{ 
-                  ...columnStyles.header,
-                  ...columnStyles.quantity
-                }}>
-                  Quantity In
-                </TableCell>
-                
-                {/* Quantity Out */}
-                <TableCell sx={{ 
-                  ...columnStyles.header,
-                  ...columnStyles.quantity
-                }}>
-                  Quantity Out
-                </TableCell>
-                
-                {/* Balance */}
-                <TableCell sx={{ 
-                  ...columnStyles.header,
-                  ...columnStyles.quantity
-                }}>
-                  Balance
-                </TableCell>
-                
-                {/* Finance Columns */}
-                {financePersonnel && (
+
+                {financePersonnel ? (
                   <>
-                    <TableCell sx={{ 
-                      ...columnStyles.header,
-                      ...columnStyles.finance
-                    }}>
-                      Avg Cost
+                    <TableCell align="right" sx={{ borderLeft: `2px solid ${theme.palette.divider}` }}>
+                      {row.isOpeningBalance ? '-' : fmtQty(row.inQty)}
                     </TableCell>
-                    <TableCell sx={{ 
-                      ...columnStyles.header,
-                      ...columnStyles.finance
-                    }}>
-                      Selling Price
+                    <TableCell align="right">
+                      {row.isOpeningBalance ? '-' : fmtAmtRow(row.inRate)}
                     </TableCell>
+                    <TableCell align="right">
+                      {row.isOpeningBalance ? '-' : fmtAmtRow(row.inAmount)}
+                    </TableCell>
+                    <TableCell align="right" sx={{ borderLeft: `2px solid ${theme.palette.divider}` }}>
+                      {row.isOpeningBalance ? '-' : fmtQty(row.outQty)}
+                    </TableCell>
+                    <TableCell align="right">
+                      {row.isOpeningBalance ? '-' : fmtAmtRow(row.outRate)}
+                    </TableCell>
+                    <TableCell align="right">
+                      {row.isOpeningBalance ? '-' : fmtAmtRow(row.outAmount)}
+                    </TableCell>
+                    <TableCell align="right" sx={{ borderLeft: `2px solid ${theme.palette.divider}` }}>
+                      {fmtQty(row.balanceQty)}
+                    </TableCell>
+                    <TableCell align="right">{fmtAmtRow(row.avgCost)}</TableCell>
+                    <TableCell align="right">
+                      {fmtAmtRow(row.balanceAmount)}
+                    </TableCell>
+                  </>
+                ) : (
+                  <>
+                    <TableCell align="right">{row.isOpeningBalance ? '-' : fmtQty(row.inQty)}</TableCell>
+                    <TableCell align="right">{row.isOpeningBalance ? '-' : fmtQty(row.outQty)}</TableCell>
+                    <TableCell align="right">{fmtQty(row.balanceQty)}</TableCell>
                   </>
                 )}
               </TableRow>
-            </TableHead>
-            
-            <TableBody>
-              {movements.map((movement, index) => {
-                const balance = movement.quantity_in - movement.quantity_out;
-                cumulativeBalance += balance;
-                const balanceStyle = getBalanceStyle(cumulativeBalance);
-                
-                return (
-                  <TableRow 
-                    key={index} 
-                    sx={{ 
-                      backgroundColor: theme.palette.background.paper,
-                      '&:nth-of-type(even)': {
-                        backgroundColor: theme.palette.action.hover,
-                      }
-                    }}
-                  >
-                    {/* Serial Number */}
-                    <TableCell sx={columnStyles.serial}>
-                      {index + 1}
-                    </TableCell>
-                    
-                    {/* Date */}
-                    <TableCell sx={columnStyles.date}>
-                      {readableDate(movement.movement_date)}
-                    </TableCell>
-                    
-                    {/* Description - WITH PROPER WRAPPING */}
-                    <TableCell sx={columnStyles.description}>
-                      {movement.description}
-                    </TableCell>
-                    
-                    {/* Reference */}
-                    <TableCell sx={columnStyles.reference}>
-                      {movement.reference}
-                    </TableCell>
-                    
-                    {/* Quantity In */}
-                    <TableCell sx={columnStyles.quantity}>
-                      {movement.quantity_in !== 0 && formatQuantity(movement.quantity_in)}
-                    </TableCell>
-                    
-                    {/* Quantity Out */}
-                    <TableCell sx={columnStyles.quantity}>
-                      {movement.quantity_out !== 0 && formatQuantity(movement.quantity_out)}
-                    </TableCell>
-                    
-                    {/* Balance */}
-                    <TableCell 
-                      sx={{ 
-                        ...columnStyles.quantity,
-                        ...balanceStyle,
-                        fontFamily: 'monospace'
-                      }}
-                    >
-                      {formatQuantity(cumulativeBalance)}
-                    </TableCell>
-                    
-                    {/* Finance Columns */}
-                    {financePersonnel && (
-                      <>
-                        <TableCell sx={{ 
-                          ...columnStyles.finance,
-                          fontFamily: 'monospace'
-                        }}>
-                          {movement.average_cost?.toLocaleString()}
-                        </TableCell>
-                        <TableCell sx={{ 
-                          ...columnStyles.finance,
-                          fontFamily: 'monospace'
-                        }}>
-                          {movement.selling_price?.toLocaleString()}
-                        </TableCell>
-                      </>
-                    )}
-                  </TableRow>
-                );
-              })}
-              
-              {/* Empty State */}
-              {movements.length === 0 && (
-                <TableRow>
-                  <TableCell 
-                    colSpan={financePersonnel ? 9 : 7} 
-                    sx={{ 
-                      textAlign: 'center', 
-                      py: 4,
-                      borderBottom: 'none'
-                    }}
-                  >
-                    <Typography variant="body1" color="text.secondary">
-                      No movement data available
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              )}
+            ))}
 
-              {/* Summary Row */}
-              {movements.length > 0 && (
-                <TableRow sx={{ 
-                  backgroundColor: theme.palette.background.default,
-                  '& td': {
-                    borderBottom: 'none',
-                    fontWeight: 600,
-                    fontSize: '0.9rem'
-                  }
-                }}>
-                  <TableCell 
-                    colSpan={4} 
-                    align="right" 
-                    sx={{ 
-                      py: 2
-                    }}
-                  >
-                    Final Balance
-                  </TableCell>
-                  
-                  <TableCell sx={{ 
-                    ...columnStyles.quantity,
-                    fontFamily: 'monospace'
-                  }}>
-                    {formatQuantity(movements.reduce((sum, m) => sum + m.quantity_in, 0))}
-                  </TableCell>
-                  
-                  <TableCell sx={{ 
-                    ...columnStyles.quantity,
-                    fontFamily: 'monospace'
-                  }}>
-                    {formatQuantity(movements.reduce((sum, m) => sum + m.quantity_out, 0))}
-                  </TableCell>
-                  
-                  <TableCell 
-                    sx={{ 
-                      ...columnStyles.quantity,
-                      ...getBalanceStyle(cumulativeBalance),
-                      fontFamily: 'monospace',
-                      fontSize: '1rem'
-                    }}
-                  >
-                    {formatQuantity(cumulativeBalance)}
-                  </TableCell>
-                  
-                  {/* Empty cells for finance columns if needed */}
-                  {financePersonnel && (
-                    <>
-                      <TableCell sx={columnStyles.finance}></TableCell>
-                      <TableCell sx={columnStyles.finance}></TableCell>
-                    </>
-                  )}
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        
-        {/* Mobile warning for horizontal scroll */}
-        <Box sx={{ 
-          display: { xs: 'block', md: 'none' },
-          mt: 1,
-          textAlign: 'center'
-        }}>
-          <Typography variant="caption" color="text.secondary">
-            ← Scroll horizontally to view all columns →
-          </Typography>
-        </Box>
-      </Box>
-    </>
+            {movements.length === 0 && (
+              <TableRow>
+                <TableCell
+                  colSpan={financePersonnel ? 11 : 5}
+                  sx={{ textAlign: 'center', py: 4, borderBottom: 'none' }}
+                >
+                  <Typography variant="body1" color="text.secondary">
+                    No movement data available
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            )}
+
+            {movements.length > 0 && (
+              <TableRow sx={{ backgroundColor: mainColor }}>
+                <TableCell colSpan={2} sx={totalSx}>TOTAL</TableCell>
+                {financePersonnel ? (
+                  <>
+                    <TableCell align="right" sx={{ ...totalSx, borderLeft: dividerBorder }}>
+                      {fmtQty(totalInQty)}
+                    </TableCell>
+                    <TableCell sx={totalSx} />
+                    <TableCell align="right" sx={totalSx}>
+                      {fmtAmtTotal(totalInAmount)}
+                    </TableCell>
+                    <TableCell align="right" sx={{ ...totalSx, borderLeft: dividerBorder }}>
+                      {fmtQty(totalOutQty)}
+                    </TableCell>
+                    <TableCell sx={totalSx} />
+                    <TableCell align="right" sx={totalSx}>
+                      {fmtAmtTotal(totalOutAmount)}
+                    </TableCell>
+                    <TableCell sx={{ ...totalSx, borderLeft: dividerBorder }} />
+                    <TableCell sx={totalSx} />
+                    <TableCell sx={totalSx} />
+                  </>
+                ) : (
+                  <>
+                    <TableCell align="right" sx={totalSx}>{fmtQty(totalInQty)}</TableCell>
+                    <TableCell align="right" sx={totalSx}>{fmtQty(totalOutQty)}</TableCell>
+                    <TableCell sx={totalSx} />
+                  </>
+                )}
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Box>
   );
 }
 
