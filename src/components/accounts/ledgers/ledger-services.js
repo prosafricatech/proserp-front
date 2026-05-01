@@ -10,10 +10,10 @@ ledgerServices.getLedgers = async (params = {}) => {
     return data;
 },
 
-ledgerServices.storeLedgerGroup = async (group) => {
-    const { data } = await axios.post('/api/accountsAndFinance/ledgers/storeLedgerGroup', group)
-    return data;
-}
+    ledgerServices.storeLedgerGroup = async (group) => {
+        const { data } = await axios.post('/api/accountsAndFinance/ledgers/storeLedgerGroup', group)
+        return data;
+    }
 
 ledgerServices.getLedgerOptions = async () => {
     const { data } = await axios.get("/api/accountsAndFinance/ledgers/getLedgerOptions");
@@ -71,5 +71,13 @@ ledgerServices.downloadExcelTemplate = async (filters) => {
     );
     return data;
 };
+
+ledgerServices.exportLedgerStatement = async (params) => {
+    const { data } = await axios.post(`/api/exports/excel/ledgerStatement/`, params, {
+        responseType: 'blob',
+    })
+    // const { data } = await axios.post(`/api/exports/excel/ledgerStatement/`, params)
+    return data;
+}
 
 export default ledgerServices;

@@ -267,8 +267,10 @@ function ProjectDashboard() {
                 (() => {
                   const execPercent =
                     dashboardFigures?.execution_percentage ?? 0;
-                  const timePercent =
-                    dashboardFigures?.time_progress_percentage ?? 0;
+                  const timePercent = Math.min(
+                    dashboardFigures?.time_progress_percentage ?? 0,
+                    100
+                  );
                   let execColor = 'success';
                   const diff = timePercent - execPercent;
                   if (diff >= 10) {
