@@ -1226,6 +1226,15 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../../src/app/api/exports/excel/itemMovement/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/exports/excel/itemMovement">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/exports/excel/itemMovement/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../../src/app/api/exports/excel/ledgerStatement/route.ts
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/exports/excel/ledgerStatement">> = Specific

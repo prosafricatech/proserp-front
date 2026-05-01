@@ -435,8 +435,6 @@ const LedgerStatementDialogContent: React.FC<
   const [activeTab, setActiveTab] = useState(0);
   const isMobile = deviceType() === 'mobile';
   const { enqueueSnackbar } = useSnackbar();
-  //   const [isDownloadingTemplate, setIsDownloadingTemplate] =
-  //     React.useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [uploadFieldsKey, setUploadFieldsKey] = useState(0);
   const [isFetching, setIsFetching] = useState(false);
@@ -477,41 +475,6 @@ const LedgerStatementDialogContent: React.FC<
     },
     []
   );
-
-  //   const downloadExcelTemplate = async () => {
-  //     try {
-  //       setIsDownloadingTemplate(true);
-  //       setUploadFieldsKey((prevKey) => prevKey + 1);
-
-  //       // Get all current filter parameters
-  //       const filters = {
-  //         from: watch('from') || commingFilters?.from,
-  //         to: watch('to') || commingFilters?.to,
-  //         ledger_id:
-  //           watch('ledger_id') ?? commingFilters?.ledger_id ?? ledger?.id,
-  //         cost_center_ids:
-  //           watch('cost_center_ids') ?? commingFilters?.cost_center_ids,
-  //         with_item_description: watch('with_item_description'),
-  //       };
-
-  //       const responseData = await ledgerServices.downloadExcelTemplate(filters);
-
-  //       const blob = new Blob([responseData], {
-  //         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  //       });
-
-  //       const link = document.createElement('a');
-  //       link.href = window.URL.createObjectURL(blob);
-  //       link.download = `${ledger?.name || ledgerName} Statement.xlsx`;
-  //       link.click();
-  //       setIsDownloadingTemplate(false);
-  //     } catch (error) {
-  //       enqueueSnackbar('Error downloading Excel Statement', {
-  //         variant: 'error',
-  //       });
-  //       setIsDownloadingTemplate(false);
-  //     }
-  //   };
 
   useEffect(() => {
     if (commingFilters) {

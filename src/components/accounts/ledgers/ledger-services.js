@@ -63,15 +63,6 @@ ledgerServices.mergeLedgers = async (ledger) => {
     return data;
 }
 
-ledgerServices.downloadExcelTemplate = async (filters) => {
-    const { data } = await axios.post(`/api/accountsAndFinance/ledgers/${filters.ledger_id}/downloadExcelTemplate`, filters,
-        {
-            responseType: 'blob',
-        }
-    );
-    return data;
-};
-
 ledgerServices.exportLedgerStatement = async (params) => {
     const { data } = await axios.post(`/api/exports/excel/ledgerStatement/`, params, {
         responseType: 'blob',
