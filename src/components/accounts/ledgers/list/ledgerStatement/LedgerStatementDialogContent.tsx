@@ -237,7 +237,16 @@ const ReportDocument: React.FC<ReportDocumentProps> = ({
             >
               Date
             </Text>
-            {/* <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1 }}>Reference</Text> */}
+            <Text
+              style={{
+                ...pdfStyles.tableHeader,
+                backgroundColor: mainColor,
+                color: contrastText,
+                flex: 1,
+              }}
+            >
+              Reference
+            </Text>
             <Text
               style={{
                 ...pdfStyles.tableHeader,
@@ -528,7 +537,7 @@ const LedgerStatementDialogContent: React.FC<
       a.click();
       window.URL.revokeObjectURL(url);
 
-      //   console.log('blob: ', blob);
+      // console.log('blob: ', blob);
     } catch (e) {
       console.log('error exporting: ', e);
     } finally {

@@ -200,15 +200,26 @@ export async function exportLedgerStatement(exportedData: any) {
 
       ws.getCell(`A${rowNum}`).value = readableDate(row.transactionDate);
       ws.getCell(`B${rowNum}`).value = row.reference ?? '';
-      ws.getCell(`C${rowNum}`).value = row.description;
+      // Split \n into separate richText segments — ExcelJS requires the literal
+      // '\n' character inside a richText text value to produce an XML line break.
+      // A single richText block with \n embedded does NOT render as a line break;
+      // it must be a real newline character (\n) inside the text string.
+      const descriptionLines = `${row.description}`.split('\n');
+      ws.getCell(`C${rowNum}`).value = {
+        richText: descriptionLines.flatMap((line, i) =>
+          i < descriptionLines.length - 1
+            ? [{ text: line }, { text: '\n' }]
+            : [{ text: line }]
+        ),
+      };
 
-      // Debit — show null/0 as '-' (matching PDF logic)
+      // Debit — show null/0 as blank (matching PDF logic)
       ws.getCell(`D${rowNum}`).value =
         row.debit && row.debit !== 0 ? row.debit : null;
       if (row.debit && row.debit !== 0)
         ws.getCell(`D${rowNum}`).numFmt = '#,###.00';
 
-      // Credit — show null/0 as '-'
+      // Credit — show null/0 as blank
       ws.getCell(`E${rowNum}`).value =
         row.credit && row.credit !== 0 ? row.credit : null;
       if (row.credit && row.credit !== 0)
@@ -225,7 +236,7 @@ export async function exportLedgerStatement(exportedData: any) {
       ws.getCell(`F${rowNum}`).value = balanceDisplay;
       ws.getCell(`F${rowNum}`).numFmt = '#,###.00';
 
-      // Borders on all cells
+      // Apply borders/style to all cells FIRST
       for (let col = 65; col <= 70; col++) {
         applyCellStyle(
           ws.getCell(`${String.fromCharCode(col)}${rowNum}`),
@@ -233,7 +244,12 @@ export async function exportLedgerStatement(exportedData: any) {
         );
       }
 
-      // Right-align numeric columns
+      // Set alignment AFTER applyCellStyle so it is not overwritten.
+      // wrapText: true is required for the \n line breaks to actually render in Excel.
+      ws.getCell(`C${rowNum}`).alignment = {
+        wrapText: true,
+        vertical: 'top',
+      };
       ws.getCell(`D${rowNum}`).alignment = {
         horizontal: 'right',
         vertical: 'middle',
@@ -287,6 +303,7 @@ export async function exportLedgerStatement(exportedData: any) {
 
     // Return Excel buffer
     return await wb.xlsx.writeBuffer();
+    // return tableRows;
   } catch (e: any) {
     console.error('Error exporting Ledger Statement Excel:', e);
     throw new Error(
