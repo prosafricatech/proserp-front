@@ -277,6 +277,14 @@ export async function exportLedgerStatement(exportedData: any) {
       vertical: 'middle',
     };
 
+    // Apply tableHeader style to all cells in total row
+    for (let col = 65; col <= 70; col++) {
+      applyCellStyle(
+        ws.getCell(`${String.fromCharCode(col)}${totalRowNum}`),
+        CELL_STYLES.tableHeader
+      );
+    }
+
     ws.getCell(`D${totalRowNum}`).value = totalDebits;
     ws.getCell(`D${totalRowNum}`).numFmt = '#,###.00';
     ws.getCell(`D${totalRowNum}`).alignment = {
@@ -292,14 +300,6 @@ export async function exportLedgerStatement(exportedData: any) {
     };
 
     ws.getCell(`F${totalRowNum}`).value = '';
-
-    // Apply tableHeader style to all cells in total row
-    for (let col = 65; col <= 70; col++) {
-      applyCellStyle(
-        ws.getCell(`${String.fromCharCode(col)}${totalRowNum}`),
-        CELL_STYLES.tableHeader
-      );
-    }
 
     // Return Excel buffer
     return await wb.xlsx.writeBuffer();
