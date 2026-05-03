@@ -32,11 +32,13 @@ export async function exporItemMovement(exportedData: any) {
             {
               date: openingBalanceTx.movement_date,
               description: openingBalanceTx.description,
+              reference: openingBalanceTx.reference,
               inQty: null,
               inRate: null,
               inAmount: null,
               outQty: null,
               outRate: null,
+              selling_price: openingBalanceTx.selling_price,
               outAmount: null,
               balanceQty: openingQty,
               avgCost: openingAvgCost || null,
@@ -53,11 +55,13 @@ export async function exporItemMovement(exportedData: any) {
         return {
           date: tx.movement_date,
           description: tx.description,
+          reference: tx.reference,
           inQty: tx.quantity_in || null,
           inRate: tx.quantity_in ? tx.average_cost : null,
           inAmount: tx.quantity_in ? inAmt : null,
           outQty: tx.quantity_out || null,
           outRate: tx.quantity_out ? tx.average_cost : null,
+          selling_price: tx.selling_price,
           outAmount: tx.quantity_out ? outAmt : null,
           balanceQty: cumulativeQty,
           avgCost: tx.average_cost || null,
@@ -107,29 +111,31 @@ export async function exporItemMovement(exportedData: any) {
     if (financePersonnel) {
       ws.columns = [
         { width: 20 }, // A — Date
-        { width: 55 }, // B — Details
-        { width: 16 }, // C — In Qty
-        { width: 16 }, // D — In Rate
-        { width: 18 }, // E — In Amount
-        { width: 16 }, // F — Out Qty
-        { width: 16 }, // G — Out Rate
-        { width: 18 }, // H — Out Amount
-        { width: 16 }, // I — Bal Qty
-        { width: 16 }, // J — Avg Cost
-        { width: 18 }, // K — Bal Amount
+        { width: 20 }, // b — Reference
+        { width: 55 }, // C — Details
+        { width: 16 }, // D — In Qty
+        { width: 16 }, // E — In Rate
+        { width: 18 }, // F — In Amount
+        { width: 16 }, // G — Out Qty
+        { width: 16 }, // H — Out Rate
+        { width: 18 }, // I — Out Amount
+        { width: 16 }, // J — Bal Qty
+        { width: 16 }, // K — Avg Cost
+        { width: 18 }, // L — Bal Amount
       ];
     } else {
       ws.columns = [
         { width: 20 }, // A — Date
-        { width: 40 }, // B — Details
-        { width: 18 }, // C — Qty In
-        { width: 18 }, // D — Qty Out
-        { width: 20 }, // E — Balance Qty
+        { width: 20 }, // B — Reference
+        { width: 40 }, // C — Details
+        { width: 18 }, // D — Qty In
+        { width: 18 }, // E — Qty Out
+        { width: 20 }, // F — Balance Qty
       ];
     }
 
-    const lastCol = financePersonnel ? 'K' : 'E';
-    const lastColCode = financePersonnel ? 75 : 69; // K=75, E=69
+    const lastCol = financePersonnel ? 'L' : 'F';
+    const lastColCode = financePersonnel ? 76 : 70; // L=76, F=70
 
     // helper: apply tableHeader style across all columns of a row
     const styleHeaderRow = (rowNum: number) => {
@@ -257,7 +263,8 @@ export async function exporItemMovement(exportedData: any) {
       const h1 = (ws.lastRow?.number ?? 0) + 1;
       ws.addRow([
         'Date',
-        'Details',
+        'REFERENCE',
+        'DETAILS',
         'INWARD',
         ' ',
         ' ',
@@ -271,15 +278,15 @@ export async function exporItemMovement(exportedData: any) {
       ws.getRow(h1).height = 22;
 
       // Merge group label cells
-      ws.mergeCells(`C${h1}:E${h1}`);
-      ws.mergeCells(`F${h1}:H${h1}`);
-      ws.mergeCells(`I${h1}:K${h1}`);
+      ws.mergeCells(`D${h1}:F${h1}`);
+      ws.mergeCells(`G${h1}:I${h1}`);
+      ws.mergeCells(`J${h1}:L${h1}`);
 
       // Style all cells
       styleHeaderRow(h1);
 
       // Center-align group labels
-      ['C', 'F', 'I'].forEach((col) => {
+      ['D', 'G', 'J'].forEach((col) => {
         ws.getCell(`${col}${h1}`).alignment = {
           horizontal: 'center',
           vertical: 'middle',
@@ -289,6 +296,7 @@ export async function exporItemMovement(exportedData: any) {
       // ── Header row 2: Sub-column labels ───────────────────────────────────
       const h2 = (ws.lastRow?.number ?? 0) + 1;
       ws.addRow([
+        ' ',
         ' ',
         ' ',
         'QNTY',
@@ -304,7 +312,7 @@ export async function exporItemMovement(exportedData: any) {
       ws.getRow(h2).height = 20;
       styleHeaderRow(h2);
       // Right-align all sub-labels except A and B
-      for (let c = 67; c <= lastColCode; c++) {
+      for (let c = 68; c <= lastColCode; c++) {
         ws.getCell(`${String.fromCharCode(c)}${h2}`).alignment = {
           horizontal: 'right',
           vertical: 'middle',
@@ -313,11 +321,19 @@ export async function exporItemMovement(exportedData: any) {
     } else {
       // ── Single header row for non-finance ─────────────────────────────────
       const h1 = (ws.lastRow?.number ?? 0) + 1;
-      ws.addRow(['Date', 'Details', 'Qty In', 'Qty Out', 'Balance']);
+      ws.addRow([
+        'Date',
+        'Reference',
+        'Details',
+        'Qty In',
+        'Qty Out',
+        'Balance',
+      ]);
       ws.getRow(h1).height = 22;
       styleHeaderRow(h1);
       // Right-align numeric headers
-      ['C', 'D', 'E'].forEach((col) => {
+      // ['C', 'D', 'E'].forEach((col) => {
+      ['D', 'E', 'F'].forEach((col) => {
         ws.getCell(`${col}${h1}`).alignment = {
           horizontal: 'right',
           vertical: 'middle',
@@ -329,80 +345,85 @@ export async function exporItemMovement(exportedData: any) {
     tableRows.forEach((row: any) => {
       const rowNum = (ws.lastRow?.number ?? 0) + 1;
 
-      // Date & Description — text cells
+      // Date, Reference & Description — text cells
       applyCellStyle(ws.getCell(`A${rowNum}`), CELL_STYLES.dataRowText);
       ws.getCell(`A${rowNum}`).value = readableDate(row.date);
 
       applyCellStyle(ws.getCell(`B${rowNum}`), CELL_STYLES.dataRowText);
-      ws.getCell(`B${rowNum}`).value = row.description;
+      ws.getCell(`B${rowNum}`).value = row.reference;
+
+      applyCellStyle(ws.getCell(`C${rowNum}`), CELL_STYLES.dataRowText);
+      ws.getCell(`C${rowNum}`).value = row.description;
 
       if (financePersonnel) {
         // INWARD
         setNumericCell(
-          ws.getCell(`C${rowNum}`),
+          ws.getCell(`D${rowNum}`),
           fmtQtyVal(row.isOpeningBalance ? null : row.inQty),
           QTY_FMT
         );
         setNumericCell(
-          ws.getCell(`D${rowNum}`),
+          ws.getCell(`E${rowNum}`),
           fmtAmtVal(row.isOpeningBalance ? null : row.inRate),
           AMT_FMT
         );
         setNumericCell(
-          ws.getCell(`E${rowNum}`),
+          ws.getCell(`F${rowNum}`),
           fmtAmtVal(row.isOpeningBalance ? null : row.inAmount),
           AMT_FMT
         );
         // OUTWARD
         setNumericCell(
-          ws.getCell(`F${rowNum}`),
+          ws.getCell(`G${rowNum}`),
           fmtQtyVal(row.isOpeningBalance ? null : row.outQty),
           QTY_FMT
         );
         setNumericCell(
-          ws.getCell(`G${rowNum}`),
-          fmtAmtVal(row.isOpeningBalance ? null : row.outRate),
+          ws.getCell(`H${rowNum}`),
+          fmtAmtVal(
+            row.isOpeningBalance ? null : (row.selling_price ?? row.outRate)
+          ),
           AMT_FMT
         );
         setNumericCell(
-          ws.getCell(`H${rowNum}`),
+          ws.getCell(`I${rowNum}`),
           fmtAmtVal(row.isOpeningBalance ? null : row.outAmount),
           AMT_FMT
         );
         // BALANCE
         setNumericCell(
-          ws.getCell(`I${rowNum}`),
+          ws.getCell(`J${rowNum}`),
           fmtQtyVal(row.balanceQty),
           QTY_FMT
         );
         setNumericCell(
-          ws.getCell(`J${rowNum}`),
+          ws.getCell(`K${rowNum}`),
           fmtAmtVal(row.avgCost),
           AMT_FMT
         );
         setNumericCell(
-          ws.getCell(`K${rowNum}`),
+          ws.getCell(`L${rowNum}`),
           fmtAmtVal(row.balanceAmount),
           AMT_FMT
         );
       } else {
         setNumericCell(
-          ws.getCell(`C${rowNum}`),
+          ws.getCell(`D${rowNum}`),
           fmtQtyVal(row.isOpeningBalance ? null : row.inQty),
           QTY_FMT
         );
         setNumericCell(
-          ws.getCell(`D${rowNum}`),
+          ws.getCell(`E${rowNum}`),
           fmtQtyVal(row.isOpeningBalance ? null : row.outQty),
           QTY_FMT
         );
         setNumericCell(
-          ws.getCell(`E${rowNum}`),
+          ws.getCell(`F${rowNum}`),
           fmtQtyVal(row.balanceQty),
           QTY_FMT
         );
         // Balance is always shown (even opening)
-        ws.getCell(`E${rowNum}`).font = { bold: true, size: 10 };
+        ws.getCell(`F${rowNum}`).font = { bold: true, size: 10 };
       }
     });
 
@@ -413,26 +434,26 @@ export async function exporItemMovement(exportedData: any) {
 
     if (financePersonnel) {
       // A:B merged = TOTAL label
-      ws.mergeCells(`A${totalRowNum}:B${totalRowNum}`);
+      ws.mergeCells(`A${totalRowNum}:C${totalRowNum}`);
       ws.getCell(`A${totalRowNum}`).value = 'TOTAL';
       ws.getCell(`A${totalRowNum}`).alignment = {
         horizontal: 'left',
         vertical: 'middle',
       };
 
-      // C = totalInQty, D = blank, E = totalInAmount
-      // F = totalOutQty, G = blank, H = totalOutAmount
-      // I = blank, J = blank, K = blank
+      // D = totalInQty, E = blank, F = totalInAmount
+      // G = totalOutQty, H = blank, I = totalOutAmount
+      // J = blank, K = blank, L = blank
       const totalCells: { col: string; val: any; fmt: string }[] = [
-        { col: 'C', val: fmtQtyVal(totalInQty), fmt: QTY_FMT },
-        { col: 'D', val: null, fmt: AMT_FMT },
-        { col: 'E', val: fmtAmtVal(totalInAmount), fmt: AMT_FMT },
-        { col: 'F', val: fmtQtyVal(totalOutQty), fmt: QTY_FMT },
-        { col: 'G', val: null, fmt: AMT_FMT },
-        { col: 'H', val: fmtAmtVal(totalOutAmount), fmt: AMT_FMT },
-        { col: 'I', val: null, fmt: QTY_FMT },
-        { col: 'J', val: null, fmt: AMT_FMT },
+        { col: 'D', val: fmtQtyVal(totalInQty), fmt: QTY_FMT },
+        { col: 'E', val: null, fmt: AMT_FMT },
+        { col: 'F', val: fmtAmtVal(totalInAmount), fmt: AMT_FMT },
+        { col: 'G', val: fmtQtyVal(totalOutQty), fmt: QTY_FMT },
+        { col: 'H', val: null, fmt: AMT_FMT },
+        { col: 'I', val: fmtAmtVal(totalOutAmount), fmt: AMT_FMT },
+        { col: 'J', val: null, fmt: QTY_FMT },
         { col: 'K', val: null, fmt: AMT_FMT },
+        { col: 'L', val: null, fmt: AMT_FMT },
       ];
       totalCells.forEach(({ col, val, fmt }) => {
         const cell = ws.getCell(`${col}${totalRowNum}`);
@@ -445,34 +466,34 @@ export async function exporItemMovement(exportedData: any) {
       });
     } else {
       // A:B merged = TOTAL label
-      ws.mergeCells(`A${totalRowNum}:B${totalRowNum}`);
+      ws.mergeCells(`A${totalRowNum}:C${totalRowNum}`);
       ws.getCell(`A${totalRowNum}`).value = 'TOTAL';
       ws.getCell(`A${totalRowNum}`).alignment = {
         horizontal: 'left',
         vertical: 'middle',
       };
 
-      // C = totalInQty, D = totalOutQty, E = blank
-      const cell_C = ws.getCell(`C${totalRowNum}`);
-      cell_C.value = fmtQtyVal(totalInQty);
-
+      // D = totalInQty, E = totalOutQty, F = blank
       const cell_D = ws.getCell(`D${totalRowNum}`);
-      cell_D.value = fmtQtyVal(totalOutQty);
+      cell_D.value = fmtQtyVal(totalInQty);
+
+      const cell_E = ws.getCell(`E${totalRowNum}`);
+      cell_E.value = fmtQtyVal(totalOutQty);
 
       ws.getCell(`E${totalRowNum}`).value = null;
 
-      [cell_C, cell_D, ws.getCell(`E${totalRowNum}`)].forEach((cell) =>
+      [cell_D, cell_E, ws.getCell(`E${totalRowNum}`)].forEach((cell) =>
         applyCellStyle(cell, CELL_STYLES.tableHeader)
       );
 
       // Set alignment after applyCellStyle so it isn't overwritten
       if (totalInQty) {
-        cell_C.numFmt = QTY_FMT;
-        cell_C.alignment = { horizontal: 'right', vertical: 'middle' };
-      }
-      if (totalOutQty) {
         cell_D.numFmt = QTY_FMT;
         cell_D.alignment = { horizontal: 'right', vertical: 'middle' };
+      }
+      if (totalOutQty) {
+        cell_E.numFmt = QTY_FMT;
+        cell_E.alignment = { horizontal: 'right', vertical: 'middle' };
       }
     }
 

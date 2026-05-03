@@ -1,27 +1,30 @@
 'use client';
-import React from 'react';
+import { readableDate } from '@/app/helpers/input-sanitization-helpers';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
 import {
-  Typography,
+  Box,
+  Paper,
   Table,
   TableBody,
   TableCell,
+  TableContainer,
   TableHead,
   TableRow,
-  Paper,
+  Typography,
   useTheme,
-  Box,
-  TableContainer,
 } from '@mui/material';
-import { readableDate } from '@/app/helpers/input-sanitization-helpers';
-import { PERMISSIONS } from '@/utilities/constants/permissions';
 
 function ItemMovementOnScreen({ movementsData, authObject, baseCurrency }) {
   const theme = useTheme();
   const { authOrganization, checkOrganizationPermission } = authObject;
-  const financePersonnel = checkOrganizationPermission([PERMISSIONS.ACCOUNTS_REPORTS]);
+  const financePersonnel = checkOrganizationPermission([
+    PERMISSIONS.ACCOUNTS_REPORTS,
+  ]);
 
-  const mainColor = authOrganization.organization.settings?.main_color || '#2113AD';
-  const contrastText = authOrganization.organization.settings?.contrast_text || '#FFFFFF';
+  const mainColor =
+    authOrganization.organization.settings?.main_color || '#2113AD';
+  const contrastText =
+    authOrganization.organization.settings?.contrast_text || '#FFFFFF';
   const headerColor =
     theme.type === 'dark'
       ? '#29f096'
@@ -49,6 +52,7 @@ function ItemMovementOnScreen({ movementsData, authObject, baseCurrency }) {
             inAmount: null,
             outQty: null,
             outRate: null,
+            selling_price: openingBalanceTx.selling_price,
             outAmount: null,
             balanceQty: openingQty,
             avgCost: openingAvgCost || null,
@@ -71,6 +75,7 @@ function ItemMovementOnScreen({ movementsData, authObject, baseCurrency }) {
         inAmount: tx.quantity_in ? inAmt : null,
         outQty: tx.quantity_out || null,
         outRate: tx.quantity_out ? tx.average_cost : null,
+        selling_price: tx.selling_price,
         outAmount: tx.quantity_out ? outAmt : null,
         balanceQty: cumulativeQty,
         avgCost: tx.average_cost || null,
@@ -85,7 +90,10 @@ function ItemMovementOnScreen({ movementsData, authObject, baseCurrency }) {
     (s, tx) => s + tx.quantity_in * (tx.average_cost || 0),
     0
   );
-  const totalOutQty = restTransactions.reduce((s, tx) => s + tx.quantity_out, 0);
+  const totalOutQty = restTransactions.reduce(
+    (s, tx) => s + tx.quantity_out,
+    0
+  );
   const totalOutAmount = restTransactions.reduce(
     (s, tx) => s + tx.quantity_out * (tx.average_cost || 0),
     0
@@ -98,11 +106,17 @@ function ItemMovementOnScreen({ movementsData, authObject, baseCurrency }) {
   const fmtAmtRow = (v) =>
     v == null || v === 0
       ? '-'
-      : v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      : v.toLocaleString('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
   const fmtAmtTotal = (v) =>
     v == null || v === 0
       ? '-'
-      : v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      : v.toLocaleString('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
 
   const headerSx = {
     backgroundColor: mainColor,
@@ -119,20 +133,27 @@ function ItemMovementOnScreen({ movementsData, authObject, baseCurrency }) {
     py: 1,
     borderTop: `1px solid ${contrastText}33`,
   };
-  const totalSx = { color: contrastText, fontWeight: 700, borderBottom: 'none' };
+  const totalSx = {
+    color: contrastText,
+    fontWeight: 700,
+    borderBottom: 'none',
+  };
   const dividerBorder = `2px solid ${contrastText}55`;
 
   return (
     <Box>
       <Typography
-        variant="h5"
+        variant='h5'
         fontWeight={700}
         sx={{ color: headerColor, textAlign: 'center', mb: 0.5 }}
       >
         {movementsData?.filters?.product?.name?.toUpperCase()} MOVEMENT
       </Typography>
       {financePersonnel && baseCurrency?.code && (
-        <Typography variant="body2" sx={{ textAlign: 'center', mb: 2, color: 'text.secondary' }}>
+        <Typography
+          variant='body2'
+          sx={{ textAlign: 'center', mb: 2, color: 'text.secondary' }}
+        >
           Currency: {baseCurrency.code}
         </Typography>
       )}
@@ -142,39 +163,99 @@ function ItemMovementOnScreen({ movementsData, authObject, baseCurrency }) {
         sx={{
           boxShadow: theme.shadows[2],
           overflowX: 'auto',
-          '& .MuiTableRow-root:hover': { backgroundColor: theme.palette.action.hover },
+          '& .MuiTableRow-root:hover': {
+            backgroundColor: theme.palette.action.hover,
+          },
         }}
       >
-        <Table size="small" sx={{ minWidth: financePersonnel ? 1100 : 700 }}>
+        <Table size='small' sx={{ minWidth: financePersonnel ? 1100 : 700 }}>
           <TableHead>
             <TableRow>
-              <TableCell rowSpan={financePersonnel ? 2 : 1} sx={headerSx}>DATE</TableCell>
-              <TableCell rowSpan={financePersonnel ? 2 : 1} sx={headerSx}>DETAILS</TableCell>
+              <TableCell rowSpan={financePersonnel ? 2 : 1} sx={headerSx}>
+                DATE
+              </TableCell>
+              <TableCell rowSpan={financePersonnel ? 2 : 1} sx={headerSx}>
+                REFERENCE
+              </TableCell>
+              <TableCell rowSpan={financePersonnel ? 2 : 1} sx={headerSx}>
+                DETAILS
+              </TableCell>
               {financePersonnel ? (
                 <>
-                  <TableCell colSpan={3} align="center" sx={{ ...headerSx, borderLeft: dividerBorder }}>INWARD</TableCell>
-                  <TableCell colSpan={3} align="center" sx={{ ...headerSx, borderLeft: dividerBorder }}>OUTWARD</TableCell>
-                  <TableCell colSpan={3} align="center" sx={{ ...headerSx, borderLeft: dividerBorder }}>BALANCE</TableCell>
+                  <TableCell
+                    colSpan={3}
+                    align='center'
+                    sx={{ ...headerSx, borderLeft: dividerBorder }}
+                  >
+                    INWARD
+                  </TableCell>
+                  <TableCell
+                    colSpan={3}
+                    align='center'
+                    sx={{ ...headerSx, borderLeft: dividerBorder }}
+                  >
+                    OUTWARD
+                  </TableCell>
+                  <TableCell
+                    colSpan={3}
+                    align='center'
+                    sx={{ ...headerSx, borderLeft: dividerBorder }}
+                  >
+                    BALANCE
+                  </TableCell>
                 </>
               ) : (
                 <>
-                  <TableCell align="right" sx={headerSx}>QNTY In</TableCell>
-                  <TableCell align="right" sx={headerSx}>QNTY Out</TableCell>
-                  <TableCell align="right" sx={headerSx}>Balance</TableCell>
+                  <TableCell align='right' sx={headerSx}>
+                    QNTY In
+                  </TableCell>
+                  <TableCell align='right' sx={headerSx}>
+                    QNTY Out
+                  </TableCell>
+                  <TableCell align='right' sx={headerSx}>
+                    Balance
+                  </TableCell>
                 </>
               )}
             </TableRow>
             {financePersonnel && (
               <TableRow>
-                <TableCell align="right" sx={{ ...subHeaderSx, borderLeft: dividerBorder }}>QNTY</TableCell>
-                <TableCell align="right" sx={subHeaderSx}>RATE</TableCell>
-                <TableCell align="right" sx={subHeaderSx}>AMOUNT</TableCell>
-                <TableCell align="right" sx={{ ...subHeaderSx, borderLeft: dividerBorder }}>QNTY</TableCell>
-                <TableCell align="right" sx={subHeaderSx}>RATE</TableCell>
-                <TableCell align="right" sx={subHeaderSx}>AMOUNT</TableCell>
-                <TableCell align="right" sx={{ ...subHeaderSx, borderLeft: dividerBorder }}>QNTY</TableCell>
-                <TableCell align="right" sx={subHeaderSx}>Avg Cost</TableCell>
-                <TableCell align="right" sx={subHeaderSx}>AMOUNT</TableCell>
+                <TableCell
+                  align='right'
+                  sx={{ ...subHeaderSx, borderLeft: dividerBorder }}
+                >
+                  QNTY
+                </TableCell>
+                <TableCell align='right' sx={subHeaderSx}>
+                  RATE
+                </TableCell>
+                <TableCell align='right' sx={subHeaderSx}>
+                  AMOUNT
+                </TableCell>
+                <TableCell
+                  align='right'
+                  sx={{ ...subHeaderSx, borderLeft: dividerBorder }}
+                >
+                  QNTY
+                </TableCell>
+                <TableCell align='right' sx={subHeaderSx}>
+                  RATE
+                </TableCell>
+                <TableCell align='right' sx={subHeaderSx}>
+                  AMOUNT
+                </TableCell>
+                <TableCell
+                  align='right'
+                  sx={{ ...subHeaderSx, borderLeft: dividerBorder }}
+                >
+                  QNTY
+                </TableCell>
+                <TableCell align='right' sx={subHeaderSx}>
+                  Avg Cost
+                </TableCell>
+                <TableCell align='right' sx={subHeaderSx}>
+                  AMOUNT
+                </TableCell>
               </TableRow>
             )}
           </TableHead>
@@ -190,13 +271,27 @@ function ItemMovementOnScreen({ movementsData, authObject, baseCurrency }) {
                       : theme.palette.action.hover,
                 }}
               >
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>{readableDate(row.date)}</TableCell>
+                <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                  {readableDate(row.date)}
+                </TableCell>
+                <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                  {' '}
+                  <Typography
+                    variant='body2'
+                    fontWeight={row.isOpeningBalance ? 700 : 400}
+                  >
+                    {row.reference}
+                  </Typography>
+                </TableCell>
                 <TableCell>
-                  <Typography variant="body2" fontWeight={row.isOpeningBalance ? 700 : 400}>
+                  <Typography
+                    variant='body2'
+                    fontWeight={row.isOpeningBalance ? 700 : 400}
+                  >
                     {row.description}
                   </Typography>
                   {row.reference && (
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant='caption' color='text.secondary'>
                       {row.reference}
                     </Typography>
                   )}
@@ -204,37 +299,56 @@ function ItemMovementOnScreen({ movementsData, authObject, baseCurrency }) {
 
                 {financePersonnel ? (
                   <>
-                    <TableCell align="right" sx={{ borderLeft: `2px solid ${theme.palette.divider}` }}>
+                    <TableCell
+                      align='right'
+                      sx={{ borderLeft: `2px solid ${theme.palette.divider}` }}
+                    >
                       {row.isOpeningBalance ? '-' : fmtQty(row.inQty)}
                     </TableCell>
-                    <TableCell align="right">
+                    <TableCell align='right'>
                       {row.isOpeningBalance ? '-' : fmtAmtRow(row.inRate)}
                     </TableCell>
-                    <TableCell align="right">
+                    <TableCell align='right'>
                       {row.isOpeningBalance ? '-' : fmtAmtRow(row.inAmount)}
                     </TableCell>
-                    <TableCell align="right" sx={{ borderLeft: `2px solid ${theme.palette.divider}` }}>
+                    <TableCell
+                      align='right'
+                      sx={{ borderLeft: `2px solid ${theme.palette.divider}` }}
+                    >
                       {row.isOpeningBalance ? '-' : fmtQty(row.outQty)}
                     </TableCell>
-                    <TableCell align="right">
-                      {row.isOpeningBalance ? '-' : fmtAmtRow(row.outRate)}
+                    <TableCell align='right'>
+                      {row.isOpeningBalance
+                        ? '-'
+                        : (row.selling_price ?? fmtAmtRow(row.outRate))}
                     </TableCell>
-                    <TableCell align="right">
+                    <TableCell align='right'>
                       {row.isOpeningBalance ? '-' : fmtAmtRow(row.outAmount)}
                     </TableCell>
-                    <TableCell align="right" sx={{ borderLeft: `2px solid ${theme.palette.divider}` }}>
+                    <TableCell
+                      align='right'
+                      sx={{ borderLeft: `2px solid ${theme.palette.divider}` }}
+                    >
                       {fmtQty(row.balanceQty)}
                     </TableCell>
-                    <TableCell align="right">{fmtAmtRow(row.avgCost)}</TableCell>
-                    <TableCell align="right">
+                    <TableCell align='right'>
+                      {fmtAmtRow(row.avgCost)}
+                    </TableCell>
+                    <TableCell align='right'>
                       {fmtAmtRow(row.balanceAmount)}
                     </TableCell>
                   </>
                 ) : (
                   <>
-                    <TableCell align="right">{row.isOpeningBalance ? '-' : fmtQty(row.inQty)}</TableCell>
-                    <TableCell align="right">{row.isOpeningBalance ? '-' : fmtQty(row.outQty)}</TableCell>
-                    <TableCell align="right">{fmtQty(row.balanceQty)}</TableCell>
+                    <TableCell align='right'>
+                      {row.isOpeningBalance ? '-' : fmtQty(row.inQty)}
+                    </TableCell>
+                    <TableCell align='right'>
+                      {row.isOpeningBalance ? '-' : fmtQty(row.outQty)}
+                    </TableCell>
+                    <TableCell align='right'>
+                      {fmtQty(row.balanceQty)}
+                    </TableCell>
                   </>
                 )}
               </TableRow>
@@ -246,7 +360,7 @@ function ItemMovementOnScreen({ movementsData, authObject, baseCurrency }) {
                   colSpan={financePersonnel ? 11 : 5}
                   sx={{ textAlign: 'center', py: 4, borderBottom: 'none' }}
                 >
-                  <Typography variant="body1" color="text.secondary">
+                  <Typography variant='body1' color='text.secondary'>
                     No movement data available
                   </Typography>
                 </TableCell>
@@ -255,21 +369,29 @@ function ItemMovementOnScreen({ movementsData, authObject, baseCurrency }) {
 
             {movements.length > 0 && (
               <TableRow sx={{ backgroundColor: mainColor }}>
-                <TableCell colSpan={2} sx={totalSx}>TOTAL</TableCell>
+                <TableCell colSpan={3} sx={totalSx}>
+                  TOTAL
+                </TableCell>
                 {financePersonnel ? (
                   <>
-                    <TableCell align="right" sx={{ ...totalSx, borderLeft: dividerBorder }}>
+                    <TableCell
+                      align='right'
+                      sx={{ ...totalSx, borderLeft: dividerBorder }}
+                    >
                       {fmtQty(totalInQty)}
                     </TableCell>
                     <TableCell sx={totalSx} />
-                    <TableCell align="right" sx={totalSx}>
+                    <TableCell align='right' sx={totalSx}>
                       {fmtAmtTotal(totalInAmount)}
                     </TableCell>
-                    <TableCell align="right" sx={{ ...totalSx, borderLeft: dividerBorder }}>
+                    <TableCell
+                      align='right'
+                      sx={{ ...totalSx, borderLeft: dividerBorder }}
+                    >
                       {fmtQty(totalOutQty)}
                     </TableCell>
                     <TableCell sx={totalSx} />
-                    <TableCell align="right" sx={totalSx}>
+                    <TableCell align='right' sx={totalSx}>
                       {fmtAmtTotal(totalOutAmount)}
                     </TableCell>
                     <TableCell sx={{ ...totalSx, borderLeft: dividerBorder }} />
@@ -278,8 +400,12 @@ function ItemMovementOnScreen({ movementsData, authObject, baseCurrency }) {
                   </>
                 ) : (
                   <>
-                    <TableCell align="right" sx={totalSx}>{fmtQty(totalInQty)}</TableCell>
-                    <TableCell align="right" sx={totalSx}>{fmtQty(totalOutQty)}</TableCell>
+                    <TableCell align='right' sx={totalSx}>
+                      {fmtQty(totalInQty)}
+                    </TableCell>
+                    <TableCell align='right' sx={totalSx}>
+                      {fmtQty(totalOutQty)}
+                    </TableCell>
                     <TableCell sx={totalSx} />
                   </>
                 )}

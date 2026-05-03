@@ -78,12 +78,14 @@ const ReportDocument = ({
       ? [
           {
             date: openingBalanceTx.movement_date,
+            reference: openingBalanceTx.reference,
             description: openingBalanceTx.description,
             inQty: null,
             inRate: null,
             inAmount: null,
             outQty: null,
             outRate: null,
+            selling_price: openingBalanceTx.reference,
             outAmount: null,
             balanceQty: openingQty,
             avgCost: openingAvgCost || null,
@@ -99,12 +101,14 @@ const ReportDocument = ({
       cumulativeAmount += inAmt - outAmt;
       return {
         date: tx.movement_date,
+        reference: tx.reference,
         description: tx.description,
         inQty: tx.quantity_in || null,
         inRate: tx.quantity_in ? tx.average_cost : null,
         inAmount: tx.quantity_in ? inAmt : null,
         outQty: tx.quantity_out || null,
         outRate: tx.quantity_out ? tx.average_cost : null,
+        selling_price: tx.selling_price,
         outAmount: tx.quantity_out ? outAmt : null,
         balanceQty: cumulativeQty,
         avgCost: tx.average_cost || null,
@@ -223,6 +227,16 @@ const ReportDocument = ({
                 ...pdfStyles.tableHeader,
                 backgroundColor: mainColor,
                 color: contrastText,
+                flex: 1.37,
+              }}
+            >
+              Reference
+            </Text>
+            <Text
+              style={{
+                ...pdfStyles.tableHeader,
+                backgroundColor: mainColor,
+                color: contrastText,
                 flex: 2.35,
               }}
             >
@@ -305,6 +319,14 @@ const ReportDocument = ({
           {/* Header row 2 – sub-labels (finance only) */}
           {financePersonnel && (
             <View style={pdfStyles.tableRow}>
+              <Text
+                style={{
+                  ...pdfStyles.tableCell,
+                  backgroundColor: lightColor,
+                  flex: 1.5,
+                  fontWeight: 'bold',
+                }}
+              ></Text>
               <Text
                 style={{
                   ...pdfStyles.tableCell,
@@ -438,6 +460,15 @@ const ReportDocument = ({
                 style={{
                   ...pdfStyles.tableCell,
                   backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
+                  flex: 1.5,
+                }}
+              >
+                {row.reference}
+              </Text>
+              <Text
+                style={{
+                  ...pdfStyles.tableCell,
+                  backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
                   flex: 2.5,
                 }}
               >
@@ -493,7 +524,9 @@ const ReportDocument = ({
                       textAlign: 'right',
                     }}
                   >
-                    {row.isOpeningBalance ? '-' : fmtAmtRow(row.outRate)}
+                    {row.isOpeningBalance
+                      ? '-'
+                      : (row.selling_price ?? fmtAmtRow(row.outRate))}
                   </Text>
                   <Text
                     style={{
@@ -581,7 +614,7 @@ const ReportDocument = ({
                 backgroundColor: mainColor,
                 color: contrastText,
                 fontWeight: 'bold',
-                flex: 4.15,
+                flex: 5.69,
               }}
             >
               TOTAL
