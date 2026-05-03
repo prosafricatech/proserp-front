@@ -12,7 +12,8 @@ import {
     DialogActions, 
     Button, 
     DialogContent, 
-    Grid 
+    Grid,
+    useTheme,
 } from '@mui/material';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
@@ -74,11 +75,14 @@ interface RelatableOrderDetailsProps {
 }
 
 function RelatableOrderDetails({ order, toggleOpen }: RelatableOrderDetailsProps) {
+    const theme = useTheme();
+    const isDark = theme.type === 'dark';
     const currencyCode = order.currency.code;
     const { checkOrganizationPermission, authOrganization } = useJumboAuth();
     const organization = authOrganization?.organization;
     const mainColor = organization?.settings?.main_color || "#2113AD";
     const lightColor = organization?.settings?.light_color || "#bec5da";
+    const headerColor = isDark ? '#29f096' : mainColor;
     const contrastText = organization?.settings?.contrast_text || "#FFFFFF";
     const withPrices = checkOrganizationPermission([PERMISSIONS.PURCHASES_CREATE, PERMISSIONS.ACCOUNTS_REPORTS]);
     
@@ -91,44 +95,44 @@ function RelatableOrderDetails({ order, toggleOpen }: RelatableOrderDetailsProps
             <DialogContent>
                 <Grid container spacing={2}>
                     <Grid size={{ xs: 12 }} sx={{ textAlign: 'center' }}>
-                        <Typography variant="h4" color={mainColor}>PURCHASE ORDER</Typography>
+                        <Typography variant="h4" color={headerColor}>PURCHASE ORDER</Typography>
                         <Typography variant="subtitle1" fontWeight="bold">{order.orderNo}</Typography>
                     </Grid>
                 </Grid>
 
                 <Grid container spacing={2} sx={{ mt: 5, mb: 10 }}>
                     <Grid size={{ xs: 8, md: 6, lg: 4 }}>
-                        <Typography variant="body2" color={mainColor}>Order Date</Typography>
+                        <Typography variant="body2" color={headerColor}>Order Date</Typography>
                         <Typography variant="body2">{readableDate(order.order_date)}</Typography>
                     </Grid>
                     {order.date_required && (
                         <Grid size={{ xs: 4, md: 6, lg: 4 }}>
-                            <Typography variant="body2" color={mainColor}>Date Required</Typography>
+                            <Typography variant="body2" color={headerColor}>Date Required</Typography>
                             <Typography variant="body2">{readableDate(order.date_required)}</Typography>
                         </Grid>
                     )}
                     {order.cost_centers && (
                         <Grid size={{ xs: 8, md: 6, lg: 4 }}>
-                            <Typography variant="body2" color={mainColor}>Purchase For</Typography>
+                            <Typography variant="body2" color={headerColor}>Purchase For</Typography>
                             <Typography variant="body2">
                                 {order.cost_centers.map(cc => cc.name).join(', ')}
                             </Typography>
                         </Grid>
                     )}
                     <Grid size={{ xs: 8, md: 6, lg: 4 }}>
-                        <Typography variant="body2" color={mainColor}>Created By:</Typography>
-                        <Typography variant="body2">{order.creator.name}</Typography>
+                        <Typography variant="body2" color={headerColor}>Created By:</Typography>
+                        <Typography variant="body2">{order.creator?.name}</Typography>
                     </Grid>
                     {(order.reference || order.requisitionNo) && (
                         <Grid size={{ xs: 4, md: 6, lg: 4 }}>
-                            <Typography variant="body2" color={mainColor}>Reference</Typography>
+                            <Typography variant="body2" color={headerColor}>Reference</Typography>
                             {order.reference && <Typography variant="body2">{order.reference}</Typography>}
                             {order.requisitionNo && <Typography variant="body2">{order.requisitionNo}</Typography>}
                         </Grid>
                     )}
                     {order.currency_id > 1 && (
                         <Grid size={{ xs: 8, md: 6, lg: 4 }}>
-                            <Typography variant="body2" color={mainColor}>Exchange Rate</Typography>
+                            <Typography variant="body2" color={headerColor}>Exchange Rate</Typography>
                             <Typography variant="body2">{order.exchange_rate}</Typography>
                         </Grid>
                     )}
@@ -136,7 +140,7 @@ function RelatableOrderDetails({ order, toggleOpen }: RelatableOrderDetailsProps
 
                 <Grid container spacing={1} sx={{ mt: 2, mb: 3 }}>
                     <Grid size={{ xs: 12 }} sx={{ textAlign: 'center' }}>
-                        <Typography variant="body2" color={mainColor} sx={{ p: '5px' }}>SUPPLIER</Typography>
+                        <Typography variant="body2" color={headerColor} sx={{ p: '5px' }}>SUPPLIER</Typography>
                         <Divider/>
                         <Typography variant="body1">{order.stakeholder.name}</Typography>
                         {order.stakeholder.address && <Typography variant="body2">{order.stakeholder.address}</Typography>}
@@ -176,7 +180,7 @@ function RelatableOrderDetails({ order, toggleOpen }: RelatableOrderDetailsProps
                 <>
                     <Grid container spacing={1} sx={{ pt: 2 }}>
                         <Grid size={12} sx={{ textAlign: 'center' }}>
-                            <Typography variant="h6" color={mainColor}>ITEMS</Typography>
+                            <Typography variant="h6" color={headerColor}>ITEMS</Typography>
                         </Grid>
                     </Grid>
                     <TableContainer component={Paper}>
@@ -204,7 +208,7 @@ function RelatableOrderDetails({ order, toggleOpen }: RelatableOrderDetailsProps
                             </TableHead>
                             <TableBody>
                                 {order.purchase_order_items.map((orderItem, index) => (
-                                    <TableRow key={orderItem.id} sx={{ backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor }}>
+                                    <TableRow key={orderItem.id} sx={{ backgroundColor: index % 2 === 1 ? (isDark ? '#333' : lightColor) : 'inherit' }}>
                                         <TableCell>{index + 1}</TableCell>
                                         <TableCell>{orderItem.product.name || orderItem.product.item_name}</TableCell>
                                         <TableCell>{orderItem.measurement_unit.symbol}</TableCell>
