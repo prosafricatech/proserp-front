@@ -52,7 +52,7 @@ function ItemMovementOnScreen({ movementsData, authObject, baseCurrency }) {
             inAmount: null,
             outQty: null,
             outRate: null,
-            selling_price: openingBalanceTx.selling_price,
+            selling_price: openingBalanceTx.reference || null,
             outAmount: null,
             balanceQty: openingQty,
             avgCost: openingAvgCost || null,
@@ -63,7 +63,9 @@ function ItemMovementOnScreen({ movementsData, authObject, baseCurrency }) {
       : []),
     ...restTransactions.map((tx) => {
       const inAmt = tx.quantity_in * (tx.average_cost || 0);
-      const outAmt = tx.quantity_out * (tx.average_cost || 0);
+      // const outAmt = tx.quantity_out * (tx.average_cost || 0);
+      const outAmt =
+        (tx.selling_price ?? tx.quantity_out) * (tx.average_cost || 0);
       cumulativeQty += tx.quantity_in - tx.quantity_out;
       cumulativeAmount += inAmt - outAmt;
       return {
@@ -75,8 +77,8 @@ function ItemMovementOnScreen({ movementsData, authObject, baseCurrency }) {
         inAmount: tx.quantity_in ? inAmt : null,
         outQty: tx.quantity_out || null,
         outRate: tx.quantity_out ? tx.average_cost : null,
-        selling_price: tx.selling_price,
-        outAmount: tx.quantity_out ? outAmt : null,
+        selling_price: tx.selling_price || null,
+        outAmount: tx.selling_price || tx.quantity_out ? outAmt : null,
         balanceQty: cumulativeQty,
         avgCost: tx.average_cost || null,
         balanceAmount: cumulativeAmount,
@@ -320,7 +322,8 @@ function ItemMovementOnScreen({ movementsData, authObject, baseCurrency }) {
                     <TableCell align='right'>
                       {row.isOpeningBalance
                         ? '-'
-                        : (row.selling_price ?? fmtAmtRow(row.outRate))}
+                        : (fmtAmtRow(row.selling_price) ??
+                          fmtAmtRow(row.outRate))}
                     </TableCell>
                     <TableCell align='right'>
                       {row.isOpeningBalance ? '-' : fmtAmtRow(row.outAmount)}

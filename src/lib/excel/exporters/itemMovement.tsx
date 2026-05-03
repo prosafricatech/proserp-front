@@ -38,7 +38,7 @@ export async function exporItemMovement(exportedData: any) {
               inAmount: null,
               outQty: null,
               outRate: null,
-              selling_price: openingBalanceTx.selling_price,
+              selling_price: openingBalanceTx.reference || null,
               outAmount: null,
               balanceQty: openingQty,
               avgCost: openingAvgCost || null,
@@ -49,7 +49,9 @@ export async function exporItemMovement(exportedData: any) {
         : []),
       ...restTransactions.map((tx: any) => {
         const inAmt = tx.quantity_in * (tx.average_cost || 0);
-        const outAmt = tx.quantity_out * (tx.average_cost || 0);
+        // const outAmt = tx.quantity_out * (tx.average_cost || 0);
+        const outAmt =
+          (tx.selling_price ?? tx.quantity_out) * (tx.average_cost || 0);
         cumulativeQty += tx.quantity_in - tx.quantity_out;
         cumulativeAmount += inAmt - outAmt;
         return {
@@ -61,8 +63,8 @@ export async function exporItemMovement(exportedData: any) {
           inAmount: tx.quantity_in ? inAmt : null,
           outQty: tx.quantity_out || null,
           outRate: tx.quantity_out ? tx.average_cost : null,
-          selling_price: tx.selling_price,
-          outAmount: tx.quantity_out ? outAmt : null,
+          selling_price: tx.selling_price || null,
+          outAmount: tx.selling_price || tx.quantity_out ? outAmt : null,
           balanceQty: cumulativeQty,
           avgCost: tx.average_cost || null,
           balanceAmount: cumulativeAmount,
