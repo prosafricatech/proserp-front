@@ -213,14 +213,16 @@ const ReportDocument = ({
         </View>
         <View style={pdfStyles.table}>
           {/* Header row 1 – group labels */}
-          <View style={pdfStyles.tableRow}>
+          <View style={{ ...pdfStyles.tableRow, gap: 1.5 }}>
             <Text
               style={{
                 ...pdfStyles.tableHeader,
+                marginRight: 0,
+                right: 0,
                 backgroundColor: mainColor,
                 color: contrastText,
                 // flex: 1.37,
-                width: '10%',
+                width: '9.9%',
               }}
             >
               Date
@@ -228,10 +230,12 @@ const ReportDocument = ({
             <Text
               style={{
                 ...pdfStyles.tableHeader,
+                marginRight: 0,
+                right: 0,
                 backgroundColor: mainColor,
                 color: contrastText,
                 // flex: 1.37,
-                width: '10%',
+                width: '9.8%',
               }}
             >
               Reference
@@ -239,10 +243,12 @@ const ReportDocument = ({
             <Text
               style={{
                 ...pdfStyles.tableHeader,
+                marginRight: 0,
+                right: 0,
                 backgroundColor: mainColor,
                 color: contrastText,
                 // flex: 2.35,
-                width: '15%',
+                width: '14.7%',
               }}
             >
               Details
@@ -252,10 +258,12 @@ const ReportDocument = ({
                 <Text
                   style={{
                     ...pdfStyles.tableHeader,
+                    marginRight: 0,
+                    right: 0,
                     backgroundColor: mainColor,
                     color: contrastText,
                     // flex: 3,
-                    width: '20%',
+                    width: '20.1%',
                     textAlign: 'center',
                   }}
                 >
@@ -264,6 +272,8 @@ const ReportDocument = ({
                 <Text
                   style={{
                     ...pdfStyles.tableHeader,
+                    marginRight: 0,
+                    right: 0,
                     backgroundColor: mainColor,
                     color: contrastText,
                     // flex: 3,
@@ -276,6 +286,8 @@ const ReportDocument = ({
                 <Text
                   style={{
                     ...pdfStyles.tableHeader,
+                    marginRight: 0,
+                    right: 0,
                     backgroundColor: mainColor,
                     color: contrastText,
                     // flex: 3,
@@ -291,6 +303,8 @@ const ReportDocument = ({
                 <Text
                   style={{
                     ...pdfStyles.tableHeader,
+                    marginRight: 0,
+                    right: 0,
                     backgroundColor: mainColor,
                     color: contrastText,
                     // flex: 1,
@@ -303,6 +317,8 @@ const ReportDocument = ({
                 <Text
                   style={{
                     ...pdfStyles.tableHeader,
+                    marginRight: 0,
+                    right: 0,
                     backgroundColor: mainColor,
                     color: contrastText,
                     // flex: 1,
@@ -315,6 +331,8 @@ const ReportDocument = ({
                 <Text
                   style={{
                     ...pdfStyles.tableHeader,
+                    marginRight: 0,
+                    right: 0,
                     backgroundColor: mainColor,
                     color: contrastText,
                     // flex: 1.5,
@@ -329,7 +347,7 @@ const ReportDocument = ({
           </View>
           {/* Header row 2 – sub-labels (finance only) */}
           {financePersonnel && (
-            <View style={pdfStyles.tableRow}>
+            <View style={{ ...pdfStyles.tableRow, gap: 1.5 }}>
               <Text
                 style={{
                   ...pdfStyles.tableCell,
@@ -481,7 +499,7 @@ const ReportDocument = ({
           )}
           {/* Data rows */}
           {tableRows.map((row, index) => (
-            <View key={index} style={pdfStyles.tableRow}>
+            <View key={index} style={{ ...pdfStyles.tableRow, gap: 1.5 }}>
               <Text
                 style={{
                   ...pdfStyles.tableCell,
@@ -676,7 +694,7 @@ const ReportDocument = ({
             </View>
           ))}
           {/* TOTAL row */}
-          <View style={pdfStyles.tableRow}>
+          <View style={{ ...pdfStyles.tableRow, gap: 1.5 }}>
             <Text
               style={{
                 ...pdfStyles.tableCell,
@@ -932,11 +950,13 @@ function ItemMovement({ productStock = null, toggleOpen, isFromDashboard }) {
   const handlExcelExport = async (exportedData) => {
     setIsExporting(true);
     try {
+      const { from, to, product } = exportedData.movementsData.filters;
+      const reportPeriod = `${readableDate(from, true)} - ${readableDate(to, true)}`;
       const blob = await productServices.exporItemMovement(exportedData);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${'Item Movement'}.xlsx`;
+      a.download = `${product.name}-Movement-${reportPeriod}.xlsx`;
       a.click();
       window.URL.revokeObjectURL(url);
     } catch (e) {
