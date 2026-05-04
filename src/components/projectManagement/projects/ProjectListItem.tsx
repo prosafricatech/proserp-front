@@ -22,13 +22,18 @@ const ProjectListItem: React.FC<ProjectItemProps> = ({ project }) => {
   const lang = useLanguage();
   const { authUser } = useJumboAuth();
   const userId = authUser?.user?.id;
+  const isAdministrator = authUser?.user?.organization_roles?.some(
+    (role: { name?: string }) => role.name === 'Administrator'
+  );
 
   const { data: projectUsersData } = useQuery({
     queryKey: ['projectUsersList', project.id],
     queryFn: () => projectsServices.projectUsersList({ project_id: project.id }),
+    enabled: !isAdministrator,
   });
 
   const isUserInvolved =
+    isAdministrator ||
     !projectUsersData ||
     projectUsersData?.data?.some((u: { id: string }) => u.id === userId);
 
