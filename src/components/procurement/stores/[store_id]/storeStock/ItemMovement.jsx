@@ -97,7 +97,8 @@ const ReportDocument = ({
     ...restTransactions.map((tx) => {
       const inAmt = tx.quantity_in * (tx.average_cost || 0);
       const outAmt =
-        (tx.selling_price ?? tx.quantity_out) * (tx.average_cost || 0);
+        tx.quantity_out *
+        (tx.selling_price !== null ? tx.selling_price : tx.average_cost || 0);
       cumulativeQty += tx.quantity_in - tx.quantity_out;
       cumulativeAmount += inAmt - outAmt;
       return {
@@ -218,7 +219,8 @@ const ReportDocument = ({
                 ...pdfStyles.tableHeader,
                 backgroundColor: mainColor,
                 color: contrastText,
-                flex: 1.37,
+                // flex: 1.37,
+                width: '10%',
               }}
             >
               Date
@@ -228,7 +230,8 @@ const ReportDocument = ({
                 ...pdfStyles.tableHeader,
                 backgroundColor: mainColor,
                 color: contrastText,
-                flex: 1.37,
+                // flex: 1.37,
+                width: '10%',
               }}
             >
               Reference
@@ -238,7 +241,8 @@ const ReportDocument = ({
                 ...pdfStyles.tableHeader,
                 backgroundColor: mainColor,
                 color: contrastText,
-                flex: 2.35,
+                // flex: 2.35,
+                width: '15%',
               }}
             >
               Details
@@ -250,7 +254,8 @@ const ReportDocument = ({
                     ...pdfStyles.tableHeader,
                     backgroundColor: mainColor,
                     color: contrastText,
-                    flex: 3,
+                    // flex: 3,
+                    width: '20%',
                     textAlign: 'center',
                   }}
                 >
@@ -261,7 +266,8 @@ const ReportDocument = ({
                     ...pdfStyles.tableHeader,
                     backgroundColor: mainColor,
                     color: contrastText,
-                    flex: 3,
+                    // flex: 3,
+                    width: '20%',
                     textAlign: 'center',
                   }}
                 >
@@ -272,7 +278,8 @@ const ReportDocument = ({
                     ...pdfStyles.tableHeader,
                     backgroundColor: mainColor,
                     color: contrastText,
-                    flex: 3,
+                    // flex: 3,
+                    width: '25%',
                     textAlign: 'center',
                   }}
                 >
@@ -286,7 +293,8 @@ const ReportDocument = ({
                     ...pdfStyles.tableHeader,
                     backgroundColor: mainColor,
                     color: contrastText,
-                    flex: 1,
+                    // flex: 1,
+                    width: '20%',
                     textAlign: 'right',
                   }}
                 >
@@ -297,7 +305,8 @@ const ReportDocument = ({
                     ...pdfStyles.tableHeader,
                     backgroundColor: mainColor,
                     color: contrastText,
-                    flex: 1,
+                    // flex: 1,
+                    width: '20%',
                     textAlign: 'right',
                   }}
                 >
@@ -308,7 +317,8 @@ const ReportDocument = ({
                     ...pdfStyles.tableHeader,
                     backgroundColor: mainColor,
                     color: contrastText,
-                    flex: 1.5,
+                    // flex: 1.5,
+                    width: '25%',
                     textAlign: 'right',
                   }}
                 >
@@ -323,32 +333,40 @@ const ReportDocument = ({
               <Text
                 style={{
                   ...pdfStyles.tableCell,
+                  marginRight: 0,
                   backgroundColor: lightColor,
-                  flex: 1.5,
+                  // flex: 1.5,
+                  width: '10%',
                   fontWeight: 'bold',
                 }}
               ></Text>
               <Text
                 style={{
                   ...pdfStyles.tableCell,
+                  marginRight: 0,
                   backgroundColor: lightColor,
-                  flex: 1.5,
+                  // flex: 1.5,
+                  width: '10%',
                   fontWeight: 'bold',
                 }}
               ></Text>
               <Text
                 style={{
                   ...pdfStyles.tableCell,
+                  marginRight: 0,
                   backgroundColor: lightColor,
-                  flex: 2.5,
+                  // flex: 2.5,
+                  width: '15%',
                   fontWeight: 'bold',
                 }}
               ></Text>
               <Text
                 style={{
                   ...pdfStyles.tableCell,
+                  marginRight: 0,
                   backgroundColor: lightColor,
-                  flex: 1,
+                  // flex: 1,
+                  width: '5%',
                   textAlign: 'right',
                   fontWeight: 'bold',
                 }}
@@ -358,8 +376,10 @@ const ReportDocument = ({
               <Text
                 style={{
                   ...pdfStyles.tableCell,
+                  marginRight: 0,
                   backgroundColor: lightColor,
-                  flex: 1,
+                  // flex: 1,
+                  width: '7%',
                   textAlign: 'right',
                   fontWeight: 'bold',
                 }}
@@ -369,8 +389,10 @@ const ReportDocument = ({
               <Text
                 style={{
                   ...pdfStyles.tableCell,
+                  marginRight: 0,
                   backgroundColor: lightColor,
-                  flex: 1,
+                  // flex: 1,
+                  width: '8%',
                   textAlign: 'right',
                   fontWeight: 'bold',
                 }}
@@ -380,8 +402,10 @@ const ReportDocument = ({
               <Text
                 style={{
                   ...pdfStyles.tableCell,
+                  marginRight: 0,
                   backgroundColor: lightColor,
-                  flex: 1,
+                  // flex: 1,
+                  width: '5%',
                   textAlign: 'right',
                   fontWeight: 'bold',
                 }}
@@ -391,8 +415,10 @@ const ReportDocument = ({
               <Text
                 style={{
                   ...pdfStyles.tableCell,
+                  marginRight: 0,
                   backgroundColor: lightColor,
-                  flex: 1,
+                  // flex: 1,
+                  width: '7%',
                   textAlign: 'right',
                   fontWeight: 'bold',
                 }}
@@ -402,8 +428,10 @@ const ReportDocument = ({
               <Text
                 style={{
                   ...pdfStyles.tableCell,
+                  marginRight: 0,
                   backgroundColor: lightColor,
-                  flex: 1,
+                  // flex: 1,
+                  width: '8%',
                   textAlign: 'right',
                   fontWeight: 'bold',
                 }}
@@ -413,8 +441,10 @@ const ReportDocument = ({
               <Text
                 style={{
                   ...pdfStyles.tableCell,
+                  marginRight: 0,
                   backgroundColor: lightColor,
-                  flex: 1,
+                  // flex: 1,
+                  width: '5%',
                   textAlign: 'right',
                   fontWeight: 'bold',
                 }}
@@ -424,8 +454,10 @@ const ReportDocument = ({
               <Text
                 style={{
                   ...pdfStyles.tableCell,
+                  marginRight: 0,
                   backgroundColor: lightColor,
-                  flex: 1,
+                  // flex: 1,
+                  width: '10%',
                   textAlign: 'right',
                   fontWeight: 'bold',
                 }}
@@ -435,8 +467,10 @@ const ReportDocument = ({
               <Text
                 style={{
                   ...pdfStyles.tableCell,
+                  marginRight: 0,
                   backgroundColor: lightColor,
-                  flex: 1,
+                  // flex: 1,
+                  width: '10%',
                   textAlign: 'right',
                   fontWeight: 'bold',
                 }}
@@ -451,8 +485,10 @@ const ReportDocument = ({
               <Text
                 style={{
                   ...pdfStyles.tableCell,
+                  marginRight: 0,
                   backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
-                  flex: 1.5,
+                  // flex: 1.5,
+                  width: '10%',
                 }}
               >
                 {readableDate(row.date)}
@@ -460,8 +496,10 @@ const ReportDocument = ({
               <Text
                 style={{
                   ...pdfStyles.tableCell,
+                  marginRight: 0,
                   backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
-                  flex: 1.5,
+                  // flex: 1.5,
+                  width: '10%',
                 }}
               >
                 {row.reference}
@@ -469,19 +507,24 @@ const ReportDocument = ({
               <Text
                 style={{
                   ...pdfStyles.tableCell,
+                  marginRight: 0,
                   backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
-                  flex: 2.5,
+                  // flex: 2.5,
+                  width: '15%',
                 }}
               >
                 {row.description}
               </Text>
               {financePersonnel ? (
                 <>
+                  {/* ===== INWARDS ===== */}
                   <Text
                     style={{
                       ...pdfStyles.tableCell,
+                      marginRight: 0,
                       backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
-                      flex: 1,
+                      // flex: 1,
+                      width: '5%',
                       textAlign: 'right',
                     }}
                   >
@@ -490,8 +533,10 @@ const ReportDocument = ({
                   <Text
                     style={{
                       ...pdfStyles.tableCell,
+                      marginRight: 0,
                       backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
-                      flex: 1,
+                      // flex: 1,
+                      width: '7%',
                       textAlign: 'right',
                     }}
                   >
@@ -500,18 +545,23 @@ const ReportDocument = ({
                   <Text
                     style={{
                       ...pdfStyles.tableCell,
+                      marginRight: 0,
                       backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
-                      flex: 1,
+                      // flex: 1,
+                      width: '8%',
                       textAlign: 'right',
                     }}
                   >
                     {row.isOpeningBalance ? '-' : fmtAmtRow(row.inAmount)}
                   </Text>
+                  {/* ===== OUTWARDS ===== */}
                   <Text
                     style={{
                       ...pdfStyles.tableCell,
+                      marginRight: 0,
                       backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
-                      flex: 1,
+                      // flex: 1,
+                      width: '5%',
                       textAlign: 'right',
                     }}
                   >
@@ -520,21 +570,26 @@ const ReportDocument = ({
                   <Text
                     style={{
                       ...pdfStyles.tableCell,
+                      marginRight: 0,
                       backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
-                      flex: 1,
+                      // flex: 1,
+                      width: '7%',
                       textAlign: 'right',
                     }}
                   >
                     {row.isOpeningBalance
                       ? '-'
-                      : (fmtAmtRow(row.selling_price) ??
-                        fmtAmtRow(row.outRate))}
+                      : row.selling_price !== null
+                        ? fmtAmtRow(row.selling_price)
+                        : fmtAmtRow(row.outRate)}
                   </Text>
                   <Text
                     style={{
                       ...pdfStyles.tableCell,
+                      marginRight: 0,
                       backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
-                      flex: 1,
+                      // flex: 1,
+                      width: '8%',
                       textAlign: 'right',
                     }}
                   >
@@ -543,8 +598,10 @@ const ReportDocument = ({
                   <Text
                     style={{
                       ...pdfStyles.tableCell,
+                      marginRight: 0,
                       backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
-                      flex: 1,
+                      // flex: 1,
+                      width: '5%',
                       textAlign: 'right',
                     }}
                   >
@@ -553,8 +610,10 @@ const ReportDocument = ({
                   <Text
                     style={{
                       ...pdfStyles.tableCell,
+                      marginRight: 0,
                       backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
-                      flex: 1,
+                      // flex: 1,
+                      width: '10%',
                       textAlign: 'right',
                     }}
                   >
@@ -563,8 +622,10 @@ const ReportDocument = ({
                   <Text
                     style={{
                       ...pdfStyles.tableCell,
+                      marginRight: 0,
                       backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
-                      flex: 1,
+                      // flex: 1,
+                      width: '10%',
                       textAlign: 'right',
                     }}
                   >
@@ -576,8 +637,10 @@ const ReportDocument = ({
                   <Text
                     style={{
                       ...pdfStyles.tableCell,
+                      marginRight: 0,
                       backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
-                      flex: 1,
+                      // flex: 1,
+                      width: '20%',
                       textAlign: 'right',
                     }}
                   >
@@ -586,8 +649,10 @@ const ReportDocument = ({
                   <Text
                     style={{
                       ...pdfStyles.tableCell,
+                      marginRight: 0,
                       backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
-                      flex: 1,
+                      // flex: 1,
+                      width: '20%',
                       textAlign: 'right',
                     }}
                   >
@@ -596,8 +661,10 @@ const ReportDocument = ({
                   <Text
                     style={{
                       ...pdfStyles.tableCell,
+                      marginRight: 0,
                       backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
-                      flex: 1.5,
+                      // flex: 1.5,
+                      width: '25%',
                       textAlign: 'right',
                       fontWeight: 'bold',
                     }}
@@ -613,10 +680,12 @@ const ReportDocument = ({
             <Text
               style={{
                 ...pdfStyles.tableCell,
+                marginRight: 0,
                 backgroundColor: mainColor,
                 color: contrastText,
                 fontWeight: 'bold',
-                flex: 5.69,
+                // flex: 5.69,
+                width: '35%',
               }}
             >
               TOTAL
@@ -626,10 +695,12 @@ const ReportDocument = ({
                 <Text
                   style={{
                     ...pdfStyles.tableCell,
+                    marginRight: 0,
                     backgroundColor: mainColor,
                     color: contrastText,
                     fontWeight: 'bold',
-                    flex: 1,
+                    // flex: 1,
+                    width: '5%',
                     textAlign: 'right',
                   }}
                 >
@@ -638,18 +709,22 @@ const ReportDocument = ({
                 <Text
                   style={{
                     ...pdfStyles.tableCell,
+                    marginRight: 0,
                     backgroundColor: mainColor,
                     color: contrastText,
-                    flex: 1,
+                    // flex: 1,
+                    width: '7%',
                   }}
                 ></Text>
                 <Text
                   style={{
                     ...pdfStyles.tableCell,
+                    marginRight: 0,
                     backgroundColor: mainColor,
                     color: contrastText,
                     fontWeight: 'bold',
-                    flex: 1,
+                    // flex: 1,
+                    width: '8%',
                     textAlign: 'right',
                   }}
                 >
@@ -658,10 +733,12 @@ const ReportDocument = ({
                 <Text
                   style={{
                     ...pdfStyles.tableCell,
+                    marginRight: 0,
                     backgroundColor: mainColor,
                     color: contrastText,
                     fontWeight: 'bold',
-                    flex: 1,
+                    // flex: 1,
+                    width: '5%',
                     textAlign: 'right',
                   }}
                 >
@@ -670,18 +747,22 @@ const ReportDocument = ({
                 <Text
                   style={{
                     ...pdfStyles.tableCell,
+                    marginRight: 0,
                     backgroundColor: mainColor,
                     color: contrastText,
-                    flex: 1,
+                    // flex: 1,
+                    width: '7%',
                   }}
                 ></Text>
                 <Text
                   style={{
                     ...pdfStyles.tableCell,
+                    marginRight: 0,
                     backgroundColor: mainColor,
                     color: contrastText,
                     fontWeight: 'bold',
-                    flex: 1,
+                    // flex: 1,
+                    width: '8%',
                     textAlign: 'right',
                   }}
                 >
@@ -690,25 +771,31 @@ const ReportDocument = ({
                 <Text
                   style={{
                     ...pdfStyles.tableCell,
+                    marginRight: 0,
                     backgroundColor: mainColor,
                     color: contrastText,
-                    flex: 1,
+                    // flex: 1,
+                    width: '5%',
                   }}
                 ></Text>
                 <Text
                   style={{
                     ...pdfStyles.tableCell,
+                    marginRight: 0,
                     backgroundColor: mainColor,
                     color: contrastText,
-                    flex: 1,
+                    // flex: 1,
+                    width: '10%',
                   }}
                 ></Text>
                 <Text
                   style={{
                     ...pdfStyles.tableCell,
+                    marginRight: 0,
                     backgroundColor: mainColor,
                     color: contrastText,
-                    flex: 1,
+                    // flex: 1,
+                    width: '10%',
                   }}
                 ></Text>
               </>
@@ -717,10 +804,12 @@ const ReportDocument = ({
                 <Text
                   style={{
                     ...pdfStyles.tableCell,
+                    marginRight: 0,
                     backgroundColor: mainColor,
                     color: contrastText,
                     fontWeight: 'bold',
-                    flex: 1,
+                    // flex: 1,
+                    width: '20%',
                     textAlign: 'right',
                   }}
                 >
@@ -729,10 +818,12 @@ const ReportDocument = ({
                 <Text
                   style={{
                     ...pdfStyles.tableCell,
+                    marginRight: 0,
                     backgroundColor: mainColor,
                     color: contrastText,
                     fontWeight: 'bold',
-                    flex: 1,
+                    // flex: 1,
+                    width: '20%',
                     textAlign: 'right',
                   }}
                 >
@@ -741,9 +832,11 @@ const ReportDocument = ({
                 <Text
                   style={{
                     ...pdfStyles.tableCell,
+                    marginRight: 0,
                     backgroundColor: mainColor,
                     color: contrastText,
-                    flex: 1.5,
+                    // flex: 1.5,
+                    width: '25%',
                   }}
                 ></Text>
               </>

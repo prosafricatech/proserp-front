@@ -63,9 +63,9 @@ function ItemMovementOnScreen({ movementsData, authObject, baseCurrency }) {
       : []),
     ...restTransactions.map((tx) => {
       const inAmt = tx.quantity_in * (tx.average_cost || 0);
-      // const outAmt = tx.quantity_out * (tx.average_cost || 0);
       const outAmt =
-        (tx.selling_price ?? tx.quantity_out) * (tx.average_cost || 0);
+        tx.quantity_out *
+        (tx.selling_price !== null ? tx.selling_price : tx.average_cost || 0);
       cumulativeQty += tx.quantity_in - tx.quantity_out;
       cumulativeAmount += inAmt - outAmt;
       return {
