@@ -71,7 +71,6 @@ const ReportDocument = ({
   const openingAmount = openingQty * openingAvgCost;
 
   let cumulativeQty = openingQty;
-  let cumulativeAmount = openingAmount;
 
   const tableRows = [
     ...(openingBalanceTx
@@ -100,7 +99,6 @@ const ReportDocument = ({
         tx.quantity_out *
         (tx.selling_price !== null ? tx.selling_price : tx.average_cost || 0);
       cumulativeQty += tx.quantity_in - tx.quantity_out;
-      cumulativeAmount += inAmt - outAmt;
       return {
         date: tx.movement_date,
         reference: tx.reference,
@@ -114,7 +112,7 @@ const ReportDocument = ({
         outAmount: tx.selling_price || tx.quantity_out ? outAmt : null,
         balanceQty: cumulativeQty,
         avgCost: tx.average_cost || null,
-        balanceAmount: cumulativeAmount,
+        balanceAmount: cumulativeQty * (tx.average_cost || 0),
         isOpeningBalance: false,
       };
     }),
@@ -135,18 +133,18 @@ const ReportDocument = ({
   );
 
   const fmtQty = (v) =>
-    v == null || v === 0
+    v == null
       ? '-'
       : v.toLocaleString('en-US', { maximumFractionDigits: 5 });
   const fmtAmtRow = (v) =>
-    v == null || v === 0
+    v == null
       ? '-'
       : v.toLocaleString('en-US', {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         });
   const fmtAmtTotal = (v) =>
-    v == null || v === 0
+    v == null
       ? '-'
       : v.toLocaleString('en-US', {
           minimumFractionDigits: 2,

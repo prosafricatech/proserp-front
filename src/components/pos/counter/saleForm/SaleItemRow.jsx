@@ -2,13 +2,26 @@ import { DisabledByDefault, EditOutlined } from '@mui/icons-material'
 import { Divider, Grid, IconButton, ListItemText, Tooltip, Typography } from '@mui/material'
 import React, { useState } from 'react'
 import SaleItemForm from './SaleItemForm';
-import { useFormContext } from 'react-hook-form';
 
-function SaleItemRow({setClearFormKey, submitMainForm, setSubmitItemForm, submitItemForm, setIsDirty, item, index, vat_percentage = 0 }) {
+function SaleItemRow({
+    salesDate,
+    setClearFormKey,
+    submitMainForm,
+    setSubmitItemForm,
+    submitItemForm,
+    setIsDirty,
+    item,
+    index,
+    vat_percentage = 0,
+    items = [],
+    setItems = () => {},
+    getLastPriceItems,
+    checkedForSuggestPrice,
+    checkedForInstantSale
+}) {
     const product = item.product;
     const [showForm, setShowForm] = useState(false);
     const vat_factor = vat_percentage*0.01;
-    const {items=[], setItems, getLastPriceItems, checkedForSuggestPrice} = useFormContext();
 
   return (
          <React.Fragment>
@@ -93,7 +106,7 @@ function SaleItemRow({setClearFormKey, submitMainForm, setSubmitItemForm, submit
                         </Grid>
                     </Grid>
                 ) : (
-                    <SaleItemForm setClearFormKey={setClearFormKey} submitMainForm={submitMainForm} setSubmitItemForm={setSubmitItemForm} submitItemForm={submitItemForm} setIsDirty={setIsDirty} item={item} setShowForm={setShowForm} index={index} items={items} setItems={setItems} vat_percentage={vat_percentage} checkedForSuggestPrice={checkedForSuggestPrice} getLastPriceItems={getLastPriceItems}/>
+                    <SaleItemForm salesDate={salesDate} checkedForInstantSale={checkedForInstantSale} setClearFormKey={setClearFormKey} submitMainForm={submitMainForm} setSubmitItemForm={setSubmitItemForm} submitItemForm={submitItemForm} setIsDirty={setIsDirty} item={item} setShowForm={setShowForm} index={index} items={items} setItems={setItems} vat_percentage={vat_percentage} checkedForSuggestPrice={checkedForSuggestPrice} getLastPriceItems={getLastPriceItems}/>
                 )
             }
         </React.Fragment>

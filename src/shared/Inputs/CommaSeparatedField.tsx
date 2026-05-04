@@ -15,7 +15,10 @@ const CommaSeparatedField = React.forwardRef<HTMLInputElement, CommaSeparatedFie
       <NumericFormat
         {...other}
         getInputRef={ref}
-        onValueChange={(values) => {
+        onValueChange={(values, sourceInfo) => {
+          // Only propagate changes from actual user input, not mount/prop changes.
+          // This prevents infinite loops when sibling fields remount each other via key changes.
+          if (sourceInfo?.source !== 'event') return;
           onChange({
             target: {
               name: props.name,
