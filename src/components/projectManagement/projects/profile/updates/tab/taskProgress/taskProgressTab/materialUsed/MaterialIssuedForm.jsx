@@ -162,7 +162,6 @@ function MaterialIssuedForm({projectTaskIndex, taskProgressItem, material = null
             return existingItem?.store?.id === storeId 
               && existingItem?.product?.id === product?.id 
               && itemIndex !== index
-              && !material?.id;
           });
 
           const existingQuantity = existingItems.reduce((total, existingItem) => {
