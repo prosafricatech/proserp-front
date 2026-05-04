@@ -3,6 +3,7 @@
 import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import axios from '@/lib/services/config';
+import { MODULES } from '@/utilities/constants/modules';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
@@ -18,7 +19,6 @@ import {
   FormControlLabel,
   Grid,
   IconButton,
-  LinearProgress,
   Skeleton,
   Stack,
   TextField,
@@ -72,60 +72,140 @@ interface PermissionModuleGroup {
   permissions: Permission[];
 }
 
-// Helper function to format module names for readability
-const formatModuleName = (moduleName: string): string => {
-  // Insert space before uppercase letters
-  let formatted = moduleName.replace(/([A-Z])/g, ' $1').trim();
-  
-  // Remove redundant prefixes
-  // E.g., "Accounts Transactions" -> "Transactions", "Accounts Masters" -> "Masters"
-  const redundantPrefixes = ['Accounts ', 'Fuel Sales '];
-  redundantPrefixes.forEach((prefix) => {
-    if (formatted.startsWith(prefix)) {
-      formatted = formatted.substring(prefix.length);
-    }
-  });
-  
-  return formatted;
-};
+interface PermissionModuleConfig {
+  key: string;
+  displayName: string;
+  prefixes: string[];
+}
 
-// Helper function to group permissions by module, nesting AccountsMasters under Accounts
+const PERMISSION_MODULES: PermissionModuleConfig[] = [
+  {
+    key: 'accounts_and_finance',
+    displayName: MODULES.ACCOUNTS_AND_FINANCE,
+    prefixes: [
+      'Accounts',
+      'AccountsMasters',
+      'AccountsTransactions',
+      'CostCenters',
+      'FundTransfers',
+      'JournalVouchers',
+      'Payments',
+      'Receipts',
+    ],
+  },
+  {
+    key: 'process_approval',
+    displayName: MODULES.PROCESS_APPROVAL,
+    prefixes: [
+      'Approvals',
+      'ApprovalChains',
+      'ApprovedRequisitions',
+      'Requisitions',
+      'RequisitionApprovals',
+    ],
+  },
+  {
+    key: 'point_of_sale',
+    displayName: MODULES.POINT_OF_SALE,
+    prefixes: [
+      'Outlets',
+      'POS',
+      'PriceLists',
+      'ProformaInvoices',
+      'Sales',
+      'SalesDispatch',
+    ],
+  },
+  {
+    key: 'fuel_station',
+    displayName: MODULES.FUEL_STATION,
+    prefixes: ['FuelSalesShifts', 'FuelStations'],
+  },
+  {
+    key: 'procurement_and_supply',
+    displayName: MODULES.PROCUREMENT_AND_SUPPLY,
+    prefixes: [
+      'InventoryConsumptions',
+      'InventoryTransfers',
+      'ProductCategories',
+      'Products',
+      'Purchases',
+      'StockAdjustments',
+      'Stores',
+    ],
+  },
+  {
+    key: 'manufacturing_and_processing',
+    displayName: MODULES.MANUFACTURING_AND_PROCESSING,
+    prefixes: ['BOM', 'ManufacturingOrders', 'ProductionBatches', 'WorkCenters'],
+  },
+  {
+    key: 'project_management',
+    displayName: MODULES.PROJECT_MANAGEMENT,
+    prefixes: ['ProjectCategories', 'Projects'],
+  },
+  {
+    key: 'shared',
+    displayName: 'Shared / Organization',
+    prefixes: [
+      'FilesShelf',
+      'MeasurementUnits',
+      'Organization',
+      'Roles',
+      'Subscriptions',
+      'Users',
+      'Stakeholders'
+    ],
+  },
+];
+
+// Group permissions by configured business modules in a fixed display order.
 const groupPermissionsByModule = (permissions: Permission[]) => {
   const grouped: Record<string, PermissionModuleGroup> = {};
-  const accountsMastersPermissions: Permission[] = [];
 
-  permissions.forEach((permission) => {
-    const moduleName = permission.name.split(':')[0];
-    // Group AccountsMasters under Accounts
-    if (moduleName === 'AccountsMasters') {
-      accountsMastersPermissions.push(permission);
-      return;
-    }
-    const displayName = formatModuleName(moduleName);
-    if (!grouped[moduleName]) {
-      grouped[moduleName] = { displayName, permissions: [] };
-    }
-    grouped[moduleName].permissions.push(permission);
+  PERMISSION_MODULES.forEach((moduleConfig) => {
+    grouped[moduleConfig.key] = {
+      displayName: moduleConfig.displayName,
+      permissions: [],
+    };
   });
 
-  // If there are AccountsMasters permissions, nest them under Accounts
-  if (accountsMastersPermissions.length > 0) {
-    if (!grouped['Accounts']) {
-      grouped['Accounts'] = { displayName: formatModuleName('Accounts'), permissions: [] };
-    }
-    grouped['Accounts'].permissions = [
-      ...grouped['Accounts'].permissions,
-      ...accountsMastersPermissions,
-    ];
-  }
+  const uncategorizedKey = 'uncategorized';
+  grouped[uncategorizedKey] = {
+    displayName: 'Uncategorized',
+    permissions: [],
+  };
 
-  // Sort modules by display name for consistent ordering
-  return Object.keys(grouped)
-    .sort((a, b) => grouped[a].displayName.localeCompare(grouped[b].displayName))
-    .reduce((result, key) => {
-      result[key] = grouped[key];
-      return result;
-    }, {} as Record<string, PermissionModuleGroup>);
+  permissions.forEach((permission) => {
+    const permissionPrefix = permission.name.split(':')[0];
+    const matchedModule = PERMISSION_MODULES.find((moduleConfig) =>
+      moduleConfig.prefixes.includes(permissionPrefix)
+    );
+
+    if (matchedModule) {
+      grouped[matchedModule.key].permissions.push(permission);
+      return;
+    }
+
+    grouped[uncategorizedKey].permissions.push(permission);
+  });
+
+  const orderedKeys = [
+    ...PERMISSION_MODULES.map((moduleConfig) => moduleConfig.key),
+    uncategorizedKey,
+  ];
+
+  return orderedKeys.reduce((result, key) => {
+    if (grouped[key].permissions.length > 0) {
+      result[key] = {
+        ...grouped[key],
+        permissions: [...grouped[key].permissions].sort((a, b) =>
+          a.name.localeCompare(b.name)
+        ),
+      };
+    }
+    return result;
+  }, {} as Record<string, PermissionModuleGroup>);
 };
 
 const OrganizationRoles = () => {
