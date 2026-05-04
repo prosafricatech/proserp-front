@@ -703,7 +703,7 @@ const ReportDocument = ({
                 color: contrastText,
                 fontWeight: 'bold',
                 // flex: 5.69,
-                width: '35%',
+                width: '35.5%',
               }}
             >
               TOTAL
