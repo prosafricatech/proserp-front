@@ -2801,6 +2801,24 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../../src/app/api/manufacturing/batches/productionCostReport/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/manufacturing/batches/productionCostReport">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/manufacturing/batches/productionCostReport/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../../src/app/api/manufacturing/batches/productionOutputReport/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/manufacturing/batches/productionOutputReport">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/manufacturing/batches/productionOutputReport/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../../src/app/api/manufacturing/boms/[id]/billOfMaterialDetails/route.ts
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/manufacturing/boms/[id]/billOfMaterialDetails">> = Specific
