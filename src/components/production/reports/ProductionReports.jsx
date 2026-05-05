@@ -1,6 +1,11 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import CostCenterSelector from '@/components/masters/costCenters/CostCenterSelector';
+import ProductsSelectProvider, {
+  useProductsSelect,
+} from '@/components/productAndServices/products/ProductsSelectProvider';
+import JumboCardQuick from '@jumbo/components/JumboCardQuick';
 import {
   Alert,
   Autocomplete,
@@ -15,25 +20,18 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-import JumboCardQuick from '@jumbo/components/JumboCardQuick';
 import { DateTimePicker } from '@mui/x-date-pickers';
-import dayjs from 'dayjs';
-import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { useQuery } from '@tanstack/react-query';
+import dayjs from 'dayjs';
+import { useEffect, useMemo, useState } from 'react';
 import productionBatchesServices from '../batches/productionBatchesServices';
-import ProductsSelectProvider, { useProductsSelect } from '@/components/productAndServices/products/ProductsSelectProvider';
-import CostCenterSelector from '@/components/masters/costCenters/CostCenterSelector';
-import productionReportsServices from './productionReportsServices';
-import OutputReport from './OutputReport';
 import CostReport from './CostReport';
-import UnsubscribedAccess from '@/shared/Information/UnsubscribedAccess';
-import { MODULES } from '@/utilities/constants/modules';
-import UnauthorizedAccess from '@/shared/Information/UnauthorizedAccess';
-import { PERMISSIONS } from '@/utilities/constants/permissions';
+import OutputReport from './OutputReport';
+import productionReportsServices from './productionReportsServices';
 
 function TabPanel({ children, value, index }) {
   return (
-    <div role="tabpanel" hidden={value !== index}>
+    <div role='tabpanel' hidden={value !== index}>
       {value === index && <Box sx={{ pt: 3 }}>{children}</Box>}
     </div>
   );
@@ -42,7 +40,12 @@ function TabPanel({ children, value, index }) {
 function ProductionReportsContent() {
   const theme = useTheme();
   const isDark = theme.type === 'dark';
-  const { authUser, authOrganization, checkOrganizationPermission, organizationHasSubscribed } = useJumboAuth();
+  const {
+    authUser,
+    authOrganization,
+    checkOrganizationPermission,
+    organizationHasSubscribed,
+  } = useJumboAuth();
   const { productOptions } = useProductsSelect();
   const organization = authOrganization?.organization;
   const mainColor = organization?.settings?.main_color || '#2113AD';
@@ -65,11 +68,16 @@ function ProductionReportsContent() {
   const [costError, setCostError] = useState('');
   const [mounted, setMounted] = useState(false);
 
-  const { data: workcenters = [], isPending: isFetchingWorkCenters } = useQuery({
-    queryKey: ['userWorkCenters', { userId: authUser?.user?.id, type: 'work center' }],
-    queryFn: productionBatchesServices.getUserWorkCenters,
-    enabled: !!authUser?.user?.id,
-  });
+  const { data: workcenters = [], isPending: isFetchingWorkCenters } = useQuery(
+    {
+      queryKey: [
+        'userWorkCenters',
+        { userId: authUser?.user?.id, type: 'work center' },
+      ],
+      queryFn: productionBatchesServices.getUserWorkCenters,
+      enabled: !!authUser?.user?.id,
+    }
+  );
 
   useEffect(() => {
     setMounted(true);
@@ -113,8 +121,12 @@ function ProductionReportsContent() {
     const sharedParams = {
       from: dayjs(from).toISOString(),
       to: dayjs(to).toISOString(),
-      ...(selectedWorkCenter?.id ? { work_center_id: selectedWorkCenter.id } : {}),
-      ...(selectedCostCenter?.id ? { cost_center_id: selectedCostCenter.id } : {}),
+      ...(selectedWorkCenter?.id
+        ? { work_center_id: selectedWorkCenter.id }
+        : {}),
+      ...(selectedCostCenter?.id
+        ? { cost_center_id: selectedCostCenter.id }
+        : {}),
     };
 
     const outputPromise = productionReportsServices
@@ -126,7 +138,9 @@ function ProductionReportsContent() {
         setOutputReport(data);
       })
       .catch((err) => {
-        setOutputError(err?.response?.data?.message || 'Failed to load output report.');
+        setOutputError(
+          err?.response?.data?.message || 'Failed to load output report.'
+        );
       })
       .finally(() => {
         setOutputLoading(false);
@@ -138,7 +152,9 @@ function ProductionReportsContent() {
         setCostReport(data);
       })
       .catch((err) => {
-        setCostError(err?.response?.data?.message || 'Failed to load cost report.');
+        setCostError(
+          err?.response?.data?.message || 'Failed to load cost report.'
+        );
       })
       .finally(() => {
         setCostLoading(false);
@@ -165,16 +181,22 @@ function ProductionReportsContent() {
 
   return (
     <Stack spacing={2}>
-      <Typography variant="h4" sx={{ color: headerColor, fontWeight: 700 }}>
-        Production Reports
-      </Typography>
+      <Typography variant='h4'>Production Reports</Typography>
       <JumboCardQuick sx={{ overflow: 'visible' }}>
         <Stack spacing={2}>
-          <Box sx={{ position: 'sticky', top: 0, zIndex: 5, bgcolor: 'background.paper', py: 1 }}>
-            <Grid container spacing={2} alignItems="center">
+          <Box
+            sx={{
+              // position: 'sticky',
+              top: 0,
+              zIndex: 5,
+              bgcolor: 'background.paper',
+              py: 1,
+            }}
+          >
+            <Grid container spacing={2} alignItems='center'>
               <Grid size={{ xs: 12, md: 6, lg: 3 }}>
                 <DateTimePicker
-                  label="From"
+                  label='From'
                   value={from}
                   onChange={setFrom}
                   slotProps={{ textField: { size: 'small', fullWidth: true } }}
@@ -182,7 +204,7 @@ function ProductionReportsContent() {
               </Grid>
               <Grid size={{ xs: 12, md: 6, lg: 3 }}>
                 <DateTimePicker
-                  label="To"
+                  label='To'
                   value={to}
                   onChange={setTo}
                   slotProps={{ textField: { size: 'small', fullWidth: true } }}
@@ -190,19 +212,25 @@ function ProductionReportsContent() {
               </Grid>
               <Grid size={{ xs: 12, md: 6, lg: 2 }}>
                 <Autocomplete
-                  size="small"
+                  size='small'
                   loading={isFetchingWorkCenters}
                   options={workcenters}
                   value={selectedWorkCenter}
-                  isOptionEqualToValue={(option, value) => option.id === value.id}
+                  isOptionEqualToValue={(option, value) =>
+                    option.id === value.id
+                  }
                   getOptionLabel={(option) => option?.name || ''}
-                  onChange={(_event, newValue) => setSelectedWorkCenter(newValue)}
-                  renderInput={(params) => <TextField {...params} label="Work Center" fullWidth />}
+                  onChange={(_event, newValue) =>
+                    setSelectedWorkCenter(newValue)
+                  }
+                  renderInput={(params) => (
+                    <TextField {...params} label='Work Center' fullWidth />
+                  )}
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 6, lg: 2 }}>
                 <CostCenterSelector
-                  label="Cost Center"
+                  label='Cost Center'
                   multiple={false}
                   defaultValue={selectedCostCenter}
                   onChange={handleCostCenterChange}
@@ -211,42 +239,75 @@ function ProductionReportsContent() {
               {selectedTab === 0 && (
                 <Grid size={{ xs: 12, md: 8, lg: 2 }}>
                   <Autocomplete
-                    size="small"
+                    size='small'
                     options={productOptions}
                     value={selectedProduct}
-                    isOptionEqualToValue={(option, value) => option.id === value.id}
-                    getOptionLabel={(option) => option?.name || option?.item_name || ''}
-                    onChange={(_event, newValue) => setSelectedProduct(newValue)}
-                    renderInput={(params) => <TextField {...params} label="Finished Product" fullWidth />}
+                    isOptionEqualToValue={(option, value) =>
+                      option.id === value.id
+                    }
+                    getOptionLabel={(option) =>
+                      option?.name || option?.item_name || ''
+                    }
+                    onChange={(_event, newValue) =>
+                      setSelectedProduct(newValue)
+                    }
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label='Finished Product'
+                        fullWidth
+                      />
+                    )}
                   />
                 </Grid>
               )}
-              <Grid size={{ xs: 12, md: 4, lg: selectedTab === 0 ? 12 : 2 }}>
-                <Button fullWidth variant="contained" onClick={handleGenerateReport} sx={{ minHeight: 40 }}>
+              <Grid
+                size={{ xs: 12, md: 4, lg: selectedTab === 0 ? 12 : 2 }}
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'end',
+                }}
+              >
+                <Button
+                  variant='contained'
+                  size='small'
+                  onClick={handleGenerateReport}
+                  // sx={{ minHeight: 40 }}
+                >
                   Generate Report
                 </Button>
               </Grid>
             </Grid>
             {filterError && (
-              <Alert severity="warning" sx={{ mt: 2 }}>
+              <Alert severity='warning' sx={{ mt: 2 }}>
                 {filterError}
               </Alert>
             )}
-            {reconciliation && (
-              <Alert severity={reconciliation.matches ? 'success' : 'warning'} sx={{ mt: 2 }}>
-                Output value {reconciliation.matches ? 'matches' : 'does not match'} net production cost.
+            {/* {reconciliation && (
+              <Alert
+                severity={reconciliation.matches ? 'success' : 'warning'}
+                sx={{ mt: 2 }}
+              >
+                Output value{' '}
+                {reconciliation.matches ? 'matches' : 'does not match'} net
+                production cost.
                 {!reconciliation.matches
                   ? ` Difference: ${Number(reconciliation.difference).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}.`
                   : ''}
               </Alert>
-            )}
+            )} */}
           </Box>
 
           {(outputLoading || costLoading) && <LinearProgress />}
 
-          <Tabs value={selectedTab} onChange={(_event, newValue) => setSelectedTab(newValue)} variant="scrollable" scrollButtons="auto">
-            <Tab label="Output Report" />
-            <Tab label="Cost Report" />
+          <Tabs
+            value={selectedTab}
+            onChange={(_event, newValue) => setSelectedTab(newValue)}
+            variant='scrollable'
+            scrollButtons='auto'
+          >
+            <Tab label='Output Report' />
+            <Tab label='Cost Report' />
           </Tabs>
 
           <TabPanel value={selectedTab} index={0}>
