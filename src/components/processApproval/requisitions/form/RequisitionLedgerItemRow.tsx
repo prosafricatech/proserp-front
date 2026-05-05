@@ -104,7 +104,7 @@ function RequisitionLedgerItemRow({
                   <>
                     <Tooltip title={'Order Date - (Amount)'}>
                       <Typography variant={"caption"} fontSize={14} lineHeight={1.25} mb={0}>
-                        {`${readableDate(ledger_item.relatable?.order_date, false)} - ${ledger_item.relatable?.total_amount?.toLocaleString('en-US', 
+                        {`${readableDate(ledger_item.relatable?.order_date, false)} - ${ledger_item.relatable?.unapproved_amount?.toLocaleString('en-US', 
                           {
                             style: 'currency',
                             currency: ledger_item.relatable?.currency?.code,

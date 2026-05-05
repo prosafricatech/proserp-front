@@ -1,7 +1,7 @@
 import JumboCardQuick from '@jumbo/components/JumboCardQuick/JumboCardQuick'
 import { AutoStoriesOutlined, FormatListNumberedRtl, Inventory2Outlined, ListOutlined, LocalGasStation, PointOfSaleOutlined, QrCodeOutlined, QrCode2Rounded, ReceiptOutlined, ShoppingCartOutlined } from '@mui/icons-material'
-import { Grid, LinearProgress, Skeleton, Typography } from '@mui/material'
-import React, { useState } from 'react'
+import { Grid, Skeleton, Typography } from '@mui/material'
+import { useState } from 'react'
 import DashboardQuickLink from '../procurement/reports/productInsights/DashboardQuickLink'
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider'
 import { MODULES } from '@/utilities/constants/modules'
@@ -57,7 +57,16 @@ function QuickLinks() {
                     </Grid>
                 }
                 {
-                    organizationHasSubscribed(MODULES.MANUFACTURING_AND_PROCESSING) &&
+                    (organizationHasSubscribed(MODULES.MANUFACTURING_AND_PROCESSING) && checkOrganizationPermission([
+                        PERMISSIONS.BOM_READ,
+                        PERMISSIONS.BOM_CREATE,
+                        PERMISSIONS.BOM_EDIT,
+                        PERMISSIONS.BOM_DELETE,
+                        PERMISSIONS.PRODUCTION_BATCHES_CREATE,
+                        PERMISSIONS.PRODUCTION_BATCHES_READ,
+                        PERMISSIONS.PRODUCTION_BATCHES_EDIT,
+                        PERMISSIONS.PRODUCTION_BATCHES_DELETE,
+                    ])) &&
                     <Grid 
                         size={{ xs: 6, md: 2, lg: 1.5 }} 
                         p={1}

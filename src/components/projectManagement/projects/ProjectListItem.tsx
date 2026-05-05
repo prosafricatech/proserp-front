@@ -9,6 +9,10 @@ import ProjectListItemAction from './ProjectListItemAction';
 import { Project } from './ProjectTypes';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/app/[lang]/contexts/LanguageContext';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { useQuery } from '@tanstack/react-query';
+import projectsServices from './project-services';
+
 interface ProjectItemProps {
   project: Project;
 }
@@ -16,6 +20,24 @@ interface ProjectItemProps {
 const ProjectListItem: React.FC<ProjectItemProps> = ({ project }) => {
   const router = useRouter();
   const lang = useLanguage();
+  const { authUser } = useJumboAuth();
+  const userId = authUser?.user?.id;
+  const isAdministrator = authUser?.user?.organization_roles?.some(
+    (role: { name?: string }) => role.name === 'Administrator'
+  );
+
+  const { data: projectUsersData } = useQuery({
+    queryKey: ['projectUsersList', project.id],
+    queryFn: () => projectsServices.projectUsersList({ project_id: project.id }),
+    enabled: !isAdministrator,
+  });
+
+  const isUserInvolved =
+    isAdministrator ||
+    !projectUsersData ||
+    projectUsersData?.data?.some((u: { id: string }) => u.id === userId);
+
+  if (!isUserInvolved) return null;
   
   return (
     <>

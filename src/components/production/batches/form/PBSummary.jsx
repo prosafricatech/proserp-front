@@ -5,7 +5,6 @@ import {
     TableHead, TableRow, Typography
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import React from 'react';
 
 function PBSummary({ combinedInputsConsumptions, otherExpenses, by_products, outputs }) {
     const theme = useTheme();
@@ -20,7 +19,7 @@ function PBSummary({ combinedInputsConsumptions, otherExpenses, by_products, out
         theme.palette.getContrastText(mainColor);
 
     const lightColor =
-        theme.palette.mode === "dark"
+        theme.type === "dark"
             ? theme.palette.action.hover
             : authOrganization.organization.settings?.light_color ||
               theme.palette.action.selected;

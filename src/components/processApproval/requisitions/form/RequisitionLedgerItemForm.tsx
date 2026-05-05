@@ -52,6 +52,7 @@ function RequisitionLedgerItemForm({
 }: RequisitionLedgerItemFormProps) {
   const [isAdding, setIsAdding] = useState(false);
   const [calculatedAmount, setCalculatedAmount] = useState(0);
+  const [formResetKey, setFormResetKey] = useState(0);
   const [isRetrieving, setIsRetrieving] = useState(false);
   const [relatedTransactions, setRelatedTransactions] = useState<
     RelatableTransaction[]
@@ -80,6 +81,20 @@ function RequisitionLedgerItemForm({
     );
   }, [organizationHasSubscribed]);
 
+  const getEmptyFormValues = () => ({
+    ledger_id: null as any,
+    ledger: null as any,
+    quantity: undefined as any,
+    rate: undefined as any,
+    amount: undefined as any,
+    relatable_type: null as any,
+    relatable: null as any,
+    relatable_id: null as any,
+    measurement_unit_id: null as any,
+    unit_symbol: undefined as any,
+    remarks: '',
+  });
+
   const validationSchema = yup.object({
     ledger_id: yup
       .number()
@@ -99,14 +114,29 @@ function RequisitionLedgerItemForm({
       .number()
       .nullable()
       .when('relatable', (relatable: any, schema) =>
-        relatable?.id
+        (Array.isArray(relatable) ? relatable[0] : relatable)?.id
           ? schema
               .required('Amount is required')
               .test(
                 'max-amount',
-                `Amount should not exceed unapproved amount (${relatable?.unapproved_amount?.toLocaleString()}) of selected relatable`,
+                'Amount should not exceed unapproved amount of selected relatable',
                 function (value) {
-                  return value <= relatable?.unapproved_amount;
+                  const currentRelatable = this.parent?.relatable;
+                  const maxAmount = Number(
+                    currentRelatable?.unapproved_amount ?? 0
+                  );
+
+                  if (!currentRelatable?.id || value == null) {
+                    return true;
+                  }
+
+                  if (Number(value) <= maxAmount) {
+                    return true;
+                  }
+
+                  return this.createError({
+                    message: `Amount should not exceed unapproved amount (${maxAmount.toLocaleString()}) of selected relatable`,
+                  });
                 }
               )
           : schema.nullable()
@@ -120,27 +150,32 @@ function RequisitionLedgerItemForm({
 
   const {
     setValue,
+    setError,
+    clearErrors,
     handleSubmit,
     watch,
     register,
     reset,
-    formState: { errors, dirtyFields },
+    formState: { errors },
   } = useForm<RequisitionLedgerItem>({
     resolver: yupResolver(validationSchema) as any,
-    defaultValues: {
-      ledger_id: ledger_item?.ledger_id,
-      ledger: ledger_item?.ledger,
-      quantity: ledger_item?.quantity,
-      rate: ledger_item?.rate,
-      relatable_type: ledger_item ? ledger_item?.relatable_type : null,
-      relatable: ledger_item ? ledger_item?.relatable : null,
-      relatable_id: ledger_item?.relatable_id,
-      measurement_unit_id:
-        ledger_item?.measurement_unit_id ?? ledger_item?.measurement_unit?.id,
-      unit_symbol:
-        ledger_item?.measurement_unit?.symbol ?? ledger_item?.unit_symbol,
-      remarks: ledger_item?.remarks,
-    },
+    defaultValues: ledger_item
+      ? {
+          ledger_id: ledger_item?.ledger_id,
+          ledger: ledger_item?.ledger,
+          quantity: ledger_item?.quantity,
+          rate: ledger_item?.rate,
+          relatable_type: ledger_item?.relatable_type,
+          relatable: ledger_item?.relatable,
+          relatable_id: ledger_item?.relatable_id,
+          measurement_unit_id:
+            ledger_item?.measurement_unit_id ??
+            ledger_item?.measurement_unit?.id,
+          unit_symbol:
+            ledger_item?.measurement_unit?.symbol ?? ledger_item?.unit_symbol,
+          remarks: ledger_item?.remarks,
+        }
+      : getEmptyFormValues(),
   });
 
   const calculateAmount = () => {
@@ -167,9 +202,22 @@ function RequisitionLedgerItemForm({
 
   const updateItems = async (data: RequisitionLedgerItem) => {
     setIsAdding(true);
+    const calculated = Number(calculateAmount() ?? 0);
+    const maxUnapprovedAmount = Number(data?.relatable?.unapproved_amount ?? 0);
+
+    if (data?.relatable?.id && calculated > maxUnapprovedAmount) {
+      setError('amount', {
+        type: 'manual',
+        message: `Amount should not exceed unapproved amount (${maxUnapprovedAmount.toLocaleString()}) of selected relatable`,
+      });
+      setIsAdding(false);
+      return;
+    }
+
+    clearErrors('amount');
     const newItem = {
       ...data,
-      amount: calculateAmount(),
+      amount: calculated,
     };
 
     if (index > -1) {
@@ -178,9 +226,15 @@ function RequisitionLedgerItemForm({
       await setRequisition_ledger_items(updatedItems);
     } else {
       await setRequisition_ledger_items((prevItems) => [...prevItems, newItem]);
+
+      // Keep form ready for next add by clearing UI state and remounting uncontrolled fields.
+      reset(getEmptyFormValues());
+      setCalculatedAmount(0);
+      setSelectedRelated(null);
+      setRelatedTransactions([]);
+      setFormResetKey((prev) => prev + 1);
     }
 
-    reset();
     setIsAdding(false);
     setShowForm?.(false);
   };
@@ -232,6 +286,7 @@ function RequisitionLedgerItemForm({
         <Grid size={{ xs: 12, md: 3 }}>
           <Div sx={{ mt: 0.3 }}>
             <LedgerSelect
+              key={`ledger-select-${formResetKey}`}
               multiple={false}
               label='Ledger Name'
               allowedGroups={[
@@ -264,6 +319,7 @@ function RequisitionLedgerItemForm({
         <Grid size={{ xs: 12, md: 2 }}>
           <Div sx={{ mt: 0.3 }}>
             <MeasurementSelector
+              key={`measurement-selector-${formResetKey}`}
               label='Unit'
               frontError={
                 errors.measurement_unit_id
@@ -287,6 +343,7 @@ function RequisitionLedgerItemForm({
         <Grid size={{ xs: 12, md: 2 }}>
           <Div sx={{ mt: 0.3 }}>
             <TextField
+              key={`quantity-${formResetKey}`}
               label='Quantity'
               fullWidth
               size='small'
@@ -312,6 +369,7 @@ function RequisitionLedgerItemForm({
         <Grid size={{ xs: 12, md: 2 }}>
           <Div sx={{ mt: 0.3 }}>
             <TextField
+              key={`rate-${formResetKey}`}
               label='Rate'
               fullWidth
               size='small'
@@ -356,6 +414,7 @@ function RequisitionLedgerItemForm({
         <Grid size={{ xs: 12, md: 3 }}>
           <Div sx={{ mt: 0.3 }}>
             <Autocomplete
+              key={`relatable-type-${formResetKey}`}
               id='checkboxes-linked_to_types'
               options={processedRelatableTypes}
               isOptionEqualToValue={(option, value) =>
@@ -394,19 +453,19 @@ function RequisitionLedgerItemForm({
           </Div>
         </Grid>
         {isRetrieving ? (
-          <Grid size={{ xs: 12, md: 2 }}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <LinearProgress />
           </Grid>
         ) : (
-          <Grid size={{ xs: 12, md: 2 }}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Div sx={{ mt: 0.3 }}>
               <Autocomplete
                 id='checkboxes-related_transitions'
-                key={watch('relatable_type')}
+                key={`${watch('relatable_type')}-${formResetKey}`}
                 options={relatedTransactions}
                 isOptionEqualToValue={(option, value) => option.id === value.id}
                 getOptionLabel={(option) =>
-                  `${option.relatableNo} (${readableDate(option.order_date, false)} - ${option.total_amount?.toLocaleString(
+                  `${option.relatableNo} (${readableDate(option.order_date, false)} - ${option.unapproved_amount?.toLocaleString(
                     'en-US',
                     {
                       style: 'currency',
@@ -436,9 +495,10 @@ function RequisitionLedgerItemForm({
             </Div>
           </Grid>
         )}
-        <Grid size={{ xs: 12, md: 7 }}>
+        <Grid size={{ xs: 12, md: 5 }}>
           <Div sx={{ mt: 0.3 }}>
             <TextField
+              key={`remarks-${formResetKey}`}
               label='Remarks'
               fullWidth
               size='small'

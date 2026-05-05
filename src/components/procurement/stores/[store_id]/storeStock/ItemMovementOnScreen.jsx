@@ -102,18 +102,18 @@ function ItemMovementOnScreen({ movementsData, authObject, baseCurrency }) {
   );
 
   const fmtQty = (v) =>
-    v == null || v === 0
+    v == null
       ? '-'
       : v.toLocaleString('en-US', { maximumFractionDigits: 5 });
   const fmtAmtRow = (v) =>
-    v == null || v === 0
+    v == null
       ? '-'
       : v.toLocaleString('en-US', {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         });
   const fmtAmtTotal = (v) =>
-    v == null || v === 0
+    v == null
       ? '-'
       : v.toLocaleString('en-US', {
           minimumFractionDigits: 2,

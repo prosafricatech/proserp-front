@@ -143,7 +143,7 @@ const MeasurementSelector: React.FC<MeasurementSelectorProps> = (props) => {
       renderOption={(props, option, { selected }) => {
         const { key, ...restProps } = props;
         return (
-          <li {...restProps} key={`${option.id}-${key}`}>
+          <li {...restProps} key={`${option.id}-${key as any}`}>
             {multiple && (
               <Checkbox
                 icon={<CheckBoxOutlineBlank fontSize='small' />}

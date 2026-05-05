@@ -24,7 +24,6 @@ export async function exporItemMovement(exportedData: any) {
     const openingAmount = openingQty * openingAvgCost;
 
     let cumulativeQty = openingQty;
-    let cumulativeAmount = openingAmount;
 
     const tableRows = [
       ...(openingBalanceTx
@@ -53,7 +52,6 @@ export async function exporItemMovement(exportedData: any) {
           tx.quantity_out *
           (tx.selling_price !== null ? tx.selling_price : tx.average_cost || 0);
         cumulativeQty += tx.quantity_in - tx.quantity_out;
-        cumulativeAmount += inAmt - outAmt;
         return {
           date: tx.movement_date,
           description: tx.description,
@@ -67,7 +65,7 @@ export async function exporItemMovement(exportedData: any) {
           outAmount: tx.selling_price || tx.quantity_out ? outAmt : null,
           balanceQty: cumulativeQty,
           avgCost: tx.average_cost || null,
-          balanceAmount: cumulativeAmount,
+          balanceAmount: cumulativeQty * (tx.average_cost || 0),
           isOpeningBalance: false,
         };
       }),
@@ -92,8 +90,8 @@ export async function exporItemMovement(exportedData: any) {
 
     // ── Formatter helpers (mirrored from PDF) ──────────────────────────────────
     // Returns null for empty cells so Excel shows blank (not the string '-')
-    const fmtQtyVal = (v: any) => (v == null || v === 0 ? null : v);
-    const fmtAmtVal = (v: any) => (v == null || v === 0 ? null : v);
+    const fmtQtyVal = (v: any) => (v == null ? null : v);
+    const fmtAmtVal = (v: any) => (v == null ? null : v);
     const QTY_FMT = '#,###.00';
     const AMT_FMT = '#,###.00';
 
