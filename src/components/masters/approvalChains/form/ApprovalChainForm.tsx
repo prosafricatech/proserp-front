@@ -83,12 +83,18 @@ function ApprovalChainForm({ toggleOpen }: ApprovalChainFormProps) {
         message: "You must add at least one item",
       });
       return;
-    } else if (isDirty) {
+    }
+    // Check dirty fields from ApprovalChainsItemForm
+    const dirtyFields = items.length > 0 && items[items.length - 1]?.dirtyFields;
+    if (
+      isDirty ||
+      (dirtyFields && (dirtyFields.role_id || dirtyFields.label || dirtyFields.remarks))
+    ) {
       setShowWarning(true);
     } else {
       addApprovalChains.mutate(data);
     }
-  };  
+  };
 
   const handleConfirmSubmitWithoutAdd = () => {
     handleSubmit((data) => addApprovalChains.mutate(data))();

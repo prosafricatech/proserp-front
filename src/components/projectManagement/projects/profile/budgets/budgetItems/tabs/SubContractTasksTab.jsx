@@ -79,6 +79,12 @@ function SubContractTasksTab({
     defaultValues: formDefaultValues,
   });
 
+  // Watch values to track changes
+  const watchedRate = watch('rate');
+  const watchedQuantity = watch('quantity');
+  const watchedExchangeRate = watch('exchange_rate');
+  const watchedCurrencyId = watch('currency_id');
+
   useEffect(() => {
     setIsDirty?.(Object.keys(dirtyFields).length > 0);
   }, [dirtyFields, setIsDirty]);
@@ -107,7 +113,24 @@ function SubContractTasksTab({
       }
 
       setTriggerKey((prev) => prev + 1);
-      reset();
+      // Reset form to initial blank/default values and force rerender
+      reset({
+        type: 'subcontract_task',
+        bound_to: '',
+        expense_ledger: null,
+        currency_id: currencies?.find(c => c.is_base === 1)?.id ?? 1,
+        exchange_rate: 1,
+        quantity: 0,
+        rate: 0,
+        project_task: null,
+        project_task_id: null,
+        expense_ledger_id: null,
+        currency: currencies?.find(c => c.is_base === 1) ?? null,
+        description: ''
+      });
+      setBoundToOption('');
+      setSelectedItemable(null);
+      setTriggerKey(prev => prev + 1);
       setIsDirty?.(false);
       setIsAdding(false);
       setShowForm && setShowForm(false);
@@ -202,7 +225,7 @@ function SubContractTasksTab({
         </Div>
       </Grid>
 
-      <Grid size={{ xs: 12, md: watch('currency_id') > 1 ? 2 : 4 }}>
+      <Grid size={{ xs: 12, md: watchedCurrencyId > 1 ? 2 : 4 }}>
         <Div sx={{ mt: 1 }}>
           <CurrencySelector
             frontError={errors?.currency_id}
@@ -216,64 +239,64 @@ function SubContractTasksTab({
         </Div>
       </Grid>
 
-      {watch('currency_id') > 1 && (
+      {watchedCurrencyId > 1 && (
         <Grid size={{ xs: 6, md: 2, lg: 2 }}>
           <Div sx={{ mt: 1 }}>
             <TextField
               label="Exchange Rate"
               fullWidth
               size="small"
+              value={watchedExchangeRate || ''}
               error={!!errors?.exchange_rate}
-              defaultValue={watch(`exchange_rate`)}
               helperText={errors?.exchange_rate?.message}
               InputProps={{ inputComponent: CommaSeparatedField }}
-              {...register('exchange_rate', {
-                onChange: (e) => {
-                  const sanitized = sanitizedNumber(e.target.value);
-                  setValue('exchange_rate', sanitized ?? null, { shouldValidate: true });
-                },
-              })}
+              onChange={(e) => {
+                const sanitized = sanitizedNumber(e.target.value);
+                setValue('exchange_rate', sanitized ?? null, { shouldValidate: true, shouldDirty: true });
+              }}
             />
           </Div>
         </Grid>
       )}
 
-      <Grid size={{ xs: watch('currency_id') > 1 ? 6 : 12, md: watch('currency_id') > 1 ? 4 : 4 }}>
+      <Grid size={{ xs: watchedCurrencyId > 1 ? 6 : 12, md: watchedCurrencyId > 1 ? 4 : 4 }}>
         <Div sx={{ mt: 1 }}>
           <TextField
-              label="Quantity"
-              fullWidth
-              size="small"
-              defaultValue={subContractItem?.quantity ?? null}
-              InputProps={{ inputComponent: CommaSeparatedField }}
-              error={!!errors?.quantity}
-              helperText={errors?.quantity?.message}
-              {...register('quantity', {
-                setValueAs: (value) => {
-                  const sanitized = sanitizedNumber(value);
-                  return sanitized === null ? undefined : Number(sanitized);
-                },
-              })}
+            label="Quantity"
+            fullWidth
+            size="small"
+            value={watchedQuantity || ''}
+            InputProps={{ inputComponent: CommaSeparatedField }}
+            error={!!errors?.quantity}
+            helperText={errors?.quantity?.message}
+            onChange={(e) => {
+              const sanitized = sanitizedNumber(e.target.value);
+              const numericValue = sanitized === null || sanitized === undefined || isNaN(Number(sanitized)) 
+                ? undefined 
+                : Number(sanitized);
+              setValue('quantity', numericValue, { shouldValidate: true, shouldDirty: true });
+            }}
           />
         </Div>
       </Grid>
 
-      <Grid size={{ xs: watch('currency_id') > 1 ? 6 : 12, md: watch('currency_id') > 1 ? 4 : 4 }}>
+      <Grid size={{ xs: watchedCurrencyId > 1 ? 6 : 12, md: watchedCurrencyId > 1 ? 4 : 4 }}>
         <Div sx={{ mt: 1 }}>
           <TextField
             label="Rate"
             fullWidth
             size="small"
-            defaultValue={subContractItem?.rate ?? null}
+            value={watchedRate || ''}
             InputProps={{ inputComponent: CommaSeparatedField }}
             error={!!errors?.rate}
             helperText={errors?.rate?.message}
-            {...register('rate', {
-              setValueAs: (value) => {
-                const sanitized = sanitizedNumber(value);
-                return sanitized === null ? undefined : Number(sanitized);
-              },
-            })}
+            onChange={(e) => {
+              const sanitized = sanitizedNumber(e.target.value);
+              const numericValue = sanitized === null || sanitized === undefined || isNaN(Number(sanitized)) 
+                ? undefined 
+                : Number(sanitized);
+              setValue('rate', numericValue, { shouldValidate: true, shouldDirty: true });
+            }}
           />
         </Div>
       </Grid>

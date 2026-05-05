@@ -5,7 +5,7 @@ import JumboListToolbar from '@jumbo/components/JumboList/components/JumboListTo
 import JumboRqList from '@jumbo/components/JumboReactQuery/JumboRqList/JumboRqList';
 import JumboSearch from '@jumbo/components/JumboSearch/JumboSearch';
 import { Card, Stack, Typography } from '@mui/material';
-import { useParams, useSearchParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import React, { useRef } from 'react';
 import currencyServices from './currency-services';
 import CurrencyActionTail from './CurrencyActionTail';
@@ -19,13 +19,12 @@ const Currencies = () => {
     id?: string;
     keyword?: string;
   }>();
-  const searchParams = useSearchParams();
   const listRef = useRef<any>(null);
   const dictionary = useDictionary();
 
   const [queryOptions, setQueryOptions] = React.useState({
     queryKey: 'currencies',
-    queryParams: { id: params.id, keyword: searchParams.get('search') || '' },
+    queryParams: { id: params.id, keyword: '' },
     countKey: 'total',
     dataKey: 'data',
   });
@@ -38,13 +37,9 @@ const Currencies = () => {
   React.useEffect(() => {
     setQueryOptions((state) => ({
       ...state,
-      queryParams: {
-        ...state.queryParams,
-        id: params.id,
-        keyword: searchParams.get('search') || '',
-      },
+      queryParams: { ...state.queryParams, id: params.id },
     }));
-  }, [params, searchParams]);
+  }, [params]);
 
   const renderCurrency = React.useCallback((currency: Currency) => {
     return <CurrencyListItem currency={currency} />;

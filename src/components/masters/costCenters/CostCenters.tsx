@@ -7,7 +7,7 @@ import JumboRqList from '@jumbo/components/JumboReactQuery/JumboRqList/JumboRqLi
 import JumboSearch from '@jumbo/components/JumboSearch/JumboSearch';
 import CostCenterListItem from './CostCenterListItem';
 import costCenterServices from './cost-center-services';
-import { useParams, useSearchParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import CostCenterActionTail from './CostCenterActionTail';
 import { CostCenter } from './CostCenterType';
 
@@ -25,14 +25,13 @@ interface QueryOptions {
 
 const CostCenters = () => {
   const params = useParams<{ category?: string; id?: string; keyword?: string }>();
-  const searchParams = useSearchParams();
   const listRef = useRef<any>(null);
 
   const [queryOptions, setQueryOptions] = useState<QueryOptions>({
     queryKey: 'costCenters',
     queryParams: {
       id: params.id,
-      keyword: searchParams?.get('search') || '',
+      keyword: '',
     },
     countKey: 'total',
     dataKey: 'data',
@@ -49,10 +48,9 @@ const CostCenters = () => {
       queryParams: {
         ...prev.queryParams,
         id: params.id,
-        keyword: searchParams?.get('search') || '',
       },
     }));
-  }, [params, searchParams]);
+  }, [params.id]);
 
   const handleOnChange = useCallback((keyword: string) => {
     setQueryOptions((prev) => ({

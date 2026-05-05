@@ -122,7 +122,7 @@ const BudgetsForm = ({
         : addBudgetMutation.mutate,
     [budget, editBudgetMutation.mutate, addBudgetMutation.mutate]
   );
-  
+
   const isPending = isDuplicate
     ? addBudgetMutation.isPending
     : budget

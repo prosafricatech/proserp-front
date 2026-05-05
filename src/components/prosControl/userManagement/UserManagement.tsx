@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useParams, useSearchParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { Card, Stack, Typography } from '@mui/material';
 import JumboRqList from '@jumbo/components/JumboReactQuery/JumboRqList';
 import JumboListToolbar from '@jumbo/components/JumboList/components/JumboListToolbar';
@@ -17,7 +17,6 @@ import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
 
 const UserManagement = () => {
     const params = useParams<{ id?: string }>();
-    const searchParams = useSearchParams();
     const listRef = useRef<any>(null);
     const { checkPermission } = useJumboAuth();
     const [mounted, setMounted] = useState(false);
@@ -29,18 +28,6 @@ const UserManagement = () => {
       countKey: 'total',
       dataKey: 'data',
     });
-
-    // Sync search param to in-page search reactively
-    useEffect(() => {
-      const keyword = searchParams?.get('search') || '';
-      setQueryOptions((prev) => ({
-        ...prev,
-        queryParams: {
-          ...prev.queryParams,
-          keyword,
-        },
-      }));
-    }, [searchParams]);
 
     useEffect(() => {
       setMounted(true);

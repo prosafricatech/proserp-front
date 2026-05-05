@@ -17,13 +17,13 @@ import {
 } from '@mui/icons-material';
 import {
   Button,
-  Checkbox,
   Dialog,
   DialogContent,
   DialogTitle,
   IconButton,
   LinearProgress,
   Stack,
+  Switch,
   Tab,
   Tabs,
   Tooltip,
@@ -158,9 +158,26 @@ const DocumentDialog = ({
           direction={'row'}
           justifyContent={'center'}
           alignItems={'center'}
+          position={'relative'}
         >
-          <Typography>With More Details</Typography>
-          <Checkbox checked={openDetails} onChange={handleDetailsChange} />
+          <Typography>Detailed</Typography>
+          <Switch
+            checked={openDetails}
+            onChange={handleDetailsChange}
+            slotProps={{ input: { 'aria-label': 'controlled' } }}
+          />
+
+          {belowLargeScreen && (
+            <Tooltip title='Close'>
+              <IconButton
+                size='small'
+                onClick={() => setOpenDocumentDialog(false)}
+                sx={{ position: 'absolute', right: 5 }}
+              >
+                <HighlightOff color='primary' />
+              </IconButton>
+            </Tooltip>
+          )}
         </Stack>
       </DialogTitle>
       <DialogContent>
@@ -224,17 +241,6 @@ const DocumentDialog = ({
                 <FontAwesomeIcon icon={faFileExcel} color='green' />
                 {!belowLargeScreen && 'Excel'}
               </IconButton>
-            )}
-
-            {belowLargeScreen && (
-              <Tooltip title='Close'>
-                <IconButton
-                  size='small'
-                  onClick={() => setOpenDocumentDialog(false)}
-                >
-                  <HighlightOff color='primary' />
-                </IconButton>
-              </Tooltip>
             )}
           </Grid>
         </Grid>
@@ -321,20 +327,28 @@ const SalesShiftsItemAction = ({ ClosedShift }) => {
     },
   });
 
+  const canUpdate = checkOrganizationPermission([
+    PERMISSIONS.FUEL_SALES_SHIFTS_UPDATE,
+  ]);
+  const canDelete = checkOrganizationPermission([
+    PERMISSIONS.FUEL_SALES_SHIFTS_DELETE,
+  ]);
   const canBackdate = checkOrganizationPermission([
     PERMISSIONS.FUEL_SALES_SHIFTS_BACKDATE,
   ]);
-  const isToday =
-    ClosedShift?.shift_end >= dayjs().startOf('date').toISOString();
+
+  const isToday = ClosedShift?.shift_end && dayjs(ClosedShift.shift_end).isSame(dayjs(), 'day');
+  const canEdit = canUpdate || isToday || canBackdate;
+  const canDeleteAction = canDelete || isToday || canBackdate;
 
   const menuItems = [
     { icon: <VisibilityOutlined />, title: 'View', action: 'open' },
-    canBackdate || isToday
+    canEdit
       ? { icon: <EditOutlined />, title: 'Edit', action: 'edit' }
       : null,
-    canBackdate || isToday
+    canDeleteAction
       ? {
-          icon: <DeleteOutlined color='error' />,
+          icon: <DeleteOutlined color='error' />, 
           title: 'Delete',
           action: 'delete',
         }

@@ -37,7 +37,6 @@ projectsServices.projectUsersList = async (params) => {
     return response.data;
 }
 
-
 projectsServices.getSubContractMaterialIssued = async (params) => {
     const response = await axios.get(
         `/api/projectManagement/project/${params.subcontract_id}/getSubContractMaterialIssued`,
@@ -97,6 +96,13 @@ projectsServices.getSubContractTasks = async (id) => {
 
 projectsServices.getbudgetItemsDetails = async (id) => {
     const { data } = await axios.get(`/api/projectManagement/project/${id}/getbudgetItemsDetails`);
+    return data;
+}
+
+projectsServices.getBudgetedCostItems = async (budgetId, ledgerId) => {
+    const { data } = await axios.get(`/api/projectManagement/project/${budgetId}/budgeted-cost-items`, {
+        params: { ledgerId }
+    });
     return data;
 }
 

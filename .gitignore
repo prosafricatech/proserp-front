@@ -45,5 +45,5 @@ package-lock.json
 # error-wrapper
 /src/app/error-wrapper.tsx
 
-/.augment
 HR_API_DOCUMENTATION.md
+/.augment

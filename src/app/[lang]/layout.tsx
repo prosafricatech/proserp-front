@@ -6,6 +6,7 @@ import { Providers } from '../providers';
 import { getDictionary } from './dictionaries';
 import { DictionaryProvider } from './contexts/DictionaryContext';
 import { LanguageProvider } from './contexts/LanguageContext';
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 interface RootLayoutProps {
   children: ReactNode;
@@ -91,6 +92,7 @@ export default async function RootLayout({ children, params }: RootLayoutProps) 
           <LanguageProvider lang={lang}>
             <DictionaryProvider dictionary={dictionary}>
               <Providers>{children}</Providers>
+              <SpeedInsights />
             </DictionaryProvider>
           </LanguageProvider>
         </div>

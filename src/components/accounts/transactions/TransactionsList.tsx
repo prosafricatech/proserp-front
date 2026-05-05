@@ -5,7 +5,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {DateTimePicker} from '@mui/x-date-pickers';
 import {EventAvailableOutlined,FilterAltOffOutlined,FilterAltOutlined} from '@mui/icons-material';
 import dayjs, { Dayjs } from 'dayjs';
-import { useParams, useSearchParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import JumboListToolbar from '@jumbo/components/JumboList/components/JumboListToolbar';
 import JumboRqList from '@jumbo/components/JumboReactQuery/JumboRqList';
 import JumboSearch from '@jumbo/components/JumboSearch';
@@ -41,7 +41,6 @@ interface FilterDate {
 
 const TransactionsList: React.FC = () => {
     const params = useParams<{ category?: string; id?: string; keyword?: string }>();
-    const searchParams = useSearchParams();
     const listRef = useRef<any>(null);
     const [openFilters, setOpenFilters] = useState(false);
     const [mounted, setMounted] = useState(false);
@@ -133,19 +132,12 @@ const TransactionsList: React.FC = () => {
 
     const defaultType = availableTypes[0]?.value ?? 'payments';
 
-    // If the search param is a transaction type and the keyword matches the type, clear the keyword
-    const transactionTypes = ['payments', 'receipts', 'journal_vouchers', 'transfers', 'debit', 'credit'];
-    const urlType = (searchParams?.get('type') as TransactionTypes) || defaultType;
-    let urlKeyword = searchParams?.get('search') || '';
-    if (transactionTypes.includes(urlType) && urlKeyword.toLowerCase().replace(/\s|_/g, '') === urlType.replace(/\s|_/g, '')) {
-      urlKeyword = '';
-    }
     const [queryOptions, setQueryOptions] = useState<QueryOptions>({
       queryKey: "transactions",
       queryParams: {
         id: params.id,
-        keyword: urlKeyword,
-        type: urlType,
+        keyword: '',
+        type: defaultType,
         cost_center_ids: authOrganization?.costCenters?.map((cost_center: CostCenter) => cost_center.id)
       },
       countKey: "total",
@@ -153,21 +145,14 @@ const TransactionsList: React.FC = () => {
     });
 
     useEffect(() => {
-      let urlType = (searchParams?.get('type') as TransactionTypes) || defaultType;
-      let urlKeyword = searchParams?.get('search') || '';
-      if (transactionTypes.includes(urlType) && urlKeyword.toLowerCase().replace(/\s|_/g, '') === urlType.replace(/\s|_/g, '')) {
-        urlKeyword = '';
-      }
       setQueryOptions(prev => ({
-        ...prev,
-        queryParams: {
-          ...prev.queryParams,
-          id: params.id,
-          keyword: urlKeyword,
-          type: urlType,
-        }
+      ...prev,
+      queryParams: {
+        ...prev.queryParams,
+        id: params.id
+      }
       }));
-    }, [params, searchParams, defaultType]);
+    }, [params.id]);
 
     useEffect(() => {
       setQueryOptions(prev => ({

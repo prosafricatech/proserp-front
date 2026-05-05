@@ -243,7 +243,49 @@ function IncomeStatement({
                     size='small'
                     fullWidth
                     value={watch('aggregate_by') ?? ''}
-                    sx={{ width: { xs: '100%', md: 180 }, maxWidth: 180 }}
+                    sx={{ width: { xs: '100%', md: 180 }, maxWidth: 180, position: 'relative' }}
+                    InputProps={{
+                      endAdornment:
+                        watch('aggregate_by') ? (
+                          <Tooltip title="Clear aggregate option">
+                            <IconButton
+                              size="small"
+                              aria-label="clear aggregate by"
+                              onClick={() => {
+                                setValue('aggregate_by', '', {
+                                  shouldValidate: true,
+                                  shouldDirty: true,
+                                });
+                                const fromDate = watch('from');
+                                const toDate = watch('to');
+                                const selectedCostCenters = watch('cost_center_ids');
+                                if (fromDate && toDate) {
+                                  retrieveReport({
+                                    from: fromDate,
+                                    to: toDate,
+                                    cost_center_ids: selectedCostCenters,
+                                    aggregate_by: null,
+                                  });
+                                }
+                              }}
+                              edge="end"
+                              sx={{
+                                opacity: 0.5,
+                                transition: 'opacity 0.2s',
+                                ml: 0.5,
+                                p: 0.5,
+                                '&:hover': { opacity: 1, bgcolor: 'transparent' },
+                                position: 'absolute',
+                                right: 25,
+                                top: '50%',
+                                transform: 'translateY(-50%)',
+                              }}
+                            >
+                              <HighlightOff fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        ) : null,
+                    }}
                     onChange={(e) => {
                       const selectedAggregate = e.target.value;
                       const fromDate = watch('from');
@@ -333,9 +375,9 @@ function IncomeStatement({
       <DialogContent>
         {isFetching ? (
           <LinearProgress />
-        ) : reportData?.direct_expenses.length > 1 ||
-          reportData?.incomes.length > 1 ||
-          reportData?.indirect_expenses.length > 1 ? (
+        ) : reportData?.direct_expenses.length > 0 ||
+          reportData?.incomes.length > 0 ||
+          reportData?.indirect_expenses.length > 0 ? (
           displayAs === 'pdf' ? (
             <PDFContent
               document={

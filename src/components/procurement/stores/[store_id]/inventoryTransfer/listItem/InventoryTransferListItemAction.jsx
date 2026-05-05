@@ -20,6 +20,7 @@ import {
   useMediaQuery,
   DialogActions,
   Grid,
+  Skeleton,
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
@@ -74,7 +75,13 @@ const InventoryTransferListItemAction = ({ transfer }) => {
     });
 
     if (isLoading) {
-      return <LinearProgress />;
+          return (
+            <div style={{ width: '100%', padding: '16px' }}>
+              <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
+              <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
+              <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+            </div>
+          );
     }
 
     const handleChangeTab = (_, newValue) => {
@@ -136,7 +143,13 @@ const InventoryTransferListItemAction = ({ transfer }) => {
     });
 
     if (isLoading) {
-      return <LinearProgress />;
+          return (
+      <div style={{ width: '100%', padding: '16px' }}>
+        <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
+        <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
+        <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+      </div>
+    );
     }
 
     return <InventoryTransferReceiveForm transfer={transferDetails} toggleOpen={setOpenReceiveDialog} />;

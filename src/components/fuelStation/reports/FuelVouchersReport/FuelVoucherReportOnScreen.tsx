@@ -127,8 +127,13 @@ const FuelVoucherReportOnScreen = ({
       <TableContainer component={Paper} sx={{ mb: 3 }}>
         <Table size='small'>
           <TableHead>
-            <TableRow sx={{ bgcolor: mainColor }}>
-              <TableCell sx={{ color: contrastText, fontWeight: 'bold' }}>
+            <TableRow style={{ backgroundColor: mainColor }}>
+              <TableCell
+                sx={{
+                  color: contrastText,
+                  fontWeight: 'bold',
+                }}
+              >
                 Date
               </TableCell>
               <TableCell sx={{ color: contrastText, fontWeight: 'bold' }}>

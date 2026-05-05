@@ -33,6 +33,25 @@ export interface RequisitionSummary {
   creator: User;
   status_label: string;
   vat_amount: number;
+  leave_items?: Array<{
+    id?: number;
+    employee_id: number;
+    leave_type_id: number;
+    start_date: string;
+    end_date: string;
+    days_requested: number;
+    reason?: string;
+    employee?: {
+      id: number;
+      employee_number?: string;
+      first_name?: string;
+      last_name?: string;
+    };
+    leave_type?: {
+      id: number;
+      name?: string;
+    };
+  }>;
 }
 
 export interface BaseApprovalRequisition {
@@ -42,11 +61,12 @@ export interface BaseApprovalRequisition {
   approval_date: string;
   creator: User;
   currency: Currency;
-  process_type: "PURCHASE" | "PAYMENT";
+  process_type: "PURCHASE" | "PAYMENT" | "LEAVE_REQUEST";
   remarks: string | null;
   status_label?: string;
   requisition: RequisitionSummary;
   next_approval_level?: ApprovalChainLevel | null;
+  leave_items?: RequisitionSummary['leave_items'];
 }
 
 export interface PaymentApprovalRequisition extends BaseApprovalRequisition {
@@ -61,17 +81,19 @@ export interface PurchaseApprovalRequisition extends BaseApprovalRequisition {
   purchase_orders_count: number;
 }
 
-export type ApprovalRequisition = PaymentApprovalRequisition | PurchaseApprovalRequisition;
+export interface LeaveApprovalRequisition extends BaseApprovalRequisition {
+  process_type: "LEAVE_REQUEST";
+}
+
+export type ApprovalRequisition = PaymentApprovalRequisition | PurchaseApprovalRequisition | LeaveApprovalRequisition;
 export type ApprovalRequisitionList = ApprovalRequisition[];
 
-// Corrected utility types
 export type RequisitionProcessType = BaseApprovalRequisition['process_type'];
 export type RequisitionAmount = {
   amount: number;
   vat_amount: number;
 };
 
-// Helper type to extract amount info from a requisition
 export const getRequisitionAmount = (req: ApprovalRequisition): RequisitionAmount => ({
   amount: req.amount,
   vat_amount: req.requisition.vat_amount

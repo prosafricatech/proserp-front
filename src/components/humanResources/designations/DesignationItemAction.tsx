@@ -9,13 +9,43 @@ import {
   EditOutlined,
   MoreHorizOutlined,
 } from '@mui/icons-material';
-import { Dialog, Tooltip, useMediaQuery } from '@mui/material';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Dialog, LinearProgress, Tooltip, useMediaQuery } from '@mui/material';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import { useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
 import DesignationForm from './DesignationForm';
 import { Designation } from './DesignationsType';
+
+const EditDesignation = ({
+  designation,
+  setOpenEditDialog,
+}: {
+  designation: Designation;
+  setOpenEditDialog: (open: boolean) => void;
+}) => {
+  const { data: designationData, isFetching } = useQuery({
+    queryKey: ['showDesignation', designation.id],
+    queryFn: () => humanResourcesServices.showDesignation(designation.id),
+  });
+  const queryClient = useQueryClient();
+
+  if (isFetching) {
+    return <LinearProgress />;
+  }
+
+  return (
+    <DesignationForm
+      designation={designationData || designation}
+      setOpenDialog={(v) => {
+        setOpenEditDialog(v);
+        if (!v) {
+          queryClient.invalidateQueries({ queryKey: ['designations'] });
+        }
+      }}
+    />
+  );
+};
 
 const DesignationItemAction = ({
   designation,
@@ -39,10 +69,19 @@ const DesignationItemAction = ({
       });
     },
     onError: (error: any) => {
-      enqueueSnackbar('Error Deleting Designation', {
-        variant: 'error',
-      });
-      console.log('error deleting designation: ', error);
+      let message = 'Something went wrong';
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as any).response?.data?.message === 'string'
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 
@@ -88,10 +127,12 @@ const DesignationItemAction = ({
         maxWidth='md'
         fullScreen={belowLargeScreen}
       >
-        <DesignationForm
-          designation={designation}
-          setOpenDialog={setOpenEditDialog}
-        />
+        {openEditDialog && (
+          <EditDesignation
+            designation={designation}
+            setOpenEditDialog={setOpenEditDialog}
+          />
+        )}
       </Dialog>
       <JumboDdMenu
         icon={

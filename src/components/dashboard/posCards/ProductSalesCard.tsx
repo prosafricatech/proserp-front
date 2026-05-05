@@ -17,11 +17,11 @@ import {
   FormControl,
   Grid,
   InputLabel,
-  Skeleton,
   List,
   ListItem,
   MenuItem,
   Select,
+  Skeleton,
   Stack,
   TextField,
   Tooltip,
@@ -233,13 +233,10 @@ function ProductSalesCard() {
     );
   };
 
+  // ===== actions header ===== //
   const Actions = () => {
     return (
-      <Grid
-        container
-        columnSpacing={1}
-        sx={{ alignItems: 'center' }}
-      >
+      <Grid container columnSpacing={1} sx={{ alignItems: 'center' }}>
         <Grid size={{ xs: 3.5, md: 3 }}>
           <Div>
             <FormControl fullWidth size='small'>
@@ -376,12 +373,39 @@ function ProductSalesCard() {
             <Grid size={{ xs: 12, md: 3, lg: 3 }}>
               {isFetchingSalesPeople ? (
                 <Div sx={{ width: '100%', height: '100%', p: 1 }}>
-                  <Skeleton variant="text" width="40%" height={32} animation="wave" sx={{ mb: 1 }} />
-                  <Skeleton variant="rectangular" width="100%" height={160} animation="wave" sx={{ mb: 1, borderRadius: 2 }} />
+                  <Skeleton
+                    variant='text'
+                    width='40%'
+                    height={32}
+                    animation='wave'
+                    sx={{ mb: 1 }}
+                  />
+                  <Skeleton
+                    variant='rectangular'
+                    width='100%'
+                    height={160}
+                    animation='wave'
+                    sx={{ mb: 1, borderRadius: 2 }}
+                  />
                   <Div sx={{ display: 'flex', gap: 2 }}>
-                    <Skeleton variant="rounded" width={80} height={32} animation="wave" />
-                    <Skeleton variant="rounded" width={80} height={32} animation="wave" />
-                    <Skeleton variant="rounded" width={80} height={32} animation="wave" />
+                    <Skeleton
+                      variant='rounded'
+                      width={80}
+                      height={32}
+                      animation='wave'
+                    />
+                    <Skeleton
+                      variant='rounded'
+                      width={80}
+                      height={32}
+                      animation='wave'
+                    />
+                    <Skeleton
+                      variant='rounded'
+                      width={80}
+                      height={32}
+                      animation='wave'
+                    />
                   </Div>
                 </Div>
               ) : (
@@ -418,11 +442,11 @@ function ProductSalesCard() {
                 />
               )}
             </Grid>
-            {!smallScreen && 
+            {!smallScreen && (
               <Grid size={{ xs: 12, md: 6, lg: 4 }} textAlign='right'>
                 <Actions />
               </Grid>
-            }
+            )}
           </Grid>
         }
         sx={{
@@ -444,27 +468,28 @@ function ProductSalesCard() {
           mb={1}
           justifyContent={'center'}
         >
-          <Grid size={{ xs: 4, md: 3, lg: 1 }}>
+          <Grid size={{ xs: 12, md: 6, lg: 3.5 }}>
             <Typography sx={{ color: COLORS.default }}>
               -{' '}
               {topOptions.find((option) => option.value === params.top)?.name ||
                 params.top}
             </Typography>
           </Grid>
-          <Grid size={{ xs: 4, md: 3, lg: 1 }}>
+          <Grid size={{ xs: 6, lg: 1.5 }} textAlign={'end'}>
             <Typography sx={{ color: COLORS.quantity }}>- Quantity</Typography>
           </Grid>
-          <Grid size={{ xs: 4, md: 3, lg: 1 }}>
+          <Grid size={{ xs: 6, lg: 2 }} textAlign={'end'}>
             <Typography sx={{ color: COLORS.revenue }}>- Revenue</Typography>
           </Grid>
-          <Grid size={{ xs: 4, md: 3, lg: 1 }}>
+          <Grid size={{ xs: 6, lg: 2 }} textAlign={'end'}>
             <Typography sx={{ color: COLORS.cogs }}>- CoGS</Typography>
           </Grid>
-          <Grid size={{ xs: 6, md: 4 }}>
+          <Grid size={{ xs: 6, lg: 2 }} textAlign={'end'}>
             <Typography sx={{ color: COLORS.profit }}>
               - Profit & Margin
             </Typography>
           </Grid>
+          <Grid size={{ xs: 6, lg: 2 }} textAlign={'end'}></Grid>
         </Grid>
         <JumboScrollbar
           autoHeight
@@ -483,7 +508,12 @@ function ProductSalesCard() {
         >
           <List>
             {isLoading ? (
-              <Skeleton variant="rectangular" width="100%" height={40} sx={{ borderRadius: 2 }} />
+              <Skeleton
+                variant='rectangular'
+                width='100%'
+                height={40}
+                sx={{ borderRadius: 2 }}
+              />
             ) : popularProducts.length > 0 ? (
               popularProducts.map((product: any, index: number) => (
                 <React.Fragment key={index}>

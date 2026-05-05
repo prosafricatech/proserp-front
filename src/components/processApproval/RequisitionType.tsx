@@ -50,8 +50,29 @@ export interface Approval {
 
 export interface ApprovalChain {
   id: number;
-  process_type: "PURCHASE" | "PAYMENT";
+  process_type: "PURCHASE" | "PAYMENT" | "LEAVE_REQUEST";
   cost_center_id: number;
+}
+
+export interface LeaveRequisitionItem {
+  id?: number;
+  employee_id: number;
+  leave_type_id: number;
+  start_date: string;
+  end_date: string;
+  days_requested: number;
+  reason?: string;
+  employee?: {
+    id: number;
+    employee_number?: string;
+    first_name?: string;
+    last_name?: string;
+  };
+  leave_type?: {
+    id: number;
+    name?: string;
+  };
+  [key: string]: any;
 }
 
 export interface RelatableTransaction {
@@ -140,11 +161,12 @@ export interface BaseRequisition {
   creator: User;
   currency: Currency;
   next_approval_level: ApprovalChainLevel | null;
-  process_type: "PURCHASE" | "PAYMENT";
+  process_type: "PURCHASE" | "PAYMENT" | "LEAVE_REQUEST";
   reference: string | null;
   remarks: string | null;
   status: string;
   status_label: string;
+  leave_items?: LeaveRequisitionItem[];
 }
 
 export interface PurchaseRequisition extends BaseRequisition {
@@ -159,8 +181,13 @@ export interface PaymentRequisition extends BaseRequisition {
   is_fully_paid: boolean;
 }
 
-export type Requisition = PurchaseRequisition | PaymentRequisition;
-export type RequisitionItem = PurchaseItem | PaymentItem;
+export interface LeaveRequestRequisition extends BaseRequisition {
+  process_type: "LEAVE_REQUEST";
+  leave_items: LeaveRequisitionItem[];
+}
+
+export type Requisition = PurchaseRequisition | PaymentRequisition | LeaveRequestRequisition;
+export type RequisitionItem = PurchaseItem | PaymentItem | LeaveRequisitionItem;
 
 // For the list of requisitions
 export type RequisitionList = Requisition[];

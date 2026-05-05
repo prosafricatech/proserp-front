@@ -1,0 +1,489 @@
+import React, { useState } from 'react';
+import { 
+  Grid, 
+  Typography, 
+  Paper, 
+  Box, 
+  TableContainer, 
+  Table, 
+  TableHead, 
+  TableRow, 
+  TableCell, 
+  TableBody, 
+  LinearProgress, 
+  Tooltip, 
+  IconButton, 
+  Dialog,
+  useTheme
+} from '@mui/material';
+import RelatableOrderDetails from './form/RelatableOrderDetails';
+import { VisibilityOutlined } from '@mui/icons-material';
+import { useQuery } from '@tanstack/react-query';
+import purchaseServices from '@/components/procurement/purchases/purchase-services';
+import { readableDate } from '@/app/helpers/input-sanitization-helpers';
+import { Organization } from '@/types/auth-types';
+import { Approval, RequisitionItem } from '../../../RequisitionType';
+
+interface FetchRelatableDetailsProps {
+  approval: Approval;
+  relatable: {
+    id: string;
+  } | null;
+  toggleOpen: (open: boolean) => void;
+}
+
+interface ApprovalOnScreenProps {
+  approval: Approval;
+  organization: Organization;
+  belowLargeScreen: boolean;
+}
+
+type LeaveViewItem = {
+    id?: number;
+    employee_id?: number;
+    start_date?: string;
+    end_date?: string;
+    days_requested?: number;
+    reason?: string;
+    employee?: {
+        employee_number?: string;
+        first_name?: string;
+        last_name?: string;
+    };
+    leave_type?: {
+        name?: string;
+    };
+};
+
+const normalizeLeaveItem = (item: any): LeaveViewItem => ({
+    ...item,
+    days_requested: Number(item?.days_requested || 0),
+    employee:
+        item?.employee ||
+        (item?.employee_number || item?.first_name || item?.last_name
+            ? {
+                    employee_number: item?.employee_number,
+                    first_name: item?.first_name,
+                    last_name: item?.last_name,
+                }
+            : undefined),
+    leave_type:
+        item?.leave_type ||
+        (item?.leave_type_name
+            ? {
+                    name: item.leave_type_name,
+                }
+            : undefined),
+});
+
+const FetchRelatableDetails = ({ relatable, toggleOpen }: FetchRelatableDetailsProps) => {
+    const { data: orderDetails, isFetching } = useQuery({
+        queryKey: ['purchaseOrder', { id: relatable?.id }],
+        queryFn: async () => relatable?.id ? purchaseServices.orderDetails(relatable.id) : null
+    });
+
+    if (isFetching) {
+        return <LinearProgress/>;
+    }
+
+    return (
+        <RelatableOrderDetails order={orderDetails} toggleOpen={toggleOpen}/>
+    );
+};
+
+function ApprovalOnScreen({ approval, organization, belowLargeScreen }: ApprovalOnScreenProps) {
+    const theme = useTheme();
+    const [selectedRelated, setSelectedRelated] = useState<any>(null);
+    const [openViewDialog, setOpenViewDialog] = useState(false);
+
+    const mainColor = organization.settings?.main_color || "#2113AD";
+    const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || "#2113AD");
+    const contrastText = organization.settings?.contrast_text || "#FFFFFF";
+
+    const isPurchase = approval.requisition?.process_type?.toLowerCase() === 'purchase';
+    const isLeaveRequest = approval.requisition?.process_type?.toLowerCase() === 'leave_request';
+    const requisitionItems: RequisitionItem[] = approval?.requisition && 'items' in approval.requisition ? (approval.requisition.items || []) : [];
+    const leaveSource =
+        (approval.requisition?.leave_items && approval.requisition.leave_items.length
+            ? approval.requisition.leave_items
+            : requisitionItems.length
+              ? requisitionItems
+              : approval.items) || [];
+    const leaveItems: LeaveViewItem[] = (leaveSource as any[]).map(normalizeLeaveItem);
+
+    const totalVAT = approval.items
+        ?.filter((item: RequisitionItem) => (item.vat_percentage ?? 0) > 0)
+        .reduce((total: number, item: RequisitionItem) => 
+            total + (item.rate * item.quantity * (item.vat_percentage ?? 0) * 0.01), 0);
+
+    const grandTotal = approval.items
+        ?.reduce((total: number, item: RequisitionItem) => 
+            total + (item.quantity * item.rate * (1 + (item.vat_percentage ?? 0) * 0.01)), 0);
+
+    const subtotal = approval?.items?.reduce((total, item) => total + (item.quantity || 0) * (item.rate || 0), 0);
+    const totalLeaveDays = leaveItems.reduce((sum, item) => sum + Number(item.days_requested || 0), 0);
+
+    const formatCurrency = (amount: number) => {
+        return amount?.toLocaleString('en-US', { 
+            style: 'currency', 
+            currency: approval.requisition?.currency?.code,
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+    };
+
+    const formatNumber = (value: number) => {
+        return value.toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+    };
+
+    return (
+        <>
+            <Box sx={{ padding: 2 }}>
+                <Grid container spacing={2}>
+                    {/* Header Section */}
+                    <Grid size={12} sx={{ mb: 3 }}>
+                        <Box 
+                            sx={{ 
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                textAlign: 'center',
+                                width: '100%'
+                            }}
+                        >
+                            <Typography variant="h4" sx={{ color: headerColor }}>
+                                {isLeaveRequest ? 'LEAVE REQUEST APPROVAL' : isPurchase ? 'PURCHASE REQUISITION APPROVAL' : 'PAYMENT REQUISITION APPROVAL'}
+                            </Typography>
+                            <Typography variant="h6">
+                                {approval.requisition?.requisitionNo}
+                            </Typography>
+                        </Box>
+                    </Grid>
+
+                    {/* Approval Information */}
+                    <Grid container spacing={2} sx={{ mb: 3 }} width={'100%'}>
+                        <Grid size={{xs: 12}}>
+                            <Box>
+                                <Typography variant="subtitle2" sx={{ color: headerColor }}>
+                                    Approval Date
+                                </Typography>
+                                <Typography variant="body1">
+                                    {readableDate(approval.approval_date)}
+                                </Typography>
+                            </Box>
+                        </Grid>
+                    </Grid>
+
+                    {/* Items Table */}
+                    <Grid size={12}>
+                        {isLeaveRequest && (
+                            <TableContainer component={Paper} sx={{ boxShadow: theme.shadows[2], mb: 2 }}>
+                                <Table>
+                                    <TableHead>
+                                        <TableRow>
+                                            <TableCell sx={{ backgroundColor: mainColor, color: contrastText }}>S/N</TableCell>
+                                            <TableCell sx={{ backgroundColor: mainColor, color: contrastText }}>Employee</TableCell>
+                                            <TableCell sx={{ backgroundColor: mainColor, color: contrastText }}>Leave Type</TableCell>
+                                            <TableCell sx={{ backgroundColor: mainColor, color: contrastText }}>Start Date</TableCell>
+                                            <TableCell sx={{ backgroundColor: mainColor, color: contrastText }}>End Date</TableCell>
+                                            <TableCell sx={{ backgroundColor: mainColor, color: contrastText }} align="right">Days</TableCell>
+                                            <TableCell sx={{ backgroundColor: mainColor, color: contrastText }}>Reason</TableCell>
+                                        </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                        {leaveItems.map((item, index) => (
+                                            <TableRow key={item.id || `${index}-${item.start_date}`}>
+                                                <TableCell>{index + 1}</TableCell>
+                                                <TableCell>{[item.employee?.first_name, item.employee?.last_name, item.employee?.employee_number].filter(Boolean).join(' ')}</TableCell>
+                                                <TableCell>{item.leave_type?.name || '-'}</TableCell>
+                                                <TableCell>{readableDate(item.start_date, false)}</TableCell>
+                                                <TableCell>{readableDate(item.end_date, false)}</TableCell>
+                                                <TableCell align="right">{Number(item.days_requested || 0).toLocaleString()}</TableCell>
+                                                <TableCell>{item.reason || '-'}</TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </TableContainer>
+                        )}
+
+                   {!isLeaveRequest && (
+                        <TableContainer 
+                            component={Paper}
+                            sx={{
+                                boxShadow: theme.shadows[2],
+                                '& .MuiTableRow-root:hover': {
+                                    backgroundColor: theme.palette.action.hover,
+                                }
+                            }}
+                        >
+                            <Table>
+                                <TableHead>
+                                    <TableRow>
+                                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
+                                            S/N
+                                        </TableCell>
+                                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
+                                            {isPurchase ? 'Product' : 'Ledger'}
+                                        </TableCell>
+                                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
+                                            Quantity
+                                        </TableCell>
+                                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
+                                            Rate
+                                        </TableCell>
+                                        {isPurchase && approval.vat_amount > 0 && (
+                                            <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
+                                                VAT
+                                            </TableCell>
+                                        )}
+                                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }} align="right">
+                                            Amount
+                                        </TableCell>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {approval?.items?.map((item: RequisitionItem, index: number) => (
+                                        <React.Fragment key={item.id}>
+                                            <TableRow sx={{ 
+                                                backgroundColor: theme.palette.background.paper,
+                                                '&:nth-of-type(even)': {
+                                                    backgroundColor: theme.palette.action.hover,
+                                                }
+                                            }}>
+                                                <TableCell>{index + 1}</TableCell>
+                                                <TableCell>
+                                                    <Box>
+                                                        <Typography variant="body2">
+                                                            {isPurchase
+                                                                ? item.requisition_product?.product?.name
+                                                                : item.requisition_ledger_item?.ledger?.name
+                                                            }
+                                                        </Typography>
+                                                        {item.remarks && (
+                                                            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem', mt: 0.5 }}>
+                                                                ({item.remarks})
+                                                            </Typography>
+                                                        )}
+                                                        {item.relatableNo && (
+                                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                                                                <Tooltip title="Related to">
+                                                                    <Typography variant="body2" component="span" color="primary.main">
+                                                                        {item.relatableNo}
+                                                                    </Typography>
+                                                                </Tooltip>
+                                                                <Tooltip title="View Order">
+                                                                    <IconButton 
+                                                                        size='small' 
+                                                                        onClick={() => {
+                                                                            setSelectedRelated(item.relatable); 
+                                                                            setOpenViewDialog(true);
+                                                                        }}
+                                                                        sx={{ 
+                                                                            color: 'primary.main',
+                                                                            '&:hover': { backgroundColor: 'rgba(25, 118, 210, 0.04)' }
+                                                                        }}
+                                                                    >
+                                                                        <VisibilityOutlined fontSize="small"/>
+                                                                    </IconButton>
+                                                                </Tooltip>
+                                                            </Box>
+                                                        )}
+                                                    </Box>
+                                                </TableCell>
+                                                <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
+                                                    {`${item.quantity?.toLocaleString()} ${item.measurement_unit?.symbol || item.requisition_ledger_item?.measurement_unit?.symbol}`}
+                                                </TableCell>
+                                                <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
+                                                    {formatNumber(item.rate)}
+                                                </TableCell>
+                                                {isPurchase && approval.vat_amount > 0 && (
+                                                    <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
+                                                        {formatNumber((item.rate * (item.vat_percentage ?? 0) * 0.01))}
+                                                    </TableCell>
+                                                )}
+                                                <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
+                                                    {formatCurrency(item.quantity * item.rate * (1 + (item.vat_percentage ?? 0) * 0.01))}
+                                                </TableCell>
+                                            </TableRow>
+
+                                            {/* Vendors Section */}
+                                            {Array.isArray(item?.vendors) && item.vendors.length > 0 && (
+                                                <React.Fragment>
+                                                    <TableRow>
+                                                        <TableCell 
+                                                            colSpan={isPurchase && approval.vat_amount > 0 ? 6 : 5} 
+                                                            sx={{ 
+                                                                textAlign: 'center', 
+                                                                backgroundColor: theme.palette.background.default,
+                                                                fontSize: '0.875rem',
+                                                                borderBottom: `1px solid ${theme.palette.divider}`
+                                                            }}
+                                                        >
+                                                            Vendors
+                                                        </TableCell>
+                                                    </TableRow>
+                                                    {item.vendors?.map((vendor, i) => (
+                                                        <TableRow 
+                                                            key={vendor.id} 
+                                                            sx={{ 
+                                                                backgroundColor: theme.palette.background.paper,
+                                                                '&:nth-of-type(even)': {
+                                                                    backgroundColor: theme.palette.action.hover,
+                                                                }
+                                                            }}
+                                                        >
+                                                            <TableCell colSpan={2}>{vendor.name}</TableCell>
+                                                            <TableCell colSpan={isPurchase && approval.vat_amount > 0 ? 4 : 3}>
+                                                                {vendor.remarks}
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    ))}
+                                                </React.Fragment>
+                                            )}
+                                        </React.Fragment>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </TableContainer>
+                        )}
+                    </Grid>
+
+                    {/* Totals Section */}
+                    <Grid size={12}>
+                            <Box 
+                                sx={{ 
+                                    mt: 3, 
+                                    p: 2, 
+                                    backgroundColor: theme.palette.background.default,
+                                    border: `1px solid ${theme.palette.divider}`,
+                                    borderRadius: 1
+                                }}
+                            >
+                                {isLeaveRequest ? (
+                                    <Grid container spacing={1}>
+                                        <Grid size={7}>
+                                            <Typography variant="h6" color={headerColor}>
+                                                Total Leave Days
+                                            </Typography>
+                                        </Grid>
+                                        <Grid size={5} sx={{ textAlign: 'right' }}>
+                                            <Typography variant="h6" color={headerColor} fontFamily="monospace">
+                                                {totalLeaveDays.toLocaleString()} day(s)
+                                            </Typography>
+                                        </Grid>
+                                    </Grid>
+                                ) : (
+                                <Grid container spacing={1}>
+                                        <>
+                                            <Grid size={7}>
+                                                <Typography variant="body1">
+                                                    Subtotal
+                                                </Typography>
+                                            </Grid>
+                                            <Grid size={5} sx={{ textAlign: 'right' }}>
+                                                <Typography variant="body1" fontFamily="monospace">
+                                                    {formatCurrency(subtotal)}
+                                                </Typography>
+                                            </Grid>
+
+                                            {isPurchase && (totalVAT ?? 0) > 0 && (
+                                                <>
+                                                    <Grid size={7}>
+                                                        <Typography variant="body1">
+                                                            VAT
+                                                        </Typography>
+                                                    </Grid>
+                                                    <Grid size={5} sx={{ textAlign: 'right' }}>
+                                                        <Typography variant="body1" fontFamily="monospace">
+                                                            {formatCurrency(totalVAT ?? 0)}
+                                                        </Typography>
+                                                    </Grid>
+                                                    <Grid size={7}>
+                                                        <Typography variant="h6" color={headerColor}>
+                                                            Grand Total
+                                                        </Typography>
+                                                    </Grid>
+                                                    <Grid size={5} sx={{ textAlign: 'right' }}>
+                                                        <Typography variant="h6" color={headerColor} fontFamily="monospace">
+                                                            {formatCurrency(grandTotal ?? 0)}
+                                                        </Typography>
+                                                    </Grid>
+                                                </>
+                                            )}
+
+                                            {!isPurchase && (
+                                                <>
+                                                    <Grid size={7}>
+                                                        <Typography variant="h6" color={headerColor}>
+                                                            Total
+                                                        </Typography>
+                                                    </Grid>
+                                                    <Grid size={5} sx={{ textAlign: 'right' }}>
+                                                        <Typography variant="h6" color={headerColor} fontFamily="monospace">
+                                                            {formatCurrency(subtotal)}
+                                                        </Typography>
+                                                    </Grid>
+                                                </>
+                                            )}
+                                        </>
+                                </Grid>
+                                )}
+                            </Box>
+                        </Grid>
+
+                    {/* Remarks Section */}
+                    {approval.remarks && (
+                        <Grid size={12} sx={{ mt: 2 }}>
+                            <Typography variant="subtitle2" sx={{ color: headerColor }}>
+                                Approval Remarks
+                            </Typography>
+                            <Typography variant="body1">
+                                {approval.remarks}
+                            </Typography>
+                        </Grid>
+                    )} 
+
+                    <Grid size={{xs: 12, sm: 6}}>
+                        <Box>
+                            <Typography variant="subtitle2" sx={{ color: headerColor }}>
+                                Requested By
+                            </Typography>
+                            <Typography variant="body1">{approval.requisition?.creator.name}</Typography>
+                        </Box>
+                    </Grid>
+                    
+                    <Grid size={{xs: 12, sm: 6}}>
+                        <Box>
+                            <Typography variant="subtitle2" sx={{ color: headerColor }}>
+                                Approved By
+                            </Typography>
+                            <Typography variant="body1">{approval?.creator?.name}</Typography>
+                        </Box>
+                    </Grid>
+                </Grid>
+            </Box>
+
+            {/* Relatable Details Dialog */}
+            <Dialog 
+                open={openViewDialog} 
+                fullScreen={belowLargeScreen} 
+                maxWidth='lg' 
+                fullWidth 
+                onClose={() => setOpenViewDialog(false)}
+            >
+                <FetchRelatableDetails 
+                    approval={approval} 
+                    relatable={selectedRelated} 
+                    toggleOpen={setOpenViewDialog} 
+                />
+            </Dialog>
+        </>
+    );
+}
+
+export default ApprovalOnScreen;

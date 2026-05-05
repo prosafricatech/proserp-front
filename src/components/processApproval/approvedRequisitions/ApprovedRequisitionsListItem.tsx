@@ -4,6 +4,7 @@ import {
   AccordionDetails,
   AccordionSummary,
   Badge,
+  Button,
   Chip,
   Grid,
   ListItemText,
@@ -11,18 +12,21 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
+import { useParams, useRouter } from 'next/navigation';
 import RemoveIcon from '@mui/icons-material/Remove';
 import AddIcon from '@mui/icons-material/Add';
 import ApprovedPurchaseActionTail from './approvedPurchase/ApprovedPurchaseActionTail';
 import ApprovedPurchaseListItem from './approvedPurchase/ApprovedPurchaseListItem';
 import ApprovedPaymentActionTail from './approvedPayment/ApprovedPaymentActionTail';
 import ApprovedPaymentListItem from './approvedPayment/ApprovedPaymentListItem';
-import ApprovalItemAction from '../listItem/tabs/ApprovalItemAction';
+import ApprovedLeaveRequestListItem from './ApprovedLeaveRequestListItem';
+import ApprovalItemAction from '../requisitions/listItem/tabs/ApprovalItemAction';
 import { CreditScoreOutlined, ShoppingCartOutlined, VerifiedRounded } from '@mui/icons-material';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { ApprovalRequisition, PaymentApprovalRequisition, PurchaseApprovalRequisition } from './ApprovalRequisitionType';
+import { processTypeConfig } from '../utils/requisition';
 
 interface ApprovedRequisitionsListItemProps {
   approvedRequisition: ApprovalRequisition;
@@ -33,6 +37,8 @@ const ApprovedRequisitionsListItem: React.FC<ApprovedRequisitionsListItemProps> 
 }) => {
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
   const { checkOrganizationPermission } = useJumboAuth();
+  const router = useRouter();
+  const { lang } = useParams<{ lang: string }>();
 
   const handleChange = (id: number) => {
     setExpanded(prev => ({
@@ -42,11 +48,16 @@ const ApprovedRequisitionsListItem: React.FC<ApprovedRequisitionsListItemProps> 
   };
 
   const isPayment = approvedRequisition.process_type === 'PAYMENT';
+  const isLeaveRequest = approvedRequisition.process_type === 'LEAVE_REQUEST';
+  const processConfig = processTypeConfig[approvedRequisition.process_type as keyof typeof processTypeConfig] || {
+    label: approvedRequisition.process_type,
+    color: 'default' as const,
+  };
   const paymentsCount = isPayment ? (approvedRequisition as PaymentApprovalRequisition).payments_count : 0;
-  const purchasesCount = !isPayment ? (approvedRequisition as PurchaseApprovalRequisition).purchase_orders_count : 0;
+  const purchasesCount = !isPayment && !isLeaveRequest ? (approvedRequisition as PurchaseApprovalRequisition).purchase_orders_count : 0;
   const paymentsOrPurchasesCount = isPayment ? paymentsCount : purchasesCount;
 
-  const isFullyProcessed = isPayment 
+  const isFullyProcessed = isLeaveRequest ? false : isPayment 
     ? (approvedRequisition as PaymentApprovalRequisition).is_fully_paid 
     : (approvedRequisition as PurchaseApprovalRequisition).is_fully_ordered;
   const hasProcessItems = paymentsOrPurchasesCount > 0;
@@ -114,8 +125,8 @@ const ApprovedRequisitionsListItem: React.FC<ApprovedRequisitionsListItemProps> 
 
           <Grid size={{ xs: 12, md: 2.5 }}>
             <Tooltip title="Process">
-              <Typography textTransform="capitalize">
-                {approvedRequisition.process_type.toLowerCase()}
+              <Typography variant="body2">
+                {processConfig.label}
               </Typography>
             </Tooltip>
             <Tooltip title="Cost Center">
@@ -141,10 +152,12 @@ const ApprovedRequisitionsListItem: React.FC<ApprovedRequisitionsListItemProps> 
           <Grid size={{ xs: 8, md: 2.5, lg: 1.7 }}>
             <Tooltip title="Amount">
               <Typography>
-                {(approvedRequisition.amount + approvedRequisition.vat_amount)?.toLocaleString('en-US', {
-                  style: 'currency',
-                  currency: approvedRequisition.currency?.code,
-                })}
+                {isLeaveRequest
+                  ? `${(approvedRequisition.requisition?.leave_items || approvedRequisition.leave_items || []).reduce((sum, item) => sum + Number(item.days_requested || 0), 0)} day(s)`
+                  : (approvedRequisition.amount + approvedRequisition.vat_amount)?.toLocaleString('en-US', {
+                      style: 'currency',
+                      currency: approvedRequisition.currency?.code,
+                    })}
               </Typography>
             </Tooltip>
             <Tooltip title="Status">
@@ -164,7 +177,7 @@ const ApprovedRequisitionsListItem: React.FC<ApprovedRequisitionsListItemProps> 
               alignItems="center"
               mt={2}
             >
-              {(hasProcessItems && (!isFullyProcessed || paymentsOrPurchasesCount > 1)) && (
+              {!isLeaveRequest && (hasProcessItems && (!isFullyProcessed || paymentsOrPurchasesCount > 1)) && (
                 <Tooltip title={isPayment ? 'Payments Count' : 'Purchase Orders Count'}>
                   <Badge
                     badgeContent={paymentsOrPurchasesCount}
@@ -179,7 +192,7 @@ const ApprovedRequisitionsListItem: React.FC<ApprovedRequisitionsListItemProps> 
                 </Tooltip>
               )}
 
-              {isFullyProcessed && (
+              {!isLeaveRequest && isFullyProcessed && (
                 <Tooltip title={isPayment ? 'Fully Paid' : 'Fully Ordered'}>
                   <VerifiedRounded fontSize="small" color="success" />
                 </Tooltip>
@@ -200,7 +213,7 @@ const ApprovedRequisitionsListItem: React.FC<ApprovedRequisitionsListItemProps> 
                 <ApprovalItemAction approval={approvedRequisition as any} hideOtherActions />
               </Grid>
               <Grid>
-                {!isPayment && 
+                {!isPayment && !isLeaveRequest &&
                   checkOrganizationPermission([PERMISSIONS.APPROVED_REQUISITIONS_PURCHASE]) && 
                   !(approvedRequisition as PurchaseApprovalRequisition).is_fully_ordered && (
                     <ApprovedPurchaseActionTail
@@ -216,12 +229,23 @@ const ApprovedRequisitionsListItem: React.FC<ApprovedRequisitionsListItemProps> 
                       isExpanded={expanded[approvedRequisition.id]}
                     />
                   )}
+                {isLeaveRequest && (
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    onClick={() => router.push(`/${lang}/humanResources/leave-requests?requisition_id=${approvedRequisition.requisition.id}`)}
+                  >
+                    View Leave Records
+                  </Button>
+                )}
               </Grid>
             </Grid>
           </Grid>
 
           <Grid size={{ xs: 12 }}>
-            {isPayment ? (
+            {isLeaveRequest ? (
+              <ApprovedLeaveRequestListItem approvedRequisition={approvedRequisition} />
+            ) : isPayment ? (
               <ApprovedPaymentListItem
                 approvedRequisition={approvedRequisition as PaymentApprovalRequisition}
                 isExpanded={expanded[approvedRequisition.id]}
