@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { Alert, Grid, IconButton, LinearProgress, TextField, Tooltip } from '@mui/material';
+import DiscountCalculatorDialog from './DiscountCalculatorDialog';
 import { useForm } from 'react-hook-form';
-import { AddOutlined, CheckOutlined, DisabledByDefault } from '@mui/icons-material';
+import { AddOutlined, CalculateOutlined, CheckOutlined, DisabledByDefault } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -77,9 +78,10 @@ function FuelVouchers({ cashierPumpProducts, index = -1, setShowForm = null, fue
   const updateItems = async (item) => {
     setIsAdding(true);
     if (index > -1) {
+      const nextItem = fuelVoucher?.id ? { ...item, id: fuelVoucher.id } : item;
       // Replace the existing item with the edited item
       let updatedFuelVouchers = [...fuelVouchers];
-      updatedFuelVouchers[index] = item;
+      updatedFuelVouchers[index] = nextItem;
       await setFuelVouchers(updatedFuelVouchers);
     } else {
       // Add the new item to the fuelVouchers array
@@ -94,6 +96,8 @@ function FuelVouchers({ cashierPumpProducts, index = -1, setShowForm = null, fue
 
   const [quantityFieldKey, setQuantityFieldKey] = useState(0)
   const [amountFieldKey, setAmountFieldKey] = useState(0)
+  const [discountDialogOpen, setDiscountDialogOpen] = useState(false);
+  const selectedProductPrice = productPrices.find(price => price?.product_id === watch('product_id'))?.price || 0;
 
   const calculateAndSetValues = (field, value) => {
     const productId = watch('product_id');
@@ -199,8 +203,8 @@ function FuelVouchers({ cashierPumpProducts, index = -1, setShowForm = null, fue
             />
           </Div>
         </Grid>
-       <Grid size={{xs:12, md:4, lg: !watch(`stakeholder_id`) ? 1.5 : 1.5}}>
-          <Div sx={{ mt: 1}}>
+        <Grid size={{xs:12, md:4, lg: !watch(`stakeholder_id`) ? 2 : 2}}>
+          <Div sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <TextField
               size="small"
               fullWidth
@@ -222,10 +226,24 @@ function FuelVouchers({ cashierPumpProducts, index = -1, setShowForm = null, fue
             />
           </Div>
         </Grid>
-        <Grid size={{xs:12, md:4, lg: !watch(`stakeholder_id`) ? 2.5 : 2}}>
-          <Div sx={{ mt: 1}}>
+        <DiscountCalculatorDialog
+          open={discountDialogOpen}
+          onClose={() => setDiscountDialogOpen(false)}
+          onSubmit={({ netAmount }) => {
+            const calculatedQuantity = selectedProductPrice
+              ? sanitizedNumber(netAmount / selectedProductPrice)
+              : 0;
+            setValue('quantity', calculatedQuantity, { shouldValidate: true, shouldDirty: true });
+            setValue('amount', netAmount, { shouldValidate: true, shouldDirty: true });
+            setQuantityFieldKey(key => key + 1);
+            setAmountFieldKey(key => key + 1);
+          }}
+          productPrice={selectedProductPrice}
+        />
+        <Grid size={{xs:12, md:4, lg: !watch(`stakeholder_id`) ? 2 : 2}}>
+          <Div sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <TextField
-              label="Amount"
+              label="Amount (TZS)"
               fullWidth
               key={amountFieldKey}
               size='small'
@@ -233,13 +251,23 @@ function FuelVouchers({ cashierPumpProducts, index = -1, setShowForm = null, fue
               InputProps={{
                 inputComponent: CommaSeparatedField,
               }}
-              disabled={!watch('product_id')}
               onChange={(e) => {
                 const value = sanitizedNumber(e.target.value);
                 setValue('amount', value, { shouldValidate: true, shouldDirty: true });
                 calculateAndSetValues('amount', value);
               }}
             />
+            {watch('expense_ledger_id') && (
+              <Tooltip title="Open discount calculator">
+                <IconButton
+                  size='small'
+                  color='primary'
+                  onClick={() => setDiscountDialogOpen(true)}
+                >
+                  <CalculateOutlined fontSize='small' />
+                </IconButton>
+              </Tooltip>
+            )}
           </Div>
         </Grid>
         <Grid size={{xs:12, md:4, lg: !watch(`stakeholder_id`) ? 4 : 5}}>
@@ -258,7 +286,7 @@ function FuelVouchers({ cashierPumpProducts, index = -1, setShowForm = null, fue
             />
           </Div>
         </Grid>
-        <Grid size={{xs:12, md:!watch(`stakeholder_id`)? 12 : 4, lg:!watch(`stakeholder_id`) ? 4 : 7}}>
+        <Grid size={{xs:12, md:!watch(`stakeholder_id`)? 12 : 4, lg:!watch(`stakeholder_id`) ? (watch('expense_ledger_id') ? 8 : 4 ): 7}}>
           <Div sx={{ mt: 1}}>
             <TextField
               size="small"
@@ -311,3 +339,4 @@ function FuelVouchers({ cashierPumpProducts, index = -1, setShowForm = null, fue
 }
 
 export default FuelVouchers;
+

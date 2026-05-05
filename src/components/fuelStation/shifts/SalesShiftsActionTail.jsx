@@ -20,7 +20,7 @@ const SalesShiftsActionTail = () => {
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
-  if (!checkOrganizationPermission(PERMISSIONS.FUEL_SALES_SHIFT_CREATE)) {
+  if (!checkOrganizationPermission(PERMISSIONS.FUEL_SALES_SHIFTS_CREATE)) {
     return null;
   }
   

@@ -15,26 +15,18 @@ productCategoryServices.getCategoryOptions = async() => {
 }
 
 productCategoryServices.add = async(productCategory) => {
-   return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.post(`/api/masters/products/product_categories/add`,productCategory)
-        return data;
-    })
+    const {data} = await axios.post(`/api/masters/products/product_categories/add`,productCategory)
+    return data;
 }
 
 productCategoryServices.update = async(productCategory) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.put(`/api/masters/products/product_categories/${productCategory.id}/update`,productCategory)
-        return data;
-    });
+    const {data} = await axios.put(`/api/masters/products/product_categories/${productCategory.id}/update`,productCategory)
+    return data;
 }
 
-
 productCategoryServices.delete = async (productCategory) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.delete(`/api/masters/products/product_categories/${productCategory.id}/delete`);
-        return data;
-    })
+    const {data} = await axios.delete(`/api/masters/products/product_categories/${productCategory.id}/delete`);
+    return data;
 };
-
 
 export default productCategoryServices;

@@ -13,7 +13,7 @@ import {
   DialogContent,
   Grid,
   IconButton,
-  LinearProgress,
+  Skeleton,
   Tooltip,
   Typography,
   useMediaQuery,
@@ -109,7 +109,7 @@ function LowStockAlerts() {
         }
       >
       {
-        isLoading ? <LinearProgress/> :
+        isLoading ? <Skeleton variant="rectangular" width="100%" height={smallScreen ? 60 : 40} sx={{ borderRadius: 2 }} /> :
         <JumboScrollbar
             autoHeight
             autoHeightMin={!isLoading && stores.length < 1 ? 200 : (smallScreen ? 300 : 250)}

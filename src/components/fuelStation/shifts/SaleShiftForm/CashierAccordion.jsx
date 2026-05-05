@@ -35,37 +35,83 @@ export default function CashierAccordion({
   const {activeStation} = useContext(StationFormContext);
   const { fuel_pumps, products } = activeStation;
   
-  const formFuelVouchers = watch(`cashiers.${index}.fuel_vouchers`) || [];
-  const formAdjustments = watch(`cashiers.${index}.adjustments`) || [];
-  const formPumpReadings = watch(`cashiers.${index}.pump_readings`) || [];
+  const watchedFuelVouchers = watch(`cashiers.${index}.fuel_vouchers`);
+  const watchedAdjustments = watch(`cashiers.${index}.adjustments`);
+  const watchedPumpReadings = watch(`cashiers.${index}.pump_readings`);
+  const formFuelVouchers = Array.isArray(watchedFuelVouchers) ? watchedFuelVouchers : [];
+  const formAdjustments = Array.isArray(watchedAdjustments) ? watchedAdjustments : [];
+  const formPumpReadings = Array.isArray(watchedPumpReadings) ? watchedPumpReadings : [];
   const formSelectedPumps = watch(`cashiers.${index}.selected_pumps`) || [];
+  const prevKey = `${index}-${JSON.stringify(lastClosingReadings || {})}`;
   
   const [localFuelVouchers, setLocalFuelVouchers] = useState(formFuelVouchers);
   const [localAdjustments, setLocalAdjustments] = useState(formAdjustments);
   const [localPumpReadings, setLocalPumpReadings] = useState(formPumpReadings);
+
+  const toSnapshot = (value) => {
+    try {
+      return JSON.stringify(value ?? []);
+    } catch {
+      return '[]';
+    }
+  };
   
   useEffect(() => {
-    const currentFuelVouchers = watch(`cashiers.${index}.fuel_vouchers`) || [];
-    const currentAdjustments = watch(`cashiers.${index}.adjustments`) || [];
-    const currentPumpReadings = watch(`cashiers.${index}.pump_readings`) || [];
-    
-    setLocalFuelVouchers(currentFuelVouchers);
-    setLocalAdjustments(currentAdjustments);
-    setLocalPumpReadings(currentPumpReadings);
-  }, [watch, index]);
+    setLocalFuelVouchers((prev) => {
+      return toSnapshot(prev) === toSnapshot(formFuelVouchers) ? prev : formFuelVouchers;
+    });
+    // Only update localAdjustments if snapshot is different
+    setLocalAdjustments((prev) => {
+      return toSnapshot(prev) === toSnapshot(formAdjustments) ? prev : formAdjustments;
+    });
+    setLocalPumpReadings((prev) => {
+      return toSnapshot(prev) === toSnapshot(formPumpReadings) ? prev : formPumpReadings;
+    });
+  }, [
+    toSnapshot(formFuelVouchers),
+    toSnapshot(formAdjustments),
+    toSnapshot(formPumpReadings),
+  ]);
 
-  const cashierPumpProducts = products?.filter(product =>
-    formSelectedPumps?.some(
-      pumpId => fuel_pumps.find(p => p.id === pumpId && p.product_id === product.id)
-    )
-  );
+  // formSelectedPumps is now array of objects { pump_id, tank_id }
+  // cashierPumpProducts: [{ product, tankIds: [id, ...] }]
+  const cashierPumpProducts = products
+    ?.map(product => {
+      // Find all selected pumps for this product
+      const selectedPumpsForProduct = formSelectedPumps?.filter(sel => {
+        const pumpId = sel.pump_id ?? sel;
+        const pump = fuel_pumps.find(p => p.id === pumpId && p.product_id === product.id);
+        return !!pump;
+      }) || [];
+      if (selectedPumpsForProduct.length > 0) {
+        // Collect all tank ids for this product from selected pumps
+        const tankIds = selectedPumpsForProduct
+          .map(sel => {
+            const pumpId = sel.pump_id ?? sel;
+            const pump = fuel_pumps.find(p => p.id === pumpId && p.product_id === product.id);
+            return sel.tank_id ?? pump?.tank_id ?? null;
+          })
+          .filter(Boolean);
+        return {
+          ...product,
+          tankIds,
+        };
+      }
+      return null;
+    })
+    .filter(Boolean);
 
   const updateFuelVouchers = (newVouchers) => {
-    setLocalFuelVouchers(newVouchers);
+    const resolvedVouchers = typeof newVouchers === 'function'
+      ? newVouchers(Array.isArray(localFuelVouchers) ? localFuelVouchers : [])
+      : newVouchers;
+    const safeVouchers = Array.isArray(resolvedVouchers) ? resolvedVouchers : [];
+
+    setLocalFuelVouchers(safeVouchers);
     if (onFuelVouchersChange) {
-      onFuelVouchersChange(newVouchers);
+      onFuelVouchersChange(safeVouchers);
     } else {
-      setValue(`cashiers.${index}.fuel_vouchers`, newVouchers, {
+      setValue(`cashiers.${index}.fuel_vouchers`, safeVouchers, {
         shouldValidate: true,
         shouldDirty: true
       });
@@ -162,6 +208,8 @@ export default function CashierAccordion({
 
         <div style={{ display: tab === 0 ? 'block' : 'none' }}>
           <PumpReadings
+            key={prevKey}
+            prevKey={prevKey}
             name={`cashiers.${index}.pump_readings`}
             control={control}
             cashierIndex={index}
@@ -178,8 +226,6 @@ export default function CashierAccordion({
             cashierIndex={index}
             localFuelVouchers={localFuelVouchers}
             setLocalFuelVouchers={updateFuelVouchers}
-            setValue={setValue}
-            onFuelVouchersChange={onFuelVouchersChange}
             cashierPumpProducts={cashierPumpProducts}
           />
         </div>

@@ -61,6 +61,14 @@ function ShiftSummary({ paymentItems = [] }) {
     return productPrices.find(p => p?.product_id === productId)?.price || 0;
   };
 
+  const isCashDebitPayment = (item) => {
+    const debitLedgerGroupId =
+      item?.debit_ledger?.ledger_group_id ||
+      ungroupedLedgerOptions.find(l => l.id === item?.debit_ledger_id)?.ledger_group_id;
+
+    return Number(debitLedgerGroupId) === 13;
+  };
+
   const calculateCashierMainLedgerAmount = (cashier) => {
     if (cashier.main_ledger_amount !== undefined && cashier.main_ledger_amount !== null) {
       return cashier.main_ledger_amount;
@@ -72,16 +80,13 @@ function ShiftSummary({ paymentItems = [] }) {
     const cashTransactions = cashier.other_transactions || [];
     const selectedPumps = cashier.selected_pumps || [];
     const mainLedgerId = cashier.main_ledger?.id || cashier.main_ledger_id;
-    
     let productsTotal = 0;
-    
-    selectedPumps.forEach(pumpId => {
+    selectedPumps.forEach(sel => {
+      const pumpId = sel.pump_id ?? sel;
       const pump = fuel_pumps?.find(p => p.id === pumpId);
       if (!pump) return;
-
       const productId = pump.product_id;
       const reading = pumpReadings.find(r => r?.fuel_pump_id === pumpId);
-
       if (reading) {
         const sold = (sanitizedNumber(reading.closing) - sanitizedNumber(reading.opening)) || 0;
         const price = getProductPrice(productId);
@@ -125,8 +130,12 @@ function ShiftSummary({ paymentItems = [] }) {
   };
 
   const totalCollectedAmount = useMemo(() => {
-    return allCashiers.reduce((sum, cashier) => sum + sanitizedNumber(cashier.collected_amount), 0);
-  }, [allCashiers]);
+    const paymentsReceivedTotal = paymentItems
+      .filter(isCashDebitPayment)
+      .reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+
+    return allCashiers.reduce((sum, cashier) => sum + sanitizedNumber(cashier.collected_amount), 0) + paymentsReceivedTotal;
+  }, [allCashiers, paymentItems, ungroupedLedgerOptions]);
 
   const mainLedgersSummary = useMemo(() => {
     const summary = [];
@@ -244,7 +253,8 @@ function ShiftSummary({ paymentItems = [] }) {
     const pumpReadings = cashier.pump_readings || [];
     const selectedPumps = cashier.selected_pumps || [];
     let cashierProductsTotal = 0;
-    selectedPumps.forEach(pumpId => {
+    selectedPumps.forEach(sel => {
+      const pumpId = sel.pump_id ?? sel;
       const pump = fuel_pumps?.find(p => p.id === pumpId);
       if (!pump) return;
       const productId = pump.product_id;
@@ -320,14 +330,12 @@ function ShiftSummary({ paymentItems = [] }) {
     allCashiers.forEach(cashier => {
       const pumpReadings = cashier.pump_readings || [];
       const selectedPumps = cashier.selected_pumps || [];
-
-      selectedPumps.forEach(pumpId => {
+      selectedPumps.forEach(sel => {
+        const pumpId = sel.pump_id ?? sel;
         const pump = fuel_pumps?.find(p => p.id === pumpId);
         if (!pump) return;
-
         const productId = pump.product_id;
         const reading = pumpReadings.find(r => r?.fuel_pump_id === pumpId);
-
         if (reading) {
           const sold = (sanitizedNumber(reading.closing) - sanitizedNumber(reading.opening)) || 0;
           totals[productId] = (totals[productId] || 0) + sold;
@@ -521,7 +529,7 @@ function ShiftSummary({ paymentItems = [] }) {
       </Card>
     );
   };
-
+ 
   const renderFinancialLedgersSummary = () => (
     <Card variant="outlined" sx={{ mb: 3 }}>
       <CardContent>

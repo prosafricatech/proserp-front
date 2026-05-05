@@ -5,11 +5,13 @@ import {
   faUsersGear,
 } from '@fortawesome/free-solid-svg-icons';
 import {
+  AccountBalanceOutlined,
   AccountTreeOutlined,
   AssessmentOutlined,
   BusinessCenterOutlined,
   CardMembershipOutlined,
   ChecklistRtlOutlined,
+  ContactPage,
   CorporateFareOutlined,
   CurrencyExchangeOutlined,
   DashboardCustomizeOutlined,
@@ -57,6 +59,7 @@ export const ICONS = {
   invitations: ShareOutlined,
   stakeholders: HandshakeOutlined,
   currencies: CurrencyExchangeOutlined,
+  banks: AccountBalanceOutlined,
   measurement_units: StraightenOutlined,
   filesShelf: faFolderOpen,
   usersManagement: ManageAccountsOutlined,
@@ -76,6 +79,7 @@ export const ICONS = {
   editAttributes: EditAttributesOutlined,
   accountTree: AccountTreeOutlined,
   employees: PeopleAltOutlined,
+  employee_contracts: ContactPage,
   businessCenter: BusinessCenterOutlined,
 } as const;
 

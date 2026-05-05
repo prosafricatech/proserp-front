@@ -169,75 +169,92 @@ const UpdatesAccordion = ({ accordionExpanded, handleChange, update }) => {
         }}
       >
         <Grid container paddingLeft={1} width={'100%'} columnSpacing={1} rowSpacing={1} alignItems={'center'}>
-          <Grid size={11}>
+          <Grid size={6}>
             <Tooltip title="Start Date">
               <Typography variant="h5" fontSize={14} lineHeight={1.25} mb={0} noWrap>
                 {readableDate(update.update_date, true)}
               </Typography>
             </Tooltip>
           </Grid>
-          <Grid size={1} textAlign={'end'}>
-            <UpdateItemAction update={update} setIsUpdateFormOpen={setIsUpdateFormOpen} />
+          <Grid size={6}>
+            <Tooltip title="Date Modified">
+              <Typography variant="h5" fontSize={14} lineHeight={1.25} mb={0} noWrap>
+                {readableDate(update.updated_at, true)}
+              </Typography>
+            </Tooltip>
           </Grid>
         </Grid>
       </AccordionSummary>
 
       <AccordionDetails sx={{ backgroundColor: 'background.paper', marginBottom: 3 }}>
-        {isFetching || error ? (
-          <Stack spacing={2}>
-            <Stack spacing={1}>
-              <Skeleton variant="rectangular" height={32} width={120} />
-              <Skeleton variant="rectangular" height={32} width={220} />
-              <Skeleton variant="rectangular" height={32} width={180} />
-            </Stack>
-            <Skeleton variant="rectangular" height={48} width="100%" />
-            <Skeleton variant="rectangular" height={48} width="100%" />
-          </Stack>
-        ) : updateDetails ? (
-          <>
-            <Tabs
-              value={tabValue}
-              onChange={(_, newValue) => setTabValue(newValue)}
-              variant="scrollable"
-              scrollButtons="auto"
-              allowScrollButtonsMobile
-              sx={{ mb: 2 }}
-            >
-              <Tab label="Description" />
-              <Tab label="Tasks Progress" />
-            </Tabs>
-
-            {tabValue === 0 && (
-              <div
-                style={{
-                  padding: '8px',
-                  background: isDarkMode ? theme.palette.background.paper : '#fff',
-                  borderRadius: '6px',
-                  color: isDarkMode ? theme.palette.text.primary : undefined
-                }}
-              >
-                {isDarkMode && (
-                  <style>
-                    {`
-                      .description-content-dark a {
-                        color: #4FC3F7 !important;
-                        text-decoration: underline;
-                        pointer-events: auto;
-                        cursor: pointer;
-                      }
-                    `}
-                  </style>
-                )}
-                <div
-                  className={isDarkMode ? 'description-content-dark' : ''}
-                  dangerouslySetInnerHTML={{ __html: description }}
-                />
-              </div>
-            )}
-
-            {tabValue === 1 && renderTaskProgress()}
-          </>
-        ) : null}
+        <Grid container spacing={2}>
+          <Grid size={12} alignItems={'end'}>
+            <UpdateItemAction update={update} setIsUpdateFormOpen={setIsUpdateFormOpen} />
+          </Grid>
+          {isFetching || error ? (
+            <Grid size={12}>
+              <Stack spacing={2}>
+                <Stack spacing={1}>
+                  <Skeleton variant="rectangular" height={32} width={120} />
+                  <Skeleton variant="rectangular" height={32} width={220} />
+                  <Skeleton variant="rectangular" height={32} width={180} />
+                </Stack>
+                <Skeleton variant="rectangular" height={48} width="100%" />
+                <Skeleton variant="rectangular" height={48} width="100%" />
+              </Stack>
+            </Grid>
+          ) : updateDetails ? (
+            <>
+              <Grid size={12}>
+                <Tabs
+                  value={tabValue}
+                  onChange={(_, newValue) => setTabValue(newValue)}
+                  variant="scrollable"
+                  scrollButtons="auto"
+                  allowScrollButtonsMobile
+                  sx={{ mb: 2 }}
+                >
+                  <Tab label="Description" />
+                  <Tab label="Tasks Progress" />
+                </Tabs>
+              </Grid>
+              {tabValue === 0 && (
+                <Grid size={12}>
+                  <div
+                    style={{
+                      padding: '8px',
+                      background: isDarkMode ? theme.palette.background.paper : '#fff',
+                      borderRadius: '6px',
+                      color: isDarkMode ? theme.palette.text.primary : undefined
+                    }}
+                  >
+                    {isDarkMode && (
+                      <style>
+                        {`
+                          .description-content-dark a {
+                            color: #4FC3F7 !important;
+                            text-decoration: underline;
+                            pointer-events: auto;
+                            cursor: pointer;
+                          }
+                        `}
+                      </style>
+                    )}
+                    <div
+                      className={isDarkMode ? 'description-content-dark' : ''}
+                      dangerouslySetInnerHTML={{ __html: description }}
+                    />
+                  </div>
+                </Grid>
+              )}
+              {tabValue === 1 && (
+                <Grid size={12}>
+                  {renderTaskProgress()}
+                </Grid>
+              )}
+            </>
+          ) : null}
+        </Grid>
       </AccordionDetails>
     </Accordion>
   );

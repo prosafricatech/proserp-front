@@ -9,7 +9,7 @@ import {
   Grid,
   IconButton,
   InputLabel,
-  LinearProgress,
+  Skeleton,
   MenuItem,
   Select,
   Tooltip,
@@ -186,9 +186,9 @@ function ProfitAndLossTrendCard() {
         fullWidth
         fullScreen={smallScreen}
         scroll={smallScreen ? 'body' : 'paper'}
-        maxWidth="md"
+        maxWidth="lg"
       >
-        <IncomeStatement from={from} to={to} cost_center_ids={cost_center_ids} />
+        <IncomeStatement from={from} to={to} cost_center_ids={cost_center_ids} aggregate_by={null} setOpenIncomeStatementDialog={setOpenDialog} />
         <DialogActions>
           <Button size="small" variant="outlined" onClick={() => setOpenDialog(false)}>
             Close
@@ -197,7 +197,7 @@ function ProfitAndLossTrendCard() {
       </Dialog>
 
       {isLoading ? (
-        <LinearProgress />
+        <Skeleton variant="rectangular" width="100%" height={180} sx={{ borderRadius: 2 }} />
       ) : (
         <ResponsiveContainer width="100%" height={180}>
           <ComposedChart data={profitAndLossTrend}>

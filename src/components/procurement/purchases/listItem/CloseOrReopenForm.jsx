@@ -43,13 +43,13 @@ const CloseOrReopenForm = ({ setOpenDialog, order, isReOpen }) => {
   });
 
   const validationSchema = yup.object({
-    datetime_closed: yup.string().when('isReOpen', {
-      is: false,
-      then: yup.string().required('Closing date is required').typeError('Closing date is required'),
+    datetime_closed: yup.string().when([], (val, schema, context) => {
+      if (!context || context.isReOpen) return schema;
+      return schema.required('Closing date is required').typeError('Closing date is required');
     }),
-    datetime_reopened: yup.string().when('isReOpen', {
-      is: true,
-      then: yup.string().required('Reopening date is required').typeError('Reopening date is required'),
+    datetime_reopened: yup.string().when([], (val, schema, context) => {
+      if (!context || !context.isReOpen) return schema;
+      return schema.required('Reopening date is required').typeError('Reopening date is required');
     }),
   });
 
@@ -61,8 +61,8 @@ const CloseOrReopenForm = ({ setOpenDialog, order, isReOpen }) => {
       datetime_closed: dayjs().toISOString(),
       datetime_reopened: dayjs().toISOString(),
       remarks: '',
-      isReOpen: isReOpen,
     },
+    context: { isReOpen },
   });
 
   const saveMutation = React.useMemo(() => {

@@ -3,12 +3,13 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function GET(req: NextRequest) {
   const lang = req.nextUrl.searchParams.get('lang') || 'en-US';
   return NextResponse.json({
-    name: "ProsERP Beta",
-    short_name: "ProsERP Beta",
+    name: "ProsERP v2",
+    short_name: "ProsERP v2",
     theme_color: "#2113AD",
     background_color: "#ffffff",
     description: "Robust ERP for accounting, project management, payroll, inventory, and requisitions.",
-    display: "standalone",
+    display: "minimal-ui",
+    display_override: ["minimal-ui", "standalone"],
     orientation: "portrait",
     scope: "/",
     start_url: `/${lang}/dashboard`,

@@ -7,6 +7,7 @@ import {
   DialogContentText, 
   DialogTitle, 
   LinearProgress, 
+  Skeleton, 
   useMediaQuery 
 } from '@mui/material';
 import React from 'react';
@@ -43,7 +44,13 @@ const DocumentDialog = ({ invoice, organization }: { invoice: Invoice; organizat
   });
   
   if (isLoading) {
-    return <LinearProgress />;
+        return (
+      <div style={{ width: '100%', padding: '16px' }}>
+        <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
+        <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
+        <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+      </div>
+    );
   }
   
   return (
@@ -63,7 +70,13 @@ function InvoiceAdjustment({ invoice, toggleOpen }: { invoice: Invoice; toggleOp
   });
 
   if (isFetching) {
-    return <LinearProgress />;
+        return (
+      <div style={{ width: '100%', padding: '16px' }}>
+        <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
+        <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
+        <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+      </div>
+    );
   }
 
   return (
@@ -78,7 +91,13 @@ const EditInvoice = ({ invoice, toggleOpen }: { invoice: Invoice; toggleOpen: (o
   });
 
   if (isFetching) {
-    return <LinearProgress />;
+        return (
+      <div style={{ width: '100%', padding: '16px' }}>
+        <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
+        <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
+        <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+      </div>
+    );
   }
 
   return (

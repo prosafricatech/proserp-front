@@ -573,7 +573,7 @@ function PurchaseOrderOnScreenPreview({ order }) {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {order.closures.map((closure, index) => (
+                {order.closures?.map((closure, index) => (
                   <TableRow
                     key={closure.id}
                     sx={{

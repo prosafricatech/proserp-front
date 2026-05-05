@@ -11,10 +11,43 @@ import { useProjectProfile } from '../ProjectProfileProvider';
 import DeliverableGroupItemAction from './DeliverableGroupItemAction';
 import DeliverableGroupActionTail from './DeliverableGroupActionTail';
 
-const DeliverableGroupsAccordion = ({ group, expanded, handleChange }) => {
+// Helper to build a unique key for nested group expansion state
+function getNestedKey(parentKey, index) {
+  return parentKey ? `${parentKey}.${index}` : `${index}`;
+}
+
+const DeliverableGroupsAccordion = ({ group, expanded, handleChange, parentKey = '' }) => {
   const [childExpanded, setChildExpanded] = useState({});
   const [openDialog, setOpenDialog] = useState(false);
-  const [searchQuery, setSearchQuery] = useState(''); 
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const LOCAL_STORAGE_KEY = 'deliverableGroupsNestedExpanded';
+
+  // Restore child expanded state from localStorage
+  useEffect(() => {
+    const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (parsed && typeof parsed === 'object') {
+          setChildExpanded(parsed[parentKey] || {});
+        }
+      } catch {}
+    }
+  }, [parentKey]);
+
+  // Persist child expanded state to localStorage
+  useEffect(() => {
+    const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+    let parsed = {};
+    if (stored) {
+      try {
+        parsed = JSON.parse(stored);
+      } catch {}
+    }
+    parsed[parentKey] = childExpanded;
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(parsed));
+  }, [childExpanded, parentKey]);
 
   const filteredDeliverables = group?.deliverables?.filter(deliverable =>
     deliverable.description?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -22,9 +55,9 @@ const DeliverableGroupsAccordion = ({ group, expanded, handleChange }) => {
 
   const filterChildrenGroups = (children) => {
     return children
-      .filter(child => 
-        child.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        (child.description && child.description.toLowerCase().includes(searchQuery.toLowerCase())) || 
+      .filter(child =>
+        child.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (child.description && child.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
         child.deliverables?.some(d => d.description?.toLowerCase().includes(searchQuery.toLowerCase()))
       )
       .map(child => ({
@@ -32,14 +65,14 @@ const DeliverableGroupsAccordion = ({ group, expanded, handleChange }) => {
         deliverables: child.deliverables?.filter(d => d.description?.toLowerCase().includes(searchQuery.toLowerCase())),
         children: filterChildrenGroups(child.children || [])
       }));
-  };  
+  };
 
   const filteredChildren = filterChildrenGroups(group?.children || []);
 
   const handleChildChange = (childIndex) => {
     setChildExpanded((prevState) => ({
       ...prevState,
-      [childIndex]: !prevState[childIndex], 
+      [childIndex]: !prevState[childIndex],
     }));
   };
 
@@ -156,6 +189,7 @@ const DeliverableGroupsAccordion = ({ group, expanded, handleChange }) => {
                   group={child}
                   expanded={childExpanded[index] === true}
                   handleChange={() => handleChildChange(index)}
+                  parentKey={getNestedKey(parentKey, index)}
                   openDialog={openDialog}
                   setOpenDialog={setOpenDialog}
                 />
@@ -168,19 +202,38 @@ const DeliverableGroupsAccordion = ({ group, expanded, handleChange }) => {
   );
 };
 
+
 function DeliverableGroupsListItem() {
   const { deliverable_groups } = useProjectProfile();
   const [openDialog, setOpenDialog] = useState(false);
   const [expanded, setExpanded] = useState([]);
-  const [searchQuery, setSearchQuery] = useState(''); 
+  const [searchQuery, setSearchQuery] = useState('');
 
-  // Initialize expanded state with proper boolean values when data loads
+  const LOCAL_STORAGE_KEY = 'deliverableGroupsExpanded';
+
+  // Restore expanded state from localStorage or initialize
   useEffect(() => {
     if (deliverable_groups) {
-      // Initialize with all accordions closed (false)
+      const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length === deliverable_groups.length) {
+            setExpanded(parsed);
+            return;
+          }
+        } catch {}
+      }
       setExpanded(Array(deliverable_groups.length).fill(false));
     }
   }, [deliverable_groups]);
+
+  // Persist expanded state to localStorage
+  useEffect(() => {
+    if (expanded && expanded.length) {
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(expanded));
+    }
+  }, [expanded]);
 
   const filteredGroups = deliverable_groups?.filter(group =>
     group.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||

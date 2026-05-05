@@ -73,10 +73,11 @@ const TransferListItem = ({ transfer, type }) => {
                 paddingLeft={0.5}
                 paddingRight={0.5}
                 columnSpacing={3}
+                rowSpacing={1}
                 container
                 width="100%"
               >
-                <Grid size={{xs: 5, md: 3}}>
+                <Grid size={{xs: 12, md: 3}}>
                   <Tooltip title={'Transfer Date'}>
                     <Typography>{readableDate(transfer.transfer_date)}</Typography>
                   </Tooltip>
@@ -86,7 +87,7 @@ const TransferListItem = ({ transfer, type }) => {
                 </Grid>
               { (type === 'external' || type === 'internal') &&
                 <>
-                  <Grid size={{xs: 7, md: 6}} sx={{ textAlign: { 'xs': 'start' , 'md': 'center'}}}>
+                  <Grid size={{xs: 12, md: 6}} sx={{ textAlign: { 'xs': 'start' , 'md': 'center'}}}>
                     <Tooltip title={'Source and Destination Store'}>
                       <Typography>{`${transfer.source_store?.name} ➡ ${transfer.destination_store?.name}`}</Typography>
                     </Tooltip>
@@ -103,13 +104,13 @@ const TransferListItem = ({ transfer, type }) => {
                 </>
               }
               { type === 'cost center change' &&
-                <Grid size={{xs: 7, md: 6}} sx={{ textAlign: { 'xs': 'start' , 'md': 'center'}}}>
+                <Grid size={{xs: 12, md: 6}} sx={{ textAlign: { 'xs': 'start' , 'md': 'center'}}}>
                   <Tooltip title={'Source and Destination Cost Center'}>
                     <Chip label={`${transfer.source_cost_center?.name} ➡ ${transfer.destination_cost_center?.name}`} color="default" />
                   </Tooltip>
                 </Grid>
               }
-                <Grid size={{xs: 11, md: 3}} textAlign='right'>
+                <Grid size={{xs: 12, md: 3}} textAlign='right'>
                   <Tooltip title={'Status'}>
                       <Chip
                         size='small' 

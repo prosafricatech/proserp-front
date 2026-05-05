@@ -7,12 +7,14 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { Div, Span } from '@jumbo/shared';
+import { HighlightOff } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 import {
   DialogContent,
   DialogTitle,
   FormControl,
   Grid,
+  IconButton,
   InputLabel,
   LinearProgress,
   MenuItem,
@@ -20,6 +22,7 @@ import {
   Stack,
   Tab,
   Tabs,
+  Tooltip,
   Typography,
   useMediaQuery,
 } from '@mui/material';
@@ -206,7 +209,7 @@ const ReportDocumet = ({ reportData, authOrganization, user }) => {
   );
 };
 
-function DebtorCreditorReport() {
+function DebtorCreditorReport({ setOpenDebtorsCreditorsDialog }) {
   const css = useProsERPStyles();
   const {
     authOrganization,
@@ -275,8 +278,6 @@ function DebtorCreditorReport() {
         await financialReportsServices.exportDebtorsOrCreditorsToExcel(
           exportedData
         );
-
-      // console.log('blob: ', blob);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -284,7 +285,6 @@ function DebtorCreditorReport() {
       a.click();
       window.URL.revokeObjectURL(url);
     } catch (e) {
-      // Optionally show error
       console.log('error exporting: ', e);
     } finally {
       setIsExporting(false);
@@ -309,6 +309,17 @@ function DebtorCreditorReport() {
                 ? 'Debtors Report'
                 : 'Creditors Report'}
             </Typography>
+            {belowLargeScreen && (
+              <Tooltip title='Close'>
+                <IconButton
+                  size='small'
+                  sx={{ position: 'absolute', top: 10, right: 10 }}
+                  onClick={() => setOpenDebtorsCreditorsDialog(false)}
+                >
+                  <HighlightOff color='primary' />
+                </IconButton>
+              </Tooltip>
+            )}
           </Grid>
         </Grid>
         <Span className={css.hiddenOnPrint}>

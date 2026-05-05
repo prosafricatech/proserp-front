@@ -129,7 +129,7 @@ function QuickReports() {
             setOpenSalesAndCashSummary={setOpenSalesAndCashSummary}
           />
         )}
-        {debtorsCreditorsDialogOpen && <DebtorCreditorReport />}
+        {debtorsCreditorsDialogOpen && <DebtorCreditorReport setOpenDebtorsCreditorsDialog={setDebtorsCreditorsDialogOpen}/>}
         {openCashierReport && (
           <LedgerSelectProvider>
             <CashierReport setOpenCashierReport={setOpenCashierReport} />
@@ -155,7 +155,7 @@ function QuickReports() {
             isFromDashboard={true}
           />
         )}
-        {openDippingReport && <DippingReport />}
+        {openDippingReport && <DippingReport closeDialog={setOpenDippingReport}/>}
         {openSalesManifest && (
           <StakeholderSelectProvider>
             <SalesManifest setOpenSalesManifest={setOpenSalesManifest} />

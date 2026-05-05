@@ -47,12 +47,12 @@ function FuelVouchersItemRow({ fuelVoucher, index, productPrices, fuelVouchers=[
                         </Grid>
                         <Grid size={{xs: 6, md: 1, lg: 1}}>
                             <Tooltip title="Quantity">
-                                <Typography>{fuelVoucher.quantity.toLocaleString()}</Typography>
+                                <Typography>{fuelVoucher.quantity?.toLocaleString()}</Typography>
                             </Tooltip>
                         </Grid>
                         <Grid size={{xs:6, md:!!expense_ledger ? 3 : 1, lg:1}}>
                             <Tooltip title="Amount">
-                                <Typography>{(product_price * fuelVoucher.quantity).toLocaleString()}</Typography>
+                                <Typography>{(product_price * fuelVoucher.quantity)?.toLocaleString()}</Typography>
                             </Tooltip>
                         </Grid>
                         <Grid size={{xs: 6, md: 5, lg: 1.5}}>

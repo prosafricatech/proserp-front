@@ -328,6 +328,10 @@ export const JumboAuthProvider = ({
   const resetAuth = useCallback(() => {
     queryClient.clear();
     localStorage.removeItem('authData');
+    // Clear navigation stack and all session storage on logout
+    if (typeof window !== 'undefined') {
+      sessionStorage.clear();
+    }
 
     setAuthValues({
       authUser: null,

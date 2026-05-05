@@ -1,4 +1,4 @@
-import { useServiceWorkerUpdatePrompt } from "@/hooks/useServiceWorkerUpdatePrompt";
+import { useServiceWorkerUpdatePrompt } from '../hooks/useServiceWorkerUpdatePrompt';
 
 export function ServiceWorkerUpdateBanner() {
   const { updateAvailable, reloadPage } = useServiceWorkerUpdatePrompt();

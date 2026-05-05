@@ -17,25 +17,19 @@ measurementUnitServices.getAllMeasurementUnits = async() => {
 
 
 measurementUnitServices.add = async(measurementUnit) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.post(`/api/masters/measurement_units/add`,measurementUnit)
-        return data;
-    })
+    const {data} = await axios.post(`/api/masters/measurement_units/add`,measurementUnit)
+    return data;
 }
 
 measurementUnitServices.update = async(measurementUnit) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.put(`/api/masters/measurement_units/${measurementUnit.id}/update`,measurementUnit)
-        return data;
-    })
+    const {data} = await axios.put(`/api/masters/measurement_units/${measurementUnit.id}/update`,measurementUnit)
+    return data;
 }
 
 
 measurementUnitServices.delete = async (id) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.delete(`/api/masters/measurement_units/${id}/delete`);
-        return data;
-    })
+    const {data} = await axios.delete(`/api/masters/measurement_units/${id}/delete`);
+    return data;
 };
 
 

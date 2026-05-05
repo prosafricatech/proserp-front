@@ -9,13 +9,13 @@ import {
   Grid,
   IconButton,
   InputLabel,
-  LinearProgress,
+  Skeleton,
   MenuItem,
   Select,
   Tooltip,
   useMediaQuery,
 } from '@mui/material';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   CartesianGrid,
   Legend,
@@ -58,7 +58,7 @@ function BalanceSheetTrend() {
     from,
     to,
     cost_center_ids,
-    aggregate_by: 'week' as 'day' | 'week' | 'month' | 'year',
+    aggregate_by: 'day' as 'day' | 'week' | 'month' | 'year',
   });
 
   useEffect(() => {
@@ -100,6 +100,14 @@ function BalanceSheetTrend() {
           <Grid size={8}>
             {!midScreen && !smallScreen ? (
               <ButtonGroup variant="outlined" size="small" disableElevation>
+                <Tooltip title="Daily Trend">
+                  <Button
+                    variant={params.aggregate_by === 'day' ? 'contained' : 'outlined'}
+                    onClick={() => setParams((prev) => ({ ...prev, aggregate_by: 'day' }))}
+                  >
+                    Daily
+                  </Button>
+                </Tooltip>
                 <Tooltip title="Weekly Trend">
                   <Button
                     variant={params.aggregate_by === 'week' ? 'contained' : 'outlined'}
@@ -137,10 +145,11 @@ function BalanceSheetTrend() {
                     onChange={(e) =>
                       setParams((prev) => ({
                         ...prev,
-                        aggregate_by: e.target.value as 'week' | 'month' | 'year',
+                        aggregate_by: e.target.value as 'day' | 'week' | 'month' | 'year',
                       }))
                     }
                   >
+                    <MenuItem value="day">Daily</MenuItem>
                     <MenuItem value="week">Weekly</MenuItem>
                     <MenuItem value="month">Monthly</MenuItem>
                     <MenuItem value="year">Yearly</MenuItem>
@@ -172,7 +181,7 @@ function BalanceSheetTrend() {
         fullScreen={smallScreen}
         maxWidth="md"
       >
-        <BalanceSheet as_at={to} />
+        <BalanceSheet as_at={to} setOpenBalanceSheettDialog={setOpenDialog} />
         <DialogActions>
           <Button size="small" variant="outlined" onClick={() => setOpenDialog(false)}>
             Close
@@ -181,7 +190,9 @@ function BalanceSheetTrend() {
       </Dialog>
 
       {isLoading ? (
-        <LinearProgress />
+        <ResponsiveContainer width="100%" height={200}>
+          <Skeleton variant="rectangular" width="100%" height={245} sx={{ borderRadius: 2 }} />
+        </ResponsiveContainer>
       ) : (
         <ResponsiveContainer width="100%" height={200}>
           <ComposedChart data={balanceSheetTrend}>
