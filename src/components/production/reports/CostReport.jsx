@@ -1,10 +1,12 @@
 'use client';
 
+import { useState } from 'react';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import {
-  ExpandMore,
+  Add,
   FileDownloadOutlined,
   PictureAsPdfOutlined,
+  Remove,
 } from '@mui/icons-material';
 import {
   Accordion,
@@ -26,7 +28,16 @@ import {
   TableHead,
   TableRow,
   Typography,
+  useTheme,
 } from '@mui/material';
+import {
+  Cell,
+  Legend,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip as RechartsTooltip,
+} from 'recharts';
 
 const formatCurrency = (value) =>
   Number(value || 0).toLocaleString(undefined, {
@@ -55,7 +66,7 @@ function SummaryCard({ label, value, accentColor, valueColor }) {
         </Typography>
         <Typography
           variant='h5'
-          sx={{ color: valueColor || accentColor, fontWeight: 700 }}
+          sx={{ color: valueColor || accentColor }}
         >
           {value}
         </Typography>
@@ -64,52 +75,224 @@ function SummaryCard({ label, value, accentColor, valueColor }) {
   );
 }
 
-function StackedCostBar({ summary }) {
+const COST_PALETTE = ['#1976d2', '#ed6c02', '#2e7d32'];
+
+function CostPieTooltip({ active, payload }) {
+  if (!active || !payload?.length) return null;
+  const { name, value } = payload[0];
+  return (
+    <Paper elevation={3} sx={{ px: 2, py: 1 }}>
+      <Typography variant='body2'>
+        {name}
+      </Typography>
+      <Typography variant='body2'>{formatCurrency(value)}</Typography>
+    </Paper>
+  );
+}
+
+function CostBreakdownChart({ summary }) {
+  const theme = useTheme();
   const material = Number(summary?.total_material_cost || 0);
   const expense = Number(summary?.total_ledger_expense_cost || 0);
   const offset = Number(summary?.total_by_product_offset || 0);
-  const total = material + expense + offset;
 
-  const materialWidth = total ? (material / total) * 100 : 0;
-  const expenseWidth = total ? (expense / total) * 100 : 0;
-  const offsetWidth = total ? (offset / total) * 100 : 0;
+  const data = [
+    { name: 'Materials', value: material },
+    { name: 'Ledger Expenses', value: expense },
+    { name: 'By-Product Offset', value: offset },
+  ].filter((d) => d.value > 0);
+
+  if (!data.length) {
+    return (
+      <Typography variant='body2' color='text.secondary' align='center'>
+        No cost data available.
+      </Typography>
+    );
+  }
 
   return (
-    <Stack spacing={1.5}>
-      <Box
-        sx={{
-          display: 'flex',
-          overflow: 'hidden',
-          height: 18,
-          borderRadius: 999,
-          bgcolor: 'divider',
-        }}
+    <Box sx={{ width: '100%', height: 260 }}>
+      <ResponsiveContainer width='100%' height='100%'>
+        <PieChart>
+          <Pie
+            data={data}
+            cx='50%'
+            cy='50%'
+            innerRadius='45%'
+            outerRadius='70%'
+            paddingAngle={3}
+            dataKey='value'
+            label={({ name, percent }) =>
+              `${name} (${(percent * 100).toFixed(1)}%)`
+            }
+            labelLine
+          >
+            {data.map((entry, index) => (
+              <Cell
+                key={entry.name}
+                fill={COST_PALETTE[index % COST_PALETTE.length]}
+              />
+            ))}
+          </Pie>
+          <RechartsTooltip content={<CostPieTooltip />} />
+          <Legend
+            formatter={(value) => (
+              <Typography
+                component='span'
+                variant='caption'
+                sx={{ color: theme.palette.text.primary }}
+              >
+                {value}
+              </Typography>
+            )}
+          />
+        </PieChart>
+      </ResponsiveContainer>
+    </Box>
+  );
+}
+
+function MaterialItemAccordion({ item }) {
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <Accordion
+      disableGutters
+      variant='outlined'
+      expanded={expanded}
+      onChange={(_, v) => setExpanded(v)}
+    >
+      <AccordionSummary
+        expandIcon={expanded ? <Remove /> : <Add />}
+        sx={{ flexDirection: 'row-reverse', '& .MuiAccordionSummary-content': { ml: 1 } }}
       >
-        <Box sx={{ width: `${materialWidth}%`, bgcolor: 'primary.main' }} />
-        <Box sx={{ width: `${expenseWidth}%`, bgcolor: 'warning.main' }} />
-        <Box sx={{ width: `${offsetWidth}%`, bgcolor: 'success.main' }} />
-      </Box>
-      <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-        <Chip
-          size='small'
-          label={`Materials ${formatCurrency(material)}`}
-          color='primary'
-          variant='outlined'
-        />
-        <Chip
-          size='small'
-          label={`Expenses ${formatCurrency(expense)}`}
-          color='warning'
-          variant='outlined'
-        />
-        <Chip
-          size='small'
-          label={`By-Product Offset ${formatCurrency(offset)}`}
-          color='success'
-          variant='outlined'
-        />
-      </Stack>
-    </Stack>
+        <Grid container spacing={2} sx={{ width: '100%', pr: 1 }}>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Typography>{item.product?.name}</Typography>
+          </Grid>
+          <Grid size={{ xs: 6, md: 2 }}>
+            <Typography>{item.measurement_unit?.symbol}</Typography>
+          </Grid>
+          <Grid size={{ xs: 6, md: 2 }}>
+            <Typography align='right'>
+              {formatQuantity(item.total_quantity)}
+            </Typography>
+          </Grid>
+          <Grid size={{ xs: 6, md: 2 }}>
+            <Typography align='right'>
+              {formatUnitCost(item.average_unit_cost)}
+            </Typography>
+          </Grid>
+          <Grid size={{ xs: 6, md: 2 }}>
+            <Typography align='right'>
+              {formatCurrency(item.total_cost)}
+            </Typography>
+          </Grid>
+        </Grid>
+      </AccordionSummary>
+      <AccordionDetails>
+        <TableContainer component={Paper} variant='outlined'>
+          <Table size='small'>
+            <TableHead>
+              <TableRow>
+                <TableCell>Batch</TableCell>
+                <TableCell>Date</TableCell>
+                <TableCell align='right'>Qty</TableCell>
+                <TableCell align='right'>Unit Cost</TableCell>
+                <TableCell align='right'>Total</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {(item.batches || []).map((batch) => (
+                <TableRow key={`${item.product?.id}-${batch.batch_id}`}>
+                  <TableCell>{batch.batchNo}</TableCell>
+                  <TableCell>{readableDate(batch.end_date, true)}</TableCell>
+                  <TableCell align='right'>
+                    {formatQuantity(batch.quantity)}
+                  </TableCell>
+                  <TableCell align='right'>
+                    {formatUnitCost(batch.unit_cost)}
+                  </TableCell>
+                  <TableCell align='right'>
+                    {formatCurrency(batch.total_cost)}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </AccordionDetails>
+    </Accordion>
+  );
+}
+
+function LedgerItemAccordion({ item }) {
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <Accordion
+      disableGutters
+      variant='outlined'
+      expanded={expanded}
+      onChange={(_, v) => setExpanded(v)}
+    >
+      <AccordionSummary
+        expandIcon={expanded ? <Remove /> : <Add />}
+        sx={{ flexDirection: 'row-reverse', '& .MuiAccordionSummary-content': { ml: 1 } }}
+      >
+        <Grid container spacing={2} sx={{ width: '100%', pr: 1 }}>
+          <Grid size={{ xs: 12, md: 5 }}>
+            <Typography>{item.ledger?.name}</Typography>
+          </Grid>
+          <Grid size={{ xs: 6, md: 3 }}>
+            <Typography>{item.currency?.name}</Typography>
+          </Grid>
+          <Grid size={{ xs: 6, md: 4 }}>
+            <Typography align='right'>
+              {formatCurrency(item.total_amount)}
+            </Typography>
+          </Grid>
+        </Grid>
+      </AccordionSummary>
+      <AccordionDetails>
+        <TableContainer component={Paper} variant='outlined'>
+          <Table size='small'>
+            <TableHead>
+              <TableRow>
+                <TableCell>Batch #</TableCell>
+                <TableCell>Date</TableCell>
+                <TableCell align='right'>Qty</TableCell>
+                <TableCell align='right'>Rate</TableCell>
+                <TableCell align='right'>Exchange Rate</TableCell>
+                <TableCell align='right'>Total</TableCell>
+                <TableCell>Remarks</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {(item.batches || []).map((batch) => (
+                <TableRow
+                  key={`${item.ledger?.id}-${batch.batch_id}-${batch.remarks || ''}`}
+                >
+                  <TableCell>{batch.batchNo}</TableCell>
+                  <TableCell>{readableDate(batch.end_date, true)}</TableCell>
+                  <TableCell align='right'>
+                    {formatQuantity(batch.quantity)}
+                  </TableCell>
+                  <TableCell align='right'>
+                    {formatCurrency(batch.rate)}
+                  </TableCell>
+                  <TableCell align='right'>
+                    {formatUnitCost(batch.exchange_rate)}
+                  </TableCell>
+                  <TableCell align='right'>
+                    {formatCurrency(batch.total)}
+                  </TableCell>
+                  <TableCell>{batch.remarks}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </AccordionDetails>
+    </Accordion>
   );
 }
 
@@ -144,6 +327,9 @@ function CostReport({
     );
   }
 
+  const [materialOpen, setMaterialOpen] = useState(true);
+  const [ledgerOpen, setLedgerOpen] = useState(false);
+
   const difference =
     Number(comparisonOutputValue || 0) -
     Number(report.summary?.net_production_cost || 0);
@@ -158,7 +344,7 @@ function CostReport({
         spacing={2}
       >
         <Box>
-          <Typography variant='h6' sx={{ color: headerColor, fontWeight: 700 }}>
+          <Typography variant='h6' sx={{ color: headerColor }}>
             Production Cost Report
           </Typography>
           <Typography variant='body2' color='text.secondary'>
@@ -229,23 +415,29 @@ function CostReport({
         <CardContent>
           <Typography
             variant='subtitle1'
-            sx={{ color: headerColor, fontWeight: 700, mb: 2 }}
+            sx={{ color: headerColor, mb: 2 }}
           >
             Cost Breakdown
           </Typography>
-          <StackedCostBar summary={report.summary} />
+          <CostBreakdownChart summary={report.summary} />
         </CardContent>
       </Card>
 
-      <Accordion defaultExpanded>
-        <AccordionSummary expandIcon={<ExpandMore />}>
+      <Accordion
+        expanded={materialOpen}
+        onChange={(_, v) => setMaterialOpen(v)}
+      >
+        <AccordionSummary
+          expandIcon={materialOpen ? <Remove /> : <Add />}
+          sx={{ flexDirection: 'row-reverse', '& .MuiAccordionSummary-content': { ml: 1 } }}
+        >
           <Stack
             direction={{ xs: 'column', md: 'row' }}
             spacing={2}
             sx={{ width: '100%', pr: 1 }}
             justifyContent='space-between'
           >
-            <Typography fontWeight={700}>Material Consumptions</Typography>
+            <Typography fontWeight={600}>Material Consumptions</Typography>
             <Chip
               label={`${report.material_consumptions?.length || 0} products`}
               size='small'
@@ -255,89 +447,30 @@ function CostReport({
         <AccordionDetails>
           <Stack spacing={2}>
             {(report.material_consumptions || []).map((item, index) => (
-              <Accordion
+              <MaterialItemAccordion
                 key={`${item.product?.id || index}-${index}`}
-                disableGutters
-                variant='outlined'
-              >
-                <AccordionSummary expandIcon={<ExpandMore />}>
-                  <Grid container spacing={2} sx={{ width: '100%', pr: 1 }}>
-                    <Grid size={{ xs: 12, md: 4 }}>
-                      <Typography fontWeight={600}>
-                        {item.product?.name}
-                      </Typography>
-                    </Grid>
-                    <Grid size={{ xs: 6, md: 2 }}>
-                      <Typography>{item.measurement_unit?.symbol}</Typography>
-                    </Grid>
-                    <Grid size={{ xs: 6, md: 2 }}>
-                      <Typography align='right'>
-                        {formatQuantity(item.total_quantity)}
-                      </Typography>
-                    </Grid>
-                    <Grid size={{ xs: 6, md: 2 }}>
-                      <Typography align='right'>
-                        {formatUnitCost(item.average_unit_cost)}
-                      </Typography>
-                    </Grid>
-                    <Grid size={{ xs: 6, md: 2 }}>
-                      <Typography align='right'>
-                        {formatCurrency(item.total_cost)}
-                      </Typography>
-                    </Grid>
-                  </Grid>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <TableContainer component={Paper} variant='outlined'>
-                    <Table size='small'>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Batch #</TableCell>
-                          <TableCell>Date</TableCell>
-                          <TableCell align='right'>Qty</TableCell>
-                          <TableCell align='right'>Unit Cost</TableCell>
-                          <TableCell align='right'>Total</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {(item.batches || []).map((batch) => (
-                          <TableRow
-                            key={`${item.product?.id}-${batch.batch_id}`}
-                          >
-                            <TableCell>{batch.batchNo}</TableCell>
-                            <TableCell>
-                              {readableDate(batch.end_date, true)}
-                            </TableCell>
-                            <TableCell align='right'>
-                              {formatQuantity(batch.quantity)}
-                            </TableCell>
-                            <TableCell align='right'>
-                              {formatUnitCost(batch.unit_cost)}
-                            </TableCell>
-                            <TableCell align='right'>
-                              {formatCurrency(batch.total_cost)}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </AccordionDetails>
-              </Accordion>
+                item={item}
+              />
             ))}
           </Stack>
         </AccordionDetails>
       </Accordion>
 
-      <Accordion>
-        <AccordionSummary expandIcon={<ExpandMore />}>
+      <Accordion
+        expanded={ledgerOpen}
+        onChange={(_, v) => setLedgerOpen(v)}
+      >
+        <AccordionSummary
+          expandIcon={ledgerOpen ? <Remove /> : <Add />}
+          sx={{ flexDirection: 'row-reverse', '& .MuiAccordionSummary-content': { ml: 1 } }}
+        >
           <Stack
             direction={{ xs: 'column', md: 'row' }}
             spacing={2}
             sx={{ width: '100%', pr: 1 }}
             justifyContent='space-between'
           >
-            <Typography fontWeight={700}>Ledger Expenses</Typography>
+            <Typography fontWeight={600}>Ledger Expenses</Typography>
             <Chip
               label={`${report.ledger_expenses?.length || 0} ledgers`}
               size='small'
@@ -347,71 +480,10 @@ function CostReport({
         <AccordionDetails>
           <Stack spacing={2}>
             {(report.ledger_expenses || []).map((item, index) => (
-              <Accordion
+              <LedgerItemAccordion
                 key={`${item.ledger?.id || index}-${index}`}
-                disableGutters
-                variant='outlined'
-              >
-                <AccordionSummary expandIcon={<ExpandMore />}>
-                  <Grid container spacing={2} sx={{ width: '100%', pr: 1 }}>
-                    <Grid size={{ xs: 12, md: 5 }}>
-                      <Typography fontWeight={600}>
-                        {item.ledger?.name}
-                      </Typography>
-                    </Grid>
-                    <Grid size={{ xs: 6, md: 3 }}>
-                      <Typography>{item.currency?.name}</Typography>
-                    </Grid>
-                    <Grid size={{ xs: 6, md: 4 }}>
-                      <Typography align='right'>
-                        {formatCurrency(item.total_amount)}
-                      </Typography>
-                    </Grid>
-                  </Grid>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <TableContainer component={Paper} variant='outlined'>
-                    <Table size='small'>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Batch #</TableCell>
-                          <TableCell>Date</TableCell>
-                          <TableCell align='right'>Qty</TableCell>
-                          <TableCell align='right'>Rate</TableCell>
-                          <TableCell align='right'>Exchange Rate</TableCell>
-                          <TableCell align='right'>Total</TableCell>
-                          <TableCell>Remarks</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {(item.batches || []).map((batch) => (
-                          <TableRow
-                            key={`${item.ledger?.id}-${batch.batch_id}-${batch.remarks || ''}`}
-                          >
-                            <TableCell>{batch.batchNo}</TableCell>
-                            <TableCell>
-                              {readableDate(batch.end_date, true)}
-                            </TableCell>
-                            <TableCell align='right'>
-                              {formatQuantity(batch.quantity)}
-                            </TableCell>
-                            <TableCell align='right'>
-                              {formatCurrency(batch.rate)}
-                            </TableCell>
-                            <TableCell align='right'>
-                              {formatUnitCost(batch.exchange_rate)}
-                            </TableCell>
-                            <TableCell align='right'>
-                              {formatCurrency(batch.total)}
-                            </TableCell>
-                            <TableCell>{batch.remarks}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </AccordionDetails>
-              </Accordion>
+                item={item}
+              />
             ))}
           </Stack>
         </AccordionDetails>
@@ -421,7 +493,7 @@ function CostReport({
         <CardContent>
           <Typography
             variant='subtitle1'
-            sx={{ color: headerColor, fontWeight: 700, mb: 2 }}
+            sx={{ color: headerColor, mb: 2 }}
           >
             By-Products Offset
           </Typography>
