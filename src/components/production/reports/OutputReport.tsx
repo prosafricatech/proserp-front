@@ -1,5 +1,6 @@
 'use client';
 
+import { FC, Fragment, JSX, useState } from 'react';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import {
   FileDownloadOutlined,
@@ -29,27 +30,33 @@ import {
   TableRow,
   Typography,
 } from '@mui/material';
-import React, { useState } from 'react';
+import { OutputReportResponse } from './productionReportsServices';
 
-const formatCurrency = (value) =>
+const formatCurrency = (value: number | string): string =>
   Number(value || 0).toLocaleString(undefined, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
 
-const formatQuantity = (value) =>
+const formatQuantity = (value: number | string): string =>
   Number(value || 0).toLocaleString(undefined, {
     minimumFractionDigits: 3,
     maximumFractionDigits: 3,
   });
 
-const formatUnitCost = (value) =>
+const formatUnitCost = (value: number | string): string =>
   Number(value || 0).toLocaleString(undefined, {
     minimumFractionDigits: 3,
     maximumFractionDigits: 3,
   });
 
-function SummaryCard({ label, value, accentColor }) {
+interface SummaryCardProps {
+  label: string;
+  value: string | number;
+  accentColor: string;
+}
+
+function SummaryCard({ label, value, accentColor }: SummaryCardProps): JSX.Element {
   return (
     <Card variant='outlined' sx={{ height: '100%' }}>
       <CardContent>
@@ -64,7 +71,17 @@ function SummaryCard({ label, value, accentColor }) {
   );
 }
 
-function OutputReport({
+interface OutputReportProps {
+  report: OutputReportResponse | null;
+  isLoading: boolean;
+  error: string;
+  headerColor: string;
+  contrastText: string;
+  lightColor: string;
+  isDark: boolean;
+}
+
+const OutputReport: FC<OutputReportProps> = ({
   report,
   isLoading,
   error,
@@ -72,11 +89,11 @@ function OutputReport({
   contrastText,
   lightColor,
   isDark,
-}) {
-  const [expandedBatches, setExpandedBatches] = useState({});
-  const [expanded, setExpanded] = useState(false);
+}): JSX.Element => {
+  const [expandedBatches, setExpandedBatches] = useState<Record<string, boolean>>({});
+  const [expanded, setExpanded] = useState<boolean>(false);
 
-  const toggleBatch = (batchId) => {
+  const toggleBatch = (batchId: string): void => {
     setExpandedBatches((state) => ({
       ...state,
       [batchId]: !state[batchId],
@@ -96,19 +113,11 @@ function OutputReport({
   }
 
   if (!report) {
-    // return (
-    //   <Alert variant='outlined'>Choose filters and generate the report.</Alert>
-    // );
-    return;
+    return <></>;
   }
 
-  // if (!report?.batches?.length) {
-  //   return (
-  //     <Alert severity='info'>No closed batches found for this period.</Alert>
-  //   );
-  // }
   if (!report?.batches?.length) {
-    return;
+    return <></>;
   }
 
   return (
@@ -302,86 +311,11 @@ function OutputReport({
         </AccordionDetails>
       </Accordion>
 
-      {/* <TableContainer component={Paper} variant='outlined'> */}
-      {/* <Table> */}
-      {/* <TableHead>
-            <TableRow sx={{ backgroundColor: headerColor }}>
-              <TableCell
-                sx={{ color: contrastText, fontWeight: 700, width: 48 }}
-              />
-              <TableCell sx={{ color: contrastText, fontWeight: 700 }}>
-                Batch #
-              </TableCell>
-              <TableCell sx={{ color: contrastText, fontWeight: 700 }}>
-                Start Date
-              </TableCell>
-              <TableCell sx={{ color: contrastText, fontWeight: 700 }}>
-                End Date
-              </TableCell>
-              <TableCell sx={{ color: contrastText, fontWeight: 700 }}>
-                Work Center
-              </TableCell>
-              <TableCell
-                align='right'
-                sx={{ color: contrastText, fontWeight: 700 }}
-              >
-                Output Value
-              </TableCell>
-              <TableCell
-                align='right'
-                sx={{ color: contrastText, fontWeight: 700 }}
-              >
-                By-Product Value
-              </TableCell>
-            </TableRow>
-          </TableHead> */}
-      {/* <TableBody> */}
       {report.batches.map((batch, index) => {
         const isExpanded = !!expandedBatches[batch.id];
 
         return (
-          <React.Fragment key={batch.id}>
-            {/* <TableRow
-                    sx={{
-                      backgroundColor:
-                        index % 2 === 1
-                          ? isDark
-                            ? '#333'
-                            : lightColor
-                          : 'inherit',
-                    }}
-                  >
-                    <TableCell>
-                      <IconButton
-                        size='small'
-                        onClick={() => toggleBatch(batch.id)}
-                      >
-                        {isExpanded ? <ExpandLess /> : <ExpandMore />}
-                      </IconButton>
-                    </TableCell>
-                    <TableCell>{batch.batchNo}</TableCell>
-                    <TableCell>
-                      {readableDate(batch.start_date, true)}
-                    </TableCell>
-                    <TableCell>{readableDate(batch.end_date, true)}</TableCell>
-                    <TableCell>
-                      <Stack spacing={0.5}>
-                        <Typography variant='body2'>
-                          {batch.work_center?.name}
-                        </Typography>
-                        <Typography variant='caption' color='text.secondary'>
-                          {batch.work_center?.cost_center?.name}
-                        </Typography>
-                      </Stack>
-                    </TableCell>
-                    <TableCell align='right'>
-                      {formatCurrency(batch.total_output_value)}
-                    </TableCell>
-                    <TableCell align='right'>
-                      {formatCurrency(batch.total_by_product_value)}
-                    </TableCell>
-                  </TableRow> */}
-
+          <Fragment key={batch.id}>
             <Accordion
               defaultExpanded={false}
               expanded={isExpanded}
@@ -595,151 +529,7 @@ function OutputReport({
                                   </Table>
                                 </TableContainer>
                               ) : (
-                                <Alert variant='outline' severity='info'>
-                                  No by-products recorded for this batch.
-                                </Alert>
-                              )}
-                            </Box>
-                          </Stack>
-                        </Collapse>
-                      </TableCell>
-                    </TableRow>
-
-                    <TableRow>
-                      <TableCell
-                        colSpan={7}
-                        sx={{ py: 0, borderBottom: isExpanded ? undefined : 0 }}
-                      >
-                        <Collapse in={isExpanded} timeout='auto' unmountOnExit>
-                          <Stack spacing={3} sx={{ py: 2 }}>
-                            <Box>
-                              <Typography
-                                variant='subtitle1'
-                                sx={{
-                                  color: headerColor,
-                                  fontWeight: 700,
-                                  mb: 1,
-                                }}
-                              >
-                                Outputs
-                              </Typography>
-                              <TableContainer
-                                component={Paper}
-                                variant='outlined'
-                              >
-                                <Table size='small'>
-                                  <TableHead>
-                                    <TableRow>
-                                      <TableCell>Product</TableCell>
-                                      <TableCell>Unit</TableCell>
-                                      <TableCell align='right'>Qty</TableCell>
-                                      <TableCell align='right'>
-                                        Unit Cost
-                                      </TableCell>
-                                      <TableCell align='right'>
-                                        Total Value
-                                      </TableCell>
-                                      <TableCell align='right'>
-                                        Value %
-                                      </TableCell>
-                                    </TableRow>
-                                  </TableHead>
-                                  <TableBody>
-                                    {(batch.outputs || []).map((output) => (
-                                      <TableRow key={output.id}>
-                                        <TableCell>
-                                          {output.product?.name}
-                                        </TableCell>
-                                        <TableCell>
-                                          {output.measurement_unit?.symbol}
-                                        </TableCell>
-                                        <TableCell align='right'>
-                                          {formatQuantity(output.quantity)}
-                                        </TableCell>
-                                        <TableCell align='right'>
-                                          {formatUnitCost(output.unit_cost)}
-                                        </TableCell>
-                                        <TableCell align='right'>
-                                          {formatCurrency(output.total_value)}
-                                        </TableCell>
-                                        <TableCell align='right'>
-                                          {formatQuantity(
-                                            output.value_percentage
-                                          )}
-                                        </TableCell>
-                                      </TableRow>
-                                    ))}
-                                  </TableBody>
-                                </Table>
-                              </TableContainer>
-                            </Box>
-
-                            <Box>
-                              <Typography
-                                variant='subtitle1'
-                                sx={{
-                                  color: headerColor,
-                                  fontWeight: 700,
-                                  mb: 1,
-                                }}
-                              >
-                                By-Products
-                              </Typography>
-                              {(batch.by_products || []).length ? (
-                                <TableContainer
-                                  component={Paper}
-                                  variant='outlined'
-                                >
-                                  <Table size='small'>
-                                    <TableHead>
-                                      <TableRow>
-                                        <TableCell>Product</TableCell>
-                                        <TableCell>Unit</TableCell>
-                                        <TableCell align='right'>Qty</TableCell>
-                                        <TableCell align='right'>
-                                          Market Value / Unit
-                                        </TableCell>
-                                        <TableCell align='right'>
-                                          Total Market Value
-                                        </TableCell>
-                                      </TableRow>
-                                    </TableHead>
-                                    <TableBody>
-                                      {(batch.by_products || []).map(
-                                        (byProduct) => (
-                                          <TableRow key={byProduct.id}>
-                                            <TableCell>
-                                              {byProduct.product?.name}
-                                            </TableCell>
-                                            <TableCell>
-                                              {
-                                                byProduct.measurement_unit
-                                                  ?.symbol
-                                              }
-                                            </TableCell>
-                                            <TableCell align='right'>
-                                              {formatQuantity(
-                                                byProduct.quantity
-                                              )}
-                                            </TableCell>
-                                            <TableCell align='right'>
-                                              {formatCurrency(
-                                                byProduct.market_value_per_unit
-                                              )}
-                                            </TableCell>
-                                            <TableCell align='right'>
-                                              {formatCurrency(
-                                                byProduct.total_market_value
-                                              )}
-                                            </TableCell>
-                                          </TableRow>
-                                        )
-                                      )}
-                                    </TableBody>
-                                  </Table>
-                                </TableContainer>
-                              ) : (
-                                <Alert variant='outline' severity='info'>
+                                <Alert variant='outlined' severity='info'>
                                   No by-products recorded for this batch.
                                 </Alert>
                               )}
@@ -752,14 +542,11 @@ function OutputReport({
                 </Table>
               </AccordionDetails>
             </Accordion>
-          </React.Fragment>
+          </Fragment>
         );
       })}
-      {/* </TableBody> */}
-      {/* </Table> */}
-      {/* </TableContainer> */}
     </Stack>
   );
-}
+};
 
 export default OutputReport;

@@ -1,5 +1,6 @@
 'use client';
 
+import React, { FC, ReactNode, useEffect, useMemo, useState } from 'react';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import CostCenterSelector from '@/components/masters/costCenters/CostCenterSelector';
 import ProductsSelectProvider, {
@@ -13,6 +14,7 @@ import {
   Button,
   Grid,
   LinearProgress,
+  Skeleton,
   Stack,
   Tab,
   Tabs,
@@ -22,14 +24,20 @@ import {
 } from '@mui/material';
 import { DateTimePicker } from '@mui/x-date-pickers';
 import { useQuery } from '@tanstack/react-query';
-import dayjs from 'dayjs';
-import { useEffect, useMemo, useState } from 'react';
+import dayjs, { Dayjs } from 'dayjs';
 import productionBatchesServices from '../batches/productionBatchesServices';
 import CostReport from './CostReport';
 import OutputReport from './OutputReport';
 import productionReportsServices from './productionReportsServices';
+import { OutputReportResponse, CostReportResponse } from './productionReportsServices';
 
-function TabPanel({ children, value, index }) {
+interface TabPanelProps {
+  children: ReactNode;
+  value: number;
+  index: number;
+}
+
+function TabPanel({ children, value, index }: TabPanelProps) {
   return (
     <div role='tabpanel' hidden={value !== index}>
       {value === index && <Box sx={{ pt: 3 }}>{children}</Box>}
@@ -37,47 +45,50 @@ function TabPanel({ children, value, index }) {
   );
 }
 
+interface WorkCenter {
+  id: string;
+  name: string;
+}
+
 function ProductionReportsContent() {
   const theme = useTheme();
-  const isDark = theme.type === 'dark';
+  const isDark = (theme as any).type === 'dark';
   const {
     authUser,
-    authOrganization,
-    checkOrganizationPermission,
-    organizationHasSubscribed,
+    authOrganization
   } = useJumboAuth();
   const { productOptions } = useProductsSelect();
-  const organization = authOrganization?.organization;
+  const organization = (authOrganization as any)?.organization;
   const mainColor = organization?.settings?.main_color || '#2113AD';
   const lightColor = organization?.settings?.light_color || '#bec5da';
   const contrastText = organization?.settings?.contrast_text || '#FFFFFF';
   const headerColor = isDark ? '#29f096' : mainColor;
 
-  const [selectedTab, setSelectedTab] = useState(0);
-  const [from, setFrom] = useState(dayjs().startOf('month'));
-  const [to, setTo] = useState(dayjs().endOf('day'));
-  const [selectedWorkCenter, setSelectedWorkCenter] = useState(null);
-  const [selectedCostCenter, setSelectedCostCenter] = useState(null);
-  const [selectedProduct, setSelectedProduct] = useState(null);
-  const [filterError, setFilterError] = useState('');
-  const [outputReport, setOutputReport] = useState(null);
-  const [costReport, setCostReport] = useState(null);
-  const [outputLoading, setOutputLoading] = useState(false);
-  const [costLoading, setCostLoading] = useState(false);
-  const [outputError, setOutputError] = useState('');
-  const [costError, setCostError] = useState('');
-  const [mounted, setMounted] = useState(false);
+  const [selectedTab, setSelectedTab] = useState<number>(0);
+  const [from, setFrom] = useState<Dayjs>(dayjs().startOf('month'));
+  const [to, setTo] = useState<Dayjs>(dayjs().endOf('day'));
+  const [selectedWorkCenter, setSelectedWorkCenter] = useState<WorkCenter | null>(null);
+  const [selectedCostCenter, setSelectedCostCenter] = useState<any>(null);
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [filterError, setFilterError] = useState<string>('');
+  const [outputReport, setOutputReport] = useState<OutputReportResponse | null>(null);
+  const [costReport, setCostReport] = useState<CostReportResponse | null>(null);
+  const [outputLoading, setOutputLoading] = useState<boolean>(false);
+  const [costLoading, setCostLoading] = useState<boolean>(false);
+  const [outputError, setOutputError] = useState<string>('');
+  const [costError, setCostError] = useState<string>('');
+  const [mounted, setMounted] = useState<boolean>(false);
 
   const { data: workcenters = [], isPending: isFetchingWorkCenters } = useQuery(
     {
       queryKey: [
         'userWorkCenters',
-        { userId: authUser?.user?.id, type: 'work center' },
+        { userId: (authUser as any)?.user?.id, type: 'work center' },
       ],
-      queryFn: productionBatchesServices.getUserWorkCenters,
-      enabled: !!authUser?.user?.id,
+      queryFn: productionBatchesServices.getUserWorkCenters as any,
+      enabled: !!(authUser as any)?.user?.id,
     }
-  );
+  ) as any;
 
   useEffect(() => {
     setMounted(true);
@@ -106,7 +117,7 @@ function ProductionReportsContent() {
     };
   }, [outputReport, costReport]);
 
-  const handleGenerateReport = async () => {
+  const handleGenerateReport = async (): Promise<void> => {
     if (!from || !to) {
       setFilterError('From and To dates are required.');
       return;
@@ -133,11 +144,11 @@ function ProductionReportsContent() {
       .getOutputReport({
         ...sharedParams,
         ...(selectedProduct?.id ? { product_id: selectedProduct.id } : {}),
-      })
+      } as any)
       .then((data) => {
         setOutputReport(data);
       })
-      .catch((err) => {
+      .catch((err: any) => {
         setOutputError(
           err?.response?.data?.message || 'Failed to load output report.'
         );
@@ -147,11 +158,11 @@ function ProductionReportsContent() {
       });
 
     const costPromise = productionReportsServices
-      .getCostReport(sharedParams)
+      .getCostReport(sharedParams as any)
       .then((data) => {
         setCostReport(data);
       })
-      .catch((err) => {
+      .catch((err: any) => {
         setCostError(
           err?.response?.data?.message || 'Failed to load cost report.'
         );
@@ -163,21 +174,13 @@ function ProductionReportsContent() {
     await Promise.allSettled([outputPromise, costPromise]);
   };
 
-  const handleCostCenterChange = (value) => {
+  const handleCostCenterChange = (value: any): void => {
     setSelectedCostCenter(Array.isArray(value) ? value[0] || null : value);
   };
 
   if (!mounted) {
-    return null;
+    return <></>;
   }
-
-  // if (!organizationHasSubscribed(MODULES.MANUFACTURING_AND_PROCESSING)) {
-  //   return <UnsubscribedAccess modules={'Manufacturing & Processing'} />;
-  // }
-
-  // if (!checkOrganizationPermission([PERMISSIONS.PRODUCTION_BATCHES_READ])) {
-  //   return <UnauthorizedAccess />;
-  // }
 
   return (
     <Stack spacing={2}>
@@ -186,7 +189,6 @@ function ProductionReportsContent() {
         <Stack spacing={2}>
           <Box
             sx={{
-              // position: 'sticky',
               top: 0,
               zIndex: 5,
               bgcolor: 'background.paper',
@@ -198,7 +200,7 @@ function ProductionReportsContent() {
                 <DateTimePicker
                   label='From'
                   value={from}
-                  onChange={setFrom}
+                  onChange={(value) => setFrom(value as Dayjs)}
                   slotProps={{ textField: { size: 'small', fullWidth: true } }}
                 />
               </Grid>
@@ -206,7 +208,7 @@ function ProductionReportsContent() {
                 <DateTimePicker
                   label='To'
                   value={to}
-                  onChange={setTo}
+                  onChange={(value) => setTo(value as Dayjs)}
                   slotProps={{ textField: { size: 'small', fullWidth: true } }}
                 />
               </Grid>
@@ -272,7 +274,6 @@ function ProductionReportsContent() {
                   variant='contained'
                   size='small'
                   onClick={handleGenerateReport}
-                  // sx={{ minHeight: 40 }}
                 >
                   Generate Report
                 </Button>
@@ -283,66 +284,61 @@ function ProductionReportsContent() {
                 {filterError}
               </Alert>
             )}
-            {/* {reconciliation && (
-              <Alert
-                severity={reconciliation.matches ? 'success' : 'warning'}
-                sx={{ mt: 2 }}
-              >
-                Output value{' '}
-                {reconciliation.matches ? 'matches' : 'does not match'} net
-                production cost.
-                {!reconciliation.matches
-                  ? ` Difference: ${Number(reconciliation.difference).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}.`
-                  : ''}
-              </Alert>
-            )} */}
           </Box>
 
-          {(outputLoading || costLoading) && <LinearProgress />}
+          {(outputLoading || costLoading) ?
+              <div style={{ width: '100%', padding: '16px' }}>
+                <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
+                <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
+                <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+              </div>
+            :
+            <>
+              <Tabs
+                value={selectedTab}
+                onChange={(_event, newValue) => setSelectedTab(newValue)}
+                variant='scrollable'
+                scrollButtons='auto'
+              >
+                <Tab label='Output Report' />
+                <Tab label='Cost Report' />
+              </Tabs>
 
-          <Tabs
-            value={selectedTab}
-            onChange={(_event, newValue) => setSelectedTab(newValue)}
-            variant='scrollable'
-            scrollButtons='auto'
-          >
-            <Tab label='Output Report' />
-            <Tab label='Cost Report' />
-          </Tabs>
+              <TabPanel value={selectedTab} index={0}>
+                <OutputReport
+                  report={outputReport}
+                  isLoading={outputLoading}
+                  error={outputError}
+                  headerColor={headerColor}
+                  contrastText={contrastText}
+                  lightColor={lightColor}
+                  isDark={isDark}
+                />
+              </TabPanel>
 
-          <TabPanel value={selectedTab} index={0}>
-            <OutputReport
-              report={outputReport}
-              isLoading={outputLoading}
-              error={outputError}
-              headerColor={headerColor}
-              contrastText={contrastText}
-              lightColor={lightColor}
-              isDark={isDark}
-            />
-          </TabPanel>
-
-          <TabPanel value={selectedTab} index={1}>
-            <CostReport
-              report={costReport}
-              isLoading={costLoading}
-              error={costError}
-              headerColor={headerColor}
-              comparisonOutputValue={outputReport?.summary?.total_output_value}
-            />
-          </TabPanel>
+              <TabPanel value={selectedTab} index={1}>
+                <CostReport
+                  report={costReport}
+                  isLoading={costLoading}
+                  error={costError}
+                  headerColor={headerColor}
+                  comparisonOutputValue={outputReport?.summary?.total_output_value}
+                />
+              </TabPanel>
+            </>
+          }
         </Stack>
       </JumboCardQuick>
     </Stack>
   );
 }
 
-function ProductionReports() {
+const ProductionReports: FC = () => {
   return (
     <ProductsSelectProvider>
       <ProductionReportsContent />
     </ProductsSelectProvider>
   );
-}
+};
 
 export default ProductionReports;

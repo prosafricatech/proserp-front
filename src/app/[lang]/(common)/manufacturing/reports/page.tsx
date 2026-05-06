@@ -1,9 +1,10 @@
 export const dynamic = 'force-dynamic';
-import React from 'react';
+
+import React, { FC } from 'react';
 import ProductionReports from '../../../../../components/production/reports/ProductionReports';
 
-function page() {
+const Page: FC = () => {
   return <ProductionReports />;
-}
+};
 
-export default page;
+export default Page;
