@@ -414,7 +414,8 @@ const BatchBlock = ({ batch, index, mainColor, contrastText, lightColor }) => {
             key={i}
             style={{
               ...pdfStyles.tableHeader,
-              backgroundColor: mainColor,
+              // backgroundColor: mainColor,
+              backgroundColor: '#888888',
               color: contrastText,
               width: col.width,
             }}
