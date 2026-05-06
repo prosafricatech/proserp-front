@@ -1,4 +1,3 @@
-import React from 'react';
 import { 
     Typography, 
     Table, 
@@ -84,7 +83,11 @@ function RelatableOrderDetails({ order, toggleOpen }: RelatableOrderDetailsProps
     const lightColor = organization?.settings?.light_color || "#bec5da";
     const headerColor = isDark ? '#29f096' : mainColor;
     const contrastText = organization?.settings?.contrast_text || "#FFFFFF";
-    const withPrices = checkOrganizationPermission([PERMISSIONS.PURCHASES_CREATE, PERMISSIONS.ACCOUNTS_REPORTS]);
+    const withPrices = [
+        PERMISSIONS.ACCOUNTS_REPORTS,
+        PERMISSIONS.PURCHASES_CREATE,
+        PERMISSIONS.APPROVED_REQUISITIONS_PURCHASE
+    ].some(perm => checkOrganizationPermission([perm]));
     
     const vatAmount = order.purchase_order_items.reduce((total, item) => {
         return total + (item.rate * item.quantity * item.vat_percentage * 0.01);
