@@ -245,10 +245,10 @@ const ProductSummaryTable = ({
   const columns = [
     { label: 'Finished Product', width: '20%' },
     { label: 'Unit', width: '16%' },
-    { label: 'Qty Produced', width: '16%', right: true },
-    { label: 'Avg Unit Cost', width: '16%', right: true },
-    { label: 'Total Value', width: '16%', right: true },
-    { label: 'Batches', width: '16%', right: true },
+    { label: 'Qty Produced', width: '16%' },
+    { label: 'Avg Unit Cost', width: '16%' },
+    { label: 'Total Value', width: '16%' },
+    { label: 'Batches', width: '16%' },
   ];
 
   return (
@@ -570,9 +570,6 @@ const ProductionOutputReportPdf = ({ reportData, organization, user }) => {
 
   const { period, summary, batches } = reportData;
 
-  const orgName = organization?.name || '';
-  const orgLogo = organization?.logo || null;
-  const orgAddress = organization?.address || '';
   const userName = user?.name || '';
 
   // Use readableDate from the shared helper with the same `true` flag that
@@ -721,9 +718,7 @@ const ProductionOutputReportPdf = ({ reportData, organization, user }) => {
 
         {/* ── PAGE FOOTER ── */}
         <View style={styles.footer} fixed>
-          <Text style={styles.footerText}>
-            {orgName} — Production Output Report
-          </Text>
+          <Text style={styles.footerText}>Production Output Report</Text>
           <Text
             style={styles.footerText}
             render={({ pageNumber, totalPages }) =>

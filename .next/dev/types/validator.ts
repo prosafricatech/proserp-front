@@ -1190,6 +1190,15 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../../src/app/api/exports/excel/ProductionOutputReport/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/exports/excel/ProductionOutputReport">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/exports/excel/ProductionOutputReport/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../../src/app/api/exports/excel/budgetDetails/route.ts
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/exports/excel/budgetDetails">> = Specific

@@ -1,10 +1,9 @@
 'use client';
 
-import { FC, Fragment, JSX, ReactNode, useState } from 'react';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import PDFContent from '@/components/pdf/PDFContent';
-import { OutputReportResponse } from './productionReportsServices';
+import { AuthOrganization } from '@/types/auth-types';
 import { faFileExcel } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Remove, VisibilityOutlined } from '@mui/icons-material';
@@ -38,7 +37,11 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
+import { FC, Fragment, JSX, ReactNode, useState } from 'react';
 import ProductionOutputReportPdf from './ProductionOutputReportPdf';
+import productionReportsServices, {
+  OutputReportResponse,
+} from './productionReportsServices';
 
 const formatCurrency = (value: number | string): string =>
   Number(value || 0).toLocaleString(undefined, {
@@ -68,6 +71,9 @@ interface OutputReportDialogProps {
   open: boolean;
   setOpen: (open: boolean) => void;
   document: ReactNode;
+  reportData?: any;
+  authOrganization?: AuthOrganization | null;
+  user?: any;
 }
 
 interface OutputReportProps {
@@ -80,7 +86,11 @@ interface OutputReportProps {
   isDark: boolean;
 }
 
-function SummaryCard({ label, value, accentColor }: SummaryCardProps): JSX.Element {
+function SummaryCard({
+  label,
+  value,
+  accentColor,
+}: SummaryCardProps): JSX.Element {
   return (
     <Card variant='outlined' sx={{ height: '100%' }}>
       <CardContent>
@@ -99,7 +109,40 @@ function OutputReportDialog({
   open,
   setOpen,
   document,
+  reportData,
+  authOrganization,
+  user,
 }: OutputReportDialogProps): JSX.Element {
+  const [isExporting, setIsExporting] = useState(false);
+
+  const exportedData = {
+    reportData: reportData,
+    authOrganization: authOrganization,
+    user: user,
+  };
+
+  const handlExcelExport = async (exportedData: any) => {
+    setIsExporting(true);
+    const { period } = reportData;
+    const periodLabel = `${readableDate(period?.from, true)} – ${readableDate(period?.to, true)}`;
+    try {
+      const blob =
+        await productionReportsServices.ExportProductionOutputReportToExcel(
+          exportedData
+        );
+      const url = window.URL.createObjectURL(blob);
+      const a = window.document.createElement('a');
+      a.href = url;
+      a.download = `product-output-report_${periodLabel}.xlsx`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      console.log('error exporting: ', e);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <Dialog maxWidth='md' fullWidth open={open}>
       <DialogTitle>
@@ -110,6 +153,8 @@ function OutputReportDialog({
         <LoadingButton
           size='small'
           sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+          loading={isExporting}
+          onClick={() => handlExcelExport(exportedData)}
           color='success'
           variant='contained'
         >
@@ -135,7 +180,9 @@ const OutputReport: FC<OutputReportProps> = ({
   const { authOrganization, authUser } = useJumboAuth();
   const user = authUser?.user;
 
-  const [expandedBatches, setExpandedBatches] = useState<Record<string, boolean>>({});
+  const [expandedBatches, setExpandedBatches] = useState<
+    Record<string, boolean>
+  >({});
   const [expanded, setExpanded] = useState<boolean>(false);
   const [openOutput, setOpenOutput] = useState<boolean>(false);
 
@@ -172,11 +219,15 @@ const OutputReport: FC<OutputReportProps> = ({
           spacing={2}
         >
           <Box>
-            <Typography variant='h6' sx={{ color: headerColor, fontWeight: 700 }}>
+            <Typography
+              variant='h6'
+              sx={{ color: headerColor, fontWeight: 700 }}
+            >
               Production Output Report
             </Typography>
             <Typography variant='body2' color='text.secondary'>
-              {readableDate(report.period?.from, true)} - {readableDate(report.period?.to, true)}
+              {readableDate(report.period?.from, true)} -{' '}
+              {readableDate(report.period?.to, true)}
             </Typography>
           </Box>
           <Stack direction='row' spacing={1}>
@@ -261,7 +312,10 @@ const OutputReport: FC<OutputReportProps> = ({
               justifyContent='space-between'
             >
               <Typography fontWeight={700}>Product Summary</Typography>
-              <Chip label={`${report.summary?.products?.length || 0} products`} size='small' />
+              <Chip
+                label={`${report.summary?.products?.length || 0} products`}
+                size='small'
+              />
             </Stack>
           </AccordionSummary>
           <AccordionDetails>
@@ -269,18 +323,34 @@ const OutputReport: FC<OutputReportProps> = ({
               <Table size='small'>
                 <TableHead>
                   <TableRow sx={{ backgroundColor: headerColor }}>
-                    <TableCell sx={{ color: contrastText, fontWeight: 700 }}>Finished Product</TableCell>
-                    <TableCell sx={{ color: contrastText, fontWeight: 700 }}>Unit</TableCell>
-                    <TableCell align='right' sx={{ color: contrastText, fontWeight: 700 }}>
+                    <TableCell sx={{ color: contrastText, fontWeight: 700 }}>
+                      Finished Product
+                    </TableCell>
+                    <TableCell sx={{ color: contrastText, fontWeight: 700 }}>
+                      Unit
+                    </TableCell>
+                    <TableCell
+                      align='right'
+                      sx={{ color: contrastText, fontWeight: 700 }}
+                    >
                       Qty Produced
                     </TableCell>
-                    <TableCell align='right' sx={{ color: contrastText, fontWeight: 700 }}>
+                    <TableCell
+                      align='right'
+                      sx={{ color: contrastText, fontWeight: 700 }}
+                    >
                       Avg Unit Cost
                     </TableCell>
-                    <TableCell align='right' sx={{ color: contrastText, fontWeight: 700 }}>
+                    <TableCell
+                      align='right'
+                      sx={{ color: contrastText, fontWeight: 700 }}
+                    >
                       Total Value
                     </TableCell>
-                    <TableCell align='right' sx={{ color: contrastText, fontWeight: 700 }}>
+                    <TableCell
+                      align='right'
+                      sx={{ color: contrastText, fontWeight: 700 }}
+                    >
                       Batches
                     </TableCell>
                   </TableRow>
@@ -290,14 +360,28 @@ const OutputReport: FC<OutputReportProps> = ({
                     <TableRow
                       key={`${item.product?.id || index}-${index}`}
                       sx={{
-                        backgroundColor: index % 2 === 1 ? (isDark ? '#333' : lightColor) : 'inherit',
+                        backgroundColor:
+                          index % 2 === 1
+                            ? isDark
+                              ? '#333'
+                              : lightColor
+                            : 'inherit',
                       }}
                     >
                       <TableCell>{item.product?.name}</TableCell>
-                      <TableCell>{item.measurement_unit?.symbol || item.measurement_unit?.name}</TableCell>
-                      <TableCell align='right'>{formatQuantity(item.total_quantity)}</TableCell>
-                      <TableCell align='right'>{formatUnitCost(item.average_unit_cost)}</TableCell>
-                      <TableCell align='right'>{formatCurrency(item.total_value)}</TableCell>
+                      <TableCell>
+                        {item.measurement_unit?.symbol ||
+                          item.measurement_unit?.name}
+                      </TableCell>
+                      <TableCell align='right'>
+                        {formatQuantity(item.total_quantity)}
+                      </TableCell>
+                      <TableCell align='right'>
+                        {formatUnitCost(item.average_unit_cost)}
+                      </TableCell>
+                      <TableCell align='right'>
+                        {formatCurrency(item.total_value)}
+                      </TableCell>
                       <TableCell align='right'>{item.batch_count}</TableCell>
                     </TableRow>
                   ))}
@@ -355,20 +439,32 @@ const OutputReport: FC<OutputReportProps> = ({
                     },
                   }}
                 >
-                  <Grid container size={12} width='100%' ml={2} alignItems='center'>
+                  <Grid
+                    container
+                    size={12}
+                    width='100%'
+                    ml={2}
+                    alignItems='center'
+                  >
                     <Grid size={2}>{batch.batchNo}</Grid>
                     <Grid size={2}>{readableDate(batch.start_date, true)}</Grid>
                     <Grid size={2}>{readableDate(batch.end_date, true)}</Grid>
                     <Grid size={2}>
                       <Stack spacing={0.5}>
-                        <Typography variant='body2'>{batch.work_center?.name}</Typography>
+                        <Typography variant='body2'>
+                          {batch.work_center?.name}
+                        </Typography>
                         <Typography variant='caption' color='text.secondary'>
                           {batch.work_center?.cost_center?.name}
                         </Typography>
                       </Stack>
                     </Grid>
-                    <Grid size={2}>{formatCurrency(batch.total_output_value)}</Grid>
-                    <Grid size={2}>{formatCurrency(batch.total_by_product_value)}</Grid>
+                    <Grid size={2}>
+                      {formatCurrency(batch.total_output_value)}
+                    </Grid>
+                    <Grid size={2}>
+                      {formatCurrency(batch.total_by_product_value)}
+                    </Grid>
                   </Grid>
                 </AccordionSummary>
                 <AccordionDetails>
@@ -382,7 +478,11 @@ const OutputReport: FC<OutputReportProps> = ({
                             borderBottom: isExpanded ? undefined : 0,
                           }}
                         >
-                          <Collapse in={isExpanded} timeout='auto' unmountOnExit>
+                          <Collapse
+                            in={isExpanded}
+                            timeout='auto'
+                            unmountOnExit
+                          >
                             <Stack spacing={3} sx={{ py: 2 }}>
                               <Box>
                                 <Typography
@@ -395,28 +495,49 @@ const OutputReport: FC<OutputReportProps> = ({
                                 >
                                   Outputs
                                 </Typography>
-                                <TableContainer component={Paper} variant='outlined'>
+                                <TableContainer
+                                  component={Paper}
+                                  variant='outlined'
+                                >
                                   <Table size='small'>
                                     <TableHead>
                                       <TableRow>
                                         <TableCell>Product</TableCell>
                                         <TableCell>Unit</TableCell>
                                         <TableCell align='right'>Qty</TableCell>
-                                        <TableCell align='right'>Unit Cost</TableCell>
-                                        <TableCell align='right'>Total Value</TableCell>
-                                        <TableCell align='right'>Value %</TableCell>
+                                        <TableCell align='right'>
+                                          Unit Cost
+                                        </TableCell>
+                                        <TableCell align='right'>
+                                          Total Value
+                                        </TableCell>
+                                        <TableCell align='right'>
+                                          Value %
+                                        </TableCell>
                                       </TableRow>
                                     </TableHead>
                                     <TableBody>
                                       {(batch.outputs || []).map((output) => (
                                         <TableRow key={output.id}>
-                                          <TableCell>{output.product?.name}</TableCell>
-                                          <TableCell>{output.measurement_unit?.symbol}</TableCell>
-                                          <TableCell align='right'>{formatQuantity(output.quantity)}</TableCell>
-                                          <TableCell align='right'>{formatUnitCost(output.unit_cost)}</TableCell>
-                                          <TableCell align='right'>{formatCurrency(output.total_value)}</TableCell>
+                                          <TableCell>
+                                            {output.product?.name}
+                                          </TableCell>
+                                          <TableCell>
+                                            {output.measurement_unit?.symbol}
+                                          </TableCell>
                                           <TableCell align='right'>
-                                            {formatQuantity(output.value_percentage)}
+                                            {formatQuantity(output.quantity)}
+                                          </TableCell>
+                                          <TableCell align='right'>
+                                            {formatUnitCost(output.unit_cost)}
+                                          </TableCell>
+                                          <TableCell align='right'>
+                                            {formatCurrency(output.total_value)}
+                                          </TableCell>
+                                          <TableCell align='right'>
+                                            {formatQuantity(
+                                              output.value_percentage
+                                            )}
                                           </TableCell>
                                         </TableRow>
                                       ))}
@@ -437,33 +558,57 @@ const OutputReport: FC<OutputReportProps> = ({
                                   By-Products
                                 </Typography>
                                 {(batch.by_products || []).length ? (
-                                  <TableContainer component={Paper} variant='outlined'>
+                                  <TableContainer
+                                    component={Paper}
+                                    variant='outlined'
+                                  >
                                     <Table size='small'>
                                       <TableHead>
                                         <TableRow>
                                           <TableCell>Product</TableCell>
                                           <TableCell>Unit</TableCell>
-                                          <TableCell align='right'>Qty</TableCell>
-                                          <TableCell align='right'>Market Value / Unit</TableCell>
-                                          <TableCell align='right'>Total Market Value</TableCell>
+                                          <TableCell align='right'>
+                                            Qty
+                                          </TableCell>
+                                          <TableCell align='right'>
+                                            Market Value / Unit
+                                          </TableCell>
+                                          <TableCell align='right'>
+                                            Total Market Value
+                                          </TableCell>
                                         </TableRow>
                                       </TableHead>
                                       <TableBody>
-                                        {(batch.by_products || []).map((byProduct) => (
-                                          <TableRow key={byProduct.id}>
-                                            <TableCell>{byProduct.product?.name}</TableCell>
-                                            <TableCell>{byProduct.measurement_unit?.symbol}</TableCell>
-                                            <TableCell align='right'>
-                                              {formatQuantity(byProduct.quantity)}
-                                            </TableCell>
-                                            <TableCell align='right'>
-                                              {formatCurrency(byProduct.market_value_per_unit)}
-                                            </TableCell>
-                                            <TableCell align='right'>
-                                              {formatCurrency(byProduct.total_market_value)}
-                                            </TableCell>
-                                          </TableRow>
-                                        ))}
+                                        {(batch.by_products || []).map(
+                                          (byProduct) => (
+                                            <TableRow key={byProduct.id}>
+                                              <TableCell>
+                                                {byProduct.product?.name}
+                                              </TableCell>
+                                              <TableCell>
+                                                {
+                                                  byProduct.measurement_unit
+                                                    ?.symbol
+                                                }
+                                              </TableCell>
+                                              <TableCell align='right'>
+                                                {formatQuantity(
+                                                  byProduct.quantity
+                                                )}
+                                              </TableCell>
+                                              <TableCell align='right'>
+                                                {formatCurrency(
+                                                  byProduct.market_value_per_unit
+                                                )}
+                                              </TableCell>
+                                              <TableCell align='right'>
+                                                {formatCurrency(
+                                                  byProduct.total_market_value
+                                                )}
+                                              </TableCell>
+                                            </TableRow>
+                                          )
+                                        )}
                                       </TableBody>
                                     </Table>
                                   </TableContainer>
@@ -489,6 +634,9 @@ const OutputReport: FC<OutputReportProps> = ({
       <OutputReportDialog
         open={openOutput}
         setOpen={setOpenOutput}
+        authOrganization={authOrganization}
+        reportData={report}
+        user={user}
         document={
           <PDFContent
             document={

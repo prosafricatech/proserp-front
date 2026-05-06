@@ -109,20 +109,39 @@ interface CostReportResponse {
 }
 
 const productionReportsServices = {
-  getOutputReport: async (params: ReportParams): Promise<OutputReportResponse> => {
-    const { data } = await axios.get('/api/manufacturing/batches/productionOutputReport', {
-      params,
-    });
+  getOutputReport: async (
+    params: ReportParams
+  ): Promise<OutputReportResponse> => {
+    const { data } = await axios.get(
+      '/api/manufacturing/batches/productionOutputReport',
+      {
+        params,
+      }
+    );
     return data;
   },
 
   getCostReport: async (params: ReportParams): Promise<CostReportResponse> => {
-    const { data } = await axios.get('/api/manufacturing/batches/productionCostReport', {
+    const { data } = await axios.get(
+      '/api/manufacturing/batches/productionCostReport',
+      {
+        params,
+      }
+    );
+    return data;
+  },
+
+  ExportProductionOutputReportToExcel: async (params: any) => {
+    const { data } = await axios.post(
+      `/api/exports/excel/ProductionOutputReport/`,
       params,
-    });
+      {
+        responseType: 'blob',
+      }
+    );
     return data;
   },
 };
 
-export type { OutputReportResponse, CostReportResponse, ReportParams };
+export type { CostReportResponse, OutputReportResponse, ReportParams };
 export default productionReportsServices;
