@@ -585,25 +585,7 @@ const CostReport: FC<CostReportProps> = ({
         alignItems={{ xs: 'flex-start', md: 'center' }}
         spacing={2}
       >
-        <Box>
-          <HelpTooltipText
-            label={
-              <Typography variant='h6' sx={{ color: headerColor }}>
-                Production Cost Report
-              </Typography>
-            }
-            description='Shows the full cost composition of completed production batches for the selected filters.'
-          />
-          <HelpTooltipText
-            label={
-              <Typography variant='body2' color='text.secondary'>
-                {readableDate(report?.period?.from, true)} -{' '}
-                {readableDate(report?.period?.to, true)}
-              </Typography>
-            }
-            description='Reporting period used to calculate all costs shown on this tab.'
-          />
-        </Box>
+        <Box></Box>
         <Stack direction='row' spacing={1}>
           <Tooltip title='Excel export is not available yet for the cost report.' arrow>
             <span>

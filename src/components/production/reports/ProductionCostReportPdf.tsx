@@ -85,6 +85,44 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontFamily: 'Helvetica-Bold',
   },
+  breakdownCard: {
+    borderWidth: 0.5,
+    borderColor: '#CCCCCC',
+    borderRadius: 2,
+    padding: 6,
+    marginBottom: 8,
+  },
+  breakdownRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  breakdownName: {
+    width: '26%',
+    fontSize: 7.5,
+  },
+  breakdownAmount: {
+    width: '20%',
+    fontSize: 7.5,
+    textAlign: 'right',
+  },
+  breakdownPercent: {
+    width: '10%',
+    fontSize: 7.5,
+    textAlign: 'right',
+  },
+  barTrack: {
+    width: '44%',
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#ECECEC',
+    overflow: 'hidden',
+    marginLeft: 6,
+  },
+  barFill: {
+    height: 6,
+    borderRadius: 3,
+  },
   footer: {
     position: 'absolute',
     bottom: 12,
@@ -145,6 +183,17 @@ const ProductionCostReportPdf = ({
   const mainColor = organization?.mainColor || '#1E3A5F';
   const contrastText = organization?.contrastText || '#FFFFFF';
   const lightColor = organization?.lightColor || '#E8EEF5';
+
+  const materialCost = Number(reportData?.summary?.total_material_cost || 0);
+  const expenseCost = Number(reportData?.summary?.total_ledger_expense_cost || 0);
+  const byProductOffset = Number(reportData?.summary?.total_by_product_offset || 0);
+  const breakdownTotal = materialCost + expenseCost + byProductOffset;
+
+  const costBreakdownRows = [
+    { label: 'Materials', value: materialCost, color: '#1976d2' },
+    { label: 'Ledger Expenses', value: expenseCost, color: '#ed6c02' },
+    { label: 'By-Product Offset', value: byProductOffset, color: '#2e7d32' },
+  ];
 
   const periodLabel = `${readableDate(reportData?.period?.from, true)} - ${readableDate(reportData?.period?.to, true)}`;
   const printedOn = readableDate(new Date().toISOString(), true);
@@ -208,6 +257,29 @@ const ProductionCostReportPdf = ({
               {formatCurrency(reportData?.summary?.net_production_cost)}
             </Text>
           </View>
+        </View>
+
+        <Text style={[styles.sectionHeading, { color: mainColor }]}>Cost Breakdown</Text>
+        <View style={styles.breakdownCard}>
+          {costBreakdownRows.map((row) => {
+            const share = breakdownTotal > 0 ? (row.value / breakdownTotal) * 100 : 0;
+            return (
+              <View key={row.label} style={styles.breakdownRow}>
+                <Text style={styles.breakdownName}>{row.label}</Text>
+                <Text style={styles.breakdownAmount}>{formatCurrency(row.value)}</Text>
+                <Text style={styles.breakdownPercent}>{`${share.toFixed(1)}%`}</Text>
+                <View style={styles.barTrack}>
+                  <View
+                    style={{
+                      ...styles.barFill,
+                      width: `${Math.max(0, Math.min(100, share))}%`,
+                      backgroundColor: row.color,
+                    }}
+                  />
+                </View>
+              </View>
+            );
+          })}
         </View>
 
         <Text style={[styles.sectionHeading, { color: mainColor }]}>Material Consumptions</Text>
