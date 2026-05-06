@@ -27,9 +27,9 @@ import { useQuery } from '@tanstack/react-query';
 import dayjs, { Dayjs } from 'dayjs';
 import productionBatchesServices from '../batches/productionBatchesServices';
 import CostReport from './CostReport';
-import OutputReport from './OutputReport';
 import productionReportsServices from './productionReportsServices';
 import { OutputReportResponse, CostReportResponse } from './productionReportsServices';
+import OutputReport from './OutputReport';
 
 interface TabPanelProps {
   children: ReactNode;
