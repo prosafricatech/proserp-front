@@ -360,6 +360,10 @@ interface LedgerItemAccordionProps {
 
 function LedgerItemAccordion({ item }: LedgerItemAccordionProps): JSX.Element {
   const [expanded, setExpanded] = useState<boolean>(false);
+  const showExchangeRate = (item.batches || []).some(
+    (batch: any) => Number(batch.exchange_rate || 1) !== 1
+  );
+
   return (
     <Accordion
       disableGutters
@@ -452,12 +456,14 @@ function LedgerItemAccordion({ item }: LedgerItemAccordionProps): JSX.Element {
                     description='Expense rate applied before currency conversion.'
                   />
                 </TableCell>
-                <TableCell align='right'>
-                  <HelpTooltipText
-                    label='Exchange Rate'
-                    description='Conversion rate used when the ledger expense currency differs from the base currency.'
-                  />
-                </TableCell>
+                {showExchangeRate && (
+                  <TableCell align='right'>
+                    <HelpTooltipText
+                      label='Exchange Rate'
+                      description='Conversion rate used when the ledger expense currency differs from the base currency.'
+                    />
+                  </TableCell>
+                )}
                 <TableCell align='right'>
                   <HelpTooltipText
                     label='Total'
@@ -485,9 +491,11 @@ function LedgerItemAccordion({ item }: LedgerItemAccordionProps): JSX.Element {
                   <TableCell align='right'>
                     {formatCurrency(batch.rate)}
                   </TableCell>
-                  <TableCell align='right'>
-                    {formatUnitCost(batch.exchange_rate)}
-                  </TableCell>
+                  {showExchangeRate && (
+                    <TableCell align='right'>
+                      {formatUnitCost(batch.exchange_rate)}
+                    </TableCell>
+                  )}
                   <TableCell align='right'>
                     {formatCurrency(batch.total)}
                   </TableCell>
@@ -720,14 +728,18 @@ const CostReport: FC<CostReportProps> = ({
           </Stack>
         </AccordionSummary>
         <AccordionDetails>
-          <Stack spacing={2}>
-            {(report.material_consumptions || []).map((item, index) => (
-              <MaterialItemAccordion
-                key={`${item.product?.id || index}-${index}`}
-                item={item}
-              />
-            ))}
-          </Stack>
+          {(report.material_consumptions || []).length ? (
+            <Stack spacing={2}>
+              {(report.material_consumptions || []).map((item, index) => (
+                <MaterialItemAccordion
+                  key={`${item.product?.id || index}-${index}`}
+                  item={item}
+                />
+              ))}
+            </Stack>
+          ) : (
+            <Alert severity='info'>No material consumptions found for this period.</Alert>
+          )}
         </AccordionDetails>
       </Accordion>
 
@@ -785,14 +797,18 @@ const CostReport: FC<CostReportProps> = ({
           </Stack>
         </AccordionSummary>
         <AccordionDetails>
-          <Stack spacing={2}>
-            {(report.ledger_expenses || []).map((item, index) => (
-              <LedgerItemAccordion
-                key={`${item.ledger?.id || index}-${index}`}
-                item={item}
-              />
-            ))}
-          </Stack>
+          {(report.ledger_expenses || []).length ? (
+            <Stack spacing={2}>
+              {(report.ledger_expenses || []).map((item, index) => (
+                <LedgerItemAccordion
+                  key={`${item.ledger?.id || index}-${index}`}
+                  item={item}
+                />
+              ))}
+            </Stack>
+          ) : (
+            <Alert severity='info'>No ledger expenses found for this period.</Alert>
+          )}
         </AccordionDetails>
       </Accordion>
 
@@ -809,52 +825,56 @@ const CostReport: FC<CostReportProps> = ({
             }
             description='Value recovered from secondary outputs that offsets the overall production cost.'
           />
-          <TableContainer component={Paper} variant='outlined'>
-            <Table size='small'>
-              <TableHead>
-                <TableRow>
-                  <TableCell>
-                    <HelpTooltipText
-                      label='Product'
-                      description='By-product generated during production.'
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <HelpTooltipText
-                      label='Unit'
-                      description='Measurement unit used for the by-product quantity.'
-                    />
-                  </TableCell>
-                  <TableCell align='right'>
-                    <HelpTooltipText
-                      label='Total Qty'
-                      description='Total by-product quantity generated in the selected period.'
-                    />
-                  </TableCell>
-                  <TableCell align='right'>
-                    <HelpTooltipText
-                      label='Cost Reduction'
-                      description='Market value credited back against production cost because of the by-product output.'
-                    />
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {(report.by_products || []).map((item, index) => (
-                  <TableRow key={`${item.product?.id || index}-${index}`}>
-                    <TableCell>{item.product?.name}</TableCell>
-                    <TableCell>{item.measurement_unit?.symbol}</TableCell>
-                    <TableCell align='right'>
-                      {formatQuantity(item.total_quantity)}
+          {(report.by_products || []).length ? (
+            <TableContainer component={Paper} variant='outlined'>
+              <Table size='small'>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>
+                      <HelpTooltipText
+                        label='Product'
+                        description='By-product generated during production.'
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <HelpTooltipText
+                        label='Unit'
+                        description='Measurement unit used for the by-product quantity.'
+                      />
                     </TableCell>
                     <TableCell align='right'>
-                      {formatCurrency(item.total_market_value)}
+                      <HelpTooltipText
+                        label='Total Qty'
+                        description='Total by-product quantity generated in the selected period.'
+                      />
+                    </TableCell>
+                    <TableCell align='right'>
+                      <HelpTooltipText
+                        label='Cost Reduction'
+                        description='Market value credited back against production cost because of the by-product output.'
+                      />
                     </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                </TableHead>
+                <TableBody>
+                  {(report.by_products || []).map((item, index) => (
+                    <TableRow key={`${item.product?.id || index}-${index}`}>
+                      <TableCell>{item.product?.name}</TableCell>
+                      <TableCell>{item.measurement_unit?.symbol}</TableCell>
+                      <TableCell align='right'>
+                        {formatQuantity(item.total_quantity)}
+                      </TableCell>
+                      <TableCell align='right'>
+                        {formatCurrency(item.total_market_value)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          ) : (
+            <Alert severity='info'>No by-products offset found for this period.</Alert>
+          )}
         </CardContent>
       </Card>
 

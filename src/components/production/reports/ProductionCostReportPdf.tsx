@@ -54,8 +54,9 @@ const styles = StyleSheet.create({
   sectionHeading: {
     fontSize: 9,
     fontFamily: 'Helvetica-Bold',
-    marginTop: 10,
-    marginBottom: 4,
+    textAlign: 'center',
+    marginTop: 14,
+    marginBottom: 8,
   },
   subSectionHeading: {
     fontSize: 7,
@@ -95,7 +96,8 @@ const styles = StyleSheet.create({
   breakdownRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 8,
+    paddingVertical: 1,
   },
   breakdownName: {
     width: '26%',
@@ -284,27 +286,30 @@ const ProductionCostReportPdf = ({
 
         <Text style={[styles.sectionHeading, { color: mainColor }]}>Material Consumptions</Text>
         {sectionHeader(
-          ['Product', 'Unit', 'Total Qty', 'Avg Unit Cost', 'Total Cost'],
+          ['S/N', 'Product', 'Unit', 'Total Qty', 'Avg Unit Cost', 'Total Cost'],
           mainColor,
           contrastText,
-          ['30%', '10%', '20%', '20%', '20%']
+          ['8%', '24%', '10%', '18%', '18%', '22%']
         )}
         {(reportData?.material_consumptions || []).map((item, idx) => (
           <View key={`${item.product?.id || idx}-${idx}`}>
             <View style={pdfStyles.tableRow}>
-              <Text style={{ ...pdfStyles.tableCell, width: '30%', backgroundColor: idx % 2 === 0 ? '#FFFFFF' : lightColor }}>
+              <Text style={{ ...pdfStyles.tableCell, width: '8%', textAlign: 'center', backgroundColor: idx % 2 === 0 ? '#FFFFFF' : lightColor }}>
+                {idx + 1}.
+              </Text>
+              <Text style={{ ...pdfStyles.tableCell, width: '24%', backgroundColor: idx % 2 === 0 ? '#FFFFFF' : lightColor }}>
                 {item.product?.name}
               </Text>
               <Text style={{ ...pdfStyles.tableCell, width: '10%', backgroundColor: idx % 2 === 0 ? '#FFFFFF' : lightColor }}>
                 {item.measurement_unit?.symbol}
               </Text>
-              <Text style={{ ...pdfStyles.tableCell, width: '20%', textAlign: 'right', backgroundColor: idx % 2 === 0 ? '#FFFFFF' : lightColor }}>
+              <Text style={{ ...pdfStyles.tableCell, width: '18%', textAlign: 'right', backgroundColor: idx % 2 === 0 ? '#FFFFFF' : lightColor }}>
                 {formatQuantity(item.total_quantity)}
               </Text>
-              <Text style={{ ...pdfStyles.tableCell, width: '20%', textAlign: 'right', backgroundColor: idx % 2 === 0 ? '#FFFFFF' : lightColor }}>
+              <Text style={{ ...pdfStyles.tableCell, width: '18%', textAlign: 'right', backgroundColor: idx % 2 === 0 ? '#FFFFFF' : lightColor }}>
                 {formatCurrency(item.average_unit_cost)}
               </Text>
-              <Text style={{ ...pdfStyles.tableCell, width: '20%', textAlign: 'right', backgroundColor: idx % 2 === 0 ? '#FFFFFF' : lightColor }}>
+              <Text style={{ ...pdfStyles.tableCell, width: '22%', textAlign: 'right', backgroundColor: idx % 2 === 0 ? '#FFFFFF' : lightColor }}>
                 {formatCurrency(item.total_cost)}
               </Text>
             </View>
@@ -344,131 +349,152 @@ const ProductionCostReportPdf = ({
 
         <Text style={[styles.sectionHeading, { color: mainColor }]}>Ledger Expenses</Text>
         {sectionHeader(
-          ['Ledger', 'Currency', 'Total Amount'],
+          ['S/N', 'Ledger', 'Currency', 'Total Amount'],
           mainColor,
           contrastText,
-          ['50%', '20%', '30%']
+          ['10%', '40%', '20%', '30%']
         )}
         {(reportData?.ledger_expenses || []).map((item, idx) => (
           <View key={`${item.ledger?.id || idx}-${idx}`}>
-            <View style={pdfStyles.tableRow}>
-              <Text style={{ ...pdfStyles.tableCell, width: '50%', backgroundColor: idx % 2 === 0 ? '#FFFFFF' : lightColor }}>
-                {item.ledger?.name}
-              </Text>
-              <Text style={{ ...pdfStyles.tableCell, width: '20%', backgroundColor: idx % 2 === 0 ? '#FFFFFF' : lightColor }}>
-                {item.currency?.name}
-              </Text>
-              <Text style={{ ...pdfStyles.tableCell, width: '30%', textAlign: 'right', backgroundColor: idx % 2 === 0 ? '#FFFFFF' : lightColor }}>
-                {formatCurrency(item.total_amount)}
-              </Text>
-            </View>
+            {(() => {
+              const showExchangeRate = (item.batches || []).some(
+                (batch) => Number(batch.exchange_rate || 1) !== 1
+              );
+              const nestedLabels = showExchangeRate
+                ? ['Batch', 'Date', 'Qty', 'Rate', 'Exchange Rate', 'Total', 'Remarks']
+                : ['Batch', 'Date', 'Qty', 'Rate', 'Total', 'Remarks'];
+              const nestedWidths = showExchangeRate
+                ? ['14%', '18%', '10%', '12%', '14%', '14%', '18%']
+                : ['16%', '20%', '12%', '14%', '16%', '22%'];
 
-            {!!item?.batches?.length && (
-              <View style={{ marginBottom: 3, marginTop: 1 }}>
-                <Text style={styles.subSectionHeading}>
-                  Production batches receiving this expense allocation
-                </Text>
-                {sectionHeader(
-                  ['Batch', 'Date', 'Qty', 'Rate', 'Exchange Rate', 'Total', 'Remarks'],
-                  '#888888',
-                  '#FFFFFF',
-                  ['14%', '18%', '10%', '12%', '14%', '14%', '18%']
-                )}
-                {(item.batches || []).map((batch, batchIdx) => (
-                  <View key={`${batch.batch_id || batchIdx}-${batchIdx}`} style={pdfStyles.tableRow}>
-                    <Text style={{ ...pdfStyles.tableCell, width: '14%', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : '#F7F7F7' }}>
-                      {batch.batchNo}
+              return (
+                <>
+                  <View style={pdfStyles.tableRow}>
+                    <Text style={{ ...pdfStyles.tableCell, width: '10%', textAlign: 'center', backgroundColor: idx % 2 === 0 ? '#FFFFFF' : lightColor }}>
+                      {idx + 1}.
                     </Text>
-                    <Text style={{ ...pdfStyles.tableCell, width: '18%', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : '#F7F7F7' }}>
-                      {readableDate(batch.end_date, true)}
+                    <Text style={{ ...pdfStyles.tableCell, width: '40%', backgroundColor: idx % 2 === 0 ? '#FFFFFF' : lightColor }}>
+                      {item.ledger?.name}
                     </Text>
-                    <Text style={{ ...pdfStyles.tableCell, width: '10%', textAlign: 'right', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : '#F7F7F7' }}>
-                      {formatQuantity(batch.quantity)}
+                    <Text style={{ ...pdfStyles.tableCell, width: '20%', backgroundColor: idx % 2 === 0 ? '#FFFFFF' : lightColor }}>
+                      {item.currency?.name}
                     </Text>
-                    <Text style={{ ...pdfStyles.tableCell, width: '12%', textAlign: 'right', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : '#F7F7F7' }}>
-                      {formatCurrency(batch.rate)}
-                    </Text>
-                    <Text style={{ ...pdfStyles.tableCell, width: '14%', textAlign: 'right', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : '#F7F7F7' }}>
-                      {formatQuantity(batch.exchange_rate)}
-                    </Text>
-                    <Text style={{ ...pdfStyles.tableCell, width: '14%', textAlign: 'right', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : '#F7F7F7' }}>
-                      {formatCurrency(batch.total)}
-                    </Text>
-                    <Text style={{ ...pdfStyles.tableCell, width: '18%', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : '#F7F7F7' }}>
-                      {batch.remarks || '-'}
+                    <Text style={{ ...pdfStyles.tableCell, width: '30%', textAlign: 'right', backgroundColor: idx % 2 === 0 ? '#FFFFFF' : lightColor }}>
+                      {formatCurrency(item.total_amount)}
                     </Text>
                   </View>
-                ))}
-              </View>
-            )}
+
+                  {!!item?.batches?.length && (
+                    <View style={{ marginBottom: 3, marginTop: 1 }}>
+                      <Text style={styles.subSectionHeading}>
+                        Production batches receiving this expense allocation
+                      </Text>
+                      {sectionHeader(
+                        nestedLabels,
+                        '#888888',
+                        '#FFFFFF',
+                        nestedWidths
+                      )}
+                      {(item.batches || []).map((batch, batchIdx) => (
+                        <View key={`${batch.batch_id || batchIdx}-${batchIdx}`} style={pdfStyles.tableRow}>
+                          <Text style={{ ...pdfStyles.tableCell, width: nestedWidths[0], backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : '#F7F7F7' }}>
+                            {batch.batchNo}
+                          </Text>
+                          <Text style={{ ...pdfStyles.tableCell, width: nestedWidths[1], backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : '#F7F7F7' }}>
+                            {readableDate(batch.end_date, true)}
+                          </Text>
+                          <Text style={{ ...pdfStyles.tableCell, width: nestedWidths[2], textAlign: 'right', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : '#F7F7F7' }}>
+                            {formatQuantity(batch.quantity)}
+                          </Text>
+                          <Text style={{ ...pdfStyles.tableCell, width: nestedWidths[3], textAlign: 'right', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : '#F7F7F7' }}>
+                            {formatCurrency(batch.rate)}
+                          </Text>
+                          {showExchangeRate && (
+                            <Text style={{ ...pdfStyles.tableCell, width: nestedWidths[4], textAlign: 'right', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : '#F7F7F7' }}>
+                              {formatQuantity(batch.exchange_rate)}
+                            </Text>
+                          )}
+                          <Text style={{ ...pdfStyles.tableCell, width: showExchangeRate ? nestedWidths[5] : nestedWidths[4], textAlign: 'right', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : '#F7F7F7' }}>
+                            {formatCurrency(batch.total)}
+                          </Text>
+                          <Text style={{ ...pdfStyles.tableCell, width: showExchangeRate ? nestedWidths[6] : nestedWidths[5], backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : '#F7F7F7' }}>
+                            {batch.remarks || '-'}
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+                </>
+              );
+            })()}
           </View>
         ))}
 
-        <Text style={[styles.sectionHeading, { color: mainColor }]}>By-Products Offset</Text>
-        {sectionHeader(
-          ['Product', 'Unit', 'Total Qty', 'Cost Reduction'],
-          mainColor,
-          contrastText,
-          ['30%', '15%', '25%', '30%']
+        {(reportData?.by_products || []).length > 0 && (
+          <>
+            <Text style={[styles.sectionHeading, { color: mainColor }]}>By-Products Offset</Text>
+            {sectionHeader(
+              ['S/N', 'Product', 'Unit', 'Total Qty', 'Cost Reduction'],
+              mainColor,
+              contrastText,
+              ['10%', '20%', '15%', '25%', '30%']
+            )}
+            {(reportData?.by_products || []).map((item, idx) => (
+              <View key={`${item.product?.id || idx}-${idx}`}>
+                <View style={pdfStyles.tableRow}>
+                  <Text style={{ ...pdfStyles.tableCell, width: '10%', textAlign: 'center', backgroundColor: idx % 2 === 0 ? '#FFFFFF' : lightColor }}>
+                    {idx + 1}.
+                  </Text>
+                  <Text style={{ ...pdfStyles.tableCell, width: '20%', backgroundColor: idx % 2 === 0 ? '#FFFFFF' : lightColor }}>
+                    {item.product?.name}
+                  </Text>
+                  <Text style={{ ...pdfStyles.tableCell, width: '15%', backgroundColor: idx % 2 === 0 ? '#FFFFFF' : lightColor }}>
+                    {item.measurement_unit?.symbol}
+                  </Text>
+                  <Text style={{ ...pdfStyles.tableCell, width: '25%', textAlign: 'right', backgroundColor: idx % 2 === 0 ? '#FFFFFF' : lightColor }}>
+                    {formatQuantity(item.total_quantity)}
+                  </Text>
+                  <Text style={{ ...pdfStyles.tableCell, width: '30%', textAlign: 'right', backgroundColor: idx % 2 === 0 ? '#FFFFFF' : lightColor }}>
+                    {formatCurrency(item.total_market_value)}
+                  </Text>
+                </View>
+
+                {!!item?.batches?.length && (
+                  <View style={{ marginBottom: 3, marginTop: 1 }}>
+                    <Text style={styles.subSectionHeading}>
+                      Production batches producing this by-product offset
+                    </Text>
+                    {sectionHeader(
+                      ['Batch', 'Date', 'Qty', 'Market Value / Unit', 'Total Market Value'],
+                      '#888888',
+                      '#FFFFFF',
+                      ['20%', '22%', '16%', '21%', '21%']
+                    )}
+                    {(item.batches || []).map((batch, batchIdx) => (
+                      <View key={`${batch.batch_id || batchIdx}-${batchIdx}`} style={pdfStyles.tableRow}>
+                        <Text style={{ ...pdfStyles.tableCell, width: '20%', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : '#F7F7F7' }}>
+                          {batch.batchNo}
+                        </Text>
+                        <Text style={{ ...pdfStyles.tableCell, width: '22%', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : '#F7F7F7' }}>
+                          {readableDate(batch.end_date, true)}
+                        </Text>
+                        <Text style={{ ...pdfStyles.tableCell, width: '16%', textAlign: 'right', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : '#F7F7F7' }}>
+                          {formatQuantity(batch.quantity)}
+                        </Text>
+                        <Text style={{ ...pdfStyles.tableCell, width: '21%', textAlign: 'right', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : '#F7F7F7' }}>
+                          {formatCurrency(batch.market_value_per_unit)}
+                        </Text>
+                        <Text style={{ ...pdfStyles.tableCell, width: '21%', textAlign: 'right', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : '#F7F7F7' }}>
+                          {formatCurrency(batch.total_market_value)}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </View>
+            ))}
+          </>
         )}
-        {(reportData?.by_products || []).map((item, idx) => (
-          <View key={`${item.product?.id || idx}-${idx}`}>
-            <View style={pdfStyles.tableRow}>
-              <Text style={{ ...pdfStyles.tableCell, width: '30%', backgroundColor: idx % 2 === 0 ? '#FFFFFF' : lightColor }}>
-                {item.product?.name}
-              </Text>
-              <Text style={{ ...pdfStyles.tableCell, width: '15%', backgroundColor: idx % 2 === 0 ? '#FFFFFF' : lightColor }}>
-                {item.measurement_unit?.symbol}
-              </Text>
-              <Text style={{ ...pdfStyles.tableCell, width: '25%', textAlign: 'right', backgroundColor: idx % 2 === 0 ? '#FFFFFF' : lightColor }}>
-                {formatQuantity(item.total_quantity)}
-              </Text>
-              <Text style={{ ...pdfStyles.tableCell, width: '30%', textAlign: 'right', backgroundColor: idx % 2 === 0 ? '#FFFFFF' : lightColor }}>
-                {formatCurrency(item.total_market_value)}
-              </Text>
-            </View>
-
-            {!!item?.batches?.length && (
-              <View style={{ marginBottom: 3, marginTop: 1 }}>
-                <Text style={styles.subSectionHeading}>
-                  Production batches producing this by-product offset
-                </Text>
-                {sectionHeader(
-                  ['Batch', 'Date', 'Qty', 'Market Value / Unit', 'Total Market Value'],
-                  '#888888',
-                  '#FFFFFF',
-                  ['20%', '22%', '16%', '21%', '21%']
-                )}
-                {(item.batches || []).map((batch, batchIdx) => (
-                  <View key={`${batch.batch_id || batchIdx}-${batchIdx}`} style={pdfStyles.tableRow}>
-                    <Text style={{ ...pdfStyles.tableCell, width: '20%', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : '#F7F7F7' }}>
-                      {batch.batchNo}
-                    </Text>
-                    <Text style={{ ...pdfStyles.tableCell, width: '22%', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : '#F7F7F7' }}>
-                      {readableDate(batch.end_date, true)}
-                    </Text>
-                    <Text style={{ ...pdfStyles.tableCell, width: '16%', textAlign: 'right', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : '#F7F7F7' }}>
-                      {formatQuantity(batch.quantity)}
-                    </Text>
-                    <Text style={{ ...pdfStyles.tableCell, width: '21%', textAlign: 'right', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : '#F7F7F7' }}>
-                      {formatCurrency(batch.market_value_per_unit)}
-                    </Text>
-                    <Text style={{ ...pdfStyles.tableCell, width: '21%', textAlign: 'right', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : '#F7F7F7' }}>
-                      {formatCurrency(batch.total_market_value)}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            )}
-          </View>
-        ))}
-
-        <View style={styles.footer} fixed>
-          <Text
-            style={styles.footerText}
-            render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`}
-          />
-        </View>
       </Page>
     </Document>
   );
