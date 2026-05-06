@@ -17,7 +17,7 @@ type CostByProduct = CostReportResponse['by_products'][number] & {
   batches?: ByProductBatch[];
 };
 
-type CostReportPdfData = CostReportResponse & {
+type CostReportPdfData = Omit<CostReportResponse, 'by_products'> & {
   by_products?: CostByProduct[];
 };
 
