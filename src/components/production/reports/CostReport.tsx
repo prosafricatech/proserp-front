@@ -2,6 +2,8 @@
 
 import { FC, JSX, ReactNode, useState } from 'react';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import PDFContent from '@/components/pdf/PDFContent';
 import {
   Add,
   FileDownloadOutlined,
@@ -18,6 +20,10 @@ import {
   Card,
   CardContent,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Grid,
   Paper,
   Stack,
@@ -39,6 +45,7 @@ import {
   ResponsiveContainer,
   Tooltip as RechartsTooltip,
 } from 'recharts';
+import ProductionCostReportPdf from './ProductionCostReportPdf';
 import { CostReportResponse } from './productionReportsServices';
 
 const formatCurrency = (value: number | string): string =>
@@ -503,6 +510,32 @@ interface CostReportProps {
   comparisonOutputValue?: number;
 }
 
+interface CostReportDialogProps {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  document: ReactNode;
+}
+
+function CostReportDialog({
+  open,
+  setOpen,
+  document,
+}: CostReportDialogProps): JSX.Element {
+  return (
+    <Dialog maxWidth='md' fullWidth open={open}>
+      <DialogTitle>
+        <Typography variant='body2'>Production Cost Report</Typography>
+      </DialogTitle>
+      <DialogContent>{document}</DialogContent>
+      <DialogActions>
+        <Button size='small' variant='outlined' onClick={() => setOpen(false)}>
+          Close
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
 const CostReport: FC<CostReportProps> = ({
   report,
   isLoading,
@@ -510,8 +543,12 @@ const CostReport: FC<CostReportProps> = ({
   headerColor,
   comparisonOutputValue,
 }): JSX.Element => {
+  const { authOrganization, authUser } = useJumboAuth();
+  const user = authUser?.user;
+
   const [materialOpen, setMaterialOpen] = useState<boolean>(true);
   const [ledgerOpen, setLedgerOpen] = useState<boolean>(false);
+  const [openCostPdf, setOpenCostPdf] = useState<boolean>(false);
 
   if (isLoading) {
     return (
@@ -580,17 +617,15 @@ const CostReport: FC<CostReportProps> = ({
               </Button>
             </span>
           </Tooltip>
-          <Tooltip title='PDF export is not available yet for the cost report.' arrow>
-            <span>
-              <Button
-                size='small'
-                variant='outlined'
-                startIcon={<PictureAsPdfOutlined />}
-                disabled
-              >
-                Export PDF
-              </Button>
-            </span>
+          <Tooltip title='Preview cost report PDF' arrow>
+            <Button
+              size='small'
+              variant='outlined'
+              startIcon={<PictureAsPdfOutlined />}
+              onClick={() => setOpenCostPdf(true)}
+            >
+              Export PDF
+            </Button>
           </Tooltip>
         </Stack>
       </Stack>
@@ -840,6 +875,23 @@ const CostReport: FC<CostReportProps> = ({
           </TableContainer>
         </CardContent>
       </Card>
+
+      <CostReportDialog
+        open={openCostPdf}
+        setOpen={setOpenCostPdf}
+        document={
+          <PDFContent
+            document={
+              <ProductionCostReportPdf
+                reportData={report}
+                organization={authOrganization || undefined}
+                user={user}
+              />
+            }
+            fileName='production-cost-report'
+          />
+        }
+      />
     </Stack>
   );
 };
