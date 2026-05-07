@@ -1,20 +1,71 @@
-'use client'
-import React, { useState } from 'react';
-import { DeleteOutlined, EditOutlined, MoreHorizOutlined } from '@mui/icons-material';
-import { Dialog, Tooltip, useMediaQuery } from '@mui/material';
-import { useSnackbar } from 'notistack';
+'use client';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
-import BudgetsForm from './BudgetsForm';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
+import {
+  ContentCopyOutlined,
+  DeleteOutlined,
+  EditOutlined,
+} from '@mui/icons-material';
+import {
+  Dialog,
+  IconButton,
+  Skeleton,
+  Stack,
+  Tooltip,
+  useMediaQuery,
+} from '@mui/material';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useSnackbar } from 'notistack';
+import { useState } from 'react';
 import projectsServices from '../../project-services';
-import { JumboDdMenu } from '@jumbo/components';
+import BudgetsForm from './BudgetsForm';
+
+const EditBudget = ({ budget, setOpenDialog, isDuplicate }) => {
+  const { data: budgetDetails, isFetching } = useQuery({
+    queryKey: ['editBudget', { id: budget.id }],
+    queryFn: async () => projectsServices.getbudgetItemsDetails(budget.id),
+  });
+
+  if (isFetching) {
+    return (
+      <div style={{ width: '100%', padding: '16px' }}>
+        <Skeleton
+          variant='text'
+          width={180}
+          height={32}
+          style={{ borderRadius: 4, marginLeft: 'auto' }}
+        />
+        <Skeleton
+          variant='rectangular'
+          width='100%'
+          height={48}
+          style={{ borderRadius: 4 }}
+        />
+        <Skeleton
+          variant='rectangular'
+          width='100%'
+          height={32}
+          style={{ borderRadius: 4 }}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <BudgetsForm
+      budget={budgetDetails}
+      setOpenDialog={setOpenDialog}
+      isDuplicate={isDuplicate}
+    />
+  );
+};
 
 const BudgetsItemAction = ({ budget }) => {
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const { showDialog, hideDialog } = useJumboDialog();
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
+  const [duplicateBudget, setDuplicateBudget] = useState(false);
 
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
@@ -24,6 +75,7 @@ const BudgetsItemAction = ({ budget }) => {
     mutationFn: (id) => projectsServices.deleteBudget(id),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['projectBudgets'] });
+      queryClient.invalidateQueries({ queryKey: ['budgets-list'] });
       enqueueSnackbar(data.message, { variant: 'success' });
     },
     onError: (error) => {
@@ -31,31 +83,21 @@ const BudgetsItemAction = ({ budget }) => {
     },
   });
 
-  const menuItems = [
-    { icon: <EditOutlined />, title: 'Edit', action: 'edit' },
-    { icon: <DeleteOutlined color="error" />, title: 'Delete', action: 'delete' },
-  ];
+  const handleEdit = () => {
+    setOpenEditDialog(true);
+  };
 
-  const handleItemAction = (menuItem) => {
-    switch (menuItem.action) {
-      case 'edit':
-        setOpenEditDialog(true);
-        break;
-      case 'delete':
-        showDialog({
-          title: 'Confirm Delete',
-          content: 'Are you sure you want to delete this Budget?',
-          onYes: () => {
-            hideDialog();
-            deleteBudgetMutation.mutate(budget.id);
-          },
-          onNo: () => hideDialog(),
-          variant: 'confirm',
-        });
-        break;
-      default:
-        break;
-    }
+  const handleDelete = () => {
+    showDialog({
+      title: 'Confirm Delete',
+      content: 'Are you sure you want to delete this Budget?',
+      onYes: () => {
+        hideDialog();
+        deleteBudgetMutation.mutate(budget.id);
+      },
+      onNo: () => hideDialog(),
+      variant: 'confirm',
+    });
   };
 
   return (
@@ -64,21 +106,55 @@ const BudgetsItemAction = ({ budget }) => {
         open={openEditDialog}
         fullWidth
         fullScreen={belowLargeScreen}
-        maxWidth="md"
+        maxWidth='lg'
         scroll={belowLargeScreen ? 'body' : 'paper'}
       >
-        <BudgetsForm budget={budget} setOpenDialog={setOpenEditDialog} />
+        <EditBudget
+          budget={budget}
+          setOpenDialog={setOpenEditDialog}
+          isDuplicate={duplicateBudget}
+        />
       </Dialog>
 
-      <JumboDdMenu
-        icon={
-          <Tooltip title="Actions">
-            <MoreHorizOutlined />
-          </Tooltip>
-        }
-        menuItems={menuItems}
-        onClickCallback={handleItemAction}
-      />
+      <Stack
+        textAlign={'end'}
+        direction='row'
+        spacing={1}
+        sx={{ mb: 1 }}
+        justifyContent='flex-end'
+      >
+        <Tooltip title='Edit'>
+          <IconButton
+            color='primary'
+            size='small'
+            onClick={(e) => {
+              e.stopPropagation();
+              setDuplicateBudget(false);
+              handleEdit();
+            }}
+          >
+            <EditOutlined />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title='Duplicate'>
+          <IconButton
+            color='primary'
+            size='small'
+            onClick={(e) => {
+              e.stopPropagation();
+              setDuplicateBudget(true);
+              handleEdit();
+            }}
+          >
+            <ContentCopyOutlined />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title='Delete'>
+          <IconButton color='error' size='small' onClick={handleDelete}>
+            <DeleteOutlined />
+          </IconButton>
+        </Tooltip>
+      </Stack>
     </>
   );
 };

@@ -153,6 +153,12 @@ export async function getMenus(locale: string) {
           icon: icon('requisitions'),
         },
         {
+          uri: `/${locale}/manufacturing/reports`,
+          label: sidebar.menuItem.reports,
+          type: 'nav-item',
+          icon: icon('reports'),
+        },
+        {
           label: sidebar.menuItem.masters,
           type: 'collapsible',
           icon: icon('manufacturingMasters'),
@@ -190,40 +196,77 @@ export async function getMenus(locale: string) {
         },
       ],
     },
-    // {
-    //   label: sidebar.menu.humanResources,
-    //   type: 'section',
-    //   children: [
-    //     {
-    //       uri: `/${locale}/humanResources/employees`,
-    //       label: sidebar.menuItem.employees,
-    //       type: 'nav-item',
-    //       icon: icon('employees'),
-    //     },
-    //     {
-    //       label: sidebar.menuItem.masters,
-    //       type: 'collapsible',
-    //       icon: icon('businessCenter'),
-    //       children: [
-    //         {
-    //           uri: `/${locale}/humanResources/departments`,
-    //           label: sidebar.menuItem.departments,
-    //           type: 'nav-item',
-    //         },
-    //         {
-    //           uri: `/${locale}/humanResources/leave_types`,
-    //           label: sidebar.menuItem.leave_types,
-    //           type: 'nav-item',
-    //         },
-    //         {
-    //           uri: `/${locale}/humanResources/designations`,
-    //           label: sidebar.menuItem.designations,
-    //           type: 'nav-item',
-    //         },
-    //       ],
-    //     },
-    //   ],
-    // },
+    {
+      label: sidebar.menu.humanResources,
+      type: 'section',
+      children: [
+        {
+          uri: `/${locale}/humanResources/employees`,
+          label: sidebar.menuItem.employees,
+          type: 'nav-item',
+          icon: icon('employees'),
+        },
+        {
+          label: sidebar.menuItem.payroll,
+          type: 'collapsible',
+          icon: icon('reports'),
+          children: [
+            {
+              uri: `/${locale}/humanResources/leave-requests`,
+              label: sidebar.menuItem.leave_requests,
+              type: 'nav-item',
+            },
+            {
+              uri: `/${locale}/humanResources/payroll`,
+              label: sidebar.menuItem.payroll_periods,
+              type: 'nav-item',
+            },
+          ],
+        },
+        {
+          label: sidebar.menuItem.masters,
+          type: 'collapsible',
+          icon: icon('businessCenter'),
+          children: [
+            {
+              uri: `/${locale}/humanResources/departments`,
+              label: sidebar.menuItem.departments,
+              type: 'nav-item',
+            },
+            {
+              uri: `/${locale}/humanResources/designations`,
+              label: sidebar.menuItem.designations,
+              type: 'nav-item',
+            },
+            {
+              uri: `/${locale}/humanResources/leave_types`,
+              label: sidebar.menuItem.leave_types,
+              type: 'nav-item',
+            },
+            {
+              uri: `/${locale}/humanResources/allowance-types`,
+              label: sidebar.menuItem.allowance_types,
+              type: 'nav-item',
+            },
+            {
+              uri: `/${locale}/humanResources/deduction-types`,
+              label: sidebar.menuItem.deduction_types,
+              type: 'nav-item',
+            },
+            {
+              uri: `/${locale}/humanResources/employer-contribution-types`,
+              label: 'Employer Contribution Types',
+              type: 'nav-item',
+            },
+            {
+              uri: `/${locale}/humanResources/paye-tax-bands`,
+              label: sidebar.menuItem.paye_tax_bands,
+              type: 'nav-item',
+            },
+          ],
+        },
+      ],
+    },
     {
       label: sidebar.menu.accounts_and_finance,
       type: 'section',
@@ -251,6 +294,11 @@ export async function getMenus(locale: string) {
           type: 'collapsible',
           icon: icon('currencies'),
           children: [
+            {
+              uri: `/${locale}/accounts/budgets`,
+              label: sidebar.menuItem.budgets,
+              type: 'nav-item',
+            },
             {
               uri: `/${locale}/accounts/ledger_groups`,
               label: sidebar.menuItem.ledgerGroups,
@@ -355,6 +403,12 @@ export async function getMenus(locale: string) {
           label: sidebar.menuItem.measurement_units,
           type: 'nav-item',
           icon: icon('measurement_units'),
+        },
+        {
+          uri: `/${locale}/masters/banks`,
+          label: sidebar.menuItem.banks,
+          type: 'nav-item',
+          icon: icon('banks'),
         },
       ],
     },

@@ -1,7 +1,7 @@
 import { Grid, IconButton, LinearProgress, TextField, Tooltip} from '@mui/material';
-import { useContext, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import * as yup  from "yup";
-import { useForm, useFormContext } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { AddOutlined, CheckOutlined, DisabledByDefault } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
@@ -17,12 +17,12 @@ import { StationFormContext } from '../../../SalesShifts';
 function Adjustments({cashierPumpProducts, index = -1, setShowForm = null, adjustment, adjustments = [], setAdjustments}) {
   const [isAdding, setIsAdding] = useState(false);
   const {activeStation} = useContext(StationFormContext);
-  const { fuel_pumps, tanks } = activeStation;
+  const { tanks } = activeStation;
   const { productOptions } = useProductsSelect();
   const [productTanks, setProductTanks] = useState([])
   const [tanksKey, setTanksKeyKey] = useState(0);
+  const [formKey, setFormKey] = useState(0);
 
-  // Define validation Schema
   const validationSchema = yup.object({
     product_id: yup.number().required("Product is required").typeError('Product is required'),
     tank_id: yup.number().required("Tank is required").typeError('Tank is required'),
@@ -61,12 +61,17 @@ function Adjustments({cashierPumpProducts, index = -1, setShowForm = null, adjus
       setShowForm && setShowForm(false);
   };
 
+  useEffect(() => {
+    setFormKey(prevKey => prevKey + 1);
+    setTanksKeyKey(prevKey => prevKey + 1);
+  }, [cashierPumpProducts]);
+
   if(isAdding){
     return <LinearProgress/>
   }
 
   return (
-    <form autoComplete='off' onSubmit={handleSubmit(updateItems)}>
+    <form key={formKey} autoComplete='off' onSubmit={handleSubmit(updateItems)}>
       <Grid container spacing={1} marginTop={0.5}>
          <Grid size={{xs: 12, md: 6, lg: 2.6}}>
           <Div sx={{ mt: 1}}>
@@ -77,9 +82,10 @@ function Adjustments({cashierPumpProducts, index = -1, setShowForm = null, adjus
               requiredProducts={cashierPumpProducts}
               onChange={(newValue) => {
                 setTanksKeyKey(prevKey => prevKey + 1);
-                const relatedPumps = fuel_pumps.filter(pump => pump.product_id === newValue?.id);
-                const relatedTankIds = relatedPumps.map(pump => pump.tank_id);
-                const tanksHavingProduct = tanks.filter(tank => relatedTankIds.includes(tank.id));
+                // Allow all tanks for this product assigned to this cashier
+                const productObj = cashierPumpProducts.find(p => p.id === newValue?.id);
+                const allowedTankIds = productObj?.tankIds || [];
+                const tanksHavingProduct = tanks.filter(tank => allowedTankIds.includes(tank.id));
                 setProductTanks(tanksHavingProduct);
                 setValue(`product_id`, newValue ? newValue.id : '', {
                   shouldValidate: true, 

@@ -1,6 +1,6 @@
 'use client'
 import { DeleteOutlined, EditOutlined, HighlightOff, MoreHorizOutlined, VisibilityOutlined } from '@mui/icons-material';
-import { Box, Button, Dialog, DialogContent, Grid, IconButton, LinearProgress, Tab, Tabs, Tooltip, useMediaQuery } from '@mui/material';
+import { Box, Button, Dialog, DialogContent, Grid, IconButton, LinearProgress, Skeleton, Tab, Tabs, Tooltip, useMediaQuery } from '@mui/material';
 import React, { useState } from 'react'
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
 import { useSnackbar } from 'notistack';
@@ -32,7 +32,13 @@ const ActionDialogContent = ({ inventoryConsumption, setOpenDialog, action = 'op
   const [activeTab, setActiveTab] = React.useState(0);
 
   if (isFetching) {
-    return <LinearProgress />;
+        return (
+          <div style={{ width: '100%', padding: '16px' }}>
+            <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
+            <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
+            <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+          </div>
+        );
   }
 
   const handleTabChange = (event, newValue) => {

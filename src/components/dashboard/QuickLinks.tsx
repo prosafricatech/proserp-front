@@ -1,7 +1,7 @@
 import JumboCardQuick from '@jumbo/components/JumboCardQuick/JumboCardQuick'
 import { AutoStoriesOutlined, FormatListNumberedRtl, Inventory2Outlined, ListOutlined, LocalGasStation, PointOfSaleOutlined, QrCodeOutlined, QrCode2Rounded, ReceiptOutlined, ShoppingCartOutlined } from '@mui/icons-material'
-import { Grid, LinearProgress, Typography } from '@mui/material'
-import React, { useState } from 'react'
+import { Grid, Skeleton, Typography } from '@mui/material'
+import { useState } from 'react'
 import DashboardQuickLink from '../procurement/reports/productInsights/DashboardQuickLink'
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider'
 import { MODULES } from '@/utilities/constants/modules'
@@ -25,7 +25,13 @@ function QuickLinks() {
         <JumboCardQuick
             title={'Quick Links'}
         >
-            {isLoading && <LinearProgress />}
+            {isLoading && 
+                <div style={{ width: '100%', padding: '16px' }}>
+                    <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
+                    <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
+                    <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+                </div>
+            }
             <Grid container columnSpacing={1} rowSpacing={1} justifyContent={'center'}>
                 {
                     organizationHasSubscribed(MODULES.PROJECT_MANAGEMENT) && checkOrganizationPermission([
@@ -51,7 +57,16 @@ function QuickLinks() {
                     </Grid>
                 }
                 {
-                    organizationHasSubscribed(MODULES.MANUFACTURING_AND_PROCESSING) &&
+                    (organizationHasSubscribed(MODULES.MANUFACTURING_AND_PROCESSING) && checkOrganizationPermission([
+                        PERMISSIONS.BOM_READ,
+                        PERMISSIONS.BOM_CREATE,
+                        PERMISSIONS.BOM_EDIT,
+                        PERMISSIONS.BOM_DELETE,
+                        PERMISSIONS.PRODUCTION_BATCHES_CREATE,
+                        PERMISSIONS.PRODUCTION_BATCHES_READ,
+                        PERMISSIONS.PRODUCTION_BATCHES_EDIT,
+                        PERMISSIONS.PRODUCTION_BATCHES_DELETE,
+                    ])) &&
                     <Grid 
                         size={{ xs: 6, md: 2, lg: 1.5 }} 
                         p={1}
@@ -70,11 +85,11 @@ function QuickLinks() {
                 }
                 {
                     (organizationHasSubscribed(MODULES.FUEL_STATION) && checkOrganizationPermission([
-                        PERMISSIONS.FUEL_SALES_SHIFT_READ,
-                        PERMISSIONS.FUEL_SALES_SHIFT_CREATE,
-                        PERMISSIONS.FUEL_SALES_SHIFT_UPDATE,
-                        PERMISSIONS.FUEL_SALES_SHIFT_DELETE,
-                        PERMISSIONS.FUEL_SALES_SHIFT_CLOSE
+                        PERMISSIONS.FUEL_SALES_SHIFTS_READ,
+                        PERMISSIONS.FUEL_SALES_SHIFTS_CREATE,
+                        PERMISSIONS.FUEL_SALES_SHIFTS_UPDATE,
+                        PERMISSIONS.FUEL_SALES_SHIFTS_DELETE,
+                        PERMISSIONS.FUEL_SALES_SHIFTS_CLOSE
                     ])) &&
                     <Grid 
                         size={{ xs: 6, md: 2, lg: 1 }} 

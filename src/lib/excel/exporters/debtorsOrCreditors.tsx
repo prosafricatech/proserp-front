@@ -53,9 +53,9 @@ export async function exportDebtorsOrCreditorsToExcel(exportedData: any) {
     // info section
     if (reportData.filters?.cost_centers?.length > 0) {
       ws.mergeCells('A4:C4');
-      ws.getCell('A4').value = 'Cost Centers';
-      ws.getCell('D4').value = 'Cost Centers';
-      ws.getCell('F4').value = 'Cost Centers';
+      ws.getCell('A4').value = 'Cost Centers ';
+      ws.getCell('D4').value = 'Printed By';
+      ws.getCell('F4').value = 'Printed On';
       let row = 5;
       let col = 65;
       for (let c = 0; c < reportData.filters.cost_centers.length; c++) {
@@ -129,10 +129,8 @@ export async function exportDebtorsOrCreditorsToExcel(exportedData: any) {
         ws.mergeCells(`B${row}:E${row}`);
         ws.getCell(`B${row}`).value = d.name;
 
-        ws.getCell(`F${row}`).value = d.amount.toLocaleString('en-US', {
-          maximumFractionDigits: 2,
-          minimumFractionDigits: 2,
-        });
+        ws.getCell(`F${row}`).value = d.amount;
+        ws.getCell(`F${row}`).numFmt = '#,###.00';
         ws.getCell(`F${row}`).alignment = {
           horizontal: 'right',
           vertical: 'middle',
@@ -181,10 +179,8 @@ export async function exportDebtorsOrCreditorsToExcel(exportedData: any) {
     ws.getCell(`A${totalRow}`).value = 'Total';
     ws.getCell(`A${totalRow}`).font = { bold: true, size: 11 };
 
-    ws.getCell(`F${totalRow}`).value = total.toLocaleString('en-US', {
-      maximumFractionDigits: 2,
-      minimumFractionDigits: 2,
-    });
+    ws.getCell(`F${totalRow}`).value = total;
+    ws.getCell(`F${totalRow}`).numFmt = '#,###.00';
     ws.getCell(`F${totalRow}`).alignment = {
       horizontal: 'right',
       vertical: 'middle',
@@ -207,7 +203,7 @@ export async function exportDebtorsOrCreditorsToExcel(exportedData: any) {
     // Return Excel buffer
     return await wb.xlsx.writeBuffer();
   } catch (e: any) {
-    console.error('Error exporting sample Excel:', e);
+    console.error('Error exporting Excel:', e);
     throw new Error(
       e?.message || 'Excel export failed during workbook generation'
     );

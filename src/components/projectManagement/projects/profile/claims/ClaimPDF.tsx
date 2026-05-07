@@ -191,7 +191,7 @@ const ClaimPDF: React.FC<{
           )}
         </View>
 
-        {/* ==================== Summary Table ==================== */}
+        {/*  ==================== Summary Table ====================  */}
         <View style={{ marginBottom: 40, marginTop: 20, alignItems: 'center' }}>
           <Text
             style={{

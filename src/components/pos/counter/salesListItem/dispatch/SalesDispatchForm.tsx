@@ -163,7 +163,7 @@ const SalesDispatchForm: React.FC<SalesDispatchFormProps> = ({ toggleOpen, sale 
       dispatch_date: dispatch_date.toISOString(),
       items: deliveryData
         ? items.map((item: any) => ({
-            id: item.id,
+            sale_item_id: item.sale_item.id,
             product_id: item.product.id,
             product: {
               id: item.product.id,
@@ -181,7 +181,7 @@ const SalesDispatchForm: React.FC<SalesDispatchFormProps> = ({ toggleOpen, sale 
             store: item.store
           }))
         : sale_items?.filter((item: any) => item.undispatched_quantity > 0).map((item: any) => ({
-            id: item.id,
+            sale_item_id: item.id,
             product_id: item.product_id,
             product: {
               id: item.product_id,

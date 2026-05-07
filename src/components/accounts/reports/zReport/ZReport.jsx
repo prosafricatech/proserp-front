@@ -2,7 +2,7 @@ import React from 'react'
 import { useState } from 'react';
 import * as yup from 'yup';
 import financialReportsServices from '../financial-reports-services';
-import { Box, DialogContent, DialogTitle, Grid, LinearProgress, Switch, Typography } from '@mui/material';
+import { Box, DialogContent, DialogTitle, Grid, LinearProgress, Skeleton, Switch, Typography } from '@mui/material';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import dayjs from 'dayjs';
@@ -130,7 +130,13 @@ function ZReport() {
     }
       <DialogContent>
         {
-          isFetching ? <LinearProgress /> :
+          isFetching ? 
+            <div style={{ width: '100%', padding: '16px' }}>
+              <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
+              <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
+              <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+            </div>
+              :
           reportData &&
           (
             <PDFContent

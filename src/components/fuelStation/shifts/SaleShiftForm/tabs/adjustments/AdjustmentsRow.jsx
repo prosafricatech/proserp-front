@@ -1,19 +1,24 @@
 import { DisabledByDefault, EditOutlined } from '@mui/icons-material'
 import { Divider, Grid, IconButton, Tooltip, Typography } from '@mui/material'
-import React, { useContext, useState } from 'react'
-import { useFormContext } from 'react-hook-form';
+import React, { useContext, useEffect, useState } from 'react'
 import Adjustments from './Adjustments';
 import { StationFormContext } from '../../../SalesShifts';
 
 function AdjustmentsRow({ cashierPumpProducts, adjustment, index, adjustments, setAdjustments}) {
     const [showForm, setShowForm] = useState(false);
+    const [rowKey, setRowKey] = useState(0);
     const {activeStation} = useContext(StationFormContext);
     const { tanks } = activeStation;
+
     const product = cashierPumpProducts?.find(product => product.id === adjustment.product_id);
     const tank = tanks.find(tank => tank.id === adjustment.tank_id);
 
+    useEffect(() => {
+        setRowKey(prevKey => prevKey + 1);
+    }, [cashierPumpProducts]);
+
   return (
-         <React.Fragment>
+         <React.Fragment key={rowKey}>
             <Divider/>
             { !showForm ? (
                     <Grid container 
@@ -29,7 +34,7 @@ function AdjustmentsRow({ cashierPumpProducts, adjustment, index, adjustments, s
                         </Grid>
                         <Grid size={{xs: 5.5, md: 2.5, lg: 2.5}}>
                             <Tooltip title="Product">
-                                <Typography>{product.name}</Typography>
+                                <Typography>{product?.name}</Typography>
                             </Tooltip>
                         </Grid>
                         <Grid size={{xs: 5.5, md: 2.5}}>

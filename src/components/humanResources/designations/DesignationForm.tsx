@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
-import React from 'react';
+import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import humanResourcesServices from '../humanResourcesServices';
@@ -59,10 +59,19 @@ const DesignationForm = ({
       queryClient.invalidateQueries({ queryKey: ['designations'] });
     },
     onError: (error) => {
-      enqueueSnackbar('Error Adding Designation', {
-        variant: 'error',
-      });
-      console.log('error adding designation: ', error);
+      let message = 'Something went wrong';
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as any).response?.data?.message === 'string'
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 
@@ -80,23 +89,33 @@ const DesignationForm = ({
       queryClient.invalidateQueries({ queryKey: ['designations'] });
     },
     onError: (error) => {
-      enqueueSnackbar('Error Updating Designation', {
-        variant: 'error',
-      });
-      console.log('error updating designation: ', error);
+      let message = 'Something went wrong';
+
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as any).response?.data?.message === 'string'
+      ) {
+        message = (error as any).response.data.message;
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
+      enqueueSnackbar(message, { variant: 'error' });
     },
   });
 
   const validationSchema = yup.object({
     id: yup.number().optional(),
-    title: yup.string().required('Title is required'),
-    code: yup.string(),
-    description: yup.string(),
+    title: yup.string().required('Title is required').max(255),
+    code: yup.string().max(50),
+    description: yup.string().max(500),
   });
 
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm<FormData>({
     resolver: yupResolver(validationSchema) as any,
@@ -108,7 +127,16 @@ const DesignationForm = ({
     },
   });
 
-  const saveMutation = React.useMemo(() => {
+  useEffect(() => {
+    reset({
+      id: designation?.id,
+      title: designation?.title || '',
+      code: designation?.code || '',
+      description: designation?.description || '',
+    });
+  }, [designation, reset]);
+
+  const saveMutation = useMemo(() => {
     return designation?.id ? updateDesignation : addDesignation;
   }, [designation, updateDesignation, addDesignation]);
 

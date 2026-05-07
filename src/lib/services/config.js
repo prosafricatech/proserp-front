@@ -1,21 +1,12 @@
 import baseAxios from "axios";
 
-const getTimezoneOffset = () => {
-  const date = new Date();
-  const timezoneOffsetMinutes = date.getTimezoneOffset();
-  const sign = timezoneOffsetMinutes < 0 ? '+' : '-';
-  const hours = Math.abs(Math.floor(timezoneOffsetMinutes / 60)).toString().padStart(2, '0');
-  const minutes = Math.abs(timezoneOffsetMinutes % 60).toString().padStart(2, '0');
-  return `${sign}${hours}:${minutes}`;
-};
-
 // Base axios instance (shared across client & server)
 const axios = baseAxios.create({
   baseURL: process.env.API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
-    'X-Timezone': getTimezoneOffset(),
+    'X-Timezone': Intl.DateTimeFormat().resolvedOptions().timeZone,
   },
   withCredentials: true,
   timeout: 60000,

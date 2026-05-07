@@ -81,8 +81,6 @@ export interface SalesShift {
   other_ledgers: LedgerAmount[];
   adjustments: Adjustment[];
   dipping_after: Dipping[];
-  isOpenSwitchON?: boolean;
-  isCloseSwitchON?: boolean;
   created_at?: string;
   updated_at?: string;
   users?: User[];

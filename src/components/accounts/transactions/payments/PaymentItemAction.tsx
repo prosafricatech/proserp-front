@@ -1,7 +1,7 @@
 'use client'
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
 import { AttachmentOutlined, ContentCopyOutlined, DeleteOutlined, EditOutlined, HighlightOff, MoreHorizOutlined, VisibilityOutlined } from '@mui/icons-material';
-import { Box, Button, Dialog, DialogContent, Grid, IconButton, LinearProgress, Tab, Tabs, Tooltip, useMediaQuery } from '@mui/material';
+import { Box, Button, Dialog, DialogContent, Grid, IconButton, LinearProgress, Skeleton, Tab, Tabs, Tooltip, useMediaQuery } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import React, { useState } from 'react'
 import paymentServices from './payment-services';
@@ -37,7 +37,13 @@ import AttachmentForm from '@/components/filesShelf/attachments/AttachmentForm';
     const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
     if (isFetching) {
-      return <LinearProgress />;
+      return (
+        <div style={{ width: '100%', padding: '16px' }}>
+          <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
+          <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
+          <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+        </div>
+      );
     }
 
     const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
@@ -144,7 +150,13 @@ function PaymentItemAction({transaction}:{transaction: Transaction}) {
       queryFn: () => paymentServices.show(transaction.id),
     });
     if(isFetching){
-      return <LinearProgress/>;
+      return (
+        <div style={{ width: '100%', padding: '16px' }}>
+          <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
+          <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
+          <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+        </div>
+      );
     }
     return (
       <PaymentFormDialogContent setOpen={setOpenEditDialog} payment={payment} />
@@ -158,7 +170,13 @@ function PaymentItemAction({transaction}:{transaction: Transaction}) {
     });
 
     if (isFetching) {
-      return <LinearProgress />;
+      return (
+        <div style={{ width: '100%', padding: '16px' }}>
+          <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
+          <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
+          <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+        </div>
+      );
     }
 
     return (

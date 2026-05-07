@@ -27,6 +27,7 @@
       "approvalChains": "Minyororo ya Kuidhinisha",
       "salesCounter": "Kaunta ya Uuzaji",
       "proformas": "Profoma",
+      "budgets": "Bajeti",
       "reports": "Ripoti",
       "fileShelf": "Rafu ya mafaili",
       "usersManagement": "Usimamizi wa Watumiaji",
@@ -65,9 +66,24 @@
       "organizations": "Mashirika",
       
       "employees": "Waajiriwa",
+      "setup": "Mipangilio",
+      "payroll": "Mishahara",
       "departments": "Idara",
       "leave_types": "Likizo",
-      "designations": "Vyeo"
+      "designations": "Vyeo",
+      "banks": "Benki",
+      "employee_contracts": "Mikataba ya waajiriwa",
+      "employee_bank_accounts": "Akaunti za benki",
+      "employee_next_of_kins": "Ndugu/Jamaa wa karibu",
+      "allowance_types": "Aina za marupurupu",
+      "deduction_types": "Aina za makato",
+      "employee_allowances": "Marupurupu ya waajiriwa",
+      "employee_deductions": "Makato ya waajiriwa",
+      "leave_allocations": "Mgawo wa likizo",
+      "leave_requests": "Maombi ya likizo",
+      "paye_tax_bands": "Viwango vya kodi ya PAYE",
+      "payroll_periods": "Vipindi vya Mishahara",
+      "payroll_runs": "Uendeshaji wa Mishahara"
     }
   },
   

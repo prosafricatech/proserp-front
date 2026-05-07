@@ -179,26 +179,11 @@ export async function exportProductSalesExcel(exportedData: any) {
         index + 1,
         pp.name,
         pp.unit_symbol,
-        pp.quantity.toLocaleString('en-US', {
-          maximumFractionDigits: 2,
-          minimumFractionDigits: 2,
-        }),
-        pp.revenue.toLocaleString('en-US', {
-          maximumFractionDigits: 2,
-          minimumFractionDigits: 2,
-        }),
-        pp.cogs.toLocaleString('en-US', {
-          maximumFractionDigits: 2,
-          minimumFractionDigits: 2,
-        }),
-        pp.profit.toLocaleString('en-US', {
-          maximumFractionDigits: 2,
-          minimumFractionDigits: 2,
-        }),
-        pp.margin.toLocaleString('en-US', {
-          maximumFractionDigits: 2,
-          minimumFractionDigits: 2,
-        }) + '%',
+        pp.quantity,
+        pp.revenue,
+        pp.cogs,
+        pp.profit,
+        pp.margin,
       ]);
 
       for (let c = 0; c < 8; c++) {
@@ -213,6 +198,7 @@ export async function exportProductSalesExcel(exportedData: any) {
             horizontal: 'right',
             vertical: 'middle',
           };
+          dataRow.getCell(c + 1).numFmt = '#,###.00';
         } else {
           dataRow.getCell(c + 1).alignment = {
             horizontal: 'left',

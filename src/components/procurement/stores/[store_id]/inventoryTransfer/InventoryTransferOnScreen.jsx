@@ -71,23 +71,23 @@ function InventoryTransferOnScreen({ transfer, organization }) {
             <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
               Cost Center
             </Typography>
-            <Typography variant="body1">{transfer.source_cost_center.name}</Typography>
+            <Typography variant="body1">
+              {transfer.source_cost_center.name} 
+              <span style={{ padding: '0 4px' }}>→</span> 
+              {transfer.destination_cost_center.name}
+            </Typography>
           </Box>
         </Grid>
         <Grid size={{xs: 12, sm: 6, md: 4}}>
           <Box>
             <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
-              From Store
+              Store
             </Typography>
-            <Typography variant="body1">{transfer.source_store.name}</Typography>
-          </Box>
-        </Grid>
-        <Grid size={{xs: 12, sm: 6, md: 4}}>
-          <Box>
-            <Typography variant="subtitle2" sx={{ color: headerColor }} gutterBottom>
-              To Store
+            <Typography variant="body1">
+              {transfer.source_store.name} 
+              <span style={{ padding: '0 4px' }}>→</span> 
+              {transfer.destination_store.name}
             </Typography>
-            <Typography variant="body1">{transfer.destination_store.name}</Typography>
           </Box>
         </Grid>
         <Grid size={{xs: 12, sm: 6, md: 4}}>

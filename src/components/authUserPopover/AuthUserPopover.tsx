@@ -63,22 +63,23 @@ export const AuthUserPopover: React.FC<AuthUserPopoverProps> = ({ dictionary }) 
   const authContext = useJumboAuth();
 
   const [openLogoutDialog, setOpenLogoutDialog] = React.useState<boolean>(false);
+  const hasTriggeredAutoLogout = React.useRef(false);
 
   if (!authContext) {
     console.error('Auth context not available');
     return null;
   }
 
-  const { setAuthValues, authData, authOrganization, resetAuth } = authContext;
+  const { authData, authOrganization, resetAuth, isLoading } = authContext;
 
   const logout = React.useCallback(() => {
     (async () => {
       await signOut({
-        callbackUrl: `http://localhost:3000/${lang}/auth/signin`,
+        callbackUrl: `/${lang}/auth/signin`,
       });
       resetAuth();
     })();
-  }, [setAuthValues, lang, resetAuth]);
+  }, [lang, resetAuth]);
 
   const switchOrganization = React.useCallback(() => {
     router.push(`/${lang}/organizations`);
@@ -86,6 +87,19 @@ export const AuthUserPopover: React.FC<AuthUserPopoverProps> = ({ dictionary }) 
 
   const user: User | undefined = authData?.authUser?.user;
   const organization: Organization | undefined = authOrganization?.organization;
+
+  React.useEffect(() => {
+    if (isLoading || user || hasTriggeredAutoLogout.current) {
+      return;
+    }
+
+    hasTriggeredAutoLogout.current = true;
+    logout();
+  }, [isLoading, user, logout]);
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <ThemeProvider theme={theme}>
@@ -116,24 +130,39 @@ export const AuthUserPopover: React.FC<AuthUserPopoverProps> = ({ dictionary }) 
           </Typography>
 
           <Stack direction="row" alignItems="center" spacing={1} mt={1}>
-            <Chip
-              label={organization?.name}
-              size="small"
-              color="primary"
-              variant="outlined"
-              clickable
-              onClick={() => {
-                if (organization?.id) {
+            {organization?.id ? (
+              <Chip
+                label={organization?.name}
+                size="small"
+                color="primary"
+                variant="outlined"
+                clickable
+                onClick={() => {
                   router.push(`/${lang}/organizations/profile/${organization.id}`);
-                }
-              }}
-              sx={{
-                cursor: 'pointer',
-                '&:hover': {
-                  backgroundColor: 'rgba(56, 13, 250, 0.1)',
-                },
-              }}
-            />
+                }}
+                sx={{
+                  cursor: 'pointer',
+                  '&:hover': {
+                    backgroundColor: 'rgba(56, 13, 250, 0.1)',
+                  },
+                }}
+              />
+            ) : (
+              <Typography
+                variant="body2"
+                color="warning.main"
+                onClick={switchOrganization}
+                sx={{
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                  '&:hover': {
+                    opacity: 0.8,
+                  },
+                }}
+              >
+                No organization selected. Click here to select one.
+              </Typography>
+            )}
           </Stack>
         </Div>
 

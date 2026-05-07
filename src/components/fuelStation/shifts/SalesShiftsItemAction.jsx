@@ -2,6 +2,7 @@
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { useLedgerSelect } from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { faFileExcel } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { JumboDdMenu } from '@jumbo/components';
@@ -16,13 +17,13 @@ import {
 } from '@mui/icons-material';
 import {
   Button,
-  Checkbox,
   Dialog,
   DialogContent,
   DialogTitle,
   IconButton,
   LinearProgress,
   Stack,
+  Switch,
   Tab,
   Tabs,
   Tooltip,
@@ -31,8 +32,9 @@ import {
 } from '@mui/material';
 import { Box, Grid } from '@mui/system';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
-import { useContext, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import PDFContent from '../../pdf/PDFContent';
 import { useProductsSelect } from '../../productAndServices/products/ProductsSelectProvider';
 import fuelStationServices from '../fuelStationServices';
@@ -87,16 +89,21 @@ const DocumentDialog = ({
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
+  useEffect(() => {
+    belowLargeScreen && setActiveTab(1);
+  }, [belowLargeScreen]);
+
   if (isFetching) {
     return <LinearProgress />;
   }
 
   let paymentReceived = [];
+  let allPaymentsReceived = [];
 
   if (shiftData?.payments_received?.length) {
     const ledgerMap = new Map(ungroupedLedgerOptions.map((ul) => [ul.id, ul]));
 
-    shiftData.payments_received.forEach((p, i) => {
+    shiftData.payments_received.forEach((p) => {
       const creditLedger = ledgerMap.get(p.credit_ledger_id);
 
       const debitLedger = ledgerMap.get(p.debit_ledger_id);
@@ -105,7 +112,12 @@ const DocumentDialog = ({
       p.debitLedger = debitLedger;
     });
 
-    paymentReceived = shiftData.payments_received;
+    const cashPayments = shiftData.payments_received.filter(
+      (p) => p.debitLedger.ledger_group_id === 13
+    );
+
+    paymentReceived = cashPayments;
+    allPaymentsReceived = shiftData.payments_received;
   }
 
   const exportedData = {
@@ -118,6 +130,7 @@ const DocumentDialog = ({
     shift_teams: shift_teams,
     withDetails: openDetails,
     paymentReceived: paymentReceived,
+    allPaymentsReceived: allPaymentsReceived,
   };
 
   const handlExcelExport = async (exportedData) => {
@@ -145,9 +158,26 @@ const DocumentDialog = ({
           direction={'row'}
           justifyContent={'center'}
           alignItems={'center'}
+          position={'relative'}
         >
-          <Typography>With More Details</Typography>
-          <Checkbox checked={openDetails} onChange={handleDetailsChange} />
+          <Typography>Detailed</Typography>
+          <Switch
+            checked={openDetails}
+            onChange={handleDetailsChange}
+            slotProps={{ input: { 'aria-label': 'controlled' } }}
+          />
+
+          {belowLargeScreen && (
+            <Tooltip title='Close'>
+              <IconButton
+                size='small'
+                onClick={() => setOpenDocumentDialog(false)}
+                sx={{ position: 'absolute', right: 5 }}
+              >
+                <HighlightOff color='primary' />
+              </IconButton>
+            </Tooltip>
+          )}
         </Stack>
       </DialogTitle>
       <DialogContent>
@@ -212,17 +242,6 @@ const DocumentDialog = ({
                 {!belowLargeScreen && 'Excel'}
               </IconButton>
             )}
-
-            {belowLargeScreen && (
-              <Tooltip title='Close'>
-                <IconButton
-                  size='small'
-                  onClick={() => setOpenDocumentDialog(false)}
-                >
-                  <HighlightOff color='primary' />
-                </IconButton>
-              </Tooltip>
-            )}
           </Grid>
         </Grid>
         {belowLargeScreen && activeTab === 1 && (
@@ -235,6 +254,8 @@ const DocumentDialog = ({
             fuel_pumps={fuel_pumps}
             shift_teams={shift_teams}
             organization={organization}
+            paymentReceived={paymentReceived}
+            allPaymentsReceived={allPaymentsReceived}
           />
         )}
         {(!belowLargeScreen || activeTab === 0) && (
@@ -252,6 +273,7 @@ const DocumentDialog = ({
                 shift_teams={shift_teams}
                 organization={organization}
                 paymentReceived={paymentReceived}
+                allPaymentsReceived={allPaymentsReceived}
               />
             }
           />
@@ -279,6 +301,7 @@ const SalesShiftsItemAction = ({ ClosedShift }) => {
   const [openDocumentDialog, setOpenDocumentDialog] = useState(false);
   const {
     authOrganization: { organization },
+    checkOrganizationPermission,
   } = useJumboAuth();
   const { showDialog, hideDialog } = useJumboDialog();
   const { enqueueSnackbar } = useSnackbar();
@@ -304,15 +327,33 @@ const SalesShiftsItemAction = ({ ClosedShift }) => {
     },
   });
 
+  const canUpdate = checkOrganizationPermission([
+    PERMISSIONS.FUEL_SALES_SHIFTS_UPDATE,
+  ]);
+  const canDelete = checkOrganizationPermission([
+    PERMISSIONS.FUEL_SALES_SHIFTS_DELETE,
+  ]);
+  const canBackdate = checkOrganizationPermission([
+    PERMISSIONS.FUEL_SALES_SHIFTS_BACKDATE,
+  ]);
+
+  const isToday = ClosedShift?.shift_end && dayjs(ClosedShift.shift_end).isSame(dayjs(), 'day');
+  const canEdit = canUpdate || isToday || canBackdate;
+  const canDeleteAction = canDelete || isToday || canBackdate;
+
   const menuItems = [
     { icon: <VisibilityOutlined />, title: 'View', action: 'open' },
-    { icon: <EditOutlined />, title: 'Edit', action: 'edit' },
-    {
-      icon: <DeleteOutlined color='error' />,
-      title: 'Delete',
-      action: 'delete',
-    },
-  ];
+    canEdit
+      ? { icon: <EditOutlined />, title: 'Edit', action: 'edit' }
+      : null,
+    canDeleteAction
+      ? {
+          icon: <DeleteOutlined color='error' />, 
+          title: 'Delete',
+          action: 'delete',
+        }
+      : null,
+  ].filter(Boolean);
 
   const handleItemAction = (menuItem) => {
     switch (menuItem.action) {

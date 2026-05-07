@@ -7,7 +7,7 @@ import {
   ButtonGroup,
   FormControl,
   InputLabel,
-  LinearProgress,
+  Skeleton,
   MenuItem,
   Select,
   Tooltip,
@@ -45,13 +45,22 @@ interface ProcessedInventoryValue {
   [key: string]: number | string;
 }
 
-function InventoryValueTrend() {
+interface InventoryValueTrendProps {
+  from?: string;
+  to?: string;
+  cost_center_ids?: number[];
+}
+
+function InventoryValueTrend(props: InventoryValueTrendProps) {
   const { theme } = useJumboTheme();
   const smallScreen = useMediaQuery(theme.breakpoints.down('md'));
   const xlScreen = useMediaQuery(theme.breakpoints.up('lg'));
   const textColor = theme.palette.text.primary;
 
-  const { chartFilters: { from, to, cost_center_ids } } = useDashboardSettings();
+  const dashboardFilters = useDashboardSettings?.() ? useDashboardSettings() : undefined;
+  const from = props.from ?? dashboardFilters?.chartFilters?.from;
+  const to = props.to ?? dashboardFilters?.chartFilters?.to;
+  const cost_center_ids = props.cost_center_ids ?? dashboardFilters?.chartFilters?.cost_center_ids;
   const [params, setParams] = useState({
     from,
     to,
@@ -204,7 +213,7 @@ function InventoryValueTrend() {
       }
     >
       {isLoading ? (
-        <LinearProgress />
+        <Skeleton variant="rectangular" width="100%" height={xlScreen ? 240 : 260} sx={{ borderRadius: 2 }} />
       ) : (
         <ResponsiveContainer width="100%" height={xlScreen ? 240 : 260}>
           <ComposedChart

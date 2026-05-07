@@ -1,42 +1,89 @@
-'use client'
-import { lazy, useState } from 'react';
-import { Alert, Grid, ListItemText, Stack, Typography, Divider, Tooltip, useMediaQuery, Chip, LinearProgress, Box } from '@mui/material';
-import Accordion from '@mui/material/Accordion';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import AccordionDetails from '@mui/material/AccordionDetails';
+'use client';
+import { readableDate } from '@/app/helpers/input-sanitization-helpers';
+import JumboSearch from '@jumbo/components/JumboSearch';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
-import JumboSearch from '@jumbo/components/JumboSearch';
-import WBSActionTail from './WBSActionTail';
+import {
+  Alert,
+  Box,
+  Chip,
+  Divider,
+  Grid,
+  LinearProgress,
+  ListItemText,
+  Stack,
+  Tooltip,
+  Typography,
+  useMediaQuery,
+} from '@mui/material';
+import Accordion from '@mui/material/Accordion';
+import AccordionDetails from '@mui/material/AccordionDetails';
+import AccordionSummary from '@mui/material/AccordionSummary';
+import { lazy, useState } from 'react';
 import { useProjectProfile } from '../ProjectProfileProvider';
+import WBSActionTail from './WBSActionTail';
 import WBSItemAction from './WBSItemAction';
 import TasksActionTail from './task/TasksActionTail';
 import TasksListItem from './task/TasksListItem';
 import TasksTreeViewActionTail from './tasksTreeView/TasksTreeViewActionTail';
-import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
-import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 
-const GanttChartActionTail = lazy(() => import('./ganttChart/GanttChartActionTail'));
+const GanttChartActionTail = lazy(
+  () => import('./ganttChart/GanttChartActionTail')
+);
 
-function LinearProgressWithLabel({ value, label, color }) {
+function LinearProgressWithLabel({
+  value,
+  color,
+  execPercent,
+  timePercent,
+  hasTimeDates,
+}) {
+  const tooltipMsg = !hasTimeDates
+    ? 'No start/end dates set — execution progress only.'
+    : color === 'success'
+      ? 'Execution is on track with time elapsed.'
+      : color === 'warning'
+        ? 'Execution is lagging behind time elapsed. Monitor closely.'
+        : color === 'error'
+          ? 'Execution is significantly behind schedule.'
+          : 'Progress status.';
   return (
     <Box sx={{ width: '100%' }}>
-      <Stack direction="row" alignItems="center" spacing={1}>
-        <Typography variant="body2" color="text.secondary" sx={{ minWidth: 80 }}>
-          {label}
+      <Box
+        sx={(theme) => ({
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          justifyContent: { xs: 'flex-start', sm: 'space-between' },
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          mb: 0.5,
+          gap: { xs: 0.5, sm: 0 },
+        })}
+      >
+        <Typography variant='body2' color='text.secondary' fontWeight={500}>
+          Execution: {Math.min(100, Number(execPercent).toFixed(2))}%
         </Typography>
-        <Box sx={{ flexGrow: 1 }}>
-          <LinearProgress
-            variant="determinate"
-            value={Math.min(Number(value) || 0, 100)}
-            color={color}
-            sx={{ height: 8, borderRadius: 2 }}
+        {hasTimeDates ? (
+          <Typography variant='body2' color='text.secondary' fontWeight={500}>
+            Time Elapsed: {Math.min(100, Number(timePercent).toFixed(2))}%
+          </Typography>
+        ) : (
+          <Chip
+            size='small'
+            label='Time: Not Set'
+            variant='outlined'
+            sx={{ fontSize: '0.7rem', height: 20 }}
           />
-        </Box>
-        <Typography variant="caption" color="text.secondary">
-          {`${Math.min(Number(value) || 0, 100)}%`}
-        </Typography>
-      </Stack>
+        )}
+      </Box>
+      <Tooltip title={tooltipMsg}>
+        <LinearProgress
+          variant='determinate'
+          value={Math.min(Number(value) || 0, 100)}
+          color={color}
+          sx={{ height: 8, borderRadius: 2 }}
+        />
+      </Tooltip>
     </Box>
   );
 }
@@ -61,7 +108,9 @@ const TimelineActivityAccordion = ({ activity, expanded, handleChange }) => {
         (child) =>
           child.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
           (child.description &&
-            child.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+            child.description
+              .toLowerCase()
+              .includes(searchQuery.toLowerCase())) ||
           child.tasks?.some((task) =>
             task.name.toLowerCase().includes(searchQuery.toLowerCase())
           )
@@ -84,19 +133,23 @@ const TimelineActivityAccordion = ({ activity, expanded, handleChange }) => {
     }));
   };
 
-  // --- Color Logic ---
+  // --- Improved Color Logic: execution vs time ---
   const execPercent = activity.executed_percentage ?? 0;
-  const timePercent = activity.percentage_time_elapsed ?? 0;
+  // Clamp timePercent to 100 for display and calculation
+  const rawTimePercent = activity.percentage_time_elapsed ?? 0;
+  const timePercent = Math.min(100, rawTimePercent);
+  const hasTimeDates = Boolean(activity.start_date && activity.end_date);
 
   let execColor = 'primary';
-  if (execPercent >= 100) execColor = 'success';
-  else if (execPercent >= 70) execColor = 'warning';
-  else if (execPercent < 30) execColor = 'error';
-
-  let timeColor = 'primary';
-  if (timePercent >= 100) timeColor = 'error';     
-  else if (timePercent >= 80) timeColor = 'warning'; 
-  else if (timePercent < 30) timeColor = 'success';
+  if (hasTimeDates) {
+    execColor = 'success';
+    const diff = timePercent - execPercent;
+    if (diff >= 10) {
+      execColor = 'error';
+    } else if (diff >= 5) {
+      execColor = 'warning';
+    }
+  }
 
   return (
     <Accordion
@@ -141,25 +194,26 @@ const TimelineActivityAccordion = ({ activity, expanded, handleChange }) => {
           container
           width={'100%'}
           spacing={1}
-          alignItems="center"
-          justifyContent="space-between"
+          alignItems='center'
+          justifyContent='space-between'
           sx={{ mb: 1, px: 2 }}
         >
-          <Grid size={{xs: 8, md: 5}}>
+          <Grid size={{ xs: 8, md: 5 }}>
             <ListItemText
               primary={
                 <>
-                  <Tooltip title="Activity Name">
-                    <Typography component="span" fontWeight={500}>
+                  <Tooltip title='Activity Name'>
+                    <Typography component='span' color='text.primary'>
                       {activity.name}
                     </Typography>
                   </Tooltip>
                   {activity.code && (
-                    <Tooltip title="Activity Code">
+                    <Tooltip title='Activity Code'>
                       <Typography
-                        component="h4"
-                        variant="body2"
-                        color="text.secondary"
+                        component='h4'
+                        variant='body2'
+                        color='text.disabled'
+                        fontWeight={400}
                       >
                         {activity.code}
                       </Typography>
@@ -168,8 +222,12 @@ const TimelineActivityAccordion = ({ activity, expanded, handleChange }) => {
                 </>
               }
               secondary={
-                <Tooltip title="Description">
-                  <Typography component="span">
+                <Tooltip title='Description'>
+                  <Typography
+                    component='span'
+                    color='text.secondary'
+                    fontSize={14}
+                  >
                     {activity.description}
                   </Typography>
                 </Tooltip>
@@ -177,9 +235,9 @@ const TimelineActivityAccordion = ({ activity, expanded, handleChange }) => {
             />
           </Grid>
 
-          <Grid size={{xs: 12, md: 2.5}}>
-            <Tooltip title="Start to End Date">
-              <Typography variant="body2">
+          <Grid size={{ xs: 12, md: 2.5 }}>
+            <Tooltip title='Start to End Date'>
+              <Typography variant='body2'>
                 {activity.start_date || activity.end_date
                   ? `${activity.start_date ? readableDate(activity.start_date, false) : 'Not Set'} ${
                       activity.end_date
@@ -191,11 +249,11 @@ const TimelineActivityAccordion = ({ activity, expanded, handleChange }) => {
             </Tooltip>
           </Grid>
 
-          <Grid size={{xs: 12, md: 2.5}}>
-            <Tooltip title="Duration (in days) and Days Remaining">
+          <Grid size={{ xs: 12, md: 2.5 }}>
+            <Tooltip title='Duration (in days) and Days Remaining'>
               <ListItemText
                 primary={
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant='body2' color='text.secondary'>
                     <strong>Duration:</strong>{' '}
                     {activity.number_of_days
                       ? `${activity.number_of_days} days`
@@ -204,48 +262,48 @@ const TimelineActivityAccordion = ({ activity, expanded, handleChange }) => {
                 }
                 secondary={
                   <Typography
-                    variant="caption"
+                    variant='caption'
                     color={
-                      activity.days_remaining < 0
+                      activity.days_remaining < 0 && execColor !== 'success'
                         ? 'error.main'
                         : 'text.secondary'
                     }
                   >
                     <strong>Remaining:</strong>{' '}
-                    {activity.days_remaining ?? '—'}
+                    {activity.days_remaining < 0
+                      ? 0
+                      : (activity.days_remaining ?? '—')}
                   </Typography>
                 }
               />
             </Tooltip>
           </Grid>
 
-          <Grid size={{xs: 12, md: 8}}>
-            <Stack spacing={2.5} direction="column">
+          <Grid size={{ xs: 12, md: 8 }}>
+            <Box>
               <LinearProgressWithLabel
-                value={execPercent}
-                label="Execution"
+                value={Math.min(100, Number(execPercent).toFixed(2))}
+                label={`Progress (${Number(execPercent).toFixed(2)}%)`}
                 color={execColor}
+                execPercent={execPercent}
+                timePercent={timePercent}
+                hasTimeDates={hasTimeDates}
               />
-              <LinearProgressWithLabel
-                value={timePercent}
-                label="Time"
-                color={timeColor}
-              />
-            </Stack>
+            </Box>
           </Grid>
 
-          <Grid size={{xs: 12, md: 4}} textAlign="end">
+          <Grid size={{ xs: 12, md: 4 }} textAlign='end'>
             <Stack
-              direction="row"
+              direction='row'
               spacing={1}
-              alignItems="center"
-              justifyContent="flex-end"
+              alignItems='center'
+              justifyContent='flex-end'
             >
-              <Tooltip title="Weighted Percentage">
+              <Tooltip title='Weighted Percentage'>
                 <Chip
-                  size="small"
-                  label={`${activity.weighted_percentage?.toLocaleString() ?? 0}% Weight`}
-                  color="default"
+                  size='small'
+                  label={`${typeof activity.weighted_percentage === 'number' ? activity.weighted_percentage.toFixed(2) : 0}% Weight`}
+                  color='default'
                 />
               </Tooltip>
               <WBSItemAction activity={activity} />
@@ -265,15 +323,15 @@ const TimelineActivityAccordion = ({ activity, expanded, handleChange }) => {
         <Grid container>
           <Grid
             size={12}
-            textAlign="end"
+            textAlign='end'
             paddingTop={1}
-            display="flex"
-            justifyContent="flex-end"
-            alignItems="center"
+            display='flex'
+            justifyContent='flex-end'
+            alignItems='center'
           >
             {(activity.children?.length > 0 || activity.tasks.length > 0) && (
-              <Grid size={{xs: 12, md: 4}} pb={1}>
-                <Tooltip title="Search Tasks or Activities">
+              <Grid size={{ xs: 12, md: 4 }} pb={1}>
+                <Tooltip title='Search Tasks or Activities'>
                   <div>
                     <JumboSearch
                       value={searchQuery}
@@ -285,7 +343,7 @@ const TimelineActivityAccordion = ({ activity, expanded, handleChange }) => {
             )}
             <Grid>
               {!activity.children.length > 0 && (
-                <Tooltip title="Add Task">
+                <Tooltip title='Add Task'>
                   <div>
                     <TasksActionTail
                       openDialog={openDialog}
@@ -298,7 +356,7 @@ const TimelineActivityAccordion = ({ activity, expanded, handleChange }) => {
             </Grid>
             <Grid>
               {!activity.tasks?.length > 0 && (
-                <Tooltip title="Add Sub-Activity">
+                <Tooltip title='Add Sub-Activity'>
                   <div>
                     <WBSItemAction activity={activity} isAccDetails />
                   </div>
@@ -361,9 +419,15 @@ function WBSListItem() {
 
   return (
     <>
-      <Grid container columnSpacing={1} justifyContent="flex-end" alignItems="center" width={'100%'}>
+      <Grid
+        container
+        columnSpacing={1}
+        justifyContent='flex-end'
+        alignItems='center'
+        width={'100%'}
+      >
         {projectTimelineActivities?.length > 0 && (
-          <Grid size={{xs: 11, md: 4}}>
+          <Grid size={{ xs: 11, md: 4 }}>
             <JumboSearch
               value={searchQuery}
               onChange={(value) => setSearchQuery(value)}
@@ -380,7 +444,7 @@ function WBSListItem() {
             </Grid>
           </>
         )}
-        <Grid size={{xs: 1, md: 0.5}}>
+        <Grid size={{ xs: 1, md: 0.5 }}>
           <WBSActionTail
             openDialog={openDialog}
             setOpenDialog={setOpenDialog}
@@ -389,7 +453,7 @@ function WBSListItem() {
         </Grid>
       </Grid>
 
-      <Stack direction="column">
+      <Stack direction='column'>
         {sortedTimelineActivity?.length > 0 ? (
           sortedTimelineActivity.map((activity, index) => (
             <TimelineActivityAccordion
@@ -402,7 +466,7 @@ function WBSListItem() {
             />
           ))
         ) : (
-          <Alert variant="outlined" severity="info">
+          <Alert variant='outlined' severity='info'>
             No Timeline Activity Found
           </Alert>
         )}

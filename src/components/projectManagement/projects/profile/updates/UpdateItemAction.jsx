@@ -1,14 +1,13 @@
 'use client'
-import { DeleteOutlined, EditOutlined, MoreHorizOutlined } from '@mui/icons-material';
-import { Dialog,Skeleton,Tooltip, useMediaQuery } from '@mui/material';
+import { DeleteOutlined, EditOutlined } from '@mui/icons-material';
+import { Dialog, Skeleton, useMediaQuery, IconButton, Stack, Tooltip } from '@mui/material';
 import { useSnackbar } from 'notistack';
-import React, { useState } from 'react';
+import React from 'react';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
 import UpdatesForm from './UpdatesForm';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import projectsServices from '../../project-services';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
-import { JumboDdMenu } from '@jumbo/components';
 
 const EditUpdate = ({update, setOpenDialog, setIsUpdateFormOpen}) => {
   const {data:updateDetails, isFetching} = useQuery({
@@ -32,7 +31,7 @@ const EditUpdate = ({update, setOpenDialog, setIsUpdateFormOpen}) => {
 }
 
 const UpdateItemAction = ({ update, setIsUpdateFormOpen }) => {
-  const [openEditDialog,setOpenEditDialog] = useState(false);
+  const [openEditDialog, setOpenEditDialog] = React.useState(false);
   const {showDialog,hideDialog} = useJumboDialog();
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
@@ -53,32 +52,18 @@ const UpdateItemAction = ({ update, setIsUpdateFormOpen }) => {
     },
   });
 
-  const menuItems = [
-    {icon: <EditOutlined/>, title: 'Edit', action: 'edit'},
-    {icon: <DeleteOutlined color='error'/>, title: 'Delete', action: 'delete'}
-  ];
-
-  const handleItemAction = (menuItem) => {
-    switch (menuItem.action) {
-      case 'edit':
-        setOpenEditDialog(true);
-        break;
-      case 'delete':
-        showDialog({
-          title: 'Confirm Delete',
-          content: 'Are you sure you want to delete this Update?',
-          onYes: () =>{ 
-            hideDialog();
-            deleteUpdate(update.id)
-          },
-          onNo: () => hideDialog(),
-          variant:'confirm'
-        });
-        break;
-        default:
-        break;
-    }
-  }
+  const handleDelete = () => {
+    showDialog({
+      title: 'Confirm Delete',
+      content: 'Are you sure you want to delete this Update?',
+      onYes: () => {
+        hideDialog();
+        deleteUpdate(update.id);
+      },
+      onNo: () => hideDialog(),
+      variant: 'confirm',
+    });
+  };
 
   return (
     <>
@@ -91,15 +76,25 @@ const UpdateItemAction = ({ update, setIsUpdateFormOpen }) => {
       >
         <EditUpdate update={update} setOpenDialog={setOpenEditDialog} setIsUpdateFormOpen={setIsUpdateFormOpen} />
       </Dialog>
-      <JumboDdMenu
-        icon={
-          <Tooltip title='Actions'>
-            <MoreHorizOutlined/>
-          </Tooltip>
-        }
-        menuItems={menuItems}
-        onClickCallback={handleItemAction}
-      />
+      <Stack textAlign={'end'} direction="row" spacing={1} sx={{ mb: 1 }} justifyContent="flex-end">
+        <Tooltip title="Edit">
+          <IconButton
+            color="primary"
+            size="small"
+            onClick={(e) => {
+              e.stopPropagation();
+              setOpenEditDialog(true);
+            }}
+          >
+          <EditOutlined />
+        </IconButton>
+        </Tooltip>
+        <Tooltip title="Delete">
+          <IconButton color="error" size="small" onClick={handleDelete}>
+            <DeleteOutlined />
+          </IconButton>
+        </Tooltip>
+      </Stack>
     </>
   );
 };

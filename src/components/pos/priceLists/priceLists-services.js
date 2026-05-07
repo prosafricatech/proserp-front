@@ -21,24 +21,18 @@ priceListServices.getCostInsights = async(params) => {
 }
 
 priceListServices.add = async(priceList) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-         const {data} = await axios.post(`/api/pos/priceLists/add`,priceList);
-         return data;
-     })
+    const {data} = await axios.post(`/api/pos/priceLists/add`,priceList);
+    return data;
 }
 
 priceListServices.update = async(priceList) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.put(`/api/pos/priceLists/${priceList.id}/update`,priceList)
-        return data;
-    })
+    const {data} = await axios.put(`/api/pos/priceLists/${priceList.id}/update`,priceList)
+    return data;
 }
 
 priceListServices.delete = async (id) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async (response) => {
-        const {data} = await axios.delete(`/api/pos/priceLists/${id}/delete`);
-        return data;
-    })
+    const {data} = await axios.delete(`/api/pos/priceLists/${id}/delete`);
+    return data;
 };
 
 priceListServices.show = async (id) => {
@@ -47,28 +41,26 @@ priceListServices.show = async (id) => {
 }
 
 priceListServices.importPriceListsExcel = async (postData) => {
-    return await axios.get('/sanctum/csrf-cookie').then(async () => {
-        const formData = new FormData();
-        Object.keys(postData).forEach((key) => {
-            if (key === 'price_lists_excel') {
-                formData.append(key, postData[key][0]);
-            } else if (key === 'sales_outlet_ids') {
-                postData[key].forEach((id) => {
-                    formData.append('sales_outlet_ids[]', id);
-                });
-            } else {
-                formData.append(key, postData[key] !== 'null' ? postData[key] : null);
-            }
-        });
-
-        const { data } = await axios.post(`/api/pos/priceLists/importPriceListsExcel`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data'
-            }
-        });
-
-        return data;
+    const formData = new FormData();
+    Object.keys(postData).forEach((key) => {
+        if (key === 'price_lists_excel') {
+            formData.append(key, postData[key][0]);
+        } else if (key === 'sales_outlet_ids') {
+            postData[key].forEach((id) => {
+                formData.append('sales_outlet_ids[]', id);
+            });
+        } else {
+            formData.append(key, postData[key] !== 'null' ? postData[key] : null);
+        }
     });
+
+    const { data } = await axios.post(`/api/pos/priceLists/importPriceListsExcel`, formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    });
+
+    return data;
 };
 
 priceListServices.downloadExcelTemplate = async (stores) => {

@@ -20,7 +20,6 @@ const authOptions = {
             },
           });
 
-          await axiosInstance.get('/sanctum/csrf-cookie');
           const { data } = await axiosInstance.post('/login', credentials, {
             validateStatus: (status) => status < 500,
           });
@@ -48,7 +47,12 @@ const authOptions = {
   ],
 
 callbacks: {
-  async jwt({ token, user }) {
+  async jwt({ token, user, trigger, session }) {
+    if (trigger === 'update' && session) {
+      if (session.accessToken) token.accessToken = session.accessToken;
+      if (session.organization_id) token.organization_id = session.organization_id;
+      if (session.organization_name) token.organization_name = session.organization_name;
+    }
     if (user) {
       token.accessToken = user.token;
       token.organization_id = user.organization_id;

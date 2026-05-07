@@ -189,7 +189,7 @@ function InventoryInputsItemRow({
                       }
                     />
                   </Grid>
-                  <Grid size={{xs: 2, md: 3}}>
+                  <Grid size={{xs: 2, md: 3}} textAlign={'end'}>
                     <Tooltip title="Quantity">
                       <Typography>
                         {it?.quantity}{' '}
