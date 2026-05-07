@@ -67,10 +67,10 @@ function RequisitionLedgerItemForm({
       value: 'purchase',
       label: 'Purchase',
     },
-    {
-      value: 'subcontract_certificate',
-      label: 'Subcontract Certificate',
-    },
+    // {
+    //   value: 'subcontract_certificate',
+    //   label: 'Subcontract Certificate',
+    // },
   ];
 
   const processedRelatableTypes = useMemo(() => {
