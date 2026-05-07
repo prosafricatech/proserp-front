@@ -3,6 +3,7 @@ import pdfStyles from '@/components/pdf/pdf-styles';
 import PdfLogo from '@/components/pdf/PdfLogo';
 import { CostReportResponse } from './productionReportsServices';
 import { Document, Page, StyleSheet, Text, View } from '@react-pdf/renderer';
+import { Organization } from '@/types/auth-types';
 
 type ByProductBatch = {
   batch_id?: string;
@@ -21,21 +22,13 @@ type CostReportPdfData = Omit<CostReportResponse, 'by_products'> & {
   by_products?: CostByProduct[];
 };
 
-interface OrganizationLike {
-  name?: string;
-  mainColor?: string;
-  contrastText?: string;
-  lightColor?: string;
-  organization?: any;
-}
-
 interface UserLike {
   name?: string;
 }
 
 interface ProductionCostReportPdfProps {
   reportData: CostReportPdfData;
-  organization?: OrganizationLike | null;
+  organization?: Organization | null;
   user?: UserLike | null;
 }
 
@@ -182,9 +175,9 @@ const ProductionCostReportPdf = ({
   organization,
   user,
 }: ProductionCostReportPdfProps) => {
-  const mainColor = organization?.mainColor || '#1E3A5F';
-  const contrastText = organization?.contrastText || '#FFFFFF';
-  const lightColor = organization?.lightColor || '#E8EEF5';
+  const mainColor = organization?.settings?.main_color || "#2113AD";
+  const lightColor = organization?.settings?.light_color || "#bec5da";
+  const contrastText = organization?.settings?.contrast_text || "#FFFFFF";
 
   const materialCost = Number(reportData?.summary?.total_material_cost || 0);
   const expenseCost = Number(reportData?.summary?.total_ledger_expense_cost || 0);
@@ -209,7 +202,7 @@ const ProductionCostReportPdf = ({
       <Page size='A4' orientation='landscape' style={styles.page}>
         <View style={styles.headerRow}>
           <View style={{ flex: 1, maxWidth: 120 }}>
-            <PdfLogo organization={organization?.organization} />
+            <PdfLogo organization={organization as Organization} />
           </View>
           <View style={{ flex: 1, textAlign: 'right' }}>
             <Text style={{ ...pdfStyles.majorInfo, color: mainColor }}>
@@ -235,27 +228,27 @@ const ProductionCostReportPdf = ({
         </View>
 
         <View style={styles.kpiRow}>
-          <View style={[styles.kpiCard, { borderColor: mainColor }]}> 
+          <View style={[styles.kpiCard]}> 
             <Text style={[styles.kpiLabel, { color: mainColor }]}>Total Material Cost</Text>
-            <Text style={[styles.kpiValue, { color: mainColor }]}>
+            <Text style={pdfStyles.minInfo}>
               {formatCurrency(reportData?.summary?.total_material_cost)}
             </Text>
           </View>
-          <View style={[styles.kpiCard, { borderColor: mainColor }]}> 
+          <View style={[styles.kpiCard]}> 
             <Text style={[styles.kpiLabel, { color: mainColor }]}>Total Expense Cost</Text>
-            <Text style={[styles.kpiValue, { color: mainColor }]}>
+            <Text style={pdfStyles.minInfo}>
               {formatCurrency(reportData?.summary?.total_ledger_expense_cost)}
             </Text>
           </View>
-          <View style={[styles.kpiCard, { borderColor: '#2E7D32' }]}> 
-            <Text style={[styles.kpiLabel, { color: '#2E7D32' }]}>By-Product Offset</Text>
-            <Text style={[styles.kpiValue, { color: '#2E7D32' }]}>
+          <View style={[styles.kpiCard]}> 
+            <Text style={[styles.kpiLabel, { color: mainColor }]}>By-Product Offset</Text>
+            <Text style={pdfStyles.minInfo}>
               {formatCurrency(reportData?.summary?.total_by_product_offset)}
             </Text>
           </View>
-          <View style={[styles.kpiCard, { borderColor: mainColor, marginRight: 0 }]}> 
+          <View style={[styles.kpiCard]}> 
             <Text style={[styles.kpiLabel, { color: mainColor }]}>Net Production Cost</Text>
-            <Text style={[styles.kpiValue, { color: mainColor }]}>
+            <Text style={pdfStyles.minInfo}>
               {formatCurrency(reportData?.summary?.net_production_cost)}
             </Text>
           </View>
@@ -293,7 +286,7 @@ const ProductionCostReportPdf = ({
         )}
         {(reportData?.material_consumptions || []).map((item, idx) => (
           <View key={`${item.product?.id || idx}-${idx}`}>
-            <View style={pdfStyles.tableRow}>
+            <View style={{ ...pdfStyles.tableRow, fontWeight: 'bold' }}>
               <Text style={{ ...pdfStyles.tableCell, width: '8%', textAlign: 'center', backgroundColor: idx % 2 === 0 ? '#FFFFFF' : lightColor }}>
                 {idx + 1}.
               </Text>
@@ -319,25 +312,25 @@ const ProductionCostReportPdf = ({
                 <Text style={styles.subSectionHeading}>Batches that consumed this material</Text>
                 {sectionHeader(
                   ['Batch', 'Date', 'Qty', 'Unit Cost', 'Total'],
-                  '#888888',
-                  '#FFFFFF',
+                  mainColor,
+                  contrastText,
                   ['24%', '24%', '16%', '18%', '18%']
                 )}
                 {(item.batches || []).map((batch, batchIdx) => (
                   <View key={`${batch.batch_id || batchIdx}-${batchIdx}`} style={pdfStyles.tableRow}>
-                    <Text style={{ ...pdfStyles.tableCell, width: '24%', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : '#F7F7F7' }}>
+                    <Text style={{ ...pdfStyles.tableCell, width: '24%', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : lightColor }}>
                       {batch.batchNo}
                     </Text>
-                    <Text style={{ ...pdfStyles.tableCell, width: '24%', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : '#F7F7F7' }}>
+                    <Text style={{ ...pdfStyles.tableCell, width: '24%', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : lightColor }}>
                       {readableDate(batch.end_date, true)}
                     </Text>
-                    <Text style={{ ...pdfStyles.tableCell, width: '16%', textAlign: 'right', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : '#F7F7F7' }}>
+                    <Text style={{ ...pdfStyles.tableCell, width: '16%', textAlign: 'right', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : lightColor }}>
                       {formatQuantity(batch.quantity)}
                     </Text>
-                    <Text style={{ ...pdfStyles.tableCell, width: '18%', textAlign: 'right', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : '#F7F7F7' }}>
+                    <Text style={{ ...pdfStyles.tableCell, width: '18%', textAlign: 'right', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : lightColor }}>
                       {formatCurrency(batch.unit_cost)}
                     </Text>
-                    <Text style={{ ...pdfStyles.tableCell, width: '18%', textAlign: 'right', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : '#F7F7F7' }}>
+                    <Text style={{ ...pdfStyles.tableCell, width: '18%', textAlign: 'right', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : lightColor }}>
                       {formatCurrency(batch.total_cost)}
                     </Text>
                   </View>
@@ -369,7 +362,7 @@ const ProductionCostReportPdf = ({
 
               return (
                 <>
-                  <View style={pdfStyles.tableRow}>
+                  <View style={{ ...pdfStyles.tableRow, fontWeight: 'bold' }}>
                     <Text style={{ ...pdfStyles.tableCell, width: '10%', textAlign: 'center', backgroundColor: idx % 2 === 0 ? '#FFFFFF' : lightColor }}>
                       {idx + 1}.
                     </Text>
@@ -391,33 +384,33 @@ const ProductionCostReportPdf = ({
                       </Text>
                       {sectionHeader(
                         nestedLabels,
-                        '#888888',
-                        '#FFFFFF',
+                        mainColor,
+                        contrastText,
                         nestedWidths
                       )}
                       {(item.batches || []).map((batch, batchIdx) => (
                         <View key={`${batch.batch_id || batchIdx}-${batchIdx}`} style={pdfStyles.tableRow}>
-                          <Text style={{ ...pdfStyles.tableCell, width: nestedWidths[0], backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : '#F7F7F7' }}>
+                          <Text style={{ ...pdfStyles.tableCell, width: nestedWidths[0], backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : lightColor }}>
                             {batch.batchNo}
                           </Text>
-                          <Text style={{ ...pdfStyles.tableCell, width: nestedWidths[1], backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : '#F7F7F7' }}>
+                          <Text style={{ ...pdfStyles.tableCell, width: nestedWidths[1], backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : lightColor }}>
                             {readableDate(batch.end_date, true)}
                           </Text>
-                          <Text style={{ ...pdfStyles.tableCell, width: nestedWidths[2], textAlign: 'right', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : '#F7F7F7' }}>
+                          <Text style={{ ...pdfStyles.tableCell, width: nestedWidths[2], textAlign: 'right', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : lightColor }}>
                             {formatQuantity(batch.quantity)}
                           </Text>
-                          <Text style={{ ...pdfStyles.tableCell, width: nestedWidths[3], textAlign: 'right', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : '#F7F7F7' }}>
+                          <Text style={{ ...pdfStyles.tableCell, width: nestedWidths[3], textAlign: 'right', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : lightColor }}>
                             {formatCurrency(batch.rate)}
                           </Text>
                           {showExchangeRate && (
-                            <Text style={{ ...pdfStyles.tableCell, width: nestedWidths[4], textAlign: 'right', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : '#F7F7F7' }}>
+                            <Text style={{ ...pdfStyles.tableCell, width: nestedWidths[4], textAlign: 'right', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : lightColor }}>
                               {formatQuantity(batch.exchange_rate)}
                             </Text>
                           )}
-                          <Text style={{ ...pdfStyles.tableCell, width: showExchangeRate ? nestedWidths[5] : nestedWidths[4], textAlign: 'right', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : '#F7F7F7' }}>
+                          <Text style={{ ...pdfStyles.tableCell, width: showExchangeRate ? nestedWidths[5] : nestedWidths[4], textAlign: 'right', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : lightColor }}>
                             {formatCurrency(batch.total)}
                           </Text>
-                          <Text style={{ ...pdfStyles.tableCell, width: showExchangeRate ? nestedWidths[6] : nestedWidths[5], backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : '#F7F7F7' }}>
+                          <Text style={{ ...pdfStyles.tableCell, width: showExchangeRate ? nestedWidths[6] : nestedWidths[5], backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : lightColor }}>
                             {batch.remarks || '-'}
                           </Text>
                         </View>
@@ -441,7 +434,7 @@ const ProductionCostReportPdf = ({
             )}
             {(reportData?.by_products || []).map((item, idx) => (
               <View key={`${item.product?.id || idx}-${idx}`}>
-                <View style={pdfStyles.tableRow}>
+                <View style={{ ...pdfStyles.tableRow, fontWeight: 'bold' }}>
                   <Text style={{ ...pdfStyles.tableCell, width: '10%', textAlign: 'center', backgroundColor: idx % 2 === 0 ? '#FFFFFF' : lightColor }}>
                     {idx + 1}.
                   </Text>
@@ -466,25 +459,25 @@ const ProductionCostReportPdf = ({
                     </Text>
                     {sectionHeader(
                       ['Batch', 'Date', 'Qty', 'Market Value / Unit', 'Total Market Value'],
-                      '#888888',
-                      '#FFFFFF',
+                      mainColor,
+                      contrastText,
                       ['20%', '22%', '16%', '21%', '21%']
                     )}
                     {(item.batches || []).map((batch, batchIdx) => (
                       <View key={`${batch.batch_id || batchIdx}-${batchIdx}`} style={pdfStyles.tableRow}>
-                        <Text style={{ ...pdfStyles.tableCell, width: '20%', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : '#F7F7F7' }}>
+                        <Text style={{ ...pdfStyles.tableCell, width: '20%', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : lightColor }}>
                           {batch.batchNo}
                         </Text>
-                        <Text style={{ ...pdfStyles.tableCell, width: '22%', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : '#F7F7F7' }}>
+                        <Text style={{ ...pdfStyles.tableCell, width: '22%', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : lightColor }}>
                           {readableDate(batch.end_date, true)}
                         </Text>
-                        <Text style={{ ...pdfStyles.tableCell, width: '16%', textAlign: 'right', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : '#F7F7F7' }}>
+                        <Text style={{ ...pdfStyles.tableCell, width: '16%', textAlign: 'right', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : lightColor }}>
                           {formatQuantity(batch.quantity)}
                         </Text>
-                        <Text style={{ ...pdfStyles.tableCell, width: '21%', textAlign: 'right', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : '#F7F7F7' }}>
+                        <Text style={{ ...pdfStyles.tableCell, width: '21%', textAlign: 'right', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : lightColor }}>
                           {formatCurrency(batch.market_value_per_unit)}
                         </Text>
-                        <Text style={{ ...pdfStyles.tableCell, width: '21%', textAlign: 'right', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : '#F7F7F7' }}>
+                        <Text style={{ ...pdfStyles.tableCell, width: '21%', textAlign: 'right', backgroundColor: batchIdx % 2 === 0 ? '#FFFFFF' : lightColor }}>
                           {formatCurrency(batch.total_market_value)}
                         </Text>
                       </View>

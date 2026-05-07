@@ -642,7 +642,7 @@ const OutputReport: FC<OutputReportProps> = ({
             document={
               <ProductionOutputReportPdf
                 reportData={report}
-                organization={authOrganization}
+                organization={authOrganization?.organization}
                 user={user}
               />
             }

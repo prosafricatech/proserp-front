@@ -4,13 +4,8 @@ import pdfStyles from '@/components/pdf/pdf-styles';
 import PdfLogo from '@/components/pdf/PdfLogo';
 import { Document, Page, StyleSheet, Text, View } from '@react-pdf/renderer';
 import { OutputReportResponse } from './productionReportsServices';
-
-interface OrganizationLike {
-  mainColor?: string;
-  contrastText?: string;
-  lightColor?: string;
-  organization?: unknown;
-}
+import { Organization } from '@/types/auth-types';
+import { useTheme } from '@mui/material';
 
 interface UserLike {
   name?: string;
@@ -18,7 +13,7 @@ interface UserLike {
 
 interface ProductionOutputReportPdfProps {
   reportData: OutputReportResponse;
-  organization?: OrganizationLike | null;
+  organization?: Organization | null;
   user?: UserLike | null;
 }
 
@@ -355,7 +350,7 @@ function BatchBlock({
             key={`${column.label}-${column.width}`}
             style={{
               ...pdfStyles.tableHeader,
-              backgroundColor: '#888888',
+              backgroundColor: mainColor,
               color: contrastText,
               width: column.width,
             }}
@@ -433,7 +428,7 @@ function BatchBlock({
           <View
             style={{
               ...pdfStyles.tableRow,
-              backgroundColor: '#888888',
+              backgroundColor: mainColor,
               paddingHorizontal: 10,
             }}
           >
@@ -443,7 +438,7 @@ function BatchBlock({
                 style={{
                   ...(column.right ? styles.subTableCellRight : styles.subTableCell),
                   width: column.width,
-                  color: '#FFFFFF',
+                  color: contrastText,
                   fontFamily: 'Helvetica-Bold',
                   fontSize: 7.5,
                 }}
@@ -455,10 +450,11 @@ function BatchBlock({
           {(batch.by_products || []).map((byProduct: ByProductItem, index) => (
             <View
               key={byProduct.id}
-              style={[
-                styles.subTableRow,
-                index % 2 !== 0 ? styles.subTableRowAlt : null,
-              ]}
+              style={
+                index % 2 !== 0
+                  ? [styles.subTableRow, { backgroundColor: lightColor }]
+                  : styles.subTableRow
+              }
             >
               <Text style={{ ...styles.subTableCell, width: '20%' }}>
                 {byProduct.product?.name}
@@ -488,9 +484,9 @@ function ProductionOutputReportPdf({
   organization,
   user,
 }: ProductionOutputReportPdfProps): JSX.Element {
-  const mainColor = organization?.mainColor || '#1E3A5F';
-  const contrastText = organization?.contrastText || '#FFFFFF';
-  const lightColor = organization?.lightColor || '#E8EEF5';
+  const mainColor = organization?.settings?.main_color || "#2113AD";
+  const lightColor = organization?.settings?.light_color || "#bec5da";
+  const contrastText = organization?.settings?.contrast_text || "#FFFFFF";
 
   const { period, summary, batches } = reportData;
   const userName = user?.name || '';
@@ -515,7 +511,7 @@ function ProductionOutputReportPdf({
       <Page size='A4' orientation='landscape' style={styles.page}>
         <View style={styles.headerRow}>
           <View style={{ flex: 1, maxWidth: 120 }}>
-            <PdfLogo organization={organization?.organization} />
+            <PdfLogo organization={organization as Organization} />
           </View>
           <View style={{ flex: 1, textAlign: 'right' }}>
             <Text style={{ ...pdfStyles.majorInfo, color: mainColor }}>
