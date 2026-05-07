@@ -160,6 +160,10 @@ export const PERMISSIONS = {
     WORK_CENTERS_DELETE: 'WorkCenters:Delete',
     WORK_CENTERS_EDIT: 'WorkCenters:Edit',
     WORK_CENTERS_READ: 'WorkCenters:Read',
+    MANUFACTURING_ORDERS_CREATE: 'ManufacturingOrders:Create',
+    MANUFACTURING_ORDERS_DELETE: 'ManufacturingOrders:Delete',
+    MANUFACTURING_ORDERS_EDIT: 'ManufacturingOrders:Edit',
+    MANUFACTURING_ORDERS_READ: 'ManufacturingOrders:Read',
 
   // Project Management
     PROJECT_CATEGORIES_CREATE: 'ProjectCategories:Create',

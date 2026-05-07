@@ -25,7 +25,7 @@ const OutletActionTail = () => {
         <OutletFormDialog setOpenDialog={setOpenDialog} />
       </Dialog>
       <ButtonGroup variant="outlined" size="small" disableElevation sx={{ '& .MuiButton-root': { px: 1 } }}>
-        {checkOrganizationPermission(PERMISSIONS.USERS_INVITE) && (
+        {(
           <Tooltip title={'New Outlet'}>
             <IconButton onClick={() => setOpenDialog(true)}>
               <AddOutlined />

@@ -261,6 +261,10 @@ function Sidebar({ menus }) {
                     PERMISSIONS.PRODUCTION_BATCHES_READ,
                     PERMISSIONS.PRODUCTION_BATCHES_EDIT,
                     PERMISSIONS.PRODUCTION_BATCHES_DELETE,
+                    PERMISSIONS.MANUFACTURING_ORDERS_CREATE,
+                    PERMISSIONS.MANUFACTURING_ORDERS_READ,
+                    PERMISSIONS.MANUFACTURING_ORDERS_EDIT,
+                    PERMISSIONS.MANUFACTURING_ORDERS_DELETE,
                 ])) {
                     updatedMenus = [...updatedMenus, ...menus.filter(menu => menu.label === dictionary.sidebar.menu.manufacturing)];
                 }

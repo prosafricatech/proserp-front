@@ -156,6 +156,7 @@ const MeasurementSelector: React.FC<MeasurementSelectorProps> = (props) => {
               ? `${option.name} (${option.symbol})`
               : option.name}
           </li>
+          
         );
       }}
       onChange={(e, newValue) => {

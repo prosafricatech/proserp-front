@@ -37,6 +37,10 @@ import PDFContent from '../../../pdf/PDFContent';
 import financialReportsServices from '../financial-reports-services';
 import IncomeStatementOnScreen from './IncomeStatementOnScreen';
 import IncomeStatementPDF from './IncomeStatementPDF';
+// Utility to safely trim values
+function safeTrim(value) {
+  return typeof value === 'string' ? value.trim() : '';
+}
 
 function IncomeStatement({
   from,
@@ -62,6 +66,7 @@ function IncomeStatement({
   const validationSchema = yup.object({
     from: yup
       .string()
+      .transform((value) => safeTrim(value))
       .required('Start Date is required')
       .typeError('Start Date is required'),
   });
@@ -102,7 +107,7 @@ function IncomeStatement({
     }
   }, [from, to, cost_center_ids, aggregate_by]);
 
-  const downloadFileName = `Income Statement ${readableDate(reportData?.filters?.from)}-${readableDate(reportData?.filters?.to)}`;
+  const downloadFileName = `Income Statement ${safeTrim(readableDate(reportData?.filters?.from))}-${safeTrim(readableDate(reportData?.filters?.to))}`;
 
   const handlExcelExport = async () => {
     setIsExporting(true);
