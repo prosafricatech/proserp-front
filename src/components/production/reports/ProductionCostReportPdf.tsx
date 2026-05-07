@@ -221,10 +221,6 @@ const ProductionCostReportPdf = ({
             <Text style={{ ...pdfStyles.minInfo, color: mainColor }}>Printed On</Text>
             <Text style={pdfStyles.minInfo}>{printedOn}</Text>
           </View>
-          <View style={{ flex: 1 }}>
-            <Text style={{ ...pdfStyles.minInfo, color: mainColor }}>Report Period</Text>
-            <Text style={pdfStyles.minInfo}>{periodLabel}</Text>
-          </View>
         </View>
 
         <View style={styles.kpiRow}>
@@ -488,6 +484,17 @@ const ProductionCostReportPdf = ({
             ))}
           </>
         )}
+
+        <View style={styles.footer} fixed>
+          <Text style={styles.footerText}>Production Cost Report</Text>
+          <Text
+            style={styles.footerText}
+            render={({ pageNumber, totalPages }) =>
+              `Page ${pageNumber} of ${totalPages}`
+            }
+          />
+          <Text style={styles.footerText}>Period: {periodLabel}</Text>
+        </View>
       </Page>
     </Document>
   );

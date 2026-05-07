@@ -218,18 +218,7 @@ const OutputReport: FC<OutputReportProps> = ({
           alignItems={{ xs: 'flex-start', md: 'center' }}
           spacing={2}
         >
-          <Box>
-            <Typography
-              variant='h6'
-              sx={{ color: headerColor, fontWeight: 700 }}
-            >
-              Production Output Report
-            </Typography>
-            <Typography variant='body2' color='text.secondary'>
-              {readableDate(report.period?.from, true)} -{' '}
-              {readableDate(report.period?.to, true)}
-            </Typography>
-          </Box>
+          <Box></Box>
           <Stack direction='row' spacing={1}>
             <Tooltip title='Preview'>
               <IconButton size='small' onClick={() => setOpenOutput(true)}>

@@ -156,7 +156,7 @@ interface SectionHeadingProps {
 }
 
 function SectionHeading({ label, color }: SectionHeadingProps): JSX.Element {
-  return <Text style={[styles.sectionHeading, { color }]}>{label}</Text>;
+  return <Text style={[styles.sectionHeading, { color, textAlign: 'center' }]}>{label}</Text>;
 }
 
 interface TableHeaderRowProps {
@@ -304,12 +304,13 @@ function BatchBlock({
   lightColor,
 }: BatchBlockProps): JSX.Element {
   const outputColumns: ColumnDefinition[] = [
-    { label: 'Product', width: '20%' },
-    { label: 'Unit', width: '16%' },
-    { label: 'Qty', width: '16%', right: true },
-    { label: 'Unit Cost', width: '16%', right: true },
-    { label: 'Total Value', width: '16%', right: true },
-    { label: 'Value %', width: '16%', right: true },
+    { label: 'S/N', width: '8%' },
+    { label: 'Product', width: '18%' },
+    { label: 'Unit', width: '14%' },
+    { label: 'Qty', width: '15%', right: true },
+    { label: 'Unit Cost', width: '15%', right: true },
+    { label: 'Total Value', width: '15%', right: true },
+    { label: 'Value %', width: '15%', right: true },
   ];
 
   const byProductColumns: ColumnDefinition[] = [
@@ -322,28 +323,25 @@ function BatchBlock({
 
   return (
     <View style={styles.batchBlock} wrap={false}>
-      <View style={pdfStyles.tableRow}>
+      <View style={{ ...pdfStyles.tableRow, fontWeight: 'bold' }}>
         <Text style={{ ...pdfStyles.tableCell, width: '20%' }}>
-          {batch.batchNo}
-        </Text>
-        <Text style={{ ...pdfStyles.tableCell, width: '16%' }}>
           {readableDate(batch.start_date, true)} - {readableDate(batch.end_date, true)}
         </Text>
-        <Text style={{ ...pdfStyles.tableCell, width: '16%' }}>
+        <Text style={{ ...pdfStyles.tableCell, width: '20%' }}>
           {batch.work_center?.name}
         </Text>
-        <Text style={{ ...pdfStyles.tableCell, width: '16%' }}>
+        <Text style={{ ...pdfStyles.tableCell, width: '20%' }}>
           {batch.work_center?.cost_center?.name}
         </Text>
-        <Text style={{ ...pdfStyles.tableCell, textAlign: 'right', width: '16%' }}>
+        <Text style={{ ...pdfStyles.tableCell, textAlign: 'right', width: '20%' }}>
           {formatCurrency(batch.total_output_value)}
         </Text>
-        <Text style={{ ...pdfStyles.tableCell, textAlign: 'right', width: '16%' }}>
+        <Text style={{ ...pdfStyles.tableCell, textAlign: 'right', width: '20%' }}>
           {formatCurrency(batch.total_by_product_value)}
         </Text>
       </View>
 
-      <Text style={styles.subSectionHeading}>Outputs</Text>
+      <Text style={{ ...styles.subSectionHeading, textAlign: 'center', fontWeight: 'bold' }}>Outputs</Text>
       <View style={pdfStyles.tableRow}>
         {outputColumns.map((column) => (
           <Text
@@ -365,7 +363,16 @@ function BatchBlock({
             style={{
               ...pdfStyles.tableCell,
               backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
-              width: '20%',
+              width: '8%',
+            }}
+          >
+            {index + 1}.
+          </Text>
+          <Text
+            style={{
+              ...pdfStyles.tableCell,
+              backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
+              width: '18%',
             }}
           >
             {output.product?.name}
@@ -374,7 +381,7 @@ function BatchBlock({
             style={{
               ...pdfStyles.tableCell,
               backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
-              width: '16%',
+              width: '14%',
             }}
           >
             {output.measurement_unit?.symbol}
@@ -383,7 +390,7 @@ function BatchBlock({
             style={{
               ...pdfStyles.tableCell,
               backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
-              width: '16%',
+              width: '15%',
               textAlign: 'right',
             }}
           >
@@ -393,7 +400,7 @@ function BatchBlock({
             style={{
               ...pdfStyles.tableCell,
               backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
-              width: '16%',
+              width: '15%',
               textAlign: 'right',
             }}
           >
@@ -403,7 +410,7 @@ function BatchBlock({
             style={{
               ...pdfStyles.tableCell,
               backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
-              width: '16%',
+              width: '15%',
               textAlign: 'right',
             }}
           >
@@ -413,7 +420,7 @@ function BatchBlock({
             style={{
               ...pdfStyles.tableCell,
               backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
-              width: '16%',
+              width: '15%',
               textAlign: 'right',
             }}
           >
@@ -494,12 +501,11 @@ function ProductionOutputReportPdf({
   const printedOn = readableDate(new Date().toISOString(), true);
 
   const batchHeaderColumns: ColumnDefinition[] = [
-    { label: 'Batch #', width: '20%' },
-    { label: 'Start Date', width: '16%' },
-    { label: 'Work Center', width: '16%' },
-    { label: 'Cost Center', width: '16%' },
-    { label: 'Output Value', width: '16%', right: true },
-    { label: 'By-Product Val', width: '16%', right: true },
+    { label: 'Duration', width: '20%' },
+    { label: 'Work Center', width: '20%' },
+    { label: 'Cost Center', width: '20%' },
+    { label: 'Output Value', width: '20%', right: true },
+    { label: 'By-Product Val', width: '20%', right: true },
   ];
 
   return (
@@ -524,12 +530,6 @@ function ProductionOutputReportPdf({
         <View style={{ ...pdfStyles.tableRow, marginTop: 10, marginBottom: 10 }}>
           <View style={{ flex: 1, padding: 2 }}>
             <Text style={{ ...pdfStyles.minInfo, color: mainColor }}>
-              Report Period
-            </Text>
-            <Text style={pdfStyles.minInfo}>{periodLabel}</Text>
-          </View>
-          <View style={{ flex: 1, padding: 2 }}>
-            <Text style={{ ...pdfStyles.minInfo, color: mainColor }}>
               Printed By
             </Text>
             <Text style={pdfStyles.minInfo}>{userName}</Text>
@@ -543,21 +543,21 @@ function ProductionOutputReportPdf({
         </View>
 
         <View style={styles.kpiRow}>
-          <View style={[styles.kpiCard, { borderColor: mainColor }]}>
+          <View style={[styles.kpiCard]}>
             <Text style={[styles.kpiLabel, { color: mainColor }]}>Total Batches</Text>
-            <Text style={[styles.kpiValue, { color: mainColor }]}>
+            <Text style={pdfStyles.minInfo}>
               {summary?.total_batches ?? 0}
             </Text>
           </View>
-          <View style={[styles.kpiCard, { borderColor: mainColor }]}>
+          <View style={[styles.kpiCard]}>
             <Text style={[styles.kpiLabel, { color: mainColor }]}>Total Output Value</Text>
-            <Text style={[styles.kpiValue, { color: mainColor }]}>
+            <Text style={pdfStyles.minInfo}>
               {formatCurrency(summary?.total_output_value)}
             </Text>
           </View>
-          <View style={[styles.kpiCard, { borderColor: '#888888' }]}>
-            <Text style={[styles.kpiLabel, { color: '#888888' }]}>By-Product Value</Text>
-            <Text style={[styles.kpiValue, { color: '#888888' }]}>
+          <View style={[styles.kpiCard]}>
+            <Text style={[styles.kpiLabel, { color: mainColor }]}>By-Product Value</Text>
+            <Text style={pdfStyles.minInfo}>
               {formatCurrency(summary?.total_by_product_value)}
             </Text>
           </View>
@@ -574,10 +574,21 @@ function ProductionOutputReportPdf({
         <SectionHeading label='Batch Detail' color={mainColor} />
         {(batches || []).map((batch, index) => (
           <Fragment key={batch.id || index}>
+            <Text
+              style={{
+                ...pdfStyles.minInfo,
+                fontWeight: 'bold',
+                textAlign: 'center',
+                color: mainColor,
+                marginTop: index > 0 ? 20 : 4,
+                marginBottom: 2,
+              }}
+            >
+              {batch.batchNo}
+            </Text>
             <View
               style={{
                 ...pdfStyles.tableRow,
-                marginTop: index > 0 ? 3 : 1,
               }}
             >
               {batchHeaderColumns.map((column) => (
