@@ -2,9 +2,11 @@ import {
   readableDate,
   sanitizedNumber,
 } from '@/app/helpers/input-sanitization-helpers';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
 import MeasurementSelector from '@/components/masters/measurementUnits/MeasurementSelector';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
+import { MODULES } from '@/utilities/constants/modules';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Div } from '@jumbo/shared';
 import {
@@ -22,7 +24,7 @@ import {
   TextField,
   Tooltip,
 } from '@mui/material';
-import { Dispatch, SetStateAction, useEffect, useState } from 'react';
+import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import {
@@ -58,6 +60,8 @@ function RequisitionLedgerItemForm({
   const [selectedRelated, setSelectedRelated] =
     useState<RelatableTransaction | null>(null);
 
+  const { organizationHasSubscribed } = useJumboAuth();
+
   const relatableTypes = [
     {
       value: 'purchase',
@@ -68,6 +72,14 @@ function RequisitionLedgerItemForm({
       label: 'Subcontract Certificate',
     },
   ];
+
+  const processedRelatableTypes = useMemo(() => {
+    return relatableTypes.filter(
+      (t) =>
+        t.value !== 'subcontract_certificate' ||
+        organizationHasSubscribed(MODULES.PROJECT_MANAGEMENT)
+    );
+  }, [organizationHasSubscribed]);
 
   const getEmptyFormValues = () => ({
     ledger_id: null as any,
@@ -157,7 +169,8 @@ function RequisitionLedgerItemForm({
           relatable: ledger_item?.relatable,
           relatable_id: ledger_item?.relatable_id,
           measurement_unit_id:
-            ledger_item?.measurement_unit_id ?? ledger_item?.measurement_unit?.id,
+            ledger_item?.measurement_unit_id ??
+            ledger_item?.measurement_unit?.id,
           unit_symbol:
             ledger_item?.measurement_unit?.symbol ?? ledger_item?.unit_symbol,
           remarks: ledger_item?.remarks,
@@ -403,14 +416,14 @@ function RequisitionLedgerItemForm({
             <Autocomplete
               key={`relatable-type-${formResetKey}`}
               id='checkboxes-linked_to_types'
-              options={relatableTypes}
+              options={processedRelatableTypes}
               isOptionEqualToValue={(option, value) =>
                 option.value === value.value
               }
               getOptionLabel={(option) => option.label}
               defaultValue={
                 ledger_item
-                  ? relatableTypes.find(
+                  ? processedRelatableTypes.find(
                       (link) => link.value === watch('relatable_type')
                     )
                   : null
