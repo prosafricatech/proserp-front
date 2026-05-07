@@ -66,6 +66,10 @@ function QuickLinks() {
                         PERMISSIONS.PRODUCTION_BATCHES_READ,
                         PERMISSIONS.PRODUCTION_BATCHES_EDIT,
                         PERMISSIONS.PRODUCTION_BATCHES_DELETE,
+                        PERMISSIONS.MANUFACTURING_ORDERS_CREATE,
+                        PERMISSIONS.MANUFACTURING_ORDERS_READ,
+                        PERMISSIONS.MANUFACTURING_ORDERS_EDIT,
+                        PERMISSIONS.MANUFACTURING_ORDERS_DELETE
                     ])) &&
                     <Grid 
                         size={{ xs: 6, md: 2, lg: 1.5 }} 

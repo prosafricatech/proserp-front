@@ -36,7 +36,7 @@ function StoreSelectionForMobile() {
                 <Dialog maxWidth="xs" open={openDialog}>
                     <StoreForm setOpenDialog={setOpenDialog} parentOptions={selectOptions}/>
                 </Dialog>
-                    {checkOrganizationPermission(PERMISSIONS.USERS_INVITE) && (
+                    {(
                     <Tooltip title={"Add Sub-store"}>
                         <Button variant="outlined" size="small" disableElevation sx={{ '& .MuiButton-root': { px: 1 } }} onClick={() => setOpenDialog(true)}>
                             <AddOutlined /> Sub-store

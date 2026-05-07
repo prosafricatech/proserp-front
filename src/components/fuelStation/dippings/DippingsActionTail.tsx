@@ -22,7 +22,7 @@ const DippingsActionTail = () => {
         </Dialog>
 
        {/* <ButtonGroup variant="outlined" size="small" disableElevation sx={{ '& .MuiButton-root': { px: 1 } }}>
-            {checkOrganizationPermission(PERMISSIONS.USERS_INVITE) && (
+            {(
             <Tooltip title={"New Dippings"}>
                 <IconButton onClick={() => setOpenDialog(true)}>
                   <AddOutlined />

@@ -38,15 +38,14 @@ function ItemMovementOnScreen({ movementsData, authObject, baseCurrency }) {
   const openingAmount = openingQty * openingAvgCost;
 
   let cumulativeQty = openingQty;
-  let cumulativeAmount = openingAmount;
 
   const tableRows = [
     ...(openingBalanceTx
       ? [
           {
             date: openingBalanceTx.movement_date,
-            description: openingBalanceTx.description,
             reference: openingBalanceTx.reference,
+            description: openingBalanceTx.description,
             inQty: null,
             inRate: null,
             inAmount: null,
@@ -67,11 +66,10 @@ function ItemMovementOnScreen({ movementsData, authObject, baseCurrency }) {
         tx.quantity_out *
         (tx.selling_price !== null ? tx.selling_price : tx.average_cost || 0);
       cumulativeQty += tx.quantity_in - tx.quantity_out;
-      cumulativeAmount += inAmt - outAmt;
       return {
         date: tx.movement_date,
-        description: tx.description,
         reference: tx.reference,
+        description: tx.description,
         inQty: tx.quantity_in || null,
         inRate: tx.quantity_in ? tx.average_cost : null,
         inAmount: tx.quantity_in ? inAmt : null,
@@ -81,7 +79,7 @@ function ItemMovementOnScreen({ movementsData, authObject, baseCurrency }) {
         outAmount: tx.selling_price || tx.quantity_out ? outAmt : null,
         balanceQty: cumulativeQty,
         avgCost: tx.average_cost || null,
-        balanceAmount: cumulativeAmount,
+        balanceAmount: cumulativeQty * (tx.average_cost || 0),
         isOpeningBalance: false,
       };
     }),

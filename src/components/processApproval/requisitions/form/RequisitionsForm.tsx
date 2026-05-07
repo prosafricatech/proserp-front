@@ -120,11 +120,20 @@ interface Requisition {
 interface RequisitionsFormProps {
   toggleOpen: (open: boolean) => void;
   requisition?: Requisition;
+  isDuplicate?: boolean;
 }
 
-function RequisitionsForm({ toggleOpen, requisition }: RequisitionsFormProps) {
+function RequisitionsForm({
+  toggleOpen,
+  requisition,
+  isDuplicate = false,
+}: RequisitionsFormProps) {
   const [requisition_date] = useState(
-    requisition ? dayjs(requisition.requisition_date) : dayjs()
+    isDuplicate
+      ? dayjs()
+      : requisition && !isDuplicate
+      ? dayjs(requisition.requisition_date)
+      : dayjs()
   );
   const { setIsEditAction } = useContext(requisitionContext);
   const { enqueueSnackbar } = useSnackbar();
@@ -290,7 +299,7 @@ function RequisitionsForm({ toggleOpen, requisition }: RequisitionsFormProps) {
   );
 
   const saveMutation = React.useMemo(() => {
-    return requisition ? updateRequisition : addRequisition;
+    return requisition && !isDuplicate ? updateRequisition : addRequisition;
   }, [requisition, addRequisition, updateRequisition]);
 
   useEffect(() => {
@@ -424,7 +433,11 @@ function RequisitionsForm({ toggleOpen, requisition }: RequisitionsFormProps) {
       <DialogTitle>
         <Grid container columnSpacing={2} width={'100%'}>
           <Grid size={{ xs: 12 }} textAlign={'center'} mb={2}>
-            {requisition ? 'Edit Requisition' : 'New Requisition'}
+            {requisition && !isDuplicate
+              ? 'Edit Requisition'
+              : requisition && isDuplicate
+                ? 'Duplicate Requisition'
+                : 'New Requisition'}
           </Grid>
           <Grid size={{ xs: 12, md: 8, lg: 9 }} mb={2}>
             <form autoComplete='off'>
