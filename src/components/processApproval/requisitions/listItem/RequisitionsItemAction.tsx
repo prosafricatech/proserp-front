@@ -302,7 +302,6 @@ const RequisitionsItemAction: React.FC<RequisitionsItemActionProps> = ({
 
           <Tooltip title='Duplicate'>
             <IconButton
-              color='primary'
               size='small'
               onClick={(e) => {
                 e.stopPropagation();
