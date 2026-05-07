@@ -300,7 +300,7 @@ const RequisitionsItemAction: React.FC<RequisitionsItemActionProps> = ({
             </IconButton>
           </Tooltip>
 
-          {/* <Tooltip title='Duplicate'>
+          <Tooltip title='Duplicate'>
             <IconButton
               color='primary'
               size='small'
@@ -312,7 +312,7 @@ const RequisitionsItemAction: React.FC<RequisitionsItemActionProps> = ({
             >
               <ContentCopyOutlined />
             </IconButton>
-          </Tooltip> */}
+          </Tooltip>
 
           <Tooltip title='Delete'>
             <IconButton onClick={handleDelete}>
