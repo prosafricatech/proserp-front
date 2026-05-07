@@ -957,7 +957,7 @@ const CostReport: FC<CostReportProps> = ({
             document={
               <ProductionCostReportPdf
                 reportData={report}
-                organization={authOrganization || undefined}
+                organization={authOrganization?.organization || undefined}
                 user={user}
               />
             }
