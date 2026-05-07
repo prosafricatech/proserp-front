@@ -141,6 +141,21 @@ const productionReportsServices = {
     );
     return data;
   },
+
+  ExportProductionCostReportToExcel: async (params: any) => {
+    const { data } = await axios.post(
+      `/api/exports/excel/ProductionCostReport/`,
+      params,
+      {
+        responseType: 'blob',
+      }
+    );
+    // const { data } = await axios.post(
+    //   `/api/exports/excel/ProductionCostReport/`,
+    //   params
+    // );
+    return data;
+  },
 };
 
 export type { CostReportResponse, OutputReportResponse, ReportParams };

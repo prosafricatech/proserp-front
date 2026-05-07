@@ -1,15 +1,13 @@
 'use client';
 
-import { FC, JSX, ReactNode, useState } from 'react';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import PDFContent from '@/components/pdf/PDFContent';
-import {
-  Add,
-  FileDownloadOutlined,
-  PictureAsPdfOutlined,
-  Remove,
-} from '@mui/icons-material';
+import { AuthOrganization } from '@/types/auth-types';
+import { faFileExcel } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Add, Remove, VisibilityOutlined } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
 import {
   Accordion,
   AccordionDetails,
@@ -25,6 +23,7 @@ import {
   DialogContent,
   DialogTitle,
   Grid,
+  IconButton,
   Paper,
   Stack,
   Table,
@@ -37,16 +36,19 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
+import { FC, JSX, ReactNode, useState } from 'react';
 import {
   Cell,
   Legend,
   Pie,
   PieChart,
-  ResponsiveContainer,
   Tooltip as RechartsTooltip,
+  ResponsiveContainer,
 } from 'recharts';
 import ProductionCostReportPdf from './ProductionCostReportPdf';
-import { CostReportResponse } from './productionReportsServices';
+import productionReportsServices, {
+  CostReportResponse,
+} from './productionReportsServices';
 
 const formatCurrency = (value: number | string): string =>
   Number(value || 0).toLocaleString(undefined, {
@@ -88,10 +90,7 @@ function SummaryCard({
           <Typography variant='body2' color='text.secondary' gutterBottom>
             {label}
           </Typography>
-          <Typography
-            variant='h5'
-            sx={{ color: valueColor || accentColor }}
-          >
+          <Typography variant='h5' sx={{ color: valueColor || accentColor }}>
             {value}
           </Typography>
         </CardContent>
@@ -111,7 +110,10 @@ function HelpTooltipText({
 }: HelpTooltipTextProps): JSX.Element {
   return (
     <Tooltip title={description} arrow>
-      <Box component='span' sx={{ display: 'inline-flex', alignItems: 'center' }}>
+      <Box
+        component='span'
+        sx={{ display: 'inline-flex', alignItems: 'center' }}
+      >
         {label}
       </Box>
     </Tooltip>
@@ -125,7 +127,10 @@ interface CostPieTooltipProps {
   payload?: Array<{ name: string; value: number }>;
 }
 
-function CostPieTooltip({ active, payload }: CostPieTooltipProps): JSX.Element | null {
+function CostPieTooltip({
+  active,
+  payload,
+}: CostPieTooltipProps): JSX.Element | null {
   if (!active || !payload?.length) return null;
   const { name, value } = payload[0];
   return (
@@ -208,7 +213,9 @@ interface MaterialItemAccordionProps {
   item: any;
 }
 
-function MaterialItemAccordion({ item }: MaterialItemAccordionProps): JSX.Element {
+function MaterialItemAccordion({
+  item,
+}: MaterialItemAccordionProps): JSX.Element {
   const [expanded, setExpanded] = useState<boolean>(false);
   return (
     <Accordion
@@ -522,13 +529,50 @@ interface CostReportDialogProps {
   open: boolean;
   setOpen: (open: boolean) => void;
   document: ReactNode;
+  reportData?: any;
+  authOrganization?: AuthOrganization | null;
+  user?: any;
 }
 
 function CostReportDialog({
   open,
   setOpen,
   document,
+  reportData,
+  authOrganization,
+  user,
 }: CostReportDialogProps): JSX.Element {
+  const [isExporting, setIsExporting] = useState(false);
+
+  const exportedData = {
+    reportData: reportData,
+    authOrganization: authOrganization,
+    user: user,
+  };
+
+  const handlExcelExport = async (exportedData: any) => {
+    setIsExporting(true);
+    const { period } = reportData;
+    const periodLabel = `${readableDate(period?.from, true)} – ${readableDate(period?.to, true)}`;
+    try {
+      const blob =
+        await productionReportsServices.ExportProductionCostReportToExcel(
+          exportedData
+        );
+      const url = window.URL.createObjectURL(blob);
+      const a = window.document.createElement('a');
+      a.href = url;
+      a.download = `production-cost-report_${periodLabel}.xlsx`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+
+      // console.log('blob: ', blob);
+    } catch (e) {
+      console.log('error exporting: ', e);
+    } finally {
+      setIsExporting(false);
+    }
+  };
   return (
     <Dialog maxWidth='md' fullWidth open={open}>
       <DialogTitle>
@@ -536,6 +580,16 @@ function CostReportDialog({
       </DialogTitle>
       <DialogContent>{document}</DialogContent>
       <DialogActions>
+        <LoadingButton
+          size='small'
+          sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+          loading={isExporting}
+          onClick={() => handlExcelExport(exportedData)}
+          color='success'
+          variant='contained'
+        >
+          <FontAwesomeIcon icon={faFileExcel} color='green' /> Excel
+        </LoadingButton>
         <Button size='small' variant='outlined' onClick={() => setOpen(false)}>
           Close
         </Button>
@@ -595,7 +649,7 @@ const CostReport: FC<CostReportProps> = ({
       >
         <Box></Box>
         <Stack direction='row' spacing={1}>
-          <Tooltip title='Excel export is not available yet for the cost report.' arrow>
+          {/* <Tooltip title='Excel export is not available yet for the cost report.' arrow>
             <span>
               <Button
                 size='small'
@@ -606,16 +660,19 @@ const CostReport: FC<CostReportProps> = ({
                 Export Excel
               </Button>
             </span>
-          </Tooltip>
+          </Tooltip> */}
           <Tooltip title='Preview cost report PDF' arrow>
-            <Button
+            {/* <Button
               size='small'
               variant='outlined'
               startIcon={<PictureAsPdfOutlined />}
               onClick={() => setOpenCostPdf(true)}
             >
               Export PDF
-            </Button>
+            </Button> */}
+            <IconButton size='small' onClick={() => setOpenCostPdf(true)}>
+              <VisibilityOutlined />
+            </IconButton>
           </Tooltip>
         </Stack>
       </Stack>
@@ -716,10 +773,15 @@ const CostReport: FC<CostReportProps> = ({
             justifyContent='space-between'
           >
             <HelpTooltipText
-              label={<Typography fontWeight={600}>Material Consumptions</Typography>}
+              label={
+                <Typography fontWeight={600}>Material Consumptions</Typography>
+              }
               description='Grouped material usage totals. Expand the section or a row to inspect batch-level material consumption.'
             />
-            <Tooltip title='Number of material products contributing cost in this report.' arrow>
+            <Tooltip
+              title='Number of material products contributing cost in this report.'
+              arrow
+            >
               <Chip
                 label={`${report.material_consumptions?.length || 0} products`}
                 size='small'
@@ -738,15 +800,14 @@ const CostReport: FC<CostReportProps> = ({
               ))}
             </Stack>
           ) : (
-            <Alert severity='info'>No material consumptions found for this period.</Alert>
+            <Alert severity='info'>
+              No material consumptions found for this period.
+            </Alert>
           )}
         </AccordionDetails>
       </Accordion>
 
-      <Accordion
-        expanded={ledgerOpen}
-        onChange={(_, v) => setLedgerOpen(v)}
-      >
+      <Accordion expanded={ledgerOpen} onChange={(_, v) => setLedgerOpen(v)}>
         <AccordionSummary
           expandIcon={ledgerOpen ? <Remove /> : <Add />}
           sx={{
@@ -788,7 +849,10 @@ const CostReport: FC<CostReportProps> = ({
               label={<Typography fontWeight={600}>Ledger Expenses</Typography>}
               description='Grouped non-material costs allocated from ledgers. Expand the section or a row to inspect batch-level expense allocations.'
             />
-            <Tooltip title='Number of ledger accounts contributing cost in this report.' arrow>
+            <Tooltip
+              title='Number of ledger accounts contributing cost in this report.'
+              arrow
+            >
               <Chip
                 label={`${report.ledger_expenses?.length || 0} ledgers`}
                 size='small'
@@ -807,7 +871,9 @@ const CostReport: FC<CostReportProps> = ({
               ))}
             </Stack>
           ) : (
-            <Alert severity='info'>No ledger expenses found for this period.</Alert>
+            <Alert severity='info'>
+              No ledger expenses found for this period.
+            </Alert>
           )}
         </AccordionDetails>
       </Accordion>
@@ -873,7 +939,9 @@ const CostReport: FC<CostReportProps> = ({
               </Table>
             </TableContainer>
           ) : (
-            <Alert severity='info'>No by-products offset found for this period.</Alert>
+            <Alert severity='info'>
+              No by-products offset found for this period.
+            </Alert>
           )}
         </CardContent>
       </Card>
@@ -881,6 +949,9 @@ const CostReport: FC<CostReportProps> = ({
       <CostReportDialog
         open={openCostPdf}
         setOpen={setOpenCostPdf}
+        authOrganization={authOrganization}
+        reportData={report}
+        user={user}
         document={
           <PDFContent
             document={
