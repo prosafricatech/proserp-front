@@ -15,7 +15,25 @@ import purchaseServices from '../procurement/purchases/purchase-services';
 import stakeholderServices from '../masters/stakeholders/stakeholder-services';
 import { MODULES } from '@/utilities/constants/modules';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
-import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+
+type SearchAccessContext = {
+  checkPermission?: (permissions: string | string[], mustHaveAll?: boolean) => boolean;
+  checkOrganizationPermission?: (permissions: string | string[], mustHaveAll?: boolean) => boolean;
+  organizationHasSubscribed?: (modules: string | string[], mustHaveAll?: boolean) => boolean;
+};
+
+type EntityAccess = {
+  permissions?: string[];
+  orgPermissions?: string[];
+  modules?: string[];
+};
+
+type EntityConfig = {
+  type: string;
+  label: string;
+  access?: EntityAccess;
+  search: (...args: any[]) => Promise<any[]>;
+};
 
 // Helper: lowercased entity types already covered by deep search
 const deepEntityTypes = [
@@ -23,12 +41,34 @@ const deepEntityTypes = [
   'user', 'requisition', 'currency', 'measurement unit', 'counter sale'
 ];
 
+const canOrg = (ctx: SearchAccessContext | undefined, permissions: string | string[]) =>
+  !!ctx?.checkOrganizationPermission?.(permissions);
+
+const hasModule = (ctx: SearchAccessContext | undefined, modules: string | string[]) =>
+  !!ctx?.organizationHasSubscribed?.(modules);
+
+const canUser = (ctx: SearchAccessContext | undefined, permissions: string | string[]) =>
+  !!ctx?.checkPermission?.(permissions);
+
+export const canAccessEntityConfig = (
+  config: EntityConfig,
+  ctx?: SearchAccessContext
+) => {
+  const access = config.access;
+  if (!access) return true;
+  if (access.permissions && !canUser(ctx, access.permissions)) return false;
+  if (access.orgPermissions && !canOrg(ctx, access.orgPermissions)) return false;
+  if (access.modules && !hasModule(ctx, access.modules)) return false;
+  return true;
+};
+
 // ==================== MASTER DATA CONFIGURATIONS ====================
 
 const masterDataConfigs = [
   {
     type: 'stakeholder',
     label: 'Stakeholder',
+    access: { orgPermissions: [PERMISSIONS.STAKEHOLDERS_READ] },
     search: async (query: string) => {
       try {
         const data = await stakeholderServices.getList({ type: 'all', keyword: query, page: 1, limit: 5 });
@@ -56,6 +96,7 @@ const masterDataConfigs = [
   {
     type: 'costCenter',
     label: 'Cost Center',
+    access: { orgPermissions: [PERMISSIONS.ACCOUNTS_MASTERS_READ], modules: [MODULES.ACCOUNTS_AND_FINANCE] },
     search: async (query: string) => {
       try {
         const service = (await import('@/components/masters/costCenters/cost-center-services')).default;
@@ -78,6 +119,7 @@ const masterDataConfigs = [
   {
     type: 'currency',
     label: 'Currency',
+    access: { orgPermissions: [PERMISSIONS.ACCOUNTS_MASTERS_READ] },
     search: async (query: string) => {
       try {
         const data = await currencyServices.getList({ keyword: query, limit: 5 });
@@ -99,6 +141,7 @@ const masterDataConfigs = [
   {
     type: 'measurementUnit',
     label: 'Measurement Unit',
+    access: { orgPermissions: [PERMISSIONS.MEASUREMENT_UNITS_READ] },
     search: async (query: string) => {
       try {
         const data = await measurementUnitServices.getList({ keyword: query, limit: 5 });
@@ -120,6 +163,7 @@ const masterDataConfigs = [
   {
     type: 'department',
     label: 'Department',
+    access: { modules: [MODULES.HUMAN_RESOURCES] },
     search: async (query: string) => {
       try {
         const data = await humanResourcesServices.getDepartmentsList({ keyword: query, limit: 5 });
@@ -146,9 +190,9 @@ const financialReportsConfigs = [
   {
     type: 'report',
     label: 'Trial Balance',
-    search: async (query: string) => {
-      const { checkOrganizationPermission } = useJumboAuth();
-      if (!checkOrganizationPermission || !checkOrganizationPermission(PERMISSIONS.ACCOUNTS_REPORTS)) return [];
+    access: { orgPermissions: [PERMISSIONS.ACCOUNTS_REPORTS], modules: [MODULES.ACCOUNTS_AND_FINANCE] },
+    search: async (query: string, ctx?: SearchAccessContext) => {
+      if (!canOrg(ctx, PERMISSIONS.ACCOUNTS_REPORTS)) return [];
       if ('trial balance'.includes(query.toLowerCase()) || query.toLowerCase().includes('trial balance')) {
         return [{
           id: 'trial-balance',
@@ -164,9 +208,9 @@ const financialReportsConfigs = [
   {
     type: 'report',
     label: 'Income Statement',
-    search: async (query: string) => {
-      const { checkOrganizationPermission } = useJumboAuth();
-      if (!checkOrganizationPermission || !checkOrganizationPermission(PERMISSIONS.ACCOUNTS_REPORTS)) return [];
+    access: { orgPermissions: [PERMISSIONS.ACCOUNTS_REPORTS], modules: [MODULES.ACCOUNTS_AND_FINANCE] },
+    search: async (query: string, ctx?: SearchAccessContext) => {
+      if (!canOrg(ctx, PERMISSIONS.ACCOUNTS_REPORTS)) return [];
       if ('income statement'.includes(query.toLowerCase()) || query.toLowerCase().includes('income statement')) {
         return [{
           id: 'income-statement',
@@ -182,9 +226,9 @@ const financialReportsConfigs = [
   {
     type: 'report',
     label: 'Balance Sheet',
-    search: async (query: string) => {
-      const { checkOrganizationPermission } = useJumboAuth();
-      if (!checkOrganizationPermission || !checkOrganizationPermission(PERMISSIONS.ACCOUNTS_REPORTS)) return [];
+    access: { orgPermissions: [PERMISSIONS.ACCOUNTS_REPORTS], modules: [MODULES.ACCOUNTS_AND_FINANCE] },
+    search: async (query: string, ctx?: SearchAccessContext) => {
+      if (!canOrg(ctx, PERMISSIONS.ACCOUNTS_REPORTS)) return [];
       if ('balance sheet'.includes(query.toLowerCase()) || query.toLowerCase().includes('balance sheet')) {
         return [{
           id: 'balance-sheet',
@@ -200,9 +244,9 @@ const financialReportsConfigs = [
   {
     type: 'report',
     label: 'Cashier Report',
-    search: async (query: string) => {
-      const { checkOrganizationPermission } = useJumboAuth();
-      if (!checkOrganizationPermission || !checkOrganizationPermission(PERMISSIONS.ACCOUNTS_REPORTS)) return [];
+    access: { orgPermissions: [PERMISSIONS.ACCOUNTS_REPORTS], modules: [MODULES.ACCOUNTS_AND_FINANCE] },
+    search: async (query: string, ctx?: SearchAccessContext) => {
+      if (!canOrg(ctx, PERMISSIONS.ACCOUNTS_REPORTS)) return [];
       if ('cashier report'.includes(query.toLowerCase()) || query.toLowerCase().includes('cashier report')) {
         return [{
           id: 'cashier-report',
@@ -218,9 +262,9 @@ const financialReportsConfigs = [
   {
     type: 'report',
     label: 'Debtors & Creditors',
-    search: async (query: string) => {
-      const { checkOrganizationPermission } = useJumboAuth();
-      if (!checkOrganizationPermission || !checkOrganizationPermission(PERMISSIONS.ACCOUNTS_REPORTS)) return [];
+    access: { orgPermissions: [PERMISSIONS.ACCOUNTS_REPORTS], modules: [MODULES.ACCOUNTS_AND_FINANCE] },
+    search: async (query: string, ctx?: SearchAccessContext) => {
+      if (!canOrg(ctx, PERMISSIONS.ACCOUNTS_REPORTS)) return [];
       if ('debtors & creditors'.includes(query.toLowerCase()) || 
           query.toLowerCase().includes('debtors') || 
           query.toLowerCase().includes('creditors')) {
@@ -238,9 +282,9 @@ const financialReportsConfigs = [
   {
     type: 'report',
     label: 'Z Report',
-    search: async (query: string) => {
-      const { checkOrganizationPermission } = useJumboAuth();
-      if (!checkOrganizationPermission || !checkOrganizationPermission(PERMISSIONS.ACCOUNTS_REPORTS)) return [];
+    access: { orgPermissions: [PERMISSIONS.ACCOUNTS_REPORTS], modules: [MODULES.ACCOUNTS_AND_FINANCE] },
+    search: async (query: string, ctx?: SearchAccessContext) => {
+      if (!canOrg(ctx, PERMISSIONS.ACCOUNTS_REPORTS)) return [];
       if ('z report'.includes(query.toLowerCase()) || query.toLowerCase().includes('z report')) {
         return [{
           id: 'z-report',
@@ -261,6 +305,7 @@ const procurementConfigs = [
   {
     type: 'requisition',
     label: 'Requisition',
+    access: { orgPermissions: [PERMISSIONS.REQUISITIONS_READ], modules: [MODULES.PROCESS_APPROVAL] },
     search: async (query: string) => {
       try {
         const data = await requisitionsServices.getList({ keyword: query, limit: 5 });
@@ -282,6 +327,7 @@ const procurementConfigs = [
   {
     type: 'purchaseOrder',
     label: 'Purchase Order',
+    access: { orgPermissions: [PERMISSIONS.PURCHASES_READ], modules: [MODULES.PROCUREMENT_AND_SUPPLY] },
     search: async (query: string) => {
       try {
         const data = await purchaseServices.getList({ keyword: query, limit: 5 });
@@ -309,9 +355,9 @@ const procurementConfigs = [
   {
     type: 'report',
     label: 'Procurement Reports',
-    search: async (query: string) => {
-      const { checkOrganizationPermission } = useJumboAuth();
-      if (!checkOrganizationPermission || !checkOrganizationPermission(PERMISSIONS.PURCHASES_REPORTS)) return [];
+    access: { orgPermissions: [PERMISSIONS.PURCHASES_REPORTS], modules: [MODULES.PROCUREMENT_AND_SUPPLY] },
+    search: async (query: string, ctx?: SearchAccessContext) => {
+      if (!canOrg(ctx, PERMISSIONS.PURCHASES_REPORTS)) return [];
       const q = query.toLowerCase();
       if (q.includes('procurement report') || 
           q.includes('procurement & supply report') || 
@@ -346,6 +392,7 @@ const projectConfigs = [
   {
     type: 'project',
     label: 'Project',
+    access: { orgPermissions: [PERMISSIONS.PROJECTS_READ], modules: [MODULES.PROJECT_MANAGEMENT] },
     search: async (query: string) => {
       try {
         const data = await projectsServices.getList({ keyword: query, limit: 5 });
@@ -367,6 +414,7 @@ const projectConfigs = [
   {
     type: 'projectCategory',
     label: 'Project Category',
+    access: { orgPermissions: [PERMISSIONS.PROJECT_CATEGORIES_READ], modules: [MODULES.PROJECT_MANAGEMENT] },
     search: async (query: string) => {
       try {
         const data = await projectCategoryServices.getList({ keyword: query, limit: 5 });
@@ -393,6 +441,7 @@ const hrUserConfigs = [
   {
     type: 'employee',
     label: 'Employee',
+    access: { modules: [MODULES.HUMAN_RESOURCES] },
     search: async (query: string) => {
       try {
         const data = await humanResourcesServices.getEmployeesList({ keyword: query, limit: 5 });
@@ -414,6 +463,7 @@ const hrUserConfigs = [
   {
     type: 'user',
     label: 'User',
+    access: { permissions: ['ProsAfricans:Read', 'ProsAfricans:Manage'] },
     search: async (query: string) => {
       try {
         const data = await userManagementServices.getList({ keyword: query, limit: 5 });
@@ -440,6 +490,7 @@ const productConfigs = [
   {
     type: 'product',
     label: 'Product',
+    access: { orgPermissions: [PERMISSIONS.PRODUCTS_READ], modules: [MODULES.PROCUREMENT_AND_SUPPLY] },
     search: async (query: string) => {
       try {
         const data = await productServices.getList({ keyword: query, limit: 5 });
@@ -466,6 +517,7 @@ const posConfigs = [
   {
     type: 'outlet',
     label: 'Sales Outlet',
+    access: { orgPermissions: [PERMISSIONS.OUTLETS_READ], modules: [MODULES.POINT_OF_SALE] },
     search: async (query: string) => {
       try {
         const data = await (await import('@/components/pos/outlet/outlet-services')).default.getList({ keyword: query, limit: 5 });
@@ -493,6 +545,7 @@ const posConfigs = [
   {
     type: 'proforma',
     label: 'Proforma Invoice',
+    access: { orgPermissions: [PERMISSIONS.PROFORMA_INVOICES_READ], modules: [MODULES.POINT_OF_SALE] },
     search: async (query: string) => {
       try {
         const data = await (await import('@/components/pos/proformaInvoices/proforma-services')).default.getList({ 
@@ -524,6 +577,7 @@ const posConfigs = [
   {
     type: 'counterSale',
     label: 'Counter Sale',
+    access: { orgPermissions: [PERMISSIONS.SALES_READ], modules: [MODULES.POINT_OF_SALE] },
     search: async (query: string) => {
       try {
         const data = await posServices.getCounterSales({
@@ -553,9 +607,9 @@ const posConfigs = [
   {
     type: 'report',
     label: 'Cashier Report (POS)',
-    search: async (query: string) => {
-      const { checkOrganizationPermission } = useJumboAuth();
-      if (!checkOrganizationPermission || !checkOrganizationPermission(PERMISSIONS.SALES_REPORTS)) return [];
+    access: { orgPermissions: [PERMISSIONS.SALES_REPORTS], modules: [MODULES.POINT_OF_SALE] },
+    search: async (query: string, ctx?: SearchAccessContext) => {
+      if (!canOrg(ctx, PERMISSIONS.SALES_REPORTS)) return [];
       if ('cashier report'.includes(query.toLowerCase()) || query.toLowerCase().includes('cashier report')) {
         return [{
           id: 'pos-cashier-report',
@@ -571,9 +625,9 @@ const posConfigs = [
   {
     type: 'report',
     label: 'Sales Manifest',
-    search: async (query: string) => {
-      const { checkOrganizationPermission } = useJumboAuth();
-      if (!checkOrganizationPermission || !checkOrganizationPermission(PERMISSIONS.SALES_REPORTS)) return [];
+    access: { orgPermissions: [PERMISSIONS.SALES_REPORTS], modules: [MODULES.POINT_OF_SALE] },
+    search: async (query: string, ctx?: SearchAccessContext) => {
+      if (!canOrg(ctx, PERMISSIONS.SALES_REPORTS)) return [];
       if ('sales manifest'.includes(query.toLowerCase()) || query.toLowerCase().includes('sales manifest')) {
         return [{
           id: 'pos-sales-manifest',
@@ -589,9 +643,9 @@ const posConfigs = [
   {
     type: 'report',
     label: 'Sales & Cash Summary',
-    search: async (query: string) => {
-      const { checkOrganizationPermission } = useJumboAuth();
-      if (!checkOrganizationPermission || !checkOrganizationPermission(PERMISSIONS.SALES_REPORTS)) return [];
+    access: { orgPermissions: [PERMISSIONS.SALES_REPORTS], modules: [MODULES.POINT_OF_SALE] },
+    search: async (query: string, ctx?: SearchAccessContext) => {
+      if (!canOrg(ctx, PERMISSIONS.SALES_REPORTS)) return [];
       if ('sales & cash summary'.includes(query.toLowerCase()) || 
           query.toLowerCase().includes('sales & cash summary') || 
           query.toLowerCase().includes('sales and cash summary')) {
@@ -614,9 +668,9 @@ const fuelStationConfigs = [
   {
     type: 'report',
     label: 'Dipping Report',
-    search: async (query: string) => {
-      const { checkOrganizationPermission, organizationHasSubscribed } = useJumboAuth();
-      if (!organizationHasSubscribed(MODULES.FUEL_STATION) || !checkOrganizationPermission(PERMISSIONS.SALES_REPORTS)) return [];
+    access: { orgPermissions: [PERMISSIONS.SALES_REPORTS], modules: [MODULES.FUEL_STATION] },
+    search: async (query: string, ctx?: SearchAccessContext) => {
+      if (!hasModule(ctx, MODULES.FUEL_STATION) || !canOrg(ctx, PERMISSIONS.SALES_REPORTS)) return [];
       if ('dipping report'.includes(query.toLowerCase()) || query.toLowerCase().includes('dipping report')) {
         return [{
           id: 'fuel-dipping-report',
@@ -632,9 +686,9 @@ const fuelStationConfigs = [
   {
     type: 'report',
     label: 'FV Report',
-    search: async (query: string) => {
-      const { checkOrganizationPermission, organizationHasSubscribed } = useJumboAuth();
-      if (!organizationHasSubscribed(MODULES.FUEL_STATION) || !checkOrganizationPermission(PERMISSIONS.SALES_REPORTS)) return [];
+    access: { orgPermissions: [PERMISSIONS.SALES_REPORTS], modules: [MODULES.FUEL_STATION] },
+    search: async (query: string, ctx?: SearchAccessContext) => {
+      if (!hasModule(ctx, MODULES.FUEL_STATION) || !canOrg(ctx, PERMISSIONS.SALES_REPORTS)) return [];
       if ('fv report'.includes(query.toLowerCase()) || 
           query.toLowerCase().includes('fv report') || 
           query.toLowerCase().includes('fuel vouchers report')) {
@@ -652,9 +706,9 @@ const fuelStationConfigs = [
   {
     type: 'report',
     label: 'Sales Manifest',
-    search: async (query: string) => {
-      const { checkOrganizationPermission, organizationHasSubscribed } = useJumboAuth();
-      if (!organizationHasSubscribed(MODULES.POINT_OF_SALE) || !checkOrganizationPermission(PERMISSIONS.SALES_REPORTS)) return [];
+    access: { orgPermissions: [PERMISSIONS.SALES_REPORTS], modules: [MODULES.POINT_OF_SALE] },
+    search: async (query: string, ctx?: SearchAccessContext) => {
+      if (!hasModule(ctx, MODULES.POINT_OF_SALE) || !canOrg(ctx, PERMISSIONS.SALES_REPORTS)) return [];
       if ('sales manifest'.includes(query.toLowerCase()) || query.toLowerCase().includes('sales manifest')) {
         return [{
           id: 'pos-sales-manifest',
@@ -670,10 +724,10 @@ const fuelStationConfigs = [
   {
     type: 'report',
     label: 'Sales & Cash Summary',
-    search: async (query: string) => {
-      const { checkOrganizationPermission, organizationHasSubscribed } = useJumboAuth();
-      if (!organizationHasSubscribed(MODULES.FUEL_STATION) && !organizationHasSubscribed(MODULES.POINT_OF_SALE)) return [];
-      if (!checkOrganizationPermission(PERMISSIONS.SALES_REPORTS)) return [];
+    access: { orgPermissions: [PERMISSIONS.SALES_REPORTS], modules: [MODULES.FUEL_STATION, MODULES.POINT_OF_SALE] },
+    search: async (query: string, ctx?: SearchAccessContext) => {
+      if (!hasModule(ctx, MODULES.FUEL_STATION) && !hasModule(ctx, MODULES.POINT_OF_SALE)) return [];
+      if (!canOrg(ctx, PERMISSIONS.SALES_REPORTS)) return [];
       if ('sales & cash summary'.includes(query.toLowerCase()) || 
           query.toLowerCase().includes('sales & cash summary') || 
           query.toLowerCase().includes('sales and cash summary')) {
@@ -696,6 +750,7 @@ const accountingConfigs = [
   {
     type: 'ledger',
     label: 'Ledger',
+    access: { orgPermissions: [PERMISSIONS.ACCOUNTS_MASTERS_READ], modules: [MODULES.ACCOUNTS_AND_FINANCE] },
     search: async (query: string) => {
       try {
         const data = await ledgerServices.getLedgers({ keyword: query, limit: 5 });
@@ -717,6 +772,7 @@ const accountingConfigs = [
   {
     type: 'budget',
     label: 'Budget',
+    access: { orgPermissions: [PERMISSIONS.ACCOUNTS_MASTERS_READ], modules: [MODULES.ACCOUNTS_AND_FINANCE] },
     search: async (query: string) => {
       try {
         const data = await budgetsServices.getBudgets({ keyword: query, limit: 5 });
@@ -738,6 +794,7 @@ const accountingConfigs = [
   {
     type: 'transaction',
     label: 'Transaction',
+    access: { orgPermissions: [PERMISSIONS.ACCOUNTS_TRANSACTIONS_READ], modules: [MODULES.ACCOUNTS_AND_FINANCE] },
     search: async (query: string, onPartialResult?: (partial: any[]) => void) => {
       try {
         const types = ['payments', 'receipts', 'journal_vouchers', 'debit', 'credit'];
@@ -832,6 +889,6 @@ const genericMenuConfigs = [
     })),
 ];
 
-export const entityConfigs = [
+export const entityConfigs: EntityConfig[] = [
   ...genericMenuConfigs
 ];

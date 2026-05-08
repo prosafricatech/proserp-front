@@ -10,7 +10,7 @@ import { staticMenuItems } from '@/utilities/constants/static-menu-items';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { MODULES } from '@/utilities/constants/modules';
-import { entityConfigs } from './entityConfigs';
+import { canAccessEntityConfig, entityConfigs } from './entityConfigs';
 import { useSpinner } from '@/shared/ProgressIndicators/SpinnerContext';
 
 type SearchGlobalProps = {
@@ -144,8 +144,21 @@ const SearchGlobal = ({ wrapperSx, sx }: SearchGlobalProps) => {
     let isCancelled = false;
     Promise.allSettled(
       entityConfigs
-        .filter(entity => canAccessMenu(entity.label) || canAccessMenu(entity.type))
-        .map(async (entity) => entity.search(searchValue))
+        .filter(entity =>
+          (canAccessMenu(entity.label) || canAccessMenu(entity.type)) &&
+          canAccessEntityConfig(entity, {
+            checkPermission,
+            checkOrganizationPermission,
+            organizationHasSubscribed,
+          })
+        )
+        .map(async (entity) =>
+          entity.search(searchValue, {
+            checkPermission,
+            checkOrganizationPermission,
+            organizationHasSubscribed,
+          })
+        )
     ).then((allResults) => {
       if (isCancelled) return;
       // Only keep entity results for which the user has permission (by label or type)
