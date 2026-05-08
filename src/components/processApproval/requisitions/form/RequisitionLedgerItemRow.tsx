@@ -8,6 +8,10 @@ import { Currency } from '@/utilities/constants/countries';
 import purchaseServices from '@/components/procurement/purchases/purchase-services';
 import RelatableOrderDetails from '../listItem/tabs/form/RelatableOrderDetails';
 import RequisitionLedgerItemForm from './RequisitionLedgerItemForm';
+import projectsServices from '@/components/projectManagement/projects/project-services.js';
+import CertificateOnScreen from '@/components/projectManagement/projects/profile/subcontracts/tabs/certificatesTab/preview/CertificateOnScreen';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { Organization } from '@/types/auth-types';
 
 interface FetchRelatableDetailsProps {
   relatable: any;
@@ -22,19 +26,34 @@ interface RequisitionLedgerItemRowProps {
   setRequisition_ledger_items: Dispatch<SetStateAction<RequisitionLedgerItem[]>>;
 }
 
-const FetchRelatableDetails = ({ relatable, toggleOpen }: FetchRelatableDetailsProps) => {
+
+const FetchRelatableDetails = ({ relatable, toggleOpen, ledger_item }: FetchRelatableDetailsProps & { ledger_item: RequisitionLedgerItem }) => {
+  const { authOrganization } = useJumboAuth();
+  if (!relatable) return null;
+
+  if (relatable.relatable_type === 'purchase' || ledger_item.relatable_type === 'purchase') {
     const { data: orderDetails, isFetching } = useQuery({
-        queryKey: ['purchaseOrder', relatable?.id],
-        queryFn: () => purchaseServices.orderDetails(relatable?.id),
+      queryKey: ['purchaseOrder', relatable?.id],
+      queryFn: () => purchaseServices.orderDetails(relatable?.id),
     });
-
     if (isFetching) {
-        return <LinearProgress />;
+      return <LinearProgress />;
     }
+    return <RelatableOrderDetails order={orderDetails} toggleOpen={toggleOpen} />;
+  }
 
-  return (
-    <RelatableOrderDetails order={orderDetails} toggleOpen={toggleOpen} />
-  );
+  if (relatable.relatable_type === 'subcontract_certificate' || ledger_item.relatable_type === 'subcontract_certificate') {
+    const { data: certificateDetails, isFetching } = useQuery({
+      queryKey: ['subcontractCertificate', relatable?.id],
+      queryFn: () => projectsServices.getCertificateDetails(relatable?.id),
+    });
+    if (isFetching) {
+      return <LinearProgress />;
+    }
+    return <CertificateOnScreen certificate={certificateDetails} organization={authOrganization?.organization as Organization} />;
+  }
+
+  return null;
 };
 
 function RequisitionLedgerItemRow({
@@ -96,7 +115,7 @@ function RequisitionLedgerItemRow({
                 primary={
                   <Tooltip title={'Relatable To'}>
                     <Typography variant={"caption"} fontSize={14} lineHeight={1.25} mb={0} noWrap>
-                      {ledger_item.relatable?.relatableNo}
+                      {ledger_item?.relatableNo}
                     </Typography>
                   </Tooltip>
                 }
@@ -104,15 +123,15 @@ function RequisitionLedgerItemRow({
                   <>
                     <Tooltip title={'Order Date - (Amount)'}>
                       <Typography variant={"caption"} fontSize={14} lineHeight={1.25} mb={0}>
-                        {`${readableDate(ledger_item.relatable?.order_date, false)} - ${ledger_item.relatable?.unapproved_amount?.toLocaleString('en-US', 
+                        {`${readableDate(ledger_item.relatable?.order_date || ledger_item.relatable?.certificate_date, false)} - ${ledger_item.relatable?.unapproved_amount?.toLocaleString('en-US', 
                           {
                             style: 'currency',
                             currency: ledger_item.relatable?.currency?.code,
-                          })}`
+                          })|| ''}`
                         }
                       </Typography>
                     </Tooltip>
-                    <Tooltip title={`View Order`}>
+                    <Tooltip title={`View ${ledger_item.relatable_type === 'purchase' ? 'Order' : 'Certificate'} Details`}>
                       <IconButton onClick={() => {
                         setSelectedRelated(ledger_item.relatable); 
                         setOpenViewDialog(true);
@@ -183,7 +202,7 @@ function RequisitionLedgerItemRow({
       )}
 
       <Dialog open={openViewDialog} maxWidth='md' fullWidth onClose={() => setOpenViewDialog(false)}>
-        <FetchRelatableDetails relatable={selectedRelated} toggleOpen={setOpenViewDialog} />
+        <FetchRelatableDetails relatable={selectedRelated} toggleOpen={setOpenViewDialog} ledger_item={ledger_item} />
       </Dialog>
     </React.Fragment>
   );
