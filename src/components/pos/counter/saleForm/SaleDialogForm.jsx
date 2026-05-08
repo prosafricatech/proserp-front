@@ -1,5 +1,4 @@
 'use client'
-import { LoadingButton } from '@mui/lab';
 import { Button, DialogActions, DialogContent, DialogTitle, Grid, Alert, Dialog, Tooltip, IconButton, Box, useMediaQuery} from '@mui/material'
 import React, { useEffect, useState } from 'react'
 import { useSnackbar } from 'notistack';
@@ -121,6 +120,10 @@ function SaleDialogForm({toggleOpen,sale = null}) {
     const majorInfoOnly = watch('major_info_only');
     const currencyId = watch('currency_id');
 
+    useEffect(() => {
+        setValue('items', items, { shouldValidate: false });
+    }, [items]);
+
     const getLastPriceItems = {
         stakeholder_id : stakeholder_id,
         currency_id: currencyId,
@@ -193,6 +196,7 @@ function SaleDialogForm({toggleOpen,sale = null}) {
     },[updateSale,addSale]);
 
     useEffect(() => {
+      console.log(sale);
         if (!!sale?.sale_items) {
             setItems(sale.sale_items.map(item => {
                 return {...item, store_id: item?.inventory_movement?.store_id}
@@ -232,14 +236,7 @@ function SaleDialogForm({toggleOpen,sale = null}) {
     };
 
   return (
-    <FormProvider {...{ 
-        salesDate, getLastPriceItems, checkedForSuggestPrice, items, setItems, counterLedgers,
-        setAddedStakeholder, debitLedger, setDebitLedger, isLoadingReceivableLedgers, 
-        stakeholderReceivableLedgers, addedStakeholder, stakeholderQuickAddDisplay, 
-        setStakeholderQuickAddDisplay, sale, setCheckedForSuggestPrice, vat_percentage, organization,
-        checkedForInstantSale, setCheckedForInstantSale,setValue,register, handleSubmit, 
-        watch, clearErrors, errors
-    }}>
+    <FormProvider {...{ setValue, register, handleSubmit, watch, clearErrors, errors }}>
         <DialogTitle>
             <Grid container columnSpacing={2}>
                 <Grid textAlign={'center'} size={12} mb={3}>
@@ -247,17 +244,40 @@ function SaleDialogForm({toggleOpen,sale = null}) {
                 </Grid>
 
                 <Grid size={{xs: 12, md: 9}} mb={2}>
-                    <SaleTopInformation />
+                    <SaleTopInformation
+                        sale={sale}
+                        counterLedgers={counterLedgers}
+                        debitLedger={debitLedger}
+                        setDebitLedger={setDebitLedger}
+                        isLoadingReceivableLedgers={isLoadingReceivableLedgers}
+                        stakeholderReceivableLedgers={stakeholderReceivableLedgers}
+                        addedStakeholder={addedStakeholder}
+                        setAddedStakeholder={setAddedStakeholder}
+                        stakeholderQuickAddDisplay={stakeholderQuickAddDisplay}
+                        setStakeholderQuickAddDisplay={setStakeholderQuickAddDisplay}
+                        organization={organization}
+                        setCheckedForInstantSale={setCheckedForInstantSale}
+                    />
                 </Grid>
                 
                 <Grid size={{xs: 12, md: 3}}>
-                    <ProductsSaleSummary />
+                    <ProductsSaleSummary
+                        items={items}
+                        watch={watch}
+                        checkedForSuggestPrice={checkedForSuggestPrice}
+                        setCheckedForSuggestPrice={setCheckedForSuggestPrice}
+                        checkedForInstantSale={checkedForInstantSale}
+                        setCheckedForInstantSale={setCheckedForInstantSale}
+                        sale={sale}
+                        vat_percentage={vat_percentage}
+                        organization={organization}
+                    />
                 </Grid>
                 
                 {
                     !majorInfoOnly &&
                     <Grid size={12}>
-                        <SaleItemForm setClearFormKey={setClearFormKey} submitMainForm={handleSubmit((data) => saveMutation.mutate(data))} submitItemForm={submitItemForm} setSubmitItemForm={setSubmitItemForm} key={clearFormKey} setIsDirty={setIsDirty} vat_percentage={vat_percentage} />
+                        <SaleItemForm setClearFormKey={setClearFormKey} submitMainForm={handleSubmit((data) => saveMutation.mutate(data))} submitItemForm={submitItemForm} setSubmitItemForm={setSubmitItemForm} key={clearFormKey} setIsDirty={setIsDirty} vat_percentage={vat_percentage} items={items} setItems={setItems} salesDate={salesDate} checkedForInstantSale={checkedForInstantSale} getLastPriceItems={getLastPriceItems} checkedForSuggestPrice={checkedForSuggestPrice} />
                     </Grid>
                 }
             </Grid>
@@ -270,7 +290,7 @@ function SaleDialogForm({toggleOpen,sale = null}) {
                 }
                 {
                     items.map((item,index) => {
-                        return <SaleItemRow setClearFormKey={setClearFormKey} submitMainForm={handleSubmit((data) => saveMutation.mutate(data))} submitItemForm={submitItemForm} setSubmitItemForm={setSubmitItemForm} setIsDirty={setIsDirty} key={index} item={item} index={index} vat_percentage={vat_percentage} />
+                        return <SaleItemRow salesDate={salesDate} setClearFormKey={setClearFormKey} submitMainForm={handleSubmit((data) => saveMutation.mutate(data))} submitItemForm={submitItemForm} setSubmitItemForm={setSubmitItemForm} setIsDirty={setIsDirty} key={index} item={item} index={index} vat_percentage={vat_percentage} items={items} setItems={setItems} getLastPriceItems={getLastPriceItems} checkedForInstantSale={checkedForInstantSale} checkedForSuggestPrice={checkedForSuggestPrice} watch={watch} />
                     })
                 }
 
@@ -339,7 +359,7 @@ function SaleDialogForm({toggleOpen,sale = null}) {
                 {!stakeholderQuickAddDisplay && (
                     <>
                         {!majorInfoOnly && (
-                            <LoadingButton
+                            <Button
                                 loading={addSale.isPending || updateSale.isPending}
                                 size='small'
                                 variant='contained'
@@ -349,11 +369,11 @@ function SaleDialogForm({toggleOpen,sale = null}) {
                                 }}
                             >
                                 Suspend
-                            </LoadingButton>
+                            </Button>
                         )}
 
                         {checkOrganizationPermission(PERMISSIONS.SALES_COMPLETE) && (
-                            <LoadingButton
+                            <Button
                                 loading={addSale.isPending || updateSale.isPending}
                                 size='small'
                                 type='submit'
@@ -362,7 +382,7 @@ function SaleDialogForm({toggleOpen,sale = null}) {
                                 onClick={handleSubmit(onSubmit)}
                             >
                                 Checkout
-                            </LoadingButton>
+                            </Button>
                         )}
                     </>
                 )}

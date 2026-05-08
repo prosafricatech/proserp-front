@@ -5,10 +5,8 @@ import {
   AccordionSummary,
   Alert,
   Badge,
-  Box,
   Chip,
   Grid,
-  ListItemText,
   Paper,
   Stack,
   Tab,
@@ -58,7 +56,6 @@ const RequisitionsListItem = ({ requisition }: RequisitionsListItemProps) => {
 
   const isLeaveRequest = requisition.process_type === 'LEAVE_REQUEST';
   const leaveItems = isLeaveRequest ? getLeaveItems(requisition as any) : [];
-  const leaveTypesSummary = Array.from(new Set(leaveItems.map((item) => item.leave_type?.name).filter(Boolean))).join(', ');
   
   return (
     <Accordion
@@ -120,7 +117,9 @@ const RequisitionsListItem = ({ requisition }: RequisitionsListItemProps) => {
           </Grid>
           <Grid size={{xs: 12, md: 3}}>
             <Tooltip title='Process'>
-              <Chip size='small' color={processConfig.color} label={processConfig.label} />
+              <Typography variant='body2'>
+                {processConfig.label}
+              </Typography>
             </Tooltip>
             <Tooltip title={'Cost Center'}>
               <Typography

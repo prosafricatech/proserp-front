@@ -3,8 +3,9 @@ import axios from "@/lib/services/config";
 const inventoryConsumptionsServices = {};
 
 inventoryConsumptionsServices.getList = async (params) => {
+  const queryParams = { ...params };
   const response = await axios.get('/api/inventoryConsumptions', {
-    params,  // pass all query params here directly
+    params: queryParams,
   });
   return response.data;
 };

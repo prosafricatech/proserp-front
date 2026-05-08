@@ -28,17 +28,27 @@ const InventoryConsumptionsTab = () => {
   
   const [queryOptions, setQueryOptions] = React.useState({
     queryKey: "inventoryConsumptions",
-    queryParams: {id: params.store_id, keyword : ''},
+    queryParams: {id: params.id, keyword : '', storeId: store?.id},
     countKey: "total",
     dataKey: "data",
   });
 
-  React.useEffect(() => {
-    setQueryOptions(state => ({
-        ...state,
-        queryParams: {...state.queryParams, id: store?.id ? store.id : params.store_id}
-    }))
-}, [store]);
+    React.useEffect(() => {
+        setQueryOptions(state => {
+            // Remove id and undefined values from queryParams
+            const qp = { ...state.queryParams };
+            delete qp.id;
+            if (store?.id) {
+                qp.storeId = store.id;
+            } else {
+                delete qp.storeId;
+            }
+            return {
+                ...state,
+                queryParams: qp
+            };
+        });
+    }, [store]);
 
   const renderConsumption = React.useCallback((inventoryConsumption) => {
       return (<InventoryConsumptionsListItem inventoryConsumption={inventoryConsumption} consumptionTab={consumptionTab}/>)

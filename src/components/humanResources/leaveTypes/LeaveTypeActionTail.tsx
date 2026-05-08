@@ -29,7 +29,7 @@ const LeaveTypeActionTail = () => {
         disableElevation
         sx={{ '& .MuiButton-root': { px: 1 } }}
       >
-        {/* {checkOrganizationPermission(PERMISSIONS.USERS_INVITE) && ( */}
+        {/* {( */}
         <Tooltip title='Add Leave Type'>
           <IconButton onClick={() => setOpenDialog(true)}>
             <AddOutlined />

@@ -175,21 +175,21 @@ function Sidebar({ menus }) {
                         PERMISSIONS.FUEL_STATIONS_CREATE,
                         PERMISSIONS.FUEL_STATIONS_UPDATE,
                         PERMISSIONS.FUEL_STATIONS_DELETE,
-                        PERMISSIONS.FUEL_SALES_SHIFT_READ,
-                        PERMISSIONS.FUEL_SALES_SHIFT_CREATE,
-                        PERMISSIONS.FUEL_SALES_SHIFT_UPDATE,
-                        PERMISSIONS.FUEL_SALES_SHIFT_CLOSE,
-                        PERMISSIONS.FUEL_SALES_SHIFT_DELETE,
+                        PERMISSIONS.FUEL_SALES_SHIFTS_READ,
+                        PERMISSIONS.FUEL_SALES_SHIFTS_CREATE,
+                        PERMISSIONS.FUEL_SALES_SHIFTS_UPDATE,
+                        PERMISSIONS.FUEL_SALES_SHIFTS_CLOSE,
+                        PERMISSIONS.FUEL_SALES_SHIFTS_DELETE,
                     ])) {
                     updatedMenus = [...updatedMenus, ...menus.filter(menu => menu.label === dictionary.sidebar.menu.fuelStations)];
                 }
 
                 // Fuel Station > Sales Shift
                 if (!checkOrganizationPermission([
-                    PERMISSIONS.FUEL_SALES_SHIFT_READ,
-                    PERMISSIONS.FUEL_SALES_SHIFT_CREATE,
-                    PERMISSIONS.FUEL_SALES_SHIFT_UPDATE,
-                    PERMISSIONS.FUEL_SALES_SHIFT_DELETE,
+                    PERMISSIONS.FUEL_SALES_SHIFTS_READ,
+                    PERMISSIONS.FUEL_SALES_SHIFTS_CREATE,
+                    PERMISSIONS.FUEL_SALES_SHIFTS_UPDATE,
+                    PERMISSIONS.FUEL_SALES_SHIFTS_DELETE,
                 ])) {
                     const fuelStationMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.fuelStations);
                     if (fuelStationMenuIndex >= 0) {
@@ -261,6 +261,10 @@ function Sidebar({ menus }) {
                     PERMISSIONS.PRODUCTION_BATCHES_READ,
                     PERMISSIONS.PRODUCTION_BATCHES_EDIT,
                     PERMISSIONS.PRODUCTION_BATCHES_DELETE,
+                    PERMISSIONS.MANUFACTURING_ORDERS_CREATE,
+                    PERMISSIONS.MANUFACTURING_ORDERS_READ,
+                    PERMISSIONS.MANUFACTURING_ORDERS_EDIT,
+                    PERMISSIONS.MANUFACTURING_ORDERS_DELETE,
                 ])) {
                     updatedMenus = [...updatedMenus, ...menus.filter(menu => menu.label === dictionary.sidebar.menu.manufacturing)];
                 }

@@ -37,7 +37,7 @@ function ByProductsItemForm({setClearFormKey, submitMainForm, submitItemForm, se
     measurement_unit_id: yup.number().required("Measurement Unit is required").typeError('Measurement Unit is required'),
   })
 
-  const {setValue, handleSubmit, register, watch, reset, formState: {errors, dirtyFields}} = useForm({
+  const {setValue, handleSubmit, register, watch, reset, formState: {errors}} = useForm({
     resolver: yupResolver(validationSchema),
     defaultValues: {
       product: item && productOptions.find(product => product.id === (item.product_id || item.product.id)),
@@ -53,14 +53,6 @@ function ByProductsItemForm({setClearFormKey, submitMainForm, submitItemForm, se
       unit_symbol: item && (item.measurement_unit?.symbol ? item.measurement_unit?.symbol : item.unit_symbol),
     }
   });
-
-  useEffect(() => {
-      const subscription = watch(() => {
-          const hasDirtyFields = Object.keys(dirtyFields).length > 0;
-          setIsDirty(hasDirtyFields);
-      });
-      return () => subscription.unsubscribe();
-  }, [watch, dirtyFields, setIsDirty]);
 
   const store_id = watch('store_id');
 

@@ -110,9 +110,10 @@ function ApprovalChainsItemForm({
       setClearFormKey(prevKey => prevKey + 1);
     }
 
-    reset();
+    reset(undefined, { keepValues: false, keepDirty: false });
     setIsAdding(false);
     setShowForm?.(false);
+    setIsDirty(false);
   };
 
   useEffect(() => {

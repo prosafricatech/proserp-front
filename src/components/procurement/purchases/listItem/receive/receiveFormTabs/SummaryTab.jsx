@@ -15,10 +15,11 @@ function SummaryTab({authOrganization, order, getReceivedItemsSummary, gettotalA
     const baseCurrency = currencies.find((currency) => !!currency?.is_base).symbol;
 
     const { checkOrganizationPermission } = useJumboAuth();
-    const withPrices = checkOrganizationPermission([
+    const withPrices = [
         PERMISSIONS.ACCOUNTS_REPORTS,
-        PERMISSIONS.PURCHASES_CREATE
-    ]);
+        PERMISSIONS.PURCHASES_CREATE,
+        PERMISSIONS.APPROVED_REQUISITIONS_PURCHASE
+    ].some(perm => checkOrganizationPermission([perm]));
 
     const mainColor =
         authOrganization.organization.settings?.main_color ||

@@ -1,26 +1,24 @@
 import { Checkbox, Divider, Grid, Switch, Typography } from '@mui/material';
-import React, { useEffect, useState, useCallback } from 'react';
-import { useFormContext } from 'react-hook-form';
+
+import React, { useEffect, useState } from 'react';
 import { useVFD } from "@/components/vfd/VFDProvider";
 import { debounce } from 'lodash';
 
-function ProductsSaleSummary() {
+function ProductsSaleSummary({
+  items = [],
+  sale,
+  checkedForSuggestPrice,
+  setCheckedForSuggestPrice,
+  vat_percentage = 0,
+  organization,
+  checkedForInstantSale,
+  setCheckedForInstantSale,
+  setValue,
+  watch
+}) {
+
   const [totalAmount, settotalAmount] = useState(0);
   const [vatableAmount, setvatableAmount] = useState(0);
-
-  const {
-    items,
-    sale,
-    checkedForSuggestPrice,
-    setCheckedForSuggestPrice,
-    vat_percentage,
-    organization,
-    checkedForInstantSale,
-    setCheckedForInstantSale,
-    setValue,
-    watch
-  } = useFormContext();
-
   const majorInfoOnly = watch('major_info_only');
   const { displayTotal, connected } = useVFD();
   const vatAmount = (vatableAmount * vat_percentage) / 100;
@@ -30,35 +28,22 @@ function ProductsSaleSummary() {
     let total = 0;
     let vatable = 0;
 
-    async function loopItems() {
-      await setValue(`items`, null);
-      await items.forEach((item, index) => {
-        total += item.rate * item.quantity;
+    items.forEach((item, index) => {
+      total += item.rate * item.quantity;
+      setValue && setValue(`items.${index}.product_id`, item?.product?.id ? item.product.id : item.product_id);
+      setValue && setValue(`items.${index}.quantity`, item.quantity);
+      setValue && setValue(`items.${index}.rate`, item.rate);
+      setValue && setValue(`items.${index}.store_id`, item.store_id);
+    });
+    settotalAmount(total);
 
-        setValue(`items.${index}.product_id`, item?.product?.id ? item.product.id : item.product_id);
-        setValue(`items.${index}.quantity`, item.quantity);
-        setValue(`items.${index}.rate`, item.rate);
-        setValue(`items.${index}.store_id`, item.store_id);
+    items
+      .filter(item => item.product.vat_exempted !== 1)
+      .forEach(item => {
+        vatable += item.rate * item.quantity;
       });
-
-      settotalAmount(total);
-    }
-
-    async function loopItemsForVAT() {
-      await setValue(`items`, null);
-
-      await items
-        .filter(item => item.product.vat_exempted !== 1)
-        .forEach(item => {
-          vatable += item.rate * item.quantity;
-        });
-
-      setvatableAmount(vatable);
-    }
-
-    loopItems();
-    loopItemsForVAT();
-  }, [items]);
+    setvatableAmount(vatable);
+  }, [items, setValue]);
 
   const grandTotal = totalAmount + vatAmount;
 

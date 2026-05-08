@@ -18,10 +18,11 @@ function PurchaseOrderPDF({
   const mainColor = organization.settings?.main_color || '#2113AD';
   const lightColor = organization.settings?.light_color || '#bec5da';
   const contrastText = organization.settings?.contrast_text || '#FFFFFF';
-  const withPrices = checkOrganizationPermission([
+  const withPrices = [
     PERMISSIONS.ACCOUNTS_REPORTS,
     PERMISSIONS.PURCHASES_CREATE,
-  ]);
+    PERMISSIONS.APPROVED_REQUISITIONS_PURCHASE
+  ].some(perm => checkOrganizationPermission([perm]));
 
   const vatAmount = order.purchase_order_items.reduce((total, item) => {
     return (total += item.rate * item.quantity * item.vat_percentage * 0.01);
@@ -37,7 +38,7 @@ function PurchaseOrderPDF({
       keywords={order.stakeholder?.name}
     >
       <Page size='A4' style={styles.page}>
-        {order.closures && order.closures.length > 0 && (
+        {order.status === 'Closed' && order.closures?.length > 0 && (
           <View style={styles.watermark} fixed>
             <Text style={styles.watermarkText}>CLOSED</Text>
           </View>

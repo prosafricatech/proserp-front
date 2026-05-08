@@ -194,7 +194,6 @@ const ApprovedPurchaseForm: React.FC<ApprovedPurchaseFormProps> = ({
   });
 
   const { setValue, handleSubmit, watch, formState: { errors } } = formMethods;
-  console.log('form errors', errors, order);
 
   const orderTotalAmount = () => {
     let total = 0;

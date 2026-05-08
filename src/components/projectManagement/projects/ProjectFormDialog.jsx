@@ -31,6 +31,7 @@ function ProjectForm({setOpenDialog, project = null, reFetchProjectAfterEdit }) 
       setOpenDialog(false);
       enqueueSnackbar(data.message, { variant: 'success' });
       queryClient.invalidateQueries({queryKey: ['projects']});
+      queryClient.invalidateQueries({queryKey: ['showProject']});
     },
     onError: (error) => {
       enqueueSnackbar(error.response.data.message, {
@@ -44,6 +45,7 @@ function ProjectForm({setOpenDialog, project = null, reFetchProjectAfterEdit }) 
     onSuccess: (data) => {
       setOpenDialog(false);
       enqueueSnackbar(data.message, { variant: 'success' });
+      queryClient.invalidateQueries({queryKey: ['showProject']});
       reFetchProjectAfterEdit()
     },
     onError: (error) => {
@@ -174,20 +176,7 @@ function ProjectForm({setOpenDialog, project = null, reFetchProjectAfterEdit }) 
               </Div>
             </Grid>
           }
-          <Grid size={{xs: 12, md: 12, lg: 12}}>
-            <Div sx={{ mt: 1, mb: 1 }}>
-              <TextField
-                label="Description"
-                size="small"
-                defaultValue={project?.description}
-                multiline={true}
-                minRows={2}
-                fullWidth
-                {...register('description')}
-              />
-            </Div>
-          </Grid>
-          <Grid size={{xs: 12, md: 4, lg: 4}}>
+          <Grid size={{xs: 12, md: 6, lg: 6}}>
             <Div sx={{ mt: 1, mb: 1 }}>
               <DateTimePicker
                 label='Commencement Date'
@@ -210,7 +199,7 @@ function ProjectForm({setOpenDialog, project = null, reFetchProjectAfterEdit }) 
               />
             </Div>
           </Grid>
-          <Grid size={{xs: 12, md: 4, lg: 4}}>
+          <Grid size={{xs: 12, md: 6, lg: 6}}>
             <Div sx={{ mt: 1, mb: 1 }}>
               <DateTimePicker
                 label='Completion Date'
@@ -233,7 +222,7 @@ function ProjectForm({setOpenDialog, project = null, reFetchProjectAfterEdit }) 
               />
             </Div>
           </Grid>
-          <Grid size={{xs: 12, md: 4, lg: 4}}>
+          <Grid size={{xs: 12 }}>
             <Div sx={{ mt: 1, mb: 1 }}>
               <StoreSelector
                 multiple={true}
@@ -246,6 +235,19 @@ function ProjectForm({setOpenDialog, project = null, reFetchProjectAfterEdit }) 
                     shouldDirty: true,
                   });
                 }}
+              />
+            </Div>
+          </Grid>
+          <Grid size={{xs: 12, md: 12, lg: 12}}>
+            <Div sx={{ mt: 1, mb: 1 }}>
+              <TextField
+                label="Description"
+                size="small"
+                defaultValue={project?.description}
+                multiline={true}
+                minRows={2}
+                fullWidth
+                {...register('description')}
               />
             </Div>
           </Grid>

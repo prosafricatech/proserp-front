@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import HomeRedirect from "./HomeRedirect";
 
 export default function Home() {
-  redirect("/en-US/auth/signin");
+  return <HomeRedirect />;
 }

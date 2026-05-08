@@ -60,7 +60,7 @@ export const ActionTail: React.FC<ActionTailProps> = ({ view, setView }) => {
                 </Button>
             </Tooltip>
             {authOrganization?.organization?.id === organization?.id && 
-                checkOrganizationPermission(PERMISSIONS.USERS_INVITE) && (
+                (
                     <Tooltip title={actionTailDict.inviteUsersTooltip}>
                         <Button onClick={handleInviteClick}>
                             <AddOutlined />

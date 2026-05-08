@@ -10,7 +10,8 @@ import {
   FormHelperText,
   Button,
   LinearProgress,
-  Alert
+  Alert,
+  Skeleton
 } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 import { useForm } from 'react-hook-form';
@@ -49,7 +50,7 @@ const validationSchema = yup.object({
       'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-      'audio/mpeg', 'audio/wav', 'audio/x-wav', 'audio/aac', 'audio/ogg'
+      'audio/mpeg'
     ];
     return allowedFormats.includes(file?.type);
   })
@@ -164,7 +165,11 @@ function AttachmentForm({
 
           <Grid size={12}>
             {isFetching ? (
-              <LinearProgress />
+              <div style={{ width: '100%', padding: '16px' }}>
+                <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
+                <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
+                <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+              </div>
             ) : attachments?.length > 0 ? (
               attachments.map((attachment: Attachment, index: number) => (
                 <AttachmentsRow key={index} attachment={attachment} index={index} />

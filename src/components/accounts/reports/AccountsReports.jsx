@@ -129,25 +129,27 @@ function AccountsReports() {
           }
         >
           {report}
-          <DialogActions className={css.hiddenOnPrint}>
-            {!belowLargeScreen && (
-              <Button
-                sx={{ m: 1 }}
-                size='small'
-                variant='outlined'
-                onClick={() => {
-                  setOpenDialog(false);
-                  setOpenReceiptDialog(false);
-                  setOpenBalanceSheet(false);
-                  setOpenTrialBalance(false);
-                  setOpenCashierReport(false);
-                  setOpenIncomeStatement(false);
-                }}
-              >
-                Close
-              </Button>
-            )}
-          </DialogActions>
+          {!openCashierReport &&
+            <DialogActions className={css.hiddenOnPrint}>
+              {!belowLargeScreen && (
+                <Button
+                  sx={{ m: 1 }}
+                  size='small'
+                  variant='outlined'
+                  onClick={() => {
+                    setOpenDialog(false);
+                    setOpenReceiptDialog(false);
+                    setOpenBalanceSheet(false);
+                    setOpenTrialBalance(false);
+                    setOpenCashierReport(false);
+                    setOpenIncomeStatement(false);
+                  }}
+                >
+                  Close
+                </Button>
+              )}
+            </DialogActions>
+          }
         </Dialog>
         <Typography variant={'h4'} mb={2}>
           Financial Reports
@@ -253,9 +255,7 @@ function AccountsReports() {
                       bgcolor: 'action.hover',
                     },
                   }}
-                  xs={6}
-                  md={3}
-                  lg={2}
+                  size={{ xs: 6, md: 3, lg: 2 }}
                   p={1}
                   textAlign={'center'}
                   onClick={() => {

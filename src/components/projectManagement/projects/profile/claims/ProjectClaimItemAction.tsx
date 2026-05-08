@@ -1,5 +1,4 @@
 'use client';
-
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import PDFContent from '@/components/pdf/PDFContent';
 import projectsServices from '@/components/projectManagement/projects/project-services';
@@ -24,6 +23,7 @@ import {
   Grid,
   IconButton,
   LinearProgress,
+  Skeleton,
   Stack,
   Tab,
   Tabs,
@@ -79,7 +79,11 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
   if (isFetching) {
     return (
       <Dialog open fullWidth fullScreen={belowLargeScreen} maxWidth='md'>
-        <LinearProgress />
+        <div style={{ width: '100%', padding: '16px' }}>
+          <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
+          <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
+          <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+        </div>
       </Dialog>
     );
   }
@@ -164,7 +168,14 @@ const EditClaim: React.FC<EditClaimProps> = ({ claim, setOpenDialog }) => {
     enabled: !!claim?.id,
   });
 
-  if (isFetching) return <LinearProgress />;
+  if (isFetching) 
+        return (
+          <div style={{ width: '100%', padding: '16px' }}>
+            <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
+            <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
+            <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+          </div>
+        );
 
   return (
     <ProjectClaimsForm claim={claimDetails} setOpenDialog={setOpenDialog} />

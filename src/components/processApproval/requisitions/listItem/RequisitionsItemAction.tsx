@@ -1,23 +1,42 @@
-'use client'
-import React, { useContext, useState } from 'react';
-import { DeleteOutlined, EditOutlined, HighlightOff, VisibilityOutlined } from '@mui/icons-material';
-import { Box, Button, Dialog, DialogActions, DialogContent, Grid, IconButton, LinearProgress, Tab, Tabs, Tooltip, useMediaQuery } from '@mui/material';
-import { useSnackbar } from 'notistack';
-import RequisitionsForm from '../form/RequisitionsForm';
-import RequisitionsOnScreen from '../../RequisitionsOnScreen';
-import RequisitionPDF from '../../RequisitionPDF';
-import requisitionsServices from '../../requisitionsServices';
-import PDFContent from '../../../pdf/PDFContent';
-import { requisitionContext } from '../../Requisitions';
-import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
-import dayjs from 'dayjs';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
+'use client';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
-import { PERMISSIONS } from '@/utilities/constants/permissions';
-import { Requisition } from '../../RequisitionType';
 import { Organization } from '@/types/auth-types';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
+import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
+import {
+  ContentCopyOutlined,
+  DeleteOutlined,
+  EditOutlined,
+  HighlightOff,
+  VisibilityOutlined,
+} from '@mui/icons-material';
+import {
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  Grid,
+  IconButton,
+  LinearProgress,
+  Tab,
+  Tabs,
+  Tooltip,
+  useMediaQuery,
+} from '@mui/material';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import dayjs from 'dayjs';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
+import { useSnackbar } from 'notistack';
+import React, { useContext, useState } from 'react';
+import PDFContent from '../../../pdf/PDFContent';
+import RequisitionPDF from '../../RequisitionPDF';
+import { requisitionContext } from '../../Requisitions';
+import RequisitionsOnScreen from '../../RequisitionsOnScreen';
+import requisitionsServices from '../../requisitionsServices';
+import { Requisition } from '../../RequisitionType';
+import RequisitionsForm from '../form/RequisitionsForm';
 
 dayjs.extend(isSameOrAfter);
 
@@ -25,6 +44,7 @@ interface EditRequisitionProps {
   requisition: Requisition;
   setOpenEditDialog: (value: boolean) => void;
   openEditDialog: boolean;
+  isDuplicate: boolean;
 }
 
 interface DocumentDialogProps {
@@ -38,10 +58,16 @@ interface RequisitionsItemActionProps {
   requisition: Requisition;
 }
 
-const EditRequisition: React.FC<EditRequisitionProps> = ({ requisition, setOpenEditDialog, openEditDialog }) => {
+const EditRequisition: React.FC<EditRequisitionProps> = ({
+  requisition,
+  setOpenEditDialog,
+  openEditDialog,
+  isDuplicate,
+}) => {
   const { data: requisitionDetails, isFetching } = useQuery({
     queryKey: ['requisitionDetails', { id: requisition.id }],
-    queryFn: async () => await requisitionsServices.getRequisitionDetails(requisition.id),
+    queryFn: async () =>
+      await requisitionsServices.getRequisitionDetails(requisition.id),
     refetchOnWindowFocus: true,
     enabled: openEditDialog && !!requisition?.id,
   });
@@ -51,22 +77,24 @@ const EditRequisition: React.FC<EditRequisitionProps> = ({ requisition, setOpenE
   }
 
   return (
-    <RequisitionsForm 
-      toggleOpen={setOpenEditDialog} 
-      requisition={requisitionDetails} 
+    <RequisitionsForm
+      toggleOpen={setOpenEditDialog}
+      requisition={requisitionDetails}
+      isDuplicate={isDuplicate}
     />
   );
 };
 
-const DocumentDialog: React.FC<DocumentDialogProps> = ({ 
-  openDocumentDialog, 
-  setOpenDocumentDialog, 
-  requisition, 
-  organization 
+const DocumentDialog: React.FC<DocumentDialogProps> = ({
+  openDocumentDialog,
+  setOpenDocumentDialog,
+  requisition,
+  organization,
 }) => {
   const { data: requisitionDetails, isFetching } = useQuery({
     queryKey: ['requisitionDetails', { id: requisition.id }],
-    queryFn: async () => await requisitionsServices.getRequisitionDetails(requisition.id),
+    queryFn: async () =>
+      await requisitionsServices.getRequisitionDetails(requisition.id),
     enabled: openDocumentDialog && !!requisition?.id,
   });
 
@@ -78,9 +106,11 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
     setSelectedTab(newValue);
   };
 
-  const isPurchaseProcess = requisition?.approval_chain?.process_type?.toLowerCase() === 'purchase';
+  const isPurchaseProcess =
+    requisition?.approval_chain?.process_type?.toLowerCase() === 'purchase';
   const forcePDFView = isPurchaseProcess && !belowLargeScreen;
-  const showTabs = !isPurchaseProcess || (isPurchaseProcess && belowLargeScreen);
+  const showTabs =
+    !isPurchaseProcess || (isPurchaseProcess && belowLargeScreen);
 
   if (isFetching) {
     return <LinearProgress />;
@@ -98,23 +128,23 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
       <DialogContent>
         <Box>
           {showTabs && (
-            <Grid container alignItems="center" justifyContent="space-between">
-              <Grid size={{xs: belowLargeScreen ? 11 : 12}}>
+            <Grid container alignItems='center' justifyContent='space-between'>
+              <Grid size={{ xs: belowLargeScreen ? 11 : 12 }}>
                 <Tabs value={selectedTab} onChange={handleTabChange}>
-                  <Tab label="On Screen" />
-                  <Tab label="PDF" />
+                  <Tab label='On Screen' />
+                  <Tab label='PDF' />
                 </Tabs>
               </Grid>
 
               {belowLargeScreen && (
-                <Grid size={{xs: 1}} textAlign="right">
-                  <Tooltip title="Close">
+                <Grid size={{ xs: 1 }} textAlign='right'>
+                  <Tooltip title='Close'>
                     <IconButton
-                      size="small"
-                      color="primary"
+                      size='small'
+                      color='primary'
                       onClick={() => setOpenDocumentDialog(false)}
                     >
-                      <HighlightOff color="primary" />
+                      <HighlightOff color='primary' />
                     </IconButton>
                   </Tooltip>
                 </Grid>
@@ -125,7 +155,12 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
           <Box>
             {forcePDFView ? (
               <PDFContent
-                document={<RequisitionPDF organization={organization} requisition={requisitionDetails} />}
+                document={
+                  <RequisitionPDF
+                    organization={organization}
+                    requisition={requisitionDetails}
+                  />
+                }
                 fileName={requisition.requisitionNo}
               />
             ) : (
@@ -139,7 +174,12 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
                 )}
                 {selectedTab === 1 && (
                   <PDFContent
-                    document={<RequisitionPDF organization={organization} requisition={requisitionDetails} />}
+                    document={
+                      <RequisitionPDF
+                        organization={organization}
+                        requisition={requisitionDetails}
+                      />
+                    }
                     fileName={requisition.requisitionNo}
                   />
                 )}
@@ -150,9 +190,9 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
       </DialogContent>
       <DialogActions sx={{ margin: 2 }}>
         <Button
-          variant="outlined"
+          variant='outlined'
           size='small'
-          color="primary"
+          color='primary'
           onClick={() => setOpenDocumentDialog(false)}
         >
           Close
@@ -162,10 +202,13 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
   );
 };
 
-const RequisitionsItemAction: React.FC<RequisitionsItemActionProps> = ({ requisition }) => {
+const RequisitionsItemAction: React.FC<RequisitionsItemActionProps> = ({
+  requisition,
+}) => {
   const { showDialog, hideDialog } = useJumboDialog();
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const { setIsEditAction } = useContext(requisitionContext);
+  const [isDuplicate, setIsDuplicate] = useState(false);
   const [openDocumentDialog, setOpenDocumentDialog] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
@@ -224,39 +267,56 @@ const RequisitionsItemAction: React.FC<RequisitionsItemActionProps> = ({ requisi
             requisition={requisition}
             setOpenEditDialog={setOpenEditDialog}
             openEditDialog={openEditDialog}
+            isDuplicate={isDuplicate}
           />
         )}
         {openDocumentDialog && (
-          <DocumentDialog 
-            requisition={requisition} 
-            organization={organization as Organization} 
-            setOpenDocumentDialog={setOpenDocumentDialog} 
+          <DocumentDialog
+            requisition={requisition}
+            organization={organization as Organization}
+            setOpenDocumentDialog={setOpenDocumentDialog}
             openDocumentDialog={openDocumentDialog}
           />
         )}
       </Dialog>
 
-      <Tooltip title="View">
+      <Tooltip title='View'>
         <IconButton onClick={() => setOpenDocumentDialog(true)}>
           <VisibilityOutlined />
         </IconButton>
       </Tooltip>
 
-      {
-        canEditOrDelete &&(
+      {canEditOrDelete && (
         <>
-          <Tooltip title="Edit">
-            <IconButton onClick={() => {
-              setOpenEditDialog(true);
-              setIsEditAction(true);
-            }}>
+          <Tooltip title='Edit'>
+            <IconButton
+              onClick={() => {
+                setIsDuplicate(false);
+                setOpenEditDialog(true);
+                setIsEditAction(true);
+              }}
+            >
               <EditOutlined />
             </IconButton>
           </Tooltip>
 
-          <Tooltip title="Delete">
+          {/* <Tooltip title='Duplicate'>
+            <IconButton
+              color='primary'
+              size='small'
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsDuplicate(true);
+                setOpenEditDialog(true);
+              }}
+            >
+              <ContentCopyOutlined />
+            </IconButton>
+          </Tooltip> */}
+
+          <Tooltip title='Delete'>
             <IconButton onClick={handleDelete}>
-              <DeleteOutlined color="error" />
+              <DeleteOutlined color='error' />
             </IconButton>
           </Tooltip>
         </>

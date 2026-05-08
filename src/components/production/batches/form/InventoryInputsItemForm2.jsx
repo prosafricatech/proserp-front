@@ -64,17 +64,14 @@ import StoreSelector from '@/components/procurement/stores/StoreSelector';
     setValue(`inventory_inputs.${index}.unit_cost`, watch(`inventory_inputs.${index}.unit_cost`));
   };
   
-  function InventoryInputsItemForm2() {
-    const {
-      productionDates,
-      fetchedBOMs,
-      outputs,
-      watch,
-      setValue,
-      setInventoryInputs,
-      inventoryInputs = [],
-      errors,
-    } = useFormContext();
+  function InventoryInputsItemForm2({      
+    setInventoryInputs,
+    inventoryInputs = [],
+    productionDates,
+    fetchedBOMs,
+    outputs
+    }) {
+    const { watch, setValue, errors } = useFormContext();
     const { activeWorkCenter } = useContext(ProductionBatchesContext);
     const currentOutput = outputs[0];
     const [isRetrieving, setIsRetrieving] = useState({});

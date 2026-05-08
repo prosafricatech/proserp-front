@@ -3,6 +3,7 @@
 import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import axios from '@/lib/services/config';
+import { MODULES } from '@/utilities/constants/modules';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
@@ -18,7 +19,7 @@ import {
   FormControlLabel,
   Grid,
   IconButton,
-  LinearProgress,
+  Skeleton,
   Stack,
   TextField,
   Tooltip,
@@ -65,6 +66,147 @@ interface ApiErrorResponse {
 interface AddRoleResponse {
   message: string;
 }
+
+interface PermissionModuleGroup {
+  displayName: string;
+  permissions: Permission[];
+}
+
+interface PermissionModuleConfig {
+  key: string;
+  displayName: string;
+  prefixes: string[];
+}
+
+const PERMISSION_MODULES: PermissionModuleConfig[] = [
+  {
+    key: 'accounts_and_finance',
+    displayName: MODULES.ACCOUNTS_AND_FINANCE,
+    prefixes: [
+      'Accounts',
+      'AccountsMasters',
+      'AccountsTransactions',
+      'CostCenters',
+      'FundTransfers',
+      'JournalVouchers',
+      'Payments',
+      'Receipts',
+    ],
+  },
+  {
+    key: 'process_approval',
+    displayName: MODULES.PROCESS_APPROVAL,
+    prefixes: [
+      'Approvals',
+      'ApprovalChains',
+      'ApprovedRequisitions',
+      'Requisitions',
+      'RequisitionApprovals',
+    ],
+  },
+  {
+    key: 'point_of_sale',
+    displayName: MODULES.POINT_OF_SALE,
+    prefixes: [
+      'Outlets',
+      'POS',
+      'PriceLists',
+      'ProformaInvoices',
+      'Sales',
+      'SalesDispatch',
+    ],
+  },
+  {
+    key: 'fuel_station',
+    displayName: MODULES.FUEL_STATION,
+    prefixes: ['FuelSalesShifts', 'FuelStations'],
+  },
+  {
+    key: 'procurement_and_supply',
+    displayName: MODULES.PROCUREMENT_AND_SUPPLY,
+    prefixes: [
+      'InventoryConsumptions',
+      'InventoryTransfers',
+      'ProductCategories',
+      'Products',
+      'Purchases',
+      'StockAdjustments',
+      'Stores',
+    ],
+  },
+  {
+    key: 'manufacturing_and_processing',
+    displayName: MODULES.MANUFACTURING_AND_PROCESSING,
+    prefixes: ['BOM', 'ManufacturingOrders', 'ProductionBatches', 'WorkCenters'],
+  },
+  {
+    key: 'project_management',
+    displayName: MODULES.PROJECT_MANAGEMENT,
+    prefixes: ['ProjectCategories', 'Projects'],
+  },
+  {
+    key: 'shared',
+    displayName: 'Shared / Organization',
+    prefixes: [
+      'FilesShelf',
+      'MeasurementUnits',
+      'Organization',
+      'Roles',
+      'Subscriptions',
+      'Users',
+      'Stakeholders'
+    ],
+  },
+];
+
+// Group permissions by configured business modules in a fixed display order.
+const groupPermissionsByModule = (permissions: Permission[]) => {
+  const grouped: Record<string, PermissionModuleGroup> = {};
+
+  PERMISSION_MODULES.forEach((moduleConfig) => {
+    grouped[moduleConfig.key] = {
+      displayName: moduleConfig.displayName,
+      permissions: [],
+    };
+  });
+
+  const uncategorizedKey = 'uncategorized';
+  grouped[uncategorizedKey] = {
+    displayName: 'Uncategorized',
+    permissions: [],
+  };
+
+  permissions.forEach((permission) => {
+    const permissionPrefix = permission.name.split(':')[0];
+    const matchedModule = PERMISSION_MODULES.find((moduleConfig) =>
+      moduleConfig.prefixes.includes(permissionPrefix)
+    );
+
+    if (matchedModule) {
+      grouped[matchedModule.key].permissions.push(permission);
+      return;
+    }
+
+    grouped[uncategorizedKey].permissions.push(permission);
+  });
+
+  const orderedKeys = [
+    ...PERMISSION_MODULES.map((moduleConfig) => moduleConfig.key),
+    uncategorizedKey,
+  ];
+
+  return orderedKeys.reduce((result, key) => {
+    if (grouped[key].permissions.length > 0) {
+      result[key] = {
+        ...grouped[key],
+        permissions: [...grouped[key].permissions].sort((a, b) =>
+          a.name.localeCompare(b.name)
+        ),
+      };
+    }
+    return result;
+  }, {} as Record<string, PermissionModuleGroup>);
+};
 
 const OrganizationRoles = () => {
   const { checkOrganizationPermission } = useJumboAuth();
@@ -222,6 +364,8 @@ const OrganizationRoles = () => {
       permissions?.filter((permission: Permission) =>
         permission.name.toLowerCase().includes(searchQuery.toLowerCase())
       ) || [];
+
+    const groupedPermissions = groupPermissionsByModule(filteredPermissions);
 
     const allPermissionsChecked =
       filteredPermissions.length > 0 &&
@@ -393,40 +537,57 @@ const OrganizationRoles = () => {
                     </Grid>
                   </>
                 )}
-                {filteredPermissions.map((permission: Permission) => (
-                  <Grid
-                    size={{ xs: 12, md: 6, lg: 4, xl: 3 }}
-                    key={permission.id}
-                  >
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          value={permission.id}
-                          disabled={
-                            role.id === 1 ||
-                            (role.id > 1 &&
-                              !checkOrganizationPermission(
-                                PERMISSIONS.ROLES_UPDATE
-                              ))
-                          }
-                          checked={checkedPermissions.includes(permission.id)}
-                          onChange={(e) => {
-                            setRoleIsNotTouched(false);
-                            const permissionId = parseInt(
-                              e.target.value.toString()
-                            );
-                            setCheckedPermissions((prev) =>
-                              e.target.checked
-                                ? [...prev, permissionId]
-                                : prev.filter((id) => id !== permissionId)
-                            );
-                          }}
-                        />
-                      }
-                      label={permission.name}
-                    />
-                  </Grid>
-                ))}
+                {Object.entries(groupedPermissions).map(
+                  ([moduleName, moduleData]: [string, PermissionModuleGroup]) => (
+                    <Grid size={12} key={moduleName} mb={0.5}>
+                      <Accordion disableGutters>
+                        <AccordionSummary expandIcon={<ExpandMoreOutlined />}>
+                          <Typography variant='h6'>
+                            {moduleData.displayName}
+                          </Typography>
+                        </AccordionSummary>
+                        <AccordionDetails>
+                          <Grid container spacing={1}>
+                            {moduleData.permissions.map((permission: Permission) => (
+                              <Grid
+                                size={{ xs: 12, md: 6, lg: 4, xl: 3 }}
+                                key={permission.id}
+                              >
+                                <FormControlLabel
+                                  control={
+                                    <Checkbox
+                                      value={permission.id}
+                                      disabled={
+                                        role.id === 1 ||
+                                        (role.id > 1 &&
+                                          !checkOrganizationPermission(
+                                            PERMISSIONS.ROLES_UPDATE
+                                          ))
+                                      }
+                                      checked={checkedPermissions.includes(permission.id)}
+                                      onChange={(e) => {
+                                        setRoleIsNotTouched(false);
+                                        const permissionId = parseInt(
+                                          e.target.value.toString()
+                                        );
+                                        setCheckedPermissions((prev) =>
+                                          e.target.checked
+                                            ? [...prev, permissionId]
+                                            : prev.filter((id) => id !== permissionId)
+                                        );
+                                      }}
+                                    />
+                                  }
+                                  label={permission.name}
+                                />
+                              </Grid>
+                            ))}
+                          </Grid>
+                        </AccordionDetails>
+                      </Accordion>
+                    </Grid>
+                  )
+                )}
                 {role.id > 1 && (
                   <Grid size={12}>
                     <Divider />
@@ -473,7 +634,13 @@ const OrganizationRoles = () => {
   };
 
   if (isLoadingRoles || isLoadingPermissions || isFetchingRoles) {
-    return <LinearProgress />;
+        return (
+      <div style={{ width: '100%', padding: '16px' }}>
+        <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
+        <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
+        <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+      </div>
+    );
   }
 
   return (

@@ -152,6 +152,12 @@ export async function getMenus(locale: string) {
           type: 'nav-item',
           icon: icon('requisitions'),
         },
+        // {
+        //   uri: `/${locale}/manufacturing/reports`,
+        //   label: sidebar.menuItem.reports,
+        //   type: 'nav-item',
+        //   icon: icon('reports'),
+        // },
         {
           label: sidebar.menuItem.masters,
           type: 'collapsible',

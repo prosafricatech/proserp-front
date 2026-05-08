@@ -1,7 +1,7 @@
 'use client'
 
 import { EditOutlined, MoreHorizOutlined } from '@mui/icons-material';
-import { Dialog, LinearProgress, Tooltip } from '@mui/material';
+import { Dialog, LinearProgress, Skeleton, Tooltip } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import React, { useState } from 'react';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
@@ -24,7 +24,13 @@ function EditCostCenter({ costCenterId, setOpenDialog }: EditCostCenterProps) {
   });
 
   if (isFetching) {
-    return <LinearProgress />;
+        return (
+      <div style={{ width: '100%', padding: '16px' }}>
+        <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
+        <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
+        <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+      </div>
+    );
   }
 
   return (
@@ -39,35 +45,13 @@ interface CostCenterItemActionProps {
 const CostCenterItemAction = ({ costCenter }: CostCenterItemActionProps) => {
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const { showDialog, hideDialog } = useJumboDialog();
-  const { enqueueSnackbar } = useSnackbar();
-  const queryClient = useQueryClient();
-
-  const { mutate: deleteCostCenter } = useMutation({
-    // mutationFn: costCenterservices.delete,
-    // onSuccess: (data: { message: string }) => {
-    //   queryClient.invalidateQueries({ queryKey: ['costCenters'] });
-    //   enqueueSnackbar(data.message, {
-    //     variant: 'success',
-    //   });
-    // },
-    // onError: (error: any) => {
-    //   enqueueSnackbar(error?.response?.data?.message || 'Failed to delete cost center', {
-    //     variant: 'error'
-    //   });
-    // },
-  });
 
   const menuItems: MenuItemProps[] = [
     { 
       icon: <EditOutlined />, 
       title: 'Edit', 
       action: 'edit' 
-    },
-    // { 
-    //   icon: <DeleteOutlined color='error' />, 
-    //   title: 'Delete', 
-    //   action: 'delete' 
-    // }
+    }
   ];
 
   const handleItemAction = (menuItem: MenuItemProps) => {

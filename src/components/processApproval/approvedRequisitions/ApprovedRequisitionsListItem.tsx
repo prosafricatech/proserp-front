@@ -125,7 +125,9 @@ const ApprovedRequisitionsListItem: React.FC<ApprovedRequisitionsListItemProps> 
 
           <Grid size={{ xs: 12, md: 2.5 }}>
             <Tooltip title="Process">
-              <Chip size="small" color={processConfig.color} label={processConfig.label} />
+              <Typography variant="body2">
+                {processConfig.label}
+              </Typography>
             </Tooltip>
             <Tooltip title="Cost Center">
               <Chip

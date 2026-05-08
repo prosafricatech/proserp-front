@@ -2,7 +2,7 @@ import { useContext, useEffect } from 'react';
 import { Grid, InputAdornment, TextField, Tooltip, Typography } from '@mui/material';
 import { ProductionBatchesContext } from '../ProductionBatchesList';
 import * as yup from 'yup';
-import { useForm, useFormContext } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import dayjs from 'dayjs';
 import { Div } from '@jumbo/shared';
@@ -10,8 +10,7 @@ import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import StoreSelector from '@/components/procurement/stores/StoreSelector';
 
-function OutputsItemForm2() {
-  const { fetchedBOMs, setOutputs, outputs = [], submitType, setInventoryInputs, productionDates } = useFormContext();
+function OutputsItemForm2({fetchedBOMs, setOutputs, outputs = [], submitType, setInventoryInputs, productionDates}) {
   const { activeWorkCenter } = useContext(ProductionBatchesContext);
 
   const outputSchema = yup.object().shape({

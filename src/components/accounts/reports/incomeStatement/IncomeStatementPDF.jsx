@@ -108,7 +108,7 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
   const costCenters = reportData.filters.cost_centers;
   const organization = authOrganization.organization;
 
-  const extraCol = mergedPeriods.length > 0 ? 2 : 1;
+  const extraCol = mergedPeriods.length > 1 ? 2 : 1;
   const colWidth = String(100 / (mergedPeriods.length + extraCol)) + '%';
 
   return reportData ? (
@@ -217,7 +217,7 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
                 </View>
               );
             })}
-            {mergedPeriods.length > 0 && (
+            {mergedPeriods.length > 1 && (
               <View
                 style={{
                   ...pdfStyles.tableHeader,
@@ -262,7 +262,7 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
               <View
                 style={{
                   ...pdfStyles.tableCell,
-                  backgroundColor: index % 2 != 0 && lightColor,
+                  backgroundColor: index % 2 !== 0 ? lightColor : '#FFFFFF',
                   width: colWidth,
                   paddingLeft: 12,
                 }}
@@ -276,7 +276,7 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
                     key={i}
                     style={{
                       ...pdfStyles.tableCell,
-                      backgroundColor: index % 2 != 0 && lightColor,
+                      backgroundColor: index % 2 !== 0 ? lightColor : '#FFFFFF',
                       width: colWidth,
                       textAlign: 'right',
                     }}
@@ -293,11 +293,11 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
                   </View>
                 );
               })}
-              {mergedPeriods.length > 0 && (
+              {mergedPeriods.length > 1 && (
                 <View
                   style={{
                     ...pdfStyles.tableCell,
-                    backgroundColor: index % 2 != 0 && lightColor,
+                    backgroundColor: index % 2 !== 0 ? lightColor : '#FFFFFF',
                     textAlign: 'right',
                     width: colWidth,
                   }}
@@ -350,7 +350,7 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
                 </Text>
               </View>
             ))}
-            {mergedPeriods.length > 0 && (
+            {mergedPeriods.length > 1 && (
               <View
                 style={{
                   ...pdfStyles.tableCell,
@@ -395,7 +395,7 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
               <View
                 style={{
                   ...pdfStyles.tableCell,
-                  backgroundColor: index % 2 != 0 && lightColor,
+                  backgroundColor: index % 2 !== 0 ? lightColor : '#FFFFFF',
                   width: colWidth,
                   paddingLeft: 12,
                 }}
@@ -409,7 +409,7 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
                     key={i}
                     style={{
                       ...pdfStyles.tableCell,
-                      backgroundColor: index % 2 != 0 && lightColor,
+                      backgroundColor: index % 2 !== 0 ? lightColor : '#FFFFFF',
                       width: colWidth,
                       textAlign: 'right',
                     }}
@@ -426,11 +426,11 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
                   </View>
                 );
               })}
-              {mergedPeriods.length > 0 && (
+              {mergedPeriods.length > 1 && (
                 <View
                   style={{
                     ...pdfStyles.tableCell,
-                    backgroundColor: index % 2 != 0 && lightColor,
+                    backgroundColor: index % 2 !== 0 ? lightColor : '#FFFFFF',
                     textAlign: 'right',
                     width: colWidth,
                   }}
@@ -483,7 +483,7 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
                 </Text>
               </View>
             ))}
-            {mergedPeriods.length > 0 && (
+            {mergedPeriods.length > 1 && (
               <View
                 style={{
                   ...pdfStyles.tableCell,
@@ -545,7 +545,7 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
                 </Text>
               </View>
             ))}
-            {mergedPeriods.length > 0 && (
+            {mergedPeriods.length > 1 && (
               <View
                 style={{
                   ...pdfStyles.tableHeader,
@@ -589,7 +589,7 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
               <View
                 style={{
                   ...pdfStyles.tableCell,
-                  backgroundColor: index % 2 != 0 && lightColor,
+                  backgroundColor: index % 2 !== 0 ? lightColor : '#FFFFFF',
                   width: colWidth,
                   paddingLeft: 12,
                 }}
@@ -603,7 +603,7 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
                     key={i}
                     style={{
                       ...pdfStyles.tableCell,
-                      backgroundColor: index % 2 != 0 && lightColor,
+                      backgroundColor: index % 2 !== 0 ? lightColor : '#FFFFFF',
                       width: colWidth,
                       textAlign: 'right',
                     }}
@@ -620,11 +620,11 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
                   </View>
                 );
               })}
-              {mergedPeriods.length > 0 && (
+              {mergedPeriods.length > 1 && (
                 <View
                   style={{
                     ...pdfStyles.tableCell,
-                    backgroundColor: index % 2 != 0 && lightColor,
+                    backgroundColor: index % 2 !== 0 ? lightColor : '#FFFFFF',
                     textAlign: 'right',
                     width: colWidth,
                   }}
@@ -677,7 +677,7 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
                 </Text>
               </View>
             ))}
-            {mergedPeriods.length > 0 && (
+            {mergedPeriods.length > 1 && (
               <View
                 style={{
                   ...pdfStyles.tableCell,
@@ -744,7 +744,7 @@ const IncomeStatementPDF = ({ reportData, authOrganization, user }) => {
                 </Text>
               </View>
             ))}
-            {mergedPeriods.length > 0 && (
+            {mergedPeriods.length > 1 && (
               <View
                 style={{
                   ...pdfStyles.tableHeader,

@@ -13,11 +13,9 @@ function InventoryTransferTrnPDF({trn,organization}) {
   return (
     <Document 
         title={`${trn.trnNo}`}
-        // author={`${}`}
         subject='TRN'
         creator='ProsERP'
         producer='ProsERP'
-        // keywords={}
     >
         <Page size="A4" style={pdfStyles.page}>
             <View style={{ ...pdfStyles.tableRow, marginBottom: 20 }}>
@@ -40,7 +38,7 @@ function InventoryTransferTrnPDF({trn,organization}) {
                 </View>
                 <View style={{ flex: 1, padding: 0.5}}>
                     <Text style={{...pdfStyles.minInfo, color: mainColor }}>Received by</Text>
-                    <Text style={{...pdfStyles.minInfo }}>{trn.creator.name}</Text>
+                    <Text style={{...pdfStyles.minInfo }}>{trn.creator?.name}</Text>
                 </View>
             </View>
             <View style={{...pdfStyles.table, minHeight: 80}}>
@@ -51,15 +49,15 @@ function InventoryTransferTrnPDF({trn,organization}) {
                     <Text style={{...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex : 1.5}}>Quantity</Text>
                 </View>
                 {
-                        trn.items.map((item,index) => (
-                            <View key={index} style={pdfStyles.tableRow}>
-                                <Text style={{ ...pdfStyles.tableCell,backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex : 0.5 }}>{index+1}</Text>
-                                <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex : 3 }}>{item.product.name}</Text>
-                                <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex : 1 }}>{item.measurement_unit.symbol}</Text>
-                                <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex : 1.5, textAlign:'right'}}>{item.quantity}</Text>
-                            </View>
-                        ))
-                    }
+                    trn.items.map((item,index) => (
+                        <View key={index} style={pdfStyles.tableRow}>
+                            <Text style={{ ...pdfStyles.tableCell,backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex : 0.5 }}>{index+1}</Text>
+                            <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex : 3 }}>{item.product.name}</Text>
+                            <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex : 1 }}>{item.measurement_unit.symbol}</Text>
+                            <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex : 1.5, textAlign:'right'}}>{item.quantity}</Text>
+                        </View>
+                    ))
+                }
             </View>
             <View style={{ ...pdfStyles.tableRow,marginBottom: 10}}>
                 <View style={{ flex: 1, padding: 0.5}}>

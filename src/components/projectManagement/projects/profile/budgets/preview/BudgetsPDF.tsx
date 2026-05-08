@@ -344,7 +344,9 @@ const PDFTable: React.FC<TableProps> = ({
                     flex: col.flex,
                     textAlign: col.align || 'left',
                     fontWeight:
-                      isLabelCell || isValueCell || !!explicitColumnValue ? 700 : 400,
+                      isLabelCell || isValueCell || !!explicitColumnValue
+                        ? 700
+                        : 400,
                   }}
                 >
                   {isLabelCell
@@ -442,10 +444,10 @@ const renderProductsTable = (
   const totalCurrencyCode = baseCurrency?.code;
 
   const columns: TableColumn[] = [
-    { key: 'product', label: 'Product', flex: 3 },
+    { key: 'product', label: 'Product', flex: 2.5 },
     { key: 'quantity', label: 'Quantity', flex: 1, align: 'right' },
     { key: 'rate', label: 'Rate', flex: 1, align: 'right' },
-    { key: 'amount', label: 'Amount', flex: 1, align: 'right' },
+    { key: 'amount', label: 'Amount', flex: 1.5, align: 'right' },
   ];
 
   const renderProductCell = (item: ProductItem, column: TableColumn) => {
@@ -537,10 +539,10 @@ const renderLedgerItemsTable = (
   const totalCurrencyCode = baseCurrency?.code;
 
   const columns: TableColumn[] = [
-    { key: 'expense', label: 'Expense', flex: 3 },
+    { key: 'expense', label: 'Expense', flex: 2.5 },
     { key: 'quantity', label: 'Quantity', flex: 1, align: 'right' },
     { key: 'rate', label: 'Rate', flex: 1, align: 'right' },
-    { key: 'amount', label: 'Amount', flex: 1, align: 'right' },
+    { key: 'amount', label: 'Amount', flex: 1.5, align: 'right' },
   ];
 
   const renderLedgerCell = (item: LedgerItem, column: TableColumn) => {
@@ -628,11 +630,11 @@ const renderSubcontractTasksTable = (
   const totalCurrencyCode = baseCurrency?.code;
 
   const columns: TableColumn[] = [
-    { key: 'taskName', label: 'Task', flex: 2 },
+    { key: 'taskName', label: 'Task', flex: 1.5 },
     { key: 'expenseName', label: 'Expense', flex: 1 },
     { key: 'quantity', label: 'Quantity', flex: 1, align: 'right' },
     { key: 'rate', label: 'Rate', flex: 1, align: 'right' },
-    { key: 'amount', label: 'Amount', flex: 1, align: 'right' },
+    { key: 'amount', label: 'Amount', flex: 1.5, align: 'right' },
   ];
 
   const renderTaskCell = (item: SubcontractTaskItem, column: TableColumn) => {

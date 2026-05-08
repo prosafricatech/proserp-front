@@ -22,7 +22,7 @@ const SubcontractActionTail = () => {
         </Dialog>
 
         <ButtonGroup variant="outlined" size="small" disableElevation sx={{ '& .MuiButton-root': { px: 1 } }}>
-            {checkOrganizationPermission(PERMISSIONS.USERS_INVITE) && (
+            {(
                 <Tooltip title={"Add Subcontract"}>
                     <IconButton onClick={() => setOpenDialog(true)}>
                         <AddOutlined />
