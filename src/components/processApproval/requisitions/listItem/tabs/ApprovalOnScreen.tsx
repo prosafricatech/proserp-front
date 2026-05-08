@@ -14,14 +14,9 @@ import {
   Tooltip, 
   IconButton, 
   Dialog,
-  useTheme,
-  DialogActions,
-  Button
+  useTheme
 } from '@mui/material';
 import RelatableOrderDetails from './form/RelatableOrderDetails';
-import projectsServices from '@/components/projectManagement/projects/project-services.js';
-import CertificateOnScreen from '@/components/projectManagement/projects/profile/subcontracts/tabs/certificatesTab/preview/CertificateOnScreen';
-import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { VisibilityOutlined } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
 import purchaseServices from '@/components/procurement/purchases/purchase-services';
@@ -82,41 +77,18 @@ const normalizeLeaveItem = (item: any): LeaveViewItem => ({
 });
 
 const FetchRelatableDetails = ({ relatable, toggleOpen }: FetchRelatableDetailsProps) => {
-    const { authOrganization } = useJumboAuth();
-    if (!relatable) return null;
+    const { data: orderDetails, isFetching } = useQuery({
+        queryKey: ['purchaseOrder', { id: relatable?.id }],
+        queryFn: async () => relatable?.id ? purchaseServices.orderDetails(relatable.id) : null
+    });
 
-    // If relatable has order_date, treat as purchase order
-    if ('order_date' in relatable && relatable.order_date) {
-        const { data: orderDetails, isFetching } = useQuery({
-            queryKey: ['purchaseOrder', { id: relatable?.id }],
-            queryFn: async () => purchaseServices.orderDetails(relatable?.id)
-        });
-        if (isFetching) {
-            return <LinearProgress/>;
-        }
-        return <RelatableOrderDetails order={orderDetails} toggleOpen={toggleOpen}/>;
+    if (isFetching) {
+        return <LinearProgress/>;
     }
 
-    // If relatable has certificate_date, treat as certificate
-    if ('certificate_date' in relatable && relatable.certificate_date) {
-        const { data: certificateDetails, isFetching } = useQuery({
-            queryKey: ['subcontractCertificate', relatable?.id],
-            queryFn: () => projectsServices.getCertificateDetails(relatable?.id),
-        });
-        if (isFetching) {
-            return <LinearProgress />;
-        }
-        return <>
-            <CertificateOnScreen certificate={certificateDetails} organization={authOrganization?.organization as Organization} />
-            <DialogActions sx={{ pb: 2 }}>
-                <Button variant="outlined" size='small' color="primary" onClick={() => toggleOpen(false)}>
-                    Close
-                </Button>
-            </DialogActions>
-        </>;
-    }
-
-    return null;
+    return (
+        <RelatableOrderDetails order={orderDetails} toggleOpen={toggleOpen}/>
+    );
 };
 
 function ApprovalOnScreen({ approval, organization, belowLargeScreen }: ApprovalOnScreenProps) {
@@ -297,14 +269,14 @@ function ApprovalOnScreen({ approval, organization, belowLargeScreen }: Approval
                                                                 ({item.remarks})
                                                             </Typography>
                                                         )}
-                                                        {!!item.relatable && (
+                                                        {item.relatableNo && (
                                                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
                                                                 <Tooltip title="Related to">
                                                                     <Typography variant="body2" component="span" color="primary.main">
-                                                                        {item.relatableNo || readableDate(item.relatable?.certificate_date, false)}
+                                                                        {item.relatableNo}
                                                                     </Typography>
                                                                 </Tooltip>
-                                                                <Tooltip title={`View ${item?.relatable_type === 'purchase' ? 'Purchase Order' : 'Certificate'}`}>
+                                                                <Tooltip title="View Order">
                                                                     <IconButton 
                                                                         size='small' 
                                                                         onClick={() => {
@@ -500,7 +472,7 @@ function ApprovalOnScreen({ approval, organization, belowLargeScreen }: Approval
             <Dialog 
                 open={openViewDialog} 
                 fullScreen={belowLargeScreen} 
-                maxWidth='md' 
+                maxWidth='lg' 
                 fullWidth 
                 onClose={() => setOpenViewDialog(false)}
             >

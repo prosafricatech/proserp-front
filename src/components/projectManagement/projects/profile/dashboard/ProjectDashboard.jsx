@@ -25,10 +25,11 @@ import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
 import projectsServices from '../../project-services';
 import { useProjectProfile } from '../ProjectProfileProvider';
+import ProjectForm from '../../ProjectFormDialog';
 
 const EditProject = ({ project, setOpenEditDialog }) => {
   return (
-    <ProjectFormDialog project={project} setOpenDialog={setOpenEditDialog} />
+    <ProjectForm project={project} setOpenDialog={setOpenEditDialog} />
   );
 };
 

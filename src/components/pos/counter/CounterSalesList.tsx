@@ -1,7 +1,9 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { getSanitizedSearchKeyword } from '@/utilities/getSanitizedSearchKeyword';
 import { useCounter } from './CounterProvider';
 import JumboRqList from '@jumbo/components/JumboReactQuery/JumboRqList/JumboRqList';
-import { Alert, Box, Grid, IconButton, LinearProgress, Skeleton, Tooltip } from '@mui/material';
+import { Alert, Box, Grid, IconButton, LinearProgress, Tooltip } from '@mui/material';
 import posServices from '../pos-services';
 import JumboSearch from '@jumbo/components/JumboSearch/JumboSearch';
 import JumboListToolbar from '@jumbo/components/JumboList/components/JumboListToolbar/JumboListToolbar';
@@ -46,6 +48,7 @@ const RqList: React.FC<RqListProps> = ({ activeCounter }) => {
   const listRef = React.useRef<any>(null);
   const { authOrganization, checkOrganizationPermission } = useJumboAuth();
   const [filterDate, setFilterDate] = useState<FilterDate>({});
+  const searchParams = useSearchParams();
 
   const [queryOptions, setQueryOptions] = useState<QueryOptions>({
     queryKey: "counterSales",
@@ -58,13 +61,19 @@ const RqList: React.FC<RqListProps> = ({ activeCounter }) => {
     dataKey: "data",
   });
 
+  // Autofill from global search
   useEffect(() => {
+    const searchValue = getSanitizedSearchKeyword('Sales Counter', searchParams);
     setQueryOptions(state => ({
       ...state,
       queryKey: "counterSales",
-      queryParams: { ...state.queryParams, counterId: activeCounter?.id || '' }
+      queryParams: {
+        ...state.queryParams,
+        counterId: activeCounter?.id || '',
+        keyword: searchValue,
+      }
     }));
-  }, [activeCounter]);
+  }, [activeCounter, searchParams]);
 
   const renderSale = useCallback((sale: any) => {
     return <CounterSalesListItem sale={sale} />;
@@ -233,13 +242,7 @@ const CounterSalesList: React.FC = () => {
   }, [activeCounter]);
 
   if (isChangingCounter) {
-        return (
-      <div style={{ width: '100%', padding: '16px' }}>
-        <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-        <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-        <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
-      </div>
-    );
+    return <LinearProgress />;
   }
 
   return (

@@ -149,11 +149,11 @@ const CertificateOnScreen: React.FC<CertificateOnScreenProps> = ({ certificate, 
   };
 
   return (
-    <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 1400, mx: 'md', bgcolor: 'background.paper' }}>
+    <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 1400, mx: 'auto', bgcolor: 'background.paper' }}>
       {/* ==================== Header ==================== */}
       <Grid container spacing={3} sx={{ mb: 6, alignItems: 'center' }}>
 
-        <Grid size={{ xs: 12, md: 12 }} textAlign="center">
+        <Grid size={{ xs: 12, md: 8 }} textAlign="center">
           <Typography variant="h3" sx={{ color: headerColor, fontWeight: 'bold' }}>
             CERTIFICATE
           </Typography>

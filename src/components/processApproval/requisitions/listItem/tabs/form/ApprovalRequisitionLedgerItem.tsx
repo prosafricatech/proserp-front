@@ -3,7 +3,6 @@ import {
     Box,
     Button,
     Dialog,
-    DialogActions,
     Divider,
     Grid,
     IconButton,
@@ -16,9 +15,6 @@ import {
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import RelatableOrderDetails from './RelatableOrderDetails';
-import projectsServices from '@/components/projectManagement/projects/project-services.js';
-import CertificateOnScreen from '@/components/projectManagement/projects/profile/subcontracts/tabs/certificatesTab/preview/CertificateOnScreen';
-import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import LedgerBudgetCheckDetails from './LedgerBudgetCheckDetails';
 import { useQuery } from '@tanstack/react-query';
 import { readableDate, sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
@@ -27,7 +23,6 @@ import purchaseServices from '@/components/procurement/purchases/purchase-servic
 import { Approval, Requisition, RequisitionItem } from '@/components/processApproval/RequisitionType';
 import { Div } from '@jumbo/shared';
 import { Currency } from '@/components/masters/Currencies/CurrencyType';
-import { Organization } from '@/types/auth-types';
 
 interface FetchRelatableDetailsProps {
     requisition: Requisition;
@@ -45,41 +40,18 @@ interface ApprovalRequisitionLedgerItemProps {
 }
 
 const FetchRelatableDetails = ({ relatable, toggleOpen }: FetchRelatableDetailsProps) => {
-    const { authOrganization } = useJumboAuth();
-    if (!relatable) return null;
+    const { data: orderDetails, isFetching } = useQuery({
+        queryKey: ['purchaseOrder', { id: relatable?.id }],
+        queryFn: async () => purchaseServices.orderDetails(relatable?.id)
+    });
 
-    // If relatable has order_date, treat as purchase order
-    if ('order_date' in relatable && relatable.order_date) {
-        const { data: orderDetails, isFetching } = useQuery({
-            queryKey: ['purchaseOrder', { id: relatable?.id }],
-            queryFn: async () => purchaseServices.orderDetails(relatable?.id)
-        });
-        if (isFetching) {
-            return <LinearProgress/>;
-        }
-        return <RelatableOrderDetails order={orderDetails} toggleOpen={toggleOpen}/>;
+    if (isFetching) {
+        return <LinearProgress/>;
     }
 
-    // If relatable has certificate_date, treat as certificate
-    if ('certificate_date' in relatable && relatable.certificate_date) {
-        const { data: certificateDetails, isFetching } = useQuery({
-            queryKey: ['subcontractCertificate', relatable?.id],
-            queryFn: () => projectsServices.getCertificateDetails(relatable?.id),
-        });
-        if (isFetching) {
-            return <LinearProgress />;
-        }
-        return <>
-            <CertificateOnScreen certificate={certificateDetails} organization={authOrganization?.organization as Organization} />
-            <DialogActions sx={{ pb: 2 }}>
-                <Button variant="outlined" color="primary" onClick={() => toggleOpen(false)}>
-                    Close
-                </Button>
-            </DialogActions>
-        </>;
-    }
-
-    return null;
+    return (
+        <RelatableOrderDetails order={orderDetails} toggleOpen={toggleOpen}/>
+    );
 };
 
 function ApprovalRequisitionLedgerItem({
@@ -162,10 +134,10 @@ function ApprovalRequisitionLedgerItem({
                                         <>
                                             <Tooltip title={'Relatable To'}>
                                                 <Typography variant="caption" fontSize={14} lineHeight={1.25} mb={0}>
-                                                    {`${item?.relatable?.orderNo || item?.relatable?.certificateNo || ''} (${readableDate(item.relatable?.order_date || item.relatable?.certificate_date, false)})`}
+                                                    {`${item?.relatable?.orderNo} (${readableDate(item?.relatable?.order_date, false)})`}
                                                 </Typography>
                                             </Tooltip>
-                                            <Tooltip title={item?.relatable_type === 'purchase' ? 'View Order' : 'View Certificate'}>
+                                            <Tooltip title={`View Order`}>
                                                 <IconButton onClick={() => {
                                                     setSelectedRelated(item?.relatable);
                                                     setOpenViewDialog(true);

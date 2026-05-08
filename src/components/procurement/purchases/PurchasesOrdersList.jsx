@@ -18,7 +18,7 @@ import { DateTimePicker } from '@mui/x-date-pickers';
 import dayjs from 'dayjs';
 import { EventAvailableOutlined, FilterAltOffOutlined, FilterAltOutlined } from '@mui/icons-material';
 import CostCenterSelector from '../../masters/costCenters/CostCenterSelector';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { MODULES } from '@/utilities/constants/modules';
 import UnsubscribedAccess from '@/shared/Information/UnsubscribedAccess';
@@ -26,6 +26,7 @@ import { PERMISSIONS } from '@/utilities/constants/permissions';
 
 function PurchasesOrdersList() {
     const params = useParams();
+    const searchParams = useSearchParams();
     const listRef = React.useRef();
     const [openFilters, setOpenFilters] = useState(false);
     const {authOrganization} = useJumboAuth();
@@ -36,7 +37,7 @@ function PurchasesOrdersList() {
     const [mounted, setMounted] = useState(false);
     const [queryOptions, setQueryOptions] = React.useState({
         queryKey: "purchaseOrders",
-        queryParams: {id: params.id, keyword : '', status: 'All'},
+        queryParams: {id: params.id, keyword : searchParams?.get('search') || '', status: 'All'},
         countKey: "total",
         dataKey: "data",
     });
@@ -44,9 +45,13 @@ function PurchasesOrdersList() {
     React.useEffect(() => {
         setQueryOptions(state => ({
             ...state,
-            queryParams: {...state.queryParams, id: params.id}
+            queryParams: {
+                ...state.queryParams,
+                id: params.id,
+                keyword: searchParams?.get('search') || '',
+            }
         }))
-    }, [params]);
+    }, [params, searchParams]);
 
     React.useEffect(() => {
         setQueryOptions(state => ({
