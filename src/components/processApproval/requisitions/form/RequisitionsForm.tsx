@@ -120,7 +120,7 @@ interface Requisition {
 interface RequisitionsFormProps {
   toggleOpen: (open: boolean) => void;
   requisition?: Requisition;
-  isDuplicate: boolean;
+  isDuplicate?: boolean;
 }
 
 function RequisitionsForm({
@@ -129,7 +129,11 @@ function RequisitionsForm({
   isDuplicate = false,
 }: RequisitionsFormProps) {
   const [requisition_date] = useState(
-    requisition && !isDuplicate ? dayjs(requisition.requisition_date) : dayjs()
+    isDuplicate
+      ? dayjs()
+      : requisition && !isDuplicate
+      ? dayjs(requisition.requisition_date)
+      : dayjs()
   );
   const { setIsEditAction } = useContext(requisitionContext);
   const { enqueueSnackbar } = useSnackbar();

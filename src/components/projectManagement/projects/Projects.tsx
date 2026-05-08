@@ -2,7 +2,8 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Card, Stack, Typography } from '@mui/material';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
+import { getSanitizedSearchKeyword } from '@/utilities/getSanitizedSearchKeyword';
 import JumboListToolbar from '@jumbo/components/JumboList/components/JumboListToolbar';
 import JumboRqList from '@jumbo/components/JumboReactQuery/JumboRqList';
 import JumboSearch from '@jumbo/components/JumboSearch';
@@ -19,13 +20,14 @@ import StakeholderSelectProvider from '@/components/masters/stakeholders/Stakeho
 
 const Projects = () => {
     const params = useParams<{ project?: string; id?: string; keyword?: string }>();
+    const searchParams = useSearchParams();
     const listRef = useRef<any>(null);
     const { organizationHasSubscribed, checkOrganizationPermission } = useJumboAuth();
     const [mounted, setMounted] = useState(false);
 
     const [queryOptions, setQueryOptions] = useState({
       queryKey: 'projects',
-      queryParams: { id: params.id, keyword: '' },
+      queryParams: { id: params.id, keyword: getSanitizedSearchKeyword('Projects', searchParams) },
       countKey: 'total',
       dataKey: 'data',
     });
@@ -33,9 +35,13 @@ const Projects = () => {
     useEffect(() => {
       setQueryOptions((state) => ({
         ...state,
-        queryParams: { ...state.queryParams, id: params.id },
+        queryParams: {
+          ...state.queryParams,
+          id: params.id,
+          keyword: getSanitizedSearchKeyword('Projects', searchParams),
+        },
       }));
-    }, [params]);
+    }, [params, searchParams]);
 
     const renderProject = useCallback((project:Project) => (
         <ProjectListItem project={project} />

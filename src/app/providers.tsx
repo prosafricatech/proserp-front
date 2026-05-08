@@ -15,6 +15,7 @@ import { JumboAuthProvider } from './providers/JumboAuthProvider';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { BackdropSpinner } from '@/shared/ProgressIndicators/BackdropSpinner';
+import { SpinnerProvider } from '@/shared/ProgressIndicators/SpinnerContext';
 import { VFDProvider } from '@/components/vfd/VFDProvider';
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -37,14 +38,16 @@ export function Providers({ children }: { children: React.ReactNode }) {
                 <JumboConfigProvider LinkComponent={Link}>
                   <JumboTheme init={CONFIG.THEME}>
                     <CssBaseline />
-                    <JumboDialogProvider>
-                      <AuthInitializer>
-                        <JumboDialog />
-                          <Suspense fallback={<BackdropSpinner />}>
-                            {children}
-                          </Suspense>
-                      </AuthInitializer>
-                    </JumboDialogProvider>
+                    <SpinnerProvider>
+                      <JumboDialogProvider>
+                        <AuthInitializer>
+                          <JumboDialog />
+                            <Suspense fallback={<BackdropSpinner />}>
+                              {children}
+                            </Suspense>
+                        </AuthInitializer>
+                      </JumboDialogProvider>
+                    </SpinnerProvider>
                   </JumboTheme>
                 </JumboConfigProvider>
               </AppRouterCacheProvider>

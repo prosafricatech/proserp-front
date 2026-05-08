@@ -5,7 +5,7 @@ import JumboRqList from "@jumbo/components/JumboReactQuery/JumboRqList";
 import JumboSearch from "@jumbo/components/JumboSearch";
 import { Card, Grid } from "@mui/material";
 import { useRef, useEffect, useCallback, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import LedgerSelectProvider from "../ledgers/forms/LedgerSelectProvider";
 import BudgetsListItemInMaters from "./BudgetsListItemInMaters";
 import budgetsServices from "./budgets-services";
@@ -45,6 +45,7 @@ interface JumboRqListRef {
 
 const Budgets = () => {
   const params = useParams<{ id?: string; keyword?: string }>();
+  const searchParams = useSearchParams();
   const listRef = useRef<JumboRqListRef>(null);
   const { authOrganization, checkOrganizationPermission } = useJumboAuth();
   const [selectedCostCenter, setSelectedCostCenter] = useState<CostCenter[]>([]);
@@ -54,7 +55,7 @@ const Budgets = () => {
     queryParams: {
       id: params?.id,
       cost_center_ids:'all',
-      keyword: params?.keyword || '',
+      keyword: '',
     },
     countKey: 'total',
     dataKey: 'data',
@@ -69,10 +70,10 @@ const Budgets = () => {
         cost_center_ids: checkOrganizationPermission(PERMISSIONS.COST_CENTERS_ALL)
                         ? 'all'
                         : authOrganization?.costCenters?.map((cost_center: any) => cost_center.id) || [],
-        keyword: params?.keyword || '',
+        keyword: searchParams?.get('search') || '',
       },
     }));
-  }, [params]);
+  }, [params, searchParams]);
 
   useEffect(() => {
     setQueryOptions(prev => ({

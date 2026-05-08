@@ -23,7 +23,7 @@ const MeasurementUnitActionTail = () => {
         <MeasurementUnitForm setOpenDialog={setOpenDialog} />
       </Dialog>
       <ButtonGroup variant="outlined" size="small" disableElevation sx={{ '& .MuiButton-root': { px: 1 } }}>
-        {checkOrganizationPermission(PERMISSIONS.USERS_INVITE) && (
+        {(
           <Tooltip title={dictionary.measurementUnits.list.labels.newCreateLabel}>
             <IconButton onClick={() => setOpenDialog(true)}>
               <AddOutlined />

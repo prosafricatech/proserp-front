@@ -29,7 +29,7 @@ const DepartmentActionTail = () => {
         disableElevation
         sx={{ '& .MuiButton-root': { px: 1 } }}
       >
-        {/* {checkOrganizationPermission(PERMISSIONS.USERS_INVITE) && ( */}
+        {/* {( */}
         <Tooltip title='Add Department'>
           <IconButton onClick={() => setOpenDialog(true)}>
             <AddOutlined />

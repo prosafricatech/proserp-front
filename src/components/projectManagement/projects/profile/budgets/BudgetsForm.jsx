@@ -135,10 +135,32 @@ const BudgetsForm = ({
     setSubContractItems(budget?.subcontract_task_items || []);
   }, [budget]);
 
+  // const validationSchema = yup.object({
+  //   name: yup.string().required('Budget name is required'),
+  //   start_date: yup.string().required('Start Date is required'),
+  //   end_date: yup.string().required('End Date is required'),
+  //   cost_center_id: yup
+  //     .number()
+  //     .required('Cost Center is required')
+  //     .positive('Cost Center is Required')
+  //     .typeError('Cost Center is Required'),
+  // });
+
   const validationSchema = yup.object({
     name: yup.string().required('Budget name is required'),
     start_date: yup.string().required('Start Date is required'),
-    end_date: yup.string().required('End Date is required'),
+    end_date: yup
+      .string()
+      .required('End Date is required')
+      .test(
+        'is-after-start-date',
+        'End date must be after start date',
+        function (value) {
+          const { start_date } = this.parent;
+          if (!start_date || !value) return true;
+          return new Date(value) > new Date(start_date);
+        }
+      ),
     cost_center_id: yup
       .number()
       .required('Cost Center is required')
@@ -151,6 +173,7 @@ const BudgetsForm = ({
     setValue,
     watch,
     handleSubmit,
+    trigger,
     formState: { errors },
   } = useForm({
     resolver: yupResolver(validationSchema),
@@ -487,6 +510,30 @@ const BudgetsForm = ({
           </Grid>
 
           <Grid size={{ xs: 12, md: 4 }}>
+            {/* <DateTimePicker
+              label='End Date'
+              fullWidth
+              minDate={dayjs(watch('start_date'))}
+              defaultValue={
+                budget && !isDuplicate ? dayjs(budget.end_date) : null
+              }
+              slotProps={{
+                textField: {
+                  size: 'small',
+                  fullWidth: true,
+                  readOnly: true,
+                  error: !!errors?.end_date,
+                  helperText: errors?.end_date?.message,
+                },
+              }}
+              onChange={(newValue) => {
+                setServerError(null);
+                setValue('end_date', newValue ? newValue.toISOString() : null, {
+                  shouldValidate: true,
+                  shouldDirty: true,
+                });
+              }}
+            /> */}
             <DateTimePicker
               label='End Date'
               fullWidth
@@ -509,6 +556,7 @@ const BudgetsForm = ({
                   shouldValidate: true,
                   shouldDirty: true,
                 });
+                trigger('start_date');
               }}
             />
           </Grid>

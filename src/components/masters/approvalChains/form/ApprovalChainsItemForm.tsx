@@ -78,8 +78,6 @@ function ApprovalChainsItemForm({
     }
   });
 
-  console.log(dirtyFields)
-
   useEffect(() => {
       const subscription = watch(() => {
           const hasDirtyFields = Object.keys(dirtyFields).length > 0;

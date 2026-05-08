@@ -342,7 +342,7 @@ function ProductionBatchesForm2({ toggleOpen, production }) {
                                     {
                                         isLoading ? <LinearProgress/> :
                                         fetchedBOMs && 
-                                        <OutputsItemForm2 />
+                                        <OutputsItemForm2 fetchedBOMs={fetchedBOMs} setOutputs={setOutputs} outputs={outputs} submitType={submitType} setInventoryInputs={setInventoryInputs} productionDates={productionDates}/>
                                     }
                                 </Grid>
                             </Grid>
@@ -369,7 +369,13 @@ function ProductionBatchesForm2({ toggleOpen, production }) {
                 <Box hidden={activeTab !== 0} sx={{ mt: 2 }}>
                     {
                         isLoading ? <LinearProgress/> :
-                        <InventoryInputsItemForm2/>
+                        <InventoryInputsItemForm2
+                            setInventoryInputs={setInventoryInputs}
+                            inventoryInputs={inventoryInputs}
+                            productionDates={productionDates}
+                            fetchedBOMs={fetchedBOMs}
+                            outputs={outputs}
+                        />
                     }
                 </Box>
 

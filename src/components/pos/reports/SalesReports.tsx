@@ -3,6 +3,7 @@
 import JumboCardQuick from '@jumbo/components/JumboCardQuick/JumboCardQuick';
 import { Dialog, Grid, Typography, useMediaQuery } from '@mui/material';
 import React, { useState, ReactNode } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { ListAltOutlined, SummarizeOutlined } from '@mui/icons-material';
 import SalesManifest from './salesManifest/SalesManifest';
 import StakeholderSelectProvider from '../../masters/stakeholders/StakeholderSelectProvider';
@@ -19,6 +20,7 @@ import { PERMISSIONS } from '@/utilities/constants/permissions';
 import UnauthorizedAccess from '@/shared/Information/UnauthorizedAccess';
 
 function SalesReports() {
+    const searchParams = useSearchParams();
     const [openCashierReport, setOpenCashierReport] = useState<boolean>(false);
     const [openSalesAndCashSummary, setOpenSalesAndCashSummary] = useState<boolean>(false);
     const [openSalesManifest, setOpenSalesManifest] = useState<boolean>(false);
@@ -33,6 +35,24 @@ function SalesReports() {
     React.useEffect(() => {
        setMounted(true);
     }, []);
+
+    // Auto-open report dialog if ?report= param is present
+    React.useEffect(() => {
+        if (!mounted) return;
+        const reportParam = searchParams.get('report');
+        if (!reportParam) return;
+        if (reportParam === 'cashier-report') {
+            setReport(<CashierReport setOpenCashierReport={setOpenCashierReport} />);
+            setOpenCashierReport(true);
+        } else if (reportParam === 'sales-manifest') {
+            setReport(<SalesManifest setOpenSalesManifest={setOpenSalesManifest} />);
+            setOpenSalesManifest(true);
+        } else if (reportParam === 'sales-cash-summary') {
+            setReport(<SalesAndCashSummary setOpenSalesAndCashSummary={setOpenSalesAndCashSummary} />);
+            setOpenSalesAndCashSummary(true);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [mounted, searchParams]);
 
     if (!mounted) return null;
 

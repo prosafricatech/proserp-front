@@ -6,7 +6,7 @@ import JumboSearch from '@jumbo/components/JumboSearch';
 import { Card, Stack, Typography } from '@mui/material';
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import LedgerSelectProvider from '../../accounts/ledgers/forms/LedgerSelectProvider';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { MODULES } from '@/utilities/constants/modules';
 import UnsubscribedAccess from '@/shared/Information/UnsubscribedAccess';
@@ -15,18 +15,18 @@ import UnauthorizedAccess from '@/shared/Information/UnauthorizedAccess';
 import ProjectCategoryListItem from './ProjectCategoryListItem';
 import ProjectCategoryActionTail from './ProjectCategoryActionTail';
 import projectCategoryServices from './project-category-services';
-import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
+import { getSanitizedSearchKeyword } from '@/utilities/getSanitizedSearchKeyword';
 
 const ProjectCategories = () => {
-    const params = useParams();
+    const params = useParams<{ project?: string; id?: string; keyword?: string }>();
+    const searchParams = useSearchParams();
     const listRef = useRef<any>(null);
     const { organizationHasSubscribed, checkOrganizationPermission } = useJumboAuth();
     const [mounted, setMounted] = useState(false);
-    const dictionary = useDictionary();
 
     const [queryOptions, setQueryOptions] = useState({
         queryKey: 'projectCategories',
-        queryParams: { id: params.id, keyword: '' },
+        queryParams: { id: params.id, keyword: getSanitizedSearchKeyword('projectCategories', searchParams) },
         countKey: 'total',
         dataKey: 'data',
     });
@@ -34,9 +34,12 @@ const ProjectCategories = () => {
     React.useEffect(() => {
         setQueryOptions((state) => ({
             ...state,
-            queryParams: { ...state.queryParams, id: params.id },
+            queryParams: {
+                ...state.queryParams,
+                keyword: getSanitizedSearchKeyword('projectCategories', searchParams),
+            },
         }));
-    }, [params]);
+    }, [params, searchParams]);
 
     const renderProjectCategory = useCallback((projectCategory: { id: number; name: string; description?: string; }) => (
         <ProjectCategoryListItem projectCategory={projectCategory} />

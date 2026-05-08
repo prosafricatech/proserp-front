@@ -31,6 +31,7 @@ function ProjectForm({setOpenDialog, project = null, reFetchProjectAfterEdit }) 
       setOpenDialog(false);
       enqueueSnackbar(data.message, { variant: 'success' });
       queryClient.invalidateQueries({queryKey: ['projects']});
+      queryClient.invalidateQueries({queryKey: ['showProject']});
     },
     onError: (error) => {
       enqueueSnackbar(error.response.data.message, {
@@ -44,6 +45,7 @@ function ProjectForm({setOpenDialog, project = null, reFetchProjectAfterEdit }) 
     onSuccess: (data) => {
       setOpenDialog(false);
       enqueueSnackbar(data.message, { variant: 'success' });
+      queryClient.invalidateQueries({queryKey: ['showProject']});
       reFetchProjectAfterEdit()
     },
     onError: (error) => {
