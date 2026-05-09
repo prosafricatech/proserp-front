@@ -28,6 +28,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import projectsServices from '../../../project-services';
 import { useProjectProfile } from '../../ProjectProfileProvider';
+import UsersSelector from '@/components/sharedComponents/UsersSelector';
 
 const createActivityTempId = (indexPath) => `activity-${indexPath}`;
 const createTaskTempId = (activityPath, index) => `task-${activityPath}-${index}`;
@@ -46,6 +47,11 @@ const normalizeTasks = (tasks = [], activityPath) =>
     end_date: task.end_date || null,
     position_index: task.position_index ?? index,
     measurement_unit_id: task.measurement_unit_id || task.measurement_unit?.id || null,
+    handlers:
+      task.handlers?.map((handler) => ({
+        id: handler.id,
+        name: handler.name || handler.full_name || handler.email || 'Unknown User',
+      })) || [],
     handlers_ids: task.handlers?.map((handler) => handler.id) || [],
     dependency_source_ids: task.dependencies?.map((dependency) => dependency.id) || [],
     deliverable_contributions:
@@ -111,6 +117,8 @@ const ActivityEditor = ({
   level = 0,
   onActivityFieldChange,
   onTaskFieldChange,
+  onTaskHandlersChange,
+  showHandlers,
 }) => {
   return (
     <Accordion disableGutters sx={{ ml: level > 0 ? 2 : 0, mb: 1 }} defaultExpanded={level < 1}>
@@ -284,12 +292,25 @@ const ActivityEditor = ({
                         InputLabelProps={{ shrink: true }}
                       />
                     </Grid>
-                    <Grid size={12}>
+                    {showHandlers && (
+                      <Grid size={{ xs: 12, md: 6.5 }}>
+                        <UsersSelector
+                          label='Handlers'
+                          multiple
+                          defaultValue={task.handlers || []}
+                          onChange={(newValue) => {
+                            const selectedHandlers = Array.isArray(newValue) ? newValue : [];
+                            onTaskHandlersChange(task.temp_id, selectedHandlers);
+                          }}
+                        />
+                      </Grid>
+                    )}
+                    <Grid size={{ xs: 12, md: showHandlers ? 5.5 : 12 }}>
                       <TextField
                         size='small'
                         fullWidth
                         multiline
-                        rows={1}
+                        rows={2}
                         label='Description'
                         value={task.description || ''}
                         onChange={(e) =>
@@ -313,6 +334,8 @@ const ActivityEditor = ({
                 level={level + 1}
                 onActivityFieldChange={onActivityFieldChange}
                 onTaskFieldChange={onTaskFieldChange}
+                onTaskHandlersChange={onTaskHandlersChange}
+                showHandlers={showHandlers}
               />
             ))}
           </Box>
@@ -404,6 +427,16 @@ function WBSCloneDialog({ setOpenDialog }) {
     );
   };
 
+  const handleTaskHandlersChange = (taskId, handlers) => {
+    setDraftActivities((prev) =>
+      updateTaskById(prev, taskId, (task) => ({
+        ...task,
+        handlers: handlers || [],
+        handlers_ids: (handlers || []).map((handler) => handler.id),
+      }))
+    );
+  };
+
   const nodeCounts = useMemo(() => countNodes(draftActivities), [draftActivities]);
 
   const validationErrors = useMemo(() => {
@@ -471,7 +504,7 @@ function WBSCloneDialog({ setOpenDialog }) {
             Select source project, load its WBS, edit activities/tasks here, then submit to clone.
           </Alert>
 
-          <Grid container spacing={1.5} alignItems='center'>
+          <Grid container spacing={1.5}>
             <Grid size={{ xs: 12, md: 7 }}>
               <Autocomplete
                 options={projectOptions}
@@ -487,52 +520,54 @@ function WBSCloneDialog({ setOpenDialog }) {
               />
             </Grid>
             <Grid size={{ xs: 12, md: 5 }}>
+              <Stack direction={{ xs: 'column', md: 'row' }} spacing={1}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={options.include_dependencies}
+                      onChange={(e) =>
+                        setOptions((prev) => ({ ...prev, include_dependencies: e.target.checked }))
+                      }
+                    />
+                  }
+                  label='Include Dependencies'
+                />
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={options.include_handlers}
+                      onChange={(e) =>
+                        setOptions((prev) => ({ ...prev, include_handlers: e.target.checked }))
+                      }
+                    />
+                  }
+                  label='Include Handlers'
+                />
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={options.include_deliverable_contributions}
+                      onChange={(e) =>
+                        setOptions((prev) => ({
+                          ...prev,
+                          include_deliverable_contributions: e.target.checked,
+                        }))
+                      }
+                    />
+                  }
+                  label='Include Deliverable Contributions'
+                />
+              </Stack>
+            </Grid>
+
+            <Grid size={12} textAlign={'end'}>
               <Stack direction='row' spacing={1} justifyContent={{ xs: 'flex-start', md: 'flex-end' }}>
-                <Button variant='outlined' onClick={handleLoadSource} disabled={isTimelineLoading}>
-                  {isTimelineLoading ? 'Loading...' : 'Load WBS'}
+                <Button variant='outlined' loading={isTimelineLoading} onClick={handleLoadSource}>
+                  {'Load WBS'}
                 </Button>
               </Stack>
             </Grid>
           </Grid>
-
-          <Stack direction={{ xs: 'column', md: 'row' }} spacing={1}>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={options.include_dependencies}
-                  onChange={(e) =>
-                    setOptions((prev) => ({ ...prev, include_dependencies: e.target.checked }))
-                  }
-                />
-              }
-              label='Include Dependencies'
-            />
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={options.include_handlers}
-                  onChange={(e) =>
-                    setOptions((prev) => ({ ...prev, include_handlers: e.target.checked }))
-                  }
-                />
-              }
-              label='Include Handlers'
-            />
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={options.include_deliverable_contributions}
-                  onChange={(e) =>
-                    setOptions((prev) => ({
-                      ...prev,
-                      include_deliverable_contributions: e.target.checked,
-                    }))
-                  }
-                />
-              }
-              label='Include Deliverable Contributions'
-            />
-          </Stack>
 
           <Divider />
 
@@ -576,6 +611,8 @@ function WBSCloneDialog({ setOpenDialog }) {
                   activity={activity}
                   onActivityFieldChange={handleActivityFieldChange}
                   onTaskFieldChange={handleTaskFieldChange}
+                  onTaskHandlersChange={handleTaskHandlersChange}
+                  showHandlers={options.include_handlers}
                 />
               ))}
             </Box>
