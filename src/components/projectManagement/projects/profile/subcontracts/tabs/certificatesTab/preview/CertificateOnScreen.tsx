@@ -64,7 +64,13 @@ interface CertificateOnScreenProps {
   organization: Organization;
 }
 
-const CertificateOnScreen: React.FC<CertificateOnScreenProps> = ({ certificate, organization }) => {
+interface CertificateOnScreenProps {
+  certificate: Certificate;
+  organization: Organization;
+  isFromProcessApproval?: boolean;
+}
+
+const CertificateOnScreen: React.FC<CertificateOnScreenProps> = ({ certificate, organization, isFromProcessApproval = false }) => {
   const theme = useTheme();
   const isDark = theme.type === 'dark';
 
@@ -149,11 +155,11 @@ const CertificateOnScreen: React.FC<CertificateOnScreenProps> = ({ certificate, 
   };
 
   return (
-    <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 1400, mx: 'auto', bgcolor: 'background.paper' }}>
+    <Box sx={{ p: { xs: 2, md: 4 }, maxWidth: 1400, mx: 'md', bgcolor: 'background.paper' }}>
       {/* ==================== Header ==================== */}
       <Grid container spacing={3} sx={{ mb: 6, alignItems: 'center' }}>
 
-        <Grid size={{ xs: 12, md: 8 }} textAlign="center">
+        <Grid size={{ xs: 12, md: 12 }} textAlign="center">
           <Typography variant="h3" sx={{ color: headerColor, fontWeight: 'bold' }}>
             CERTIFICATE
           </Typography>
@@ -185,8 +191,8 @@ const CertificateOnScreen: React.FC<CertificateOnScreenProps> = ({ certificate, 
       </Grid>
 
       {/* ==================== Summary Table (Right Aligned) ==================== */}
-      <Box sx={{ mb: 8, display: 'flex', justifyContent: 'flex-end' }}>
-        <Box>
+      <Box sx={{ mb: 8, display: 'flex', justifyContent: isFromProcessApproval ? 'flex-start' : 'flex-end' }}>
+        <Box sx={{ width: isFromProcessApproval ? '100%' : 'auto' }}>
           <Typography variant="h6" sx={{ mb: 3, textAlign: 'center' }}>
             Summary
           </Typography>

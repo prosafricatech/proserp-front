@@ -67,10 +67,10 @@ function RequisitionLedgerItemForm({
       value: 'purchase',
       label: 'Purchase',
     },
-    // {
-    //   value: 'subcontract_certificate',
-    //   label: 'Subcontract Certificate',
-    // },
+    {
+      value: 'subcontract_certificate',
+      label: 'Subcontract Certificate',
+    },
   ];
 
   const processedRelatableTypes = useMemo(() => {
@@ -465,7 +465,7 @@ function RequisitionLedgerItemForm({
                 options={relatedTransactions}
                 isOptionEqualToValue={(option, value) => option.id === value.id}
                 getOptionLabel={(option) =>
-                  `${option.relatableNo} (${readableDate(option.order_date, false)} - ${option.unapproved_amount?.toLocaleString(
+                  `${option.relatableNo || option.certificateNo || ''} (${readableDate(option.order_date || option.certificate_date, false)} - ${option.unapproved_amount?.toLocaleString(
                     'en-US',
                     {
                       style: 'currency',
