@@ -50,7 +50,7 @@ const FetchRelatableDetails = ({ relatable, toggleOpen, ledger_item }: FetchRela
     if (isFetching) {
       return <LinearProgress />;
     }
-    return <CertificateOnScreen certificate={certificateDetails} organization={authOrganization?.organization as Organization} />;
+    return <CertificateOnScreen isFromProcessApproval={true} certificate={certificateDetails} organization={authOrganization?.organization as Organization} />;
   }
 
   return null;

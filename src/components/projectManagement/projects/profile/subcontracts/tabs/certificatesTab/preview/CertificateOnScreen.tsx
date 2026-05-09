@@ -64,7 +64,13 @@ interface CertificateOnScreenProps {
   organization: Organization;
 }
 
-const CertificateOnScreen: React.FC<CertificateOnScreenProps> = ({ certificate, organization }) => {
+interface CertificateOnScreenProps {
+  certificate: Certificate;
+  organization: Organization;
+  isFromProcessApproval?: boolean;
+}
+
+const CertificateOnScreen: React.FC<CertificateOnScreenProps> = ({ certificate, organization, isFromProcessApproval = false }) => {
   const theme = useTheme();
   const isDark = theme.type === 'dark';
 
@@ -185,8 +191,8 @@ const CertificateOnScreen: React.FC<CertificateOnScreenProps> = ({ certificate, 
       </Grid>
 
       {/* ==================== Summary Table (Right Aligned) ==================== */}
-      <Box sx={{ mb: 8, display: 'flex', justifyContent: 'flex-end' }}>
-        <Box>
+      <Box sx={{ mb: 8, display: 'flex', justifyContent: isFromProcessApproval ? 'flex-start' : 'flex-end' }}>
+        <Box sx={{ width: isFromProcessApproval ? '100%' : 'auto' }}>
           <Typography variant="h6" sx={{ mb: 3, textAlign: 'center' }}>
             Summary
           </Typography>

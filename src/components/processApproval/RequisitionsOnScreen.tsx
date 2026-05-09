@@ -102,7 +102,7 @@ const FetchRelatableDetails: React.FC<{
       return <LinearProgress />;
     }
     return <>
-      <CertificateOnScreen certificate={certificateDetails} organization={authOrganization?.organization as Organization} />
+      <CertificateOnScreen isFromProcessApproval={true} certificate={certificateDetails} organization={authOrganization?.organization as Organization} />
       <DialogActions sx={{ pb: 2 }}>
         <Button variant="outlined" size='small' color="primary" onClick={() => toggleOpen(false)}>
           Close
