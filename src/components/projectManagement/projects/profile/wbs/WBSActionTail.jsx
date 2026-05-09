@@ -1,5 +1,5 @@
 'use client'
-import { ContentCopy, PlaylistAdd } from "@mui/icons-material";
+import { CloudDownloadOutlined, PlaylistAdd } from "@mui/icons-material";
 import { ButtonGroup, Dialog, IconButton, Tooltip, useMediaQuery } from "@mui/material";
 import React, { useState } from "react";
 import WBSForm from "./WBSForm";
@@ -24,7 +24,7 @@ const WBSActionTail = ({ openDialog, setOpenDialog, group }) => {
         <ButtonGroup variant="outlined" size="small" disableElevation sx={{ '& .MuiButton-root': { px: 1 } }}>
           <Tooltip title={"Clone WBS From Another Project"}>
             <IconButton onClick={() => setOpenCloneDialog(true)}>
-              <ContentCopy />
+              <CloudDownloadOutlined />
             </IconButton>
           </Tooltip>
           <Tooltip title={"New Timeline Activity"}>
