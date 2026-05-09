@@ -236,148 +236,148 @@ const ActivityEditor = ({
                 );
 
                 return (
-                <Box key={task.temp_id} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 1 }}>
-                  <Grid container spacing={1.5}>
-                    <Grid size={{ xs: 12, md: 3 }}>
-                      <TextField
-                        size='small'
-                        fullWidth
-                        label='Task Name'
-                        value={task.name}
-                        onChange={(e) =>
-                          onTaskFieldChange(task.temp_id, 'name', e.target.value)
-                        }
-                      />
-                    </Grid>
-                    <Grid size={{ xs: 12, md: 2 }}>
-                      <TextField
-                        size='small'
-                        fullWidth
-                        label='Code'
-                        value={task.code || ''}
-                        onChange={(e) =>
-                          onTaskFieldChange(task.temp_id, 'code', e.target.value)
-                        }
-                      />
-                    </Grid>
-                    <Grid size={{ xs: 12, md: 1 }}>
-                      <TextField
-                        size='small'
-                        fullWidth
-                        type='number'
-                        label='Weight %'
-                        value={task.weighted_percentage ?? 0}
-                        onChange={(e) =>
-                          onTaskFieldChange(
-                            task.temp_id,
-                            'weighted_percentage',
-                            Number(e.target.value || 0)
-                          )
-                        }
-                      />
-                    </Grid>
-                    <Grid size={{ xs: 12, md: 2 }}>
-                      <TextField
-                        size='small'
-                        fullWidth
-                        type='number'
-                        label='Qty'
-                        value={task.quantity ?? 0}
-                        onChange={(e) =>
-                          onTaskFieldChange(task.temp_id, 'quantity', Number(e.target.value || 0))
-                        }
-                      />
-                    </Grid>
-                    <Grid size={{ xs: 12, md: 2 }}>
-                      <TextField
-                        size='small'
-                        fullWidth
-                        type='date'
-                        label='Start Date'
-                        value={task.start_date ? String(task.start_date).slice(0, 10) : ''}
-                        onChange={(e) =>
-                          onTaskFieldChange(task.temp_id, 'start_date', e.target.value || null)
-                        }
-                        InputLabelProps={{ shrink: true }}
-                      />
-                    </Grid>
-                    <Grid size={{ xs: 12, md: 2 }}>
-                      <TextField
-                        size='small'
-                        fullWidth
-                        type='date'
-                        label='End Date'
-                        value={task.end_date ? String(task.end_date).slice(0, 10) : ''}
-                        onChange={(e) =>
-                          onTaskFieldChange(task.temp_id, 'end_date', e.target.value || null)
-                        }
-                        InputLabelProps={{ shrink: true }}
-                      />
-                    </Grid>
-                    {showDependencies && (
-                      <Grid size={{ xs: 12, md: 6 }}>
-                        <Autocomplete
-                          multiple
-                          options={availableDependencyOptions}
-                          value={selectedDependencyOptions}
-                          isOptionEqualToValue={(option, value) =>
-                            (option.source_id || option.id) === (value.source_id || value.id)
+                  <Box key={task.temp_id} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 1 }}>
+                    <Grid container spacing={1.5}>
+                      <Grid size={{ xs: 12, md: 3 }}>
+                        <TextField
+                          size='small'
+                          fullWidth
+                          label='Task Name'
+                          value={task.name}
+                          onChange={(e) =>
+                            onTaskFieldChange(task.temp_id, 'name', e.target.value)
                           }
-                          getOptionLabel={(option) => option?.name || 'Unnamed Task'}
-                          onChange={(event, newValue) => {
-                            onTaskDependenciesChange(task.temp_id, newValue || []);
-                          }}
-                          renderInput={(params) => (
-                            <TextField {...params} size='small' fullWidth label='Dependencies' />
-                          )}
-                          renderTags={(value, getTagProps) =>
-                            value.map((option, index) => (
-                              <Chip
-                                {...getTagProps({ index })}
-                                key={option.source_id || option.id}
-                                size='small'
-                                label={option.name}
-                                color='primary'
-                                variant='outlined'
-                              />
-                            ))
-                          }
-                          renderOption={(props, option) => (
-                            <li {...props} key={option.temp_id || option.source_id || option.id}>
-                              {option.name}
-                            </li>
-                          )}
                         />
                       </Grid>
-                    )}
-                    {showHandlers && (
-                      <Grid size={{ xs: 12, md: 6 }}>
-                        <UsersSelector
-                          label='Handlers'
-                          multiple
-                          defaultValue={task.handlers || []}
-                          onChange={(newValue) => {
-                            const selectedHandlers = Array.isArray(newValue) ? newValue : [];
-                            onTaskHandlersChange(task.temp_id, selectedHandlers);
-                          }}
+                      <Grid size={{ xs: 12, md: 2 }}>
+                        <TextField
+                          size='small'
+                          fullWidth
+                          label='Code'
+                          value={task.code || ''}
+                          onChange={(e) =>
+                            onTaskFieldChange(task.temp_id, 'code', e.target.value)
+                          }
                         />
                       </Grid>
-                    )}
-                    <Grid size={{ xs: 12, md: (showHandlers && showDependencies) ? 12 : (showDependencies || showHandlers) ? 6 : 12 }}>
-                      <TextField
-                        size='small'
-                        fullWidth
-                        multiline
-                        rows={2}
-                        label='Description'
-                        value={task.description || ''}
-                        onChange={(e) =>
-                          onTaskFieldChange(task.temp_id, 'description', e.target.value)
-                        }
-                      />
+                      <Grid size={{ xs: 12, md: 1 }}>
+                        <TextField
+                          size='small'
+                          fullWidth
+                          type='number'
+                          label='Weight %'
+                          value={task.weighted_percentage ?? 0}
+                          onChange={(e) =>
+                            onTaskFieldChange(
+                              task.temp_id,
+                              'weighted_percentage',
+                              Number(e.target.value || 0)
+                            )
+                          }
+                        />
+                      </Grid>
+                      <Grid size={{ xs: 12, md: 2 }}>
+                        <TextField
+                          size='small'
+                          fullWidth
+                          type='number'
+                          label='Qty'
+                          value={task.quantity ?? 0}
+                          onChange={(e) =>
+                            onTaskFieldChange(task.temp_id, 'quantity', Number(e.target.value || 0))
+                          }
+                        />
+                      </Grid>
+                      <Grid size={{ xs: 12, md: 2 }}>
+                        <TextField
+                          size='small'
+                          fullWidth
+                          type='date'
+                          label='Start Date'
+                          value={task.start_date ? String(task.start_date).slice(0, 10) : ''}
+                          onChange={(e) =>
+                            onTaskFieldChange(task.temp_id, 'start_date', e.target.value || null)
+                          }
+                          InputLabelProps={{ shrink: true }}
+                        />
+                      </Grid>
+                      <Grid size={{ xs: 12, md: 2 }}>
+                        <TextField
+                          size='small'
+                          fullWidth
+                          type='date'
+                          label='End Date'
+                          value={task.end_date ? String(task.end_date).slice(0, 10) : ''}
+                          onChange={(e) =>
+                            onTaskFieldChange(task.temp_id, 'end_date', e.target.value || null)
+                          }
+                          InputLabelProps={{ shrink: true }}
+                        />
+                      </Grid>
+                      {showDependencies && (
+                        <Grid size={{ xs: 12, md: 6 }}>
+                          <Autocomplete
+                            multiple
+                            options={availableDependencyOptions}
+                            value={selectedDependencyOptions}
+                            isOptionEqualToValue={(option, value) =>
+                              (option.source_id || option.id) === (value.source_id || value.id)
+                            }
+                            getOptionLabel={(option) => option?.name || 'Unnamed Task'}
+                            onChange={(event, newValue) => {
+                              onTaskDependenciesChange(task.temp_id, newValue || []);
+                            }}
+                            renderInput={(params) => (
+                              <TextField {...params} size='small' fullWidth label='Dependencies' />
+                            )}
+                            renderTags={(value, getTagProps) =>
+                              value.map((option, index) => (
+                                <Chip
+                                  {...getTagProps({ index })}
+                                  key={option.source_id || option.id}
+                                  size='small'
+                                  label={option.name}
+                                  color='primary'
+                                  variant='outlined'
+                                />
+                              ))
+                            }
+                            renderOption={(props, option) => (
+                              <li {...props} key={option.temp_id || option.source_id || option.id}>
+                                {option.name}
+                              </li>
+                            )}
+                          />
+                        </Grid>
+                      )}
+                      {showHandlers && (
+                        <Grid size={{ xs: 12, md: 6 }}>
+                          <UsersSelector
+                            label='Handlers'
+                            multiple
+                            defaultValue={task.handlers || []}
+                            onChange={(newValue) => {
+                              const selectedHandlers = Array.isArray(newValue) ? newValue : [];
+                              onTaskHandlersChange(task.temp_id, selectedHandlers);
+                            }}
+                          />
+                        </Grid>
+                      )}
+                      <Grid size={{ xs: 12, md: (showHandlers && showDependencies) ? 12 : (showDependencies || showHandlers) ? 6 : 12 }}>
+                        <TextField
+                          size='small'
+                          fullWidth
+                          multiline
+                          rows={2}
+                          label='Description'
+                          value={task.description || ''}
+                          onChange={(e) =>
+                            onTaskFieldChange(task.temp_id, 'description', e.target.value)
+                          }
+                        />
+                      </Grid>
                     </Grid>
-                  </Grid>
-                </Box>
+                  </Box>
                 );
               })}
             </Stack>
