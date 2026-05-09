@@ -30,13 +30,93 @@ import projectsServices from '../../../project-services';
 import { useProjectProfile } from '../../ProjectProfileProvider';
 import UsersSelector from '@/components/sharedComponents/UsersSelector';
 
-const createActivityTempId = (indexPath) => `activity-${indexPath}`;
-const createTaskTempId = (activityPath, index) => `task-${activityPath}-${index}`;
+type EntityId = number | string;
 
-const normalizeTasks = (tasks = [], activityPath) =>
+type ProjectOption = {
+  id: EntityId;
+  name?: string | null;
+};
+
+type HandlerOption = {
+  id: number;
+  name: string;
+};
+
+type DependencyOption = {
+  id?: EntityId;
+  source_id?: EntityId | null;
+  temp_id?: string;
+  name: string;
+};
+
+type DraftTask = {
+  temp_id: string;
+  source_id: EntityId | null;
+  name: string;
+  code: string;
+  description: string;
+  weighted_percentage: number;
+  quantity: number;
+  is_milestone: number;
+  start_date: string | null;
+  end_date: string | null;
+  position_index: number;
+  measurement_unit_id: EntityId | null;
+  handlers: HandlerOption[];
+  handlers_ids: number[];
+  dependency_source_ids: EntityId[];
+  dependencies: Array<{ id: EntityId; name: string }>;
+  [key: string]: unknown;
+};
+
+type DraftActivity = {
+  temp_id: string;
+  source_id: EntityId | null;
+  name: string;
+  code: string;
+  description: string;
+  weighted_percentage: number;
+  start_date: string | null;
+  end_date: string | null;
+  position_index: number;
+  tasks: DraftTask[];
+  children: DraftActivity[];
+  [key: string]: unknown;
+};
+
+type CloneOptions = {
+  include_dependencies: boolean;
+  include_handlers: boolean;
+};
+
+type CountNodesResult = {
+  activities: number;
+  tasks: number;
+};
+
+type ActivityEditorProps = {
+  activity: DraftActivity;
+  level?: number;
+  onActivityFieldChange: (activityId: string, field: string, value: unknown) => void;
+  onTaskFieldChange: (taskId: string, field: string, value: unknown) => void;
+  onTaskHandlersChange: (taskId: string, handlers: HandlerOption[]) => void;
+  onTaskDependenciesChange: (taskId: string, dependencies: DependencyOption[]) => void;
+  dependencyOptions: DependencyOption[];
+  showHandlers: boolean;
+  showDependencies: boolean;
+};
+
+type WBSCloneDialogProps = {
+  setOpenDialog: React.Dispatch<React.SetStateAction<boolean>>;
+};
+
+const createActivityTempId = (indexPath: string): string => `activity-${indexPath}`;
+const createTaskTempId = (activityPath: string, index: number): string => `task-${activityPath}-${index}`;
+
+const normalizeTasks = (tasks: any[] = [], activityPath: string): DraftTask[] =>
   tasks.map((task, index) => ({
     temp_id: createTaskTempId(activityPath, index),
-    source_id: task.id,
+    source_id: task.id ?? null,
     name: task.name || '',
     code: task.code || '',
     description: task.description || '',
@@ -48,26 +128,25 @@ const normalizeTasks = (tasks = [], activityPath) =>
     position_index: task.position_index ?? index,
     measurement_unit_id: task.measurement_unit_id || task.measurement_unit?.id || null,
     handlers:
-      task.handlers?.map((handler) => ({
-        id: handler.id,
+      task.handlers?.map((handler: any) => ({
+        id: Number(handler.id),
         name: handler.name || handler.full_name || handler.email || 'Unknown User',
       })) || [],
-    handlers_ids: task.handlers?.map((handler) => handler.id) || [],
-    dependency_source_ids: task.dependencies?.map((dependency) => dependency.id) || [],
+    handlers_ids: task.handlers?.map((handler: any) => Number(handler.id)) || [],
+    dependency_source_ids: task.dependencies?.map((dependency: any) => dependency.id) || [],
     dependencies:
-      task.dependencies?.map((dep) => ({
+      task.dependencies?.map((dep: any) => ({
         id: dep.id,
         name: dep.name || dep.label || `Task #${dep.id}`,
       })) || [],
   }));
 
-
-const normalizeActivities = (activities = [], parentPath = 'root') =>
+const normalizeActivities = (activities: any[] = [], parentPath = 'root'): DraftActivity[] =>
   activities.map((activity, index) => {
     const indexPath = `${parentPath}-${index}`;
     return {
       temp_id: createActivityTempId(indexPath),
-      source_id: activity.id,
+      source_id: activity.id ?? null,
       name: activity.name || '',
       code: activity.code || '',
       description: activity.description || '',
@@ -80,7 +159,11 @@ const normalizeActivities = (activities = [], parentPath = 'root') =>
     };
   });
 
-const updateActivityById = (activities, targetId, updateFn) =>
+const updateActivityById = (
+  activities: DraftActivity[],
+  targetId: string,
+  updateFn: (activity: DraftActivity) => DraftActivity
+): DraftActivity[] =>
   activities.map((activity) => {
     if (activity.temp_id === targetId) {
       return updateFn(activity);
@@ -92,7 +175,11 @@ const updateActivityById = (activities, targetId, updateFn) =>
     };
   });
 
-const updateTaskById = (activities, targetTaskId, updateFn) =>
+const updateTaskById = (
+  activities: DraftActivity[],
+  targetTaskId: string,
+  updateFn: (task: DraftTask) => DraftTask
+): DraftActivity[] =>
   activities.map((activity) => ({
     ...activity,
     tasks: (activity.tasks || []).map((task) =>
@@ -101,8 +188,8 @@ const updateTaskById = (activities, targetTaskId, updateFn) =>
     children: updateTaskById(activity.children || [], targetTaskId, updateFn),
   }));
 
-const countNodes = (activities = []) =>
-  activities.reduce(
+const countNodes = (activities: DraftActivity[] = []): CountNodesResult =>
+  activities.reduce<CountNodesResult>(
     (acc, activity) => {
       const childCount = countNodes(activity.children || []);
       return {
@@ -113,7 +200,7 @@ const countNodes = (activities = []) =>
     { activities: 0, tasks: 0 }
   );
 
-const flattenTasks = (activities = []) =>
+const flattenTasks = (activities: DraftActivity[] = []): DependencyOption[] =>
   activities.flatMap((activity) => [
     ...(activity.tasks || []).map((task) => ({
       temp_id: task.temp_id,
@@ -133,7 +220,7 @@ const ActivityEditor = ({
   dependencyOptions,
   showHandlers,
   showDependencies,
-}) => {
+}: ActivityEditorProps) => {
   return (
     <Accordion disableGutters sx={{ ml: level > 0 ? 2 : 0, mb: 1 }} defaultExpanded={level < 1}>
       <AccordionSummary expandIcon={<ExpandMore />}>
@@ -232,7 +319,7 @@ const ActivityEditor = ({
                   (option) => option.temp_id !== task.temp_id
                 );
                 const selectedDependencyOptions = availableDependencyOptions.filter((option) =>
-                  (task.dependency_source_ids || []).includes(option.source_id || option.id)
+                  (task.dependency_source_ids || []).includes(option.source_id || option.id || '')
                 );
 
                 return (
@@ -324,7 +411,7 @@ const ActivityEditor = ({
                               (option.source_id || option.id) === (value.source_id || value.id)
                             }
                             getOptionLabel={(option) => option?.name || 'Unnamed Task'}
-                            onChange={(event, newValue) => {
+                            onChange={(_event, newValue) => {
                               onTaskDependenciesChange(task.temp_id, newValue || []);
                             }}
                             renderInput={(params) => (
@@ -356,8 +443,8 @@ const ActivityEditor = ({
                             label='Handlers'
                             multiple
                             defaultValue={task.handlers || []}
-                            onChange={(newValue) => {
-                              const selectedHandlers = Array.isArray(newValue) ? newValue : [];
+                            onChange={(newValue: unknown) => {
+                              const selectedHandlers = Array.isArray(newValue) ? (newValue as HandlerOption[]) : [];
                               onTaskHandlersChange(task.temp_id, selectedHandlers);
                             }}
                           />
@@ -407,17 +494,17 @@ const ActivityEditor = ({
   );
 };
 
-function WBSCloneDialog({ setOpenDialog }) {
+function WBSCloneDialog({ setOpenDialog }: WBSCloneDialogProps) {
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
-  const { project } = useProjectProfile();
+  const { project } = useProjectProfile() as { project?: ProjectOption | null };
 
-  const [projectKeyword, setProjectKeyword] = useState('');
-  const [sourceProject, setSourceProject] = useState(null);
-  const [draftActivities, setDraftActivities] = useState([]);
-  const [options, setOptions] = useState({
+  const [projectKeyword, setProjectKeyword] = useState<string>('');
+  const [sourceProject, setSourceProject] = useState<ProjectOption | null>(null);
+  const [draftActivities, setDraftActivities] = useState<DraftActivity[]>([]);
+  const [options, setOptions] = useState<CloneOptions>({
     include_dependencies: true,
-    include_handlers: false,
+    include_handlers: true,
   });
 
   const { data: projectsData, isFetching: isProjectsLoading } = useQuery({
@@ -425,9 +512,9 @@ function WBSCloneDialog({ setOpenDialog }) {
     queryFn: () => projectsServices.getList({ keyword: projectKeyword, limit: 20 }),
   });
 
-  const projectOptions = useMemo(() => {
+  const projectOptions = useMemo<ProjectOption[]>(() => {
     const list = Array.isArray(projectsData?.data) ? projectsData.data : [];
-    return list.filter((item) => item.id !== project?.id);
+    return list.filter((item: ProjectOption) => item.id !== project?.id);
   }, [projectsData, project?.id]);
 
   const {
@@ -442,12 +529,12 @@ function WBSCloneDialog({ setOpenDialog }) {
 
   useEffect(() => {
     if (!sourceTimelineData) return;
-    setDraftActivities(normalizeActivities(sourceTimelineData));
+    setDraftActivities(normalizeActivities(sourceTimelineData as any[]));
   }, [sourceTimelineData]);
 
   const cloneMutation = useMutation({
     mutationFn: projectsServices.cloneProjectWbsDraft,
-    onSuccess: (response) => {
+    onSuccess: (response: any) => {
       enqueueSnackbar(response?.message || 'WBS cloned successfully', {
         variant: 'success',
       });
@@ -455,7 +542,7 @@ function WBSCloneDialog({ setOpenDialog }) {
       queryClient.invalidateQueries({ queryKey: ['projectTimelineActivities'] });
       setOpenDialog(false);
     },
-    onError: (error) => {
+    onError: (error: any) => {
       enqueueSnackbar(error?.response?.data?.message || 'Failed to clone WBS', {
         variant: 'error',
       });
@@ -470,7 +557,7 @@ function WBSCloneDialog({ setOpenDialog }) {
     await refetchTimeline();
   };
 
-  const handleActivityFieldChange = (activityId, field, value) => {
+  const handleActivityFieldChange = (activityId: string, field: string, value: unknown) => {
     setDraftActivities((prev) =>
       updateActivityById(prev, activityId, (activity) => ({
         ...activity,
@@ -479,7 +566,7 @@ function WBSCloneDialog({ setOpenDialog }) {
     );
   };
 
-  const handleTaskFieldChange = (taskId, field, value) => {
+  const handleTaskFieldChange = (taskId: string, field: string, value: unknown) => {
     setDraftActivities((prev) =>
       updateTaskById(prev, taskId, (task) => ({
         ...task,
@@ -488,7 +575,7 @@ function WBSCloneDialog({ setOpenDialog }) {
     );
   };
 
-  const handleTaskHandlersChange = (taskId, handlers) => {
+  const handleTaskHandlersChange = (taskId: string, handlers: HandlerOption[]) => {
     setDraftActivities((prev) =>
       updateTaskById(prev, taskId, (task) => ({
         ...task,
@@ -501,25 +588,25 @@ function WBSCloneDialog({ setOpenDialog }) {
   const nodeCounts = useMemo(() => countNodes(draftActivities), [draftActivities]);
   const dependencyOptions = useMemo(() => flattenTasks(draftActivities), [draftActivities]);
 
-  const handleTaskDependenciesChange = (taskId, dependencies) => {
+  const handleTaskDependenciesChange = (taskId: string, dependencies: DependencyOption[]) => {
     setDraftActivities((prev) =>
       updateTaskById(prev, taskId, (task) => ({
         ...task,
         dependencies: (dependencies || []).map((dependency) => ({
-          id: dependency.source_id || dependency.id,
+          id: dependency.source_id || dependency.id || '',
           name: dependency.name || 'Unnamed Task',
         })),
         dependency_source_ids: (dependencies || []).map(
-          (dependency) => dependency.source_id || dependency.id
+          (dependency) => dependency.source_id || dependency.id || ''
         ),
       }))
     );
   };
 
-  const validationErrors = useMemo(() => {
-    const errors = [];
+  const validationErrors = useMemo<string[]>(() => {
+    const errors: string[] = [];
 
-    const validateActivity = (activity, pathLabel) => {
+    const validateActivity = (activity: DraftActivity, pathLabel: string) => {
       if (
         activity.start_date &&
         activity.end_date &&
@@ -587,8 +674,8 @@ function WBSCloneDialog({ setOpenDialog }) {
                 options={projectOptions}
                 loading={isProjectsLoading}
                 value={sourceProject}
-                onChange={(event, value) => setSourceProject(value)}
-                onInputChange={(event, value) => setProjectKeyword(value)}
+                onChange={(_event, value) => setSourceProject(value)}
+                onInputChange={(_event, value) => setProjectKeyword(value)}
                 isOptionEqualToValue={(option, value) => option.id === value.id}
                 getOptionLabel={(option) => option?.name || ''}
                 renderInput={(params) => (
@@ -620,11 +707,10 @@ function WBSCloneDialog({ setOpenDialog }) {
                   }
                   label='Include Handlers'
                 />
-
               </Stack>
             </Grid>
 
-            <Grid size={12} textAlign={'end'}>
+            <Grid size={12} textAlign='end'>
               <Stack direction='row' spacing={1} justifyContent={{ xs: 'flex-start', md: 'flex-end' }}>
                 <Button variant='outlined' loading={isTimelineLoading} onClick={handleLoadSource}>
                   {'Load WBS'}
