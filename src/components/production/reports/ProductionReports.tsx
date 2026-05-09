@@ -196,7 +196,7 @@ function ProductionReportsContent() {
             }}
           >
             <Grid container spacing={2} alignItems='center'>
-              <Grid size={{ xs: 12, md: 6, lg: 3 }}>
+              <Grid size={{ xs: 12, md: selectedTab === 0 ? 3 : 4 }}>
                 <DateTimePicker
                   label='From'
                   value={from}
@@ -204,7 +204,7 @@ function ProductionReportsContent() {
                   slotProps={{ textField: { size: 'small', fullWidth: true } }}
                 />
               </Grid>
-              <Grid size={{ xs: 12, md: 6, lg: 3 }}>
+              <Grid size={{ xs: 12, md: selectedTab === 0 ? 3 : 4 }}>
                 <DateTimePicker
                   label='To'
                   value={to}
@@ -212,7 +212,7 @@ function ProductionReportsContent() {
                   slotProps={{ textField: { size: 'small', fullWidth: true } }}
                 />
               </Grid>
-              <Grid size={{ xs: 12, md: 6, lg: 2 }}>
+              <Grid size={{ xs: 12, md: selectedTab === 0 ? 3 : 4 }}>
                 <Autocomplete
                   size='small'
                   loading={isFetchingWorkCenters}
@@ -230,16 +230,8 @@ function ProductionReportsContent() {
                   )}
                 />
               </Grid>
-              <Grid size={{ xs: 12, md: 6, lg: 2 }}>
-                <CostCenterSelector
-                  label='Cost Center'
-                  multiple={false}
-                  defaultValue={selectedCostCenter}
-                  onChange={handleCostCenterChange}
-                />
-              </Grid>
               {selectedTab === 0 && (
-                <Grid size={{ xs: 12, md: 8, lg: 2 }}>
+                <Grid size={{ xs: 12, md: 3 }}>
                   <Autocomplete
                     size='small'
                     options={productOptions}
@@ -264,7 +256,7 @@ function ProductionReportsContent() {
                 </Grid>
               )}
               <Grid
-                size={{ xs: 12, md: 4, lg: selectedTab === 0 ? 12 : 2 }}
+                size={{ xs: 12, md: 12}}
                 sx={{
                   display: 'flex',
                   justifyContent: 'end',
