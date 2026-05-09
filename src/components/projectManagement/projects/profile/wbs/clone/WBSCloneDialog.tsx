@@ -11,18 +11,20 @@ import {
   Button,
   Checkbox,
   Chip,
+  Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   Divider,
   FormControlLabel,
   Grid,
+  IconButton,
   Stack,
   TextField,
   Tooltip,
   Typography,
 } from '@mui/material';
-import { ExpandMore } from '@mui/icons-material';
+import { DeleteOutline, ExpandMore } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
@@ -101,6 +103,11 @@ type ActivityEditorProps = {
   onTaskFieldChange: (taskId: string, field: string, value: unknown) => void;
   onTaskHandlersChange: (taskId: string, handlers: HandlerOption[]) => void;
   onTaskDependenciesChange: (taskId: string, dependencies: DependencyOption[]) => void;
+  onRemoveTask: (taskId: string) => void;
+  onRemoveActivity: (activityId: string) => void;
+  pendingUndo: PendingUndoState | null;
+  undoSecondsLeft: number;
+  onUndoDelete: () => void;
   dependencyOptions: DependencyOption[];
   showHandlers: boolean;
   showDependencies: boolean;
@@ -109,6 +116,19 @@ type ActivityEditorProps = {
 type WBSCloneDialogProps = {
   setOpenDialog: React.Dispatch<React.SetStateAction<boolean>>;
 };
+
+type UndoLocation =
+  | { type: 'task'; parentActivityTempId: string; index: number }
+  | { type: 'activity'; parentActivityTempId: string | null; index: number };
+
+type PendingUndoState = {
+  previousDraft: DraftActivity[];
+  expiresAt: number;
+  message: string;
+  location: UndoLocation;
+};
+
+const UNDO_WINDOW_MS = 8000;
 
 const createActivityTempId = (indexPath: string): string => `activity-${indexPath}`;
 const createTaskTempId = (activityPath: string, index: number): string => `task-${activityPath}-${index}`;
@@ -210,6 +230,162 @@ const flattenTasks = (activities: DraftActivity[] = []): DependencyOption[] =>
     ...flattenTasks(activity.children || []),
   ]);
 
+const removeTaskById = (activities: DraftActivity[], targetTaskId: string): DraftActivity[] =>
+  activities.map((activity) => ({
+    ...activity,
+    tasks: (activity.tasks || []).filter((task) => task.temp_id !== targetTaskId),
+    children: removeTaskById(activity.children || [], targetTaskId),
+  }));
+
+const removeActivityAndCollectTaskIds = (
+  activities: DraftActivity[],
+  targetActivityId: string
+): { nextActivities: DraftActivity[]; removedSourceIds: EntityId[] } => {
+  const removedSourceIds: EntityId[] = [];
+
+  const collectTaskSourceIds = (items: DraftActivity[]) => {
+    items.forEach((item) => {
+      (item.tasks || []).forEach((task) => {
+        if (task.source_id !== null && task.source_id !== undefined && task.source_id !== '') {
+          removedSourceIds.push(task.source_id);
+        }
+      });
+      collectTaskSourceIds(item.children || []);
+    });
+  };
+
+  const walk = (items: DraftActivity[]): DraftActivity[] =>
+    items
+      .filter((item) => {
+        const shouldKeep = item.temp_id !== targetActivityId;
+        if (!shouldKeep) {
+          collectTaskSourceIds([item]);
+        }
+        return shouldKeep;
+      })
+      .map((item) => ({
+        ...item,
+        children: walk(item.children || []),
+      }));
+
+  return {
+    nextActivities: walk(activities),
+    removedSourceIds,
+  };
+};
+
+const sanitizeDependencies = (activities: DraftActivity[], removedSourceIds: EntityId[]): DraftActivity[] => {
+  if (removedSourceIds.length === 0) return activities;
+
+  const removedSet = new Set(removedSourceIds);
+
+  return activities.map((activity) => ({
+    ...activity,
+    tasks: (activity.tasks || []).map((task) => ({
+      ...task,
+      dependency_source_ids: (task.dependency_source_ids || []).filter(
+        (id) => !removedSet.has(id)
+      ),
+      dependencies: (task.dependencies || []).filter((dep) => !removedSet.has(dep.id)),
+    })),
+    children: sanitizeDependencies(activity.children || [], removedSourceIds),
+  }));
+};
+
+const cloneDraftActivities = (activities: DraftActivity[]): DraftActivity[] =>
+  JSON.parse(JSON.stringify(activities)) as DraftActivity[];
+
+const findTaskLocation = (
+  activities: DraftActivity[],
+  taskTempId: string
+): { parentActivityTempId: string; index: number } | null => {
+  for (const activity of activities) {
+    const index = (activity.tasks || []).findIndex((task) => task.temp_id === taskTempId);
+    if (index >= 0) {
+      return { parentActivityTempId: activity.temp_id, index };
+    }
+
+    const nested = findTaskLocation(activity.children || [], taskTempId);
+    if (nested) return nested;
+  }
+
+  return null;
+};
+
+const findActivityLocation = (
+  activities: DraftActivity[],
+  activityTempId: string,
+  parentActivityTempId: string | null = null
+): { parentActivityTempId: string | null; index: number } | null => {
+  const index = activities.findIndex((activity) => activity.temp_id === activityTempId);
+  if (index >= 0) {
+    return { parentActivityTempId, index };
+  }
+
+  for (const activity of activities) {
+    const nested = findActivityLocation(activity.children || [], activityTempId, activity.temp_id);
+    if (nested) return nested;
+  }
+
+  return null;
+};
+
+const UndoInlineAlert = ({
+  message,
+  seconds,
+  onUndo,
+}: {
+  message: string;
+  seconds: number;
+  onUndo: () => void;
+}) => (
+  <Alert
+    severity='warning'
+    variant='outlined'
+    sx={{
+      mb: 1,
+      borderWidth: 1.5,
+      bgcolor: (theme) => (theme.type === 'dark' ? 'warning.dark' : 'warning.50'),
+      borderColor: (theme) =>
+        theme.type === 'dark' ? theme.palette.warning.main : theme.palette.warning.light,
+      color: (theme) =>
+        theme.type === 'dark' ? theme.palette.warning.contrastText : theme.palette.text.primary,
+      '& .MuiAlert-icon': {
+        color: (theme) =>
+          theme.type === 'dark' ? theme.palette.warning.light : theme.palette.warning.main,
+      },
+      '& .MuiAlert-message': {
+        display: 'flex',
+        alignItems: 'center',
+        fontWeight: 600,
+      },
+      '& .MuiAlert-action': {
+        alignItems: 'center',
+      },
+    }}
+    action={
+      <Button
+        variant='contained'
+        color='warning'
+        size='small'
+        onClick={onUndo}
+        sx={{
+          fontWeight: 700,
+          minWidth: 92,
+          boxShadow: 'none',
+          '&:hover': {
+            boxShadow: 'none',
+          },
+        }}
+      >
+        Undo ({seconds}s)
+      </Button>
+    }
+  >
+    {message}. You can undo within {seconds} seconds.
+  </Alert>
+);
+
 const ActivityEditor = ({
   activity,
   level = 0,
@@ -217,10 +393,24 @@ const ActivityEditor = ({
   onTaskFieldChange,
   onTaskHandlersChange,
   onTaskDependenciesChange,
+  onRemoveTask,
+  onRemoveActivity,
+  pendingUndo,
+  undoSecondsLeft,
+  onUndoDelete,
   dependencyOptions,
   showHandlers,
   showDependencies,
 }: ActivityEditorProps) => {
+  const isTaskUndoForThisActivity =
+    pendingUndo?.location.type === 'task' &&
+    pendingUndo.location.parentActivityTempId === activity.temp_id;
+  const isChildActivityUndoForThisActivity =
+    pendingUndo?.location.type === 'activity' &&
+    pendingUndo.location.parentActivityTempId === activity.temp_id;
+  const showTaskSection = (activity.tasks?.length || 0) > 0 || isTaskUndoForThisActivity;
+  const showChildrenSection = (activity.children?.length || 0) > 0 || isChildActivityUndoForThisActivity;
+
   return (
     <Accordion disableGutters sx={{ ml: level > 0 ? 2 : 0, mb: 1 }} defaultExpanded={level < 1}>
       <AccordionSummary expandIcon={<ExpandMore />}>
@@ -232,6 +422,36 @@ const ActivityEditor = ({
           {(activity.children?.length || 0) > 0 && (
             <Chip size='small' variant='outlined' label={`${activity.children.length} sub activities`} />
           )}
+          <Tooltip title={level === 0 ? 'Remove Group' : 'Remove Activity'}>
+            <Box
+              role='button'
+              tabIndex={0}
+              aria-label={level === 0 ? 'Remove Group' : 'Remove Activity'}
+              onClick={(event) => {
+                event.stopPropagation();
+                onRemoveActivity(activity.temp_id);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  onRemoveActivity(activity.temp_id);
+                }
+              }}
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'error.main',
+                borderRadius: 1,
+                p: 0.5,
+                cursor: 'pointer',
+                '&:hover': { bgcolor: 'action.hover' },
+              }}
+            >
+              <DeleteOutline fontSize='small' />
+            </Box>
+          </Tooltip>
         </Stack>
       </AccordionSummary>
 
@@ -308,13 +528,13 @@ const ActivityEditor = ({
           </Grid>
         </Grid>
 
-        {(activity.tasks?.length || 0) > 0 && (
+        {showTaskSection && (
           <Box mt={2}>
             <Typography variant='subtitle2' sx={{ mb: 1 }}>
               Tasks
             </Typography>
             <Stack spacing={1}>
-              {(activity.tasks || []).map((task) => {
+              {(activity.tasks || []).map((task, taskIndex) => {
                 const availableDependencyOptions = (dependencyOptions || []).filter(
                   (option) => option.temp_id !== task.temp_id
                 );
@@ -323,7 +543,22 @@ const ActivityEditor = ({
                 );
 
                 return (
-                  <Box key={task.temp_id} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 1 }}>
+                  <React.Fragment key={task.temp_id}>
+                    {isTaskUndoForThisActivity && pendingUndo.location.index === taskIndex && (
+                      <UndoInlineAlert
+                        message={pendingUndo.message}
+                        seconds={undoSecondsLeft}
+                        onUndo={onUndoDelete}
+                      />
+                    )}
+                    <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 1 }}>
+                    <Stack direction='row' justifyContent='flex-end' sx={{ mb: 0.5 }}>
+                      <Tooltip title='Remove Task'>
+                        <IconButton size='small' color='error' onClick={() => onRemoveTask(task.temp_id)}>
+                          <DeleteOutline fontSize='small' />
+                        </IconButton>
+                      </Tooltip>
+                    </Stack>
                     <Grid container spacing={1.5}>
                       <Grid size={{ xs: 12, md: 3 }}>
                         <TextField
@@ -464,29 +699,57 @@ const ActivityEditor = ({
                         />
                       </Grid>
                     </Grid>
-                  </Box>
+                    </Box>
+                  </React.Fragment>
                 );
               })}
+              {isTaskUndoForThisActivity && pendingUndo.location.index === (activity.tasks || []).length && (
+                <UndoInlineAlert
+                  message={pendingUndo.message}
+                  seconds={undoSecondsLeft}
+                  onUndo={onUndoDelete}
+                />
+              )}
             </Stack>
           </Box>
         )}
 
-        {(activity.children?.length || 0) > 0 && (
+        {showChildrenSection && (
           <Box mt={2}>
-            {(activity.children || []).map((child) => (
-              <ActivityEditor
-                key={child.temp_id}
-                activity={child}
-                level={level + 1}
-                onActivityFieldChange={onActivityFieldChange}
-                onTaskFieldChange={onTaskFieldChange}
-                onTaskHandlersChange={onTaskHandlersChange}
-                onTaskDependenciesChange={onTaskDependenciesChange}
-                dependencyOptions={dependencyOptions}
-                showHandlers={showHandlers}
-                showDependencies={showDependencies}
-              />
+            {(activity.children || []).map((child, childIndex) => (
+              <React.Fragment key={child.temp_id}>
+                {isChildActivityUndoForThisActivity && pendingUndo.location.index === childIndex && (
+                  <UndoInlineAlert
+                    message={pendingUndo.message}
+                    seconds={undoSecondsLeft}
+                    onUndo={onUndoDelete}
+                  />
+                )}
+                <ActivityEditor
+                  activity={child}
+                  level={level + 1}
+                  onActivityFieldChange={onActivityFieldChange}
+                  onTaskFieldChange={onTaskFieldChange}
+                  onTaskHandlersChange={onTaskHandlersChange}
+                  onTaskDependenciesChange={onTaskDependenciesChange}
+                  onRemoveTask={onRemoveTask}
+                  onRemoveActivity={onRemoveActivity}
+                  pendingUndo={pendingUndo}
+                  undoSecondsLeft={undoSecondsLeft}
+                  onUndoDelete={onUndoDelete}
+                  dependencyOptions={dependencyOptions}
+                  showHandlers={showHandlers}
+                  showDependencies={showDependencies}
+                />
+              </React.Fragment>
             ))}
+            {isChildActivityUndoForThisActivity && pendingUndo.location.index === (activity.children || []).length && (
+              <UndoInlineAlert
+                message={pendingUndo.message}
+                seconds={undoSecondsLeft}
+                onUndo={onUndoDelete}
+              />
+            )}
           </Box>
         )}
       </AccordionDetails>
@@ -502,6 +765,9 @@ function WBSCloneDialog({ setOpenDialog }: WBSCloneDialogProps) {
   const [projectKeyword, setProjectKeyword] = useState<string>('');
   const [sourceProject, setSourceProject] = useState<ProjectOption | null>(null);
   const [draftActivities, setDraftActivities] = useState<DraftActivity[]>([]);
+  const [openReloadWarning, setOpenReloadWarning] = useState<boolean>(false);
+  const [pendingUndo, setPendingUndo] = useState<PendingUndoState | null>(null);
+  const [undoSecondsLeft, setUndoSecondsLeft] = useState<number>(0);
   const [options, setOptions] = useState<CloneOptions>({
     include_dependencies: true,
     include_handlers: true,
@@ -549,12 +815,34 @@ function WBSCloneDialog({ setOpenDialog }: WBSCloneDialogProps) {
     },
   });
 
+  const doLoadSource = async () => {
+    if (!sourceProject?.id) {
+      enqueueSnackbar('Please select source project first', { variant: 'warning' });
+      return;
+    }
+
+    await refetchTimeline();
+    setPendingUndo(null);
+    setUndoSecondsLeft(0);
+  };
+
   const handleLoadSource = async () => {
     if (!sourceProject?.id) {
       enqueueSnackbar('Please select source project first', { variant: 'warning' });
       return;
     }
-    await refetchTimeline();
+
+    if (draftActivities.length > 0) {
+      setOpenReloadWarning(true);
+      return;
+    }
+
+    await doLoadSource();
+  };
+
+  const handleConfirmReload = async () => {
+    setOpenReloadWarning(false);
+    await doLoadSource();
   };
 
   const handleActivityFieldChange = (activityId: string, field: string, value: unknown) => {
@@ -602,6 +890,76 @@ function WBSCloneDialog({ setOpenDialog }: WBSCloneDialogProps) {
       }))
     );
   };
+
+  const startUndoWindow = (
+    previousDraft: DraftActivity[],
+    message: string,
+    location: UndoLocation
+  ) => {
+    const snapshot = cloneDraftActivities(previousDraft);
+    const expiresAt = Date.now() + UNDO_WINDOW_MS;
+    setPendingUndo({ previousDraft: snapshot, expiresAt, message, location });
+    setUndoSecondsLeft(Math.ceil(UNDO_WINDOW_MS / 1000));
+  };
+
+  const handleUndoDelete = () => {
+    if (!pendingUndo) return;
+    setDraftActivities(pendingUndo.previousDraft);
+    setPendingUndo(null);
+    setUndoSecondsLeft(0);
+    enqueueSnackbar('Deleted item restored', { variant: 'success' });
+  };
+
+  const handleRemoveTask = (taskTempId: string) => {
+    const previousDraft = cloneDraftActivities(draftActivities);
+    const taskLocation = findTaskLocation(draftActivities, taskTempId);
+    const removedTask = dependencyOptions.find((option) => option.temp_id === taskTempId);
+    const removedSourceIds =
+      removedTask?.source_id !== undefined && removedTask?.source_id !== null && removedTask?.source_id !== ''
+        ? [removedTask.source_id]
+        : [];
+
+    const nextDraft = sanitizeDependencies(removeTaskById(draftActivities, taskTempId), removedSourceIds);
+    setDraftActivities(nextDraft);
+    if (taskLocation) {
+      startUndoWindow(previousDraft, 'Task removed', {
+        type: 'task',
+        parentActivityTempId: taskLocation.parentActivityTempId,
+        index: taskLocation.index,
+      });
+    }
+  };
+
+  const handleRemoveActivity = (activityTempId: string) => {
+    const previousDraft = cloneDraftActivities(draftActivities);
+    const activityLocation = findActivityLocation(draftActivities, activityTempId);
+    const { nextActivities, removedSourceIds } = removeActivityAndCollectTaskIds(draftActivities, activityTempId);
+    setDraftActivities(sanitizeDependencies(nextActivities, removedSourceIds));
+    if (activityLocation) {
+      startUndoWindow(previousDraft, 'Activity/Group removed', {
+        type: 'activity',
+        parentActivityTempId: activityLocation.parentActivityTempId,
+        index: activityLocation.index,
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (!pendingUndo) return;
+
+    const timer = window.setInterval(() => {
+      const seconds = Math.max(0, Math.ceil((pendingUndo.expiresAt - Date.now()) / 1000));
+      setUndoSecondsLeft(seconds);
+
+      if (seconds <= 0) {
+        setPendingUndo(null);
+      }
+    }, 250);
+
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, [pendingUndo]);
 
   const validationErrors = useMemo<string[]>(() => {
     const errors: string[] = [];
@@ -674,8 +1032,15 @@ function WBSCloneDialog({ setOpenDialog }: WBSCloneDialogProps) {
                 options={projectOptions}
                 loading={isProjectsLoading}
                 value={sourceProject}
-                onChange={(_event, value) => setSourceProject(value)}
-                onInputChange={(_event, value) => setProjectKeyword(value)}
+                onChange={(_event, value) => {
+                  setSourceProject(value);
+                  setProjectKeyword('');
+                }}
+                onInputChange={(_event, value, reason) => {
+                  if (reason === 'input') {
+                    setProjectKeyword(value);
+                  }
+                }}
                 isOptionEqualToValue={(option, value) => option.id === value.id}
                 getOptionLabel={(option) => option?.name || ''}
                 renderInput={(params) => (
@@ -753,25 +1118,65 @@ function WBSCloneDialog({ setOpenDialog }: WBSCloneDialogProps) {
             </Alert>
           )}
 
-          {draftActivities.length > 0 && (
+          {(draftActivities.length > 0 ||
+            (pendingUndo?.location.type === 'activity' && pendingUndo.location.parentActivityTempId === null)) && (
             <Box sx={{ maxHeight: '58vh', overflowY: 'auto', pr: 0.5 }}>
-              {draftActivities.map((activity) => (
-                <ActivityEditor
-                  key={activity.temp_id}
-                  activity={activity}
-                  onActivityFieldChange={handleActivityFieldChange}
-                  onTaskFieldChange={handleTaskFieldChange}
-                  onTaskHandlersChange={handleTaskHandlersChange}
-                  onTaskDependenciesChange={handleTaskDependenciesChange}
-                  dependencyOptions={dependencyOptions}
-                  showHandlers={options.include_handlers}
-                  showDependencies={options.include_dependencies}
-                />
+              {draftActivities.map((activity, index) => (
+                <React.Fragment key={activity.temp_id}>
+                  {pendingUndo?.location.type === 'activity' &&
+                    pendingUndo.location.parentActivityTempId === null &&
+                    pendingUndo.location.index === index && (
+                      <UndoInlineAlert
+                        message={pendingUndo.message}
+                        seconds={undoSecondsLeft}
+                        onUndo={handleUndoDelete}
+                      />
+                    )}
+                  <ActivityEditor
+                    activity={activity}
+                    onActivityFieldChange={handleActivityFieldChange}
+                    onTaskFieldChange={handleTaskFieldChange}
+                    onTaskHandlersChange={handleTaskHandlersChange}
+                    onTaskDependenciesChange={handleTaskDependenciesChange}
+                    onRemoveTask={handleRemoveTask}
+                    onRemoveActivity={handleRemoveActivity}
+                    pendingUndo={pendingUndo}
+                    undoSecondsLeft={undoSecondsLeft}
+                    onUndoDelete={handleUndoDelete}
+                    dependencyOptions={dependencyOptions}
+                    showHandlers={options.include_handlers}
+                    showDependencies={options.include_dependencies}
+                  />
+                </React.Fragment>
               ))}
+              {pendingUndo?.location.type === 'activity' &&
+                pendingUndo.location.parentActivityTempId === null &&
+                pendingUndo.location.index === draftActivities.length && (
+                  <UndoInlineAlert
+                    message={pendingUndo.message}
+                    seconds={undoSecondsLeft}
+                    onUndo={handleUndoDelete}
+                  />
+                )}
             </Box>
           )}
         </Stack>
       </DialogContent>
+
+      <Dialog open={openReloadWarning} onClose={() => setOpenReloadWarning(false)} maxWidth='xs' fullWidth>
+        <DialogTitle>Reload WBS?</DialogTitle>
+        <DialogContent>
+          <Typography variant='body2'>
+            This will discard all current draft changes in this dialog. Do you want to continue?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenReloadWarning(false)}>Cancel</Button>
+          <LoadingButton color='warning' variant='contained' onClick={handleConfirmReload} loading={isTimelineLoading}>
+            Reload
+          </LoadingButton>
+        </DialogActions>
+      </Dialog>
 
       <DialogActions>
         <Tooltip title='Close dialog without cloning'>
