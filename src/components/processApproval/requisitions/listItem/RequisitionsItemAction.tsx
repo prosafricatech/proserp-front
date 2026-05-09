@@ -286,6 +286,19 @@ const RequisitionsItemAction: React.FC<RequisitionsItemActionProps> = ({
         </IconButton>
       </Tooltip>
 
+      <Tooltip title='Duplicate'>
+        <IconButton
+          size='small'
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsDuplicate(true);
+            setOpenEditDialog(true);
+          }}
+        >
+          <ContentCopyOutlined />
+        </IconButton>
+      </Tooltip>
+
       {canEditOrDelete && (
         <>
           <Tooltip title='Edit'>
@@ -297,20 +310,6 @@ const RequisitionsItemAction: React.FC<RequisitionsItemActionProps> = ({
               }}
             >
               <EditOutlined />
-            </IconButton>
-          </Tooltip>
-
-          <Tooltip title='Duplicate'>
-            <IconButton
-              color='primary'
-              size='small'
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsDuplicate(true);
-                setOpenEditDialog(true);
-              }}
-            >
-              <ContentCopyOutlined />
             </IconButton>
           </Tooltip>
 
