@@ -255,6 +255,11 @@ projectsServices.showProjectTimelineActivities = async (id) => {
     return data;
 }
 
+projectsServices.cloneProjectWbsDraft = async (payload) => {
+    const { data } = await axios.post('/api/projectManagement/project/cloneTimelineActivities', payload);
+    return data;
+}
+
 projectsServices.projectUpdateDetails = async (id) => {
     const { data } = await axios.get(`/api/projectManagement/project/${id}/projectUpdateDetails`);
     return data;
