@@ -54,12 +54,13 @@ const normalizeTasks = (tasks = [], activityPath) =>
       })) || [],
     handlers_ids: task.handlers?.map((handler) => handler.id) || [],
     dependency_source_ids: task.dependencies?.map((dependency) => dependency.id) || [],
-    deliverable_contributions:
-      task.deliverables?.map((deliverable) => ({
-        deliverable_id: deliverable.id,
-        contribution_percentage: deliverable.contribution_percentage,
+    dependencies:
+      task.dependencies?.map((dep) => ({
+        id: dep.id,
+        name: dep.name || dep.label || `Task #${dep.id}`,
       })) || [],
   }));
+
 
 const normalizeActivities = (activities = [], parentPath = 'root') =>
   activities.map((activity, index) => {
@@ -112,13 +113,26 @@ const countNodes = (activities = []) =>
     { activities: 0, tasks: 0 }
   );
 
+const flattenTasks = (activities = []) =>
+  activities.flatMap((activity) => [
+    ...(activity.tasks || []).map((task) => ({
+      temp_id: task.temp_id,
+      source_id: task.source_id,
+      name: task.name || 'Unnamed Task',
+    })),
+    ...flattenTasks(activity.children || []),
+  ]);
+
 const ActivityEditor = ({
   activity,
   level = 0,
   onActivityFieldChange,
   onTaskFieldChange,
   onTaskHandlersChange,
+  onTaskDependenciesChange,
+  dependencyOptions,
   showHandlers,
+  showDependencies,
 }) => {
   return (
     <Accordion disableGutters sx={{ ml: level > 0 ? 2 : 0, mb: 1 }} defaultExpanded={level < 1}>
@@ -213,7 +227,15 @@ const ActivityEditor = ({
               Tasks
             </Typography>
             <Stack spacing={1}>
-              {(activity.tasks || []).map((task) => (
+              {(activity.tasks || []).map((task) => {
+                const availableDependencyOptions = (dependencyOptions || []).filter(
+                  (option) => option.temp_id !== task.temp_id
+                );
+                const selectedDependencyOptions = availableDependencyOptions.filter((option) =>
+                  (task.dependency_source_ids || []).includes(option.source_id || option.id)
+                );
+
+                return (
                 <Box key={task.temp_id} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 1 }}>
                   <Grid container spacing={1.5}>
                     <Grid size={{ xs: 12, md: 3 }}>
@@ -238,7 +260,7 @@ const ActivityEditor = ({
                         }
                       />
                     </Grid>
-                    <Grid size={{ xs: 12, md: 1.5 }}>
+                    <Grid size={{ xs: 12, md: 1 }}>
                       <TextField
                         size='small'
                         fullWidth
@@ -254,7 +276,7 @@ const ActivityEditor = ({
                         }
                       />
                     </Grid>
-                    <Grid size={{ xs: 12, md: 1.5 }}>
+                    <Grid size={{ xs: 12, md: 2 }}>
                       <TextField
                         size='small'
                         fullWidth
@@ -292,8 +314,44 @@ const ActivityEditor = ({
                         InputLabelProps={{ shrink: true }}
                       />
                     </Grid>
+                    {showDependencies && (
+                      <Grid size={{ xs: 12, md: 6 }}>
+                        <Autocomplete
+                          multiple
+                          options={availableDependencyOptions}
+                          value={selectedDependencyOptions}
+                          isOptionEqualToValue={(option, value) =>
+                            (option.source_id || option.id) === (value.source_id || value.id)
+                          }
+                          getOptionLabel={(option) => option?.name || 'Unnamed Task'}
+                          onChange={(event, newValue) => {
+                            onTaskDependenciesChange(task.temp_id, newValue || []);
+                          }}
+                          renderInput={(params) => (
+                            <TextField {...params} size='small' fullWidth label='Dependencies' />
+                          )}
+                          renderTags={(value, getTagProps) =>
+                            value.map((option, index) => (
+                              <Chip
+                                {...getTagProps({ index })}
+                                key={option.source_id || option.id}
+                                size='small'
+                                label={option.name}
+                                color='primary'
+                                variant='outlined'
+                              />
+                            ))
+                          }
+                          renderOption={(props, option) => (
+                            <li {...props} key={option.temp_id || option.source_id || option.id}>
+                              {option.name}
+                            </li>
+                          )}
+                        />
+                      </Grid>
+                    )}
                     {showHandlers && (
-                      <Grid size={{ xs: 12, md: 6.5 }}>
+                      <Grid size={{ xs: 12, md: 6 }}>
                         <UsersSelector
                           label='Handlers'
                           multiple
@@ -305,7 +363,7 @@ const ActivityEditor = ({
                         />
                       </Grid>
                     )}
-                    <Grid size={{ xs: 12, md: showHandlers ? 5.5 : 12 }}>
+                    <Grid size={{ xs: 12, md: (showHandlers && showDependencies) ? 12 : (showDependencies || showHandlers) ? 6 : 12 }}>
                       <TextField
                         size='small'
                         fullWidth
@@ -320,7 +378,8 @@ const ActivityEditor = ({
                     </Grid>
                   </Grid>
                 </Box>
-              ))}
+                );
+              })}
             </Stack>
           </Box>
         )}
@@ -335,7 +394,10 @@ const ActivityEditor = ({
                 onActivityFieldChange={onActivityFieldChange}
                 onTaskFieldChange={onTaskFieldChange}
                 onTaskHandlersChange={onTaskHandlersChange}
+                onTaskDependenciesChange={onTaskDependenciesChange}
+                dependencyOptions={dependencyOptions}
                 showHandlers={showHandlers}
+                showDependencies={showDependencies}
               />
             ))}
           </Box>
@@ -356,7 +418,6 @@ function WBSCloneDialog({ setOpenDialog }) {
   const [options, setOptions] = useState({
     include_dependencies: true,
     include_handlers: false,
-    include_deliverable_contributions: false,
   });
 
   const { data: projectsData, isFetching: isProjectsLoading } = useQuery({
@@ -438,6 +499,22 @@ function WBSCloneDialog({ setOpenDialog }) {
   };
 
   const nodeCounts = useMemo(() => countNodes(draftActivities), [draftActivities]);
+  const dependencyOptions = useMemo(() => flattenTasks(draftActivities), [draftActivities]);
+
+  const handleTaskDependenciesChange = (taskId, dependencies) => {
+    setDraftActivities((prev) =>
+      updateTaskById(prev, taskId, (task) => ({
+        ...task,
+        dependencies: (dependencies || []).map((dependency) => ({
+          id: dependency.source_id || dependency.id,
+          name: dependency.name || 'Unnamed Task',
+        })),
+        dependency_source_ids: (dependencies || []).map(
+          (dependency) => dependency.source_id || dependency.id
+        ),
+      }))
+    );
+  };
 
   const validationErrors = useMemo(() => {
     const errors = [];
@@ -543,20 +620,7 @@ function WBSCloneDialog({ setOpenDialog }) {
                   }
                   label='Include Handlers'
                 />
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={options.include_deliverable_contributions}
-                      onChange={(e) =>
-                        setOptions((prev) => ({
-                          ...prev,
-                          include_deliverable_contributions: e.target.checked,
-                        }))
-                      }
-                    />
-                  }
-                  label='Include Deliverable Contributions'
-                />
+
               </Stack>
             </Grid>
 
@@ -612,7 +676,10 @@ function WBSCloneDialog({ setOpenDialog }) {
                   onActivityFieldChange={handleActivityFieldChange}
                   onTaskFieldChange={handleTaskFieldChange}
                   onTaskHandlersChange={handleTaskHandlersChange}
+                  onTaskDependenciesChange={handleTaskDependenciesChange}
+                  dependencyOptions={dependencyOptions}
                   showHandlers={options.include_handlers}
+                  showDependencies={options.include_dependencies}
                 />
               ))}
             </Box>
