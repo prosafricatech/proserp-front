@@ -829,7 +829,7 @@ function ProjectDashboard() {
                 <Grid container size={12} sx={{ py: 1, px: 1 }}>
                   <Grid size={6}>
                     <Tooltip title='Total Value'>
-                      <Typography>Total Value</Typography>
+                      <Typography>Total</Typography>
                     </Tooltip>
                   </Grid>
                   <Grid size={6}>
