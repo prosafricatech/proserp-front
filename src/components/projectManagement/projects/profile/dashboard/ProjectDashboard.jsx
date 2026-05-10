@@ -1,6 +1,5 @@
 'use client';
 
-import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import financialReportsServices from '@/components/accounts/reports/financial-reports-services';
 import { useCurrencySelect } from '@/components/masters/Currencies/CurrencySelectProvider';
 import {
@@ -67,12 +66,11 @@ function ProjectDashboard() {
   const processInventoryValues = (data, aggregateBy) => {
     if (!data || data.length === 0) return [];
 
-    const latestTimestamp = data[data.length - 1];
-    const sortedCategories = Object.entries(latestTimestamp.groupedValues || {})
-      .map(([key, value]) => ({ key, value: value.balanceValue || 0 }))
-      .sort((a, b) => b.value - a.value);
-
-    const top5Categories = sortedCategories.slice(0, 5).map((item) => item.key);
+    const allCategories = Array.from(
+      new Set(
+        data.flatMap((item) => Object.keys(item.groupedValues || {}))
+      )
+    );
 
     return data.map((item) => {
       const transformedItem = {
@@ -83,24 +81,12 @@ function ProjectDashboard() {
       };
 
       let totalValue = 0;
-      let othersValue = 0;
 
-      top5Categories.forEach((category) => {
+      allCategories.forEach((category) => {
         const value = item.groupedValues?.[category]?.balanceValue || 0;
         transformedItem[category] = value;
         totalValue += value;
       });
-
-      Object.keys(item.groupedValues || {}).forEach((category) => {
-        if (!top5Categories.includes(category)) {
-          othersValue += item.groupedValues[category].balanceValue || 0;
-        }
-      });
-
-      if (othersValue > 0) {
-        transformedItem['Others'] = othersValue;
-        totalValue += othersValue;
-      }
 
       transformedItem['Total Value'] = totalValue;
 
@@ -555,7 +541,7 @@ function ProjectDashboard() {
                 inventoryValues.map((iv, i) => {
                   if (i > 0) return;
                   return Object.entries(iv).map(([key, value], idx) => {
-                    if (key === 'Total Value') return;
+                    if (key === 'Total Value' || key === 'name') return;
                     return (
                       <React.Fragment key={idx + 0.1}>
                         <Divider />
@@ -568,12 +554,10 @@ function ProjectDashboard() {
                           <Grid size={6}>
                             <Tooltip title='value'>
                               <Typography textAlign={'right'}>
-                                {key === 'name'
-                                  ? readableDate(value, false)
-                                  : parseFloat(value).toLocaleString('en-US', {
-                                      minimumFractionDigits: 2,
-                                      maximumFractionDigits: 2,
-                                    })}
+                                {parseFloat(value).toLocaleString('en-US', {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
                               </Typography>
                             </Tooltip>
                           </Grid>
@@ -604,12 +588,10 @@ function ProjectDashboard() {
                         <Grid size={6}>
                           <Tooltip title='value'>
                             <Typography textAlign={'right'}>
-                              {key === 'name'
-                                ? readableDate(value, false)
-                                : parseFloat(value).toLocaleString('en-US', {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 2,
-                                  })}
+                              {parseFloat(value).toLocaleString('en-US', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
                             </Typography>
                           </Tooltip>
                         </Grid>
@@ -620,24 +602,6 @@ function ProjectDashboard() {
               })}
           </Card>
         </Grid>
-
-        {/* <Grid size={{ xs: 12, md: 12 }}>
-          <InventoryValueTrend
-            from={
-              project?.commencement_date
-                ? dayjs(project.commencement_date).toISOString()
-                : undefined
-            }
-            to={
-              project?.completion_date
-                ? dayjs(project.completion_date).toISOString()
-                : undefined
-            }
-            cost_center_ids={
-              project?.cost_center?.id ? [project.cost_center.id] : undefined
-            }
-          />
-        </Grid> */}
       </Grid>
 
       <Dialog open={openEditDialog} scroll='paper' fullWidth maxWidth='md'>
