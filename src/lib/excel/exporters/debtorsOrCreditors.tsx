@@ -203,7 +203,7 @@ export async function exportDebtorsOrCreditorsToExcel(exportedData: any) {
     // Return Excel buffer
     return await wb.xlsx.writeBuffer();
   } catch (e: any) {
-    console.error('Error exporting sample Excel:', e);
+    console.error('Error exporting Excel:', e);
     throw new Error(
       e?.message || 'Excel export failed during workbook generation'
     );

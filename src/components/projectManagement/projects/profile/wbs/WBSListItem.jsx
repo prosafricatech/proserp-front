@@ -427,7 +427,7 @@ function WBSListItem() {
         width={'100%'}
       >
         {projectTimelineActivities?.length > 0 && (
-          <Grid size={{ xs: 11, md: 4 }}>
+          <Grid size={{ xs: 11, md: 3.5 }}>
             <JumboSearch
               value={searchQuery}
               onChange={(value) => setSearchQuery(value)}
@@ -444,7 +444,7 @@ function WBSListItem() {
             </Grid>
           </>
         )}
-        <Grid size={{ xs: 1, md: 0.5 }}>
+        <Grid size={{ xs: 1, md: 1 }}>
           <WBSActionTail
             openDialog={openDialog}
             setOpenDialog={setOpenDialog}
