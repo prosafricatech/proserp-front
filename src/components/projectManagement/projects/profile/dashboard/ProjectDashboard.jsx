@@ -588,14 +588,14 @@ function ProjectDashboard() {
                 </Alert>
               )}
             </CardContent>
-            {inventoryValues?.length &&
-              inventoryValues.map((iv, i) => {
-                if (i > 0) return;
-                return Object.entries(iv).map(([key, value], idx) => {
-                  if (key !== 'Total Value') return;
-                  return (
-                    <CardActions key={idx}>
-                      <Grid container size={12} sx={{ py: 1, px: 1 }}>
+            <CardActions>
+              {inventoryValues?.length > 1 &&
+                inventoryValues.map((iv, i) => {
+                  if (i > 0) return;
+                  return Object.entries(iv).map(([key, value], idx) => {
+                    if (key !== 'Total Value') return;
+                    return (
+                      <Grid container size={12} sx={{ py: 1, px: 1 }} key={idx}>
                         <Grid size={6}>
                           <Tooltip title={key}>
                             <Typography>{key}</Typography>
@@ -614,10 +614,10 @@ function ProjectDashboard() {
                           </Tooltip>
                         </Grid>
                       </Grid>
-                    </CardActions>
-                  );
-                });
-              })}
+                    );
+                  });
+                })}
+            </CardActions>
           </Card>
         </Grid>
 
