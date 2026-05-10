@@ -159,12 +159,6 @@ export async function getMenus(locale: string) {
           icon: icon('reports'),
         },
         {
-          uri: `/${locale}/manufacturing/reports`,
-          label: sidebar.menuItem.reports,
-          type: 'nav-item',
-          icon: icon('reports'),
-        },
-        {
           label: sidebar.menuItem.masters,
           type: 'collapsible',
           icon: icon('manufacturingMasters'),
