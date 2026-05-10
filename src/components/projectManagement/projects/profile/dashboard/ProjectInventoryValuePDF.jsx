@@ -40,10 +40,9 @@ function ProjectInventoryValuePDF({
           </View>
           <View style={{ flex: 1, textAlign: 'right' }}>
             <Text style={{ ...pdfStyles.majorInfo, color: mainColor }}>
-              Project Inventory Value Summary
+              Project Inventory Value
             </Text>
             <Text style={pdfStyles.midInfo}>{projectName}</Text>
-            <Text style={pdfStyles.minInfo}>{organizationName}</Text>
           </View>
         </View>
 

@@ -46,6 +46,7 @@ import ProjectForm from '../../ProjectFormDialog';
 import { useProjectProfile } from '../ProjectProfileProvider';
 import ProjectInventoryValueOnScreen from './ProjectInventoryValueOnScreen';
 import ProjectInventoryValuePDF from './ProjectInventoryValuePDF';
+import ProjectInventoryValueTrend from './ProjectInventoryValueTrend';
 import ProjectLiabilitiesOnScreen from './ProjectLiabilitiesOnScreen';
 import ProjectLiabilitiesPDF from './ProjectLiabilitiesPDF';
 
@@ -68,6 +69,7 @@ const DashboardDocumentDialog = ({
   setOpenDocumentDialog,
   document,
   fileName,
+  trendContent,
   onScreenContent,
   exportedData,
   documentType,
@@ -80,6 +82,10 @@ const DashboardDocumentDialog = ({
   const handleTabChange = (_event, newValue) => {
     setSelectedTab(newValue);
   };
+
+  const isInventoryDocument = documentType === 'inventory';
+  const showTabs = belowLargeScreen || isInventoryDocument;
+  const showExcelAction = !showTabs || selectedTab === 1;
 
   const handlExcelExport = async (exportedData) => {
     setIsExporting(true);
@@ -112,32 +118,44 @@ const DashboardDocumentDialog = ({
   return (
     <>
       <DialogContent>
-        {belowLargeScreen ? (
+        {showTabs ? (
           <Box>
             <Grid container alignItems='center' justifyContent='space-between'>
               <Grid size={{ xs: 11 }}>
                 <Tabs value={selectedTab} onChange={handleTabChange}>
-                  <Tab label='On Screen' />
+                  {isInventoryDocument ? (
+                    <Tab label='Trend' />
+                  ) : (
+                    <Tab label='On Screen' />
+                  )}
                   <Tab label='PDF' />
+                  {belowLargeScreen && isInventoryDocument && (
+                    <Tab label='On Screen' />
+                  )}
                 </Tabs>
               </Grid>
-              <Grid size={{ xs: 1 }} textAlign='right'>
-                <Tooltip title='Close'>
-                  <IconButton
-                    size='small'
-                    color='primary'
-                    onClick={() => setOpenDocumentDialog(false)}
-                  >
-                    <HighlightOff color='primary' />
-                  </IconButton>
-                </Tooltip>
-              </Grid>
+              {belowLargeScreen && (
+                <Grid size={{ xs: 1 }} textAlign='right'>
+                  <Tooltip title='Close'>
+                    <IconButton
+                      size='small'
+                      color='primary'
+                      onClick={() => setOpenDocumentDialog(false)}
+                    >
+                      <HighlightOff color='primary' />
+                    </IconButton>
+                  </Tooltip>
+                </Grid>
+              )}
             </Grid>
             <Box>
-              {selectedTab === 0 && onScreenContent}
+              {selectedTab === 0 &&
+                (isInventoryDocument ? trendContent : onScreenContent)}
               {selectedTab === 1 && (
                 <PDFContent document={document} fileName={fileName} />
               )}
+              {selectedTab === 2 && belowLargeScreen && isInventoryDocument &&
+                onScreenContent}
             </Box>
           </Box>
         ) : (
@@ -152,16 +170,18 @@ const DashboardDocumentDialog = ({
           alignContent={'center'}
           gap={2}
         >
-          <LoadingButton
-            size='small'
-            onClick={() => handlExcelExport(exportedData)}
-            loading={isExporting}
-            sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-            color='success'
-            variant='contained'
-          >
-            <FontAwesomeIcon icon={faFileExcel} color='green' /> Excel
-          </LoadingButton>
+          {showExcelAction && (
+            <LoadingButton
+              size='small'
+              onClick={() => handlExcelExport(exportedData)}
+              loading={isExporting}
+              sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+              color='success'
+              variant='contained'
+            >
+              <FontAwesomeIcon icon={faFileExcel} color='green' /> Excel
+            </LoadingButton>
+          )}
           {belowLargeScreen && (
             <Button
               variant='outlined'
@@ -192,7 +212,6 @@ function ProjectDashboard() {
   const currencyCode = baseCurrency?.code;
   const hasClient = !!(project?.client_id || project?.client?.id);
   const [liabilitiesTotal, setLiabilitiesTotal] = useState(0);
-  const [isExporting, setIsExporting] = useState(false);
 
   // Fetch all dashboard figures in one call
   const { data: dashboardFigures, isLoading: isLoadingDashboard } = useQuery({
@@ -355,6 +374,10 @@ function ProjectDashboard() {
         total={selectedTotal}
       />
     );
+  const selectedTrendContent =
+    selectedReport === 'inventory' ? (
+      <ProjectInventoryValueTrend data={inventoryValues} />
+    ) : null;
   const selectedOnScreenContent =
     selectedReport === 'liabilities' ? (
       <ProjectLiabilitiesOnScreen
@@ -852,6 +875,7 @@ function ProjectDashboard() {
             setOpenDocumentDialog={handleCloseDocumentDialog}
             fileName={selectedFileName}
             document={selectedDocument}
+            trendContent={selectedTrendContent}
             onScreenContent={selectedOnScreenContent}
             exportedData={exportedData}
             documentType={selectedReport}
