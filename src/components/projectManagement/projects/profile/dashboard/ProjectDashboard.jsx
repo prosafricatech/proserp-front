@@ -249,21 +249,11 @@ function ProjectDashboard() {
     setLiabilitiesTotal(total);
   }, [liabilites]);
 
-  // fetch inventory values
+  // inventory values
   const inventoryValuesParam = {
-    from: dayjs().toISOString(),
-    // from: project?.commencement_date
-    //   ? dayjs(project.commencement_date).toISOString()
-    //   : undefined,
-
-    to: project?.completion_date
-      ? dayjs(project.completion_date).toISOString()
-      : undefined,
-
-    cost_center_ids: project?.cost_center?.id
-      ? [project.cost_center.id]
-      : undefined,
-
+    from: dayjs(project.commencement_date).toISOString(),
+    to: dayjs().toISOString(),
+    cost_center_ids: project?.cost_center?.id,
     aggregate_by: 'day',
     group_by: 'product_category',
   };
@@ -314,7 +304,7 @@ function ProjectDashboard() {
     value: creditor.amount,
   }));
 
-  const inventorySnapshot = inventoryValues?.[0];
+  const inventorySnapshot = inventoryValues?.[inventoryValues.length - 1];
   const inventoryRows = inventorySnapshot
     ? Object.entries(inventorySnapshot)
         .filter(([key]) => key !== 'name' && key !== 'Total Value')
@@ -760,7 +750,7 @@ function ProjectDashboard() {
               }
               title={
                 <Typography variant='h6' fontWeight={600}>
-                  Inventry value
+                  Inventory value
                 </Typography>
               }
             />
@@ -778,49 +768,13 @@ function ProjectDashboard() {
                   <Skeleton variant='text' height={80} />
                   <Skeleton variant='rectangular' height={8} sx={{ mt: 2 }} />
                 </>
-              ) : inventoryValues?.length ? (
-                inventoryValues.map((iv, i) => {
-                  if (i > 0) return;
-                  return Object.entries(iv).map(([key, value], idx) => {
-                    if (key === 'Total Value' || key === 'name') return;
-                    return (
-                      <React.Fragment key={idx + 0.1}>
-                        <Divider />
-                        <Grid container size={12} sx={{ py: 1, px: 1 }}>
-                          <Grid size={6}>
-                            <Tooltip title={key}>
-                              <Typography>{key}</Typography>
-                            </Tooltip>
-                          </Grid>
-                          <Grid size={6}>
-                            <Tooltip title='value'>
-                              <Typography textAlign={'right'}>
-                                {parseFloat(value).toLocaleString('en-US', {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                })}
-                              </Typography>
-                            </Tooltip>
-                          </Grid>
-                        </Grid>
-                      </React.Fragment>
-                    );
-                  });
-                })
-              ) : (
-                <Alert variant='outlined' severity='info'>
-                  No inventory values found for now
-                </Alert>
-              )}
-            </CardContent>
-            <CardActions>
-              {inventoryValues?.length > 0 &&
-                inventoryValues.map((iv, i) => {
-                  if (i > 0) return;
-                  return Object.entries(iv).map(([key, value], idx) => {
-                    if (key !== 'Total Value') return;
-                    return (
-                      <Grid container size={12} sx={{ py: 1, px: 1 }} key={idx}>
+              ) : inventorySnapshot ? (
+                Object.entries(inventorySnapshot).map(([key, value], idx) => {
+                  if (key === 'Total Value' || key === 'name') return;
+                  return (
+                    <React.Fragment key={idx + 0.1}>
+                      <Divider />
+                      <Grid container size={12} sx={{ py: 1, px: 1 }}>
                         <Grid size={6}>
                           <Tooltip title={key}>
                             <Typography>{key}</Typography>
@@ -828,23 +782,7 @@ function ProjectDashboard() {
                         </Grid>
                         <Grid size={6}>
                           <Tooltip title='value'>
-                            <Typography
-                              textAlign={'right'}
-                              onClick={() =>
-                                canOpenInventoryPdf &&
-                                handleOpenDocumentDialog('inventory')
-                              }
-                              sx={{
-                                cursor: canOpenInventoryPdf
-                                  ? 'pointer'
-                                  : 'default',
-                                '&:hover': canOpenInventoryPdf
-                                  ? {
-                                      color: 'primary.main',
-                                    }
-                                  : undefined,
-                              }}
-                            >
+                            <Typography textAlign={'right'}>
                               {parseFloat(value).toLocaleString('en-US', {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2,
@@ -853,9 +791,49 @@ function ProjectDashboard() {
                           </Tooltip>
                         </Grid>
                       </Grid>
-                    );
-                  });
-                })}
+                    </React.Fragment>
+                  );
+                })
+              ) : (
+                <Alert variant='outlined' severity='info'>
+                  No inventory values found for now
+                </Alert>
+              )}
+            </CardContent>
+            <CardActions>
+              {inventorySnapshot && (
+                <Grid container size={12} sx={{ py: 1, px: 1 }}>
+                  <Grid size={6}>
+                    <Tooltip title='Total Value'>
+                      <Typography>Total Value</Typography>
+                    </Tooltip>
+                  </Grid>
+                  <Grid size={6}>
+                    <Tooltip title='value'>
+                      <Typography
+                        textAlign={'right'}
+                        onClick={() =>
+                          canOpenInventoryPdf &&
+                          handleOpenDocumentDialog('inventory')
+                        }
+                        sx={{
+                          cursor: canOpenInventoryPdf ? 'pointer' : 'default',
+                          '&:hover': canOpenInventoryPdf
+                            ? {
+                                color: 'primary.main',
+                              }
+                            : undefined,
+                        }}
+                      >
+                        {parseFloat(inventoryTotal).toLocaleString('en-US', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </Typography>
+                    </Tooltip>
+                  </Grid>
+                </Grid>
+              )}
             </CardActions>
           </Card>
         </Grid>
