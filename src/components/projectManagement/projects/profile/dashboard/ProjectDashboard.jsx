@@ -2,7 +2,6 @@
 
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import financialReportsServices from '@/components/accounts/reports/financial-reports-services';
-import InventoryValueTrend from '@/components/dashboard/procurementCards/InventoryValueTrend';
 import { useCurrencySelect } from '@/components/masters/Currencies/CurrencySelectProvider';
 import {
   AccountBalanceWalletOutlined,
@@ -15,7 +14,9 @@ import {
   Alert,
   Box,
   Card,
+  CardActions,
   CardContent,
+  CardHeader,
   Dialog,
   Divider,
   Grid,
@@ -433,24 +434,27 @@ function ProjectDashboard() {
               borderRadius: 3,
               height: '100%',
               width: '100%',
-              maxHeight: '300px',
-              overflowY: 'auto',
+              maxHeight: 300,
+              display: 'flex',
+              flexDirection: 'column',
             }}
           >
-            <CardContent>
-              <Box
-                display='flex'
-                alignItems='center'
-                mb={2}
-                // position={'sticky'}
-                // top={0}
-              >
-                <Money color='success' sx={{ mr: 1 }} />
+            <CardHeader
+              avatar={<Money color='success' />}
+              title={
                 <Typography variant='h6' fontWeight={600}>
                   Liabilities
                 </Typography>
-              </Box>
-
+              }
+            />
+            <CardContent
+              sx={{
+                flex: 1,
+                overflowY: 'auto',
+                maxHeight: 300,
+                width: '100%',
+              }}
+            >
               {liabilitesLoading ? (
                 <>
                   <Skeleton variant='text' height={80} />
@@ -497,18 +501,29 @@ function ProjectDashboard() {
               borderRadius: 3,
               height: '100%',
               width: '100%',
-              maxHeight: '300px',
-              overflowY: 'auto',
+              maxHeight: 300,
+              display: 'flex',
+              flexDirection: 'column',
             }}
           >
-            <CardContent>
-              <Box display='flex' alignItems='center' mb={2}>
+            <CardHeader
+              avatar={
                 <AccountBalanceWalletOutlined color='success' sx={{ mr: 1 }} />
+              }
+              title={
                 <Typography variant='h6' fontWeight={600}>
                   Inventry value
                 </Typography>
-              </Box>
-
+              }
+            />
+            <CardContent
+              sx={{
+                flex: 1,
+                overflowY: 'auto',
+                maxHeight: 300,
+                width: '100%',
+              }}
+            >
               {inventoryValuesLoading ? (
                 <>
                   <Skeleton variant='text' height={80} />
@@ -518,9 +533,47 @@ function ProjectDashboard() {
               ) : inventoryValues?.length ? (
                 inventoryValues.map((iv, i) => {
                   if (i > 0) return;
-                  return Object.entries(iv).map(([key, value], idx) => (
-                    <React.Fragment key={idx + 0.1}>
-                      <Divider />
+                  return Object.entries(iv).map(([key, value], idx) => {
+                    if (key === 'Total Value') return;
+                    return (
+                      <React.Fragment key={idx + 0.1}>
+                        <Divider />
+                        <Grid container size={12} sx={{ py: 1, px: 1 }}>
+                          <Grid size={6}>
+                            <Tooltip title={key}>
+                              <Typography>{key}</Typography>
+                            </Tooltip>
+                          </Grid>
+                          <Grid size={6}>
+                            <Tooltip title='value'>
+                              <Typography textAlign={'right'}>
+                                {key === 'name'
+                                  ? readableDate(value, false)
+                                  : parseFloat(value).toLocaleString('en-US', {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    })}
+                              </Typography>
+                            </Tooltip>
+                          </Grid>
+                        </Grid>
+                      </React.Fragment>
+                    );
+                  });
+                })
+              ) : (
+                <Alert variant='outlined' severity='info'>
+                  No inventory values found for now
+                </Alert>
+              )}
+            </CardContent>
+            {inventoryValues?.length &&
+              inventoryValues.map((iv, i) => {
+                if (i > 0) return;
+                return Object.entries(iv).map(([key, value], idx) => {
+                  if (key !== 'Total Value') return;
+                  return (
+                    <CardActions key={idx}>
                       <Grid container size={12} sx={{ py: 1, px: 1 }}>
                         <Grid size={6}>
                           <Tooltip title={key}>
@@ -540,19 +593,14 @@ function ProjectDashboard() {
                           </Tooltip>
                         </Grid>
                       </Grid>
-                    </React.Fragment>
-                  ));
-                })
-              ) : (
-                <Alert variant='outlined' severity='info'>
-                  No inventory values found for now
-                </Alert>
-              )}
-            </CardContent>
+                    </CardActions>
+                  );
+                });
+              })}
           </Card>
         </Grid>
 
-        <Grid size={{ xs: 12, md: 12 }}>
+        {/* <Grid size={{ xs: 12, md: 12 }}>
           <InventoryValueTrend
             from={
               project?.commencement_date
@@ -568,7 +616,7 @@ function ProjectDashboard() {
               project?.cost_center?.id ? [project.cost_center.id] : undefined
             }
           />
-        </Grid>
+        </Grid> */}
       </Grid>
 
       <Dialog open={openEditDialog} scroll='paper' fullWidth maxWidth='md'>
