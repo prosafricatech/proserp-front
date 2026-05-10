@@ -55,6 +55,7 @@ function ProjectDashboard() {
   const baseCurrency = currencies?.find((c) => c.is_base === 1);
   const currencyCode = baseCurrency?.code;
   const hasClient = !!(project?.client_id || project?.client?.id);
+  const [liabilitiesTotal, setLiabilitiesTotal] = useState(0);
 
   // Fetch all dashboard figures in one call
   const { data: dashboardFigures, isLoading: isLoadingDashboard } = useQuery({
@@ -118,6 +119,14 @@ function ProjectDashboard() {
     enabled: !!project?.id,
   });
 
+  useEffect(() => {
+    const total = liabilites?.creditors?.reduce(
+      (acc, item) => (acc += item.amount),
+      0
+    );
+    setLiabilitiesTotal(total);
+  }, [liabilites]);
+
   // fetch inventory values
   const inventoryValuesParam = {
     // from: dayjs().toISOString(),
@@ -145,13 +154,6 @@ function ProjectDashboard() {
         return processInventoryValues(res);
       },
     });
-
-  // useEffect(() => {
-  //   console.log('liabilites: ', liabilites);
-  //   console.log('invenotryValues: ', inventoryValues);
-  //   console.log('inventoryValuesParam: ', inventoryValuesParam);
-  //   console.log('inventoryValuesLoading: ', inventoryValuesLoading);
-  // }, [liabilites, inventoryValues]);
 
   useEffect(() => {
     reFetchProject();
@@ -434,7 +436,7 @@ function ProjectDashboard() {
               borderRadius: 3,
               height: '100%',
               width: '100%',
-              maxHeight: 300,
+              maxHeight: 350,
               display: 'flex',
               flexDirection: 'column',
             }}
@@ -451,7 +453,7 @@ function ProjectDashboard() {
               sx={{
                 flex: 1,
                 overflowY: 'auto',
-                maxHeight: 300,
+                maxHeight: 350,
                 width: '100%',
               }}
             >
@@ -490,6 +492,25 @@ function ProjectDashboard() {
                 </Alert>
               )}
             </CardContent>
+            <CardActions>
+              <Grid container size={12} sx={{ py: 1, px: 1 }}>
+                <Grid size={6}>
+                  <Tooltip title='Total'>
+                    <Typography>Total</Typography>
+                  </Tooltip>
+                </Grid>
+                <Grid size={6}>
+                  <Tooltip title='value'>
+                    <Typography textAlign={'right'}>
+                      {parseFloat(liabilitiesTotal).toLocaleString('en-US', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </Typography>
+                  </Tooltip>
+                </Grid>
+              </Grid>
+            </CardActions>
           </Card>
         </Grid>
 
@@ -501,7 +522,7 @@ function ProjectDashboard() {
               borderRadius: 3,
               height: '100%',
               width: '100%',
-              maxHeight: 300,
+              maxHeight: 350,
               display: 'flex',
               flexDirection: 'column',
             }}
@@ -520,7 +541,7 @@ function ProjectDashboard() {
               sx={{
                 flex: 1,
                 overflowY: 'auto',
-                maxHeight: 300,
+                maxHeight: 350,
                 width: '100%',
               }}
             >
