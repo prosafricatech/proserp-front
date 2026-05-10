@@ -4,6 +4,9 @@ import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import financialReportsServices from '@/components/accounts/reports/financial-reports-services';
 import { useCurrencySelect } from '@/components/masters/Currencies/CurrencySelectProvider';
 import PDFContent from '@/components/pdf/PDFContent';
+import { faFileExcel } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import {
   AccountBalanceWalletOutlined,
   EditOutlined,
@@ -12,6 +15,7 @@ import {
   PaidOutlined,
   TimelineOutlined,
 } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
 import {
   Alert,
   Box,
@@ -21,6 +25,7 @@ import {
   CardContent,
   CardHeader,
   Dialog,
+  DialogActions,
   DialogContent,
   Divider,
   Grid,
@@ -33,17 +38,16 @@ import {
   Typography,
   useMediaQuery,
 } from '@mui/material';
-import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import React, { useEffect, useState } from 'react';
-import ProjectInventoryValuePDF from './ProjectInventoryValuePDF';
-import ProjectInventoryValueOnScreen from './ProjectInventoryValueOnScreen';
-import ProjectLiabilitiesPDF from './ProjectLiabilitiesPDF';
-import ProjectLiabilitiesOnScreen from './ProjectLiabilitiesOnScreen';
 import projectsServices from '../../project-services';
 import ProjectForm from '../../ProjectFormDialog';
 import { useProjectProfile } from '../ProjectProfileProvider';
+import ProjectInventoryValueOnScreen from './ProjectInventoryValueOnScreen';
+import ProjectInventoryValuePDF from './ProjectInventoryValuePDF';
+import ProjectLiabilitiesOnScreen from './ProjectLiabilitiesOnScreen';
+import ProjectLiabilitiesPDF from './ProjectLiabilitiesPDF';
 
 const EditProject = ({ project, setOpenEditDialog }) => {
   return <ProjectForm project={project} setOpenDialog={setOpenEditDialog} />;
@@ -65,13 +69,44 @@ const DashboardDocumentDialog = ({
   document,
   fileName,
   onScreenContent,
+  exportedData,
+  documentType,
 }) => {
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
   const [selectedTab, setSelectedTab] = useState(0);
+  const [isExporting, setIsExporting] = useState(false);
 
   const handleTabChange = (_event, newValue) => {
     setSelectedTab(newValue);
+  };
+
+  const handlExcelExport = async (exportedData) => {
+    setIsExporting(true);
+    try {
+      const blob =
+        documentType === 'liabilities'
+          ? await projectsServices.exportProjectLiabilitiesExcel(exportedData)
+          : await projectsServices.exportProjectInventoryValuesReportExcel(
+              exportedData
+            );
+      const url = window.URL.createObjectURL(blob);
+      const a = window.document.createElement('a');
+      a.href = url;
+      const excelName =
+        documentType === 'liabilities'
+          ? 'project-liabilities-report'
+          : 'project-inventory-value-report';
+      a.download = `${excelName}${'_' + dayjs().format('DD MMM YYYY, HH:mm')}.xlsx`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+
+      // console.log('blob: ', blob);
+    } catch (e) {
+      console.log('error exporting: ', e);
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   return (
@@ -109,18 +144,36 @@ const DashboardDocumentDialog = ({
           <PDFContent document={document} fileName={fileName} />
         )}
       </DialogContent>
-      {belowLargeScreen && (
-        <Box textAlign='right' margin={2}>
-          <Button
-            variant='outlined'
+      <DialogActions>
+        <Box
+          textAlign='right'
+          margin={2}
+          display={'flex'}
+          alignContent={'center'}
+          gap={2}
+        >
+          <LoadingButton
             size='small'
-            color='primary'
-            onClick={() => setOpenDocumentDialog(false)}
+            onClick={() => handlExcelExport(exportedData)}
+            loading={isExporting}
+            sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+            color='success'
+            variant='contained'
           >
-            Close
-          </Button>
+            <FontAwesomeIcon icon={faFileExcel} color='green' /> Excel
+          </LoadingButton>
+          {belowLargeScreen && (
+            <Button
+              variant='outlined'
+              size='small'
+              color='primary'
+              onClick={() => setOpenDocumentDialog(false)}
+            >
+              Close
+            </Button>
+          )}
         </Box>
-      )}
+      </DialogActions>
     </>
   );
 };
@@ -139,6 +192,7 @@ function ProjectDashboard() {
   const currencyCode = baseCurrency?.code;
   const hasClient = !!(project?.client_id || project?.client?.id);
   const [liabilitiesTotal, setLiabilitiesTotal] = useState(0);
+  const [isExporting, setIsExporting] = useState(false);
 
   // Fetch all dashboard figures in one call
   const { data: dashboardFigures, isLoading: isLoadingDashboard } = useQuery({
@@ -151,9 +205,7 @@ function ProjectDashboard() {
     if (!data || data.length === 0) return [];
 
     const allCategories = Array.from(
-      new Set(
-        data.flatMap((item) => Object.keys(item.groupedValues || {}))
-      )
+      new Set(data.flatMap((item) => Object.keys(item.groupedValues || {})))
     );
 
     return data.map((item) => {
@@ -199,10 +251,10 @@ function ProjectDashboard() {
 
   // fetch inventory values
   const inventoryValuesParam = {
-    // from: dayjs().toISOString(),
-    from: project?.commencement_date
-      ? dayjs(project.commencement_date).toISOString()
-      : undefined,
+    from: dayjs().toISOString(),
+    // from: project?.commencement_date
+    //   ? dayjs(project.commencement_date).toISOString()
+    //   : undefined,
 
     to: project?.completion_date
       ? dayjs(project.completion_date).toISOString()
@@ -327,6 +379,26 @@ function ProjectDashboard() {
         currencyCode={currencyCode}
       />
     );
+
+  let exportedData;
+
+  if (selectedReport === 'liabilities') {
+    exportedData = {
+      organization: organization,
+      project: project,
+      currencyCode: currencyCode,
+      rows: selectedRows,
+      total: selectedTotal,
+    };
+  } else {
+    exportedData = {
+      organization: organization,
+      project: project,
+      currencyCode: currencyCode,
+      rows: selectedRows,
+      total: selectedTotal,
+    };
+  }
 
   return (
     <>
@@ -803,6 +875,8 @@ function ProjectDashboard() {
             fileName={selectedFileName}
             document={selectedDocument}
             onScreenContent={selectedOnScreenContent}
+            exportedData={exportedData}
+            documentType={selectedReport}
           />
         )}
       </Dialog>

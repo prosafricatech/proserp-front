@@ -1280,6 +1280,24 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../../src/app/api/exports/excel/projectInventoryValuesReport/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/exports/excel/projectInventoryValuesReport">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/exports/excel/projectInventoryValuesReport/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../../src/app/api/exports/excel/projectLiabilitiesReport/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/exports/excel/projectLiabilitiesReport">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/exports/excel/projectLiabilitiesReport/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../../src/app/api/exports/excel/salesShifts/route.ts
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/exports/excel/salesShifts">> = Specific

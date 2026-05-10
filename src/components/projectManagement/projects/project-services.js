@@ -311,10 +311,26 @@ projectsServices.getProjectDashboardFigures = async (projectId) => {
     return data;
 }
 
-projectsServices.deleteProject = async (project_id) => {
-    const { data } = await axios.delete(`/api/projectManagement/project/${project_id}/deleteProject`);
+projectsServices.exportProjectLiabilitiesExcel = async (params) => {
+    const { data } = await axios.post(`/api/exports/excel/projectLiabilitiesReport/`, params, {
+        responseType: 'blob',
+    }
+    );
     return data;
-};
+},
+
+    projectsServices.exportProjectInventoryValuesReportExcel = async (params) => {
+        const { data } = await axios.post(`/api/exports/excel/projectInventoryValuesReport/`, params, {
+            responseType: 'blob'
+        }
+        );
+        return data;
+    },
+
+    projectsServices.deleteProject = async (project_id) => {
+        const { data } = await axios.delete(`/api/projectManagement/project/${project_id}/deleteProject`);
+        return data;
+    };
 
 projectsServices.deleteExistingBudgetItem = async ({ id, type }) => {
     const { data } = await axios.delete(`/api/projectManagement/project/deleteExistingBudgetItem/${type}/${id}`);
