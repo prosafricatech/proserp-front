@@ -828,7 +828,7 @@ function ProjectDashboard() {
               {inventorySnapshot && (
                 <Grid container size={12} sx={{ py: 1, px: 1 }}>
                   <Grid size={6}>
-                    <Tooltip title='Total Value'>
+                    <Tooltip title='Total'>
                       <Typography>Total</Typography>
                     </Tooltip>
                   </Grid>
