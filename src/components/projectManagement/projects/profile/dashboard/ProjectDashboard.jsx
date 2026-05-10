@@ -1,10 +1,13 @@
 'use client';
 
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import financialReportsServices from '@/components/accounts/reports/financial-reports-services';
 import { useCurrencySelect } from '@/components/masters/Currencies/CurrencySelectProvider';
+import PDFContent from '@/components/pdf/PDFContent';
 import {
   AccountBalanceWalletOutlined,
   EditOutlined,
+  HighlightOff,
   Money,
   PaidOutlined,
   TimelineOutlined,
@@ -12,22 +15,32 @@ import {
 import {
   Alert,
   Box,
+  Button,
   Card,
   CardActions,
   CardContent,
   CardHeader,
   Dialog,
+  DialogContent,
   Divider,
   Grid,
   IconButton,
   LinearProgress,
   Skeleton,
+  Tab,
+  Tabs,
   Tooltip,
   Typography,
+  useMediaQuery,
 } from '@mui/material';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import React, { useEffect, useState } from 'react';
+import ProjectInventoryValuePDF from './ProjectInventoryValuePDF';
+import ProjectInventoryValueOnScreen from './ProjectInventoryValueOnScreen';
+import ProjectLiabilitiesPDF from './ProjectLiabilitiesPDF';
+import ProjectLiabilitiesOnScreen from './ProjectLiabilitiesOnScreen';
 import projectsServices from '../../project-services';
 import ProjectForm from '../../ProjectFormDialog';
 import { useProjectProfile } from '../ProjectProfileProvider';
@@ -47,10 +60,81 @@ const StatItem = ({ label, value }) => (
   </Box>
 );
 
+const DashboardDocumentDialog = ({
+  setOpenDocumentDialog,
+  document,
+  fileName,
+  onScreenContent,
+}) => {
+  const { theme } = useJumboTheme();
+  const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
+  const [selectedTab, setSelectedTab] = useState(0);
+
+  const handleTabChange = (_event, newValue) => {
+    setSelectedTab(newValue);
+  };
+
+  return (
+    <>
+      <DialogContent>
+        {belowLargeScreen ? (
+          <Box>
+            <Grid container alignItems='center' justifyContent='space-between'>
+              <Grid size={{ xs: 11 }}>
+                <Tabs value={selectedTab} onChange={handleTabChange}>
+                  <Tab label='On Screen' />
+                  <Tab label='PDF' />
+                </Tabs>
+              </Grid>
+              <Grid size={{ xs: 1 }} textAlign='right'>
+                <Tooltip title='Close'>
+                  <IconButton
+                    size='small'
+                    color='primary'
+                    onClick={() => setOpenDocumentDialog(false)}
+                  >
+                    <HighlightOff color='primary' />
+                  </IconButton>
+                </Tooltip>
+              </Grid>
+            </Grid>
+            <Box>
+              {selectedTab === 0 && onScreenContent}
+              {selectedTab === 1 && (
+                <PDFContent document={document} fileName={fileName} />
+              )}
+            </Box>
+          </Box>
+        ) : (
+          <PDFContent document={document} fileName={fileName} />
+        )}
+      </DialogContent>
+      {belowLargeScreen && (
+        <Box textAlign='right' margin={2}>
+          <Button
+            variant='outlined'
+            size='small'
+            color='primary'
+            onClick={() => setOpenDocumentDialog(false)}
+          >
+            Close
+          </Button>
+        </Box>
+      )}
+    </>
+  );
+};
+
 function ProjectDashboard() {
   const { project, setIsDashboardTab, reFetchProject } = useProjectProfile();
   const [openEditDialog, setOpenEditDialog] = useState(false);
+  const [openDocumentDialog, setOpenDocumentDialog] = useState(false);
+  const [selectedReport, setSelectedReport] = useState(null);
   const { currencies } = useCurrencySelect();
+  const { authOrganization } = useJumboAuth();
+  const organization = authOrganization?.organization;
+  const { theme } = useJumboTheme();
+  const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
   const baseCurrency = currencies?.find((c) => c.is_base === 1);
   const currencyCode = baseCurrency?.code;
   const hasClient = !!(project?.client_id || project?.client?.id);
@@ -172,6 +256,77 @@ function ProjectDashboard() {
     });
     return `${currencyCode ? currencyCode + ' ' : ''}${formatted}`;
   };
+
+  const liabilityRows = (liabilites?.creditors || []).map((creditor) => ({
+    label: creditor.name,
+    value: creditor.amount,
+  }));
+
+  const inventorySnapshot = inventoryValues?.[0];
+  const inventoryRows = inventorySnapshot
+    ? Object.entries(inventorySnapshot)
+        .filter(([key]) => key !== 'name' && key !== 'Total Value')
+        .map(([key, value]) => ({ label: key, value }))
+    : [];
+
+  const inventoryTotal = inventorySnapshot?.['Total Value'] || 0;
+
+  const canOpenLiabilitiesPdf = liabilityRows.length > 0;
+  const canOpenInventoryPdf = inventoryRows.length > 0;
+
+  const handleOpenDocumentDialog = (report) => {
+    setSelectedReport(report);
+    setOpenDocumentDialog(true);
+  };
+
+  const handleCloseDocumentDialog = () => {
+    setOpenDocumentDialog(false);
+    setSelectedReport(null);
+  };
+
+  const selectedRows =
+    selectedReport === 'liabilities' ? liabilityRows : inventoryRows;
+  const selectedTitle =
+    selectedReport === 'liabilities'
+      ? 'Project Liabilities Summary'
+      : 'Project Inventory Value Summary';
+  const selectedTotal =
+    selectedReport === 'liabilities' ? liabilitiesTotal : inventoryTotal;
+  const selectedFileName = `${selectedTitle} ${
+    project?.name || project?.project_name || 'Project'
+  }`;
+  const selectedDocument =
+    selectedReport === 'liabilities' ? (
+      <ProjectLiabilitiesPDF
+        organization={organization}
+        project={project}
+        currencyCode={currencyCode}
+        rows={selectedRows}
+        total={selectedTotal}
+      />
+    ) : (
+      <ProjectInventoryValuePDF
+        organization={organization}
+        project={project}
+        currencyCode={currencyCode}
+        rows={selectedRows}
+        total={selectedTotal}
+      />
+    );
+  const selectedOnScreenContent =
+    selectedReport === 'liabilities' ? (
+      <ProjectLiabilitiesOnScreen
+        rows={selectedRows}
+        total={selectedTotal}
+        currencyCode={currencyCode}
+      />
+    ) : (
+      <ProjectInventoryValueOnScreen
+        rows={selectedRows}
+        total={selectedTotal}
+        currencyCode={currencyCode}
+      />
+    );
 
   return (
     <>
@@ -487,7 +642,21 @@ function ProjectDashboard() {
                 </Grid>
                 <Grid size={6}>
                   <Tooltip title='value'>
-                    <Typography textAlign={'right'}>
+                    <Typography
+                      textAlign={'right'}
+                      onClick={() =>
+                        canOpenLiabilitiesPdf &&
+                        handleOpenDocumentDialog('liabilities')
+                      }
+                      sx={{
+                        cursor: canOpenLiabilitiesPdf ? 'pointer' : 'default',
+                        '&:hover': canOpenLiabilitiesPdf
+                          ? {
+                              color: 'primary.main',
+                            }
+                          : undefined,
+                      }}
+                    >
                       {parseFloat(liabilitiesTotal).toLocaleString('en-US', {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
@@ -573,7 +742,7 @@ function ProjectDashboard() {
               )}
             </CardContent>
             <CardActions>
-              {inventoryValues?.length > 1 &&
+              {inventoryValues?.length > 0 &&
                 inventoryValues.map((iv, i) => {
                   if (i > 0) return;
                   return Object.entries(iv).map(([key, value], idx) => {
@@ -587,7 +756,23 @@ function ProjectDashboard() {
                         </Grid>
                         <Grid size={6}>
                           <Tooltip title='value'>
-                            <Typography textAlign={'right'}>
+                            <Typography
+                              textAlign={'right'}
+                              onClick={() =>
+                                canOpenInventoryPdf &&
+                                handleOpenDocumentDialog('inventory')
+                              }
+                              sx={{
+                                cursor: canOpenInventoryPdf
+                                  ? 'pointer'
+                                  : 'default',
+                                '&:hover': canOpenInventoryPdf
+                                  ? {
+                                      color: 'primary.main',
+                                    }
+                                  : undefined,
+                              }}
+                            >
                               {parseFloat(value).toLocaleString('en-US', {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2,
@@ -603,6 +788,24 @@ function ProjectDashboard() {
           </Card>
         </Grid>
       </Grid>
+
+      <Dialog
+        open={openDocumentDialog}
+        fullWidth
+        fullScreen={belowLargeScreen}
+        maxWidth='md'
+        scroll={belowLargeScreen ? 'body' : 'paper'}
+        onClose={handleCloseDocumentDialog}
+      >
+        {openDocumentDialog && selectedReport && (
+          <DashboardDocumentDialog
+            setOpenDocumentDialog={handleCloseDocumentDialog}
+            fileName={selectedFileName}
+            document={selectedDocument}
+            onScreenContent={selectedOnScreenContent}
+          />
+        )}
+      </Dialog>
 
       <Dialog open={openEditDialog} scroll='paper' fullWidth maxWidth='md'>
         <EditProject project={project} setOpenEditDialog={setOpenEditDialog} />
