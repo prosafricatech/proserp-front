@@ -11,8 +11,9 @@ import {
   AccountBalanceWalletOutlined,
   EditOutlined,
   HighlightOff,
-  Money,
+  Inventory2Outlined,
   PaidOutlined,
+  ReceiptLongOutlined,
   TimelineOutlined,
 } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
@@ -668,7 +669,7 @@ function ProjectDashboard() {
             }}
           >
             <CardHeader
-              avatar={<Money color='success' />}
+              avatar={<ReceiptLongOutlined color='success' />}
               title={
                 <Typography variant='h6' fontWeight={600}>
                   Liabilities
@@ -769,7 +770,7 @@ function ProjectDashboard() {
           >
             <CardHeader
               avatar={
-                <AccountBalanceWalletOutlined color='success' sx={{ mr: 1 }} />
+                <Inventory2Outlined color='success' sx={{ mr: 1 }} />
               }
               title={
                 <Typography variant='h6' fontWeight={600}>
