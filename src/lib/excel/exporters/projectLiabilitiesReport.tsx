@@ -6,7 +6,8 @@ const AMT_FMT = '#,###.00';
 
 export async function exportProjectLiabilitiesExcel(exportedData: any) {
   try {
-    const { organization, project, currencyCode, rows, total } = exportedData;
+    const { organization, project, currencyCode, rows, total, activeTab } =
+      exportedData;
 
     const orgName = organization?.name || 'Organization';
     const projectName =
@@ -24,7 +25,10 @@ export async function exportProjectLiabilitiesExcel(exportedData: any) {
     ];
 
     // ── ROW 1: Org name (A) + Report title (B) ─────────────────────────────
-    ws.addRow([orgName, 'Project Liabilities Summary']);
+    ws.addRow([
+      orgName,
+      `Project ${activeTab === 0 ? 'Creditors' : 'Debtors'} Summary`,
+    ]);
     ws.getCell('A1').font = { bold: true, size: 12 };
     ws.getCell('B1').font = { bold: true, size: 12 };
     ws.getCell('B1').alignment = { horizontal: 'right' };
@@ -51,7 +55,10 @@ export async function exportProjectLiabilitiesExcel(exportedData: any) {
     // ── TABLE HEADER ROW ────────────────────────────────────────────────────
     // PDF: Creditor (flex 2) | Amount/currencyCode (flex 1, right-aligned)
     const headerRowNum = (ws.lastRow?.number ?? 0) + 1;
-    ws.addRow(['Creditor', currencyCode || 'Amount']);
+    ws.addRow([
+      activeTab === 0 ? 'Creditor' : 'Debtor',
+      currencyCode || 'Amount',
+    ]);
     applyCellStyle(ws.getCell(`A${headerRowNum}`), CELL_STYLES.tableHeader);
     applyCellStyle(ws.getCell(`B${headerRowNum}`), CELL_STYLES.tableHeader);
     ws.getCell(`B${headerRowNum}`).alignment = {

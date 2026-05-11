@@ -27,6 +27,7 @@ const ProjectLiabilityDocumentDialog = ({
   organization,
   user,
   liabilitiesPaylod,
+  activeTab,
 }) => {
   const [isExporting, setIsExporting] = useState(false);
 
@@ -122,6 +123,7 @@ const ProjectLiabilityDocumentDialog = ({
                 user={user}
                 ledgerName={liabilitiesPaylod?.liabilityName}
                 increasesWith={liabilitiesPaylod?.increasesWith}
+                activeTab={activeTab}
               />
             }
           />

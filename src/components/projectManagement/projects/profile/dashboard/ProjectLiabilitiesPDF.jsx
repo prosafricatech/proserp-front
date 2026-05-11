@@ -15,6 +15,7 @@ function ProjectLiabilitiesPDF({
   currencyCode,
   rows,
   total,
+  activeTab,
 }) {
   const mainColor = organization?.settings?.main_color ?? '#2113AD';
   const lightColor = organization?.settings?.light_color ?? '#F4F6FB';
@@ -40,7 +41,7 @@ function ProjectLiabilitiesPDF({
           </View>
           <View style={{ flex: 1, textAlign: 'right' }}>
             <Text style={{ ...pdfStyles.majorInfo, color: mainColor }}>
-              Project Liabilities
+              Project {activeTab === 0 ? 'Creditors' : 'Debtors'}
             </Text>
             <Text style={pdfStyles.midInfo}>{projectName}</Text>
           </View>
@@ -64,7 +65,7 @@ function ProjectLiabilitiesPDF({
                 flex: 2,
               }}
             >
-              Creditor
+              {activeTab === 0 ? 'Creditors' : 'Debtors'}
             </Text>
             <Text
               style={{

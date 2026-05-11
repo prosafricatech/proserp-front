@@ -10,6 +10,7 @@ const ProjectLiabilityDocumentPDF = ({
   ledger,
   ledgerName,
   increasesWith,
+  activeTab,
 }) => {
   const [openingBalanceTx, ...restTransactions] = transactionsData.transactions;
 

@@ -81,6 +81,7 @@ const DashboardDocumentDialog = ({
   onScreenContent,
   exportedData,
   documentType,
+  activeTab,
   inventoryValuesParam,
   inventoryValues,
 }) => {
@@ -165,7 +166,9 @@ const DashboardDocumentDialog = ({
       a.href = url;
       const excelName =
         documentType === 'liabilities'
-          ? 'project-liabilities-report'
+          ? activeTab === 0
+            ? 'project-credotors-report'
+            : 'project-debtors-report'
           : 'project-inventory-value-report';
       a.download = `${excelName}${'_' + dayjs().format('DD MMM YYYY, HH:mm')}.xlsx`;
       a.click();
@@ -374,8 +377,14 @@ function ProjectDashboard() {
   const baseCurrency = currencies?.find((c) => c.is_base === 1);
   const currencyCode = baseCurrency?.code;
   const hasClient = !!(project?.client_id || project?.client?.id);
-  const [liabilitiesTotal, setLiabilitiesTotal] = useState(0);
+  const [creditorsTotal, setCreditorsTotal] = useState(0);
+  const [debitorsTotal, setDebitorsTotal] = useState(0);
   const [openDialog, setOpenDialog] = useState(false);
+  const [activeTab, setActiveTab] = useState(0);
+
+  const handleTabChange = (event, newValue) => {
+    setActiveTab(newValue);
+  };
 
   let cost_center_id = [];
   cost_center_id.push(project?.cost_center?.id);
@@ -430,19 +439,31 @@ function ProjectDashboard() {
     as_at: dayjs().toISOString(),
     cost_center_ids: [project?.id],
   };
-  const { data: liabilites, isLoading: liabilitesLoading } = useQuery({
-    queryKey: [project?.id],
+  const { data: creditors, isLoading: liabilitesLoading } = useQuery({
+    queryKey: [project?.id, 'creditors'],
     queryFn: () => financialReportsServices.creditors(params),
     enabled: !!project?.id,
   });
 
+  const { data: debtors, isLoading: debtorsLoading } = useQuery({
+    queryKey: [project?.id, 'debitors'],
+    queryFn: () => financialReportsServices.debtors(params),
+    enabled: !!project?.id,
+  });
+
   useEffect(() => {
-    const total = liabilites?.creditors?.reduce(
+    const totalCreditors = creditors?.creditors?.reduce(
       (acc, item) => (acc += item.amount),
       0
     );
-    setLiabilitiesTotal(total);
-  }, [liabilites]);
+    const totalDebtors = debtors?.debtors?.reduce(
+      (acc, item) => (acc += item.amount),
+      0
+    );
+    setCreditorsTotal(totalCreditors);
+    setDebitorsTotal(totalDebtors);
+    console.log('debitors: ', debtors);
+  }, [creditors, debtors]);
 
   // inventory values
   const inventoryValuesParam = {
@@ -496,9 +517,14 @@ function ProjectDashboard() {
     return `${currencyCode ? currencyCode + ' ' : ''}${formatted}`;
   };
 
-  const liabilityRows = (liabilites?.creditors || []).map((creditor) => ({
+  const liabilityRows = (creditors?.creditors || []).map((creditor) => ({
     label: creditor.name,
     value: creditor.amount,
+  }));
+
+  const debtorsRow = (debtors?.debtors || []).map((debtor) => ({
+    label: debtor.name,
+    value: debtor.amount,
   }));
 
   const inventorySnapshot = inventoryValues?.[inventoryValues.length - 1];
@@ -511,6 +537,7 @@ function ProjectDashboard() {
   const inventoryTotal = inventorySnapshot?.['Total Value'] || 0;
 
   const canOpenLiabilitiesPdf = liabilityRows.length > 0;
+  const canOpenDebtorsPdf = debtorsRow.length > 0;
   const canOpenInventoryPdf = inventoryRows.length > 0;
 
   const handleOpenDocumentDialog = (report) => {
@@ -524,13 +551,23 @@ function ProjectDashboard() {
   };
 
   const selectedRows =
-    selectedReport === 'liabilities' ? liabilityRows : inventoryRows;
+    selectedReport === 'liabilities'
+      ? activeTab === 0
+        ? liabilityRows
+        : debtorsRow
+      : inventoryRows;
   const selectedTitle =
     selectedReport === 'liabilities'
-      ? 'Project Liabilities Summary'
+      ? activeTab === 0
+        ? 'Project Creditors Summary'
+        : 'Project Debtors Summary'
       : 'Project Inventory Value Summary';
   const selectedTotal =
-    selectedReport === 'liabilities' ? liabilitiesTotal : inventoryTotal;
+    selectedReport === 'liabilities'
+      ? activeTab === 0
+        ? creditorsTotal
+        : debitorsTotal
+      : inventoryTotal;
   const selectedFileName = `${selectedTitle} ${
     project?.name || project?.project_name || 'Project'
   }`;
@@ -542,6 +579,7 @@ function ProjectDashboard() {
         currencyCode={currencyCode}
         rows={selectedRows}
         total={selectedTotal}
+        activeTab={activeTab}
       />
     ) : (
       <ProjectInventoryValuePDF
@@ -580,6 +618,7 @@ function ProjectDashboard() {
       currencyCode: currencyCode,
       rows: selectedRows,
       total: selectedTotal,
+      activeTab: activeTab,
     };
   } else {
     exportedData = {
@@ -848,9 +887,14 @@ function ProjectDashboard() {
             <CardHeader
               avatar={<ReceiptLongOutlined color='success' />}
               title={
-                <Typography variant='h6' fontWeight={600}>
-                  Liabilities
-                </Typography>
+                <Tabs
+                  value={activeTab}
+                  onChange={handleTabChange}
+                  variant='fullWidth'
+                >
+                  <Tab label='Creditors' />
+                  <Tab label='Debitors' />
+                </Tabs>
               }
             />
             <CardContent
@@ -867,8 +911,58 @@ function ProjectDashboard() {
                   <Skeleton variant='text' height={80} />
                   <Skeleton variant='rectangular' height={8} sx={{ mt: 2 }} />
                 </>
-              ) : liabilites?.creditors.length ? (
-                liabilites?.creditors.map((l, i) => (
+              ) : activeTab === 0 ? (
+                creditors?.creditors.length ? (
+                  creditors?.creditors.map((l, i) => (
+                    <React.Fragment key={i}>
+                      <Divider />
+                      <Grid container size={12} sx={{ py: 1, px: 1 }}>
+                        <Grid size={8}>
+                          <Tooltip title='Name'>
+                            <Typography>{l.name}</Typography>
+                          </Tooltip>
+                        </Grid>
+                        <Grid size={4}>
+                          <Tooltip title='Amount'>
+                            <Typography
+                              textAlign={'right'}
+                              onClick={() => {
+                                setLiabilitiesPayload((prevPayload) => ({
+                                  ...prevPayload,
+                                  ledger_id: l.id,
+                                  liabilityName: l.name,
+                                  increasesWith: l.increasesWith,
+                                }));
+                                setOpenDialog(true);
+                              }}
+                              sx={{
+                                cursor: canOpenLiabilitiesPdf
+                                  ? 'pointer'
+                                  : 'default',
+                                '&:hover': canOpenLiabilitiesPdf
+                                  ? {
+                                      color: 'primary.main',
+                                    }
+                                  : undefined,
+                              }}
+                            >
+                              {parseFloat(l.amount).toLocaleString('en-US', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </Typography>
+                          </Tooltip>
+                        </Grid>
+                      </Grid>
+                    </React.Fragment>
+                  ))
+                ) : (
+                  <Alert variant='outlined' severity='info'>
+                    No Creditors Found
+                  </Alert>
+                )
+              ) : debtors?.debtors.length ? (
+                debtors?.debtors.map((l, i) => (
                   <React.Fragment key={i}>
                     <Divider />
                     <Grid container size={12} sx={{ py: 1, px: 1 }}>
@@ -913,7 +1007,7 @@ function ProjectDashboard() {
                 ))
               ) : (
                 <Alert variant='outlined' severity='info'>
-                  No Liabilities Found
+                  No Debtors Found
                 </Alert>
               )}
             </CardContent>
@@ -930,22 +1024,27 @@ function ProjectDashboard() {
                       textAlign={'right'}
                       fontWeight={'bold'}
                       onClick={() =>
-                        canOpenLiabilitiesPdf &&
+                        canOpenDebtorsPdf &&
                         handleOpenDocumentDialog('liabilities')
                       }
                       sx={{
-                        cursor: canOpenLiabilitiesPdf ? 'pointer' : 'default',
-                        '&:hover': canOpenLiabilitiesPdf
+                        cursor: canOpenDebtorsPdf ? 'pointer' : 'default',
+                        '&:hover': canOpenDebtorsPdf
                           ? {
                               color: 'primary.main',
                             }
                           : undefined,
                       }}
                     >
-                      {parseFloat(liabilitiesTotal).toLocaleString('en-US', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
+                      {activeTab === 0
+                        ? parseFloat(creditorsTotal).toLocaleString('en-US', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })
+                        : parseFloat(debitorsTotal).toLocaleString('en-US', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
                     </Typography>
                   </Tooltip>
                 </Grid>
@@ -1077,6 +1176,7 @@ function ProjectDashboard() {
             onScreenContent={selectedOnScreenContent}
             exportedData={exportedData}
             documentType={selectedReport}
+            activeTab={activeTab}
             inventoryValuesParam={inventoryValuesParam}
             inventoryValues={inventoryValues}
           />
@@ -1090,6 +1190,7 @@ function ProjectDashboard() {
         organization={authOrganization}
         user={user}
         liabilitiesPaylod={liabilitiesPayload}
+        activeTab={activeTab}
       />
 
       <Dialog open={openEditDialog} scroll='paper' fullWidth maxWidth='md'>
