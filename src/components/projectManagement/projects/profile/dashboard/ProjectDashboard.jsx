@@ -57,6 +57,7 @@ import ProjectInventoryValuePDF from './ProjectInventoryValuePDF';
 import ProjectInventoryValueTrend from './ProjectInventoryValueTrend';
 import ProjectLiabilitiesOnScreen from './ProjectLiabilitiesOnScreen';
 import ProjectLiabilitiesPDF from './ProjectLiabilitiesPDF';
+import ProjectLiabilityDocumentDialog from './ProjectLiabilityDocumentDialog';
 
 const EditProject = ({ project, setOpenEditDialog }) => {
   return <ProjectForm project={project} setOpenDialog={setOpenEditDialog} />;
@@ -211,7 +212,11 @@ const DashboardDocumentDialog = ({
       <DialogContent>
         {showTabs ? (
           <Box>
-            <Grid container alignItems='center' justifyContent='space-between'>
+            <Grid
+              container
+              alignItems={smallScreen ? 'start' : 'center'}
+              justifyContent='space-between'
+            >
               <Grid container size={{ xs: 11 }}>
                 <Grid size={8}>
                   <Tabs value={selectedTab} onChange={handleTabChange}>
@@ -227,96 +232,78 @@ const DashboardDocumentDialog = ({
                   </Tabs>
                 </Grid>
                 <Grid size={4} display={'flex'} justifyContent={'end'}>
-                  {selectedTab === 0 &&
-                    isInventoryDocument &&
-                    (!smallScreen ? (
-                      <ButtonGroup
-                        variant='outlined'
-                        size='small'
-                        disableElevation
-                      >
-                        <Tooltip title='Daily Trend'>
-                          <Button
-                            variant={
-                              rangeValue === 'day' ? 'contained' : 'outlined'
-                            }
-                            onClick={() => setRangeValue('day')}
-                          >
-                            Daily
-                          </Button>
-                        </Tooltip>
-                        <Tooltip title='Weekly Trend'>
-                          <Button
-                            variant={
-                              rangeValue === 'week' ? 'contained' : 'outlined'
-                            }
-                            onClick={() => setRangeValue('week')}
-                          >
-                            Weekly
-                          </Button>
-                        </Tooltip>
-                        <Tooltip title='Monthly Trend'>
-                          <Button
-                            variant={
-                              rangeValue === 'month' ? 'contained' : 'outlined'
-                            }
-                            onClick={() => setRangeValue('month')}
-                          >
-                            Monthly
-                          </Button>
-                        </Tooltip>
-                        <Tooltip title='Yearly Trend'>
-                          <Button
-                            variant={
-                              rangeValue === 'year' ? 'contained' : 'outlined'
-                            }
-                            onClick={() => setRangeValue('year')}
-                          >
-                            Yearly
-                          </Button>
-                        </Tooltip>
-                      </ButtonGroup>
-                    ) : (
-                      <Div sx={{ mt: 1 }}>
-                        <FormControl fullWidth size='small'>
-                          <InputLabel id='inventory-value-trend-group-by-input-label'>
-                            Interval
-                          </InputLabel>
-                          <Select
-                            labelId='inventory-value-trend-group-by-label'
-                            id='inventory-value-trend-group-by'
-                            value={rangeValue}
-                            label='Interval'
-                            onChange={(e) => setRangeValue(e.target.value)}
-                          >
-                            <MenuItem value='day'>Daily</MenuItem>
-                            <MenuItem value='week'>Weekly</MenuItem>
-                            <MenuItem value='month'>Monthly</MenuItem>
-                            <MenuItem value='year'>Yearly</MenuItem>
-                          </Select>
-                        </FormControl>
-                      </Div>
-                    ))}
-                  {/* {showExcelAction && (
-                    <LoadingButton
+                  {selectedTab === 0 && isInventoryDocument && !smallScreen && (
+                    <ButtonGroup
+                      variant='outlined'
                       size='small'
-                      onClick={() => handlExcelExport(exportedData)}
-                      loading={isExporting}
-                      sx={{
-                        width: 'fit-content',
-                        height: 'fit-content',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 1,
-                        mx: 4,
-                      }}
-                      color='success'
-                      variant='contained'
+                      disableElevation
                     >
-                      <FontAwesomeIcon icon={faFileExcel} color='green' /> Excel
-                    </LoadingButton>
-                  )} */}
+                      <Tooltip title='Daily Trend'>
+                        <Button
+                          variant={
+                            rangeValue === 'day' ? 'contained' : 'outlined'
+                          }
+                          onClick={() => setRangeValue('day')}
+                        >
+                          Daily
+                        </Button>
+                      </Tooltip>
+                      <Tooltip title='Weekly Trend'>
+                        <Button
+                          variant={
+                            rangeValue === 'week' ? 'contained' : 'outlined'
+                          }
+                          onClick={() => setRangeValue('week')}
+                        >
+                          Weekly
+                        </Button>
+                      </Tooltip>
+                      <Tooltip title='Monthly Trend'>
+                        <Button
+                          variant={
+                            rangeValue === 'month' ? 'contained' : 'outlined'
+                          }
+                          onClick={() => setRangeValue('month')}
+                        >
+                          Monthly
+                        </Button>
+                      </Tooltip>
+                      <Tooltip title='Yearly Trend'>
+                        <Button
+                          variant={
+                            rangeValue === 'year' ? 'contained' : 'outlined'
+                          }
+                          onClick={() => setRangeValue('year')}
+                        >
+                          Yearly
+                        </Button>
+                      </Tooltip>
+                    </ButtonGroup>
+                  )}
                 </Grid>
+                {smallScreen && (
+                  <Grid size={12} my={2}>
+                    <Div sx={{ mt: 1 }}>
+                      <FormControl fullWidth size='small'>
+                        <InputLabel id='inventory-value-trend-group-by-input-label'>
+                          Interval
+                        </InputLabel>
+                        <Select
+                          labelId='inventory-value-trend-group-by-label'
+                          id='inventory-value-trend-group-by'
+                          value={rangeValue}
+                          label='Interval'
+                          onChange={(e) => setRangeValue(e.target.value)}
+                        >
+                          <MenuItem value='day'>Daily</MenuItem>
+                          <MenuItem value='week'>Weekly</MenuItem>
+                          <MenuItem value='month'>Monthly</MenuItem>
+                          <MenuItem value='year'>Yearly</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Div>
+                  </Grid>
+                )}
               </Grid>
               {belowLargeScreen && (
                 <Grid size={{ xs: 1 }} textAlign='right'>
@@ -379,14 +366,28 @@ function ProjectDashboard() {
   const [openDocumentDialog, setOpenDocumentDialog] = useState(false);
   const [selectedReport, setSelectedReport] = useState(null);
   const { currencies } = useCurrencySelect();
-  const { authOrganization } = useJumboAuth();
+  const { authOrganization, authUser } = useJumboAuth();
   const organization = authOrganization?.organization;
+  const user = authUser?.user;
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
   const baseCurrency = currencies?.find((c) => c.is_base === 1);
   const currencyCode = baseCurrency?.code;
   const hasClient = !!(project?.client_id || project?.client?.id);
   const [liabilitiesTotal, setLiabilitiesTotal] = useState(0);
+  const [openDialog, setOpenDialog] = useState(false);
+
+  let cost_center_id = [];
+  cost_center_id.push(project?.cost_center?.id);
+
+  const [liabilitiesPayload, setLiabilitiesPayload] = useState({
+    from: project.commencement_date
+      ? dayjs(project.commencement_date).toISOString()
+      : dayjs(organization?.recording_start_date).toISOString(),
+    to: dayjs().toISOString(),
+    cost_center_ids: cost_center_id,
+    with_item_description: true,
+  });
 
   // Fetch all dashboard figures in one call
   const { data: dashboardFigures, isLoading: isLoadingDashboard } = useQuery({
@@ -435,6 +436,8 @@ function ProjectDashboard() {
     enabled: !!project?.id,
   });
 
+  console.log('creditors: ', liabilites);
+
   useEffect(() => {
     const total = liabilites?.creditors?.reduce(
       (acc, item) => (acc += item.amount),
@@ -444,10 +447,10 @@ function ProjectDashboard() {
   }, [liabilites]);
 
   // inventory values
-  let cost_center_id = [];
-  cost_center_id.push(project?.cost_center?.id);
   const inventoryValuesParam = {
-    from: dayjs(project.commencement_date).toISOString(),
+    from: project.commencement_date
+      ? dayjs(project.commencement_date).toISOString()
+      : dayjs(organization?.recording_start_date).toISOString(),
     to: dayjs().toISOString(),
     cost_center_ids: cost_center_id,
     aggregate_by: 'day',
@@ -878,7 +881,28 @@ function ProjectDashboard() {
                       </Grid>
                       <Grid size={4}>
                         <Tooltip title='Amount'>
-                          <Typography textAlign={'right'}>
+                          <Typography
+                            textAlign={'right'}
+                            onClick={() => {
+                              setLiabilitiesPayload((prevPayload) => ({
+                                ...prevPayload,
+                                ledger_id: l.id,
+                                liabilityName: l.name,
+                                increasesWith: l.increasesWith,
+                              }));
+                              setOpenDialog(true);
+                            }}
+                            sx={{
+                              cursor: canOpenLiabilitiesPdf
+                                ? 'pointer'
+                                : 'default',
+                              '&:hover': canOpenLiabilitiesPdf
+                                ? {
+                                    color: 'primary.main',
+                                  }
+                                : undefined,
+                            }}
+                          >
                             {parseFloat(l.amount).toLocaleString('en-US', {
                               minimumFractionDigits: 2,
                               maximumFractionDigits: 2,
@@ -899,13 +923,14 @@ function ProjectDashboard() {
               <Grid container size={12} sx={{ py: 1, px: 1 }}>
                 <Grid size={6}>
                   <Tooltip title='Total'>
-                    <Typography>Total</Typography>
+                    <Typography fontWeight={'bold'}>Total</Typography>
                   </Tooltip>
                 </Grid>
                 <Grid size={6}>
-                  <Tooltip title='Click to preview'>
+                  <Tooltip title='More details'>
                     <Typography
                       textAlign={'right'}
+                      fontWeight={'bold'}
                       onClick={() =>
                         canOpenLiabilitiesPdf &&
                         handleOpenDocumentDialog('liabilities')
@@ -948,7 +973,7 @@ function ProjectDashboard() {
               avatar={<Inventory2Outlined color='success' sx={{ mr: 1 }} />}
               title={
                 <Typography variant='h6' fontWeight={600}>
-                  Inventory value
+                  Inventory Value
                 </Typography>
               }
             />
@@ -1003,13 +1028,14 @@ function ProjectDashboard() {
                 <Grid container size={12} sx={{ py: 1, px: 1 }}>
                   <Grid size={6}>
                     <Tooltip title='Total'>
-                      <Typography>Total</Typography>
+                      <Typography fontWeight={'bold'}>Total</Typography>
                     </Tooltip>
                   </Grid>
                   <Grid size={6}>
-                    <Tooltip title='Click to preview'>
+                    <Tooltip title='More details'>
                       <Typography
                         textAlign={'right'}
+                        fontWeight={'bold'}
                         onClick={() =>
                           canOpenInventoryPdf &&
                           handleOpenDocumentDialog('inventory')
@@ -1058,6 +1084,15 @@ function ProjectDashboard() {
           />
         )}
       </Dialog>
+
+      <ProjectLiabilityDocumentDialog
+        openDialog={openDialog}
+        onClose={setOpenDialog}
+        baseCurrency={baseCurrency}
+        organization={authOrganization}
+        user={user}
+        liabilitiesPaylod={liabilitiesPayload}
+      />
 
       <Dialog open={openEditDialog} scroll='paper' fullWidth maxWidth='md'>
         <EditProject project={project} setOpenEditDialog={setOpenEditDialog} />
