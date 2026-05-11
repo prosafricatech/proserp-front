@@ -13,7 +13,7 @@ const ProjectLiabilityDocumentPDF = ({
 }) => {
   const [openingBalanceTx, ...restTransactions] = transactionsData.transactions;
 
-  // Opening balance seeds cumulative balance but is excluded from DR/CR totals
+  //  Opening balance seeds cumulative balance but is excluded from DR/CR totals
   const openingBalance = openingBalanceTx
     ? increasesWith === 'DR'
       ? openingBalanceTx.debit - openingBalanceTx.credit
