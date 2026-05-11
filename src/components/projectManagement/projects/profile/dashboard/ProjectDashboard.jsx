@@ -183,7 +183,7 @@ const DashboardDocumentDialog = ({
               <FontAwesomeIcon icon={faFileExcel} color='green' /> Excel
             </LoadingButton>
           )}
-          {belowLargeScreen && (
+          {(
             <Button
               variant='outlined'
               size='small'
