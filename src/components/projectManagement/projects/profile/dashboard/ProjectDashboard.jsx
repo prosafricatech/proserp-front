@@ -144,10 +144,11 @@ const DashboardDocumentDialog = ({
 
   const isInventoryDocument = documentType === 'inventory';
   const showTabs = belowLargeScreen || isInventoryDocument;
+
   const showExcelAction =
-    !showTabs ||
-    selectedTab === 1 ||
-    (documentType !== 'inventory' && selectedTab === 1);
+    ((documentType === 'liabilities' || documentType === 'inventory') &&
+      selectedTab === 1) ||
+    !showTabs;
 
   const handlExcelExport = async (exportedData) => {
     setIsExporting(true);
@@ -186,7 +187,7 @@ const DashboardDocumentDialog = ({
           justifyContent={'end'}
           width={'100%'}
         >
-          {documentType === 'liabilities' && (
+          {showExcelAction && (
             <LoadingButton
               size='small'
               onClick={() => handlExcelExport(exportedData)}
@@ -296,7 +297,7 @@ const DashboardDocumentDialog = ({
                         </FormControl>
                       </Div>
                     ))}
-                  {showExcelAction && (
+                  {/* {showExcelAction && (
                     <LoadingButton
                       size='small'
                       onClick={() => handlExcelExport(exportedData)}
@@ -314,7 +315,7 @@ const DashboardDocumentDialog = ({
                     >
                       <FontAwesomeIcon icon={faFileExcel} color='green' /> Excel
                     </LoadingButton>
-                  )}
+                  )} */}
                 </Grid>
               </Grid>
               {belowLargeScreen && (
