@@ -107,8 +107,6 @@ const DashboardDocumentDialog = ({
       a.download = `${excelName}${'_' + dayjs().format('DD MMM YYYY, HH:mm')}.xlsx`;
       a.click();
       window.URL.revokeObjectURL(url);
-
-      // console.log('blob: ', blob);
     } catch (e) {
       console.log('error exporting: ', e);
     } finally {
@@ -155,7 +153,9 @@ const DashboardDocumentDialog = ({
               {selectedTab === 1 && (
                 <PDFContent document={document} fileName={fileName} />
               )}
-              {selectedTab === 2 && belowLargeScreen && isInventoryDocument &&
+              {selectedTab === 2 &&
+                belowLargeScreen &&
+                isInventoryDocument &&
                 onScreenContent}
             </Box>
           </Box>
@@ -183,7 +183,7 @@ const DashboardDocumentDialog = ({
               <FontAwesomeIcon icon={faFileExcel} color='green' /> Excel
             </LoadingButton>
           )}
-          {(
+          {
             <Button
               variant='outlined'
               size='small'
@@ -192,7 +192,7 @@ const DashboardDocumentDialog = ({
             >
               Close
             </Button>
-          )}
+          }
         </Box>
       </DialogActions>
     </>
@@ -270,16 +270,18 @@ function ProjectDashboard() {
   }, [liabilites]);
 
   // inventory values
+  let cost_center_id = [];
+  cost_center_id.push(project?.cost_center?.id);
   const inventoryValuesParam = {
     from: dayjs(project.commencement_date).toISOString(),
     to: dayjs().toISOString(),
-    cost_center_ids: project?.cost_center?.id,
+    cost_center_ids: cost_center_id,
     aggregate_by: 'day',
     group_by: 'product_category',
   };
   const { data: inventoryValues = [], isLoading: inventoryValuesLoading } =
     useQuery({
-      queryKey: ['inventoryValueTrend', project?.id],
+      queryKey: ['inventoryValueTrend', project?.cost_center?.id],
       queryFn: async () => {
         const res =
           await financialReportsServices.inventoryValue(inventoryValuesParam);
@@ -769,9 +771,7 @@ function ProjectDashboard() {
             }}
           >
             <CardHeader
-              avatar={
-                <Inventory2Outlined color='success' sx={{ mr: 1 }} />
-              }
+              avatar={<Inventory2Outlined color='success' sx={{ mr: 1 }} />}
               title={
                 <Typography variant='h6' fontWeight={600}>
                   Inventory value
