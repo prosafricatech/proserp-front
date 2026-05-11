@@ -436,8 +436,6 @@ function ProjectDashboard() {
     enabled: !!project?.id,
   });
 
-  console.log('creditors: ', liabilites);
-
   useEffect(() => {
     const total = liabilites?.creditors?.reduce(
       (acc, item) => (acc += item.amount),

@@ -11,7 +11,6 @@ const ProjectLiabilityDocumentPDF = ({
   ledgerName,
   increasesWith,
 }) => {
-  console.log('transactionsData: ', transactionsData);
   const [openingBalanceTx, ...restTransactions] = transactionsData.transactions;
 
   // Opening balance seeds cumulative balance but is excluded from DR/CR totals

@@ -1,5 +1,9 @@
+import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import ledgerServices from '@/components/accounts/ledgers/ledger-services';
 import PDFContent from '@/components/pdf/PDFContent';
+import { faFileExcel } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { LoadingButton } from '@mui/lab';
 import {
   Box,
   Button,
@@ -13,6 +17,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
 import ProjectLiabilityDocumentPDF from './ProjectLiabilityDocumentPDF';
 
 const ProjectLiabilityDocumentDialog = ({
@@ -23,37 +28,63 @@ const ProjectLiabilityDocumentDialog = ({
   user,
   liabilitiesPaylod,
 }) => {
+  const [isExporting, setIsExporting] = useState(false);
+
   const { data: transactions, isLoading } = useQuery({
     queryKey: ['budgetItemsDetails', liabilitiesPaylod],
     queryFn: async () => ledgerServices.statement(liabilitiesPaylod),
   });
 
+  const exportedData = {
+    transactionsData: transactions,
+    authOrganization: organization,
+    user: user,
+    ledgerName: liabilitiesPaylod?.liabilityName,
+    increasesWith: liabilitiesPaylod?.increasesWith,
+  };
+
+  const handlExcelExport = async (exportedData) => {
+    setIsExporting(true);
+    try {
+      const blob = await ledgerServices.exportLedgerStatement(exportedData);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${'Ledger_Statement_Report_'} ${readableDate(exportedData.transactionsData?.filters?.from, true)} - ${readableDate(exportedData.transactionsData?.filters?.to, true)}.xlsx`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      console.log('error exporting: ', e);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <Dialog open={openDialog} fullWidth maxWidth={'md'}>
       <DialogTitle>
-        <Typography variant='body1' textAlign={'center'}>
+        <Typography textAlign={'center'}>
           {liabilitiesPaylod?.liabilityName ?? 'Liability'} Statement
         </Typography>
-        {/* <Grid size={{ xs: 12 }} textAlign={'right'}>
-                      <Stack
-                        direction='row'
-                        spacing={0.5}
-                        justifyContent='flex-end'
-                        alignItems='center'
-                      >
-                        <LoadingButton
-                          size='small'
-                          onClick={() => handlExcelExport(exportedData)}
-                          loading={isExporting}
-                          disabled={isFetching}
-                          variant='contained'
-                          color='success'
-                        >
-                          <FontAwesomeIcon icon={faFileExcel} color='green' />
-                          Excel
-                        </LoadingButton>
-                      </Stack>
-                    </Grid> */}
+        <Grid size={{ xs: 12 }} textAlign={'right'}>
+          <Stack
+            direction='row'
+            spacing={0.5}
+            justifyContent='flex-end'
+            alignItems='center'
+          >
+            <LoadingButton
+              size='small'
+              onClick={() => handlExcelExport(exportedData)}
+              loading={isExporting}
+              variant='contained'
+              color='success'
+            >
+              <FontAwesomeIcon icon={faFileExcel} color='green' />
+              Excel
+            </LoadingButton>
+          </Stack>
+        </Grid>
       </DialogTitle>
       <DialogContent>
         {isLoading ? (
@@ -90,6 +121,7 @@ const ProjectLiabilityDocumentDialog = ({
                 authOrganization={organization}
                 user={user}
                 ledgerName={liabilitiesPaylod?.liabilityName}
+                increasesWith={liabilitiesPaylod?.increasesWith}
               />
             }
           />
