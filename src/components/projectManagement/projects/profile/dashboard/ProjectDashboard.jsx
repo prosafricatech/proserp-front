@@ -144,7 +144,10 @@ const DashboardDocumentDialog = ({
 
   const isInventoryDocument = documentType === 'inventory';
   const showTabs = belowLargeScreen || isInventoryDocument;
-  const showExcelAction = !showTabs || selectedTab === 1;
+  const showExcelAction =
+    !showTabs ||
+    selectedTab === 1 ||
+    (documentType !== 'inventory' && selectedTab === 1);
 
   const handlExcelExport = async (exportedData) => {
     setIsExporting(true);
@@ -182,7 +185,27 @@ const DashboardDocumentDialog = ({
           alignContent={'center'}
           justifyContent={'end'}
           width={'100%'}
-        ></Box>
+        >
+          {documentType === 'liabilities' && (
+            <LoadingButton
+              size='small'
+              onClick={() => handlExcelExport(exportedData)}
+              loading={isExporting}
+              sx={{
+                width: 'fit-content',
+                height: 'fit-content',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                mx: 4,
+              }}
+              color='success'
+              variant='contained'
+            >
+              <FontAwesomeIcon icon={faFileExcel} color='green' /> Excel
+            </LoadingButton>
+          )}
+        </Box>
       </DialogTitle>
       <DialogContent>
         {showTabs ? (
