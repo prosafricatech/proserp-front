@@ -14,6 +14,8 @@ import {
   Tooltip,
   IconButton,
   Dialog,
+  DialogActions,
+  Button,
   useTheme,
   Skeleton
 } from '@mui/material';
@@ -21,6 +23,9 @@ import { VisibilityOutlined } from '@mui/icons-material';
 import { useQuery } from '@tanstack/react-query';
 import purchaseServices from '../procurement/purchases/purchase-services';
 import RelatableOrderDetails from './requisitions/listItem/tabs/form/RelatableOrderDetails';
+import projectsServices from '@/components/projectManagement/projects/project-services.js';
+import CertificateOnScreen from '@/components/projectManagement/projects/profile/subcontracts/tabs/certificatesTab/preview/CertificateOnScreen';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import { PaymentItem, PurchaseItem, Requisition, RequisitionItem, Vendor } from './RequisitionType';
 import { Organization } from '@/types/auth-types';
@@ -69,30 +74,44 @@ const normalizeLeaveItem = (item: any): LeaveViewItem => ({
       : undefined),
 });
 
-// --- Fetch Order Details Component ---
+// --- Fetch Relatable Details Component ---
 const FetchRelatableDetails: React.FC<{
-  relatable: { id: number } | undefined;
+  relatable: any;
   toggleOpen: (open: boolean) => void;
 }> = ({ relatable, toggleOpen }) => {
-  const { data: orderDetails, isPending } = useQuery({
-    queryKey: ['purchaseOrder', relatable?.id],
-    queryFn: () => {
-      if (!relatable?.id) throw new Error('Missing relatable ID');
-      return purchaseServices.orderDetails(relatable.id);
-    },
-    enabled: !!relatable?.id
-  });
+  const { authOrganization } = useJumboAuth();
+  if (!relatable) return null;
 
-    if (isPending) 
-      return (
-        <div style={{ width: '100%', padding: '16px' }}>
-          <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-          <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-          <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
-        </div>
-      );
-      
-  return <RelatableOrderDetails order={orderDetails} toggleOpen={toggleOpen} />;
+  if (relatable.order_date) {
+    const { data: orderDetails, isFetching } = useQuery({
+      queryKey: ['purchaseOrder', relatable?.id],
+      queryFn: () => purchaseServices.orderDetails(relatable?.id),
+    });
+    if (isFetching) {
+      return <LinearProgress />;
+    }
+    return <RelatableOrderDetails order={orderDetails} toggleOpen={toggleOpen} />;
+  }
+
+  if (relatable.certificate_date) {
+    const { data: certificateDetails, isFetching } = useQuery({
+      queryKey: ['subcontractCertificate', relatable?.id],
+      queryFn: () => projectsServices.getCertificateDetails(relatable?.id),
+    });
+    if (isFetching) {
+      return <LinearProgress />;
+    }
+    return <>
+      <CertificateOnScreen isFromProcessApproval={true} certificate={certificateDetails} organization={authOrganization?.organization as Organization} />
+      <DialogActions sx={{ pb: 2 }}>
+        <Button variant="outlined" size='small' color="primary" onClick={() => toggleOpen(false)}>
+          Close
+        </Button>
+      </DialogActions>
+    </>;
+  }
+
+  return null;
 };
 
 // --- Main Component ---
@@ -286,14 +305,14 @@ const RequisitionsOnScreen: React.FC<Props> = ({
                                     ({item.remarks})
                                   </Typography>
                                 )}
-                                {item.relatableNo && (
+                                {!!item.relatable && (
                                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
                                     <Tooltip title="Related to">
                                       <Typography variant="body2" component="span" color="primary.main">
-                                        {item.relatableNo}
+                                        {item.relatableNo || readableDate(item.relatable?.certificate_date, false)}
                                       </Typography>
                                     </Tooltip>
-                                    <Tooltip title="View Order">
+                                    <Tooltip title={`View ${item?.relatable_type === 'purchase' ? 'Purchase Order' : 'Certificate'}`}>
                                       <IconButton
                                         size="small"
                                         onClick={() => {

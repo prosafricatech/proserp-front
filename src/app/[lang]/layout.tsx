@@ -2,11 +2,11 @@ import type { Metadata, Viewport } from 'next';
 import '@/styles/style.css';
 import '@assets/fonts/noir-pro/styles.css';
 import { ReactNode } from 'react';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Providers } from '../providers';
 import { getDictionary } from './dictionaries';
 import { DictionaryProvider } from './contexts/DictionaryContext';
 import { LanguageProvider } from './contexts/LanguageContext';
-import { SpeedInsights } from "@vercel/speed-insights/next";
 
 interface RootLayoutProps {
   children: ReactNode;

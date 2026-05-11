@@ -26,6 +26,7 @@ import {
   useMediaQuery,
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import LedgerSelectProvider from '../ledgers/forms/LedgerSelectProvider';
 import BalanceSheet from './balance sheet/BalanceSheet';
 import CashierReport from './cashierReport/CashierReport';
@@ -35,6 +36,7 @@ import TrialBalance from './trial balance/TrialBalance';
 import XReport from './zReport/ZReport';
 
 function AccountsReports() {
+  const searchParams = useSearchParams();
   const css = useProsERPStyles();
   const [openDialog, setOpenDialog] = useState(false);
   const [openBalanceSheet, setOpenBalanceSheet] = useState(false);
@@ -58,6 +60,33 @@ function AccountsReports() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Auto-open report dialog if ?report= param is present
+  useEffect(() => {
+    if (!mounted) return;
+    const reportParam = searchParams.get('report');
+    if (!reportParam) return;
+    if (reportParam === 'trial-balance') {
+      setReport(<TrialBalance setOpenTrialBalanceDialog={setOpenTrialBalance} />);
+      setOpenTrialBalance(true);
+    } else if (reportParam === 'income-statement') {
+      setReport(<IncomeStatement setOpenIncomeStatementDialog={setOpenIncomeStatement} />);
+      setOpenIncomeStatement(true);
+    } else if (reportParam === 'cashier-report') {
+      setReport(<CashierReport setOpenCashierReport={setOpenCashierReport} />);
+      setOpenCashierReport(true);
+    } else if (reportParam === 'balance-sheet') {
+      setReport(<BalanceSheet setOpenBalanceSheettDialog={setOpenBalanceSheet} />);
+      setOpenBalanceSheet(true);
+    } else if (reportParam === 'debtors-creditors') {
+      setReport(<DebtorCreditorReport setOpenDebtorsCreditorsDialog={setOpenDialog} />);
+      setOpenDialog(true);
+    } else if (reportParam === 'z-report') {
+      setReport(<XReport />);
+      setOpenReceiptDialog(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mounted, searchParams]);
 
   if (!mounted) return null;
 

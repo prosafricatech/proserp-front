@@ -12,6 +12,7 @@ import ProductsSelectProvider from '../productAndServices/products/ProductsSelec
 import ProductsProvider from '../productAndServices/products/ProductsProvider';
 import LedgerSelectProvider from '../accounts/ledgers/forms/LedgerSelectProvider';
 import StakeholderSelectProvider from '../masters/stakeholders/StakeholderSelectProvider';
+import RequisitionsListItem from './requisitions/listItem/RequisitionsListItem';
 import CurrencySelectProvider from '../masters/Currencies/CurrencySelectProvider';
 import { EventAvailableOutlined, FilterAltOffOutlined, FilterAltOutlined } from '@mui/icons-material';
 import { DateTimePicker } from '@mui/x-date-pickers';
@@ -19,13 +20,13 @@ import dayjs, { Dayjs } from 'dayjs';
 import RequisitionsTypeSelector from './RequisitionsTypeSelector';
 import CostCenterSelector from '../masters/costCenters/CostCenterSelector';
 import RequisitionsWaitingForSelector from './RequisitionsWaitingForSelector';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
+import { getSanitizedSearchKeyword } from '@/utilities/getSanitizedSearchKeyword';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import UnauthorizedAccess from '@/shared/Information/UnauthorizedAccess';
 import { Requisition } from './RequisitionType';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { CostCenter } from '../masters/costCenters/CostCenterType';
-import RequisitionsListItem from './requisitions/listItem/RequisitionsListItem';
 
 interface RequisitionContextType {
   isEditAction: boolean;
@@ -61,6 +62,7 @@ export const requisitionContext = createContext<RequisitionContextType>({
 
 const Requisitions = () => {
     const params = useParams();
+    const searchParams = useSearchParams();
     const listRef = useRef<any>(null);
     const { checkOrganizationPermission, authOrganization } = useJumboAuth();
     const [isEditAction, setIsEditAction] = useState(false);
@@ -72,7 +74,7 @@ const Requisitions = () => {
         queryKey: 'requisitions',
         queryParams: {
             id: params.id as string,
-            keyword: '',
+            keyword: getSanitizedSearchKeyword('Requisitions', searchParams),
             process_type: 'all',
             next_approval_role_id: null,
             cost_center_ids: authOrganization?.costCenters?.map((cost_center: CostCenter) => cost_center.id) || [],
@@ -80,6 +82,17 @@ const Requisitions = () => {
         countKey: 'total',
         dataKey: 'data',
     });
+    // Sync in-page search with global search param
+    useEffect(() => {
+        const search = getSanitizedSearchKeyword('Requisitions', searchParams);
+        setQueryOptions((state) => ({
+            ...state,
+            queryParams: {
+                ...state.queryParams,
+                keyword: search,
+            },
+        }));
+    }, [searchParams]);
 
     const [mounted, setMounted] = React.useState(false);
     React.useEffect(() => {
@@ -281,10 +294,10 @@ const Requisitions = () => {
                                             actionTail={
                                               <Grid container spacing={1}>
                                                 <Grid size={{xs: 11, lg: 11}}>
-                                                  <JumboSearch
-                                                    onChange={handleOnChange}
-                                                    value={queryOptions.queryParams.keyword}
-                                                  />
+                                                                                                    <JumboSearch
+                                                                                                        onChange={handleOnChange}
+                                                                                                        value={queryOptions.queryParams.keyword}
+                                                                                                    />
                                                 </Grid>
                                                 <Grid size={{xs: 1, lg: 1}}>
                                                     <RequisitionsActionTail />

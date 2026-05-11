@@ -1,3 +1,5 @@
 export const PROCESS_TYPES = [
-    'PURCHASE','PAYMENT'
+    'PURCHASE',
+    'PAYMENT',
+    'LEAVE_REQUEST'
 ];

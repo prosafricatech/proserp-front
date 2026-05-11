@@ -154,6 +154,14 @@ function StockReport({ setOpenDialog, isFromDashboard }) {
                     schema.required('Store is required').typeError('Store is required'),
                 otherwise: (schema) => schema.nullable(),
             }),
+        sort_by: yup
+            .string()
+            .oneOf(['brand', 'model', 'specifications', 'item_name', 'sku'], 'Invalid sort field')
+            .default('item_name'),
+        sort_direction: yup
+            .string()
+            .oneOf(['asc', 'desc'], 'Sort direction must be ascending or descending')
+            .default('asc'),
     });
 
     const { setValue, watch, handleSubmit, register, formState: { errors } } = useForm({
@@ -162,7 +170,9 @@ function StockReport({ setOpenDialog, isFromDashboard }) {
             isFromDashboard: isFromDashboard || false,
             store_id: isFromDashboard ? null : activeStore?.id,
             cost_center_ids: authOrganization.costCenters.map(cost_center => cost_center.id),
-            show_zero_balance: 0
+            show_zero_balance: 0,
+            sort_by: 'item_name',
+            sort_direction: 'asc'
         },
         resolver: yupResolver(validationSchema),
     });
@@ -186,6 +196,8 @@ function StockReport({ setOpenDialog, isFromDashboard }) {
                 cost_center_ids: watch('cost_center_ids'),
                 product_category_ids: watch('product_category_ids'),
                 show_zero_balance: watch('show_zero_balance'),
+                sort_by: watch('sort_by'),
+                sort_direction: watch('sort_direction'),
             };
 
             // Pass all filters to the service
@@ -213,6 +225,8 @@ function StockReport({ setOpenDialog, isFromDashboard }) {
             cost_center_ids: watch('cost_center_ids'),
             product_category_ids: watch('product_category_ids'),
             show_zero_balance: watch('show_zero_balance'),
+            sort_by: watch('sort_by'),
+            sort_direction: watch('sort_direction'),
         };
         getAvailableStock(initialFilters);
     }, [!isFromDashboard]);
@@ -275,6 +289,8 @@ function StockReport({ setOpenDialog, isFromDashboard }) {
                                                         store_id: newValue.id,
                                                         cost_center_ids: watch('cost_center_ids'),
                                                         show_zero_balance: watch('show_zero_balance'),
+                                                        sort_by: watch('sort_by'),
+                                                        sort_direction: watch('sort_direction'),
                                                     };
                                                     getAvailableStock(filters);
                                                 }}
@@ -309,6 +325,8 @@ function StockReport({ setOpenDialog, isFromDashboard }) {
                                                 cost_center_ids: selectedCostCenterIds,
                                                 product_category_ids: watch('product_category_ids'),
                                                 show_zero_balance: watch('show_zero_balance'),
+                                                sort_by: watch('sort_by'),
+                                                sort_direction: watch('sort_direction'),
                                             };
                                             getAvailableStock(filters);
                                         }}
@@ -368,6 +386,8 @@ function StockReport({ setOpenDialog, isFromDashboard }) {
                                                 cost_center_ids: watch('cost_center_ids'),
                                                 product_category_ids: categoryIds,
                                                 show_zero_balance: watch('show_zero_balance'),
+                                                sort_by: watch('sort_by'),
+                                                sort_direction: watch('sort_direction'),
                                             });
                                         }}
                                     />
@@ -399,6 +419,8 @@ function StockReport({ setOpenDialog, isFromDashboard }) {
                                                     cost_center_ids: watch('cost_center_ids'),
                                                     product_category_ids: watch('product_category_ids'),
                                                     show_zero_balance: watch('show_zero_balance'),
+                                                    sort_by: watch('sort_by'),
+                                                    sort_direction: watch('sort_direction'),
                                                 };
                                                 getAvailableStock(filters);
                                             }}
@@ -420,10 +442,85 @@ function StockReport({ setOpenDialog, isFromDashboard }) {
                                                 cost_center_ids: watch('cost_center_ids'),
                                                 product_category_ids: watch('product_category_ids'),
                                                 show_zero_balance: value,
+                                                sort_by: watch('sort_by'),
+                                                sort_direction: watch('sort_direction'),
                                             });
                                         }}
                                     />
                                     <Typography variant="body2">Include zero stock</Typography>
+                                </Div>
+                            </Grid>
+                            <Grid size={{xs: 12, md: isFromDashboard ? 6 : 4}}>
+                                <Div sx={{ mt: 0.3 }}>
+                                    <Autocomplete
+                                        options={['item_name', 'brand', 'model', 'specifications', 'sku']}
+                                        value={watch('sort_by')}
+                                        onChange={(event, newValue) => {
+                                            setValue('sort_by', newValue || 'item_name');
+                                            getAvailableStock({
+                                                as_at: watch('as_at'),
+                                                store_id: watch('store_id'),
+                                                cost_center_ids: watch('cost_center_ids'),
+                                                product_category_ids: watch('product_category_ids'),
+                                                show_zero_balance: watch('show_zero_balance'),
+                                                sort_by: newValue || 'item_name',
+                                                sort_direction: watch('sort_direction'),
+                                            });
+                                        }}
+                                        renderInput={(params) => (
+                                            <TextField
+                                                {...params}
+                                                label="Sort By"
+                                                size="small"
+                                                fullWidth
+                                            />
+                                        )}
+                                        getOptionLabel={(option) => {
+                                            const labels = {
+                                                'item_name': 'Item Name',
+                                                'brand': 'Brand',
+                                                'model': 'Model',
+                                                'specifications': 'Specifications',
+                                                'sku': 'SKU'
+                                            };
+                                            return labels[option] || option;
+                                        }}
+                                    />
+                                </Div>
+                            </Grid>
+                            <Grid size={{xs: 12, md: isFromDashboard ? 6 : 4}}>
+                                <Div sx={{ mt: 0.3 }}>
+                                    <Autocomplete
+                                        options={['asc', 'desc']}
+                                        value={watch('sort_direction')}
+                                        onChange={(event, newValue) => {
+                                            setValue('sort_direction', newValue || 'asc');
+                                            getAvailableStock({
+                                                as_at: watch('as_at'),
+                                                store_id: watch('store_id'),
+                                                cost_center_ids: watch('cost_center_ids'),
+                                                product_category_ids: watch('product_category_ids'),
+                                                show_zero_balance: watch('show_zero_balance'),
+                                                sort_by: watch('sort_by'),
+                                                sort_direction: newValue || 'asc',
+                                            });
+                                        }}
+                                        renderInput={(params) => (
+                                            <TextField
+                                                {...params}
+                                                label="Sort Direction"
+                                                size="small"
+                                                fullWidth
+                                            />
+                                        )}
+                                        getOptionLabel={(option) => {
+                                            const labels = {
+                                                'asc': 'Ascending',
+                                                'desc': 'Descending'
+                                            };
+                                            return labels[option] || option;
+                                        }}
+                                    />
                                 </Div>
                             </Grid>
                             <Grid size={12} textAlign={'right'}>

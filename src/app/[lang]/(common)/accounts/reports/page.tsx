@@ -1,10 +1,12 @@
 export const dynamic = "force-dynamic";
 import AccountsReports from '@/components/accounts/reports/AccountsReports'
-import React from 'react'
+import React, { Suspense } from 'react'
 
 function page() {
   return (
-    <AccountsReports/>
+    <Suspense fallback={null}>
+      <AccountsReports/>
+    </Suspense>
   )
 }
 
