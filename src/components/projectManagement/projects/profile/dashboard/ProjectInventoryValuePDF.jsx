@@ -47,9 +47,7 @@ function ProjectInventoryValuePDF({
         </View>
 
         <View style={{ marginBottom: 12 }}>
-          <Text style={{ ...pdfStyles.midInfo, color: mainColor }}>
-            As At
-          </Text>
+          <Text style={{ ...pdfStyles.midInfo, color: mainColor }}>As At</Text>
           <Text style={pdfStyles.midInfo}>
             {dayjs().format('DD MMM YYYY, HH:mm')}
           </Text>
@@ -119,7 +117,8 @@ function ProjectInventoryValuePDF({
               style={{
                 ...pdfStyles.tableHeader,
                 ...pdfStyles.tableCell,
-                backgroundColor: lightColor,
+                backgroundColor: mainColor,
+                color: contrastText,
                 flex: 2,
               }}
             >
@@ -129,7 +128,8 @@ function ProjectInventoryValuePDF({
               style={{
                 ...pdfStyles.tableHeader,
                 ...pdfStyles.tableCell,
-                backgroundColor: lightColor,
+                backgroundColor: mainColor,
+                color: contrastText,
                 flex: 1,
                 textAlign: 'right',
               }}

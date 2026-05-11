@@ -9,7 +9,13 @@ const formatReportAmount = (value) =>
     maximumFractionDigits: 2,
   });
 
-function ProjectLiabilitiesPDF({ organization, project, currencyCode, rows, total }) {
+function ProjectLiabilitiesPDF({
+  organization,
+  project,
+  currencyCode,
+  rows,
+  total,
+}) {
   const mainColor = organization?.settings?.main_color ?? '#2113AD';
   const lightColor = organization?.settings?.light_color ?? '#F4F6FB';
   const contrastText = organization?.settings?.contrast_text ?? '#FFFFFF';
@@ -41,9 +47,7 @@ function ProjectLiabilitiesPDF({ organization, project, currencyCode, rows, tota
         </View>
 
         <View style={{ marginBottom: 12 }}>
-          <Text style={{ ...pdfStyles.midInfo, color: mainColor }}>
-            As At
-          </Text>
+          <Text style={{ ...pdfStyles.midInfo, color: mainColor }}>As At</Text>
           <Text style={pdfStyles.midInfo}>
             {dayjs().format('DD MMM YYYY, HH:mm')}
           </Text>
@@ -113,7 +117,8 @@ function ProjectLiabilitiesPDF({ organization, project, currencyCode, rows, tota
               style={{
                 ...pdfStyles.tableHeader,
                 ...pdfStyles.tableCell,
-                backgroundColor: lightColor,
+                backgroundColor: mainColor,
+                color: contrastText,
                 flex: 2,
               }}
             >
@@ -123,7 +128,8 @@ function ProjectLiabilitiesPDF({ organization, project, currencyCode, rows, tota
               style={{
                 ...pdfStyles.tableHeader,
                 ...pdfStyles.tableCell,
-                backgroundColor: lightColor,
+                backgroundColor: mainColor,
+                color: contrastText,
                 flex: 1,
                 textAlign: 'right',
               }}

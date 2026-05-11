@@ -7,6 +7,7 @@ import PDFContent from '@/components/pdf/PDFContent';
 import { faFileExcel } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
+import { Div } from '@jumbo/shared';
 import {
   AccountBalanceWalletOutlined,
   EditOutlined,
@@ -21,6 +22,7 @@ import {
   Alert,
   Box,
   Button,
+  ButtonGroup,
   Card,
   CardActions,
   CardContent,
@@ -28,10 +30,15 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
+  DialogTitle,
   Divider,
+  FormControl,
   Grid,
   IconButton,
+  InputLabel,
   LinearProgress,
+  MenuItem,
+  Select,
   Skeleton,
   Tab,
   Tabs,
@@ -70,15 +77,66 @@ const DashboardDocumentDialog = ({
   setOpenDocumentDialog,
   document,
   fileName,
-  trendContent,
   onScreenContent,
   exportedData,
   documentType,
+  inventoryValuesParam,
+  inventoryValues,
 }) => {
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
+  const smallScreen = useMediaQuery(theme.breakpoints.down('md'));
   const [selectedTab, setSelectedTab] = useState(0);
   const [isExporting, setIsExporting] = useState(false);
+  const [currentInventoryValue, setCurrentInventoryValue] =
+    useState(inventoryValues);
+  const [rangeValue, setRangeValue] = useState('day');
+
+  const processInventoryValues = (data, aggregateBy) => {
+    if (!data || data.length === 0) return [];
+
+    const allCategories = Array.from(
+      new Set(data.flatMap((item) => Object.keys(item.groupedValues || {})))
+    );
+
+    return data.map((item) => {
+      const transformedItem = {
+        name:
+          aggregateBy === 'day'
+            ? dayjs(item.asOf).format('ddd, MMM D, YYYY')
+            : item.asOf,
+      };
+
+      let totalValue = 0;
+
+      allCategories.forEach((category) => {
+        const value = item.groupedValues?.[category]?.balanceValue || 0;
+        transformedItem[category] = value;
+        totalValue += value;
+      });
+
+      transformedItem['Total Value'] = totalValue;
+
+      return transformedItem;
+    });
+  };
+
+  // inventory values
+  const { data: newInventoryValues = [], isLoading: inventoryValuesLoading } =
+    useQuery({
+      queryKey: ['inventoryValueTrend', rangeValue],
+      queryFn: async () => {
+        const res = await financialReportsServices.inventoryValue({
+          ...inventoryValuesParam,
+          aggregate_by: rangeValue,
+        });
+        return processInventoryValues(res);
+      },
+    });
+
+  useEffect(() => {
+    setCurrentInventoryValue(newInventoryValues);
+  }, [newInventoryValues, rangeValue]);
 
   const handleTabChange = (_event, newValue) => {
     setSelectedTab(newValue);
@@ -116,22 +174,125 @@ const DashboardDocumentDialog = ({
 
   return (
     <>
+      <DialogTitle>
+        <Box
+          marginLeft={2}
+          marginRight={2}
+          display={'flex'}
+          alignContent={'center'}
+          justifyContent={'end'}
+          width={'100%'}
+        ></Box>
+      </DialogTitle>
       <DialogContent>
         {showTabs ? (
           <Box>
             <Grid container alignItems='center' justifyContent='space-between'>
-              <Grid size={{ xs: 11 }}>
-                <Tabs value={selectedTab} onChange={handleTabChange}>
-                  {isInventoryDocument ? (
-                    <Tab label='Trend' />
-                  ) : (
-                    <Tab label='On Screen' />
+              <Grid container size={{ xs: 11 }}>
+                <Grid size={8}>
+                  <Tabs value={selectedTab} onChange={handleTabChange}>
+                    {isInventoryDocument ? (
+                      <Tab label='Trend' />
+                    ) : (
+                      <Tab label='On Screen' />
+                    )}
+                    <Tab label='PDF' />
+                    {belowLargeScreen && isInventoryDocument && (
+                      <Tab label='On Screen' />
+                    )}
+                  </Tabs>
+                </Grid>
+                <Grid size={4} display={'flex'} justifyContent={'end'}>
+                  {selectedTab === 0 &&
+                    isInventoryDocument &&
+                    (!smallScreen ? (
+                      <ButtonGroup
+                        variant='outlined'
+                        size='small'
+                        disableElevation
+                      >
+                        <Tooltip title='Daily Trend'>
+                          <Button
+                            variant={
+                              rangeValue === 'day' ? 'contained' : 'outlined'
+                            }
+                            onClick={() => setRangeValue('day')}
+                          >
+                            Daily
+                          </Button>
+                        </Tooltip>
+                        <Tooltip title='Weekly Trend'>
+                          <Button
+                            variant={
+                              rangeValue === 'week' ? 'contained' : 'outlined'
+                            }
+                            onClick={() => setRangeValue('week')}
+                          >
+                            Weekly
+                          </Button>
+                        </Tooltip>
+                        <Tooltip title='Monthly Trend'>
+                          <Button
+                            variant={
+                              rangeValue === 'month' ? 'contained' : 'outlined'
+                            }
+                            onClick={() => setRangeValue('month')}
+                          >
+                            Monthly
+                          </Button>
+                        </Tooltip>
+                        <Tooltip title='Yearly Trend'>
+                          <Button
+                            variant={
+                              rangeValue === 'year' ? 'contained' : 'outlined'
+                            }
+                            onClick={() => setRangeValue('year')}
+                          >
+                            Yearly
+                          </Button>
+                        </Tooltip>
+                      </ButtonGroup>
+                    ) : (
+                      <Div sx={{ mt: 1 }}>
+                        <FormControl fullWidth size='small'>
+                          <InputLabel id='inventory-value-trend-group-by-input-label'>
+                            Interval
+                          </InputLabel>
+                          <Select
+                            labelId='inventory-value-trend-group-by-label'
+                            id='inventory-value-trend-group-by'
+                            value={rangeValue}
+                            label='Interval'
+                            onChange={(e) => setRangeValue(e.target.value)}
+                          >
+                            <MenuItem value='day'>Daily</MenuItem>
+                            <MenuItem value='week'>Weekly</MenuItem>
+                            <MenuItem value='month'>Monthly</MenuItem>
+                            <MenuItem value='year'>Yearly</MenuItem>
+                          </Select>
+                        </FormControl>
+                      </Div>
+                    ))}
+                  {showExcelAction && (
+                    <LoadingButton
+                      size='small'
+                      onClick={() => handlExcelExport(exportedData)}
+                      loading={isExporting}
+                      sx={{
+                        width: 'fit-content',
+                        height: 'fit-content',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        mx: 4,
+                      }}
+                      color='success'
+                      variant='contained'
+                    >
+                      <FontAwesomeIcon icon={faFileExcel} color='green' /> Excel
+                    </LoadingButton>
                   )}
-                  <Tab label='PDF' />
-                  {belowLargeScreen && isInventoryDocument && (
-                    <Tab label='On Screen' />
-                  )}
-                </Tabs>
+                </Grid>
               </Grid>
               {belowLargeScreen && (
                 <Grid size={{ xs: 1 }} textAlign='right'>
@@ -149,7 +310,11 @@ const DashboardDocumentDialog = ({
             </Grid>
             <Box>
               {selectedTab === 0 &&
-                (isInventoryDocument ? trendContent : onScreenContent)}
+                (isInventoryDocument ? (
+                  <ProjectInventoryValueTrend data={currentInventoryValue} />
+                ) : (
+                  onScreenContent
+                ))}
               {selectedTab === 1 && (
                 <PDFContent document={document} fileName={fileName} />
               )}
@@ -169,30 +334,15 @@ const DashboardDocumentDialog = ({
           margin={2}
           display={'flex'}
           alignContent={'center'}
-          gap={2}
         >
-          {showExcelAction && (
-            <LoadingButton
-              size='small'
-              onClick={() => handlExcelExport(exportedData)}
-              loading={isExporting}
-              sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-              color='success'
-              variant='contained'
-            >
-              <FontAwesomeIcon icon={faFileExcel} color='green' /> Excel
-            </LoadingButton>
-          )}
-          {
-            <Button
-              variant='outlined'
-              size='small'
-              color='primary'
-              onClick={() => setOpenDocumentDialog(false)}
-            >
-              Close
-            </Button>
-          }
+          <Button
+            variant='outlined'
+            size='small'
+            color='primary'
+            onClick={() => setOpenDocumentDialog(false)}
+          >
+            Close
+          </Button>
         </Box>
       </DialogActions>
     </>
@@ -377,10 +527,10 @@ function ProjectDashboard() {
         total={selectedTotal}
       />
     );
-  const selectedTrendContent =
-    selectedReport === 'inventory' ? (
-      <ProjectInventoryValueTrend data={inventoryValues} />
-    ) : null;
+  // const selectedTrendContent =
+  //   selectedReport === 'inventory' ? (
+  //     <ProjectInventoryValueTrend data={inventoryValues} />
+  //   ) : null;
   const selectedOnScreenContent =
     selectedReport === 'liabilities' ? (
       <ProjectLiabilitiesOnScreen
@@ -729,7 +879,7 @@ function ProjectDashboard() {
                   </Tooltip>
                 </Grid>
                 <Grid size={6}>
-                  <Tooltip title='value'>
+                  <Tooltip title='Click to preview'>
                     <Typography
                       textAlign={'right'}
                       onClick={() =>
@@ -833,7 +983,7 @@ function ProjectDashboard() {
                     </Tooltip>
                   </Grid>
                   <Grid size={6}>
-                    <Tooltip title='value'>
+                    <Tooltip title='Click to preview'>
                       <Typography
                         textAlign={'right'}
                         onClick={() =>
@@ -867,7 +1017,7 @@ function ProjectDashboard() {
         open={openDocumentDialog}
         fullWidth
         fullScreen={belowLargeScreen}
-        maxWidth='md'
+        maxWidth={selectedReport !== 'liabilities' ? 'lg' : 'md'}
         scroll={belowLargeScreen ? 'body' : 'paper'}
         onClose={handleCloseDocumentDialog}
       >
@@ -876,10 +1026,11 @@ function ProjectDashboard() {
             setOpenDocumentDialog={handleCloseDocumentDialog}
             fileName={selectedFileName}
             document={selectedDocument}
-            trendContent={selectedTrendContent}
             onScreenContent={selectedOnScreenContent}
             exportedData={exportedData}
             documentType={selectedReport}
+            inventoryValuesParam={inventoryValuesParam}
+            inventoryValues={inventoryValues}
           />
         )}
       </Dialog>
