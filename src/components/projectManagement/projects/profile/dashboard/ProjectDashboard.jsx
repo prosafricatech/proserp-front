@@ -82,15 +82,12 @@ const DashboardDocumentDialog = ({
   documentType,
   activeTab,
   inventoryValuesParam,
-  inventoryValues,
 }) => {
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
   const smallScreen = useMediaQuery(theme.breakpoints.down('md'));
   const [selectedTab, setSelectedTab] = useState(0);
   const [isExporting, setIsExporting] = useState(false);
-  const [currentInventoryValue, setCurrentInventoryValue] =
-    useState(inventoryValues);
   const [rangeValue, setRangeValue] = useState('day');
 
   const processInventoryValues = (data, aggregateBy) => {
@@ -131,13 +128,9 @@ const DashboardDocumentDialog = ({
           ...inventoryValuesParam,
           aggregate_by: rangeValue,
         });
-        return processInventoryValues(res);
+        return processInventoryValues(res, rangeValue);
       },
     });
-
-  useEffect(() => {
-    setCurrentInventoryValue(newInventoryValues);
-  }, [newInventoryValues, rangeValue]);
 
   const handleTabChange = (_event, newValue) => {
     setSelectedTab(newValue);
@@ -324,7 +317,7 @@ const DashboardDocumentDialog = ({
             <Box>
               {selectedTab === 0 &&
                 (isInventoryDocument ? (
-                  <ProjectInventoryValueTrend data={currentInventoryValue} />
+                  <ProjectInventoryValueTrend data={newInventoryValues} />
                 ) : (
                   onScreenContent
                 ))}
@@ -461,7 +454,6 @@ function ProjectDashboard() {
     );
     setCreditorsTotal(totalCreditors);
     setDebitorsTotal(totalDebtors);
-    console.log('debitors: ', debtors);
   }, [creditors, debtors]);
 
   // inventory values
@@ -480,7 +472,7 @@ function ProjectDashboard() {
       queryFn: async () => {
         const res =
           await financialReportsServices.inventoryValue(inventoryValuesParam);
-        return processInventoryValues(res);
+        return processInventoryValues(res, inventoryValuesParam.aggregate_by);
       },
     });
 
