@@ -94,8 +94,6 @@ function RequisitionLedgerItemRow({
     });
   };
 
-  console.log('Rendering RequisitionLedgerItemRow with ledger_item:', ledger_item);
-
   return (
     <React.Fragment>
       <Divider />
