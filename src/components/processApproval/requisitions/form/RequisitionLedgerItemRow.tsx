@@ -1,4 +1,9 @@
-import { DisabledByDefault, EditOutlined, VisibilityOutlined } from '@mui/icons-material';
+import {
+  DisabledByDefault,
+  EditOutlined,
+  VisibilityOutlined,
+  AccountBalanceWalletOutlined,
+} from '@mui/icons-material';
 import { Dialog, Divider, Grid, IconButton, LinearProgress, ListItemText, Tooltip, Typography } from '@mui/material';
 import React, { useState, Dispatch, SetStateAction } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -12,6 +17,7 @@ import projectsServices from '@/components/projectManagement/projects/project-se
 import CertificateOnScreen from '@/components/projectManagement/projects/profile/subcontracts/tabs/certificatesTab/preview/CertificateOnScreen';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { Organization } from '@/types/auth-types';
+import LedgerBudgetCheckDetails from '../listItem/tabs/form/LedgerBudgetCheckDetails';
 
 interface FetchRelatableDetailsProps {
   relatable: any;
@@ -24,6 +30,8 @@ interface RequisitionLedgerItemRowProps {
   index: number;
   requisition_ledger_items?: RequisitionLedgerItem[];
   setRequisition_ledger_items: Dispatch<SetStateAction<RequisitionLedgerItem[]>>;
+  isDuplicate?: boolean;
+  costCenterId?: number;
 }
 
 
@@ -62,10 +70,21 @@ function RequisitionLedgerItemRow({
   index,
   requisition_ledger_items = [],
   setRequisition_ledger_items,
+  isDuplicate = false,
+  costCenterId
 }: RequisitionLedgerItemRowProps) {
-  const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState(
+    isDuplicate && Boolean(ledger_item?.relatable_id)
+  );
   const [openViewDialog, setOpenViewDialog] = useState(false);
   const [selectedRelated, setSelectedRelated] = useState<any>(null);
+  const [openLedgerBudgetDialog, setOpenLedgerBudgetDialog] = useState(false);
+  const [ledgerDialogData, setLedgerDialogData] = useState<{
+    ledgerId: number;
+    ledgerName: string;
+    costCenterId?: number;
+    currency?: Currency;
+  } | null>(null);
 
   const handleRemoveItem = () => {
     setRequisition_ledger_items(currentItems => {
@@ -74,6 +93,8 @@ function RequisitionLedgerItemRow({
       return newItems;
     });
   };
+
+  console.log('Rendering RequisitionLedgerItemRow with ledger_item:', ledger_item);
 
   return (
     <React.Fragment>
@@ -97,6 +118,27 @@ function RequisitionLedgerItemRow({
                 <Tooltip title={'Relatable To'}>
                   <Typography variant={"h5"} fontSize={14} lineHeight={1.25} mb={0} noWrap>
                     {ledger_item.ledger?.name}
+                    {ledger_item.ledger && (
+                      <Tooltip title={`${ledger_item.ledger.name} Budget check`}>
+                        <IconButton
+                          size='small'
+                          sx={{ ml: 1 }}
+                          onClick={() => {
+                            const selectedLedger = ledger_item.ledger;
+                            if (!selectedLedger) return;
+                            setLedgerDialogData({
+                              ledgerId: selectedLedger.id,
+                              ledgerName: selectedLedger.name,
+                              costCenterId: costCenterId,
+                              currency: currencyDetails,
+                            });
+                            setOpenLedgerBudgetDialog(true);
+                          }}
+                        >
+                          <AccountBalanceWalletOutlined fontSize='small' />
+                        </IconButton>
+                      </Tooltip>
+                    )}
                   </Typography>
                 </Tooltip>
               }
@@ -195,7 +237,8 @@ function RequisitionLedgerItemRow({
         <RequisitionLedgerItemForm
           ledger_item={ledger_item} 
           setShowForm={setShowForm} 
-          index={index} 
+          index={index}
+          isDuplicate={isDuplicate}
           requisition_ledger_items={requisition_ledger_items} 
           setRequisition_ledger_items={setRequisition_ledger_items}
         />
@@ -204,6 +247,15 @@ function RequisitionLedgerItemRow({
       <Dialog open={openViewDialog} maxWidth='md' fullWidth onClose={() => setOpenViewDialog(false)}>
         <FetchRelatableDetails relatable={selectedRelated} toggleOpen={setOpenViewDialog} ledger_item={ledger_item} />
       </Dialog>
+
+      <LedgerBudgetCheckDetails
+        open={openLedgerBudgetDialog}
+        onClose={() => setOpenLedgerBudgetDialog(false)}
+        ledgerId={ledgerDialogData?.ledgerId || 0}
+        costCenterId={ledgerDialogData?.costCenterId || 0}
+        currency={ledgerDialogData?.currency as any}
+        ledgerName={ledgerDialogData?.ledgerName || ''}
+      />
     </React.Fragment>
   );
 }
