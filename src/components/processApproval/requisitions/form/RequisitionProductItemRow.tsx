@@ -144,7 +144,13 @@ function RequisitionProductItemRow({
               <ListItemText
                 primary={
                   <Tooltip title={'Product'}>
-                    <Typography variant="h5" fontSize={14} lineHeight={1.25} mb={0} noWrap>
+                    <Typography
+                      variant="h5"
+                      fontSize={14}
+                      lineHeight={1.25}
+                      mb={0}
+                      sx={{ whiteSpace: 'normal', overflowWrap: 'anywhere' }}
+                    >
                       {product_item.product?.name}
                       {product_item.product && (
                         <Tooltip title={`${product_item.product.name} Budget check`}>

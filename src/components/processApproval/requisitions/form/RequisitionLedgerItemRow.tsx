@@ -116,7 +116,13 @@ function RequisitionLedgerItemRow({
             <ListItemText
               primary={
                 <Tooltip title={'Relatable To'}>
-                  <Typography variant={"h5"} fontSize={14} lineHeight={1.25} mb={0} noWrap>
+                  <Typography
+                    variant={"h5"}
+                    fontSize={14}
+                    lineHeight={1.25}
+                    mb={0}
+                    sx={{ whiteSpace: 'normal', overflowWrap: 'anywhere' }}
+                  >
                     {ledger_item.ledger?.name}
                     {ledger_item.ledger && (
                       <Tooltip title={`${ledger_item.ledger.name} Budget check`}>
