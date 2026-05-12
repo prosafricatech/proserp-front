@@ -132,7 +132,7 @@ const DashboardDocumentDialog = ({
           ...inventoryValuesParam,
           aggregate_by: rangeValue,
         });
-        return processInventoryValues(res);
+        return processInventoryValues(res, rangeValue);
       },
     });
 
@@ -462,7 +462,6 @@ function ProjectDashboard() {
     );
     setCreditorsTotal(totalCreditors);
     setDebitorsTotal(totalDebtors);
-    console.log('debitors: ', debtors);
   }, [creditors, debtors]);
 
   // inventory values
@@ -481,7 +480,7 @@ function ProjectDashboard() {
       queryFn: async () => {
         const res =
           await financialReportsServices.inventoryValue(inventoryValuesParam);
-        return processInventoryValues(res);
+        return processInventoryValues(res, inventoryValuesParam.aggregate_by);
       },
     });
 
