@@ -14,7 +14,6 @@ import {
   HighlightOff,
   Inventory2Outlined,
   PaidOutlined,
-  ReceiptLongOutlined,
   TimelineOutlined,
 } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
@@ -167,7 +166,7 @@ const DashboardDocumentDialog = ({
       const excelName =
         documentType === 'liabilities'
           ? activeTab === 0
-            ? 'project-credotors-report'
+            ? 'project-creditors-report'
             : 'project-debtors-report'
           : 'project-inventory-value-report';
       a.download = `${excelName}${'_' + dayjs().format('DD MMM YYYY, HH:mm')}.xlsx`;
@@ -590,10 +589,6 @@ function ProjectDashboard() {
         total={selectedTotal}
       />
     );
-  // const selectedTrendContent =
-  //   selectedReport === 'inventory' ? (
-  //     <ProjectInventoryValueTrend data={inventoryValues} />
-  //   ) : null;
   const selectedOnScreenContent =
     selectedReport === 'liabilities' ? (
       <ProjectLiabilitiesOnScreen
@@ -885,7 +880,6 @@ function ProjectDashboard() {
             }}
           >
             <CardHeader
-              avatar={<ReceiptLongOutlined color='success' />}
               title={
                 <Tabs
                   value={activeTab}
@@ -893,7 +887,7 @@ function ProjectDashboard() {
                   variant='fullWidth'
                 >
                   <Tab label='Creditors' />
-                  <Tab label='Debitors' />
+                  <Tab label='Debtors' />
                 </Tabs>
               }
             />
@@ -923,7 +917,7 @@ function ProjectDashboard() {
                           </Tooltip>
                         </Grid>
                         <Grid size={4}>
-                          <Tooltip title='Amount'>
+                          <Tooltip title={`Click to view ${l.name} Statement`}>
                             <Typography
                               textAlign={'right'}
                               onClick={() => {
@@ -972,7 +966,7 @@ function ProjectDashboard() {
                         </Tooltip>
                       </Grid>
                       <Grid size={4}>
-                        <Tooltip title='Amount'>
+                        <Tooltip title={`Click to view ${l.name} Statement`}>
                           <Typography
                             textAlign={'right'}
                             onClick={() => {
@@ -1019,7 +1013,7 @@ function ProjectDashboard() {
                   </Tooltip>
                 </Grid>
                 <Grid size={6}>
-                  <Tooltip title='More details'>
+                  <Tooltip title='Click For More details'>
                     <Typography
                       textAlign={'right'}
                       fontWeight={'bold'}
@@ -1129,7 +1123,7 @@ function ProjectDashboard() {
                     </Tooltip>
                   </Grid>
                   <Grid size={6}>
-                    <Tooltip title='More details'>
+                    <Tooltip title='Click For More details'>
                       <Typography
                         textAlign={'right'}
                         fontWeight={'bold'}
