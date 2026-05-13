@@ -497,6 +497,10 @@ function ProjectDashboard() {
       ).toFixed(2)
     : '0.00';
 
+  const workInProgress =
+    (Number(dashboardFigures?.progressive_revenue) || 0) -
+    (Number(dashboardFigures?.certified_revenue) || 0);
+
   // Format currency with two decimal places and space between amount and currency code
   const formatCurrency = (value) => {
     const amount = Number(value) || 0;
@@ -766,6 +770,10 @@ function ProjectDashboard() {
                       )}
                     />
                     <StatItem
+                      label='Work in Progress'
+                      value={formatCurrency(workInProgress)}
+                    />
+                    <StatItem
                       label='Progressive Revenue'
                       value={formatCurrency(
                         dashboardFigures?.progressive_revenue
@@ -802,7 +810,7 @@ function ProjectDashboard() {
             elevation={3}
             sx={{ borderRadius: 3, height: '100%', width: '100%' }}
           >
-            <CardContent>
+            <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
               <Box display='flex' alignItems='center' mb={2}>
                 <AccountBalanceWalletOutlined color='success' sx={{ mr: 1 }} />
                 <Typography variant='h6' fontWeight={600}>
@@ -817,7 +825,14 @@ function ProjectDashboard() {
                   <Skeleton variant='rectangular' height={8} sx={{ mt: 2 }} />
                 </>
               ) : (
-                <>
+                <Box
+                  sx={{
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                  }}
+                >
                   <StatItem
                     label='Total Budget'
                     value={formatCurrency(dashboardFigures?.budget)}
@@ -852,7 +867,7 @@ function ProjectDashboard() {
                     label='Remaining Budget'
                     value={formatCurrency(dashboardFigures?.remaining_budget)}
                   />
-                </>
+                </Box>
               )}
             </CardContent>
           </Card>
