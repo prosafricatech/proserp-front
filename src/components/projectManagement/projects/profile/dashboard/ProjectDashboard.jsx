@@ -778,6 +778,13 @@ function ProjectDashboard() {
                       )}
                     />
                     <StatItem
+                      label='Work In Progress'
+                      value={formatCurrency(
+                        dashboardFigures?.progressive_revenue -
+                          dashboardFigures?.certified_revenue
+                      )}
+                    />
+                    <StatItem
                       label='Progressive Revenue'
                       value={formatCurrency(
                         dashboardFigures?.progressive_revenue
@@ -814,7 +821,13 @@ function ProjectDashboard() {
             elevation={3}
             sx={{ borderRadius: 3, height: '100%', width: '100%' }}
           >
-            <CardContent>
+            <CardContent
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+              }}
+            >
               <Box display='flex' alignItems='center' mb={2}>
                 <AccountBalanceWalletOutlined color='success' sx={{ mr: 1 }} />
                 <Typography variant='h6' fontWeight={600}>
