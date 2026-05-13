@@ -55,7 +55,7 @@ const ProsAfricansRoles = () => {
       onYes: async() => {
         hideDialog();
         try {
-          const res = await axios.delete(`/prosafricans/${role.id}/roles`, { data: { role_id: role.id } });
+          const res = await axios.delete(`/api/prosControl/prosafricans/${role.id}/deleteProsRoles`, { data: { role_id: role.id } });
           enqueueSnackbar(res.data.message, {
             variant: 'success'
           });
@@ -79,7 +79,7 @@ const ProsAfricansRoles = () => {
     const saveRole = async (role: Role) => {
       setIsSavingRole(true);
       try {
-        const response = await axios.put(`/prosafricans/${role.id}/roles`, {
+        const response = await axios.put(`/api/prosControl/prosafricans/${role.id}/updateProsRoles`, {
           pros_permission_ids: checkedPermissions
         });
         enqueueSnackbar(response.data.message, {
