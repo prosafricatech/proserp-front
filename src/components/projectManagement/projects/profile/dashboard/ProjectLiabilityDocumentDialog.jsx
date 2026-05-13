@@ -14,10 +14,15 @@ import {
   Grid,
   Skeleton,
   Stack,
+  Tab,
+  Tabs,
   Typography,
+  useMediaQuery,
 } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
+import { useEffect, useState } from 'react';
+import LedgerStatementOnScreen from '@/components/accounts/ledgers/list/ledgerStatement/LedgerStatementOnScreen';
 import ProjectLiabilityDocumentPDF from './ProjectLiabilityDocumentPDF';
 
 const ProjectLiabilityDocumentDialog = ({
@@ -30,10 +35,22 @@ const ProjectLiabilityDocumentDialog = ({
   activeTab,
 }) => {
   const [isExporting, setIsExporting] = useState(false);
+  const [selectedTab, setSelectedTab] = useState(0);
+  const { theme } = useJumboTheme();
+  const smallScreen = useMediaQuery(theme.breakpoints.down('md'));
+
+  const hasSelectedLedger = Boolean(liabilitiesPaylod?.ledger_id);
+
+  useEffect(() => {
+    if (openDialog && smallScreen) {
+      setSelectedTab(0);
+    }
+  }, [openDialog, smallScreen]);
 
   const { data: transactions, isLoading } = useQuery({
     queryKey: ['budgetItemsDetails', liabilitiesPaylod],
     queryFn: async () => ledgerServices.statement(liabilitiesPaylod),
+    enabled: openDialog && hasSelectedLedger,
   });
 
   const exportedData = {
@@ -62,7 +79,7 @@ const ProjectLiabilityDocumentDialog = ({
   };
 
   return (
-    <Dialog open={openDialog} fullWidth maxWidth={'md'}>
+    <Dialog open={openDialog} fullWidth fullScreen={smallScreen} maxWidth={'md'}>
       <DialogTitle>
         <Typography textAlign={'center'}>
           {liabilitiesPaylod?.liabilityName ?? 'Liability'} Statement
@@ -86,6 +103,18 @@ const ProjectLiabilityDocumentDialog = ({
             </LoadingButton>
           </Stack>
         </Grid>
+        {smallScreen && (
+          <Grid size={12} mt={1}>
+            <Tabs
+              value={selectedTab}
+              onChange={(_event, newValue) => setSelectedTab(newValue)}
+              variant='fullWidth'
+            >
+              <Tab label='On Screen' />
+              <Tab label='PDF' />
+            </Tabs>
+          </Grid>
+        )}
       </DialogTitle>
       <DialogContent>
         {isLoading ? (
@@ -113,6 +142,12 @@ const ProjectLiabilityDocumentDialog = ({
               </Stack>
             </Grid>
           </Grid>
+        ) : smallScreen && selectedTab === 0 ? (
+          <LedgerStatementOnScreen
+            transactionsData={transactions}
+            authOrganization={organization}
+            increasesWith={liabilitiesPaylod?.increasesWith}
+          />
         ) : (
           <PDFContent
             fileName='Liability report'

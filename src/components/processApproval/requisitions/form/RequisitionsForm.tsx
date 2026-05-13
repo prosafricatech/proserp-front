@@ -85,6 +85,9 @@ interface RequisitionItem {
   ledger_id?: number;
   measurement_unit_id?: number;
   product_id?: number;
+  relatable_id?: number | null;
+  relatable_type?: string | null;
+  relatableNo?: string;
   rate?: number;
   quantity?: number;
   vat_percentage?: number;
@@ -98,6 +101,7 @@ interface RequisitionItem {
     id?: number;
     name?: string;
   };
+  relatable?: any;
   ledger?: any;
   measurement_unit?: any;
   product?: any;
@@ -288,6 +292,7 @@ function RequisitionsForm({
 
   const selectedProcessType = watch('process_type');
   const currencyDetails = watch('currencyDetails');
+  const selectedCostCenterId = watch('cost_center_id');
   const processTypeOptions = React.useMemo(
     () =>
       PROCESS_TYPES.filter(
@@ -301,6 +306,88 @@ function RequisitionsForm({
   const saveMutation = React.useMemo(() => {
     return requisition && !isDuplicate ? updateRequisition : addRequisition;
   }, [requisition, addRequisition, updateRequisition]);
+
+  const validateDuplicateLedgerRelatables = async () => {
+    if (!isDuplicate || selectedProcessType !== 'PAYMENT') {
+      return true;
+    }
+
+    const refreshedItems = await Promise.all(
+      requisition_ledger_items.map(async (item: any, itemIndex) => {
+        if (!item?.relatable_id || !item?.ledger_id || !item?.relatable_type) {
+          return { item, error: null as string | null };
+        }
+
+        try {
+          const relatedResponse = await requisitionsServices.getRelatedTransactions(
+            {
+              ledger_id: item.ledger_id,
+              type: item.relatable_type,
+              payment_status: 'partially_and_not_approved',
+            }
+          );
+
+          const latestRelated = (extractList(relatedResponse) as any[]).find(
+            (related) => Number(related?.id) === Number(item.relatable_id)
+          );
+
+          if (!latestRelated) {
+            return {
+              item: {
+                ...item,
+                relatable: null,
+              },
+              error: `Row ${itemIndex + 1}: Linked transaction is no longer available.`,
+            };
+          }
+
+          const latestUnapprovedAmount = Number(
+            latestRelated?.unapproved_amount ?? 0
+          );
+          const currentAmount =
+            sanitizedNumber(item.rate) * sanitizedNumber(item.quantity);
+
+          if (currentAmount > latestUnapprovedAmount) {
+            return {
+              item: {
+                ...item,
+                relatable: latestRelated,
+                relatableNo:
+                  latestRelated?.relatableNo || latestRelated?.certificateNo,
+              },
+              error: `Row ${itemIndex + 1}: Amount exceeds latest unapproved amount (${latestUnapprovedAmount.toLocaleString()}).`,
+            };
+          }
+
+          return {
+            item: {
+              ...item,
+              relatable: latestRelated,
+              relatableNo:
+                latestRelated?.relatableNo || latestRelated?.certificateNo,
+            },
+            error: null as string | null,
+          };
+        } catch {
+          return {
+            item,
+            error: `Row ${itemIndex + 1}: Failed to refresh linked transaction.`,
+          };
+        }
+      })
+    );
+
+    const nextLedgerItems = refreshedItems.map((entry) => entry.item);
+    setRequisition_ledger_items(nextLedgerItems);
+
+    const firstError = refreshedItems.find((entry) => entry.error)?.error;
+    if (firstError) {
+      enqueueSnackbar(firstError, { variant: 'error' });
+      return false;
+    }
+
+    return true;
+  };
 
   useEffect(() => {
     let total = 0;
@@ -344,7 +431,7 @@ function RequisitionsForm({
     setValue,
   ]);
 
-  const onSubmit = () => {
+  const onSubmit = async () => {
     if (selectedProcessType === 'LEAVE_REQUEST') {
       if (!requisition_leave_items.length) {
         enqueueSnackbar('At least one leave item is required', {
@@ -376,6 +463,12 @@ function RequisitionsForm({
       }
     }
 
+    const hasValidDuplicateRelatables =
+      await validateDuplicateLedgerRelatables();
+    if (!hasValidDuplicateRelatables) {
+      return;
+    }
+
     if (isDirty) {
       setShowWarning(true);
     } else {
@@ -404,6 +497,12 @@ function RequisitionsForm({
   };
 
   const handleConfirmSubmitWithoutAdd = async () => {
+    const hasValidDuplicateRelatables =
+      await validateDuplicateLedgerRelatables();
+    if (!hasValidDuplicateRelatables) {
+      return;
+    }
+
     handleSubmit((data) => {
       const normalizedLeaveItems =
         selectedProcessType === 'LEAVE_REQUEST'
@@ -653,6 +752,7 @@ function RequisitionsForm({
           <Grid size={{ xs: 12 }}>
             {selectedProcessType === 'PAYMENT' ? (
               <RequisitionLedgerItemForm
+                isDuplicate={isDuplicate}
                 setRequisition_ledger_items={setRequisition_ledger_items}
                 requisition_ledger_items={requisition_ledger_items}
               />
@@ -677,6 +777,8 @@ function RequisitionsForm({
             <RequisitionLedgerItemRow
               key={index}
               index={index}
+              isDuplicate={isDuplicate}
+              costCenterId={selectedCostCenterId}
               currencyDetails={currencyDetails}
               setRequisition_ledger_items={setRequisition_ledger_items}
               requisition_ledger_items={requisition_ledger_items}
@@ -689,6 +791,7 @@ function RequisitionsForm({
               key={index}
               index={index}
               currencyDetails={currencyDetails}
+              costCenterId={selectedCostCenterId}
               setRequisition_product_items={setRequisition_product_items}
               requisition_product_items={requisition_product_items}
               product_item={product_item}
@@ -706,12 +809,15 @@ function RequisitionsForm({
               employeeOptions={employeeOptions}
               leaveTypeOptions={leaveTypes}
             />
-          ))}
+          ))
+        }
 
         {selectedProcessType === 'LEAVE_REQUEST' &&
           requisition_leave_items.length === 0 && (
             <Grid size={{ xs: 12 }}>No leave item added yet.</Grid>
-          )}
+          )
+        }
+        
         <Grid size={{ xs: 12 }} paddingTop={2}>
           <Div sx={{ mt: 0.3 }}>
             <TextField

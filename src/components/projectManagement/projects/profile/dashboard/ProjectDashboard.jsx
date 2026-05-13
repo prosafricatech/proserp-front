@@ -14,7 +14,6 @@ import {
   HighlightOff,
   Inventory2Outlined,
   PaidOutlined,
-  ReceiptLongOutlined,
   TimelineOutlined,
 } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
@@ -83,15 +82,12 @@ const DashboardDocumentDialog = ({
   documentType,
   activeTab,
   inventoryValuesParam,
-  inventoryValues,
 }) => {
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
   const smallScreen = useMediaQuery(theme.breakpoints.down('md'));
   const [selectedTab, setSelectedTab] = useState(0);
   const [isExporting, setIsExporting] = useState(false);
-  const [currentInventoryValue, setCurrentInventoryValue] =
-    useState(inventoryValues);
   const [rangeValue, setRangeValue] = useState('day');
 
   const processInventoryValues = (data, aggregateBy) => {
@@ -136,10 +132,6 @@ const DashboardDocumentDialog = ({
       },
     });
 
-  useEffect(() => {
-    setCurrentInventoryValue(newInventoryValues);
-  }, [newInventoryValues, rangeValue]);
-
   const handleTabChange = (_event, newValue) => {
     setSelectedTab(newValue);
   };
@@ -167,7 +159,7 @@ const DashboardDocumentDialog = ({
       const excelName =
         documentType === 'liabilities'
           ? activeTab === 0
-            ? 'project-credotors-report'
+            ? 'project-creditors-report'
             : 'project-debtors-report'
           : 'project-inventory-value-report';
       a.download = `${excelName}${'_' + dayjs().format('DD MMM YYYY, HH:mm')}.xlsx`;
@@ -325,7 +317,7 @@ const DashboardDocumentDialog = ({
             <Box>
               {selectedTab === 0 &&
                 (isInventoryDocument ? (
-                  <ProjectInventoryValueTrend data={currentInventoryValue} />
+                  <ProjectInventoryValueTrend data={newInventoryValues} />
                 ) : (
                   onScreenContent
                 ))}
@@ -505,6 +497,10 @@ function ProjectDashboard() {
       ).toFixed(2)
     : '0.00';
 
+  const workInProgress =
+    (Number(dashboardFigures?.progressive_revenue) || 0) -
+    (Number(dashboardFigures?.certified_revenue) || 0);
+
   // Format currency with two decimal places and space between amount and currency code
   const formatCurrency = (value) => {
     const amount = Number(value) || 0;
@@ -589,10 +585,6 @@ function ProjectDashboard() {
         total={selectedTotal}
       />
     );
-  // const selectedTrendContent =
-  //   selectedReport === 'inventory' ? (
-  //     <ProjectInventoryValueTrend data={inventoryValues} />
-  //   ) : null;
   const selectedOnScreenContent =
     selectedReport === 'liabilities' ? (
       <ProjectLiabilitiesOnScreen
@@ -778,11 +770,8 @@ function ProjectDashboard() {
                       )}
                     />
                     <StatItem
-                      label='Work In Progress'
-                      value={formatCurrency(
-                        dashboardFigures?.progressive_revenue -
-                          dashboardFigures?.certified_revenue
-                      )}
+                      label='Work in Progress'
+                      value={formatCurrency(workInProgress)}
                     />
                     <StatItem
                       label='Progressive Revenue'
@@ -823,9 +812,9 @@ function ProjectDashboard() {
           >
             <CardContent
               sx={{
+                height: '100%',
                 display: 'flex',
                 flexDirection: 'column',
-                justifyContent: 'space-between',
               }}
             >
               <Box display='flex' alignItems='center' mb={2}>
@@ -842,7 +831,14 @@ function ProjectDashboard() {
                   <Skeleton variant='rectangular' height={8} sx={{ mt: 2 }} />
                 </>
               ) : (
-                <>
+                <Box
+                  sx={{
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                  }}
+                >
                   <StatItem
                     label='Total Budget'
                     value={formatCurrency(dashboardFigures?.budget)}
@@ -877,7 +873,7 @@ function ProjectDashboard() {
                     label='Remaining Budget'
                     value={formatCurrency(dashboardFigures?.remaining_budget)}
                   />
-                </>
+                </Box>
               )}
             </CardContent>
           </Card>
@@ -897,7 +893,6 @@ function ProjectDashboard() {
             }}
           >
             <CardHeader
-              avatar={<ReceiptLongOutlined color='success' />}
               title={
                 <Tabs
                   value={activeTab}
@@ -905,7 +900,7 @@ function ProjectDashboard() {
                   variant='fullWidth'
                 >
                   <Tab label='Creditors' />
-                  <Tab label='Debitors' />
+                  <Tab label='Debtors' />
                 </Tabs>
               }
             />
@@ -935,7 +930,7 @@ function ProjectDashboard() {
                           </Tooltip>
                         </Grid>
                         <Grid size={4}>
-                          <Tooltip title='Amount'>
+                          <Tooltip title={`Click to view ${l.name} Statement`}>
                             <Typography
                               textAlign={'right'}
                               onClick={() => {
@@ -984,7 +979,7 @@ function ProjectDashboard() {
                         </Tooltip>
                       </Grid>
                       <Grid size={4}>
-                        <Tooltip title='Amount'>
+                        <Tooltip title={`Click to view ${l.name} Statement`}>
                           <Typography
                             textAlign={'right'}
                             onClick={() => {
@@ -1031,7 +1026,7 @@ function ProjectDashboard() {
                   </Tooltip>
                 </Grid>
                 <Grid size={6}>
-                  <Tooltip title='More details'>
+                  <Tooltip title='Click For More details'>
                     <Typography
                       textAlign={'right'}
                       fontWeight={'bold'}
@@ -1141,7 +1136,7 @@ function ProjectDashboard() {
                     </Tooltip>
                   </Grid>
                   <Grid size={6}>
-                    <Tooltip title='More details'>
+                    <Tooltip title='Click For More details'>
                       <Typography
                         textAlign={'right'}
                         fontWeight={'bold'}

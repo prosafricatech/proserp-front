@@ -8,9 +8,11 @@ import {
   Tooltip,
   Typography,
   Box,
-  ListItemText
+  ListItemText,
+  IconButton
 } from '@mui/material';
 import { DisabledByDefault, EditOutlined } from '@mui/icons-material';
+import { AccountBalanceWalletOutlined } from '@mui/icons-material';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import RequisitionProductItemForm, { RequisitionProductItem } from './RequisitionProductItemForm';
@@ -18,9 +20,11 @@ import ProductVendor from './productVendor/ProductVendor';
 import ProductVendorRow from './productVendor/ProductVendorRow';
 import { Currency } from '@/utilities/constants/countries';
 import { Vendor } from '../../RequisitionType';
+import ProductBudgetCheckDetails from '../listItem/tabs/form/ProductBudgetCheckDetails';
 
 interface RequisitionProductItemRowProps {
   currencyDetails?: Currency;
+  costCenterId?: number;
   requisition_product_items: RequisitionProductItem[];
   setRequisition_product_items: (items: React.SetStateAction<RequisitionProductItem[]>) => void;
   product_item: RequisitionProductItem;
@@ -29,10 +33,11 @@ interface RequisitionProductItemRowProps {
 
 function RequisitionProductItemRow({
   currencyDetails,
+  costCenterId,
   requisition_product_items,
   setRequisition_product_items,
   product_item,
-  index
+  index,
 }: RequisitionProductItemRowProps) {
   const [expanded, setExpanded] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -44,6 +49,14 @@ function RequisitionProductItemRow({
         })) 
       : []
   );
+  const [openProductBudgetDialog, setOpenProductBudgetDialog] = useState(false);
+  const [productDialogData, setProductDialogData] = useState<{
+    productId: number;
+    costCenterId?: number;
+    productName: string;
+    measurementUnit: any;
+    currency?: Currency;
+  } | null>(null);
 
   const handleChange = (currentIndex: number) => {
     setExpanded(prevExpanded => (prevExpanded === currentIndex ? null : currentIndex));
@@ -72,66 +85,95 @@ function RequisitionProductItemRow({
   };
 
   return (
-    <Accordion
-      key={index}
-      expanded={expanded === index}
-      onChange={() => handleChange(index)}
-      square
-      sx={{
-        borderRadius: 2,
-        borderTop: 2,
-        padding: 0.5,
-        borderColor: 'divider',
-        '& > .MuiAccordionDetails-root:hover': {
-          bgcolor: 'transparent',
-        },
-      }}
-    >
-      <AccordionSummary
-        expandIcon={expanded === index ? <RemoveIcon /> : <AddIcon />}
+    <>
+      <Accordion
+        key={index}
+        expanded={expanded === index}
+        onChange={() => handleChange(index)}
+        square
         sx={{
-          px: 3,
-          flexDirection: 'row-reverse',
-          '.MuiAccordionSummary-content': {
-            alignItems: 'center',
-            '&.Mui-expanded': {
-              margin: '12px 0',
-            },
-          },
-          '.MuiAccordionSummary-expandIconWrapper': {
-            borderRadius: 1,
-            border: 1,
-            color: 'text.secondary',
-            transform: 'none',
-            mr: 1,
-            '&.Mui-expanded': {
-              transform: 'none',
-              color: 'primary.main',
-              borderColor: 'primary.main',
-            },
-            '& svg': {
-              fontSize: '1.25rem',
-            },
+          borderRadius: 2,
+          borderTop: 2,
+          padding: 0.5,
+          borderColor: 'divider',
+          '& > .MuiAccordionDetails-root:hover': {
+            bgcolor: 'transparent',
           },
         }}
       >
-        <Divider />
-        {!showForm ? (
-          <Grid container 
-            width={'100%'}
-            sx={{
-              cursor: 'pointer',
-              '&:hover': {
-                bgcolor: 'action.hover',
-              }
-            }}
-          >
+        <AccordionSummary
+          expandIcon={expanded === index ? <RemoveIcon /> : <AddIcon />}
+          sx={{
+            px: 3,
+            flexDirection: 'row-reverse',
+            '.MuiAccordionSummary-content': {
+              alignItems: 'center',
+              '&.Mui-expanded': {
+                margin: '12px 0',
+              },
+            },
+            '.MuiAccordionSummary-expandIconWrapper': {
+              borderRadius: 1,
+              border: 1,
+              color: 'text.secondary',
+              transform: 'none',
+              mr: 1,
+              '&.Mui-expanded': {
+                transform: 'none',
+                color: 'primary.main',
+                borderColor: 'primary.main',
+              },
+              '& svg': {
+                fontSize: '1.25rem',
+              },
+            },
+          }}
+        >
+          <Divider />
+          {!showForm ? (
+            <Grid container 
+              width={'100%'}
+              sx={{
+                cursor: 'pointer',
+                '&:hover': {
+                  bgcolor: 'action.hover',
+                }
+              }}
+            >
             <Grid size={{xs: 12, md: 3.5}}>
               <ListItemText
                 primary={
                   <Tooltip title={'Product'}>
-                    <Typography variant="h5" fontSize={14} lineHeight={1.25} mb={0} noWrap>
+                    <Typography
+                      variant="h5"
+                      fontSize={14}
+                      lineHeight={1.25}
+                      mb={0}
+                      sx={{ whiteSpace: 'normal', overflowWrap: 'anywhere' }}
+                    >
                       {product_item.product?.name}
+                      {product_item.product && (
+                        <Tooltip title={`${product_item.product.name} Budget check`}>
+                          <IconButton
+                            size="small"
+                            sx={{ ml: 1 }}
+                            onClick={() => {
+                              const selectedProduct = product_item.product;
+                              if (!selectedProduct) return;
+                              setProductDialogData({
+                                productId: selectedProduct.id,
+                                costCenterId: costCenterId,
+                                productName: selectedProduct.name,
+                                measurementUnit: product_item.measurement_unit,
+                                currency: currencyDetails,
+                              });
+                              setOpenProductBudgetDialog(true);
+                            }}
+                          >
+                            <AccountBalanceWalletOutlined fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      )}
                     </Typography>
                   </Tooltip>
                 }
@@ -218,40 +260,52 @@ function RequisitionProductItemRow({
                 </Box>
               </Tooltip>
             </Grid>
-          </Grid>
-        ) : (
-          <Box sx={{ width: '100%' }}>
-            <RequisitionProductItemForm 
-              product_item={product_item} 
-              setShowForm={setShowForm} 
-              index={index} 
-              requisition_product_items={requisition_product_items} 
-              setRequisition_product_items={setRequisition_product_items}
-            />
-          </Box>
-        )}
-      </AccordionSummary>
-      <AccordionDetails>
-        <ProductVendor 
-          vendorIndex={index} 
-          setRequisition_product_items={setRequisition_product_items} 
-          vendors={vendors} 
-          setVendors={setVendors}
-        />
-        
-        {vendors.map((vendor: Vendor, vendorIndex: number) => (
-          <ProductVendorRow 
-            key={vendorIndex} 
-            index={vendorIndex} 
-            vendor={vendor} 
+            </Grid>
+          ) : (
+            <Box sx={{ width: '100%' }}>
+              <RequisitionProductItemForm 
+                product_item={product_item} 
+                setShowForm={setShowForm} 
+                index={index} 
+                requisition_product_items={requisition_product_items} 
+                setRequisition_product_items={setRequisition_product_items}
+              />
+            </Box>
+          )}
+        </AccordionSummary>
+        <AccordionDetails>
+          <ProductVendor 
+            vendorIndex={index} 
+            setRequisition_product_items={setRequisition_product_items} 
             vendors={vendors} 
             setVendors={setVendors}
-            vendorIndex={index}
-            setRequisition_product_items={setRequisition_product_items}
           />
-        ))}
-      </AccordionDetails>
-    </Accordion>
+          
+          {vendors.map((vendor: Vendor, vendorIndex: number) => (
+            <ProductVendorRow 
+              key={vendorIndex} 
+              index={vendorIndex} 
+              vendor={vendor} 
+              vendors={vendors} 
+              setVendors={setVendors}
+              vendorIndex={index}
+              setRequisition_product_items={setRequisition_product_items}
+            />
+          ))}
+        </AccordionDetails>
+      </Accordion>
+
+      <ProductBudgetCheckDetails
+        requisition={null as any}
+        open={openProductBudgetDialog}
+        onClose={() => setOpenProductBudgetDialog(false)}
+        productId={productDialogData?.productId || 0}
+        costCenterId={productDialogData?.costCenterId || 0}
+        productName={productDialogData?.productName || ''}
+        measurementUnit={productDialogData?.measurementUnit as any}
+        currency={productDialogData?.currency as any}
+      />
+    </>
   );
 }
 

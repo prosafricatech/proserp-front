@@ -41,6 +41,7 @@ interface RequisitionLedgerItemFormProps {
   ledger_item?: RequisitionLedgerItem | null;
   index?: number;
   setShowForm?: Dispatch<SetStateAction<boolean>>;
+  isDuplicate?: boolean;
 }
 
 function RequisitionLedgerItemForm({
@@ -49,6 +50,7 @@ function RequisitionLedgerItemForm({
   ledger_item = null,
   index = -1,
   setShowForm,
+  isDuplicate = false,
 }: RequisitionLedgerItemFormProps) {
   const [isAdding, setIsAdding] = useState(false);
   const [calculatedAmount, setCalculatedAmount] = useState(0);
@@ -72,6 +74,13 @@ function RequisitionLedgerItemForm({
       label: 'Subcontract Certificate',
     },
   ];
+
+  const extractRelatedTransactions = (payload: any): RelatableTransaction[] => {
+    if (Array.isArray(payload)) return payload;
+    if (Array.isArray(payload?.data)) return payload.data;
+    if (Array.isArray(payload?.data?.data)) return payload.data.data;
+    return [];
+  };
 
   const processedRelatableTypes = useMemo(() => {
     return relatableTypes.filter(
@@ -152,6 +161,7 @@ function RequisitionLedgerItemForm({
     setValue,
     setError,
     clearErrors,
+    trigger,
     handleSubmit,
     watch,
     register,
@@ -252,14 +262,77 @@ function RequisitionLedgerItemForm({
             type: relatable_type,
             payment_status: 'partially_and_not_approved',
           });
-        setRelatedTransactions(fetchedRelatedTransactions);
+        const normalizedTransactions = extractRelatedTransactions(
+          fetchedRelatedTransactions
+        );
+        setRelatedTransactions(normalizedTransactions);
 
         if (ledger_item?.relatable_id) {
-          setSelectedRelated(
-            fetchedRelatedTransactions.find(
-              (link: any) => link.id === ledger_item.relatable_id
-            )
+          const latestRelated = normalizedTransactions.find(
+            (link: any) => Number(link.id) === Number(ledger_item.relatable_id)
           );
+
+          if (latestRelated) {
+            setSelectedRelated(latestRelated);
+            setValue('relatable', latestRelated, {
+              shouldValidate: isDuplicate,
+              shouldDirty: isDuplicate,
+            });
+            setValue('relatable_id', latestRelated.id, {
+              shouldValidate: isDuplicate,
+              shouldDirty: isDuplicate,
+            });
+
+            if (isDuplicate && index > -1) {
+              setRequisition_ledger_items((currentItems) => {
+                const updatedItems = [...currentItems];
+                const currentItem = updatedItems[index] || {};
+                updatedItems[index] = {
+                  ...currentItem,
+                  relatable: latestRelated,
+                  relatable_id: latestRelated.id,
+                  relatableNo:
+                    latestRelated?.relatableNo || latestRelated?.certificateNo,
+                };
+                return updatedItems;
+              });
+            }
+
+            if (isDuplicate) {
+              const currentAmount =
+                sanitizedNumber(watch('quantity')) * sanitizedNumber(watch('rate'));
+              const maxUnapprovedAmount = Number(
+                latestRelated?.unapproved_amount ?? 0
+              );
+
+              if (currentAmount > maxUnapprovedAmount) {
+                setError('amount', {
+                  type: 'manual',
+                  message: `Amount should not exceed unapproved amount (${maxUnapprovedAmount.toLocaleString()}) of selected relatable`,
+                });
+              } else {
+                clearErrors('amount');
+              }
+
+              await trigger('amount');
+            }
+          } else if (isDuplicate) {
+            setSelectedRelated(null);
+            setValue('relatable', null, {
+              shouldValidate: true,
+              shouldDirty: true,
+            });
+            setValue('relatable_id', null, {
+              shouldValidate: true,
+              shouldDirty: true,
+            });
+            setError('amount', {
+              type: 'manual',
+              message:
+                'Linked transaction is no longer available. Please select another relatable.',
+            });
+            await trigger('amount');
+          }
         }
       } finally {
         setIsRetrieving(false);
@@ -272,6 +345,8 @@ function RequisitionLedgerItemForm({
   useEffect(() => {
     getRelatedTransactions();
   }, [watch('ledger_id'), watch('relatable_type')]);
+
+  const hasValidationErrors = isDuplicate && Object.keys(errors).length > 0;
 
   if (isAdding) {
     return <LinearProgress />;
@@ -519,15 +594,26 @@ function RequisitionLedgerItemForm({
             )}
           </Button>
           {ledger_item && (
-            <Tooltip title='Close Edit'>
+            <Tooltip
+              title={
+                hasValidationErrors
+                  ? 'Resolve validation errors before closing edit'
+                  : 'Close Edit'
+              }
+            >
+              <span>
               <IconButton
                 size='small'
+                disabled={hasValidationErrors}
                 onClick={() => {
-                  setShowForm?.(false);
+                  if (!hasValidationErrors) {
+                    setShowForm?.(false);
+                  }
                 }}
               >
                 <DisabledByDefault fontSize='small' color='success' />
               </IconButton>
+              </span>
             </Tooltip>
           )}
         </Grid>
