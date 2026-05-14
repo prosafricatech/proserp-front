@@ -62,12 +62,12 @@ const EditProject = ({ project, setOpenEditDialog }) => {
   return <ProjectForm project={project} setOpenDialog={setOpenEditDialog} />;
 };
 
-const StatItem = ({ label, value }) => (
+const StatItem = ({ label, value, valueColor }) => (
   <Box mb={2}>
     <Typography variant='body2' color='text.secondary'>
       {label}
     </Typography>
-    <Typography variant='h4'>
+    <Typography variant='h4' color={valueColor || 'text.primary'}>
       {typeof value === 'number' ? value.toFixed(2) : value}
     </Typography>
   </Box>
@@ -820,6 +820,11 @@ function ProjectDashboard() {
                         value={formatCurrency(
                           dashboardFigures?.gross_profit_to_date
                         )}
+                        valueColor={
+                          Number(dashboardFigures?.gross_profit_to_date) < 0
+                            ? 'error.main'
+                            : undefined
+                        }
                       />
                     </Grid>
                   </Grid>
