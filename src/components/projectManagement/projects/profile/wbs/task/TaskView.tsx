@@ -1,11 +1,14 @@
+import JumboListToolbar from '@jumbo/components/JumboList/components/JumboListToolbar';
+import JumboRqList from '@jumbo/components/JumboReactQuery/JumboRqList';
+import JumboSearch from '@jumbo/components/JumboSearch';
 import {
   Box,
   Button,
+  Card,
   DialogActions,
   DialogContent,
   DialogTitle,
   Paper,
-  Skeleton,
   Stack,
   Tab,
   Table,
@@ -15,13 +18,13 @@ import {
   TableHead,
   TableRow,
   Tabs,
-  Tooltip,
   Typography,
 } from '@mui/material';
-import { useQuery } from '@tanstack/react-query';
-import React, { SyntheticEvent, useEffect, useState } from 'react';
+import React, { SyntheticEvent, useRef, useState } from 'react';
 import projectsServices from '../../../project-services';
 import MaterialIssuedSelector from '../../subcontracts/tabs/materialIssued/MaterialIssuedSelector';
+import TaskViewListItem from './TaskViewListItem';
+import TaskViewSummary from './TaskViewSummary';
 
 interface TaskViewProps {
   setOpenDialog: (value: boolean) => void;
@@ -30,24 +33,19 @@ interface TaskViewProps {
 }
 
 const TaskView = ({ setOpenDialog, task, activity }: TaskViewProps) => {
+  const listRef = useRef<any>(null);
   const [selectedTab, setSelectedTab] = useState(0);
   const [queryOptions, setQueryOptions] = React.useState({
-    queryKey: [task?.id, selectedTab],
+    // queryKey: [task?.id, selectedTab],
+    queryKey: 'taskMaterialsUsed',
     queryParams: {
       id: task?.id,
-      aggregated: false,
+      aggregated: true,
+      keyword: '',
     },
+    countKey: 'total',
+    dataKey: 'data',
   });
-  const [materialUsed, setMaterialUsed] = useState([]);
-  const { data: materialUsedData, isLoading } = useQuery<any>({
-    queryKey: [...queryOptions.queryKey, queryOptions.queryParams.aggregated],
-    queryFn: async () =>
-      await projectsServices.ViewTaskMaterials(queryOptions.queryParams),
-  });
-
-  useEffect(() => {
-    setMaterialUsed(materialUsedData?.data);
-  }, [materialUsedData]);
 
   const taskDeliverables = task?.deliverables ?? [];
 
@@ -65,6 +63,16 @@ const TaskView = ({ setOpenDialog, task, activity }: TaskViewProps) => {
     setSelectedTab(newValue);
   };
 
+  const handleOnChange = React.useCallback((keyword: string) => {
+    setQueryOptions((state) => ({
+      ...state,
+      queryParams: {
+        ...state.queryParams,
+        keyword: keyword,
+      },
+    }));
+  }, []);
+
   const formatNumber = (value: number | string) =>
     parseFloat(String(value || 0)).toLocaleString('en-US', {
       minimumFractionDigits: 2,
@@ -80,17 +88,37 @@ const TaskView = ({ setOpenDialog, task, activity }: TaskViewProps) => {
 
   const isAggregated = Boolean(queryOptions.queryParams.aggregated);
 
+  const taskSubtitle = task.weighted_percentage
+    ? task.weighted_percentage.toLocaleString() +
+      '% of ' +
+      (activity?.name || 'Task details and resource usage')
+    : activity?.name || 'Task details and resource usage';
+
+  const renderEmployees = React.useCallback(
+    (task: any) => {
+      return <TaskViewListItem task={task} isAggregated={isAggregated} />;
+    },
+    [isAggregated]
+  );
+
   return (
     <>
       <DialogTitle sx={{ pb: 1 }}>
         <Typography textAlign={'center'} fontSize={20} fontWeight={700}>
           {task?.name + ' Task' || 'Task details'}
         </Typography>
-        <Typography textAlign={'center'} variant='body2' color='text.secondary' mt={0.5}>
-          {activity?.name || 'Task details and resource usage'}
+        <Typography
+          textAlign={'center'}
+          variant='body2'
+          color='text.secondary'
+          mt={0.5}
+        >
+          {taskSubtitle}
         </Typography>
 
-        <Paper variant='outlined' sx={{ mt: 2, borderRadius: 2, p: 1.5 }}>
+        <TaskViewSummary task={task} />
+
+        <Paper variant='outlined' sx={{ mt: 2, borderRadius: 2, pt: 1.5 }}>
           <Tabs
             value={selectedTab}
             onChange={handleTabChange}
@@ -100,31 +128,17 @@ const TaskView = ({ setOpenDialog, task, activity }: TaskViewProps) => {
             <Tab label='Deliverables' />
             <Tab label='Material Used' />
           </Tabs>
-
-          {selectedTab === 1 && (
-            <Box
-              sx={{
-                mt: 1.5,
-                pt: 1,
-                borderTop: 1,
-                borderColor: 'divider',
-                display: 'flex',
-                justifyContent: { xs: 'flex-start', md: 'flex-end' },
-              }}
-            >
-              <MaterialIssuedSelector
-                aggregated={queryOptions.queryParams.aggregated}
-                onChange={handleAggregatedChange}
-              />
-            </Box>
-          )}
         </Paper>
       </DialogTitle>
       <DialogContent>
         <Box sx={{ pt: 1 }}>
           {selectedTab === 0 &&
             (taskDeliverables.length > 0 ? (
-              <TableContainer component={Paper} variant='outlined' sx={{ borderRadius: 2 }}>
+              <TableContainer
+                component={Paper}
+                variant='outlined'
+                sx={{ borderRadius: 2 }}
+              >
                 <Table
                   sx={{
                     minWidth: 700,
@@ -138,9 +152,13 @@ const TaskView = ({ setOpenDialog, task, activity }: TaskViewProps) => {
                 >
                   <TableHead sx={{ bgcolor: 'action.hover' }}>
                     <TableRow>
-                      <TableCell sx={{ width: '25%' }}>Name</TableCell>
-                      <TableCell sx={{ width: '25%' }}>Contribution Percentage</TableCell>
-                      <TableCell sx={{ width: '50%' }} align='left'>Description</TableCell>
+                      <TableCell sx={{ width: '25%' }}>Code</TableCell>
+                      <TableCell sx={{ width: '50%' }} align='left'>
+                        Description
+                      </TableCell>
+                      <TableCell sx={{ width: '25%' }}>
+                        Contribution Percentage
+                      </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -152,10 +170,10 @@ const TaskView = ({ setOpenDialog, task, activity }: TaskViewProps) => {
                         }}
                       >
                         <TableCell align='left'>{item.code}</TableCell>
+                        <TableCell align='left'>{item.description}</TableCell>
                         <TableCell align='right'>
                           {formatNumber(item.contribution_percentage)}
                         </TableCell>
-                        <TableCell align='left'>{item.description}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -163,87 +181,58 @@ const TaskView = ({ setOpenDialog, task, activity }: TaskViewProps) => {
               </TableContainer>
             ) : (
               <Paper variant='outlined' sx={{ p: 2, borderRadius: 2 }}>
-                <Typography color='text.secondary'>No task deliverables for this task</Typography>
+                <Typography color='text.secondary'>
+                  No task deliverables for this task
+                </Typography>
               </Paper>
             ))}
 
-          {selectedTab === 1 && isLoading && (
-            <Box>
-              <Stack direction={'column'} gap={1}>
-                <Skeleton sx={{ width: '100%', py: 3 }} />
-                <Skeleton sx={{ width: '80%', py: 3 }} />
-                <Skeleton sx={{ width: '100%', py: 3 }} />
-                <Skeleton sx={{ width: '80%', py: 3 }} />
-                <Skeleton sx={{ width: '100%', py: 3 }} />
-              </Stack>
-            </Box>
-          )}
-
-          {selectedTab === 1 && !isLoading && (
-            <>
-              {materialUsed?.length > 0 ? (
-                <TableContainer component={Paper} variant='outlined' sx={{ borderRadius: 2 }}>
-                  <Table
-                    sx={{
-                      minWidth: 700,
-                      tableLayout: 'fixed',
-                      '& .MuiTableCell-root': {
-                        border: 1,
-                        borderColor: 'divider',
-                      },
-                    }}
-                    aria-label='Material Used Table'
-                  >
-                    <TableHead sx={{ bgcolor: 'action.hover' }}>
-                      <TableRow>
-                        <TableCell sx={{ width: '10%' }}>S/N</TableCell>
-                        {!isAggregated && (
-                          <TableCell sx={{ width: '15%' }}>Date</TableCell>
-                        )}
-                        <TableCell sx={{ width: isAggregated ? '65%' : '55%' }}>Product</TableCell>
-                        <TableCell sx={{ width: '20%' }}>Quantity</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {materialUsed.map((item: any, idx: number) => (
-                        <TableRow key={idx} sx={{ '&:hover': { bgcolor: 'action.hover' } }}>
-                          <TableCell align='center'>{idx + 1}.</TableCell>
-                          {!isAggregated && (
-                            <TableCell>
-                              <Tooltip title='Issued Date'>
-                                <Typography>{formatDate(item.date)}</Typography>
-                              </Tooltip>
-                            </TableCell>
-                          )}
-                          <TableCell>
-                            <Tooltip title='Product Name'>
-                              <Typography>{item.product_name}</Typography>
-                            </Tooltip>
-                          </TableCell>
-                          <TableCell align='right'>
-                            <Tooltip title='Quantity'>
-                              <Typography>
-                                {formatNumber(item.quantity)} {item.measurement_unit?.symbol}
-                              </Typography>
-                            </Tooltip>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              ) : (
-                <Paper variant='outlined' sx={{ p: 2, borderRadius: 2 }}>
-                  <Typography color='text.secondary'>No material used found for this task</Typography>
-                </Paper>
-              )}
-            </>
+          {selectedTab === 1 && (
+            <JumboRqList
+              ref={listRef}
+              wrapperComponent={Card}
+              service={projectsServices.ViewTaskMaterials}
+              primaryKey='id'
+              queryOptions={queryOptions}
+              itemsPerPage={10}
+              itemsPerPageOptions={[5, 8, 10, 15, 20]}
+              renderItem={renderEmployees}
+              componentElement='div'
+              wrapperSx={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+              toolbar={
+                <JumboListToolbar
+                  hideItemsPerPage={true}
+                  actionTail={
+                    <Stack direction='row'>
+                      {selectedTab === 1 && (
+                        <MaterialIssuedSelector
+                          aggregated={queryOptions.queryParams.aggregated}
+                          onChange={handleAggregatedChange}
+                        />
+                      )}
+                      <JumboSearch
+                        onChange={handleOnChange}
+                        value={queryOptions.queryParams.keyword}
+                      />
+                    </Stack>
+                  }
+                ></JumboListToolbar>
+              }
+            />
           )}
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button size='small' variant='outlined' onClick={() => setOpenDialog(false)}>
-          Cancel
+        <Button
+          size='small'
+          variant='outlined'
+          onClick={() => setOpenDialog(false)}
+        >
+          Close
         </Button>
       </DialogActions>
     </>

@@ -24,7 +24,7 @@ const SubContractMaterialIssuedTab = ({ subContract }) => {
       id: subContract?.id,
       keyword: '',
       subcontract_id: subContract?.id,
-      aggregated: false,
+      aggregated: true,
     },
     countKey: 'total',
     dataKey: 'data',
