@@ -152,6 +152,7 @@ function RequisitionsForm({
   } = useJumboAuth();
 
   const [showWarning, setShowWarning] = useState(false);
+  const [currencyChanged, setCurrencyChanged] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [clearFormKey, setClearFormKey] = useState(0);
   const [submitItemForm, setSubmitItemForm] = useState(false);
@@ -670,6 +671,9 @@ function RequisitionsForm({
                           'exchange_rate',
                           newValue?.exchangeRate ? newValue.exchangeRate : 1
                         );
+
+                        const originalCurrencyId = requisition?.currency?.id ?? 1;
+                        setCurrencyChanged(newValue?.id !== originalCurrencyId);
                       }}
                     />
                   </Div>
@@ -753,6 +757,8 @@ function RequisitionsForm({
             {selectedProcessType === 'PAYMENT' ? (
               <RequisitionLedgerItemForm
                 isDuplicate={isDuplicate}
+                currencyChanged={currencyChanged}
+                currencyDetails={currencyDetails}
                 setRequisition_ledger_items={setRequisition_ledger_items}
                 requisition_ledger_items={requisition_ledger_items}
               />
@@ -778,6 +784,7 @@ function RequisitionsForm({
               key={index}
               index={index}
               isDuplicate={isDuplicate}
+              currencyChanged={currencyChanged}
               costCenterId={selectedCostCenterId}
               currencyDetails={currencyDetails}
               setRequisition_ledger_items={setRequisition_ledger_items}
@@ -817,7 +824,7 @@ function RequisitionsForm({
             <Grid size={{ xs: 12 }}>No leave item added yet.</Grid>
           )
         }
-        
+
         <Grid size={{ xs: 12 }} paddingTop={2}>
           <Div sx={{ mt: 0.3 }}>
             <TextField

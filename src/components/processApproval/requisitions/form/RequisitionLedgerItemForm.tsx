@@ -42,6 +42,8 @@ interface RequisitionLedgerItemFormProps {
   index?: number;
   setShowForm?: Dispatch<SetStateAction<boolean>>;
   isDuplicate?: boolean;
+  currencyChanged?: boolean;
+  currencyDetails?: any;
 }
 
 function RequisitionLedgerItemForm({
@@ -51,6 +53,8 @@ function RequisitionLedgerItemForm({
   index = -1,
   setShowForm,
   isDuplicate = false,
+  currencyDetails,
+  currencyChanged = false
 }: RequisitionLedgerItemFormProps) {
   const [isAdding, setIsAdding] = useState(false);
   const [calculatedAmount, setCalculatedAmount] = useState(0);
@@ -59,8 +63,7 @@ function RequisitionLedgerItemForm({
   const [relatedTransactions, setRelatedTransactions] = useState<
     RelatableTransaction[]
   >([]);
-  const [selectedRelated, setSelectedRelated] =
-    useState<RelatableTransaction | null>(null);
+  const [selectedRelated, setSelectedRelated]= useState<RelatableTransaction | null>(null);
 
   const { organizationHasSubscribed } = useJumboAuth();
 
@@ -260,6 +263,7 @@ function RequisitionLedgerItemForm({
           await requisitionsServices.getRelatedTransactions({
             ledger_id: ledgerId,
             type: relatable_type,
+            currency_id: currencyDetails?.id,
             payment_status: 'partially_and_not_approved',
           });
         const normalizedTransactions = extractRelatedTransactions(
@@ -275,15 +279,15 @@ function RequisitionLedgerItemForm({
           if (latestRelated) {
             setSelectedRelated(latestRelated);
             setValue('relatable', latestRelated, {
-              shouldValidate: isDuplicate,
-              shouldDirty: isDuplicate,
+              shouldValidate: isDuplicate || currencyChanged,
+              shouldDirty: isDuplicate || currencyChanged,
             });
             setValue('relatable_id', latestRelated.id, {
-              shouldValidate: isDuplicate,
-              shouldDirty: isDuplicate,
+              shouldValidate: isDuplicate || currencyChanged,
+              shouldDirty: isDuplicate || currencyChanged,
             });
 
-            if (isDuplicate && index > -1) {
+            if ((isDuplicate || currencyChanged) && index > -1) {
               setRequisition_ledger_items((currentItems) => {
                 const updatedItems = [...currentItems];
                 const currentItem = updatedItems[index] || {};
@@ -298,7 +302,7 @@ function RequisitionLedgerItemForm({
               });
             }
 
-            if (isDuplicate) {
+            if (isDuplicate || currencyChanged) {
               const currentAmount =
                 sanitizedNumber(watch('quantity')) * sanitizedNumber(watch('rate'));
               const maxUnapprovedAmount = Number(
@@ -316,7 +320,7 @@ function RequisitionLedgerItemForm({
 
               await trigger('amount');
             }
-          } else if (isDuplicate) {
+          } else if (isDuplicate || currencyChanged) {
             setSelectedRelated(null);
             setValue('relatable', null, {
               shouldValidate: true,
@@ -344,9 +348,13 @@ function RequisitionLedgerItemForm({
 
   useEffect(() => {
     getRelatedTransactions();
-  }, [watch('ledger_id'), watch('relatable_type')]);
+  }, [watch('ledger_id'), watch('relatable_type'), currencyChanged]);
 
-  const hasValidationErrors = isDuplicate && Object.keys(errors).length > 0;
+  useEffect(() => {
+    setSelectedRelated(null);
+  }, [currencyChanged]);
+
+  const hasValidationErrors = (isDuplicate || currencyChanged) && Object.keys(errors).length > 0;
 
   if (isAdding) {
     return <LinearProgress />;

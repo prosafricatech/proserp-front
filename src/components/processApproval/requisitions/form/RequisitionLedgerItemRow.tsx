@@ -5,7 +5,7 @@ import {
   AccountBalanceWalletOutlined,
 } from '@mui/icons-material';
 import { Dialog, Divider, Grid, IconButton, LinearProgress, ListItemText, Tooltip, Typography } from '@mui/material';
-import React, { useState, Dispatch, SetStateAction } from 'react';
+import React, { useState, Dispatch, SetStateAction, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import { RequisitionLedgerItem } from '../../RequisitionType';
@@ -26,6 +26,7 @@ interface FetchRelatableDetailsProps {
 
 interface RequisitionLedgerItemRowProps {
   currencyDetails?: Currency;
+  currencyChanged?: boolean;
   ledger_item: RequisitionLedgerItem;
   index: number;
   requisition_ledger_items?: RequisitionLedgerItem[];
@@ -33,7 +34,6 @@ interface RequisitionLedgerItemRowProps {
   isDuplicate?: boolean;
   costCenterId?: number;
 }
-
 
 const FetchRelatableDetails = ({ relatable, toggleOpen, ledger_item }: FetchRelatableDetailsProps & { ledger_item: RequisitionLedgerItem }) => {
   const { authOrganization } = useJumboAuth();
@@ -66,6 +66,7 @@ const FetchRelatableDetails = ({ relatable, toggleOpen, ledger_item }: FetchRela
 
 function RequisitionLedgerItemRow({
   currencyDetails,
+  currencyChanged = false,
   ledger_item,
   index,
   requisition_ledger_items = [],
@@ -86,6 +87,8 @@ function RequisitionLedgerItemRow({
     currency?: Currency;
   } | null>(null);
 
+  console.log(currencyChanged)
+
   const handleRemoveItem = () => {
     setRequisition_ledger_items(currentItems => {
       const newItems = [...currentItems];
@@ -94,6 +97,12 @@ function RequisitionLedgerItemRow({
     });
   };
 
+  useEffect(() => {
+    if (currencyChanged) {
+      setShowForm(true);
+    }
+  }, [currencyChanged])
+  
   return (
     <React.Fragment>
       <Divider />
@@ -243,6 +252,8 @@ function RequisitionLedgerItemRow({
           setShowForm={setShowForm} 
           index={index}
           isDuplicate={isDuplicate}
+          currencyChanged={currencyChanged}
+          currencyDetails={currencyDetails}
           requisition_ledger_items={requisition_ledger_items} 
           setRequisition_ledger_items={setRequisition_ledger_items}
         />
