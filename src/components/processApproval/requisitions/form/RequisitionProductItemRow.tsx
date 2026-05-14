@@ -8,8 +8,7 @@ import {
   Tooltip,
   Typography,
   Box,
-  ListItemText,
-  IconButton
+  ListItemText
 } from '@mui/material';
 import { DisabledByDefault, EditOutlined } from '@mui/icons-material';
 import { AccountBalanceWalletOutlined } from '@mui/icons-material';
@@ -143,39 +142,59 @@ function RequisitionProductItemRow({
             <Grid size={{xs: 12, md: 3.5}}>
               <ListItemText
                 primary={
-                  <Tooltip title={'Product'}>
-                    <Typography
-                      variant="h5"
-                      fontSize={14}
-                      lineHeight={1.25}
-                      mb={0}
-                      sx={{ whiteSpace: 'normal', overflowWrap: 'anywhere' }}
-                    >
-                      {product_item.product?.name}
-                      {product_item.product && (
-                        <Tooltip title={`${product_item.product.name} Budget check`}>
-                          <IconButton
-                            size="small"
-                            sx={{ ml: 1 }}
-                            onClick={() => {
-                              const selectedProduct = product_item.product;
-                              if (!selectedProduct) return;
-                              setProductDialogData({
-                                productId: selectedProduct.id,
-                                costCenterId: costCenterId,
-                                productName: selectedProduct.name,
-                                measurementUnit: product_item.measurement_unit,
-                                currency: currencyDetails,
-                              });
-                              setOpenProductBudgetDialog(true);
-                            }}
-                          >
-                            <AccountBalanceWalletOutlined fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
-                      )}
-                    </Typography>
-                  </Tooltip>
+                  <Typography
+                    variant="h5"
+                    fontSize={14}
+                    lineHeight={1.25}
+                    mb={0}
+                    component='div'
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      whiteSpace: 'normal',
+                      overflowWrap: 'anywhere',
+                    }}
+                  >
+                    <Tooltip title={'Product'}>
+                      <span>{product_item.product?.name}</span>
+                    </Tooltip>
+                    {product_item.product && (
+                      <Tooltip title={`${product_item.product.name} Budget check`}>
+                        <Box
+                          component='span'
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const selectedProduct = product_item.product;
+                            if (!selectedProduct) return;
+                            setProductDialogData({
+                              productId: selectedProduct.id,
+                              costCenterId: costCenterId,
+                              productName: selectedProduct.name,
+                              measurementUnit: product_item.measurement_unit,
+                              currency: currencyDetails,
+                            });
+                            setOpenProductBudgetDialog(true);
+                          }}
+                          sx={{
+                            ml: 1,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            width: 24,
+                            height: 24,
+                            cursor: 'pointer',
+                            color: 'action.active',
+                            '&:hover': {
+                              color: 'primary.main',
+                            },
+                          }}
+                        >
+                          <AccountBalanceWalletOutlined fontSize="small" />
+                        </Box>
+                      </Tooltip>
+                    )}
+                  </Typography>
                 }
                 secondary={
                   <Tooltip title={'Remarks'}>
