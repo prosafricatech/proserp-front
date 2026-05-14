@@ -258,6 +258,7 @@ function RequisitionLedgerItemRow({
           isDuplicate={isDuplicate}
           currencyChanged={currencyChanged}
           currencyDetails={currencyDetails}
+          costCenterId={costCenterId}
           requisition_ledger_items={requisition_ledger_items} 
           setRequisition_ledger_items={setRequisition_ledger_items}
         />

@@ -759,6 +759,7 @@ function RequisitionsForm({
                 isDuplicate={isDuplicate}
                 currencyChanged={currencyChanged}
                 currencyDetails={currencyDetails}
+                costCenterId={selectedCostCenterId}
                 setRequisition_ledger_items={setRequisition_ledger_items}
                 requisition_ledger_items={requisition_ledger_items}
               />

@@ -11,6 +11,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { Div } from '@jumbo/shared';
 import {
   AddOutlined,
+  AccountBalanceWalletOutlined,
   CheckOutlined,
   DisabledByDefault,
 } from '@mui/icons-material';
@@ -31,6 +32,7 @@ import {
   RelatableTransaction,
   RequisitionLedgerItem,
 } from '../../RequisitionType';
+import LedgerBudgetCheckDetails from '../listItem/tabs/form/LedgerBudgetCheckDetails';
 import requisitionsServices from '../../requisitionsServices';
 
 interface RequisitionLedgerItemFormProps {
@@ -44,6 +46,7 @@ interface RequisitionLedgerItemFormProps {
   isDuplicate?: boolean;
   currencyChanged?: boolean;
   currencyDetails?: any;
+  costCenterId?: number;
 }
 
 function RequisitionLedgerItemForm({
@@ -54,7 +57,8 @@ function RequisitionLedgerItemForm({
   setShowForm,
   isDuplicate = false,
   currencyDetails,
-  currencyChanged = false
+  currencyChanged = false,
+  costCenterId,
 }: RequisitionLedgerItemFormProps) {
   const [isAdding, setIsAdding] = useState(false);
   const [calculatedAmount, setCalculatedAmount] = useState(0);
@@ -64,6 +68,13 @@ function RequisitionLedgerItemForm({
     RelatableTransaction[]
   >([]);
   const [selectedRelated, setSelectedRelated]= useState<RelatableTransaction | null>(null);
+  const [openLedgerBudgetDialog, setOpenLedgerBudgetDialog] = useState(false);
+  const [ledgerDialogData, setLedgerDialogData] = useState<{
+    ledgerId: number;
+    ledgerName: string;
+    costCenterId?: number;
+    currency?: any;
+  } | null>(null);
 
   const { organizationHasSubscribed } = useJumboAuth();
 
@@ -355,6 +366,8 @@ function RequisitionLedgerItemForm({
   }, [currencyChanged]);
 
   const hasValidationErrors = (isDuplicate || currencyChanged) && Object.keys(errors).length > 0;
+  const selectedLedger = (watch('ledger') as any) || ledger_item?.ledger;
+  const hasCostCenter = Boolean(costCenterId);
 
   if (isAdding) {
     return <LinearProgress />;
@@ -366,7 +379,7 @@ function RequisitionLedgerItemForm({
         <Grid size={12}>
           <Divider />
         </Grid>
-        <Grid size={{ xs: 12, md: 3 }}>
+        <Grid size={{ xs: 12, md: selectedLedger ? 3 : 3.5 }}>
           <Div sx={{ mt: 0.3 }}>
             <LedgerSelect
               key={`ledger-select-${formResetKey}`}
@@ -399,6 +412,38 @@ function RequisitionLedgerItemForm({
             />
           </Div>
         </Grid>
+        {selectedLedger &&
+          <Grid size={{ xs: 12, md: 0.5 }}>
+            <Div sx={{ mt: 0.3, display: 'flex', alignItems: 'flex-start' }}>
+              <Tooltip
+                title={
+                  hasCostCenter
+                    ? `${selectedLedger?.name} Budget check`
+                    : 'Select cost center first'
+                }
+              >
+                <span>
+                  <IconButton
+                    size='small'
+                    disabled={!hasCostCenter}
+                    onClick={() => {
+                      if (!selectedLedger?.id || !hasCostCenter) return;
+                      setLedgerDialogData({
+                        ledgerId: selectedLedger.id,
+                        ledgerName: selectedLedger.name,
+                        costCenterId,
+                        currency: currencyDetails,
+                      });
+                      setOpenLedgerBudgetDialog(true);
+                    }}
+                  >
+                    <AccountBalanceWalletOutlined fontSize='small' />
+                  </IconButton>
+                </span>
+              </Tooltip>
+            </Div>
+          </Grid>
+        }
         <Grid size={{ xs: 12, md: 2 }}>
           <Div sx={{ mt: 0.3 }}>
             <MeasurementSelector
@@ -475,7 +520,7 @@ function RequisitionLedgerItemForm({
             />
           </Div>
         </Grid>
-        <Grid size={{ xs: 12, md: 3 }}>
+        <Grid size={{ xs: 12, md: 2.5 }}>
           <Div sx={{ mt: 0.3 }}>
             <TextField
               label='Amount'
@@ -494,7 +539,7 @@ function RequisitionLedgerItemForm({
             />
           </Div>
         </Grid>
-        <Grid size={{ xs: 12, md: 3 }}>
+        <Grid size={{ xs: 12, md: 3.5 }}>
           <Div sx={{ mt: 0.3 }}>
             <Autocomplete
               key={`relatable-type-${formResetKey}`}
@@ -578,7 +623,7 @@ function RequisitionLedgerItemForm({
             </Div>
           </Grid>
         )}
-        <Grid size={{ xs: 12, md: 5 }}>
+        <Grid size={{ xs: 12, md: 4.5 }}>
           <Div sx={{ mt: 0.3 }}>
             <TextField
               key={`remarks-${formResetKey}`}
@@ -626,6 +671,15 @@ function RequisitionLedgerItemForm({
           )}
         </Grid>
       </Grid>
+
+      <LedgerBudgetCheckDetails
+        open={openLedgerBudgetDialog}
+        onClose={() => setOpenLedgerBudgetDialog(false)}
+        ledgerId={ledgerDialogData?.ledgerId || 0}
+        costCenterId={ledgerDialogData?.costCenterId || 0}
+        currency={ledgerDialogData?.currency}
+        ledgerName={ledgerDialogData?.ledgerName || ''}
+      />
     </form>
   );
 }
