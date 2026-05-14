@@ -37,6 +37,7 @@ import React, { useState } from 'react';
 import ClaimOnscreen from './ClaimOnscreen';
 import ClaimPDF from './ClaimPDF';
 import ProjectClaimsForm from './form/ProjectClaimsForm';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
 
 interface DocumentDialogProps {
   open: boolean;
@@ -194,6 +195,7 @@ const ProjectClaimItemAction: React.FC<ProjectClaimItemActionProps> = ({
 
   const { authOrganization } = useJumboAuth();
   const organization = authOrganization?.organization;
+  const { checkOrganizationPermission } = useJumboAuth();
 
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
@@ -215,13 +217,15 @@ const ProjectClaimItemAction: React.FC<ProjectClaimItemActionProps> = ({
 
   const menuItems = [
     { icon: <VisibilityOutlined />, title: 'View', action: 'view' },
-    { icon: <EditOutlined />, title: 'Edit', action: 'edit' },
-    {
+    checkOrganizationPermission(PERMISSIONS.PROJECT_CLAIMS_UPDATE) && {
+      icon: <EditOutlined />, title: 'Edit', action: 'edit'
+    },
+    checkOrganizationPermission(PERMISSIONS.PROJECT_CLAIMS_DELETE) && {
       icon: <DeleteOutlined color='error' />,
       title: 'Delete',
       action: 'delete',
     },
-  ];
+  ].filter(Boolean);
 
   const handleItemAction = (menu: MenuItemProps) => {
     switch (menu.action) {
@@ -272,15 +276,17 @@ const ProjectClaimItemAction: React.FC<ProjectClaimItemActionProps> = ({
         organization={organization}
       />
 
-      <JumboDdMenu
-        icon={
-          <Tooltip title='Actions'>
-            <MoreHorizOutlined />
-          </Tooltip>
-        }
-        menuItems={menuItems}
-        onClickCallback={handleItemAction}
-      />
+      {menuItems.length > 0 && (
+        <JumboDdMenu
+          icon={
+            <Tooltip title='Actions'>
+              <MoreHorizOutlined />
+            </Tooltip>
+          }
+          menuItems={menuItems as any}
+          onClickCallback={handleItemAction}
+        />
+      )}
     </>
   );
 };

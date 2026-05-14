@@ -4,11 +4,13 @@ import { Dialog,LinearProgress,Tooltip, useMediaQuery } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import React, { useState } from 'react';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import SubcontractForm from './SubcontractForm';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import projectsServices from '../../project-services';
 import { JumboDdMenu } from '@jumbo/components';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
 
 const EditSubContract = ({subContract,setOpenDialog}) => {
   const {data:SubContractDetails,isFetching} = useQuery({
@@ -30,6 +32,7 @@ const SubcontractItemAction = ({subContract}) => {
   const {showDialog,hideDialog} = useJumboDialog();
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
+  const { checkOrganizationPermission } = useJumboAuth();
 
   const {theme} = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
@@ -49,9 +52,17 @@ const SubcontractItemAction = ({subContract}) => {
   });
 
   const menuItems = [
-    {icon: <EditOutlined/>, title: 'Edit', action: 'edit'},
-    {icon: <DeleteOutlined color='error'/>, title: 'Delete', action: 'delete'},
-  ];
+    checkOrganizationPermission(PERMISSIONS.PROJECT_SUBCONTRACTS_EDIT) && {
+      icon: <EditOutlined/>,
+      title: 'Edit',
+      action: 'edit',
+    },
+    checkOrganizationPermission(PERMISSIONS.PROJECT_SUBCONTRACTS_DELETE) && {
+      icon: <DeleteOutlined color='error'/>,
+      title: 'Delete',
+      action: 'delete',
+    },
+  ].filter(Boolean);
 
   const handleItemAction = (menuItem) => {
     switch (menuItem.action) {
@@ -86,15 +97,17 @@ const SubcontractItemAction = ({subContract}) => {
       >
         {openEditDialog && <EditSubContract subContract={subContract} setOpenDialog={setOpenEditDialog}/>}
       </Dialog>
-      <JumboDdMenu
-        icon={
-          <Tooltip title='Actions'>
-            <MoreHorizOutlined/>
-          </Tooltip>
-        }
-        menuItems={menuItems}
-        onClickCallback={handleItemAction}
-      />
+      {menuItems.length > 0 && (
+        <JumboDdMenu
+          icon={
+            <Tooltip title='Actions'>
+              <MoreHorizOutlined/>
+            </Tooltip>
+          }
+          menuItems={menuItems}
+          onClickCallback={handleItemAction}
+        />
+      )}
     </>
   );
 };

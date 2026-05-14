@@ -10,7 +10,7 @@ import { PERMISSIONS } from '@/utilities/constants/permissions';
 const SubcontractActionTail = () => {
   const { checkOrganizationPermission } = useJumboAuth();
   const [openDialog, setOpenDialog] = useState(false);
-
+ 
   //Screen handling constants
   const {theme} = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
@@ -22,7 +22,7 @@ const SubcontractActionTail = () => {
         </Dialog>
 
         <ButtonGroup variant="outlined" size="small" disableElevation sx={{ '& .MuiButton-root': { px: 1 } }}>
-            {(
+            {checkOrganizationPermission(PERMISSIONS.PROJECT_SUBCONTRACTS_CREATE) && (
                 <Tooltip title={"Add Subcontract"}>
                     <IconButton onClick={() => setOpenDialog(true)}>
                         <AddOutlined />

@@ -2,6 +2,7 @@
 
 import { lazy, useEffect, useMemo, useState } from 'react';
 import { Card, Skeleton, Stack, Tab, Tabs, Typography } from '@mui/material';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import JumboContentLayout from '@jumbo/components/JumboContentLayout';
 import ProjectDashboard from './dashboard/ProjectDashboard';
 import ProjectProfileProvider, { useProjectProfile } from './ProjectProfileProvider';
@@ -10,6 +11,7 @@ import projectsServices from '../project-services';
 import StakeholderSelectProvider from '@/components/masters/stakeholders/StakeholderSelectProvider';
 import CurrencySelectProvider from '@/components/masters/Currencies/CurrencySelectProvider';
 import ProjectClaims from './claims/ProjectClaims';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
 
 const AttachmentForm = lazy(() => import('@/components/filesShelf/attachments/AttachmentForm'));
 const Subcontracts = lazy(() => import('./subcontracts/Subcontracts'));
@@ -50,7 +52,15 @@ const TABS_NEEDING_TIMELINE: TabKey[] = [
 
 function ProfileContent() {
   const { project, updateProjectProfile, setIsDashboardTab }: any = useProjectProfile();
+  const { authUser, checkOrganizationPermission } = useJumboAuth();
   const queryClient = useQueryClient();
+  const isAdministrator = authUser?.user?.organization_roles?.some(
+    (role: { name?: string }) => role.name === 'Administrator'
+  );
+  const canManageTeam =
+    isAdministrator ||
+    checkOrganizationPermission(PERMISSIONS.PROJECTS_MANAGE_TEAM);
+  const showUsersTab = canManageTeam;
   
   // Store active tab in sessionStorage for persistence
   const [activeTab, setActiveTab] = useState<TabKey>(() => {
@@ -185,6 +195,12 @@ function ProfileContent() {
     setIsDashboardTab(activeTab === 'dashboard');
   }, [activeTab, setIsDashboardTab]);
 
+  useEffect(() => {
+    if (!showUsersTab && activeTab === 'users') {
+      setActiveTab('dashboard');
+    }
+  }, [activeTab, showUsersTab]);
+
   const handleTabChange = (event: React.SyntheticEvent, newValue: TabKey) => {
     setActiveTab(newValue);
   };
@@ -210,6 +226,7 @@ function ProfileContent() {
       case 'claims':
         return <ProjectClaims />;
       case 'users':
+        if (!showUsersTab) return null;
         return <ProjectUsers />;
       case 'attachments':
         return (
@@ -252,7 +269,7 @@ function ProfileContent() {
             <Tab label="Updates" value="updates" />
             <Tab label="Subcontracts" value="subcontracts" />
             {project?.client_id && <Tab label="Claims" value="claims" />}
-            <Tab label="Users" value="users" />
+            {showUsersTab && <Tab label="Users" value="users" />}
             <Tab label="Attachments" value="attachments" />
           </Tabs>
 

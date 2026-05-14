@@ -357,9 +357,7 @@ function BudgetsAccordionDetails({ budget, expanded }) {
   });
 
   const getPercentageColor = (percentage) => {
-    if (percentage <= 50) return 'success';
-    if (percentage > 50 && percentage < 75) return 'warning';
-    return 'error';
+    return percentage === Infinity ? 'error' : 'primary';
   };
 
   const filteredExpenses = budgetItemsDetails?.expenses_budgeted?.filter(
@@ -648,9 +646,7 @@ function BudgetsAccordionDetails({ budget, expanded }) {
                               : `${percentageSpent.toFixed(2)}%`
                           }
                           color={
-                            percentageSpent === Infinity
-                              ? 'error'
-                              : getPercentageColor(percentageSpent)
+                            getPercentageColor(percentageSpent)
                           }
                           size='small'
                         />
@@ -667,9 +663,7 @@ function BudgetsAccordionDetails({ budget, expanded }) {
                                 : percentageSpent
                             }
                             color={
-                              percentageSpent === Infinity
-                                ? 'error'
-                                : getPercentageColor(percentageSpent)
+                              getPercentageColor(percentageSpent)
                             }
                             sx={{
                               height: 15,
