@@ -1,9 +1,9 @@
-import { Button, Checkbox, Divider, FormControl, Grid, IconButton, LinearProgress, MenuItem, Select, TextField, Tooltip, Typography } from '@mui/material';
+import { Box, Button, Checkbox, Divider, FormControl, Grid, IconButton, LinearProgress, MenuItem, Select, TextField, Tooltip, Typography } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { AddOutlined, CheckOutlined, DisabledByDefault } from '@mui/icons-material';
+import { AccountBalanceWalletOutlined, AddOutlined, CheckOutlined, DisabledByDefault } from '@mui/icons-material';
 import { useProductsSelect } from '@/components/productAndServices/products/ProductsSelectProvider';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import ProductSelect from '@/components/productAndServices/products/ProductSelect';
@@ -13,6 +13,8 @@ import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { Product } from '@/components/productAndServices/products/ProductType';
 import { Organization } from '@/types/auth-types';
 import ProductQuickAdd from '@/components/productAndServices/products/ProductQuickAdd';
+import ProductBudgetCheckDetails from '../listItem/tabs/form/ProductBudgetCheckDetails';
+import { Currency } from '@/utilities/constants/countries';
 
 export interface RequisitionProductItem {
   product_id?: number;
@@ -35,6 +37,8 @@ export interface RequisitionProductItem {
 
 interface RequisitionProductItemFormProps {
   product_item?: RequisitionProductItem | null;
+  currencyDetails?: Currency;
+  costCenterId?: number;
   index?: number;
   setRequisition_product_items: (items: React.SetStateAction<RequisitionProductItem[]>) => void;
   requisition_product_items?: RequisitionProductItem[];
@@ -43,6 +47,8 @@ interface RequisitionProductItemFormProps {
 
 function RequisitionProductItemForm({
   product_item = null,
+  currencyDetails,
+  costCenterId,
   index = -1,
   setRequisition_product_items,
   requisition_product_items = [],
@@ -61,6 +67,14 @@ function RequisitionProductItemForm({
     const [priceInclusiveVAT, setPriceInclusiveVAT] = useState(0);
     const [priceFieldKey, setPriceFieldKey] = useState(0);
     const [vatPriceFieldKey, setVatPriceFieldKey] = useState(0);
+    const [openProductBudgetDialog, setOpenProductBudgetDialog] = useState(false);
+    const [productDialogData, setProductDialogData] = useState<{
+      productId: number;
+      costCenterId?: number;
+      productName: string;
+      measurementUnit: any;
+      currency?: Currency;
+    } | null>(null);
 
     const validationSchema = yup.object({
         product: yup.object().required('Product is required').typeError('Product is required'),
@@ -93,6 +107,12 @@ function RequisitionProductItemForm({
     });
 
     const product: Product | undefined | null = watch('product');
+    const canSeeBudget = checkOrganizationPermission([
+      PERMISSIONS.BUDGETS_CREATE,
+      PERMISSIONS.BUDGETS_EDIT,
+      PERMISSIONS.BUDGETS_READ,
+      PERMISSIONS.BUDGETS_DELETE,
+    ]);
     const vat_percentage: number = watch('vat_percentage') || 0;
     const vat_factor = vat_percentage * 0.01;
 
@@ -181,7 +201,7 @@ function RequisitionProductItemForm({
         )}
         {!openProductQuickAdd && (
           <>
-            <Grid size={{xs: 12, md: 3}}>
+            <Grid size={{ xs: 12, md: product && canSeeBudget ? 2.5 : 3 }}>
               <ProductSelect
                 label='Product'
                 frontError={errors.product}
@@ -224,6 +244,35 @@ function RequisitionProductItemForm({
                 }
               />
             </Grid>
+            {(product && !canSeeBudget) && (
+              <Grid size={{ xs: 12, md: 0.5 }}>
+                <Box sx={{ mt: 0.3, display: 'flex', alignItems: 'flex-start' }}>
+                  <Tooltip title={`${product.name} Budget check`}>
+                    <IconButton
+                      size='small'
+                      onClick={() => {
+                        const selectedProduct = product;
+                        if (!selectedProduct) return;
+                        setProductDialogData({
+                          productId: selectedProduct.id,
+                          costCenterId,
+                          productName: selectedProduct.name,
+                          measurementUnit:
+                            (selectedUnit &&
+                              combinedUnits.find((unit: any) => unit.id === selectedUnit)) ||
+                            selectedProduct.primary_unit ||
+                            selectedProduct.measurement_unit,
+                          currency: currencyDetails,
+                        });
+                        setOpenProductBudgetDialog(true);
+                      }}
+                    >
+                      <AccountBalanceWalletOutlined fontSize='small' />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              </Grid>
+            )}
             <Grid size={{xs: 12, md: 2}}>
               <TextField
                 label='Quantity'
@@ -354,7 +403,7 @@ function RequisitionProductItemForm({
                 />
               </Grid>
             )}
-            <Grid size={{xs: 12, md: vat_factor ? 2 : 3}}>
+            <Grid size={{xs: 12, md: vat_factor ? (product && !canSeeBudget ? 1.5 : 2) : ((product && !canSeeBudget) ? 2.5 : 3)}}>
               <TextField
                 label='Amount'
                 fullWidth
@@ -413,6 +462,16 @@ function RequisitionProductItemForm({
         )}
         {openProductQuickAdd && <ProductQuickAdd setOpen={setOpenProductQuickAdd} setAddedProduct={setAddedProduct} />}
       </Grid>
+
+      <ProductBudgetCheckDetails
+        open={openProductBudgetDialog}
+        onClose={() => setOpenProductBudgetDialog(false)}
+        productId={productDialogData?.productId || 0}
+        costCenterId={productDialogData?.costCenterId || 0}
+        productName={productDialogData?.productName || ''}
+        measurementUnit={productDialogData?.measurementUnit as any}
+        currency={productDialogData?.currency as any}
+      />
     </form>
   );
 }

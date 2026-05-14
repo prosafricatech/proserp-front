@@ -240,8 +240,8 @@ projectsServices.EditTask = async (task) => {
     return data;
 }
 
-projectsServices.ViewTaskMaterials = async (task) => {
-    const { data } = await axios.get(`/api/projectManagement/project/${task.id}/getTaskMaterialUsed`, task)
+projectsServices.ViewTaskMaterials = async (params) => {
+    const { data } = await axios.get(`/api/projectManagement/project/${params.id}/getTaskMaterialUsed`, { params })
     return data;
 }
 

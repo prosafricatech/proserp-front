@@ -12,8 +12,9 @@ export async function GET(
   const { headers, response } = await getAuthHeaders(req);
   if (response) return response;
 
-  const url = new URL(
-    `${API_BASE}/project-tasks/${id}/material-used?aggregated=1`
+  const url = new URL(`${API_BASE}/project-tasks/${id}/material-used`);
+  req.nextUrl.searchParams.forEach((value, key) =>
+    url.searchParams.set(key, value)
   );
 
   const res = await fetch(url.toString(), {

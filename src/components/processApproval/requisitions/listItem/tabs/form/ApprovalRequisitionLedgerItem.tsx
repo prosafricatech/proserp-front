@@ -20,6 +20,7 @@ import projectsServices from '@/components/projectManagement/projects/project-se
 import CertificateOnScreen from '@/components/projectManagement/projects/profile/subcontracts/tabs/certificatesTab/preview/CertificateOnScreen';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import LedgerBudgetCheckDetails from './LedgerBudgetCheckDetails';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { useQuery } from '@tanstack/react-query';
 import { readableDate, sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
@@ -93,6 +94,13 @@ function ApprovalRequisitionLedgerItem({
     const [openViewDialog, setOpenViewDialog] = useState(false);
     const [selectedRelated, setSelectedRelated] = useState<{ id: number; orderNo: string; order_date: string } | null>(null);
     const [initialItems, setInitialItems] = useState<RequisitionItem[]>([]);
+    const { checkOrganizationPermission } = useJumboAuth();
+    const canSeeBudget = checkOrganizationPermission([
+        PERMISSIONS.BUDGETS_CREATE,
+        PERMISSIONS.BUDGETS_EDIT,
+        PERMISSIONS.BUDGETS_READ,
+        PERMISSIONS.BUDGETS_DELETE,
+    ]);
     const [openLedgerBudgetDialog, setOpenLedgerBudgetDialog] = useState(false);
     const [ledgerDialogData, setLedgerDialogData] = useState<{ ledgerId: number, ledgerName: string, costCenterId: number, currency: Currency } | null>(null);
     const sourceItemsCount = (approval?.items || ('items' in requisition ? requisition.items : []) || []).length;
@@ -135,7 +143,7 @@ function ApprovalRequisitionLedgerItem({
                                     <Tooltip title={'Ledger'}>
                                         <Typography variant="h5" fontSize={14} lineHeight={1.25} mb={0} noWrap>
                                             {item.ledger?.name}
-                                            {item.ledger && (
+                                            {item.ledger && canSeeBudget && (
                                                 <Tooltip title={`${item.ledger.name} Budget check`}>
                                                     <IconButton
                                                         size="small"

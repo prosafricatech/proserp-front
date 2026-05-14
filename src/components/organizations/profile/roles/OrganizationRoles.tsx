@@ -91,6 +91,7 @@ const PERMISSION_MODULES: PermissionModuleConfig[] = [
       'JournalVouchers',
       'Payments',
       'Receipts',
+      'Budgets'
     ],
   },
   {
@@ -142,7 +143,7 @@ const PERMISSION_MODULES: PermissionModuleConfig[] = [
   {
     key: 'project_management',
     displayName: MODULES.PROJECT_MANAGEMENT,
-    prefixes: ['ProjectCategories', 'Projects'],
+    prefixes: ['ProjectCategories', 'Projects', 'ProjectClaims', 'ProjectSubcontracts'],
   },
   {
     key: 'shared',

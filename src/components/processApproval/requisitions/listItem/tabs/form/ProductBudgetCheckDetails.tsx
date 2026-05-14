@@ -22,7 +22,7 @@ import { Currency } from '@/components/masters/Currencies/CurrencyType';
 import { MeasurementUnit } from '@/components/masters/measurementUnits/MeasurementUnitType';
 
 interface ProductBudgetCheckDetailsProps {
-  requisition: any;
+  requisition?: any;
   productId: number;
   costCenterId: number;
   productName: string;
@@ -107,6 +107,10 @@ const ProductBudgetCheckDetails: React.FC<ProductBudgetCheckDetailsProps> = ({
 
         {isFetching ? (
           <Skeleton variant="rectangular" width="100%" height={240} />
+        ) : !costCenterId ? (
+          <Typography color="text.secondary" textAlign={'center'}>
+            Please select a cost center to fetch budget check details.
+          </Typography>
         ) : data ? (
           <Grid container spacing={3}>
             {/* Budget */}

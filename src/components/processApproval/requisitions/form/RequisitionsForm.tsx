@@ -765,6 +765,8 @@ function RequisitionsForm({
               />
             ) : selectedProcessType === 'PURCHASE' ? (
               <RequisitionProductItemForm
+                currencyDetails={currencyDetails}
+                costCenterId={selectedCostCenterId}
                 setRequisition_product_items={setRequisition_product_items}
                 requisition_product_items={requisition_product_items}
               />

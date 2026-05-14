@@ -18,6 +18,7 @@ import CertificateOnScreen from '@/components/projectManagement/projects/profile
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { Organization } from '@/types/auth-types';
 import LedgerBudgetCheckDetails from '../listItem/tabs/form/LedgerBudgetCheckDetails';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
 
 interface FetchRelatableDetailsProps {
   relatable: any;
@@ -79,6 +80,13 @@ function RequisitionLedgerItemRow({
   );
   const [openViewDialog, setOpenViewDialog] = useState(false);
   const [selectedRelated, setSelectedRelated] = useState<any>(null);
+  const { checkOrganizationPermission } = useJumboAuth();
+  const canSeeBudget = checkOrganizationPermission([
+    PERMISSIONS.BUDGETS_CREATE,
+    PERMISSIONS.BUDGETS_EDIT,
+    PERMISSIONS.BUDGETS_READ,
+    PERMISSIONS.BUDGETS_DELETE,
+  ]);
   const [openLedgerBudgetDialog, setOpenLedgerBudgetDialog] = useState(false);
   const [ledgerDialogData, setLedgerDialogData] = useState<{
     ledgerId: number;
@@ -137,7 +145,7 @@ function RequisitionLedgerItemRow({
                   <Tooltip title={'Relatable To'}>
                     <span>{ledger_item.ledger?.name}</span>
                   </Tooltip>
-                  {ledger_item.ledger && (
+                  {ledger_item.ledger && canSeeBudget && (
                     <Tooltip title={`${ledger_item.ledger.name} Budget check`}>
                       <IconButton
                         size='small'

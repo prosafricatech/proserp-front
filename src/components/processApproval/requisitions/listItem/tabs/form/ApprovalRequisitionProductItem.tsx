@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Divider, Typography, TextField, Tabs, Tab, Tooltip, InputAdornment, Checkbox, IconButton, Box, Button, Grid } from '@mui/material';
 import { AccountBalanceWalletOutlined } from '@mui/icons-material';
 import ProductBudgetCheckDetails from './ProductBudgetCheckDetails';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
 import Vendors from './Vendors';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { Restore } from '@mui/icons-material';
@@ -37,7 +38,13 @@ function ApprovalRequisitionProductItem({
     requisitionProductItem, 
     setRequisitionProductItem 
 }: ApprovalRequisitionProductItemProps) {
-    const { authOrganization } = useJumboAuth();
+    const { authOrganization, checkOrganizationPermission } = useJumboAuth();
+    const canSeeBudget = checkOrganizationPermission([
+        PERMISSIONS.BUDGETS_CREATE,
+        PERMISSIONS.BUDGETS_EDIT,
+        PERMISSIONS.BUDGETS_READ,
+        PERMISSIONS.BUDGETS_DELETE,
+    ]);
     const [initialItems, setInitialItems] = useState<RequisitionItem[]>([]);
     const [vatFieldStates, setVatFieldStates] = useState<Record<number, ItemState>>({});
     const [priceInclusiveVATs, setPriceInclusiveVATs] = useState<Record<number, ItemState>>({});
@@ -113,7 +120,7 @@ function ApprovalRequisitionProductItem({
                                 <Tooltip title="Product">
                                     <Typography>{item.product?.name}</Typography>
                                 </Tooltip>
-                                {item.product && (
+                                {item.product && canSeeBudget && (
                                     <Tooltip title={`${item.product.name} Budget check`}>
                                         <IconButton
                                             size="small"

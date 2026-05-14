@@ -20,6 +20,8 @@ import ProductVendorRow from './productVendor/ProductVendorRow';
 import { Currency } from '@/utilities/constants/countries';
 import { Vendor } from '../../RequisitionType';
 import ProductBudgetCheckDetails from '../listItem/tabs/form/ProductBudgetCheckDetails';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
 
 interface RequisitionProductItemRowProps {
   currencyDetails?: Currency;
@@ -48,6 +50,13 @@ function RequisitionProductItemRow({
         })) 
       : []
   );
+  const { checkOrganizationPermission } = useJumboAuth();
+  const canSeeBudget = checkOrganizationPermission([
+    PERMISSIONS.BUDGETS_CREATE,
+    PERMISSIONS.BUDGETS_EDIT,
+    PERMISSIONS.BUDGETS_READ,
+    PERMISSIONS.BUDGETS_DELETE,
+  ]);
   const [openProductBudgetDialog, setOpenProductBudgetDialog] = useState(false);
   const [productDialogData, setProductDialogData] = useState<{
     productId: number;
@@ -159,7 +168,7 @@ function RequisitionProductItemRow({
                     <Tooltip title={'Product'}>
                       <span>{product_item.product?.name}</span>
                     </Tooltip>
-                    {product_item.product && (
+                    {product_item.product && canSeeBudget && (
                       <Tooltip title={`${product_item.product.name} Budget check`}>
                         <Box
                           component='span'
@@ -284,6 +293,8 @@ function RequisitionProductItemRow({
             <Box sx={{ width: '100%' }}>
               <RequisitionProductItemForm 
                 product_item={product_item} 
+                currencyDetails={currencyDetails}
+                costCenterId={costCenterId}
                 setShowForm={setShowForm} 
                 index={index} 
                 requisition_product_items={requisition_product_items} 
@@ -315,7 +326,6 @@ function RequisitionProductItemRow({
       </Accordion>
 
       <ProductBudgetCheckDetails
-        requisition={null as any}
         open={openProductBudgetDialog}
         onClose={() => setOpenProductBudgetDialog(false)}
         productId={productDialogData?.productId || 0}

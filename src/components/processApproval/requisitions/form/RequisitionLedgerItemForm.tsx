@@ -7,6 +7,7 @@ import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
 import MeasurementSelector from '@/components/masters/measurementUnits/MeasurementSelector';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { MODULES } from '@/utilities/constants/modules';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Div } from '@jumbo/shared';
 import {
@@ -76,7 +77,7 @@ function RequisitionLedgerItemForm({
     currency?: any;
   } | null>(null);
 
-  const { organizationHasSubscribed } = useJumboAuth();
+  const { organizationHasSubscribed, checkOrganizationPermission } = useJumboAuth();
 
   const relatableTypes = [
     {
@@ -368,6 +369,12 @@ function RequisitionLedgerItemForm({
   const hasValidationErrors = (isDuplicate || currencyChanged) && Object.keys(errors).length > 0;
   const selectedLedger = (watch('ledger') as any) || ledger_item?.ledger;
   const hasCostCenter = Boolean(costCenterId);
+  const canSeeBudget = checkOrganizationPermission([
+    PERMISSIONS.BUDGETS_CREATE,
+    PERMISSIONS.BUDGETS_EDIT,
+    PERMISSIONS.BUDGETS_READ,
+    PERMISSIONS.BUDGETS_DELETE,
+  ]);
 
   if (isAdding) {
     return <LinearProgress />;
@@ -379,7 +386,7 @@ function RequisitionLedgerItemForm({
         <Grid size={12}>
           <Divider />
         </Grid>
-        <Grid size={{ xs: 12, md: selectedLedger ? 3 : 3.5 }}>
+        <Grid size={{ xs: 12, md: selectedLedger && canSeeBudget ? 3 : 3.5 }}>
           <Div sx={{ mt: 0.3 }}>
             <LedgerSelect
               key={`ledger-select-${formResetKey}`}
@@ -412,7 +419,7 @@ function RequisitionLedgerItemForm({
             />
           </Div>
         </Grid>
-        {selectedLedger &&
+        {selectedLedger && canSeeBudget &&
           <Grid size={{ xs: 12, md: 0.5 }}>
             <Div sx={{ mt: 0.3, display: 'flex', alignItems: 'flex-start' }}>
               <Tooltip
