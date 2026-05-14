@@ -4529,6 +4529,15 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../../src/app/api/projectManagement/project/[id]/getTaskMaterialUsed/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/projectManagement/project/[id]/getTaskMaterialUsed">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/projectManagement/project/[id]/getTaskMaterialUsed/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../../src/app/api/projectManagement/project/[id]/getbudgetItemsDetails/route.ts
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/projectManagement/project/[id]/getbudgetItemsDetails">> = Specific
