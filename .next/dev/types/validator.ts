@@ -4925,6 +4925,24 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../../src/app/api/prosControl/prosafricans/[id]/deleteProsRoles/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/prosControl/prosafricans/[id]/deleteProsRoles">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/prosControl/prosafricans/[id]/deleteProsRoles/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../../src/app/api/prosControl/prosafricans/[id]/updateProsRoles/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/prosControl/prosafricans/[id]/updateProsRoles">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/prosControl/prosafricans/[id]/updateProsRoles/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../../src/app/api/prosControl/prosafricans/[id]/userDetachAction/route.ts
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/prosControl/prosafricans/[id]/userDetachAction">> = Specific

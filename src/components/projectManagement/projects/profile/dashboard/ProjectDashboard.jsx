@@ -648,7 +648,7 @@ function ProjectDashboard() {
           >
             <CardContent>
               <Box display='flex' alignItems='center' mb={3}>
-                <TimelineOutlined color='warning' sx={{ mr: 1 }} />
+                <TimelineOutlined color='primary' sx={{ mr: 1 }} />
                 <Typography variant='h6' fontWeight={600}>
                   Project Progress
                 </Typography>
@@ -758,46 +758,71 @@ function ProjectDashboard() {
                     <Skeleton variant='rectangular' height={8} sx={{ mt: 2 }} />
                   </>
                 ) : (
-                  <>
-                    <StatItem
-                      label='Contract Sum'
-                      value={formatCurrency(dashboardFigures?.contract_sum)}
-                    />
-                    <StatItem
-                      label='Certified Revenue'
-                      value={formatCurrency(
-                        dashboardFigures?.certified_revenue
-                      )}
-                    />
-                    <StatItem
-                      label='Work in Progress'
-                      value={formatCurrency(workInProgress)}
-                    />
-                    <StatItem
-                      label='Progressive Revenue'
-                      value={formatCurrency(
-                        dashboardFigures?.progressive_revenue
-                      )}
-                    />
-                    <Box mt={2} mb={2}>
-                      <Box display='flex' alignItems='center' gap={1}>
-                        <LinearProgress
-                          variant='determinate'
-                          value={parseFloat(progressiveRevenuePercent)}
-                          sx={{ height: 8, borderRadius: 5, mt: 1, flex: 1 }}
-                        />
+                  <Grid container columnSpacing={1}>
+                    <Grid size={{ xs: 12, md: 6, lg: 6 }}>
+                      <StatItem
+                        label='Contract Sum'
+                        value={formatCurrency(dashboardFigures?.contract_sum)}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 6, lg: 6 }}>
+                      <StatItem
+                        label='Certified Revenue'
+                        value={formatCurrency(
+                          dashboardFigures?.certified_revenue
+                        )}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 6, lg: 6 }}>
+                      <StatItem
+                        label='Uncertified Revenue'
+                        value={formatCurrency(workInProgress)}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 6, lg: 6 }}>
+                      <StatItem
+                        label='Progressive Revenue'
+                        value={formatCurrency(
+                          dashboardFigures?.progressive_revenue
+                        )}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12 }} mb={2}>
+                      <Box
+                        display='flex'
+                        alignItems='center'
+                        justifyContent='space-between'
+                        mb={1}
+                      >
+                        <Typography variant='body2' color='text.secondary'>
+                          % Progress Revenue
+                        </Typography>
                         <Typography variant='body2' color='text.secondary'>
                           {parseFloat(progressiveRevenuePercent).toFixed(2)}%
                         </Typography>
                       </Box>
-                    </Box>
-                    <StatItem
-                      label='Gross Profit to Date'
-                      value={formatCurrency(
-                        dashboardFigures?.gross_profit_to_date
-                      )}
-                    />
-                  </>
+                      <Box
+                        display='flex'
+                        alignItems='center'
+                        gap={1}
+                        paddingTop={1}
+                      >
+                        <LinearProgress
+                          variant='determinate'
+                          value={parseFloat(progressiveRevenuePercent)}
+                          sx={{ height: 8, borderRadius: 5, flex: 1 }}
+                        />
+                      </Box>
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 6, lg: 6 }}>
+                      <StatItem
+                        label='Gross Profit to Date'
+                        value={formatCurrency(
+                          dashboardFigures?.gross_profit_to_date
+                        )}
+                      />
+                    </Grid>
+                  </Grid>
                 )}
               </CardContent>
             </Card>
@@ -810,15 +835,9 @@ function ProjectDashboard() {
             elevation={3}
             sx={{ borderRadius: 3, height: '100%', width: '100%' }}
           >
-            <CardContent
-              sx={{
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-              }}
-            >
+            <CardContent>
               <Box display='flex' alignItems='center' mb={2}>
-                <AccountBalanceWalletOutlined color='success' sx={{ mr: 1 }} />
+                <AccountBalanceWalletOutlined color='primary' sx={{ mr: 1 }} />
                 <Typography variant='h6' fontWeight={600}>
                   Budgets
                 </Typography>
@@ -831,23 +850,26 @@ function ProjectDashboard() {
                   <Skeleton variant='rectangular' height={8} sx={{ mt: 2 }} />
                 </>
               ) : (
-                <Box
-                  sx={{
-                    flex: 1,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                  }}
-                >
-                  <StatItem
-                    label='Total Budget'
-                    value={formatCurrency(dashboardFigures?.budget)}
-                  />
-                  <StatItem
-                    label='Cost to Date'
-                    value={formatCurrency(dashboardFigures?.cost_to_date)}
-                  />
-                  <Box mt={2} paddingBottom={3}>
+                <Grid container columnSpacing={1}>
+                  <Grid size={{ xs: 12, md: 6, lg: 6 }}>
+                    <StatItem
+                      label='Total Budget'
+                      value={formatCurrency(dashboardFigures?.budget)}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 6, lg: 6 }}>
+                    <StatItem
+                      label='Cost to Date'
+                      value={formatCurrency(dashboardFigures?.cost_to_date)}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 6, lg: 6 }}>
+                    <StatItem
+                      label='Remaining Budget'
+                      value={formatCurrency(dashboardFigures?.remaining_budget)}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12 }} paddingBottom={3}>
                     <Box
                       display='flex'
                       alignItems='center'
@@ -868,12 +890,8 @@ function ProjectDashboard() {
                         sx={{ height: 8, borderRadius: 5, mt: 1, flex: 1 }}
                       />
                     </Box>
-                  </Box>
-                  <StatItem
-                    label='Remaining Budget'
-                    value={formatCurrency(dashboardFigures?.remaining_budget)}
-                  />
-                </Box>
+                  </Grid>
+                </Grid>
               )}
             </CardContent>
           </Card>
@@ -1074,7 +1092,7 @@ function ProjectDashboard() {
             }}
           >
             <CardHeader
-              avatar={<Inventory2Outlined color='success' sx={{ mr: 1 }} />}
+              avatar={<Inventory2Outlined color='primary' sx={{ mr: 1 }} />}
               title={
                 <Typography variant='h6' fontWeight={600}>
                   Inventory Value
