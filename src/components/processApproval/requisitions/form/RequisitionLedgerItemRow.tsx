@@ -87,8 +87,6 @@ function RequisitionLedgerItemRow({
     currency?: Currency;
   } | null>(null);
 
-  console.log(currencyChanged)
-
   const handleRemoveItem = () => {
     setRequisition_ledger_items(currentItems => {
       const newItems = [...currentItems];
@@ -122,38 +120,44 @@ function RequisitionLedgerItemRow({
           <Grid size={{xs: 11, md: !ledger_item.relatable_id ? 5.5 : 4.5, lg: !ledger_item.relatable_id ? 4.5 : 3.5}}>
             <ListItemText
               primary={
-                <Tooltip title={'Relatable To'}>
-                  <Typography
-                    variant={"h5"}
-                    fontSize={14}
-                    lineHeight={1.25}
-                    mb={0}
-                    sx={{ whiteSpace: 'normal', overflowWrap: 'anywhere' }}
-                  >
-                    {ledger_item.ledger?.name}
-                    {ledger_item.ledger && (
-                      <Tooltip title={`${ledger_item.ledger.name} Budget check`}>
-                        <IconButton
-                          size='small'
-                          sx={{ ml: 1 }}
-                          onClick={() => {
-                            const selectedLedger = ledger_item.ledger;
-                            if (!selectedLedger) return;
-                            setLedgerDialogData({
-                              ledgerId: selectedLedger.id,
-                              ledgerName: selectedLedger.name,
-                              costCenterId: costCenterId,
-                              currency: currencyDetails,
-                            });
-                            setOpenLedgerBudgetDialog(true);
-                          }}
-                        >
-                          <AccountBalanceWalletOutlined fontSize='small' />
-                        </IconButton>
-                      </Tooltip>
-                    )}
-                  </Typography>
-                </Tooltip>
+                <Typography
+                  variant={"h5"}
+                  fontSize={14}
+                  lineHeight={1.25}
+                  mb={0}
+                  component='div'
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                    whiteSpace: 'normal',
+                    overflowWrap: 'anywhere',
+                  }}
+                >
+                  <Tooltip title={'Relatable To'}>
+                    <span>{ledger_item.ledger?.name}</span>
+                  </Tooltip>
+                  {ledger_item.ledger && (
+                    <Tooltip title={`${ledger_item.ledger.name} Budget check`}>
+                      <IconButton
+                        size='small'
+                        onClick={() => {
+                          const selectedLedger = ledger_item.ledger;
+                          if (!selectedLedger) return;
+                          setLedgerDialogData({
+                            ledgerId: selectedLedger.id,
+                            ledgerName: selectedLedger.name,
+                            costCenterId: costCenterId,
+                            currency: currencyDetails,
+                          });
+                          setOpenLedgerBudgetDialog(true);
+                        }}
+                      >
+                        <AccountBalanceWalletOutlined fontSize='small' />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                </Typography>
               }
               secondary={
                 <Tooltip title={'Remarks'}>
