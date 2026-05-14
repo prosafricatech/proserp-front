@@ -96,7 +96,7 @@ function RequisitionLedgerItemRow({
   };
 
   useEffect(() => {
-    if (currencyChanged) {
+    if (currencyChanged && ledger_item?.relatable_id) {
       setShowForm(true);
     }
   }, [currencyChanged])
