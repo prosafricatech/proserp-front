@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
   Autocomplete,
+  Avatar,
   Checkbox,
   Chip,
   TextField,
@@ -9,68 +10,6 @@ import {
 } from "@mui/material";
 import { CheckBox, CheckBoxOutlineBlank } from "@mui/icons-material";
 import { useProductsSelect } from "./ProductsSelectProvider";
-
-// const ProductThumbnail = ({ name, imageUrl, size = 64 }) => {
-//   const theme = useTheme();
-//   const letter = name?.charAt(0)?.toUpperCase() || "?";
-//   const [hovered, setHovered] = useState(false);
-
-//   const canHover = Boolean(imageUrl);
-
-//   return (
-//     <Box
-//       sx={{
-//         width: hovered && canHover ? size + 50 : size,
-//         height: hovered && canHover ? size + 50 : size,
-//         mr: 2,
-//         transition: "all 0.25s ease",
-//         flexShrink: 0,
-//       }}
-//     >
-//       <Avatar
-//         variant="square"
-//         alt={name}
-//         src={imageUrl || undefined}
-//         onMouseEnter={() => canHover && setHovered(true)}
-//         onMouseLeave={() => setHovered(false)}
-//         sx={{
-//           width: "100%",
-//           height: "100%",
-//           overflow: "hidden",
-
-//           cursor: canHover ? "pointer" : "default",
-
-//           bgcolor:
-//             theme.type === "dark"
-//               ? theme.palette.grey[800]
-//               : theme.palette.grey[200],
-
-//           color:
-//             theme.type === "dark"
-//               ? theme.palette.grey[100]
-//               : theme.palette.grey[800],
-
-//           border: "1px solid",
-//           borderColor: theme.palette.divider,
-//           fontSize: size * 0.45,
-
-//           "& img": {
-//             width: "100%",
-//             height: "100%",
-//             objectFit: "cover",
-//           },
-//         }}
-//         imgProps={{
-//           onError: (e) => {
-//             e.currentTarget.style.display = "none";
-//           },
-//         }}
-//       >
-//         {!imageUrl && letter}
-//       </Avatar>
-//     </Box>
-//   );
-// };
 
 function ProductSelect(props) {
   const {
@@ -96,12 +35,10 @@ function ProductSelect(props) {
 
   useEffect(() => {
     if (defaultValue !== null) {
-      // Only update if different and not already set
       if (JSON.stringify(selectedItems) !== JSON.stringify(defaultValue)) {
         setSelectedItems(defaultValue);
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(defaultValue)]);
 
   useEffect(() => {
@@ -109,12 +46,10 @@ function ProductSelect(props) {
     const value = multiple ? [addedProduct] : addedProduct;
     if (JSON.stringify(selectedItems) !== JSON.stringify(value)) {
       setSelectedItems(value);
-      // Only call onChange if value is different from selectedItems and from defaultValue
       if (JSON.stringify(defaultValue) !== JSON.stringify(value)) {
         onChange?.(value);
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(addedProduct), multiple]);
 
   const finalOptions = useMemo(() => {
@@ -124,12 +59,10 @@ function ProductSelect(props) {
         p.id !== addedProduct?.id
     );
 
-    // 👇 REMOVE fuel products when flag is true
     if (excludeFuelProducts) {
       opts = opts.filter((p) => !p.is_fuel);
     }
 
-    // 👇 ONLY fuel products when flag is true
     if (includeOnlyFuelProducts) {
       opts = opts.filter((p) => p.is_fuel);
     }
@@ -192,11 +125,13 @@ function ProductSelect(props) {
                 />
               )}
 
-              {/* <ProductThumbnail
-                name={option.name}
-                imageUrl={option.image_url}
-                size={64}
-              /> */}
+              <Avatar
+                src={option.thumbnail || undefined}
+                variant="rounded"
+                sx={{ width: 36, height: 36, mr: 1.5, fontWeight: 700, fontSize: 14, flexShrink: 0 }}
+              >
+                {option.name?.charAt(0)?.toUpperCase()}
+              </Avatar>
 
               <Box>
                 <Typography 

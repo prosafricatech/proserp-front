@@ -59,6 +59,35 @@ productServices.getProductBrands = async () => {
     return data;
 }
 
+productServices.getProductPhotos = async (productId) => {
+    const { data } = await axios.get(`/api/masters/products/${productId}/photos`);
+    return data;
+}
+
+productServices.uploadProductPhotos = async ({ productId, files }) => {
+    const formData = new FormData();
+    files.forEach((file) => formData.append('photos[]', file));
+    const { data } = await axios.post(`/api/masters/products/${productId}/photos`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return data;
+}
+
+productServices.setMainProductPhoto = async ({ productId, photoId }) => {
+    const { data } = await axios.patch(`/api/masters/products/${productId}/photos/${photoId}/set-main`);
+    return data;
+}
+
+productServices.reorderProductPhotos = async ({ productId, order }) => {
+    const { data } = await axios.patch(`/api/masters/products/${productId}/photos/reorder`, { order });
+    return data;
+}
+
+productServices.deleteProductPhoto = async ({ productId, photoId }) => {
+    const { data } = await axios.delete(`/api/masters/products/${productId}/photos/${photoId}`);
+    return data;
+}
+
 productServices.getProductNames = async () => {
     const { data } = await axios.get(`/api/masters/products/getProductNames`);
     return data;
