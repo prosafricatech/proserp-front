@@ -1,81 +1,81 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { CheckBox, CheckBoxOutlineBlank } from '@mui/icons-material';
 import {
   Autocomplete,
+  Box,
   Checkbox,
   Chip,
   TextField,
-  Box,
-  Typography
-} from "@mui/material";
-import { CheckBox, CheckBoxOutlineBlank } from "@mui/icons-material";
-import { useProductsSelect } from "./ProductsSelectProvider";
+  Typography,
+} from '@mui/material';
+import { useEffect, useMemo, useState } from 'react';
+import { useProductsSelect } from './ProductsSelectProvider';
 
-// const ProductThumbnail = ({ name, imageUrl, size = 64 }) => {
-//   const theme = useTheme();
-//   const letter = name?.charAt(0)?.toUpperCase() || "?";
-//   const [hovered, setHovered] = useState(false);
+const ProductThumbnail = ({ name, imageUrl, size = 64 }) => {
+  const theme = useTheme();
+  const letter = name?.charAt(0)?.toUpperCase() || '?';
+  const [hovered, setHovered] = useState(false);
 
-//   const canHover = Boolean(imageUrl);
+  const canHover = Boolean(imageUrl);
 
-//   return (
-//     <Box
-//       sx={{
-//         width: hovered && canHover ? size + 50 : size,
-//         height: hovered && canHover ? size + 50 : size,
-//         mr: 2,
-//         transition: "all 0.25s ease",
-//         flexShrink: 0,
-//       }}
-//     >
-//       <Avatar
-//         variant="square"
-//         alt={name}
-//         src={imageUrl || undefined}
-//         onMouseEnter={() => canHover && setHovered(true)}
-//         onMouseLeave={() => setHovered(false)}
-//         sx={{
-//           width: "100%",
-//           height: "100%",
-//           overflow: "hidden",
+  return (
+    <Box
+      sx={{
+        width: hovered && canHover ? size + 50 : size,
+        height: hovered && canHover ? size + 50 : size,
+        mr: 2,
+        transition: 'all 0.25s ease',
+        flexShrink: 0,
+      }}
+    >
+      <Avatar
+        variant='square'
+        alt={name}
+        src={imageUrl || undefined}
+        onMouseEnter={() => canHover && setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        sx={{
+          width: '100%',
+          height: '100%',
+          overflow: 'hidden',
 
-//           cursor: canHover ? "pointer" : "default",
+          cursor: canHover ? 'pointer' : 'default',
 
-//           bgcolor:
-//             theme.type === "dark"
-//               ? theme.palette.grey[800]
-//               : theme.palette.grey[200],
+          bgcolor:
+            theme.type === 'dark'
+              ? theme.palette.grey[800]
+              : theme.palette.grey[200],
 
-//           color:
-//             theme.type === "dark"
-//               ? theme.palette.grey[100]
-//               : theme.palette.grey[800],
+          color:
+            theme.type === 'dark'
+              ? theme.palette.grey[100]
+              : theme.palette.grey[800],
 
-//           border: "1px solid",
-//           borderColor: theme.palette.divider,
-//           fontSize: size * 0.45,
+          border: '1px solid',
+          borderColor: theme.palette.divider,
+          fontSize: size * 0.45,
 
-//           "& img": {
-//             width: "100%",
-//             height: "100%",
-//             objectFit: "cover",
-//           },
-//         }}
-//         imgProps={{
-//           onError: (e) => {
-//             e.currentTarget.style.display = "none";
-//           },
-//         }}
-//       >
-//         {!imageUrl && letter}
-//       </Avatar>
-//     </Box>
-//   );
-// };
+          '& img': {
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+          },
+        }}
+        imgProps={{
+          onError: (e) => {
+            e.currentTarget.style.display = 'none';
+          },
+        }}
+      >
+        {!imageUrl && letter}
+      </Avatar>
+    </Box>
+  );
+};
 
 function ProductSelect(props) {
   const {
     frontError = null,
-    label = "Select Product",
+    label = 'Select Product',
     excludeIds = [],
     multiple = false,
     startAdornment,
@@ -119,9 +119,7 @@ function ProductSelect(props) {
 
   const finalOptions = useMemo(() => {
     let opts = productOptions.filter(
-      (p) =>
-        !excludeIds.includes(p.id) &&
-        p.id !== addedProduct?.id
+      (p) => !excludeIds.includes(p.id) && p.id !== addedProduct?.id
     );
 
     // 👇 REMOVE fuel products when flag is true
@@ -139,9 +137,7 @@ function ProductSelect(props) {
     }
 
     if (requiredProducts) {
-      opts = opts.filter((o) =>
-        requiredProducts.some((r) => r.id === o.id)
-      );
+      opts = opts.filter((o) => requiredProducts.some((r) => r.id === o.id));
     }
 
     return opts;
@@ -151,7 +147,7 @@ function ProductSelect(props) {
     addedProduct,
     requiredProducts,
     excludeFuelProducts,
-    includeOnlyFuelProducts
+    includeOnlyFuelProducts,
   ]);
 
   const handleOnChange = (_, newValue) => {
@@ -168,7 +164,7 @@ function ProductSelect(props) {
       value={selectedItems}
       disableCloseOnSelect={multiple}
       onChange={handleOnChange}
-      getOptionLabel={(o) => o?.name || ""}
+      getOptionLabel={(o) => o?.name || ''}
       isOptionEqualToValue={(o, v) => o.id === v.id}
       renderOption={(props, option, { selected }) => {
         const { key, ...rest } = props;
@@ -177,43 +173,40 @@ function ProductSelect(props) {
           <li {...rest} key={`${option.id}-${key}`}>
             <Box
               sx={{
-                display: "flex",
-                alignItems: "center",
+                display: 'flex',
+                alignItems: 'center',
                 // minHeight: 80,
                 py: 1,
               }}
             >
               {multiple && (
                 <Checkbox
-                  icon={<CheckBoxOutlineBlank fontSize="small" />}
-                  checkedIcon={<CheckBox fontSize="small" />}
+                  icon={<CheckBoxOutlineBlank fontSize='small' />}
+                  checkedIcon={<CheckBox fontSize='small' />}
                   checked={selected}
                   sx={{ mr: 1 }}
                 />
               )}
 
-              {/* <ProductThumbnail
+              <ProductThumbnail
                 name={option.name}
                 imageUrl={option.image_url}
                 size={64}
-              /> */}
+              />
 
               <Box>
-                <Typography 
-                  variant="body1" 
+                <Typography
+                  variant='body1'
                   // fontWeight={500}
                 >
                   {option.name}
                 </Typography>
 
-                {/* {option.type && (
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                  >
+                {option.type && (
+                  <Typography variant='caption' color='text.secondary'>
                     {option.type}
                   </Typography>
-                )} */}
+                )}
               </Box>
             </Box>
           </li>
@@ -228,7 +221,7 @@ function ProductSelect(props) {
               {...rest}
               key={`${option.id}-${key}`}
               label={
-                <Box sx={{ display: "flex", alignItems: "center" }}>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
                   {/* <ProductThumbnail
                     name={option.name}
                     imageUrl={option.image_url}
@@ -237,12 +230,12 @@ function ProductSelect(props) {
                   {option.name}
                 </Box>
               }
-              size="medium"
+              size='medium'
               sx={{
                 borderRadius: 1,
-                "& .MuiChip-label": {
-                  display: "flex",
-                  alignItems: "center",
+                '& .MuiChip-label': {
+                  display: 'flex',
+                  alignItems: 'center',
                   pl: 0.5,
                 },
               }}
@@ -253,7 +246,7 @@ function ProductSelect(props) {
       renderInput={(params) => (
         <TextField
           {...params}
-          size="small"
+          size='small'
           fullWidth
           label={label}
           error={!!frontError}
@@ -262,11 +255,7 @@ function ProductSelect(props) {
             ...params.InputProps,
             startAdornment: (
               <>
-                {startAdornment && (
-                  <Box sx={{ mr: 0.5 }}>
-                    {startAdornment}
-                  </Box>
-                )}
+                {startAdornment && <Box sx={{ mr: 0.5 }}>{startAdornment}</Box>}
                 {params.InputProps.startAdornment}
               </>
             ),
