@@ -1,10 +1,10 @@
 import { Divider, Grid, Tooltip, Typography } from '@mui/material';
 
 const TaskViewListItem = ({
-  task,
+  material,
   isAggregated,
 }: {
-  task: any;
+  material: any;
   isAggregated: boolean;
 }) => {
   const formatNumber = (value: number | string) =>
@@ -42,7 +42,7 @@ const TaskViewListItem = ({
           <Grid size={4}>
             <Tooltip title='Issued Date'>
               <div>
-                <Typography>{formatDate(task?.date)}</Typography>
+                <Typography>{formatDate(material?.date)}</Typography>
               </div>
             </Tooltip>
           </Grid>
@@ -51,7 +51,7 @@ const TaskViewListItem = ({
         <Grid size={!isAggregated ? 5 : 8}>
           <Tooltip title='Product Name'>
             <div>
-              <Typography noWrap>{task?.product_name}</Typography>
+              <Typography noWrap>{material?.product_name}</Typography>
             </div>
           </Tooltip>
         </Grid>
@@ -59,7 +59,7 @@ const TaskViewListItem = ({
         <Grid size={!isAggregated ? 3 : 4}>
           <Tooltip title='Quantity'>
             <Typography>
-              {formatNumber(task?.quantity)} {task?.measurement_unit?.symbol}
+              {formatNumber(material?.quantity)} {material?.measurement_unit?.symbol}
             </Typography>
           </Tooltip>
         </Grid>

@@ -36,7 +36,6 @@ const TaskView = ({ setOpenDialog, task, activity }: TaskViewProps) => {
   const listRef = useRef<any>(null);
   const [selectedTab, setSelectedTab] = useState(0);
   const [queryOptions, setQueryOptions] = React.useState({
-    // queryKey: [task?.id, selectedTab],
     queryKey: 'taskMaterialsUsed',
     queryParams: {
       id: task?.id,
@@ -94,9 +93,9 @@ const TaskView = ({ setOpenDialog, task, activity }: TaskViewProps) => {
       (activity?.name || 'Task details and resource usage')
     : activity?.name || 'Task details and resource usage';
 
-  const renderEmployees = React.useCallback(
-    (task: any) => {
-      return <TaskViewListItem task={task} isAggregated={isAggregated} />;
+  const renderMaterial = React.useCallback(
+    (material: any) => {
+      return <TaskViewListItem material={material} isAggregated={isAggregated} />;
     },
     [isAggregated]
   );
@@ -192,11 +191,11 @@ const TaskView = ({ setOpenDialog, task, activity }: TaskViewProps) => {
               ref={listRef}
               wrapperComponent={Card}
               service={projectsServices.ViewTaskMaterials}
-              primaryKey='id'
+              primaryKey={queryOptions.queryParams.aggregated ? 'product_id' : 'id'}
               queryOptions={queryOptions}
               itemsPerPage={10}
               itemsPerPageOptions={[5, 8, 10, 15, 20]}
-              renderItem={renderEmployees}
+              renderItem={renderMaterial}
               componentElement='div'
               wrapperSx={{
                 flex: 1,
