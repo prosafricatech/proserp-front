@@ -1,4 +1,4 @@
-import { Accordion, AccordionDetails, AccordionSummary, Divider, Grid, ListItemText, Tooltip, Typography } from '@mui/material'
+import { Accordion, AccordionDetails, AccordionSummary, Avatar, Box, Divider, Grid, ListItemText, Tooltip, Typography } from '@mui/material'
 import React, {useState} from 'react'
 import RemoveIcon from '@mui/icons-material/Remove';
 import AddIcon from '@mui/icons-material/Add'
@@ -66,6 +66,14 @@ function ProductListItem({product}) {
             container
         >
           <Grid size={{xs: 12, md: 5}}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Avatar
+                src={product.main_photo?.full_path}
+                variant='rounded'
+                sx={{ width: 44, height: 44, flexShrink: 0, fontWeight: 700, fontSize: 18 }}
+              >
+                {product.name?.charAt(0)?.toUpperCase()}
+              </Avatar>
             <ListItemText
               primary={
                 <Tooltip title={dictionary.products.list.labels.name}>
@@ -82,6 +90,7 @@ function ProductListItem({product}) {
                 </Tooltip>
               }
             />
+            </Box>
           </Grid>
           <Grid size={{xs: 6, md: 2}}>
             <ListItemText

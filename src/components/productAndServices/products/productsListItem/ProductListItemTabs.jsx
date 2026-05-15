@@ -8,6 +8,7 @@ import { useJumboAuth } from '@/app/providers/JumboAuthProvider'
 import { PERMISSIONS } from '@/utilities/constants/permissions'
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks'
 import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext'
+import ProductGallery from './ProductGallery'
 
 function ProductListItemTabs ({ product, expanded}) {
   const [activeTab, setActiveTab] = useState(0);
@@ -31,11 +32,20 @@ function ProductListItemTabs ({ product, expanded}) {
           scrollButtons='auto'
           allowScrollButtonsMobile
         >
+          <Tab label="Gallery"/>
           <Tab label={dictionary.products.list.secondaryForm.labels.secondaryTitle}/>
         </Tabs>
       </Grid>
 
-      {activeTab === 0 && 
+      {activeTab === 0 &&
+        <Grid container sx={{ width: '100%' }} px={1}>
+          <Grid size={12}>
+            <ProductGallery product={product} />
+          </Grid>
+        </Grid>
+      }
+
+      {activeTab === 1 && 
         <Grid container sx={{width: '100%'}}>
           <Grid size={12} textAlign={'end'}>
             {

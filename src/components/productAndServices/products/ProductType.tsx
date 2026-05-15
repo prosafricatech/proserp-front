@@ -34,6 +34,16 @@ export interface Product {
   }>;
   created_at?: string;
   updated_at?: string;
+  main_photo?: ProductPhoto | null;
+  photos?: ProductPhoto[];
+}
+
+export interface ProductPhoto {
+  id: number;
+  path: string;
+  full_path: string;
+  is_main: boolean;
+  sort_order: number;
 }
 
 export interface ProductOption {
@@ -42,6 +52,7 @@ export interface ProductOption {
   code: string;
   product_id?: number;
   unit_symbol?: string;
+  thumbnail?: string | null;
   measurement_unit: {
     id: number;
     symbol: string;
