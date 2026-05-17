@@ -21,6 +21,7 @@ import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Currency } from '@/components/masters/Currencies/CurrencyType';
 import { Ledger } from '@/components/accounts/ledgers/LedgerType';
+import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 
 interface PaymentItem {
   id?: number;
@@ -41,6 +42,7 @@ interface Payment {
   credit_ledger_id?: number;
   creditLedgerName?: string;
   currency: Currency;
+  exchange_rate: number;
   cost_centers: CostCenter[];
   transactionDate: string;
   narration?: string;
@@ -92,6 +94,7 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
           ledger: prevItem.ledger,
           debit_ledger_id: payItem.debit_ledger_id,
           amount: payItem.amount,
+          description: payItem.description,
           unpaid_amount: prevItem ? (payItem.amount + prevItem.unpaid_amount) : 0,
           requisition_approval_ledger_item_id: prevItem.id,
         };
@@ -168,8 +171,8 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
       id: payment?.id,
       requisition_approval_id: approvedDetails?.id,
       credit_ledger_id: payment?.credit_ledger_id || 0,
-      currency_id: payment ? payment.currency.id : 1,
-      exchange_rate: payment ? payment.currency.exchangeRate : 1,
+      currency_id: payment ? payment.currency.id : approvedDetails ? approvedDetails.currency.id : 1,
+      exchange_rate: payment ? payment.exchange_rate : approvedDetails ? approvedDetails.currency.exchangeRate : 1,
       cost_centers: approvedRequisition ? [approvedRequisition.requisition.cost_center] : payment?.cost_centers || [],
       transactionDate: payment ? payment.transactionDate : dayjs().toISOString(),
       items: items,
@@ -298,11 +301,18 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
                   <TextField
                     label="Exchange Rate"
                     fullWidth
+                    defaultValue={watch(`exchange_rate`)}
                     size='small'
                     InputProps={{
                       inputComponent: CommaSeparatedField,
                     }}
-                    disabled={true}
+                    onChange={(e) => {
+                      const sanitizedValue = sanitizedNumber(e.target.value);
+                      setValue('exchange_rate', sanitizedValue, {
+                        shouldValidate: true,
+                        shouldDirty: true
+                      });
+                    }}
                   />
                 </Div>
               </Grid>
