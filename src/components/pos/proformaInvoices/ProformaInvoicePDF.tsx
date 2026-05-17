@@ -123,7 +123,7 @@ function ProformaInvoicePDF({ proforma, organization }: ProformaInvoicePDFProps)
                                 {proformaItem.product.main_photo?.full_path && (
                                     <Image
                                         src={proformaItem.product.main_photo.full_path}
-                                        style={{ width: 24, height: 24, borderRadius: 3, flexShrink: 0 }}
+                                        style={{ width: 48, height: 48, borderRadius: 4, flexShrink: 0 }}
                                     />
                                 )}
                                 <View style={{ flex: 1 }}>

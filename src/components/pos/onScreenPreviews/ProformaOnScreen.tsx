@@ -190,7 +190,7 @@ function ProformaOnScreen({ proforma, organization }: ProformaOnScreenProps) {
                     <Avatar
                       src={proformaItem.product.main_photo?.full_path || undefined}
                       variant="rounded"
-                      sx={{ width: 32, height: 32, flexShrink: 0, bgcolor: 'primary.light', color: 'primary.contrastText', fontWeight: 700, fontSize: 14 }}
+                      sx={{ width: 48, height: 48, flexShrink: 0, bgcolor: 'primary.light', color: 'primary.contrastText', fontWeight: 700, fontSize: 18 }}
                     >
                       {proformaItem.product.name?.charAt(0)?.toUpperCase()}
                     </Avatar>

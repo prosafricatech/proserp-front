@@ -100,7 +100,7 @@ const PriceListPDF: React.FC<PriceListPDFProps> = ({
                 <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 0.3 }}>{index + 1}</Text>
                 <View style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 3, flexDirection: 'row', alignItems: 'flex-start', gap: 4 }}>
                   {priceItem.product.main_photo?.full_path && (
-                    <Image src={priceItem.product.main_photo.full_path} style={{ width: 24, height: 24, borderRadius: 3, flexShrink: 0 }} />
+                    <Image src={priceItem.product.main_photo.full_path} style={{ width: 48, height: 48, borderRadius: 4, flexShrink: 0 }} />
                   )}
                   <Text style={{ flex: 1 }}>{priceItem.product.name}</Text>
                 </View>
