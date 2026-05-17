@@ -19,7 +19,7 @@ export interface Product {
     id: number;
     name: string;
     unit_symbol: string;
-    conversion_factor?:any;
+    conversion_factor?: any;
   };
   secondary_units?: Array<{
     id: number;
@@ -35,6 +35,7 @@ export interface Product {
   created_at?: string;
   updated_at?: string;
   main_photo?: ProductPhoto | null;
+  thumbnail?: string | null;
   photos?: ProductPhoto[];
 }
 
