@@ -53,7 +53,8 @@ function ProformaItemRow({
   index,
   vat_percentage = 0,
 }: ProformaItemRowProps) {
-  const product = item.product;
+  const product = item?.product;
+  const thumbnail = item?.product?.main_photo?.full_path || item?.product?.thumbnail;
   const [showForm, setShowForm] = useState(false);
   const vat_factor = vat_percentage * 0.01;
 
@@ -98,7 +99,7 @@ function ProformaItemRow({
             <Tooltip title='Product'>
               <Stack direction={'row'} gap={1}>
                 <PhotoThumbnail
-                  thumbnail={product?.thumbnail}
+                  thumbnail={thumbnail}
                   itemName={product?.name}
                 />
                 <ListItemText

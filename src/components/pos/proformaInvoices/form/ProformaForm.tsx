@@ -241,6 +241,7 @@ function ProformaForm({ toggleOpen, proforma = null }: ProformaFormProps) {
       toggleOpen(false);
       enqueueSnackbar(data.message, { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['proformaInvoices'] });
+      queryClient.invalidateQueries({ queryKey: ['proformaDetails'] });
     },
     onError: (error: any) => {
       error?.response?.data?.message &&
