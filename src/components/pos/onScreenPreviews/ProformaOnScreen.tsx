@@ -1,5 +1,6 @@
 import React from 'react';
 import { 
+  Avatar,
   Grid, 
   Typography, 
   Table, 
@@ -20,6 +21,7 @@ import { Organization } from '@/types/auth-types';
 interface Product {
   name: string;
   vat_exempted?: boolean;
+  main_photo?: { full_path: string } | null;
 }
 
 interface ProformaItem {
@@ -184,12 +186,23 @@ function ProformaOnScreen({ proforma, organization }: ProformaOnScreenProps) {
               >
                 <TableCell>{index + 1}</TableCell>
                 <TableCell>
-                  {proformaItem.product.name}
-                  {proformaItem.description && (
-                    <span style={{ color: '#888', fontStyle: 'italic', marginLeft: 4 }}>
-                      ({proformaItem.description})
-                    </span>
-                  )}
+                  <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                    <Avatar
+                      src={proformaItem.product.main_photo?.full_path || undefined}
+                      variant="rounded"
+                      sx={{ width: 32, height: 32, flexShrink: 0, bgcolor: 'primary.light', color: 'primary.contrastText', fontWeight: 700, fontSize: 14 }}
+                    >
+                      {proformaItem.product.name?.charAt(0)?.toUpperCase()}
+                    </Avatar>
+                    <Box>
+                      {proformaItem.product.name}
+                      {proformaItem.description && (
+                        <span style={{ color: '#888', fontStyle: 'italic', marginLeft: 4 }}>
+                          ({proformaItem.description})
+                        </span>
+                      )}
+                    </Box>
+                  </Box>
                 </TableCell>
                 <TableCell>{proformaItem.measurement_unit.symbol}</TableCell>
                 <TableCell align="right" sx={{ fontFamily: 'monospace' }}>

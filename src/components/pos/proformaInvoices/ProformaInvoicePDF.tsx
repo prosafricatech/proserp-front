@@ -1,4 +1,4 @@
-import { Document, Page, Text, View } from '@react-pdf/renderer'
+import { Document, Image, Page, Text, View } from '@react-pdf/renderer'
 import React from 'react'
 import pdfStyles from '../../pdf/pdf-styles'
 import PdfLogo from '../../pdf/PdfLogo';
@@ -17,6 +17,7 @@ interface Creator {
 interface Product {
     name: string;
     vat_exempted?: boolean;
+    main_photo?: { full_path: string } | null;
 }
 
 interface ProformaItem {
@@ -27,6 +28,7 @@ interface ProformaItem {
   quantity: number;
   rate: number;
 }
+
 
 interface Proforma {
   proformaNo: string;
@@ -117,11 +119,19 @@ function ProformaInvoicePDF({ proforma, organization }: ProformaInvoicePDFProps)
                             <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 0.3 }}>
                                 {index + 1}
                             </Text>
-                            <View style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 3 }}>
-                                <Text>{proformaItem.product.name}</Text>
-                                {proformaItem.description && (
-                                  <Text style={{ fontSize: 10, color: '#888', marginTop: 2 }}>{' ('}{proformaItem.description}{')'}</Text>
+                            <View style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 3, flexDirection: 'row', alignItems: 'flex-start', gap: 4 }}>
+                                {proformaItem.product.main_photo?.full_path && (
+                                    <Image
+                                        src={proformaItem.product.main_photo.full_path}
+                                        style={{ width: 24, height: 24, borderRadius: 3, flexShrink: 0 }}
+                                    />
                                 )}
+                                <View style={{ flex: 1 }}>
+                                    <Text>{proformaItem.product.name}</Text>
+                                    {proformaItem.description && (
+                                      <Text style={{ fontSize: 10, color: '#888', marginTop: 2 }}>{' ('}{proformaItem.description}{')'}</Text>
+                                    )}
+                                </View>
                             </View>
                             <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 0.5 }}>
                                 {proformaItem.measurement_unit.symbol}

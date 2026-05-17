@@ -1,5 +1,5 @@
 import React from 'react';
-import { Document, Page, Text, View } from '@react-pdf/renderer';
+import { Document, Image, Page, Text, View } from '@react-pdf/renderer';
 import pdfStyles from '../../pdf/pdf-styles';
 import PageFooter from '../../pdf/PageFooter';
 import PdfLogo from '../../pdf/PdfLogo';
@@ -14,6 +14,7 @@ interface PriceItem {
   product: {
     name: string;
     vat_exempted?: boolean;
+    main_photo?: { full_path: string } | null;
   };
   sales_outlets: Array<{
     name: string;
@@ -97,7 +98,12 @@ const PriceListPDF: React.FC<PriceListPDFProps> = ({
             {priceList.items.map((priceItem, index) => (
               <View key={priceItem.id} style={pdfStyles.tableRow}>
                 <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 0.3 }}>{index + 1}</Text>
-                <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 3 }}>{priceItem.product.name}</Text>
+                <View style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 3, flexDirection: 'row', alignItems: 'flex-start', gap: 4 }}>
+                  {priceItem.product.main_photo?.full_path && (
+                    <Image src={priceItem.product.main_photo.full_path} style={{ width: 24, height: 24, borderRadius: 3, flexShrink: 0 }} />
+                  )}
+                  <Text style={{ flex: 1 }}>{priceItem.product.name}</Text>
+                </View>
                 <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1.2, textAlign: 'right' }}>{priceItem.price.toLocaleString()}</Text>
                 {is_vat_registered && (
                   <>
