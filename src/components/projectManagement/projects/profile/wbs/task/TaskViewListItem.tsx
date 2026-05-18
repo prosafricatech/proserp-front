@@ -23,6 +23,7 @@ const TaskViewListItem = ({
   return (
     <>
       <Divider />
+
       <Grid
         mt={1}
         mb={1}
