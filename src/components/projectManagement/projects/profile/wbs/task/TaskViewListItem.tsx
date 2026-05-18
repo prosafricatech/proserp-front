@@ -51,7 +51,7 @@ const TaskViewListItem = ({
         <Grid size={!isAggregated ? 5 : 8}>
           <Tooltip title='Product Name'>
             <div>
-              <Typography noWrap>{material?.product_name}</Typography>
+              <Typography noWrap={false}>{material?.product_name}</Typography>
             </div>
           </Tooltip>
         </Grid>
@@ -59,7 +59,8 @@ const TaskViewListItem = ({
         <Grid size={!isAggregated ? 3 : 4}>
           <Tooltip title='Quantity'>
             <Typography>
-              {formatNumber(material?.quantity)} {material?.measurement_unit?.symbol}
+              {formatNumber(material?.quantity)}{' '}
+              {material?.measurement_unit?.symbol}
             </Typography>
           </Tooltip>
         </Grid>
