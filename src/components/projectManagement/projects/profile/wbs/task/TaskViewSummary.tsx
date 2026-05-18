@@ -192,7 +192,7 @@ const TaskViewSummary = ({ task }: { task: any }) => {
       {/* Row 3: Single Progress Bar Row */}
       <Grid size={12} mb={1}>
         <Grid container alignItems='center' spacing={2}>
-          <Grid size={{ xs: 8 }}>
+          <Grid size={{ xs: 12 }}>
             <LinearProgressWithLabel
               value={execPercent}
               execPercent={execPercent}
@@ -201,7 +201,7 @@ const TaskViewSummary = ({ task }: { task: any }) => {
               hasTimeDates={hasTimeDates}
             />
           </Grid>
-          <Grid size={{ xs: 4 }} textAlign={'end'}>
+          {/* <Grid size={{ xs: 4 }} textAlign={'end'}>
             <Tooltip title='Weighted Percentage'>
               <Chip
                 size='small'
@@ -209,7 +209,7 @@ const TaskViewSummary = ({ task }: { task: any }) => {
                 label={`${task.weighted_percentage?.toLocaleString() ?? 0}% Weight`}
               />
             </Tooltip>
-          </Grid>
+          </Grid> */}
         </Grid>
       </Grid>
     </Grid>
