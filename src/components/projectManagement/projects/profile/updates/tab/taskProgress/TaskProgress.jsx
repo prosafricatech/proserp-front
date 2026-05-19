@@ -152,6 +152,7 @@ function TaskProgress({ taskProgressItem = null, index = -1, setShowForm = null 
     setValue,
     handleSubmit,
     watch,
+    getValues,
     reset,
     register,
     formState: { errors },
@@ -228,6 +229,21 @@ function TaskProgress({ taskProgressItem = null, index = -1, setShowForm = null 
     queryFn: () => projectsServices.getSubcontractOptions(project.id),
     enabled: !!project?.id,
   });
+
+  // When editing an existing item, replace lightweight project_subcontract
+  useEffect(() => {
+    const subcontractId = taskProgressItem?.project_subcontract_id;
+    if (!subcontractId || !subcontractOptions?.length) return;
+
+    const selected = subcontractOptions.find((opt) => opt.id === subcontractId);
+    if (!selected) return;
+
+    const current = getValues('project_subcontract');
+    if (!current?.tasks?.length) {
+      setValue('project_subcontract', selected);
+      setValue('project_subcontract_id', selected.id);
+    }
+  }, [taskProgressItem?.project_subcontract_id, subcontractOptions, getValues, setValue]);
 
   const selectedSubcontract = watch('project_subcontract');
 
