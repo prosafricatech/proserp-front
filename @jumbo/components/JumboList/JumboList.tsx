@@ -10,6 +10,7 @@ import {
   TableHead,
   TableRow,
   Theme,
+  Typography,
 } from '@mui/material';
 import Collapse from '@mui/material/Collapse';
 import Grid, { GridProps } from '@mui/material/Grid';
@@ -400,7 +401,7 @@ const JumboList = React.forwardRef<
                   {tableHeader.length > 0 &&
                     tableHeader.map((itm: string, i: number) => (
                       <TableCell sx={{ width: '25%' }} key={i}>
-                        {itm}
+                        <Typography>{itm}</Typography>
                       </TableCell>
                     ))}
                 </TableRow>
