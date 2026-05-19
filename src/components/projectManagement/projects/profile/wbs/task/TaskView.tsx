@@ -8,6 +8,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Grid,
   Paper,
   Stack,
   Tab,
@@ -31,6 +32,50 @@ interface TaskViewProps {
   task: any;
   activity: any;
 }
+
+const MaterialUsedListHeader = ({
+  isAggregated,
+}: {
+  isAggregated: boolean;
+}) => {
+  return (
+    <Grid
+      mt={1}
+      mb={1}
+      sx={{
+        cursor: 'pointer',
+        '&:hover': {
+          bgcolor: 'action.hover',
+        },
+      }}
+      paddingLeft={2}
+      paddingRight={2}
+      spacing={1}
+      alignItems={'center'}
+      container
+    >
+      {!isAggregated && (
+        <Grid size={4}>
+          <Typography>Date</Typography>
+        </Grid>
+      )}
+
+      <Grid size={!isAggregated ? 5 : 6}>
+        <Typography noWrap={false}>Product Name</Typography>
+      </Grid>
+
+      {isAggregated && (
+        <Grid size={3}>
+          <Typography>Budgeted Quantity</Typography>
+        </Grid>
+      )}
+
+      <Grid size={!isAggregated ? 3 : 3}>
+        <Typography>Quantity</Typography>
+      </Grid>
+    </Grid>
+  );
+};
 
 const TaskView = ({ setOpenDialog, task, activity }: TaskViewProps) => {
   const listRef = useRef<any>(null);
@@ -95,10 +140,18 @@ const TaskView = ({ setOpenDialog, task, activity }: TaskViewProps) => {
 
   const renderMaterial = React.useCallback(
     (material: any) => {
-      return <TaskViewListItem material={material} isAggregated={isAggregated} />;
+      return (
+        <TaskViewListItem material={material} isAggregated={isAggregated} />
+      );
     },
     [isAggregated]
   );
+
+  let tableHeader: Array<string> = [];
+
+  !isAggregated
+    ? (tableHeader = ['Date', 'Product Name', 'Quantity'])
+    : (tableHeader = ['Product Name', 'Budgeted Quantity', 'Quantity']);
 
   return (
     <>
@@ -191,7 +244,9 @@ const TaskView = ({ setOpenDialog, task, activity }: TaskViewProps) => {
               ref={listRef}
               wrapperComponent={Card}
               service={projectsServices.ViewTaskMaterials}
-              primaryKey={queryOptions.queryParams.aggregated ? 'product_id' : 'id'}
+              primaryKey={
+                queryOptions.queryParams.aggregated ? 'product_id' : 'id'
+              }
               queryOptions={queryOptions}
               itemsPerPage={10}
               itemsPerPageOptions={[5, 8, 10, 15, 20]}
@@ -202,21 +257,25 @@ const TaskView = ({ setOpenDialog, task, activity }: TaskViewProps) => {
                 display: 'flex',
                 flexDirection: 'column',
               }}
+              view='table'
+              tableHeader={tableHeader}
               toolbar={
                 <JumboListToolbar
                   hideItemsPerPage={true}
                   actionTail={
-                    <Stack direction='row'>
-                      {selectedTab === 1 && (
-                        <MaterialIssuedSelector
-                          aggregated={queryOptions.queryParams.aggregated}
-                          onChange={handleAggregatedChange}
+                    <Stack direction={'column'}>
+                      <Stack direction='row'>
+                        {selectedTab === 1 && (
+                          <MaterialIssuedSelector
+                            aggregated={queryOptions.queryParams.aggregated}
+                            onChange={handleAggregatedChange}
+                          />
+                        )}
+                        <JumboSearch
+                          onChange={handleOnChange}
+                          value={queryOptions.queryParams.keyword}
                         />
-                      )}
-                      <JumboSearch
-                        onChange={handleOnChange}
-                        value={queryOptions.queryParams.keyword}
-                      />
+                      </Stack>
                     </Stack>
                   }
                 ></JumboListToolbar>

@@ -1,4 +1,4 @@
-import { Divider, Grid, Tooltip, Typography } from '@mui/material';
+import { TableCell, TableRow, Typography } from '@mui/material';
 
 const TaskViewListItem = ({
   material,
@@ -22,61 +22,39 @@ const TaskViewListItem = ({
 
   return (
     <>
-      <Divider />
-
-      <Grid
-        mt={1}
-        mb={1}
+      <TableRow
         sx={{
-          cursor: 'pointer',
-          '&:hover': {
-            bgcolor: 'action.hover',
-          },
+          '&:hover': { bgcolor: 'action.hover' },
         }}
-        paddingLeft={2}
-        paddingRight={2}
-        spacing={1}
-        alignItems={'center'}
-        container
       >
         {!isAggregated && (
-          <Grid size={4}>
-            <Tooltip title='Issued Date'>
-              <div>
-                <Typography>{formatDate(material?.date)}</Typography>
-              </div>
-            </Tooltip>
-          </Grid>
+          <TableCell>
+            <Typography>{formatDate(material?.date)}</Typography>
+          </TableCell>
         )}
-
-        <Grid size={!isAggregated ? 5 : 6}>
-          <Tooltip title='Product Name'>
-            <div>
-              <Typography noWrap={false}>{material?.product_name}</Typography>
-            </div>
-          </Tooltip>
-        </Grid>
-
+        <TableCell>
+          <Typography>{material?.product_name}</Typography>
+        </TableCell>
         {isAggregated && (
-          <Grid size={3}>
-            <Tooltip title='Budgeted Quantity'>
-              <Typography>
-                {formatNumber(material?.budgeted_quantity)}{' '}
-                {material?.measurement_unit?.symbol}
-              </Typography>
-            </Tooltip>
-          </Grid>
-        )}
-
-        <Grid size={!isAggregated ? 3 : 3}>
-          <Tooltip title='Quantity'>
+          <TableCell>
             <Typography>
-              {formatNumber(material?.quantity)}{' '}
+              {formatNumber(material?.budgeted_quantity)}{' '}
               {material?.measurement_unit?.symbol}
             </Typography>
-          </Tooltip>
-        </Grid>
-      </Grid>
+          </TableCell>
+        )}
+
+        <TableCell>
+          <Typography
+            color={
+              material?.quantity > material?.budgeted_quantity ? 'error' : ''
+            }
+          >
+            {formatNumber(material?.quantity)}{' '}
+            {material?.measurement_unit?.symbol}
+          </Typography>
+        </TableCell>
+      </TableRow>
     </>
   );
 };
