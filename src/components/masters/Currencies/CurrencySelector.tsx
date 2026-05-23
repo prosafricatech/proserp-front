@@ -7,7 +7,7 @@ import { Currency } from './CurrencyType';
 
 interface CurrencySelectorProps {
   onChange?: (newValue: Currency | null) => void;
-  frontError?: { message: string } | null;
+  frontError?: { message?: string } | null;
   label?: string;
   defaultValue?: number;
   disabled?: boolean;
