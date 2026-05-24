@@ -511,7 +511,7 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
             variant="outlined"
             onClick={() => setActivePurchaseTab(1)}
           >
-            Next
+            Next &gt;
           </Button>
         )}
         {isPurchaseType && activePurchaseTab === 1 && (
@@ -520,7 +520,7 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
             variant="outlined"
             onClick={() => setActivePurchaseTab(0)}
           >
-            Prev
+            &lt; Prev
           </Button>
         )}
         {(!isPurchaseType || activePurchaseTab === 1) && (

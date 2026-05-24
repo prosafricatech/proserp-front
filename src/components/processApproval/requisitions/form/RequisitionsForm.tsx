@@ -330,6 +330,8 @@ function RequisitionsForm({
   const selectedProcessType = watch('process_type');
   const currencyDetails = watch('currencyDetails');
   const selectedCostCenterId = watch('cost_center_id');
+  const isPurchaseType = selectedProcessType === 'PURCHASE';
+  const isPurchaseLastTab = activeTab === 1;
   const processTypeOptions = React.useMemo(
     () =>
       PROCESS_TYPES.filter(
@@ -657,6 +659,7 @@ function RequisitionsForm({
                         setRequisition_product_items([]);
                         setRequisition_ledger_items([]);
                         setRequisition_leave_items([]);
+                        setActiveTab(0);
 
                         setValue('process_type', newValue ? newValue : null, {
                           shouldValidate: true,
@@ -963,6 +966,7 @@ function RequisitionsForm({
       <DialogActions>
         <Button
           size='small'
+          variant='outlined'
           onClick={() => {
             toggleOpen(false);
             setIsEditAction(false);
@@ -970,31 +974,81 @@ function RequisitionsForm({
         >
           Cancel
         </Button>
-        <LoadingButton
-          loading={addRequisition.isPending || updateRequisition.isPending}
-          size='small'
-          variant='contained'
-          type='submit'
-          onClick={(e) => {
-            setValue('submit_type' as any, 'suspended');
-            handleSubmit(onSubmit)(e);
-          }}
-        >
-          Suspend
-        </LoadingButton>
-        <LoadingButton
-          loading={addRequisition.isPending || updateRequisition.isPending}
-          variant='contained'
-          color='success'
-          type='submit'
-          onClick={(e) => {
-            setValue('submit_type' as any, 'submitted');
-            handleSubmit(onSubmit)(e);
-          }}
-          size='small'
-        >
-          Submit
-        </LoadingButton>
+        {isPurchaseType && !isPurchaseLastTab ? (
+          <>
+            <Button
+              size='small'
+              variant='outlined'
+              onClick={() => setActiveTab((prev) => Math.min(prev + 1, 1))}
+              disabled={activeTab >= 1}
+            >
+              Next &gt;
+            </Button>
+          </>
+        ) : isPurchaseType && isPurchaseLastTab ? (
+          <>
+            <Button
+              size='small'
+              variant='outlined'
+              onClick={() => setActiveTab((prev) => Math.max(prev - 1, 0))}
+            >
+              &lt; Prev
+            </Button>
+            <LoadingButton
+              loading={addRequisition.isPending || updateRequisition.isPending}
+              size='small'
+              variant='contained'
+              type='submit'
+              onClick={(e) => {
+                setValue('submit_type' as any, 'suspended');
+                handleSubmit(onSubmit)(e);
+              }}
+            >
+              Suspend
+            </LoadingButton>
+            <LoadingButton
+              loading={addRequisition.isPending || updateRequisition.isPending}
+              variant='contained'
+              color='success'
+              type='submit'
+              onClick={(e) => {
+                setValue('submit_type' as any, 'submitted');
+                handleSubmit(onSubmit)(e);
+              }}
+              size='small'
+            >
+              Submit
+            </LoadingButton>
+          </>
+        ) : (
+          <>
+            <LoadingButton
+              loading={addRequisition.isPending || updateRequisition.isPending}
+              size='small'
+              variant='contained'
+              type='submit'
+              onClick={(e) => {
+                setValue('submit_type' as any, 'suspended');
+                handleSubmit(onSubmit)(e);
+              }}
+            >
+              Suspend
+            </LoadingButton>
+            <LoadingButton
+              loading={addRequisition.isPending || updateRequisition.isPending}
+              variant='contained'
+              color='success'
+              type='submit'
+              onClick={(e) => {
+                setValue('submit_type' as any, 'submitted');
+                handleSubmit(onSubmit)(e);
+              }}
+              size='small'
+            >
+              Submit
+            </LoadingButton>
+          </>
+        )}
       </DialogActions>
     </React.Fragment>
   );
