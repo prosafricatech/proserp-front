@@ -60,10 +60,9 @@ function SubContratorTasksFilter({
       renderInput={(params) => (
         <TextField
           {...params}
-          label='Tasks'
+          label='Filter by tasks'
           size='small'
           fullWidth
-          placeholder='Filter by tasks'
         />
       )}
     />
