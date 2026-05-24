@@ -1,10 +1,13 @@
 import {
   Button,
+  Divider,
   DialogActions,
   DialogContent,
   DialogTitle,
   Grid,
   Stack,
+  Tab,
+  Tabs,
   TextField,
   Typography,
 } from '@mui/material';
@@ -23,9 +26,10 @@ import dayjs, { Dayjs } from 'dayjs';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
-import { readableDate } from '@/app/helpers/input-sanitization-helpers';
+import { readableDate, sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import { Div } from '@jumbo/shared';
 import { Approval, Requisition, RequisitionItem, Vendor } from '@/components/processApproval/RequisitionType';
+import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 
 interface ApprovalFormProps {
   toggleOpen: (value: boolean) => void;
@@ -42,6 +46,7 @@ interface FormValues {
   remarks?: string;
   product_items?: any[];
   ledger_items?: any[];
+  additional_costs?: any[];
   chain_level_id?: number;
   submit_type?: string;
 }
@@ -88,12 +93,33 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
     }));
   };
 
+  const getInitialAdditionalCosts = () => {
+    const source =
+      (approval as any)?.additional_costs ||
+      (requisition as any)?.additional_costs ||
+      [];
+
+    return source.map((cost: any) => ({
+      ...cost,
+      id: cost?.requisition_additional_cost?.id || cost?.id,
+      amount: Number(cost?.amount || 0),
+      exchange_rate: Number(cost?.exchange_rate || 1),
+      credit_ledger_name:
+        cost?.credit_ledger_name || cost?.ledger?.name || cost?.name || '',
+      currency_name: cost?.currency_name || cost?.currency?.name || '',
+      currency_id: cost?.currency_id || cost?.currency?.id,
+    }));
+  };
+
   const [requisitionProductItem, setRequisitionProductItem] = useState<RequisitionItem[]>(getInitialProductItems());
   const [requisitionLedgerItem, setRequisitionLedgerItem] = useState<RequisitionItem[]>(getInitialLedgerItems());
+  const [requisitionAdditionalCosts, setRequisitionAdditionalCosts] = useState<any[]>(getInitialAdditionalCosts());
+  const [activePurchaseTab, setActivePurchaseTab] = useState(0);
 
   useEffect(() => {
     setRequisitionProductItem(getInitialProductItems());
     setRequisitionLedgerItem(getInitialLedgerItems());
+    setRequisitionAdditionalCosts(getInitialAdditionalCosts());
   }, [requisition, approval]);
 
   const isPurchaseType = requisition?.approval_chain?.process_type?.toLowerCase() === 'purchase';
@@ -121,6 +147,16 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
                 .positive('Quantity is required for final approval')
                 .typeError('Quantity is required for final approval')
               : yup.number().nullable(),
+          })
+        )
+      : yup.array().nullable(),
+    additional_costs: isPurchaseType
+      ? yup.array().of(
+          yup.object().shape({
+            amount: yup.number()
+              .required('Amount is required')
+              .positive('Amount is required')
+              .typeError('Amount is required'),
           })
         )
       : yup.array().nullable(),
@@ -154,6 +190,7 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
       process_type: requisition?.approval_chain?.process_type,
       remarks: approval?.remarks || requisition?.remarks || '',
       product_items: isPurchaseType ? (approval?.items || requisitionItems) : [],
+      additional_costs: isPurchaseType ? getInitialAdditionalCosts() : [],
       ledger_items: !isPurchaseType && !isLeaveType ? (approval?.items || requisitionItems) : [],
       chain_level_id: approval && isEdit ? approval.approval_chain_level_id : requisition?.next_approval_level?.id,
     }
@@ -207,6 +244,19 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
     }
   };
 
+  const handleAdditionalCostAmountChange = (index: number, value: number) => {
+    setRequisitionAdditionalCosts((prevCosts) => {
+      const updatedCosts = [...prevCosts];
+      if (updatedCosts[index]) {
+        updatedCosts[index] = {
+          ...updatedCosts[index],
+          amount: value,
+        };
+      }
+      return updatedCosts;
+    });
+  };
+
   useEffect(() => {
     if (isPurchaseType) {
       const product_items = requisitionProductItem?.map((item) => ({
@@ -219,6 +269,21 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
       }));
 
       setValue('product_items', product_items, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+
+      const additional_costs = requisitionAdditionalCosts?.map((cost) => ({
+        requisition_additional_cost_id: cost.id,
+        ledger_id: cost.ledger_id || cost.ledger?.id,
+        credit_ledger_name: cost.credit_ledger_name || cost.name,
+        currency_id: cost.currency_id || cost.currency?.id,
+        exchange_rate: Number(cost.exchange_rate || 1),
+        reference: cost.reference,
+        amount: Number(cost.amount || 0),
+      }));
+
+      setValue('additional_costs', additional_costs, {
         shouldValidate: true,
         shouldDirty: true,
       });
@@ -236,7 +301,14 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
         shouldDirty: true,
       });
     }
-  }, [requisitionProductItem, requisitionLedgerItem, setValue, isPurchaseType, isLeaveType]);
+  }, [
+    requisitionProductItem,
+    requisitionLedgerItem,
+    requisitionAdditionalCosts,
+    setValue,
+    isPurchaseType,
+    isLeaveType,
+  ]);
 
   const saveMutation = React.useMemo(() => {
     return isEdit ? editApprovalRequisition.mutate : approveRequisition.mutate;
@@ -246,6 +318,7 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
     const payload = {
       ...formData,
       product_items: isPurchaseType ? formData.product_items : undefined,
+      additional_costs: isPurchaseType ? formData.additional_costs : undefined,
       ledger_items: !isPurchaseType && !isLeaveType ? formData.ledger_items : undefined,
     };
     saveMutation(payload as FormValues);
@@ -319,14 +392,90 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
               items={leaveSummaryItems as any}
             />
           ) : isPurchaseType ? 
-            <ApprovalRequisitionProductItem 
-              approval={approval} 
-              requisition={requisition} 
-              errors={errors.product_items} 
-              requisitionProductItem={requisitionProductItem} 
-              setRequisitionProductItem={setRequisitionProductItem} 
-              handleItemChange={handleItemChange}
-            /> 
+            <>
+              <Tabs
+                value={activePurchaseTab}
+                onChange={(_, newValue) => setActivePurchaseTab(newValue)}
+                variant='scrollable'
+                scrollButtons='auto'
+                allowScrollButtonsMobile
+                sx={{ mb: 1 }}
+              >
+                <Tab label='Products' />
+                <Tab label='Additional Costs' />
+              </Tabs>
+
+              {activePurchaseTab === 0 && (
+                <ApprovalRequisitionProductItem 
+                  approval={approval} 
+                  requisition={requisition} 
+                  errors={errors.product_items} 
+                  requisitionProductItem={requisitionProductItem} 
+                  setRequisitionProductItem={setRequisitionProductItem} 
+                  handleItemChange={handleItemChange}
+                />
+              )}
+
+              {activePurchaseTab === 1 && requisitionAdditionalCosts.length > 0 && (
+                <Grid container spacing={1} sx={{ mt: 1, mb: 2 }}>
+                  {requisitionAdditionalCosts.map((cost, index) => {
+                    const additionalCostErrors = (errors as any)?.additional_costs?.[index];
+
+                    return (
+                      <React.Fragment key={cost.id || index}>
+                      <Grid size={{ xs: 12, md: 4 }}>
+                        <Typography variant='body2' sx={{ mt: 1.5 }}>
+                          {`${index + 1}. ${cost.credit_ledger_name || cost.name}`}
+                        </Typography>
+                        {cost.reference && (
+                          <Typography variant='caption' color='text.secondary'>
+                            Ref: {cost.reference}
+                          </Typography>
+                        )}
+                      </Grid>
+                      <Grid size={{ xs: 6, md: 2 }}>
+                        <Typography variant='body2' sx={{ mt: 1.5 }}>
+                          {cost.currency_name || requisition.currency?.name}
+                        </Typography>
+                      </Grid>
+                      <Grid size={{ xs: 6, md: 2 }}>
+                        <Typography variant='body2' sx={{ mt: 1.5 }}>
+                          Rate: {Number(cost.exchange_rate || 1).toLocaleString('en-US')}
+                        </Typography>
+                      </Grid>
+                      <Grid size={{ xs: 12, md: 4 }}>
+                        <Div sx={{ mt: 0.5 }}>
+                          <TextField
+                            label='Amount'
+                            fullWidth
+                            size='small'
+                            value={Number(cost.amount || 0).toLocaleString('en-US')}
+                            error={!!additionalCostErrors?.amount}
+                            helperText={additionalCostErrors?.amount?.message as string}
+                            InputProps={{
+                              inputComponent: CommaSeparatedField,
+                            }}
+                            onChange={(e) =>
+                              handleAdditionalCostAmountChange(
+                                index,
+                                sanitizedNumber(e.target.value) || 0
+                              )
+                            }
+                          />
+                        </Div>
+                      </Grid>
+                      </React.Fragment>
+                    );
+                  })}
+                </Grid>
+              )}
+
+              {activePurchaseTab === 1 && requisitionAdditionalCosts.length === 0 && (
+                <Typography variant='body2' color='text.secondary' sx={{ mt: 1 }}>
+                  No additional costs on this requisition.
+                </Typography>
+              )}
+            </>
           :
             <ApprovalRequisitionLedgerItem 
               approval={approval} 
@@ -356,6 +505,26 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
         <Button size="small" onClick={() => toggleOpen(false)}>
           Cancel
         </Button>
+        {isPurchaseType && activePurchaseTab === 0 && (
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={() => setActivePurchaseTab(1)}
+          >
+            Next
+          </Button>
+        )}
+        {isPurchaseType && activePurchaseTab === 1 && (
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={() => setActivePurchaseTab(0)}
+          >
+            Prev
+          </Button>
+        )}
+        {(!isPurchaseType || activePurchaseTab === 1) && (
+          <>
         <LoadingButton
           loading={approveRequisition.isPending || editApprovalRequisition.isPending}
           size="small"
@@ -394,6 +563,8 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
         >
           Approve
         </LoadingButton>
+          </>
+        )}
       </DialogActions>
     </React.Fragment>
   );
