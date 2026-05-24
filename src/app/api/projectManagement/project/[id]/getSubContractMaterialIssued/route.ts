@@ -13,7 +13,9 @@ export async function GET(
   if (response) return response;
 
   const url = new URL(`${API_BASE}/project-subcontract/${id}/material-used`);
-  req.nextUrl.searchParams.forEach((value, key) => url.searchParams.set(key, value));
+  req.nextUrl.searchParams.forEach((value, key) =>
+    url.searchParams.append(key, value)
+  );
 
   const res = await fetch(url.toString(), {
     headers,

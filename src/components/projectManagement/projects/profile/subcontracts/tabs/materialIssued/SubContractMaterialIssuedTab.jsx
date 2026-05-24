@@ -6,9 +6,11 @@ import JumboRqList from '@jumbo/components/JumboReactQuery/JumboRqList/JumboRqLi
 import JumboSearch from '@jumbo/components/JumboSearch/JumboSearch';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { Card, Grid, useMediaQuery } from '@mui/material';
+import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
 import React from 'react';
 import MaterialIssuedSelector from './MaterialIssuedSelector';
+import SubContratorTasksFilter from './SubContratorTasksFilter';
 import SubContractMaterialIssuedListItem from './SubContractMaterialIssuedListItem';
 
 const SubContractMaterialIssuedTab = ({ subContract }) => {
@@ -25,9 +27,16 @@ const SubContractMaterialIssuedTab = ({ subContract }) => {
       keyword: '',
       subcontract_id: subContract?.id,
       aggregated: true,
+      project_task_ids: [],
     },
     countKey: 'total',
     dataKey: 'data',
+  });
+
+  const { data: subContractTasks = [] } = useQuery({
+    queryKey: ['subContractTasksForMaterialIssued', { id: subContract?.id }],
+    queryFn: async () => projectsServices.getSubContractTasks(subContract.id),
+    enabled: !!subContract?.id,
   });
 
   React.useEffect(() => {
@@ -68,6 +77,16 @@ const SubContractMaterialIssuedTab = ({ subContract }) => {
     }));
   }, []);
 
+  const handleTaskIdsChange = React.useCallback((projectTaskIds) => {
+    setQueryOptions((state) => ({
+      ...state,
+      queryParams: {
+        ...state.queryParams,
+        project_task_ids: projectTaskIds,
+      },
+    }));
+  }, []);
+
   return (
     <JumboRqList
       ref={listRef}
@@ -87,27 +106,45 @@ const SubContractMaterialIssuedTab = ({ subContract }) => {
       toolbar={
         <JumboListToolbar
           hideItemsPerPage={true}
-          actionTail={
+          action={
             <Grid
               container
-              columnSpacing={{ md: 8, lg: 4 }}
+              columnSpacing={{ md: 2 }}
               rowSpacing={1}
               justifyContent={'end'}
             >
               {isLargeScreen && (
-                <Grid size={{ xs: 6, md: 4 }}>
+                <Grid size={{ xs: 12, md: 3 }}>
                   <MaterialIssuedSelector
                     aggregated={queryOptions.queryParams.aggregated}
                     onChange={handleAggregatedChange}
                   />
                 </Grid>
               )}
-              <Grid size={{ xs: 12, md: 8 }}>
+              {isLargeScreen && (
+                <Grid size={{ xs: 12, md: 5 }}>
+                  <SubContratorTasksFilter
+                    tasks={subContractTasks}
+                    value={queryOptions.queryParams.project_task_ids}
+                    onChange={handleTaskIdsChange}
+                  />
+                </Grid>
+              )}
+              <Grid size={{ xs: 12, md: 4 }}>
                 <JumboSearch
                   onChange={handleOnChange}
                   value={queryOptions.queryParams.keyword}
                 />
               </Grid>
+              {!isLargeScreen && (
+                <Grid size={{ xs: 12 }}>
+                  <SubContratorTasksFilter
+                    tasks={subContractTasks}
+                    value={queryOptions.queryParams.project_task_ids}
+                    onChange={handleTaskIdsChange}
+                  />
+                </Grid>
+              )}
               {!isLargeScreen && (
                 <Grid size={{ xs: 12 }}>
                   <MaterialIssuedSelector
