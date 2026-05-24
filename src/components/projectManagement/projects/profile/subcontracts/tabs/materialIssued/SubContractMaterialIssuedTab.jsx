@@ -114,14 +114,6 @@ const SubContractMaterialIssuedTab = ({ subContract }) => {
               justifyContent={'end'}
             >
               {isLargeScreen && (
-                <Grid size={{ xs: 12, md: 3 }}>
-                  <MaterialIssuedSelector
-                    aggregated={queryOptions.queryParams.aggregated}
-                    onChange={handleAggregatedChange}
-                  />
-                </Grid>
-              )}
-              {isLargeScreen && (
                 <Grid size={{ xs: 12, md: 5 }}>
                   <SubContratorTasksFilter
                     tasks={subContractTasks}
@@ -130,7 +122,15 @@ const SubContractMaterialIssuedTab = ({ subContract }) => {
                   />
                 </Grid>
               )}
-              <Grid size={{ xs: 12, md: 4 }}>
+              {isLargeScreen && (
+                <Grid size={{ xs: 12, md: 2 }}>
+                  <MaterialIssuedSelector
+                    aggregated={queryOptions.queryParams.aggregated}
+                    onChange={handleAggregatedChange}
+                  />
+                </Grid>
+              )}
+              <Grid size={{ xs: 12, md: 5 }}>
                 <JumboSearch
                   onChange={handleOnChange}
                   value={queryOptions.queryParams.keyword}
