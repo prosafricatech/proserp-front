@@ -2,6 +2,8 @@
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { Organization } from '@/types/auth-types';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
+import { faFileExcel } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import {
@@ -11,6 +13,7 @@ import {
   HighlightOff,
   VisibilityOutlined,
 } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
 import {
   Box,
   Button,
@@ -101,6 +104,7 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
   const [selectedTab, setSelectedTab] = useState(0);
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
+  const [isExporting, setIsExporting] = useState(false);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setSelectedTab(newValue);
@@ -115,6 +119,30 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
   if (isFetching) {
     return <LinearProgress />;
   }
+
+  const exportedData = {
+    requisition: requisitionDetails,
+    organization: organization,
+  };
+
+  const handlExcelExport = async (exportedData: any) => {
+    setIsExporting(true);
+    try {
+      const blob =
+        await requisitionsServices.exportPurchaseRequisitionExcel(exportedData);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'Purchase-Requisition.xlsx';
+      a.click();
+      window.URL.revokeObjectURL(url);
+      // console.log('blob: ', blob);
+    } catch (e) {
+      console.log('error exporting: ', e);
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   return (
     <Dialog
@@ -189,6 +217,16 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
         </Box>
       </DialogContent>
       <DialogActions sx={{ margin: 2 }}>
+        <LoadingButton
+          size='small'
+          onClick={() => handlExcelExport(exportedData)}
+          loading={isExporting}
+          variant='contained'
+          color='success'
+        >
+          <FontAwesomeIcon icon={faFileExcel} color='green' />
+          Excel
+        </LoadingButton>
         <Button
           variant='outlined'
           size='small'
