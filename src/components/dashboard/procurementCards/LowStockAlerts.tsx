@@ -1,7 +1,17 @@
-'use client'
-import React, { useEffect, useState } from 'react';
-import { useDashboardSettings } from '../Dashboard';
+'use client';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import lowStockThresholdServices from '@/components/procurement/stores/[store_id]/storeStock/lowStockThresholds/lowStockThreshold-services';
+import { AuthUser } from '@/types/auth-types';
+import { JumboScrollbar } from '@jumbo/components';
 import JumboCardQuick from '@jumbo/components/JumboCardQuick';
+import JumboChipsGroup from '@jumbo/components/JumboChipsGroup';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
+import { Div } from '@jumbo/shared';
+import {
+  ExpandMoreOutlined,
+  NotificationsActiveRounded,
+  Print,
+} from '@mui/icons-material';
 import {
   Accordion,
   AccordionDetails,
@@ -18,17 +28,11 @@ import {
   Typography,
   useMediaQuery,
 } from '@mui/material';
-import { ExpandMoreOutlined, NotificationsActiveRounded, Print } from '@mui/icons-material';
-import JumboChipsGroup from '@jumbo/components/JumboChipsGroup';
-import PDFContent from '../../pdf/PDFContent';
-import LowStockAlertsPDF from './LowStockAlertsPDF';
-import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { useQuery } from '@tanstack/react-query';
-import lowStockThresholdServices from '@/components/procurement/stores/[store_id]/storeStock/lowStockThresholds/lowStockThreshold-services';
-import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
-import { JumboScrollbar } from '@jumbo/components';
-import { Div } from '@jumbo/shared';
-import { AuthUser } from '@/types/auth-types';
+import React, { useEffect, useState } from 'react';
+import PDFContent from '../../pdf/PDFContent';
+import { useDashboardSettings } from '../Dashboard';
+import LowStockAlertsPDF from './LowStockAlertsPDF';
 
 interface AlertItem {
   product_name: string;
@@ -55,8 +59,11 @@ function LowStockAlerts() {
   const { theme } = useJumboTheme();
   const smallScreen = useMediaQuery(theme.breakpoints.down('md'));
   const midScreen = useMediaQuery(theme.breakpoints.down('lg'));
-  
-  const { chartFilters: { to, cost_center_ids } } = useDashboardSettings();
+  const xlScreen = useMediaQuery(theme.breakpoints.up('lg'));
+
+  const {
+    chartFilters: { to, cost_center_ids },
+  } = useDashboardSettings();
   const [params, setParams] = useState({
     cost_center_ids,
     as_of: to,
@@ -70,22 +77,35 @@ function LowStockAlerts() {
     queryKey: ['lowStockAlerts', params],
     queryFn: async () => {
       return await lowStockThresholdServices.alerts(params);
-    }
+    },
   });
 
-  const DocumentDialog: React.FC<DocumentDialogProps> = ({ open, onClose, stores }) => {
+  const DocumentDialog: React.FC<DocumentDialogProps> = ({
+    open,
+    onClose,
+    stores,
+  }) => {
     const { authOrganization, authUser } = useJumboAuth();
     const organization = authOrganization?.organization;
     return (
       <Dialog
         open={open}
-        scroll={(smallScreen || !open) ? 'body' : 'paper'}
+        scroll={smallScreen || !open ? 'body' : 'paper'}
         fullWidth
-        maxWidth="lg"
+        maxWidth='lg'
         onClose={onClose}
       >
         <DialogContent>
-          <PDFContent fileName='Low Stock Alert' document={<LowStockAlertsPDF stores={stores as any} organization={organization as any} authUser={authUser as AuthUser}/>} />
+          <PDFContent
+            fileName='Low Stock Alert'
+            document={
+              <LowStockAlertsPDF
+                stores={stores as any}
+                organization={organization as any}
+                authUser={authUser as AuthUser}
+              />
+            }
+          />
         </DialogContent>
       </Dialog>
     );
@@ -96,7 +116,12 @@ function LowStockAlerts() {
       <JumboCardQuick
         title={'Low Stock Alerts'}
         sx={{
-          height: !isLoading && smallScreen && stores.length < 1 ? 200 : (smallScreen || midScreen ? 350 : 310),
+          height:
+            !isLoading && smallScreen && stores.length < 1
+              ? 200
+              : smallScreen || midScreen
+                ? 360
+                : 360,
         }}
         action={
           stores.length > 0 && (
@@ -108,101 +133,127 @@ function LowStockAlerts() {
           )
         }
       >
-      {
-        isLoading ? <Skeleton variant="rectangular" width="100%" height={smallScreen ? 60 : 40} sx={{ borderRadius: 2 }} /> :
-        <JumboScrollbar
+        {isLoading ? (
+          <Skeleton
+            variant='rectangular'
+            width='100%'
+            height={smallScreen ? 60 : 40}
+            sx={{ borderRadius: 2 }}
+          />
+        ) : (
+          <JumboScrollbar
             autoHeight
-            autoHeightMin={!isLoading && stores.length < 1 ? 200 : (smallScreen ? 300 : 250)}
+            autoHeightMin={
+              !isLoading && stores.length < 1 ? 200 : smallScreen ? 300 : 250
+            }
             autoHide
             autoHideDuration={200}
             autoHideTimeout={500}
-        >
-          {
-            stores.length > 0 ? stores.map((store: any) => (
-              <Accordion key={store.id}>
-                    <AccordionSummary
-                        expandIcon={<ExpandMoreOutlined/>}
-                    >
-                      <Grid container width={'100%'}>
-                        <Grid size={{ xs: 9 }}>
-                          <Tooltip title={'Store Name'}>
-                            <Typography variant='h4'>{store.name}</Typography>
-                          </Tooltip>
-                        </Grid>
-                        <Grid size={{ xs: 2 }} textAlign={'end'}>
-                          <Tooltip
-                            title="Alerts found"
-                          >
-                            <Badge badgeContent={store.alerts.length} color="secondary">
-                                <NotificationsActiveRounded/>
-                            </Badge>
-                          </Tooltip>
-                        </Grid>
+          >
+            {stores.length > 0 ? (
+              stores.map((store: any) => (
+                <Accordion key={store.id}>
+                  <AccordionSummary expandIcon={<ExpandMoreOutlined />}>
+                    <Grid container width={'100%'}>
+                      <Grid size={{ xs: 9 }}>
+                        <Tooltip title={'Store Name'}>
+                          <Typography variant='h4'>{store.name}</Typography>
+                        </Tooltip>
                       </Grid>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      <JumboScrollbar
-                          autoHeight
-                          autoHeightMin={smallScreen ? 350 : 270}
-                          autoHide
-                          autoHideDuration={200}
-                          autoHideTimeout={500}
-                      >
-                        {
-                          store.alerts.map((alert:any, index: number) => (
-                            <Grid container width={'100%'} key={index} columnSpacing={1} rowSpacing={1} mt={1}
-                              sx={{
-                                cursor: 'pointer',
-                                borderTop: 2,
-                                borderColor: 'divider',
-                                '&:hover': {
-                                    bgcolor: 'action.hover',
-                                },
-                                padding: 1,
-                              }}
-                            >
-                                <Grid size={{ xs: 12, lg: 8 }}>
-                                  <Tooltip title={'Product Name'}>
-                                      <Typography>{alert.product_name}</Typography>
-                                  </Tooltip>
-                                </Grid>
-                                <Grid size={{ xs: 6, lg: 2 }} textAlign={'end'}>
-                                  <Tooltip title={'Threshold'}>
-                                      <Chip label={alert.threshold} color={'primary'}/>
-                                    </Tooltip>
-                                </Grid>
-                                <Grid size={{ xs: 6, lg: 2 }} textAlign={'end'}>
-                                  <Tooltip title={'Available Stock'}>
-                                      <Chip label={alert.available_stock} color={alert.available_stock > 0 ? 'warning' : 'error'}/>
-                                    </Tooltip>
-                                </Grid>
-                                <Grid size={{ xs: 12 }}>
-                                  <Tooltip title={'Cost Centers'}>
-                                    <Div>
-                                      <JumboChipsGroup
-                                          chips={alert.cost_centers}
-                                          mapKeys={{label: "name"}}
-                                          spacing={1}
-                                          size={"small"}
-                                          max={3}
-                                      />
-                                    </Div>
-                                  </Tooltip>
-                                </Grid>
-                            </Grid>
-                          ))
-                        }
-                      </JumboScrollbar>
-                    </AccordionDetails>
+                      <Grid size={{ xs: 2 }} textAlign={'end'}>
+                        <Tooltip title='Alerts found'>
+                          <Badge
+                            badgeContent={store.alerts.length}
+                            color='secondary'
+                          >
+                            <NotificationsActiveRounded />
+                          </Badge>
+                        </Tooltip>
+                      </Grid>
+                    </Grid>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <JumboScrollbar
+                      autoHeight
+                      autoHeightMin={smallScreen ? 350 : 270}
+                      autoHide
+                      autoHideDuration={200}
+                      autoHideTimeout={500}
+                    >
+                      {store.alerts.map((alert: any, index: number) => (
+                        <Grid
+                          container
+                          width={'100%'}
+                          key={index}
+                          columnSpacing={1}
+                          rowSpacing={1}
+                          mt={1}
+                          sx={{
+                            cursor: 'pointer',
+                            borderTop: 2,
+                            borderColor: 'divider',
+                            '&:hover': {
+                              bgcolor: 'action.hover',
+                            },
+                            padding: 1,
+                          }}
+                        >
+                          <Grid size={{ xs: 12, lg: 8 }}>
+                            <Tooltip title={'Product Name'}>
+                              <Typography>{alert.product_name}</Typography>
+                            </Tooltip>
+                          </Grid>
+                          <Grid size={{ xs: 6, lg: 2 }} textAlign={'end'}>
+                            <Tooltip title={'Threshold'}>
+                              <Chip label={alert.threshold} color={'primary'} />
+                            </Tooltip>
+                          </Grid>
+                          <Grid size={{ xs: 6, lg: 2 }} textAlign={'end'}>
+                            <Tooltip title={'Available Stock'}>
+                              <Chip
+                                label={alert.available_stock}
+                                color={
+                                  alert.available_stock > 0
+                                    ? 'warning'
+                                    : 'error'
+                                }
+                              />
+                            </Tooltip>
+                          </Grid>
+                          <Grid size={{ xs: 12 }}>
+                            <Tooltip title={'Cost Centers'}>
+                              <Div>
+                                <JumboChipsGroup
+                                  chips={alert.cost_centers}
+                                  mapKeys={{ label: 'name' }}
+                                  spacing={1}
+                                  size={'small'}
+                                  max={3}
+                                />
+                              </Div>
+                            </Tooltip>
+                          </Grid>
+                        </Grid>
+                      ))}
+                    </JumboScrollbar>
+                  </AccordionDetails>
                 </Accordion>
-            )) :  <Alert variant={'outlined'} severity={'info'}>No any low stock alerts</Alert>
-          }
-        </JumboScrollbar>
-      }
+              ))
+            ) : (
+              <Alert variant={'outlined'} severity={'info'}>
+                No any low stock alerts
+              </Alert>
+            )}
+          </JumboScrollbar>
+        )}
       </JumboCardQuick>
 
       {/* Render the DocumentDialog*/}
-      <DocumentDialog open={openDocumentDialog} stores={stores} onClose={() => setOpenDocumentDialog(false)}/>
+      <DocumentDialog
+        open={openDocumentDialog}
+        stores={stores}
+        onClose={() => setOpenDocumentDialog(false)}
+      />
     </div>
   );
 }
