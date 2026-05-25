@@ -20,6 +20,15 @@ const TaskViewListItem = ({
     return parsed.toLocaleDateString('en-GB');
   };
 
+  const toNumber = (value: unknown) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+
+  const quantity = toNumber(material?.quantity);
+  const budgetedQuantity = toNumber(material?.budgeted_quantity);
+  const balance = budgetedQuantity - quantity;
+
   return (
     <>
       <TableRow
@@ -35,25 +44,29 @@ const TaskViewListItem = ({
         <TableCell>
           <Typography>{material?.product_name}</Typography>
         </TableCell>
-        {isAggregated && (
-          <TableCell>
-            <Typography>
-              {formatNumber(material?.budgeted_quantity)}{' '}
-              {material?.measurement_unit?.symbol}
-            </Typography>
-          </TableCell>
-        )}
 
-        <TableCell>
-          <Typography
-            color={
-              material?.quantity > material?.budgeted_quantity ? 'error' : ''
-            }
-          >
-            {formatNumber(material?.quantity)}{' '}
+        <TableCell align='right'>
+          <Typography>
+            {formatNumber(quantity)}{' '}
             {material?.measurement_unit?.symbol}
           </Typography>
         </TableCell>
+
+        {isAggregated && (
+          <>
+            <TableCell align='right'>
+              <Typography>
+                {formatNumber(budgetedQuantity)}{' '}
+                {material?.measurement_unit?.symbol}
+              </Typography>
+            </TableCell>
+            <TableCell align='right'>
+              <Typography color={balance < 0 ? 'error' : 'text.primary'}>
+                {formatNumber(balance)} {material?.measurement_unit?.symbol}
+              </Typography>
+            </TableCell>
+          </>
+        )}
       </TableRow>
     </>
   );
