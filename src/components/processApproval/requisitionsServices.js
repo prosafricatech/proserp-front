@@ -11,19 +11,19 @@ requisitionsServices.productBudgetCheck = async ({ product_id, cost_center_id })
 };
 
 requisitionsServices.getList = async (params) => {
-  const response = await axios.get('/api/processApproval/getRequisitions', {
-    params,
-  });
-  return response.data;
+    const response = await axios.get('/api/processApproval/getRequisitions', {
+        params,
+    });
+    return response.data;
 };
 
-requisitionsServices.addRequisitions = async(requisitions) => {
-    const {data} = await axios.post(`/api/processApproval/addRequisitions`,requisitions)
+requisitionsServices.addRequisitions = async (requisitions) => {
+    const { data } = await axios.post(`/api/processApproval/addRequisitions`, requisitions)
     return data;
 }
 
-requisitionsServices.getRolesOptions = async(mainOnly = true) => {
-    const {data} = await axios.get(`/api/processApproval/getRolesOptions`,{
+requisitionsServices.getRolesOptions = async (mainOnly = true) => {
+    const { data } = await axios.get(`/api/processApproval/getRolesOptions`, {
         params: {
             mainOnly: mainOnly,
         }
@@ -31,8 +31,8 @@ requisitionsServices.getRolesOptions = async(mainOnly = true) => {
     return data;
 }
 
-requisitionsServices.approveRequisition = async(approval) => {
-    const {data} = await axios.post(`/api/processApproval/approveRequisition`,approval)
+requisitionsServices.approveRequisition = async (approval) => {
+    const { data } = await axios.post(`/api/processApproval/approveRequisition`, approval)
     return data;
 }
 
@@ -41,15 +41,15 @@ requisitionsServices.getRequisitionDetails = async (id) => {
     return data;
 }
 
-requisitionsServices.getRelatedTransactions = async(params) => {
-    const {data} = await axios.get(`/api/processApproval/getRelatedTransactions`,{
+requisitionsServices.getRelatedTransactions = async (params) => {
+    const { data } = await axios.get(`/api/processApproval/getRelatedTransactions`, {
         params
     });
     return data;
 }
 
 requisitionsServices.retrieveApprovalDetails = async (id) => {
-    const {data} = await axios.get(`/api/processApproval/${id}/retrieveApprovalDetails`);
+    const { data } = await axios.get(`/api/processApproval/${id}/retrieveApprovalDetails`);
     return data;
 }
 
@@ -68,54 +68,62 @@ requisitionsServices.getApprovedPayments = async (id) => {
     return data;
 }
 
-requisitionsServices.updateRequisition = async(requisition) => {
-    const {data} = await axios.put(`/api/processApproval/${requisition.id}/updateRequisition`,requisition)
+requisitionsServices.updateRequisition = async (requisition) => {
+    const { data } = await axios.put(`/api/processApproval/${requisition.id}/updateRequisition`, requisition)
     return data;
 }
 
-requisitionsServices.editApprovalRequisition = async(approval) => {
-    const {data} = await axios.put(`/api/processApproval/${approval.id}/editApprovalRequisition`,approval)
+requisitionsServices.editApprovalRequisition = async (approval) => {
+    const { data } = await axios.put(`/api/processApproval/${approval.id}/editApprovalRequisition`, approval)
     return data;
 }
 
 requisitionsServices.deleteRequisiton = async (id) => {
-    const {data} = await axios.delete(`/api/processApproval/${id}/deleteRequisiton`);
+    const { data } = await axios.delete(`/api/processApproval/${id}/deleteRequisiton`);
     return data;
 };
 
 requisitionsServices.deleteApprovedPurchaseOrder = async (id) => {
-    const {data} = await axios.delete(`/api/processApproval/${id}/deleteApprovedPurchaseOrder`);
+    const { data } = await axios.delete(`/api/processApproval/${id}/deleteApprovedPurchaseOrder`);
     return data;
 };
 
 requisitionsServices.deleteApprovedPaymentOrder = async (id) => {
-    const {data} = await axios.delete(`/api/processApproval/${id}/deleteApprovedPaymentOrder`);
+    const { data } = await axios.delete(`/api/processApproval/${id}/deleteApprovedPaymentOrder`);
     return data;
 };
 
 requisitionsServices.deleteApproval = async (id) => {
-    const {data} = await axios.delete(`/api/processApproval/${id}/deleteApproval`);
+    const { data } = await axios.delete(`/api/processApproval/${id}/deleteApproval`);
     return data;
 };
 
 requisitionsServices.expenseBudgetCheck = async ({ ledger_id, cost_center_id }) => {
     const response = await axios.get('/api/processApproval/expense-budget-check', {
-      params: {
-        ledger_id,
-        cost_center_id,
-      }
+        params: {
+            ledger_id,
+            cost_center_id,
+        }
     });
     return response.data;
 };
 
 requisitionsServices.productBudgetCheck = async ({ product_id, cost_center_id }) => {
     const response = await axios.get('/api/processApproval/product-budget-check', {
-      params: {
-        product_id,
-        cost_center_id,
-      }
+        params: {
+            product_id,
+            cost_center_id,
+        }
     });
     return response.data;
 };
+
+requisitionsServices.exportPurchaseRequisitionExcel = async (params) => {
+    const { data } = await axios.post(`/api/exports/excel/purchaseRequisition/`, params, {
+        responseType: 'blob',
+    })
+    return data;
+}
+
 
 export default requisitionsServices;
