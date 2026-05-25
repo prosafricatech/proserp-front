@@ -1,5 +1,5 @@
 import { LoadingButton } from '@mui/lab';
-import { Alert, Button, DialogActions, DialogContent, DialogTitle, Grid } from '@mui/material';
+import { Alert, Button, DialogActions, DialogContent, DialogTitle, Grid, Tab, Tabs, TextField, Typography } from '@mui/material';
 import dayjs from 'dayjs';
 import React, { useEffect, useState, useMemo } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
@@ -15,6 +15,7 @@ import stakeholderServices from '@/components/masters/stakeholders/stakeholder-s
 import purchaseServices from '@/components/procurement/purchases/purchase-services';
 import PurchaseOrderSummary from '@/components/procurement/purchases/purchaseOrderForm/PurchaseOrderSummary';
 import PurchaseOrderPaymentAndReceive from '@/components/procurement/purchases/purchaseOrderForm/PurchaseOrderPaymentAndReceive';
+import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { PurchaseApprovalRequisition } from '../../ApprovalRequisitionType';
 import { Vendor } from '@/components/processApproval/RequisitionType';
 import { Product } from '@/components/productAndServices/products/ProductType';
@@ -44,6 +45,22 @@ interface Order {
     product: Product;
     vendors?: Vendor;
   }>;
+  additional_costs?: any[];
+}
+
+interface AdditionalCostItem {
+  id?: number;
+  requisition_additional_cost_id?: number;
+  credit_ledger_name?: string;
+  name?: string;
+  ledger?: { id?: number; name?: string };
+  reference?: string;
+  currency_name?: string;
+  currency?: { id?: number; name?: string; code?: string };
+  currency_id?: number;
+  exchange_rate?: number;
+  amount?: number;
+  approved_amount?: number;
 }
 
 interface OrderItem {
@@ -82,6 +99,15 @@ interface FormValues {
     measurement_unit_id: number;
     vat_percentage: number;
   }>;
+  additional_costs?: Array<{
+    requisition_additional_cost_id?: number;
+    credit_ledger_name?: string;
+    ledger_id?: number;
+    currency_id?: number;
+    exchange_rate?: number;
+    reference?: string;
+    amount?: number;
+  }>;
   stakeholder_ledger_id?: number | null;
 }
 
@@ -110,6 +136,42 @@ const ApprovedPurchaseForm: React.FC<ApprovedPurchaseFormProps> = ({
   const [displayStoreSelector, setDisplayStoreSelector] = useState(false);
   const [stakeholderQuickAddDisplay, setStakeholderQuickAddDisplay] = useState(false);
   const [addedStakeholder, setAddedStakeholder] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState(0);
+
+  const approvedAdditionalCostsSource = approvedDetails?.additional_costs || prevApprovedDetails?.additional_costs || [];
+
+  const [additionalCosts, setAdditionalCosts] = useState<AdditionalCostItem[]>(() => {
+    if (order?.additional_costs?.length) {
+      return order.additional_costs.map((cost: any) => {
+        const approvedCost = approvedAdditionalCostsSource.find((item: any) =>
+          Number(item?.id || item?.requisition_additional_cost_id) === Number(cost?.id || cost?.requisition_additional_cost_id)
+        );
+
+        return {
+          ...cost,
+          requisition_additional_cost_id: cost?.requisition_additional_cost_id || cost?.id,
+          approved_amount: Number(approvedCost?.amount),
+          amount: Number(cost?.amount ?? 0),
+          exchange_rate: Number(cost?.exchange_rate ?? 1),
+          currency_id: cost?.currency_id || cost?.currency?.id,
+          currency_name: cost?.currency_name || cost?.currency?.name,
+        };
+      });
+    }
+
+    return (approvedAdditionalCostsSource || []).map((cost: any) => {
+      const approvedAmount = Number(cost?.approved_amount ?? cost?.unordered_amount ?? cost?.amount ?? 0);
+      return {
+        ...cost,
+        requisition_additional_cost_id: cost?.requisition_additional_cost_id || cost?.id,
+        approved_amount: approvedAmount,
+        amount: approvedAmount,
+        exchange_rate: Number(cost?.exchange_rate ?? 1),
+        currency_id: cost?.currency_id || cost?.currency?.id,
+        currency_name: cost?.currency_name || cost?.currency?.name,
+      };
+    });
+  });
 
   const [items, setItems] = useState(() => {
     if (order?.purchase_order_items) {
@@ -189,7 +251,16 @@ const ApprovedPurchaseForm: React.FC<ApprovedPurchaseFormProps> = ({
       instant_receive: getBool(order?.instant_receive, false),
       credit_ledger_id: (order?.instant_pay && order?.credit_ledger) ? order.credit_ledger.id : null,
       cost_centers: approvedRequisition ? [approvedRequisition.requisition.cost_center] : order?.cost_centers || [],
-      items: items
+      items: items,
+      additional_costs: additionalCosts.map((cost: AdditionalCostItem) => ({
+        requisition_additional_cost_id: cost.requisition_additional_cost_id || cost.id,
+        credit_ledger_name: cost.credit_ledger_name || cost.name,
+        ledger_id: (cost as any).ledger_id || (cost as any).ledger?.id || null,
+        currency_id: cost.currency_id || cost.currency?.id,
+        exchange_rate: Number(cost.exchange_rate || 1),
+        reference: cost.reference,
+        amount: Number(cost.amount || 0),
+      })),
     }
   });
 
@@ -231,6 +302,21 @@ const ApprovedPurchaseForm: React.FC<ApprovedPurchaseFormProps> = ({
   React.useEffect(() => {
     orderTotalAmount();
   },[items]);
+
+  useEffect(() => {
+    setValue(
+      'additional_costs',
+      additionalCosts.map((cost) => ({
+        requisition_additional_cost_id: cost.requisition_additional_cost_id || cost.id,
+        credit_ledger_name: cost.credit_ledger_name || cost.name,
+        ledger_id: (cost as any).ledger_id || null,
+        currency_id: cost.currency_id || cost.currency?.id,
+        exchange_rate: Number(cost.exchange_rate || 1),
+        reference: cost.reference,
+        amount: Number(cost.amount || 0),
+      }))
+    );
+  }, [additionalCosts, setValue]);
   
   const stakeholder_id = watch('stakeholder_id');
   const { data: stakeholderPayableLedgers } = useQuery({
@@ -322,6 +408,39 @@ const ApprovedPurchaseForm: React.FC<ApprovedPurchaseFormProps> = ({
     return order ? updatePurchaseOrder.mutate : addPurchaseOrder.mutate;
   }, [order, updatePurchaseOrder, addPurchaseOrder]);
 
+  const handleAdditionalCostAmountChange = (index: number, value: number) => {
+    setAdditionalCosts((prev) => {
+      const next = [...prev];
+      if (next[index]) {
+        next[index] = {
+          ...next[index],
+          amount: value,
+        };
+      }
+      return next;
+    });
+  };
+
+  const validateAdditionalCosts = () => {
+    return !additionalCosts.some((cost) => {
+      const costAmount = Number(cost.approved_amount ?? 0);
+      const enteredAmount = Number(cost.amount ?? 0);
+      return enteredAmount > costAmount;
+    });
+  };
+
+  const onSubmit = (data: FormValues) => {
+    if (!validateAdditionalCosts()) {
+      enqueueSnackbar('Please ensure each value does not exceed its cost amount.', {
+        variant: 'error',
+      });
+      setActiveTab(1);
+      return;
+    }
+
+    saveMutation(data);
+  };
+
   return (
     <FormProvider {...formMethods}>
       <DialogTitle>
@@ -360,6 +479,20 @@ const ApprovedPurchaseForm: React.FC<ApprovedPurchaseFormProps> = ({
         </Grid>
       </DialogTitle>
       <DialogContent>
+        <Tabs
+          value={activeTab}
+          onChange={(_, newValue) => setActiveTab(newValue)}
+          variant='scrollable'
+          scrollButtons='auto'
+          allowScrollButtonsMobile
+          sx={{ mb: 1 }}
+        >
+          <Tab label='Products' />
+          <Tab label='Additional Costs' />
+        </Tabs>
+
+        {activeTab === 0 && (
+          <>
         {errors?.items?.message && items.length < 1 && <Alert severity='error'>{errors.items.message}</Alert>}
         <ApprovedPurchaseItemForm 
           approvedDetails={approvedDetails} 
@@ -367,6 +500,60 @@ const ApprovedPurchaseForm: React.FC<ApprovedPurchaseFormProps> = ({
           prevApprovedDetails={prevApprovedDetails}
           handleItemChange={handleItemChange}
         />
+          </>
+        )}
+
+        {activeTab === 1 && additionalCosts.length > 0 && (
+          <Grid container spacing={1} sx={{ mt: 1 }}>
+            {additionalCosts.map((cost, index) => (
+              <React.Fragment key={cost.id || cost.requisition_additional_cost_id || index}>
+                <Grid size={{ xs: 12, md: 1 }}>
+                  <Typography variant='body2' sx={{ mt: 1.5 }}>
+                    {`${index + 1}.`}
+                  </Typography>
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 7 }}>
+                  <Typography variant='body2' sx={{ mt: 1.5 }}>
+                    {`${cost.credit_ledger_name || cost.ledger?.name || cost.name}`}
+                  </Typography>
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 4 }}>
+                  {(() => {
+                    const costAmount = Number(cost.approved_amount ?? 0);
+                    const enteredAmount = Number(cost.amount ?? 0);
+                    const isAmountInvalid = enteredAmount > costAmount;
+
+                    return (
+                      <TextField
+                        label='Amount'
+                        size='small'
+                        value={Number(cost.amount || 0).toLocaleString('en-US')}
+                        error={isAmountInvalid}
+                        helperText={
+                          isAmountInvalid
+                            ? `Value should not exceed cost amount (${costAmount.toLocaleString('en-US')}).`
+                            : ''
+                        }
+                        InputProps={{
+                          inputComponent: CommaSeparatedField,
+                        }}
+                        onChange={(e) =>
+                          handleAdditionalCostAmountChange(index, sanitizedNumber(e.target.value) || 0)
+                        }
+                      />
+                    );
+                  })()}
+                </Grid>
+              </React.Fragment>
+            ))}
+          </Grid>
+        )}
+
+        {activeTab === 1 && additionalCosts.length === 0 && (
+          <Alert severity='info'>No additional costs found on this approved requisition.</Alert>
+        )}
       </DialogContent>
       <DialogActions>
         <Button size='small' onClick={() => toggleOpen(false)}>
@@ -376,7 +563,7 @@ const ApprovedPurchaseForm: React.FC<ApprovedPurchaseFormProps> = ({
           <LoadingButton
             variant='contained'
             size='small'
-            onClick={handleSubmit((data) => saveMutation(data))}
+            onClick={handleSubmit(onSubmit)}
             loading={addPurchaseOrder.isPending || updatePurchaseOrder.isPending}
           >
             Submit
