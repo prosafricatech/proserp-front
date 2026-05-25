@@ -32,8 +32,8 @@ function PurchaseOrderOnScreenPreview({ order }) {
   const withPrices = [
     PERMISSIONS.ACCOUNTS_REPORTS,
     PERMISSIONS.PURCHASES_CREATE,
-    PERMISSIONS.APPROVED_REQUISITIONS_PURCHASE
-  ].some(perm => checkOrganizationPermission([perm]));
+    PERMISSIONS.APPROVED_REQUISITIONS_PURCHASE,
+  ].some((perm) => checkOrganizationPermission([perm]));
 
   const vatAmount = order.purchase_order_items.reduce((total, item) => {
     return (total += item.rate * item.quantity * item.vat_percentage * 0.01);
@@ -413,6 +413,122 @@ function PurchaseOrderOnScreenPreview({ order }) {
           </Table>
         </TableContainer>
       </Box>
+
+      {/* Additional costs sections */}
+      {order?.additional_costs?.length > 0 && (
+        <Box sx={{ mb: 3 }}>
+          <Typography
+            variant='h6'
+            sx={{
+              color: headerColor,
+              textAlign: 'center',
+              mb: 2,
+            }}
+          >
+            ADDTIONAL COSTS
+          </Typography>
+
+          <Grid size={12}>
+            <TableContainer
+              component={Paper}
+              sx={{
+                boxShadow: theme.shadows[2],
+                mt: 2,
+                '& .MuiTableRow-root:hover': {
+                  backgroundColor: theme.palette.action.hover,
+                },
+              }}
+            >
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell
+                      sx={{
+                        backgroundColor: mainColor,
+                        color: contrastText,
+                        fontSize: '0.875rem',
+                        width: '8%',
+                      }}
+                    >
+                      S/N
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        backgroundColor: mainColor,
+                        color: contrastText,
+                        fontSize: '0.875rem',
+                        width: '52%',
+                      }}
+                    >
+                      Cost Name
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        backgroundColor: mainColor,
+                        color: contrastText,
+                        fontSize: '0.875rem',
+                        width: '15%',
+                      }}
+                    >
+                      Currency
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        backgroundColor: mainColor,
+                        color: contrastText,
+                        fontSize: '0.875rem',
+                        width: '25%',
+                      }}
+                      align='right'
+                    >
+                      Amount
+                    </TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {order.additional_costs.map((cost, index) => (
+                    <TableRow
+                      key={
+                        cost.id || cost.requisition_additional_cost_id || index
+                      }
+                    >
+                      <TableCell sx={{ width: '8%' }}>{index + 1}</TableCell>
+                      <TableCell sx={{ width: '52%' }}>
+                        {cost.credit_ledger_name ||
+                          cost.ledger?.name ||
+                          cost.name ||
+                          '-'}
+                        {cost.reference ? (
+                          <Typography
+                            variant='body2'
+                            color='text.secondary'
+                            sx={{ mt: 0.5 }}
+                          >
+                            Ref: {cost.reference}
+                          </Typography>
+                        ) : null}
+                      </TableCell>
+                      <TableCell sx={{ width: '15%' }}>
+                        {cost.currency?.symbol ||
+                          cost.currency?.code ||
+                          cost.currency_name ||
+                          approval.requisition?.currency?.code ||
+                          '-'}
+                      </TableCell>
+                      <TableCell
+                        align='right'
+                        sx={{ fontFamily: 'monospace', width: '25%' }}
+                      >
+                        {`${cost.currency?.symbol} ${Number(cost.amount || 0).toLocaleString('en-US', { maximumFractionDigits: 2 })}`.trim()}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Grid>
+        </Box>
+      )}
 
       {/* Totals Section */}
       {withPrices && (
