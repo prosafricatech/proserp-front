@@ -64,15 +64,15 @@ const MaterialUsedListHeader = ({
         <Typography noWrap={false}>Product Name</Typography>
       </Grid>
 
+      <Grid size={!isAggregated ? 3 : 3}>
+        <Typography>Quantity</Typography>
+      </Grid>
+
       {isAggregated && (
         <Grid size={3}>
           <Typography>Budgeted Quantity</Typography>
         </Grid>
       )}
-
-      <Grid size={!isAggregated ? 3 : 3}>
-        <Typography>Quantity</Typography>
-      </Grid>
     </Grid>
   );
 };
@@ -151,7 +151,12 @@ const TaskView = ({ setOpenDialog, task, activity }: TaskViewProps) => {
 
   !isAggregated
     ? (tableHeader = ['Date', 'Product Name', 'Quantity'])
-    : (tableHeader = ['Product Name', 'Budgeted Quantity', 'Quantity']);
+    : (tableHeader = [
+        'Product Name',
+        'Quantity',
+        'Budgeted Quantity',
+        'Balance',
+      ]);
 
   return (
     <>
@@ -248,7 +253,7 @@ const TaskView = ({ setOpenDialog, task, activity }: TaskViewProps) => {
                 queryOptions.queryParams.aggregated ? 'product_id' : 'id'
               }
               queryOptions={queryOptions}
-              itemsPerPage={10}
+              itemsPerPage={20}
               itemsPerPageOptions={[5, 8, 10, 15, 20]}
               renderItem={renderMaterial}
               componentElement='div'
