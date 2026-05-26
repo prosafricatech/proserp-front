@@ -3242,15 +3242,6 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
-// Validate ../../../src/app/api/masters/products/[id]/photos/[photoId]/set-main/route.ts
-{
-  type __IsExpected<Specific extends RouteHandlerConfig<"/api/masters/products/[id]/photos/[photoId]/set-main">> = Specific
-  const handler = {} as typeof import("../../../src/app/api/masters/products/[id]/photos/[photoId]/set-main/route.js")
-  type __Check = __IsExpected<typeof handler>
-  // @ts-ignore
-  type __Unused = __Check
-}
-
 // Validate ../../../src/app/api/masters/products/[id]/photos/reorder/route.ts
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/masters/products/[id]/photos/reorder">> = Specific
