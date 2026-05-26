@@ -54,7 +54,9 @@ function RequisitionPDF({ requisition, organization }: RequisitionPDFProps) {
     const lightColor = organization.settings?.light_color || "#bec5da";
     const contrastText = organization.settings?.contrast_text || "#FFFFFF";
     const isLeaveRequest = requisition?.approval_chain?.process_type?.toLowerCase() === 'leave_request';
+    const isPurchase = requisition?.approval_chain?.process_type?.toLowerCase() === 'purchase';
     const requisitionItems: RequisitionItem[] = 'items' in requisition ? (requisition.items || []) : [];
+    const additionalCosts = isPurchase ? (((requisition as any)?.additional_costs || []) as any[]) : [];
     const leaveSource = (requisition?.leave_items && requisition.leave_items.length ? requisition.leave_items : requisitionItems) || [];
     const leaveItems: LeaveViewItem[] = (leaveSource as any[]).map(normalizeLeaveItem);
 
@@ -231,60 +233,88 @@ function RequisitionPDF({ requisition, organization }: RequisitionPDFProps) {
                     )}
                 </View>
 
-                                {isLeaveRequest ? (
-                                    <View style={{ ...pdfStyles.tableRow, marginBottom: 4 }}>
-                                        <Text style={{ textAlign: 'center', flex : 4.5 }}></Text>
-                                        <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2, textAlign: 'right' }}>
-                                            Total Leave Days
+                {isLeaveRequest ? (
+                        <View style={{ ...pdfStyles.tableRow, marginBottom: 4 }}>
+                            <Text style={{ textAlign: 'center', flex : 4.5 }}></Text>
+                            <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2, textAlign: 'right' }}>
+                                Total Leave Days
+                            </Text>
+                            <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2.2, textAlign: 'right' }}>
+                                {`${totalLeaveDays.toLocaleString()} day(s)`}
+                            </Text>
+                        </View>
+                    ) : (
+                    <>
+                        <View style={{ ...pdfStyles.tableRow, marginBottom: 4 }}>
+                        <Text style={{ textAlign: 'center', flex : 4.5 }}></Text>
+                        <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2, textAlign: 'right' }}>
+                            Total
+                        </Text>
+                        <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2.2, textAlign: 'right' }}>
+                            {requisitionItems.reduce((total: number, item: RequisitionItem) => total + (item.quantity || 0) * (item.rate || 0), 0).toLocaleString('en-US', { 
+                                style: 'currency', 
+                                currency: requisition.currency?.code 
+                            })}
+                        </Text>
+                        </View>
+                        {requisition?.approval_chain?.process_type?.toLowerCase() === 'purchase' && totalVAT > 0 &&
+                            <>
+                                <View style={{ ...pdfStyles.tableRow, marginBottom: 4 }}>
+                                    <Text style={{ textAlign: 'center', flex : 4.5 }}></Text>
+                                    <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2, textAlign: 'right' }}>
+                                        VAT
+                                    </Text>
+                                    <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2.2, textAlign: 'right' }}>
+                                        {totalVAT.toLocaleString('en-US', { 
+                                            style: 'currency', 
+                                            currency: requisition.currency?.code 
+                                        })}
+                                    </Text>
+                                </View>
+                                <View style={{ ...pdfStyles.tableRow, marginBottom: 4 }}>
+                                    <Text style={{ textAlign: 'center', flex : 4.5 }}></Text>
+                                    <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2, textAlign: 'right' }}>
+                                        Grand Total (VAT Incl.)
+                                    </Text>
+                                    <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2.2, textAlign: 'right' }}>
+                                        {grandTotal.toLocaleString('en-US', { 
+                                            style: 'currency', 
+                                            currency: requisition.currency?.code 
+                                        })}
+                                    </Text>
+                                </View>
+                            </>
+                        }
+                    </>
+                )}
+
+                {!isLeaveRequest && isPurchase && additionalCosts.length > 0 && (
+                    <>
+                        <Text style={{ ...pdfStyles.minInfo, color: mainColor, marginBottom: 4 }}>Additional Costs</Text>
+                        <View style={{ ...pdfStyles.table, marginBottom: 10 }}>
+                            <View style={pdfStyles.tableRow}>
+                                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.1 }}>S/N</Text>
+                                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.5 }}>Cost Name</Text>
+                                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.4 }}>Amount</Text>
+                            </View>
+
+                            {additionalCosts.map((cost, index) => {
+                                const currencyCode = cost.currency?.code || cost.currency_name || requisition.currency?.code || '';
+                                return (
+                                    <View key={cost.id || cost.requisition_additional_cost_id || index} style={pdfStyles.tableRow}>
+                                        <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 0.1 }}>{index + 1}</Text>
+                                        <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 0.5 }}>
+                                            {cost.credit_ledger_name || cost.ledger?.name || cost.name || '-'}
                                         </Text>
-                                        <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2.2, textAlign: 'right' }}>
-                                            {`${totalLeaveDays.toLocaleString()} day(s)`}
+                                        <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 0.4, textAlign: 'right' }}>
+                                            {`${currencyCode} ${Number(cost.amount || 0).toLocaleString('en-US', { maximumFractionDigits: 2 })}`.trim()}
                                         </Text>
                                     </View>
-                                ) : (
-                  <>
-                    <View style={{ ...pdfStyles.tableRow, marginBottom: 4 }}>
-                      <Text style={{ textAlign: 'center', flex : 4.5 }}></Text>
-                      <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2, textAlign: 'right' }}>
-                          Total
-                      </Text>
-                      <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2.2, textAlign: 'right' }}>
-                          {requisitionItems.reduce((total: number, item: RequisitionItem) => total + (item.quantity || 0) * (item.rate || 0), 0).toLocaleString('en-US', { 
-                              style: 'currency', 
-                              currency: requisition.currency?.code 
-                          })}
-                      </Text>
-                    </View>
-                    {requisition?.approval_chain?.process_type?.toLowerCase() === 'purchase' && totalVAT > 0 &&
-                        <>
-                            <View style={{ ...pdfStyles.tableRow, marginBottom: 4 }}>
-                                <Text style={{ textAlign: 'center', flex : 4.5 }}></Text>
-                                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2, textAlign: 'right' }}>
-                                    VAT
-                                </Text>
-                                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2.2, textAlign: 'right' }}>
-                                    {totalVAT.toLocaleString('en-US', { 
-                                        style: 'currency', 
-                                        currency: requisition.currency?.code 
-                                    })}
-                                </Text>
-                            </View>
-                            <View style={{ ...pdfStyles.tableRow, marginBottom: 4 }}>
-                                <Text style={{ textAlign: 'center', flex : 4.5 }}></Text>
-                                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2, textAlign: 'right' }}>
-                                    Grand Total (VAT Incl.)
-                                </Text>
-                                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2.2, textAlign: 'right' }}>
-                                    {grandTotal.toLocaleString('en-US', { 
-                                        style: 'currency', 
-                                        currency: requisition.currency?.code 
-                                    })}
-                                </Text>
-                            </View>
-                        </>
-                    }
-                  </>
-                                )}
+                                );
+                            })}
+                        </View>
+                    </>
+                )}
 
                 <View style={{ ...pdfStyles.tableRow, marginBottom: 10 }}>
                     {requisition?.remarks && (

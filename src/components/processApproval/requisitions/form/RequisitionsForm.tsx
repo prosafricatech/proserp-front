@@ -21,6 +21,8 @@ import {
   Divider,
   Grid,
   IconButton,
+  Tab,
+  Tabs,
   TextField,
   Tooltip,
   Typography,
@@ -29,15 +31,17 @@ import { DateTimePicker } from '@mui/x-date-pickers';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
-import React, { useContext, useEffect, useState } from 'react';
+import React, { SyntheticEvent, useContext, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import CostCenterSelector from '../../../masters/costCenters/CostCenterSelector';
 import CurrencySelector from '../../../masters/Currencies/CurrencySelector';
 import { requisitionContext } from '../../Requisitions';
 import requisitionsServices from '../../requisitionsServices';
+import PurchaseRequisitionAdditionalCostsTabRow from './AdditionalCostsTabRow';
 import LeaveItemForm from './LeaveItemForm';
 import LeaveItemRow, { LeaveItemFormValue } from './LeaveItemRow';
+import PurchaseRequisitionAdditionalCostsTab from './PurchaseRequisitionAdditionalCostsTab';
 import RequisitionLedgerItemForm from './RequisitionLedgerItemForm';
 import RequisitionLedgerItemRow from './RequisitionLedgerItemRow';
 import RequisitionProductItemForm from './RequisitionProductItemForm';
@@ -109,6 +113,7 @@ interface RequisitionItem {
 
 interface Requisition {
   id?: number;
+  additional_costs: Array<any>;
   requisition_date?: string;
   approval_chain?: {
     process_type?: string;
@@ -136,8 +141,8 @@ function RequisitionsForm({
     isDuplicate
       ? dayjs()
       : requisition && !isDuplicate
-      ? dayjs(requisition.requisition_date)
-      : dayjs()
+        ? dayjs(requisition.requisition_date)
+        : dayjs()
   );
   const { setIsEditAction } = useContext(requisitionContext);
   const { enqueueSnackbar } = useSnackbar();
@@ -156,6 +161,18 @@ function RequisitionsForm({
   const [isDirty, setIsDirty] = useState(false);
   const [clearFormKey, setClearFormKey] = useState(0);
   const [submitItemForm, setSubmitItemForm] = useState(false);
+  const [activeTab, setActiveTab] = useState(0);
+  const [additionalCosts, setAdditionalCosts] = useState(
+    requisition
+      ? requisition?.additional_costs.map((cost) => ({
+          ...cost,
+          // ledger_id: cost.ledger?.id,
+          credit_ledger_name: cost.ledger?.name || cost.name,
+          currency_id: cost.currency_id || cost.currency?.id,
+          currency_name: cost.currency_name || cost.currency?.name,
+        }))
+      : []
+  );
 
   const [requisition_ledger_items, setRequisition_ledger_items] = useState<
     RequisitionItem[]
@@ -246,6 +263,10 @@ function RequisitionsForm({
         requisition?.approval_chain?.process_type?.toUpperCase() === 'PURCHASE'
           ? requisition?.items
           : null,
+      additional_costs:
+        requisition?.approval_chain?.process_type?.toUpperCase() === 'PURCHASE'
+          ? requisition?.additional_costs || []
+          : null,
       ledger_items:
         requisition?.approval_chain?.process_type?.toUpperCase() === 'PAYMENT'
           ? requisition?.items
@@ -260,6 +281,21 @@ function RequisitionsForm({
         : currencies?.find((c) => c.is_base === 1),
     },
   });
+
+  // Update form state when additional Costs change
+  useEffect(() => {
+    setValue(
+      'additional_costs',
+      additionalCosts?.map((additionalCost) => ({
+        credit_ledger_name: additionalCost.credit_ledger_name,
+        ledger_id: additionalCost.ledger_id,
+        currency_id: additionalCost.currency_id || additionalCost.currency?.id,
+        exchange_rate: additionalCost.exchange_rate,
+        reference: additionalCost.reference,
+        amount: additionalCost.amount,
+      }))
+    );
+  }, [additionalCosts, setValue]);
 
   const addRequisition = useMutation({
     mutationFn: requisitionsServices.addRequisitions,
@@ -294,6 +330,8 @@ function RequisitionsForm({
   const selectedProcessType = watch('process_type');
   const currencyDetails = watch('currencyDetails');
   const selectedCostCenterId = watch('cost_center_id');
+  const isPurchaseType = selectedProcessType === 'PURCHASE';
+  const isPurchaseLastTab = activeTab === 1;
   const processTypeOptions = React.useMemo(
     () =>
       PROCESS_TYPES.filter(
@@ -320,13 +358,12 @@ function RequisitionsForm({
         }
 
         try {
-          const relatedResponse = await requisitionsServices.getRelatedTransactions(
-            {
+          const relatedResponse =
+            await requisitionsServices.getRelatedTransactions({
               ledger_id: item.ledger_id,
               type: item.relatable_type,
               payment_status: 'partially_and_not_approved',
-            }
-          );
+            });
 
           const latestRelated = (extractList(relatedResponse) as any[]).find(
             (related) => Number(related?.id) === Number(item.relatable_id)
@@ -431,6 +468,18 @@ function RequisitionsForm({
     requisition_leave_items,
     setValue,
   ]);
+
+  const [nextTab, setNextTab] = useState<number | null>(null);
+
+  const handleTabChange = (event: SyntheticEvent, newTab: number) => {
+    // if (isDirty) {
+    //   setNextTab(newTab);
+    //   setShowWarning(true);
+    // } else {
+    //   setActiveTab(newTab);
+    // }
+    setActiveTab(newTab);
+  };
 
   const onSubmit = async () => {
     if (selectedProcessType === 'LEAVE_REQUEST') {
@@ -610,6 +659,7 @@ function RequisitionsForm({
                         setRequisition_product_items([]);
                         setRequisition_ledger_items([]);
                         setRequisition_leave_items([]);
+                        setActiveTab(0);
 
                         setValue('process_type', newValue ? newValue : null, {
                           shouldValidate: true,
@@ -672,7 +722,8 @@ function RequisitionsForm({
                           newValue?.exchangeRate ? newValue.exchangeRate : 1
                         );
 
-                        const originalCurrencyId = requisition?.currency?.id ?? 1;
+                        const originalCurrencyId =
+                          requisition?.currency?.id ?? 1;
                         setCurrencyChanged(newValue?.id !== originalCurrencyId);
                       }}
                     />
@@ -764,12 +815,47 @@ function RequisitionsForm({
                 requisition_ledger_items={requisition_ledger_items}
               />
             ) : selectedProcessType === 'PURCHASE' ? (
-              <RequisitionProductItemForm
-                currencyDetails={currencyDetails}
-                costCenterId={selectedCostCenterId}
-                setRequisition_product_items={setRequisition_product_items}
-                requisition_product_items={requisition_product_items}
-              />
+              <>
+                <Tabs
+                  value={activeTab}
+                  onChange={(e, newValue) => handleTabChange(e, newValue)}
+                  variant='scrollable'
+                  scrollButtons='auto'
+                  allowScrollButtonsMobile
+                  sx={{ mt: 1 }}
+                >
+                  <Tab label='Products' />
+                  <Tab label='Additional Costs' />
+                </Tabs>
+                {activeTab === 0 && (
+                  <RequisitionProductItemForm
+                    currencyDetails={currencyDetails}
+                    costCenterId={selectedCostCenterId}
+                    setRequisition_product_items={setRequisition_product_items}
+                    requisition_product_items={requisition_product_items}
+                  />
+                )}
+                {activeTab === 1 && (
+                  <PurchaseRequisitionAdditionalCostsTab
+                    setIsDirty={setIsDirty}
+                    additionalCosts={additionalCosts}
+                    setAdditionalCosts={setAdditionalCosts}
+                  />
+                )}
+                {activeTab === 1 &&
+                  additionalCosts.map((additionalCost, index) => {
+                    return (
+                      <PurchaseRequisitionAdditionalCostsTabRow
+                        additionalCosts={additionalCosts}
+                        setAdditionalCosts={setAdditionalCosts}
+                        key={index}
+                        setIsDirty={setIsDirty}
+                        additionalCost={additionalCost}
+                        index={index}
+                      />
+                    );
+                  })}
+              </>
             ) : selectedProcessType === 'LEAVE_REQUEST' ? (
               <LeaveItemForm
                 employeeOptions={employeeOptions}
@@ -796,6 +882,7 @@ function RequisitionsForm({
             />
           ))}
         {selectedProcessType === 'PURCHASE' &&
+          activeTab === 0 &&
           requisition_product_items.map((product_item, index) => (
             <RequisitionProductItemRow
               key={index}
@@ -819,14 +906,12 @@ function RequisitionsForm({
               employeeOptions={employeeOptions}
               leaveTypeOptions={leaveTypes}
             />
-          ))
-        }
+          ))}
 
         {selectedProcessType === 'LEAVE_REQUEST' &&
           requisition_leave_items.length === 0 && (
             <Grid size={{ xs: 12 }}>No leave item added yet.</Grid>
-          )
-        }
+          )}
 
         <Grid size={{ xs: 12 }} paddingTop={2}>
           <Div sx={{ mt: 0.3 }}>
@@ -881,6 +966,7 @@ function RequisitionsForm({
       <DialogActions>
         <Button
           size='small'
+          variant='outlined'
           onClick={() => {
             toggleOpen(false);
             setIsEditAction(false);
@@ -888,31 +974,81 @@ function RequisitionsForm({
         >
           Cancel
         </Button>
-        <LoadingButton
-          loading={addRequisition.isPending || updateRequisition.isPending}
-          size='small'
-          variant='contained'
-          type='submit'
-          onClick={(e) => {
-            setValue('submit_type' as any, 'suspended');
-            handleSubmit(onSubmit)(e);
-          }}
-        >
-          Suspend
-        </LoadingButton>
-        <LoadingButton
-          loading={addRequisition.isPending || updateRequisition.isPending}
-          variant='contained'
-          color='success'
-          type='submit'
-          onClick={(e) => {
-            setValue('submit_type' as any, 'submitted');
-            handleSubmit(onSubmit)(e);
-          }}
-          size='small'
-        >
-          Submit
-        </LoadingButton>
+        {isPurchaseType && !isPurchaseLastTab ? (
+          <>
+            <Button
+              size='small'
+              variant='outlined'
+              onClick={() => setActiveTab((prev) => Math.min(prev + 1, 1))}
+              disabled={activeTab >= 1}
+            >
+              Next &gt;
+            </Button>
+          </>
+        ) : isPurchaseType && isPurchaseLastTab ? (
+          <>
+            <Button
+              size='small'
+              variant='outlined'
+              onClick={() => setActiveTab((prev) => Math.max(prev - 1, 0))}
+            >
+              &lt; Prev
+            </Button>
+            <LoadingButton
+              loading={addRequisition.isPending || updateRequisition.isPending}
+              size='small'
+              variant='contained'
+              type='submit'
+              onClick={(e) => {
+                setValue('submit_type' as any, 'suspended');
+                handleSubmit(onSubmit)(e);
+              }}
+            >
+              Suspend
+            </LoadingButton>
+            <LoadingButton
+              loading={addRequisition.isPending || updateRequisition.isPending}
+              variant='contained'
+              color='success'
+              type='submit'
+              onClick={(e) => {
+                setValue('submit_type' as any, 'submitted');
+                handleSubmit(onSubmit)(e);
+              }}
+              size='small'
+            >
+              Submit
+            </LoadingButton>
+          </>
+        ) : (
+          <>
+            <LoadingButton
+              loading={addRequisition.isPending || updateRequisition.isPending}
+              size='small'
+              variant='contained'
+              type='submit'
+              onClick={(e) => {
+                setValue('submit_type' as any, 'suspended');
+                handleSubmit(onSubmit)(e);
+              }}
+            >
+              Suspend
+            </LoadingButton>
+            <LoadingButton
+              loading={addRequisition.isPending || updateRequisition.isPending}
+              variant='contained'
+              color='success'
+              type='submit'
+              onClick={(e) => {
+                setValue('submit_type' as any, 'submitted');
+                handleSubmit(onSubmit)(e);
+              }}
+              size='small'
+            >
+              Submit
+            </LoadingButton>
+          </>
+        )}
       </DialogActions>
     </React.Fragment>
   );

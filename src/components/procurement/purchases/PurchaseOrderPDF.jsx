@@ -21,8 +21,8 @@ function PurchaseOrderPDF({
   const withPrices = [
     PERMISSIONS.ACCOUNTS_REPORTS,
     PERMISSIONS.PURCHASES_CREATE,
-    PERMISSIONS.APPROVED_REQUISITIONS_PURCHASE
-  ].some(perm => checkOrganizationPermission([perm]));
+    PERMISSIONS.APPROVED_REQUISITIONS_PURCHASE,
+  ].some((perm) => checkOrganizationPermission([perm]));
 
   const vatAmount = order.purchase_order_items.reduce((total, item) => {
     return (total += item.rate * item.quantity * item.vat_percentage * 0.01);
@@ -425,6 +425,107 @@ function PurchaseOrderPDF({
             )}
           </>
         )}
+
+        {order?.additional_costs?.length > 0 && (
+          <>
+            <Text
+              style={{
+                ...pdfStyles.minInfo,
+                color: mainColor,
+                marginBottom: 4,
+              }}
+            >
+              Additional Costs
+            </Text>
+            <View style={{ ...pdfStyles.table, marginBottom: 10 }}>
+              <View style={pdfStyles.tableRow}>
+                <Text
+                  style={{
+                    ...pdfStyles.tableHeader,
+                    backgroundColor: mainColor,
+                    color: contrastText,
+                    flex: 0.1,
+                  }}
+                >
+                  S/N
+                </Text>
+                <Text
+                  style={{
+                    ...pdfStyles.tableHeader,
+                    backgroundColor: mainColor,
+                    color: contrastText,
+                    flex: 0.5,
+                  }}
+                >
+                  Cost Name
+                </Text>
+                <Text
+                  style={{
+                    ...pdfStyles.tableHeader,
+                    backgroundColor: mainColor,
+                    color: contrastText,
+                    flex: 0.4,
+                  }}
+                >
+                  Amount
+                </Text>
+              </View>
+
+              {order.additional_costs.map((cost, index) => {
+                const currencyCode =
+                  cost.currency?.symbol ||
+                  cost.currency?.code ||
+                  cost.currency_name ||
+                  approval.requisition.currency?.code ||
+                  '';
+                return (
+                  <View
+                    key={
+                      cost.id || cost.requisition_additional_cost_id || index
+                    }
+                    style={pdfStyles.tableRow}
+                  >
+                    <Text
+                      style={{
+                        ...pdfStyles.tableCell,
+                        backgroundColor:
+                          index % 2 === 0 ? '#FFFFFF' : lightColor,
+                        flex: 0.1,
+                      }}
+                    >
+                      {index + 1}
+                    </Text>
+                    <Text
+                      style={{
+                        ...pdfStyles.tableCell,
+                        backgroundColor:
+                          index % 2 === 0 ? '#FFFFFF' : lightColor,
+                        flex: 0.5,
+                      }}
+                    >
+                      {cost.credit_ledger_name ||
+                        cost.ledger?.name ||
+                        cost.name ||
+                        '-'}
+                    </Text>
+                    <Text
+                      style={{
+                        ...pdfStyles.tableCell,
+                        backgroundColor:
+                          index % 2 === 0 ? '#FFFFFF' : lightColor,
+                        flex: 0.4,
+                        textAlign: 'right',
+                      }}
+                    >
+                      {`${currencyCode} ${Number(cost.amount || 0).toLocaleString('en-US', { maximumFractionDigits: 2 })}`.trim()}
+                    </Text>
+                  </View>
+                );
+              })}
+            </View>
+          </>
+        )}
+
         {!!order?.terms_of_payment && (
           <View style={{ ...pdfStyles.tableRow, marginTop: 10 }}>
             <View style={{ flex: 1 }}>
@@ -516,18 +617,18 @@ function PurchaseOrderPDF({
               >
                 S/N
               </Text>
-                <Text
-                    style={{
-                    ...styles.tableCell,
-                    ...styles.tableHeader,
-                    ...styles.midInfo,
-                    backgroundColor: mainColor,
-                    color: contrastText,
-                    flex: 1,
-                    }}
-                >
-                    Date
-                </Text>
+              <Text
+                style={{
+                  ...styles.tableCell,
+                  ...styles.tableHeader,
+                  ...styles.midInfo,
+                  backgroundColor: mainColor,
+                  color: contrastText,
+                  flex: 1,
+                }}
+              >
+                Date
+              </Text>
               <Text
                 style={{
                   ...styles.tableCell,

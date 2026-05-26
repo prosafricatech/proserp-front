@@ -131,6 +131,9 @@ function ApprovalOnScreen({ approval, organization, belowLargeScreen }: Approval
     const isPurchase = approval.requisition?.process_type?.toLowerCase() === 'purchase';
     const isLeaveRequest = approval.requisition?.process_type?.toLowerCase() === 'leave_request';
     const requisitionItems: RequisitionItem[] = approval?.requisition && 'items' in approval.requisition ? (approval.requisition.items || []) : [];
+    const additionalCosts = isPurchase
+        ? ((((approval as any).additional_costs) || (approval.requisition as any)?.additional_costs || []) as any[])
+        : [];
     const leaveSource =
         (approval.requisition?.leave_items && approval.requisition.leave_items.length
             ? approval.requisition.leave_items
@@ -383,86 +386,131 @@ function ApprovalOnScreen({ approval, organization, belowLargeScreen }: Approval
 
                     {/* Totals Section */}
                     <Grid size={12}>
-                            <Box 
-                                sx={{ 
-                                    mt: 3, 
-                                    p: 2, 
-                                    backgroundColor: theme.palette.background.default,
-                                    border: `1px solid ${theme.palette.divider}`,
-                                    borderRadius: 1
-                                }}
-                            >
-                                {isLeaveRequest ? (
-                                    <Grid container spacing={1}>
+                        <Box 
+                            sx={{ 
+                                mt: 3, 
+                                p: 2, 
+                                backgroundColor: theme.palette.background.default,
+                                border: `1px solid ${theme.palette.divider}`,
+                                borderRadius: 1
+                            }}
+                        >
+                            {isLeaveRequest ? (
+                                <Grid container spacing={1}>
+                                    <Grid size={7}>
+                                        <Typography variant="h6" color={headerColor}>
+                                            Total Leave Days
+                                        </Typography>
+                                    </Grid>
+                                    <Grid size={5} sx={{ textAlign: 'right' }}>
+                                        <Typography variant="h6" color={headerColor} fontFamily="monospace">
+                                            {totalLeaveDays.toLocaleString()} day(s)
+                                        </Typography>
+                                    </Grid>
+                                </Grid>
+                            ) : (
+                            <Grid container spacing={1}>
+                                    <>
                                         <Grid size={7}>
-                                            <Typography variant="h6" color={headerColor}>
-                                                Total Leave Days
+                                            <Typography variant="body1">
+                                                Subtotal
                                             </Typography>
                                         </Grid>
                                         <Grid size={5} sx={{ textAlign: 'right' }}>
-                                            <Typography variant="h6" color={headerColor} fontFamily="monospace">
-                                                {totalLeaveDays.toLocaleString()} day(s)
+                                            <Typography variant="body1" fontFamily="monospace">
+                                                {formatCurrency(subtotal)}
                                             </Typography>
                                         </Grid>
-                                    </Grid>
-                                ) : (
-                                <Grid container spacing={1}>
-                                        <>
-                                            <Grid size={7}>
-                                                <Typography variant="body1">
-                                                    Subtotal
-                                                </Typography>
-                                            </Grid>
-                                            <Grid size={5} sx={{ textAlign: 'right' }}>
-                                                <Typography variant="body1" fontFamily="monospace">
-                                                    {formatCurrency(subtotal)}
-                                                </Typography>
-                                            </Grid>
 
-                                            {isPurchase && (totalVAT ?? 0) > 0 && (
-                                                <>
-                                                    <Grid size={7}>
-                                                        <Typography variant="body1">
-                                                            VAT
-                                                        </Typography>
-                                                    </Grid>
-                                                    <Grid size={5} sx={{ textAlign: 'right' }}>
-                                                        <Typography variant="body1" fontFamily="monospace">
-                                                            {formatCurrency(totalVAT ?? 0)}
-                                                        </Typography>
-                                                    </Grid>
-                                                    <Grid size={7}>
-                                                        <Typography variant="h6" color={headerColor}>
-                                                            Grand Total
-                                                        </Typography>
-                                                    </Grid>
-                                                    <Grid size={5} sx={{ textAlign: 'right' }}>
-                                                        <Typography variant="h6" color={headerColor} fontFamily="monospace">
-                                                            {formatCurrency(grandTotal ?? 0)}
-                                                        </Typography>
-                                                    </Grid>
-                                                </>
-                                            )}
+                                        {isPurchase && (totalVAT ?? 0) > 0 && (
+                                            <>
+                                                <Grid size={7}>
+                                                    <Typography variant="body1">
+                                                        VAT
+                                                    </Typography>
+                                                </Grid>
+                                                <Grid size={5} sx={{ textAlign: 'right' }}>
+                                                    <Typography variant="body1" fontFamily="monospace">
+                                                        {formatCurrency(totalVAT ?? 0)}
+                                                    </Typography>
+                                                </Grid>
+                                                <Grid size={7}>
+                                                    <Typography variant="h6" color={headerColor}>
+                                                        Grand Total
+                                                    </Typography>
+                                                </Grid>
+                                                <Grid size={5} sx={{ textAlign: 'right' }}>
+                                                    <Typography variant="h6" color={headerColor} fontFamily="monospace">
+                                                        {formatCurrency(grandTotal ?? 0)}
+                                                    </Typography>
+                                                </Grid>
+                                            </>
+                                        )}
 
-                                            {!isPurchase && (
-                                                <>
-                                                    <Grid size={7}>
-                                                        <Typography variant="h6" color={headerColor}>
-                                                            Total
+                                        {!isPurchase && (
+                                            <>
+                                                <Grid size={7}>
+                                                    <Typography variant="h6" color={headerColor}>
+                                                        Total
+                                                    </Typography>
+                                                </Grid>
+                                                <Grid size={5} sx={{ textAlign: 'right' }}>
+                                                    <Typography variant="h6" color={headerColor} fontFamily="monospace">
+                                                        {formatCurrency(subtotal)}
+                                                    </Typography>
+                                                </Grid>
+                                            </>
+                                        )}
+                                    </>
+                            </Grid>
+                            )}
+                        </Box>
+                    </Grid>
+
+                    {!isLeaveRequest && isPurchase && additionalCosts.length > 0 && (
+                        <Grid size={12}>
+                            <TableContainer
+                                component={Paper}
+                                sx={{
+                                    boxShadow: theme.shadows[2],
+                                    mt: 2,
+                                    '& .MuiTableRow-root:hover': {
+                                        backgroundColor: theme.palette.action.hover,
+                                    }
+                                }}
+                            >
+                                <Table>
+                                    <TableHead>
+                                        <TableRow>
+                                            <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem', width: '8%' }}>S/N</TableCell>
+                                            <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem', width: '52%' }}>Cost Name</TableCell>
+                                            <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem', width: '15%' }}>Currency</TableCell>
+                                            <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem', width: '25%' }} align="right">Amount</TableCell>
+                                        </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                        {additionalCosts.map((cost, index) => (
+                                            <TableRow key={cost.id || cost.requisition_additional_cost_id || index}>
+                                                <TableCell sx={{ width: '8%' }}>{index + 1}</TableCell>
+                                                <TableCell sx={{ width: '52%' }}>
+                                                    {cost.credit_ledger_name || cost.ledger?.name || cost.name || '-'}
+                                                    {cost.reference ? (
+                                                        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                                                            Ref: {cost.reference}
                                                         </Typography>
-                                                    </Grid>
-                                                    <Grid size={5} sx={{ textAlign: 'right' }}>
-                                                        <Typography variant="h6" color={headerColor} fontFamily="monospace">
-                                                            {formatCurrency(subtotal)}
-                                                        </Typography>
-                                                    </Grid>
-                                                </>
-                                            )}
-                                        </>
-                                </Grid>
-                                )}
-                            </Box>
+                                                    ) : null}
+                                                </TableCell>
+                                                <TableCell sx={{ width: '15%' }}>{cost.currency?.code || cost.currency_name || approval.requisition?.currency?.code || '-'}</TableCell>
+                                                <TableCell align="right" sx={{ fontFamily: 'monospace', width: '25%' }}>
+                                                    {`${cost.currency?.code} ${Number(cost.amount || 0).toLocaleString('en-US', { maximumFractionDigits: 2 })}`.trim()}
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </TableContainer>
                         </Grid>
+                    )}
 
                     {/* Remarks Section */}
                     {approval.remarks && (

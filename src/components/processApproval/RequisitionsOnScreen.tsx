@@ -131,6 +131,7 @@ const RequisitionsOnScreen: React.FC<Props> = ({
   const isPurchase = requisition?.approval_chain.process_type?.toLowerCase() === 'purchase';
   const isLeaveRequest = requisition?.approval_chain.process_type?.toLowerCase() === 'leave_request';
   const requisitionItems: RequisitionItem[] = 'items' in requisition ? (requisition.items || []) : [];
+  const additionalCosts = isPurchase ? (((requisition as any)?.additional_costs || []) as any[]) : [];
   const leaveSource = (requisition?.leave_items && requisition.leave_items.length ? requisition.leave_items : requisitionItems) || [];
   const leaveItems: LeaveViewItem[] = (leaveSource as any[]).map(normalizeLeaveItem);
 
@@ -467,6 +468,51 @@ const RequisitionsOnScreen: React.FC<Props> = ({
               )}
             </Box>
           </Grid>
+
+          {!isLeaveRequest && isPurchase && additionalCosts.length > 0 && (
+            <Grid size={12}>
+              <TableContainer
+                component={Paper}
+                sx={{
+                  boxShadow: theme.shadows[2],
+                  mt: 2,
+                  '& .MuiTableRow-root:hover': {
+                    backgroundColor: theme.palette.action.hover,
+                  }
+                }}
+              >
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell sx={{ backgroundColor: mainColor, color: contrastText, width: '8%' }}>S/N</TableCell>
+                      <TableCell sx={{ backgroundColor: mainColor, color: contrastText, width: '52%' }}>Cost Name</TableCell>
+                      <TableCell sx={{ backgroundColor: mainColor, color: contrastText, width: '15%' }}>Currency</TableCell>
+                      <TableCell sx={{ backgroundColor: mainColor, color: contrastText, width: '25%' }} align="right">Amount</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {additionalCosts.map((cost, index) => (
+                      <TableRow key={cost.id || cost.requisition_additional_cost_id || index}>
+                        <TableCell sx={{ width: '8%' }}>{index + 1}</TableCell>
+                        <TableCell sx={{ width: '52%' }}>
+                          {cost.credit_ledger_name || cost.ledger?.name || cost.name || '-'}
+                          {cost.reference ? (
+                            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                              Ref: {cost.reference}
+                            </Typography>
+                          ) : null}
+                        </TableCell>
+                        <TableCell sx={{ width: '15%' }}>{cost.currency?.code || cost.currency_name || requisition.currency?.code || '-'}</TableCell>
+                        <TableCell align="right" sx={{ fontFamily: 'monospace', width: '25%' }}>
+                          {`${cost.currency?.code} ${Number(cost.amount || 0).toLocaleString('en-US', { maximumFractionDigits: 2 })}`.trim()}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Grid>
+          )}
 
           {/* Remarks Section */}
           {requisition.remarks && (

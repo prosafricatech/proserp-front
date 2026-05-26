@@ -15,6 +15,7 @@ interface Approval {
   id: number;
   approval_date: string;
   items: RequisitionItem[];
+  additional_costs?: any[];
   requisition: Requisition;
   creator: Creator;
   remarks?: string;
@@ -70,7 +71,11 @@ function ApprovalPDF({ approval, organization }: ApprovalPDFProps) {
   const lightColor = organization.settings?.light_color || "#bec5da";
   const contrastText = organization.settings?.contrast_text || "#FFFFFF";
   const isLeaveRequest = approval.requisition.process_type?.toLowerCase() === 'leave_request';
+  const isPurchase = approval.requisition.process_type?.toLowerCase() === 'purchase';
   const requisitionItems: RequisitionItem[] = approval?.requisition && 'items' in approval.requisition ? (approval.requisition.items || []) : [];
+  const additionalCosts = isPurchase
+    ? ((approval.additional_costs || (approval.requisition as any)?.additional_costs || []) as any[])
+    : [];
   const leaveSource =
     (approval.requisition?.leave_items && approval.requisition.leave_items.length
       ? approval.requisition.leave_items
@@ -117,7 +122,7 @@ function ApprovalPDF({ approval, organization }: ApprovalPDFProps) {
             <Text style={{ ...pdfStyles.midInfo }}>{approval.requisition.requisitionNo}</Text>
           </View>
         </View>
-        
+
         <View style={{ ...pdfStyles.tableRow, marginBottom: 10}}>
           <View style={{ flex: 1, padding: 0.5 }}>
             <Text style={{...pdfStyles.minInfo, color: mainColor }}>Approval Date</Text>
@@ -235,7 +240,7 @@ function ApprovalPDF({ approval, organization }: ApprovalPDFProps) {
             </>
           )}
         </View>
-        
+
         {isLeaveRequest ? (
           <View style={{ ...pdfStyles.tableRow, marginBottom: 4 }}>
             <Text style={{ flex: 4.5 }}></Text>
@@ -260,6 +265,34 @@ function ApprovalPDF({ approval, organization }: ApprovalPDFProps) {
             </Text>
           </View>
         }
+
+        {!isLeaveRequest && isPurchase && additionalCosts.length > 0 && (
+          <>
+            <Text style={{ ...pdfStyles.minInfo, color: mainColor, marginBottom: 4 }}>Additional Costs</Text>
+            <View style={{ ...pdfStyles.table, marginBottom: 10 }}>
+              <View style={pdfStyles.tableRow}>
+                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.1 }}>S/N</Text>
+                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.5 }}>Cost Name</Text>
+                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.4 }}>Amount</Text>
+              </View>
+
+              {additionalCosts.map((cost, index) => {
+                const currencyCode = cost.currency?.code || cost.currency_name || approval.requisition.currency?.code || '';
+                return (
+                  <View key={cost.id || cost.requisition_additional_cost_id || index} style={pdfStyles.tableRow}>
+                    <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 0.1 }}>{index + 1}</Text>
+                    <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 0.5 }}>
+                      {cost.credit_ledger_name || cost.ledger?.name || cost.name || '-'}
+                    </Text>
+                    <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 0.4, textAlign: 'right' }}>
+                      {`${currencyCode} ${Number(cost.amount || 0).toLocaleString('en-US', { maximumFractionDigits: 2 })}`.trim()}
+                    </Text>
+                  </View>
+                );
+              })}
+            </View>
+          </>
+        )}
         
         {!isLeaveRequest && approval.requisition.process_type?.toLowerCase() === 'purchase' && totalVAT > 0 && (
           <>
