@@ -971,7 +971,25 @@ const ApprovedPurchaseForm: React.FC<ApprovedPurchaseFormProps> = ({
         <Button size='small' onClick={() => toggleOpen(false)}>
           Cancel
         </Button>
-        {items?.length > 0 && (
+        {activeTab === 0 ? (
+          <Button
+            size='small'
+            variant='outlined'
+            onClick={() => setActiveTab((prev) => Math.min(prev + 1, 1))}
+            disabled={activeTab >= 1}
+          >
+            Next &gt;
+          </Button>
+        ) : (
+          <Button
+            size='small'
+            variant='outlined'
+            onClick={() => setActiveTab((prev) => Math.max(prev - 1, 0))}
+          >
+            &lt; Prev
+          </Button>
+        )}
+        {items?.length > 0 && activeTab === 1 && (
           <LoadingButton
             variant='contained'
             size='small'
