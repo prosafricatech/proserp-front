@@ -119,6 +119,7 @@ const PurchaseRequisitionAdditionalCostsTab = ({
 
     reset();
     setIsAdding(false);
+    setIsDirty(false);
     setShowForm && setShowForm(false);
   };
 
