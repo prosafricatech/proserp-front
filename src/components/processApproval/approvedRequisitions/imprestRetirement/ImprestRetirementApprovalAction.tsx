@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { CheckCircleOutlineOutlined, DeleteOutlined, EditOutlined, MoreHorizOutlined, UndoOutlined, CancelOutlined } from '@mui/icons-material';
+import { CheckCircleOutlineOutlined, DeleteOutlined, EditOutlined, MoreHorizOutlined, UndoOutlined } from '@mui/icons-material';
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, TextField, Tooltip, useMediaQuery, LinearProgress } from '@mui/material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
@@ -13,7 +13,6 @@ import imprestRetirementServices from '@/components/processApproval/imprestRetir
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
-import requisitionsServices from '../../requisitionsServices';
 import ImprestRetirementForm from './form/ImprestRetirementForm';
 
 interface ImprestRetirementApprovalActionProps {
@@ -30,6 +29,7 @@ function ImprestRetirementApprovalAction({ retirement, approvedRequisition }: Im
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
   const [openUpdateDialog, setOpenUpdateDialog] = React.useState(false);
+  const [openApprovalDialog, setOpenApprovalDialog] = React.useState(false);
   const [remarksDialogMode, setRemarksDialogMode] = React.useState<'reject' | 'revoke' | null>(null);
   const [remarks, setRemarks] = React.useState('');
 
@@ -37,16 +37,18 @@ function ImprestRetirementApprovalAction({ retirement, approvedRequisition }: Im
   const statusLabelRaw = String(retirement?.status_label || '').toLowerCase();
   const approvalStatusRaw = String(retirement?.approval?.status || '').toLowerCase();
 
-  const isPendingApproval = statusRaw === 'submitted' && !approvalStatusRaw && statusLabelRaw.includes('pending');
+  const isPendingApproval =
+    statusRaw === 'submitted' &&
+    (approvalStatusRaw === 'pending' || !approvalStatusRaw || statusLabelRaw.includes('pending'));
   const isApproved = approvalStatusRaw === 'approved' || statusLabelRaw.includes('approved');
   const isRejected = approvalStatusRaw === 'rejected' || statusLabelRaw.includes('rejected');
-  const isDraftLike = statusRaw === 'draft' || statusRaw === 'suspended' || isRejected;
+  const isDraftLike = statusRaw === 'draft' || statusRaw === 'suspended';
   const canApproveRetirement = checkOrganizationPermission([PERMISSIONS.IMPREST_RETIREMENT_APPROVE]);
 
-  const { data: approvedRequisitionDetails, isFetching: isFetchingRequisitionDetails } = useQuery({
-    queryKey: ['requisitionDetails', { id: approvedRequisition?.id }, 'imprest-retirement-update'],
-    queryFn: async () => requisitionsServices.getApprovedRequisitionDetails(approvedRequisition?.id),
-    enabled: !!approvedRequisition?.id && !!openUpdateDialog,
+  const { data: retirementDetails, isFetching: isFetchingRetirementDetails } = useQuery({
+    queryKey: ['imprestRetirementDetails', { id: retirement?.id }, 'imprest-retirement-update'],
+    queryFn: async () => imprestRetirementServices.show(retirement?.id),
+    enabled: !!retirement?.id && (!!openUpdateDialog || !!openApprovalDialog),
   });
 
   const { mutate: approveRetirement, isPending } = useMutation({
@@ -54,6 +56,7 @@ function ImprestRetirementApprovalAction({ retirement, approvedRequisition }: Im
     onSuccess: (response: any) => {
       enqueueSnackbar(response?.message || 'Retirement approved', { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['imprestRetirements'] });
+      setOpenApprovalDialog(false);
     },
     onError: (error: any) => {
       enqueueSnackbar(error?.response?.data?.message || 'Failed to approve retirement', {
@@ -94,36 +97,34 @@ function ImprestRetirementApprovalAction({ retirement, approvedRequisition }: Im
     ...(isDraftLike
       ? [
           { icon: <EditOutlined />, title: 'Update Draft', action: 'update-draft' } as MenuItemProps,
-          { icon: <DeleteOutlined color="error" />, title: 'Delete Draft', action: 'delete-draft' } as MenuItemProps,
         ]
       : []),
     ...(isPendingApproval
       && canApproveRetirement
       ? [
-          { icon: <CheckCircleOutlineOutlined color="success" />, title: 'Approve Retirement', action: 'approve' } as MenuItemProps,
-          { icon: <CancelOutlined color="error" />, title: 'Reject Retirement', action: 'reject' } as MenuItemProps,
+          { icon: <CheckCircleOutlineOutlined color="success" />, title: 'Approval', action: 'retirement-approval' } as MenuItemProps,
+        ]
+      : []),
+    ...(isRejected
+      && canApproveRetirement
+      ? [
+          { icon: <EditOutlined color="warning" />, title: 'Edit Approval Decision', action: 'retirement-approval' } as MenuItemProps,
         ]
       : []),
     ...(isApproved && canApproveRetirement
       ? [{ icon: <UndoOutlined color="warning" />, title: 'Revoke Approval', action: 'revoke' } as MenuItemProps]
       : []),
+    ...(isDraftLike
+      ? [{ icon: <DeleteOutlined color="error" />, title: 'Delete Draft', action: 'delete-draft' } as MenuItemProps]
+      : []),
   ];
 
-  const handleApprove = () => {
-    showDialog({
-      title: 'Approve Retirement',
-      content: `Approve retirement ${retirement?.retirementNo || `#${retirement?.id}`}?`,
-      variant: 'confirm',
-      onYes: async () => {
-        hideDialog();
-        await approveRetirement({
-          imprest_retirement_id: retirement.id,
-          status: 'approved',
-          approval_date: dayjs().format('YYYY-MM-DD'),
-          remarks: null,
-        });
-      },
-      onNo: () => hideDialog(),
+  const handleApprove = async () => {
+    await approveRetirement({
+      imprest_retirement_id: retirement.id,
+      status: 'approved',
+      approval_date: dayjs().format('YYYY-MM-DD'),
+      remarks: null,
     });
   };
 
@@ -181,11 +182,8 @@ function ImprestRetirementApprovalAction({ retirement, approvedRequisition }: Im
         handleDeleteDraft();
         break;
       case 'approve':
-        handleApprove();
-        break;
-      case 'reject':
-        setRemarks('');
-        setRemarksDialogMode('reject');
+      case 'retirement-approval':
+        setOpenApprovalDialog(true);
         break;
       case 'revoke':
         setRemarks('');
@@ -208,14 +206,42 @@ function ImprestRetirementApprovalAction({ retirement, approvedRequisition }: Im
         fullScreen={belowLargeScreen}
         onClose={() => setOpenUpdateDialog(false)}
       >
-        {isFetchingRequisitionDetails ? (
+        {isFetchingRetirementDetails ? (
           <LinearProgress />
         ) : (
           <ImprestRetirementForm
             toggleOpen={setOpenUpdateDialog}
             approvedRequisition={approvedRequisition}
-            approvedDetails={approvedRequisitionDetails}
+            existingRetirementDetails={retirementDetails}
             preferredRetirementId={retirement?.id}
+          />
+        )}
+      </Dialog>
+
+      <Dialog
+        open={openApprovalDialog}
+        maxWidth="lg"
+        scroll={belowLargeScreen ? 'body' : 'paper'}
+        fullWidth
+        fullScreen={belowLargeScreen}
+        onClose={() => setOpenApprovalDialog(false)}
+      >
+        {isFetchingRetirementDetails ? (
+          <LinearProgress />
+        ) : (
+          <ImprestRetirementForm
+            toggleOpen={setOpenApprovalDialog}
+            approvedRequisition={approvedRequisition}
+            existingRetirementDetails={retirementDetails}
+            preferredRetirementId={retirement?.id}
+            reviewMode
+            onApprove={handleApprove}
+            onReject={() => {
+              setRemarks('');
+              setRemarksDialogMode('reject');
+            }}
+            approveLoading={isPending}
+            rejectLoading={isPending || isRevokingApproval}
           />
         )}
       </Dialog>
@@ -226,7 +252,7 @@ function ImprestRetirementApprovalAction({ retirement, approvedRequisition }: Im
           setRemarksDialogMode(null);
           setRemarks('');
         }}
-        maxWidth="sm"
+        maxWidth="xs"
         fullWidth
       >
         <DialogTitle textAlign="center">

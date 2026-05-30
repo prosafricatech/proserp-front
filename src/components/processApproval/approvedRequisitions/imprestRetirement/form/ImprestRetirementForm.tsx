@@ -43,7 +43,13 @@ type ImprestRetirementFormProps = {
   toggleOpen: (open: boolean) => void;
   approvedRequisition: any;
   approvedDetails?: any;
+  existingRetirementDetails?: any;
   preferredRetirementId?: number | null;
+  reviewMode?: boolean;
+  onApprove?: () => void;
+  onReject?: () => void;
+  approveLoading?: boolean;
+  rejectLoading?: boolean;
 };
 
 const extractList = (payload: any): any[] => {
@@ -51,6 +57,14 @@ const extractList = (payload: any): any[] => {
   if (Array.isArray(payload?.data)) return payload.data;
   if (Array.isArray(payload?.data?.data)) return payload.data.data;
   return [];
+};
+
+const extractOne = (payload: any): any | null => {
+  if (!payload) return null;
+  if (payload?.id) return payload;
+  if (payload?.data?.id) return payload.data;
+  if (payload?.data?.data?.id) return payload.data.data;
+  return null;
 };
 
 const EMPTY_ITEM: RetirementItem = {
@@ -63,7 +77,13 @@ function ImprestRetirementForm({
   toggleOpen,
   approvedRequisition,
   approvedDetails,
+  existingRetirementDetails,
   preferredRetirementId = null,
+  reviewMode = false,
+  onApprove,
+  onReject,
+  approveLoading = false,
+  rejectLoading = false,
 }: ImprestRetirementFormProps) {
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
@@ -91,8 +111,13 @@ function ImprestRetirementForm({
         requisition_approval_id: approvedDetails?.id,
         limit: 20,
       }),
-    enabled: !!approvedDetails?.id,
+    enabled: !!approvedDetails?.id && !existingRetirementDetails,
   });
+
+  const existingRetirementFromShow = React.useMemo(
+    () => extractOne(existingRetirementDetails),
+    [existingRetirementDetails]
+  );
 
   const myImprestLedgers = React.useMemo(() => {
     return extractList(myLedgersResponse)
@@ -105,6 +130,10 @@ function ImprestRetirementForm({
   }, [myLedgersResponse]);
 
   const existingRetirement = React.useMemo(() => {
+    if (existingRetirementFromShow?.id) {
+      return existingRetirementFromShow;
+    }
+
     const list = extractList(existingRetirementsResponse);
     if (list.length === 0) return null;
 
@@ -119,7 +148,7 @@ function ImprestRetirementForm({
     });
 
     return editable || list[0];
-  }, [existingRetirementsResponse, preferredRetirementId]);
+  }, [existingRetirementFromShow, existingRetirementsResponse, preferredRetirementId]);
 
   React.useEffect(() => {
     if (!existingRetirement) return;
@@ -168,9 +197,15 @@ function ImprestRetirementForm({
   );
 
   const ceilingAmount = Number(approvedDetails?.amount || approvedRequisition?.amount || 0);
+  const currencyCode =
+    existingRetirementFromShow?.currency?.code ||
+    existingRetirementFromShow?.currency_code ||
+    existingRetirementFromShow?.imprest_approval?.requisition?.currency?.code ||
+    approvedRequisition?.requisition?.currency?.code ||
+    'TZS';
 
   const statusRaw = String(statusLabel || '').toLowerCase();
-  const isLocked = statusRaw.includes('approved') || statusRaw.includes('pending');
+  const isLocked = reviewMode || statusRaw.includes('approved') || statusRaw.includes('pending');
 
   const addRetirement = useMutation({
     mutationFn: imprestRetirementServices.add,
@@ -265,7 +300,8 @@ function ImprestRetirementForm({
   };
 
   const buildPayload = () => ({
-    requisition_approval_id: approvedDetails?.id,
+    requisition_approval_id:
+      existingRetirementFromShow?.requisition_approval_id || approvedDetails?.id,
     ledger_id: ledgerId,
     retirement_date: retirementDate ? retirementDate.format('YYYY-MM-DD') : null,
     remarks,
@@ -312,7 +348,11 @@ function ImprestRetirementForm({
           </Grid>
           <Grid size={{ xs: 12, md: 9 }} textAlign={{ md: 'right' }}>
             <Typography variant="body2">
-              Approved Amount: {ceilingAmount.toLocaleString('en-US')}
+              Approved Amount:{' '}
+              {ceilingAmount.toLocaleString('en-US', {
+                style: 'currency',
+                currency: currencyCode,
+              })}
             </Typography>
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>
@@ -437,14 +477,13 @@ function ImprestRetirementForm({
         )}
 
         <Grid container spacing={1} mb={2}>
-          <Grid size={{ xs: 12, md: 6 }}>
+          <Grid size={{ xs: 12, md: 12 }}>
             <Alert severity={totalAmount > ceilingAmount ? 'warning' : 'info'}>
-              Total Retired: {Number.isFinite(totalAmount) ? totalAmount.toLocaleString('en-US') : '0'}
-            </Alert>
-          </Grid>
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Alert severity="info">
-              Retirement can exceed approved amount as per policy.
+              Total Retired:{' '}
+              {(Number.isFinite(totalAmount) ? totalAmount : 0).toLocaleString('en-US', {
+                style: 'currency',
+                currency: currencyCode,
+              })}
             </Alert>
           </Grid>
         </Grid>
@@ -474,8 +513,32 @@ function ImprestRetirementForm({
 
       <DialogActions>
         <Button size="small" onClick={() => toggleOpen(false)}>
-          Cancel
+          {reviewMode ? 'Close' : 'Cancel'}
         </Button>
+        {reviewMode && (
+          <>
+            <LoadingButton
+              size="small"
+              color="error"
+              variant="outlined"
+              onClick={onReject}
+              loading={rejectLoading}
+              disabled={approveLoading}
+            >
+              Reject
+            </LoadingButton>
+            <LoadingButton
+              size="small"
+              color="success"
+              variant="contained"
+              onClick={onApprove}
+              loading={approveLoading}
+              disabled={rejectLoading}
+            >
+              Approve
+            </LoadingButton>
+          </>
+        )}
         {!isLocked && (
           <LoadingButton
             size="small"

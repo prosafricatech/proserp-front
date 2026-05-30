@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Alert, Grid, ListItemText, LinearProgress, Tooltip, Typography } from '@mui/material';
+import { Alert, Chip, Grid, ListItemText, LinearProgress, Tooltip, Typography } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import imprestRetirementServices from '@/components/processApproval/imprestRetirements/imprestRetirementServices';
@@ -108,9 +108,12 @@ function ImprestRetirementListItem({ requisitionApprovalId, approvedRequisition 
             </Grid>
             <Grid size={{ xs: 12, md: 2 }}>
               <Tooltip title="Status">
-                <Typography variant="body2">
-                  {retirement?.status_label}
-                </Typography>
+                <Chip
+                  size="small"
+                  label={retirement?.status_label || '-'}
+                  color={String(retirement?.status_label || retirement?.status || '').toLowerCase().includes('reject') ? 'error' : 'default'}
+                  variant={String(retirement?.status_label || retirement?.status || '').toLowerCase().includes('reject') ? 'filled' : 'outlined'}
+                />
               </Tooltip>
             </Grid>
             <Grid size={{ xs: 12, md: 2 }} textAlign={{ md: 'right' }}>
