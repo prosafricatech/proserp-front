@@ -50,7 +50,7 @@ export interface Approval {
 
 export interface ApprovalChain {
   id: number;
-  process_type: "PURCHASE" | "PAYMENT" | "LEAVE_REQUEST";
+  process_type: "PURCHASE" | "PAYMENT" | "LEAVE_REQUEST" | "IMPREST";
   cost_center_id: number;
 }
 
@@ -161,12 +161,14 @@ export interface BaseRequisition {
   creator: User;
   currency: Currency;
   next_approval_level: ApprovalChainLevel | null;
-  process_type: "PURCHASE" | "PAYMENT" | "LEAVE_REQUEST";
+  process_type: "PURCHASE" | "PAYMENT" | "LEAVE_REQUEST" | "IMPREST";
   reference: string | null;
   remarks: string | null;
   status: string;
   status_label: string;
   leave_items?: LeaveRequisitionItem[];
+  imprest_ledger_id?: number;
+  imprest_ledger?: Ledger;
 }
 
 export interface PurchaseRequisition extends BaseRequisition {
@@ -181,12 +183,19 @@ export interface PaymentRequisition extends BaseRequisition {
   is_fully_paid: boolean;
 }
 
+export interface ImprestRequisition extends BaseRequisition {
+  process_type: "IMPREST";
+  items: PaymentItem[];
+  imprest_ledger_id: number;
+  imprest_ledger?: Ledger;
+}
+
 export interface LeaveRequestRequisition extends BaseRequisition {
   process_type: "LEAVE_REQUEST";
   leave_items: LeaveRequisitionItem[];
 }
 
-export type Requisition = PurchaseRequisition | PaymentRequisition | LeaveRequestRequisition;
+export type Requisition = PurchaseRequisition | PaymentRequisition | LeaveRequestRequisition | ImprestRequisition;
 export type RequisitionItem = PurchaseItem | PaymentItem | LeaveRequisitionItem;
 
 // For the list of requisitions

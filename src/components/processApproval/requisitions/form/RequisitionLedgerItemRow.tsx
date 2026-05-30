@@ -34,6 +34,7 @@ interface RequisitionLedgerItemRowProps {
   setRequisition_ledger_items: Dispatch<SetStateAction<RequisitionLedgerItem[]>>;
   isDuplicate?: boolean;
   costCenterId?: number;
+  notAllowedLedgers?: Array<number | { id: number }>;
 }
 
 const FetchRelatableDetails = ({ relatable, toggleOpen, ledger_item }: FetchRelatableDetailsProps & { ledger_item: RequisitionLedgerItem }) => {
@@ -73,7 +74,8 @@ function RequisitionLedgerItemRow({
   requisition_ledger_items = [],
   setRequisition_ledger_items,
   isDuplicate = false,
-  costCenterId
+  costCenterId,
+  notAllowedLedgers = [],
 }: RequisitionLedgerItemRowProps) {
   const [showForm, setShowForm] = useState(
     isDuplicate && Boolean(ledger_item?.relatable_id)
@@ -267,6 +269,7 @@ function RequisitionLedgerItemRow({
           currencyChanged={currencyChanged}
           currencyDetails={currencyDetails}
           costCenterId={costCenterId}
+          notAllowedLedgers={notAllowedLedgers}
           requisition_ledger_items={requisition_ledger_items} 
           setRequisition_ledger_items={setRequisition_ledger_items}
         />

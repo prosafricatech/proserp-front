@@ -12,6 +12,8 @@ interface Ledger {
   nature_id?: number;
 }
 
+type LedgerRef = number | Ledger | { id: number };
+
 interface LedgerSelectProps {
   onChange: (value: Ledger | Ledger[] | null) => void;
   frontError?: { message?: string } | null;
@@ -19,6 +21,8 @@ interface LedgerSelectProps {
   defaultValue?: Ledger | Ledger[] | null;
   allowedGroups?: string[];
   notAllowedGroups?: string[];
+  allowedLedgers?: LedgerRef[];
+  notAllowedLedgers?: LedgerRef[];
   value?: Ledger | Ledger[] | null;
   addedLedger?: Ledger | null;
   multiple?: boolean;
@@ -38,6 +42,8 @@ function LedgerSelect(props: LedgerSelectProps) {
     defaultValue = null,
     allowedGroups = [],
     notAllowedGroups = [],
+    allowedLedgers = [],
+    notAllowedLedgers = [],
     value = null,
     addedLedger = null,
     multiple = false,
@@ -50,10 +56,45 @@ function LedgerSelect(props: LedgerSelectProps) {
     Ledger | Ledger[] | null
   >(defaultValue ? defaultValue : multiple ? [] : value);
 
+  const toLedgerId = React.useCallback((entry: LedgerRef) => {
+    return typeof entry === 'number' ? entry : entry.id;
+  }, []);
+
   React.useEffect(() => {
-    setOptions([]);
-    extractLedgers(ledgerOptions, notAllowedGroups, allowedGroups, setOptions);
-  }, [ledgerOptions]);
+    const extractedOptions: Ledger[] = [];
+    extractLedgers(
+      ledgerOptions,
+      notAllowedGroups,
+      allowedGroups,
+      (updater) => {
+        if (typeof updater === 'function') {
+          const next = updater(extractedOptions);
+          extractedOptions.splice(0, extractedOptions.length, ...next);
+        } else {
+          extractedOptions.splice(0, extractedOptions.length, ...updater);
+        }
+      }
+    );
+
+    const allowedLedgerIds = new Set(allowedLedgers.map(toLedgerId));
+    const notAllowedLedgerIds = new Set(notAllowedLedgers.map(toLedgerId));
+
+    const filtered = extractedOptions.filter((ledger) => {
+      if (notAllowedLedgerIds.has(ledger.id)) return false;
+      if (allowedLedgerIds.size > 0 && !allowedLedgerIds.has(ledger.id)) return false;
+      return true;
+    });
+
+    setOptions(filtered);
+  }, [
+    ledgerOptions,
+    allowedGroups,
+    notAllowedGroups,
+    allowedLedgers,
+    notAllowedLedgers,
+    extractLedgers,
+    toLedgerId,
+  ]);
 
   React.useEffect(() => {
     if (!addedLedger) return;

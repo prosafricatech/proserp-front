@@ -1,6 +1,7 @@
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { useCurrencySelect } from '@/components/masters/Currencies/CurrencySelectProvider';
+import userLedgerServices from '@/components/accounts/ledgers/user-ledger-services';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { PROCESS_TYPES } from '@/utilities/constants/processTypes';
@@ -15,14 +16,12 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Divider,
   Grid,
   IconButton,
   Tab,
   Tabs,
   TextField,
   Tooltip,
-  Typography,
 } from '@mui/material';
 import { DateTimePicker } from '@mui/x-date-pickers';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -89,7 +88,23 @@ interface Requisition {
   exchange_rate?: number;
   remarks?: string;
   items?: RequisitionItem[];
+  imprest_ledger_id?: number;
+  imprest_ledger?: {
+    id?: number;
+    name?: string;
+  };
 }
+
+type ImprestLedgerOption = {
+  id: number;
+  type?: string;
+  ledger_id?: number;
+  name?: string;
+  ledger?: {
+    id?: number;
+    name?: string;
+  };
+};
 
 interface RequisitionsFormProps {
   toggleOpen: (open: boolean) => void;
@@ -176,6 +191,14 @@ function RequisitionsForm({
       .min(-1, 'Cost center is required')
       .required('Cost center is required')
       .typeError('Cost center is required'),
+    imprest_ledger_id: yup
+      .number()
+      .nullable()
+      .when('process_type', {
+        is: 'IMPREST',
+        then: (schema) =>
+          schema.required('Imprest Ledger is required').typeError('Imprest Ledger is required'),
+      }),
   });
 
   const {
@@ -204,8 +227,14 @@ function RequisitionsForm({
           ? requisition?.additional_costs || []
           : null,
       ledger_items:
-        requisition?.approval_chain?.process_type?.toUpperCase() === 'PAYMENT'
+        ['PAYMENT', 'IMPREST'].includes(
+          String(requisition?.approval_chain?.process_type || '').toUpperCase()
+        )
           ? requisition?.items
+          : null,
+      imprest_ledger_id:
+        requisition?.approval_chain?.process_type?.toUpperCase() === 'IMPREST'
+          ? requisition?.imprest_ledger_id || requisition?.imprest_ledger?.id || null
           : null,
       currencyDetails: requisition
         ? requisition.currency
@@ -261,6 +290,27 @@ function RequisitionsForm({
   const selectedProcessType = watch('process_type');
   const currencyDetails = watch('currencyDetails');
   const selectedCostCenterId = watch('cost_center_id');
+  const { data: myLedgersResponse } = useQuery({
+    queryKey: ['my-ledgers'],
+    queryFn: userLedgerServices.getMyLedgers,
+    enabled: true,
+  });
+  const imprestLedgerOptions = React.useMemo(
+    () => extractList(myLedgersResponse) as ImprestLedgerOption[],
+    [myLedgersResponse]
+  );
+  const notAllowedImprestLedgers = React.useMemo(
+    () =>
+      Array.from(
+        new Set(
+          imprestLedgerOptions
+            .filter((item) => String(item.type || '').toLowerCase() === 'imprest' || !item.type)
+            .map((item) => Number(item.ledger_id || item.ledger?.id || 0))
+            .filter((id) => Number.isFinite(id) && id > 0)
+        )
+      ),
+    [imprestLedgerOptions]
+  );
   const isPurchaseType = selectedProcessType === 'PURCHASE';
   const isPurchaseLastTab = activeTab === 1;
   const processTypeOptions = React.useMemo(
@@ -273,7 +323,7 @@ function RequisitionsForm({
   }, [requisition, addRequisition, updateRequisition]);
 
   const validateDuplicateLedgerRelatables = async () => {
-    if (!isDuplicate || selectedProcessType !== 'PAYMENT') {
+    if (!isDuplicate || !['PAYMENT', 'IMPREST'].includes(String(selectedProcessType))) {
       return true;
     }
 
@@ -375,7 +425,7 @@ function RequisitionsForm({
       });
       setVatableAmount(vatableAmount);
       setTotalAmount(total || 0);
-    } else if (selectedProcessType === 'PAYMENT') {
+    } else if (selectedProcessType === 'PAYMENT' || selectedProcessType === 'IMPREST') {
       setValue('ledger_items', requisition_ledger_items);
       setTotalAmount(total || 0);
     } else {
@@ -420,7 +470,11 @@ function RequisitionsForm({
               ? requisition_product_items
               : null,
           ledger_items:
-            selectedProcessType === 'PAYMENT' ? requisition_ledger_items : null,
+            selectedProcessType === 'PAYMENT' || selectedProcessType === 'IMPREST'
+              ? requisition_ledger_items
+              : null,
+          imprest_ledger_id:
+            selectedProcessType === 'IMPREST' ? data.imprest_ledger_id : null,
         };
         saveMutation.mutate(updatedData);
       })();
@@ -440,7 +494,11 @@ function RequisitionsForm({
         product_items:
           selectedProcessType === 'PURCHASE' ? requisition_product_items : null,
         ledger_items:
-          selectedProcessType === 'PAYMENT' ? requisition_ledger_items : null,
+          selectedProcessType === 'PAYMENT' || selectedProcessType === 'IMPREST'
+            ? requisition_ledger_items
+            : null,
+        imprest_ledger_id:
+          selectedProcessType === 'IMPREST' ? data.imprest_ledger_id : null,
       };
       saveMutation.mutate(updatedData);
     })();
@@ -545,10 +603,55 @@ function RequisitionsForm({
                           shouldValidate: true,
                           shouldDirty: true,
                         });
+                        setValue('imprest_ledger_id', null as any, {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                        });
                       }}
                     />
                   </Div>
                 </Grid>
+                {selectedProcessType === 'IMPREST' && (
+                  <Grid size={{ xs: 12, md: 4 }}>
+                    <Div sx={{ mt: 0.3 }}>
+                      <Autocomplete
+                        options={imprestLedgerOptions}
+                        isOptionEqualToValue={(option, value) => {
+                          const optionId = option.ledger_id || option.ledger?.id || option.id;
+                          const valueId = value.ledger_id || value.ledger?.id || value.id;
+                          return Number(optionId) === Number(valueId);
+                        }}
+                        getOptionLabel={(option) =>
+                          option.ledger?.name || option.name || 'Unknown Imprest Ledger'
+                        }
+                        value={
+                          imprestLedgerOptions.find((option) => {
+                            const optionId = option.ledger_id || option.ledger?.id || option.id;
+                            return Number(optionId) === Number(watch('imprest_ledger_id'));
+                          }) || null
+                        }
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            label='Imprest Ledger'
+                            size='small'
+                            fullWidth
+                            error={!!(errors as any).imprest_ledger_id}
+                            helperText={(errors as any).imprest_ledger_id?.message as string}
+                          />
+                        )}
+                        onChange={(_, selected: any) => {
+                          const ledgerId =
+                            selected?.ledger_id || selected?.ledger?.id || selected?.id || null;
+                          setValue('imprest_ledger_id', ledgerId, {
+                            shouldValidate: true,
+                            shouldDirty: true,
+                          });
+                        }}
+                      />
+                    </Div>
+                  </Grid>
+                )}
                 <Grid size={{ xs: 12, md: 4 }}>
                   <Div sx={{ mt: 0.3 }}>
                     <CostCenterSelector
@@ -636,12 +739,13 @@ function RequisitionsForm({
             />
           </Grid>
           <Grid size={{ xs: 12 }}>
-            {selectedProcessType === 'PAYMENT' ? (
+            {selectedProcessType === 'PAYMENT' || selectedProcessType === 'IMPREST' ? (
               <RequisitionLedgerItemForm
                 isDuplicate={isDuplicate}
                 currencyChanged={currencyChanged}
                 currencyDetails={currencyDetails}
                 costCenterId={selectedCostCenterId}
+                notAllowedLedgers={notAllowedImprestLedgers}
                 setRequisition_ledger_items={setRequisition_ledger_items}
                 requisition_ledger_items={requisition_ledger_items}
               />
@@ -692,7 +796,7 @@ function RequisitionsForm({
         </Grid>
       </DialogTitle>
       <DialogContent>
-        {selectedProcessType === 'PAYMENT' &&
+        {(selectedProcessType === 'PAYMENT' || selectedProcessType === 'IMPREST') &&
           requisition_ledger_items.map((ledger_item, index) => (
             <RequisitionLedgerItemRow
               key={index}
@@ -701,6 +805,7 @@ function RequisitionsForm({
               currencyChanged={currencyChanged}
               costCenterId={selectedCostCenterId}
               currencyDetails={currencyDetails}
+              notAllowedLedgers={notAllowedImprestLedgers}
               setRequisition_ledger_items={setRequisition_ledger_items}
               requisition_ledger_items={requisition_ledger_items}
               ledger_item={ledger_item}

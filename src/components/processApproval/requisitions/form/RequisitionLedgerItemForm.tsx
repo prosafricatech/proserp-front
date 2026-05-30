@@ -48,6 +48,7 @@ interface RequisitionLedgerItemFormProps {
   currencyChanged?: boolean;
   currencyDetails?: any;
   costCenterId?: number;
+  notAllowedLedgers?: Array<number | { id: number }>;
 }
 
 function RequisitionLedgerItemForm({
@@ -60,6 +61,7 @@ function RequisitionLedgerItemForm({
   currencyDetails,
   currencyChanged = false,
   costCenterId,
+  notAllowedLedgers = [],
 }: RequisitionLedgerItemFormProps) {
   const [isAdding, setIsAdding] = useState(false);
   const [calculatedAmount, setCalculatedAmount] = useState(0);
@@ -392,6 +394,7 @@ function RequisitionLedgerItemForm({
               key={`ledger-select-${formResetKey}`}
               multiple={false}
               label='Ledger Name'
+              notAllowedLedgers={notAllowedLedgers}
               allowedGroups={[
                 'Accounts Receivable',
                 'Accounts Payable',
