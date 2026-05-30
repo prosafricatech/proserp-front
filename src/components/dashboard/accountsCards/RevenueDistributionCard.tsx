@@ -1,13 +1,13 @@
-'use client'
+'use client';
 import JumboCardQuick from '@jumbo/components/JumboCardQuick/JumboCardQuick';
-import React, { useEffect, useState } from 'react';
-import { Skeleton, Typography, useMediaQuery, Box } from '@mui/material';
-import financialReportsServices from '../../accounts/reports/financial-reports-services';
-import { useDashboardSettings } from '../Dashboard';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
+import { Box, Skeleton, Typography, useMediaQuery } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
+import { useEffect, useState } from 'react';
+import financialReportsServices from '../../accounts/reports/financial-reports-services';
+import { useDashboardSettings } from '../Dashboard';
 
 interface RevenueData {
   ledger_name: string;
@@ -20,16 +20,18 @@ interface ChartDataPoint {
 }
 
 function RevenueDistributionCard() {
-  const { chartFilters: { from, to, cost_center_ids } } = useDashboardSettings();
+  const {
+    chartFilters: { from, to, cost_center_ids },
+  } = useDashboardSettings();
   const [params, setParams] = useState({
     from,
     to,
     cost_center_ids,
-    aggregate_by: 'day' as const
+    aggregate_by: 'day' as const,
   });
 
   useEffect(() => {
-    setParams(prev => ({ ...prev, from, to, cost_center_ids }));
+    setParams((prev) => ({ ...prev, from, to, cost_center_ids }));
   }, [from, to, cost_center_ids]);
 
   const { theme } = useJumboTheme();
@@ -45,14 +47,14 @@ function RevenueDistributionCard() {
         to: params.to,
         ledgerGroupId: 3,
         cost_center_ids: params.cost_center_ids,
-        group_by_ledgers: true
+        group_by_ledgers: true,
       });
 
       return revenues.map((rev: RevenueData) => ({
         name: rev.ledger_name,
-        y: rev.amount
+        y: rev.amount,
       })) as ChartDataPoint[];
-    }
+    },
   });
 
   const options: Highcharts.Options = {
@@ -61,13 +63,13 @@ function RevenueDistributionCard() {
       height: 245,
       backgroundColor: 'transparent',
       spacing: [10, 10, 10, 10],
-      style: { color: textColor }
+      style: { color: textColor },
     },
     title: { text: '' },
     tooltip: {
       pointFormat: '{point.y}: <b>({point.percentage:.1f}%)</b>',
       backgroundColor,
-      style: { color: textColor }
+      style: { color: textColor },
     },
     plotOptions: {
       pie: {
@@ -82,14 +84,14 @@ function RevenueDistributionCard() {
           style: {
             color: textColor,
             textOutline: '0px transparent', // prevents shrinking/blurring on theme switch
-            fontSize: '11px'
-          }
-        }
-      }
+            fontSize: '11px',
+          },
+        },
+      },
     },
     credits: { enabled: false },
     legend: {
-      itemStyle: { color: textColor }
+      itemStyle: { color: textColor },
     },
     series: [
       {
@@ -104,7 +106,7 @@ function RevenueDistributionCard() {
   // 👇 Trigger Highcharts reflow after theme mode changes for proper layout
   useEffect(() => {
     const timeout = setTimeout(() => {
-      Highcharts.charts.forEach(chart => chart?.reflow());
+      Highcharts.charts.forEach((chart) => chart?.reflow());
     }, 100);
     return () => clearTimeout(timeout);
   }, [theme.type]);
@@ -112,14 +114,14 @@ function RevenueDistributionCard() {
   return (
     <JumboCardQuick
       sx={{
-        height: xlScreen ? 310 : null,
+        height: xlScreen ? 360 : null,
         display: 'flex',
-        flexDirection: 'column'
+        flexDirection: 'column',
       }}
     >
       <Box sx={{ px: 2, pt: 1 }}>
         <Typography
-          variant="subtitle1"
+          variant='subtitle1'
           sx={{
             color: textColor,
             fontFamily: 'NoirPro, Arial',
@@ -134,11 +136,16 @@ function RevenueDistributionCard() {
           flexGrow: 1,
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center'
+          justifyContent: 'center',
         }}
       >
         {isLoading ? (
-          <Skeleton variant="rectangular" width="100%" height={245} sx={{ borderRadius: 2 }} />
+          <Skeleton
+            variant='rectangular'
+            width='100%'
+            height={245}
+            sx={{ borderRadius: 2 }}
+          />
         ) : (
           // 👇 Key ensures full chart redraw when theme changes
           <HighchartsReact
