@@ -9,8 +9,6 @@ interface ApprovalsListItemProps {
 }
 
 function ApprovalsListItem({ requisition, approvals }: ApprovalsListItemProps) {
-  const isLeaveRequest = requisition.process_type === 'LEAVE_REQUEST';
-  
   return (
     <Grid container spacing={2}>
       {approvals?.length > 0 ? (
@@ -43,17 +41,15 @@ function ApprovalsListItem({ requisition, approvals }: ApprovalsListItemProps) {
               </Tooltip>
             </Grid>
             <Grid size={{xs: 12, md: 3, lg: 3}}>
-              {!isLeaveRequest && (
-                <Tooltip title='Amount'>
-                  <Typography>
-                    {(approval.amount + approval.vat_amount)?.toLocaleString('en-US', 
-                    {
-                      style: 'currency',
-                      currency: requisition.currency?.code,
-                    })}
-                  </Typography>
-                </Tooltip>
-              )}
+              <Tooltip title='Amount'>
+                <Typography>
+                  {(approval.amount + approval.vat_amount)?.toLocaleString('en-US', 
+                  {
+                    style: 'currency',
+                    currency: requisition.currency?.code,
+                  })}
+                </Typography>
+              </Tooltip>
               <Tooltip title='Status'>
                 <Chip
                   size='small' 

@@ -20,7 +20,6 @@ import { useSnackbar } from 'notistack';
 import requisitionsServices from '../../../../requisitionsServices';
 import ApprovalRequisitionProductItem from './ApprovalRequisitionProductItem';
 import ApprovalRequisitionLedgerItem from './ApprovalRequisitionLedgerItem';
-import ApprovalLeaveItemsSummary from './ApprovalLeaveItemsSummary';
 import { DateTimePicker } from '@mui/x-date-pickers';
 import dayjs, { Dayjs } from 'dayjs';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -123,12 +122,7 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
   }, [requisition, approval]);
 
   const isPurchaseType = requisition?.approval_chain?.process_type?.toLowerCase() === 'purchase';
-  const isLeaveType = requisition?.approval_chain?.process_type?.toLowerCase() === 'leave_request';
   const isFinal = isEdit ? approval?.is_final === 1 : requisition?.next_approval_level?.is_final;
-  const approvalRequisitionItems: RequisitionItem[] =
-    approval?.requisition && 'items' in approval.requisition ? (approval.requisition.items || []) : [];
-  const leaveSummaryItems =
-    requisition.leave_items || approval?.requisition?.leave_items || requisitionItems || approvalRequisitionItems || [];
 
   const validationSchema = yup.object().shape({
     approval_date: yup.string().required('Approval Date is required').typeError('Approval Date is required'),
@@ -160,7 +154,7 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
           })
         )
       : yup.array().nullable(),
-    ledger_items: !isPurchaseType && !isLeaveType
+    ledger_items: !isPurchaseType
       ? yup.array().of(
           yup.object().shape({
             rate: yup.number()
@@ -191,7 +185,7 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
       remarks: approval?.remarks || requisition?.remarks || '',
       product_items: isPurchaseType ? (approval?.items || requisitionItems) : [],
       additional_costs: isPurchaseType ? getInitialAdditionalCosts() : [],
-      ledger_items: !isPurchaseType && !isLeaveType ? (approval?.items || requisitionItems) : [],
+      ledger_items: !isPurchaseType ? (approval?.items || requisitionItems) : [],
       chain_level_id: approval && isEdit ? approval.approval_chain_level_id : requisition?.next_approval_level?.id,
     }
   });
@@ -287,7 +281,7 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
         shouldValidate: true,
         shouldDirty: true,
       });
-    } else if (!isLeaveType) {
+    } else {
       const ledger_items = requisitionLedgerItem?.map((item) => ({
         requisition_ledger_item_id: item.id,
         quantity: item.quantity,
@@ -307,7 +301,6 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
     requisitionAdditionalCosts,
     setValue,
     isPurchaseType,
-    isLeaveType,
   ]);
 
   const saveMutation = React.useMemo(() => {
@@ -319,7 +312,7 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
       ...formData,
       product_items: isPurchaseType ? formData.product_items : undefined,
       additional_costs: isPurchaseType ? formData.additional_costs : undefined,
-      ledger_items: !isPurchaseType && !isLeaveType ? formData.ledger_items : undefined,
+      ledger_items: !isPurchaseType ? formData.ledger_items : undefined,
     };
     saveMutation(payload as FormValues);
   };
@@ -387,11 +380,7 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
         </Grid>
       </DialogTitle>
       <DialogContent>
-        {isLeaveType ? (
-            <ApprovalLeaveItemsSummary
-              items={leaveSummaryItems as any}
-            />
-          ) : isPurchaseType ? 
+        {isPurchaseType ? 
             <>
               <Tabs
                 value={activePurchaseTab}
