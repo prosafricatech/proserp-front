@@ -25,6 +25,7 @@ interface UsersSelectorProps {
   multiple?: boolean;
   label?: string;
   defaultValue?: User | User[] | null;
+  value?: User | User[] | null;
   frontError?: { message?: string } | null;
   excludeUsers?: User[];
 }
@@ -34,6 +35,7 @@ const UsersSelector: React.FC<UsersSelectorProps> = ({
   multiple = false,
   label = "Users",
   defaultValue = null,
+  value: controlledValue,
   frontError = null,
   excludeUsers = [],
 }) => {
@@ -63,7 +65,7 @@ const UsersSelector: React.FC<UsersSelectorProps> = ({
   }, [rawUsers, excludeUsers]);
 
   const [value, setValue] = useState<User | User[] | null>(
-    multiple ? [] : null
+    controlledValue ?? (multiple ? [] : null)
   );
 
   const syncedRef = useRef(false);
@@ -88,6 +90,30 @@ const UsersSelector: React.FC<UsersSelectorProps> = ({
       setValue(users.find((u) => u.id === id) || null);
     }
   }, [defaultValue, users, multiple]);
+
+  useEffect(() => {
+    if (controlledValue === undefined) return;
+
+    if (multiple) {
+      const current = (value as User[]) || [];
+      const incoming = (Array.isArray(controlledValue) ? controlledValue : controlledValue ? [controlledValue] : []) as User[];
+      const sameLength = current.length === incoming.length;
+      const sameValues =
+        sameLength && current.every((item, index) => item?.id === incoming[index]?.id);
+
+      if (!sameValues) {
+        setValue(incoming);
+      }
+      return;
+    }
+
+    const currentId = (value as User | null)?.id ?? null;
+    const incomingId = (Array.isArray(controlledValue) ? controlledValue[0] : controlledValue)?.id ?? null;
+
+    if (currentId !== incomingId) {
+      setValue((Array.isArray(controlledValue) ? controlledValue[0] : controlledValue) || null);
+    }
+  }, [controlledValue, multiple, value]);
 
   const handleChange = useCallback(
     (_: any, newValue: User | User[] | null) => {

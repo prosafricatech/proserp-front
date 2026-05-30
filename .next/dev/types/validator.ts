@@ -101,6 +101,15 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../../src/app/[lang]/(common)/accounts/user-ledgers/page.tsx
+{
+  type __IsExpected<Specific extends AppPageConfig<"/[lang]/accounts/user-ledgers">> = Specific
+  const handler = {} as typeof import("../../../src/app/[lang]/(common)/accounts/user-ledgers/page.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../../src/app/[lang]/(common)/approval-chains/page.tsx
 {
   type __IsExpected<Specific extends AppPageConfig<"/[lang]/approval-chains">> = Specific
@@ -1104,6 +1113,15 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/accountsAndFinance/transactions/transfers/add">> = Specific
   const handler = {} as typeof import("../../../src/app/api/accountsAndFinance/transactions/transfers/add/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../../src/app/api/accountsAndFinance/user-ledger-payments/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/accountsAndFinance/user-ledger-payments">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/accountsAndFinance/user-ledger-payments/route.js")
   type __Check = __IsExpected<typeof handler>
   // @ts-ignore
   type __Unused = __Check

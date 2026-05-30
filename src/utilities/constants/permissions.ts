@@ -53,7 +53,7 @@ export const PERMISSIONS = {
   APPROVED_REQUISITIONS_PAY: 'ApprovedRequisitions:Pay',
   APPROVED_REQUISITIONS_PURCHASE: 'ApprovedRequisitions:Purchase',
   APPROVED_REQUISITIONS_READ: 'ApprovedRequisitions:Read',
-    IMPREST_RETIREMENT_APPROVE: 'ImprestRetirement:Approve',
+  IMPREST_RETIREMENT_APPROVE: 'ImprestRetirement:Approve',
   REQUISITIONS_BACKDATE: 'Requisitions:BackDate',
   REQUISITIONS_CREATE: 'Requisitions:Create',
   REQUISITIONS_DELETE: 'Requisitions:Delete',

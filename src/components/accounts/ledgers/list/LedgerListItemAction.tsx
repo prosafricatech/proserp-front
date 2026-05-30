@@ -2,13 +2,12 @@
 
 import { Dialog, Tooltip } from '@mui/material'
 import React, { useState } from 'react'
-import { DeleteOutlined, EditOutlined, MoreHorizOutlined, PersonAddOutlined, PersonRemoveOutlined, ViewTimelineOutlined } from '@mui/icons-material'
+import { DeleteOutlined, EditOutlined, MoreHorizOutlined, ViewTimelineOutlined } from '@mui/icons-material'
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog'
 import ledgerServices from '../ledger-services'
 import LedgerStatementDialogContent from './ledgerStatement/LedgerStatementDialogContent'
 import { useSnackbar } from 'notistack'
 import LedgerForm from '../forms/LedgerForm'
-import UserLedgerActionForm from '../forms/UserLedgerActionForm'
 import { deviceType } from '@/utilities/helpers/user-agent-helpers'
 import { PERMISSIONS } from '@/utilities/constants/permissions'
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider'
@@ -36,8 +35,6 @@ function LedgerListItemAction({ ledger }: LedgerListItemActionProps) {
   const { checkOrganizationPermission } = useJumboAuth();
   const queryClient = useQueryClient();
   const [openEditLedgerFormDialog, setOpenEditLedgerFormDialog] = useState(false);
-  const [openLinkUserFormDialog, setOpenLinkUserFormDialog] = useState(false);
-  const [openUnlinkUserFormDialog, setOpenUnlinkUserFormDialog] = useState(false);
   const isMobile = deviceType() === 'mobile';
 
   const { mutate: deleteLedgerMutation } = useMutation({
@@ -58,12 +55,6 @@ function LedgerListItemAction({ ledger }: LedgerListItemActionProps) {
     ...(ledger?.id > 10 && checkOrganizationPermission(PERMISSIONS.ACCOUNTS_MASTERS_EDIT)
       ? [{ icon: <EditOutlined />, title: 'Edit', action: 'edit' } as MenuItemProps]
       : []),
-    ...(ledger?.id > 10 && checkOrganizationPermission(PERMISSIONS.ACCOUNTS_MASTERS_EDIT)
-      ? [{ icon: <PersonAddOutlined />, title: 'Link User', action: 'link-user' } as MenuItemProps]
-      : []),
-    ...(ledger?.id > 10 && checkOrganizationPermission(PERMISSIONS.ACCOUNTS_MASTERS_EDIT)
-      ? [{ icon: <PersonRemoveOutlined color='error' />, title: 'Unlink User', action: 'unlink-user' } as MenuItemProps]
-      : []),
     { icon: <ViewTimelineOutlined />, title: 'Statement', action: 'statement' } as MenuItemProps,
     ...(ledger?.balance?.amount === 0 && ledger?.id > 10 && checkOrganizationPermission(PERMISSIONS.ACCOUNTS_MASTERS_DELETE)
       ? [{ icon: <DeleteOutlined color='error' />, title: 'Delete', action: 'delete' } as MenuItemProps]
@@ -74,12 +65,6 @@ function LedgerListItemAction({ ledger }: LedgerListItemActionProps) {
     switch (menuItem.action) {
       case 'edit':
         setOpenEditLedgerFormDialog(true);
-        break;
-      case 'link-user':
-        setOpenLinkUserFormDialog(true);
-        break;
-      case 'unlink-user':
-        setOpenUnlinkUserFormDialog(true);
         break;
       case 'statement':
         setOpenDocumentDialog(true);
@@ -104,15 +89,13 @@ function LedgerListItemAction({ ledger }: LedgerListItemActionProps) {
   return (
     <>
       <Dialog
-        open={openDocumentDialog || openEditLedgerFormDialog || openLinkUserFormDialog || openUnlinkUserFormDialog}
+        open={openDocumentDialog || openEditLedgerFormDialog}
         fullWidth
         fullScreen={isMobile}
-        maxWidth={openEditLedgerFormDialog || openLinkUserFormDialog || openUnlinkUserFormDialog ? 'sm' : 'md'}
+        maxWidth={openEditLedgerFormDialog ? 'sm' : 'md'}
       >
         {openDocumentDialog && <LedgerStatementDialogContent ledger={ledger} setOpen={setOpenDocumentDialog} />}
         {openEditLedgerFormDialog && <LedgerForm ledger={ledger} toggleOpen={setOpenEditLedgerFormDialog} />}
-        {openLinkUserFormDialog && <UserLedgerActionForm mode='link' ledger={ledger} toggleOpen={setOpenLinkUserFormDialog} />}
-        {openUnlinkUserFormDialog && <UserLedgerActionForm mode='unlink' ledger={ledger} toggleOpen={setOpenUnlinkUserFormDialog} />}
       </Dialog>
       <JumboDdMenu
         icon={

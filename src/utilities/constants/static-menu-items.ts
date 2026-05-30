@@ -27,6 +27,7 @@ export const staticMenuItems = [
   { label: 'Budgets', uri: '/en-US/accounts/budgets' },
   { label: 'Ledger Groups', uri: '/en-US/accounts/ledger_groups' },
   { label: 'Ledgers', uri: '/en-US/accounts/ledgers' },
+  { label: 'User Ledgers', uri: '/en-US/accounts/user-ledgers' },
   { label: 'Cost Centers', uri: '/en-US/cost_centers' },
   { label: 'Approved Purchases', uri: '/en-US/procurement/approvedPurchases' },
   { label: 'Purchases', uri: '/en-US/procurement/purchases' },

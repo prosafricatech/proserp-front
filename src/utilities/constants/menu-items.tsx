@@ -310,6 +310,11 @@ export async function getMenus(locale: string) {
               type: 'nav-item',
             },
             {
+              uri: `/${locale}/accounts/user-ledgers`,
+              label: 'User Ledgers',
+              type: 'nav-item',
+            },
+            {
               uri: `/${locale}/cost_centers`,
               label: sidebar.menuItem.costCenters,
               type: 'nav-item',

@@ -89,6 +89,8 @@ export default function UserLedgerActionForm({ mode, ledger, toggleOpen }: Props
     onSuccess: (data: { message?: string }) => {
       queryClient.invalidateQueries({ queryKey: ['my-ledgers'] });
       queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['user-ledgers-list'] });
+      queryClient.invalidateQueries({ queryKey: ['user-ledger-payments-list'] });
       enqueueSnackbar(
         data?.message || (mode === 'link' ? 'Ledger linked successfully' : 'Ledger unlinked successfully'),
         { variant: 'success' }

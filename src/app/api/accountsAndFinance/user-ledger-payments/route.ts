@@ -8,25 +8,9 @@ export async function GET(req: NextRequest) {
   if (response) return response;
 
   const queryString = req.nextUrl.searchParams.toString();
-  const res = await fetch(`${API_BASE}/user-ledgers?${queryString}`, {
+  const res = await fetch(`${API_BASE}/user-ledger-payments?${queryString}`, {
     headers,
     credentials: 'include',
-  });
-
-  return handleJsonResponse(res);
-}
-
-export async function POST(req: NextRequest) {
-  const { headers, response } = await getAuthHeaders(req);
-  if (response) return response;
-
-  const payload = await req.json();
-
-  const res = await fetch(`${API_BASE}/user-ledgers`, {
-    method: 'POST',
-    headers,
-    credentials: 'include',
-    body: JSON.stringify(payload),
   });
 
   return handleJsonResponse(res);

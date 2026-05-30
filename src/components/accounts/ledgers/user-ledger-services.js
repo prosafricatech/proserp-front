@@ -17,6 +17,22 @@ userLedgerServices.getMyLedgers = async () => {
   return data;
 };
 
+userLedgerServices.getUserLedgersList = async (params = {}) => {
+  const { page = 1, limit = 10, ...queryParams } = params;
+  const { data } = await axios.get('/api/accountsAndFinance/user-ledgers', {
+    params: { page, limit, ...queryParams },
+  });
+  return data;
+};
+
+userLedgerServices.getUserLedgerPayments = async (params = {}) => {
+  const { page = 1, limit = 10, ...queryParams } = params;
+  const { data } = await axios.get('/api/accountsAndFinance/user-ledger-payments', {
+    params: { page, limit, ...queryParams },
+  });
+  return data;
+};
+
 userLedgerServices.getUserLedgers = async (userId) => {
   const { data } = await axios.get(`/api/accountsAndFinance/users/${userId}/ledgers`);
   return data;
