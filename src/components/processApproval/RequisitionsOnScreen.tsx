@@ -36,44 +36,6 @@ interface Props {
   belowLargeScreen: boolean;
 }
 
-type LeaveViewItem = {
-  id?: number;
-  employee_id?: number;
-  start_date?: string;
-  end_date?: string;
-  days_requested?: number;
-  reason?: string;
-  employee?: {
-    employee_number?: string;
-    first_name?: string;
-    last_name?: string;
-  };
-  leave_type?: {
-    name?: string;
-  };
-};
-
-const normalizeLeaveItem = (item: any): LeaveViewItem => ({
-  ...item,
-  days_requested: Number(item?.days_requested || 0),
-  employee:
-    item?.employee ||
-    (item?.employee_number || item?.first_name || item?.last_name
-      ? {
-          employee_number: item?.employee_number,
-          first_name: item?.first_name,
-          last_name: item?.last_name,
-        }
-      : undefined),
-  leave_type:
-    item?.leave_type ||
-    (item?.leave_type_name
-      ? {
-          name: item.leave_type_name,
-        }
-      : undefined),
-});
-
 // --- Fetch Relatable Details Component ---
 const FetchRelatableDetails: React.FC<{
   relatable: any;
@@ -129,11 +91,8 @@ const RequisitionsOnScreen: React.FC<Props> = ({
   const contrastText = organization.settings?.contrast_text || '#FFFFFF';
 
   const isPurchase = requisition?.approval_chain.process_type?.toLowerCase() === 'purchase';
-  const isLeaveRequest = requisition?.approval_chain.process_type?.toLowerCase() === 'leave_request';
   const requisitionItems: RequisitionItem[] = 'items' in requisition ? (requisition.items || []) : [];
   const additionalCosts = isPurchase ? (((requisition as any)?.additional_costs || []) as any[]) : [];
-  const leaveSource = (requisition?.leave_items && requisition.leave_items.length ? requisition.leave_items : requisitionItems) || [];
-  const leaveItems: LeaveViewItem[] = (leaveSource as any[]).map(normalizeLeaveItem);
 
   const totalVAT = requisitionItems
     ?.filter((item: RequisitionItem) => (item.vat_percentage || 0) > 0)
@@ -144,7 +103,6 @@ const RequisitionsOnScreen: React.FC<Props> = ({
     .reduce((total: number, item: RequisitionItem) => total + item.quantity * item.rate * (1 + (item.vat_percentage || 0) / 100), 0) || 0;
 
   const subtotal = requisitionItems.reduce((total: number, item: RequisitionItem) => total + (item.quantity || 0) * (item.rate || 0), 0);
-  const totalLeaveDays = leaveItems.reduce((sum, item) => sum + Number(item.days_requested || 0), 0);
 
   const formatCurrency = (amount: number) => {
     return amount?.toLocaleString('en-US', {
@@ -179,7 +137,7 @@ const RequisitionsOnScreen: React.FC<Props> = ({
               }}
             >
               <Typography variant="h4" sx={{ color: headerColor }}>
-                {isLeaveRequest ? 'LEAVE REQUEST' : isPurchase ? 'PURCHASE REQUISITION' : 'PAYMENT REQUISITION'}
+                {isPurchase ? 'PURCHASE REQUISITION' : 'PAYMENT REQUISITION'}
               </Typography>
               <Typography variant="h6">
                 {requisition.requisitionNo}
@@ -229,39 +187,7 @@ const RequisitionsOnScreen: React.FC<Props> = ({
               }}
             >
               <Table>
-                {isLeaveRequest ? (
-                  <>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText }}>S/N</TableCell>
-                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText }}>Employee</TableCell>
-                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText }}>Leave Type</TableCell>
-                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText }}>Start Date</TableCell>
-                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText }}>End Date</TableCell>
-                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText }} align="right">Days</TableCell>
-                        <TableCell sx={{ backgroundColor: mainColor, color: contrastText }}>Reason</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {leaveItems.map((item, index) => (
-                        <TableRow key={item.id || `${item.employee_id}-${index}`}>
-                          <TableCell>{index + 1}</TableCell>
-                          <TableCell>
-                            {[item.employee?.first_name, item.employee?.last_name, item.employee?.employee_number]
-                              .filter(Boolean)
-                              .join(' ')}
-                          </TableCell>
-                          <TableCell>{item.leave_type?.name || '-'}</TableCell>
-                          <TableCell>{readableDate(item.start_date)}</TableCell>
-                          <TableCell>{readableDate(item.end_date)}</TableCell>
-                          <TableCell align="right">{Number(item.days_requested || 0).toLocaleString()}</TableCell>
-                          <TableCell>{item.reason || '-'}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </>
-                ) : (
-                  <>
+                <>
                     <TableHead>
                       <TableRow>
                         <TableCell colSpan={1} sx={{ backgroundColor: mainColor, color: contrastText }}>
@@ -382,8 +308,7 @@ const RequisitionsOnScreen: React.FC<Props> = ({
                         </React.Fragment>
                       ))}
                     </TableBody>
-                  </>
-                )}
+                </>
               </Table>
             </TableContainer>
           </Grid>
@@ -399,21 +324,7 @@ const RequisitionsOnScreen: React.FC<Props> = ({
                 borderRadius: 1
               }}
             >
-              {isLeaveRequest ? (
-                <Grid container spacing={1}>
-                  <Grid size={7}>
-                    <Typography variant="h6" color={headerColor}>
-                      Total Leave Days
-                    </Typography>
-                  </Grid>
-                  <Grid size={5} sx={{ textAlign: 'right' }}>
-                    <Typography variant="h6" color={headerColor} fontFamily="monospace">
-                      {totalLeaveDays.toLocaleString()} day(s)
-                    </Typography>
-                  </Grid>
-                </Grid>
-              ) : (
-                <Grid container spacing={1}>
+              <Grid container spacing={1}>
                   <Grid size={7}>
                     <Typography variant="body1">
                       Subtotal
@@ -464,12 +375,11 @@ const RequisitionsOnScreen: React.FC<Props> = ({
                       </Grid>
                     </>
                   )}
-                </Grid>
-              )}
+              </Grid>
             </Box>
           </Grid>
 
-          {!isLeaveRequest && isPurchase && additionalCosts.length > 0 && (
+          {isPurchase && additionalCosts.length > 0 && (
             <Grid size={12}>
               <TableContainer
                 component={Paper}
