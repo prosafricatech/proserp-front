@@ -17,6 +17,7 @@ function RequisitionPDF({ requisition, organization }: RequisitionPDFProps) {
     const lightColor = organization.settings?.light_color || '#bec5da';
     const contrastText = organization.settings?.contrast_text || '#FFFFFF';
     const isPurchase = requisition?.approval_chain?.process_type?.toLowerCase() === 'purchase';
+    const isImprest = requisition?.approval_chain?.process_type?.toLowerCase() === 'imprest';
     const requisitionItems: RequisitionItem[] = 'items' in requisition ? (requisition.items || []) : [];
     const additionalCosts = isPurchase ? (((requisition as any)?.additional_costs || []) as any[]) : [];
 
@@ -52,7 +53,11 @@ function RequisitionPDF({ requisition, organization }: RequisitionPDFProps) {
                     </View>
                     <View style={{ flex: 1, textAlign: 'right' }}>
                         <Text style={{ ...pdfStyles.majorInfo, color: mainColor }}>
-                            {isPurchase ? 'Purchase Requisition' : 'Payment Requisition'}
+                            {isPurchase
+                                ? 'Purchase Requisition'
+                                : isImprest
+                                    ? 'Imprest Requisition'
+                                    : 'Payment Requisition'}
                         </Text>
                         <Text style={{ ...pdfStyles.midInfo }}>{requisition.requisitionNo}</Text>
                     </View>

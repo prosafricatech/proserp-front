@@ -91,6 +91,7 @@ const RequisitionsOnScreen: React.FC<Props> = ({
   const contrastText = organization.settings?.contrast_text || '#FFFFFF';
 
   const isPurchase = requisition?.approval_chain.process_type?.toLowerCase() === 'purchase';
+  const isImprest = requisition?.approval_chain.process_type?.toLowerCase() === 'imprest';
   const requisitionItems: RequisitionItem[] = 'items' in requisition ? (requisition.items || []) : [];
   const additionalCosts = isPurchase ? (((requisition as any)?.additional_costs || []) as any[]) : [];
 
@@ -137,7 +138,11 @@ const RequisitionsOnScreen: React.FC<Props> = ({
               }}
             >
               <Typography variant="h4" sx={{ color: headerColor }}>
-                {isPurchase ? 'PURCHASE REQUISITION' : 'PAYMENT REQUISITION'}
+                {isPurchase
+                  ? 'PURCHASE REQUISITION'
+                  : isImprest
+                    ? 'IMPREST REQUISITION'
+                    : 'PAYMENT REQUISITION'}
               </Typography>
               <Typography variant="h6">
                 {requisition.requisitionNo}
