@@ -34,6 +34,7 @@ function ApprovalPDF({ approval, organization }: ApprovalPDFProps) {
   const lightColor = organization.settings?.light_color || "#bec5da";
   const contrastText = organization.settings?.contrast_text || "#FFFFFF";
   const isPurchase = approval.requisition.process_type?.toLowerCase() === 'purchase';
+  const isImprest = approval.requisition.process_type?.toLowerCase() === 'imprest';
   const additionalCosts = isPurchase
     ? ((approval.additional_costs || (approval.requisition as any)?.additional_costs || []) as any[])
     : [];
@@ -66,9 +67,11 @@ function ApprovalPDF({ approval, organization }: ApprovalPDFProps) {
           </View>
           <View style={{ flex: 1, textAlign: 'right' }}>
             <Text style={{...pdfStyles.majorInfo, color: mainColor }}>
-              {approval.requisition.process_type?.toLowerCase() === 'purchase' 
-                ? 'Purchase Requisition Approval' 
-                : 'Payment Requisition Approval'}
+              {isPurchase
+                ? 'Purchase Requisition Approval'
+                : isImprest
+                  ? 'Imprest Requisition Approval'
+                  : 'Payment Requisition Approval'}
             </Text>
             <Text style={{ ...pdfStyles.midInfo }}>{approval.requisition.requisitionNo}</Text>
           </View>

@@ -91,6 +91,7 @@ function ApprovalOnScreen({ approval, organization, belowLargeScreen }: Approval
     const contrastText = organization.settings?.contrast_text || "#FFFFFF";
 
     const isPurchase = approval.requisition?.process_type?.toLowerCase() === 'purchase';
+    const isImprest = approval.requisition?.process_type?.toLowerCase() === 'imprest';
     const additionalCosts = isPurchase
         ? ((((approval as any).additional_costs) || (approval.requisition as any)?.additional_costs || []) as any[])
         : [];
@@ -139,7 +140,11 @@ function ApprovalOnScreen({ approval, organization, belowLargeScreen }: Approval
                             }}
                         >
                             <Typography variant="h4" sx={{ color: headerColor }}>
-                                {isPurchase ? 'PURCHASE REQUISITION APPROVAL' : 'PAYMENT REQUISITION APPROVAL'}
+                                                                {isPurchase
+                                                                    ? 'PURCHASE REQUISITION APPROVAL'
+                                                                    : isImprest
+                                                                        ? 'IMPREST REQUISITION APPROVAL'
+                                                                        : 'PAYMENT REQUISITION APPROVAL'}
                             </Typography>
                             <Typography variant="h6">
                                 {approval.requisition?.requisitionNo}

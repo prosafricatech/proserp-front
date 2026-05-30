@@ -47,14 +47,15 @@ const ApprovedRequisitionsListItem: React.FC<ApprovedRequisitionsListItemProps> 
     }));
   };
 
-  const isPayment = approvedRequisition.process_type === 'PAYMENT';
+  const isPayment = ['PAYMENT', 'IMPREST'].includes(approvedRequisition.process_type);
+  const isPurchase = approvedRequisition.process_type === 'PURCHASE';
   const isLeaveRequest = approvedRequisition.process_type === 'LEAVE_REQUEST';
   const processConfig = processTypeConfig[approvedRequisition.process_type as keyof typeof processTypeConfig] || {
     label: approvedRequisition.process_type,
     color: 'default' as const,
   };
   const paymentsCount = isPayment ? (approvedRequisition as PaymentApprovalRequisition).payments_count : 0;
-  const purchasesCount = !isPayment && !isLeaveRequest ? (approvedRequisition as PurchaseApprovalRequisition).purchase_orders_count : 0;
+  const purchasesCount = isPurchase ? (approvedRequisition as PurchaseApprovalRequisition).purchase_orders_count : 0;
   const paymentsOrPurchasesCount = isPayment ? paymentsCount : purchasesCount;
 
   const isFullyProcessed = isLeaveRequest ? false : isPayment 
@@ -213,7 +214,7 @@ const ApprovedRequisitionsListItem: React.FC<ApprovedRequisitionsListItemProps> 
                 <ApprovalItemAction approval={approvedRequisition as any} hideOtherActions />
               </Grid>
               <Grid>
-                {!isPayment && !isLeaveRequest &&
+                {isPurchase &&
                   checkOrganizationPermission([PERMISSIONS.APPROVED_REQUISITIONS_PURCHASE]) && 
                   !(approvedRequisition as PurchaseApprovalRequisition).is_fully_ordered && (
                     <ApprovedPurchaseActionTail

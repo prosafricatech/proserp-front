@@ -61,7 +61,7 @@ export interface BaseApprovalRequisition {
   approval_date: string;
   creator: User;
   currency: Currency;
-  process_type: "PURCHASE" | "PAYMENT" | "LEAVE_REQUEST";
+  process_type: "PURCHASE" | "PAYMENT" | "LEAVE_REQUEST" | "IMPREST";
   remarks: string | null;
   status_label?: string;
   requisition: RequisitionSummary;
@@ -70,7 +70,7 @@ export interface BaseApprovalRequisition {
 }
 
 export interface PaymentApprovalRequisition extends BaseApprovalRequisition {
-  process_type: "PAYMENT";
+  process_type: "PAYMENT" | "IMPREST";
   is_fully_paid: boolean;
   payments_count: number;
 }

@@ -122,7 +122,34 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
   }, [requisition, approval]);
 
   const isPurchaseType = requisition?.approval_chain?.process_type?.toLowerCase() === 'purchase';
+  const isImprestType = requisition?.approval_chain?.process_type?.toLowerCase() === 'imprest';
   const isFinal = isEdit ? approval?.is_final === 1 : requisition?.next_approval_level?.is_final;
+  const approvalDisplayValue = React.useMemo(() => {
+    const lineItemsTotal = (isPurchaseType ? requisitionProductItem : requisitionLedgerItem).reduce(
+      (sum, item) => sum + Number(item.quantity || 0) * Number(item.rate || 0),
+      0
+    );
+
+    if (!isPurchaseType) {
+      return lineItemsTotal;
+    }
+
+    const vatTotal = requisitionProductItem.reduce(
+      (sum, item) =>
+        sum +
+        Number(item.quantity || 0) *
+          Number(item.rate || 0) *
+          Number(item.vat_percentage || 0) *
+          0.01,
+      0
+    );
+    const additionalTotal = requisitionAdditionalCosts.reduce(
+      (sum, cost) => sum + Number(cost.amount || 0),
+      0
+    );
+
+    return lineItemsTotal + vatTotal + additionalTotal;
+  }, [isPurchaseType, requisitionProductItem, requisitionLedgerItem, requisitionAdditionalCosts]);
 
   const validationSchema = yup.object().shape({
     approval_date: yup.string().required('Approval Date is required').typeError('Approval Date is required'),
@@ -322,25 +349,42 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
       <DialogTitle>
         <Grid container spacing={2}>
           <Grid size={{xs: 12}} textAlign={"center"} mb={2}>
-            {isEdit ? 'Edit Approval' : 'Approve Requisition'}
+            {isEdit
+              ? 'Edit Approval'
+              : isImprestType
+                ? 'Approve Imprest Requisition'
+                : 'Approve Requisition'}
           </Grid>
-          <Grid size={{xs: 12, md: 4, lg: 4}} sx={{ mt: 1, mb: 1 }}>
-            <Stack direction="row" spacing={1}>
-              <Typography sx={{ fontWeight: 'bold'}}>Requisition Date:</Typography>
-              <Typography>{readableDate(requisition.requisition_date)}</Typography>
-            </Stack>
+          <Grid size={{ xs: 12, md: 3 }} sx={{ mt: 1, mb: 1 }}>
+            <Div sx={{ p: 1.25, border: 1, borderColor: 'divider', borderRadius: 1 }}>
+              <Typography variant='caption' color='text.secondary'>Requisition Date</Typography>
+              <Typography variant='body2'>{readableDate(requisition.requisition_date)}</Typography>
+            </Div>
           </Grid>
-          <Grid size={{xs: 12, md: 4, lg: 4}} sx={{ mt: 1, mb: 1 }}>
-            <Stack direction="row" spacing={1}>
-              <Typography sx={{ fontWeight: 'bold'}}>Currency:</Typography>
-              <Typography>{requisition.currency?.name}</Typography>
-            </Stack>
+          <Grid size={{ xs: 12, md: 3 }} sx={{ mt: 1, mb: 1 }}>
+            <Div sx={{ p: 1.25, border: 1, borderColor: 'divider', borderRadius: 1 }}>
+              <Typography variant='caption' color='text.secondary'>Currency</Typography>
+              <Typography variant='body2'>{requisition.currency?.name}</Typography>
+            </Div>
           </Grid>
-          <Grid size={{xs: 12, md: 4, lg: 4}} sx={{ mt: 1, mb: 1 }}>
-            <Stack direction="row" spacing={1}>
-              <Typography sx={{ fontWeight: 'bold'}}>Cost Center:</Typography>
-              <Typography>{requisition.cost_center?.name}</Typography>
-            </Stack>
+          <Grid size={{ xs: 12, md: 4 }} sx={{ mt: 1, mb: 1 }}>
+            <Div sx={{ p: 1.25, border: 1, borderColor: 'divider', borderRadius: 1 }}>
+              <Typography variant='caption' color='text.secondary'>Cost Center</Typography>
+              <Typography variant='body2' sx={{ wordBreak: 'break-word' }}>
+                {requisition.cost_center?.name || '-'}
+              </Typography>
+            </Div>
+          </Grid>
+          <Grid size={{ xs: 12, md: 2 }} sx={{ mt: 1, mb: 1 }}>
+            <Div sx={{ p: 1.25, border: 1, borderColor: 'divider', borderRadius: 1 }}>
+              <Typography variant='caption' color='text.secondary'>Grand Total</Typography>
+              <Typography variant='body2'>
+                {Number(approvalDisplayValue || 0).toLocaleString('en-US', {
+                  style: 'currency',
+                  currency: requisition.currency?.code || 'USD',
+                })}
+              </Typography>
+            </Div>
           </Grid>
           <Grid size={{xs: 12, md: 4, lg: 4}}>
             <Div sx={{mt: 1}}>
@@ -470,6 +514,7 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
               approval={approval} 
               requisition={requisition} 
               errors={errors.ledger_items} 
+              readOnlyMode={isImprestType}
               requisitionLedgerItem={requisitionLedgerItem} 
               setRequisitionLedgerItem={setRequisitionLedgerItem} 
               handleItemChange={handleItemChange}
