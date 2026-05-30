@@ -23,12 +23,14 @@ interface ApprovedPaymentItemFormProps {
   handleItemChange: (index: number, key: string, value: any) => void;
   items: PaymentItem[];
   approvedDetails?: boolean;
+  isImprestPayment?: boolean;
 }
 
 const ApprovedPaymentItemForm: React.FC<ApprovedPaymentItemFormProps> = ({ 
   handleItemChange, 
   items, 
-  approvedDetails 
+  approvedDetails,
+  isImprestPayment = false,
 }) => {
   const filteredItems = approvedDetails
     ? items.filter(item => item.unpaid_amount > 0)
@@ -76,13 +78,14 @@ const ApprovedPaymentItemForm: React.FC<ApprovedPaymentItemFormProps> = ({
                 label="Amount"
                 fullWidth
                 size="small"
+                disabled={!isImprestPayment}
                 defaultValue={approvedDetails
                   ? item.unpaid_amount
                   : item.amount
                 }
                 onChange={(e) => {
                   const sanitizedValue = sanitizedNumber(e.target.value);
-                  handleItemChange(itemIndex, 'amount', sanitizedValue);
+                  handleItemChange(itemIndex, 'amount', Number.isFinite(sanitizedValue) ? sanitizedValue : 0);
                 }}  
                 InputProps={{
                   inputComponent: CommaSeparatedField,
@@ -103,7 +106,7 @@ const ApprovedPaymentItemForm: React.FC<ApprovedPaymentItemFormProps> = ({
               </Tooltip>
             </Div>
           </Grid>
-          {items.length > 1 &&
+          {!isImprestPayment && items.length > 1 &&
             <Grid size={{xs: 1, md: 0.5}} textAlign={'end'}>
               <Div sx={{ mt: 1, mb: 1.7 }}>
                 <Tooltip title="Remove Item">

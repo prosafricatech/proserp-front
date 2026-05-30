@@ -3,6 +3,9 @@ import { Autocomplete, Box, Checkbox, Chip, TextField } from '@mui/material';
 import React from 'react';
 import { useLedgerSelect } from './LedgerSelectProvider';
 
+const EMPTY_LEDGER_REFS: LedgerRef[] = [];
+const EMPTY_GROUPS: string[] = [];
+
 interface Ledger {
   id: number;
   name: string;
@@ -40,10 +43,10 @@ function LedgerSelect(props: LedgerSelectProps) {
     frontError = null,
     label = 'Select Ledger',
     defaultValue = null,
-    allowedGroups = [],
-    notAllowedGroups = [],
-    allowedLedgers = [],
-    notAllowedLedgers = [],
+    allowedGroups = EMPTY_GROUPS,
+    notAllowedGroups = EMPTY_GROUPS,
+    allowedLedgers = EMPTY_LEDGER_REFS,
+    notAllowedLedgers = EMPTY_LEDGER_REFS,
     value = null,
     addedLedger = null,
     multiple = false,
@@ -85,7 +88,16 @@ function LedgerSelect(props: LedgerSelectProps) {
       return true;
     });
 
-    setOptions(filtered);
+    setOptions((prev) => {
+      if (
+        prev.length === filtered.length &&
+        prev.every((ledger, index) => ledger.id === filtered[index]?.id)
+      ) {
+        return prev;
+      }
+
+      return filtered;
+    });
   }, [
     ledgerOptions,
     allowedGroups,

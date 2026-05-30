@@ -182,6 +182,11 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
 
   const handleItemChange = (index: number, key: string, value: any) => {
     let updatedItems: PaymentItem[];
+
+    // Imprest items should not be removable; only amount adjustments are allowed.
+    if (isImprestPayment && key === 'delete' && value === true) {
+      return;
+    }
   
     if (key === 'delete' && value === true) {
       updatedItems = items.filter((_, itemIndex) => itemIndex !== index);
@@ -193,11 +198,21 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
     setItems(updatedItems);
   };
 
-  const totalAmount = items.reduce((totalAmount, item) => totalAmount + item.amount, 0);
+  const totalAmount = items.reduce(
+    (runningTotal, item) => runningTotal + (Number.isFinite(Number(item.amount)) ? Number(item.amount) : 0),
+    0
+  );
 
   const savePayment = React.useMemo(() => {
     return payment ? updatePayment.mutate : addPayment.mutate;
   }, [payment, updatePayment, addPayment]);
+
+  const isImprestPayment = approvedRequisition?.process_type === 'IMPREST'
+    || approvedDetails?.process_type === 'IMPREST';
+
+  const formTitle = payment
+    ? (isImprestPayment ? 'Edit Imprest Payment' : 'Edit Payment')
+    : (isImprestPayment ? 'New Approved Imprest Payment Form' : 'New Approved Payment Form');
 
   const handleSubmitForm = async (data: FormValues) => {
     const updatedData = { 
@@ -205,7 +220,7 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
       items: items.filter(item => item.unpaid_amount > 0).map(item => ({
         debit_ledger_id: item.debit_ledger_id,
         requisition_approval_ledger_item_id: item.requisition_approval_ledger_item_id,
-        amount: item.amount,
+        amount: Number.isFinite(Number(item.amount)) ? Number(item.amount) : 0,
         description: item.remarks || item.description
       }))
     };
@@ -215,7 +230,7 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
   return (
     <>
       <DialogTitle textAlign={'center'}>
-        {payment ? `Edit Payment` : `New Approved Payment Form`}
+        {formTitle}
       </DialogTitle>
       <DialogContent>
         <form autoComplete='off'>
@@ -336,6 +351,7 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
             approvedDetails={approvedDetails} 
             items={items} 
             handleItemChange={handleItemChange}
+            isImprestPayment={isImprestPayment}
           />
 
           <Divider />

@@ -2621,6 +2621,51 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../../src/app/api/imprest-retirement-approvals/[id]/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/imprest-retirement-approvals/[id]">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/imprest-retirement-approvals/[id]/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../../src/app/api/imprest-retirement-approvals/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/imprest-retirement-approvals">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/imprest-retirement-approvals/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../../src/app/api/imprest-retirements/[id]/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/imprest-retirements/[id]">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/imprest-retirements/[id]/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../../src/app/api/imprest-retirements/[id]/submit/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/imprest-retirements/[id]/submit">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/imprest-retirements/[id]/submit/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../../src/app/api/imprest-retirements/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/imprest-retirements">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/imprest-retirements/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../../src/app/api/inventoryConsumptions/[id]/delete/route.ts
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/inventoryConsumptions/[id]/delete">> = Specific

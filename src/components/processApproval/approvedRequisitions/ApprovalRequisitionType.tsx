@@ -61,7 +61,7 @@ export interface BaseApprovalRequisition {
   approval_date: string;
   creator: User;
   currency: Currency;
-  process_type: "PURCHASE" | "PAYMENT" | "LEAVE_REQUEST" | "IMPREST";
+  process_type: "PURCHASE" | "PAYMENT" | "IMPREST";
   remarks: string | null;
   status_label?: string;
   requisition: RequisitionSummary;
@@ -81,11 +81,7 @@ export interface PurchaseApprovalRequisition extends BaseApprovalRequisition {
   purchase_orders_count: number;
 }
 
-export interface LeaveApprovalRequisition extends BaseApprovalRequisition {
-  process_type: "LEAVE_REQUEST";
-}
-
-export type ApprovalRequisition = PaymentApprovalRequisition | PurchaseApprovalRequisition | LeaveApprovalRequisition;
+export type ApprovalRequisition = PaymentApprovalRequisition | PurchaseApprovalRequisition;
 export type ApprovalRequisitionList = ApprovalRequisition[];
 
 export type RequisitionProcessType = BaseApprovalRequisition['process_type'];

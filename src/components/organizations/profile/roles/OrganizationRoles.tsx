@@ -101,6 +101,7 @@ const PERMISSION_MODULES: PermissionModuleConfig[] = [
       'Approvals',
       'ApprovalChains',
       'ApprovedRequisitions',
+      'ImprestRetirement',
       'Requisitions',
       'RequisitionApprovals',
     ],
@@ -635,7 +636,7 @@ const OrganizationRoles = () => {
   };
 
   if (isLoadingRoles || isLoadingPermissions || isFetchingRoles) {
-        return (
+    return (
       <div style={{ width: '100%', padding: '16px' }}>
         <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
         <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
