@@ -22,11 +22,11 @@ const WBSActionTail = ({ openDialog, setOpenDialog, group }) => {
         </Dialog>
   
         <ButtonGroup variant="outlined" size="small" disableElevation sx={{ '& .MuiButton-root': { px: 1 } }}>
-          <Tooltip title={"Clone WBS From Another Project"}>
+          {/* <Tooltip title={"Clone WBS From Another Project"}>
             <IconButton onClick={() => setOpenCloneDialog(true)}>
               <CloudDownloadOutlined />
             </IconButton>
-          </Tooltip>
+          </Tooltip> */}
           <Tooltip title={"New Timeline Activity"}>
             <IconButton onClick={() => setOpenDialog(true)}>
               <PlaylistAdd />

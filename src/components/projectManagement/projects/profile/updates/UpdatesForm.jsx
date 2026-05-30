@@ -3,6 +3,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  LinearProgress,
   Tab,
   Tabs,
   Typography
@@ -33,9 +34,19 @@ function UpdatesForm({ setOpenDialog, update, setIsUpdateFormOpen = () => {} }) 
   const { project } = useProjectProfile();
   const queryClient = useQueryClient();
 
+  const parseDescription = (rawDescription) => {
+    if (!rawDescription) return null;
+    try {
+      const parsed = JSON.parse(rawDescription);
+      return Array.isArray(parsed) ? parsed[0] : null;
+    } catch {
+      return null;
+    }
+  };
+
   const [activeTab, setActiveTab] = useState(0);
   const [descriptionContent, setDescriptionContent] = useState(
-    update ? JSON.parse(update.description)[0] : null
+    update ? parseDescription(update.description) : null
   );
 
   const [taskProgressItems, setTaskProgressItems] = useState(
@@ -47,17 +58,9 @@ function UpdatesForm({ setOpenDialog, update, setIsUpdateFormOpen = () => {} }) 
       : []
   );
   const [removedTaskProgressItems, setRemovedTaskProgressItems] = useState([]);
-
-  const [isSaving, setIsSaving] = useState(false);
+  const [isHydratingEditData, setIsHydratingEditData] = useState(false);
 
   const formIdRef = useRef(update?.id || null);
-  const isAutoSavingRef = useRef(false);
-  const hasPendingAutoSaveRef = useRef(false);
-  const lastChangeAtRef = useRef(null);
-  const lastSnapshotRef = useRef(null);
-
-  const AUTO_SAVE_INTERVAL = 1 * 60 * 1000;
-  const AUTO_SAVE_TICK = 1000;
 
   const addMutation = useMutation({
     mutationFn: projectsServices.addProjectUpdates,
@@ -73,11 +76,12 @@ function UpdatesForm({ setOpenDialog, update, setIsUpdateFormOpen = () => {} }) 
     mutationFn: projectsServices.updateProjectUpdates,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projectUpdates'] });
+      queryClient.invalidateQueries({ queryKey: ['editProjectUpdate'] });
     }
   });
 
   const validationSchema = yup.object({
-    update_date: yup.date().required()
+    update_date: yup.date().required('Update date is required')
   });
 
   const { handleSubmit } = useForm({
@@ -89,77 +93,7 @@ function UpdatesForm({ setOpenDialog, update, setIsUpdateFormOpen = () => {} }) 
     }
   });
 
-  const buildSnapshot = () =>
-    JSON.stringify({
-      descriptionContent,
-      taskProgressItems
-    });
-
-  useEffect(() => {
-    const snapshot = buildSnapshot();
-
-    if (lastSnapshotRef.current === null) {
-      lastSnapshotRef.current = snapshot;
-      return;
-    }
-
-    if (snapshot !== lastSnapshotRef.current) {
-      lastSnapshotRef.current = snapshot;
-
-      if (!hasPendingAutoSaveRef.current) {
-        hasPendingAutoSaveRef.current = true;
-        lastChangeAtRef.current = Date.now();
-      }
-    }
-  }, [descriptionContent, taskProgressItems]);
-
-  useEffect(() => {
-    const interval = setInterval(async () => {
-      if (!hasPendingAutoSaveRef.current) return;
-      if (!lastChangeAtRef.current) return;
-      if (isAutoSavingRef.current) return;
-
-      const elapsed = Date.now() - lastChangeAtRef.current;
-      if (elapsed < AUTO_SAVE_INTERVAL) return;
-
-      isAutoSavingRef.current = true;
-      setIsSaving(true);
-
-      try {
-        const payload = {
-          id: formIdRef.current,
-          project_id: project.id,
-          description: [descriptionContent],
-          tasks_executions: taskProgressItems,
-          update_date: dayjs()
-        };
-
-        if (!formIdRef.current) {
-          const response = await projectsServices.addProjectUpdates(payload);
-          if (response?.id) {
-            formIdRef.current = response.id;
-          }
-          queryClient.invalidateQueries({ queryKey: ['projectUpdates'] });
-        } else {
-          await projectsServices.updateProjectUpdates(payload);
-          queryClient.invalidateQueries({ queryKey: ['projectUpdates'] });
-        }
-      } finally {
-        isAutoSavingRef.current = false;
-        setIsSaving(false);
-        hasPendingAutoSaveRef.current = false;
-        lastChangeAtRef.current = null;
-      }
-    }, AUTO_SAVE_TICK);
-
-    return () => clearInterval(interval);
-  }, [descriptionContent, taskProgressItems, project.id]);
-
   const onSubmit = () => {
-    hasPendingAutoSaveRef.current = false;
-    lastChangeAtRef.current = null;
-    isAutoSavingRef.current = false;
-
     const payload = {
       id: formIdRef.current,
       project_id: project.id,
@@ -182,6 +116,33 @@ function UpdatesForm({ setOpenDialog, update, setIsUpdateFormOpen = () => {} }) 
     return () => setIsUpdateFormOpen(false);
   }, []);
 
+  useEffect(() => {
+    if (!update) {
+      setDescriptionContent(null);
+      setTaskProgressItems([]);
+      formIdRef.current = null;
+      setIsHydratingEditData(false);
+      return;
+    }
+
+    if (!update.description && !update.task_executions) {
+      setIsHydratingEditData(true);
+      return;
+    }
+
+    setDescriptionContent(parseDescription(update.description));
+    setTaskProgressItems(
+      update?.task_executions
+        ? update.task_executions.map(te => ({
+            ...te,
+            project_task_id: te.task?.id,
+          }))
+        : []
+    );
+    formIdRef.current = update?.id || null;
+    setIsHydratingEditData(false);
+  }, [update]);
+
   return (
     <UpdateFormContext.Provider
       value={{
@@ -196,12 +157,6 @@ function UpdatesForm({ setOpenDialog, update, setIsUpdateFormOpen = () => {} }) 
         {update ? "Edit Project Update" : "New Project Update"}
       </Typography>
 
-      {isSaving && (
-        <Typography textAlign="center" color="primary">
-          Saving...
-        </Typography>
-      )}
-
       <DialogTitle>
         <Tabs value={activeTab} onChange={(e, v) => setActiveTab(v)}>
           <Tab label="Description" />
@@ -209,27 +164,27 @@ function UpdatesForm({ setOpenDialog, update, setIsUpdateFormOpen = () => {} }) 
         </Tabs>
       </DialogTitle>
 
+      {isHydratingEditData && <LinearProgress />}
+
       <DialogContent>
-        {activeTab === 0 && (
+        <div style={{ display: activeTab === 0 ? 'block' : 'none' }}>
           <DescriptionTab
             descriptionContent={descriptionContent}
             setDescriptionContent={setDescriptionContent}
             update={update}
           />
-        )}
+        </div>
 
-        {activeTab === 1 && (
-          <>
-            <TaskProgress update={update} />
-            {taskProgressItems.map((item, index) => (
-              <TaskProgressRow
-                key={index}
-                index={index}
-                taskProgressItem={item}
-              />
-            ))}
-          </>
-        )}
+        <div style={{ display: activeTab === 1 ? 'block' : 'none' }}>
+          <TaskProgress update={update} />
+          {taskProgressItems.map((item, index) => (
+            <TaskProgressRow
+              key={index}
+              index={index}
+              taskProgressItem={item}
+            />
+          ))}
+        </div>
       </DialogContent>
 
       <DialogActions>

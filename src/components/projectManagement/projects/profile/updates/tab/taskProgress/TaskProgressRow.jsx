@@ -205,6 +205,8 @@ function TaskProgressRow({ taskProgressItem, index }) {
             <MaterialIssuedRow
               key={materialIndex}
               index={materialIndex}
+              projectTaskIndex={index}
+              taskProgressItem={taskProgressItem}
               material={material}
               MaterialIssued={MaterialIssued}
               setMaterialIssued={setMaterialIssued}

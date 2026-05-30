@@ -27,65 +27,30 @@ function MaterialIssuedForm({projectTaskIndex, taskProgressItem, material = null
       .required('Product is required')
       .typeError('Product is required'),
 
-    quantity: yup
-      .number()
-      .transform((value) =>
-        isNaN(value) || value === null || value === '' ? undefined : value
-      )
-      .required('Quantity is required')
-      .typeError('Quantity must be a number')
-      .test(
-        'positive-check',
-        'Quantity must be greater than 0',
-        function (value) {
-          if (value === undefined || value === null) {
-            return false;
+      quantity: yup.number()
+        .required("Quantity is required")
+        .positive("Quantity must be positive")
+        .typeError('Quantity is required')
+        .test(
+          'balance-check',
+          'Quantity exceeds available balance',
+          function (value) {
+            const availableBalance = this.parent.available_balance;
+            return availableBalance === 'N/A' || !value || value <= availableBalance;
           }
-          return value > 0;
-        }
-      )
-      .test(
-        'inventory-balance-check',
-        'Quantity exceeds available balance',
-        function (value) {
-          const { product, available_balance } = this.parent;
-
-          // no product or not inventory → skip balance validation
-          if (!product || product.type !== 'Inventory') {
-            return true;
+        )
+        .test(
+          'negative-balance-check',
+          'This quantity will lead to negative balance',
+          function (value) {
+            const currentBalance = this.parent.current_balance;
+            const availableBalance = this.parent.available_balance;
+            if (currentBalance >= availableBalance) return true;
+            return !value || value <= currentBalance;
           }
-
-          const available = Number(available_balance);
-
-          // still loading or invalid balance
-          if (isNaN(available)) {
-            return true;
-          }
-
-          return value <= available;
-        }
-      )
-      .test(
-        'inventory-negative-check',
-        'This quantity will lead to negative stock balance',
-        function (value) {
-          const { product, current_balance } = this.parent;
-
-          if (!product || product.type !== 'Inventory') {
-            return true;
-          }
-
-          const current = Number(current_balance);
-
-          if (isNaN(current)) {
-            return true;
-          }
-
-          return value <= current;
-        }
-      ),
+        )
   });
-
+  
   const {setValue, handleSubmit, register, watch, clearErrors, reset, formState: {errors}} = useForm({
     resolver: yupResolver(validationSchema),
     defaultValues: {
@@ -109,18 +74,24 @@ function MaterialIssuedForm({projectTaskIndex, taskProgressItem, material = null
   const measurement_unit_id = watch('measurement_unit_id');
   const store_id = watch('store_id');
   const store = watch('store');
+  const quantity = watch('quantity');
 
   const [isAdding, setIsAdding] = useState(false);
   
   const updateItems = async (item) => {
     setIsAdding(true);
+    const normalizedItem = {
+      ...item,
+      execution_date: item?.execution_date || taskProgressItem?.execution_date || material?.execution_date,
+      projectTaskIndex: projectTaskIndex ?? material?.projectTaskIndex,
+    };
     
     if (index > -1) {
       let updatedItems = [...MaterialIssued];
-      updatedItems[index] = item;
+      updatedItems[index] = normalizedItem;
       await setMaterialIssued(updatedItems);
     } else {
-      await setMaterialIssued((items) => [...items, item]);
+      await setMaterialIssued((items) => [...items, normalizedItem]);
     }
   
     reset();
@@ -146,6 +117,58 @@ function MaterialIssuedForm({projectTaskIndex, taskProgressItem, material = null
       setIsRetrieving(true);
   
       try {
+        const currentQuantity = material
+          ? (parseFloat(quantity) || parseFloat(material?.quantity) || 0)
+          : 0;
+        const pickedUnit = combinedUnits?.find(unit => unit.id === measurement_unit_id);
+
+        // Build a stable snapshot so current task uses the latest local rows before context sync completes.
+        const taskProgressSnapshot = (taskProgressItems || []).map((taskItem, taskIndex) => {
+          if (taskIndex === projectTaskIndex) {
+            return { ...taskItem, material_used: MaterialIssued || [] };
+          }
+          return taskItem;
+        });
+
+        const allIssuedWithMeta = taskProgressSnapshot.flatMap((taskItem, taskIndex) => {
+          return (taskItem?.material_used || []).map((existingItem, itemIndex) => ({
+            ...existingItem,
+            __taskIndex: taskIndex,
+            __itemIndex: itemIndex,
+          }));
+        });
+
+        const existingItems = allIssuedWithMeta.filter((existingItem) => {
+          const sameStoreAndProduct = existingItem?.store?.id === storeId && existingItem?.product?.id === product?.id;
+          if (!sameStoreAndProduct) return false;
+
+          // Persisted rows are already reflected by backend stock movements.
+          if (existingItem?.id) return false;
+
+          if (material?.id) {
+            return existingItem?.id !== material.id;
+          }
+
+          if (index > -1) {
+            const isCurrentEditingRow = existingItem.__taskIndex === projectTaskIndex && existingItem.__itemIndex === index;
+            return !isCurrentEditingRow;
+          }
+
+          return true;
+        });
+
+        const existingQuantity = existingItems.reduce((total, existingItem) => {
+          const itemUnitFactor = combinedUnits.find(unit => unit.id === existingItem?.measurement_unit_id)?.conversion_factor || 1;
+          const pickedUnitFactor = pickedUnit?.conversion_factor || 1;
+          const primaryUnitId = product?.primary_unit?.id;
+
+          const conversionFactor = pickedUnit?.id === primaryUnitId
+            ? (existingItem?.measurement_unit_id !== primaryUnitId ? 1 / itemUnitFactor : 1)
+            : (existingItem?.measurement_unit_id === primaryUnitId ? pickedUnitFactor : pickedUnitFactor / itemUnitFactor);
+
+          return total + ((parseFloat(existingItem?.quantity) || 0) * conversionFactor);
+        }, 0);
+
         const balances = await productServices.getStoreBalances({
           as_at: taskProgressItem?.execution_date || material?.execution_date,
           productId: product.id,
@@ -153,40 +176,17 @@ function MaterialIssuedForm({projectTaskIndex, taskProgressItem, material = null
           costCenterId: project?.cost_center?.id,
           measurement_unit_id: measurement_unit_id
         });
-  
-        if (balances) {
-          const pickedUnit = combinedUnits?.find(unit => unit.id === measurement_unit_id);
-          const allMaterialIssued = taskProgressItems?.flatMap(task => task.material_used) || [];
 
-          const existingItems = allMaterialIssued?.filter((existingItem, itemIndex) => {
-            return existingItem?.store?.id === storeId 
-              && existingItem?.product?.id === product?.id 
-              && itemIndex !== index
-          });
+        const storeBalance = balances?.stock_balances?.find((balanceItem) => {
+          return balanceItem.cost_center_id === project?.cost_center?.id;
+        }) || balances?.stock_balances?.[0];
 
-          const existingQuantity = existingItems.reduce((total, existingItem) => {
-            const itemUnitFactor = combinedUnits.find(unit => unit.id === existingItem?.measurement_unit_id)?.conversion_factor || 1;
-            const pickedUnitFactor = pickedUnit?.conversion_factor || 1;
-            const primaryUnitId = product?.primary_unit?.id;
-  
-            const conversionFactor = pickedUnit?.id === primaryUnitId
-              ? (existingItem?.measurement_unit_id !== primaryUnitId ? 1 / itemUnitFactor : 1)
-              : (existingItem?.measurement_unit_id === primaryUnitId ? pickedUnitFactor : pickedUnitFactor / itemUnitFactor);
-  
-            return total + (existingItem.quantity * conversionFactor);
-          }, 0);
-  
-          const balance = balances?.stock_balances?.find(storeBalance => storeBalance.cost_center_id === project?.cost_center?.id)?.balance;
-          const currentBalance = balances?.stock_balances?.find(storeBalance => storeBalance.cost_center_id === project?.cost_center?.id)?.current_balance;
-  
-          const updatedBalance = parseFloat((balance - existingQuantity).toFixed(6));
-  
-          setValue(`available_balance`, !balance ? 0 : updatedBalance);
-          setValue(`current_balance`, !balance
-            ? 0
-            : parseFloat(currentBalance) + parseFloat(material ? material.quantity : 0 || existingQuantity) || 0);
-  
-        }
+        const availableBalance = storeBalance?.current_balance || 0;
+        const current_balance = storeBalance?.current_balance || 0;
+        const editableQuantity = material?.id ? (parseFloat(currentQuantity) || 0) : 0;
+
+        await setValue(`available_balance`, (availableBalance + editableQuantity) - existingQuantity);
+        await setValue(`current_balance`, parseFloat(current_balance) + parseFloat(currentQuantity || 0));
       } catch (error) {
         console.error('Error retrieving balances:', error);
       } finally {
@@ -200,7 +200,7 @@ function MaterialIssuedForm({projectTaskIndex, taskProgressItem, material = null
 
   useEffect(() => {
     retrieveBalances(store_id, product, measurement_unit_id)
-  }, [store_id, product, measurement_unit_id, material]);
+  }, [store_id, product, measurement_unit_id, material, taskProgressItems, MaterialIssued, projectTaskIndex, index, quantity]);
   
   if(isAdding){
     return <LinearProgress/>
@@ -227,6 +227,8 @@ function MaterialIssuedForm({projectTaskIndex, taskProgressItem, material = null
                 await setValue('unit_symbol', newValue.primary_unit?.unit_symbol);
                 await setValue(`product_id`,newValue.id);
                 setValue(`projectTaskIndex`, projectTaskIndex)
+
+                await setValue(`new_added`, true);
 
                 // Auto-select store if available from project_subcontract
                 let selectedStoreId = store_id;

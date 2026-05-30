@@ -150,6 +150,7 @@ function TaskProgress({ taskProgressItem = null, index = -1, setShowForm = null 
 
   const {
     setValue,
+    trigger,
     handleSubmit,
     watch,
     getValues,
@@ -200,15 +201,15 @@ function TaskProgress({ taskProgressItem = null, index = -1, setShowForm = null 
     setIsRetrievingDetails(false);
   };
 
-  // Revalidate quantity_executed when project_subcontract or project_task_id changes
+  const selectedProjectSubcontract = watch('project_subcontract');
+  const selectedProjectTaskId = watch('project_task_id');
+  const quantityExecuted = watch('quantity_executed');
+
   useEffect(() => {
-    if (watch('quantity_executed') !== undefined) {
-      setValue('quantity_executed', watch('quantity_executed'), {
-        shouldValidate: true,
-        shouldDirty: true,
-      });
+    if (quantityExecuted !== undefined && quantityExecuted !== null) {
+      trigger('quantity_executed');
     }
-  }, [watch('project_subcontract'), watch('project_task_id')]);
+  }, [selectedProjectSubcontract, selectedProjectTaskId, quantityExecuted, trigger]);
 
   useEffect(() => {
     if (taskProgressItem?.task?.id) {
@@ -222,12 +223,19 @@ function TaskProgress({ taskProgressItem = null, index = -1, setShowForm = null 
       ...getTaskOptions(activity.children || []),
     ]);
 
-  const allTasks = getTaskOptions(projectTimelineActivities);
+  const allTasks = useMemo(
+    () => getTaskOptions(projectTimelineActivities),
+    [projectTimelineActivities]
+  );
 
   const { data: subcontractOptions, isLoading } = useQuery({
     queryKey: ['subcontractOptions', project?.id],
     queryFn: () => projectsServices.getSubcontractOptions(project.id),
     enabled: !!project?.id,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 
   // When editing an existing item, replace lightweight project_subcontract
@@ -245,7 +253,7 @@ function TaskProgress({ taskProgressItem = null, index = -1, setShowForm = null 
     }
   }, [taskProgressItem?.project_subcontract_id, subcontractOptions, getValues, setValue]);
 
-  const selectedSubcontract = watch('project_subcontract');
+  const selectedSubcontract = selectedProjectSubcontract;
 
   const filteredTasks = useMemo(() => {
     if (!selectedSubcontract) return allTasks;
@@ -255,7 +263,7 @@ function TaskProgress({ taskProgressItem = null, index = -1, setShowForm = null 
     return allTasks.filter((t) => allowedIds.includes(t.id));
   }, [selectedSubcontract, allTasks]);
 
-  if (isAdding || isLoading) 
+  if (isAdding || (isLoading && !subcontractOptions?.length)) 
   return (
     <div style={{ width: '100%', padding: '16px' }}>
       <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />

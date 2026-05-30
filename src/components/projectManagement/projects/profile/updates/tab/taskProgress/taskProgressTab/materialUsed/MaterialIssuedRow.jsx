@@ -3,7 +3,7 @@ import { Divider, Grid, IconButton, Tooltip, Typography } from '@mui/material'
 import React, { useState } from 'react'
 import MaterialIssuedForm from './MaterialIssuedForm';
 
-function MaterialIssuedRow({ material, index, MaterialIssued=[], setMaterialIssued}) {
+function MaterialIssuedRow({ material, index, projectTaskIndex, taskProgressItem, MaterialIssued=[], setMaterialIssued}) {
     const product = material.product;
     const [showForm, setShowForm] = useState(false);
 
@@ -65,7 +65,15 @@ function MaterialIssuedRow({ material, index, MaterialIssued=[], setMaterialIssu
                         </Grid>
                     </Grid>
                 ) : (
-                    <MaterialIssuedForm material={material} setShowForm={setShowForm} index={index} MaterialIssued={MaterialIssued} setMaterialIssued={setMaterialIssued}/>
+                    <MaterialIssuedForm
+                        material={material}
+                        projectTaskIndex={projectTaskIndex}
+                        taskProgressItem={taskProgressItem}
+                        setShowForm={setShowForm}
+                        index={index}
+                        MaterialIssued={MaterialIssued}
+                        setMaterialIssued={setMaterialIssued}
+                    />
                 )
             }
         </React.Fragment>

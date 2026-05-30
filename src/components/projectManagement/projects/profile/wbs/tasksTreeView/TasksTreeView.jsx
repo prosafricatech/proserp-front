@@ -3,6 +3,11 @@
 import React, { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import Highcharts from "highcharts";
+import treemapModule from "highcharts/modules/treemap";
+import treegraphModule from "highcharts/modules/treegraph";
+import exportingModule from "highcharts/modules/exporting";
+import exportDataModule from "highcharts/modules/export-data";
+import offlineExportingModule from "highcharts/modules/offline-exporting";
 import { Button, DialogActions, DialogContent, DialogTitle, IconButton, Tooltip } from "@mui/material";
 import { HighlightOff } from "@mui/icons-material";
 import { useProjectProfile } from "../../ProjectProfileProvider";
@@ -20,33 +25,23 @@ function TasksTreeView({ setOpenTasksTreeView }) {
   useEffect(() => {
     let mounted = true;
 
-    const initModule = (mod) => {
-      const fn = mod && (mod.default ?? mod);
-      if (typeof fn === "function") {
-        try {
-          fn(Highcharts);
-          return true;
-        } catch (err) {
-          console.warn("Highcharts module initializer threw:", err);
-          return false;
-        }
-      } else {
-        console.warn("Highcharts module is not a function:", mod);
-        return false;
+    const applyModule = (mod) => {
+      const init = mod && (mod.default ?? mod);
+      if (typeof init === "function") {
+        init(Highcharts);
       }
     };
 
     async function load() {
       try {
-        const modules = await Promise.all([
-          import("highcharts/modules/treemap"),
-          import("highcharts/modules/treegraph"),
-          import("highcharts/modules/exporting"),
-          import("highcharts/modules/export-data"),
-          import("highcharts/modules/offline-exporting"),
-        ]);
+        window.Highcharts = window.Highcharts || Highcharts;
+        window._Highcharts = window._Highcharts || Highcharts;
 
-        modules.forEach(initModule);
+        applyModule(treemapModule);
+        applyModule(treegraphModule);
+        applyModule(exportingModule);
+        applyModule(exportDataModule);
+        applyModule(offlineExportingModule);
       } catch (err) {
         console.error("Failed to load Highcharts modules:", err);
       } finally {

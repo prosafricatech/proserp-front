@@ -357,7 +357,7 @@ function BudgetsAccordionDetails({ budget, expanded }) {
   });
 
   const getPercentageColor = (percentage) => {
-    return percentage === Infinity ? 'error' : 'primary';
+    return percentage === Infinity || percentage >= 100 ? 'error' : 'primary';
   };
 
   const filteredExpenses = budgetItemsDetails?.expenses_budgeted?.filter(
@@ -668,14 +668,16 @@ function BudgetsAccordionDetails({ budget, expanded }) {
                             sx={{
                               height: 15,
                               borderRadius: 5,
-                              ...(percentageSpent === Infinity && {
+                              ...(percentageSpent === Infinity || percentageSpent >= 100
+                                ? {
                                 backgroundColor: (theme) =>
                                   theme.palette.error.main,
                                 '& .MuiLinearProgress-bar': {
                                   backgroundColor: (theme) =>
                                     theme.palette.error.main,
                                 },
-                              }),
+                              }
+                                : {}),
                             }}
                           />
                         </Box>
