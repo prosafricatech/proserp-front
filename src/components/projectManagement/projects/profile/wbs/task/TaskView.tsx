@@ -155,7 +155,7 @@ const TaskView = ({ setOpenDialog, task, activity }: TaskViewProps) => {
         'Product Name',
         'Quantity',
         'Budgeted Quantity',
-        'Balance',
+        'Budget Balance',
       ]);
 
   return (
