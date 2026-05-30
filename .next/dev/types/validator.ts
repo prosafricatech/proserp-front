@@ -920,6 +920,15 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../../src/app/api/accountsAndFinance/my-ledgers/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/accountsAndFinance/my-ledgers">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/accountsAndFinance/my-ledgers/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../../src/app/api/accountsAndFinance/transactions/[type]/[id]/deleteSaleInvoiceAdjustment/route.ts
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/accountsAndFinance/transactions/[type]/[id]/deleteSaleInvoiceAdjustment">> = Specific
@@ -1095,6 +1104,33 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/accountsAndFinance/transactions/transfers/add">> = Specific
   const handler = {} as typeof import("../../../src/app/api/accountsAndFinance/transactions/transfers/add/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../../src/app/api/accountsAndFinance/user-ledgers/[id]/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/accountsAndFinance/user-ledgers/[id]">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/accountsAndFinance/user-ledgers/[id]/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../../src/app/api/accountsAndFinance/user-ledgers/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/accountsAndFinance/user-ledgers">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/accountsAndFinance/user-ledgers/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../../src/app/api/accountsAndFinance/users/[id]/ledgers/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/accountsAndFinance/users/[id]/ledgers">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/accountsAndFinance/users/[id]/ledgers/route.js")
   type __Check = __IsExpected<typeof handler>
   // @ts-ignore
   type __Unused = __Check
