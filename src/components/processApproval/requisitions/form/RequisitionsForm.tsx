@@ -156,7 +156,9 @@ function RequisitionsForm({
   const [requisition_ledger_items, setRequisition_ledger_items] = useState<
     RequisitionItem[]
   >(
-    requisition?.approval_chain?.process_type?.toUpperCase() === 'PAYMENT'
+    ['PAYMENT', 'IMPREST'].includes(
+      String(requisition?.approval_chain?.process_type || '').toUpperCase()
+    )
       ? requisition?.items?.map((item) => ({
           ...item,
           ledger_id: item.ledger?.id,
