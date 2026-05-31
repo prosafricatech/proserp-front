@@ -73,6 +73,45 @@ const EMPTY_ITEM: RetirementItem = {
   description: '',
 };
 
+const ReadOnlyField = ({
+  label,
+  value,
+}: {
+  label: string;
+  value: React.ReactNode;
+}) => {
+  return (
+    <Div
+      sx={(theme) => ({
+        border: 1,
+        borderColor:
+          theme.type === 'dark' ? 'rgba(255,255,255,0.2)' : 'divider',
+        borderRadius: 1,
+        px: 1.25,
+        py: 1,
+        height: '100%',
+        bgcolor:
+          theme.type === 'dark' ? 'rgba(255,255,255,0.06)' : 'grey.50',
+        boxShadow:
+          theme.type === 'dark'
+            ? 'inset 0 1px 0 rgba(255,255,255,0.08)'
+            : 'none',
+      })}
+    >
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        sx={{ display: 'block', mb: 0.5, opacity: 0.95 }}
+      >
+        {label}
+      </Typography>
+      <Typography variant="body2" color="text.primary" sx={{ fontWeight: 500 }}>
+        {value || '-'}
+      </Typography>
+    </Div>
+  );
+};
+
 function ImprestRetirementForm({
   toggleOpen,
   approvedRequisition,
@@ -211,6 +250,12 @@ function ImprestRetirementForm({
 
   const statusRaw = String(statusLabel || '').toLowerCase();
   const isLocked = reviewMode || statusRaw.includes('approved') || statusRaw.includes('pending');
+  const useReadOnlyDisplay = reviewMode;
+  const selectedLedgerName =
+    myImprestLedgers.find((option) => option.id === ledgerId)?.name ||
+    existingRetirement?.ledger?.name ||
+    (ledgerId ? `Ledger #${ledgerId}` : '-');
+  const formattedRetirementDate = retirementDate ? retirementDate.format('DD/MM/YYYY') : '-';
 
   const addRetirement = useMutation({
     mutationFn: imprestRetirementServices.add,
@@ -364,56 +409,78 @@ function ImprestRetirementForm({
               })}
             </Typography>
           </Grid>
-          <Grid size={{ xs: 12, md: 4 }}>
-            <Autocomplete
-              options={myImprestLedgers}
-              disabled={isLocked}
-              getOptionLabel={(option) => option.name}
-              value={myImprestLedgers.find((option) => option.id === ledgerId) || null}
-              isOptionEqualToValue={(option, value) => option.id === value.id}
-              onChange={(_e, newValue) => {
-                setLedgerId(newValue?.id || null);
-              }}
-              renderInput={(params) => (
-                <TextField {...params} size="small" label="Imprest Ledger" fullWidth />
-              )}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, md: 4 }}>
-            <DatePicker
-              label="Retirement Date"
-              disabled={isLocked}
-              value={retirementDate}
-              onChange={(value: Dayjs | null) => setRetirementDate(value)}
-              slotProps={{
-                textField: {
-                  size: 'small',
-                  fullWidth: true,
-                },
-              }}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, md: 4 }}>
-            <TextField
-              size="small"
-              fullWidth
-              label="Reference Requisition"
-              disabled
-              value={approvedRequisition?.requisition?.requisitionNo || ''}
-            />
-          </Grid>
-          <Grid size={{ xs: 12 }}>
-            <TextField
-              size="small"
-              fullWidth
-              multiline
-              minRows={2}
-              disabled={isLocked}
-              label="Remarks"
-              value={remarks}
-              onChange={(e) => setRemarks(e.target.value)}
-            />
-          </Grid>
+          {useReadOnlyDisplay ? (
+            <>
+              <Grid size={{ xs: 12, md: 4 }}>
+                <ReadOnlyField label="Imprest Ledger" value={selectedLedgerName} />
+              </Grid>
+              <Grid size={{ xs: 12, md: 4 }}>
+                <ReadOnlyField label="Retirement Date" value={formattedRetirementDate} />
+              </Grid>
+              <Grid size={{ xs: 12, md: 4 }}>
+                <ReadOnlyField
+                  label="Reference Requisition"
+                  value={approvedRequisition?.requisition?.requisitionNo || '-'}
+                />
+              </Grid>
+              <Grid size={{ xs: 12 }}>
+                <ReadOnlyField label="Remarks" value={remarks || '-'} />
+              </Grid>
+            </>
+          ) : (
+            <>
+              <Grid size={{ xs: 12, md: 4 }}>
+                <Autocomplete
+                  options={myImprestLedgers}
+                  disabled={isLocked}
+                  getOptionLabel={(option) => option.name}
+                  value={myImprestLedgers.find((option) => option.id === ledgerId) || null}
+                  isOptionEqualToValue={(option, value) => option.id === value.id}
+                  onChange={(_e, newValue) => {
+                    setLedgerId(newValue?.id || null);
+                  }}
+                  renderInput={(params) => (
+                    <TextField {...params} size="small" label="Imprest Ledger" fullWidth />
+                  )}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 4 }}>
+                <DatePicker
+                  label="Retirement Date"
+                  disabled={isLocked}
+                  value={retirementDate}
+                  onChange={(value: Dayjs | null) => setRetirementDate(value)}
+                  slotProps={{
+                    textField: {
+                      size: 'small',
+                      fullWidth: true,
+                    },
+                  }}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 4 }}>
+                <TextField
+                  size="small"
+                  fullWidth
+                  label="Reference Requisition"
+                  disabled
+                  value={approvedRequisition?.requisition?.requisitionNo || ''}
+                />
+              </Grid>
+              <Grid size={{ xs: 12 }}>
+                <TextField
+                  size="small"
+                  fullWidth
+                  multiline
+                  minRows={2}
+                  disabled={isLocked}
+                  label="Remarks"
+                  value={remarks}
+                  onChange={(e) => setRemarks(e.target.value)}
+                />
+              </Grid>
+            </>
+          )}
         </Grid>
 
         <Divider sx={{ mb: 1.5 }} />
@@ -423,52 +490,80 @@ function ImprestRetirementForm({
             <Grid size={{ xs: 12, md: 0.5 }}>
               <Typography variant="body2">{index + 1}.</Typography>
             </Grid>
-            <Grid size={{ xs: 12, md: 4.5 }}>
-              <LedgerSelect
-                label="Expense Ledger"
-                defaultValue={item.ledger_id ? ({ id: item.ledger_id, name: item.ledger?.name || '' } as any) : null}
-                onChange={(newValue: any) => {
-                  const singleValue = Array.isArray(newValue) ? newValue[0] : newValue;
-                  updateItem(index, {
-                    ledger_id: Number(singleValue?.id || 0) || null,
-                    ledger: singleValue,
-                  });
-                }}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, md: 2.5 }}>
-              <TextField
-                size="small"
-                fullWidth
-                disabled={isLocked}
-                label="Amount"
-                value={item.amount ?? 0}
-                InputProps={{ inputComponent: CommaSeparatedField as any }}
-                onChange={(e) => {
-                  const amount = sanitizedNumber(e.target.value);
-                  updateItem(index, { amount: Number.isFinite(amount) ? amount : 0 });
-                }}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <TextField
-                size="small"
-                fullWidth
-                disabled={isLocked}
-                label="Description"
-                value={item.description || ''}
-                onChange={(e) => updateItem(index, { description: e.target.value })}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, md: 0.5 }} textAlign="right">
-              {!isLocked && items.length > 1 && (
-                <Tooltip title="Remove Item">
-                  <IconButton size="small" onClick={() => removeItem(index)}>
-                    <DisabledByDefault fontSize="small" color="error" />
-                  </IconButton>
-                </Tooltip>
-              )}
-            </Grid>
+            {useReadOnlyDisplay ? (
+              <>
+                <Grid size={{ xs: 12, md: 4.5 }}>
+                  <ReadOnlyField
+                    label="Expense Ledger"
+                    value={item.ledger?.name || (item.ledger_id ? `Ledger #${item.ledger_id}` : '-')}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 2.5 }}>
+                  <ReadOnlyField
+                    label="Amount"
+                    value={(Number.isFinite(Number(item.amount)) ? Number(item.amount) : 0).toLocaleString(
+                      'en-US',
+                      {
+                        style: 'currency',
+                        currency: currencyCode,
+                      }
+                    )}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 4.5 }}>
+                  <ReadOnlyField label="Description" value={item.description || '-'} />
+                </Grid>
+              </>
+            ) : (
+              <>
+                <Grid size={{ xs: 12, md: 4.5 }}>
+                  <LedgerSelect
+                    label="Expense Ledger"
+                    defaultValue={item.ledger_id ? ({ id: item.ledger_id, name: item.ledger?.name || '' } as any) : null}
+                    onChange={(newValue: any) => {
+                      const singleValue = Array.isArray(newValue) ? newValue[0] : newValue;
+                      updateItem(index, {
+                        ledger_id: Number(singleValue?.id || 0) || null,
+                        ledger: singleValue,
+                      });
+                    }}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 2.5 }}>
+                  <TextField
+                    size="small"
+                    fullWidth
+                    disabled={isLocked}
+                    label="Amount"
+                    value={item.amount ?? 0}
+                    InputProps={{ inputComponent: CommaSeparatedField as any }}
+                    onChange={(e) => {
+                      const amount = sanitizedNumber(e.target.value);
+                      updateItem(index, { amount: Number.isFinite(amount) ? amount : 0 });
+                    }}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <TextField
+                    size="small"
+                    fullWidth
+                    disabled={isLocked}
+                    label="Description"
+                    value={item.description || ''}
+                    onChange={(e) => updateItem(index, { description: e.target.value })}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 0.5 }} textAlign="right">
+                  {!isLocked && items.length > 1 && (
+                    <Tooltip title="Remove Item">
+                      <IconButton size="small" onClick={() => removeItem(index)}>
+                        <DisabledByDefault fontSize="small" color="error" />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                </Grid>
+              </>
+            )}
           </Grid>
         ))}
 
