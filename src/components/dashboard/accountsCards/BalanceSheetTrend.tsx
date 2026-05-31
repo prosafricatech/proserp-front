@@ -1,5 +1,9 @@
-'use client'
+'use client';
+import { shortNumber } from '@/app/helpers/input-sanitization-helpers';
 import JumboCardQuick from '@jumbo/components/JumboCardQuick/JumboCardQuick';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
+import { Div } from '@jumbo/shared';
+import { BalanceOutlined } from '@mui/icons-material';
 import {
   Button,
   ButtonGroup,
@@ -9,32 +13,28 @@ import {
   Grid,
   IconButton,
   InputLabel,
-  Skeleton,
   MenuItem,
   Select,
+  Skeleton,
   Tooltip,
   useMediaQuery,
 } from '@mui/material';
+import { useQuery } from '@tanstack/react-query';
+import dayjs from 'dayjs';
 import { useEffect, useState } from 'react';
 import {
   CartesianGrid,
+  ComposedChart,
   Legend,
   Line,
+  Tooltip as RechartTooltip,
   ResponsiveContainer,
   XAxis,
   YAxis,
-  Tooltip as RechartTooltip,
-  ComposedChart,
 } from 'recharts';
+import BalanceSheet from '../../accounts/reports/balance sheet/BalanceSheet';
 import financialReportsServices from '../../accounts/reports/financial-reports-services';
 import { useDashboardSettings } from '../Dashboard';
-import dayjs from 'dayjs';
-import { BalanceOutlined } from '@mui/icons-material';
-import BalanceSheet from '../../accounts/reports/balance sheet/BalanceSheet';
-import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
-import { useQuery } from '@tanstack/react-query';
-import { Div } from '@jumbo/shared';
-import { shortNumber } from '@/app/helpers/input-sanitization-helpers';
 
 interface BalanceSheetItem {
   period: string;
@@ -68,7 +68,8 @@ function BalanceSheetTrend() {
   const { data: balanceSheetTrend, isLoading } = useQuery({
     queryKey: ['balanceSheetTrend', params],
     queryFn: async () => {
-      const balanceSheetFigures = await financialReportsServices.balanceSheetFigures(params);
+      const balanceSheetFigures =
+        await financialReportsServices.balanceSheetFigures(params);
 
       return balanceSheetFigures.map((item: BalanceSheetItem) => ({
         name:
@@ -91,43 +92,60 @@ function BalanceSheetTrend() {
 
   return (
     <JumboCardQuick
-      title="Balance Sheet Trend"
+      title='Balance Sheet Trend'
       sx={{
-        height: xlScreen ? 310 : null,
+        // height: xlScreen ? 360 : null,
+        height: midScreen ? 360 : null,
       }}
       action={
-        <Grid container columnSpacing={1} alignItems="center">
+        <Grid container columnSpacing={1} alignItems='center'>
           <Grid size={8}>
             {!midScreen && !smallScreen ? (
-              <ButtonGroup variant="outlined" size="small" disableElevation>
-                <Tooltip title="Daily Trend">
+              <ButtonGroup variant='outlined' size='small' disableElevation>
+                <Tooltip title='Daily Trend'>
                   <Button
-                    variant={params.aggregate_by === 'day' ? 'contained' : 'outlined'}
-                    onClick={() => setParams((prev) => ({ ...prev, aggregate_by: 'day' }))}
+                    variant={
+                      params.aggregate_by === 'day' ? 'contained' : 'outlined'
+                    }
+                    onClick={() =>
+                      setParams((prev) => ({ ...prev, aggregate_by: 'day' }))
+                    }
                   >
                     Daily
                   </Button>
                 </Tooltip>
-                <Tooltip title="Weekly Trend">
+                <Tooltip title='Weekly Trend'>
                   <Button
-                    variant={params.aggregate_by === 'week' ? 'contained' : 'outlined'}
-                    onClick={() => setParams((prev) => ({ ...prev, aggregate_by: 'week' }))}
+                    variant={
+                      params.aggregate_by === 'week' ? 'contained' : 'outlined'
+                    }
+                    onClick={() =>
+                      setParams((prev) => ({ ...prev, aggregate_by: 'week' }))
+                    }
                   >
                     Weekly
                   </Button>
                 </Tooltip>
-                <Tooltip title="Monthly Trend">
+                <Tooltip title='Monthly Trend'>
                   <Button
-                    variant={params.aggregate_by === 'month' ? 'contained' : 'outlined'}
-                    onClick={() => setParams((prev) => ({ ...prev, aggregate_by: 'month' }))}
+                    variant={
+                      params.aggregate_by === 'month' ? 'contained' : 'outlined'
+                    }
+                    onClick={() =>
+                      setParams((prev) => ({ ...prev, aggregate_by: 'month' }))
+                    }
                   >
                     Monthly
                   </Button>
                 </Tooltip>
-                <Tooltip title="Yearly Trend">
+                <Tooltip title='Yearly Trend'>
                   <Button
-                    variant={params.aggregate_by === 'year' ? 'contained' : 'outlined'}
-                    onClick={() => setParams((prev) => ({ ...prev, aggregate_by: 'year' }))}
+                    variant={
+                      params.aggregate_by === 'year' ? 'contained' : 'outlined'
+                    }
+                    onClick={() =>
+                      setParams((prev) => ({ ...prev, aggregate_by: 'year' }))
+                    }
                   >
                     Yearly
                   </Button>
@@ -135,32 +153,42 @@ function BalanceSheetTrend() {
               </ButtonGroup>
             ) : (
               <Div>
-                <FormControl fullWidth size="small">
-                  <InputLabel id="balance-sheet-trend-group-by-input-label">Interval</InputLabel>
+                <FormControl fullWidth size='small'>
+                  <InputLabel id='balance-sheet-trend-group-by-input-label'>
+                    Interval
+                  </InputLabel>
                   <Select
-                    labelId="balance-sheet-trend-group-by-label"
-                    id="balance-sheet-trend-group-by"
+                    labelId='balance-sheet-trend-group-by-label'
+                    id='balance-sheet-trend-group-by'
                     value={params.aggregate_by}
-                    label="Interval"
+                    label='Interval'
                     onChange={(e) =>
                       setParams((prev) => ({
                         ...prev,
-                        aggregate_by: e.target.value as 'day' | 'week' | 'month' | 'year',
+                        aggregate_by: e.target.value as
+                          | 'day'
+                          | 'week'
+                          | 'month'
+                          | 'year',
                       }))
                     }
                   >
-                    <MenuItem value="day">Daily</MenuItem>
-                    <MenuItem value="week">Weekly</MenuItem>
-                    <MenuItem value="month">Monthly</MenuItem>
-                    <MenuItem value="year">Yearly</MenuItem>
+                    <MenuItem value='day'>Daily</MenuItem>
+                    <MenuItem value='week'>Weekly</MenuItem>
+                    <MenuItem value='month'>Monthly</MenuItem>
+                    <MenuItem value='year'>Yearly</MenuItem>
                   </Select>
                 </FormControl>
               </Div>
             )}
           </Grid>
           <Grid size={4} textAlign={'end'}>
-            <Tooltip title="Open Balance Sheet Report">
-              <IconButton onClick={() => setOpenDialog(true)} size="small" color="primary">
+            <Tooltip title='Open Balance Sheet Report'>
+              <IconButton
+                onClick={() => setOpenDialog(true)}
+                size='small'
+                color='primary'
+              >
                 <BalanceOutlined
                   sx={
                     smallScreen
@@ -179,26 +207,38 @@ function BalanceSheetTrend() {
         fullWidth
         scroll={smallScreen ? 'body' : 'paper'}
         fullScreen={smallScreen}
-        maxWidth="md"
+        maxWidth='md'
       >
         <BalanceSheet as_at={to} setOpenBalanceSheettDialog={setOpenDialog} />
         <DialogActions>
-          <Button size="small" variant="outlined" onClick={() => setOpenDialog(false)}>
+          <Button
+            size='small'
+            variant='outlined'
+            onClick={() => setOpenDialog(false)}
+          >
             Close
           </Button>
         </DialogActions>
       </Dialog>
 
       {isLoading ? (
-        <ResponsiveContainer width="100%" height={200}>
-          <Skeleton variant="rectangular" width="100%" height={245} sx={{ borderRadius: 2 }} />
+        <ResponsiveContainer width='100%' height={200}>
+          <Skeleton
+            variant='rectangular'
+            width='100%'
+            height={245}
+            sx={{ borderRadius: 2 }}
+          />
         </ResponsiveContainer>
       ) : (
-        <ResponsiveContainer width="100%" height={200}>
+        <ResponsiveContainer width='100%' height={200}>
           <ComposedChart data={balanceSheetTrend}>
-            <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
+            <CartesianGrid
+              strokeDasharray='3 3'
+              stroke={theme.palette.divider}
+            />
             <XAxis
-              dataKey="name"
+              dataKey='name'
               stroke={theme.palette.text.primary}
               tick={{ fill: theme.palette.text.primary }}
             />
@@ -221,7 +261,10 @@ function BalanceSheetTrend() {
               itemStyle={{
                 color: theme.palette.text.primary,
               }}
-              labelStyle={{ color: theme.palette.text.primary, fontWeight: 600 }}
+              labelStyle={{
+                color: theme.palette.text.primary,
+                fontWeight: 600,
+              }}
               cursor={{ stroke: theme.palette.divider }}
               formatter={(value: number, name: string) => [
                 value.toLocaleString('en-US', {
@@ -233,24 +276,24 @@ function BalanceSheetTrend() {
             />
             <Legend wrapperStyle={{ color: theme.palette.text.primary }} />
             <Line
-              type="monotone"
-              dataKey="Assets"
+              type='monotone'
+              dataKey='Assets'
               stroke={colorCodes.Assets}
               strokeWidth={2}
               dot={false}
               activeDot={{ r: 5 }}
             />
             <Line
-              type="monotone"
-              dataKey="Liabilities"
+              type='monotone'
+              dataKey='Liabilities'
               stroke={colorCodes.Liabilities}
               strokeWidth={2}
               dot={false}
               activeDot={{ r: 5 }}
             />
             <Line
-              type="monotone"
-              dataKey="Equity"
+              type='monotone'
+              dataKey='Equity'
               stroke={colorCodes.Equity}
               strokeWidth={2}
               dot={false}

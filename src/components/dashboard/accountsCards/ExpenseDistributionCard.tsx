@@ -1,18 +1,13 @@
-'use client'
+'use client';
 import JumboCardQuick from '@jumbo/components/JumboCardQuick/JumboCardQuick';
-import React, { useEffect, useState } from 'react';
-import {
-  Skeleton,
-  Typography,
-  useMediaQuery,
-  Box,
-} from '@mui/material';
-import financialReportsServices from '../../accounts/reports/financial-reports-services';
-import { useDashboardSettings } from '../Dashboard';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
+import { Box, Skeleton, Typography, useMediaQuery } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
+import { useEffect, useState } from 'react';
+import financialReportsServices from '../../accounts/reports/financial-reports-services';
+import { useDashboardSettings } from '../Dashboard';
 
 interface ExpenseData {
   ledger_name: string;
@@ -24,7 +19,9 @@ interface ChartDataPoint {
 }
 
 function ExpenseDistributionCard() {
-  const { chartFilters: { from, to, cost_center_ids } } = useDashboardSettings();
+  const {
+    chartFilters: { from, to, cost_center_ids },
+  } = useDashboardSettings();
   const [params, setParams] = useState({
     from,
     to,
@@ -33,7 +30,7 @@ function ExpenseDistributionCard() {
   });
 
   useEffect(() => {
-    setParams(prev => ({ ...prev, from, to, cost_center_ids }));
+    setParams((prev) => ({ ...prev, from, to, cost_center_ids }));
   }, [from, to, cost_center_ids]);
 
   const { theme } = useJumboTheme();
@@ -108,7 +105,7 @@ function ExpenseDistributionCard() {
 
   useEffect(() => {
     const timeout = setTimeout(() => {
-      Highcharts.charts.forEach(chart => chart?.reflow());
+      Highcharts.charts.forEach((chart) => chart?.reflow());
     }, 100);
     return () => clearTimeout(timeout);
   }, [theme.type]);
@@ -116,14 +113,14 @@ function ExpenseDistributionCard() {
   return (
     <JumboCardQuick
       sx={{
-        height: xlScreen ? 310 : null,
+        height: xlScreen ? 360 : null,
         display: 'flex',
         flexDirection: 'column',
       }}
     >
       <Box sx={{ px: 2, pt: 1 }}>
         <Typography
-          variant="subtitle1"
+          variant='subtitle1'
           sx={{
             color: textColor,
             fontFamily: 'NoirPro, Arial',
@@ -142,7 +139,12 @@ function ExpenseDistributionCard() {
         }}
       >
         {isLoading ? (
-          <Skeleton variant="rectangular" width="100%" height={245} sx={{ borderRadius: 2 }} />
+          <Skeleton
+            variant='rectangular'
+            width='100%'
+            height={245}
+            sx={{ borderRadius: 2 }}
+          />
         ) : (
           <HighchartsReact
             key={theme.type}
