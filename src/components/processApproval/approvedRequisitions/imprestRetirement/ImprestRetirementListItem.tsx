@@ -70,7 +70,7 @@ function ImprestRetirementListItem({ requisitionApprovalId, approvedRequisition 
               py: 1.25,
             }}
           >
-            <Grid size={{ xs: 12, md: 3 }}>
+            <Grid size={{ xs: 6, md: 3 }}>
               <ListItemText
                 primary={
                   <Tooltip title="Retirement Number">
@@ -88,14 +88,14 @@ function ImprestRetirementListItem({ requisitionApprovalId, approvedRequisition 
                 }
               />
             </Grid>
-            <Grid size={{ xs: 12, md: 2 }}>
+            <Grid size={{ xs: 6, md: 2 }}>
               <Tooltip title="Retirement Date">
                 <Typography component="span" lineHeight={1.25} noWrap>
                   {readableDate(retirement?.retirement_date)}
                 </Typography>
               </Tooltip>
             </Grid>
-            <Grid size={{ xs: 12, md: 2 }}>
+            <Grid size={{ xs: 6, md: 2 }}>
               <ListItemText
                 primary={
                   <Tooltip title="Remarks">
@@ -106,7 +106,7 @@ function ImprestRetirementListItem({ requisitionApprovalId, approvedRequisition 
                 }
               />
             </Grid>
-            <Grid size={{ xs: 12, md: 2 }}>
+            <Grid size={{ xs: 6, md: 2 }}>
               <Tooltip title="Status">
                 <Chip
                   size="small"
@@ -116,7 +116,7 @@ function ImprestRetirementListItem({ requisitionApprovalId, approvedRequisition 
                 />
               </Tooltip>
             </Grid>
-            <Grid size={{ xs: 12, md: 2 }} textAlign={{ md: 'right' }}>
+            <Grid size={{ xs: 6, md: 2 }} textAlign={{ md: 'right' }}>
               <Tooltip title="Amount">
                 <Typography>
                   {totalAmount.toLocaleString('en-US', {
@@ -126,7 +126,7 @@ function ImprestRetirementListItem({ requisitionApprovalId, approvedRequisition 
                 </Typography>
               </Tooltip>
             </Grid>
-            <Grid size={{ xs: 12, md: 1 }} textAlign={{ md: 'right' }}>
+            <Grid size={{ xs: 6, md: 1 }} textAlign={'end'}>
               <ImprestRetirementApprovalAction retirement={retirement} approvedRequisition={approvedRequisition} />
             </Grid>
           </Grid>

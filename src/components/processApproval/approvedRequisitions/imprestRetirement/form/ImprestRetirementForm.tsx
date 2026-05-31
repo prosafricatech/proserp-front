@@ -460,7 +460,7 @@ function ImprestRetirementForm({
           <Grid size={{ xs: 12, md: 3 }}>
             <Chip size="small" color="primary" label={`Status: ${statusLabel}`} />
           </Grid>
-          <Grid size={{ xs: 12, md: 9 }} textAlign={{ md: 'right' }}>
+          <Grid size={{ xs: 12, md: 9 }} textAlign={'right'}>
             <Div
               sx={(theme) => ({
                 display: 'inline-block',
