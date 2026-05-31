@@ -1,7 +1,7 @@
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
-import { useCurrencySelect } from '@/components/masters/Currencies/CurrencySelectProvider';
 import userLedgerServices from '@/components/accounts/ledgers/user-ledger-services';
+import { useCurrencySelect } from '@/components/masters/Currencies/CurrencySelectProvider';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { PROCESS_TYPES } from '@/utilities/constants/processTypes';
@@ -130,10 +130,7 @@ function RequisitionsForm({
   const { currencies } = useCurrencySelect();
   const [totalAmount, setTotalAmount] = useState(0);
   const [vatableAmount, setVatableAmount] = useState(0);
-  const {
-    authOrganization,
-    checkOrganizationPermission,
-  } = useJumboAuth();
+  const { authOrganization, checkOrganizationPermission } = useJumboAuth();
 
   const [showWarning, setShowWarning] = useState(false);
   const [currencyChanged, setCurrencyChanged] = useState(false);
@@ -199,7 +196,9 @@ function RequisitionsForm({
       .when('process_type', {
         is: 'IMPREST',
         then: (schema) =>
-          schema.required('Imprest Ledger is required').typeError('Imprest Ledger is required'),
+          schema
+            .required('Imprest Ledger is required')
+            .typeError('Imprest Ledger is required'),
       }),
   });
 
@@ -228,15 +227,16 @@ function RequisitionsForm({
         requisition?.approval_chain?.process_type?.toUpperCase() === 'PURCHASE'
           ? requisition?.additional_costs || []
           : null,
-      ledger_items:
-        ['PAYMENT', 'IMPREST'].includes(
-          String(requisition?.approval_chain?.process_type || '').toUpperCase()
-        )
-          ? requisition?.items
-          : null,
+      ledger_items: ['PAYMENT', 'IMPREST'].includes(
+        String(requisition?.approval_chain?.process_type || '').toUpperCase()
+      )
+        ? requisition?.items
+        : null,
       imprest_ledger_id:
         requisition?.approval_chain?.process_type?.toUpperCase() === 'IMPREST'
-          ? requisition?.imprest_ledger_id || requisition?.imprest_ledger?.id || null
+          ? requisition?.imprest_ledger_id ||
+            requisition?.imprest_ledger?.id ||
+            null
           : null,
       currencyDetails: requisition
         ? requisition.currency
@@ -306,7 +306,11 @@ function RequisitionsForm({
       Array.from(
         new Set(
           imprestLedgerOptions
-            .filter((item) => String(item.type || '').toLowerCase() === 'imprest' || !item.type)
+            .filter(
+              (item) =>
+                String(item.type || '').toLowerCase() === 'imprest' ||
+                !item.type
+            )
             .map((item) => Number(item.ledger_id || item.ledger?.id || 0))
             .filter((id) => Number.isFinite(id) && id > 0)
         )
@@ -325,7 +329,10 @@ function RequisitionsForm({
   }, [requisition, addRequisition, updateRequisition]);
 
   const validateDuplicateLedgerRelatables = async () => {
-    if (!isDuplicate || !['PAYMENT', 'IMPREST'].includes(String(selectedProcessType))) {
+    if (
+      !isDuplicate ||
+      !['PAYMENT', 'IMPREST'].includes(String(selectedProcessType))
+    ) {
       return true;
     }
 
@@ -427,7 +434,10 @@ function RequisitionsForm({
       });
       setVatableAmount(vatableAmount);
       setTotalAmount(total || 0);
-    } else if (selectedProcessType === 'PAYMENT' || selectedProcessType === 'IMPREST') {
+    } else if (
+      selectedProcessType === 'PAYMENT' ||
+      selectedProcessType === 'IMPREST'
+    ) {
       setValue('ledger_items', requisition_ledger_items);
       setTotalAmount(total || 0);
     } else {
@@ -472,7 +482,8 @@ function RequisitionsForm({
               ? requisition_product_items
               : null,
           ledger_items:
-            selectedProcessType === 'PAYMENT' || selectedProcessType === 'IMPREST'
+            selectedProcessType === 'PAYMENT' ||
+            selectedProcessType === 'IMPREST'
               ? requisition_ledger_items
               : null,
           imprest_ledger_id:
@@ -619,17 +630,27 @@ function RequisitionsForm({
                       <Autocomplete
                         options={imprestLedgerOptions}
                         isOptionEqualToValue={(option, value) => {
-                          const optionId = option.ledger_id || option.ledger?.id || option.id;
-                          const valueId = value.ledger_id || value.ledger?.id || value.id;
+                          const optionId =
+                            option.ledger_id || option.ledger?.id || option.id;
+                          const valueId =
+                            value.ledger_id || value.ledger?.id || value.id;
                           return Number(optionId) === Number(valueId);
                         }}
                         getOptionLabel={(option) =>
-                          option.ledger?.name || option.name || 'Unknown Imprest Ledger'
+                          option.ledger?.name ||
+                          option.name ||
+                          'Unknown Imprest Ledger'
                         }
                         value={
                           imprestLedgerOptions.find((option) => {
-                            const optionId = option.ledger_id || option.ledger?.id || option.id;
-                            return Number(optionId) === Number(watch('imprest_ledger_id'));
+                            const optionId =
+                              option.ledger_id ||
+                              option.ledger?.id ||
+                              option.id;
+                            return (
+                              Number(optionId) ===
+                              Number(watch('imprest_ledger_id'))
+                            );
                           }) || null
                         }
                         renderInput={(params) => (
@@ -639,12 +660,18 @@ function RequisitionsForm({
                             size='small'
                             fullWidth
                             error={!!(errors as any).imprest_ledger_id}
-                            helperText={(errors as any).imprest_ledger_id?.message as string}
+                            helperText={
+                              (errors as any).imprest_ledger_id
+                                ?.message as string
+                            }
                           />
                         )}
                         onChange={(_, selected: any) => {
                           const ledgerId =
-                            selected?.ledger_id || selected?.ledger?.id || selected?.id || null;
+                            selected?.ledger_id ||
+                            selected?.ledger?.id ||
+                            selected?.id ||
+                            null;
                           setValue('imprest_ledger_id', ledgerId, {
                             shouldValidate: true,
                             shouldDirty: true,
@@ -741,7 +768,8 @@ function RequisitionsForm({
             />
           </Grid>
           <Grid size={{ xs: 12 }}>
-            {selectedProcessType === 'PAYMENT' || selectedProcessType === 'IMPREST' ? (
+            {selectedProcessType === 'PAYMENT' ||
+            selectedProcessType === 'IMPREST' ? (
               <RequisitionLedgerItemForm
                 isDuplicate={isDuplicate}
                 currencyChanged={currencyChanged}
@@ -798,7 +826,8 @@ function RequisitionsForm({
         </Grid>
       </DialogTitle>
       <DialogContent>
-        {(selectedProcessType === 'PAYMENT' || selectedProcessType === 'IMPREST') &&
+        {(selectedProcessType === 'PAYMENT' ||
+          selectedProcessType === 'IMPREST') &&
           requisition_ledger_items.map((ledger_item, index) => (
             <RequisitionLedgerItemRow
               key={index}
