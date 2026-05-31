@@ -1,7 +1,6 @@
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
 import { useLedgerSelect } from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
-import CurrencySelector from '@/components/masters/Currencies/CurrencySelector';
 import { useCurrencySelect } from '@/components/masters/Currencies/CurrencySelectProvider';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -45,8 +44,6 @@ const PurchaseRequisitionAdditionalCostsTab = ({
   const [isAdding, setIsAdding] = useState(false);
   const { currencies } = useCurrencySelect();
 
-  //   console.log('additionalCost: ', additionalCost);
-
   // Define validation schema
   const validationSchema = yup.object({
     credit_ledger_name: yup.string(),
@@ -54,17 +51,17 @@ const PurchaseRequisitionAdditionalCostsTab = ({
       .number()
       .required('Cost name is required')
       .typeError('Cost name is required'),
-    currency_id: yup
-      .number()
-      .positive('Currency is required')
-      .required('Currency is required')
-      .typeError('Currency is required'),
-    currency_name: yup.string(),
-    exchange_rate: yup
-      .number()
-      .positive('Exchange rate is required')
-      .required('Exchange rate is required')
-      .typeError('Exchange rate is required'),
+    // currency_id: yup
+    //   .number()
+    //   .positive('Currency is required')
+    //   .required('Currency is required')
+    //   .typeError('Currency is required'),
+    // currency_name: yup.string(),
+    // exchange_rate: yup
+    //   .number()
+    //   .positive('Exchange rate is required')
+    //   .required('Exchange rate is required')
+    //   .typeError('Exchange rate is required'),
     reference: yup.string(),
     amount: yup
       .number()
@@ -86,13 +83,13 @@ const PurchaseRequisitionAdditionalCostsTab = ({
         additionalCost &&
         (additionalCost.ledger?.name || additionalCost.credit_ledger_name),
       ledger_id: additionalCost && additionalCost.ledger_id,
-      currency_id: additionalCost
-        ? additionalCost.currency?.id || additionalCost.currency_id
-        : 1,
-      currency_name: additionalCost
-        ? additionalCost.currency?.name || additionalCost.currency_name
-        : currencies?.find((currency) => currency.id === 1).name_plural,
-      exchange_rate: additionalCost ? additionalCost.exchange_rate : 1,
+      // currency_id: additionalCost
+      //   ? additionalCost.currency?.id || additionalCost.currency_id
+      //   : 1,
+      // currency_name: additionalCost
+      //   ? additionalCost.currency?.name || additionalCost.currency_name
+      //   : currencies?.find((currency) => currency.id === 1).name_plural,
+      // exchange_rate: additionalCost ? additionalCost.exchange_rate : 1,
       reference: additionalCost && additionalCost.reference,
       amount: additionalCost && additionalCost.amount,
     },
@@ -119,6 +116,7 @@ const PurchaseRequisitionAdditionalCostsTab = ({
 
     reset();
     setIsAdding(false);
+    setIsDirty(false);
     setShowForm && setShowForm(false);
   };
 
@@ -132,7 +130,7 @@ const PurchaseRequisitionAdditionalCostsTab = ({
         <Divider />
       </Grid>
       <Grid container columnSpacing={1}>
-        <Grid size={{ xs: 12, md: 3, lg: 4 }}>
+        <Grid size={{ xs: 12, md: 4, lg: 4 }}>
           <Div sx={{ mt: 1 }}>
             <LedgerSelect
               multiple={false}
@@ -154,7 +152,7 @@ const PurchaseRequisitionAdditionalCostsTab = ({
             />
           </Div>
         </Grid>
-        <Grid size={{ xs: 12, md: 2, lg: 2 }}>
+        <Grid size={{ xs: 12, md: 4, lg: 4 }}>
           <Div sx={{ mt: 1 }}>
             <TextField
               label='Reference'
@@ -173,57 +171,8 @@ const PurchaseRequisitionAdditionalCostsTab = ({
         <Grid
           size={{
             xs: 12,
-            md: watch(`currency_id`) > 1 ? 3.5 : 5,
-            lg: watch(`currency_id`) > 1 ? 2 : 4,
-          }}
-        >
-          <Div sx={{ mt: 1 }}>
-            <CurrencySelector
-              frontError={errors?.currency_id}
-              defaultValue={additionalCost && additionalCost.currency_id}
-              onChange={(newValue: any) => {
-                setValue(`currency_id`, newValue ? newValue.id : 1, {
-                  shouldDirty: true,
-                  shouldValidate: true,
-                });
-                setValue(`currency_name`, newValue.name);
-                setValue(`exchange_rate`, newValue ? newValue.exchangeRate : 1);
-              }}
-            />
-          </Div>
-        </Grid>
-        {watch(`currency_id`) > 1 && (
-          <Grid size={{ xs: 6, md: 2, lg: 2 }}>
-            <Div sx={{ mt: 1 }}>
-              <TextField
-                label='Exchange Rate'
-                fullWidth
-                size='small'
-                error={errors && !!errors.exchange_rate}
-                helperText={errors && errors.exchange_rate?.message}
-                InputProps={{
-                  inputComponent: CommaSeparatedField,
-                }}
-                defaultValue={watch(`exchange_rate`)}
-                onChange={(e) => {
-                  setValue(
-                    `exchange_rate`,
-                    e.target.value ? sanitizedNumber(e.target.value) : null,
-                    {
-                      shouldValidate: true,
-                      shouldDirty: true,
-                    }
-                  );
-                }}
-              />
-            </Div>
-          </Grid>
-        )}
-        <Grid
-          size={{
-            xs: watch(`currency_id`) > 1 ? 6 : 12,
-            md: watch(`currency_id`) > 1 ? 1.5 : 2,
-            lg: watch(`currency_id`) > 1 ? 2 : 2,
+            md: 2,
+            lg: 2,
           }}
         >
           <Div sx={{ mt: 1 }}>
@@ -250,37 +199,37 @@ const PurchaseRequisitionAdditionalCostsTab = ({
             />
           </Div>
         </Grid>
-      </Grid>
-      <Grid size={{ xs: 12, md: 12, lg: 12 }} mt={1} textAlign={'end'}>
-        <LoadingButton
-          loading={false}
-          variant='contained'
-          size='small'
-          type='submit'
-          sx={{ marginBottom: 0.5 }}
-        >
-          {additionalCost ? (
-            <>
-              <CheckOutlined fontSize='small' /> Done
-            </>
-          ) : (
-            <>
-              <AddOutlined fontSize='small' /> Add
-            </>
+        <Grid size={{ xs: 12, md: 2 }} mt={1} textAlign={'end'}>
+          <LoadingButton
+            loading={false}
+            variant='contained'
+            size='small'
+            type='submit'
+            sx={{ marginBottom: 0.5 }}
+          >
+            {additionalCost ? (
+              <>
+                <CheckOutlined fontSize='small' /> Done
+              </>
+            ) : (
+              <>
+                <AddOutlined fontSize='small' /> Add
+              </>
+            )}
+          </LoadingButton>
+          {additionalCost && (
+            <Tooltip title='Close Edit'>
+              <IconButton
+                size='small'
+                onClick={() => {
+                  setShowForm(false);
+                }}
+              >
+                <DisabledByDefault fontSize='small' color='success' />
+              </IconButton>
+            </Tooltip>
           )}
-        </LoadingButton>
-        {additionalCost && (
-          <Tooltip title='Close Edit'>
-            <IconButton
-              size='small'
-              onClick={() => {
-                setShowForm(false);
-              }}
-            >
-              <DisabledByDefault fontSize='small' color='success' />
-            </IconButton>
-          </Tooltip>
-        )}
+        </Grid>
       </Grid>
     </form>
   );

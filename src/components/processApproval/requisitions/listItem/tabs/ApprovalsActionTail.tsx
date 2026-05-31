@@ -1,5 +1,7 @@
 'use client';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { requisitionContext } from '@/components/processApproval/Requisitions';
+import requisitionsServices from '@/components/processApproval/requisitionsServices';
 import { Requisition } from '@/components/processApproval/RequisitionType';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { FactCheckOutlined } from '@mui/icons-material';
@@ -13,12 +15,13 @@ import {
 } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import React, { useContext, useState } from 'react';
-import { requisitionContext } from '../../../Requisitions';
-import requisitionsServices from '../../../requisitionsServices';
 import ApprovalForm from './form/ApprovalForm';
 
 interface ApprovalsActionTailProps {
   requisition: Requisition;
+  isPending?: boolean;
+  isEditAction?: boolean;
+  requisitionDetails?: any;
   isExpanded: boolean;
 }
 

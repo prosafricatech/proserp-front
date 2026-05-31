@@ -183,6 +183,19 @@ function ApprovalForm({
     requisitionLedgerItem,
     requisitionAdditionalCosts,
   ]);
+  const isLeaveType =
+    requisition?.approval_chain?.process_type?.toLowerCase() ===
+    'leave_request';
+  const approvalRequisitionItems: RequisitionItem[] =
+    approval?.requisition && 'items' in approval.requisition
+      ? approval.requisition.items || []
+      : [];
+  const leaveSummaryItems =
+    requisition.leave_items ||
+    approval?.requisition?.leave_items ||
+    requisitionItems ||
+    approvalRequisitionItems ||
+    [];
 
   const validationSchema = yup.object().shape({
     approval_date: yup
@@ -220,22 +233,23 @@ function ApprovalForm({
           })
         )
       : yup.array().nullable(),
-    ledger_items: !isPurchaseType
-      ? yup.array().of(
-          yup.object().shape({
-            rate: yup
-              .number()
-              .required('Rate is required')
-              .positive('Rate is required')
-              .typeError('Rate is required'),
-            quantity: yup
-              .number()
-              .required('Quantity is required')
-              .positive('Quantity is required')
-              .typeError('Quantity is required'),
-          })
-        )
-      : yup.array().nullable(),
+    ledger_items:
+      !isPurchaseType && !isLeaveType
+        ? yup.array().of(
+            yup.object().shape({
+              rate: yup
+                .number()
+                .required('Rate is required')
+                .positive('Rate is required')
+                .typeError('Rate is required'),
+              quantity: yup
+                .number()
+                .required('Quantity is required')
+                .positive('Quantity is required')
+                .typeError('Quantity is required'),
+            })
+          )
+        : yup.array().nullable(),
   });
 
   const {
@@ -253,7 +267,10 @@ function ApprovalForm({
       remarks: approval?.remarks || requisition?.remarks || '',
       product_items: isPurchaseType ? approval?.items || requisitionItems : [],
       additional_costs: isPurchaseType ? getInitialAdditionalCosts() : [],
-      ledger_items: !isPurchaseType ? approval?.items || requisitionItems : [],
+      ledger_items:
+        !isPurchaseType && !isLeaveType
+          ? approval?.items || requisitionItems
+          : [],
       chain_level_id:
         approval && isEdit
           ? approval.approval_chain_level_id
@@ -387,7 +404,8 @@ function ApprovalForm({
       ...formData,
       product_items: isPurchaseType ? formData.product_items : undefined,
       additional_costs: isPurchaseType ? formData.additional_costs : undefined,
-      ledger_items: !isPurchaseType ? formData.ledger_items : undefined,
+      ledger_items:
+        !isPurchaseType && !isLeaveType ? formData.ledger_items : undefined,
     };
     saveMutation(payload as FormValues);
   };

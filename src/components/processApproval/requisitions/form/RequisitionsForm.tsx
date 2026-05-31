@@ -251,8 +251,8 @@ function RequisitionsForm({
       additionalCosts?.map((additionalCost) => ({
         credit_ledger_name: additionalCost.credit_ledger_name,
         ledger_id: additionalCost.ledger_id,
-        currency_id: additionalCost.currency_id || additionalCost.currency?.id,
-        exchange_rate: additionalCost.exchange_rate,
+        // currency_id: additionalCost.currency_id || additionalCost.currency?.id,
+        // exchange_rate: additionalCost.exchange_rate,
         reference: additionalCost.reference,
         amount: additionalCost.amount,
       }))

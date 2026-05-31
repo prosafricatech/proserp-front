@@ -22,7 +22,7 @@ function PurchaseRequisitionAdditionalCostsTabRow({
 
   return (
     <React.Fragment>
-      <Divider />
+      <Divider sx={{ mt: 2 }} />
       {!showForm ? (
         <Grid
           container
@@ -33,8 +33,8 @@ function PurchaseRequisitionAdditionalCostsTabRow({
             },
           }}
         >
-          <Grid size={{ xs: 1, md: 0.5 }}>{index + 1}.</Grid>
-          <Grid size={{ xs: 7, md: 2.5 }}>
+          <Grid size={{ xs: 1, md: 1 }}>{index + 1}.</Grid>
+          <Grid size={{ xs: 7, md: 3 }}>
             <Tooltip title='Cost name'>
               <Typography>
                 {additionalCost.credit_ledger_name || additionalCost.name}
@@ -42,33 +42,14 @@ function PurchaseRequisitionAdditionalCostsTabRow({
             </Tooltip>
           </Grid>
           <Grid
-            size={{ xs: 4, md: 2 }}
+            size={{ xs: 4, md: 3 }}
             textAlign={{ xs: 'right', md: 'start' }}
           >
             <Tooltip title='Reference'>
               <Typography>{additionalCost.reference}</Typography>
             </Tooltip>
           </Grid>
-          <Grid size={{ xs: 6, md: 3 }}>
-            <Tooltip title='Currency'>
-              <Typography>
-                {additionalCost.currency_name || additionalCost.currency?.name}
-              </Typography>
-            </Tooltip>
-          </Grid>
-          <Grid size={{ xs: 6, md: 1.5 }} textAlign={'right'}>
-            <Tooltip title='Exchange Rate'>
-              <Typography>
-                {parseFloat(additionalCost.exchange_rate).toLocaleString(
-                  'en-US',
-                  {
-                    maximumFractionDigits: 0,
-                  }
-                )}
-              </Typography>
-            </Tooltip>
-          </Grid>
-          <Grid size={{ xs: 6, md: 1.5 }} textAlign={{ md: 'right' }}>
+          <Grid size={{ xs: 6, md: 3 }} textAlign={{ md: 'right' }}>
             <Tooltip title='Amount'>
               <Typography>
                 {parseFloat(additionalCost.amount)?.toLocaleString('en-US', {
@@ -78,7 +59,7 @@ function PurchaseRequisitionAdditionalCostsTabRow({
               </Typography>
             </Tooltip>
           </Grid>
-          <Grid textAlign={'end'} size={{ xs: 6, md: 1 }}>
+          <Grid textAlign={'end'} size={{ xs: 6, md: 2 }}>
             <Tooltip title='Edit Additional Cost'>
               <IconButton
                 size='small'
