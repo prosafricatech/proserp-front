@@ -108,20 +108,20 @@ function ImprestRetirementApprovalAction({ retirement, approvedRequisition }: Im
     { icon: <VisibilityOutlined />, title: 'Preview', action: 'preview' } as MenuItemProps,
     ...(canUpdateOrDelete
       ? [
-          { icon: <EditOutlined />, title: 'Update', action: 'update-draft' } as MenuItemProps,
+          { icon: <EditOutlined />, title: 'Edit', action: 'update-draft' } as MenuItemProps,
         ]
       : []),
     ...(isPendingApproval
       && canApproveRetirement
       ? [
-          { icon: <CheckCircleOutlineOutlined color="success" />, title: 'Approval', action: 'retirement-approval' } as MenuItemProps,
+          { icon: <CheckCircleOutlineOutlined color="success" />, title: 'Approve', action: 'retirement-approval' } as MenuItemProps,
         ]
       : []),
     ...((isApproved || isRejected) && canApproveRetirement
       ? [{ icon: <UndoOutlined color="warning" />, title: 'Revoke', action: 'revoke' } as MenuItemProps]
       : []),
     ...(canUpdateOrDelete
-      ? [{ icon: <DeleteOutlined color="error" />, title: 'Delete Draft', action: 'delete-draft' } as MenuItemProps]
+      ? [{ icon: <DeleteOutlined color="error" />, title: 'Delete', action: 'delete-draft' } as MenuItemProps]
       : []),
   ];
 
