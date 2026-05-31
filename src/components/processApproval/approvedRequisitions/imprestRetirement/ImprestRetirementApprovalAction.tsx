@@ -30,7 +30,7 @@ function ImprestRetirementApprovalAction({ retirement, approvedRequisition }: Im
 
   const [openUpdateDialog, setOpenUpdateDialog] = React.useState(false);
   const [openApprovalDialog, setOpenApprovalDialog] = React.useState(false);
-  const [remarksDialogMode, setRemarksDialogMode] = React.useState<'reject' | 'revoke' | null>(null);
+  const [remarksDialogMode, setRemarksDialogMode] = React.useState<'reject' | null>(null);
   const [remarks, setRemarks] = React.useState('');
 
   const statusRaw = String(retirement?.status || '').toLowerCase();
@@ -83,8 +83,6 @@ function ImprestRetirementApprovalAction({ retirement, approvedRequisition }: Im
     onSuccess: (response: any) => {
       enqueueSnackbar(response?.message || 'Retirement approval revoked', { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['imprestRetirements'] });
-      setRemarksDialogMode(null);
-      setRemarks('');
     },
     onError: (error: any) => {
       enqueueSnackbar(error?.response?.data?.message || 'Failed to revoke retirement approval', {
@@ -105,14 +103,8 @@ function ImprestRetirementApprovalAction({ retirement, approvedRequisition }: Im
           { icon: <CheckCircleOutlineOutlined color="success" />, title: 'Approval', action: 'retirement-approval' } as MenuItemProps,
         ]
       : []),
-    ...(isRejected
-      && canApproveRetirement
-      ? [
-          { icon: <EditOutlined color="warning" />, title: 'Edit Approval Decision', action: 'retirement-approval' } as MenuItemProps,
-        ]
-      : []),
-    ...(isApproved && canApproveRetirement
-      ? [{ icon: <UndoOutlined color="warning" />, title: 'Revoke Approval', action: 'revoke' } as MenuItemProps]
+    ...((isApproved || isRejected) && canApproveRetirement
+      ? [{ icon: <UndoOutlined color="warning" />, title: 'Revoke', action: 'revoke' } as MenuItemProps]
       : []),
     ...(isDraftLike
       ? [{ icon: <DeleteOutlined color="error" />, title: 'Delete Draft', action: 'delete-draft' } as MenuItemProps]
@@ -142,35 +134,49 @@ function ImprestRetirementApprovalAction({ retirement, approvedRequisition }: Im
   };
 
   const handleSubmitRemarksAction = async () => {
-    if (remarksDialogMode === 'reject' && !remarks.trim()) {
+    if (!remarks.trim()) {
       enqueueSnackbar('Remarks are required for rejection', { variant: 'error' });
       return;
     }
 
-    if (remarksDialogMode === 'reject') {
-      await approveRetirement({
-        imprest_retirement_id: retirement.id,
-        status: 'rejected',
-        approval_date: dayjs().format('YYYY-MM-DD'),
-        remarks: remarks.trim(),
-      });
-      setRemarksDialogMode(null);
-      setRemarks('');
-      return;
-    }
+    await approveRetirement({
+      imprest_retirement_id: retirement.id,
+      status: 'rejected',
+      approval_date: dayjs().format('YYYY-MM-DD'),
+      remarks: remarks.trim(),
+    });
+    setRemarksDialogMode(null);
+    setRemarks('');
+  };
 
-    if (remarksDialogMode === 'revoke') {
-      const approvalId = retirement?.approval?.id;
-      if (!approvalId) {
-        enqueueSnackbar('Approval reference not found for revoke', { variant: 'error' });
-        return;
-      }
+  const resolveApprovalId = async (): Promise<number | null> => {
+    const directApprovalId = Number(retirement?.approval?.id || retirementDetails?.approval?.id || 0);
+    if (directApprovalId) return directApprovalId;
 
-      await revokeRetirementApproval({
-        approvalId,
-        remarks: remarks.trim(),
-      });
-    }
+    const latestRetirement = await imprestRetirementServices.show(retirement?.id);
+    const fetchedApprovalId = Number(latestRetirement?.approval?.id || latestRetirement?.data?.approval?.id || 0);
+    return fetchedApprovalId || null;
+  };
+
+  const handleRevoke = () => {
+    showDialog({
+      title: 'Revoke Approval',
+      content: `Revoke approval for ${retirement?.retirementNo || `#${retirement?.id}`}?`,
+      variant: 'confirm',
+      onYes: async () => {
+        hideDialog();
+        const approvalId = await resolveApprovalId();
+        if (!approvalId) {
+          enqueueSnackbar('Approval reference not found for revoke', { variant: 'error' });
+          return;
+        }
+        await revokeRetirementApproval({
+          approvalId,
+          remarks: '',
+        });
+      },
+      onNo: () => hideDialog(),
+    });
   };
 
   const handleItemAction = (menuItem: MenuItemProps) => {
@@ -186,8 +192,7 @@ function ImprestRetirementApprovalAction({ retirement, approvedRequisition }: Im
         setOpenApprovalDialog(true);
         break;
       case 'revoke':
-        setRemarks('');
-        setRemarksDialogMode('revoke');
+        handleRevoke();
         break;
       default:
         break;
@@ -256,7 +261,7 @@ function ImprestRetirementApprovalAction({ retirement, approvedRequisition }: Im
         fullWidth
       >
         <DialogTitle textAlign="center">
-          {remarksDialogMode === 'reject' ? 'Reject Retirement' : 'Revoke Retirement Approval'}
+          Reject Retirement
         </DialogTitle>
         <DialogContent>
           <TextField
@@ -268,7 +273,7 @@ function ImprestRetirementApprovalAction({ retirement, approvedRequisition }: Im
             label="Remarks"
             value={remarks}
             onChange={(e) => setRemarks(e.target.value)}
-            required={remarksDialogMode === 'reject'}
+            required
           />
         </DialogContent>
         <DialogActions>
@@ -284,11 +289,11 @@ function ImprestRetirementApprovalAction({ retirement, approvedRequisition }: Im
           <Button
             size="small"
             variant="contained"
-            color={remarksDialogMode === 'reject' ? 'error' : 'warning'}
+            color="error"
             onClick={handleSubmitRemarksAction}
             disabled={isPending || isRevokingApproval}
           >
-            {remarksDialogMode === 'reject' ? 'Reject' : 'Revoke'}
+            Reject
           </Button>
         </DialogActions>
       </Dialog>
