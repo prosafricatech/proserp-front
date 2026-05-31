@@ -1,34 +1,40 @@
 import {
+  readableDate,
+  sanitizedNumber,
+} from '@/app/helpers/input-sanitization-helpers';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import {
+  Approval,
+  Requisition,
+  RequisitionItem,
+  Vendor,
+} from '@/components/processApproval/RequisitionType';
+import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { Div } from '@jumbo/shared';
+import { LoadingButton } from '@mui/lab';
+import {
   Button,
-  Divider,
   DialogActions,
   DialogContent,
   DialogTitle,
   Grid,
-  Stack,
   Tab,
   Tabs,
   TextField,
   Typography,
 } from '@mui/material';
-import React, { useEffect, useState } from 'react';
-import { LoadingButton } from '@mui/lab';
-import { useForm, SubmitHandler } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
-import * as yup from 'yup';
-import { useSnackbar } from 'notistack';
-import requisitionsServices from '../../../../requisitionsServices';
-import ApprovalRequisitionProductItem from './ApprovalRequisitionProductItem';
-import ApprovalRequisitionLedgerItem from './ApprovalRequisitionLedgerItem';
 import { DateTimePicker } from '@mui/x-date-pickers';
-import dayjs, { Dayjs } from 'dayjs';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
-import { PERMISSIONS } from '@/utilities/constants/permissions';
-import { readableDate, sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
-import { Div } from '@jumbo/shared';
-import { Approval, Requisition, RequisitionItem, Vendor } from '@/components/processApproval/RequisitionType';
-import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
+import dayjs, { Dayjs } from 'dayjs';
+import { useSnackbar } from 'notistack';
+import React, { useEffect, useState } from 'react';
+import { SubmitHandler, useForm } from 'react-hook-form';
+import * as yup from 'yup';
+import requisitionsServices from '../../../../requisitionsServices';
+import ApprovalRequisitionLedgerItem from './ApprovalRequisitionLedgerItem';
+import ApprovalRequisitionProductItem from './ApprovalRequisitionProductItem';
 
 interface ApprovalFormProps {
   toggleOpen: (value: boolean) => void;
@@ -56,12 +62,18 @@ interface ItemChangeParams {
   value: number | null;
 }
 
-function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: ApprovalFormProps) {
+function ApprovalForm({
+  toggleOpen,
+  requisition,
+  approval,
+  isEdit = false,
+}: ApprovalFormProps) {
   const [approvalDate] = useState<Dayjs>(dayjs());
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
   const { checkOrganizationPermission } = useJumboAuth();
-  const requisitionItems: RequisitionItem[] = 'items' in requisition ? (requisition.items || []) : [];
+  const requisitionItems: RequisitionItem[] =
+    'items' in requisition ? requisition.items || [] : [];
 
   const getInitialProductItems = (): RequisitionItem[] => {
     const items = approval?.items || requisitionItems;
@@ -71,11 +83,11 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
       product: item.product || item.requisition_product?.product,
       vendors: item.vendors?.map((vendor: Vendor) => ({
         ...vendor,
-        stakeholder_id: vendor.id
+        stakeholder_id: vendor.id,
       })),
       quantity: item.quantity || 0,
       rate: item.rate || 0,
-      remarks: item.remarks || ''
+      remarks: item.remarks || '',
     }));
   };
 
@@ -85,10 +97,11 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
       ...item,
       id: item.requisition_ledger_item?.id || item.id,
       ledger: item.ledger || item.requisition_ledger_item?.ledger,
-      measurement_unit: item.measurement_unit || item.requisition_ledger_item?.measurement_unit,
+      measurement_unit:
+        item.measurement_unit || item.requisition_ledger_item?.measurement_unit,
       quantity: item.quantity || 0,
       rate: item.rate || 0,
-      remarks: item.remarks || ''
+      remarks: item.remarks || '',
     }));
   };
 
@@ -100,7 +113,10 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
 
     return source.map((cost: any) => ({
       ...cost,
-      id: cost?.requisition_additional_cost?.id || cost?.id,
+      id:
+        cost?.requisition_additional_cost?.id ||
+        cost?.requisition_additional_cost_id ||
+        cost?.id,
       amount: Number(cost?.amount || 0),
       exchange_rate: Number(cost?.exchange_rate || 1),
       credit_ledger_name:
@@ -110,9 +126,15 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
     }));
   };
 
-  const [requisitionProductItem, setRequisitionProductItem] = useState<RequisitionItem[]>(getInitialProductItems());
-  const [requisitionLedgerItem, setRequisitionLedgerItem] = useState<RequisitionItem[]>(getInitialLedgerItems());
-  const [requisitionAdditionalCosts, setRequisitionAdditionalCosts] = useState<any[]>(getInitialAdditionalCosts());
+  const [requisitionProductItem, setRequisitionProductItem] = useState<
+    RequisitionItem[]
+  >(getInitialProductItems());
+  const [requisitionLedgerItem, setRequisitionLedgerItem] = useState<
+    RequisitionItem[]
+  >(getInitialLedgerItems());
+  const [requisitionAdditionalCosts, setRequisitionAdditionalCosts] = useState<
+    any[]
+  >(getInitialAdditionalCosts());
   const [activePurchaseTab, setActivePurchaseTab] = useState(0);
 
   useEffect(() => {
@@ -121,11 +143,17 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
     setRequisitionAdditionalCosts(getInitialAdditionalCosts());
   }, [requisition, approval]);
 
-  const isPurchaseType = requisition?.approval_chain?.process_type?.toLowerCase() === 'purchase';
-  const isImprestType = requisition?.approval_chain?.process_type?.toLowerCase() === 'imprest';
-  const isFinal = isEdit ? approval?.is_final === 1 : requisition?.next_approval_level?.is_final;
+  const isPurchaseType =
+    requisition?.approval_chain?.process_type?.toLowerCase() === 'purchase';
+  const isImprestType =
+    requisition?.approval_chain?.process_type?.toLowerCase() === 'imprest';
+  const isFinal = isEdit
+    ? approval?.is_final === 1
+    : requisition?.next_approval_level?.is_final;
   const approvalDisplayValue = React.useMemo(() => {
-    const lineItemsTotal = (isPurchaseType ? requisitionProductItem : requisitionLedgerItem).reduce(
+    const lineItemsTotal = (
+      isPurchaseType ? requisitionProductItem : requisitionLedgerItem
+    ).reduce(
       (sum, item) => sum + Number(item.quantity || 0) * Number(item.rate || 0),
       0
     );
@@ -149,24 +177,34 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
     );
 
     return lineItemsTotal + vatTotal + additionalTotal;
-  }, [isPurchaseType, requisitionProductItem, requisitionLedgerItem, requisitionAdditionalCosts]);
+  }, [
+    isPurchaseType,
+    requisitionProductItem,
+    requisitionLedgerItem,
+    requisitionAdditionalCosts,
+  ]);
 
   const validationSchema = yup.object().shape({
-    approval_date: yup.string().required('Approval Date is required').typeError('Approval Date is required'),
+    approval_date: yup
+      .string()
+      .required('Approval Date is required')
+      .typeError('Approval Date is required'),
     product_items: isPurchaseType
       ? yup.array().of(
           yup.object().shape({
             rate: isFinal
-              ? yup.number()
-                .required('Rate is required for final approval')
-                .positive('Rate is required for final approval')
-                .typeError('Rate is required for final approval')
+              ? yup
+                  .number()
+                  .required('Rate is required for final approval')
+                  .positive('Rate is required for final approval')
+                  .typeError('Rate is required for final approval')
               : yup.number().nullable(),
             quantity: isFinal
-              ? yup.number()
-                .required('Quantity is required for final approval')
-                .positive('Quantity is required for final approval')
-                .typeError('Quantity is required for final approval')
+              ? yup
+                  .number()
+                  .required('Quantity is required for final approval')
+                  .positive('Quantity is required for final approval')
+                  .typeError('Quantity is required for final approval')
               : yup.number().nullable(),
           })
         )
@@ -174,7 +212,8 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
     additional_costs: isPurchaseType
       ? yup.array().of(
           yup.object().shape({
-            amount: yup.number()
+            amount: yup
+              .number()
               .required('Amount is required')
               .positive('Amount is required')
               .typeError('Amount is required'),
@@ -184,24 +223,26 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
     ledger_items: !isPurchaseType
       ? yup.array().of(
           yup.object().shape({
-            rate: yup.number()
+            rate: yup
+              .number()
               .required('Rate is required')
               .positive('Rate is required')
               .typeError('Rate is required'),
-            quantity: yup.number()
+            quantity: yup
+              .number()
               .required('Quantity is required')
               .positive('Quantity is required')
-              .typeError('Quantity is required')
+              .typeError('Quantity is required'),
           })
         )
       : yup.array().nullable(),
   });
 
-  const { 
-    handleSubmit, 
-    setValue, 
-    register, 
-    formState: { errors } 
+  const {
+    handleSubmit,
+    setValue,
+    register,
+    formState: { errors },
   } = useForm<FormValues>({
     resolver: yupResolver(validationSchema) as any,
     defaultValues: {
@@ -210,11 +251,14 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
       approval_date: approvalDate.toISOString(),
       process_type: requisition?.approval_chain?.process_type,
       remarks: approval?.remarks || requisition?.remarks || '',
-      product_items: isPurchaseType ? (approval?.items || requisitionItems) : [],
+      product_items: isPurchaseType ? approval?.items || requisitionItems : [],
       additional_costs: isPurchaseType ? getInitialAdditionalCosts() : [],
-      ledger_items: !isPurchaseType ? (approval?.items || requisitionItems) : [],
-      chain_level_id: approval && isEdit ? approval.approval_chain_level_id : requisition?.next_approval_level?.id,
-    }
+      ledger_items: !isPurchaseType ? approval?.items || requisitionItems : [],
+      chain_level_id:
+        approval && isEdit
+          ? approval.approval_chain_level_id
+          : requisition?.next_approval_level?.id,
+    },
   });
 
   const approveRequisition = useMutation({
@@ -225,8 +269,9 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
       queryClient.invalidateQueries({ queryKey: ['requisitions'] });
     },
     onError: (error: any) => {
-      error?.response?.data?.message && enqueueSnackbar(error.response.data.message, { variant: 'error' });
-    }
+      error?.response?.data?.message &&
+        enqueueSnackbar(error.response.data.message, { variant: 'error' });
+    },
   });
 
   const editApprovalRequisition = useMutation({
@@ -237,19 +282,22 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
       queryClient.invalidateQueries({ queryKey: ['requisitions'] });
     },
     onError: (error: any) => {
-      error?.response?.data?.message && enqueueSnackbar(error.response.data.message, { variant: 'error' });
-    }
+      error?.response?.data?.message &&
+        enqueueSnackbar(error.response.data.message, { variant: 'error' });
+    },
   });
 
   const handleItemChange = ({ index, key, value }: ItemChangeParams) => {
     let updatedItems;
 
-    if (requisition?.approval_chain?.process_type?.toLowerCase() === 'purchase') {
+    if (
+      requisition?.approval_chain?.process_type?.toLowerCase() === 'purchase'
+    ) {
       updatedItems = [...requisitionProductItem];
       if (updatedItems[index]) {
         updatedItems[index] = {
           ...updatedItems[index],
-          [key]: Number.isNaN(value) ? null : value
+          [key]: Number.isNaN(value) ? null : value,
         };
         setRequisitionProductItem(updatedItems);
       }
@@ -258,7 +306,7 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
       if (updatedItems[index]) {
         updatedItems[index] = {
           ...updatedItems[index],
-          [key]: Number.isNaN(value) ? null : value
+          [key]: Number.isNaN(value) ? null : value,
         };
         setRequisitionLedgerItem(updatedItems);
       }
@@ -286,7 +334,7 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
         quantity: item.quantity,
         rate: item.rate,
         remarks: item.remarks,
-        vendors: item.vendors
+        vendors: item.vendors,
       }));
 
       setValue('product_items', product_items, {
@@ -314,7 +362,7 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
         quantity: item.quantity,
         rate: item.rate,
         remarks: item.remarks,
-        measurement_unit_id: item.measurement_unit?.id
+        measurement_unit_id: item.measurement_unit?.id,
       }));
 
       setValue('ledger_items', ledger_items, {
@@ -348,7 +396,7 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
     <React.Fragment>
       <DialogTitle>
         <Grid container spacing={2}>
-          <Grid size={{xs: 12}} textAlign={"center"} mb={2}>
+          <Grid size={{ xs: 12 }} textAlign={'center'} mb={2}>
             {isEdit
               ? 'Edit Approval'
               : isImprestType
@@ -356,28 +404,68 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
                 : 'Approve Requisition'}
           </Grid>
           <Grid size={{ xs: 12, md: 3 }} sx={{ mt: 1, mb: 1 }}>
-            <Div sx={{ p: 1.25, border: 1, borderColor: 'divider', borderRadius: 1 }}>
-              <Typography variant='caption' color='text.secondary'>Requisition Date</Typography>
-              <Typography variant='body2'>{readableDate(requisition.requisition_date)}</Typography>
+            <Div
+              sx={{
+                p: 1.25,
+                border: 1,
+                borderColor: 'divider',
+                borderRadius: 1,
+              }}
+            >
+              <Typography variant='caption' color='text.secondary'>
+                Requisition Date
+              </Typography>
+              <Typography variant='body2'>
+                {readableDate(requisition.requisition_date)}
+              </Typography>
             </Div>
           </Grid>
           <Grid size={{ xs: 12, md: 3 }} sx={{ mt: 1, mb: 1 }}>
-            <Div sx={{ p: 1.25, border: 1, borderColor: 'divider', borderRadius: 1 }}>
-              <Typography variant='caption' color='text.secondary'>Currency</Typography>
-              <Typography variant='body2'>{requisition.currency?.name}</Typography>
+            <Div
+              sx={{
+                p: 1.25,
+                border: 1,
+                borderColor: 'divider',
+                borderRadius: 1,
+              }}
+            >
+              <Typography variant='caption' color='text.secondary'>
+                Currency
+              </Typography>
+              <Typography variant='body2'>
+                {requisition.currency?.name}
+              </Typography>
             </Div>
           </Grid>
           <Grid size={{ xs: 12, md: 4 }} sx={{ mt: 1, mb: 1 }}>
-            <Div sx={{ p: 1.25, border: 1, borderColor: 'divider', borderRadius: 1 }}>
-              <Typography variant='caption' color='text.secondary'>Cost Center</Typography>
+            <Div
+              sx={{
+                p: 1.25,
+                border: 1,
+                borderColor: 'divider',
+                borderRadius: 1,
+              }}
+            >
+              <Typography variant='caption' color='text.secondary'>
+                Cost Center
+              </Typography>
               <Typography variant='body2' sx={{ wordBreak: 'break-word' }}>
                 {requisition.cost_center?.name || '-'}
               </Typography>
             </Div>
           </Grid>
           <Grid size={{ xs: 12, md: 2 }} sx={{ mt: 1, mb: 1 }}>
-            <Div sx={{ p: 1.25, border: 1, borderColor: 'divider', borderRadius: 1 }}>
-              <Typography variant='caption' color='text.secondary'>Grand Total</Typography>
+            <Div
+              sx={{
+                p: 1.25,
+                border: 1,
+                borderColor: 'divider',
+                borderRadius: 1,
+              }}
+            >
+              <Typography variant='caption' color='text.secondary'>
+                Grand Total
+              </Typography>
               <Typography variant='body2'>
                 {Number(approvalDisplayValue || 0).toLocaleString('en-US', {
                   style: 'currency',
@@ -386,35 +474,35 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
               </Typography>
             </Div>
           </Grid>
-          <Grid size={{xs: 12, md: 4, lg: 4}}>
-            <Div sx={{mt: 1}}>
+          <Grid size={{ xs: 12, md: 4, lg: 4 }}>
+            <Div sx={{ mt: 1 }}>
               <DateTimePicker
-                label="Approval Date"
+                label='Approval Date'
                 readOnly={true}
                 defaultValue={approvalDate}
                 minDate={
                   checkOrganizationPermission(PERMISSIONS.APPROVAL_BACKDATE)
-                  ? dayjs(requisition.requisition_date)
-                  : dayjs().startOf('day')
+                    ? dayjs(requisition.requisition_date)
+                    : dayjs().startOf('day')
                 }
                 maxDate={
                   checkOrganizationPermission(PERMISSIONS.APPROVAL_POSTDATE)
-                  ? dayjs().add(10, 'year').endOf('year')
-                  : dayjs().endOf('day')
+                    ? dayjs().add(10, 'year').endOf('year')
+                    : dayjs().endOf('day')
                 }
                 slotProps={{
                   textField: {
                     size: 'small',
                     fullWidth: true,
                     error: !!errors?.approval_date,
-                    helperText: errors?.approval_date?.message
-                  }
+                    helperText: errors?.approval_date?.message,
+                  },
                 }}
                 onChange={(newValue: Dayjs | null) => {
                   if (newValue) {
                     setValue('approval_date', newValue.toISOString(), {
                       shouldValidate: true,
-                      shouldDirty: true
+                      shouldDirty: true,
                     });
                   }
                 }}
@@ -424,103 +512,120 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
         </Grid>
       </DialogTitle>
       <DialogContent>
-        {isPurchaseType ? 
-            <>
-              <Tabs
-                value={activePurchaseTab}
-                onChange={(_, newValue) => setActivePurchaseTab(newValue)}
-                variant='scrollable'
-                scrollButtons='auto'
-                allowScrollButtonsMobile
-                sx={{ mb: 1 }}
-              >
-                <Tab label='Products' />
-                <Tab label='Additional Costs' />
-              </Tabs>
+        {isPurchaseType ? (
+          <>
+            <Tabs
+              value={activePurchaseTab}
+              onChange={(_, newValue) => setActivePurchaseTab(newValue)}
+              variant='scrollable'
+              scrollButtons='auto'
+              allowScrollButtonsMobile
+              sx={{ mb: 1 }}
+            >
+              <Tab label='Products' />
+              <Tab label='Additional Costs' />
+            </Tabs>
 
-              {activePurchaseTab === 0 && (
-                <ApprovalRequisitionProductItem 
-                  approval={approval} 
-                  requisition={requisition} 
-                  errors={errors.product_items} 
-                  requisitionProductItem={requisitionProductItem} 
-                  setRequisitionProductItem={setRequisitionProductItem} 
-                  handleItemChange={handleItemChange}
-                />
-              )}
+            {activePurchaseTab === 0 && (
+              <ApprovalRequisitionProductItem
+                approval={approval}
+                requisition={requisition}
+                errors={errors.product_items}
+                requisitionProductItem={requisitionProductItem}
+                setRequisitionProductItem={setRequisitionProductItem}
+                handleItemChange={handleItemChange}
+              />
+            )}
 
-              {activePurchaseTab === 1 && requisitionAdditionalCosts.length > 0 && (
+            {activePurchaseTab === 1 &&
+              requisitionAdditionalCosts.length > 0 && (
                 <Grid container spacing={1} sx={{ mt: 1, mb: 2 }}>
                   {requisitionAdditionalCosts.map((cost, index) => {
-                    const additionalCostErrors = (errors as any)?.additional_costs?.[index];
+                    const additionalCostErrors = (errors as any)
+                      ?.additional_costs?.[index];
 
                     return (
                       <React.Fragment key={cost.id || index}>
-                      <Grid size={{ xs: 12, md: 4 }}>
-                        <Typography variant='body2' sx={{ mt: 1.5 }}>
-                          {`${index + 1}. ${cost.credit_ledger_name || cost.name}`}
-                        </Typography>
-                        {cost.reference && (
-                          <Typography variant='caption' color='text.secondary'>
-                            Ref: {cost.reference}
+                        <Grid size={{ xs: 12, md: 4 }}>
+                          <Typography variant='body2' sx={{ mt: 1.5 }}>
+                            {`${index + 1}. ${cost.credit_ledger_name || cost.name}`}
                           </Typography>
-                        )}
-                      </Grid>
-                      <Grid size={{ xs: 6, md: 2 }}>
-                        <Typography variant='body2' sx={{ mt: 1.5 }}>
-                          {cost.currency_name || requisition.currency?.name}
-                        </Typography>
-                      </Grid>
-                      <Grid size={{ xs: 6, md: 2 }}>
-                        <Typography variant='body2' sx={{ mt: 1.5 }}>
-                          Rate: {Number(cost.exchange_rate || 1).toLocaleString('en-US')}
-                        </Typography>
-                      </Grid>
-                      <Grid size={{ xs: 12, md: 4 }}>
-                        <Div sx={{ mt: 0.5 }}>
-                          <TextField
-                            label='Amount'
-                            fullWidth
-                            size='small'
-                            value={Number(cost.amount || 0).toLocaleString('en-US')}
-                            error={!!additionalCostErrors?.amount}
-                            helperText={additionalCostErrors?.amount?.message as string}
-                            InputProps={{
-                              inputComponent: CommaSeparatedField,
-                            }}
-                            onChange={(e) =>
-                              handleAdditionalCostAmountChange(
-                                index,
-                                sanitizedNumber(e.target.value) || 0
-                              )
-                            }
-                          />
-                        </Div>
-                      </Grid>
+                          {cost.reference && (
+                            <Typography
+                              variant='caption'
+                              color='text.secondary'
+                            >
+                              Ref: {cost.reference}
+                            </Typography>
+                          )}
+                        </Grid>
+                        <Grid size={{ xs: 6, md: 2 }}>
+                          <Typography variant='body2' sx={{ mt: 1.5 }}>
+                            {cost.currency_name || requisition.currency?.name}
+                          </Typography>
+                        </Grid>
+                        <Grid size={{ xs: 6, md: 2 }}>
+                          <Typography variant='body2' sx={{ mt: 1.5 }}>
+                            Rate:{' '}
+                            {Number(cost.exchange_rate || 1).toLocaleString(
+                              'en-US'
+                            )}
+                          </Typography>
+                        </Grid>
+                        <Grid size={{ xs: 12, md: 4 }}>
+                          <Div sx={{ mt: 0.5 }}>
+                            <TextField
+                              label='Amount'
+                              fullWidth
+                              size='small'
+                              value={Number(cost.amount || 0).toLocaleString(
+                                'en-US'
+                              )}
+                              error={!!additionalCostErrors?.amount}
+                              helperText={
+                                additionalCostErrors?.amount?.message as string
+                              }
+                              InputProps={{
+                                inputComponent: CommaSeparatedField,
+                              }}
+                              onChange={(e) =>
+                                handleAdditionalCostAmountChange(
+                                  index,
+                                  sanitizedNumber(e.target.value) || 0
+                                )
+                              }
+                            />
+                          </Div>
+                        </Grid>
                       </React.Fragment>
                     );
                   })}
                 </Grid>
               )}
 
-              {activePurchaseTab === 1 && requisitionAdditionalCosts.length === 0 && (
-                <Typography variant='body2' color='text.secondary' sx={{ mt: 1 }}>
+            {activePurchaseTab === 1 &&
+              requisitionAdditionalCosts.length === 0 && (
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                  sx={{ mt: 1 }}
+                >
                   No additional costs on this requisition.
                 </Typography>
               )}
-            </>
-          :
-            <ApprovalRequisitionLedgerItem 
-              approval={approval} 
-              requisition={requisition} 
-              errors={errors.ledger_items} 
-              readOnlyMode={isImprestType}
-              requisitionLedgerItem={requisitionLedgerItem} 
-              setRequisitionLedgerItem={setRequisitionLedgerItem} 
-              handleItemChange={handleItemChange}
-            />
-        }
-        <Grid size={{xs: 12}}>
+          </>
+        ) : (
+          <ApprovalRequisitionLedgerItem
+            approval={approval}
+            requisition={requisition}
+            errors={errors.ledger_items}
+            readOnlyMode={isImprestType}
+            requisitionLedgerItem={requisitionLedgerItem}
+            setRequisitionLedgerItem={setRequisitionLedgerItem}
+            handleItemChange={handleItemChange}
+          />
+        )}
+        <Grid size={{ xs: 12 }}>
           <Div sx={{ mt: 1, mb: 1 }}>
             <TextField
               label='Remarks'
@@ -536,13 +641,13 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
         </Grid>
       </DialogContent>
       <DialogActions>
-        <Button size="small" onClick={() => toggleOpen(false)}>
+        <Button size='small' onClick={() => toggleOpen(false)}>
           Cancel
         </Button>
         {isPurchaseType && activePurchaseTab === 0 && (
           <Button
-            size="small"
-            variant="outlined"
+            size='small'
+            variant='outlined'
             onClick={() => setActivePurchaseTab(1)}
           >
             Next &gt;
@@ -550,8 +655,8 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
         )}
         {isPurchaseType && activePurchaseTab === 1 && (
           <Button
-            size="small"
-            variant="outlined"
+            size='small'
+            variant='outlined'
             onClick={() => setActivePurchaseTab(0)}
           >
             &lt; Prev
@@ -559,44 +664,53 @@ function ApprovalForm({ toggleOpen, requisition, approval, isEdit = false }: App
         )}
         {(!isPurchaseType || activePurchaseTab === 1) && (
           <>
-        <LoadingButton
-          loading={approveRequisition.isPending || editApprovalRequisition.isPending}
-          size="small"
-          variant="contained"
-          color="error"
-          type="submit"
-          onClick={(e) => {
-            setValue('submit_type', 'rejected');
-            handleSubmit(onSubmit)(e);
-          }}
-        >
-          Reject
-        </LoadingButton>
-        <LoadingButton
-          loading={approveRequisition.isPending || editApprovalRequisition.isPending}
-          size="small"
-          variant="contained"
-          type="submit"
-          onClick={(e) => {
-            setValue('submit_type', 'on hold');
-            handleSubmit(onSubmit)(e);
-          }}
-        >
-          Hold
-        </LoadingButton>
-        <LoadingButton
-          loading={approveRequisition.isPending || editApprovalRequisition.isPending}
-          variant="contained"
-          color="success"
-          type="submit"
-          size="small"
-          onClick={(e) => {
-            setValue('submit_type', 'approved');
-            handleSubmit(onSubmit)(e);
-          }}
-        >
-          Approve
-        </LoadingButton>
+            <LoadingButton
+              loading={
+                approveRequisition.isPending ||
+                editApprovalRequisition.isPending
+              }
+              size='small'
+              variant='contained'
+              color='error'
+              type='submit'
+              onClick={(e) => {
+                setValue('submit_type', 'rejected');
+                handleSubmit(onSubmit)(e);
+              }}
+            >
+              Reject
+            </LoadingButton>
+            <LoadingButton
+              loading={
+                approveRequisition.isPending ||
+                editApprovalRequisition.isPending
+              }
+              size='small'
+              variant='contained'
+              type='submit'
+              onClick={(e) => {
+                setValue('submit_type', 'on hold');
+                handleSubmit(onSubmit)(e);
+              }}
+            >
+              Hold
+            </LoadingButton>
+            <LoadingButton
+              loading={
+                approveRequisition.isPending ||
+                editApprovalRequisition.isPending
+              }
+              variant='contained'
+              color='success'
+              type='submit'
+              size='small'
+              onClick={(e) => {
+                setValue('submit_type', 'approved');
+                handleSubmit(onSubmit)(e);
+              }}
+            >
+              Approve
+            </LoadingButton>
           </>
         )}
       </DialogActions>
