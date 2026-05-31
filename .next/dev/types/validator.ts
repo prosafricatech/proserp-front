@@ -2666,15 +2666,6 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
-// Validate ../../../src/app/api/imprest-retirements/[id]/submit/route.ts
-{
-  type __IsExpected<Specific extends RouteHandlerConfig<"/api/imprest-retirements/[id]/submit">> = Specific
-  const handler = {} as typeof import("../../../src/app/api/imprest-retirements/[id]/submit/route.js")
-  type __Check = __IsExpected<typeof handler>
-  // @ts-ignore
-  type __Unused = __Check
-}
-
 // Validate ../../../src/app/api/imprest-retirements/route.ts
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/imprest-retirements">> = Specific

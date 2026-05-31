@@ -25,6 +25,7 @@ import { Attachment } from './AttachmentsType';
 
 type AttachmentFormProps = {
   hideFeatures?: boolean;
+  readOnly?: boolean;
   setAttachDialog?: (open: boolean) => void;
   attachmentable_id: number;
   attachmentable_type: string;
@@ -58,6 +59,7 @@ const validationSchema = yup.object({
 
 function AttachmentForm({
   hideFeatures,
+  readOnly = false,
   setAttachDialog,
   attachmentable_id,
   attachmentable_type,
@@ -126,42 +128,46 @@ function AttachmentForm({
 
       <DialogContent>
         <Grid container spacing={2} pt={2}>
-          <Grid size={{xs: 12, md: 6}}>
-            <TextField
-              fullWidth
-              label="Name"
-              size='small'
-              error={!!errors?.name}
-              helperText={errors?.name?.message}
-              {...register('name')}
-            />
-          </Grid>
+          {!readOnly && (
+            <>
+              <Grid size={{xs: 12, md: 6}}>
+                <TextField
+                  fullWidth
+                  label="Name"
+                  size='small'
+                  error={!!errors?.name}
+                  helperText={errors?.name?.message}
+                  {...register('name')}
+                />
+              </Grid>
 
-          <Grid size={{xs: 12, md: 6}}>
-            <Input
-              type="file"
-              id="file"
-              error={!!errors?.file}
-              inputProps={{ ...register("file") }}
-            />
-            {!errors?.file ? (
-              <InputLabel htmlFor="file-input">File Attachment</InputLabel>
-            ) : (
-              <FormHelperText error>{errors?.file?.message}</FormHelperText>
-            )}
-          </Grid>
+              <Grid size={{xs: 12, md: 6}}>
+                <Input
+                  type="file"
+                  id="file"
+                  error={!!errors?.file}
+                  inputProps={{ ...register("file") }}
+                />
+                {!errors?.file ? (
+                  <InputLabel htmlFor="file-input">File Attachment</InputLabel>
+                ) : (
+                  <FormHelperText error>{errors?.file?.message}</FormHelperText>
+                )}
+              </Grid>
 
-          <Grid size={12} textAlign="right">
-            <LoadingButton
-              size="small"
-              variant="contained"
-              color="success"
-              type="submit"
-              loading={addAttachment.isPending}
-            >
-              Upload
-            </LoadingButton>
-          </Grid>
+              <Grid size={12} textAlign="right">
+                <LoadingButton
+                  size="small"
+                  variant="contained"
+                  color="success"
+                  type="submit"
+                  loading={addAttachment.isPending}
+                >
+                  Upload
+                </LoadingButton>
+              </Grid>
+            </>
+          )}
 
           <Grid size={12}>
             {isFetching ? (
@@ -172,7 +178,7 @@ function AttachmentForm({
               </div>
             ) : attachments?.length > 0 ? (
               attachments.map((attachment: Attachment, index: number) => (
-                <AttachmentsRow key={index} attachment={attachment} index={index} />
+                <AttachmentsRow key={index} attachment={attachment} index={index} readOnly={readOnly} />
               ))
             ) : (
               <Alert variant="outlined" severity="info">

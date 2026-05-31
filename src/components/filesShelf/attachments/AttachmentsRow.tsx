@@ -68,9 +68,10 @@ const fileTypeIcon: Record<string, any> = {
 type AttachmentsRowProps = {
   attachment: Attachment;
   index: number;
+  readOnly?: boolean;
 };
 
-const AttachmentsRow: React.FC<AttachmentsRowProps> = ({ attachment, index }) => {
+const AttachmentsRow: React.FC<AttachmentsRowProps> = ({ attachment, index, readOnly = false }) => {
   const fileType = attachment.type?.split('/').pop()?.toLowerCase() || 'default';
   const icon = fileTypeIcon[fileType] || fileTypeIcon.default;
   const iconColor = iconColors[fileType] || iconColors.default;
@@ -113,7 +114,7 @@ const AttachmentsRow: React.FC<AttachmentsRowProps> = ({ attachment, index }) =>
           </Tooltip>
         </Grid>
         <Grid size={{xs: 6, md: 1.5}} textAlign="end">
-          <AttachmentItemAction attachment={attachment} />
+          {!readOnly && <AttachmentItemAction attachment={attachment} />}
         </Grid>
       </Grid>
     </>

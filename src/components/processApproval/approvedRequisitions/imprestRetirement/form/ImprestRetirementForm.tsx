@@ -150,6 +150,11 @@ function ImprestRetirementForm({
     return editable || list[0];
   }, [existingRetirementFromShow, existingRetirementsResponse, preferredRetirementId]);
 
+  const retirementDisplayNo =
+    existingRetirementFromShow?.retirementNo ||
+    existingRetirement?.retirementNo ||
+    (preferredRetirementId ? `#${preferredRetirementId}` : '');
+
   React.useEffect(() => {
     if (!existingRetirement) return;
 
@@ -340,11 +345,15 @@ function ImprestRetirementForm({
 
   return (
     <>
-      <DialogTitle textAlign="center">Imprest Retirement Form</DialogTitle>
+      <DialogTitle textAlign="center">
+        {reviewMode
+          ? `Approve ${retirementDisplayNo}`
+          : 'Imprest Retirement Form'}
+      </DialogTitle>
       <DialogContent>
         <Grid container spacing={1.5} marginBottom={2}>
           <Grid size={{ xs: 12, md: 3 }}>
-            <Chip size="small" color="primary" label={`Status: ${statusLabel || 'Draft'}`} />
+            <Chip size="small" color="primary" label={`Status: ${statusLabel}`} />
           </Grid>
           <Grid size={{ xs: 12, md: 9 }} textAlign={{ md: 'right' }}>
             <Typography variant="body2">
@@ -502,6 +511,7 @@ function ImprestRetirementForm({
             </Typography>
             <AttachmentForm
               hideFeatures
+              readOnly={reviewMode}
               attachmentable_id={retirementId}
               attachmentable_type="imprest_retirement"
               attachment_name="imprest retirement"
