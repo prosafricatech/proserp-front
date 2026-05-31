@@ -106,7 +106,7 @@ const ReadOnlyField = ({
       >
         {label}
       </Typography>
-      <Typography variant="body2" color="text.primary" sx={{ fontWeight: 500 }}>
+      <Typography variant="body2" color="text.primary">
         {value || '-'}
       </Typography>
     </Div>
@@ -251,6 +251,10 @@ function ImprestRetirementForm({
     existingRetirementFromShow?.imprest_approval?.requisition?.currency?.code ||
     approvedRequisition?.requisition?.currency?.code ||
     'TZS';
+  const approvedAmountDisplay = ceilingAmount.toLocaleString('en-US', {
+    style: 'currency',
+    currency: currencyCode,
+  });
 
   const statusRaw = String(statusLabel || '').toLowerCase();
   const isLocked = reviewMode || statusRaw.includes('approved');
@@ -271,14 +275,50 @@ function ImprestRetirementForm({
     (ledgerId ? `Ledger #${ledgerId}` : '-');
   const formattedRetirementDate = retirementDate ? retirementDate.format('DD/MM/YYYY') : '-';
 
+  const resolveRetirementIdFromResponse = React.useCallback(
+    async (response: any): Promise<number | null> => {
+      const directId = Number(
+        response?.id ||
+          response?.data?.id ||
+          response?.retirement?.id ||
+          response?.data?.retirement?.id ||
+          response?.imprest_retirement?.id ||
+          response?.data?.imprest_retirement?.id ||
+          0
+      );
+
+      if (directId) return directId;
+
+      const message = String(response?.message || '');
+      const match = message.match(/IR\/\d+/i);
+      if (!match?.[0] || !requisitionApprovalId) return null;
+
+      const listResponse = await imprestRetirementServices.list({
+        requisition_approval_id: requisitionApprovalId,
+        limit: 100,
+      });
+
+      const found = extractList(listResponse).find(
+        (entry: any) => String(entry?.retirementNo || '').toUpperCase() === match[0].toUpperCase()
+      );
+
+      return Number(found?.id || 0) || null;
+    },
+    [requisitionApprovalId]
+  );
+
   const addRetirement = useMutation({
     mutationFn: imprestRetirementServices.add,
-    onSuccess: (response: any) => {
+    onSuccess: async (response: any) => {
       enqueueSnackbar(response?.message || 'Imprest retirement draft created', { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['imprestRetirements'] });
-      const createdId = Number(response?.id || response?.data?.id || 0);
+      const createdId = await resolveRetirementIdFromResponse(response);
       if (createdId) {
         setRetirementId(createdId);
+      } else {
+        enqueueSnackbar('Draft saved. Reopen the form if attachments do not appear yet.', {
+          variant: 'info',
+        });
       }
     },
     onError: (error: any) => {
@@ -421,13 +461,24 @@ function ImprestRetirementForm({
             <Chip size="small" color="primary" label={`Status: ${statusLabel}`} />
           </Grid>
           <Grid size={{ xs: 12, md: 9 }} textAlign={{ md: 'right' }}>
-            <Typography variant="body2">
-              Approved Amount:{' '}
-              {ceilingAmount.toLocaleString('en-US', {
-                style: 'currency',
-                currency: currencyCode,
+            <Div
+              sx={(theme) => ({
+                display: 'inline-block',
+                px: 1.5,
+                py: 0.75,
+                borderRadius: 1.5,
+                border: '1px solid',
+                borderColor: theme.type === 'dark' ? 'rgba(46, 204, 113, 0.45)' : 'success.light',
+                bgcolor: theme.type === 'dark' ? 'rgba(46, 204, 113, 0.12)' : 'rgba(46, 204, 113, 0.1)',
               })}
-            </Typography>
+            >
+              <Typography variant="caption" sx={{ display: 'block', opacity: 0.9 }}>
+                Approved Amount
+              </Typography>
+              <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+                {approvedAmountDisplay}
+              </Typography>
+            </Div>
           </Grid>
           {useReadOnlyDisplay ? (
             <>
