@@ -42,7 +42,12 @@ function ImprestRetirementApprovalAction({ retirement, approvedRequisition }: Im
     (approvalStatusRaw === 'pending' || !approvalStatusRaw || statusLabelRaw.includes('pending'));
   const isApproved = approvalStatusRaw === 'approved' || statusLabelRaw.includes('approved');
   const isRejected = approvalStatusRaw === 'rejected' || statusLabelRaw.includes('rejected');
-  const isDraftLike = statusRaw === 'draft' || statusRaw === 'suspended';
+  const isDraftLike =
+    statusRaw === 'draft' ||
+    statusRaw === 'suspended' ||
+    statusRaw.includes('reject') ||
+    statusLabelRaw.includes('reject') ||
+    approvalStatusRaw.includes('reject');
   const canApproveRetirement = checkOrganizationPermission([PERMISSIONS.IMPREST_RETIREMENT_APPROVE]);
 
   const { data: retirementDetails, isFetching: isFetchingRetirementDetails } = useQuery({
@@ -91,10 +96,12 @@ function ImprestRetirementApprovalAction({ retirement, approvedRequisition }: Im
     },
   });
 
+  const canUpdateOrDelete = isDraftLike || isPendingApproval;
+
   const menuItems: MenuItemProps[] = [
-    ...(isDraftLike
+    ...(canUpdateOrDelete
       ? [
-          { icon: <EditOutlined />, title: 'Update Draft', action: 'update-draft' } as MenuItemProps,
+          { icon: <EditOutlined />, title: 'Update', action: 'update-draft' } as MenuItemProps,
         ]
       : []),
     ...(isPendingApproval
@@ -106,7 +113,7 @@ function ImprestRetirementApprovalAction({ retirement, approvedRequisition }: Im
     ...((isApproved || isRejected) && canApproveRetirement
       ? [{ icon: <UndoOutlined color="warning" />, title: 'Revoke', action: 'revoke' } as MenuItemProps]
       : []),
-    ...(isDraftLike
+    ...(canUpdateOrDelete
       ? [{ icon: <DeleteOutlined color="error" />, title: 'Delete Draft', action: 'delete-draft' } as MenuItemProps]
       : []),
   ];

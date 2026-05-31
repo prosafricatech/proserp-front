@@ -45,6 +45,7 @@ const ImprestRetirementActionTail: React.FC<ImprestRetirementActionTailProps> = 
             toggleOpen={setOpenDialog}
             approvedRequisition={approvedRequisition}
             approvedDetails={approvedRequisitionDetails}
+            startNew
           />
         )}
       </Dialog>

@@ -45,6 +45,7 @@ type ImprestRetirementFormProps = {
   approvedDetails?: any;
   existingRetirementDetails?: any;
   preferredRetirementId?: number | null;
+  startNew?: boolean;
   reviewMode?: boolean;
   onApprove?: () => void;
   onReject?: () => void;
@@ -118,6 +119,7 @@ function ImprestRetirementForm({
   approvedDetails,
   existingRetirementDetails,
   preferredRetirementId = null,
+  startNew = false,
   reviewMode = false,
   onApprove,
   onReject,
@@ -150,7 +152,7 @@ function ImprestRetirementForm({
         requisition_approval_id: approvedDetails?.id,
         limit: 20,
       }),
-    enabled: !!approvedDetails?.id && !existingRetirementDetails,
+    enabled: !!approvedDetails?.id && !existingRetirementDetails && !startNew,
   });
 
   const existingRetirementFromShow = React.useMemo(
@@ -169,6 +171,8 @@ function ImprestRetirementForm({
   }, [myLedgersResponse]);
 
   const existingRetirement = React.useMemo(() => {
+    if (startNew) return null;
+
     if (existingRetirementFromShow?.id) {
       return existingRetirementFromShow;
     }
@@ -187,7 +191,7 @@ function ImprestRetirementForm({
     });
 
     return editable || list[0];
-  }, [existingRetirementFromShow, existingRetirementsResponse, preferredRetirementId]);
+  }, [startNew, existingRetirementFromShow, existingRetirementsResponse, preferredRetirementId]);
 
   const retirementDisplayNo =
     existingRetirementFromShow?.retirementNo ||
@@ -249,8 +253,18 @@ function ImprestRetirementForm({
     'TZS';
 
   const statusRaw = String(statusLabel || '').toLowerCase();
-  const isLocked = reviewMode || statusRaw.includes('approved') || statusRaw.includes('pending');
+  const isLocked = reviewMode || statusRaw.includes('approved');
+  const canSubmitForApproval =
+    !reviewMode && !statusRaw.includes('approved') && !statusRaw.includes('pending') && !statusRaw.includes('submitted');
   const useReadOnlyDisplay = reviewMode;
+  const requisitionApprovalId =
+    existingRetirementFromShow?.requisition_approval_id ||
+    existingRetirement?.requisition_approval_id ||
+    existingRetirementFromShow?.imprest_approval?.id ||
+    existingRetirement?.imprest_approval?.id ||
+    approvedDetails?.id ||
+    approvedRequisition?.id ||
+    null;
   const selectedLedgerName =
     myImprestLedgers.find((option) => option.id === ledgerId)?.name ||
     existingRetirement?.ledger?.name ||
@@ -320,6 +334,11 @@ function ImprestRetirementForm({
   };
 
   const validateBeforeSave = () => {
+    if (!requisitionApprovalId) {
+      setClientError('Requisition approval reference is missing. Please reopen the form and try again.');
+      return false;
+    }
+
     if (!ledgerId) {
       setClientError('Imprest ledger is required.');
       return false;
@@ -350,8 +369,7 @@ function ImprestRetirementForm({
   };
 
   const buildPayload = () => ({
-    requisition_approval_id:
-      existingRetirementFromShow?.requisition_approval_id || approvedDetails?.id,
+    requisition_approval_id: requisitionApprovalId,
     ledger_id: ledgerId,
     retirement_date: retirementDate ? retirementDate.format('YYYY-MM-DD') : null,
     remarks,
@@ -393,7 +411,9 @@ function ImprestRetirementForm({
       <DialogTitle textAlign="center">
         {reviewMode
           ? `Approve ${retirementDisplayNo}`
-          : 'Imprest Retirement Form'}
+          : retirementId
+            ? `Update ${retirementDisplayNo}`
+            : 'Imprest Retirement Form'}
       </DialogTitle>
       <DialogContent>
         <Grid container spacing={1.5} marginBottom={2}>
@@ -598,12 +618,19 @@ function ImprestRetirementForm({
           </Alert>
         )}
 
-        {retirementId && (
-          <>
-            <Divider sx={{ mb: 1.5 }} />
-            <Typography variant="subtitle2" mb={1}>
-              Receipts / Supporting Documents
-            </Typography>
+        <>
+          <Divider sx={{ mb: 1.5 }} />
+          <Typography variant="subtitle2" mb={1}>
+            Receipts / Supporting Documents
+          </Typography>
+
+          {!retirementId && !reviewMode && (
+            <Alert severity="info" sx={{ mb: 1.5 }}>
+              Save first to upload supporting documents.
+            </Alert>
+          )}
+
+          {retirementId && (
             <AttachmentForm
               hideFeatures
               readOnly={reviewMode}
@@ -612,8 +639,8 @@ function ImprestRetirementForm({
               attachment_name="imprest retirement"
               attachment_sourceNo={approvedRequisition?.requisition?.requisitionNo || ''}
             />
-          </>
-        )}
+          )}
+        </>
       </DialogContent>
 
       <DialogActions>
@@ -651,10 +678,10 @@ function ImprestRetirementForm({
             onClick={handleSaveDraft}
             loading={addRetirement.isPending || updateRetirement.isPending}
           >
-            {retirementId ? 'Update Draft' : 'Save Draft'}
+            {retirementId ? 'Update' : 'Save Draft'}
           </LoadingButton>
         )}
-        {!isLocked && (
+        {canSubmitForApproval && (
           <LoadingButton
             size="small"
             color="success"
