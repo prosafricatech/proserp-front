@@ -1,19 +1,22 @@
 'use client';
 
 import React from 'react';
-import { CheckCircleOutlineOutlined, DeleteOutlined, EditOutlined, MoreHorizOutlined, UndoOutlined } from '@mui/icons-material';
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, TextField, Tooltip, useMediaQuery, LinearProgress } from '@mui/material';
+import { CheckCircleOutlineOutlined, DeleteOutlined, EditOutlined, HighlightOff, MoreHorizOutlined, UndoOutlined, VisibilityOutlined } from '@mui/icons-material';
+import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Grid, IconButton, LinearProgress, Tab, Tabs, TextField, Tooltip, useMediaQuery } from '@mui/material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import dayjs from 'dayjs';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
 import { JumboDdMenu } from '@jumbo/components';
 import { MenuItemProps } from '@jumbo/types';
+import PDFContent from '@/components/pdf/PDFContent';
 import imprestRetirementServices from '@/components/processApproval/imprestRetirements/imprestRetirementServices';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 import ImprestRetirementForm from './form/ImprestRetirementForm';
+import ImprestRetirementOnScreenPreview from './preview/ImprestRetirementOnScreenPreview';
+import ImprestRetirementPDF from './preview/ImprestRetirementPDF';
 
 interface ImprestRetirementApprovalActionProps {
   retirement: any;
@@ -25,11 +28,14 @@ function ImprestRetirementApprovalAction({ retirement, approvedRequisition }: Im
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
   const { theme } = useJumboTheme();
-  const { checkOrganizationPermission } = useJumboAuth();
+  const { checkOrganizationPermission, authOrganization } = useJumboAuth();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
+  const organization = authOrganization?.organization;
 
   const [openUpdateDialog, setOpenUpdateDialog] = React.useState(false);
   const [openApprovalDialog, setOpenApprovalDialog] = React.useState(false);
+  const [openPreviewDialog, setOpenPreviewDialog] = React.useState(false);
+  const [activePreviewTab, setActivePreviewTab] = React.useState(0);
   const [remarksDialogMode, setRemarksDialogMode] = React.useState<'reject' | null>(null);
   const [remarks, setRemarks] = React.useState('');
 
@@ -53,7 +59,7 @@ function ImprestRetirementApprovalAction({ retirement, approvedRequisition }: Im
   const { data: retirementDetails, isFetching: isFetchingRetirementDetails } = useQuery({
     queryKey: ['imprestRetirementDetails', { id: retirement?.id }, 'imprest-retirement-update'],
     queryFn: async () => imprestRetirementServices.show(retirement?.id),
-    enabled: !!retirement?.id && (!!openUpdateDialog || !!openApprovalDialog),
+    enabled: !!retirement?.id && (!!openUpdateDialog || !!openApprovalDialog || !!openPreviewDialog),
   });
 
   const { mutate: approveRetirement, isPending } = useMutation({
@@ -99,6 +105,7 @@ function ImprestRetirementApprovalAction({ retirement, approvedRequisition }: Im
   const canUpdateOrDelete = isDraftLike || isPendingApproval;
 
   const menuItems: MenuItemProps[] = [
+    { icon: <VisibilityOutlined />, title: 'Preview', action: 'preview' } as MenuItemProps,
     ...(canUpdateOrDelete
       ? [
           { icon: <EditOutlined />, title: 'Update', action: 'update-draft' } as MenuItemProps,
@@ -191,6 +198,9 @@ function ImprestRetirementApprovalAction({ retirement, approvedRequisition }: Im
       case 'update-draft':
         setOpenUpdateDialog(true);
         break;
+      case 'preview':
+        setOpenPreviewDialog(true);
+        break;
       case 'delete-draft':
         handleDeleteDraft();
         break;
@@ -208,8 +218,64 @@ function ImprestRetirementApprovalAction({ retirement, approvedRequisition }: Im
 
   if (menuItems.length === 0) return null;
 
+  const previewRetirement = retirementDetails?.data?.data || retirementDetails?.data || retirementDetails || retirement;
+
   return (
     <>
+      <Dialog
+        open={openPreviewDialog}
+        scroll={belowLargeScreen ? 'body' : 'paper'}
+        fullWidth
+        fullScreen={belowLargeScreen}
+        maxWidth="md"
+        onClose={() => setOpenPreviewDialog(false)}
+      >
+        {isFetchingRetirementDetails ? (
+          <LinearProgress />
+        ) : (
+          <>
+            <DialogTitle>
+              <Grid container alignItems="center" justifyContent="space-between">
+                <Grid size={{ xs: 11 }}>
+                  <Tabs
+                    value={activePreviewTab}
+                    onChange={(_event: React.SyntheticEvent, newValue: number) => setActivePreviewTab(newValue)}
+                    aria-label="retirement preview tabs"
+                  >
+                    <Tab label="ONSCREEN" />
+                    <Tab label="PDF" />
+                  </Tabs>
+                </Grid>
+                <Grid size={{ xs: 1 }} sx={{ textAlign: 'right' }}>
+                  <Tooltip title="Close">
+                    <IconButton size="small" onClick={() => setOpenPreviewDialog(false)}>
+                      <HighlightOff color="primary" />
+                    </IconButton>
+                  </Tooltip>
+                </Grid>
+              </Grid>
+            </DialogTitle>
+            <DialogContent>
+              {activePreviewTab === 0 ? (
+                <ImprestRetirementOnScreenPreview retirement={previewRetirement} />
+              ) : (
+                <PDFContent
+                  fileName={previewRetirement?.retirementNo || `retirement-${previewRetirement?.id || retirement?.id || ''}`}
+                  document={<ImprestRetirementPDF retirement={previewRetirement} organization={organization} />}
+                />
+              )}
+            </DialogContent>
+            <DialogActions>
+              <Box sx={{ textAlign: 'right', marginTop: 1 }}>
+                <Button variant="outlined" size="small" color="primary" onClick={() => setOpenPreviewDialog(false)}>
+                  Close
+                </Button>
+              </Box>
+            </DialogActions>
+          </>
+        )}
+      </Dialog>
+
       <Dialog
         open={openUpdateDialog}
         maxWidth="lg"
