@@ -15,7 +15,6 @@ import {
   FormControlLabel,
   FormHelperText,
   Grid,
-  LinearProgress,
   Radio,
   RadioGroup,
   Skeleton,
@@ -71,13 +70,20 @@ interface FormValues {
 interface LedgerFormProps {
   ledger?: Ledger;
   toggleOpen: (open: boolean) => void;
+  isQuickAdd?: boolean;
+  setNewLedger?: (newLedger: any) => void;
 }
 
 const sanitizedNumber = (value: string): number => {
   return parseFloat(value.replace(/,/g, '')) || 0;
 };
 
-export default function LedgerForm({ ledger, toggleOpen }: LedgerFormProps) {
+export default function LedgerForm({
+  ledger,
+  toggleOpen,
+  isQuickAdd = false,
+  setNewLedger,
+}: LedgerFormProps) {
   const { enqueueSnackbar } = useSnackbar();
   const { ledgerGroupOptions } = useLedgerGroup();
   const queryClient = useQueryClient();
@@ -96,6 +102,7 @@ export default function LedgerForm({ ledger, toggleOpen }: LedgerFormProps) {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['ledgers-list'] });
       queryClient.invalidateQueries({ queryKey: ['ledgerOptions'] });
+      if (isQuickAdd && setNewLedger) setNewLedger(data.ledger);
       enqueueSnackbar('Ledger created successfully', {
         variant: 'success',
         autoHideDuration: 2000,
@@ -220,9 +227,24 @@ export default function LedgerForm({ ledger, toggleOpen }: LedgerFormProps) {
   if (isFetching) {
     return (
       <div style={{ width: '100%', padding: '16px' }}>
-        <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-        <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-        <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+        <Skeleton
+          variant='text'
+          width={180}
+          height={32}
+          style={{ borderRadius: 4, marginLeft: 'auto' }}
+        />
+        <Skeleton
+          variant='rectangular'
+          width='100%'
+          height={48}
+          style={{ borderRadius: 4 }}
+        />
+        <Skeleton
+          variant='rectangular'
+          width='100%'
+          height={32}
+          style={{ borderRadius: 4 }}
+        />
       </div>
     );
   }

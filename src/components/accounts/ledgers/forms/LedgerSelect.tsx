@@ -1,6 +1,6 @@
 import { CheckBox, CheckBoxOutlineBlank } from '@mui/icons-material';
 import { Autocomplete, Box, Checkbox, Chip, TextField } from '@mui/material';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useLedgerSelect } from './LedgerSelectProvider';
 
 const EMPTY_LEDGER_REFS: LedgerRef[] = [];
@@ -59,6 +59,10 @@ function LedgerSelect(props: LedgerSelectProps) {
     Ledger | Ledger[] | null
   >(defaultValue ? defaultValue : multiple ? [] : value);
 
+  useEffect(() => {
+    if (value) setSelectedValue(value);
+  }, [value]);
+
   const toLedgerId = React.useCallback((entry: LedgerRef) => {
     return typeof entry === 'number' ? entry : entry.id;
   }, []);
@@ -84,7 +88,8 @@ function LedgerSelect(props: LedgerSelectProps) {
 
     const filtered = extractedOptions.filter((ledger) => {
       if (notAllowedLedgerIds.has(ledger.id)) return false;
-      if (allowedLedgerIds.size > 0 && !allowedLedgerIds.has(ledger.id)) return false;
+      if (allowedLedgerIds.size > 0 && !allowedLedgerIds.has(ledger.id))
+        return false;
       return true;
     });
 
