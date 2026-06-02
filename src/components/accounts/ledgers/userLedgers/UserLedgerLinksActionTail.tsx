@@ -93,6 +93,8 @@ export default function UserLedgerLinksActionTail() {
       enqueueSnackbar(data?.message || 'Ledger linked successfully', {
         variant: 'success',
       });
+      setSelectedLedger(null);
+      setSelectedUser(null);
       setOpenDialog(false);
     },
     onError: (error: any) => {
