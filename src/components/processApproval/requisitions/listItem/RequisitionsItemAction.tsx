@@ -155,13 +155,25 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
     >
       <DialogContent>
         <Box>
-          {showTabs && (
+          {showTabs ? (
             <Grid container alignItems='center' justifyContent='space-between'>
-              <Grid size={{ xs: belowLargeScreen ? 11 : 12 }}>
+              <Grid size={{ xs: belowLargeScreen ? 9 : 10 }}>
                 <Tabs value={selectedTab} onChange={handleTabChange}>
                   <Tab label='On Screen' />
                   <Tab label='PDF' />
                 </Tabs>
+              </Grid>
+              <Grid size={{ xs: belowLargeScreen ? 2 : 2 }} textAlign={'right'}>
+                <LoadingButton
+                  size='small'
+                  onClick={() => handlExcelExport(exportedData)}
+                  loading={isExporting}
+                  variant='contained'
+                  color='success'
+                >
+                  <FontAwesomeIcon icon={faFileExcel} color='green' />
+                  Excel
+                </LoadingButton>
               </Grid>
 
               {belowLargeScreen && (
@@ -177,6 +189,19 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
                   </Tooltip>
                 </Grid>
               )}
+            </Grid>
+          ) : (
+            <Grid container size={12} textAlign={'right'}>
+              <LoadingButton
+                size='small'
+                onClick={() => handlExcelExport(exportedData)}
+                loading={isExporting}
+                variant='contained'
+                color='success'
+              >
+                <FontAwesomeIcon icon={faFileExcel} color='green' />
+                Excel
+              </LoadingButton>
             </Grid>
           )}
 
@@ -217,16 +242,6 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
         </Box>
       </DialogContent>
       <DialogActions sx={{ margin: 2 }}>
-        <LoadingButton
-          size='small'
-          onClick={() => handlExcelExport(exportedData)}
-          loading={isExporting}
-          variant='contained'
-          color='success'
-        >
-          <FontAwesomeIcon icon={faFileExcel} color='green' />
-          Excel
-        </LoadingButton>
         <Button
           variant='outlined'
           size='small'
