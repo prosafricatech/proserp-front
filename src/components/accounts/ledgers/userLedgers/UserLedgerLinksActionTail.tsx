@@ -1,14 +1,25 @@
 'use client';
 
-import React from 'react';
-import { LinkOutlined } from '@mui/icons-material';
-import { Alert, Dialog, DialogActions, DialogContent, DialogTitle, Grid, IconButton, Tooltip } from '@mui/material';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import UsersSelector from '@/components/sharedComponents/UsersSelector';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
+import { AddOutlined, LinkOutlined } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
+import {
+  Alert,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Grid,
+  IconButton,
+  Tooltip,
+} from '@mui/material';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
-import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
-import { PERMISSIONS } from '@/utilities/constants/permissions';
-import UsersSelector from '@/components/sharedComponents/UsersSelector';
+import React, { useState } from 'react';
+import LedgerGroupProvider from '../../ledgerGroups/LedgerGroupProvider';
+import LedgerForm from '../forms/LedgerForm';
 import LedgerSelect from '../forms/LedgerSelect';
 import LedgerSelectProvider from '../forms/LedgerSelectProvider';
 import userLedgerServices from '../user-ledger-services';
@@ -18,9 +29,32 @@ type User = {
   name?: string;
 };
 
-type Ledger = {
+// type Ledger = {
+//   id: number;
+//   name?: string;
+// };
+
+interface Ledger {
   id: number;
-  name?: string;
+  name: string;
+  code: string | null;
+  ledger_group_id: number;
+  alias: string | null;
+  nature_id?: number;
+}
+
+const QuickAddLegder = ({
+  openQuickAdd,
+  setOpenQuickAdd,
+  setNewLedger,
+  ledgerForm,
+}: {
+  openQuickAdd: boolean;
+  setOpenQuickAdd: () => void;
+  setNewLedger?: (val: Ledger) => void;
+  ledgerForm: React.ReactNode;
+}) => {
+  return <Dialog open={openQuickAdd}>{ledgerForm}</Dialog>;
 };
 
 export default function UserLedgerLinksActionTail() {
@@ -30,7 +64,10 @@ export default function UserLedgerLinksActionTail() {
 
   const [openDialog, setOpenDialog] = React.useState(false);
   const [selectedUser, setSelectedUser] = React.useState<User | null>(null);
-  const [selectedLedger, setSelectedLedger] = React.useState<Ledger | null>(null);
+  const [selectedLedger, setSelectedLedger] = React.useState<Ledger | null>(
+    null
+  );
+  const [openQuickAdd, setOpenQuickAdd] = useState(false);
 
   const refreshQueries = React.useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['my-ledgers'] });
@@ -53,13 +90,20 @@ export default function UserLedgerLinksActionTail() {
     },
     onSuccess: (data: { message?: string }) => {
       refreshQueries();
-      enqueueSnackbar(data?.message || 'Ledger linked successfully', { variant: 'success' });
+      enqueueSnackbar(data?.message || 'Ledger linked successfully', {
+        variant: 'success',
+      });
       setOpenDialog(false);
     },
     onError: (error: any) => {
-      enqueueSnackbar(error?.response?.data?.message || error?.message || 'Failed to link user', {
-        variant: 'error',
-      });
+      enqueueSnackbar(
+        error?.response?.data?.message ||
+          error?.message ||
+          'Failed to link user',
+        {
+          variant: 'error',
+        }
+      );
     },
   });
 
@@ -77,7 +121,12 @@ export default function UserLedgerLinksActionTail() {
         </IconButton>
       </Tooltip>
 
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} fullWidth maxWidth='xs'>
+      <Dialog
+        open={openDialog}
+        onClose={() => setOpenDialog(false)}
+        fullWidth
+        maxWidth='xs'
+      >
         <DialogTitle textAlign='center'>Link User</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
@@ -96,17 +145,27 @@ export default function UserLedgerLinksActionTail() {
                 <LedgerSelect
                   label='Select Ledger'
                   defaultValue={null}
+                  value={selectedLedger}
                   onChange={(value: Ledger | Ledger[] | null) => {
                     const selected = Array.isArray(value) ? value[0] : value;
                     setSelectedLedger(selected || null);
                   }}
+                  startAdornment={
+                    <Tooltip
+                      title={'Quick Add Ledger'}
+                      onClick={() => setOpenQuickAdd(true)}
+                    >
+                      <AddOutlined sx={{ cursor: 'pointer' }} />
+                    </Tooltip>
+                  }
                 />
               </LedgerSelectProvider>
             </Grid>
             {selectedUser?.name && selectedLedger?.name && (
               <Grid size={{ xs: 12 }}>
                 <Alert severity='warning'>
-                  You are about to link <strong>{selectedUser?.name || 'selected user'}</strong> to{' '}
+                  You are about to link{' '}
+                  <strong>{selectedUser?.name || 'selected user'}</strong> to{' '}
                   <strong>{selectedLedger?.name || 'selected ledger'}</strong>.
                 </Alert>
               </Grid>
@@ -134,6 +193,22 @@ export default function UserLedgerLinksActionTail() {
           </LoadingButton>
         </DialogActions>
       </Dialog>
+
+      <QuickAddLegder
+        openQuickAdd={openQuickAdd}
+        setOpenQuickAdd={() => setOpenQuickAdd(false)}
+        ledgerForm={
+          <LedgerGroupProvider>
+            <LedgerForm
+              isQuickAdd={true}
+              toggleOpen={setOpenQuickAdd}
+              setNewLedger={(ledger) => {
+                setSelectedLedger(ledger);
+              }}
+            />
+          </LedgerGroupProvider>
+        }
+      />
     </>
   );
 }

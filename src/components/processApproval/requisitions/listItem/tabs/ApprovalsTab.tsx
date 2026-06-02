@@ -1,8 +1,7 @@
 import { Grid } from '@mui/material';
-import React from 'react';
+import { Requisition } from '../../../RequisitionType';
 import ApprovalsActionTail from './ApprovalsActionTail';
 import ApprovalsListItem from './ApprovalsListItem';
-import { Requisition } from '../../../RequisitionType';
 
 interface ApprovalsTabProps {
   requisition: Requisition;
@@ -14,11 +13,17 @@ function ApprovalsTab({ requisition, isExpanded }: ApprovalsTabProps) {
     <Grid container spacing={2}>
       {requisition.approvals.length === 0 && (
         <Grid size={12} textAlign={'end'}>
-          <ApprovalsActionTail requisition={requisition} isExpanded={isExpanded}/>
+          <ApprovalsActionTail
+            requisition={requisition}
+            isExpanded={isExpanded}
+          />
         </Grid>
       )}
       <Grid size={12}>
-        <ApprovalsListItem approvals={requisition.approvals} requisition={requisition}/>
+        <ApprovalsListItem
+          approvals={requisition.approvals}
+          requisition={requisition}
+        />
       </Grid>
     </Grid>
   );
