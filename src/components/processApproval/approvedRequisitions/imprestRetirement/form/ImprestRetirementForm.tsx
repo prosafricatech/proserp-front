@@ -22,6 +22,7 @@ import dayjs, { Dayjs } from 'dayjs';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
+import MeasurementSelector from '@/components/masters/measurementUnits/MeasurementSelector';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import userLedgerServices from '@/components/accounts/ledgers/user-ledger-services';
@@ -30,13 +31,34 @@ import imprestRetirementServices from '@/components/processApproval/imprestRetir
 
 type RetirementItem = {
   id?: number;
+  imprest_retirement_item_id?: number;
   ledger_id: number | null;
-  amount: number;
+  measurement_unit_id: number | null;
+  quantity: number;
+  rate: number;
+  amount?: number;
   description: string;
   ledger?: {
     id: number;
     name: string;
   };
+  measurement_unit?: {
+    id: number;
+    name?: string;
+    alias?: string;
+    symbol?: string;
+  };
+};
+
+type ApprovalDecisionPayload = {
+  items: Array<{
+    imprest_retirement_item_id: number;
+    ledger_id: number;
+    measurement_unit_id: number;
+    quantity: number;
+    rate: number;
+    description: string;
+  }>;
 };
 
 type ImprestRetirementFormProps = {
@@ -47,9 +69,11 @@ type ImprestRetirementFormProps = {
   preferredRetirementId?: number | null;
   startNew?: boolean;
   reviewMode?: boolean;
-  onApprove?: () => void;
+  onApprove?: (payload: ApprovalDecisionPayload) => void;
+  onHold?: (payload: ApprovalDecisionPayload) => void;
   onReject?: () => void;
   approveLoading?: boolean;
+  holdLoading?: boolean;
   rejectLoading?: boolean;
 };
 
@@ -70,7 +94,9 @@ const extractOne = (payload: any): any | null => {
 
 const EMPTY_ITEM: RetirementItem = {
   ledger_id: null,
-  amount: 0,
+  measurement_unit_id: null,
+  quantity: 1,
+  rate: 0,
   description: '',
 };
 
@@ -122,8 +148,10 @@ function ImprestRetirementForm({
   startNew = false,
   reviewMode = false,
   onApprove,
+  onHold,
   onReject,
   approveLoading = false,
+  holdLoading = false,
   rejectLoading = false,
 }: ImprestRetirementFormProps) {
   const queryClient = useQueryClient();
@@ -193,6 +221,37 @@ function ImprestRetirementForm({
     return editable || list[0];
   }, [startNew, existingRetirementFromShow, existingRetirementsResponse, preferredRetirementId]);
 
+  const approvalSeedItems = React.useMemo(() => {
+    if (!reviewMode) return null;
+
+    const approvals = extractList(
+      existingRetirementFromShow?.approvals || existingRetirement?.approvals
+    );
+
+    const previousApprovalWithItems = [...approvals]
+      .reverse()
+      .find((entry: any) => extractList(entry?.items).length > 0);
+
+    const sourceItems = previousApprovalWithItems
+      ? extractList(previousApprovalWithItems?.items)
+      : extractList(existingRetirementFromShow?.items || existingRetirement?.items);
+
+    return sourceItems.map((item: any) => ({
+      id: item?.id,
+      imprest_retirement_item_id:
+        Number(item?.imprest_retirement_item_id || item?.id || 0) || undefined,
+      ledger_id: Number(item?.ledger_id || item?.ledger?.id) || null,
+      measurement_unit_id:
+        Number(item?.measurement_unit_id || item?.measurement_unit?.id) || null,
+      quantity: Number.isFinite(Number(item?.quantity)) ? Number(item.quantity) : 1,
+      rate: Number.isFinite(Number(item?.rate)) ? Number(item.rate) : 0,
+      amount: Number.isFinite(Number(item?.amount)) ? Number(item.amount) : undefined,
+      description: item?.description || item?.remarks || '',
+      ledger: item?.ledger,
+      measurement_unit: item?.measurement_unit,
+    }));
+  }, [reviewMode, existingRetirementFromShow, existingRetirement]);
+
   const retirementDisplayNo =
     existingRetirementFromShow?.retirementNo ||
     existingRetirement?.retirementNo ||
@@ -211,16 +270,27 @@ function ImprestRetirementForm({
     );
     setRemarks(existingRetirement.remarks || '');
 
-    const normalizedItems = extractList(existingRetirement.items).map((item: any) => ({
+    const sourceItems = reviewMode
+      ? approvalSeedItems || []
+      : extractList(existingRetirement.items);
+
+    const normalizedItems = sourceItems.map((item: any) => ({
       id: item.id,
+      imprest_retirement_item_id:
+        Number(item?.imprest_retirement_item_id || item?.id || 0) || undefined,
       ledger_id: Number(item.ledger_id || item.ledger?.id) || null,
-      amount: Number.isFinite(Number(item.amount)) ? Number(item.amount) : 0,
+      measurement_unit_id:
+        Number(item.measurement_unit_id || item.measurement_unit?.id) || null,
+      quantity: Number.isFinite(Number(item.quantity)) ? Number(item.quantity) : 1,
+      rate: Number.isFinite(Number(item.rate)) ? Number(item.rate) : 0,
+      amount: Number.isFinite(Number(item.amount)) ? Number(item.amount) : undefined,
       description: item.description || item.remarks || '',
       ledger: item.ledger,
+      measurement_unit: item.measurement_unit,
     }));
 
     setItems(normalizedItems.length > 0 ? normalizedItems : [{ ...EMPTY_ITEM }]);
-  }, [existingRetirement]);
+  }, [existingRetirement, reviewMode, approvalSeedItems]);
 
   React.useEffect(() => {
     if (ledgerId) return;
@@ -239,10 +309,13 @@ function ImprestRetirementForm({
     }
   }, [ledgerId, approvedDetails, myImprestLedgers]);
 
-  const totalAmount = React.useMemo(
-    () => items.reduce((sum, item) => sum + (Number.isFinite(Number(item.amount)) ? Number(item.amount) : 0), 0),
-    [items]
-  );
+  const totalAmount = React.useMemo(() => {
+    return items.reduce((sum, item) => {
+      const qty = Number.isFinite(Number(item.quantity)) ? Number(item.quantity) : 0;
+      const rate = Number.isFinite(Number(item.rate)) ? Number(item.rate) : 0;
+      return sum + qty * rate;
+    }, 0);
+  }, [items]);
 
   const ceilingAmount = Number(approvedDetails?.amount || approvedRequisition?.amount || 0);
   const currencyCode =
@@ -255,9 +328,13 @@ function ImprestRetirementForm({
     style: 'currency',
     currency: currencyCode,
   });
+  const totalItemsAmountDisplay = (Number.isFinite(totalAmount) ? totalAmount : 0).toLocaleString('en-US', {
+    style: 'currency',
+    currency: currencyCode,
+  });
 
   const statusRaw = String(statusLabel || '').toLowerCase();
-  const isLocked = reviewMode || statusRaw.includes('approved');
+  const isLocked = statusRaw.includes('approved');
   const canSubmitForApproval =
     !reviewMode && !statusRaw.includes('approved') && !statusRaw.includes('pending') && !statusRaw.includes('submitted');
   const useReadOnlyDisplay = reviewMode;
@@ -273,6 +350,9 @@ function ImprestRetirementForm({
     myImprestLedgers.find((option) => option.id === ledgerId)?.name ||
     existingRetirement?.ledger?.name ||
     (ledgerId ? `Ledger #${ledgerId}` : '-');
+  const paidThroughLabel = selectedLedgerName && selectedLedgerName !== '-'
+    ? selectedLedgerName
+    : (existingRetirementFromShow?.ledger?.name || '-');
   const formattedRetirementDate = retirementDate ? retirementDate.format('DD/MM/YYYY') : '-';
 
   const resolveRetirementIdFromResponse = React.useCallback(
@@ -395,12 +475,20 @@ function ImprestRetirementForm({
     }
 
     const hasInvalidItem = items.some((item) => {
-      const amount = Number(item.amount);
-      return !item.ledger_id || !Number.isFinite(amount) || amount <= 0;
+      const quantity = Number(item.quantity);
+      const rate = Number(item.rate);
+      return (
+        !item.ledger_id ||
+        !item.measurement_unit_id ||
+        !Number.isFinite(quantity) ||
+        quantity <= 0 ||
+        !Number.isFinite(rate) ||
+        rate <= 0
+      );
     });
 
     if (hasInvalidItem) {
-      setClientError('Each item requires an expense ledger and amount greater than 0.');
+      setClientError('Each item requires ledger, measurement unit, quantity > 0 and rate > 0.');
       return false;
     }
 
@@ -415,10 +503,76 @@ function ImprestRetirementForm({
     remarks,
     items: items.map((item) => ({
       ledger_id: item.ledger_id,
-      amount: Number.isFinite(Number(item.amount)) ? Number(item.amount) : 0,
+      measurement_unit_id: item.measurement_unit_id,
+      quantity: Number.isFinite(Number(item.quantity)) ? Number(item.quantity) : 0,
+      rate: Number.isFinite(Number(item.rate)) ? Number(item.rate) : 0,
       description: item.description || '',
     })),
   });
+
+  const buildApprovalItemsPayload = React.useCallback(() => {
+    return items
+      .map((item) => ({
+        imprest_retirement_item_id: Number(
+          item.imprest_retirement_item_id || item.id || 0
+        ),
+        ledger_id: Number(item.ledger_id || 0),
+        measurement_unit_id: Number(item.measurement_unit_id || 0),
+        quantity: Number.isFinite(Number(item.quantity)) ? Number(item.quantity) : 0,
+        rate: Number.isFinite(Number(item.rate)) ? Number(item.rate) : 0,
+        description: item.description || '',
+      }))
+      .filter(
+        (item) =>
+          item.imprest_retirement_item_id > 0 &&
+          item.ledger_id > 0 &&
+          item.measurement_unit_id > 0 &&
+          item.quantity > 0 &&
+          item.rate > 0
+      );
+  }, [items]);
+
+  const validateBeforeDecision = React.useCallback(() => {
+    if (items.length < 1) {
+      setClientError('At least one retirement item is required for approval decision.');
+      return false;
+    }
+
+    const hasInvalidItem = items.some((item) => {
+      const originalItemId = Number(item.imprest_retirement_item_id || item.id || 0);
+      const quantity = Number(item.quantity);
+      const rate = Number(item.rate);
+      return (
+        !originalItemId ||
+        !item.ledger_id ||
+        !item.measurement_unit_id ||
+        !Number.isFinite(quantity) ||
+        quantity <= 0 ||
+        !Number.isFinite(rate) ||
+        rate <= 0
+      );
+    });
+
+    if (hasInvalidItem) {
+      setClientError(
+        'Approval items must include original item reference, ledger, measurement unit, quantity > 0 and rate > 0.'
+      );
+      return false;
+    }
+
+    setClientError(null);
+    return true;
+  }, [items]);
+
+  const handleApproveDecision = () => {
+    if (!validateBeforeDecision()) return;
+    onApprove?.({ items: buildApprovalItemsPayload() });
+  };
+
+  const handleHoldDecision = () => {
+    if (!validateBeforeDecision()) return;
+    onHold?.({ items: buildApprovalItemsPayload() });
+  };
 
   const handleSaveDraft = async () => {
     if (!validateBeforeSave()) return;
@@ -460,24 +614,44 @@ function ImprestRetirementForm({
           <Grid size={{ xs: 12, md: 3 }}>
             <Chip size="small" color="primary" label={`Status: ${statusLabel}`} />
           </Grid>
-          <Grid size={{ xs: 12, md: 9 }} textAlign={'right'}>
-            <Div
-              sx={(theme) => ({
-                display: 'inline-block',
-                px: 1.5,
-                py: 0.75,
-                borderRadius: 1.5,
-                border: '1px solid',
-                borderColor: theme.type === 'dark' ? 'rgba(46, 204, 113, 0.45)' : 'success.light',
-                bgcolor: theme.type === 'dark' ? 'rgba(46, 204, 113, 0.12)' : 'rgba(46, 204, 113, 0.1)',
-              })}
-            >
-              <Typography variant="caption" sx={{ display: 'block', opacity: 0.9 }}>
-                Approved Amount
-              </Typography>
-              <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
-                {approvedAmountDisplay}
-              </Typography>
+          <Grid size={{ xs: 12, md: 9 }}>
+            <Div sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, flexWrap: 'wrap' }}>
+              <Div
+                sx={(theme) => ({
+                  display: 'inline-block',
+                  px: 1.5,
+                  py: 0.75,
+                  borderRadius: 1.5,
+                  border: '1px solid',
+                  borderColor: theme.type === 'dark' ? 'rgba(46, 204, 113, 0.45)' : 'success.light',
+                  bgcolor: theme.type === 'dark' ? 'rgba(46, 204, 113, 0.12)' : 'rgba(46, 204, 113, 0.1)',
+                })}
+              >
+                <Typography variant="caption" sx={{ display: 'block', opacity: 0.9 }}>
+                  Approved Amount
+                </Typography>
+                <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+                  {approvedAmountDisplay}
+                </Typography>
+              </Div>
+              <Div
+                sx={(theme) => ({
+                  display: 'inline-block',
+                  px: 1.5,
+                  py: 0.75,
+                  borderRadius: 1.5,
+                  border: '1px solid',
+                  borderColor: theme.type === 'dark' ? 'rgba(33, 150, 243, 0.45)' : 'info.light',
+                  bgcolor: theme.type === 'dark' ? 'rgba(33, 150, 243, 0.12)' : 'rgba(33, 150, 243, 0.08)',
+                })}
+              >
+                <Typography variant="caption" sx={{ display: 'block', opacity: 0.9 }}>
+                  Total Items Amount
+                </Typography>
+                <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+                  {totalItemsAmountDisplay}
+                </Typography>
+              </Div>
             </Div>
           </Grid>
           {useReadOnlyDisplay ? (
@@ -558,21 +732,35 @@ function ImprestRetirementForm({
 
         {items.map((item, index) => (
           <Grid container spacing={1} alignItems="center" key={`${item.id || 'new'}-${index}`} mb={1}>
-            <Grid size={{ xs: 12, md: 0.5 }}>
+            <Grid size={{ xs: 1, md: 0.5 }}>
               <Typography variant="body2">{index + 1}.</Typography>
             </Grid>
-            {useReadOnlyDisplay ? (
+            {isLocked ? (
               <>
                 <Grid size={{ xs: 12, md: 4.5 }}>
                   <ReadOnlyField
-                    label="Expense Ledger"
-                    value={item.ledger?.name || (item.ledger_id ? `Ledger #${item.ledger_id}` : '-')}
+                    label="Paid Through (Item Ledger)"
+                    value={`${paidThroughLabel} (${item.ledger?.name || (item.ledger_id ? `Ledger #${item.ledger_id}` : '-')})`}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 2 }}>
+                  <ReadOnlyField
+                    label="Unit"
+                    value={item.measurement_unit?.alias || item.measurement_unit?.symbol || item.measurement_unit?.name || '-'}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 1.5 }}>
+                  <ReadOnlyField
+                    label="Qty"
+                    value={Number(item.quantity || 0).toLocaleString('en-US', {
+                      maximumFractionDigits: 4,
+                    })}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, md: 2.5 }}>
                   <ReadOnlyField
-                    label="Amount"
-                    value={(Number.isFinite(Number(item.amount)) ? Number(item.amount) : 0).toLocaleString(
+                    label="Rate"
+                    value={(Number.isFinite(Number(item.rate)) ? Number(item.rate) : 0).toLocaleString(
                       'en-US',
                       {
                         style: 'currency',
@@ -581,16 +769,29 @@ function ImprestRetirementForm({
                     )}
                   />
                 </Grid>
-                <Grid size={{ xs: 12, md: 4.5 }}>
+                <Grid size={{ xs: 12, md: 1.5 }}>
+                  <ReadOnlyField
+                    label="Amount"
+                    value={(
+                      (Number.isFinite(Number(item.quantity)) ? Number(item.quantity) : 0) *
+                      (Number.isFinite(Number(item.rate)) ? Number(item.rate) : 0)
+                    ).toLocaleString('en-US', {
+                      style: 'currency',
+                      currency: currencyCode,
+                    })}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 3 }}>
                   <ReadOnlyField label="Description" value={item.description || '-'} />
                 </Grid>
               </>
             ) : (
               <>
-                <Grid size={{ xs: 12, md: 4.5 }}>
+                <Grid size={{ xs: 11, md: 3.5 }}>
                   <LedgerSelect
-                    label="Expense Ledger"
+                    label={`Item Ledger (Paid via ${paidThroughLabel})`}
                     defaultValue={item.ledger_id ? ({ id: item.ledger_id, name: item.ledger?.name || '' } as any) : null}
+                    readOnly={isLocked}
                     onChange={(newValue: any) => {
                       const singleValue = Array.isArray(newValue) ? newValue[0] : newValue;
                       updateItem(index, {
@@ -600,32 +801,76 @@ function ImprestRetirementForm({
                     }}
                   />
                 </Grid>
+                <Grid size={{ xs: 12, md: 2 }}>
+                  <MeasurementSelector
+                    label="Unit"
+                    defaultValue={item.measurement_unit_id || null}
+                    onChange={(newValue: any) => {
+                      const selected = Array.isArray(newValue) ? newValue[0] : newValue;
+                      updateItem(index, {
+                        measurement_unit_id: Number(selected?.id || 0) || null,
+                        measurement_unit: selected,
+                      });
+                    }}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 1.5 }}>
+                  <TextField
+                    size="small"
+                    fullWidth
+                    disabled={isLocked}
+                    label="Qty"
+                    value={item.quantity ?? 0}
+                    InputProps={{ inputComponent: CommaSeparatedField as any }}
+                    onChange={(e) => {
+                      const quantity = sanitizedNumber(e.target.value);
+                      updateItem(index, { quantity: Number.isFinite(quantity) ? quantity : 0 });
+                    }}
+                  />
+                </Grid>
                 <Grid size={{ xs: 12, md: 2.5 }}>
                   <TextField
                     size="small"
                     fullWidth
                     disabled={isLocked}
-                    label="Amount"
-                    value={item.amount ?? 0}
+                    label="Rate"
+                    value={item.rate ?? 0}
                     InputProps={{ inputComponent: CommaSeparatedField as any }}
                     onChange={(e) => {
-                      const amount = sanitizedNumber(e.target.value);
-                      updateItem(index, { amount: Number.isFinite(amount) ? amount : 0 });
+                      const rate = sanitizedNumber(e.target.value);
+                      updateItem(index, { rate: Number.isFinite(rate) ? rate : 0 });
                     }}
                   />
                 </Grid>
-                <Grid size={{ xs: 12, md: 4 }}>
+                <Grid size={{ xs: 12, md: 2 }}>
                   <TextField
                     size="small"
                     fullWidth
+                    label="Amount"
+                    value={(
+                      (Number.isFinite(Number(item.quantity)) ? Number(item.quantity) : 0) *
+                      (Number.isFinite(Number(item.rate)) ? Number(item.rate) : 0)
+                    ).toLocaleString('en-US', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                    disabled
+                  />
+                </Grid>
+                <Grid size={{ xs: items.length > 1 ? 11.5 : 12 }}>
+                  <TextField
+                    size="small"
+                    fullWidth
+                    multiline
+                    minRows={2}
                     disabled={isLocked}
                     label="Description"
                     value={item.description || ''}
                     onChange={(e) => updateItem(index, { description: e.target.value })}
                   />
                 </Grid>
-                <Grid size={{ xs: 12, md: 0.5 }} textAlign="right">
-                  {!isLocked && items.length > 1 && (
+                <Grid size={{ xs: 0.5 }} textAlign="right">
+                  {!isLocked && !reviewMode && items.length > 1 && (
                     <Tooltip title="Remove Item">
                       <IconButton size="small" onClick={() => removeItem(index)}>
                         <DisabledByDefault fontSize="small" color="error" />
@@ -638,7 +883,7 @@ function ImprestRetirementForm({
           </Grid>
         ))}
 
-        {!isLocked && (
+        {!isLocked && !reviewMode && (
           <Div sx={{ textAlign: 'right', mb: 1.5 }}>
             <Button
               size="small"
@@ -650,18 +895,6 @@ function ImprestRetirementForm({
             </Button>
           </Div>
         )}
-
-        <Grid container spacing={1} mb={2}>
-          <Grid size={{ xs: 12, md: 12 }}>
-            <Alert severity={totalAmount > ceilingAmount ? 'warning' : 'info'}>
-              Total Retired:{' '}
-              {(Number.isFinite(totalAmount) ? totalAmount : 0).toLocaleString('en-US', {
-                style: 'currency',
-                currency: currencyCode,
-              })}
-            </Alert>
-          </Grid>
-        </Grid>
 
         {clientError && (
           <Alert severity="error" sx={{ mb: 1.5 }}>
@@ -684,7 +917,7 @@ function ImprestRetirementForm({
           {retirementId && (
             <AttachmentForm
               hideFeatures
-              readOnly={reviewMode}
+              readOnly={reviewMode || isLocked}
               attachmentable_id={retirementId}
               attachmentable_type="imprest_retirement"
               attachment_name="imprest retirement"
@@ -706,23 +939,33 @@ function ImprestRetirementForm({
               variant="outlined"
               onClick={onReject}
               loading={rejectLoading}
-              disabled={approveLoading}
+              disabled={approveLoading || holdLoading}
             >
               Reject
             </LoadingButton>
             <LoadingButton
               size="small"
+              color="warning"
+              variant="outlined"
+              onClick={handleHoldDecision}
+              loading={holdLoading}
+              disabled={approveLoading || rejectLoading}
+            >
+              On Hold
+            </LoadingButton>
+            <LoadingButton
+              size="small"
               color="success"
               variant="contained"
-              onClick={onApprove}
+              onClick={handleApproveDecision}
               loading={approveLoading}
-              disabled={rejectLoading}
+              disabled={rejectLoading || holdLoading}
             >
               Approve
             </LoadingButton>
           </>
         )}
-        {!isLocked && (
+        {!isLocked && !reviewMode && (
           <LoadingButton
             size="small"
             variant="contained"

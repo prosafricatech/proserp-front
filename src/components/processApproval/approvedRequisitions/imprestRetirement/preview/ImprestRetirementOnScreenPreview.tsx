@@ -30,6 +30,7 @@ function ImprestRetirementOnScreenPreview({ retirement }: RetirementPreviewProps
 
   const items = Array.isArray(retirement?.items) ? retirement.items : [];
   const attachments = Array.isArray(retirement?.attachments) ? retirement.attachments : [];
+  const imprestLedgerName = retirement?.ledger?.name || '-';
 
   const totalRetired = items.reduce(
     (sum: number, item: any) => sum + (Number.isFinite(Number(item?.amount)) ? Number(item.amount) : 0),
@@ -98,7 +99,7 @@ function ImprestRetirementOnScreenPreview({ retirement }: RetirementPreviewProps
           <TableHead>
             <TableRow>
               <TableCell sx={{ width: 50 }}>S/N</TableCell>
-              <TableCell>Expense Ledger</TableCell>
+              <TableCell>Paid Through (Item Ledger)</TableCell>
               <TableCell>Description</TableCell>
               <TableCell align="right">Amount ({currencyCode})</TableCell>
             </TableRow>
@@ -108,7 +109,7 @@ function ImprestRetirementOnScreenPreview({ retirement }: RetirementPreviewProps
               items.map((item: any, index: number) => (
                 <TableRow key={item?.id || index}>
                   <TableCell>{index + 1}</TableCell>
-                  <TableCell>{item?.ledger?.name || '-'}</TableCell>
+                  <TableCell>{`${imprestLedgerName} (${item?.ledger?.name || '-'})`}</TableCell>
                   <TableCell>{item?.description || '-'}</TableCell>
                   <TableCell align="right">
                     {Number(item?.amount || 0).toLocaleString('en-US', {

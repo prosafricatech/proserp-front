@@ -23,6 +23,25 @@ interface ImprestRetirementApprovalActionProps {
   approvedRequisition: any;
 }
 
+const extractOne = (payload: any): any | null => {
+  if (!payload) return null;
+  if (payload?.id) return payload;
+  if (payload?.data?.id) return payload.data;
+  if (payload?.data?.data?.id) return payload.data.data;
+  return null;
+};
+
+type DecisionPayload = {
+  items: Array<{
+    imprest_retirement_item_id: number;
+    ledger_id: number;
+    measurement_unit_id: number;
+    quantity: number;
+    rate: number;
+    description: string;
+  }>;
+};
+
 function ImprestRetirementApprovalAction({ retirement, approvedRequisition }: ImprestRetirementApprovalActionProps) {
   const { showDialog, hideDialog } = useJumboDialog();
   const { enqueueSnackbar } = useSnackbar();
@@ -36,8 +55,9 @@ function ImprestRetirementApprovalAction({ retirement, approvedRequisition }: Im
   const [openApprovalDialog, setOpenApprovalDialog] = React.useState(false);
   const [openPreviewDialog, setOpenPreviewDialog] = React.useState(false);
   const [activePreviewTab, setActivePreviewTab] = React.useState(0);
-  const [remarksDialogMode, setRemarksDialogMode] = React.useState<'reject' | null>(null);
+  const [remarksDialogMode, setRemarksDialogMode] = React.useState<'reject' | 'on-hold' | null>(null);
   const [remarks, setRemarks] = React.useState('');
+  const [pendingDecisionPayload, setPendingDecisionPayload] = React.useState<DecisionPayload | null>(null);
 
   const statusRaw = String(retirement?.status || '').toLowerCase();
   const statusLabelRaw = String(retirement?.status_label || '').toLowerCase();
@@ -75,6 +95,27 @@ function ImprestRetirementApprovalAction({ retirement, approvedRequisition }: Im
       });
     },
   });
+
+  const currentRetirementDetails = React.useMemo(
+    () => extractOne(retirementDetails) || retirement,
+    [retirementDetails, retirement]
+  );
+
+  const chainLevelId = Number(
+    currentRetirementDetails?.next_approval_level?.id ||
+      approvedRequisition?.next_approval_level?.id ||
+      approvedRequisition?.requisition?.next_approval_level?.id ||
+      retirement?.next_approval_level?.id ||
+      0
+  );
+
+  const isFinal = Number(
+    currentRetirementDetails?.next_approval_level?.is_final ||
+      approvedRequisition?.next_approval_level?.is_final ||
+      approvedRequisition?.requisition?.next_approval_level?.is_final ||
+      retirement?.next_approval_level?.is_final ||
+      0
+  );
 
   const { mutate: deleteRetirement, isPending: isDeletingRetirement } = useMutation({
     mutationFn: imprestRetirementServices.delete,
@@ -125,12 +166,43 @@ function ImprestRetirementApprovalAction({ retirement, approvedRequisition }: Im
       : []),
   ];
 
-  const handleApprove = async () => {
-    await approveRetirement({
+  const runApprovalDecision = async ({
+    status,
+    remarks,
+    items,
+  }: {
+    status: 'approved' | 'rejected' | 'on hold';
+    remarks?: string | null;
+    items?: DecisionPayload['items'];
+  }) => {
+    if (!chainLevelId) {
+      enqueueSnackbar('Approval chain level is missing for this retirement.', {
+        variant: 'error',
+      });
+      return;
+    }
+
+    const payload: any = {
       imprest_retirement_id: retirement.id,
-      status: 'approved',
+      chain_level_id: chainLevelId,
+      is_final: isFinal,
+      status,
       approval_date: dayjs().format('YYYY-MM-DD'),
+      remarks: remarks ?? null,
+    };
+
+    if (items?.length && (status === 'approved' || status === 'on hold')) {
+      payload.items = items;
+    }
+
+    await approveRetirement(payload);
+  };
+
+  const handleApprove = async (payload: DecisionPayload) => {
+    await runApprovalDecision({
+      status: 'approved',
       remarks: null,
+      items: payload.items,
     });
   };
 
@@ -149,18 +221,27 @@ function ImprestRetirementApprovalAction({ retirement, approvedRequisition }: Im
 
   const handleSubmitRemarksAction = async () => {
     if (!remarks.trim()) {
-      enqueueSnackbar('Remarks are required for rejection', { variant: 'error' });
+      enqueueSnackbar(
+        remarksDialogMode === 'on-hold'
+          ? 'Remarks are required for on-hold decision'
+          : 'Remarks are required for rejection',
+        { variant: 'error' }
+      );
       return;
     }
 
-    await approveRetirement({
-      imprest_retirement_id: retirement.id,
-      status: 'rejected',
-      approval_date: dayjs().format('YYYY-MM-DD'),
+    await runApprovalDecision({
+      status: remarksDialogMode === 'on-hold' ? 'on hold' : 'rejected',
       remarks: remarks.trim(),
+      items:
+        remarksDialogMode === 'on-hold'
+          ? pendingDecisionPayload?.items || []
+          : undefined,
     });
+
     setRemarksDialogMode(null);
     setRemarks('');
+    setPendingDecisionPayload(null);
   };
 
   const resolveApprovalId = async (): Promise<number | null> => {
@@ -314,11 +395,18 @@ function ImprestRetirementApprovalAction({ retirement, approvedRequisition }: Im
             preferredRetirementId={retirement?.id}
             reviewMode
             onApprove={handleApprove}
+            onHold={(payload) => {
+              setPendingDecisionPayload(payload);
+              setRemarks('');
+              setRemarksDialogMode('on-hold');
+            }}
             onReject={() => {
+              setPendingDecisionPayload(null);
               setRemarks('');
               setRemarksDialogMode('reject');
             }}
             approveLoading={isPending}
+            holdLoading={isPending || isRevokingApproval}
             rejectLoading={isPending || isRevokingApproval}
           />
         )}
@@ -334,7 +422,7 @@ function ImprestRetirementApprovalAction({ retirement, approvedRequisition }: Im
         fullWidth
       >
         <DialogTitle textAlign="center">
-          Reject Retirement
+          {remarksDialogMode === 'on-hold' ? 'Put Retirement On Hold' : 'Reject Retirement'}
         </DialogTitle>
         <DialogContent>
           <TextField
@@ -355,6 +443,7 @@ function ImprestRetirementApprovalAction({ retirement, approvedRequisition }: Im
             onClick={() => {
               setRemarksDialogMode(null);
               setRemarks('');
+              setPendingDecisionPayload(null);
             }}
           >
             Cancel
@@ -362,11 +451,11 @@ function ImprestRetirementApprovalAction({ retirement, approvedRequisition }: Im
           <Button
             size="small"
             variant="contained"
-            color="error"
+            color={remarksDialogMode === 'on-hold' ? 'warning' : 'error'}
             onClick={handleSubmitRemarksAction}
             disabled={isPending || isRevokingApproval}
           >
-            Reject
+            {remarksDialogMode === 'on-hold' ? 'On Hold' : 'Reject'}
           </Button>
         </DialogActions>
       </Dialog>
