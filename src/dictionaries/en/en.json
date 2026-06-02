@@ -329,7 +329,7 @@
 
   "signin": {
     "pageTitle": "Sign In to Your Account",
-    "header": "Welcome!",
+    "header": "Welcome",
     "forgotPassword": {
       "text": "Forgot your password? Recover Now",
       "action": "Reset it now"

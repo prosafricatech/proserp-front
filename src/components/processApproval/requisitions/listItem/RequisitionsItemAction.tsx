@@ -153,80 +153,84 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
       maxWidth={'md'}
       fullScreen={belowLargeScreen}
     >
-      <DialogContent>
-        <Box>
-          {showTabs && (
-            <Grid container alignItems='center' justifyContent='space-between'>
-              <Grid size={{ xs: belowLargeScreen ? 11 : 12 }}>
-                <Tabs value={selectedTab} onChange={handleTabChange}>
-                  <Tab label='On Screen' />
-                  <Tab label='PDF' />
-                </Tabs>
-              </Grid>
+      <DialogContent sx={{ pt: 1.5 }}>
+        <Grid container alignItems='center' justifyContent='space-between' sx={{ mb: 1.5 }}>
+          <Grid size={{ xs: belowLargeScreen ? 8 : 9 }} sx={{ minWidth: 0 }}>
+            {showTabs && (
+              <Tabs value={selectedTab} onChange={handleTabChange}>
+                <Tab label='On Screen' />
+                <Tab label='PDF' />
+              </Tabs>
+            )}
+          </Grid>
+          <Grid
+            size={{ xs: belowLargeScreen ? 3 : 3 }}
+            textAlign='right'
+            sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5 }}
+          >
+            <LoadingButton
+              size='small'
+              onClick={() => handlExcelExport(exportedData)}
+              loading={isExporting}
+              variant='contained'
+              color='success'
+            >
+              <FontAwesomeIcon icon={faFileExcel} color='green' />
+              Excel
+            </LoadingButton>
+          </Grid>
 
-              {belowLargeScreen && (
-                <Grid size={{ xs: 1 }} textAlign='right'>
-                  <Tooltip title='Close'>
-                    <IconButton
-                      size='small'
-                      color='primary'
-                      onClick={() => setOpenDocumentDialog(false)}
-                    >
-                      <HighlightOff color='primary' />
-                    </IconButton>
-                  </Tooltip>
-                </Grid>
-              )}
+          {belowLargeScreen && (
+            <Grid size={{ xs: 1 }} textAlign='right'>
+              <Tooltip title='Close'>
+                <IconButton
+                  size='small'
+                  color='primary'
+                  onClick={() => setOpenDocumentDialog(false)}
+                >
+                  <HighlightOff color='primary' />
+                </IconButton>
+              </Tooltip>
             </Grid>
           )}
+        </Grid>
 
-          <Box>
-            {forcePDFView ? (
-              <PDFContent
-                document={
-                  <RequisitionPDF
-                    organization={organization}
-                    requisition={requisitionDetails}
-                  />
-                }
-                fileName={requisition.requisitionNo}
-              />
-            ) : (
-              <>
-                {selectedTab === 0 && (
-                  <RequisitionsOnScreen
-                    belowLargeScreen={belowLargeScreen}
-                    requisition={requisitionDetails}
-                    organization={organization}
-                  />
-                )}
-                {selectedTab === 1 && (
-                  <PDFContent
-                    document={
-                      <RequisitionPDF
-                        organization={organization}
-                        requisition={requisitionDetails}
-                      />
-                    }
-                    fileName={requisition.requisitionNo}
-                  />
-                )}
-              </>
-            )}
-          </Box>
+        <Box>
+          {forcePDFView ? (
+            <PDFContent
+              document={
+                <RequisitionPDF
+                  organization={organization}
+                  requisition={requisitionDetails}
+                />
+              }
+              fileName={requisition.requisitionNo}
+            />
+          ) : (
+            <>
+              {selectedTab === 0 && (
+                <RequisitionsOnScreen
+                  belowLargeScreen={belowLargeScreen}
+                  requisition={requisitionDetails}
+                  organization={organization}
+                />
+              )}
+              {selectedTab === 1 && (
+                <PDFContent
+                  document={
+                    <RequisitionPDF
+                      organization={organization}
+                      requisition={requisitionDetails}
+                    />
+                  }
+                  fileName={requisition.requisitionNo}
+                />
+              )}
+            </>
+          )}
         </Box>
       </DialogContent>
       <DialogActions sx={{ margin: 2 }}>
-        <LoadingButton
-          size='small'
-          onClick={() => handlExcelExport(exportedData)}
-          loading={isExporting}
-          variant='contained'
-          color='success'
-        >
-          <FontAwesomeIcon icon={faFileExcel} color='green' />
-          Excel
-        </LoadingButton>
         <Button
           variant='outlined'
           size='small'

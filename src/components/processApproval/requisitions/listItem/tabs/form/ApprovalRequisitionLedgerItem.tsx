@@ -43,7 +43,6 @@ interface ApprovalRequisitionLedgerItemProps {
     requisitionLedgerItem: RequisitionItem[];
     handleItemChange: any
     setRequisitionLedgerItem: (items: RequisitionItem[]) => void;
-    readOnlyMode?: boolean;
 }
 
 const FetchRelatableDetails = ({ relatable, toggleOpen }: FetchRelatableDetailsProps) => {
@@ -91,7 +90,6 @@ function ApprovalRequisitionLedgerItem({
     requisitionLedgerItem,
     handleItemChange,
     setRequisitionLedgerItem,
-    readOnlyMode = false,
 }: ApprovalRequisitionLedgerItemProps) {
     const [openViewDialog, setOpenViewDialog] = useState(false);
     const [selectedRelated, setSelectedRelated] = useState<{ id: number; orderNo: string; order_date: string } | null>(null);
@@ -196,7 +194,6 @@ function ApprovalRequisitionLedgerItem({
                                 fullWidth
                                 size="small"
                                 defaultValue={item.quantity}
-                                disabled={readOnlyMode}
                                 onChange={(e) => handleItemChange({ 
                                     index: itemIndex, 
                                     key: 'quantity', 
@@ -218,7 +215,6 @@ function ApprovalRequisitionLedgerItem({
                                 fullWidth
                                 size="small"
                                 defaultValue={item.rate}
-                                disabled={readOnlyMode}
                                 error={!!errors?.[itemIndex]?.rate}
                                 helperText={errors?.[itemIndex]?.rate?.message || ''}
                                 onChange={(e) => handleItemChange({
@@ -257,7 +253,6 @@ function ApprovalRequisitionLedgerItem({
                                 fullWidth
                                 size="small"
                                 defaultValue={item.remarks}
-                                disabled={readOnlyMode}
                                 onChange={(e) => handleItemChange({
                                     index: itemIndex, 
                                     key: 'remarks', 
@@ -266,7 +261,7 @@ function ApprovalRequisitionLedgerItem({
                             />
                         </Div>
                     </Grid>
-                    {requisitionLedgerItem.length > 1 && !readOnlyMode && (
+                    {requisitionLedgerItem.length > 1 && (
                         <Grid size={{xs: 1, md: 0.5, lg: 0.5}}>
                             <Div sx={{ mt: 1.5, mb: 0.5 }}>
                                 <Tooltip title="Delete item">
@@ -284,7 +279,7 @@ function ApprovalRequisitionLedgerItem({
                 </Grid>
             ))}
 
-            {!readOnlyMode && sourceItemsCount > 1 && requisitionLedgerItem.length < initialItems.length && (
+            {sourceItemsCount > 1 && requisitionLedgerItem.length < initialItems.length && (
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2, mb: 2 }}>
                     <Tooltip title="Restore all deleted items" arrow placement="top">
                         <Button

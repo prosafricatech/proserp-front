@@ -564,7 +564,7 @@ function ApprovalForm({
 
                     return (
                       <React.Fragment key={cost.id || index}>
-                        <Grid size={{ xs: 12, md: 4 }}>
+                        <Grid size={{ xs: 12, md: 9 }}>
                           <Typography variant='body2' sx={{ mt: 1.5 }}>
                             {`${index + 1}. ${cost.credit_ledger_name || cost.name}`}
                           </Typography>
@@ -577,20 +577,7 @@ function ApprovalForm({
                             </Typography>
                           )}
                         </Grid>
-                        <Grid size={{ xs: 6, md: 2 }}>
-                          <Typography variant='body2' sx={{ mt: 1.5 }}>
-                            {cost.currency_name || requisition.currency?.name}
-                          </Typography>
-                        </Grid>
-                        <Grid size={{ xs: 6, md: 2 }}>
-                          <Typography variant='body2' sx={{ mt: 1.5 }}>
-                            Rate:{' '}
-                            {Number(cost.exchange_rate || 1).toLocaleString(
-                              'en-US'
-                            )}
-                          </Typography>
-                        </Grid>
-                        <Grid size={{ xs: 12, md: 4 }}>
+                        <Grid size={{ xs: 12, md: 3 }}>
                           <Div sx={{ mt: 0.5 }}>
                             <TextField
                               label='Amount'
@@ -599,6 +586,7 @@ function ApprovalForm({
                               value={Number(cost.amount || 0).toLocaleString(
                                 'en-US'
                               )}
+                              inputProps={{ style: { textAlign: 'right' } }}
                               error={!!additionalCostErrors?.amount}
                               helperText={
                                 additionalCostErrors?.amount?.message as string
