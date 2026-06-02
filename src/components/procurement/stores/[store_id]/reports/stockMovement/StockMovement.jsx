@@ -570,7 +570,7 @@ function StockMovement({ toggleOpen, dormantStock = false, isFromDashboard }) {
 
   useEffect(() => {
     setValue('include_children', includeChildren);
-  }, [includeChildren]);
+  }, [includeChildren, setValue]);
 
   const getMovements = async (filters) => {
     if (!filters?.store_id) {
@@ -584,19 +584,22 @@ function StockMovement({ toggleOpen, dormantStock = false, isFromDashboard }) {
     setisFetching(false);
   };
 
+  const buildFilters = (overrides = {}) => ({
+    from: watch('from'),
+    to: watch('to'),
+    store_id: watch('store_id'),
+    cost_center_ids: watch('cost_center_ids'),
+    product_category_ids: watch('product_category_ids'),
+    include_children: includeChildren,
+    ...overrides,
+  });
+
   const downloadExcelTemplate = async () => {
     try {
       setIsDownloadingTemplate(true);
 
       // Get all current filter parameters
-      const filters = {
-        from: watch(`from`),
-        to: watch(`to`),
-        store_id: watch(`store_id`),
-        cost_center_ids: watch(`cost_center_ids`),
-        product_category_ids: watch('product_category_ids'),
-        include_children: watch('include_children'),
-      };
+      const filters = buildFilters();
 
       // Pass all filters to the service
       const responseData = await storeServices.getStockMovementExcel(filters);
@@ -816,10 +819,19 @@ function StockMovement({ toggleOpen, dormantStock = false, isFromDashboard }) {
                       control={
                         <Switch
                           checked={includeChildren}
-                          onChange={(e) => setIncludeChildren((prev) => !prev)}
+                          onChange={(e) => {
+                            const nextValue = e.target.checked;
+                            setIncludeChildren(nextValue);
+                            setValue('include_children', nextValue);
+                            getMovements(
+                              buildFilters({
+                                include_children: nextValue,
+                              })
+                            );
+                          }}
                         />
                       }
-                      label='Include Children'
+                      label='Include Substores'
                     />
                   </Div>
                 </Grid>

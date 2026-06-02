@@ -399,7 +399,7 @@ function StockReport({ setOpenDialog, isFromDashboard }) {
 
   useEffect(() => {
     setValue('include_children', includeChildren);
-  }, [includeChildren]);
+  }, [includeChildren, setValue]);
 
   const getAvailableStock = async (filters) => {
     setIsFetching(true);
@@ -408,22 +408,25 @@ function StockReport({ setOpenDialog, isFromDashboard }) {
     setIsFetching(false);
   };
 
+  const buildFilters = (overrides = {}) => ({
+    as_at: watch('as_at'),
+    store_id: watch('store_id'),
+    cost_center_ids: watch('cost_center_ids'),
+    product_category_ids: watch('product_category_ids'),
+    show_zero_balance: watch('show_zero_balance'),
+    sort_by: watch('sort_by'),
+    sort_direction: watch('sort_direction'),
+    include_children: includeChildren,
+    ...overrides,
+  });
+
   const downloadExcelTemplate = async () => {
     try {
       setIsDownloadingTemplate(true);
       setUploadFieldsKey((prevKey) => prevKey + 1);
 
       // Get all current filter parameters
-      const filters = {
-        as_at: watch('as_at'),
-        store_id: watch('store_id'),
-        cost_center_ids: watch('cost_center_ids'),
-        product_category_ids: watch('product_category_ids'),
-        show_zero_balance: watch('show_zero_balance'),
-        sort_by: watch('sort_by'),
-        sort_direction: watch('sort_direction'),
-        include_children: watch('include_children'),
-      };
+      const filters = buildFilters();
 
       // Pass all filters to the service
       const responseData = await storeServices.downloadExcelTemplate(filters);
@@ -444,17 +447,7 @@ function StockReport({ setOpenDialog, isFromDashboard }) {
   };
 
   useEffect(() => {
-    const initialFilters = {
-      as_at: watch('as_at'),
-      store_id: watch('store_id'),
-      cost_center_ids: watch('cost_center_ids'),
-      product_category_ids: watch('product_category_ids'),
-      show_zero_balance: watch('show_zero_balance'),
-      sort_by: watch('sort_by'),
-      sort_direction: watch('sort_direction'),
-      include_children: watch('include_children'),
-    };
-    getAvailableStock(initialFilters);
+    getAvailableStock(buildFilters());
   }, [!isFromDashboard]);
 
   const handleTabChange = (event, newValue) => {
@@ -519,15 +512,11 @@ function StockReport({ setOpenDialog, isFromDashboard }) {
                           shouldValidate: true,
                           shouldDirty: true,
                         });
-                        const filters = {
-                          as_at: watch('as_at'),
-                          store_id: newValue.id,
-                          cost_center_ids: watch('cost_center_ids'),
-                          show_zero_balance: watch('show_zero_balance'),
-                          sort_by: watch('sort_by'),
-                          sort_direction: watch('sort_direction'),
-                        };
-                        getAvailableStock(filters);
+                        getAvailableStock(
+                          buildFilters({
+                            store_id: newValue?.id,
+                          })
+                        );
                       }}
                     />
                   </Div>
@@ -563,16 +552,11 @@ function StockReport({ setOpenDialog, isFromDashboard }) {
 
                       setCostCenter(selectedCostCenters);
                       setValue('cost_center_ids', selectedCostCenterIds);
-                      const filters = {
-                        as_at: watch('as_at'),
-                        store_id: watch('store_id'),
-                        cost_center_ids: selectedCostCenterIds,
-                        product_category_ids: watch('product_category_ids'),
-                        show_zero_balance: watch('show_zero_balance'),
-                        sort_by: watch('sort_by'),
-                        sort_direction: watch('sort_direction'),
-                      };
-                      getAvailableStock(filters);
+                      getAvailableStock(
+                        buildFilters({
+                          cost_center_ids: selectedCostCenterIds,
+                        })
+                      );
                     }}
                   />
                 </Div>
@@ -628,15 +612,11 @@ function StockReport({ setOpenDialog, isFromDashboard }) {
                       const categories = newValue.map((category) => category);
                       setValue('product_category_ids', categoryIds);
                       setValue('product_categories', categories);
-                      getAvailableStock({
-                        as_at: watch('as_at'),
-                        store_id: watch('store_id'),
-                        cost_center_ids: watch('cost_center_ids'),
-                        product_category_ids: categoryIds,
-                        show_zero_balance: watch('show_zero_balance'),
-                        sort_by: watch('sort_by'),
-                        sort_direction: watch('sort_direction'),
-                      });
+                      getAvailableStock(
+                        buildFilters({
+                          product_category_ids: categoryIds,
+                        })
+                      );
                     }}
                   />
                 </Div>
@@ -667,16 +647,11 @@ function StockReport({ setOpenDialog, isFromDashboard }) {
                         }
                       );
 
-                      const filters = {
-                        as_at: newValue.toISOString(),
-                        store_id: watch('store_id'),
-                        cost_center_ids: watch('cost_center_ids'),
-                        product_category_ids: watch('product_category_ids'),
-                        show_zero_balance: watch('show_zero_balance'),
-                        sort_by: watch('sort_by'),
-                        sort_direction: watch('sort_direction'),
-                      };
-                      getAvailableStock(filters);
+                      getAvailableStock(
+                        buildFilters({
+                          as_at: newValue.toISOString(),
+                        })
+                      );
                     }}
                   />
                 </Div>
@@ -690,15 +665,11 @@ function StockReport({ setOpenDialog, isFromDashboard }) {
                     onChange={(e) => {
                       const value = e.target.checked ? 1 : 0;
                       setValue('show_zero_balance', value);
-                      getAvailableStock({
-                        as_at: watch('as_at'),
-                        store_id: watch('store_id'),
-                        cost_center_ids: watch('cost_center_ids'),
-                        product_category_ids: watch('product_category_ids'),
-                        show_zero_balance: value,
-                        sort_by: watch('sort_by'),
-                        sort_direction: watch('sort_direction'),
-                      });
+                      getAvailableStock(
+                        buildFilters({
+                          show_zero_balance: value,
+                        })
+                      );
                     }}
                   />
                   <Typography variant='body2'>Include zero stock</Typography>
@@ -717,15 +688,11 @@ function StockReport({ setOpenDialog, isFromDashboard }) {
                     value={watch('sort_by')}
                     onChange={(event, newValue) => {
                       setValue('sort_by', newValue || 'item_name');
-                      getAvailableStock({
-                        as_at: watch('as_at'),
-                        store_id: watch('store_id'),
-                        cost_center_ids: watch('cost_center_ids'),
-                        product_category_ids: watch('product_category_ids'),
-                        show_zero_balance: watch('show_zero_balance'),
-                        sort_by: newValue || 'item_name',
-                        sort_direction: watch('sort_direction'),
-                      });
+                      getAvailableStock(
+                        buildFilters({
+                          sort_by: newValue || 'item_name',
+                        })
+                      );
                     }}
                     renderInput={(params) => (
                       <TextField
@@ -755,15 +722,11 @@ function StockReport({ setOpenDialog, isFromDashboard }) {
                     value={watch('sort_direction')}
                     onChange={(event, newValue) => {
                       setValue('sort_direction', newValue || 'asc');
-                      getAvailableStock({
-                        as_at: watch('as_at'),
-                        store_id: watch('store_id'),
-                        cost_center_ids: watch('cost_center_ids'),
-                        product_category_ids: watch('product_category_ids'),
-                        show_zero_balance: watch('show_zero_balance'),
-                        sort_by: watch('sort_by'),
-                        sort_direction: newValue || 'asc',
-                      });
+                      getAvailableStock(
+                        buildFilters({
+                          sort_direction: newValue || 'asc',
+                        })
+                      );
                     }}
                     renderInput={(params) => (
                       <TextField
@@ -790,10 +753,19 @@ function StockReport({ setOpenDialog, isFromDashboard }) {
                       control={
                         <Switch
                           checked={includeChildren}
-                          onChange={(e) => setIncludeChildren((prev) => !prev)}
+                          onChange={(e) => {
+                            const nextValue = e.target.checked;
+                            setIncludeChildren(nextValue);
+                            setValue('include_children', nextValue);
+                            getAvailableStock(
+                              buildFilters({
+                                include_children: nextValue,
+                              })
+                            );
+                          }}
                         />
                       }
-                      label='Include Children'
+                      label='Include Substores'
                     />
                   </Div>
                 </Grid>
