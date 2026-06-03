@@ -50,17 +50,6 @@ type RetirementItem = {
   };
 };
 
-type ApprovalDecisionPayload = {
-  items: Array<{
-    imprest_retirement_item_id: number;
-    ledger_id: number;
-    measurement_unit_id: number;
-    quantity: number;
-    rate: number;
-    description: string;
-  }>;
-};
-
 type ImprestRetirementFormProps = {
   toggleOpen: (open: boolean) => void;
   approvedRequisition: any;
@@ -68,13 +57,6 @@ type ImprestRetirementFormProps = {
   existingRetirementDetails?: any;
   preferredRetirementId?: number | null;
   startNew?: boolean;
-  reviewMode?: boolean;
-  onApprove?: (payload: ApprovalDecisionPayload) => void;
-  onHold?: (payload: ApprovalDecisionPayload) => void;
-  onReject?: () => void;
-  approveLoading?: boolean;
-  holdLoading?: boolean;
-  rejectLoading?: boolean;
 };
 
 const extractList = (payload: any): any[] => {
@@ -146,13 +128,6 @@ function ImprestRetirementForm({
   existingRetirementDetails,
   preferredRetirementId = null,
   startNew = false,
-  reviewMode = false,
-  onApprove,
-  onHold,
-  onReject,
-  approveLoading = false,
-  holdLoading = false,
-  rejectLoading = false,
 }: ImprestRetirementFormProps) {
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
@@ -221,37 +196,6 @@ function ImprestRetirementForm({
     return editable || list[0];
   }, [startNew, existingRetirementFromShow, existingRetirementsResponse, preferredRetirementId]);
 
-  const approvalSeedItems = React.useMemo(() => {
-    if (!reviewMode) return null;
-
-    const approvals = extractList(
-      existingRetirementFromShow?.approvals || existingRetirement?.approvals
-    );
-
-    const previousApprovalWithItems = [...approvals]
-      .reverse()
-      .find((entry: any) => extractList(entry?.items).length > 0);
-
-    const sourceItems = previousApprovalWithItems
-      ? extractList(previousApprovalWithItems?.items)
-      : extractList(existingRetirementFromShow?.items || existingRetirement?.items);
-
-    return sourceItems.map((item: any) => ({
-      id: item?.id,
-      imprest_retirement_item_id:
-        Number(item?.imprest_retirement_item_id || item?.id || 0) || undefined,
-      ledger_id: Number(item?.ledger_id || item?.ledger?.id) || null,
-      measurement_unit_id:
-        Number(item?.measurement_unit_id || item?.measurement_unit?.id) || null,
-      quantity: Number.isFinite(Number(item?.quantity)) ? Number(item.quantity) : 1,
-      rate: Number.isFinite(Number(item?.rate)) ? Number(item.rate) : 0,
-      amount: Number.isFinite(Number(item?.amount)) ? Number(item.amount) : undefined,
-      description: item?.description || item?.remarks || '',
-      ledger: item?.ledger,
-      measurement_unit: item?.measurement_unit,
-    }));
-  }, [reviewMode, existingRetirementFromShow, existingRetirement]);
-
   const retirementDisplayNo =
     existingRetirementFromShow?.retirementNo ||
     existingRetirement?.retirementNo ||
@@ -270,9 +214,7 @@ function ImprestRetirementForm({
     );
     setRemarks(existingRetirement.remarks || '');
 
-    const sourceItems = reviewMode
-      ? approvalSeedItems || []
-      : extractList(existingRetirement.items);
+    const sourceItems = extractList(existingRetirement.items);
 
     const normalizedItems = sourceItems.map((item: any) => ({
       id: item.id,
@@ -290,7 +232,7 @@ function ImprestRetirementForm({
     }));
 
     setItems(normalizedItems.length > 0 ? normalizedItems : [{ ...EMPTY_ITEM }]);
-  }, [existingRetirement, reviewMode, approvalSeedItems]);
+  }, [existingRetirement]);
 
   React.useEffect(() => {
     if (ledgerId) return;
@@ -335,10 +277,24 @@ function ImprestRetirementForm({
   });
 
   const statusRaw = String(statusLabel || '').toLowerCase();
-  const isLocked = statusRaw.includes('approved');
-  const canSubmitForApproval =
-    !reviewMode && !statusRaw.includes('approved') && !statusRaw.includes('pending') && !statusRaw.includes('submitted');
-  const useReadOnlyDisplay = reviewMode;
+  const approvalStatusRaw = String(
+    existingRetirementFromShow?.latest_approval?.status ||
+      existingRetirement?.latest_approval?.status ||
+      existingRetirementFromShow?.approval?.status ||
+      existingRetirement?.approval?.status ||
+      ''
+  ).toLowerCase();
+  const isOnHoldStatus =
+    approvalStatusRaw === 'on hold' || statusRaw.includes('on hold');
+  const isRejectedStatus =
+    approvalStatusRaw.includes('reject') || statusRaw.includes('reject');
+  const isApprovedStatus =
+    approvalStatusRaw === 'approved' || statusRaw.includes('approved');
+  const isPendingStatus =
+    approvalStatusRaw === 'pending' ||
+    (statusRaw.includes('submitted') && !isOnHoldStatus && !isRejectedStatus && !isApprovedStatus);
+  const isLocked = false;
+  const canSubmitForApproval = !isApprovedStatus && !isPendingStatus;
   const requisitionApprovalId =
     existingRetirementFromShow?.requisition_approval_id ||
     existingRetirement?.requisition_approval_id ||
@@ -511,70 +467,6 @@ function ImprestRetirementForm({
     })),
   });
 
-  const buildApprovalItemsPayload = React.useCallback(() => {
-    return items
-      .map((item) => ({
-        imprest_retirement_item_id: Number(
-          item.imprest_retirement_item_id || item.id || 0
-        ),
-        ledger_id: Number(item.ledger_id || 0),
-        measurement_unit_id: Number(item.measurement_unit_id || 0),
-        quantity: Number.isFinite(Number(item.quantity)) ? Number(item.quantity) : 0,
-        rate: Number.isFinite(Number(item.rate)) ? Number(item.rate) : 0,
-        description: item.description || '',
-      }))
-      .filter(
-        (item) =>
-          item.imprest_retirement_item_id > 0 &&
-          item.ledger_id > 0 &&
-          item.measurement_unit_id > 0 &&
-          item.quantity > 0 &&
-          item.rate > 0
-      );
-  }, [items]);
-
-  const validateBeforeDecision = React.useCallback(() => {
-    if (items.length < 1) {
-      setClientError('At least one retirement item is required for approval decision.');
-      return false;
-    }
-
-    const hasInvalidItem = items.some((item) => {
-      const originalItemId = Number(item.imprest_retirement_item_id || item.id || 0);
-      const quantity = Number(item.quantity);
-      const rate = Number(item.rate);
-      return (
-        !originalItemId ||
-        !item.ledger_id ||
-        !item.measurement_unit_id ||
-        !Number.isFinite(quantity) ||
-        quantity <= 0 ||
-        !Number.isFinite(rate) ||
-        rate <= 0
-      );
-    });
-
-    if (hasInvalidItem) {
-      setClientError(
-        'Approval items must include original item reference, ledger, measurement unit, quantity > 0 and rate > 0.'
-      );
-      return false;
-    }
-
-    setClientError(null);
-    return true;
-  }, [items]);
-
-  const handleApproveDecision = () => {
-    if (!validateBeforeDecision()) return;
-    onApprove?.({ items: buildApprovalItemsPayload() });
-  };
-
-  const handleHoldDecision = () => {
-    if (!validateBeforeDecision()) return;
-    onHold?.({ items: buildApprovalItemsPayload() });
-  };
-
   const handleSaveDraft = async () => {
     if (!validateBeforeSave()) return;
 
@@ -603,11 +495,7 @@ function ImprestRetirementForm({
   return (
     <>
       <DialogTitle textAlign="center">
-        {reviewMode
-          ? `Approve ${retirementDisplayNo}`
-          : retirementId
-            ? `Update ${retirementDisplayNo}`
-            : 'Imprest Retirement Form'}
+        {retirementId ? `Update ${retirementDisplayNo}` : 'Imprest Retirement Form'}
       </DialogTitle>
       <DialogContent>
         <Grid container spacing={1.5} marginBottom={2}>
@@ -654,78 +542,58 @@ function ImprestRetirementForm({
               </Div>
             </Div>
           </Grid>
-          {useReadOnlyDisplay ? (
-            <>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <ReadOnlyField label="Imprest Ledger" value={selectedLedgerName} />
-              </Grid>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <ReadOnlyField label="Retirement Date" value={formattedRetirementDate} />
-              </Grid>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <ReadOnlyField
-                  label="Reference Requisition"
-                  value={approvedRequisition?.requisition?.requisitionNo || '-'}
-                />
-              </Grid>
-              <Grid size={{ xs: 12 }}>
-                <ReadOnlyField label="Remarks" value={remarks || '-'} />
-              </Grid>
-            </>
-          ) : (
-            <>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <Autocomplete
-                  options={myImprestLedgers}
-                  disabled={isLocked}
-                  getOptionLabel={(option) => option.name}
-                  value={myImprestLedgers.find((option) => option.id === ledgerId) || null}
-                  isOptionEqualToValue={(option, value) => option.id === value.id}
-                  onChange={(_e, newValue) => {
-                    setLedgerId(newValue?.id || null);
-                  }}
-                  renderInput={(params) => (
-                    <TextField {...params} size="small" label="Imprest Ledger" fullWidth />
-                  )}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <DatePicker
-                  label="Retirement Date"
-                  disabled={isLocked}
-                  value={retirementDate}
-                  onChange={(value: Dayjs | null) => setRetirementDate(value)}
-                  slotProps={{
-                    textField: {
-                      size: 'small',
-                      fullWidth: true,
-                    },
-                  }}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <TextField
-                  size="small"
-                  fullWidth
-                  label="Reference Requisition"
-                  disabled
-                  value={approvedRequisition?.requisition?.requisitionNo || ''}
-                />
-              </Grid>
-              <Grid size={{ xs: 12 }}>
-                <TextField
-                  size="small"
-                  fullWidth
-                  multiline
-                  minRows={2}
-                  disabled={isLocked}
-                  label="Remarks"
-                  value={remarks}
-                  onChange={(e) => setRemarks(e.target.value)}
-                />
-              </Grid>
-            </>
-          )}
+          <>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Autocomplete
+                options={myImprestLedgers}
+                disabled={isLocked}
+                getOptionLabel={(option) => option.name}
+                value={myImprestLedgers.find((option) => option.id === ledgerId) || null}
+                isOptionEqualToValue={(option, value) => option.id === value.id}
+                onChange={(_e, newValue) => {
+                  setLedgerId(newValue?.id || null);
+                }}
+                renderInput={(params) => (
+                  <TextField {...params} size="small" label="Imprest Ledger" fullWidth />
+                )}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <DatePicker
+                label="Retirement Date"
+                disabled={isLocked}
+                value={retirementDate}
+                onChange={(value: Dayjs | null) => setRetirementDate(value)}
+                slotProps={{
+                  textField: {
+                    size: 'small',
+                    fullWidth: true,
+                  },
+                }}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <TextField
+                size="small"
+                fullWidth
+                label="Reference Requisition"
+                disabled
+                value={approvedRequisition?.requisition?.requisitionNo || ''}
+              />
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                size="small"
+                fullWidth
+                multiline
+                minRows={2}
+                disabled={isLocked}
+                label="Remarks"
+                value={remarks}
+                onChange={(e) => setRemarks(e.target.value)}
+              />
+            </Grid>
+          </>
         </Grid>
 
         <Divider sx={{ mb: 1.5 }} />
@@ -869,7 +737,7 @@ function ImprestRetirementForm({
                   />
                 </Grid>
                 <Grid size={{ xs: 0.5 }} textAlign="right">
-                  {!isLocked && !reviewMode && items.length > 1 && (
+                  {!isLocked && items.length > 1 && (
                     <Tooltip title="Remove Item">
                       <IconButton size="small" onClick={() => removeItem(index)}>
                         <DisabledByDefault fontSize="small" color="error" />
@@ -882,7 +750,7 @@ function ImprestRetirementForm({
           </Grid>
         ))}
 
-        {!isLocked && !reviewMode && (
+        {!isLocked && (
           <Div sx={{ textAlign: 'right', mb: 1.5 }}>
             <Button
               size="small"
@@ -907,7 +775,7 @@ function ImprestRetirementForm({
             Receipts / Supporting Documents
           </Typography>
 
-          {!retirementId && !reviewMode && (
+          {!retirementId && (
             <Alert severity="info" sx={{ mb: 1.5 }}>
               Save first to upload supporting documents.
             </Alert>
@@ -916,7 +784,7 @@ function ImprestRetirementForm({
           {retirementId && (
             <AttachmentForm
               hideFeatures
-              readOnly={reviewMode || isLocked}
+              readOnly={isLocked}
               attachmentable_id={retirementId}
               attachmentable_type="imprest_retirement"
               attachment_name="imprest retirement"
@@ -928,43 +796,9 @@ function ImprestRetirementForm({
 
       <DialogActions>
         <Button size="small" onClick={() => toggleOpen(false)}>
-          {reviewMode ? 'Close' : 'Cancel'}
+          Cancel
         </Button>
-        {reviewMode && (
-          <>
-            <LoadingButton
-              size="small"
-              color="error"
-              variant="outlined"
-              onClick={onReject}
-              loading={rejectLoading}
-              disabled={approveLoading || holdLoading}
-            >
-              Reject
-            </LoadingButton>
-            <LoadingButton
-              size="small"
-              color="warning"
-              variant="outlined"
-              onClick={handleHoldDecision}
-              loading={holdLoading}
-              disabled={approveLoading || rejectLoading}
-            >
-              On Hold
-            </LoadingButton>
-            <LoadingButton
-              size="small"
-              color="success"
-              variant="contained"
-              onClick={handleApproveDecision}
-              loading={approveLoading}
-              disabled={rejectLoading || holdLoading}
-            >
-              Approve
-            </LoadingButton>
-          </>
-        )}
-        {!isLocked && !reviewMode && (
+        {!isLocked && (
           <LoadingButton
             size="small"
             variant="contained"

@@ -81,12 +81,13 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
   const queryClient = useQueryClient();
   const [serverError, setServerError] = useState<Record<string, string> | null>(null);
   const { enqueueSnackbar } = useSnackbar();
+  const resolvedApprovedDetails = approvedDetails || prevApprovedDetails || null;
   const isImprestPayment = approvedRequisition?.process_type === 'IMPREST'
-    || approvedDetails?.process_type === 'IMPREST';
+    || resolvedApprovedDetails?.process_type === 'IMPREST';
 
   const imprestLedger = approvedRequisition?.requisition?.imprest_ledger
-    || approvedDetails?.imprest_ledger
-    || approvedDetails?.requisition?.imprest_ledger
+    || resolvedApprovedDetails?.imprest_ledger
+    || resolvedApprovedDetails?.requisition?.imprest_ledger
     || null;
 
   const resolvedImprestCreditLedgerName =
@@ -181,8 +182,8 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
       id: payment?.id,
       requisition_approval_id: approvedDetails?.id,
       credit_ledger_id: payment?.credit_ledger_id || 0,
-      currency_id: payment ? payment.currency.id : approvedDetails ? approvedDetails.currency.id : 1,
-      exchange_rate: payment ? payment.exchange_rate : approvedDetails ? approvedDetails.currency.exchangeRate : 1,
+      currency_id: payment ? payment.currency.id : resolvedApprovedDetails ? resolvedApprovedDetails.currency.id : 1,
+      exchange_rate: payment ? payment.exchange_rate : resolvedApprovedDetails ? resolvedApprovedDetails.currency.exchangeRate : 1,
       cost_centers: approvedRequisition ? [approvedRequisition.requisition.cost_center] : payment?.cost_centers || [],
       transactionDate: payment ? payment.transactionDate : dayjs().toISOString(),
       items: items,
@@ -213,7 +214,7 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
   }, [payment, updatePayment, addPayment]);
 
   const formTitle = payment
-    ? (isImprestPayment ? 'Edit Imprest Payment' : 'Edit Payment')
+    ? (isImprestPayment ? 'Edit Approved Imprest Payment Form' : 'Edit Payment')
     : (isImprestPayment ? 'New Approved Imprest Payment Form' : 'New Approved Payment Form');
 
   const handleSubmitForm = async (data: FormValues) => {
@@ -313,7 +314,7 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
             <Grid size={{xs: 12, md: 4}}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <CurrencySelector
-                  defaultValue={approvedDetails ? approvedDetails.currency.id : 1}
+                  defaultValue={resolvedApprovedDetails ? resolvedApprovedDetails.currency.id : 1}
                   disabled={true}
                 />
               </Div>
@@ -356,7 +357,7 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
           {errors?.items?.message && items.length < 1 && <Alert severity='error'>{errors.items.message}</Alert>}
 
           <ApprovedPaymentItemForm 
-            approvedDetails={approvedDetails} 
+            approvedDetails={resolvedApprovedDetails} 
             items={items} 
             handleItemChange={handleItemChange}
             isImprestPayment={isImprestPayment}

@@ -21,6 +21,8 @@ function ImprestRequisitionTabs({
   setActiveTab,
   isExpanded,
 }: ImprestRequisitionTabsProps) {
+  const isFullyPaid = approvedRequisition?.is_fully_paid === true;
+
   return (
     <Grid container spacing={1}>
       <Grid size={{ xs: 12 }}>
@@ -30,23 +32,26 @@ function ImprestRequisitionTabs({
           aria-label="Imprest tabs"
         >
           <Tab label="Payments" />
-          <Tab label="Retirement" />
+          <Tab label="Retirements" />
         </Tabs>
       </Grid>
 
       {activeTab === 0 && (
         <Grid size={{ xs: 12 }}>
           <Grid container spacing={1} justifyContent="flex-end" mb={1}>
-            <Grid>
-              <ApprovedPaymentActionTail
-                approvedRequisition={approvedRequisition}
-                isExpanded={isExpanded}
-              />
-            </Grid>
+            {!isFullyPaid && (
+              <Grid>
+                <ApprovedPaymentActionTail
+                  approvedRequisition={approvedRequisition}
+                  isExpanded={isExpanded}
+                />
+              </Grid>
+            )}
           </Grid>
           <ApprovedPaymentListItem
             approvedRequisition={approvedRequisition}
             isExpanded={isExpanded}
+            showHeader={false}
           />
         </Grid>
       )}

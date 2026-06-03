@@ -38,6 +38,21 @@ const ApprovedPaymentItemForm: React.FC<ApprovedPaymentItemFormProps> = ({
     ? items.filter(item => item.unpaid_amount > 0)
     : items;
 
+  const resolveDebitLabel = (item: PaymentItem) => {
+    const sourceLedgerName = String(payFromLedgerName || '').trim();
+    const itemLedgerName = String(item.ledger?.name || '').trim();
+
+    if (!isImprestPayment || !sourceLedgerName) {
+      return itemLedgerName;
+    }
+
+    if (!itemLedgerName || sourceLedgerName === itemLedgerName) {
+      return sourceLedgerName;
+    }
+
+    return `${sourceLedgerName} (${itemLedgerName})`;
+  };
+
   return (
     <React.Fragment>
       {filteredItems.map((item, itemIndex) => (
@@ -64,9 +79,7 @@ const ApprovedPaymentItemForm: React.FC<ApprovedPaymentItemFormProps> = ({
             <Div sx={{ mt: 2, mb: 1.7 }}>
               <Tooltip title="Debit">
                 <Typography>
-                  {isImprestPayment && payFromLedgerName
-                    ? `${payFromLedgerName} (${item.ledger.name})`
-                    : item.ledger.name}
+                  {resolveDebitLabel(item)}
                 </Typography>
               </Tooltip>
             </Div>

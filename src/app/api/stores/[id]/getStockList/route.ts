@@ -13,11 +13,7 @@ export async function GET(
   if (response) return response;
 
   const { searchParams } = new URL(req.url);
-  const keyword = searchParams.get('keyword') || '';
-  const page = searchParams.get('page') || '1';
-  const limit = searchParams.get('limit') || '10';
-
-  const query = new URLSearchParams({ keyword, page, limit }).toString();
+  const query = searchParams.toString();
 
   const res = await fetch(`${API_BASE}/stores/${id}/stock_list?${query}`, {
     headers,
