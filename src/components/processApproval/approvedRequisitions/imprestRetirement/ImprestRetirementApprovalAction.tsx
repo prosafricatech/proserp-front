@@ -163,7 +163,16 @@ function ImprestRetirementApprovalAction({ retirement, approvedRequisition }: Im
   };
 
   const resolveApprovalId = async (): Promise<number | null> => {
-    return Number(retirement?.id || resolvedRetirement?.id || 0) || null;
+    const approvals = Array.isArray(retirement?.approvals) ? retirement.approvals : [];
+    const latestApprovalFromRow = retirement?.latest_approval || retirement?.approval || null;
+    const lastApprovalInList = approvals.length > 0 ? approvals[approvals.length - 1] : null;
+    return Number(
+      latestApprovalFromRow?.id ||
+        latestApprovalFromRow?.approval_id ||
+        lastApprovalInList?.id ||
+        lastApprovalInList?.approval_id ||
+        0
+    ) || null;
   };
 
   const handleRevoke = () => {
