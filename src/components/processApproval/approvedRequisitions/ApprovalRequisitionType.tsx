@@ -33,6 +33,12 @@ export interface RequisitionSummary {
   creator: User;
   status_label: string;
   vat_amount: number;
+  currency?: Currency;
+  imprest_ledger?: {
+    id: number;
+    name: string;
+    code?: string;
+  } | null;
   leave_items?: Array<{
     id?: number;
     employee_id: number;

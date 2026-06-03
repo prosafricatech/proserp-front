@@ -318,12 +318,13 @@ function ImprestRetirementForm({
   }, [items]);
 
   const ceilingAmount = Number(approvedDetails?.amount || approvedRequisition?.amount || 0);
-  const currencyCode =
+  const currencyCode = String(
     existingRetirementFromShow?.currency?.code ||
     existingRetirementFromShow?.currency_code ||
     existingRetirementFromShow?.imprest_approval?.requisition?.currency?.code ||
     approvedRequisition?.requisition?.currency?.code ||
-    'TZS';
+    'TZS'
+  ).trim() || 'TZS';
   const approvedAmountDisplay = ceilingAmount.toLocaleString('en-US', {
     style: 'currency',
     currency: currencyCode,
@@ -589,7 +590,6 @@ function ImprestRetirementForm({
 
   const handleSubmitForApproval = async () => {
     if (!retirementId) {
-      setClientError('Save draft first before submitting.');
       return;
     }
 
@@ -791,7 +791,6 @@ function ImprestRetirementForm({
                   <LedgerSelect
                     label={`Item Ledger (Paid via ${paidThroughLabel})`}
                     defaultValue={item.ledger_id ? ({ id: item.ledger_id, name: item.ledger?.name || '' } as any) : null}
-                    readOnly={isLocked}
                     onChange={(newValue: any) => {
                       const singleValue = Array.isArray(newValue) ? newValue[0] : newValue;
                       updateItem(index, {
@@ -842,7 +841,7 @@ function ImprestRetirementForm({
                     }}
                   />
                 </Grid>
-                <Grid size={{ xs: 12, md: 2 }}>
+                <Grid size={{ xs: 12, md: items.length > 1 ? 1.5 : 2 }}>
                   <TextField
                     size="small"
                     fullWidth
@@ -982,6 +981,7 @@ function ImprestRetirementForm({
             variant="contained"
             onClick={handleSubmitForApproval}
             loading={submitRetirement.isPending}
+            disabled={!retirementId}
           >
             Submit
           </LoadingButton>
