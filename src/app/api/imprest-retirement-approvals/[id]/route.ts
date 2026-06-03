@@ -26,3 +26,22 @@ export async function DELETE(
 
   return handleJsonResponse(res);
 }
+
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const { headers, response } = await getAuthHeaders(req);
+  if (response) return response;
+
+  const body = await req.json();
+
+  const res = await fetch(`${API_BASE}/imprest-retirement-approvals/${id}`, {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify(body),
+  });
+
+  return handleJsonResponse(res);
+}

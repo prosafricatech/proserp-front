@@ -59,6 +59,7 @@ function ImprestRetirementApprovalForm({
     retirement?.latest_approval ||
     retirement?.approval ||
     (approvals.length > 0 ? approvals[approvals.length - 1] : null);
+  const approvalId = Number(latestApproval?.id || 0) || 0;
 
   const chainLevelId = Number(
     isEdit
@@ -141,7 +142,9 @@ function ImprestRetirementApprovalForm({
     });
 
   const { mutate: submitApproval, isPending } = useMutation({
-    mutationFn: imprestRetirementServices.approve,
+    mutationFn: isEdit
+      ? imprestRetirementServices.updateApproval
+      : imprestRetirementServices.approve,
     onSuccess: (response: any) => {
       enqueueSnackbar(response?.message || 'Decision recorded', { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['imprestRetirements'] });
@@ -206,7 +209,13 @@ function ImprestRetirementApprovalForm({
   const run = (status: 'approved' | 'on hold' | 'rejected') => {
     if (!validate(status !== 'approved')) return;
 
+    if (isEdit && !approvalId) {
+      setClientError('Approval record could not be determined for update.');
+      return;
+    }
+
     const payload: any = {
+      ...(isEdit ? { id: approvalId } : {}),
       imprest_retirement_id: retirement.id,
       chain_level_id: chainLevelId,
       is_final: isFinal,
