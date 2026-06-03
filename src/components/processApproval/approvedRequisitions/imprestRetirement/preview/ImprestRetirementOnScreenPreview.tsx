@@ -127,28 +127,6 @@ function ImprestRetirementOnScreenPreview({ retirement }: RetirementPreviewProps
           </TableBody>
         </Table>
       </TableContainer>
-
-      <Box>
-        <Typography variant="subtitle2" gutterBottom>
-          Supporting Documents
-        </Typography>
-        {attachments.length > 0 ? (
-          attachments.map((attachment: any) => (
-            <Box key={attachment?.id} sx={{ mb: 0.5 }}>
-              <Link
-                href={attachment?.full_path || '#'}
-                target="_blank"
-                rel="noopener noreferrer"
-                underline="hover"
-              >
-                {attachment?.name || attachment?.path || `Attachment #${attachment?.id}`}
-              </Link>
-            </Box>
-          ))
-        ) : (
-          <Typography variant="body2" color="text.secondary">No attachments</Typography>
-        )}
-      </Box>
     </Box>
   );
 }

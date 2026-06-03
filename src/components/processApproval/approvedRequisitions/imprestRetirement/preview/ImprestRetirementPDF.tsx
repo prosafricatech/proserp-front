@@ -151,21 +151,6 @@ function ImprestRetirementPDF({ retirement, organization }: ImprestRetirementPDF
             })}
           </Text>
         </View>
-
-        <View style={{ ...pdfStyles.tableRow }}>
-          <View style={{ flex: 1 }}>
-            <Text style={{ ...pdfStyles.minInfo, color: mainColor, marginBottom: 4 }}>Supporting Documents</Text>
-            {attachments.length > 0 ? (
-              attachments.map((attachment: any, index: number) => (
-                <Text key={attachment?.id || index} style={{ ...pdfStyles.minInfo }}>
-                  {index + 1}. {attachment?.name || attachment?.path || `Attachment #${attachment?.id}`}
-                </Text>
-              ))
-            ) : (
-              <Text style={{ ...pdfStyles.minInfo }}>No attachments</Text>
-            )}
-          </View>
-        </View>
       </Page>
     </Document>
   );

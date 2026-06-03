@@ -201,6 +201,8 @@ function ImprestRetirementForm({
     existingRetirement?.retirementNo ||
     (preferredRetirementId ? `#${preferredRetirementId}` : '');
 
+  const isEditMode = Boolean(existingRetirement?.id);
+
   React.useEffect(() => {
     if (!existingRetirement) return;
 
@@ -294,7 +296,11 @@ function ImprestRetirementForm({
     approvalStatusRaw === 'pending' ||
     (statusRaw.includes('submitted') && !isOnHoldStatus && !isRejectedStatus && !isApprovedStatus);
   const isLocked = false;
-  const canSubmitForApproval = !isApprovedStatus && !isPendingStatus;
+  const canSubmitForApproval =
+    !isEditMode &&
+    (statusRaw === 'draft' ||
+      statusRaw === 'suspended' ||
+      statusRaw.includes('reject'));
   const requisitionApprovalId =
     existingRetirementFromShow?.requisition_approval_id ||
     existingRetirement?.requisition_approval_id ||
@@ -472,8 +478,11 @@ function ImprestRetirementForm({
 
     const payload = buildPayload();
 
-    if (retirementId) {
-      await updateRetirement.mutateAsync({ id: retirementId, ...payload });
+    if (retirementId || isEditMode) {
+      await updateRetirement.mutateAsync({
+        ...payload,
+        id: retirementId || existingRetirement?.id,
+      });
       return;
     }
 

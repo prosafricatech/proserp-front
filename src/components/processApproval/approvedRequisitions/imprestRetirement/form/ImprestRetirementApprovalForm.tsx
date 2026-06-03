@@ -22,8 +22,6 @@ import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import imprestRetirementServices from '@/components/processApproval/imprestRetirements/imprestRetirementServices';
 
-// ------- types -------
-
 type ApprovalItem = {
   imprest_retirement_item_id: number;
   ledger_id: number | null;
@@ -37,13 +35,9 @@ type ApprovalItem = {
 
 type ImprestRetirementApprovalFormProps = {
   toggleOpen: (open: boolean) => void;
-  /** Full retirement object returned by imprestRetirementServices.show() */
   retirement: any;
-  /** isEdit=true when re-approving an already-decided record (on-hold / rejected) */
   isEdit?: boolean;
 };
-
-// ------- helpers -------
 
 const extractList = (p: any): any[] => {
   if (Array.isArray(p)) return p;
@@ -51,8 +45,6 @@ const extractList = (p: any): any[] => {
   if (Array.isArray(p?.data?.data)) return p.data.data;
   return [];
 };
-
-// ------- component -------
 
 function ImprestRetirementApprovalForm({
   toggleOpen,
@@ -62,17 +54,11 @@ function ImprestRetirementApprovalForm({
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
 
-  // Mirror of ApprovalForm chain_level_id resolution:
-  //   isEdit → from existing approval record (approval_chain_level_id)
-  //   new    → from retirement.next_approval_level.id
   const approvals = extractList(retirement?.approvals);
   const latestApproval =
     retirement?.latest_approval ||
     retirement?.approval ||
     (approvals.length > 0 ? approvals[approvals.length - 1] : null);
-
-    console.log('Latest approval:', latestApproval);
-    console.log('Retirement next approval level:', retirement?.next_approval_level);
 
   const chainLevelId = Number(
     isEdit
@@ -80,12 +66,14 @@ function ImprestRetirementApprovalForm({
           latestApproval?.approval_chain_level_id ||
           latestApproval?.approval_chain_level?.id ||
           latestApproval?.chain_level?.id ||
+          approvals[approvals.length - 1]?.approval_chain_level?.id ||
           retirement?.next_approval_level?.id
       : retirement?.next_approval_level?.id ||
           latestApproval?.chain_level_id ||
           latestApproval?.approval_chain_level_id ||
           latestApproval?.approval_chain_level?.id ||
-          latestApproval?.chain_level?.id
+          latestApproval?.chain_level?.id ||
+          approvals[approvals.length - 1]?.approval_chain_level?.id
   ) || 0;
 
   const isFinal = Number(
@@ -93,11 +81,13 @@ function ImprestRetirementApprovalForm({
       ? latestApproval?.is_final ||
           latestApproval?.approval_chain_level?.is_final ||
           latestApproval?.chain_level?.is_final ||
+          approvals[approvals.length - 1]?.is_final ||
           retirement?.next_approval_level?.is_final
       : retirement?.next_approval_level?.is_final ||
           latestApproval?.is_final ||
           latestApproval?.approval_chain_level?.is_final ||
-          latestApproval?.chain_level?.is_final
+          latestApproval?.chain_level?.is_final ||
+          approvals[approvals.length - 1]?.is_final
   ) || 0;
 
   // Seed editable items — prefer items from the most recent approval that has items;
@@ -233,6 +223,14 @@ function ImprestRetirementApprovalForm({
     submitApproval(payload);
   };
 
+  const handleRemarksChange = (value: string) => {
+    setRemarks(value);
+
+    if (clientError === 'Remarks are required for this decision.' && value.trim()) {
+      setClientError(null);
+    }
+  };
+
   return (
     <>
       <DialogTitle textAlign="center">
@@ -364,7 +362,7 @@ function ImprestRetirementApprovalForm({
           sx={{ mt: 4 }}
           label="Remarks (required for On Hold / Reject)"
           value={remarks}
-          onChange={(e) => setRemarks(e.target.value)}
+          onChange={(e) => handleRemarksChange(e.target.value)}
         />
 
         {clientError && (
