@@ -94,14 +94,18 @@ function BalanceSheetTrend() {
     <JumboCardQuick
       title='Balance Sheet Trend'
       sx={{
-        // height: xlScreen ? 360 : null,
         height: midScreen ? 360 : null,
       }}
       action={
         <Grid container columnSpacing={1} alignItems='center'>
           <Grid size={8}>
             {!midScreen && !smallScreen ? (
-              <ButtonGroup variant='outlined' size='small' disableElevation>
+              <ButtonGroup
+                variant='outlined'
+                size='small'
+                disableElevation
+                sx={{ p: 0 }}
+              >
                 <Tooltip title='Daily Trend'>
                   <Button
                     variant={
@@ -182,18 +186,19 @@ function BalanceSheetTrend() {
               </Div>
             )}
           </Grid>
-          <Grid size={4} textAlign={'end'}>
-            <Tooltip title='Open Balance Sheet Report'>
+          <Grid size={4} textAlign={'end'} p={0}>
+            <Tooltip title='Open Balance Sheet Report' sx={{ p: 0 }}>
               <IconButton
                 onClick={() => setOpenDialog(true)}
                 size='small'
                 color='primary'
+                sx={{ p: 0 }}
               >
                 <BalanceOutlined
                   sx={
                     smallScreen
                       ? { fontSize: '40px' }
-                      : { fontSize: '38px', marginLeft: 2 }
+                      : { fontSize: '28px', marginLeft: 2 }
                   }
                 />
               </IconButton>
@@ -222,16 +227,16 @@ function BalanceSheetTrend() {
       </Dialog>
 
       {isLoading ? (
-        <ResponsiveContainer width='100%' height={200}>
+        <ResponsiveContainer width='100%' height={midScreen ? 245 : 245}>
           <Skeleton
             variant='rectangular'
             width='100%'
-            height={245}
+            height={midScreen ? 245 : 245}
             sx={{ borderRadius: 2 }}
           />
         </ResponsiveContainer>
       ) : (
-        <ResponsiveContainer width='100%' height={200}>
+        <ResponsiveContainer width='100%' height={midScreen ? 240 : 245}>
           <ComposedChart data={balanceSheetTrend}>
             <CartesianGrid
               strokeDasharray='3 3'

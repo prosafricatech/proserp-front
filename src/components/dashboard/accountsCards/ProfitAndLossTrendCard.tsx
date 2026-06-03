@@ -125,12 +125,11 @@ function ProfitAndLossTrendCard() {
     <JumboCardQuick
       title='Profit & Loss Trend'
       sx={{
-        // height: smallScreen ? null : 360
         height: midScreen ? 360 : null,
       }}
       action={
         <Grid container columnSpacing={1} alignItems='center'>
-          <Grid size={{ xs: 8 }}>
+          <Grid size={{ xs: 8 }} position={'relative'}>
             {!midScreen && !smallScreen ? (
               <ButtonGroup variant='outlined' size='small' disableElevation>
                 <Tooltip title='Daily Trend'>
@@ -213,18 +212,23 @@ function ProfitAndLossTrendCard() {
               </Div>
             )}
           </Grid>
-          <Grid size={{ xs: 4 }} textAlign={'end'}>
+          <Grid size={{ xs: 4 }} textAlign={'end'} position={'relative'}>
             <Tooltip title='Income Statement'>
               <IconButton
                 onClick={() => setOpenDialog(true)}
                 size='small'
                 color='primary'
+                sx={{ p: 0 }}
               >
                 <ViewTimelineOutlined
                   sx={
                     smallScreen
-                      ? { fontSize: '40px' }
-                      : { fontSize: '38px', marginLeft: 2 }
+                      ? { fontSize: '40px', p: 0 }
+                      : {
+                          fontSize: '28px',
+                          marginLeft: 2,
+                          p: 0,
+                        }
                   }
                 />
               </IconButton>
@@ -262,12 +266,15 @@ function ProfitAndLossTrendCard() {
         <Skeleton
           variant='rectangular'
           width='100%'
-          height={200}
+          height={midScreen ? 245 : 245}
           sx={{ borderRadius: 2 }}
         />
       ) : (
-        <ResponsiveContainer width='100%' height={200}>
-          <ComposedChart data={profitAndLossTrend}>
+        <ResponsiveContainer width='100%' height={midScreen ? 240 : 245}>
+          <ComposedChart
+            data={profitAndLossTrend}
+            margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
+          >
             <CartesianGrid
               strokeDasharray='3 3'
               stroke={theme.palette.divider}

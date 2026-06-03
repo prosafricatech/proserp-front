@@ -1,7 +1,7 @@
 'use client';
 import JumboCardQuick from '@jumbo/components/JumboCardQuick/JumboCardQuick';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
-import { Box, Skeleton, Typography, useMediaQuery } from '@mui/material';
+import { Box, Skeleton, useMediaQuery } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
@@ -35,6 +35,7 @@ function ExpenseDistributionCard() {
 
   const { theme } = useJumboTheme();
   const xlScreen = useMediaQuery(theme.breakpoints.up('lg'));
+  const midScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
   const textColor = theme.palette.text.primary;
   const backgroundColor = theme.palette.background.paper;
@@ -60,7 +61,7 @@ function ExpenseDistributionCard() {
   const options: Highcharts.Options = {
     chart: {
       type: 'pie',
-      height: 245,
+      height: 255,
       backgroundColor: 'transparent',
       spacing: [10, 10, 10, 10],
       style: { color: textColor },
@@ -112,13 +113,14 @@ function ExpenseDistributionCard() {
 
   return (
     <JumboCardQuick
+      title={'Operating Expenses'}
       sx={{
-        height: xlScreen ? 360 : null,
+        height: midScreen ? 360 : null,
         display: 'flex',
         flexDirection: 'column',
       }}
     >
-      <Box sx={{ px: 2, pt: 1 }}>
+      {/* <Box sx={{ px: 2, pt: 1 }}>
         <Typography
           variant='subtitle1'
           sx={{
@@ -128,7 +130,7 @@ function ExpenseDistributionCard() {
         >
           Operating Expenses
         </Typography>
-      </Box>
+      </Box> */}
 
       <Box
         sx={{

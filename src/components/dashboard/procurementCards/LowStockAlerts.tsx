@@ -118,7 +118,7 @@ function LowStockAlerts() {
         sx={{
           height:
             !isLoading && smallScreen && stores.length < 1
-              ? 200
+              ? 360
               : smallScreen || midScreen
                 ? 360
                 : 360,
@@ -137,7 +137,7 @@ function LowStockAlerts() {
           <Skeleton
             variant='rectangular'
             width='100%'
-            height={smallScreen ? 60 : 40}
+            height={smallScreen ? 245 : 245}
             sx={{ borderRadius: 2 }}
           />
         ) : (
