@@ -335,6 +335,7 @@ const ProductCategoryFormDialogContent: React.FC<
           <QuickAddLedger
             ledgerType={ledgertType}
             toggleOpen={setOpenQuickAddLedger}
+            heading='Quick Add Ledger'
             setAddedLedger={(v) => {
               if (ledgertType === 'credit') {
                 setRecentlyAddedIncomeLedger(v);

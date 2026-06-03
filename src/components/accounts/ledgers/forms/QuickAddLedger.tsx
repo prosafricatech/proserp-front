@@ -60,6 +60,7 @@ interface LedgerGroupOption {
 interface QuickAddLedgerType {
   ledgerType: string;
   ledger?: Ledger;
+  heading?: string;
   toggleOpen: (open: boolean) => void;
   setAddedLedger?: (value: MiniLedger) => void;
 }
@@ -80,6 +81,7 @@ interface FormValues {
 const QuickAddLedger = ({
   ledgerType,
   ledger,
+  heading,
   toggleOpen,
   setAddedLedger,
 }: QuickAddLedgerType) => {
@@ -174,9 +176,11 @@ const QuickAddLedger = ({
     <>
       <Divider />
       <Typography textAlign={'center'} variant='h4' marginTop={2}>
-        {ledgerType === 'credit'
-          ? 'Quick Add Credit Ledger'
-          : 'Quick Add Debit Ledger'}
+        {!heading
+          ? ledgerType === 'credit'
+            ? 'Quick Add Credit Ledger'
+            : 'Quick Add Debit Ledger'
+          : heading}
       </Typography>
       <DialogContent>
         <form autoComplete='off'>

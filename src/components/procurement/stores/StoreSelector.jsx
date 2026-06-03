@@ -1,20 +1,38 @@
-import React, { useState } from 'react'
-import storeServices from './store-services';
-import { Autocomplete, Checkbox, Chip, LinearProgress, TextField } from '@mui/material';
-import parse from "autosuggest-highlight/parse";
-import match from "autosuggest-highlight/match";
 import { CheckBox, CheckBoxOutlineBlank } from '@mui/icons-material';
+import {
+  Autocomplete,
+  Checkbox,
+  Chip,
+  LinearProgress,
+  TextField,
+} from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
+import match from 'autosuggest-highlight/match';
+import parse from 'autosuggest-highlight/parse';
+import { useState } from 'react';
+import storeServices from './store-services';
 
-function StoreSelector({onChange, frontError = null, multiple = false, label = 'Store', defaultValue, allowSubStores = false, excludeStores = null, includeStores = null, proposedOptions = null}) {
+function StoreSelector({
+  onChange,
+  frontError = null,
+  multiple = false,
+  label = 'Store',
+  defaultValue,
+  allowSubStores = false,
+  excludeStores = null,
+  includeStores = null,
+  proposedOptions = null,
+}) {
   //Fetch Stores
   const { data: stores, isLoading: isFetchingStores } = useQuery({
     queryKey: ['storeOptions'],
     queryFn: storeServices.getStoreOptions,
   });
-  const [selectedStore, setSelectedStore] = useState(defaultValue ? defaultValue : (multiple ? [] : null));
+  const [selectedStore, setSelectedStore] = useState(
+    defaultValue ? defaultValue : multiple ? [] : null
+  );
 
-  // Engine for stores when allowSubStores is true 
+  // Engine for stores when allowSubStores is true
   const toOptions = (stores, depth = 0, parent_id = null) => {
     const { id, name, children = [] } = stores;
     const subStores = children.flatMap((child) =>
@@ -25,18 +43,17 @@ function StoreSelector({onChange, frontError = null, multiple = false, label = '
       name,
       depth,
       parent_id,
-      matchTerms: [name].concat(subStores.map((obj) => obj.name))
+      matchTerms: [name].concat(subStores.map((obj) => obj.name)),
     };
     return [option].concat(subStores);
   };
-  
 
   let storeOptions;
   if (!!allowSubStores) {
     if (proposedOptions) {
-      storeOptions = proposedOptions.flatMap(stores => toOptions(stores));
+      storeOptions = proposedOptions.flatMap((stores) => toOptions(stores));
     } else if (stores) {
-      storeOptions = stores.flatMap(stores => toOptions(stores));
+      storeOptions = stores.flatMap((stores) => toOptions(stores));
     }
   } else {
     storeOptions = proposedOptions || stores;
@@ -45,7 +62,7 @@ function StoreSelector({onChange, frontError = null, multiple = false, label = '
   function dedupeById(options) {
     if (!Array.isArray(options)) return options;
     const seen = new Set();
-    return options.filter(option => {
+    return options.filter((option) => {
       if (!option || !option.id) return false;
       if (seen.has(option.id)) return false;
       seen.add(option.id);
@@ -57,9 +74,13 @@ function StoreSelector({onChange, frontError = null, multiple = false, label = '
 
   let finalOptions = storeOptions;
   if (excludeStores) {
-    finalOptions = storeOptions?.filter(option => !excludeStores.every(store => store.id === option.id));
+    finalOptions = storeOptions?.filter(
+      (option) => !excludeStores.every((store) => store.id === option.id)
+    );
   } else if (includeStores) {
-    finalOptions = storeOptions?.filter(option => includeStores.some(store => store.id === option.id));
+    finalOptions = storeOptions?.filter((option) =>
+      includeStores.some((store) => store.id === option.id)
+    );
   }
   finalOptions = dedupeById(finalOptions);
 
@@ -69,7 +90,7 @@ function StoreSelector({onChange, frontError = null, multiple = false, label = '
 
   return (
     <Autocomplete
-      id="checkboxes-stores"
+      id='checkboxes-stores'
       multiple={multiple}
       options={finalOptions}
       disableCloseOnSelect={multiple}
@@ -80,20 +101,26 @@ function StoreSelector({onChange, frontError = null, multiple = false, label = '
         <TextField
           {...params}
           label={label}
-          size="small"
+          size='small'
           fullWidth
           error={!!frontError}
           helperText={frontError?.message}
           value={
             multiple
-              ? selectedStore?.map((item) => item.name).join(", ")
+              ? selectedStore?.map((item) => item.name).join(', ')
               : selectedStore
           }
         />
       )}
       renderTags={(tagValue, getTagProps) => {
         return tagValue.map((option, index) => {
-          return <Chip {...getTagProps({ index })} key={`tag-${option.id}-${option.name}`} label={option.name} />;
+          return (
+            <Chip
+              {...getTagProps({ index })}
+              key={`tag-${option.id}-${option.name}`}
+              label={option.name}
+            />
+          );
         });
       }}
       renderOption={(props, option, { selected, inputValue }) => {
@@ -112,9 +139,10 @@ function StoreSelector({onChange, frontError = null, multiple = false, label = '
           >
             {multiple && (
               <Checkbox
-                size="small"
-                icon={<CheckBoxOutlineBlank fontSize="small" />}
-                checkedIcon={<CheckBox fontSize="small" />}
+                key={`option-${option.id}-${option.name}`}
+                size='small'
+                icon={<CheckBoxOutlineBlank fontSize='small' />}
+                checkedIcon={<CheckBox fontSize='small' />}
                 checked={selected}
                 sx={{ mr: 1 }}
               />
