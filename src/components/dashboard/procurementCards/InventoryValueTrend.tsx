@@ -7,6 +7,7 @@ import {
   Button,
   ButtonGroup,
   FormControl,
+  Grid,
   InputLabel,
   MenuItem,
   Select,
@@ -176,101 +177,105 @@ function InventoryValueTrend(props: InventoryValueTrendProps) {
         height: midScreen ? 360 : null,
       }}
       action={
-        !smallScreen ? (
-          <ButtonGroup variant='outlined' size='small' disableElevation>
-            <Tooltip title='Daily Trend'>
-              <Button
-                variant={
-                  params.aggregate_by === 'day' ? 'contained' : 'outlined'
-                }
-                onClick={() =>
-                  setParams((prev) => ({ ...prev, aggregate_by: 'day' }))
-                }
-              >
-                Daily
-              </Button>
-            </Tooltip>
-            <Tooltip title='Weekly Trend'>
-              <Button
-                variant={
-                  params.aggregate_by === 'week' ? 'contained' : 'outlined'
-                }
-                onClick={() =>
-                  setParams((prev) => ({ ...prev, aggregate_by: 'week' }))
-                }
-              >
-                Weekly
-              </Button>
-            </Tooltip>
-            <Tooltip title='Monthly Trend'>
-              <Button
-                variant={
-                  params.aggregate_by === 'month' ? 'contained' : 'outlined'
-                }
-                onClick={() =>
-                  setParams((prev) => ({ ...prev, aggregate_by: 'month' }))
-                }
-              >
-                Monthly
-              </Button>
-            </Tooltip>
-            <Tooltip title='Yearly Trend'>
-              <Button
-                variant={
-                  params.aggregate_by === 'year' ? 'contained' : 'outlined'
-                }
-                onClick={() =>
-                  setParams((prev) => ({ ...prev, aggregate_by: 'year' }))
-                }
-              >
-                Yearly
-              </Button>
-            </Tooltip>
-          </ButtonGroup>
-        ) : (
-          <Div sx={{ mt: 1 }}>
-            <FormControl fullWidth size='small'>
-              <InputLabel id='inventory-value-trend-group-by-input-label'>
-                Interval
-              </InputLabel>
-              <Select
-                labelId='inventory-value-trend-group-by-label'
-                id='inventory-value-trend-group-by'
-                value={params.aggregate_by}
-                label='Interval'
-                onChange={(e) =>
-                  setParams((prev) => ({
-                    ...prev,
-                    aggregate_by: e.target.value as
-                      | 'day'
-                      | 'week'
-                      | 'month'
-                      | 'year',
-                  }))
-                }
-              >
-                <MenuItem value='day'>Daily</MenuItem>
-                <MenuItem value='week'>Weekly</MenuItem>
-                <MenuItem value='month'>Monthly</MenuItem>
-                <MenuItem value='year'>Yearly</MenuItem>
-              </Select>
-            </FormControl>
-          </Div>
-        )
+        <Grid container columnSpacing={1} alignItems='center'>
+          <Grid size={{ xs: 8 }}>
+            {!smallScreen ? (
+              <ButtonGroup variant='outlined' size='small' disableElevation>
+                <Tooltip title='Daily Trend'>
+                  <Button
+                    variant={
+                      params.aggregate_by === 'day' ? 'contained' : 'outlined'
+                    }
+                    onClick={() =>
+                      setParams((prev) => ({ ...prev, aggregate_by: 'day' }))
+                    }
+                  >
+                    Daily
+                  </Button>
+                </Tooltip>
+                <Tooltip title='Weekly Trend'>
+                  <Button
+                    variant={
+                      params.aggregate_by === 'week' ? 'contained' : 'outlined'
+                    }
+                    onClick={() =>
+                      setParams((prev) => ({ ...prev, aggregate_by: 'week' }))
+                    }
+                  >
+                    Weekly
+                  </Button>
+                </Tooltip>
+                <Tooltip title='Monthly Trend'>
+                  <Button
+                    variant={
+                      params.aggregate_by === 'month' ? 'contained' : 'outlined'
+                    }
+                    onClick={() =>
+                      setParams((prev) => ({ ...prev, aggregate_by: 'month' }))
+                    }
+                  >
+                    Monthly
+                  </Button>
+                </Tooltip>
+                <Tooltip title='Yearly Trend'>
+                  <Button
+                    variant={
+                      params.aggregate_by === 'year' ? 'contained' : 'outlined'
+                    }
+                    onClick={() =>
+                      setParams((prev) => ({ ...prev, aggregate_by: 'year' }))
+                    }
+                  >
+                    Yearly
+                  </Button>
+                </Tooltip>
+              </ButtonGroup>
+            ) : (
+              <Div sx={{ mt: 1 }}>
+                <FormControl fullWidth size='small'>
+                  <InputLabel id='inventory-value-trend-group-by-input-label'>
+                    Interval
+                  </InputLabel>
+                  <Select
+                    labelId='inventory-value-trend-group-by-label'
+                    id='inventory-value-trend-group-by'
+                    value={params.aggregate_by}
+                    label='Interval'
+                    onChange={(e) =>
+                      setParams((prev) => ({
+                        ...prev,
+                        aggregate_by: e.target.value as
+                          | 'day'
+                          | 'week'
+                          | 'month'
+                          | 'year',
+                      }))
+                    }
+                  >
+                    <MenuItem value='day'>Daily</MenuItem>
+                    <MenuItem value='week'>Weekly</MenuItem>
+                    <MenuItem value='month'>Monthly</MenuItem>
+                    <MenuItem value='year'>Yearly</MenuItem>
+                  </Select>
+                </FormControl>
+              </Div>
+            )}
+          </Grid>
+        </Grid>
       }
     >
       {isLoading ? (
         <Skeleton
           variant='rectangular'
           width='100%'
-          height={xlScreen ? 240 : 260}
+          height={midScreen ? 245 : 245}
           sx={{ borderRadius: 2 }}
         />
       ) : (
-        <ResponsiveContainer width='100%' height={xlScreen ? 240 : 260}>
+        <ResponsiveContainer width='100%' height={midScreen ? 245 : 245}>
           <ComposedChart
             data={inventoryValues}
-            margin={{ top: 20, right: 30, left: 10, bottom: 10 }}
+            margin={{ top: 10, right: 30, left: 10, bottom: 10 }}
           >
             <CartesianGrid
               strokeDasharray='3 3'
