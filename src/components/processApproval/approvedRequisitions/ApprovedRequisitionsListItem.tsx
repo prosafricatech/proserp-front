@@ -58,6 +58,8 @@ const ApprovedRequisitionsListItem: React.FC<ApprovedRequisitionsListItemProps> 
     : (approvedRequisition as PurchaseApprovalRequisition).is_fully_ordered;
   const hasProcessItems = paymentsOrPurchasesCount > 0;
 
+  console.log(isFullyProcessed)
+
   return (
     <Accordion
       key={approvedRequisition.id}

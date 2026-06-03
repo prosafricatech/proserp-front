@@ -4,26 +4,26 @@ const storeServices = {};
 
 storeServices.getList = async ({ type, keyword, page, limit }) => {
     const response = await axios.get('/api/stores', {
-      params: { type, keyword, page, limit },
+        params: { type, keyword, page, limit },
     });
     return response.data;
 },
 
-storeServices.getStockList = async ({ id, keyword, page, limit }) => {
-  const response = await axios.get(`/api/stores/${id}/getStockList`, {
-    params: { keyword, page, limit },
-  });
-  return response.data;
-};
+    storeServices.getStockList = async ({ id, keyword, page, limit, include_children }) => {
+        const response = await axios.get(`/api/stores/${id}/getStockList`, {
+            params: { keyword, page, limit, include_children },
+        });
+        return response.data;
+    };
 
 storeServices.getExistedProducts = async (storeId) => {
-    const {data} = await axios.get(`/api/stores/${storeId}/getExistedProducts`);
+    const { data } = await axios.get(`/api/stores/${storeId}/getExistedProducts`);
     return data;
 };
 
-storeServices.show = async({queryKey}) => {
-    const {id} = queryKey[1];
-    const {data} = await axios.get(`/api/stores/${id}/show`)
+storeServices.show = async ({ queryKey }) => {
+    const { id } = queryKey[1];
+    const { data } = await axios.get(`/api/stores/${id}/show`)
     return data;
 }
 
@@ -32,8 +32,8 @@ storeServices.getAddresses = async () => {
     return data;
 }
 
-storeServices.getStoreOptions = async(mainOnly = true) => {
-    const {data} = await axios.get(`/api/stores/getStoreOptions`,{
+storeServices.getStoreOptions = async (mainOnly = true) => {
+    const { data } = await axios.get(`/api/stores/getStoreOptions`, {
         params: {
             mainOnly: mainOnly,
         }
@@ -41,44 +41,44 @@ storeServices.getStoreOptions = async(mainOnly = true) => {
     return data;
 }
 
-storeServices.add = async(store) => {
-    const {data} = await axios.post(`/api/stores/add`,store)
+storeServices.add = async (store) => {
+    const { data } = await axios.post(`/api/stores/add`, store)
     return data;
 }
 
-storeServices.update = async(store) => {
-    const {data} = await axios.put(`/api/stores/${store.id}/update`,store)
+storeServices.update = async (store) => {
+    const { data } = await axios.put(`/api/stores/${store.id}/update`, store)
     return data;
 }
 
 storeServices.delete = async (id) => {
-    const {data} = await axios.delete(`/api/stores/${id}/delete`);
+    const { data } = await axios.delete(`/api/stores/${id}/delete`);
     return data;
 };
 
 storeServices.getStockMovement = async (params, dormantStock = false) => {
-  const { data } = await axios.get(`/api/stores/${params.store_id}/getStockMovement`, {
-    params: {
-      ...params,
-      dormant: dormantStock,
-    },
-  });
-  return data;
+    const { data } = await axios.get(`/api/stores/${params.store_id}/getStockMovement`, {
+        params: {
+            ...params,
+            dormant: dormantStock,
+        },
+    });
+    return data;
 };
 
 storeServices.getStock = async (params) => {
-    const {data} = await axios.get(`/api/stores/${params.store_id}/getStock`,{
+    const { data } = await axios.get(`/api/stores/${params.store_id}/getStock`, {
         params
     })
     return data;
 }
 
 storeServices.downloadExcelTemplate = async (filters) => {
-    const { data } = await axios.post(`/api/stores/${filters.store_id}/downloadExcelTemplate`,filters,
+    const { data } = await axios.post(`/api/stores/${filters.store_id}/downloadExcelTemplate`, filters,
         {
             responseType: 'blob',
         }
-    );      
+    );
     return data;
 };
 
