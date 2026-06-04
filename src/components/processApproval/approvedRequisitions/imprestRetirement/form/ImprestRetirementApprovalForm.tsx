@@ -33,6 +33,13 @@ type ApprovalItem = {
   measurement_unit?: any;
 };
 
+type ApprovalItemFieldErrors = {
+  ledger_id?: string;
+  measurement_unit_id?: string;
+  quantity?: string;
+  rate?: string;
+};
+
 type ImprestRetirementApprovalFormProps = {
   toggleOpen: (open: boolean) => void;
   retirement: any;
@@ -61,6 +68,14 @@ function ImprestRetirementApprovalForm({
     (approvals.length > 0 ? approvals[approvals.length - 1] : null);
   const approvalId = Number(latestApproval?.id || 0) || 0;
 
+  const nextApprovalLevelId = Number(retirement?.next_approval_level?.id || 0) || 0;
+  const nextApprovalLevelIsFinal = Number(
+    retirement?.next_approval_level?.is_final ||
+      retirement?.next_approval_level?.can_finalize ||
+      0
+  ) || 0;
+  const isFinalLevel = Boolean(nextApprovalLevelIsFinal || latestApproval?.is_final);
+
   const chainLevelId = Number(
     isEdit
       ? latestApproval?.chain_level_id ||
@@ -68,8 +83,8 @@ function ImprestRetirementApprovalForm({
           latestApproval?.approval_chain_level?.id ||
           latestApproval?.chain_level?.id ||
           approvals[approvals.length - 1]?.approval_chain_level?.id ||
-          retirement?.next_approval_level?.id
-      : retirement?.next_approval_level?.id ||
+          nextApprovalLevelId
+      : nextApprovalLevelId ||
           latestApproval?.chain_level_id ||
           latestApproval?.approval_chain_level_id ||
           latestApproval?.approval_chain_level?.id ||
@@ -83,8 +98,8 @@ function ImprestRetirementApprovalForm({
           latestApproval?.approval_chain_level?.is_final ||
           latestApproval?.chain_level?.is_final ||
           approvals[approvals.length - 1]?.is_final ||
-          retirement?.next_approval_level?.is_final
-      : retirement?.next_approval_level?.is_final ||
+        nextApprovalLevelIsFinal
+      : nextApprovalLevelIsFinal ||
           latestApproval?.is_final ||
           latestApproval?.approval_chain_level?.is_final ||
           latestApproval?.chain_level?.is_final ||
@@ -115,6 +130,7 @@ function ImprestRetirementApprovalForm({
   }, [retirement]);
 
   const [items, setItems] = React.useState<ApprovalItem[]>(seedItems);
+  const [fieldErrors, setFieldErrors] = React.useState<ApprovalItemFieldErrors[]>([]);
   const [remarks, setRemarks] = React.useState('');
   const [clientError, setClientError] = React.useState<string | null>(null);
 
@@ -134,12 +150,41 @@ function ImprestRetirementApprovalForm({
   const statusLabel = String(retirement?.status_label || retirement?.status || '');
   const retirementNo = retirement?.retirementNo || `#${retirement?.id}`;
 
-  const updateItem = (index: number, patch: Partial<ApprovalItem>) =>
+  const updateItem = (
+    index: number,
+    patch: Partial<ApprovalItem>,
+    clearFields: (keyof ApprovalItemFieldErrors)[] = []
+  ) =>
     setItems((prev) => {
       const next = [...prev];
       next[index] = { ...next[index], ...patch };
       return next;
     });
+
+  const clearFieldErrors = (
+    index: number,
+    fields: (keyof ApprovalItemFieldErrors)[]
+  ) => {
+    setFieldErrors((prev) => {
+      const next = [...prev];
+      next[index] = { ...(next[index] || {}) };
+      fields.forEach((field) => {
+        delete next[index][field];
+      });
+      return next;
+    });
+  };
+
+  const handleItemChange = (
+    index: number,
+    patch: Partial<ApprovalItem>,
+    clearFields: (keyof ApprovalItemFieldErrors)[] = []
+  ) => {
+    updateItem(index, patch);
+    if (clearFields.length > 0) {
+      clearFieldErrors(index, clearFields);
+    }
+  };
 
   const { mutate: submitApproval, isPending } = useMutation({
     mutationFn: isEdit
@@ -174,8 +219,38 @@ function ImprestRetirementApprovalForm({
           i.ledger_id > 0 &&
           i.measurement_unit_id > 0 &&
           i.quantity > 0 &&
-          i.rate > 0
+          (!isFinalLevel || i.rate > 0)
       );
+
+  const validateItems = (): boolean => {
+    const nextFieldErrors: ApprovalItemFieldErrors[] = items.map(() => ({}));
+    let hasAnyError = false;
+
+    items.forEach((item, index) => {
+      if (!item.ledger_id) {
+        nextFieldErrors[index].ledger_id = 'Ledger is required.';
+        hasAnyError = true;
+      }
+
+      if (!item.measurement_unit_id) {
+        nextFieldErrors[index].measurement_unit_id = 'Unit is required.';
+        hasAnyError = true;
+      }
+
+      if (!Number.isFinite(Number(item.quantity)) || Number(item.quantity) <= 0) {
+        nextFieldErrors[index].quantity = 'Quantity must be greater than 0.';
+        hasAnyError = true;
+      }
+
+      if (isFinalLevel && (!Number.isFinite(Number(item.rate)) || Number(item.rate) <= 0)) {
+        nextFieldErrors[index].rate = 'Rate is required for final approval.';
+        hasAnyError = true;
+      }
+    });
+
+    setFieldErrors(nextFieldErrors);
+    return !hasAnyError;
+  };
 
   const validate = (requireRemarks: boolean): boolean => {
     if (!chainLevelId) {
@@ -188,17 +263,11 @@ function ImprestRetirementApprovalForm({
       setClientError('Remarks are required for this decision.');
       return false;
     }
-    const hasInvalid = items.some(
-      (i) =>
-        !i.imprest_retirement_item_id ||
-        !i.ledger_id ||
-        !i.measurement_unit_id ||
-        Number(i.quantity) <= 0 ||
-        Number(i.rate) <= 0
-    );
-    if (hasInvalid) {
+    if (!validateItems()) {
       setClientError(
-        'Each item requires a ledger, unit, quantity > 0 and rate > 0.'
+        isFinalLevel
+          ? 'Final approval requires valid ledger, unit, quantity, and rate on each item.'
+          : 'Each item requires valid ledger, unit, and quantity.'
       );
       return false;
     }
@@ -282,6 +351,7 @@ function ImprestRetirementApprovalForm({
             <Grid size={{ xs: 11, md: 3.5 }}>
               <LedgerSelect
                 label="Item Ledger"
+                frontError={fieldErrors[index]?.ledger_id ? { message: fieldErrors[index].ledger_id } : null}
                 defaultValue={
                   item.ledger_id
                     ? ({ id: item.ledger_id, name: item.ledger?.name || '' } as any)
@@ -289,23 +359,24 @@ function ImprestRetirementApprovalForm({
                 }
                 onChange={(v: any) => {
                   const val = Array.isArray(v) ? v[0] : v;
-                  updateItem(index, {
+                  handleItemChange(index, {
                     ledger_id: Number(val?.id || 0) || null,
                     ledger: val,
-                  });
+                  }, ['ledger_id']);
                 }}
               />
             </Grid>
             <Grid size={{ xs: 12, md: 2 }}>
               <MeasurementSelector
                 label="Unit"
+                frontError={fieldErrors[index]?.measurement_unit_id ? { message: fieldErrors[index].measurement_unit_id } : null}
                 defaultValue={item.measurement_unit_id || null}
                 onChange={(v: any) => {
                   const val = Array.isArray(v) ? v[0] : v;
-                  updateItem(index, {
+                  handleItemChange(index, {
                     measurement_unit_id: Number(val?.id || 0) || null,
                     measurement_unit: val,
-                  });
+                  }, ['measurement_unit_id']);
                 }}
               />
             </Grid>
@@ -315,10 +386,12 @@ function ImprestRetirementApprovalForm({
                 fullWidth
                 label="Qty"
                 value={item.quantity ?? 0}
+                error={!!fieldErrors[index]?.quantity}
+                helperText={fieldErrors[index]?.quantity}
                 InputProps={{ inputComponent: CommaSeparatedField as any }}
                 onChange={(e) => {
                   const q = sanitizedNumber(e.target.value);
-                  updateItem(index, { quantity: Number.isFinite(q) ? q : 0 });
+                  handleItemChange(index, { quantity: Number.isFinite(q) ? q : 0 }, ['quantity']);
                 }}
               />
             </Grid>
@@ -328,10 +401,12 @@ function ImprestRetirementApprovalForm({
                 fullWidth
                 label="Rate"
                 value={item.rate ?? 0}
+                error={!!fieldErrors[index]?.rate}
+                helperText={fieldErrors[index]?.rate}
                 InputProps={{ inputComponent: CommaSeparatedField as any }}
                 onChange={(e) => {
                   const r = sanitizedNumber(e.target.value);
-                  updateItem(index, { rate: Number.isFinite(r) ? r : 0 });
+                  handleItemChange(index, { rate: Number.isFinite(r) ? r : 0 }, ['rate']);
                 }}
               />
             </Grid>

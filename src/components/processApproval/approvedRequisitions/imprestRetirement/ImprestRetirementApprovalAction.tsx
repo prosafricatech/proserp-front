@@ -126,6 +126,7 @@ function ImprestRetirementApprovalAction({ retirement, approvedRequisition }: Im
 
   const canUpdate = isDraftLike || isPendingApproval || isOnHold || isRejected || isApproved;
   const canDelete = isDraftLike || isPendingApproval;
+  const canApproveNext = canApproveRetirement && !hasFinalApproval && (isPendingApproval || isApproved);
 
   const menuItems: MenuItemProps[] = [
     { icon: <VisibilityOutlined />, title: 'Preview', action: 'preview' } as MenuItemProps,
@@ -134,9 +135,7 @@ function ImprestRetirementApprovalAction({ retirement, approvedRequisition }: Im
           { icon: <EditOutlined />, title: 'Edit', action: 'update-draft' } as MenuItemProps,
         ]
       : []),
-    ...((isPendingApproval || isOnHold || isRejected)
-      && canApproveRetirement
-      && !hasFinalApproval
+    ...(canApproveNext
       ? [
           { icon: <CheckCircleOutlineOutlined color="success" />, title: 'Approve', action: 'retirement-approval' } as MenuItemProps,
         ]
