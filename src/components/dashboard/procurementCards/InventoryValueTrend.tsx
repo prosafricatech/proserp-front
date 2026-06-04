@@ -7,7 +7,6 @@ import {
   Button,
   ButtonGroup,
   FormControl,
-  Grid,
   InputLabel,
   MenuItem,
   Select,
@@ -177,91 +176,91 @@ function InventoryValueTrend(props: InventoryValueTrendProps) {
         height: midScreen ? 360 : null,
       }}
       action={
-        <Grid container columnSpacing={1} alignItems='center'>
-          <Grid size={{ xs: 8 }}>
-            {!smallScreen ? (
-              <ButtonGroup variant='outlined' size='small' disableElevation>
-                <Tooltip title='Daily Trend'>
-                  <Button
-                    variant={
-                      params.aggregate_by === 'day' ? 'contained' : 'outlined'
-                    }
-                    onClick={() =>
-                      setParams((prev) => ({ ...prev, aggregate_by: 'day' }))
-                    }
-                  >
-                    Daily
-                  </Button>
-                </Tooltip>
-                <Tooltip title='Weekly Trend'>
-                  <Button
-                    variant={
-                      params.aggregate_by === 'week' ? 'contained' : 'outlined'
-                    }
-                    onClick={() =>
-                      setParams((prev) => ({ ...prev, aggregate_by: 'week' }))
-                    }
-                  >
-                    Weekly
-                  </Button>
-                </Tooltip>
-                <Tooltip title='Monthly Trend'>
-                  <Button
-                    variant={
-                      params.aggregate_by === 'month' ? 'contained' : 'outlined'
-                    }
-                    onClick={() =>
-                      setParams((prev) => ({ ...prev, aggregate_by: 'month' }))
-                    }
-                  >
-                    Monthly
-                  </Button>
-                </Tooltip>
-                <Tooltip title='Yearly Trend'>
-                  <Button
-                    variant={
-                      params.aggregate_by === 'year' ? 'contained' : 'outlined'
-                    }
-                    onClick={() =>
-                      setParams((prev) => ({ ...prev, aggregate_by: 'year' }))
-                    }
-                  >
-                    Yearly
-                  </Button>
-                </Tooltip>
-              </ButtonGroup>
-            ) : (
-              <Div sx={{ mt: 1 }}>
-                <FormControl fullWidth size='small'>
-                  <InputLabel id='inventory-value-trend-group-by-input-label'>
-                    Interval
-                  </InputLabel>
-                  <Select
-                    labelId='inventory-value-trend-group-by-label'
-                    id='inventory-value-trend-group-by'
-                    value={params.aggregate_by}
-                    label='Interval'
-                    onChange={(e) =>
-                      setParams((prev) => ({
-                        ...prev,
-                        aggregate_by: e.target.value as
-                          | 'day'
-                          | 'week'
-                          | 'month'
-                          | 'year',
-                      }))
-                    }
-                  >
-                    <MenuItem value='day'>Daily</MenuItem>
-                    <MenuItem value='week'>Weekly</MenuItem>
-                    <MenuItem value='month'>Monthly</MenuItem>
-                    <MenuItem value='year'>Yearly</MenuItem>
-                  </Select>
-                </FormControl>
-              </Div>
-            )}
-          </Grid>
-        </Grid>
+        // <Grid container columnSpacing={1} alignItems='center'>
+        //   <Grid size={{ xs: 8 }}>
+        !smallScreen ? (
+          <ButtonGroup variant='outlined' size='small' disableElevation>
+            <Tooltip title='Daily Trend'>
+              <Button
+                variant={
+                  params.aggregate_by === 'day' ? 'contained' : 'outlined'
+                }
+                onClick={() =>
+                  setParams((prev) => ({ ...prev, aggregate_by: 'day' }))
+                }
+              >
+                Daily
+              </Button>
+            </Tooltip>
+            <Tooltip title='Weekly Trend'>
+              <Button
+                variant={
+                  params.aggregate_by === 'week' ? 'contained' : 'outlined'
+                }
+                onClick={() =>
+                  setParams((prev) => ({ ...prev, aggregate_by: 'week' }))
+                }
+              >
+                Weekly
+              </Button>
+            </Tooltip>
+            <Tooltip title='Monthly Trend'>
+              <Button
+                variant={
+                  params.aggregate_by === 'month' ? 'contained' : 'outlined'
+                }
+                onClick={() =>
+                  setParams((prev) => ({ ...prev, aggregate_by: 'month' }))
+                }
+              >
+                Monthly
+              </Button>
+            </Tooltip>
+            <Tooltip title='Yearly Trend'>
+              <Button
+                variant={
+                  params.aggregate_by === 'year' ? 'contained' : 'outlined'
+                }
+                onClick={() =>
+                  setParams((prev) => ({ ...prev, aggregate_by: 'year' }))
+                }
+              >
+                Yearly
+              </Button>
+            </Tooltip>
+          </ButtonGroup>
+        ) : (
+          <Div sx={{ mt: 1 }}>
+            <FormControl fullWidth size='small'>
+              <InputLabel id='inventory-value-trend-group-by-input-label'>
+                Interval
+              </InputLabel>
+              <Select
+                labelId='inventory-value-trend-group-by-label'
+                id='inventory-value-trend-group-by'
+                value={params.aggregate_by}
+                label='Interval'
+                onChange={(e) =>
+                  setParams((prev) => ({
+                    ...prev,
+                    aggregate_by: e.target.value as
+                      | 'day'
+                      | 'week'
+                      | 'month'
+                      | 'year',
+                  }))
+                }
+              >
+                <MenuItem value='day'>Daily</MenuItem>
+                <MenuItem value='week'>Weekly</MenuItem>
+                <MenuItem value='month'>Monthly</MenuItem>
+                <MenuItem value='year'>Yearly</MenuItem>
+              </Select>
+            </FormControl>
+          </Div>
+        )
+        //   </Grid>
+        // </Grid>
       }
     >
       {isLoading ? (
