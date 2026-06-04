@@ -20,6 +20,7 @@ import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
 import MeasurementSelector from '@/components/masters/measurementUnits/MeasurementSelector';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
+import AttachmentForm from '@/components/filesShelf/attachments/AttachmentForm';
 import imprestRetirementServices from '@/components/processApproval/imprestRetirements/imprestRetirementServices';
 
 type ApprovalItem = {
@@ -106,8 +107,6 @@ function ImprestRetirementApprovalForm({
           approvals[approvals.length - 1]?.is_final
   ) || 0;
 
-  // Seed editable items — prefer items from the most recent approval that has items;
-  // fall back to the retirement's own items (mirrors ApprovalForm's getInitialLedgerItems)
   const seedItems = React.useMemo((): ApprovalItem[] => {
     const lastWithItems = [...approvals]
       .reverse()
@@ -146,14 +145,17 @@ function ImprestRetirementApprovalForm({
     (sum, item) => sum + (Number(item.quantity) || 0) * (Number(item.rate) || 0),
     0
   );
+  const totalRetiredToDate = Number(retirement?.imprest_approval?.total_retired || 0);
 
   const statusLabel = String(retirement?.status_label || retirement?.status || '');
   const retirementNo = retirement?.retirementNo || `#${retirement?.id}`;
+  const formattedRetirementDate = retirement?.retirement_date
+    ? dayjs(retirement.retirement_date).format('DD/MM/YYYY')
+    : '-';
 
   const updateItem = (
     index: number,
     patch: Partial<ApprovalItem>,
-    clearFields: (keyof ApprovalItemFieldErrors)[] = []
   ) =>
     setItems((prev) => {
       const next = [...prev];
@@ -316,15 +318,45 @@ function ImprestRetirementApprovalForm({
       </DialogTitle>
 
       <DialogContent>
-        <Grid container spacing={1.5} mb={2} alignItems="center">
-          <Grid size={{ xs: 12, sm: 6 }}>
-            <Chip size="small" color="primary" label={`Status: ${statusLabel}`} />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }} sx={{ textAlign: 'right' }}>
-            <Typography variant="caption" color="text.secondary">
-              Total:{' '}
+        <Grid
+          container
+          spacing={1.5}
+          mb={2}
+          sx={{
+            p: 1.5,
+            border: 1,
+            borderColor: 'divider',
+            borderRadius: 2,
+            bgcolor: 'background.paper',
+          }}
+        >
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Chip size="small" color="primary" label={`Status: ${statusLabel}`} sx={{ mb: 1 }} />
+            <Typography variant="body2" fontWeight={700}>
+              {retirementNo}
             </Typography>
-            <Typography variant="body2" fontWeight={700} component="span">
+            <Typography variant="caption" color="text.secondary">
+              Retirement Date: {formattedRetirementDate}
+            </Typography>
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+              Total Retired To Date
+            </Typography>
+            <Typography variant="h6" fontWeight={700} color="info.main">
+              {totalRetiredToDate.toLocaleString('en-US', {
+                style: 'currency',
+                currency: currencyCode,
+              })}
+            </Typography>
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 4 }} sx={{ textAlign: { xs: 'left', md: 'right' } }}>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+              Current Items Total
+            </Typography>
+            <Typography variant="h6" fontWeight={700} color="success.main">
               {totalAmount.toLocaleString('en-US', {
                 style: 'currency',
                 currency: currencyCode,
@@ -448,6 +480,29 @@ function ImprestRetirementApprovalForm({
           value={remarks}
           onChange={(e) => handleRemarksChange(e.target.value)}
         />
+
+        <Typography variant="subtitle2" mt={2} fontWeight={600}>
+          Receipts / Supporting Documents
+        </Typography>
+
+        {retirement?.id ? (
+          <AttachmentForm
+            hideFeatures
+            readOnly
+            attachmentable_id={retirement.id}
+            attachmentable_type="imprest_retirement"
+            attachment_name="imprest retirement"
+            attachment_sourceNo={
+              retirement?.imprest_approval?.requisition?.requisitionNo ||
+              retirement?.retirementNo ||
+              ''
+            }
+          />
+        ) : (
+          <Alert severity="info" sx={{ mt: 1 }}>
+            Supporting documents are unavailable because retirement reference is missing.
+          </Alert>
+        )}
 
         {clientError && (
           <Alert severity="error" sx={{ mt: 1.5 }}>
