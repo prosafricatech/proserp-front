@@ -37,6 +37,11 @@ imprestRetirementServices.approve = async (payload) => {
   return data;
 };
 
+imprestRetirementServices.showApproval = async (id) => {
+  const { data } = await axios.get(`/api/imprest-retirement-approvals/${id}`);
+  return data;
+};
+
 imprestRetirementServices.updateApproval = async (payload) => {
   const { data } = await axios.put(`/api/imprest-retirement-approvals/${payload.id}`, payload);
   return data;

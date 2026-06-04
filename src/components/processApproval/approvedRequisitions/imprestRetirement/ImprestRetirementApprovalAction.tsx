@@ -56,16 +56,45 @@ function ImprestRetirementApprovalAction({
   const [activePreviewTab, setActivePreviewTab] = React.useState(0);
   const canApproveRetirement = checkOrganizationPermission([PERMISSIONS.IMPREST_RETIREMENT_APPROVE]);
 
+  const isApprovalContext = previewContext === 'approval';
+  const selectedApprovalId = React.useMemo(() => {
+    const approval = retirement?.latest_approval || retirement?.approval || null;
+    return Number(approval?.id || approval?.approval_id || 0) || null;
+  }, [retirement]);
+
   const { data: retirementDetails, isFetching: isFetchingRetirementDetails } = useQuery({
     queryKey: ['imprestRetirementDetails', { id: retirement?.id }, 'imprest-retirement-update'],
     queryFn: async () => imprestRetirementServices.show(retirement?.id),
-    enabled: !!retirement?.id && (!!openUpdateDialog || !!openApprovalDialog || !!openPreviewDialog),
+    enabled:
+      !isApprovalContext &&
+      !!retirement?.id &&
+      (!!openUpdateDialog || !!openApprovalDialog || !!openPreviewDialog),
   });
 
-  const resolvedRetirement = React.useMemo(
-    () => extractOne(retirementDetails) || retirement,
-    [retirementDetails, retirement]
-  );
+  const { data: approvalDetails, isFetching: isFetchingApprovalDetails } = useQuery({
+    queryKey: ['imprestRetirementApprovalDetails', { id: selectedApprovalId }, 'imprest-retirement-approval-update'],
+    queryFn: async () => imprestRetirementServices.showApproval(selectedApprovalId),
+    enabled: isApprovalContext && !!selectedApprovalId && (!!openApprovalDialog || !!openPreviewDialog),
+  });
+
+  const resolvedRetirement = React.useMemo(() => {
+    const baseRetirement = extractOne(retirementDetails) || retirement;
+    const selectedApproval =
+      extractOne(approvalDetails) || retirement?.latest_approval || retirement?.approval || null;
+
+    if (!isApprovalContext || !selectedApproval) {
+      return baseRetirement;
+    }
+
+    return {
+      ...baseRetirement,
+      status: selectedApproval?.status || baseRetirement?.status,
+      status_label: selectedApproval?.status_label || baseRetirement?.status_label,
+      latest_approval: selectedApproval,
+      approval: selectedApproval,
+      approvals: [selectedApproval],
+    };
+  }, [retirementDetails, approvalDetails, retirement, isApprovalContext]);
 
   // Decide menu actions from the list row payload to keep behavior stable.
   const statusRaw = String(retirement?.status || '').toLowerCase();
@@ -177,6 +206,8 @@ function ImprestRetirementApprovalAction({
   };
 
   const resolveApprovalId = async (): Promise<number | null> => {
+    if (selectedApprovalId) return selectedApprovalId;
+
     const approvals = Array.isArray(retirement?.approvals) ? retirement.approvals : [];
     const latestApprovalFromRow = retirement?.latest_approval || retirement?.approval || null;
     const lastApprovalInList = approvals.length > 0 ? approvals[approvals.length - 1] : null;
@@ -238,21 +269,11 @@ function ImprestRetirementApprovalAction({
 
   if (menuItems.length === 0) return null;
 
-  const previewBaseRetirement =
-    retirementDetails?.data?.data || retirementDetails?.data || retirementDetails || retirement;
-  const selectedApproval = retirement?.latest_approval || retirement?.approval || null;
-  const previewRetirement =
-    previewContext === 'approval' && selectedApproval
-      ? {
-          ...previewBaseRetirement,
-          status: selectedApproval?.status || previewBaseRetirement?.status,
-          status_label: selectedApproval?.status_label || previewBaseRetirement?.status_label,
-          latest_approval: selectedApproval,
-          approval: selectedApproval,
-          approvals: [selectedApproval],
-        }
-      : previewBaseRetirement;
+  const previewRetirement = resolvedRetirement;
   const editRetirement = resolvedRetirement;
+  const isFetchingDialogDetails = isApprovalContext
+    ? isFetchingApprovalDetails
+    : isFetchingRetirementDetails;
 
   return (
     <>
@@ -264,7 +285,7 @@ function ImprestRetirementApprovalAction({
         maxWidth="md"
         onClose={() => setOpenPreviewDialog(false)}
       >
-        {isFetchingRetirementDetails ? (
+        {isFetchingDialogDetails ? (
           <LinearProgress />
         ) : (
           <>
@@ -318,7 +339,7 @@ function ImprestRetirementApprovalAction({
         fullScreen={belowLargeScreen}
         onClose={() => setOpenUpdateDialog(false)}
       >
-        {isFetchingRetirementDetails && !retirementDetails ? (
+        {!isApprovalContext && isFetchingRetirementDetails && !retirementDetails ? (
           <LinearProgress />
         ) : (
           <ImprestRetirementForm
@@ -338,7 +359,7 @@ function ImprestRetirementApprovalAction({
         fullScreen={belowLargeScreen}
         onClose={() => setOpenApprovalDialog(false)}
       >
-        {isFetchingRetirementDetails ? (
+        {isFetchingDialogDetails ? (
           <LinearProgress />
         ) : (
           <ImprestRetirementApprovalForm
@@ -351,7 +372,7 @@ function ImprestRetirementApprovalAction({
 
       <JumboDdMenu
         icon={
-          <Tooltip title="Retirement Actions">
+          <Tooltip title={previewContext === 'approval' ? 'Approval Actions' : 'Retirement Actions'}>
             <MoreHorizOutlined fontSize="small" />
           </Tooltip>
         }
