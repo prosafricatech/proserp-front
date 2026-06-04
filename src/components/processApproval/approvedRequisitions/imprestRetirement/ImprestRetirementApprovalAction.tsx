@@ -21,6 +21,8 @@ import ImprestRetirementPDF from './preview/ImprestRetirementPDF';
 interface ImprestRetirementApprovalActionProps {
   retirement: any;
   approvedRequisition: any;
+  previewContext?: 'retirement' | 'approval';
+  previewOnly?: boolean;
 }
 
 const extractOne = (payload: any): any | null => {
@@ -34,7 +36,12 @@ const extractOne = (payload: any): any | null => {
 const isTruthyFlag = (value: any) =>
   value === true || value === 1 || String(value || '').toLowerCase() === 'true';
 
-function ImprestRetirementApprovalAction({ retirement, approvedRequisition }: ImprestRetirementApprovalActionProps) {
+function ImprestRetirementApprovalAction({
+  retirement,
+  approvedRequisition,
+  previewContext = 'retirement',
+  previewOnly = false,
+}: ImprestRetirementApprovalActionProps) {
   const { showDialog, hideDialog } = useJumboDialog();
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
@@ -129,7 +136,14 @@ function ImprestRetirementApprovalAction({ retirement, approvedRequisition }: Im
   const canApproveNext = canApproveRetirement && !hasFinalApproval && (isPendingApproval || isApproved);
 
   const menuItems: MenuItemProps[] = [
-    { icon: <VisibilityOutlined />, title: 'Preview', action: 'preview' } as MenuItemProps,
+    {
+      icon: <VisibilityOutlined />,
+      title: previewContext === 'approval' ? 'Preview Approval' : 'Preview Retirement',
+      action: 'preview',
+    } as MenuItemProps,
+    ...(previewOnly
+      ? []
+      : [
     ...(canUpdate
       ? [
           { icon: <EditOutlined />, title: 'Edit', action: 'update-draft' } as MenuItemProps,
@@ -146,6 +160,7 @@ function ImprestRetirementApprovalAction({ retirement, approvedRequisition }: Im
     ...(canDelete
       ? [{ icon: <DeleteOutlined color="error" />, title: 'Delete', action: 'delete-draft' } as MenuItemProps]
       : []),
+      ]),
   ];
 
   const handleDeleteDraft = () => {
@@ -173,11 +188,10 @@ function ImprestRetirementApprovalAction({ retirement, approvedRequisition }: Im
         0
     ) || null;
   };
-
   const handleRevoke = () => {
     showDialog({
       title: 'Revoke Approval',
-      content: `Revoke approval for ${retirement?.retirementNo || `#${retirement?.id}`}?`,
+      content: `Revoke approval for ${retirement?.retirementNo}?`,
       variant: 'confirm',
       onYes: async () => {
         hideDialog();
@@ -224,7 +238,20 @@ function ImprestRetirementApprovalAction({ retirement, approvedRequisition }: Im
 
   if (menuItems.length === 0) return null;
 
-  const previewRetirement = retirementDetails?.data?.data || retirementDetails?.data || retirementDetails || retirement;
+  const previewBaseRetirement =
+    retirementDetails?.data?.data || retirementDetails?.data || retirementDetails || retirement;
+  const selectedApproval = retirement?.latest_approval || retirement?.approval || null;
+  const previewRetirement =
+    previewContext === 'approval' && selectedApproval
+      ? {
+          ...previewBaseRetirement,
+          status: selectedApproval?.status || previewBaseRetirement?.status,
+          status_label: selectedApproval?.status_label || previewBaseRetirement?.status_label,
+          latest_approval: selectedApproval,
+          approval: selectedApproval,
+          approvals: [selectedApproval],
+        }
+      : previewBaseRetirement;
   const editRetirement = resolvedRetirement;
 
   return (
@@ -247,7 +274,7 @@ function ImprestRetirementApprovalAction({ retirement, approvedRequisition }: Im
                   <Tabs
                     value={activePreviewTab}
                     onChange={(_event: React.SyntheticEvent, newValue: number) => setActivePreviewTab(newValue)}
-                    aria-label="retirement preview tabs"
+                    aria-label={previewContext === 'approval' ? 'approval preview tabs' : 'retirement preview tabs'}
                   >
                     <Tab label="ONSCREEN" />
                     <Tab label="PDF" />
