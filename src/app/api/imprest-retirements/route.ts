@@ -20,11 +20,24 @@ export async function POST(req: NextRequest) {
   const { headers, response } = await getAuthHeaders(req);
   if (response) return response;
 
-  const body = await req.json();
+  const contentType = req.headers.get('content-type') || '';
+  const isMultipart = contentType.toLowerCase().includes('multipart/form-data');
+
+  const proxyHeaders = { ...headers } as Record<string, string>;
+  let body: BodyInit;
+
+  if (isMultipart) {
+    delete proxyHeaders['Content-Type'];
+    body = await req.formData();
+  } else {
+    const jsonBody = await req.json();
+    body = JSON.stringify(jsonBody);
+  }
+
   const res = await fetch(`${API_BASE}/imprest-retirements`, {
     method: 'POST',
-    headers,
-    body: JSON.stringify(body),
+    headers: proxyHeaders,
+    body,
   });
 
   return handleJsonResponse(res);

@@ -182,7 +182,7 @@ function ImprestRetirementListItem({ requisitionApprovalId, approvedRequisition 
                   </Tooltip>
                 </Grid>
 
-                <Grid size={{ xs: 6, md: 2 }} textAlign={{ md: 'right' }}>
+                <Grid size={{ xs: 6, md: 3 }} textAlign={{ md: 'right' }}>
                   <Tooltip title="Amount">
                     <Typography>
                       {totalAmount.toLocaleString('en-US', {
@@ -191,18 +191,6 @@ function ImprestRetirementListItem({ requisitionApprovalId, approvedRequisition 
                       })}
                     </Typography>
                   </Tooltip>
-                </Grid>
-
-                <Grid size={{ xs: 12, md: 1 }} textAlign={{ md: 'right' }}>
-                  <Typography variant="caption" color="text.secondary">
-                    {attachments.length} docs
-                  </Typography>
-                  <ImprestRetirementApprovalAction
-                    retirement={retirement}
-                    approvedRequisition={approvedRequisition}
-                    previewContext="retirement"
-                    previewOnly
-                  />
                 </Grid>
               </Grid>
             </AccordionSummary>

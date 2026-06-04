@@ -50,6 +50,11 @@ type RetirementItem = {
   };
 };
 
+type PendingAttachment = {
+  file: File;
+  name: string;
+};
+
 type ImprestRetirementFormProps = {
   toggleOpen: (open: boolean) => void;
   approvedRequisition: any;
@@ -138,6 +143,7 @@ function ImprestRetirementForm({
   const [retirementDate, setRetirementDate] = React.useState<Dayjs | null>(dayjs());
   const [remarks, setRemarks] = React.useState('');
   const [items, setItems] = React.useState<RetirementItem[]>([{ ...EMPTY_ITEM }]);
+  const [pendingAttachments, setPendingAttachments] = React.useState<PendingAttachment[]>([]);
   const [clientError, setClientError] = React.useState<string | null>(null);
 
   const { data: myLedgersResponse } = useQuery({
@@ -266,9 +272,8 @@ function ImprestRetirementForm({
     existingRetirementFromShow?.currency?.code ||
     existingRetirementFromShow?.currency_code ||
     existingRetirementFromShow?.imprest_approval?.requisition?.currency?.code ||
-    approvedRequisition?.requisition?.currency?.code ||
-    'TZS'
-  ).trim() || 'TZS';
+    approvedRequisition?.requisition?.currency?.code
+  ).trim();
   const approvedAmountDisplay = ceilingAmount.toLocaleString('en-US', {
     style: 'currency',
     currency: currencyCode,
@@ -292,9 +297,6 @@ function ImprestRetirementForm({
     approvalStatusRaw.includes('reject') || statusRaw.includes('reject');
   const isApprovedStatus =
     approvalStatusRaw === 'approved' || statusRaw.includes('approved');
-  const isPendingStatus =
-    approvalStatusRaw === 'pending' ||
-    (statusRaw.includes('submitted') && !isOnHoldStatus && !isRejectedStatus && !isApprovedStatus);
   const isLocked = false;
   const canSubmitForApproval =
     !isEditMode &&
@@ -316,7 +318,6 @@ function ImprestRetirementForm({
   const paidThroughLabel = selectedLedgerName && selectedLedgerName !== '-'
     ? selectedLedgerName
     : (existingRetirementFromShow?.ledger?.name || '-');
-  const formattedRetirementDate = retirementDate ? retirementDate.format('DD/MM/YYYY') : '-';
 
   const resolveRetirementIdFromResponse = React.useCallback(
     async (response: any): Promise<number | null> => {
@@ -473,12 +474,62 @@ function ImprestRetirementForm({
     })),
   });
 
+  const buildCreateFormData = () => {
+    const payload = buildPayload();
+    const formData = new FormData();
+
+    formData.append('requisition_approval_id', String(payload.requisition_approval_id || ''));
+    formData.append('ledger_id', String(payload.ledger_id || ''));
+    formData.append('retirement_date', payload.retirement_date || '');
+    formData.append('remarks', payload.remarks || '');
+
+    payload.items.forEach((item, index) => {
+      formData.append(`items[${index}][ledger_id]`, String(item.ledger_id || ''));
+      formData.append(
+        `items[${index}][measurement_unit_id]`,
+        String(item.measurement_unit_id || '')
+      );
+      formData.append(`items[${index}][quantity]`, String(item.quantity || 0));
+      formData.append(`items[${index}][rate]`, String(item.rate || 0));
+      formData.append(`items[${index}][description]`, item.description || '');
+    });
+
+    pendingAttachments.forEach((attachment, index) => {
+      formData.append(`attachments[${index}]`, attachment.file);
+      formData.append(`attachment_names[${index}]`, attachment.name || attachment.file.name);
+    });
+
+    return formData;
+  };
+
+  const addPendingFiles = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+
+    const nextFiles = Array.from(files).map((file) => ({
+      file,
+      name: file.name,
+    }));
+
+    setPendingAttachments((prev) => [...prev, ...nextFiles]);
+  };
+
+  const removePendingAttachment = (index: number) => {
+    setPendingAttachments((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const updatePendingAttachmentName = (index: number, name: string) => {
+    setPendingAttachments((prev) => {
+      const next = [...prev];
+      next[index] = { ...next[index], name };
+      return next;
+    });
+  };
+
   const handleSaveDraft = async () => {
     if (!validateBeforeSave()) return;
 
-    const payload = buildPayload();
-
     if (retirementId || isEditMode) {
+      const payload = buildPayload();
       await updateRetirement.mutateAsync({
         ...payload,
         id: retirementId || existingRetirement?.id,
@@ -486,15 +537,29 @@ function ImprestRetirementForm({
       return;
     }
 
-    await addRetirement.mutateAsync(payload);
+    const createFormData = buildCreateFormData();
+    await addRetirement.mutateAsync(createFormData);
   };
 
   const handleSubmitForApproval = async () => {
-    if (!retirementId) {
+    if (retirementId) {
+      await submitRetirement.mutateAsync(retirementId);
       return;
     }
 
-    await submitRetirement.mutateAsync(retirementId);
+    if (!validateBeforeSave()) return;
+
+    const response = await addRetirement.mutateAsync(buildCreateFormData());
+    const createdId = await resolveRetirementIdFromResponse(response);
+
+    if (!createdId) {
+      enqueueSnackbar('Retirement created but could not resolve record id for submit.', {
+        variant: 'error',
+      });
+      return;
+    }
+
+    await submitRetirement.mutateAsync(createdId);
   };
 
   if (isFetchingExisting) {
@@ -785,9 +850,64 @@ function ImprestRetirementForm({
           </Typography>
 
           {!retirementId && (
-            <Alert severity="info" sx={{ mb: 1.5 }}>
-              Save first to upload supporting documents.
-            </Alert>
+            <Grid container spacing={1}>
+              <Grid size={{ xs: 12 }}>
+                <Button variant="outlined" component="label" size="small">
+                  Select Files
+                  <input
+                    hidden
+                    multiple
+                    type="file"
+                    onChange={(event) => {
+                      addPendingFiles(event.target.files);
+                      event.currentTarget.value = '';
+                    }}
+                  />
+                </Button>
+              </Grid>
+
+              {pendingAttachments.length === 0 && (
+                <Grid size={{ xs: 12 }}>
+                  <Alert severity="info" sx={{ mb: 0 }}>
+                    Attach multiple supporting files now. No need to save draft first.
+                  </Alert>
+                </Grid>
+              )}
+
+              {pendingAttachments.map((attachment, index) => (
+                <React.Fragment key={`${attachment.file.name}-${index}`}>
+                  <Grid size={{ xs: 12, md: 4 }}>
+                    <TextField
+                      size="small"
+                      fullWidth
+                      disabled
+                      label="File"
+                      value={attachment.file.name}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <TextField
+                      size="small"
+                      fullWidth
+                      label="Attachment Name"
+                      value={attachment.name}
+                      onChange={(e) => updatePendingAttachmentName(index, e.target.value)}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 2 }}>
+                    <Button
+                      fullWidth
+                      size="small"
+                      color="error"
+                      variant="outlined"
+                      onClick={() => removePendingAttachment(index)}
+                    >
+                      Remove
+                    </Button>
+                  </Grid>
+                </React.Fragment>
+              ))}
+            </Grid>
           )}
 
           {retirementId && (
@@ -823,8 +943,7 @@ function ImprestRetirementForm({
             color="success"
             variant="contained"
             onClick={handleSubmitForApproval}
-            loading={submitRetirement.isPending}
-            disabled={!retirementId}
+            loading={submitRetirement.isPending || addRetirement.isPending}
           >
             Submit
           </LoadingButton>
