@@ -22,6 +22,7 @@ import dayjs, { Dayjs } from 'dayjs';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
+import MeasurementSelector from '@/components/masters/measurementUnits/MeasurementSelector';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import userLedgerServices from '@/components/accounts/ledgers/user-ledger-services';
@@ -30,13 +31,28 @@ import imprestRetirementServices from '@/components/processApproval/imprestRetir
 
 type RetirementItem = {
   id?: number;
+  imprest_retirement_item_id?: number;
   ledger_id: number | null;
-  amount: number;
+  measurement_unit_id: number | null;
+  quantity: number;
+  rate: number;
+  amount?: number;
   description: string;
   ledger?: {
     id: number;
     name: string;
   };
+  measurement_unit?: {
+    id: number;
+    name?: string;
+    alias?: string;
+    symbol?: string;
+  };
+};
+
+type PendingAttachment = {
+  file: File;
+  name: string;
 };
 
 type ImprestRetirementFormProps = {
@@ -46,11 +62,6 @@ type ImprestRetirementFormProps = {
   existingRetirementDetails?: any;
   preferredRetirementId?: number | null;
   startNew?: boolean;
-  reviewMode?: boolean;
-  onApprove?: () => void;
-  onReject?: () => void;
-  approveLoading?: boolean;
-  rejectLoading?: boolean;
 };
 
 const extractList = (payload: any): any[] => {
@@ -70,7 +81,9 @@ const extractOne = (payload: any): any | null => {
 
 const EMPTY_ITEM: RetirementItem = {
   ledger_id: null,
-  amount: 0,
+  measurement_unit_id: null,
+  quantity: 1,
+  rate: 0,
   description: '',
 };
 
@@ -120,11 +133,6 @@ function ImprestRetirementForm({
   existingRetirementDetails,
   preferredRetirementId = null,
   startNew = false,
-  reviewMode = false,
-  onApprove,
-  onReject,
-  approveLoading = false,
-  rejectLoading = false,
 }: ImprestRetirementFormProps) {
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
@@ -135,6 +143,7 @@ function ImprestRetirementForm({
   const [retirementDate, setRetirementDate] = React.useState<Dayjs | null>(dayjs());
   const [remarks, setRemarks] = React.useState('');
   const [items, setItems] = React.useState<RetirementItem[]>([{ ...EMPTY_ITEM }]);
+  const [pendingAttachments, setPendingAttachments] = React.useState<PendingAttachment[]>([]);
   const [clientError, setClientError] = React.useState<string | null>(null);
 
   const { data: myLedgersResponse } = useQuery({
@@ -198,6 +207,8 @@ function ImprestRetirementForm({
     existingRetirement?.retirementNo ||
     (preferredRetirementId ? `#${preferredRetirementId}` : '');
 
+  const isEditMode = Boolean(existingRetirement?.id);
+
   React.useEffect(() => {
     if (!existingRetirement) return;
 
@@ -211,12 +222,21 @@ function ImprestRetirementForm({
     );
     setRemarks(existingRetirement.remarks || '');
 
-    const normalizedItems = extractList(existingRetirement.items).map((item: any) => ({
+    const sourceItems = extractList(existingRetirement.items);
+
+    const normalizedItems = sourceItems.map((item: any) => ({
       id: item.id,
+      imprest_retirement_item_id:
+        Number(item?.imprest_retirement_item_id || item?.id || 0) || undefined,
       ledger_id: Number(item.ledger_id || item.ledger?.id) || null,
-      amount: Number.isFinite(Number(item.amount)) ? Number(item.amount) : 0,
+      measurement_unit_id:
+        Number(item.measurement_unit_id || item.measurement_unit?.id) || null,
+      quantity: Number.isFinite(Number(item.quantity)) ? Number(item.quantity) : 1,
+      rate: Number.isFinite(Number(item.rate)) ? Number(item.rate) : 0,
+      amount: Number.isFinite(Number(item.amount)) ? Number(item.amount) : undefined,
       description: item.description || item.remarks || '',
       ledger: item.ledger,
+      measurement_unit: item.measurement_unit,
     }));
 
     setItems(normalizedItems.length > 0 ? normalizedItems : [{ ...EMPTY_ITEM }]);
@@ -239,28 +259,50 @@ function ImprestRetirementForm({
     }
   }, [ledgerId, approvedDetails, myImprestLedgers]);
 
-  const totalAmount = React.useMemo(
-    () => items.reduce((sum, item) => sum + (Number.isFinite(Number(item.amount)) ? Number(item.amount) : 0), 0),
-    [items]
-  );
+  const totalAmount = React.useMemo(() => {
+    return items.reduce((sum, item) => {
+      const qty = Number.isFinite(Number(item.quantity)) ? Number(item.quantity) : 0;
+      const rate = Number.isFinite(Number(item.rate)) ? Number(item.rate) : 0;
+      return sum + qty * rate;
+    }, 0);
+  }, [items]);
 
   const ceilingAmount = Number(approvedDetails?.amount || approvedRequisition?.amount || 0);
-  const currencyCode =
+  const currencyCode = String(
     existingRetirementFromShow?.currency?.code ||
     existingRetirementFromShow?.currency_code ||
     existingRetirementFromShow?.imprest_approval?.requisition?.currency?.code ||
-    approvedRequisition?.requisition?.currency?.code ||
-    'TZS';
+    approvedRequisition?.requisition?.currency?.code
+  ).trim();
   const approvedAmountDisplay = ceilingAmount.toLocaleString('en-US', {
+    style: 'currency',
+    currency: currencyCode,
+  });
+  const totalItemsAmountDisplay = (Number.isFinite(totalAmount) ? totalAmount : 0).toLocaleString('en-US', {
     style: 'currency',
     currency: currencyCode,
   });
 
   const statusRaw = String(statusLabel || '').toLowerCase();
-  const isLocked = reviewMode || statusRaw.includes('approved');
+  const approvalStatusRaw = String(
+    existingRetirementFromShow?.latest_approval?.status ||
+      existingRetirement?.latest_approval?.status ||
+      existingRetirementFromShow?.approval?.status ||
+      existingRetirement?.approval?.status ||
+      ''
+  ).toLowerCase();
+  const isOnHoldStatus =
+    approvalStatusRaw === 'on hold' || statusRaw.includes('on hold');
+  const isRejectedStatus =
+    approvalStatusRaw.includes('reject') || statusRaw.includes('reject');
+  const isApprovedStatus =
+    approvalStatusRaw === 'approved' || statusRaw.includes('approved');
+  const isLocked = false;
   const canSubmitForApproval =
-    !reviewMode && !statusRaw.includes('approved') && !statusRaw.includes('pending') && !statusRaw.includes('submitted');
-  const useReadOnlyDisplay = reviewMode;
+    !isEditMode &&
+    (statusRaw === 'draft' ||
+      statusRaw === 'suspended' ||
+      statusRaw.includes('reject'));
   const requisitionApprovalId =
     existingRetirementFromShow?.requisition_approval_id ||
     existingRetirement?.requisition_approval_id ||
@@ -273,7 +315,9 @@ function ImprestRetirementForm({
     myImprestLedgers.find((option) => option.id === ledgerId)?.name ||
     existingRetirement?.ledger?.name ||
     (ledgerId ? `Ledger #${ledgerId}` : '-');
-  const formattedRetirementDate = retirementDate ? retirementDate.format('DD/MM/YYYY') : '-';
+  const paidThroughLabel = selectedLedgerName && selectedLedgerName !== '-'
+    ? selectedLedgerName
+    : (existingRetirementFromShow?.ledger?.name || '-');
 
   const resolveRetirementIdFromResponse = React.useCallback(
     async (response: any): Promise<number | null> => {
@@ -395,12 +439,20 @@ function ImprestRetirementForm({
     }
 
     const hasInvalidItem = items.some((item) => {
-      const amount = Number(item.amount);
-      return !item.ledger_id || !Number.isFinite(amount) || amount <= 0;
+      const quantity = Number(item.quantity);
+      const rate = Number(item.rate);
+      return (
+        !item.ledger_id ||
+        !item.measurement_unit_id ||
+        !Number.isFinite(quantity) ||
+        quantity <= 0 ||
+        !Number.isFinite(rate) ||
+        rate <= 0
+      );
     });
 
     if (hasInvalidItem) {
-      setClientError('Each item requires an expense ledger and amount greater than 0.');
+      setClientError('Each item requires ledger, measurement unit, quantity > 0 and rate > 0.');
       return false;
     }
 
@@ -415,31 +467,99 @@ function ImprestRetirementForm({
     remarks,
     items: items.map((item) => ({
       ledger_id: item.ledger_id,
-      amount: Number.isFinite(Number(item.amount)) ? Number(item.amount) : 0,
+      measurement_unit_id: item.measurement_unit_id,
+      quantity: Number.isFinite(Number(item.quantity)) ? Number(item.quantity) : 0,
+      rate: Number.isFinite(Number(item.rate)) ? Number(item.rate) : 0,
       description: item.description || '',
     })),
   });
 
+  const buildCreateFormData = () => {
+    const payload = buildPayload();
+    const formData = new FormData();
+
+    formData.append('requisition_approval_id', String(payload.requisition_approval_id || ''));
+    formData.append('ledger_id', String(payload.ledger_id || ''));
+    formData.append('retirement_date', payload.retirement_date || '');
+    formData.append('remarks', payload.remarks || '');
+
+    payload.items.forEach((item, index) => {
+      formData.append(`items[${index}][ledger_id]`, String(item.ledger_id || ''));
+      formData.append(
+        `items[${index}][measurement_unit_id]`,
+        String(item.measurement_unit_id || '')
+      );
+      formData.append(`items[${index}][quantity]`, String(item.quantity || 0));
+      formData.append(`items[${index}][rate]`, String(item.rate || 0));
+      formData.append(`items[${index}][description]`, item.description || '');
+    });
+
+    pendingAttachments.forEach((attachment, index) => {
+      formData.append(`attachments[${index}]`, attachment.file);
+      formData.append(`attachment_names[${index}]`, attachment.name || attachment.file.name);
+    });
+
+    return formData;
+  };
+
+  const addPendingFiles = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+
+    const nextFiles = Array.from(files).map((file) => ({
+      file,
+      name: file.name,
+    }));
+
+    setPendingAttachments((prev) => [...prev, ...nextFiles]);
+  };
+
+  const removePendingAttachment = (index: number) => {
+    setPendingAttachments((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const updatePendingAttachmentName = (index: number, name: string) => {
+    setPendingAttachments((prev) => {
+      const next = [...prev];
+      next[index] = { ...next[index], name };
+      return next;
+    });
+  };
+
   const handleSaveDraft = async () => {
     if (!validateBeforeSave()) return;
 
-    const payload = buildPayload();
-
-    if (retirementId) {
-      await updateRetirement.mutateAsync({ id: retirementId, ...payload });
+    if (retirementId || isEditMode) {
+      const payload = buildPayload();
+      await updateRetirement.mutateAsync({
+        ...payload,
+        id: retirementId || existingRetirement?.id,
+      });
       return;
     }
 
-    await addRetirement.mutateAsync(payload);
+    const createFormData = buildCreateFormData();
+    await addRetirement.mutateAsync(createFormData);
   };
 
   const handleSubmitForApproval = async () => {
-    if (!retirementId) {
-      setClientError('Save draft first before submitting.');
+    if (retirementId) {
+      await submitRetirement.mutateAsync(retirementId);
       return;
     }
 
-    await submitRetirement.mutateAsync(retirementId);
+    if (!validateBeforeSave()) return;
+
+    const response = await addRetirement.mutateAsync(buildCreateFormData());
+    const createdId = await resolveRetirementIdFromResponse(response);
+
+    if (!createdId) {
+      enqueueSnackbar('Retirement created but could not resolve record id for submit.', {
+        variant: 'error',
+      });
+      return;
+    }
+
+    await submitRetirement.mutateAsync(createdId);
   };
 
   if (isFetchingExisting) {
@@ -449,130 +569,140 @@ function ImprestRetirementForm({
   return (
     <>
       <DialogTitle textAlign="center">
-        {reviewMode
-          ? `Approve ${retirementDisplayNo}`
-          : retirementId
-            ? `Update ${retirementDisplayNo}`
-            : 'Imprest Retirement Form'}
+        {retirementId ? `Update ${retirementDisplayNo}` : 'Imprest Retirement Form'}
       </DialogTitle>
       <DialogContent>
         <Grid container spacing={1.5} marginBottom={2}>
           <Grid size={{ xs: 12, md: 3 }}>
             <Chip size="small" color="primary" label={`Status: ${statusLabel}`} />
           </Grid>
-          <Grid size={{ xs: 12, md: 9 }} textAlign={'right'}>
-            <Div
-              sx={(theme) => ({
-                display: 'inline-block',
-                px: 1.5,
-                py: 0.75,
-                borderRadius: 1.5,
-                border: '1px solid',
-                borderColor: theme.type === 'dark' ? 'rgba(46, 204, 113, 0.45)' : 'success.light',
-                bgcolor: theme.type === 'dark' ? 'rgba(46, 204, 113, 0.12)' : 'rgba(46, 204, 113, 0.1)',
-              })}
-            >
-              <Typography variant="caption" sx={{ display: 'block', opacity: 0.9 }}>
-                Approved Amount
-              </Typography>
-              <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
-                {approvedAmountDisplay}
-              </Typography>
+          <Grid size={{ xs: 12, md: 9 }}>
+            <Div sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, flexWrap: 'wrap' }}>
+              <Div
+                sx={(theme) => ({
+                  display: 'inline-block',
+                  px: 1.5,
+                  py: 0.75,
+                  borderRadius: 1.5,
+                  border: '1px solid',
+                  borderColor: theme.type === 'dark' ? 'rgba(46, 204, 113, 0.45)' : 'success.light',
+                  bgcolor: theme.type === 'dark' ? 'rgba(46, 204, 113, 0.12)' : 'rgba(46, 204, 113, 0.1)',
+                })}
+              >
+                <Typography variant="caption" sx={{ display: 'block', opacity: 0.9 }}>
+                  Approved Amount
+                </Typography>
+                <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+                  {approvedAmountDisplay}
+                </Typography>
+              </Div>
+              <Div
+                sx={(theme) => ({
+                  display: 'inline-block',
+                  px: 1.5,
+                  py: 0.75,
+                  borderRadius: 1.5,
+                  border: '1px solid',
+                  borderColor: theme.type === 'dark' ? 'rgba(33, 150, 243, 0.45)' : 'info.light',
+                  bgcolor: theme.type === 'dark' ? 'rgba(33, 150, 243, 0.12)' : 'rgba(33, 150, 243, 0.08)',
+                })}
+              >
+                <Typography variant="caption" sx={{ display: 'block', opacity: 0.9 }}>
+                  Total Items Amount
+                </Typography>
+                <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+                  {totalItemsAmountDisplay}
+                </Typography>
+              </Div>
             </Div>
           </Grid>
-          {useReadOnlyDisplay ? (
-            <>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <ReadOnlyField label="Imprest Ledger" value={selectedLedgerName} />
-              </Grid>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <ReadOnlyField label="Retirement Date" value={formattedRetirementDate} />
-              </Grid>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <ReadOnlyField
-                  label="Reference Requisition"
-                  value={approvedRequisition?.requisition?.requisitionNo || '-'}
-                />
-              </Grid>
-              <Grid size={{ xs: 12 }}>
-                <ReadOnlyField label="Remarks" value={remarks || '-'} />
-              </Grid>
-            </>
-          ) : (
-            <>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <Autocomplete
-                  options={myImprestLedgers}
-                  disabled={isLocked}
-                  getOptionLabel={(option) => option.name}
-                  value={myImprestLedgers.find((option) => option.id === ledgerId) || null}
-                  isOptionEqualToValue={(option, value) => option.id === value.id}
-                  onChange={(_e, newValue) => {
-                    setLedgerId(newValue?.id || null);
-                  }}
-                  renderInput={(params) => (
-                    <TextField {...params} size="small" label="Imprest Ledger" fullWidth />
-                  )}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <DatePicker
-                  label="Retirement Date"
-                  disabled={isLocked}
-                  value={retirementDate}
-                  onChange={(value: Dayjs | null) => setRetirementDate(value)}
-                  slotProps={{
-                    textField: {
-                      size: 'small',
-                      fullWidth: true,
-                    },
-                  }}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <TextField
-                  size="small"
-                  fullWidth
-                  label="Reference Requisition"
-                  disabled
-                  value={approvedRequisition?.requisition?.requisitionNo || ''}
-                />
-              </Grid>
-              <Grid size={{ xs: 12 }}>
-                <TextField
-                  size="small"
-                  fullWidth
-                  multiline
-                  minRows={2}
-                  disabled={isLocked}
-                  label="Remarks"
-                  value={remarks}
-                  onChange={(e) => setRemarks(e.target.value)}
-                />
-              </Grid>
-            </>
-          )}
+          <>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Autocomplete
+                options={myImprestLedgers}
+                disabled={isLocked}
+                getOptionLabel={(option) => option.name}
+                value={myImprestLedgers.find((option) => option.id === ledgerId) || null}
+                isOptionEqualToValue={(option, value) => option.id === value.id}
+                onChange={(_e, newValue) => {
+                  setLedgerId(newValue?.id || null);
+                }}
+                renderInput={(params) => (
+                  <TextField {...params} size="small" label="Imprest Ledger" fullWidth />
+                )}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <DatePicker
+                label="Retirement Date"
+                disabled={isLocked}
+                value={retirementDate}
+                onChange={(value: Dayjs | null) => setRetirementDate(value)}
+                slotProps={{
+                  textField: {
+                    size: 'small',
+                    fullWidth: true,
+                  },
+                }}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <TextField
+                size="small"
+                fullWidth
+                label="Reference Requisition"
+                disabled
+                value={approvedRequisition?.requisition?.requisitionNo || ''}
+              />
+            </Grid>
+            <Grid size={{ xs: 12 }}>
+              <TextField
+                size="small"
+                fullWidth
+                multiline
+                minRows={2}
+                disabled={isLocked}
+                label="Remarks"
+                value={remarks}
+                onChange={(e) => setRemarks(e.target.value)}
+              />
+            </Grid>
+          </>
         </Grid>
 
         <Divider sx={{ mb: 1.5 }} />
 
         {items.map((item, index) => (
           <Grid container spacing={1} alignItems="center" key={`${item.id || 'new'}-${index}`} mb={1}>
-            <Grid size={{ xs: 12, md: 0.5 }}>
+            <Grid size={{ xs: 1, md: 0.5 }}>
               <Typography variant="body2">{index + 1}.</Typography>
             </Grid>
-            {useReadOnlyDisplay ? (
+            {isLocked ? (
               <>
                 <Grid size={{ xs: 12, md: 4.5 }}>
                   <ReadOnlyField
-                    label="Expense Ledger"
-                    value={item.ledger?.name || (item.ledger_id ? `Ledger #${item.ledger_id}` : '-')}
+                    label="Paid Through (Item Ledger)"
+                    value={`${paidThroughLabel} (${item.ledger?.name || (item.ledger_id ? `Ledger #${item.ledger_id}` : '-')})`}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 2 }}>
+                  <ReadOnlyField
+                    label="Unit"
+                    value={item.measurement_unit?.alias || item.measurement_unit?.symbol || item.measurement_unit?.name || '-'}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 1.5 }}>
+                  <ReadOnlyField
+                    label="Qty"
+                    value={Number(item.quantity || 0).toLocaleString('en-US', {
+                      maximumFractionDigits: 4,
+                    })}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, md: 2.5 }}>
                   <ReadOnlyField
-                    label="Amount"
-                    value={(Number.isFinite(Number(item.amount)) ? Number(item.amount) : 0).toLocaleString(
+                    label="Rate"
+                    value={(Number.isFinite(Number(item.rate)) ? Number(item.rate) : 0).toLocaleString(
                       'en-US',
                       {
                         style: 'currency',
@@ -581,15 +711,27 @@ function ImprestRetirementForm({
                     )}
                   />
                 </Grid>
-                <Grid size={{ xs: 12, md: 4.5 }}>
+                <Grid size={{ xs: 12, md: 1.5 }}>
+                  <ReadOnlyField
+                    label="Amount"
+                    value={(
+                      (Number.isFinite(Number(item.quantity)) ? Number(item.quantity) : 0) *
+                      (Number.isFinite(Number(item.rate)) ? Number(item.rate) : 0)
+                    ).toLocaleString('en-US', {
+                      style: 'currency',
+                      currency: currencyCode,
+                    })}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 3 }}>
                   <ReadOnlyField label="Description" value={item.description || '-'} />
                 </Grid>
               </>
             ) : (
               <>
-                <Grid size={{ xs: 12, md: 4.5 }}>
+                <Grid size={{ xs: 11, md: 3.5 }}>
                   <LedgerSelect
-                    label="Expense Ledger"
+                    label={`Item Ledger (Paid via ${paidThroughLabel})`}
                     defaultValue={item.ledger_id ? ({ id: item.ledger_id, name: item.ledger?.name || '' } as any) : null}
                     onChange={(newValue: any) => {
                       const singleValue = Array.isArray(newValue) ? newValue[0] : newValue;
@@ -600,31 +742,75 @@ function ImprestRetirementForm({
                     }}
                   />
                 </Grid>
+                <Grid size={{ xs: 12, md: 2 }}>
+                  <MeasurementSelector
+                    label="Unit"
+                    defaultValue={item.measurement_unit_id || null}
+                    onChange={(newValue: any) => {
+                      const selected = Array.isArray(newValue) ? newValue[0] : newValue;
+                      updateItem(index, {
+                        measurement_unit_id: Number(selected?.id || 0) || null,
+                        measurement_unit: selected,
+                      });
+                    }}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 1.5 }}>
+                  <TextField
+                    size="small"
+                    fullWidth
+                    disabled={isLocked}
+                    label="Qty"
+                    value={item.quantity ?? 0}
+                    InputProps={{ inputComponent: CommaSeparatedField as any }}
+                    onChange={(e) => {
+                      const quantity = sanitizedNumber(e.target.value);
+                      updateItem(index, { quantity: Number.isFinite(quantity) ? quantity : 0 });
+                    }}
+                  />
+                </Grid>
                 <Grid size={{ xs: 12, md: 2.5 }}>
                   <TextField
                     size="small"
                     fullWidth
                     disabled={isLocked}
-                    label="Amount"
-                    value={item.amount ?? 0}
+                    label="Rate"
+                    value={item.rate ?? 0}
                     InputProps={{ inputComponent: CommaSeparatedField as any }}
                     onChange={(e) => {
-                      const amount = sanitizedNumber(e.target.value);
-                      updateItem(index, { amount: Number.isFinite(amount) ? amount : 0 });
+                      const rate = sanitizedNumber(e.target.value);
+                      updateItem(index, { rate: Number.isFinite(rate) ? rate : 0 });
                     }}
                   />
                 </Grid>
-                <Grid size={{ xs: 12, md: 4 }}>
+                <Grid size={{ xs: 12, md: items.length > 1 ? 1.5 : 2 }}>
                   <TextField
                     size="small"
                     fullWidth
+                    label="Amount"
+                    value={(
+                      (Number.isFinite(Number(item.quantity)) ? Number(item.quantity) : 0) *
+                      (Number.isFinite(Number(item.rate)) ? Number(item.rate) : 0)
+                    ).toLocaleString('en-US', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                    disabled
+                  />
+                </Grid>
+                <Grid size={{ xs: items.length > 1 ? 11.5 : 12 }}>
+                  <TextField
+                    size="small"
+                    fullWidth
+                    multiline
+                    minRows={2}
                     disabled={isLocked}
                     label="Description"
                     value={item.description || ''}
                     onChange={(e) => updateItem(index, { description: e.target.value })}
                   />
                 </Grid>
-                <Grid size={{ xs: 12, md: 0.5 }} textAlign="right">
+                <Grid size={{ xs: 0.5 }} textAlign="right">
                   {!isLocked && items.length > 1 && (
                     <Tooltip title="Remove Item">
                       <IconButton size="small" onClick={() => removeItem(index)}>
@@ -651,18 +837,6 @@ function ImprestRetirementForm({
           </Div>
         )}
 
-        <Grid container spacing={1} mb={2}>
-          <Grid size={{ xs: 12, md: 12 }}>
-            <Alert severity={totalAmount > ceilingAmount ? 'warning' : 'info'}>
-              Total Retired:{' '}
-              {(Number.isFinite(totalAmount) ? totalAmount : 0).toLocaleString('en-US', {
-                style: 'currency',
-                currency: currencyCode,
-              })}
-            </Alert>
-          </Grid>
-        </Grid>
-
         {clientError && (
           <Alert severity="error" sx={{ mb: 1.5 }}>
             {clientError}
@@ -675,16 +849,71 @@ function ImprestRetirementForm({
             Receipts / Supporting Documents
           </Typography>
 
-          {!retirementId && !reviewMode && (
-            <Alert severity="info" sx={{ mb: 1.5 }}>
-              Save first to upload supporting documents.
-            </Alert>
+          {!retirementId && (
+            <Grid container spacing={1}>
+              <Grid size={{ xs: 12 }}>
+                <Button variant="outlined" component="label" size="small">
+                  Select Files
+                  <input
+                    hidden
+                    multiple
+                    type="file"
+                    onChange={(event) => {
+                      addPendingFiles(event.target.files);
+                      event.currentTarget.value = '';
+                    }}
+                  />
+                </Button>
+              </Grid>
+
+              {pendingAttachments.length === 0 && (
+                <Grid size={{ xs: 12 }}>
+                  <Alert severity="info" sx={{ mb: 0 }}>
+                    Attach multiple supporting files now. No need to save draft first.
+                  </Alert>
+                </Grid>
+              )}
+
+              {pendingAttachments.map((attachment, index) => (
+                <React.Fragment key={`${attachment.file.name}-${index}`}>
+                  <Grid size={{ xs: 12, md: 4 }}>
+                    <TextField
+                      size="small"
+                      fullWidth
+                      disabled
+                      label="File"
+                      value={attachment.file.name}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <TextField
+                      size="small"
+                      fullWidth
+                      label="Attachment Name"
+                      value={attachment.name}
+                      onChange={(e) => updatePendingAttachmentName(index, e.target.value)}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 2 }}>
+                    <Button
+                      fullWidth
+                      size="small"
+                      color="error"
+                      variant="outlined"
+                      onClick={() => removePendingAttachment(index)}
+                    >
+                      Remove
+                    </Button>
+                  </Grid>
+                </React.Fragment>
+              ))}
+            </Grid>
           )}
 
           {retirementId && (
             <AttachmentForm
               hideFeatures
-              readOnly={reviewMode}
+              readOnly={isLocked}
               attachmentable_id={retirementId}
               attachmentable_type="imprest_retirement"
               attachment_name="imprest retirement"
@@ -696,32 +925,8 @@ function ImprestRetirementForm({
 
       <DialogActions>
         <Button size="small" onClick={() => toggleOpen(false)}>
-          {reviewMode ? 'Close' : 'Cancel'}
+          Cancel
         </Button>
-        {reviewMode && (
-          <>
-            <LoadingButton
-              size="small"
-              color="error"
-              variant="outlined"
-              onClick={onReject}
-              loading={rejectLoading}
-              disabled={approveLoading}
-            >
-              Reject
-            </LoadingButton>
-            <LoadingButton
-              size="small"
-              color="success"
-              variant="contained"
-              onClick={onApprove}
-              loading={approveLoading}
-              disabled={rejectLoading}
-            >
-              Approve
-            </LoadingButton>
-          </>
-        )}
         {!isLocked && (
           <LoadingButton
             size="small"
@@ -738,7 +943,7 @@ function ImprestRetirementForm({
             color="success"
             variant="contained"
             onClick={handleSubmitForApproval}
-            loading={submitRetirement.isPending}
+            loading={submitRetirement.isPending || addRetirement.isPending}
           >
             Submit
           </LoadingButton>

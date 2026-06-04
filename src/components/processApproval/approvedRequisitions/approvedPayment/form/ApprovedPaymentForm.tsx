@@ -81,6 +81,17 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
   const queryClient = useQueryClient();
   const [serverError, setServerError] = useState<Record<string, string> | null>(null);
   const { enqueueSnackbar } = useSnackbar();
+  const resolvedApprovedDetails = approvedDetails || prevApprovedDetails || null;
+  const isImprestPayment = approvedRequisition?.process_type === 'IMPREST'
+    || resolvedApprovedDetails?.process_type === 'IMPREST';
+
+  const imprestLedger = approvedRequisition?.requisition?.imprest_ledger
+    || resolvedApprovedDetails?.imprest_ledger
+    || resolvedApprovedDetails?.requisition?.imprest_ledger
+    || null;
+
+  const resolvedImprestCreditLedgerName =
+    payment?.creditLedgerName || imprestLedger?.name || '';
 
   const [items, setItems] = useState<PaymentItem[]>(() => {
     if (payment) {
@@ -171,8 +182,8 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
       id: payment?.id,
       requisition_approval_id: approvedDetails?.id,
       credit_ledger_id: payment?.credit_ledger_id || 0,
-      currency_id: payment ? payment.currency.id : approvedDetails ? approvedDetails.currency.id : 1,
-      exchange_rate: payment ? payment.exchange_rate : approvedDetails ? approvedDetails.currency.exchangeRate : 1,
+      currency_id: payment ? payment.currency.id : resolvedApprovedDetails ? resolvedApprovedDetails.currency.id : 1,
+      exchange_rate: payment ? payment.exchange_rate : resolvedApprovedDetails ? resolvedApprovedDetails.currency.exchangeRate : 1,
       cost_centers: approvedRequisition ? [approvedRequisition.requisition.cost_center] : payment?.cost_centers || [],
       transactionDate: payment ? payment.transactionDate : dayjs().toISOString(),
       items: items,
@@ -182,11 +193,6 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
 
   const handleItemChange = (index: number, key: string, value: any) => {
     let updatedItems: PaymentItem[];
-
-    // Imprest items should not be removable; only amount adjustments are allowed.
-    if (isImprestPayment && key === 'delete' && value === true) {
-      return;
-    }
   
     if (key === 'delete' && value === true) {
       updatedItems = items.filter((_, itemIndex) => itemIndex !== index);
@@ -207,11 +213,8 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
     return payment ? updatePayment.mutate : addPayment.mutate;
   }, [payment, updatePayment, addPayment]);
 
-  const isImprestPayment = approvedRequisition?.process_type === 'IMPREST'
-    || approvedDetails?.process_type === 'IMPREST';
-
   const formTitle = payment
-    ? (isImprestPayment ? 'Edit Imprest Payment' : 'Edit Payment')
+    ? (isImprestPayment ? 'Edit Approved Imprest Payment Form' : 'Edit Payment')
     : (isImprestPayment ? 'New Approved Imprest Payment Form' : 'New Approved Payment Form');
 
   const handleSubmitForm = async (data: FormValues) => {
@@ -221,7 +224,13 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
         debit_ledger_id: item.debit_ledger_id,
         requisition_approval_ledger_item_id: item.requisition_approval_ledger_item_id,
         amount: Number.isFinite(Number(item.amount)) ? Number(item.amount) : 0,
-        description: item.remarks || item.description
+        description: (() => {
+          const base = (item.remarks || item.description || '').trim();
+          const debitLabel = item?.ledger?.name?.trim();
+          if (!isImprestPayment) return base;
+          if (!debitLabel) return base;
+          return base ? `${base} (${debitLabel})` : `(${debitLabel})`;
+        })(),
       }))
     };
     await savePayment(updatedData);
@@ -274,7 +283,7 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
                           id: payment.credit_ledger_id || 0, 
                           name: payment.creditLedgerName || '',
                         } as Ledger 
-                      : null
+                        : null
                   }
                   allowedGroups={['Current Assets', 'Current Liabilities', 'Cash and Cash Equivalents', 'Banks', 'Accounts Payable', 'Accounts Receivable']}
                   onChange={(newValue: Ledger | Ledger[] | null) => {
@@ -305,7 +314,7 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
             <Grid size={{xs: 12, md: 4}}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <CurrencySelector
-                  defaultValue={approvedDetails ? approvedDetails.currency.id : 1}
+                  defaultValue={resolvedApprovedDetails ? resolvedApprovedDetails.currency.id : 1}
                   disabled={true}
                 />
               </Div>
@@ -348,10 +357,11 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
           {errors?.items?.message && items.length < 1 && <Alert severity='error'>{errors.items.message}</Alert>}
 
           <ApprovedPaymentItemForm 
-            approvedDetails={approvedDetails} 
+            approvedDetails={resolvedApprovedDetails} 
             items={items} 
             handleItemChange={handleItemChange}
             isImprestPayment={isImprestPayment}
+            payFromLedgerName={isImprestPayment ? resolvedImprestCreditLedgerName : undefined}
           />
 
           <Divider />

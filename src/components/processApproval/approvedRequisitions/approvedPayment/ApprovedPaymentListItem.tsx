@@ -118,11 +118,13 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
 interface ApprovedPaymentListItemProps {
   approvedRequisition: ApprovalRequisition;
   isExpanded: boolean;
+  showHeader?: boolean;
 }
 
 const ApprovedPaymentListItem: React.FC<ApprovedPaymentListItemProps> = ({ 
   approvedRequisition, 
-  isExpanded 
+  isExpanded,
+  showHeader = true,
 }) => {
   const [openDocumentDialog, setOpenDocumentDialog] = useState(false);
   const { checkOrganizationPermission } = useJumboAuth();
@@ -151,7 +153,7 @@ const ApprovedPaymentListItem: React.FC<ApprovedPaymentListItemProps> = ({
 
   return (
     <>
-      <Typography variant="body1">Payments</Typography>
+      {showHeader && <Typography variant="body1">Payments</Typography>}
       {approvedPayments.map((pay: Payment) => (
         <Grid
           key={pay.id}

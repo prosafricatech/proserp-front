@@ -24,6 +24,7 @@ interface ApprovedPaymentItemFormProps {
   items: PaymentItem[];
   approvedDetails?: boolean;
   isImprestPayment?: boolean;
+  payFromLedgerName?: string;
 }
 
 const ApprovedPaymentItemForm: React.FC<ApprovedPaymentItemFormProps> = ({ 
@@ -31,10 +32,26 @@ const ApprovedPaymentItemForm: React.FC<ApprovedPaymentItemFormProps> = ({
   items, 
   approvedDetails,
   isImprestPayment = false,
+  payFromLedgerName,
 }) => {
   const filteredItems = approvedDetails
     ? items.filter(item => item.unpaid_amount > 0)
     : items;
+
+  const resolveDebitLabel = (item: PaymentItem) => {
+    const sourceLedgerName = String(payFromLedgerName || '').trim();
+    const itemLedgerName = String(item.ledger?.name || '').trim();
+
+    if (!isImprestPayment || !sourceLedgerName) {
+      return itemLedgerName;
+    }
+
+    if (!itemLedgerName || sourceLedgerName === itemLedgerName) {
+      return sourceLedgerName;
+    }
+
+    return `${sourceLedgerName} (${itemLedgerName})`;
+  };
 
   return (
     <React.Fragment>
@@ -61,7 +78,9 @@ const ApprovedPaymentItemForm: React.FC<ApprovedPaymentItemFormProps> = ({
           <Grid size={{xs: 11.5, md: 4, lg: 4}}>
             <Div sx={{ mt: 2, mb: 1.7 }}>
               <Tooltip title="Debit">
-                <Typography>{item.ledger.name}</Typography>
+                <Typography>
+                  {resolveDebitLabel(item)}
+                </Typography>
               </Tooltip>
             </Div>
           </Grid>
@@ -106,7 +125,7 @@ const ApprovedPaymentItemForm: React.FC<ApprovedPaymentItemFormProps> = ({
               </Tooltip>
             </Div>
           </Grid>
-          {!isImprestPayment && items.length > 1 &&
+          {items.length > 1 &&
             <Grid size={{xs: 1, md: 0.5}} textAlign={'end'}>
               <Div sx={{ mt: 1, mb: 1.7 }}>
                 <Tooltip title="Remove Item">

@@ -625,7 +625,6 @@ function ApprovalForm({
             approval={approval}
             requisition={requisition}
             errors={errors.ledger_items}
-            readOnlyMode={isImprestType}
             requisitionLedgerItem={requisitionLedgerItem}
             setRequisitionLedgerItem={setRequisitionLedgerItem}
             handleItemChange={handleItemChange}

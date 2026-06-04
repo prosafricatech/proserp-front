@@ -18,6 +18,7 @@ function ImprestRetirementPDF({ retirement, organization }: ImprestRetirementPDF
 
   const items = Array.isArray(retirement?.items) ? retirement.items : [];
   const attachments = Array.isArray(retirement?.attachments) ? retirement.attachments : [];
+  const imprestLedgerName = retirement?.ledger?.name || '-';
 
   const totalRetired = items.reduce(
     (sum: number, item: any) => sum + (Number.isFinite(Number(item?.amount)) ? Number(item.amount) : 0),
@@ -99,7 +100,7 @@ function ImprestRetirementPDF({ retirement, organization }: ImprestRetirementPDF
         <View style={{ ...pdfStyles.table, minHeight: 220, marginBottom: 14 }}>
           <View style={pdfStyles.tableRow}>
             <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.5 }}>S/N</Text>
-            <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2.5 }}>Expense Ledger</Text>
+            <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2.5 }}>Paid Through (Item Ledger)</Text>
             <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2 }}>Description</Text>
             <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.5, textAlign: 'right' }}>
               Amount ({currencyCode})
@@ -113,7 +114,7 @@ function ImprestRetirementPDF({ retirement, organization }: ImprestRetirementPDF
                   {index + 1}
                 </Text>
                 <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 2.5 }}>
-                  {item?.ledger?.name || '-'}
+                  {`${imprestLedgerName} (${item?.ledger?.name || '-'})`}
                 </Text>
                 <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 2 }}>
                   {item?.description || '-'}
@@ -149,21 +150,6 @@ function ImprestRetirementPDF({ retirement, organization }: ImprestRetirementPDF
               currency: currencyCode,
             })}
           </Text>
-        </View>
-
-        <View style={{ ...pdfStyles.tableRow }}>
-          <View style={{ flex: 1 }}>
-            <Text style={{ ...pdfStyles.minInfo, color: mainColor, marginBottom: 4 }}>Supporting Documents</Text>
-            {attachments.length > 0 ? (
-              attachments.map((attachment: any, index: number) => (
-                <Text key={attachment?.id || index} style={{ ...pdfStyles.minInfo }}>
-                  {index + 1}. {attachment?.name || attachment?.path || `Attachment #${attachment?.id}`}
-                </Text>
-              ))
-            ) : (
-              <Text style={{ ...pdfStyles.minInfo }}>No attachments</Text>
-            )}
-          </View>
         </View>
       </Page>
     </Document>

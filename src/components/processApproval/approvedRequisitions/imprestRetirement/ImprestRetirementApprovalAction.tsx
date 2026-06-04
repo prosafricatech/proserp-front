@@ -437,7 +437,6 @@ function ImprestRetirementApprovalAction({
             approvedRequisition={approvedRequisition}
             existingRetirementDetails={retirementDetails}
             preferredRetirementId={retirement?.id}
-            reviewMode
             onApprove={handleApprove}
             onReject={() => {
               setRemarks('');

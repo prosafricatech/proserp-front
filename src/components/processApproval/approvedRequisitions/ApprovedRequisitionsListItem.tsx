@@ -52,9 +52,11 @@ const ApprovedRequisitionsListItem: React.FC<ApprovedRequisitionsListItemProps> 
   const paymentsCount = isPayment ? (approvedRequisition as PaymentApprovalRequisition).payments_count : 0;
   const purchasesCount = isPurchase ? (approvedRequisition as PurchaseApprovalRequisition).purchase_orders_count : 0;
   const paymentsOrPurchasesCount = isPayment ? paymentsCount : purchasesCount;
+  const paymentRequisition = approvedRequisition as PaymentApprovalRequisition & { is_fully_paid?: boolean | number | string };
+  const isFullyPaid = paymentRequisition?.is_fully_paid === true;
 
   const isFullyProcessed = isPayment
-    ? (approvedRequisition as PaymentApprovalRequisition).is_fully_paid
+    ? isFullyPaid
     : (approvedRequisition as PurchaseApprovalRequisition).is_fully_ordered;
   const hasProcessItems = paymentsOrPurchasesCount > 0;
 
@@ -182,10 +184,9 @@ const ApprovedRequisitionsListItem: React.FC<ApprovedRequisitionsListItemProps> 
                       isExpanded={expanded[approvedRequisition.id]}
                     />
                   )}
-                {!isImprest &&
-                  isPayment &&
+                {(!isImprest && isPayment) &&
                   checkOrganizationPermission([PERMISSIONS.APPROVED_REQUISITIONS_PAY]) &&
-                  !(approvedRequisition as PaymentApprovalRequisition).is_fully_paid && (
+                  !isFullyPaid && (
                     <ApprovedPaymentActionTail
                       approvedRequisition={approvedRequisition as PaymentApprovalRequisition}
                       isExpanded={expanded[approvedRequisition.id]}
