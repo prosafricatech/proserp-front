@@ -37,6 +37,12 @@ export async function getMenus(locale: string) {
           icon: icon('approvals'),
         },
         {
+          uri: `/${locale}/retirements`,
+          label: sidebar.menuItem.retirements,
+          type: 'nav-item',
+          icon: icon('retirements'),
+        },
+        {
           label: sidebar.menuItem.masters,
           type: 'collapsible',
           icon: icon('editAttributes'),
