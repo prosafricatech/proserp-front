@@ -1,11 +1,33 @@
 'use client';
 
 import React from 'react';
-import { Alert, Chip, Grid, LinearProgress, Typography } from '@mui/material';
+import { Alert, Chip, Grid, LinearProgress, Tooltip, Typography } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import imprestRetirementServices from '@/components/processApproval/imprestRetirements/imprestRetirementServices';
 import ImprestRetirementApprovalItemAction from '../ImprestRetirementApprovalItemAction';
+
+const getStatusChipColor = (status: string, statusLabel?: string) => {
+  const normalizedStatus = String(status || '').toLowerCase();
+  const normalizedLabel = String(statusLabel || '').toLowerCase();
+
+  const labelHasPriority =
+    normalizedLabel.includes('reject') ||
+    normalizedLabel.includes('approved') ||
+    normalizedLabel.includes('complete') ||
+    normalizedLabel.includes('hold') ||
+    normalizedLabel.includes('pending') ||
+    normalizedLabel.includes('wait');
+
+  const statusSource = labelHasPriority ? normalizedLabel : normalizedStatus;
+
+  if (statusSource.includes('reject')) return 'error';
+  if (statusSource.includes('approved') || statusSource.includes('complete')) return 'success';
+  if (statusSource.includes('hold')) return 'info';
+  if (statusSource.includes('pending') || statusSource.includes('wait')) return 'warning';
+
+  return 'default';
+};
 
 type RetirementApprovalsTabProps = {
   retirement: any;
@@ -89,26 +111,47 @@ function RetirementApprovalsTab({ retirement, isActive, approvedRequisition }: R
             }}
           >
             <Grid size={{ xs: 12, md: 3 }}>
-              <Typography variant="body2" fontWeight={600}>
-                {readableDate(approval?.approval_date)}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {approval?.creator?.name}
-              </Typography>
+              <Tooltip title="Approval Date">
+                <Typography variant="body2" fontWeight={600} noWrap>
+                  {readableDate(approval?.approval_date)}
+                </Typography>
+              </Tooltip>
+              <Tooltip title="Approved By">
+                <Typography variant="caption" color="text.secondary" noWrap>
+                  {approval?.creator?.name || '-'}
+                </Typography>
+              </Tooltip>
             </Grid>
 
             <Grid size={{ xs: 12, md: 2 }}>
-              <Chip size="small" label={approval?.status_label} />
+              <Tooltip title="Status">
+                <Chip
+                  size="small"
+                  label={approval?.status_label || '-'}
+                  color={getStatusChipColor(approval?.status || approval?.status_label, approval?.status_label)}
+                  variant={
+                    getStatusChipColor(approval?.status || approval?.status_label, approval?.status_label) === 'default'
+                      ? 'outlined'
+                      : 'filled'
+                  }
+                />
+              </Tooltip>
             </Grid>
 
             <Grid size={{ xs: 12, md: 2 }}>
-              <Typography variant="body2">{formattedApprovalTotal}</Typography>
+              <Tooltip title="Amount">
+                <Typography variant="body2" noWrap>
+                  {formattedApprovalTotal}
+                </Typography>
+              </Tooltip>
             </Grid>
 
             <Grid size={{ xs: 12, md: 2 }}>
-              <Typography variant="caption" color="text.secondary" noWrap>
-                {approval?.remarks}
-              </Typography>
+              <Tooltip title="Remarks">
+                <Typography variant="caption" color="text.secondary" noWrap>
+                  {approval?.remarks || '-'}
+                </Typography>
+              </Tooltip>
             </Grid>
 
             <Grid size={{ xs: 12, md: 3 }} textAlign={{ md: 'right' }}>

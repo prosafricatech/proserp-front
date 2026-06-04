@@ -30,6 +30,28 @@ const extractList = (payload: any): any[] => {
   return [];
 };
 
+const getStatusChipColor = (status: string, statusLabel?: string) => {
+  const normalizedStatus = String(status || '').toLowerCase();
+  const normalizedLabel = String(statusLabel || '').toLowerCase();
+
+  const labelHasPriority =
+    normalizedLabel.includes('reject') ||
+    normalizedLabel.includes('approved') ||
+    normalizedLabel.includes('complete') ||
+    normalizedLabel.includes('hold') ||
+    normalizedLabel.includes('pending') ||
+    normalizedLabel.includes('wait');
+
+  const statusSource = labelHasPriority ? normalizedLabel : normalizedStatus;
+
+  if (statusSource.includes('reject')) return 'error';
+  if (statusSource.includes('approved') || statusSource.includes('complete')) return 'success';
+  if (statusSource.includes('hold')) return 'info';
+  if (statusSource.includes('pending') || statusSource.includes('wait')) return 'warning';
+
+  return 'default';
+};
+
 type ImprestRetirementListItemProps = {
   requisitionApprovalId: number;
   approvedRequisition: any;
@@ -88,7 +110,10 @@ function ImprestRetirementListItem({ requisitionApprovalId, approvedRequisition 
                 sum + (Number.isFinite(Number(item?.amount)) ? Number(item.amount) : 0),
               0
             );
-        const currencyCode= retirement?.requisition?.currency?.code;
+        const displayStatus = retirement?.latest_approval?.status_label || retirement?.status_label || retirement?.latest_approval?.status || retirement?.status || '';
+        const colorStatus = retirement?.latest_approval?.status || retirement?.latest_approval?.status_label || retirement?.status || retirement?.status_label || '';
+        const colorStatusLabel = retirement?.latest_approval?.status_label || retirement?.status_label || '';
+        const currencyCode = retirement?.requisition?.currency?.code;
         const formattedAmount = currencyCode
           ? totalAmount.toLocaleString('en-US', {
               style: 'currency',
@@ -98,11 +123,6 @@ function ImprestRetirementListItem({ requisitionApprovalId, approvedRequisition 
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             });
-        const isRejected = String(
-          retirement?.status_label || retirement?.status || ''
-        )
-          .toLowerCase()
-          .includes('reject');
         const activeTab = activeTabs[retirement.id] || 0;
 
         return (
@@ -183,9 +203,13 @@ function ImprestRetirementListItem({ requisitionApprovalId, approvedRequisition 
                   <Tooltip title="Status">
                     <Chip
                       size="small"
-                      label={retirement?.status_label}
-                      color={isRejected ? 'error' : 'default'}
-                      variant={isRejected ? 'filled' : 'outlined'}
+                      label={displayStatus || '-'}
+                      color={getStatusChipColor(colorStatus, colorStatusLabel)}
+                      variant={
+                        getStatusChipColor(colorStatus, colorStatusLabel) === 'default'
+                          ? 'outlined'
+                          : 'filled'
+                      }
                     />
                   </Tooltip>
                 </Grid>
