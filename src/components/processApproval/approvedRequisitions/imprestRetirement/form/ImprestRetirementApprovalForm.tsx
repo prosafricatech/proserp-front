@@ -341,10 +341,6 @@ function ImprestRetirementApprovalForm({
             <Typography variant="caption" color="text.secondary">
               Retirement Date: {formattedRetirementDate}
             </Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
-              Approval Chain Level:{' '}
-              {activeApprovalChainLevel?.label || activeApprovalChainLevel?.role?.name || '-'}
-            </Typography>
           </Grid>
 
           <Grid size={{ xs: 12, md: 4 }}>
