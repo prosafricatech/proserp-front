@@ -254,7 +254,7 @@ const ProductCategoryFormDialogContent: React.FC<
                 }}
                 startAdornment={
                   <Tooltip
-                    title={'Quick Add Credit Ledger'}
+                    title={'Quick Add Ledger'}
                     onClick={() => {
                       setLedgertType('credit');
                       setOpenQuickAddLedger(true);
@@ -290,7 +290,7 @@ const ProductCategoryFormDialogContent: React.FC<
                 }}
                 startAdornment={
                   <Tooltip
-                    title={'Quick Add Debit Ledger'}
+                    title={'Quick Add Ledger'}
                     onClick={() => {
                       setLedgertType('debit');
                       setOpenQuickAddLedger(true);
@@ -330,7 +330,7 @@ const ProductCategoryFormDialogContent: React.FC<
         </DialogActions>
       </form>
 
-      <Dialog open={openQuickAddLedger}>
+      <Dialog open={openQuickAddLedger} maxWidth={'md'}>
         <LedgerGroupProvider>
           <QuickAddLedger
             ledgerType={ledgertType}
