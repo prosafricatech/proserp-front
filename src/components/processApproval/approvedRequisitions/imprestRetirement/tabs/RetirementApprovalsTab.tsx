@@ -1,10 +1,17 @@
 'use client';
 
-import React from 'react';
-import { Alert, Chip, Grid, LinearProgress, Tooltip, Typography } from '@mui/material';
-import { useQuery } from '@tanstack/react-query';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import imprestRetirementServices from '@/components/processApproval/imprestRetirements/imprestRetirementServices';
+import {
+  Alert,
+  Chip,
+  Grid,
+  LinearProgress,
+  Tooltip,
+  Typography,
+} from '@mui/material';
+import { useQuery } from '@tanstack/react-query';
+import React from 'react';
 import ImprestRetirementApprovalItemAction from '../ImprestRetirementApprovalItemAction';
 
 const getStatusChipColor = (status: string, statusLabel?: string) => {
@@ -22,9 +29,11 @@ const getStatusChipColor = (status: string, statusLabel?: string) => {
   const statusSource = labelHasPriority ? normalizedLabel : normalizedStatus;
 
   if (statusSource.includes('reject')) return 'error';
-  if (statusSource.includes('approved') || statusSource.includes('complete')) return 'success';
+  if (statusSource.includes('approved') || statusSource.includes('complete'))
+    return 'success';
   if (statusSource.includes('hold')) return 'info';
-  if (statusSource.includes('pending') || statusSource.includes('wait')) return 'warning';
+  if (statusSource.includes('pending') || statusSource.includes('wait'))
+    return 'warning';
 
   return 'default';
 };
@@ -32,19 +41,28 @@ const getStatusChipColor = (status: string, statusLabel?: string) => {
 type RetirementApprovalsTabProps = {
   retirement: any;
   isActive: boolean;
-  approvedRequisition: any;
+  approvedRequisition?: any;
 };
 
-function RetirementApprovalsTab({ retirement, isActive, approvedRequisition }: RetirementApprovalsTabProps) {
+function RetirementApprovalsTab({
+  retirement,
+  isActive,
+  approvedRequisition,
+}: RetirementApprovalsTabProps) {
   const { data: retirementDetails, isFetching } = useQuery({
-    queryKey: ['imprestRetirementDetails', { id: retirement?.id }, 'imprest-retirement-approvals-tab'],
+    queryKey: [
+      'imprestRetirementDetails',
+      { id: retirement?.id },
+      'imprest-retirement-approvals-tab',
+    ],
     queryFn: () => imprestRetirementServices.show(retirement?.id),
     enabled: !!retirement?.id && isActive,
   });
 
   const resolvedRetirement = retirementDetails || retirement;
   const approvals = resolvedRetirement?.approvals || [];
-  const latestApprovalId = Number(resolvedRetirement?.latest_approval?.id || 0) || null;
+  const latestApprovalId =
+    Number(resolvedRetirement?.latest_approval?.id || 0) || null;
 
   if (isFetching && !retirementDetails) {
     return <LinearProgress />;
@@ -54,7 +72,7 @@ function RetirementApprovalsTab({ retirement, isActive, approvedRequisition }: R
     return (
       <Grid container spacing={1}>
         <Grid size={{ xs: 12 }}>
-          <Alert variant="outlined" severity="info" sx={{ mt: 1 }}>
+          <Alert variant='outlined' severity='info' sx={{ mt: 1 }}>
             No approvals found for this retirement.
           </Alert>
         </Grid>
@@ -90,7 +108,8 @@ function RetirementApprovalsTab({ retirement, isActive, approvedRequisition }: R
         const retirementForApprovalAction = {
           ...resolvedRetirement,
           status: approval?.status || resolvedRetirement?.status,
-          status_label: approval?.status_label || resolvedRetirement?.status_label,
+          status_label:
+            approval?.status_label || resolvedRetirement?.status_label,
           latest_approval: approval,
           approval,
           approvals: [approval],
@@ -102,7 +121,7 @@ function RetirementApprovalsTab({ retirement, isActive, approvedRequisition }: R
             size={{ xs: 12 }}
             container
             spacing={1}
-            alignItems="center"
+            alignItems='center'
             sx={{
               borderTop: 1,
               borderColor: 'divider',
@@ -111,26 +130,32 @@ function RetirementApprovalsTab({ retirement, isActive, approvedRequisition }: R
             }}
           >
             <Grid size={{ xs: 12, md: 3 }}>
-              <Tooltip title="Approval Date">
-                <Typography variant="body2" fontWeight={600} noWrap>
+              <Tooltip title='Approval Date'>
+                <Typography variant='body2' fontWeight={600} noWrap>
                   {readableDate(approval?.approval_date)}
                 </Typography>
               </Tooltip>
-              <Tooltip title="Approved By">
-                <Typography variant="caption" color="text.secondary" noWrap>
+              <Tooltip title='Approved By'>
+                <Typography variant='caption' color='text.secondary' noWrap>
                   {approval?.creator?.name || '-'}
                 </Typography>
               </Tooltip>
             </Grid>
 
             <Grid size={{ xs: 12, md: 2 }}>
-              <Tooltip title="Status">
+              <Tooltip title='Status'>
                 <Chip
-                  size="small"
+                  size='small'
                   label={approval?.status_label || '-'}
-                  color={getStatusChipColor(approval?.status || approval?.status_label, approval?.status_label)}
+                  color={getStatusChipColor(
+                    approval?.status || approval?.status_label,
+                    approval?.status_label
+                  )}
                   variant={
-                    getStatusChipColor(approval?.status || approval?.status_label, approval?.status_label) === 'default'
+                    getStatusChipColor(
+                      approval?.status || approval?.status_label,
+                      approval?.status_label
+                    ) === 'default'
                       ? 'outlined'
                       : 'filled'
                   }
@@ -139,16 +164,16 @@ function RetirementApprovalsTab({ retirement, isActive, approvedRequisition }: R
             </Grid>
 
             <Grid size={{ xs: 12, md: 2 }}>
-              <Tooltip title="Amount">
-                <Typography variant="body2" noWrap>
+              <Tooltip title='Amount'>
+                <Typography variant='body2' noWrap>
                   {formattedApprovalTotal}
                 </Typography>
               </Tooltip>
             </Grid>
 
             <Grid size={{ xs: 12, md: 2 }}>
-              <Tooltip title="Remarks">
-                <Typography variant="caption" color="text.secondary" noWrap>
+              <Tooltip title='Remarks'>
+                <Typography variant='caption' color='text.secondary' noWrap>
                   {approval?.remarks || '-'}
                 </Typography>
               </Tooltip>

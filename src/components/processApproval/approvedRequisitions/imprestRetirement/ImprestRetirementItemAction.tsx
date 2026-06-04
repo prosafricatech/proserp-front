@@ -1,6 +1,10 @@
 'use client';
 
-import React from 'react';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import PDFContent from '@/components/pdf/PDFContent';
+import imprestRetirementServices from '@/components/processApproval/imprestRetirements/imprestRetirementServices';
+import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import {
   CheckCircleOutlineOutlined,
   DeleteOutlined,
@@ -25,20 +29,17 @@ import {
 } from '@mui/material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
+import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import { useSnackbar } from 'notistack';
-import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
-import PDFContent from '@/components/pdf/PDFContent';
-import imprestRetirementServices from '@/components/processApproval/imprestRetirements/imprestRetirementServices';
-import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
-import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
-import ImprestRetirementForm from './form/ImprestRetirementForm';
+import React from 'react';
 import ImprestRetirementApprovalForm from './form/ImprestRetirementApprovalForm';
+import ImprestRetirementForm from './form/ImprestRetirementForm';
 import ImprestRetirementOnScreenPreview from './preview/ImprestRetirementOnScreenPreview';
 import ImprestRetirementPDF from './preview/ImprestRetirementPDF';
 
 type ImprestRetirementItemActionProps = {
   retirement: any;
-  approvedRequisition: any;
+  approvedRequisition?: any;
   isExpanded: boolean;
 };
 
@@ -63,13 +64,21 @@ function ImprestRetirementItemAction({
   const [openPreviewDialog, setOpenPreviewDialog] = React.useState(false);
   const [activePreviewTab, setActivePreviewTab] = React.useState(0);
 
-  const { data: retirementDetails, isFetching: isFetchingRetirementDetails } = useQuery({
-    queryKey: ['imprestRetirementDetails', { id: retirement?.id }, 'imprest-retirement-item-action'],
-    queryFn: async () => imprestRetirementServices.show(retirement?.id),
-    enabled:
-      !!retirement?.id &&
-      (isExpanded || !!openUpdateDialog || !!openApprovalDialog || !!openPreviewDialog),
-  });
+  const { data: retirementDetails, isFetching: isFetchingRetirementDetails } =
+    useQuery({
+      queryKey: [
+        'imprestRetirementDetails',
+        { id: retirement?.id },
+        'imprest-retirement-item-action',
+      ],
+      queryFn: async () => imprestRetirementServices.show(retirement?.id),
+      enabled:
+        !!retirement?.id &&
+        (isExpanded ||
+          !!openUpdateDialog ||
+          !!openApprovalDialog ||
+          !!openPreviewDialog),
+    });
 
   const currentApproval =
     retirementDetails?.latest_approval ||
@@ -77,12 +86,16 @@ function ImprestRetirementItemAction({
     retirement?.latest_approval ||
     null;
 
-  const statusRaw = String(currentApproval?.status || retirementDetails?.status || '').toLowerCase();
+  const statusRaw = String(
+    currentApproval?.status || retirementDetails?.status || ''
+  ).toLowerCase();
   const statusLabelRaw = String(
     currentApproval?.status_label || retirementDetails?.status_label || ''
   ).toLowerCase();
   const approvalStatusRaw = String(currentApproval?.status || '').toLowerCase();
-  const approvalStatusLabelRaw = String(currentApproval?.status_label || '').toLowerCase();
+  const approvalStatusLabelRaw = String(
+    currentApproval?.status_label || ''
+  ).toLowerCase();
   const hasFinalApproval = isTruthyFlag(currentApproval?.is_final);
 
   const isOnHold =
@@ -104,19 +117,27 @@ function ImprestRetirementItemAction({
     !isRejected &&
     !isApproved &&
     statusRaw === 'submitted' &&
-    (approvalStatusRaw === 'pending' || !approvalStatusRaw || statusLabelRaw.includes('pending'));
+    (approvalStatusRaw === 'pending' ||
+      !approvalStatusRaw ||
+      statusLabelRaw.includes('pending'));
 
   const nextApprovalLevel =
     retirementDetails?.next_approval_level || retirement?.next_approval_level;
   const hasNextApprovalLevel = Boolean(nextApprovalLevel?.id);
-  const canApproveByRole = hasOrganizationRole(nextApprovalLevel?.role?.name ?? '');
+  const canApproveByRole = hasOrganizationRole(
+    nextApprovalLevel?.role?.name ?? ''
+  );
   const canApproveNext =
     hasNextApprovalLevel &&
     canApproveByRole &&
     !hasFinalApproval &&
     !isOnHold &&
     !isRejected &&
-    (isPendingApproval || isApproved || retirementDetails?.approvals?.length === 0);
+    (isPendingApproval ||
+      isApproved ||
+      retirementDetails?.approvals?.length === 0);
+
+  dayjs.extend(isSameOrAfter);
 
   const canEditOrDeleteRetirement =
     retirementDetails?.approvals?.length === 0 &&
@@ -125,13 +146,18 @@ function ImprestRetirementItemAction({
   const { mutate: deleteRetirement } = useMutation({
     mutationFn: imprestRetirementServices.delete,
     onSuccess: (response: any) => {
-      enqueueSnackbar(response?.message || 'Retirement draft deleted', { variant: 'success' });
+      enqueueSnackbar(response?.message || 'Retirement draft deleted', {
+        variant: 'success',
+      });
       queryClient.invalidateQueries({ queryKey: ['imprestRetirements'] });
     },
     onError: (error: any) => {
-      enqueueSnackbar(error?.response?.data?.message || 'Failed to delete retirement draft', {
-        variant: 'error',
-      });
+      enqueueSnackbar(
+        error?.response?.data?.message || 'Failed to delete retirement draft',
+        {
+          variant: 'error',
+        }
+      );
     },
   });
 
@@ -150,7 +176,8 @@ function ImprestRetirementItemAction({
 
   const showPreview = true;
   const showEdit = canEditOrDeleteRetirement;
-  const showApprove = canApproveNext && retirementDetails?.approvals?.length === 0;
+  const showApprove =
+    canApproveNext && retirementDetails?.approvals?.length === 0;
   const showDelete = canEditOrDeleteRetirement;
 
   if (!showPreview && !showEdit && !showApprove && !showDelete) return null;
@@ -164,7 +191,7 @@ function ImprestRetirementItemAction({
         scroll={belowLargeScreen ? 'body' : 'paper'}
         fullWidth
         fullScreen={belowLargeScreen}
-        maxWidth="md"
+        maxWidth='md'
         onClose={() => setOpenPreviewDialog(false)}
       >
         {isFetchingDialogDetails ? (
@@ -172,23 +199,31 @@ function ImprestRetirementItemAction({
         ) : (
           <>
             <DialogTitle>
-              <Grid container alignItems="center" justifyContent="space-between">
+              <Grid
+                container
+                alignItems='center'
+                justifyContent='space-between'
+              >
                 <Grid size={{ xs: 11 }}>
                   <Tabs
                     value={activePreviewTab}
-                    onChange={(_event: React.SyntheticEvent, newValue: number) =>
-                      setActivePreviewTab(newValue)
-                    }
-                    aria-label="retirement preview tabs"
+                    onChange={(
+                      _event: React.SyntheticEvent,
+                      newValue: number
+                    ) => setActivePreviewTab(newValue)}
+                    aria-label='retirement preview tabs'
                   >
-                    <Tab label="ONSCREEN" />
-                    <Tab label="PDF" />
+                    <Tab label='ONSCREEN' />
+                    <Tab label='PDF' />
                   </Tabs>
                 </Grid>
                 <Grid size={{ xs: 1 }} sx={{ textAlign: 'right' }}>
-                  <Tooltip title="Close">
-                    <IconButton size="small" onClick={() => setOpenPreviewDialog(false)}>
-                      <HighlightOff color="primary" />
+                  <Tooltip title='Close'>
+                    <IconButton
+                      size='small'
+                      onClick={() => setOpenPreviewDialog(false)}
+                    >
+                      <HighlightOff color='primary' />
                     </IconButton>
                   </Tooltip>
                 </Grid>
@@ -196,7 +231,9 @@ function ImprestRetirementItemAction({
             </DialogTitle>
             <DialogContent>
               {activePreviewTab === 0 ? (
-                <ImprestRetirementOnScreenPreview retirement={retirementDetails} />
+                <ImprestRetirementOnScreenPreview
+                  retirement={retirementDetails}
+                />
               ) : (
                 <PDFContent
                   fileName={
@@ -215,9 +252,9 @@ function ImprestRetirementItemAction({
             <DialogActions>
               <Box sx={{ textAlign: 'right', marginTop: 1 }}>
                 <Button
-                  variant="outlined"
-                  size="small"
-                  color="primary"
+                  variant='outlined'
+                  size='small'
+                  color='primary'
                   onClick={() => setOpenPreviewDialog(false)}
                 >
                   Close
@@ -230,7 +267,7 @@ function ImprestRetirementItemAction({
 
       <Dialog
         open={openUpdateDialog}
-        maxWidth="lg"
+        maxWidth='lg'
         scroll={belowLargeScreen ? 'body' : 'paper'}
         fullWidth
         fullScreen={belowLargeScreen}
@@ -250,7 +287,7 @@ function ImprestRetirementItemAction({
 
       <Dialog
         open={openApprovalDialog}
-        maxWidth="lg"
+        maxWidth='lg'
         scroll={belowLargeScreen ? 'body' : 'paper'}
         fullWidth
         fullScreen={belowLargeScreen}
@@ -268,33 +305,33 @@ function ImprestRetirementItemAction({
       </Dialog>
 
       {showPreview && (
-        <Tooltip title="Preview Retirement">
-          <IconButton size="small" onClick={() => setOpenPreviewDialog(true)}>
+        <Tooltip title='Preview Retirement'>
+          <IconButton size='small' onClick={() => setOpenPreviewDialog(true)}>
             <VisibilityOutlined />
           </IconButton>
         </Tooltip>
       )}
 
       {showEdit && (
-        <Tooltip title="Edit">
-          <IconButton size="small" onClick={() => setOpenUpdateDialog(true)}>
+        <Tooltip title='Edit'>
+          <IconButton size='small' onClick={() => setOpenUpdateDialog(true)}>
             <EditOutlined />
           </IconButton>
         </Tooltip>
       )}
 
       {showApprove && (
-        <Tooltip title="Approve">
-          <IconButton size="small" onClick={() => setOpenApprovalDialog(true)}>
-            <CheckCircleOutlineOutlined color="success" />
+        <Tooltip title='Approve'>
+          <IconButton size='small' onClick={() => setOpenApprovalDialog(true)}>
+            <CheckCircleOutlineOutlined color='success' />
           </IconButton>
         </Tooltip>
       )}
 
       {showDelete && (
-        <Tooltip title="Delete">
-          <IconButton size="small" onClick={handleDeleteDraft}>
-            <DeleteOutlined color="error" />
+        <Tooltip title='Delete'>
+          <IconButton size='small' onClick={handleDeleteDraft}>
+            <DeleteOutlined color='error' />
           </IconButton>
         </Tooltip>
       )}

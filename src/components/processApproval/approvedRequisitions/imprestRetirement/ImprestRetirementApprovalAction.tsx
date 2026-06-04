@@ -437,13 +437,6 @@ function ImprestRetirementApprovalAction({
             approvedRequisition={approvedRequisition}
             existingRetirementDetails={retirementDetails}
             preferredRetirementId={retirement?.id}
-            // onApprove={handleApprove}
-            // onReject={() => {
-            //   setRemarks('');
-            //   setRemarksDialogMode('reject');
-            // }}
-            // approveLoading={isPending}
-            // rejectLoading={isPending || isRevokingApproval}
           />
         )}
       </Dialog>
