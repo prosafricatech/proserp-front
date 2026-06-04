@@ -20,7 +20,7 @@ import { useQuery } from '@tanstack/react-query';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import imprestRetirementServices from '@/components/processApproval/imprestRetirements/imprestRetirementServices';
 import AttachmentForm from '@/components/filesShelf/attachments/AttachmentForm';
-import ImprestRetirementApprovalAction from './ImprestRetirementApprovalAction';
+import ImprestRetirementItemAction from './ImprestRetirementItemAction';
 import RetirementApprovalsTab from './tabs/RetirementApprovalsTab';
 
 const extractList = (payload: any): any[] => {
@@ -80,8 +80,7 @@ function ImprestRetirementListItem({ requisitionApprovalId, approvedRequisition 
   return (
     <Grid container spacing={1}>
       {retirements.map((retirement: any) => {
-        const items = extractList(retirement?.items);
-        const attachments = extractList(retirement?.attachments);
+        const items = retirement?.items || [];
         const totalAmount = Number.isFinite(Number(retirement?.amount))
           ? Number(retirement.amount)
           : items.reduce(
@@ -89,7 +88,16 @@ function ImprestRetirementListItem({ requisitionApprovalId, approvedRequisition 
                 sum + (Number.isFinite(Number(item?.amount)) ? Number(item.amount) : 0),
               0
             );
-        const currencyCode = retirement?.currency?.code || retirement?.currency_code || 'TZS';
+        const currencyCode= retirement?.requisition?.currency?.code;
+        const formattedAmount = currencyCode
+          ? totalAmount.toLocaleString('en-US', {
+              style: 'currency',
+              currency: currencyCode,
+            })
+          : totalAmount.toLocaleString('en-US', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            });
         const isRejected = String(
           retirement?.status_label || retirement?.status || ''
         )
@@ -166,7 +174,7 @@ function ImprestRetirementListItem({ requisitionApprovalId, approvedRequisition 
                 <Grid size={{ xs: 6, md: 2 }}>
                   <Tooltip title="Remarks">
                     <Typography lineHeight={1.25} noWrap>
-                      {retirement?.remarks || '-'}
+                      {retirement?.remarks}
                     </Typography>
                   </Tooltip>
                 </Grid>
@@ -175,7 +183,7 @@ function ImprestRetirementListItem({ requisitionApprovalId, approvedRequisition 
                   <Tooltip title="Status">
                     <Chip
                       size="small"
-                      label={retirement?.status_label || '-'}
+                      label={retirement?.status_label}
                       color={isRejected ? 'error' : 'default'}
                       variant={isRejected ? 'filled' : 'outlined'}
                     />
@@ -184,12 +192,7 @@ function ImprestRetirementListItem({ requisitionApprovalId, approvedRequisition 
 
                 <Grid size={{ xs: 6, md: 3 }} textAlign={{ md: 'right' }}>
                   <Tooltip title="Amount">
-                    <Typography>
-                      {totalAmount.toLocaleString('en-US', {
-                        style: 'currency',
-                        currency: currencyCode,
-                      })}
-                    </Typography>
+                    <Typography>{formattedAmount}</Typography>
                   </Tooltip>
                 </Grid>
               </Grid>
@@ -197,6 +200,14 @@ function ImprestRetirementListItem({ requisitionApprovalId, approvedRequisition 
 
             <AccordionDetails sx={{ backgroundColor: 'background.paper', mb: 2 }}>
               <Grid container spacing={1}>
+                <Grid size={{ xs: 12 }} textAlign={{ md: 'right' }}>
+                  <ImprestRetirementItemAction
+                    retirement={retirement}
+                    approvedRequisition={approvedRequisition}
+                    isExpanded={!!expanded[retirement.id]}
+                  />
+                </Grid>
+
                 <Grid size={{ xs: 12 }}>
                   <Tabs
                     value={activeTab}
@@ -225,7 +236,6 @@ function ImprestRetirementListItem({ requisitionApprovalId, approvedRequisition 
                   <Grid size={{ xs: 12 }}>
                     <AttachmentForm
                       hideFeatures
-                      readOnly
                       attachment_name="imprest retirement"
                       attachmentable_type="imprest_retirement"
                       attachmentable_id={retirement.id}

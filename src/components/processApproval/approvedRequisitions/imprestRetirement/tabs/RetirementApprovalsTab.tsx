@@ -5,22 +5,7 @@ import { Alert, Chip, Grid, LinearProgress, Typography } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import imprestRetirementServices from '@/components/processApproval/imprestRetirements/imprestRetirementServices';
-import ImprestRetirementApprovalAction from '../ImprestRetirementApprovalAction';
-
-const extractList = (payload: any): any[] => {
-  if (Array.isArray(payload)) return payload;
-  if (Array.isArray(payload?.data)) return payload.data;
-  if (Array.isArray(payload?.data?.data)) return payload.data.data;
-  return [];
-};
-
-const extractOne = (payload: any): any | null => {
-  if (!payload) return null;
-  if (payload?.id) return payload;
-  if (payload?.data?.id) return payload.data;
-  if (payload?.data?.data?.id) return payload.data.data;
-  return null;
-};
+import ImprestRetirementApprovalItemAction from '../ImprestRetirementApprovalItemAction';
 
 type RetirementApprovalsTabProps = {
   retirement: any;
@@ -35,15 +20,9 @@ function RetirementApprovalsTab({ retirement, isActive, approvedRequisition }: R
     enabled: !!retirement?.id && isActive,
   });
 
-  const resolvedRetirement = extractOne(retirementDetails) || retirement;
-  const approvals = extractList(resolvedRetirement?.approvals);
+  const resolvedRetirement = retirementDetails || retirement;
+  const approvals = resolvedRetirement?.approvals || [];
   const latestApprovalId = Number(resolvedRetirement?.latest_approval?.id || 0) || null;
-  const currencyCode =
-    resolvedRetirement?.currency?.code ||
-    resolvedRetirement?.currency_code ||
-    retirement?.currency?.code ||
-    retirement?.currency_code ||
-    'TZS';
 
   if (isFetching && !retirementDetails) {
     return <LinearProgress />;
@@ -52,14 +31,6 @@ function RetirementApprovalsTab({ retirement, isActive, approvedRequisition }: R
   if (approvals.length === 0) {
     return (
       <Grid container spacing={1}>
-        <Grid size={{ xs: 12 }} textAlign={{ md: 'right' }}>
-          <ImprestRetirementApprovalAction
-            retirement={resolvedRetirement}
-            approvedRequisition={approvedRequisition}
-            previewContext="retirement"
-            isLatestApprovalRow
-          />
-        </Grid>
         <Grid size={{ xs: 12 }}>
           <Alert variant="outlined" severity="info" sx={{ mt: 1 }}>
             No approvals found for this retirement.
@@ -72,7 +43,7 @@ function RetirementApprovalsTab({ retirement, isActive, approvedRequisition }: R
   return (
     <Grid container spacing={1}>
       {approvals.map((approval: any, index: number) => {
-        const approvalItems = extractList(approval?.items);
+        const approvalItems = approval?.items || [];
         const approvalTotal = Number.isFinite(Number(approval?.amount))
           ? Number(approval.amount)
           : approvalItems.reduce(
@@ -83,6 +54,16 @@ function RetirementApprovalsTab({ retirement, isActive, approvedRequisition }: R
                   : Number(item?.quantity || 0) * Number(item?.rate || 0)),
               0
             );
+        const currencyCode = retirement?.requisition?.currency?.code;
+        const formattedApprovalTotal = currencyCode
+          ? approvalTotal.toLocaleString('en-US', {
+              style: 'currency',
+              currency: currencyCode,
+            })
+          : approvalTotal.toLocaleString('en-US', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            });
 
         const retirementForApprovalAction = {
           ...resolvedRetirement,
@@ -112,34 +93,29 @@ function RetirementApprovalsTab({ retirement, isActive, approvedRequisition }: R
                 {readableDate(approval?.approval_date)}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                {approval?.creator?.name || '-'}
+                {approval?.creator?.name}
               </Typography>
             </Grid>
 
             <Grid size={{ xs: 12, md: 2 }}>
-              <Chip size="small" label={approval?.status_label || '-'} />
+              <Chip size="small" label={approval?.status_label} />
             </Grid>
 
             <Grid size={{ xs: 12, md: 2 }}>
-              <Typography variant="body2">
-                {approvalTotal.toLocaleString('en-US', {
-                  style: 'currency',
-                  currency: currencyCode,
-                })}
-              </Typography>
+              <Typography variant="body2">{formattedApprovalTotal}</Typography>
             </Grid>
 
             <Grid size={{ xs: 12, md: 2 }}>
               <Typography variant="caption" color="text.secondary" noWrap>
-                {approval?.remarks || '-'}
+                {approval?.remarks}
               </Typography>
             </Grid>
 
             <Grid size={{ xs: 12, md: 3 }} textAlign={{ md: 'right' }}>
-              <ImprestRetirementApprovalAction
+              <ImprestRetirementApprovalItemAction
                 retirement={retirementForApprovalAction}
-                approvedRequisition={approvedRequisition}
-                previewContext="approval"
+                approval={approval}
+                approvals={approvals}
                 isLatestApprovalRow={
                   latestApprovalId
                     ? Number(approval?.id) === latestApprovalId

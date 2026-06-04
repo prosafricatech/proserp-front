@@ -75,6 +75,9 @@ function ImprestRetirementApprovalForm({
       retirement?.next_approval_level?.can_finalize ||
       0
   ) || 0;
+  const activeApprovalChainLevel = isEdit
+    ? latestApproval?.approval_chain_level || latestApproval?.chain_level || approvals[approvals.length - 1]?.approval_chain_level || null
+    : retirement?.next_approval_level || latestApproval?.approval_chain_level || latestApproval?.chain_level || approvals[approvals.length - 1]?.approval_chain_level || null;
   const isFinalLevel = Boolean(nextApprovalLevelIsFinal || latestApproval?.is_final);
 
   const chainLevelId = Number(
@@ -337,6 +340,10 @@ function ImprestRetirementApprovalForm({
             </Typography>
             <Typography variant="caption" color="text.secondary">
               Retirement Date: {formattedRetirementDate}
+            </Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+              Approval Chain Level:{' '}
+              {activeApprovalChainLevel?.label || activeApprovalChainLevel?.role?.name || '-'}
             </Typography>
           </Grid>
 
