@@ -129,7 +129,7 @@ function ProfitAndLossTrendCard() {
       }}
       action={
         <Grid container columnSpacing={1} alignItems='center'>
-          <Grid size={{ xs: 8 }} position={'relative'}>
+          <Grid size={{ xs: 8 }}>
             {!midScreen && !smallScreen ? (
               <ButtonGroup variant='outlined' size='small' disableElevation>
                 <Tooltip title='Daily Trend'>
@@ -212,7 +212,7 @@ function ProfitAndLossTrendCard() {
               </Div>
             )}
           </Grid>
-          <Grid size={{ xs: 4 }} textAlign={'end'} position={'relative'}>
+          <Grid size={{ xs: 4 }} textAlign={'end'} p={0}>
             <Tooltip title='Income Statement'>
               <IconButton
                 onClick={() => setOpenDialog(true)}
