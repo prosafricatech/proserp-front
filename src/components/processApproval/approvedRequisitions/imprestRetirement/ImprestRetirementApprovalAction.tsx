@@ -1,13 +1,11 @@
 'use client';
 
 import React from 'react';
-import { CheckCircleOutlineOutlined, DeleteOutlined, EditOutlined, HighlightOff, MoreHorizOutlined, UndoOutlined, VisibilityOutlined } from '@mui/icons-material';
+import { CheckCircleOutlineOutlined, DeleteOutlined, EditOutlined, HighlightOff, UndoOutlined, VisibilityOutlined } from '@mui/icons-material';
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Grid, IconButton, LinearProgress, Tab, Tabs, Tooltip, useMediaQuery } from '@mui/material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
-import { JumboDdMenu } from '@jumbo/components';
-import { MenuItemProps } from '@jumbo/types';
 import PDFContent from '@/components/pdf/PDFContent';
 import imprestRetirementServices from '@/components/processApproval/imprestRetirements/imprestRetirementServices';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
@@ -23,6 +21,7 @@ interface ImprestRetirementApprovalActionProps {
   approvedRequisition: any;
   previewContext?: 'retirement' | 'approval';
   previewOnly?: boolean;
+  isLatestApprovalRow?: boolean;
 }
 
 const extractOne = (payload: any): any | null => {
@@ -41,12 +40,13 @@ function ImprestRetirementApprovalAction({
   approvedRequisition,
   previewContext = 'retirement',
   previewOnly = false,
+  isLatestApprovalRow = true,
 }: ImprestRetirementApprovalActionProps) {
   const { showDialog, hideDialog } = useJumboDialog();
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
   const { theme } = useJumboTheme();
-  const { checkOrganizationPermission, authOrganization } = useJumboAuth();
+  const { checkOrganizationPermission, hasOrganizationRole, authOrganization } = useJumboAuth();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
   const organization = authOrganization?.organization;
 
@@ -162,35 +162,17 @@ function ImprestRetirementApprovalAction({
 
   const canUpdate = isDraftLike || isPendingApproval || isOnHold || isRejected || isApproved;
   const canDelete = isDraftLike || isPendingApproval;
-  const canApproveNext = canApproveRetirement && !hasFinalApproval && (isPendingApproval || isApproved);
-
-  const menuItems: MenuItemProps[] = [
-    {
-      icon: <VisibilityOutlined />,
-      title: previewContext === 'approval' ? 'Preview Approval' : 'Preview Retirement',
-      action: 'preview',
-    } as MenuItemProps,
-    ...(previewOnly
-      ? []
-      : [
-    ...(canUpdate
-      ? [
-          { icon: <EditOutlined />, title: 'Edit', action: 'update-draft' } as MenuItemProps,
-        ]
-      : []),
-    ...(canApproveNext
-      ? [
-          { icon: <CheckCircleOutlineOutlined color="success" />, title: 'Approve', action: 'retirement-approval' } as MenuItemProps,
-        ]
-      : []),
-    ...((isApproved || isRejected || isOnHold) && canApproveRetirement
-      ? [{ icon: <UndoOutlined color="warning" />, title: 'Revoke', action: 'revoke' } as MenuItemProps]
-      : []),
-    ...(canDelete
-      ? [{ icon: <DeleteOutlined color="error" />, title: 'Delete', action: 'delete-draft' } as MenuItemProps]
-      : []),
-      ]),
-  ];
+  const nextApprovalLevel = resolvedRetirement?.next_approval_level || retirement?.next_approval_level;
+  const hasNextApprovalLevel = Boolean(nextApprovalLevel?.id);
+  const canApproveByRole = hasOrganizationRole(nextApprovalLevel?.role?.name ?? '');
+  const canApproveNext =
+    hasNextApprovalLevel &&
+    canApproveByRole &&
+    isLatestApprovalRow &&
+    !hasFinalApproval &&
+    !isOnHold &&
+    !isRejected &&
+    (isPendingApproval || isApproved);
 
   const handleDeleteDraft = () => {
     showDialog({
@@ -240,34 +222,13 @@ function ImprestRetirementApprovalAction({
     });
   };
 
-  const handleItemAction = (menuItem: MenuItemProps) => {
-    switch (menuItem.action) {
-      case 'update-draft':
-        if (shouldEditApproval) {
-          setOpenApprovalDialog(true);
-        } else {
-          setOpenUpdateDialog(true);
-        }
-        break;
-      case 'preview':
-        setOpenPreviewDialog(true);
-        break;
-      case 'delete-draft':
-        handleDeleteDraft();
-        break;
-      case 'approve':
-      case 'retirement-approval':
-        setOpenApprovalDialog(true);
-        break;
-      case 'revoke':
-        handleRevoke();
-        break;
-      default:
-        break;
-    }
-  };
+  const showPreview = true;
+  const showEdit = !previewOnly && canUpdate;
+  const showApprove = !previewOnly && canApproveNext;
+  const showRevoke = !previewOnly && (isApproved || isRejected || isOnHold) && canApproveRetirement;
+  const showDelete = !previewOnly && canDelete;
 
-  if (menuItems.length === 0) return null;
+  if (!showPreview && !showEdit && !showApprove && !showRevoke && !showDelete) return null;
 
   const previewRetirement = resolvedRetirement;
   const editRetirement = resolvedRetirement;
@@ -370,15 +331,54 @@ function ImprestRetirementApprovalAction({
         )}
       </Dialog>
 
-      <JumboDdMenu
-        icon={
-          <Tooltip title={previewContext === 'approval' ? 'Approval Actions' : 'Retirement Actions'}>
-            <MoreHorizOutlined fontSize="small" />
-          </Tooltip>
-        }
-        menuItems={menuItems}
-        onClickCallback={handleItemAction}
-      />
+      {showPreview && (
+        <Tooltip title={previewContext === 'approval' ? 'Preview Approval' : 'Preview Retirement'}>
+          <IconButton size="small" onClick={() => setOpenPreviewDialog(true)}>
+            <VisibilityOutlined />
+          </IconButton>
+        </Tooltip>
+      )}
+
+      {showEdit && (
+        <Tooltip title="Edit">
+          <IconButton
+            size="small"
+            onClick={() => {
+              if (shouldEditApproval) {
+                setOpenApprovalDialog(true);
+              } else {
+                setOpenUpdateDialog(true);
+              }
+            }}
+          >
+            <EditOutlined />
+          </IconButton>
+        </Tooltip>
+      )}
+
+      {showApprove && (
+        <Tooltip title="Approve">
+          <IconButton size="small" onClick={() => setOpenApprovalDialog(true)}>
+            <CheckCircleOutlineOutlined color="success" />
+          </IconButton>
+        </Tooltip>
+      )}
+
+      {showRevoke && (
+        <Tooltip title="Revoke">
+          <IconButton size="small" onClick={handleRevoke}>
+            <UndoOutlined color="warning" />
+          </IconButton>
+        </Tooltip>
+      )}
+
+      {showDelete && (
+        <Tooltip title="Delete">
+          <IconButton size="small" onClick={handleDeleteDraft}>
+            <DeleteOutlined color="error" />
+          </IconButton>
+        </Tooltip>
+      )}
     </>
   );
 }

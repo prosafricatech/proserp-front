@@ -37,6 +37,7 @@ function RetirementApprovalsTab({ retirement, isActive, approvedRequisition }: R
 
   const resolvedRetirement = extractOne(retirementDetails) || retirement;
   const approvals = extractList(resolvedRetirement?.approvals);
+  const latestApprovalId = Number(resolvedRetirement?.latest_approval?.id || 0) || null;
   const currencyCode =
     resolvedRetirement?.currency?.code ||
     resolvedRetirement?.currency_code ||
@@ -50,9 +51,21 @@ function RetirementApprovalsTab({ retirement, isActive, approvedRequisition }: R
 
   if (approvals.length === 0) {
     return (
-      <Alert variant="outlined" severity="info" sx={{ mt: 1 }}>
-        No approvals found for this retirement.
-      </Alert>
+      <Grid container spacing={1}>
+        <Grid size={{ xs: 12 }} textAlign={{ md: 'right' }}>
+          <ImprestRetirementApprovalAction
+            retirement={resolvedRetirement}
+            approvedRequisition={approvedRequisition}
+            previewContext="retirement"
+            isLatestApprovalRow
+          />
+        </Grid>
+        <Grid size={{ xs: 12 }}>
+          <Alert variant="outlined" severity="info" sx={{ mt: 1 }}>
+            No approvals found for this retirement.
+          </Alert>
+        </Grid>
+      </Grid>
     );
   }
 
@@ -127,6 +140,11 @@ function RetirementApprovalsTab({ retirement, isActive, approvedRequisition }: R
                 retirement={retirementForApprovalAction}
                 approvedRequisition={approvedRequisition}
                 previewContext="approval"
+                isLatestApprovalRow={
+                  latestApprovalId
+                    ? Number(approval?.id) === latestApprovalId
+                    : index === approvals.length - 1
+                }
               />
             </Grid>
           </Grid>
