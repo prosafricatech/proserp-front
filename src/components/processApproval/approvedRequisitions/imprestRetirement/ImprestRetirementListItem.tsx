@@ -30,13 +30,24 @@ const extractList = (payload: any): any[] => {
   return [];
 };
 
-const getStatusChipColor = (status: string) => {
+const getStatusChipColor = (status: string, statusLabel?: string) => {
   const normalizedStatus = String(status || '').toLowerCase();
+  const normalizedLabel = String(statusLabel || '').toLowerCase();
 
-  if (normalizedStatus.includes('reject')) return 'error';
-  if (normalizedStatus.includes('approved') || normalizedStatus.includes('complete')) return 'success';
-  if (normalizedStatus.includes('hold')) return 'info';
-  if (normalizedStatus.includes('pending') || normalizedStatus.includes('wait')) return 'warning';
+  const labelHasPriority =
+    normalizedLabel.includes('reject') ||
+    normalizedLabel.includes('approved') ||
+    normalizedLabel.includes('complete') ||
+    normalizedLabel.includes('hold') ||
+    normalizedLabel.includes('pending') ||
+    normalizedLabel.includes('wait');
+
+  const statusSource = labelHasPriority ? normalizedLabel : normalizedStatus;
+
+  if (statusSource.includes('reject')) return 'error';
+  if (statusSource.includes('approved') || statusSource.includes('complete')) return 'success';
+  if (statusSource.includes('hold')) return 'info';
+  if (statusSource.includes('pending') || statusSource.includes('wait')) return 'warning';
 
   return 'default';
 };
@@ -101,6 +112,7 @@ function ImprestRetirementListItem({ requisitionApprovalId, approvedRequisition 
             );
         const displayStatus = retirement?.latest_approval?.status_label || retirement?.status_label || retirement?.latest_approval?.status || retirement?.status || '';
         const colorStatus = retirement?.latest_approval?.status || retirement?.latest_approval?.status_label || retirement?.status || retirement?.status_label || '';
+        const colorStatusLabel = retirement?.latest_approval?.status_label || retirement?.status_label || '';
         const currencyCode = retirement?.requisition?.currency?.code;
         const formattedAmount = currencyCode
           ? totalAmount.toLocaleString('en-US', {
@@ -192,9 +204,9 @@ function ImprestRetirementListItem({ requisitionApprovalId, approvedRequisition 
                     <Chip
                       size="small"
                       label={displayStatus || '-'}
-                      color={getStatusChipColor(colorStatus)}
+                      color={getStatusChipColor(colorStatus, colorStatusLabel)}
                       variant={
-                        getStatusChipColor(colorStatus) === 'default'
+                        getStatusChipColor(colorStatus, colorStatusLabel) === 'default'
                           ? 'outlined'
                           : 'filled'
                       }

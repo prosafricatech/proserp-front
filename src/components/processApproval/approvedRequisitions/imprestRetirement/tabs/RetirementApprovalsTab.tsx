@@ -7,13 +7,24 @@ import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import imprestRetirementServices from '@/components/processApproval/imprestRetirements/imprestRetirementServices';
 import ImprestRetirementApprovalItemAction from '../ImprestRetirementApprovalItemAction';
 
-const getStatusChipColor = (status: string) => {
+const getStatusChipColor = (status: string, statusLabel?: string) => {
   const normalizedStatus = String(status || '').toLowerCase();
+  const normalizedLabel = String(statusLabel || '').toLowerCase();
 
-  if (normalizedStatus.includes('reject')) return 'error';
-  if (normalizedStatus.includes('approved') || normalizedStatus.includes('complete')) return 'success';
-  if (normalizedStatus.includes('hold')) return 'info';
-  if (normalizedStatus.includes('pending') || normalizedStatus.includes('wait')) return 'warning';
+  const labelHasPriority =
+    normalizedLabel.includes('reject') ||
+    normalizedLabel.includes('approved') ||
+    normalizedLabel.includes('complete') ||
+    normalizedLabel.includes('hold') ||
+    normalizedLabel.includes('pending') ||
+    normalizedLabel.includes('wait');
+
+  const statusSource = labelHasPriority ? normalizedLabel : normalizedStatus;
+
+  if (statusSource.includes('reject')) return 'error';
+  if (statusSource.includes('approved') || statusSource.includes('complete')) return 'success';
+  if (statusSource.includes('hold')) return 'info';
+  if (statusSource.includes('pending') || statusSource.includes('wait')) return 'warning';
 
   return 'default';
 };
@@ -117,9 +128,9 @@ function RetirementApprovalsTab({ retirement, isActive, approvedRequisition }: R
                 <Chip
                   size="small"
                   label={approval?.status_label || '-'}
-                  color={getStatusChipColor(approval?.status || approval?.status_label)}
+                  color={getStatusChipColor(approval?.status || approval?.status_label, approval?.status_label)}
                   variant={
-                    getStatusChipColor(approval?.status || approval?.status_label) === 'default'
+                    getStatusChipColor(approval?.status || approval?.status_label, approval?.status_label) === 'default'
                       ? 'outlined'
                       : 'filled'
                   }
