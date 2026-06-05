@@ -257,7 +257,6 @@ function ImprestRetirementApprovalAction({
   if (menuItems.length === 0) return null;
 
   const previewRetirement =
-    retirementDetails?.data?.data ||
     retirementDetails?.data ||
     retirementDetails ||
     retirement;
