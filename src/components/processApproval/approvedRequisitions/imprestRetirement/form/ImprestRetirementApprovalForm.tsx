@@ -195,9 +195,13 @@ function ImprestRetirementApprovalForm({
     mutationFn: isEdit
       ? imprestRetirementServices.updateApproval
       : imprestRetirementServices.approve,
-    onSuccess: (response: any) => {
+    onSuccess: async (response: any) => {
       enqueueSnackbar(response?.message || 'Decision recorded', { variant: 'success' });
-      queryClient.invalidateQueries({ queryKey: ['imprestRetirements'] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['imprestRetirements'] }),
+        queryClient.invalidateQueries({ queryKey: ['imprestRetirementDetails'] }),
+        queryClient.invalidateQueries({ queryKey: ['imprestRetirementApprovalDetails'] }),
+      ]);
       toggleOpen(false);
     },
     onError: (error: any) => {
@@ -484,6 +488,12 @@ function ImprestRetirementApprovalForm({
           onChange={(e) => handleRemarksChange(e.target.value)}
         />
 
+        {clientError && (
+          <Alert severity="error" sx={{ mt: 1.5 }}>
+            {clientError}
+          </Alert>
+        )}
+
         <Typography variant="subtitle2" mt={2} fontWeight={600}>
           Receipts / Supporting Documents
         </Typography>
@@ -504,12 +514,6 @@ function ImprestRetirementApprovalForm({
         ) : (
           <Alert severity="info" sx={{ mt: 1 }}>
             Supporting documents are unavailable because retirement reference is missing.
-          </Alert>
-        )}
-
-        {clientError && (
-          <Alert severity="error" sx={{ mt: 1.5 }}>
-            {clientError}
           </Alert>
         )}
       </DialogContent>

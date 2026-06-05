@@ -2,8 +2,8 @@
 
 import React from 'react';
 import {
-  CheckCircleOutlineOutlined,
   EditOutlined,
+  FactCheckOutlined,
   HighlightOff,
   UndoOutlined,
   VisibilityOutlined,
@@ -170,11 +170,15 @@ function ImprestRetirementApprovalItemAction({
 
   const { mutate: revokeRetirementApproval } = useMutation({
     mutationFn: imprestRetirementServices.revokeApproval,
-    onSuccess: (response: any) => {
+    onSuccess: async (response: any) => {
       enqueueSnackbar(response?.message || 'Retirement approval revoked', {
         variant: 'success',
       });
-      queryClient.invalidateQueries({ queryKey: ['imprestRetirements'] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['imprestRetirements'] }),
+        queryClient.invalidateQueries({ queryKey: ['imprestRetirementDetails'] }),
+        queryClient.invalidateQueries({ queryKey: ['imprestRetirementApprovalDetails'] }),
+      ]);
     },
     onError: (error: any) => {
       enqueueSnackbar(error?.response?.data?.message || 'Failed to revoke retirement approval', {
@@ -324,7 +328,7 @@ function ImprestRetirementApprovalItemAction({
       </Dialog>
 
       {showPreview && (
-        <Tooltip title="Preview Approval">
+        <Tooltip title="View">
           <IconButton size="small" onClick={() => setOpenPreviewDialog(true)}>
             <VisibilityOutlined />
           </IconButton>
@@ -354,7 +358,7 @@ function ImprestRetirementApprovalItemAction({
               setOpenApprovalDialog(true);
             }}
           >
-            <CheckCircleOutlineOutlined color="success" />
+            <FactCheckOutlined />
           </IconButton>
         </Tooltip>
       )}

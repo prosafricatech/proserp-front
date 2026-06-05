@@ -6,9 +6,9 @@ import imprestRetirementServices from '@/components/processApproval/imprestRetir
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import {
-  CheckCircleOutlineOutlined,
   DeleteOutlined,
   EditOutlined,
+  FactCheckOutlined,
   HighlightOff,
   VisibilityOutlined,
 } from '@mui/icons-material';
@@ -323,7 +323,7 @@ function ImprestRetirementItemAction({
       {showApprove && (
         <Tooltip title='Approve'>
           <IconButton size='small' onClick={() => setOpenApprovalDialog(true)}>
-            <CheckCircleOutlineOutlined color='success' />
+            <FactCheckOutlined />
           </IconButton>
         </Tooltip>
       )}
