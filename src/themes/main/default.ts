@@ -45,44 +45,44 @@ export const mainTheme: ThemeOptions = {
       main: '#2113AD',
       light: '#567FFB',
       dark: '#473bb7',
-      contrastText: '#FFFFFF'
+      contrastText: '#FFFFFF',
     },
     secondary: {
       main: '#E44A77',
       light: '#FF7EA6',
       dark: '#DF295E',
-      contrastText: '#FFF'
+      contrastText: '#FFF',
     },
     error: {
       main: '#E73145',
       light: '#FF6A70',
       dark: '#AD001E',
-      contrastText: '#FFF'
+      contrastText: '#FFF',
     },
     warning: {
       main: '#F39711',
       light: '#FFC84C',
       dark: '#BB6900',
-      contrastText: '#FFF'
+      contrastText: '#FFF',
     },
     info: {
       main: '#2EB5C9',
       light: '#6FE7FC',
       dark: '#008598',
-      contrastText: '#FFF'
+      contrastText: '#FFF',
     },
     success: {
       main: '#0f8507',
       light: '#07ab2d',
       dark: '#00A073',
-      contrastText: '#FFF'
+      contrastText: '#FFF',
     },
     text: {
       primary: '#475259',
       secondary: '#8595A6',
       disabled: '#A2B2C3',
     },
-    divider : '#DEE2E6',
+    divider: '#DEE2E6',
     background: {
       paper: '#FFFFFF',
       default: '#F5F7FA',
@@ -160,8 +160,8 @@ export const mainTheme: ThemeOptions = {
       },
     },
     JumboSearch: {
-      background: '#F5F5F5'
-    }
+      background: '#F5F5F5',
+    },
   },
   components: {
     MuiTableCell: {
@@ -178,93 +178,125 @@ export const mainTheme: ThemeOptions = {
         },
       },
     },
+    MuiAccordion: {
+      styleOverrides: {
+        root: {
+          boxShadow: `0 0.5rem 1.25rem ${alpha('#000000', 0.15)}`,
+          ':first-of-type': {
+            borderTopLeftRadius: 12,
+            borderTopRightRadius: 12,
+          },
+          ':last-of-type': {
+            borderBottomLeftRadius: 12,
+            borderBottomRightRadius: 12,
+          },
+        },
+      },
+    },
+    MuiAccordionDetails: {
+      styleOverrides: {
+        root: {
+          padding: '0 20px 20px',
+        },
+      },
+    },
+    MuiAccordionSummary: {
+      styleOverrides: {
+        root: {
+          paddingInline: 20,
+        },
+        content: {
+          marginBlock: 20,
+        },
+      },
+    },
     MuiCard: {
       styleOverrides: {
         root: {
           borderRadius: 12,
-          boxShadow: `0 0.5rem 1.25rem ${alpha('#2113AD', .175)}`
+          boxShadow: `0 0.5rem 1.25rem ${alpha('#2113AD', 0.175)}`,
         },
       },
     },
     MuiCardContent: {
       styleOverrides: {
         root: {
-          padding: 24
+          padding: 24,
         },
       },
     },
     MuiCardHeader: {
       styleOverrides: {
         root: {
-          padding: '18px 24px'
+          padding: '18px 24px',
         },
         title: {
           fontSize: '1.1rem',
-          marginBottom: 0
+          marginBottom: 0,
         },
         subheader: {
-          margin: '4px 0 0'
+          margin: '4px 0 0',
         },
         action: {
-          margin: 0
-        }
-      }
+          margin: 0,
+        },
+      },
     },
     MuiCardActions: {
       styleOverrides: {
         root: {
-          padding: '8px 24px'
-        }
-      }
+          padding: '8px 24px',
+        },
+      },
     },
     MuiChip: {
       styleOverrides: {
         sizeSmall: {
           height: 22,
           fontSize: 12,
-        }
-      }
+        },
+      },
     },
     MuiButton: {
       styleOverrides: {
         root: {
           fontWeight: 400,
           letterSpacing: 1,
-          textTransform : 'none'
+          textTransform: 'none',
         },
         sizeSmall: {
-          fontSize: '12px'
-        }
-      }
+          fontSize: '12px',
+        },
+      },
     },
     MuiPopover: {
       styleOverrides: {
         paper: {
-          borderRadius: 8
-        }
-      }
+          borderRadius: 8,
+        },
+      },
     },
     MuiDialogTitle: {
       styleOverrides: {
         root: {
-          fontSize: 18
-        }
-      }
+          fontSize: 18,
+        },
+      },
     },
     MuiDialogActions: {
       styleOverrides: {
         root: {
-          padding: '16px 24px'
-        }
-      }
+          padding: '16px 24px',
+        },
+      },
     },
     MuiAvatarGroup: {
       styleOverrides: {
         avatar: {
           backgroundColor: '#757575',
-          fontSize: 16
-        }
-      }
+          fontSize: 16,
+        },
+      },
     },
   },
 };
