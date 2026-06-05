@@ -35,8 +35,8 @@ type RetirementItem = {
   imprest_retirement_item_id?: number;
   ledger_id: number | null;
   measurement_unit_id: number | null;
-  quantity: number;
-  rate: number;
+  quantity: number | null;
+  rate: number | null;
   amount?: number;
   description: string;
   ledger?: {
@@ -58,6 +58,11 @@ type PendingAttachment = {
 
 type AttachmentFormValues = {
   attachments: PendingAttachment[];
+};
+
+type ImprestLedgerOption = {
+  id: number;
+  name: string;
 };
 
 const ALLOWED_ATTACHMENT_EXTENSIONS = new Set([
@@ -100,26 +105,11 @@ type ImprestRetirementFormProps = {
   startNew?: boolean;
 };
 
-const extractList = (payload: any): any[] => {
-  if (Array.isArray(payload)) return payload;
-  if (Array.isArray(payload?.data)) return payload.data;
-  if (Array.isArray(payload?.data?.data)) return payload.data.data;
-  return [];
-};
-
-const extractOne = (payload: any): any | null => {
-  if (!payload) return null;
-  if (payload?.id) return payload;
-  if (payload?.data?.id) return payload.data;
-  if (payload?.data?.data?.id) return payload.data.data;
-  return null;
-};
-
 const EMPTY_ITEM: RetirementItem = {
   ledger_id: null,
   measurement_unit_id: null,
-  quantity: 1,
-  rate: 0,
+  quantity: null,
+  rate: null,
   description: '',
 };
 
@@ -191,7 +181,6 @@ function ImprestRetirementForm({
     fields: pendingAttachments,
     append: appendPendingAttachment,
     remove: removePendingAttachmentField,
-    update: updatePendingAttachmentField,
   } = useFieldArray({
     control,
     name: 'attachments',
@@ -225,13 +214,22 @@ function ImprestRetirementForm({
     enabled: !!approvedDetails?.id && !existingRetirementDetails && !startNew,
   });
 
-  const existingRetirementFromShow = React.useMemo(
-    () => extractOne(existingRetirementDetails),
-    [existingRetirementDetails]
-  );
+  const existingRetirementFromShow = React.useMemo(() => {
+    if (!existingRetirementDetails) return null;
+    if (existingRetirementDetails?.id) return existingRetirementDetails;
+    if (existingRetirementDetails?.data?.id) return existingRetirementDetails.data;
+    if (existingRetirementDetails?.data?.data?.id) return existingRetirementDetails.data.data;
+    return null;
+  }, [existingRetirementDetails]);
 
-  const myImprestLedgers = React.useMemo(() => {
-    return extractList(myLedgersResponse)
+  const myImprestLedgers = React.useMemo<ImprestLedgerOption[]>(() => {
+    const ledgers = Array.isArray(myLedgersResponse)
+      ? myLedgersResponse
+      : Array.isArray(myLedgersResponse?.data)
+        ? myLedgersResponse.data
+          : [];
+
+    return ledgers
       .filter((entry: any) => String(entry?.type || '').toLowerCase() === 'imprest')
       .map((entry: any) => ({
         id: Number(entry?.ledger_id || entry?.ledger?.id),
@@ -247,7 +245,12 @@ function ImprestRetirementForm({
       return existingRetirementFromShow;
     }
 
-    const list = extractList(existingRetirementsResponse);
+    const list = Array.isArray(existingRetirementsResponse)
+      ? existingRetirementsResponse
+      : Array.isArray(existingRetirementsResponse?.data)
+        ? existingRetirementsResponse.data
+          : [];
+
     if (list.length === 0) return null;
 
     if (preferredRetirementId) {
@@ -283,7 +286,13 @@ function ImprestRetirementForm({
     );
     setRemarks(existingRetirement.remarks || '');
 
-    const sourceItems = extractList(existingRetirement.items);
+    const sourceItems = Array.isArray(existingRetirement.items)
+      ? existingRetirement.items
+      : Array.isArray(existingRetirement.items?.data)
+        ? existingRetirement.items.data
+        : Array.isArray(existingRetirement.items?.data?.data)
+          ? existingRetirement.items.data.data
+          : [];
 
     const normalizedItems = sourceItems.map((item: any) => ({
       id: item.id,
@@ -364,12 +373,6 @@ function ImprestRetirementForm({
       existingRetirement?.approval?.status ||
       ''
   ).toLowerCase();
-  const isOnHoldStatus =
-    approvalStatusRaw === 'on hold' || statusRaw.includes('on hold');
-  const isRejectedStatus =
-    approvalStatusRaw.includes('reject') || statusRaw.includes('reject');
-  const isApprovedStatus =
-    approvalStatusRaw === 'approved' || statusRaw.includes('approved');
   const isLocked = false;
   const canSubmitForApproval =
     !isEditMode &&
@@ -415,7 +418,15 @@ function ImprestRetirementForm({
         limit: 100,
       });
 
-      const found = extractList(listResponse).find(
+      const list = Array.isArray(listResponse)
+        ? listResponse
+        : Array.isArray(listResponse?.data)
+          ? listResponse.data
+          : Array.isArray(listResponse?.data?.data)
+            ? listResponse.data.data
+            : [];
+
+      const found = list.find(
         (entry: any) => String(entry?.retirementNo || '').toUpperCase() === match[0].toUpperCase()
       );
 

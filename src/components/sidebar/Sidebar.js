@@ -36,6 +36,14 @@ function Sidebar({ menus }) {
                     }
                 }
 
+                if (!checkOrganizationPermission(PERMISSIONS.IMPREST_RETIREMENTS_READ)) {
+                    if (processApprovalMenuIndex >= 0) {
+                        updatedMenus[processApprovalMenuIndex].children = updatedMenus[processApprovalMenuIndex].children.filter(
+                            child => child.label !== dictionary.sidebar.menuItem.retirements
+                        );
+                    }
+                }
+
                 const hasApprovalMasters = checkOrganizationPermission([
                     PERMISSIONS.APPROVAL_CHAINS_CREATE,
                     PERMISSIONS.APPROVAL_CHAINS_READ,

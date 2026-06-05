@@ -37,6 +37,8 @@ import ImprestRetirementForm from './form/ImprestRetirementForm';
 import ImprestRetirementOnScreenPreview from './preview/ImprestRetirementOnScreenPreview';
 import ImprestRetirementPDF from './preview/ImprestRetirementPDF';
 
+dayjs.extend(isSameOrAfter);
+
 type ImprestRetirementItemActionProps = {
   retirement: any;
   approvedRequisition?: any;
@@ -45,6 +47,7 @@ type ImprestRetirementItemActionProps = {
 
 const isTruthyFlag = (value: any) =>
   value === true || value === 1 || String(value || '').toLowerCase() === 'true';
+const normalizeStatus = (value: any) => String(value || '').toLowerCase();
 
 function ImprestRetirementItemAction({
   retirement,
@@ -86,17 +89,17 @@ function ImprestRetirementItemAction({
     retirement?.latest_approval ||
     null;
 
-  const statusRaw = String(
-    currentApproval?.status || retirementDetails?.status || ''
-  ).toLowerCase();
-  const statusLabelRaw = String(
-    currentApproval?.status_label || retirementDetails?.status_label || ''
-  ).toLowerCase();
-  const approvalStatusRaw = String(currentApproval?.status || '').toLowerCase();
-  const approvalStatusLabelRaw = String(
-    currentApproval?.status_label || ''
-  ).toLowerCase();
-  const hasFinalApproval = isTruthyFlag(currentApproval?.is_final);
+  const statusRaw = normalizeStatus(
+    currentApproval?.status || retirementDetails?.status || retirement?.status
+  );
+  const statusLabelRaw = normalizeStatus(
+    currentApproval?.status_label ||
+      retirementDetails?.status_label ||
+      retirement?.status_label
+  );
+  const approvalStatusRaw = normalizeStatus(currentApproval?.status);
+  const approvalStatusLabelRaw = normalizeStatus(currentApproval?.status_label);
+  const isFinalApproval = isTruthyFlag(currentApproval?.is_final);
 
   const isOnHold =
     approvalStatusRaw === 'on hold' ||
@@ -110,9 +113,9 @@ function ImprestRetirementItemAction({
     approvalStatusRaw === 'approved' ||
     statusLabelRaw.includes('approved') ||
     approvalStatusLabelRaw.includes('approved') ||
-    hasFinalApproval;
+    isFinalApproval;
   const isPendingApproval =
-    !hasFinalApproval &&
+    !isFinalApproval &&
     !isOnHold &&
     !isRejected &&
     !isApproved &&
@@ -123,25 +126,20 @@ function ImprestRetirementItemAction({
 
   const nextApprovalLevel =
     retirementDetails?.next_approval_level || retirement?.next_approval_level;
-  const hasNextApprovalLevel = Boolean(nextApprovalLevel?.id);
-  const canApproveByRole = hasOrganizationRole(
-    nextApprovalLevel?.role?.name ?? ''
-  );
+  const approvalsCount = retirementDetails?.approvals?.length ?? 0;
   const canApproveNext =
-    hasNextApprovalLevel &&
-    canApproveByRole &&
-    !hasFinalApproval &&
+    Boolean(nextApprovalLevel?.id) &&
+    hasOrganizationRole(nextApprovalLevel?.role?.name ?? '') &&
+    !isFinalApproval &&
     !isOnHold &&
     !isRejected &&
-    (isPendingApproval ||
-      isApproved ||
-      retirementDetails?.approvals?.length === 0);
-
-  dayjs.extend(isSameOrAfter);
+    (isPendingApproval || isApproved || approvalsCount === 0);
 
   const canEditOrDeleteRetirement =
-    retirementDetails?.approvals?.length === 0 &&
-    dayjs(retirement?.retirement_date).isSameOrAfter(dayjs().startOf('day'));
+    approvalsCount === 0 &&
+    dayjs(retirementDetails?.retirement_date || retirement?.retirement_date).isSameOrAfter(
+      dayjs().startOf('day')
+    );
 
   const { mutate: deleteRetirement } = useMutation({
     mutationFn: imprestRetirementServices.delete,
@@ -174,13 +172,9 @@ function ImprestRetirementItemAction({
     });
   };
 
-  const showPreview = true;
   const showEdit = canEditOrDeleteRetirement;
-  const showApprove =
-    canApproveNext && retirementDetails?.approvals?.length === 0;
+  const showApprove = canApproveNext && approvalsCount === 0;
   const showDelete = canEditOrDeleteRetirement;
-
-  if (!showPreview && !showEdit && !showApprove && !showDelete) return null;
 
   const isFetchingDialogDetails = isFetchingRetirementDetails;
 
@@ -304,13 +298,11 @@ function ImprestRetirementItemAction({
         )}
       </Dialog>
 
-      {showPreview && (
-        <Tooltip title='Preview Retirement'>
-          <IconButton size='small' onClick={() => setOpenPreviewDialog(true)}>
-            <VisibilityOutlined />
-          </IconButton>
-        </Tooltip>
-      )}
+      <Tooltip title='Preview Retirement'>
+        <IconButton size='small' onClick={() => setOpenPreviewDialog(true)}>
+          <VisibilityOutlined />
+        </IconButton>
+      </Tooltip>
 
       {showEdit && (
         <Tooltip title='Edit'>

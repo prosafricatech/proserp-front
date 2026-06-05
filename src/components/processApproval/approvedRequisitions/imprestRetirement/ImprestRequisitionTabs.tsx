@@ -7,6 +7,8 @@ import ApprovedPaymentListItem from '../approvedPayment/ApprovedPaymentListItem'
 import ImprestRetirementActionTail from './ImprestRetirementActionTail';
 import ImprestRetirementListItem from './ImprestRetirementListItem';
 import { PaymentApprovalRequisition } from '../ApprovalRequisitionType';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
 
 interface ImprestRequisitionTabsProps {
   approvedRequisition: PaymentApprovalRequisition;
@@ -22,6 +24,16 @@ function ImprestRequisitionTabs({
   isExpanded,
 }: ImprestRequisitionTabsProps) {
   const isFullyPaid = approvedRequisition?.is_fully_paid === true;
+  const { checkOrganizationPermission } = useJumboAuth();
+  const canReadRetirements = checkOrganizationPermission(
+    PERMISSIONS.IMPREST_RETIREMENTS_READ
+  );
+
+  React.useEffect(() => {
+    if (!canReadRetirements && activeTab !== 0) {
+      setActiveTab(0);
+    }
+  }, [activeTab, canReadRetirements, setActiveTab]);
 
   return (
     <Grid container spacing={1}>
@@ -32,7 +44,7 @@ function ImprestRequisitionTabs({
           aria-label="Imprest tabs"
         >
           <Tab label="Payments" />
-          <Tab label="Retirements" />
+          {canReadRetirements && <Tab label="Retirements" />}
         </Tabs>
       </Grid>
 
@@ -56,7 +68,7 @@ function ImprestRequisitionTabs({
         </Grid>
       )}
 
-      {activeTab === 1 && (
+      {canReadRetirements && activeTab === 1 && (
         <Grid size={{ xs: 12 }}>
           <Grid container spacing={1} justifyContent="flex-end" mb={1}>
             <Grid size={{ xs: 12 }} textAlign="right">

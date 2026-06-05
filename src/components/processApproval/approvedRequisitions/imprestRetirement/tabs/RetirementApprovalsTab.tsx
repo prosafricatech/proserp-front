@@ -47,7 +47,7 @@ type RetirementApprovalsTabProps = {
 function RetirementApprovalsTab({
   retirement,
   isActive,
-  approvedRequisition,
+  approvedRequisition: _approvedRequisition,
 }: RetirementApprovalsTabProps) {
   const { data: retirementDetails, isFetching } = useQuery({
     queryKey: [
@@ -60,9 +60,36 @@ function RetirementApprovalsTab({
   });
 
   const resolvedRetirement = retirementDetails || retirement;
-  const approvals = resolvedRetirement?.approvals || [];
+  const approvals = Array.isArray(resolvedRetirement?.approvals)
+    ? resolvedRetirement.approvals
+    : Array.isArray(resolvedRetirement?.approvals?.data)
+      ? resolvedRetirement.approvals.data
+      : [];
   const latestApprovalId =
     Number(resolvedRetirement?.latest_approval?.id || 0) || null;
+  const normalizedCurrencyCode = String(
+    resolvedRetirement?.currency?.code ||
+      resolvedRetirement?.currency_code ||
+      resolvedRetirement?.imprest_approval?.requisition?.currency?.code ||
+      resolvedRetirement?.requisition?.currency?.code ||
+      ''
+  )
+    .trim()
+    .toUpperCase();
+  const currencyCode = /^[A-Z]{3}$/.test(normalizedCurrencyCode)
+    ? normalizedCurrencyCode
+    : null;
+
+  const formatApprovalAmount = (value: number) =>
+    currencyCode
+      ? value.toLocaleString('en-US', {
+          style: 'currency',
+          currency: currencyCode,
+        })
+      : value.toLocaleString('en-US', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
 
   if (isFetching && !retirementDetails) {
     return <LinearProgress />;
@@ -94,16 +121,11 @@ function RetirementApprovalsTab({
                   : Number(item?.quantity || 0) * Number(item?.rate || 0)),
               0
             );
-        const currencyCode = retirement?.requisition?.currency?.code;
-        const formattedApprovalTotal = currencyCode
-          ? approvalTotal.toLocaleString('en-US', {
-              style: 'currency',
-              currency: currencyCode,
-            })
-          : approvalTotal.toLocaleString('en-US', {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            });
+        const formattedApprovalTotal = formatApprovalAmount(approvalTotal);
+        const statusChipColor = getStatusChipColor(
+          approval?.status || approval?.status_label,
+          approval?.status_label
+        );
 
         const retirementForApprovalAction = {
           ...resolvedRetirement,
@@ -137,7 +159,7 @@ function RetirementApprovalsTab({
               </Tooltip>
               <Tooltip title='Approved By'>
                 <Typography variant='caption' color='text.secondary' noWrap>
-                  {approval?.creator?.name || '-'}
+                  {approval?.creator?.name}
                 </Typography>
               </Tooltip>
             </Grid>
@@ -146,19 +168,9 @@ function RetirementApprovalsTab({
               <Tooltip title='Status'>
                 <Chip
                   size='small'
-                  label={approval?.status_label || '-'}
-                  color={getStatusChipColor(
-                    approval?.status || approval?.status_label,
-                    approval?.status_label
-                  )}
-                  variant={
-                    getStatusChipColor(
-                      approval?.status || approval?.status_label,
-                      approval?.status_label
-                    ) === 'default'
-                      ? 'outlined'
-                      : 'filled'
-                  }
+                  label={approval?.status_label}
+                  color={statusChipColor}
+                  variant={statusChipColor === 'default' ? 'outlined' : 'filled'}
                 />
               </Tooltip>
             </Grid>
@@ -174,7 +186,7 @@ function RetirementApprovalsTab({
             <Grid size={{ xs: 12, md: 2 }}>
               <Tooltip title='Remarks'>
                 <Typography variant='caption' color='text.secondary' noWrap>
-                  {approval?.remarks || '-'}
+                  {approval?.remarks}
                 </Typography>
               </Tooltip>
             </Grid>
