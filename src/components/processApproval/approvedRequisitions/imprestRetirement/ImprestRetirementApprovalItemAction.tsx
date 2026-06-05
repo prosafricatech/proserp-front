@@ -234,8 +234,7 @@ function ImprestRetirementApprovalItemAction({
     canEditOrDeleteDate &&
     isCurrentLatestApprovalRow &&
     ((currentApproval?.creator?.id === authUser?.user?.id) ||
-      canDeleteAnyRetirementApproval) &&
-    !(currentApproval?.has_orders || currentApproval?.has_payments);
+      canDeleteAnyRetirementApproval)
 
   const isFetchingDialogDetails = isFetchingApprovalDetails || isFetchingRetirementDetails;
 
