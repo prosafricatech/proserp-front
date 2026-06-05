@@ -161,7 +161,7 @@ function ImprestRetirementApprovalAction({
     ...((isApproved || isRejected)
       ? [
           {
-            icon: <UndoOutlined color='warning' />,
+            icon: <UndoOutlined color='error' />,
             title: 'Revoke',
             action: 'revoke',
           } as MenuItemProps,

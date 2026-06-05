@@ -365,7 +365,7 @@ function ImprestRetirementApprovalItemAction({
       {showRevoke && (
         <Tooltip title="Revoke">
           <IconButton size="small" onClick={handleRevoke}>
-            <UndoOutlined color="warning" />
+            <UndoOutlined color="error" />
           </IconButton>
         </Tooltip>
       )}
