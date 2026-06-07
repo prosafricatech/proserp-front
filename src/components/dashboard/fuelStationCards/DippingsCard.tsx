@@ -81,8 +81,8 @@ function DippingsCard() {
   return (
     <JumboCardQuick
       sx={{
-        // height: smallScreen ? 700 : 310
-        height: midScreen ? 360 : null,
+        height: smallScreen ? 700 : 310,
+        // height: midScreen ? 360 : null,
       }}
       title={
         isLoading ? (

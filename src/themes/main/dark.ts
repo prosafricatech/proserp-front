@@ -1,5 +1,5 @@
-import { Shadows, ThemeOptions, alpha } from '@mui/material';
 import '@mui/lab/themeAugmentation';
+import { Shadows, ThemeOptions, alpha } from '@mui/material';
 
 const shadows: Shadows = [
   'none',
