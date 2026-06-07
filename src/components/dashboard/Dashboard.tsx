@@ -32,6 +32,7 @@ const PurchasesAndGrns = lazy(
   () => import('./procurementCards/PurchasesAndGrns')
 );
 const ProductSalesCard = lazy(() => import('./posCards/ProductSalesCard'));
+
 const ProfitAndLossTrendCard = lazy(
   () => import('./accountsCards/ProfitAndLossTrendCard')
 );
@@ -42,6 +43,7 @@ const RevenueDistributionCard = lazy(
   () => import('./accountsCards/RevenueDistributionCard')
 );
 const DippingsCard = lazy(() => import('./fuelStationCards/DippingsCard'));
+
 const QuickReports = lazy(() => import('./QuickReports'));
 
 interface DashboardContextType {
