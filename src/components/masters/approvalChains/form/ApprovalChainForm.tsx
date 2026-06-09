@@ -10,9 +10,11 @@ import ApprovalChainsItemForm from './ApprovalChainsItemForm';
 import ApprovalChainsItemRow from './ApprovalChainsItemRow';
 import CostCenterSelector from '../../costCenters/CostCenterSelector';
 import { HighlightOff } from '@mui/icons-material';
-import { PROCESS_TYPES } from '@/utilities/constants/processTypes';
+import { getProcessTypes } from '@/utilities/constants/processTypes';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Div } from '@jumbo/shared';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { MODULES } from '@/utilities/constants/modules';
 
 interface ApprovalChainFormValues {
   process_type: string;
@@ -30,6 +32,7 @@ function ApprovalChainForm({ toggleOpen }: ApprovalChainFormProps) {
   const [serverError, setServerError] = useState<{ process_type?: string[] } | null>(null);
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
+  const { organizationHasSubscribed } = useJumboAuth();
 
   const [showWarning, setShowWarning] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
@@ -39,6 +42,11 @@ function ApprovalChainForm({ toggleOpen }: ApprovalChainFormProps) {
   const validationSchema = yup.object({
     process_type: yup.string().required('Process Type is required').typeError('Process Type is required'),
   });
+
+  const processTypeOptions = React.useMemo(
+    () => getProcessTypes(organizationHasSubscribed(MODULES.HUMAN_RESOURCES)),
+    [organizationHasSubscribed]
+  );
 
   const { 
     handleSubmit, 
@@ -117,7 +125,7 @@ function ApprovalChainForm({ toggleOpen }: ApprovalChainFormProps) {
                   <Div sx={{ mt: 0.3 }}>
                     <Autocomplete
                       id="checkboxes-process_type"
-                      options={PROCESS_TYPES}
+                      options={processTypeOptions}
                       isOptionEqualToValue={(option, value) => option === value}
                       getOptionLabel={(option) => option}
                       renderInput={(params) => (

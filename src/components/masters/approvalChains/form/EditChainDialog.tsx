@@ -7,11 +7,13 @@ import { useForm, SubmitHandler } from 'react-hook-form';
 import { useSnackbar } from 'notistack';
 import approvalChainsServices from '../approvalChainsServices';
 import CostCenterSelector from '../../costCenters/CostCenterSelector';
-import { PROCESS_TYPES } from '@/utilities/constants/processTypes';
+import { getProcessTypes } from '@/utilities/constants/processTypes';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Div } from '@jumbo/shared';
 import { CostCenter } from '../../costCenters/CostCenterType';
 import { ApprovalChain } from '../ApprovalChainType';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { MODULES } from '@/utilities/constants/modules';
 
 interface FormValues {
   id: number;
@@ -28,11 +30,17 @@ interface EditChainDialogProps {
 function EditChainDialog({ toggleOpen, approvalChain }: EditChainDialogProps) {
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
+  const { organizationHasSubscribed } = useJumboAuth();
 
   const validationSchema = yup.object({
     process_type: yup.string().required('Process Type is required').typeError('Process Type is required'),
     cost_center_id: yup.number().nullable(),
   });
+
+  const processTypeOptions = React.useMemo(
+    () => getProcessTypes(organizationHasSubscribed(MODULES.HUMAN_RESOURCES)),
+    [organizationHasSubscribed]
+  );
 
   const { handleSubmit, setValue, register, formState: { errors } } = useForm<FormValues>({
     resolver: yupResolver(validationSchema) as any,
@@ -74,7 +82,7 @@ function EditChainDialog({ toggleOpen, approvalChain }: EditChainDialogProps) {
                   <Div sx={{ mt: 0.3 }}>
                     <Autocomplete
                       id="checkboxes-process_type"
-                      options={PROCESS_TYPES}
+                      options={processTypeOptions}
                       defaultValue={approvalChain.process_type}
                       isOptionEqualToValue={(option, value) => option === value}
                       getOptionLabel={(option) => option}
