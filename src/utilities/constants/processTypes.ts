@@ -1,5 +1,7 @@
 export const PROCESS_TYPES = [
     'PURCHASE',
     'PAYMENT',
-    'IMPREST'
+    'IMPREST',
+    'IMPREST RETIREMENT',
+    'LEAVE REQUEST'
 ];
