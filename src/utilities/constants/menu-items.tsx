@@ -296,15 +296,16 @@ export async function getMenus(locale: string) {
           icon: icon('reports'),
         },
         {
+          uri: `/${locale}/accounts/budgets`,
+          label: sidebar.menuItem.budgets,
+          type: 'nav-item',
+          icon: icon('budgets'),
+        },
+        {
           label: sidebar.menuItem.masters,
           type: 'collapsible',
           icon: icon('currencies'),
           children: [
-            {
-              uri: `/${locale}/accounts/budgets`,
-              label: sidebar.menuItem.budgets,
-              type: 'nav-item',
-            },
             {
               uri: `/${locale}/accounts/ledger_groups`,
               label: sidebar.menuItem.ledgerGroups,
