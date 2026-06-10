@@ -97,7 +97,6 @@ const ApprovedPaymentItemForm: React.FC<ApprovedPaymentItemFormProps> = ({
                 label="Amount"
                 fullWidth
                 size="small"
-                disabled={!isImprestPayment}
                 defaultValue={approvedDetails
                   ? item.unpaid_amount
                   : item.amount
