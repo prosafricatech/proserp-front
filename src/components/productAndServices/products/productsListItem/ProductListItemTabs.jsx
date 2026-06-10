@@ -47,14 +47,14 @@ function ProductListItemTabs({ product, expanded }) {
           scrollButtons='auto'
           allowScrollButtonsMobile
         >
-          <Tab label='Pictures' />
           <Tab
             label={dictionary.products.list.secondaryForm.labels.secondaryTitle}
           />
+          <Tab label='Pictures' />
         </Tabs>
       </Grid>
 
-      {activeTab === 0 && (
+      {activeTab === 1 && (
         <Grid container sx={{ width: '100%' }} px={1}>
           <Grid size={12}>
             <ProductGallery product={product} />
@@ -62,7 +62,7 @@ function ProductListItemTabs({ product, expanded }) {
         </Grid>
       )}
 
-      {activeTab === 1 && (
+      {activeTab === 0 && (
         <Grid container sx={{ width: '100%' }}>
           <Grid size={12} textAlign={'end'}>
             {canCreateOrEdit && (
