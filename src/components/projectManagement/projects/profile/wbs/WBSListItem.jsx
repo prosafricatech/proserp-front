@@ -20,7 +20,7 @@ import {
 import Accordion from '@mui/material/Accordion';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import AccordionSummary from '@mui/material/AccordionSummary';
-import { lazy, useState } from 'react';
+import { lazy, memo, useCallback, useMemo, useState } from 'react';
 import { useProjectProfile } from '../ProjectProfileProvider';
 import WBSActionTail from './WBSActionTail';
 import WBSItemAction from './WBSItemAction';
@@ -31,6 +31,40 @@ import TasksTreeViewActionTail from './tasksTreeView/TasksTreeViewActionTail';
 const GanttChartActionTail = lazy(
   () => import('./ganttChart/GanttChartActionTail')
 );
+
+const LARGE_LIST_THRESHOLD = 80;
+const INITIAL_VISIBLE_COUNT = 60;
+const BATCH_SIZE = 40;
+
+function filterActivityChildren(children = [], normalizedQuery = '') {
+  if (!normalizedQuery) {
+    return children;
+  }
+
+  return children.reduce((acc, child) => {
+    const filteredChildren = filterActivityChildren(child.children || [], normalizedQuery);
+    const filteredTasks = (child.tasks || []).filter((task) => {
+      const taskName = task?.name?.toLowerCase() || '';
+      const taskDescription = task?.description?.toLowerCase() || '';
+      return taskName.includes(normalizedQuery) || taskDescription.includes(normalizedQuery);
+    });
+
+    const childName = child?.name?.toLowerCase() || '';
+    const childDescription = child?.description?.toLowerCase() || '';
+    const childMatches =
+      childName.includes(normalizedQuery) || childDescription.includes(normalizedQuery);
+
+    if (childMatches || filteredTasks.length > 0 || filteredChildren.length > 0) {
+      acc.push({
+        ...child,
+        tasks: filteredTasks,
+        children: filteredChildren,
+      });
+    }
+
+    return acc;
+  }, []);
+}
 
 function LinearProgressWithLabel({
   value,
@@ -88,50 +122,40 @@ function LinearProgressWithLabel({
   );
 }
 
-const TimelineActivityAccordion = ({ activity, expanded, handleChange }) => {
+const TimelineActivityAccordion = memo(function TimelineActivityAccordion({ activity, expanded, handleChange }) {
   const [childExpanded, setChildExpanded] = useState({});
   const [openDialog, setOpenDialog] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const filteredTasks = activity?.tasks?.filter((task) => {
-    const description = task.description?.toLowerCase() || '';
-    const name = task.name?.toLowerCase() || '';
-    return (
-      description.includes(searchQuery.toLowerCase()) ||
-      name.includes(searchQuery.toLowerCase())
-    );
-  });
+  const normalizedQuery = useMemo(
+    () => searchQuery.trim().toLowerCase(),
+    [searchQuery]
+  );
 
-  const filterActivityChildren = (children) => {
-    return children
-      .filter(
-        (child) =>
-          child.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (child.description &&
-            child.description
-              .toLowerCase()
-              .includes(searchQuery.toLowerCase())) ||
-          child.tasks?.some((task) =>
-            task.name.toLowerCase().includes(searchQuery.toLowerCase())
-          )
-      )
-      .map((child) => ({
-        ...child,
-        tasks: child.tasks?.filter((task) =>
-          task.name.toLowerCase().includes(searchQuery.toLowerCase())
-        ),
-        children: filterActivityChildren(child.children),
-      }));
-  };
+  const filteredTasks = useMemo(() => {
+    const tasks = activity?.tasks || [];
+    if (!normalizedQuery) {
+      return tasks;
+    }
 
-  const filteredChildren = filterActivityChildren(activity?.children || []);
+    return tasks.filter((task) => {
+      const description = task?.description?.toLowerCase() || '';
+      const name = task?.name?.toLowerCase() || '';
+      return description.includes(normalizedQuery) || name.includes(normalizedQuery);
+    });
+  }, [activity?.tasks, normalizedQuery]);
 
-  const handleChildChange = (childIndex) => {
+  const filteredChildren = useMemo(
+    () => filterActivityChildren(activity?.children || [], normalizedQuery),
+    [activity?.children, normalizedQuery]
+  );
+
+  const handleChildChange = useCallback((childIndex) => {
     setChildExpanded((prev) => ({
       ...prev,
       [childIndex]: !prev[childIndex],
     }));
-  };
+  }, []);
 
   // --- Improved Color Logic: execution vs time ---
   const execPercent = activity.executed_percentage ?? 0;
@@ -155,6 +179,7 @@ const TimelineActivityAccordion = ({ activity, expanded, handleChange }) => {
     <Accordion
       expanded={expanded}
       onChange={handleChange}
+      TransitionProps={{ unmountOnExit: true }}
       square
       sx={{
         borderRadius: 2,
@@ -313,6 +338,7 @@ const TimelineActivityAccordion = ({ activity, expanded, handleChange }) => {
         <Divider />
       </AccordionSummary>
 
+      {expanded && (
       <AccordionDetails
         sx={{
           backgroundColor: 'background.paper',
@@ -371,7 +397,7 @@ const TimelineActivityAccordion = ({ activity, expanded, handleChange }) => {
             <Grid size={12}>
               {filteredChildren.map((child, index) => (
                 <TimelineActivityAccordion
-                  key={index}
+                  key={child?.id ?? index}
                   activity={child}
                   expanded={!!childExpanded[index]}
                   handleChange={() => handleChildChange(index)}
@@ -383,36 +409,80 @@ const TimelineActivityAccordion = ({ activity, expanded, handleChange }) => {
           )}
         </Grid>
       </AccordionDetails>
+      )}
     </Accordion>
   );
-};
+});
 
 function WBSListItem() {
   const { projectTimelineActivities } = useProjectProfile();
   const [openDialog, setOpenDialog] = useState(false);
-  const [expanded, setExpanded] = useState(
-    Array(projectTimelineActivities?.length).fill(false)
-  );
+  const [expandedById, setExpandedById] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
+  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE_COUNT);
 
-  const filteredTimelineActivity = projectTimelineActivities?.filter(
-    (activity) =>
-      activity.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (activity.description &&
-        activity.description.toLowerCase().includes(searchQuery.toLowerCase()))
+  const normalizedQuery = useMemo(
+    () => searchQuery.trim().toLowerCase(),
+    [searchQuery]
   );
 
-  const sortedTimelineActivity = filteredTimelineActivity?.sort((a, b) => {
-    if (a.position_index === null) return 1;
-    if (b.position_index === null) return -1;
-    return a.position_index - b.position_index;
-  });
+  const filteredTimelineActivity = useMemo(() => {
+    const activities = Array.isArray(projectTimelineActivities)
+      ? projectTimelineActivities
+      : [];
 
-  const handleChange = (index) => {
-    const newExpanded = [...expanded];
-    newExpanded[index] = !newExpanded[index];
-    setExpanded(newExpanded);
-  };
+    if (!normalizedQuery) {
+      return activities;
+    }
+
+    return activities.filter((activity) => {
+      const name = activity?.name?.toLowerCase() || '';
+      const description = activity?.description?.toLowerCase() || '';
+      return name.includes(normalizedQuery) || description.includes(normalizedQuery);
+    });
+  }, [projectTimelineActivities, normalizedQuery]);
+
+  const sortedTimelineActivity = useMemo(() => {
+    return [...filteredTimelineActivity].sort((a, b) => {
+      if (a.position_index === null) return 1;
+      if (b.position_index === null) return -1;
+      return a.position_index - b.position_index;
+    });
+  }, [filteredTimelineActivity]);
+
+  const isLargeList = sortedTimelineActivity.length > LARGE_LIST_THRESHOLD;
+  const visibleTimelineActivities = useMemo(() => {
+    if (!isLargeList) {
+      return sortedTimelineActivity;
+    }
+    return sortedTimelineActivity.slice(0, visibleCount);
+  }, [sortedTimelineActivity, isLargeList, visibleCount]);
+
+  const hasMore = isLargeList && visibleCount < sortedTimelineActivity.length;
+
+  const handleChange = useCallback((activityId) => {
+    setExpandedById((prevState) => ({
+      ...prevState,
+      [activityId]: !prevState[activityId],
+    }));
+  }, []);
+
+  const loadMore = useCallback(() => {
+    if (!hasMore) return;
+    setVisibleCount((prev) => Math.min(prev + BATCH_SIZE, sortedTimelineActivity.length));
+  }, [hasMore, sortedTimelineActivity.length]);
+
+  const handleListScroll = useCallback(
+    (event) => {
+      if (!hasMore) return;
+      const target = event.currentTarget;
+      const distanceToBottom = target.scrollHeight - target.scrollTop - target.clientHeight;
+      if (distanceToBottom < 220) {
+        loadMore();
+      }
+    },
+    [hasMore, loadMore]
+  );
 
   const { theme } = useJumboTheme();
   const isLargeScreen = useMediaQuery(theme.breakpoints.up('md'));
@@ -453,14 +523,32 @@ function WBSListItem() {
         </Grid>
       </Grid>
 
-      <Stack direction='column'>
-        {sortedTimelineActivity?.length > 0 ? (
-          sortedTimelineActivity.map((activity, index) => (
+      {isLargeScreen && isLargeList && (
+        <Typography variant='caption' color='text.secondary' sx={{ display: 'block', mb: 1 }}>
+          Showing {visibleTimelineActivities.length} of {sortedTimelineActivity.length}
+        </Typography>
+      )}
+
+      <Stack
+        direction='column'
+        onScroll={isLargeList ? handleListScroll : undefined}
+        sx={
+          isLargeList
+            ? {
+                maxHeight: '70vh',
+                overflowY: 'auto',
+                pr: 0.5,
+              }
+            : undefined
+        }
+      >
+        {visibleTimelineActivities?.length > 0 ? (
+          visibleTimelineActivities.map((activity, index) => (
             <TimelineActivityAccordion
-              key={index}
+              key={activity?.id ?? index}
               activity={activity}
-              expanded={expanded[index]}
-              handleChange={() => handleChange(index)}
+              expanded={!!expandedById[activity?.id]}
+              handleChange={() => handleChange(activity?.id)}
               openDialog={openDialog}
               setOpenDialog={setOpenDialog}
             />
@@ -469,6 +557,11 @@ function WBSListItem() {
           <Alert variant='outlined' severity='info'>
             No Timeline Activity Found
           </Alert>
+        )}
+        {hasMore && (
+          <Box display='flex' justifyContent='center' py={1}>
+            <Chip label='Load more activities' onClick={loadMore} clickable variant='outlined' />
+          </Box>
         )}
       </Stack>
     </>

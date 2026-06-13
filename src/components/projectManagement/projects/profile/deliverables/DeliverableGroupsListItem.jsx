@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Grid, ListItemText, Stack, Typography, Divider, Tooltip } from '@mui/material';
 import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
@@ -11,75 +11,79 @@ import { useProjectProfile } from '../ProjectProfileProvider';
 import DeliverableGroupItemAction from './DeliverableGroupItemAction';
 import DeliverableGroupActionTail from './DeliverableGroupActionTail';
 
-// Helper to build a unique key for nested group expansion state
 function getNestedKey(parentKey, index) {
   return parentKey ? `${parentKey}.${index}` : `${index}`;
 }
 
-const DeliverableGroupsAccordion = ({ group, expanded, handleChange, parentKey = '' }) => {
+function filterChildrenGroups(children = [], normalizedQuery = '') {
+  if (!normalizedQuery) {
+    return children;
+  }
+
+  return children.reduce((acc, child) => {
+    const filteredChildren = filterChildrenGroups(child.children || [], normalizedQuery);
+    const filteredDeliverables = (child.deliverables || []).filter((deliverable) =>
+      deliverable?.description?.toLowerCase().includes(normalizedQuery)
+    );
+    const selfMatches =
+      child.name?.toLowerCase().includes(normalizedQuery) ||
+      child.description?.toLowerCase().includes(normalizedQuery);
+
+    if (selfMatches || filteredDeliverables.length > 0 || filteredChildren.length > 0) {
+      acc.push({
+        ...child,
+        deliverables: filteredDeliverables,
+        children: filteredChildren,
+      });
+    }
+
+    return acc;
+  }, []);
+}
+
+const DeliverableGroupsAccordion = memo(function DeliverableGroupsAccordion({
+  group,
+  expanded,
+  handleChange,
+  parentKey = '',
+}) {
   const [childExpanded, setChildExpanded] = useState({});
   const [openDialog, setOpenDialog] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const LOCAL_STORAGE_KEY = 'deliverableGroupsNestedExpanded';
-
-  // Restore child expanded state from localStorage
-  useEffect(() => {
-    const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        if (parsed && typeof parsed === 'object') {
-          setChildExpanded(parsed[parentKey] || {});
-        }
-      } catch {}
-    }
-  }, [parentKey]);
-
-  // Persist child expanded state to localStorage
-  useEffect(() => {
-    const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-    let parsed = {};
-    if (stored) {
-      try {
-        parsed = JSON.parse(stored);
-      } catch {}
-    }
-    parsed[parentKey] = childExpanded;
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(parsed));
-  }, [childExpanded, parentKey]);
-
-  const filteredDeliverables = group?.deliverables?.filter(deliverable =>
-    deliverable.description?.toLowerCase().includes(searchQuery.toLowerCase())
+  const normalizedQuery = useMemo(
+    () => searchQuery.trim().toLowerCase(),
+    [searchQuery]
   );
 
-  const filterChildrenGroups = (children) => {
-    return children
-      .filter(child =>
-        child.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (child.description && child.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        child.deliverables?.some(d => d.description?.toLowerCase().includes(searchQuery.toLowerCase()))
-      )
-      .map(child => ({
-        ...child,
-        deliverables: child.deliverables?.filter(d => d.description?.toLowerCase().includes(searchQuery.toLowerCase())),
-        children: filterChildrenGroups(child.children || [])
-      }));
-  };
+  const filteredDeliverables = useMemo(() => {
+    const deliverables = group?.deliverables || [];
+    if (!normalizedQuery) {
+      return deliverables;
+    }
 
-  const filteredChildren = filterChildrenGroups(group?.children || []);
+    return deliverables.filter((deliverable) =>
+      deliverable?.description?.toLowerCase().includes(normalizedQuery)
+    );
+  }, [group?.deliverables, normalizedQuery]);
 
-  const handleChildChange = (childIndex) => {
+  const filteredChildren = useMemo(
+    () => filterChildrenGroups(group?.children || [], normalizedQuery),
+    [group?.children, normalizedQuery]
+  );
+
+  const handleChildChange = useCallback((childIndex) => {
     setChildExpanded((prevState) => ({
       ...prevState,
       [childIndex]: !prevState[childIndex],
     }));
-  };
+  }, []);
 
   return (
     <Accordion
       expanded={expanded === true}
       onChange={handleChange}
+      TransitionProps={{ unmountOnExit: true }}
       square
       sx={{
         borderRadius: 2,
@@ -155,6 +159,7 @@ const DeliverableGroupsAccordion = ({ group, expanded, handleChange, parentKey =
         <Divider />
       </AccordionSummary>
 
+      {expanded === true && (
       <AccordionDetails
         sx={{
           backgroundColor: 'background.paper',
@@ -185,7 +190,7 @@ const DeliverableGroupsAccordion = ({ group, expanded, handleChange, parentKey =
             <Grid size={{xs: 12}}>
               {filteredChildren?.map((child, index) => (
                 <DeliverableGroupsAccordion
-                  key={index}
+                  key={child?.id ?? getNestedKey(parentKey, index)}
                   group={child}
                   expanded={childExpanded[index] === true}
                   handleChange={() => handleChildChange(index)}
@@ -198,59 +203,70 @@ const DeliverableGroupsAccordion = ({ group, expanded, handleChange, parentKey =
           )}
         </Grid>
       </AccordionDetails>
+      )}
     </Accordion>
   );
-};
+});
 
 
 function DeliverableGroupsListItem() {
   const { deliverable_groups } = useProjectProfile();
   const [openDialog, setOpenDialog] = useState(false);
-  const [expanded, setExpanded] = useState([]);
+  const [expandedById, setExpandedById] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
 
   const LOCAL_STORAGE_KEY = 'deliverableGroupsExpanded';
 
-  // Restore expanded state from localStorage or initialize
+  // Restore expanded state from localStorage
   useEffect(() => {
-    if (deliverable_groups) {
-      const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          if (Array.isArray(parsed) && parsed.length === deliverable_groups.length) {
-            setExpanded(parsed);
-            return;
-          }
-        } catch {}
+    const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (!stored) return;
+
+    try {
+      const parsed = JSON.parse(stored);
+      if (parsed && typeof parsed === 'object') {
+        setExpandedById(parsed);
       }
-      setExpanded(Array(deliverable_groups.length).fill(false));
-    }
-  }, [deliverable_groups]);
+    } catch {}
+  }, []);
 
   // Persist expanded state to localStorage
   useEffect(() => {
-    if (expanded && expanded.length) {
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(expanded));
-    }
-  }, [expanded]);
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(expandedById));
+  }, [expandedById]);
 
-  const filteredGroups = deliverable_groups?.filter(group =>
-    group.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (group.description && group.description.toLowerCase().includes(searchQuery.toLowerCase())) 
+  const normalizedQuery = useMemo(
+    () => searchQuery.trim().toLowerCase(),
+    [searchQuery]
   );
 
-  const sortedDeliverableGroups = filteredGroups?.sort((a, b) => {
-    if (a.position_index === null) return 1;
-    if (b.position_index === null) return -1;
-    return a.position_index - b.position_index;
-  });
+  const filteredGroups = useMemo(() => {
+    const groups = Array.isArray(deliverable_groups) ? deliverable_groups : [];
 
-  const handleChange = (index) => {
-    const newExpanded = [...expanded];
-    newExpanded[index] = !newExpanded[index];
-    setExpanded(newExpanded);
-  };
+    if (!normalizedQuery) {
+      return groups;
+    }
+
+    return groups.filter((group) =>
+      group.name?.toLowerCase().includes(normalizedQuery) ||
+      group.description?.toLowerCase().includes(normalizedQuery)
+    );
+  }, [deliverable_groups, normalizedQuery]);
+
+  const sortedDeliverableGroups = useMemo(() => {
+    return [...filteredGroups].sort((a, b) => {
+      if (a.position_index === null) return 1;
+      if (b.position_index === null) return -1;
+      return a.position_index - b.position_index;
+    });
+  }, [filteredGroups]);
+
+  const handleChange = useCallback((groupId) => {
+    setExpandedById((prevState) => ({
+      ...prevState,
+      [groupId]: !prevState[groupId],
+    }));
+  }, []);
 
   return (
     <React.Fragment>
@@ -271,10 +287,10 @@ function DeliverableGroupsListItem() {
         {sortedDeliverableGroups && sortedDeliverableGroups.length > 0 ? (
           sortedDeliverableGroups.map((group, index) => (
             <DeliverableGroupsAccordion
-              key={index}
+              key={group?.id ?? index}
               group={group}
-              expanded={expanded[index] === true}
-              handleChange={() => handleChange(index)}
+              expanded={expandedById[group?.id] === true}
+              handleChange={() => handleChange(group?.id)}
               openDialog={openDialog}
               setOpenDialog={setOpenDialog}
             />
