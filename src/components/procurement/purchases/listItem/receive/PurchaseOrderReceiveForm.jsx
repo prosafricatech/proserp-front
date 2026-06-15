@@ -1,65 +1,96 @@
-import React, { useEffect, useState } from 'react';
-import { Button, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle, Grid, Stack, Tab,Tabs, TextField, Typography } from '@mui/material';
-import { LoadingButton } from '@mui/lab';
-import * as yup from 'yup';
-import { yupResolver } from '@hookform/resolvers/yup';
-import { FormProvider, useForm } from 'react-hook-form';
-import { useSnackbar } from 'notistack';
-import dayjs from 'dayjs';
-import {  KeyboardArrowLeftOutlined, KeyboardArrowRightOutlined } from '@mui/icons-material';
-import purchaseServices from '../../purchase-services';
-import StoreSelector from '../../../stores/StoreSelector';
-import AdditionalCostsTabRow from './receiveFormTabs/AdditionalCosts/AdditionalCostsTabRow';
-import SummaryTab from './receiveFormTabs/SummaryTab';
-import AdditionalCostsTab from './receiveFormTabs/AdditionalCosts/AdditionalCostsTab';
-import ItemsTab from './receiveFormTabs/ItemsTab';
-import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useCurrencySelect } from '@/components/masters/Currencies/CurrencySelectProvider';
-import { Div } from '@jumbo/shared';
-import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
-import CostCenterSelector from '@/components/masters/costCenters/CostCenterSelector';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
-import { DateTimePicker } from '@mui/x-date-pickers';
-import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { useLedgerSelect } from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
+import CostCenterSelector from '@/components/masters/costCenters/CostCenterSelector';
+import { useCurrencySelect } from '@/components/masters/Currencies/CurrencySelectProvider';
+import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { Div } from '@jumbo/shared';
+import {
+  KeyboardArrowLeftOutlined,
+  KeyboardArrowRightOutlined,
+} from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
+import {
+  Alert,
+  Button,
+  Checkbox,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Grid,
+  Stack,
+  Tab,
+  Tabs,
+  TextField,
+  Typography,
+  useTheme,
+} from '@mui/material';
+import { DateTimePicker } from '@mui/x-date-pickers';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import dayjs from 'dayjs';
+import { useSnackbar } from 'notistack';
+import React, { useEffect, useState } from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
+import * as yup from 'yup';
+import StoreSelector from '../../../stores/StoreSelector';
+import purchaseServices from '../../purchase-services';
+import AdditionalCostsTab from './receiveFormTabs/AdditionalCosts/AdditionalCostsTab';
+import AdditionalCostsTabRow from './receiveFormTabs/AdditionalCosts/AdditionalCostsTabRow';
+import ItemsTab from './receiveFormTabs/ItemsTab';
+import SummaryTab from './receiveFormTabs/SummaryTab';
 
 function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
-  const [additionalCosts, setAdditionalCosts] = useState(grn ? grn?.additional_costs.map(cost => ({ 
-    ...cost,
-    credit_ledger_name: cost.credit_ledger_name || cost.name,
-    currency_id: cost.currency_id || cost.currency?.id,
-    currency_name: cost.currency_name || cost.currency?.name,
-   })) : []);
+  const theme = useTheme();
+  const [additionalCosts, setAdditionalCosts] = useState(
+    grn
+      ? grn?.additional_costs.map((cost) => ({
+          ...cost,
+          credit_ledger_name: cost.credit_ledger_name || cost.name,
+          currency_id: cost.currency_id || cost.currency?.id,
+          currency_name: cost.currency_name || cost.currency?.name,
+        }))
+      : []
+  );
   const [date_received] = useState(dayjs());
   const [activeTab, setActiveTab] = useState(0);
   const { enqueueSnackbar } = useSnackbar();
-  const queryClient = useQueryClient();  
+  const queryClient = useQueryClient();
   const order_currency_id = order?.currency.id;
-  const {currencies} = useCurrencySelect();
-  const {authOrganization,checkOrganizationPermission} = useJumboAuth();
+  const { currencies } = useCurrencySelect();
+  const { authOrganization, checkOrganizationPermission } = useJumboAuth();
   const [totalReceivedAmount, setTotalReceivedAmount] = useState(0);
   const [totalAmount, setTotalAmount] = useState(0);
   const { ungroupedLedgerOptions } = useLedgerSelect();
 
   // Calculate correct unreceived_quantity for edit mode
-  let purchase_order_items = order?.purchase_order_items?.map((item) => {
-    let grnItem = grn?.items.find(i => i.purchase_order_item_id === item.id);
-    let unreceived_quantity = item.unreceived_quantity;
-    if (grnItem) {
-      unreceived_quantity += (grnItem.quantity || 0);
-    }
-    return {
-      ...item,
-      grn_quantity: grnItem ? (grnItem.quantity || 0) : 0,
-      unreceived_quantity,
-    };
-  }) || [];
+  let purchase_order_items =
+    order?.purchase_order_items?.map((item) => {
+      let grnItem = grn?.items.find(
+        (i) => i.purchase_order_item_id === item.id
+      );
+      let unreceived_quantity = item.unreceived_quantity;
+      if (grnItem) {
+        unreceived_quantity += grnItem.quantity || 0;
+      }
+      return {
+        ...item,
+        grn_quantity: grnItem ? grnItem.quantity || 0 : 0,
+        unreceived_quantity,
+      };
+    }) || [];
 
-  const initialItems = React.useMemo(() =>
-    purchase_order_items?.filter(item => item.product.type === 'Inventory' && item.unreceived_quantity > 0) || []
-  , [order]);
+  const initialItems = React.useMemo(
+    () =>
+      purchase_order_items?.filter(
+        (item) =>
+          item.product.type === 'Inventory' && item.unreceived_quantity > 0
+      ) || [],
+    [order]
+  );
 
   const [nextTab, setNextTab] = useState(null);
   const [showWarning, setShowWarning] = useState(false);
@@ -67,19 +98,18 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
 
   const handleTabChange = (event, newTab) => {
     if (isDirty) {
-      setNextTab(newTab); 
-      setShowWarning(true); 
+      setNextTab(newTab);
+      setShowWarning(true);
     } else {
-      setActiveTab(newTab); 
+      setActiveTab(newTab);
     }
   };
 
   const handleDiscardChanges = () => {
     setShowWarning(false);
     setIsDirty(false);
-    setActiveTab(nextTab); 
+    setActiveTab(nextTab);
   };
-
 
   const receiveOrder = useMutation({
     mutationFn: purchaseServices.receive,
@@ -100,13 +130,18 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
     mutationFn: ({ grnId, data }) => purchaseServices.editGrn(grnId, data),
     onSuccess: (response) => {
       toggleOpen(false);
-      enqueueSnackbar(response.message || 'GRN updated successfully', { variant: 'success' });
+      enqueueSnackbar(response.message || 'GRN updated successfully', {
+        variant: 'success',
+      });
       queryClient.invalidateQueries({ queryKey: ['purchaseOrders'] });
       queryClient.invalidateQueries({ queryKey: ['purchaseOrderDetails'] });
       queryClient.invalidateQueries({ queryKey: ['purchaseOrderGrns'] });
     },
     onError: (error) => {
-      enqueueSnackbar(error?.response?.data?.message || 'Failed to update GRN', { variant: 'error' });
+      enqueueSnackbar(
+        error?.response?.data?.message || 'Failed to update GRN',
+        { variant: 'error' }
+      );
     },
   });
 
@@ -135,12 +170,18 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
     change_cost_center: yup.boolean(),
     destination_cost_center_id: yup.number().when('change_cost_center', {
       is: true,
-      then: (schema) => schema.required('Destination Cost Center is required').typeError('Destination Cost Center is required'),
+      then: (schema) =>
+        schema
+          .required('Destination Cost Center is required')
+          .typeError('Destination Cost Center is required'),
       otherwise: (schema) => schema.nullable(),
     }),
     receivable_ledger_id: yup.number().when('change_cost_center', {
       is: true,
-      then: (schema) => schema.required('Receivable Ledger is required').typeError('Receivable Ledger is required'),
+      then: (schema) =>
+        schema
+          .required('Receivable Ledger is required')
+          .typeError('Receivable Ledger is required'),
       otherwise: (schema) => schema.nullable(),
     }),
     items: yup.array().of(
@@ -192,76 +233,105 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
       })
     ),
   });
-  
-  const {register, getValues, watch, setValue, clearErrors, handleSubmit, formState: { errors } } = useForm({
+
+  const {
+    register,
+    getValues,
+    watch,
+    setValue,
+    clearErrors,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
     resolver: yupResolver(validationSchema),
-    defaultValues: grn ? {
-      id: grn.id,
-      date_received: grn.date_received || date_received.toISOString(),
-      cost_factor: grn.cost_factor || '',
-      reference: grn.reference || order?.orderNo,
-      destination_cost_center_id: grn.destination_cost_center_id || null,
-      exchange_rate: grn.exchange_rate || order?.exchange_rate || 1,
-      store_id: grn.store.id,
-      change_cost_center: Boolean(grn.change_cost_center),
-      receivable_ledger_id: grn.receivable_ledger_id || null,
-      items: purchase_order_items
-        ?.filter(item => item.product.type === 'Inventory' && item.unreceived_quantity > 0)
-        .map(item => {
-          return {
-            unreceived_quantity: item.unreceived_quantity,
-            quantity: item.grn_quantity,
-            purchase_order_item_id: item.id,
-            rate: item.rate,
-          };
-        }) || [],
-      additional_costs: grn.additional_costs || [],
-    } : {
-      id: order?.id,
-      date_received: date_received.toISOString(),
-      cost_factor: '',
-      reference: order?.orderNo,
-      exchange_rate: order?.exchange_rate ? order.exchange_rate : 1,
-      items: purchase_order_items
-        ?.filter(item => item.product.type === 'Inventory' && item.unreceived_quantity > 0)
-        .map(item => ({
-          unreceived_quantity: item.unreceived_quantity,
-          quantity: item.unreceived_quantity,
-          purchase_order_item_id: item.id,
-          rate: item.rate,
-        })),
-    },
+    defaultValues: grn
+      ? {
+          id: grn.id,
+          date_received: grn.date_received || date_received.toISOString(),
+          cost_factor: grn.cost_factor || '',
+          reference: grn.reference || order?.orderNo,
+          destination_cost_center_id: grn.destination_cost_center_id || null,
+          exchange_rate: grn.exchange_rate || order?.exchange_rate || 1,
+          store_id: grn.store.id,
+          change_cost_center: Boolean(grn.change_cost_center),
+          receivable_ledger_id: grn.receivable_ledger_id || null,
+          items:
+            purchase_order_items
+              ?.filter(
+                (item) =>
+                  item.product.type === 'Inventory' &&
+                  item.unreceived_quantity > 0
+              )
+              .map((item) => {
+                return {
+                  unreceived_quantity: item.unreceived_quantity,
+                  quantity: item.grn_quantity,
+                  purchase_order_item_id: item.id,
+                  rate: item.rate,
+                };
+              }) || [],
+          additional_costs: grn.additional_costs || [],
+        }
+      : {
+          id: order?.id,
+          date_received: date_received.toISOString(),
+          cost_factor: '',
+          reference: order?.orderNo,
+          exchange_rate: order?.exchange_rate ? order.exchange_rate : 1,
+          items: purchase_order_items
+            ?.filter(
+              (item) =>
+                item.product.type === 'Inventory' &&
+                item.unreceived_quantity > 0
+            )
+            .map((item) => ({
+              unreceived_quantity: item.unreceived_quantity,
+              quantity: item.unreceived_quantity,
+              purchase_order_item_id: item.id,
+              rate: item.rate,
+            })),
+        },
   });
 
   // Update form state when additional Costs change
   useEffect(() => {
-    setValue('additional_costs', additionalCosts?.map(additionalCost => ({
-      credit_ledger_name: additionalCost.credit_ledger_name,
-      credit_ledger_id : additionalCost.credit_ledger_id,
-      currency_id: additionalCost.currency_id || additionalCost.currency?.id,
-      exchange_rate: additionalCost.exchange_rate,
-      reference: additionalCost.reference,
-      amount: additionalCost.amount,
-    })));
-  }, [additionalCosts, setValue]); 
+    setValue(
+      'additional_costs',
+      additionalCosts?.map((additionalCost) => ({
+        credit_ledger_name: additionalCost.credit_ledger_name,
+        credit_ledger_id: additionalCost.credit_ledger_id,
+        currency_id: additionalCost.currency_id || additionalCost.currency?.id,
+        exchange_rate: additionalCost.exchange_rate,
+        reference: additionalCost.reference,
+        amount: additionalCost.amount,
+      }))
+    );
+  }, [additionalCosts, setValue]);
 
   //total for items and its respectful rate
   useEffect(() => {
     let total = 0;
     for (let i = 0; i < purchase_order_items.length; i++) {
       const purchaseItem = purchase_order_items[i];
-      const item = watch(`items`).find(item => item.purchase_order_item_id === purchaseItem.id);
+      const item = watch(`items`).find(
+        (item) => item.purchase_order_item_id === purchaseItem.id
+      );
       const rate = item?.rate;
       const quantity = item?.quantity;
       const exchangeRate = watch('exchange_rate');
-  
-      if (purchaseItem.unreceived_quantity > 0 && rate !== undefined && quantity !== undefined && exchangeRate !== undefined) {
+
+      if (
+        purchaseItem.unreceived_quantity > 0 &&
+        rate !== undefined &&
+        quantity !== undefined &&
+        exchangeRate !== undefined
+      ) {
         const itemValue = rate * quantity * exchangeRate;
         total += itemValue;
       }
     }
     setTotalReceivedAmount(total);
-  }, [watch()]);  
+  }, [watch()]);
 
   //total for Additional Costs
   useEffect(() => {
@@ -276,13 +346,13 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
   }, [watch()]);
 
   useEffect(() => {
-    const CostFactor = 1 + (totalAmount / totalReceivedAmount);
+    const CostFactor = 1 + totalAmount / totalReceivedAmount;
     setValue('cost_factor', CostFactor);
   }, [totalAmount, totalReceivedAmount]);
 
   const getReceivedItemsSummary = () => {
     return purchase_order_items
-      .filter(item => item.unreceived_quantity !== 0)
+      .filter((item) => item.unreceived_quantity !== 0)
       .map((item, index) => ({
         product: item.product.name,
         unit: item.measurement_unit.symbol,
@@ -297,12 +367,15 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
   // Handler to reset items
   const handleResetItems = () => {
     setItemsState(initialItems);
-    setValue('items', initialItems.map(item => ({
-      unreceived_quantity: item.unreceived_quantity,
-      quantity: item.grn_quantity || item.unreceived_quantity,
-      purchase_order_item_id: item.id,
-      rate: item.rate,
-    })));
+    setValue(
+      'items',
+      initialItems.map((item) => ({
+        unreceived_quantity: item.unreceived_quantity,
+        quantity: item.grn_quantity || item.unreceived_quantity,
+        purchase_order_item_id: item.id,
+        rate: item.rate,
+      }))
+    );
   };
 
   // Handler to remove item
@@ -312,25 +385,32 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
       newItems.splice(index, 1);
       setItemsState(newItems);
       // Also update form values
-      setValue('items', newItems.map(item => ({
-        unreceived_quantity: item.unreceived_quantity,
-        quantity: item.grn_quantity || item.unreceived_quantity,
-        purchase_order_item_id: item.id,
-        rate: item.rate,
-      })));
+      setValue(
+        'items',
+        newItems.map((item) => ({
+          unreceived_quantity: item.unreceived_quantity,
+          quantity: item.grn_quantity || item.unreceived_quantity,
+          purchase_order_item_id: item.id,
+          rate: item.rate,
+        }))
+      );
     }
   };
 
   const getAdditionalCostsSummary = () => {
-    return additionalCosts.filter(item => item.amount > 0).map((item, index) => {
-      const itemCurrency = currencies.find((currency) => currency.id === item.currency_id);
-      return {
-        costName: item.credit_ledger_name,
-        itemCurrency: itemCurrency ? itemCurrency.symbol : null,
-        exchangeRate: item.exchange_rate,
-        amount: item.amount,
-      };
-    });
+    return additionalCosts
+      .filter((item) => item.amount > 0)
+      .map((item, index) => {
+        const itemCurrency = currencies.find(
+          (currency) => currency.id === item.currency_id
+        );
+        return {
+          costName: item.credit_ledger_name,
+          itemCurrency: itemCurrency ? itemCurrency.symbol : null,
+          exchangeRate: item.exchange_rate,
+          amount: item.amount,
+        };
+      });
   };
 
   const gettotalAmount = () => {
@@ -339,19 +419,24 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
     }, 0);
   };
 
+  const percentageReceived = (gettotalAmount() / order?.amount) * 100;
+
   // Function to calculate the total amount for additional costs
   const getTotalAdditionalCostsAmount = () => {
     return getAdditionalCostsSummary().reduce((total, item) => {
-      return total + (item.amount * item.exchangeRate);
+      return total + item.amount * item.exchangeRate;
     }, 0);
   };
 
   const getTotalCostAmount = () => {
     return getReceivedItemsSummary().reduce((total, item) => {
-      return total + item.exchangeRate * item.rate * item.costfactor * item.receivedQuantity;
+      return (
+        total +
+        item.exchangeRate * item.rate * item.costfactor * item.receivedQuantity
+      );
     }, 0);
-  }; 
-  
+  };
+
   //Removing items which quantity <=0
   const validateItems = (data) => {
     return data.items.filter((item) => item.quantity > 0);
@@ -359,49 +444,77 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
 
   const handleSubmitForm = async (data) => {
     const validItems = validateItems(data);
-    const validAdditionalItems = data.additional_costs.every(item => item.credit_ledger_id === null) ? [] : data.additional_costs;
-    const updatedData = { ...data, items: validItems, additional_costs: validAdditionalItems };
+    const validAdditionalItems = data.additional_costs.every(
+      (item) => item.credit_ledger_id === null
+    )
+      ? []
+      : data.additional_costs;
+    const updatedData = {
+      ...data,
+      items: validItems,
+      additional_costs: validAdditionalItems,
+    };
     saveMutation(updatedData);
   };
 
   return (
-    <FormProvider {...{ errors, register, setValue, watch, clearErrors}}>
+    <FormProvider {...{ errors, register, setValue, watch, clearErrors }}>
       <DialogTitle>
         <Grid container spacing={1}>
-          <Grid size={12} textAlign={"center"} mb={1}>
-            {grn
-                ? `Edit ${grn.grnNo}`
-                : `Receive ${order.orderNo}`}
+          <Grid size={12} textAlign={'center'} mb={1}>
+            {grn ? `Edit ${grn.grnNo}` : `Receive ${order.orderNo}`}
           </Grid>
           <Grid size={12}>
             <form autoComplete='off'>
               <Grid container spacing={1}>
-                <Grid size={{xs: 12, md: 6, lg: 4}}>
-                  <Div sx={{ mt: 1}}>
+                <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+                  <Div sx={{ mt: 1 }}>
                     <DateTimePicker
                       fullWidth
-                      label="Receive Date"
-                      defaultValue={grn && grn.date_received ? dayjs(grn.date_received) : date_received}
-                      minDate={checkOrganizationPermission(PERMISSIONS.PURCHASES_BACKDATE) ? dayjs(authOrganization.organization.recording_start_date) : dayjs().startOf('day')}
-                      maxDate={checkOrganizationPermission(PERMISSIONS.PURCHASES_POSTDATE) ? dayjs().add(10,'year').endOf('year') : dayjs().endOf('day')}
+                      label='Receive Date'
+                      defaultValue={
+                        grn && grn.date_received
+                          ? dayjs(grn.date_received)
+                          : date_received
+                      }
+                      minDate={
+                        checkOrganizationPermission(
+                          PERMISSIONS.PURCHASES_BACKDATE
+                        )
+                          ? dayjs(
+                              authOrganization.organization.recording_start_date
+                            )
+                          : dayjs().startOf('day')
+                      }
+                      maxDate={
+                        checkOrganizationPermission(
+                          PERMISSIONS.PURCHASES_POSTDATE
+                        )
+                          ? dayjs().add(10, 'year').endOf('year')
+                          : dayjs().endOf('day')
+                      }
                       slotProps={{
                         textField: {
                           size: 'small',
                           fullWidth: true,
                           readOnly: true,
-                        }
+                        },
                       }}
                       onChange={(newValue) => {
-                        setValue(`date_received`, newValue ? newValue.toISOString() : null, {
-                          shouldValidate: true,
-                          shouldDirty: true
-                        });
+                        setValue(
+                          `date_received`,
+                          newValue ? newValue.toISOString() : null,
+                          {
+                            shouldValidate: true,
+                            shouldDirty: true,
+                          }
+                        );
                       }}
                     />
                   </Div>
                 </Grid>
-                <Grid size={{xs: 12, md: 6, lg: 4}}>
-                  <Div sx={{ mt: 1}}>
+                <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+                  <Div sx={{ mt: 1 }}>
                     <StoreSelector
                       allowSubStores={true}
                       frontError={errors.store_id}
@@ -416,125 +529,147 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
                     />
                   </Div>
                 </Grid>
-                  <Grid size={{xs: 12, md: 6, lg: 4}}>
-                    <Div sx={{mt: 1}}>
-                      <TextField
-                        label="Order Reference"
-                        fullWidth
-                        size="small"
-                        defaultValue={watch('reference')}
-                        onChange={(e) => {
-                          setValue(`reference`,e.target.value,{
-                            shouldValidate: true,
-                            shouldDirty: true
-                          });
-                        }}
-                      />
-                    </Div>
-                  </Grid>
-                  <Grid size={{xs: 12, md: 6, lg: 4}}>
-                    <Div sx={{mt: 1}}>
-                      <TextField
-                        label="Cost Factor"
-                        fullWidth
-                        size='small'
-                        disabled
-                        InputProps={{
-                          inputComponent: CommaSeparatedField,
-                        }}
-                        value={watch('cost_factor')}
-                      />
-                    </Div>
-                  </Grid>
-                  <Grid size={{xs: 12, md: 6, lg: 4}}>
-                    <Div sx={{mt: 1, display: 'flex', alignItems: 'center'}}>
-                      <Checkbox
-                        checked={Boolean(watch('change_cost_center'))}
-                        onChange={e => {
-                          setValue('change_cost_center', e.target.checked, {
-                            shouldValidate: true,
-                            shouldDirty: true
-                          });
-                          if (!e.target.checked) {
-                            setValue('destination_cost_center_id', null);
-                            setValue('receivable_ledger_id', null);
+                <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+                  <Div sx={{ mt: 1 }}>
+                    <TextField
+                      label='Order Reference'
+                      fullWidth
+                      size='small'
+                      defaultValue={watch('reference')}
+                      onChange={(e) => {
+                        setValue(`reference`, e.target.value, {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                        });
+                      }}
+                    />
+                  </Div>
+                </Grid>
+                <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+                  <Div sx={{ mt: 1 }}>
+                    <TextField
+                      label='Cost Factor'
+                      fullWidth
+                      size='small'
+                      disabled
+                      InputProps={{
+                        inputComponent: CommaSeparatedField,
+                      }}
+                      value={watch('cost_factor')}
+                    />
+                  </Div>
+                </Grid>
+                <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+                  <Div sx={{ mt: 1, display: 'flex', alignItems: 'center' }}>
+                    <Checkbox
+                      checked={Boolean(watch('change_cost_center'))}
+                      onChange={(e) => {
+                        setValue('change_cost_center', e.target.checked, {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                        });
+                        if (!e.target.checked) {
+                          setValue('destination_cost_center_id', null);
+                          setValue('receivable_ledger_id', null);
+                        }
+                      }}
+                      size='small'
+                    />
+                    <Typography>Change Cost Center</Typography>
+                  </Div>
+                </Grid>
+                {watch('change_cost_center') && (
+                  <>
+                    <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+                      <Div sx={{ mt: 1 }}>
+                        <CostCenterSelector
+                          label='Destination Cost Center'
+                          multiple={false}
+                          defaultValue={
+                            grn?.receivable_ledger_id && grn?.cost_center
                           }
-                        }}
-                        size="small"
-                      />
-                      <Typography>Change Cost Center</Typography>
-                    </Div>
-                  </Grid>
-                  {watch('change_cost_center') && (
-                    <>
-                      <Grid size={{xs: 12, md: 6, lg: 4}}>
-                        <Div sx={{mt: 1}}>
-                          <CostCenterSelector
-                            label="Destination Cost Center"
-                            multiple={false}
-                            defaultValue={grn?.receivable_ledger_id && grn?.cost_center}
-                            removedCostCentersIds={grn?.order?.cost_centers?.map(c => c.id)}
-                            frontError={errors.destination_cost_center_id}
-                            onChange={newValue => {
-                              setValue('destination_cost_center_id', newValue ? newValue.id : null, {
+                          removedCostCentersIds={grn?.order?.cost_centers?.map(
+                            (c) => c.id
+                          )}
+                          frontError={errors.destination_cost_center_id}
+                          onChange={(newValue) => {
+                            setValue(
+                              'destination_cost_center_id',
+                              newValue ? newValue.id : null,
+                              {
                                 shouldValidate: true,
-                                shouldDirty: true
-                              });
-                            }}
-                          />
-                        </Div>
-                      </Grid>
-                      <Grid size={{xs: 12, md: 6, lg: 4}}>
-                        <Div sx={{mt: 1}}>
-                          <LedgerSelect
-                            label="Receivable Ledger"
-                            allowedGroups={['Accounts Receivable']}
-                            multiple={false}
-                            defaultValue={ungroupedLedgerOptions.find(
-                              (ledger) => ledger.id === watch('receivable_ledger_id')
-                            )}
-                            frontError={errors.receivable_ledger_id}
-                            onChange={newValue => {
-                              setValue('receivable_ledger_id', newValue ? newValue.id : null, {
-                                shouldValidate: true,
-                                shouldDirty: true
-                              });
-                            }}
-                          />
-                        </Div>
-                      </Grid>
-                    </>
-                  )}
-                  <Grid size={{xs: 12, md: 6, lg: 4}} sx={{ mt: 2, mb: 2 }}>
-                    <Stack direction="row" spacing={2}>
-                      <Typography sx={{ fontWeight: 'bold', color: 'primary.main' }}>Order Currency:</Typography>
-                      <Typography>{order.currency?.name}</Typography>
-                    </Stack>
-                  </Grid>
-                  {
-                    order_currency_id > 1 &&
-                    <Grid size={{xs: 12, md: 6, lg: 4}}>
-                      <Div sx={{mt: 1}}>
-                        <TextField
-                          label="Order Exchange Rate"
-                          fullWidth
-                          size='small'
-                          error={!!errors?.exchange_rate}
-                          helperText={errors?.exchange_rate?.message}
-                          InputProps={{
-                            inputComponent: CommaSeparatedField,
-                          }}
-                          value={watch('exchange_rate')}
-                          onChange={(e) => {
-                            setValue(`exchange_rate`,e.target.value ? sanitizedNumber(e.target.value ): null,{
-                              shouldValidate: true,
-                              shouldDirty: true
-                            });
+                                shouldDirty: true,
+                              }
+                            );
                           }}
                         />
                       </Div>
                     </Grid>
-                  }
+                    <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+                      <Div sx={{ mt: 1 }}>
+                        <LedgerSelect
+                          label='Receivable Ledger'
+                          allowedGroups={['Accounts Receivable']}
+                          multiple={false}
+                          defaultValue={ungroupedLedgerOptions.find(
+                            (ledger) =>
+                              ledger.id === watch('receivable_ledger_id')
+                          )}
+                          frontError={errors.receivable_ledger_id}
+                          onChange={(newValue) => {
+                            setValue(
+                              'receivable_ledger_id',
+                              newValue ? newValue.id : null,
+                              {
+                                shouldValidate: true,
+                                shouldDirty: true,
+                              }
+                            );
+                          }}
+                        />
+                      </Div>
+                    </Grid>
+                  </>
+                )}
+                <Grid size={{ xs: 12, md: 6, lg: 4 }} sx={{ mt: 2, mb: 2 }}>
+                  <Stack direction='row' spacing={2}>
+                    <Typography
+                      sx={{ fontWeight: 'bold', color: 'primary.main' }}
+                    >
+                      Order Currency:
+                    </Typography>
+                    <Typography>{order.currency?.name}</Typography>
+                  </Stack>
+                </Grid>
+                {order_currency_id > 1 && (
+                  <Grid size={{ xs: 12, md: 6, lg: 4 }}>
+                    <Div sx={{ mt: 1 }}>
+                      <TextField
+                        label='Order Exchange Rate'
+                        fullWidth
+                        size='small'
+                        error={!!errors?.exchange_rate}
+                        helperText={errors?.exchange_rate?.message}
+                        InputProps={{
+                          inputComponent: CommaSeparatedField,
+                        }}
+                        value={watch('exchange_rate')}
+                        onChange={(e) => {
+                          setValue(
+                            `exchange_rate`,
+                            e.target.value
+                              ? sanitizedNumber(e.target.value)
+                              : null,
+                            {
+                              shouldValidate: true,
+                              shouldDirty: true,
+                            }
+                          );
+                        }}
+                      />
+                    </Div>
+                  </Grid>
+                )}
               </Grid>
             </form>
           </Grid>
@@ -542,18 +677,18 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
             <Tabs
               value={activeTab}
               onChange={(e, newValue) => handleTabChange(e, newValue)}
-              variant="scrollable"
+              variant='scrollable'
               scrollButtons='auto'
               allowScrollButtonsMobile
               sx={{ mt: 1 }}
             >
-              <Tab label="Items"/>
-              <Tab label="Additional Costs"/>
-              <Tab label="Summary Preview"/>
+              <Tab label='Items' />
+              <Tab label='Additional Costs' />
+              <Tab label='Summary Preview' />
             </Tabs>
           </Grid>
         </Grid>
-      </DialogTitle>  
+      </DialogTitle>
       <DialogContent>
         {activeTab === 0 && (
           <ItemsTab
@@ -564,29 +699,77 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
           />
         )}
 
-        {activeTab === 1 && <AdditionalCostsTab setIsDirty={setIsDirty} additionalCosts={additionalCosts} setAdditionalCosts={setAdditionalCosts} />}
-
-        {activeTab === 2 && 
-          <SummaryTab 
-            authOrganization={authOrganization} order={order} getReceivedItemsSummary={getReceivedItemsSummary} gettotalAmount={gettotalAmount}
-            getTotalCostAmount={getTotalCostAmount} getTotalAdditionalCostsAmount={getTotalAdditionalCostsAmount} getAdditionalCostsSummary={getAdditionalCostsSummary}
+        {activeTab === 1 && (
+          <AdditionalCostsTab
+            setIsDirty={setIsDirty}
+            additionalCosts={additionalCosts}
+            setAdditionalCosts={setAdditionalCosts}
           />
-        }
+        )}
 
-        {activeTab === 1 &&
-          additionalCosts.map((additionalCost, index) => {
-            return <AdditionalCostsTabRow additionalCosts={additionalCosts} setAdditionalCosts={setAdditionalCosts} key={index} setIsDirty={setIsDirty} additionalCost={additionalCost} index={index}/>
-          })
-        }
+        {activeTab === 2 && (
+          <SummaryTab
+            authOrganization={authOrganization}
+            order={order}
+            getReceivedItemsSummary={getReceivedItemsSummary}
+            gettotalAmount={gettotalAmount}
+            getTotalCostAmount={getTotalCostAmount}
+            getTotalAdditionalCostsAmount={getTotalAdditionalCostsAmount}
+            getAdditionalCostsSummary={getAdditionalCostsSummary}
+          />
+        )}
+
+        {activeTab === 1 && (
+          <>
+            {additionalCosts.length > 0 && (
+              <Alert
+                variant='outlined'
+                severity='warning'
+                sx={{
+                  my: 2,
+                  color: theme.palette.getContrastText(
+                    theme.palette.background.default
+                  ),
+                }}
+              >
+                The calculated amount might vary from the actual amount, please
+                verify the calculated amounts
+              </Alert>
+            )}
+
+            {additionalCosts.map((additionalCost, index) => {
+              return (
+                <AdditionalCostsTabRow
+                  additionalCosts={additionalCosts}
+                  setAdditionalCosts={setAdditionalCosts}
+                  key={index}
+                  setIsDirty={setIsDirty}
+                  additionalCost={additionalCost}
+                  index={index}
+                  percentageReceived={percentageReceived}
+                />
+              );
+            })}
+          </>
+        )}
 
         <Dialog open={showWarning} onClose={() => setShowWarning(false)}>
           <DialogTitle>Unsaved Additional Cost</DialogTitle>
           <DialogContent>
-            You have unsaved Additional Cost. Are you sure you want to leave without saving?
+            You have unsaved Additional Cost. Are you sure you want to leave
+            without saving?
           </DialogContent>
           <DialogActions>
-            <Button size='small' onClick={()=> setShowWarning(false)}>Cancel</Button>
-            <Button size='small' onClick={handleDiscardChanges} color="secondary">Discard</Button>
+            <Button size='small' onClick={() => setShowWarning(false)}>
+              Cancel
+            </Button>
+            <Button
+              size='small'
+              onClick={handleDiscardChanges}
+              color='secondary'
+            >
+              Discard
+            </Button>
           </DialogActions>
         </Dialog>
       </DialogContent>
@@ -594,41 +777,53 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
         <Grid container spacing={1}>
           <Grid size={{ xs: 12, md: 8 }}></Grid>
           <Grid size={{ xs: 12, md: 4 }}>
-            <Stack spacing={1} direction={'row'} justifyContent={'end'} sx={{ mt: 1, mb: 1 }}>
+            <Stack
+              spacing={1}
+              direction={'row'}
+              justifyContent={'end'}
+              sx={{ mt: 1, mb: 1 }}
+            >
               <Button size='small' onClick={() => toggleOpen(false)}>
                 Cancel
               </Button>
-              {
-                activeTab > 0 &&
-                <Button size='small' variant='outlined' onClick={() => handleTabChange(null, activeTab - 1)}>
-                  <KeyboardArrowLeftOutlined/>
+              {activeTab > 0 && (
+                <Button
+                  size='small'
+                  variant='outlined'
+                  onClick={() => handleTabChange(null, activeTab - 1)}
+                >
+                  <KeyboardArrowLeftOutlined />
                   Prev
                 </Button>
-              }
-              {
-                activeTab < 2 &&
-                <Button size='small' variant='outlined' onClick={() => handleTabChange(null, activeTab + 1)}>
+              )}
+              {activeTab < 2 && (
+                <Button
+                  size='small'
+                  variant='outlined'
+                  onClick={() => handleTabChange(null, activeTab + 1)}
+                >
                   Next
-                  <KeyboardArrowRightOutlined/>
+                  <KeyboardArrowRightOutlined />
                 </Button>
-              }
-              {
-                activeTab === 2 &&
+              )}
+              {activeTab === 2 && (
                 <LoadingButton
-                  loading={grn ? editGrnMutation.isPending : receiveOrder.isPending}
+                  loading={
+                    grn ? editGrnMutation.isPending : receiveOrder.isPending
+                  }
                   variant='contained'
                   size='small'
                   onClick={handleSubmit(() => handleSubmitForm(getValues()))}
                 >
                   Submit
                 </LoadingButton>
-              }
+              )}
             </Stack>
           </Grid>
         </Grid>
       </DialogActions>
     </FormProvider>
-  )
+  );
 }
 
 export default PurchaseOrderReceiveForm;
