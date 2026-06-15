@@ -32,8 +32,8 @@ function PurchaseOrderOnScreenPreview({ order }) {
   const withPrices = [
     PERMISSIONS.ACCOUNTS_REPORTS,
     PERMISSIONS.PURCHASES_CREATE,
-    PERMISSIONS.APPROVED_REQUISITIONS_PURCHASE
-  ].some(perm => checkOrganizationPermission([perm]));
+    PERMISSIONS.APPROVED_REQUISITIONS_PURCHASE,
+  ].some((perm) => checkOrganizationPermission([perm]));
 
   const vatAmount = order.purchase_order_items.reduce((total, item) => {
     return (total += item.rate * item.quantity * item.vat_percentage * 0.01);
@@ -148,7 +148,7 @@ function PurchaseOrderOnScreenPreview({ order }) {
             >
               Created By
             </Typography>
-            <Typography variant='body1'>{order?.creator.name}</Typography>
+            <Typography variant='body1'>{order?.creator?.name}</Typography>
           </Box>
         </Grid>
         {(order?.reference || order?.requisitionNo) && (
@@ -458,10 +458,7 @@ function PurchaseOrderOnScreenPreview({ order }) {
                 cost.name ||
                 `Additional Cost ${index + 1}`;
               const costCurrency =
-                cost.currency?.code ||
-                cost.currency_name ||
-                currencyCode ||
-                '';
+                cost.currency?.code || cost.currency_name || currencyCode || '';
 
               return (
                 <React.Fragment
