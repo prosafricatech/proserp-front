@@ -705,13 +705,11 @@ declare global {
     params: Promise<ParamMap[AppRouteHandlerRoute]>
   }
 }
-n GET(request: NextRequest, context: RouteContext<'/api/users/[id]'>) {
-   *   const { id } = await context.params
-   *   return Response.json({ id })
-   * }
-   * ```
-   */
+GET({request: NextRequest, context: RouteContext<'/api/users/[id]'>}){
+   const { id } = await context.params
+   return Response.json({ id })
+   }
+   
   interface RouteContext<AppRouteHandlerRoute extends AppRouteHandlerRoutes> {
     params: Promise<ParamMap[AppRouteHandlerRoute]>
   }
-}

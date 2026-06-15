@@ -6,7 +6,7 @@ import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import JumboContentLayout from '@jumbo/components/JumboContentLayout';
 import ProjectDashboard from './dashboard/ProjectDashboard';
 import ProjectProfileProvider, { useProjectProfile } from './ProjectProfileProvider';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import projectsServices from '../project-services';
 import StakeholderSelectProvider from '@/components/masters/stakeholders/StakeholderSelectProvider';
 import CurrencySelectProvider from '@/components/masters/Currencies/CurrencySelectProvider';
@@ -53,7 +53,6 @@ const TABS_NEEDING_TIMELINE: TabKey[] = [
 function ProfileContent() {
   const { project, updateProjectProfile, setIsDashboardTab }: any = useProjectProfile();
   const { authUser, checkOrganizationPermission } = useJumboAuth();
-  const queryClient = useQueryClient();
   const isAdministrator = authUser?.user?.organization_roles?.some(
     (role: { name?: string }) => role.name === 'Administrator'
   );
@@ -80,7 +79,9 @@ function ProfileContent() {
 
   const { data: deliverablesData, isLoading: isDeliverablesLoading, refetch: refetchDeliverables } = useQuery({
     queryKey: ['projectDeliverableGroups', project?.id],
-    queryFn: () => projectsServices.showDeliverablesAndGroups(project.id),
+    queryFn: () => projectsServices.showDeliverablesAndGroups(project!.id),
+    enabled: !!project?.id,
+    staleTime: 60_000,
   });
 
   //Budgets
@@ -92,62 +93,53 @@ function ProfileContent() {
         cost_center_id: project?.cost_center?.id 
       }),
     enabled: !!project?.id,
+    staleTime: 60_000,
   });
 
   //Timeline Activities
   const { data: timelineActivitiesData, isLoading: isTimelineActivitiesLoading, refetch: refetchTimelineActivities } = useQuery({
     queryKey: ['projectTimelineActivities', project?.id],
-    queryFn: () => projectsServices.showProjectTimelineActivities(project.id),
+    queryFn: () => projectsServices.showProjectTimelineActivities(project!.id),
+    enabled: !!project?.id,
+    staleTime: 60_000,
   });
 
-  // Clear cache and fetch fresh data when tab changes
+  // Fetch data based on active tab only when needed.
   useEffect(() => {
     if (!project?.id) return;
 
-    // Clear existing cache for fresh data
-    queryClient.invalidateQueries({ queryKey: ['projectDeliverableGroups', project.id] });
-    queryClient.invalidateQueries({ queryKey: ['projectBudgets', project.id, project.cost_center?.id] });
-    queryClient.invalidateQueries({ queryKey: ['projectTimelineActivities', project.id] });
-
-    // Fetch data based on active tab
     const fetchDataForTab = async () => {
-      switch (activeTab) {
-        case 'deliverables':
-        case 'wbs':
-        case 'updates':
-        case 'budgets':
-        case 'subcontracts':
-        case 'claims':
-          // These tabs need deliverables
-          if (TABS_NEEDING_DELIVERABLES.includes(activeTab)) {
-            await refetchDeliverables();
-          }
-          // These tabs need timeline
-          if (TABS_NEEDING_TIMELINE.includes(activeTab)) {
-            await refetchTimelineActivities();
-          }
-          break;
-        case 'budgets':
-          await refetchBudgets();
-          break;
+      if (TABS_NEEDING_DELIVERABLES.includes(activeTab) && !deliverablesData) {
+        await refetchDeliverables();
+      }
+
+      if (TABS_NEEDING_TIMELINE.includes(activeTab) && !timelineActivitiesData) {
+        await refetchTimelineActivities();
+      }
+
+      if (activeTab === 'budgets' && !budgetsData) {
+        await refetchBudgets();
       }
     };
 
     fetchDataForTab();
-  }, [activeTab, project?.id]);
+  }, [
+    activeTab,
+    project?.id,
+    deliverablesData,
+    timelineActivitiesData,
+    budgetsData,
+    refetchDeliverables,
+    refetchTimelineActivities,
+    refetchBudgets,
+  ]);
 
-  // Initial data fetch when component mounts
+  // Prefetch heavy tabs while dashboard is open so switch is instant later.
   useEffect(() => {
-    if (project?.id && TABS_NEEDING_DELIVERABLES.includes(activeTab)) {
-      refetchDeliverables();
-    }
-    if (project?.id && TABS_NEEDING_TIMELINE.includes(activeTab)) {
-      refetchTimelineActivities();
-    }
-    if (project?.id && activeTab === 'budgets') {
-      refetchBudgets();
-    }
-  }, [project?.id]);
+    if (!project?.id) return;
+    refetchDeliverables();
+    refetchTimelineActivities();
+  }, [project?.id, refetchDeliverables, refetchTimelineActivities]);
 
   // Update profile context with fetched data
   useEffect(() => {

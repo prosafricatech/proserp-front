@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  Box,
   Grid,
   Accordion,
   AccordionSummary,
@@ -11,6 +12,7 @@ import {
   Tab,
   LinearProgress,
   Skeleton,
+  Button,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
@@ -26,6 +28,10 @@ function DeliverablesListItem({ filteredDeliverables }) {
   const { activeTab } = useProjectProfile();
   const [expandedIndex, setExpandedIndex] = React.useState(-1);
   const [tabIndex, setTabIndex] = React.useState(0);
+  const [visibleCount, setVisibleCount] = useState(60);
+
+  const BATCH_SIZE = 40;
+  const LARGE_LIST_THRESHOLD = 80;
 
   const LOCAL_STORAGE_KEY = 'deliverablesExpandedIndex';
 
@@ -49,6 +55,41 @@ function DeliverablesListItem({ filteredDeliverables }) {
     localStorage.setItem(LOCAL_STORAGE_KEY, expandedIndex);
   }, [expandedIndex]);
 
+  useEffect(() => {
+    setVisibleCount(60);
+    if (expandedIndex >= filteredDeliverables.length) {
+      setExpandedIndex(-1);
+    }
+  }, [filteredDeliverables, expandedIndex]);
+
+  const isLargeList = filteredDeliverables.length > LARGE_LIST_THRESHOLD;
+
+  const visibleDeliverables = useMemo(() => {
+    if (!isLargeList) {
+      return filteredDeliverables;
+    }
+    return filteredDeliverables.slice(0, visibleCount);
+  }, [filteredDeliverables, isLargeList, visibleCount]);
+
+  const hasMore = isLargeList && visibleCount < filteredDeliverables.length;
+
+  const loadMore = useCallback(() => {
+    if (!hasMore) return;
+    setVisibleCount((prev) => Math.min(prev + BATCH_SIZE, filteredDeliverables.length));
+  }, [hasMore, filteredDeliverables.length]);
+
+  const handleListScroll = useCallback(
+    (event) => {
+      if (!hasMore) return;
+      const target = event.currentTarget;
+      const distanceToBottom = target.scrollHeight - target.scrollTop - target.clientHeight;
+      if (distanceToBottom < 220) {
+        loadMore();
+      }
+    },
+    [hasMore, loadMore]
+  );
+
   const { data: deliverableDetails, isLoading: isDetailsLoading } = useQuery({
     queryKey: ['deliverableDetails', expandedIndex],
     queryFn: () => {
@@ -68,14 +109,32 @@ function DeliverablesListItem({ filteredDeliverables }) {
   return (
     <Grid size={{xs: 12}}>
       {filteredDeliverables.length > 0 && <Typography>Deliverables</Typography>}
-      {filteredDeliverables.map((deliverable, index) => {
+      {isLargeList && (
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+          Showing {visibleDeliverables.length} of {filteredDeliverables.length}
+        </Typography>
+      )}
+      <Box
+        onScroll={isLargeList ? handleListScroll : undefined}
+        sx={
+          isLargeList
+            ? {
+                maxHeight: '70vh',
+                overflowY: 'auto',
+                pr: 0.5,
+              }
+            : undefined
+        }
+      >
+      {visibleDeliverables.map((deliverable, index) => {
+        const realIndex = index;
         const currencyCode = deliverable.currency?.code;
 
         return (
           <Accordion
-            key={index}
-            expanded={expandedIndex === index}
-            onChange={() => handleAccordionToggle(index)}
+            key={deliverable?.id ?? index}
+            expanded={expandedIndex === realIndex}
+            onChange={() => handleAccordionToggle(realIndex)}
             square
             sx={{
               borderRadius: 2,
@@ -91,7 +150,7 @@ function DeliverablesListItem({ filteredDeliverables }) {
             }}
           >
             <AccordionSummary
-              expandIcon={expandedIndex === index ? <RemoveIcon /> : <AddIcon />}
+              expandIcon={expandedIndex === realIndex ? <RemoveIcon /> : <AddIcon />}
               sx={{
                 px: 3,
                 flexDirection: 'row-reverse',
@@ -195,6 +254,14 @@ function DeliverablesListItem({ filteredDeliverables }) {
           </Accordion>
         );
       })}
+      {hasMore && (
+        <Box display="flex" justifyContent="center" py={1}>
+          <Button size="small" variant="outlined" onClick={loadMore}>
+            Load more deliverables
+          </Button>
+        </Box>
+      )}
+      </Box>
     </Grid>
   );
 }

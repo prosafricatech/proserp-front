@@ -47,13 +47,6 @@ type ImprestRetirementApprovalFormProps = {
   isEdit?: boolean;
 };
 
-const extractList = (p: any): any[] => {
-  if (Array.isArray(p)) return p;
-  if (Array.isArray(p?.data)) return p.data;
-  if (Array.isArray(p?.data?.data)) return p.data.data;
-  return [];
-};
-
 function ImprestRetirementApprovalForm({
   toggleOpen,
   retirement,
@@ -62,61 +55,61 @@ function ImprestRetirementApprovalForm({
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
 
-  const approvals = extractList(retirement?.approvals);
+  const approvals = Array.isArray(retirement?.approvals)
+    ? retirement.approvals
+    : Array.isArray(retirement?.approvals?.data)
+      ? retirement.approvals.data
+      : Array.isArray(retirement?.approvals?.data?.data)
+        ? retirement.approvals.data.data
+        : [];
+  const lastApproval = approvals.length > 0 ? approvals[approvals.length - 1] : null;
   const latestApproval =
     retirement?.latest_approval ||
     retirement?.approval ||
-    (approvals.length > 0 ? approvals[approvals.length - 1] : null);
+    lastApproval;
   const approvalId = Number(latestApproval?.id || 0) || 0;
 
-  const nextApprovalLevelId = Number(retirement?.next_approval_level?.id || 0) || 0;
-  const nextApprovalLevelIsFinal = Number(
-    retirement?.next_approval_level?.is_final ||
-      retirement?.next_approval_level?.can_finalize ||
-      0
-  ) || 0;
-  const activeApprovalChainLevel = isEdit
-    ? latestApproval?.approval_chain_level || latestApproval?.chain_level || approvals[approvals.length - 1]?.approval_chain_level || null
-    : retirement?.next_approval_level || latestApproval?.approval_chain_level || latestApproval?.chain_level || approvals[approvals.length - 1]?.approval_chain_level || null;
-  const isFinalLevel = Boolean(nextApprovalLevelIsFinal || latestApproval?.is_final);
+  const nextApprovalLevel = retirement?.next_approval_level || null;
+  const nextApprovalLevelId = Number(nextApprovalLevel?.id ?? 0) || 0;
+  const nextApprovalLevelIsFinal =
+    Number(nextApprovalLevel?.is_final ?? nextApprovalLevel?.can_finalize ?? 0) ||
+    0;
 
-  const chainLevelId = Number(
-    isEdit
-      ? latestApproval?.chain_level_id ||
-          latestApproval?.approval_chain_level_id ||
-          latestApproval?.approval_chain_level?.id ||
-          latestApproval?.chain_level?.id ||
-          approvals[approvals.length - 1]?.approval_chain_level?.id ||
-          nextApprovalLevelId
-      : nextApprovalLevelId ||
-          latestApproval?.chain_level_id ||
-          latestApproval?.approval_chain_level_id ||
-          latestApproval?.approval_chain_level?.id ||
-          latestApproval?.chain_level?.id ||
-          approvals[approvals.length - 1]?.approval_chain_level?.id
-  ) || 0;
+  const editChainLevelId =
+    Number(
+      latestApproval?.chain_level_id ??
+        latestApproval?.approval_chain_level_id ??
+        latestApproval?.approval_chain_level?.id ??
+        latestApproval?.chain_level?.id ??
+        0
+    ) || 0;
 
-  const isFinal = Number(
-    isEdit
-      ? latestApproval?.is_final ||
-          latestApproval?.approval_chain_level?.is_final ||
-          latestApproval?.chain_level?.is_final ||
-          approvals[approvals.length - 1]?.is_final ||
-        nextApprovalLevelIsFinal
-      : nextApprovalLevelIsFinal ||
-          latestApproval?.is_final ||
-          latestApproval?.approval_chain_level?.is_final ||
-          latestApproval?.chain_level?.is_final ||
-          approvals[approvals.length - 1]?.is_final
-  ) || 0;
+  const chainLevelId = isEdit ? editChainLevelId : nextApprovalLevelId;
+
+  const editIsFinal =
+    Number(
+      latestApproval?.is_final ??
+        latestApproval?.approval_chain_level?.is_final ??
+        latestApproval?.chain_level?.is_final ??
+        0
+    ) || 0;
+
+  const isFinal = isEdit ? editIsFinal : nextApprovalLevelIsFinal;
+  const isFinalLevel = Boolean(isFinal);
 
   const seedItems = React.useMemo((): ApprovalItem[] => {
+    const toList = (value: any): any[] => {
+      if (Array.isArray(value)) return value;
+      if (Array.isArray(value?.data)) return value.data;
+      return [];
+    };
+
     const lastWithItems = [...approvals]
       .reverse()
-      .find((a) => extractList(a?.items).length > 0);
+      .find((a) => toList(a?.items).length > 0);
     const source = lastWithItems
-      ? extractList(lastWithItems.items)
-      : extractList(retirement?.items);
+      ? toList(lastWithItems.items)
+      : toList(retirement?.items);
 
     return source.map((item: any) => ({
       imprest_retirement_item_id: Number(item?.imprest_retirement_item_id || item?.id || 0),
@@ -140,8 +133,7 @@ function ImprestRetirementApprovalForm({
     String(
       retirement?.currency?.code ||
         retirement?.currency_code ||
-        retirement?.imprest_approval?.requisition?.currency?.code ||
-        'TZS'
+        retirement?.imprest_approval?.requisition?.currency?.code
     ).trim() || 'TZS';
 
   const totalAmount = items.reduce(
@@ -195,9 +187,13 @@ function ImprestRetirementApprovalForm({
     mutationFn: isEdit
       ? imprestRetirementServices.updateApproval
       : imprestRetirementServices.approve,
-    onSuccess: (response: any) => {
+    onSuccess: async (response: any) => {
       enqueueSnackbar(response?.message || 'Decision recorded', { variant: 'success' });
-      queryClient.invalidateQueries({ queryKey: ['imprestRetirements'] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['imprestRetirements'] }),
+        queryClient.invalidateQueries({ queryKey: ['imprestRetirementDetails'] }),
+        queryClient.invalidateQueries({ queryKey: ['imprestRetirementApprovalDetails'] }),
+      ]);
       toggleOpen(false);
     },
     onError: (error: any) => {
@@ -484,6 +480,12 @@ function ImprestRetirementApprovalForm({
           onChange={(e) => handleRemarksChange(e.target.value)}
         />
 
+        {clientError && (
+          <Alert severity="error" sx={{ mt: 1.5 }}>
+            {clientError}
+          </Alert>
+        )}
+
         <Typography variant="subtitle2" mt={2} fontWeight={600}>
           Receipts / Supporting Documents
         </Typography>
@@ -504,12 +506,6 @@ function ImprestRetirementApprovalForm({
         ) : (
           <Alert severity="info" sx={{ mt: 1 }}>
             Supporting documents are unavailable because retirement reference is missing.
-          </Alert>
-        )}
-
-        {clientError && (
-          <Alert severity="error" sx={{ mt: 1.5 }}>
-            {clientError}
           </Alert>
         )}
       </DialogContent>

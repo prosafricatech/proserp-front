@@ -2,8 +2,8 @@
 
 import React from 'react';
 import {
-  CheckCircleOutlineOutlined,
   EditOutlined,
+  FactCheckOutlined,
   HighlightOff,
   UndoOutlined,
   VisibilityOutlined,
@@ -34,6 +34,10 @@ import { PERMISSIONS } from '@/utilities/constants/permissions';
 import ImprestRetirementApprovalForm from './form/ImprestRetirementApprovalForm';
 import ImprestRetirementOnScreenPreview from './preview/ImprestRetirementOnScreenPreview';
 import ImprestRetirementPDF from './preview/ImprestRetirementPDF';
+import dayjs from 'dayjs';
+import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
+
+dayjs.extend(isSameOrAfter);
 
 type ImprestRetirementApprovalItemActionProps = {
   retirement: any;
@@ -44,6 +48,7 @@ type ImprestRetirementApprovalItemActionProps = {
 
 const isTruthyFlag = (value: any) =>
   value === true || value === 1 || String(value || '').toLowerCase() === 'true';
+const normalizeStatus = (value: any) => String(value || '').toLowerCase();
 
 function ImprestRetirementApprovalItemAction({
   retirement,
@@ -64,8 +69,8 @@ function ImprestRetirementApprovalItemAction({
   const [approvalDialogMode, setApprovalDialogMode] = React.useState<'approve' | 'edit'>('approve');
   const [openPreviewDialog, setOpenPreviewDialog] = React.useState(false);
   const [activePreviewTab, setActivePreviewTab] = React.useState(0);
-  const canApproveRetirement = checkOrganizationPermission([
-    PERMISSIONS.IMPREST_RETIREMENT_APPROVE,
+  const canDeleteAnyRetirementApproval = checkOrganizationPermission([
+    PERMISSIONS.IMPREST_RETIREMENT_APPROVALS_DELETE_ANY,
   ]);
 
   const currentApproval = approval || retirement?.latest_approval || retirement?.approval || null;
@@ -92,15 +97,9 @@ function ImprestRetirementApprovalItemAction({
   const resolvedRetirement = React.useMemo(() => {
     const baseRetirement = retirementDetails || retirement;
     const selectedApproval =
-      approvalDetails ||
-      approval ||
-      retirement?.latest_approval ||
-      retirement?.approval ||
-      null;
+      approvalDetails ?? approval ?? retirement?.latest_approval ?? retirement?.approval;
 
-    if (!selectedApproval) {
-      return baseRetirement;
-    }
+    if (!selectedApproval) return baseRetirement;
 
     return {
       ...baseRetirement,
@@ -122,13 +121,13 @@ function ImprestRetirementApprovalItemAction({
     isLatestApprovalRow &&
     (approvalList.length === 0 || latestApprovalRow?.id === currentApproval?.id);
 
-  const statusRaw = String(currentApproval?.status || retirement?.status || '').toLowerCase();
-  const statusLabelRaw = String(
-    currentApproval?.status_label || retirement?.status_label || ''
-  ).toLowerCase();
-  const approvalStatusRaw = String(currentApproval?.status || '').toLowerCase();
-  const approvalStatusLabelRaw = String(currentApproval?.status_label || '').toLowerCase();
-  const hasFinalApproval = isTruthyFlag(currentApproval?.is_final);
+  const statusRaw = normalizeStatus(currentApproval?.status || retirement?.status);
+  const statusLabelRaw = normalizeStatus(
+    currentApproval?.status_label || retirement?.status_label
+  );
+  const approvalStatusRaw = normalizeStatus(currentApproval?.status);
+  const approvalStatusLabelRaw = normalizeStatus(currentApproval?.status_label);
+  const isFinalApproval = isTruthyFlag(currentApproval?.is_final);
 
   const isOnHold =
     approvalStatusRaw === 'on hold' ||
@@ -142,9 +141,9 @@ function ImprestRetirementApprovalItemAction({
     approvalStatusRaw === 'approved' ||
     statusLabelRaw.includes('approved') ||
     approvalStatusLabelRaw.includes('approved') ||
-    hasFinalApproval;
+    isFinalApproval;
   const isPendingApproval =
-    !hasFinalApproval &&
+    !isFinalApproval &&
     !isOnHold &&
     !isRejected &&
     !isApproved &&
@@ -152,29 +151,37 @@ function ImprestRetirementApprovalItemAction({
     (approvalStatusRaw === 'pending' || !approvalStatusRaw || statusLabelRaw.includes('pending'));
 
   const nextApprovalLevel = resolvedRetirement?.next_approval_level || retirement?.next_approval_level;
-  const hasNextApprovalLevel = Boolean(nextApprovalLevel?.id);
-  const canApproveByRole = hasOrganizationRole(nextApprovalLevel?.role?.name ?? '');
+  const retirementStatusRaw = normalizeStatus(resolvedRetirement?.status || retirement?.status);
+  const canEditOrDeleteDate =
+    checkOrganizationPermission(PERMISSIONS.APPROVAL_BACKDATE) ||
+    dayjs(currentApproval?.approval_date).isSameOrAfter(dayjs().startOf('day'));
   const canApproveNext =
-    hasNextApprovalLevel &&
-    canApproveByRole &&
+    Boolean(nextApprovalLevel?.id) &&
+    hasOrganizationRole(nextApprovalLevel?.role?.name ?? '') &&
+    retirementStatusRaw !== 'suspended' &&
     isCurrentLatestApprovalRow &&
-    !hasFinalApproval &&
+    Number(currentApproval?.is_final || 0) === 0 &&
     !isOnHold &&
     !isRejected &&
     (isPendingApproval || isApproved || approvalList.length === 0);
 
   const canEditLatestRow =
+    canEditOrDeleteDate &&
     isCurrentLatestApprovalRow &&
     currentApproval?.creator?.id === authUser?.user?.id &&
     !(currentApproval?.has_orders || currentApproval?.has_payments);
 
   const { mutate: revokeRetirementApproval } = useMutation({
     mutationFn: imprestRetirementServices.revokeApproval,
-    onSuccess: (response: any) => {
+    onSuccess: async (response: any) => {
       enqueueSnackbar(response?.message || 'Retirement approval revoked', {
         variant: 'success',
       });
-      queryClient.invalidateQueries({ queryKey: ['imprestRetirements'] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['imprestRetirements'] }),
+        queryClient.invalidateQueries({ queryKey: ['imprestRetirementDetails'] }),
+        queryClient.invalidateQueries({ queryKey: ['imprestRetirementApprovalDetails'] }),
+      ]);
     },
     onError: (error: any) => {
       enqueueSnackbar(error?.response?.data?.message || 'Failed to revoke retirement approval', {
@@ -221,15 +228,13 @@ function ImprestRetirementApprovalItemAction({
     });
   };
 
-  const showPreview = true;
   const showEdit = canEditLatestRow;
   const showApprove = canApproveNext;
   const showRevoke =
-    (isApproved || isRejected || isOnHold) &&
-    canApproveRetirement &&
-    isCurrentLatestApprovalRow;
-
-  if (!showPreview && !showEdit && !showApprove && !showRevoke) return null;
+    canEditOrDeleteDate &&
+    isCurrentLatestApprovalRow &&
+    ((currentApproval?.creator?.id === authUser?.user?.id) ||
+      canDeleteAnyRetirementApproval)
 
   const isFetchingDialogDetails = isFetchingApprovalDetails || isFetchingRetirementDetails;
 
@@ -323,13 +328,11 @@ function ImprestRetirementApprovalItemAction({
         )}
       </Dialog>
 
-      {showPreview && (
-        <Tooltip title="Preview Approval">
-          <IconButton size="small" onClick={() => setOpenPreviewDialog(true)}>
-            <VisibilityOutlined />
-          </IconButton>
-        </Tooltip>
-      )}
+      <Tooltip title="View">
+        <IconButton size="small" onClick={() => setOpenPreviewDialog(true)}>
+          <VisibilityOutlined />
+        </IconButton>
+      </Tooltip>
 
       {showEdit && (
         <Tooltip title="Edit">
@@ -354,7 +357,7 @@ function ImprestRetirementApprovalItemAction({
               setOpenApprovalDialog(true);
             }}
           >
-            <CheckCircleOutlineOutlined color="success" />
+            <FactCheckOutlined />
           </IconButton>
         </Tooltip>
       )}
@@ -362,7 +365,7 @@ function ImprestRetirementApprovalItemAction({
       {showRevoke && (
         <Tooltip title="Revoke">
           <IconButton size="small" onClick={handleRevoke}>
-            <UndoOutlined color="warning" />
+            <UndoOutlined color="error" />
           </IconButton>
         </Tooltip>
       )}

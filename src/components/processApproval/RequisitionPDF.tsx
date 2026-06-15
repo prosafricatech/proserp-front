@@ -20,6 +20,11 @@ function RequisitionPDF({ requisition, organization }: RequisitionPDFProps) {
     const isImprest = requisition?.approval_chain?.process_type?.toLowerCase() === 'imprest';
     const requisitionItems: RequisitionItem[] = 'items' in requisition ? (requisition.items || []) : [];
     const additionalCosts = isPurchase ? (((requisition as any)?.additional_costs || []) as any[]) : [];
+    const totalAdditionalCosts =
+        additionalCosts.reduce(
+            (total: number, cost: any) => total + Number(cost?.amount || 0),
+            0
+        ) || 0;
 
     const totalVAT =
         requisitionItems
@@ -30,13 +35,15 @@ function RequisitionPDF({ requisition, organization }: RequisitionPDFProps) {
                 0
             ) || 0;
 
-    const grandTotal =
+    const productsTotal =
         requisitionItems
             ?.reduce(
-                (total: number, item: RequisitionItem) =>
-                    total + item.quantity * item.rate * (1 + (item.vat_percentage || 0) * 0.01),
+                (total: number, item: RequisitionItem) => total + (item.quantity || 0) * (item.rate || 0),
                 0
             ) || 0;
+
+    const grandTotal =
+        productsTotal + totalVAT + totalAdditionalCosts;
 
     return (
         <Document title={'Requisition'} subject='Requisition' creator='ProsERP' producer='ProsERP'>
@@ -168,40 +175,66 @@ function RequisitionPDF({ requisition, organization }: RequisitionPDFProps) {
 
                 <View style={{ ...pdfStyles.tableRow, marginBottom: 4 }}>
                     <Text style={{ textAlign: 'center', flex: 4.5 }}></Text>
-                    <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2, textAlign: 'right' }}>
+                    <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2, textAlign: 'left' }}>
                         Total
                     </Text>
                     <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2.2, textAlign: 'right' }}>
-                        {requisitionItems
-                            .reduce(
-                                (total: number, item: RequisitionItem) => total + (item.quantity || 0) * (item.rate || 0),
-                                0
-                            )
-                            .toLocaleString('en-US', {
-                                style: 'currency',
-                                currency: requisition.currency?.code,
-                            })}
+                        {productsTotal.toLocaleString('en-US', {
+                            style: 'currency',
+                            currency: requisition.currency?.code,
+                        })}
                     </Text>
                 </View>
 
-                {isPurchase && totalVAT > 0 && (
-                    <>
-                        <View style={{ ...pdfStyles.tableRow, marginBottom: 4 }}>
+                {isPurchase && additionalCosts.length > 0 && additionalCosts.map((cost: any, index: number) => {
+                    const costLabel = cost.credit_ledger_name || cost.ledger?.name || cost.name || `Additional Cost ${index + 1}`;
+                    const currencyCode = cost.currency?.code || cost.currency_name || requisition.currency?.code || '';
+                    return (
+                        <View
+                            key={cost.id || cost.requisition_additional_cost_id || index}
+                            style={{ ...pdfStyles.tableRow, marginBottom: 4 }}
+                        >
                             <Text style={{ textAlign: 'center', flex: 4.5 }}></Text>
-                            <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2, textAlign: 'right' }}>
-                                VAT
+                            <Text
+                                hyphenationCallback={(word) => [word]}
+                                style={{
+                                    ...pdfStyles.tableHeader,
+                                    backgroundColor: mainColor,
+                                    color: contrastText,
+                                    flex: 2,
+                                    textAlign: 'left',
+                                    lineHeight: 1.25,
+                                }}
+                            >
+                                {costLabel}
                             </Text>
                             <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2.2, textAlign: 'right' }}>
-                                {totalVAT.toLocaleString('en-US', {
-                                    style: 'currency',
-                                    currency: requisition.currency?.code,
-                                })}
+                                {`${currencyCode} ${Number(cost.amount || 0).toLocaleString('en-US', { maximumFractionDigits: 2 })}`.trim()}
                             </Text>
                         </View>
+                    );
+                })}
+
+                {isPurchase && (totalVAT > 0 || totalAdditionalCosts > 0) && (
+                    <>
+                        {totalVAT > 0 && (
+                            <View style={{ ...pdfStyles.tableRow, marginBottom: 4 }}>
+                                <Text style={{ textAlign: 'center', flex: 4.5 }}></Text>
+                                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2, textAlign: 'left' }}>
+                                    VAT
+                                </Text>
+                                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2.2, textAlign: 'right' }}>
+                                    {totalVAT.toLocaleString('en-US', {
+                                        style: 'currency',
+                                        currency: requisition.currency?.code,
+                                    })}
+                                </Text>
+                            </View>
+                        )}
                         <View style={{ ...pdfStyles.tableRow, marginBottom: 4 }}>
                             <Text style={{ textAlign: 'center', flex: 4.5 }}></Text>
-                            <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2, textAlign: 'right' }}>
-                                Grand Total (VAT Incl.)
+                            <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2, textAlign: 'left' }}>
+                                Grand Total
                             </Text>
                             <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2.2, textAlign: 'right' }}>
                                 {grandTotal.toLocaleString('en-US', {
@@ -209,36 +242,6 @@ function RequisitionPDF({ requisition, organization }: RequisitionPDFProps) {
                                     currency: requisition.currency?.code,
                                 })}
                             </Text>
-                        </View>
-                    </>
-                )}
-
-                {isPurchase && additionalCosts.length > 0 && (
-                    <>
-                        <Text style={{ ...pdfStyles.minInfo, color: mainColor, marginBottom: 4 }}>Additional Costs</Text>
-                        <View style={{ ...pdfStyles.table, marginBottom: 10 }}>
-                            <View style={pdfStyles.tableRow}>
-                                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.1 }}>S/N</Text>
-                                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.5 }}>Cost Name</Text>
-                                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.4 }}>Amount</Text>
-                            </View>
-
-                            {additionalCosts.map((cost, index) => {
-                                const currencyCode = cost.currency?.code || cost.currency_name || requisition.currency?.code || '';
-                                return (
-                                    <View key={cost.id || cost.requisition_additional_cost_id || index} style={pdfStyles.tableRow}>
-                                        <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 0.1 }}>
-                                            {index + 1}
-                                        </Text>
-                                        <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 0.5 }}>
-                                            {cost.credit_ledger_name || cost.ledger?.name || cost.name || '-'}
-                                        </Text>
-                                        <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 0.4, textAlign: 'right' }}>
-                                            {`${currencyCode} ${Number(cost.amount || 0).toLocaleString('en-US', { maximumFractionDigits: 2 })}`.trim()}
-                                        </Text>
-                                    </View>
-                                );
-                            })}
                         </View>
                     </>
                 )}

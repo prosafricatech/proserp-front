@@ -21,6 +21,7 @@ import { DatePicker } from '@mui/x-date-pickers';
 import dayjs, { Dayjs } from 'dayjs';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
+import { useFieldArray, useForm, useWatch } from 'react-hook-form';
 import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
 import MeasurementSelector from '@/components/masters/measurementUnits/MeasurementSelector';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
@@ -34,8 +35,8 @@ type RetirementItem = {
   imprest_retirement_item_id?: number;
   ledger_id: number | null;
   measurement_unit_id: number | null;
-  quantity: number;
-  rate: number;
+  quantity: number | null;
+  rate: number | null;
   amount?: number;
   description: string;
   ledger?: {
@@ -51,8 +52,48 @@ type RetirementItem = {
 };
 
 type PendingAttachment = {
-  file: File;
+  file: File | null;
   name: string;
+};
+
+type AttachmentFormValues = {
+  attachments: PendingAttachment[];
+};
+
+type ImprestLedgerOption = {
+  id: number;
+  name: string;
+};
+
+const ALLOWED_ATTACHMENT_EXTENSIONS = new Set([
+  'jpg',
+  'jpeg',
+  'png',
+  'gif',
+  'bmp',
+  'svg',
+  'webp',
+  'mp4',
+  'mov',
+  'avi',
+  'mkv',
+  'wmv',
+  'pdf',
+  'doc',
+  'docx',
+  'xls',
+  'xlsx',
+  'ppt',
+  'pptx',
+  'mp3',
+  'wav',
+  'aac',
+  'ogg',
+]);
+
+const getFileExtension = (fileName: string) => {
+  const parts = String(fileName || '').toLowerCase().split('.');
+  return parts.length > 1 ? parts[parts.length - 1] : '';
 };
 
 type ImprestRetirementFormProps = {
@@ -64,26 +105,11 @@ type ImprestRetirementFormProps = {
   startNew?: boolean;
 };
 
-const extractList = (payload: any): any[] => {
-  if (Array.isArray(payload)) return payload;
-  if (Array.isArray(payload?.data)) return payload.data;
-  if (Array.isArray(payload?.data?.data)) return payload.data.data;
-  return [];
-};
-
-const extractOne = (payload: any): any | null => {
-  if (!payload) return null;
-  if (payload?.id) return payload;
-  if (payload?.data?.id) return payload.data;
-  if (payload?.data?.data?.id) return payload.data.data;
-  return null;
-};
-
 const EMPTY_ITEM: RetirementItem = {
   ledger_id: null,
   measurement_unit_id: null,
-  quantity: 1,
-  rate: 0,
+  quantity: null,
+  rate: null,
   description: '',
 };
 
@@ -143,8 +169,32 @@ function ImprestRetirementForm({
   const [retirementDate, setRetirementDate] = React.useState<Dayjs | null>(dayjs());
   const [remarks, setRemarks] = React.useState('');
   const [items, setItems] = React.useState<RetirementItem[]>([{ ...EMPTY_ITEM }]);
-  const [pendingAttachments, setPendingAttachments] = React.useState<PendingAttachment[]>([]);
   const [clientError, setClientError] = React.useState<string | null>(null);
+
+  const { control, getValues, setValue } = useForm<AttachmentFormValues>({
+    defaultValues: {
+      attachments: [{ name: '', file: null }],
+    },
+  });
+
+  const {
+    fields: pendingAttachments,
+    append: appendPendingAttachment,
+    remove: removePendingAttachmentField,
+  } = useFieldArray({
+    control,
+    name: 'attachments',
+  });
+
+  const attachmentValues = useWatch({
+    control,
+    name: 'attachments',
+  }) || [];
+
+  const attachmentRows = React.useMemo(
+    () => pendingAttachments.map((field, index) => ({ ...field, ...(attachmentValues[index] || {}) })),
+    [pendingAttachments, attachmentValues]
+  );
 
   const { data: myLedgersResponse } = useQuery({
     queryKey: ['my-ledgers'],
@@ -164,13 +214,22 @@ function ImprestRetirementForm({
     enabled: !!approvedDetails?.id && !existingRetirementDetails && !startNew,
   });
 
-  const existingRetirementFromShow = React.useMemo(
-    () => extractOne(existingRetirementDetails),
-    [existingRetirementDetails]
-  );
+  const existingRetirementFromShow = React.useMemo(() => {
+    if (!existingRetirementDetails) return null;
+    if (existingRetirementDetails?.id) return existingRetirementDetails;
+    if (existingRetirementDetails?.data?.id) return existingRetirementDetails.data;
+    if (existingRetirementDetails?.data?.data?.id) return existingRetirementDetails.data.data;
+    return null;
+  }, [existingRetirementDetails]);
 
-  const myImprestLedgers = React.useMemo(() => {
-    return extractList(myLedgersResponse)
+  const myImprestLedgers = React.useMemo<ImprestLedgerOption[]>(() => {
+    const ledgers = Array.isArray(myLedgersResponse)
+      ? myLedgersResponse
+      : Array.isArray(myLedgersResponse?.data)
+        ? myLedgersResponse.data
+          : [];
+
+    return ledgers
       .filter((entry: any) => String(entry?.type || '').toLowerCase() === 'imprest')
       .map((entry: any) => ({
         id: Number(entry?.ledger_id || entry?.ledger?.id),
@@ -186,7 +245,12 @@ function ImprestRetirementForm({
       return existingRetirementFromShow;
     }
 
-    const list = extractList(existingRetirementsResponse);
+    const list = Array.isArray(existingRetirementsResponse)
+      ? existingRetirementsResponse
+      : Array.isArray(existingRetirementsResponse?.data)
+        ? existingRetirementsResponse.data
+          : [];
+
     if (list.length === 0) return null;
 
     if (preferredRetirementId) {
@@ -222,7 +286,13 @@ function ImprestRetirementForm({
     );
     setRemarks(existingRetirement.remarks || '');
 
-    const sourceItems = extractList(existingRetirement.items);
+    const sourceItems = Array.isArray(existingRetirement.items)
+      ? existingRetirement.items
+      : Array.isArray(existingRetirement.items?.data)
+        ? existingRetirement.items.data
+        : Array.isArray(existingRetirement.items?.data?.data)
+          ? existingRetirement.items.data.data
+          : [];
 
     const normalizedItems = sourceItems.map((item: any) => ({
       id: item.id,
@@ -268,20 +338,32 @@ function ImprestRetirementForm({
   }, [items]);
 
   const ceilingAmount = Number(approvedDetails?.amount || approvedRequisition?.amount || 0);
-  const currencyCode = String(
+  const rawCurrencyCode =
     existingRetirementFromShow?.currency?.code ||
     existingRetirementFromShow?.currency_code ||
     existingRetirementFromShow?.imprest_approval?.requisition?.currency?.code ||
-    approvedRequisition?.requisition?.currency?.code
-  ).trim();
-  const approvedAmountDisplay = ceilingAmount.toLocaleString('en-US', {
-    style: 'currency',
-    currency: currencyCode,
-  });
-  const totalItemsAmountDisplay = (Number.isFinite(totalAmount) ? totalAmount : 0).toLocaleString('en-US', {
-    style: 'currency',
-    currency: currencyCode,
-  });
+    approvedRequisition?.requisition?.currency?.code ||
+    '';
+  const normalizedCurrencyCode = String(rawCurrencyCode).trim().toUpperCase();
+  const currencyCode = /^[A-Z]{3}$/.test(normalizedCurrencyCode)
+    ? normalizedCurrencyCode
+    : null;
+  const formatMoney = (value: number) => {
+    const safeValue = Number.isFinite(value) ? value : 0;
+    if (currencyCode) {
+      return safeValue.toLocaleString('en-US', {
+        style: 'currency',
+        currency: currencyCode,
+      });
+    }
+    return safeValue.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  };
+
+  const approvedAmountDisplay = formatMoney(ceilingAmount);
+  const totalItemsAmountDisplay = formatMoney(Number.isFinite(totalAmount) ? totalAmount : 0);
 
   const statusRaw = String(statusLabel || '').toLowerCase();
   const approvalStatusRaw = String(
@@ -291,12 +373,6 @@ function ImprestRetirementForm({
       existingRetirement?.approval?.status ||
       ''
   ).toLowerCase();
-  const isOnHoldStatus =
-    approvalStatusRaw === 'on hold' || statusRaw.includes('on hold');
-  const isRejectedStatus =
-    approvalStatusRaw.includes('reject') || statusRaw.includes('reject');
-  const isApprovedStatus =
-    approvalStatusRaw === 'approved' || statusRaw.includes('approved');
   const isLocked = false;
   const canSubmitForApproval =
     !isEditMode &&
@@ -342,7 +418,15 @@ function ImprestRetirementForm({
         limit: 100,
       });
 
-      const found = extractList(listResponse).find(
+      const list = Array.isArray(listResponse)
+        ? listResponse
+        : Array.isArray(listResponse?.data)
+          ? listResponse.data
+          : Array.isArray(listResponse?.data?.data)
+            ? listResponse.data.data
+            : [];
+
+      const found = list.find(
         (entry: any) => String(entry?.retirementNo || '').toUpperCase() === match[0].toUpperCase()
       );
 
@@ -366,9 +450,23 @@ function ImprestRetirementForm({
       }
     },
     onError: (error: any) => {
-      enqueueSnackbar(error?.response?.data?.message || 'Failed to create retirement draft', {
-        variant: 'error',
-      });
+      const apiMessage = error?.response?.data?.message || 'Failed to create retirement draft';
+      const validationErrors = error?.response?.data?.validation_errors;
+      const attachmentErrorKeys = validationErrors
+        ? Object.keys(validationErrors).filter((key) => key.startsWith('attachments.'))
+        : [];
+
+      if (attachmentErrorKeys.length > 0) {
+        setClientError(
+          'Some attachments are invalid. Allowed types: jpg, jpeg, png, gif, bmp, svg, webp, mp4, mov, avi, mkv, wmv, pdf, doc, docx, xls, xlsx, ppt, pptx, mp3, wav, aac, ogg.'
+        );
+        enqueueSnackbar('Please fix invalid attachments and try again.', {
+          variant: 'error',
+        });
+        return;
+      }
+
+      enqueueSnackbar(apiMessage, { variant: 'error' });
     },
   });
 
@@ -456,6 +554,16 @@ function ImprestRetirementForm({
       return false;
     }
 
+    const attachmentsValues = getValues('attachments') || [];
+    const hasIncompleteAttachment = attachmentsValues.some(
+      (attachment) => (attachment?.name || '').trim() !== '' && !(attachment?.file instanceof File)
+    );
+
+    if (hasIncompleteAttachment) {
+      setClientError('Each attachment with a name must have a selected file.');
+      return false;
+    }
+
     setClientError(null);
     return true;
   };
@@ -494,35 +602,58 @@ function ImprestRetirementForm({
       formData.append(`items[${index}][description]`, item.description || '');
     });
 
-    pendingAttachments.forEach((attachment, index) => {
-      formData.append(`attachments[${index}]`, attachment.file);
-      formData.append(`attachment_names[${index}]`, attachment.name || attachment.file.name);
+    getValues('attachments').forEach((attachment) => {
+      if (!(attachment.file instanceof File)) return;
+      formData.append('attachments[]', attachment.file);
+      formData.append('attachment_names[]', attachment.name || attachment.file.name);
     });
 
     return formData;
   };
 
-  const addPendingFiles = (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-
-    const nextFiles = Array.from(files).map((file) => ({
-      file,
-      name: file.name,
-    }));
-
-    setPendingAttachments((prev) => [...prev, ...nextFiles]);
+  const addPendingAttachment = () => {
+    setClientError(null);
+    appendPendingAttachment({ name: '', file: null });
   };
 
   const removePendingAttachment = (index: number) => {
-    setPendingAttachments((prev) => prev.filter((_, i) => i !== index));
+    removePendingAttachmentField(index);
   };
 
   const updatePendingAttachmentName = (index: number, name: string) => {
-    setPendingAttachments((prev) => {
-      const next = [...prev];
-      next[index] = { ...next[index], name };
-      return next;
+    setValue(`attachments.${index}.name`, name, {
+      shouldDirty: true,
+      shouldTouch: true,
     });
+  };
+
+  const updatePendingAttachmentFile = (index: number, file: File | null) => {
+    if (!file) return;
+
+    const isAllowed = ALLOWED_ATTACHMENT_EXTENSIONS.has(getFileExtension(file.name));
+    if (!isAllowed) {
+      setClientError(
+        `Invalid file type: ${file.name}. Allowed types: jpg, jpeg, png, gif, bmp, svg, webp, mp4, mov, avi, mkv, wmv, pdf, doc, docx, xls, xlsx, ppt, pptx, mp3, wav, aac, ogg.`
+      );
+      enqueueSnackbar('Selected file type is not allowed.', { variant: 'warning' });
+      return;
+    }
+
+    const existing = getValues(`attachments.${index}`);
+    if (!existing) return;
+
+    setClientError(null);
+    const shouldSyncName = !existing.name || existing.name === (existing.file?.name || '');
+    setValue(`attachments.${index}.file`, file, {
+      shouldDirty: true,
+      shouldTouch: true,
+    });
+    if (shouldSyncName) {
+      setValue(`attachments.${index}.name`, file.name, {
+        shouldDirty: true,
+        shouldTouch: true,
+      });
+    }
   };
 
   const handleSaveDraft = async () => {
@@ -702,25 +833,16 @@ function ImprestRetirementForm({
                 <Grid size={{ xs: 12, md: 2.5 }}>
                   <ReadOnlyField
                     label="Rate"
-                    value={(Number.isFinite(Number(item.rate)) ? Number(item.rate) : 0).toLocaleString(
-                      'en-US',
-                      {
-                        style: 'currency',
-                        currency: currencyCode,
-                      }
-                    )}
+                    value={formatMoney(Number.isFinite(Number(item.rate)) ? Number(item.rate) : 0)}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, md: 1.5 }}>
                   <ReadOnlyField
                     label="Amount"
-                    value={(
+                    value={formatMoney(
                       (Number.isFinite(Number(item.quantity)) ? Number(item.quantity) : 0) *
-                      (Number.isFinite(Number(item.rate)) ? Number(item.rate) : 0)
-                    ).toLocaleString('en-US', {
-                      style: 'currency',
-                      currency: currencyCode,
-                    })}
+                        (Number.isFinite(Number(item.rate)) ? Number(item.rate) : 0)
+                    )}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, md: 3 }}>
@@ -850,42 +972,15 @@ function ImprestRetirementForm({
           </Typography>
 
           {!retirementId && (
-            <Grid container spacing={1}>
-              <Grid size={{ xs: 12 }}>
-                <Button variant="outlined" component="label" size="small">
-                  Select Files
-                  <input
-                    hidden
-                    multiple
-                    type="file"
-                    onChange={(event) => {
-                      addPendingFiles(event.target.files);
-                      event.currentTarget.value = '';
-                    }}
-                  />
-                </Button>
-              </Grid>
-
-              {pendingAttachments.length === 0 && (
-                <Grid size={{ xs: 12 }}>
-                  <Alert severity="info" sx={{ mb: 0 }}>
-                    Attach multiple supporting files now. No need to save draft first.
-                  </Alert>
-                </Grid>
-              )}
-
-              {pendingAttachments.map((attachment, index) => (
-                <React.Fragment key={`${attachment.file.name}-${index}`}>
-                  <Grid size={{ xs: 12, md: 4 }}>
-                    <TextField
-                      size="small"
-                      fullWidth
-                      disabled
-                      label="File"
-                      value={attachment.file.name}
-                    />
+            <Grid container spacing={1} alignItems="center">
+              {attachmentRows.map((attachment, index) => (
+                <React.Fragment key={attachment.id}>
+                  <Grid size={{ xs: 12, md: 1 }}>
+                    <Typography variant="body2" sx={{ pt: { xs: 0, md: 1 } }}>
+                      {`${index + 1}.`}
+                    </Typography>
                   </Grid>
-                  <Grid size={{ xs: 12, md: 6 }}>
+                  <Grid size={{ xs: 12, md: 4 }}>
                     <TextField
                       size="small"
                       fullWidth
@@ -894,19 +989,49 @@ function ImprestRetirementForm({
                       onChange={(e) => updatePendingAttachmentName(index, e.target.value)}
                     />
                   </Grid>
-                  <Grid size={{ xs: 12, md: 2 }}>
-                    <Button
-                      fullWidth
-                      size="small"
-                      color="error"
-                      variant="outlined"
-                      onClick={() => removePendingAttachment(index)}
-                    >
-                      Remove
-                    </Button>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Div>
+                      <input
+                        type="file"
+                        style={{ width: '100%' }}
+                        onChange={(event) => {
+                          const file = event.target.files?.[0] || null;
+                          updatePendingAttachmentFile(index, file);
+                        }}
+                      />
+                      <Typography variant="caption" color="text.secondary">
+                        {attachment.file?.name || 'File Attachment'}
+                      </Typography>
+                    </Div>
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 1 }}>
+                    {attachmentRows.length > 1 && (
+                      <Tooltip title="Remove Attachment">
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={() => removePendingAttachment(index)}
+                        >
+                          <DisabledByDefault fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    )}
                   </Grid>
                 </React.Fragment>
               ))}
+
+              <Grid size={{ xs: 12 }}>
+                <Div sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    startIcon={<AddOutlined />}
+                    onClick={addPendingAttachment}
+                  >
+                    Add
+                  </Button>
+                </Div>
+              </Grid>
             </Grid>
           )}
 

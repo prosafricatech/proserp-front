@@ -13,7 +13,17 @@ imprestRetirementServices.show = async (id) => {
 };
 
 imprestRetirementServices.add = async (payload) => {
-  const { data } = await axios.post('/api/imprest-retirements', payload);
+  const isFormData = typeof FormData !== 'undefined' && payload instanceof FormData;
+  const { data } = await axios.post('/api/imprest-retirements', payload, {
+    ...(isFormData
+      ? {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+          transformRequest: [(requestPayload) => requestPayload],
+        }
+      : {}),
+  });
   return data;
 };
 

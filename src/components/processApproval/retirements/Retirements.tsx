@@ -1,12 +1,15 @@
 'use client';
 import CurrencySelectProvider from '@/components/masters/Currencies/CurrencySelectProvider';
 import { getSanitizedSearchKeyword } from '@/utilities/getSanitizedSearchKeyword';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
+import UnauthorizedAccess from '@/shared/Information/UnauthorizedAccess';
 import JumboListToolbar from '@jumbo/components/JumboList/components/JumboListToolbar';
 import JumboRqList from '@jumbo/components/JumboReactQuery/JumboRqList';
 import JumboSearch from '@jumbo/components/JumboSearch';
 import { Card, Grid } from '@mui/material';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import imprestRetirementServices from '../imprestRetirements/imprestRetirementServices';
 import RetirementsListItem from './RetirementsListItem';
 
@@ -25,6 +28,7 @@ const Retirements = () => {
   const params = useParams();
   const searchParams = useSearchParams();
   const listRef = useRef<any>(null);
+  const { checkOrganizationPermission } = useJumboAuth();
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
@@ -54,6 +58,13 @@ const Retirements = () => {
       },
     }));
   }, []);
+
+  if (!checkOrganizationPermission(PERMISSIONS.IMPREST_RETIREMENTS_READ)) {
+    return <UnauthorizedAccess />;
+  }
+  
+  if (!mounted) return null;
+
   return (
     <CurrencySelectProvider>
       <JumboRqList

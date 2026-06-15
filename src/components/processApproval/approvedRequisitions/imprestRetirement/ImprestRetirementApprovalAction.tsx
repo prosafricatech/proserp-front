@@ -3,7 +3,6 @@
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import PDFContent from '@/components/pdf/PDFContent';
 import imprestRetirementServices from '@/components/processApproval/imprestRetirements/imprestRetirementServices';
-import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { JumboDdMenu } from '@jumbo/components';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
@@ -29,12 +28,10 @@ import {
   LinearProgress,
   Tab,
   Tabs,
-  TextField,
   Tooltip,
   useMediaQuery,
 } from '@mui/material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
 import React from 'react';
 import ImprestRetirementForm from './form/ImprestRetirementForm';
@@ -54,7 +51,7 @@ function ImprestRetirementApprovalAction({
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
   const { theme } = useJumboTheme();
-  const { checkOrganizationPermission, authOrganization } = useJumboAuth();
+  const { authOrganization } = useJumboAuth();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
   const organization = authOrganization?.organization;
 
@@ -62,10 +59,6 @@ function ImprestRetirementApprovalAction({
   const [openApprovalDialog, setOpenApprovalDialog] = React.useState(false);
   const [openPreviewDialog, setOpenPreviewDialog] = React.useState(false);
   const [activePreviewTab, setActivePreviewTab] = React.useState(0);
-  const [remarksDialogMode, setRemarksDialogMode] = React.useState<
-    'reject' | null
-  >(null);
-  const [remarks, setRemarks] = React.useState('');
 
   const statusRaw = String(retirement?.status || '').toLowerCase();
   const statusLabelRaw = String(retirement?.status_label || '').toLowerCase();
@@ -88,9 +81,6 @@ function ImprestRetirementApprovalAction({
     statusRaw.includes('reject') ||
     statusLabelRaw.includes('reject') ||
     approvalStatusRaw.includes('reject');
-  const canApproveRetirement = checkOrganizationPermission([
-    PERMISSIONS.IMPREST_RETIREMENT_APPROVE,
-  ]);
 
   const { data: retirementDetails, isFetching: isFetchingRetirementDetails } =
     useQuery({
@@ -105,18 +95,17 @@ function ImprestRetirementApprovalAction({
         (!!openUpdateDialog || !!openApprovalDialog || !!openPreviewDialog),
     });
 
-  const { mutate: approveRetirement, isPending } = useMutation({
-    mutationFn: imprestRetirementServices.approve,
+  const { mutate: deleteRetirement } = useMutation({
+    mutationFn: imprestRetirementServices.delete,
     onSuccess: (response: any) => {
-      enqueueSnackbar(response?.message || 'Retirement approved', {
+      enqueueSnackbar(response?.message || 'Retirement draft deleted', {
         variant: 'success',
       });
       queryClient.invalidateQueries({ queryKey: ['imprestRetirements'] });
-      setOpenApprovalDialog(false);
     },
     onError: (error: any) => {
       enqueueSnackbar(
-        error?.response?.data?.message || 'Failed to approve retirement',
+        error?.response?.data?.message || 'Failed to delete retirement draft',
         {
           variant: 'error',
         }
@@ -124,44 +113,24 @@ function ImprestRetirementApprovalAction({
     },
   });
 
-  const { mutate: deleteRetirement, isPending: isDeletingRetirement } =
-    useMutation({
-      mutationFn: imprestRetirementServices.delete,
-      onSuccess: (response: any) => {
-        enqueueSnackbar(response?.message || 'Retirement draft deleted', {
-          variant: 'success',
-        });
-        queryClient.invalidateQueries({ queryKey: ['imprestRetirements'] });
-      },
-      onError: (error: any) => {
-        enqueueSnackbar(
-          error?.response?.data?.message || 'Failed to delete retirement draft',
-          {
-            variant: 'error',
-          }
-        );
-      },
-    });
-
-  const { mutate: revokeRetirementApproval, isPending: isRevokingApproval } =
-    useMutation({
-      mutationFn: imprestRetirementServices.revokeApproval,
-      onSuccess: (response: any) => {
-        enqueueSnackbar(response?.message || 'Retirement approval revoked', {
-          variant: 'success',
-        });
-        queryClient.invalidateQueries({ queryKey: ['imprestRetirements'] });
-      },
-      onError: (error: any) => {
-        enqueueSnackbar(
-          error?.response?.data?.message ||
-            'Failed to revoke retirement approval',
-          {
-            variant: 'error',
-          }
-        );
-      },
-    });
+  const { mutate: revokeRetirementApproval } = useMutation({
+    mutationFn: imprestRetirementServices.revokeApproval,
+    onSuccess: (response: any) => {
+      enqueueSnackbar(response?.message || 'Retirement approval revoked', {
+        variant: 'success',
+      });
+      queryClient.invalidateQueries({ queryKey: ['imprestRetirements'] });
+    },
+    onError: (error: any) => {
+      enqueueSnackbar(
+        error?.response?.data?.message ||
+          'Failed to revoke retirement approval',
+        {
+          variant: 'error',
+        }
+      );
+    },
+  });
 
   const canUpdateOrDelete = isDraftLike || isPendingApproval;
 
@@ -180,7 +149,7 @@ function ImprestRetirementApprovalAction({
           } as MenuItemProps,
         ]
       : []),
-    ...(isPendingApproval && canApproveRetirement
+    ...(isPendingApproval
       ? [
           {
             icon: <CheckCircleOutlineOutlined color='success' />,
@@ -189,10 +158,10 @@ function ImprestRetirementApprovalAction({
           } as MenuItemProps,
         ]
       : []),
-    ...((isApproved || isRejected) && canApproveRetirement
+    ...((isApproved || isRejected)
       ? [
           {
-            icon: <UndoOutlined color='warning' />,
+            icon: <UndoOutlined color='error' />,
             title: 'Revoke',
             action: 'revoke',
           } as MenuItemProps,
@@ -209,15 +178,6 @@ function ImprestRetirementApprovalAction({
       : []),
   ];
 
-  const handleApprove = async () => {
-    await approveRetirement({
-      imprest_retirement_id: retirement.id,
-      status: 'approved',
-      approval_date: dayjs().format('YYYY-MM-DD'),
-      remarks: null,
-    });
-  };
-
   const handleDeleteDraft = () => {
     showDialog({
       title: 'Delete Draft',
@@ -229,24 +189,6 @@ function ImprestRetirementApprovalAction({
       },
       onNo: () => hideDialog(),
     });
-  };
-
-  const handleSubmitRemarksAction = async () => {
-    if (!remarks.trim()) {
-      enqueueSnackbar('Remarks are required for rejection', {
-        variant: 'error',
-      });
-      return;
-    }
-
-    await approveRetirement({
-      imprest_retirement_id: retirement.id,
-      status: 'rejected',
-      approval_date: dayjs().format('YYYY-MM-DD'),
-      remarks: remarks.trim(),
-    });
-    setRemarksDialogMode(null);
-    setRemarks('');
   };
 
   const resolveApprovalId = async (): Promise<number | null> => {
@@ -315,7 +257,6 @@ function ImprestRetirementApprovalAction({
   if (menuItems.length === 0) return null;
 
   const previewRetirement =
-    retirementDetails?.data?.data ||
     retirementDetails?.data ||
     retirementDetails ||
     retirement;
@@ -439,51 +380,6 @@ function ImprestRetirementApprovalAction({
             preferredRetirementId={retirement?.id}
           />
         )}
-      </Dialog>
-
-      <Dialog
-        open={!!remarksDialogMode}
-        onClose={() => {
-          setRemarksDialogMode(null);
-          setRemarks('');
-        }}
-        maxWidth='xs'
-        fullWidth
-      >
-        <DialogTitle textAlign='center'>Reject Retirement</DialogTitle>
-        <DialogContent>
-          <TextField
-            size='small'
-            fullWidth
-            multiline
-            minRows={2}
-            sx={{ mt: 1 }}
-            label='Remarks'
-            value={remarks}
-            onChange={(e) => setRemarks(e.target.value)}
-            required
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button
-            size='small'
-            onClick={() => {
-              setRemarksDialogMode(null);
-              setRemarks('');
-            }}
-          >
-            Cancel
-          </Button>
-          <Button
-            size='small'
-            variant='contained'
-            color='error'
-            onClick={handleSubmitRemarksAction}
-            disabled={isPending || isRevokingApproval}
-          >
-            Reject
-          </Button>
-        </DialogActions>
       </Dialog>
 
       <JumboDdMenu
