@@ -21,11 +21,18 @@ function PurchaseOrderPDF({
   const withPrices = [
     PERMISSIONS.ACCOUNTS_REPORTS,
     PERMISSIONS.PURCHASES_CREATE,
-    PERMISSIONS.APPROVED_REQUISITIONS_PURCHASE,
-  ].some((perm) => checkOrganizationPermission([perm]));
+    PERMISSIONS.APPROVED_REQUISITIONS_PURCHASE
+  ].some(perm => checkOrganizationPermission([perm]));
 
   const vatAmount = order.purchase_order_items.reduce((total, item) => {
     return (total += item.rate * item.quantity * item.vat_percentage * 0.01);
+  }, 0);
+  const productsTotal = order.purchase_order_items.reduce((total, item) => {
+    return total + Number(item.rate || 0) * Number(item.quantity || 0);
+  }, 0);
+  const additionalCosts = order.additional_costs || [];
+  const totalAdditionalCosts = additionalCosts.reduce((total, cost) => {
+    return total + Number(cost?.amount || 0);
   }, 0);
 
   return (
@@ -343,7 +350,7 @@ function PurchaseOrderPDF({
                   backgroundColor: mainColor,
                   color: contrastText,
                   flex: 2,
-                  textAlign: 'right',
+                  textAlign: 'left',
                 }}
               >
                 Total
@@ -357,14 +364,90 @@ function PurchaseOrderPDF({
                   textAlign: 'right',
                 }}
               >
-                {order.amount?.toLocaleString('en-US', {
+                {productsTotal?.toLocaleString('en-US', {
                   style: 'currency',
                   currency: currencyCode,
                 })}
               </Text>
             </View>
-            {vatAmount > 0 && (
+            {additionalCosts.length > 0 &&
+              additionalCosts.map((cost, index) => {
+                const costLabel =
+                  cost.credit_ledger_name ||
+                  cost.ledger?.name ||
+                  cost.name ||
+                  `Additional Cost ${index + 1}`;
+                const costCurrency =
+                  cost.currency?.code ||
+                  cost.currency_name ||
+                  currencyCode ||
+                  '';
+
+                return (
+                  <View
+                    key={cost.id || cost.requisition_additional_cost_id || index}
+                    style={{ ...pdfStyles.tableRow, marginTop: 4 }}
+                  >
+                    <Text style={{ textAlign: 'center', flex: 4.5 }}></Text>
+                    <Text
+                      hyphenationCallback={(word) => [word]}
+                      style={{
+                        ...pdfStyles.tableHeader,
+                        backgroundColor: mainColor,
+                        color: contrastText,
+                        flex: 2,
+                        textAlign: 'left',
+                        lineHeight: 1.25,
+                      }}
+                    >
+                      {costLabel}
+                    </Text>
+                    <Text
+                      style={{
+                        ...pdfStyles.tableHeader,
+                        backgroundColor: mainColor,
+                        color: contrastText,
+                        flex: 2.2,
+                        textAlign: 'right',
+                      }}
+                    >
+                      {`${costCurrency} ${Number(cost.amount || 0).toLocaleString('en-US', { maximumFractionDigits: 2 })}`.trim()}
+                    </Text>
+                  </View>
+                );
+              })}
+            {(vatAmount > 0 || totalAdditionalCosts > 0) && (
               <React.Fragment>
+                {vatAmount > 0 && (
+                  <View style={{ ...pdfStyles.tableRow, marginTop: 4 }}>
+                    <Text style={{ textAlign: 'center', flex: 4.5 }}></Text>
+                    <Text
+                      style={{
+                        ...pdfStyles.tableHeader,
+                        backgroundColor: mainColor,
+                        color: contrastText,
+                        flex: 2,
+                        textAlign: 'left',
+                      }}
+                    >
+                      VAT
+                    </Text>
+                    <Text
+                      style={{
+                        ...pdfStyles.tableHeader,
+                        backgroundColor: mainColor,
+                        color: contrastText,
+                        flex: 2.2,
+                        textAlign: 'right',
+                      }}
+                    >
+                      {vatAmount?.toLocaleString('en-US', {
+                        style: 'currency',
+                        currency: currencyCode,
+                      })}
+                    </Text>
+                  </View>
+                )}
                 <View style={{ ...pdfStyles.tableRow, marginTop: 4 }}>
                   <Text style={{ textAlign: 'center', flex: 4.5 }}></Text>
                   <Text
@@ -373,10 +456,10 @@ function PurchaseOrderPDF({
                       backgroundColor: mainColor,
                       color: contrastText,
                       flex: 2,
-                      textAlign: 'right',
+                      textAlign: 'left',
                     }}
                   >
-                    VAT
+                    Grand Total
                   </Text>
                   <Text
                     style={{
@@ -387,35 +470,7 @@ function PurchaseOrderPDF({
                       textAlign: 'right',
                     }}
                   >
-                    {vatAmount?.toLocaleString('en-US', {
-                      style: 'currency',
-                      currency: currencyCode,
-                    })}
-                  </Text>
-                </View>
-                <View style={{ ...pdfStyles.tableRow, marginTop: 4 }}>
-                  <Text style={{ textAlign: 'center', flex: 4.5 }}></Text>
-                  <Text
-                    style={{
-                      ...pdfStyles.tableHeader,
-                      backgroundColor: mainColor,
-                      color: contrastText,
-                      flex: 2,
-                      textAlign: 'right',
-                    }}
-                  >
-                    Grand Total (VAT Incl.)
-                  </Text>
-                  <Text
-                    style={{
-                      ...pdfStyles.tableHeader,
-                      backgroundColor: mainColor,
-                      color: contrastText,
-                      flex: 2.2,
-                      textAlign: 'right',
-                    }}
-                  >
-                    {(order.amount + vatAmount).toLocaleString('en-US', {
+                    {(productsTotal + vatAmount + totalAdditionalCosts).toLocaleString('en-US', {
                       style: 'currency',
                       currency: currencyCode,
                     })}
@@ -425,107 +480,6 @@ function PurchaseOrderPDF({
             )}
           </>
         )}
-
-        {order?.additional_costs?.length > 0 && (
-          <>
-            <Text
-              style={{
-                ...pdfStyles.minInfo,
-                color: mainColor,
-                marginBottom: 4,
-              }}
-            >
-              Additional Costs
-            </Text>
-            <View style={{ ...pdfStyles.table, marginBottom: 10 }}>
-              <View style={pdfStyles.tableRow}>
-                <Text
-                  style={{
-                    ...pdfStyles.tableHeader,
-                    backgroundColor: mainColor,
-                    color: contrastText,
-                    flex: 0.1,
-                  }}
-                >
-                  S/N
-                </Text>
-                <Text
-                  style={{
-                    ...pdfStyles.tableHeader,
-                    backgroundColor: mainColor,
-                    color: contrastText,
-                    flex: 0.5,
-                  }}
-                >
-                  Cost Name
-                </Text>
-                <Text
-                  style={{
-                    ...pdfStyles.tableHeader,
-                    backgroundColor: mainColor,
-                    color: contrastText,
-                    flex: 0.4,
-                  }}
-                >
-                  Amount
-                </Text>
-              </View>
-
-              {order.additional_costs.map((cost, index) => {
-                const currencyCode =
-                  cost.currency?.symbol ||
-                  cost.currency?.code ||
-                  cost.currency_name ||
-                  approval.requisition.currency?.code ||
-                  '';
-                return (
-                  <View
-                    key={
-                      cost.id || cost.requisition_additional_cost_id || index
-                    }
-                    style={pdfStyles.tableRow}
-                  >
-                    <Text
-                      style={{
-                        ...pdfStyles.tableCell,
-                        backgroundColor:
-                          index % 2 === 0 ? '#FFFFFF' : lightColor,
-                        flex: 0.1,
-                      }}
-                    >
-                      {index + 1}
-                    </Text>
-                    <Text
-                      style={{
-                        ...pdfStyles.tableCell,
-                        backgroundColor:
-                          index % 2 === 0 ? '#FFFFFF' : lightColor,
-                        flex: 0.5,
-                      }}
-                    >
-                      {cost.credit_ledger_name ||
-                        cost.ledger?.name ||
-                        cost.name ||
-                        '-'}
-                    </Text>
-                    <Text
-                      style={{
-                        ...pdfStyles.tableCell,
-                        backgroundColor:
-                          index % 2 === 0 ? '#FFFFFF' : lightColor,
-                        flex: 0.4,
-                        textAlign: 'right',
-                      }}
-                    >
-                      {`${currencyCode} ${Number(cost.amount || 0).toLocaleString('en-US', { maximumFractionDigits: 2 })}`.trim()}
-                    </Text>
-                  </View>
-                );
-              })}
-            </View>
-          </>
-        )}
-
         {!!order?.terms_of_payment && (
           <View style={{ ...pdfStyles.tableRow, marginTop: 10 }}>
             <View style={{ flex: 1 }}>
@@ -617,18 +571,18 @@ function PurchaseOrderPDF({
               >
                 S/N
               </Text>
-              <Text
-                style={{
-                  ...styles.tableCell,
-                  ...styles.tableHeader,
-                  ...styles.midInfo,
-                  backgroundColor: mainColor,
-                  color: contrastText,
-                  flex: 1,
-                }}
-              >
-                Date
-              </Text>
+                <Text
+                    style={{
+                    ...styles.tableCell,
+                    ...styles.tableHeader,
+                    ...styles.midInfo,
+                    backgroundColor: mainColor,
+                    color: contrastText,
+                    flex: 1,
+                    }}
+                >
+                    Date
+                </Text>
               <Text
                 style={{
                   ...styles.tableCell,

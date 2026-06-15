@@ -122,6 +122,11 @@ const RequisitionsOnScreen: React.FC<Props> = ({
   const additionalCosts = isPurchase
     ? (((requisition as any)?.additional_costs || []) as any[])
     : [];
+  const totalAdditionalCosts =
+    additionalCosts.reduce(
+      (total: number, cost: any) => total + Number(cost?.amount || 0),
+      0
+    ) || 0;
 
   const totalVAT =
     requisitionItems
@@ -132,19 +137,13 @@ const RequisitionsOnScreen: React.FC<Props> = ({
         0
       ) || 0;
 
-  const grandTotal =
-    requisitionItems.reduce(
-      (total: number, item: RequisitionItem) =>
-        total +
-        item.quantity * item.rate * (1 + (item.vat_percentage || 0) / 100),
-      0
-    ) || 0;
-
   const subtotal = requisitionItems.reduce(
     (total: number, item: RequisitionItem) =>
       total + (item.quantity || 0) * (item.rate || 0),
     0
   );
+
+  const grandTotal = subtotal + totalVAT + totalAdditionalCosts;
 
   const formatCurrency = (amount: number) => {
     return amount?.toLocaleString('en-US', {
@@ -473,7 +472,7 @@ const RequisitionsOnScreen: React.FC<Props> = ({
             >
               <Grid container spacing={1}>
                 <Grid size={7}>
-                  <Typography variant='body1'>Subtotal</Typography>
+                  <Typography variant='body1'>Product Total</Typography>
                 </Grid>
                 <Grid size={5} sx={{ textAlign: 'right' }}>
                   <Typography variant='body1' fontFamily='monospace'>
@@ -483,14 +482,59 @@ const RequisitionsOnScreen: React.FC<Props> = ({
 
                 {isPurchase && (
                   <>
-                    <Grid size={7}>
-                      <Typography variant='body1'>VAT</Typography>
-                    </Grid>
-                    <Grid size={5} sx={{ textAlign: 'right' }}>
-                      <Typography variant='body1' fontFamily='monospace'>
-                        {formatCurrency(totalVAT)}
-                      </Typography>
-                    </Grid>
+                    {additionalCosts.map((cost: any, index: number) => {
+                      const costLabel =
+                        cost.credit_ledger_name ||
+                        cost.ledger?.name ||
+                        cost.name ||
+                        `Additional Cost ${index + 1}`;
+                      const costCurrency =
+                        cost.currency?.code ||
+                        cost.currency_name ||
+                        requisition.currency?.code ||
+                        '';
+
+                      return (
+                        <React.Fragment
+                          key={
+                            cost.id ||
+                            cost.requisition_additional_cost_id ||
+                            index
+                          }
+                        >
+                          <Grid size={7}>
+                            <Typography
+                              variant='body1'
+                              sx={{
+                                whiteSpace: 'normal',
+                                overflowWrap: 'anywhere',
+                                wordBreak: 'break-word',
+                              }}
+                            >
+                              {costLabel}
+                            </Typography>
+                          </Grid>
+                          <Grid size={5} sx={{ textAlign: 'right' }}>
+                            <Typography variant='body1' fontFamily='monospace'>
+                              {`${costCurrency} ${Number(cost.amount || 0).toLocaleString('en-US', { maximumFractionDigits: 2 })}`.trim()}
+                            </Typography>
+                          </Grid>
+                        </React.Fragment>
+                      );
+                    })}
+
+                    {totalVAT > 0 && (
+                      <>
+                        <Grid size={7}>
+                          <Typography variant='body1'>VAT</Typography>
+                        </Grid>
+                        <Grid size={5} sx={{ textAlign: 'right' }}>
+                          <Typography variant='body1' fontFamily='monospace'>
+                            {formatCurrency(totalVAT)}
+                          </Typography>
+                        </Grid>
+                      </>
+                    )}
                     <Grid size={7}>
                       <Typography variant='h6' color={headerColor}>
                         Grand Total
@@ -529,105 +573,6 @@ const RequisitionsOnScreen: React.FC<Props> = ({
               </Grid>
             </Box>
           </Grid>
-
-          {isPurchase && additionalCosts.length > 0 && (
-            <Grid size={12}>
-              <TableContainer
-                component={Paper}
-                sx={{
-                  boxShadow: theme.shadows[2],
-                  mt: 2,
-                  '& .MuiTableRow-root:hover': {
-                    backgroundColor: theme.palette.action.hover,
-                  },
-                }}
-              >
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell
-                        sx={{
-                          backgroundColor: mainColor,
-                          color: contrastText,
-                          width: '8%',
-                        }}
-                      >
-                        S/N
-                      </TableCell>
-                      <TableCell
-                        sx={{
-                          backgroundColor: mainColor,
-                          color: contrastText,
-                          width: '52%',
-                        }}
-                      >
-                        Cost Name
-                      </TableCell>
-                      <TableCell
-                        sx={{
-                          backgroundColor: mainColor,
-                          color: contrastText,
-                          width: '15%',
-                        }}
-                      >
-                        Currency
-                      </TableCell>
-                      <TableCell
-                        sx={{
-                          backgroundColor: mainColor,
-                          color: contrastText,
-                          width: '25%',
-                        }}
-                        align='right'
-                      >
-                        Amount
-                      </TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {additionalCosts.map((cost, index) => (
-                      <TableRow
-                        key={
-                          cost.id ||
-                          cost.requisition_additional_cost_id ||
-                          index
-                        }
-                      >
-                        <TableCell sx={{ width: '8%' }}>{index + 1}</TableCell>
-                        <TableCell sx={{ width: '52%' }}>
-                          {cost.credit_ledger_name ||
-                            cost.ledger?.name ||
-                            cost.name ||
-                            '-'}
-                          {cost.reference ? (
-                            <Typography
-                              variant='body2'
-                              color='text.secondary'
-                              sx={{ mt: 0.5 }}
-                            >
-                              Ref: {cost.reference}
-                            </Typography>
-                          ) : null}
-                        </TableCell>
-                        <TableCell sx={{ width: '15%' }}>
-                          {cost.currency?.code ||
-                            cost.currency_name ||
-                            requisition.currency?.code ||
-                            '-'}
-                        </TableCell>
-                        <TableCell
-                          align='right'
-                          sx={{ fontFamily: 'monospace', width: '25%' }}
-                        >
-                          {`${cost.currency?.code} ${Number(cost.amount || 0).toLocaleString('en-US', { maximumFractionDigits: 2 })}`.trim()}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </Grid>
-          )}
 
           {/* Remarks Section */}
           {requisition.remarks && (
