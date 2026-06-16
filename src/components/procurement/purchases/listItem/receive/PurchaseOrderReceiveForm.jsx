@@ -33,7 +33,7 @@ import { DateTimePicker } from '@mui/x-date-pickers';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import StoreSelector from '../../../stores/StoreSelector';
@@ -45,16 +45,6 @@ import SummaryTab from './receiveFormTabs/SummaryTab';
 
 function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
   const theme = useTheme();
-  const [additionalCosts, setAdditionalCosts] = useState(
-    grn
-      ? grn?.additional_costs.map((cost) => ({
-          ...cost,
-          credit_ledger_name: cost.credit_ledger_name || cost.name,
-          currency_id: cost.currency_id || cost.currency?.id,
-          currency_name: cost.currency_name || cost.currency?.name,
-        }))
-      : []
-  );
   const [date_received] = useState(dayjs());
   const [activeTab, setActiveTab] = useState(0);
   const { enqueueSnackbar } = useSnackbar();
@@ -290,8 +280,86 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
               purchase_order_item_id: item.id,
               rate: item.rate,
             })),
+          additional_costs: order?.additional_costs || [],
         },
   });
+
+  const getReceivedItemsSummary = () => {
+    return purchase_order_items
+      .filter((item) => item.unreceived_quantity !== 0)
+      .map((item, index) => ({
+        product: item.product.name,
+        unit: item.measurement_unit.symbol,
+        rate: item.rate,
+        costfactor: watch(`cost_factor`) || 1,
+        exchangeRate: watch(`exchange_rate`),
+        receivedQuantity: watch(`items.${index}.quantity`) || 0,
+      }));
+  };
+
+  const gettotalAmount = () => {
+    return getReceivedItemsSummary().reduce((total, item) => {
+      return total + item.receivedQuantity * item.rate;
+    }, 0);
+  };
+
+  const originalOrderAmt = purchase_order_items.reduce((sum, item) => {
+    return sum + item.quantity * item.rate;
+  }, 0);
+
+  const percentageReceived = useMemo(() => {
+    return (gettotalAmount() / originalOrderAmt) * 100;
+  }, [gettotalAmount(), originalOrderAmt]);
+
+  const [additionalCosts, setAdditionalCosts] = useState(
+    grn
+      ? grn?.additional_costs.map((cost) => {
+          return {
+            ...cost,
+            credit_ledger_name: cost.credit_ledger_name || cost.name,
+            currency_id: cost.currency_id || cost.currency?.id,
+            currency_name: cost.currency_name || cost.currency?.name,
+          };
+        })
+      : order
+        ? order?.additional_costs.map((cost) => {
+            const calculatedPercentageAmt =
+              (parseFloat(cost.amount ?? 0) * parseFloat(percentageReceived)) /
+              100;
+            return {
+              ...cost,
+              credit_ledger_name:
+                cost.credit_ledger_name || cost.name || cost.ledger?.name,
+              credit_ledger_id: cost.ledger?.id,
+              currency_id: cost.currency_id || cost.currency?.id,
+              currency_name: order.currency?.name || cost.currency?.name,
+              amount: calculatedPercentageAmt,
+            };
+          })
+        : []
+  );
+
+  // on received quantity change, update additional costs amount to match percentage value of items received quantity
+  useEffect(() => {
+    setAdditionalCosts((prevCost) => {
+      return (
+        order?.additional_costs.map((item) => {
+          const calculatedPercentageAmt =
+            (parseFloat(item.amount ?? 0) * parseFloat(percentageReceived)) /
+            100;
+          return {
+            ...item,
+            amount: calculatedPercentageAmt,
+            credit_ledger_name:
+              item.credit_ledger_name || item.name || item.ledger?.name,
+            credit_ledger_id: item.ledger?.id,
+            currency_id: item.currency_id || item.currency?.id,
+            currency_name: order.currency?.name || item.currency?.name,
+          };
+        }) || []
+      );
+    });
+  }, [gettotalAmount()]);
 
   // Update form state when additional Costs change
   useEffect(() => {
@@ -350,19 +418,6 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
     setValue('cost_factor', CostFactor);
   }, [totalAmount, totalReceivedAmount]);
 
-  const getReceivedItemsSummary = () => {
-    return purchase_order_items
-      .filter((item) => item.unreceived_quantity !== 0)
-      .map((item, index) => ({
-        product: item.product.name,
-        unit: item.measurement_unit.symbol,
-        rate: item.rate,
-        costfactor: watch(`cost_factor`) || 1,
-        exchangeRate: watch(`exchange_rate`),
-        receivedQuantity: watch(`items.${index}.quantity`) || 0,
-      }));
-  };
-
   const [itemsState, setItemsState] = useState(initialItems);
   // Handler to reset items
   const handleResetItems = () => {
@@ -412,14 +467,6 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
         };
       });
   };
-
-  const gettotalAmount = () => {
-    return getReceivedItemsSummary().reduce((total, item) => {
-      return total + item.receivedQuantity * item.rate;
-    }, 0);
-  };
-
-  const percentageReceived = (gettotalAmount() / order?.amount) * 100;
 
   // Function to calculate the total amount for additional costs
   const getTotalAdditionalCostsAmount = () => {

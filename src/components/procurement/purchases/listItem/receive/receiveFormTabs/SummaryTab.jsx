@@ -236,7 +236,10 @@ function SummaryTab({
                             item.exchangeRate *
                             item.rate *
                             item.costfactor
-                          ).toLocaleString()}
+                          ).toLocaleString('en-US', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
                         </TableCell>
 
                         <TableCell
@@ -255,7 +258,10 @@ function SummaryTab({
                             item.rate *
                             item.costfactor *
                             item.receivedQuantity
-                          ).toLocaleString()}
+                          ).toLocaleString('en-US', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
                         </TableCell>
                       </>
                     )}

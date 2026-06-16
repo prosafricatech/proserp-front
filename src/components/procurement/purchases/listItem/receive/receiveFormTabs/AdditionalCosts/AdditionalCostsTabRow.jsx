@@ -13,10 +13,6 @@ function AdditionalCostsTabRow({
 }) {
   const [showForm, setShowForm] = useState(false);
 
-  const calculatedPercentageAmt =
-    (parseFloat(additionalCost.amount ?? 0) * parseFloat(percentageReceived)) /
-    100;
-
   return (
     <React.Fragment>
       <Divider />
@@ -56,15 +52,23 @@ function AdditionalCostsTabRow({
           <Grid size={{ xs: 6, md: 1.5 }} textAlign={'right'}>
             <Tooltip title='Exchange Rate'>
               <Typography>
-                {additionalCost.exchange_rate.toLocaleString()}
+                {parseFloat(additionalCost.exchange_rate).toLocaleString(
+                  'en-US',
+                  { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+                )}
               </Typography>
             </Tooltip>
           </Grid>
           <Grid size={{ xs: 6, md: 1.5 }} textAlign={{ md: 'right' }}>
             <Tooltip title='Amount'>
-              {/* <Typography>{additionalCost.amount?.toLocaleString()}</Typography> */}
               <Typography>
-                {calculatedPercentageAmt.toLocaleString()}
+                {parseFloat(additionalCost.amount ?? 0).toLocaleString(
+                  'en-US',
+                  {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  }
+                )}
               </Typography>
             </Tooltip>
           </Grid>

@@ -15,6 +15,7 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
+import React from 'react';
 
 function PurchaseOrderOnScreenPreview({ order }) {
   const theme = useTheme();
