@@ -33,7 +33,13 @@ import { DateTimePicker } from '@mui/x-date-pickers';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import StoreSelector from '../../../stores/StoreSelector';
@@ -334,16 +340,20 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
               currency_id: cost.currency_id || cost.currency?.id,
               currency_name: order.currency?.name || cost.currency?.name,
               amount: calculatedPercentageAmt,
+              prepopulated: true,
             };
           })
         : []
   );
 
-  // on received quantity change, update additional costs amount to match percentage value of items received quantity
-  useEffect(() => {
+  const updatePercentageAmt = useCallback(() => {
     setAdditionalCosts((prevCost) => {
-      return (
-        order?.additional_costs.map((item) => {
+      const newItems = prevCost
+        ? prevCost.filter((i) => i.prepopulated === false)
+        : [];
+      const oldItems = order?.additional_costs;
+      const updatedItems =
+        oldItems.map((item) => {
           const calculatedPercentageAmt =
             (parseFloat(item.amount ?? 0) * parseFloat(percentageReceived)) /
             100;
@@ -355,11 +365,23 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
             credit_ledger_id: item.ledger?.id,
             currency_id: item.currency_id || item.currency?.id,
             currency_name: order.currency?.name || item.currency?.name,
+            prepopulated: true,
           };
-        }) || []
-      );
+        }) || [];
+
+      return [...updatedItems, ...newItems];
     });
-  }, [gettotalAmount()]);
+  }, [gettotalAmount]);
+
+  const isFirstRender = useRef(true);
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    updatePercentageAmt();
+  }, [percentageReceived]);
 
   // Update form state when additional Costs change
   useEffect(() => {
@@ -768,7 +790,7 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
 
         {activeTab === 1 && (
           <>
-            {additionalCosts.length > 0 && (
+            {order?.additional_costs.length > 0 && (
               <Alert
                 variant='outlined'
                 severity='warning'
