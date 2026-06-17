@@ -779,8 +779,9 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
                   ),
                 }}
               >
-                The calculated amount might vary from the actual amount, please
-                verify the calculated amounts
+                The prepopulated Additional cost amounts might vary from the
+                actual amount, please verify from the actual amounts and correct
+                where required
               </Alert>
             )}
 
