@@ -210,7 +210,7 @@ const ClaimedDeliverablesItemForm: React.FC<ClaimedDeliverablesItemFormProps> = 
     setIsRetrievingDetails(true);
     try {
       const details = await projectsServices.showDelUncertifiedQTY(delId, claimDate);
-      setValue('response_uncertified_quantity', deliverableItem?.certified_quantity ?? details?.uncertified_quantity ?? 0);
+      setValue('response_uncertified_quantity', deliverableItem ? deliverableItem.certified_quantity + (details?.uncertified_quantity ?? 0) : details?.uncertified_quantity ?? 0);
     } catch (error) {
       console.error('Failed to retrieve uncertified quantity', error);
     } finally {
