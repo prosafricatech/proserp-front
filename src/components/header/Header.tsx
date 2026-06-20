@@ -1,6 +1,5 @@
 'use client';
 
-import { SearchGlobal } from '@/components/searchGlobal';
 import {
   useJumboLayout,
   useSidebarState,
@@ -145,10 +144,11 @@ function Header({ dictionary }: { dictionary: any }) {
         <Stack
           direction='row'
           alignItems='center'
+          justifyContent={'end'}
           gap={1.25}
           sx={{ ml: 'auto', minWidth: 320 }}
         >
-          <SearchGlobal sx={{ maxWidth: 320, minWidth: 200 }} />
+          {/* <SearchGlobal sx={{ maxWidth: 320, minWidth: 200 }} /> */}
           <ThemeModeOption />
           <AuthUserPopover dictionary={dictionary} />
         </Stack>
@@ -212,9 +212,9 @@ function Header({ dictionary }: { dictionary: any }) {
       </Grid>
 
       {/* Second Row: Search Global */}
-      <Grid size={12} paddingBottom={5}>
+      {/* <Grid size={12} paddingBottom={5}>
         <SearchGlobal sx={{ width: '100%' }} />
-      </Grid>
+      </Grid> */}
     </Grid>
   );
 }
