@@ -1,5 +1,6 @@
 'use client';
 
+import { SearchGlobal } from '@/components/searchGlobal';
 import {
   useJumboLayout,
   useSidebarState,
@@ -9,13 +10,12 @@ import { SIDEBAR_STYLES } from '@jumbo/utilities/constants';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import { IconButton, Stack, Tooltip, useMediaQuery, Grid, Box } from '@mui/material';
+import { Grid, IconButton, Stack, Tooltip, useMediaQuery } from '@mui/material';
 import dynamic from 'next/dynamic';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import React from 'react';
 import { Logo } from '../logo/Logo';
 import { SidebarToggleButton } from '../sidebarToggleButton';
-import { SearchGlobal } from '@/components/searchGlobal';
 import { ThemeModeOption } from './themeModeOptions/ThemeModeOption';
 
 const AuthUserPopover = dynamic(
@@ -56,7 +56,10 @@ function Header({ dictionary }: { dictionary: any }) {
   React.useEffect(() => {
     const storageKey = 'proserp-navigation-stack';
     if (!sessionStorage.getItem(storageKey)) {
-      sessionStorage.setItem(storageKey, JSON.stringify({ stack: [], index: 0 }));
+      sessionStorage.setItem(
+        storageKey,
+        JSON.stringify({ stack: [], index: 0 })
+      );
     }
   }, []);
 
@@ -70,7 +73,10 @@ function Header({ dictionary }: { dictionary: any }) {
     try {
       const saved = sessionStorage.getItem(storageKey);
       if (saved) {
-        const parsed = JSON.parse(saved) as { stack?: string[]; index?: number };
+        const parsed = JSON.parse(saved) as {
+          stack?: string[];
+          index?: number;
+        };
         const savedStack = Array.isArray(parsed?.stack) ? parsed.stack : [];
         const savedIndex = typeof parsed?.index === 'number' ? parsed.index : 0;
 
@@ -80,7 +86,10 @@ function Header({ dictionary }: { dictionary: any }) {
         } else if (savedStack[savedIndex] === currentPath) {
           nextStack = savedStack;
           nextIndex = savedIndex;
-        } else if (savedIndex > 0 && savedStack[savedIndex - 1] === currentPath) {
+        } else if (
+          savedIndex > 0 &&
+          savedStack[savedIndex - 1] === currentPath
+        ) {
           nextStack = savedStack;
           nextIndex = savedIndex - 1;
         } else if (
@@ -133,7 +142,12 @@ function Header({ dictionary }: { dictionary: any }) {
         {isSidebarStyle(SIDEBAR_STYLES.CLIPPED_UNDER_HEADER) && !isBelowLg && (
           <Logo sx={{ mr: 3, minWidth: 150 }} mode={theme.type} />
         )}
-        <Stack direction='row' alignItems='center' gap={1.25} sx={{ ml: 'auto', minWidth: 320 }}>
+        <Stack
+          direction='row'
+          alignItems='center'
+          gap={1.25}
+          sx={{ ml: 'auto', minWidth: 320 }}
+        >
           <SearchGlobal sx={{ maxWidth: 320, minWidth: 200 }} />
           <ThemeModeOption />
           <AuthUserPopover dictionary={dictionary} />
@@ -144,11 +158,16 @@ function Header({ dictionary }: { dictionary: any }) {
 
   // For small screens - grid layout
   return (
-    <Grid container alignItems="center" spacing={1} sx={{ width: '100%' }}>
+    <Grid container alignItems='center' spacing={1} sx={{ width: '100%' }}>
       {/* First Row: Navigation Buttons and Sidebar Toggle */}
       <Grid size={12}>
-        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ width: '100%' }}>
-          <Stack direction="row" alignItems="center" gap={0.5}>
+        <Stack
+          direction='row'
+          alignItems='center'
+          justifyContent='space-between'
+          sx={{ width: '100%' }}
+        >
+          <Stack direction='row' alignItems='center' gap={0.5}>
             <SidebarToggleButton />
             {canGoBack && (
               <Tooltip title='Back'>
@@ -185,8 +204,10 @@ function Header({ dictionary }: { dictionary: any }) {
               </IconButton>
             </Tooltip>
           </Stack>
-          <ThemeModeOption />
-          <AuthUserPopover dictionary={dictionary} />
+          <Stack direction={'row'} alignItems={'center'} gap={1}>
+            <ThemeModeOption />
+            <AuthUserPopover dictionary={dictionary} />
+          </Stack>
         </Stack>
       </Grid>
 
