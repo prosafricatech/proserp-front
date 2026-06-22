@@ -1,112 +1,242 @@
-'use client'
+'use client';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import AttachmentForm from '@/components/filesShelf/attachments/AttachmentForm';
+import PDFContent from '@/components/pdf/PDFContent';
+import { FileExportGrid } from '@/components/sharedComponents/FileExportGrid';
+import UnauthorizedAccess from '@/shared/Information/UnauthorizedAccess';
+import { AuthObject } from '@/types/auth-types';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
+import { JumboDdMenu } from '@jumbo/components';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
-import { AttachmentOutlined, ContentCopyOutlined, DeleteOutlined, EditOutlined, HighlightOff, MoreHorizOutlined, VisibilityOutlined } from '@mui/icons-material';
-import { Box, Button, Dialog, DialogContent, Grid, IconButton, LinearProgress, Skeleton, Tab, Tabs, Tooltip, useMediaQuery } from '@mui/material';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
+import { MenuItemProps } from '@jumbo/types';
+import {
+  AttachmentOutlined,
+  ContentCopyOutlined,
+  DeleteOutlined,
+  EditOutlined,
+  HighlightOff,
+  MoreHorizOutlined,
+  VisibilityOutlined,
+} from '@mui/icons-material';
+import {
+  Box,
+  Button,
+  Dialog,
+  DialogContent,
+  Grid,
+  IconButton,
+  Skeleton,
+  Tooltip,
+  useMediaQuery,
+} from '@mui/material';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
-import React, { useState } from 'react'
+import React, { useState } from 'react';
+import { Transaction } from '../TransactionTypes';
 import paymentServices from './payment-services';
 import PaymentFormDialogContent from './PaymentFormDialogContent';
-import PaymentPDF from './PaymentPDF';
 import PaymentOnScreenPreview from './PaymentOnScreenPreview';
-import dayjs from 'dayjs';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
-import PDFContent from '@/components/pdf/PDFContent';
-import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
-import { PERMISSIONS } from '@/utilities/constants/permissions';
-import UnauthorizedAccess from '@/shared/Information/UnauthorizedAccess';
-import { MenuItemProps } from '@jumbo/types';
-import { JumboDdMenu } from '@jumbo/components';
-import { Transaction } from '../TransactionTypes';
-import { AuthObject } from '@/types/auth-types';
-import AttachmentForm from '@/components/filesShelf/attachments/AttachmentForm';
+import PaymentPDF from './PaymentPDF';
 
-  interface DocumentDialogProps {
-    transaction: Transaction;
-    authObject: AuthObject;
-    setOpenDocumentDialog: React.Dispatch<React.SetStateAction<boolean>>;
+interface DocumentDialogProps {
+  transaction: Transaction;
+  authObject: AuthObject;
+  setOpenDocumentDialog: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+const DocumentDialog: React.FC<DocumentDialogProps> = ({
+  transaction,
+  authObject,
+  setOpenDocumentDialog,
+}) => {
+  const { data, isFetching } = useQuery({
+    queryKey: ['payment', transaction.id],
+    queryFn: () => paymentServices.show(transaction.id),
+  });
+  const [activeTab, setActiveTab] = useState(0);
+  const [showOnScreen, setShowOnScreen] = useState(true);
+  const { theme } = useJumboTheme();
+  const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
+
+  if (isFetching) {
+    return (
+      <div style={{ width: '100%', padding: '16px' }}>
+        <Skeleton
+          variant='text'
+          width={180}
+          height={32}
+          style={{ borderRadius: 4, marginLeft: 'auto' }}
+        />
+        <Skeleton
+          variant='rectangular'
+          width='100%'
+          height={48}
+          style={{ borderRadius: 4 }}
+        />
+        <Skeleton
+          variant='rectangular'
+          width='100%'
+          height={32}
+          style={{ borderRadius: 4 }}
+        />
+      </div>
+    );
   }
 
-  const DocumentDialog: React.FC<DocumentDialogProps> = ({ transaction, authObject, setOpenDocumentDialog }) => {
-    const { data, isFetching } = useQuery({
-      queryKey: ['payment', transaction.id],
-      queryFn: () => paymentServices.show(transaction.id),
-    });
-    const [activeTab, setActiveTab] = useState(0);
-    const { theme } = useJumboTheme();
-    const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setActiveTab(newValue);
+  };
 
-    if (isFetching) {
-      return (
-        <div style={{ width: '100%', padding: '16px' }}>
-          <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-          <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-          <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
-        </div>
-      );
-    }
-
-    const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-      setActiveTab(newValue);
-    };
-
-    return (
-      <DialogContent>
-        {belowLargeScreen && (
-          <Grid container alignItems="center" justifyContent="space-between">
-            <Grid size={11}>
-              <Tabs 
+  return (
+    <DialogContent>
+      {belowLargeScreen ? (
+        <Grid
+          container
+          alignItems='center'
+          justifyContent='space-between'
+          mb={2}
+        >
+          <Grid size={11} textAlign={'right'}>
+            {/* <Tabs 
                 value={activeTab} 
                 onChange={handleTabChange} 
                 aria-label="Payment View Tabs"
               >
                 <Tab label="ONSCREEN" />
                 <Tab label="PDF" />
-              </Tabs>
-            </Grid>
+              </Tabs> */}
 
-            <Grid size={1} textAlign="right">
-              <Tooltip title="Close">
-                <IconButton 
-                  size="small" 
-                  onClick={() => setOpenDocumentDialog(false)}
+            {/* <Box
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                border: '1px solid',
+                borderColor: 'divider',
+                borderRadius: 2,
+                bgcolor: 'background.paper',
+                p: 0,
+                color: 'text.secondary',
+                '& svg': {
+                  m: 1,
+                },
+              }}
+            >
+              <Tooltip title='Export Excel'>
+                <Button
+                  sx={{
+                    width: 'fit-content',
+                    fontSize: 15,
+                  }}
                 >
-                  <HighlightOff color="primary" />
-                </IconButton>
+                  <FontAwesomeIcon color='green' size='lg' icon={faFileExcel} />
+                </Button>
               </Tooltip>
-            </Grid>
+              <Divider orientation='vertical' variant='middle' flexItem />
+              <Tooltip title='Export PDF'>
+                <Button
+                  sx={{
+                    width: 'fit-content',
+                    fontSize: 15,
+                  }}
+                >
+                  <FontAwesomeIcon color='red' size='lg' icon={faFilePdf} />
+                </Button>
+              </Tooltip>
+            </Box> */}
+
+            <FileExportGrid
+              exportPdf
+              handlePdf={() => {
+                setShowOnScreen((prev) => !prev);
+              }}
+            />
           </Grid>
-        )}
-        {belowLargeScreen && activeTab === 0 ?
+
+          <Grid size={1} textAlign='right'>
+            <Tooltip title='Close'>
+              <IconButton
+                size='small'
+                onClick={() => setOpenDocumentDialog(false)}
+              >
+                <HighlightOff color='primary' />
+              </IconButton>
+            </Tooltip>
+          </Grid>
+        </Grid>
+      ) : (
+        <Grid
+          container
+          alignItems='center'
+          justifyContent='space-between'
+          mb={2}
+        >
+          <Grid size={12} textAlign={'right'}>
+            <FileExportGrid
+              exportPdf
+              handlePdf={() => {
+                setShowOnScreen((prev) => !prev);
+              }}
+            />
+          </Grid>
+        </Grid>
+      )}
+      {/* {belowLargeScreen && activeTab === 0 ?
           <PaymentOnScreenPreview transaction={data} authObject={authObject} /> 
           :
           <PDFContent
             fileName={transaction.voucherNo}
             document={<PaymentPDF transaction={data} authObject={authObject} />}
           />
-        }
-        {
-          belowLargeScreen &&
-          <Box textAlign="right" marginTop={5}>
-            <Button variant="outlined" size='small' color="primary" onClick={() => setOpenDocumentDialog(false)}>
-              Close
-            </Button>
-          </Box>
-        }
-      </DialogContent>
-    );
-  };
+        } */}
+      {showOnScreen ? (
+        <PaymentOnScreenPreview transaction={data} authObject={authObject} />
+      ) : (
+        <PDFContent
+          fileName={transaction.voucherNo}
+          document={<PaymentPDF transaction={data} authObject={authObject} />}
+        />
+      )}
 
-const AttachDialog= ({transaction, setAttachDialog}:{ transaction: Transaction, setAttachDialog: React.Dispatch<React.SetStateAction<boolean>>}) => {
+      {belowLargeScreen && (
+        <Box textAlign='right' marginTop={5}>
+          <Button
+            variant='outlined'
+            size='small'
+            color='primary'
+            onClick={() => setOpenDocumentDialog(false)}
+          >
+            Close
+          </Button>
+        </Box>
+      )}
+    </DialogContent>
+  );
+};
+
+const AttachDialog = ({
+  transaction,
+  setAttachDialog,
+}: {
+  transaction: Transaction;
+  setAttachDialog: React.Dispatch<React.SetStateAction<boolean>>;
+}) => {
   return (
-    <AttachmentForm setAttachDialog={setAttachDialog} attachment_sourceNo={transaction.voucherNo} attachmentable_type={'payment'} attachment_name={'Payment'} attachmentable_id={transaction.id}/>
-  )
-}
+    <AttachmentForm
+      setAttachDialog={setAttachDialog}
+      attachment_sourceNo={transaction.voucherNo}
+      attachmentable_type={'payment'}
+      attachment_name={'Payment'}
+      attachmentable_id={transaction.id}
+    />
+  );
+};
 
-function PaymentItemAction({transaction}:{transaction: Transaction}) {
-  const [openDocumentDialog, setOpenDocumentDialog] = useState(false)
-  const {showDialog,hideDialog} = useJumboDialog();
-  const {enqueueSnackbar} = useSnackbar();
+function PaymentItemAction({ transaction }: { transaction: Transaction }) {
+  const [openDocumentDialog, setOpenDocumentDialog] = useState(false);
+  const { showDialog, hideDialog } = useJumboDialog();
+  const { enqueueSnackbar } = useSnackbar();
   const [openDuplicateDialog, setOpenDuplicateDialog] = useState(false);
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [attachDialog, setAttachDialog] = useState(false);
@@ -114,11 +244,11 @@ function PaymentItemAction({transaction}:{transaction: Transaction}) {
   const queryClient = useQueryClient();
 
   //Screen handling constants
-  const {theme} = useJumboTheme();
+  const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
   const checkOrganizationPermission = authObject.checkOrganizationPermission;
-  
+
   const deletePayment = useMutation({
     mutationFn: paymentServices.delete,
     onSuccess: (data) => {
@@ -131,17 +261,49 @@ function PaymentItemAction({transaction}:{transaction: Transaction}) {
   });
 
   const menuItems: MenuItemProps[] = [
-    (checkOrganizationPermission([PERMISSIONS.ACCOUNTS_TRANSACTIONS_READ, PERMISSIONS.PAYMENTS_READ]) && {icon: <VisibilityOutlined/>, title: "View", action: "open"}),
-    {icon: <AttachmentOutlined/>, title: "Attach", action: "attach"},
-    (checkOrganizationPermission([PERMISSIONS.ACCOUNTS_TRANSACTIONS_CREATE, PERMISSIONS.PAYMENTS_CREATE]) && {icon: <ContentCopyOutlined/>, title: "Duplicate", action: "duplicate"}),
-    (!transaction.requisition_approval_id && checkOrganizationPermission([PERMISSIONS.ACCOUNTS_TRANSACTIONS_EDIT, PERMISSIONS.PAYMENTS_EDIT]) && 
-      (checkOrganizationPermission([PERMISSIONS.ACCOUNTS_TRANSACTIONS_BACKDATE, PERMISSIONS.PAYMENTS_BACKDATE]) || 
-      transaction.transaction_date >= dayjs().startOf('date').toISOString())) && 
-      {icon: <EditOutlined/>, title: 'Edit', action: 'edit'},
-    (!transaction.requisition_approval_id && checkOrganizationPermission([PERMISSIONS.ACCOUNTS_TRANSACTIONS_DELETE, PERMISSIONS.PAYMENTS_DELETE]) && 
-      (checkOrganizationPermission([PERMISSIONS.ACCOUNTS_TRANSACTIONS_BACKDATE, PERMISSIONS.PAYMENTS_BACKDATE]) || 
-      transaction.transaction_date >= dayjs().startOf('date').toISOString())) && 
-      {icon: <DeleteOutlined color='error'/>, title: 'Delete', action: 'delete'}
+    checkOrganizationPermission([
+      PERMISSIONS.ACCOUNTS_TRANSACTIONS_READ,
+      PERMISSIONS.PAYMENTS_READ,
+    ]) && { icon: <VisibilityOutlined />, title: 'View', action: 'open' },
+    { icon: <AttachmentOutlined />, title: 'Attach', action: 'attach' },
+    checkOrganizationPermission([
+      PERMISSIONS.ACCOUNTS_TRANSACTIONS_CREATE,
+      PERMISSIONS.PAYMENTS_CREATE,
+    ]) && {
+      icon: <ContentCopyOutlined />,
+      title: 'Duplicate',
+      action: 'duplicate',
+    },
+    !transaction.requisition_approval_id &&
+      checkOrganizationPermission([
+        PERMISSIONS.ACCOUNTS_TRANSACTIONS_EDIT,
+        PERMISSIONS.PAYMENTS_EDIT,
+      ]) &&
+      (checkOrganizationPermission([
+        PERMISSIONS.ACCOUNTS_TRANSACTIONS_BACKDATE,
+        PERMISSIONS.PAYMENTS_BACKDATE,
+      ]) ||
+        transaction.transaction_date >=
+          dayjs().startOf('date').toISOString()) && {
+        icon: <EditOutlined />,
+        title: 'Edit',
+        action: 'edit',
+      },
+    !transaction.requisition_approval_id &&
+      checkOrganizationPermission([
+        PERMISSIONS.ACCOUNTS_TRANSACTIONS_DELETE,
+        PERMISSIONS.PAYMENTS_DELETE,
+      ]) &&
+      (checkOrganizationPermission([
+        PERMISSIONS.ACCOUNTS_TRANSACTIONS_BACKDATE,
+        PERMISSIONS.PAYMENTS_BACKDATE,
+      ]) ||
+        transaction.transaction_date >=
+          dayjs().startOf('date').toISOString()) && {
+        icon: <DeleteOutlined color='error' />,
+        title: 'Delete',
+        action: 'delete',
+      },
   ].filter(Boolean) as MenuItemProps[];
 
   const EditPaymentDialog = () => {
@@ -149,19 +311,34 @@ function PaymentItemAction({transaction}:{transaction: Transaction}) {
       queryKey: ['payment', transaction.id],
       queryFn: () => paymentServices.show(transaction.id),
     });
-    if(isFetching){
+    if (isFetching) {
       return (
         <div style={{ width: '100%', padding: '16px' }}>
-          <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-          <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-          <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+          <Skeleton
+            variant='text'
+            width={180}
+            height={32}
+            style={{ borderRadius: 4, marginLeft: 'auto' }}
+          />
+          <Skeleton
+            variant='rectangular'
+            width='100%'
+            height={48}
+            style={{ borderRadius: 4 }}
+          />
+          <Skeleton
+            variant='rectangular'
+            width='100%'
+            height={32}
+            style={{ borderRadius: 4 }}
+          />
         </div>
       );
     }
     return (
       <PaymentFormDialogContent setOpen={setOpenEditDialog} payment={payment} />
     );
-  }
+  };
 
   const DuplicatePaymentDialog = () => {
     const { data: payment, isFetching } = useQuery({
@@ -172,21 +349,36 @@ function PaymentItemAction({transaction}:{transaction: Transaction}) {
     if (isFetching) {
       return (
         <div style={{ width: '100%', padding: '16px' }}>
-          <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-          <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-          <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+          <Skeleton
+            variant='text'
+            width={180}
+            height={32}
+            style={{ borderRadius: 4, marginLeft: 'auto' }}
+          />
+          <Skeleton
+            variant='rectangular'
+            width='100%'
+            height={48}
+            style={{ borderRadius: 4 }}
+          />
+          <Skeleton
+            variant='rectangular'
+            width='100%'
+            height={32}
+            style={{ borderRadius: 4 }}
+          />
         </div>
       );
     }
 
     return (
-      <PaymentFormDialogContent 
-        setOpen={setOpenDuplicateDialog} 
-        payment={payment} 
+      <PaymentFormDialogContent
+        setOpen={setOpenDuplicateDialog}
+        payment={payment}
         isDuplicate={true}
       />
     );
-  }
+  };
 
   React.useEffect(() => {
     if (openEditDialog) {
@@ -205,7 +397,7 @@ function PaymentItemAction({transaction}:{transaction: Transaction}) {
             deletePayment.mutate(transaction);
           },
           onNo: () => hideDialog(),
-          variant: 'confirm'
+          variant: 'confirm',
         });
         break;
       case 'edit':
@@ -223,48 +415,70 @@ function PaymentItemAction({transaction}:{transaction: Transaction}) {
       default:
         break;
     }
-  }
+  };
 
   return (
     <React.Fragment>
-    <Dialog
-      open={openEditDialog || openDuplicateDialog || openDocumentDialog || attachDialog}
-      scroll={'paper'}
-      fullScreen={belowLargeScreen}
-      fullWidth
-      onClose={() => {
-        if (openDocumentDialog) setOpenDocumentDialog(false);
-      }}
-      maxWidth={openEditDialog || openDuplicateDialog ? 'lg' : 'md'}
-    >
-      {openEditDialog && (
-        checkOrganizationPermission([PERMISSIONS.ACCOUNTS_TRANSACTIONS_EDIT, PERMISSIONS.PAYMENTS_EDIT]) ? 
-          <EditPaymentDialog/> : 
-          <UnauthorizedAccess/>
-      )}
-      {openDuplicateDialog && (
-        checkOrganizationPermission([PERMISSIONS.ACCOUNTS_TRANSACTIONS_CREATE, PERMISSIONS.PAYMENTS_CREATE]) ? 
-          <DuplicatePaymentDialog/> : 
-          <UnauthorizedAccess/>
-      )}
-      {openDocumentDialog && (
-        checkOrganizationPermission([PERMISSIONS.ACCOUNTS_TRANSACTIONS_READ, PERMISSIONS.PAYMENTS_READ]) ? 
-          <DocumentDialog 
-            transaction={transaction} 
-            authObject={authObject as unknown as AuthObject} 
-            setOpenDocumentDialog={setOpenDocumentDialog}
-          /> : 
-          <UnauthorizedAccess/>
-      )}
-      {attachDialog && <AttachDialog transaction={transaction} setAttachDialog={setAttachDialog}/>}
-    </Dialog>
-      
+      <Dialog
+        open={
+          openEditDialog ||
+          openDuplicateDialog ||
+          openDocumentDialog ||
+          attachDialog
+        }
+        scroll={'paper'}
+        fullScreen={belowLargeScreen}
+        fullWidth
+        onClose={() => {
+          if (openDocumentDialog) setOpenDocumentDialog(false);
+        }}
+        maxWidth={openEditDialog || openDuplicateDialog ? 'lg' : 'md'}
+      >
+        {openEditDialog &&
+          (checkOrganizationPermission([
+            PERMISSIONS.ACCOUNTS_TRANSACTIONS_EDIT,
+            PERMISSIONS.PAYMENTS_EDIT,
+          ]) ? (
+            <EditPaymentDialog />
+          ) : (
+            <UnauthorizedAccess />
+          ))}
+        {openDuplicateDialog &&
+          (checkOrganizationPermission([
+            PERMISSIONS.ACCOUNTS_TRANSACTIONS_CREATE,
+            PERMISSIONS.PAYMENTS_CREATE,
+          ]) ? (
+            <DuplicatePaymentDialog />
+          ) : (
+            <UnauthorizedAccess />
+          ))}
+        {openDocumentDialog &&
+          (checkOrganizationPermission([
+            PERMISSIONS.ACCOUNTS_TRANSACTIONS_READ,
+            PERMISSIONS.PAYMENTS_READ,
+          ]) ? (
+            <DocumentDialog
+              transaction={transaction}
+              authObject={authObject as unknown as AuthObject}
+              setOpenDocumentDialog={setOpenDocumentDialog}
+            />
+          ) : (
+            <UnauthorizedAccess />
+          ))}
+        {attachDialog && (
+          <AttachDialog
+            transaction={transaction}
+            setAttachDialog={setAttachDialog}
+          />
+        )}
+      </Dialog>
+
       <JumboDdMenu
         icon={
           <Tooltip title='Actions'>
-            <MoreHorizOutlined/>
+            <MoreHorizOutlined />
           </Tooltip>
-      }
+        }
         menuItems={menuItems}
         onClickCallback={handleItemAction}
       />
@@ -272,4 +486,4 @@ function PaymentItemAction({transaction}:{transaction: Transaction}) {
   );
 }
 
-export default PaymentItemAction
+export default PaymentItemAction;

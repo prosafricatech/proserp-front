@@ -1,45 +1,44 @@
-'use client'
-import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
-import { 
-  AttachmentOutlined, 
-  DeleteOutlined, 
-  EditOutlined, 
-  HighlightOff, 
-  MoreHorizOutlined,
-  VisibilityOutlined 
-} from '@mui/icons-material';
-import { 
-  Box, 
-  Button, 
-  Dialog, 
-  DialogContent, 
-  Grid, 
-  IconButton, 
-  LinearProgress, 
-  Skeleton, 
-  Tab, 
-  Tabs, 
-  Tooltip, 
-  useMediaQuery 
-} from '@mui/material';
-import { useSnackbar } from 'notistack';
-import React, { useState } from 'react';
-import TransferFormDialogContent from './TransferFormDialogContent';
-import fundTransferServices from './fund-transfer-services';
-import TransferInvoicePDF from './TransferPDF';
-import TransferOnScreen from './TransferOnScreen';
-import dayjs from 'dayjs';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
-import PDFContent from '@/components/pdf/PDFContent';
-import AttachmentForm from '@/components/filesShelf/attachments/AttachmentForm';
+'use client';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import AttachmentForm from '@/components/filesShelf/attachments/AttachmentForm';
+import PDFContent from '@/components/pdf/PDFContent';
+import UnauthorizedAccess from '@/shared/Information/UnauthorizedAccess';
+import { AuthObject } from '@/types/auth-types';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { JumboDdMenu } from '@jumbo/components';
+import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { MenuItemProps } from '@jumbo/types';
-import UnauthorizedAccess from '@/shared/Information/UnauthorizedAccess';
+import {
+  AttachmentOutlined,
+  DeleteOutlined,
+  EditOutlined,
+  HighlightOff,
+  MoreHorizOutlined,
+  VisibilityOutlined,
+} from '@mui/icons-material';
+import {
+  Box,
+  Button,
+  Dialog,
+  DialogContent,
+  Grid,
+  IconButton,
+  Skeleton,
+  Tab,
+  Tabs,
+  Tooltip,
+  useMediaQuery,
+} from '@mui/material';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import dayjs from 'dayjs';
+import { useSnackbar } from 'notistack';
+import React, { useState } from 'react';
 import { Transaction } from '../TransactionTypes';
-import { AuthObject } from '@/types/auth-types';
+import fundTransferServices from './fund-transfer-services';
+import TransferFormDialogContent from './TransferFormDialogContent';
+import TransferOnScreen from './TransferOnScreen';
+import TransferInvoicePDF from './TransferPDF';
 
 interface DocumentDialogProps {
   transaction: Transaction;
@@ -47,10 +46,10 @@ interface DocumentDialogProps {
   setOpenDocumentDialog: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const DocumentDialog: React.FC<DocumentDialogProps> = ({ 
-  transaction, 
-  authObject, 
-  setOpenDocumentDialog 
+const DocumentDialog: React.FC<DocumentDialogProps> = ({
+  transaction,
+  authObject,
+  setOpenDocumentDialog,
 }) => {
   const { data, isFetching } = useQuery({
     queryKey: ['transfer', transaction.id],
@@ -64,9 +63,24 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
   if (isFetching) {
     return (
       <div style={{ width: '100%', padding: '16px' }}>
-        <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-        <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-        <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+        <Skeleton
+          variant='text'
+          width={180}
+          height={32}
+          style={{ borderRadius: 4, marginLeft: 'auto' }}
+        />
+        <Skeleton
+          variant='rectangular'
+          width='100%'
+          height={48}
+          style={{ borderRadius: 4 }}
+        />
+        <Skeleton
+          variant='rectangular'
+          width='100%'
+          height={32}
+          style={{ borderRadius: 4 }}
+        />
       </div>
     );
   }
@@ -78,51 +92,52 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
   return (
     <DialogContent>
       {belowLargeScreen && (
-        <Grid container alignItems="center" justifyContent="space-between">
+        <Grid container alignItems='center' justifyContent='space-between'>
           <Grid size={11}>
             <Tabs
               value={activeTab}
               onChange={handleTabChange}
-              aria-label="transfer View Tabs"
+              aria-label='transfer View Tabs'
             >
-              <Tab label="ONSCREEN" />
-              <Tab label="PDF" />
+              <Tab label='ONSCREEN' />
+              <Tab label='PDF' />
             </Tabs>
           </Grid>
 
-          <Grid size={1} textAlign="right">
-            <Tooltip title="Close">
+          <Grid size={1} textAlign='right'>
+            <Tooltip title='Close'>
               <IconButton
-                size="small" 
+                size='small'
                 onClick={() => setOpenDocumentDialog(false)}
               >
-                <HighlightOff color="primary" />
+                <HighlightOff color='primary' />
               </IconButton>
             </Tooltip>
           </Grid>
         </Grid>
       )}
       {belowLargeScreen && activeTab === 0 ? (
-        <TransferOnScreen transaction={data} authObject={authObject} /> 
+        <TransferOnScreen transaction={data} authObject={authObject} />
       ) : (
         <PDFContent
-          document={<TransferInvoicePDF transaction={data} authObject={authObject} />}
+          document={
+            <TransferInvoicePDF transaction={data} authObject={authObject} />
+          }
           fileName={transaction.voucherNo}
         />
       )}
-      {
-        belowLargeScreen &&
-        <Box textAlign="right" marginTop={5}>
-          <Button 
-            variant="outlined" 
-            size="small" 
-            color="primary" 
+      {belowLargeScreen && (
+        <Box textAlign='right' marginTop={5}>
+          <Button
+            variant='outlined'
+            size='small'
+            color='primary'
             onClick={() => setOpenDocumentDialog(false)}
           >
             Close
           </Button>
         </Box>
-      }
+      )}
     </DialogContent>
   );
 };
@@ -132,13 +147,16 @@ interface AttachDialogProps {
   setAttachDialog: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const AttachDialog: React.FC<AttachDialogProps> = ({ transaction, setAttachDialog }) => {
+const AttachDialog: React.FC<AttachDialogProps> = ({
+  transaction,
+  setAttachDialog,
+}) => {
   return (
-    <AttachmentForm 
-      setAttachDialog={setAttachDialog} 
-      attachment_sourceNo={transaction.voucherNo} 
-      attachmentable_type={'fund_transfer'} 
-      attachment_name={'Fund Transfer'} 
+    <AttachmentForm
+      setAttachDialog={setAttachDialog}
+      attachment_sourceNo={transaction.voucherNo}
+      attachmentable_type={'fund_transfer'}
+      attachment_name={'Fund Transfer'}
       attachmentable_id={transaction.id}
     />
   );
@@ -148,7 +166,9 @@ interface TransferItemActionProps {
   transaction: Transaction;
 }
 
-const TransferItemAction: React.FC<TransferItemActionProps> = ({ transaction }) => {
+const TransferItemAction: React.FC<TransferItemActionProps> = ({
+  transaction,
+}) => {
   const [openDocumentDialog, setOpenDocumentDialog] = useState(false);
   const { showDialog, hideDialog } = useJumboDialog();
   const { enqueueSnackbar } = useSnackbar();
@@ -173,26 +193,47 @@ const TransferItemAction: React.FC<TransferItemActionProps> = ({ transaction }) 
   });
 
   const menuItems: MenuItemProps[] = [
-    (checkOrganizationPermission([PERMISSIONS.ACCOUNTS_TRANSACTIONS_READ, PERMISSIONS.FUND_TRANSFERS_READ]) && { 
-      icon: <VisibilityOutlined/>, 
-      title: 'View', 
-      action: 'open' 
+    (checkOrganizationPermission([
+      PERMISSIONS.ACCOUNTS_TRANSACTIONS_READ,
+      PERMISSIONS.FUND_TRANSFERS_READ,
+    ]) && {
+      icon: <VisibilityOutlined />,
+      title: 'View',
+      action: 'open',
     }) as MenuItemProps,
-    { 
-      icon: <AttachmentOutlined/>, 
-      title: "Attach", 
-      action: "attach" 
+    {
+      icon: <AttachmentOutlined />,
+      title: 'Attach',
+      action: 'attach',
     } as MenuItemProps,
-    checkOrganizationPermission([PERMISSIONS.ACCOUNTS_TRANSACTIONS_EDIT, PERMISSIONS.FUND_TRANSFERS_EDIT]) && 
-      !!transaction.editable &&
-      (checkOrganizationPermission([PERMISSIONS.ACCOUNTS_TRANSACTIONS_BACKDATE, PERMISSIONS.FUND_TRANSFERS_BACKDATE]) || 
-      transaction.transaction_date >= dayjs().startOf('date').toISOString()) ? 
-      { icon: <EditOutlined/>, title: 'Edit', action: 'edit' } : null,
-    checkOrganizationPermission([PERMISSIONS.ACCOUNTS_TRANSACTIONS_DELETE, PERMISSIONS.FUND_TRANSFERS_DELETE]) && 
-      !!transaction.editable &&
-      (checkOrganizationPermission([PERMISSIONS.ACCOUNTS_TRANSACTIONS_BACKDATE, PERMISSIONS.FUND_TRANSFERS_BACKDATE]) || 
-      transaction.transaction_date >= dayjs().startOf('date').toISOString()) ? 
-      { icon: <DeleteOutlined color='error'/>, title: 'Delete', action: 'delete' } : null
+    checkOrganizationPermission([
+      PERMISSIONS.ACCOUNTS_TRANSACTIONS_EDIT,
+      PERMISSIONS.FUND_TRANSFERS_EDIT,
+    ]) &&
+    !!transaction.editable &&
+    (checkOrganizationPermission([
+      PERMISSIONS.ACCOUNTS_TRANSACTIONS_BACKDATE,
+      PERMISSIONS.FUND_TRANSFERS_BACKDATE,
+    ]) ||
+      transaction.transaction_date >= dayjs().startOf('date').toISOString())
+      ? { icon: <EditOutlined />, title: 'Edit', action: 'edit' }
+      : null,
+    checkOrganizationPermission([
+      PERMISSIONS.ACCOUNTS_TRANSACTIONS_DELETE,
+      PERMISSIONS.FUND_TRANSFERS_DELETE,
+    ]) &&
+    !!transaction.editable &&
+    (checkOrganizationPermission([
+      PERMISSIONS.ACCOUNTS_TRANSACTIONS_BACKDATE,
+      PERMISSIONS.FUND_TRANSFERS_BACKDATE,
+    ]) ||
+      transaction.transaction_date >= dayjs().startOf('date').toISOString())
+      ? {
+          icon: <DeleteOutlined color='error' />,
+          title: 'Delete',
+          action: 'delete',
+        }
+      : null,
   ].filter((item): item is MenuItemProps => item !== null);
 
   const EditTransferDialog = () => {
@@ -200,25 +241,45 @@ const TransferItemAction: React.FC<TransferItemActionProps> = ({ transaction }) 
       queryKey: ['fundTransfer', transaction.id],
       queryFn: () => fundTransferServices.show(transaction.id),
     });
-    
+
     if (isFetching) {
-          return (
-            <div style={{ width: '100%', padding: '16px' }}>
-              <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-              <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-              <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
-            </div>
-          );
+      return (
+        <div style={{ width: '100%', padding: '16px' }}>
+          <Skeleton
+            variant='text'
+            width={180}
+            height={32}
+            style={{ borderRadius: 4, marginLeft: 'auto' }}
+          />
+          <Skeleton
+            variant='rectangular'
+            width='100%'
+            height={48}
+            style={{ borderRadius: 4 }}
+          />
+          <Skeleton
+            variant='rectangular'
+            width='100%'
+            height={32}
+            style={{ borderRadius: 4 }}
+          />
+        </div>
+      );
     }
-    
+
     return (
-      <TransferFormDialogContent setOpen={setOpenEditDialog} transfer={transfer} />
+      <TransferFormDialogContent
+        setOpen={setOpenEditDialog}
+        transfer={transfer}
+      />
     );
   };
 
   React.useEffect(() => {
     if (openEditDialog) {
-      queryClient.invalidateQueries({ queryKey: ['fundTransfer', transaction.id] });
+      queryClient.invalidateQueries({
+        queryKey: ['fundTransfer', transaction.id],
+      });
     }
   }, [openEditDialog, transaction.id, queryClient]);
 
@@ -233,7 +294,7 @@ const TransferItemAction: React.FC<TransferItemActionProps> = ({ transaction }) 
             deleteTransfer.mutate(transaction);
           },
           onNo: () => hideDialog(),
-          variant: 'confirm'
+          variant: 'confirm',
         });
         break;
       case 'edit':
@@ -262,23 +323,31 @@ const TransferItemAction: React.FC<TransferItemActionProps> = ({ transaction }) 
         fullScreen={belowLargeScreen}
         maxWidth={openEditDialog ? 'lg' : 'md'}
       >
-        {openEditDialog && (
-          checkOrganizationPermission([PERMISSIONS.ACCOUNTS_TRANSACTIONS_EDIT, PERMISSIONS.FUND_TRANSFERS_EDIT]) ? 
-            <EditTransferDialog/> : 
-            <UnauthorizedAccess/>
-        )}
-        {openDocumentDialog && (
-          checkOrganizationPermission([PERMISSIONS.ACCOUNTS_TRANSACTIONS_READ, PERMISSIONS.FUND_TRANSFERS_READ]) ? 
-            <DocumentDialog 
-              setOpenDocumentDialog={setOpenDocumentDialog} 
-              transaction={transaction} 
+        {openEditDialog &&
+          (checkOrganizationPermission([
+            PERMISSIONS.ACCOUNTS_TRANSACTIONS_EDIT,
+            PERMISSIONS.FUND_TRANSFERS_EDIT,
+          ]) ? (
+            <EditTransferDialog />
+          ) : (
+            <UnauthorizedAccess />
+          ))}
+        {openDocumentDialog &&
+          (checkOrganizationPermission([
+            PERMISSIONS.ACCOUNTS_TRANSACTIONS_READ,
+            PERMISSIONS.FUND_TRANSFERS_READ,
+          ]) ? (
+            <DocumentDialog
+              setOpenDocumentDialog={setOpenDocumentDialog}
+              transaction={transaction}
               authObject={authObject as unknown as AuthObject}
-            /> : 
-            <UnauthorizedAccess/>
-        )}
+            />
+          ) : (
+            <UnauthorizedAccess />
+          ))}
         {attachDialog && (
-          <AttachDialog 
-            transaction={transaction} 
+          <AttachDialog
+            transaction={transaction}
             setAttachDialog={setAttachDialog}
           />
         )}
@@ -286,7 +355,7 @@ const TransferItemAction: React.FC<TransferItemActionProps> = ({ transaction }) 
       <JumboDdMenu
         icon={
           <Tooltip title='Actions'>
-            <MoreHorizOutlined/>
+            <MoreHorizOutlined />
           </Tooltip>
         }
         menuItems={menuItems}
