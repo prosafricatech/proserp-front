@@ -119,7 +119,7 @@ requisitionsServices.productBudgetCheck = async ({ product_id, cost_center_id })
 };
 
 requisitionsServices.exportPurchaseRequisitionExcel = async (params) => {
-    const { data } = await axios.post(`/api/exports/excel/purchaseRequisition/`, params, {
+    const { data } = await axios.post(`/api/exports/excel/purchaseRequisition`, params, {
         responseType: 'blob',
     })
     return data;
