@@ -1,6 +1,13 @@
 'use client';
 
-import React from 'react';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import PDFContent from '@/components/pdf/PDFContent';
+import imprestRetirementServices from '@/components/processApproval/imprestRetirements/imprestRetirementServices';
+import { FileExportGrid } from '@/components/sharedComponents/FileExportGrid';
+import PreviewTopBar from '@/components/sharedComponents/PreviewTopBar';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
+import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import {
   EditOutlined,
   FactCheckOutlined,
@@ -15,27 +22,19 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Grid,
   IconButton,
   LinearProgress,
-  Tab,
-  Tabs,
   Tooltip,
   useMediaQuery,
 } from '@mui/material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import dayjs from 'dayjs';
+import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import { useSnackbar } from 'notistack';
-import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
-import PDFContent from '@/components/pdf/PDFContent';
-import imprestRetirementServices from '@/components/processApproval/imprestRetirements/imprestRetirementServices';
-import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
-import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
-import { PERMISSIONS } from '@/utilities/constants/permissions';
+import React, { useState } from 'react';
 import ImprestRetirementApprovalForm from './form/ImprestRetirementApprovalForm';
 import ImprestRetirementOnScreenPreview from './preview/ImprestRetirementOnScreenPreview';
 import ImprestRetirementPDF from './preview/ImprestRetirementPDF';
-import dayjs from 'dayjs';
-import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 
 dayjs.extend(isSameOrAfter);
 
@@ -60,51 +59,73 @@ function ImprestRetirementApprovalItemAction({
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
   const { theme } = useJumboTheme();
-  const { checkOrganizationPermission, hasOrganizationRole, authOrganization, authUser } =
-    useJumboAuth();
+  const {
+    checkOrganizationPermission,
+    hasOrganizationRole,
+    authOrganization,
+    authUser,
+  } = useJumboAuth();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
   const organization = authOrganization?.organization;
 
   const [openApprovalDialog, setOpenApprovalDialog] = React.useState(false);
-  const [approvalDialogMode, setApprovalDialogMode] = React.useState<'approve' | 'edit'>('approve');
+  const [approvalDialogMode, setApprovalDialogMode] = React.useState<
+    'approve' | 'edit'
+  >('approve');
   const [openPreviewDialog, setOpenPreviewDialog] = React.useState(false);
-  const [activePreviewTab, setActivePreviewTab] = React.useState(0);
+  const [showOnScreen, setShowOnScreen] = useState(true);
   const canDeleteAnyRetirementApproval = checkOrganizationPermission([
     PERMISSIONS.IMPREST_RETIREMENT_APPROVALS_DELETE_ANY,
   ]);
 
-  const currentApproval = approval || retirement?.latest_approval || retirement?.approval || null;
+  const currentApproval =
+    approval || retirement?.latest_approval || retirement?.approval || null;
   const selectedApprovalId = React.useMemo(() => {
-    return Number(currentApproval?.id || currentApproval?.approval_id || 0) || null;
+    return (
+      Number(currentApproval?.id || currentApproval?.approval_id || 0) || null
+    );
   }, [currentApproval]);
 
-  const { data: approvalDetails, isFetching: isFetchingApprovalDetails } = useQuery({
-    queryKey: [
-      'imprestRetirementApprovalDetails',
-      { id: selectedApprovalId },
-      'imprest-retirement-approval-item-action',
-    ],
-    queryFn: async () => imprestRetirementServices.showApproval(selectedApprovalId),
-    enabled: !!selectedApprovalId && (!!openApprovalDialog || !!openPreviewDialog),
-  });
+  const { data: approvalDetails, isFetching: isFetchingApprovalDetails } =
+    useQuery({
+      queryKey: [
+        'imprestRetirementApprovalDetails',
+        { id: selectedApprovalId },
+        'imprest-retirement-approval-item-action',
+      ],
+      queryFn: async () =>
+        imprestRetirementServices.showApproval(selectedApprovalId),
+      enabled:
+        !!selectedApprovalId && (!!openApprovalDialog || !!openPreviewDialog),
+    });
 
-  const { data: retirementDetails, isFetching: isFetchingRetirementDetails } = useQuery({
-    queryKey: ['imprestRetirementDetails', { id: retirement?.id }, 'imprest-retirement-approval-item-action'],
-    queryFn: async () => imprestRetirementServices.show(retirement?.id),
-    enabled: !!retirement?.id && (!!openApprovalDialog || !!openPreviewDialog),
-  });
+  const { data: retirementDetails, isFetching: isFetchingRetirementDetails } =
+    useQuery({
+      queryKey: [
+        'imprestRetirementDetails',
+        { id: retirement?.id },
+        'imprest-retirement-approval-item-action',
+      ],
+      queryFn: async () => imprestRetirementServices.show(retirement?.id),
+      enabled:
+        !!retirement?.id && (!!openApprovalDialog || !!openPreviewDialog),
+    });
 
   const resolvedRetirement = React.useMemo(() => {
     const baseRetirement = retirementDetails || retirement;
     const selectedApproval =
-      approvalDetails ?? approval ?? retirement?.latest_approval ?? retirement?.approval;
+      approvalDetails ??
+      approval ??
+      retirement?.latest_approval ??
+      retirement?.approval;
 
     if (!selectedApproval) return baseRetirement;
 
     return {
       ...baseRetirement,
       status: selectedApproval?.status || baseRetirement?.status,
-      status_label: selectedApproval?.status_label || baseRetirement?.status_label,
+      status_label:
+        selectedApproval?.status_label || baseRetirement?.status_label,
       latest_approval: selectedApproval,
       approval: selectedApproval,
       approvals: [selectedApproval],
@@ -116,12 +137,16 @@ function ImprestRetirementApprovalItemAction({
     : Array.isArray(retirement?.approvals)
       ? retirement.approvals
       : [];
-  const latestApprovalRow = approvalList.length > 0 ? approvalList[approvalList.length - 1] : null;
+  const latestApprovalRow =
+    approvalList.length > 0 ? approvalList[approvalList.length - 1] : null;
   const isCurrentLatestApprovalRow =
     isLatestApprovalRow &&
-    (approvalList.length === 0 || latestApprovalRow?.id === currentApproval?.id);
+    (approvalList.length === 0 ||
+      latestApprovalRow?.id === currentApproval?.id);
 
-  const statusRaw = normalizeStatus(currentApproval?.status || retirement?.status);
+  const statusRaw = normalizeStatus(
+    currentApproval?.status || retirement?.status
+  );
   const statusLabelRaw = normalizeStatus(
     currentApproval?.status_label || retirement?.status_label
   );
@@ -148,10 +173,15 @@ function ImprestRetirementApprovalItemAction({
     !isRejected &&
     !isApproved &&
     statusRaw === 'submitted' &&
-    (approvalStatusRaw === 'pending' || !approvalStatusRaw || statusLabelRaw.includes('pending'));
+    (approvalStatusRaw === 'pending' ||
+      !approvalStatusRaw ||
+      statusLabelRaw.includes('pending'));
 
-  const nextApprovalLevel = resolvedRetirement?.next_approval_level || retirement?.next_approval_level;
-  const retirementStatusRaw = normalizeStatus(resolvedRetirement?.status || retirement?.status);
+  const nextApprovalLevel =
+    resolvedRetirement?.next_approval_level || retirement?.next_approval_level;
+  const retirementStatusRaw = normalizeStatus(
+    resolvedRetirement?.status || retirement?.status
+  );
   const canEditOrDeleteDate =
     checkOrganizationPermission(PERMISSIONS.APPROVAL_BACKDATE) ||
     dayjs(currentApproval?.approval_date).isSameOrAfter(dayjs().startOf('day'));
@@ -179,23 +209,35 @@ function ImprestRetirementApprovalItemAction({
       });
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['imprestRetirements'] }),
-        queryClient.invalidateQueries({ queryKey: ['imprestRetirementDetails'] }),
-        queryClient.invalidateQueries({ queryKey: ['imprestRetirementApprovalDetails'] }),
+        queryClient.invalidateQueries({
+          queryKey: ['imprestRetirementDetails'],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['imprestRetirementApprovalDetails'],
+        }),
       ]);
     },
     onError: (error: any) => {
-      enqueueSnackbar(error?.response?.data?.message || 'Failed to revoke retirement approval', {
-        variant: 'error',
-      });
+      enqueueSnackbar(
+        error?.response?.data?.message ||
+          'Failed to revoke retirement approval',
+        {
+          variant: 'error',
+        }
+      );
     },
   });
 
   const resolveApprovalId = async (): Promise<number | null> => {
     if (selectedApprovalId) return selectedApprovalId;
 
-    const approvalsList = Array.isArray(retirement?.approvals) ? retirement.approvals : [];
-    const latestApprovalFromRow = retirement?.latest_approval || retirement?.approval || null;
-    const lastApprovalInList = approvalsList.length > 0 ? approvalsList[approvalsList.length - 1] : null;
+    const approvalsList = Array.isArray(retirement?.approvals)
+      ? retirement.approvals
+      : [];
+    const latestApprovalFromRow =
+      retirement?.latest_approval || retirement?.approval || null;
+    const lastApprovalInList =
+      approvalsList.length > 0 ? approvalsList[approvalsList.length - 1] : null;
     return (
       Number(
         latestApprovalFromRow?.id ||
@@ -216,7 +258,9 @@ function ImprestRetirementApprovalItemAction({
         hideDialog();
         const approvalId = await resolveApprovalId();
         if (!approvalId) {
-          enqueueSnackbar('Approval reference not found for revoke', { variant: 'error' });
+          enqueueSnackbar('Approval reference not found for revoke', {
+            variant: 'error',
+          });
           return;
         }
         await revokeRetirementApproval({
@@ -233,10 +277,11 @@ function ImprestRetirementApprovalItemAction({
   const showRevoke =
     canEditOrDeleteDate &&
     isCurrentLatestApprovalRow &&
-    ((currentApproval?.creator?.id === authUser?.user?.id) ||
-      canDeleteAnyRetirementApproval)
+    (currentApproval?.creator?.id === authUser?.user?.id ||
+      canDeleteAnyRetirementApproval);
 
-  const isFetchingDialogDetails = isFetchingApprovalDetails || isFetchingRetirementDetails;
+  const isFetchingDialogDetails =
+    isFetchingApprovalDetails || isFetchingRetirementDetails;
 
   return (
     <>
@@ -245,7 +290,7 @@ function ImprestRetirementApprovalItemAction({
         scroll={belowLargeScreen ? 'body' : 'paper'}
         fullWidth
         fullScreen={belowLargeScreen}
-        maxWidth="md"
+        maxWidth='md'
         onClose={() => setOpenPreviewDialog(false)}
       >
         {isFetchingDialogDetails ? (
@@ -253,31 +298,31 @@ function ImprestRetirementApprovalItemAction({
         ) : (
           <>
             <DialogTitle>
-              <Grid container alignItems="center" justifyContent="space-between">
-                <Grid size={{ xs: 11 }}>
-                  <Tabs
-                    value={activePreviewTab}
-                    onChange={(_event: React.SyntheticEvent, newValue: number) =>
-                      setActivePreviewTab(newValue)
-                    }
-                    aria-label="approval preview tabs"
+              <PreviewTopBar
+                fileExportGrid={
+                  <FileExportGrid
+                    exportPdf
+                    handlePdf={() => {
+                      setShowOnScreen((prev) => !prev);
+                    }}
+                  />
+                }
+                closeButton={
+                  <IconButton
+                    size='small'
+                    color='primary'
+                    onClick={() => setOpenPreviewDialog(false)}
                   >
-                    <Tab label="ONSCREEN" />
-                    <Tab label="PDF" />
-                  </Tabs>
-                </Grid>
-                <Grid size={{ xs: 1 }} sx={{ textAlign: 'right' }}>
-                  <Tooltip title="Close">
-                    <IconButton size="small" onClick={() => setOpenPreviewDialog(false)}>
-                      <HighlightOff color="primary" />
-                    </IconButton>
-                  </Tooltip>
-                </Grid>
-              </Grid>
+                    <HighlightOff color='primary' />
+                  </IconButton>
+                }
+              />
             </DialogTitle>
             <DialogContent>
-              {activePreviewTab === 0 ? (
-                <ImprestRetirementOnScreenPreview retirement={resolvedRetirement} />
+              {showOnScreen ? (
+                <ImprestRetirementOnScreenPreview
+                  retirement={resolvedRetirement}
+                />
               ) : (
                 <PDFContent
                   fileName={
@@ -296,9 +341,9 @@ function ImprestRetirementApprovalItemAction({
             <DialogActions>
               <Box sx={{ textAlign: 'right', marginTop: 1 }}>
                 <Button
-                  variant="outlined"
-                  size="small"
-                  color="primary"
+                  variant='outlined'
+                  size='small'
+                  color='primary'
                   onClick={() => setOpenPreviewDialog(false)}
                 >
                   Close
@@ -311,7 +356,7 @@ function ImprestRetirementApprovalItemAction({
 
       <Dialog
         open={openApprovalDialog}
-        maxWidth="lg"
+        maxWidth='lg'
         scroll={belowLargeScreen ? 'body' : 'paper'}
         fullWidth
         fullScreen={belowLargeScreen}
@@ -328,16 +373,16 @@ function ImprestRetirementApprovalItemAction({
         )}
       </Dialog>
 
-      <Tooltip title="View">
-        <IconButton size="small" onClick={() => setOpenPreviewDialog(true)}>
+      <Tooltip title='View'>
+        <IconButton size='small' onClick={() => setOpenPreviewDialog(true)}>
           <VisibilityOutlined />
         </IconButton>
       </Tooltip>
 
       {showEdit && (
-        <Tooltip title="Edit">
+        <Tooltip title='Edit'>
           <IconButton
-            size="small"
+            size='small'
             onClick={() => {
               setApprovalDialogMode('edit');
               setOpenApprovalDialog(true);
@@ -349,9 +394,9 @@ function ImprestRetirementApprovalItemAction({
       )}
 
       {showApprove && (
-        <Tooltip title="Approve">
+        <Tooltip title='Approve'>
           <IconButton
-            size="small"
+            size='small'
             onClick={() => {
               setApprovalDialogMode('approve');
               setOpenApprovalDialog(true);
@@ -363,9 +408,9 @@ function ImprestRetirementApprovalItemAction({
       )}
 
       {showRevoke && (
-        <Tooltip title="Revoke">
-          <IconButton size="small" onClick={handleRevoke}>
-            <UndoOutlined color="error" />
+        <Tooltip title='Revoke'>
+          <IconButton size='small' onClick={handleRevoke}>
+            <UndoOutlined color='error' />
           </IconButton>
         </Tooltip>
       )}
