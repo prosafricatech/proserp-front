@@ -16,6 +16,7 @@ import React from 'react';
 import { Logo } from '../logo/Logo';
 import { SidebarToggleButton } from '../sidebarToggleButton';
 import { ThemeModeOption } from './themeModeOptions/ThemeModeOption';
+import { SearchGlobal } from '../searchGlobal';
 
 const AuthUserPopover = dynamic(
   () => import('../authUserPopover').then((mod) => mod.AuthUserPopover),
@@ -148,7 +149,7 @@ function Header({ dictionary }: { dictionary: any }) {
           gap={1.25}
           sx={{ ml: 'auto', minWidth: 320 }}
         >
-          {/* <SearchGlobal sx={{ maxWidth: 320, minWidth: 200 }} /> */}
+          <SearchGlobal sx={{ maxWidth: 320, minWidth: 200 }} />
           <ThemeModeOption />
           <AuthUserPopover dictionary={dictionary} />
         </Stack>
@@ -212,9 +213,9 @@ function Header({ dictionary }: { dictionary: any }) {
       </Grid>
 
       {/* Second Row: Search Global */}
-      {/* <Grid size={12} paddingBottom={5}>
+      <Grid size={12} paddingBottom={5}>
         <SearchGlobal sx={{ width: '100%' }} />
-      </Grid> */}
+      </Grid>
     </Grid>
   );
 }
