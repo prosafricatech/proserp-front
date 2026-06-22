@@ -1,9 +1,8 @@
 'use client';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { FileExportGrid } from '@/components/sharedComponents/FileExportGrid';
 import { Organization } from '@/types/auth-types';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
-import { faFileExcel } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import {
@@ -13,7 +12,6 @@ import {
   HighlightOff,
   VisibilityOutlined,
 } from '@mui/icons-material';
-import { LoadingButton } from '@mui/lab';
 import {
   Box,
   Button,
@@ -23,8 +21,6 @@ import {
   Grid,
   IconButton,
   LinearProgress,
-  Tab,
-  Tabs,
   Tooltip,
   useMediaQuery,
 } from '@mui/material';
@@ -102,6 +98,7 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
   });
 
   const [selectedTab, setSelectedTab] = useState(0);
+  const [showOnScreen, setShowOnScreen] = useState(true);
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
   const [isExporting, setIsExporting] = useState(false);
@@ -154,21 +151,35 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
       fullScreen={belowLargeScreen}
     >
       <DialogContent sx={{ pt: 1.5 }}>
-        <Grid container alignItems='center' justifyContent='space-between' sx={{ mb: 1.5 }}>
-          <Grid size={{ xs: belowLargeScreen ? 8 : 9 }} sx={{ minWidth: 0 }}>
-            {showTabs && (
+        <Grid
+          container
+          alignItems='center'
+          justifyContent='space-between'
+          sx={{ mb: 1.5 }}
+        >
+          <Grid size={{ xs: belowLargeScreen ? 11 : 12 }} sx={{ minWidth: 0 }}>
+            {/* {showTabs && (
               <Tabs value={selectedTab} onChange={handleTabChange}>
                 <Tab label='On Screen' />
                 <Tab label='PDF' />
               </Tabs>
-            )}
-          </Grid>
-          <Grid
-            size={{ xs: belowLargeScreen ? 3 : 3 }}
-            textAlign='right'
-            sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5 }}
-          >
-            <LoadingButton
+            )} */}
+            <Grid
+              size={{ xs: belowLargeScreen ? 12 : 12 }}
+              textAlign='right'
+              sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5 }}
+            >
+              <FileExportGrid
+                exportExcel
+                exportPdf
+                handlExcelExport={() => handlExcelExport(exportedData)}
+                handlePdf={() => {
+                  setShowOnScreen((prev) => !prev);
+                }}
+                exportingExcel={isExporting}
+              />
+            </Grid>
+            {/* <LoadingButton
               size='small'
               onClick={() => handlExcelExport(exportedData)}
               loading={isExporting}
@@ -177,7 +188,7 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
             >
               <FontAwesomeIcon icon={faFileExcel} color='green' />
               Excel
-            </LoadingButton>
+            </LoadingButton> */}
           </Grid>
 
           {belowLargeScreen && (
@@ -195,7 +206,7 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
           )}
         </Grid>
 
-        <Box>
+        {/* <Box>
           {forcePDFView ? (
             <PDFContent
               document={
@@ -227,6 +238,26 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
                 />
               )}
             </>
+          )}
+        </Box> */}
+
+        <Box>
+          {showOnScreen ? (
+            <RequisitionsOnScreen
+              belowLargeScreen={belowLargeScreen}
+              requisition={requisitionDetails}
+              organization={organization}
+            />
+          ) : (
+            <PDFContent
+              document={
+                <RequisitionPDF
+                  organization={organization}
+                  requisition={requisitionDetails}
+                />
+              }
+              fileName={requisition.requisitionNo}
+            />
           )}
         </Box>
       </DialogContent>
