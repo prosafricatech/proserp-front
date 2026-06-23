@@ -14,11 +14,19 @@ const LeaveRequestsListItem = ({
     leaveRequest.status === 'approved'
       ? 'success'
       : leaveRequest.status === 'rejected'
-      ? 'error'
-      : leaveRequest.status === 'cancelled'
-      ? 'default'
-      : 'warning';
+        ? 'error'
+        : leaveRequest.status === 'cancelled'
+          ? 'default'
+          : 'warning';
 
+  const formattedStatus =
+    leaveRequest.status === 'in_review'
+      ? 'In Review'
+      : leaveRequest.status === 'approved'
+        ? 'Approved'
+        : leaveRequest.status === 'cancelled'
+          ? 'Cancelled'
+          : 'Rejected';
   return (
     <>
       <Divider />
@@ -39,19 +47,26 @@ const LeaveRequestsListItem = ({
       >
         <Grid size={{ xs: 12, md: 2.2 }}>
           <Tooltip title='Leave Type'>
-            <Typography>{leaveRequest.leave_type?.name || `Type #${leaveRequest.leave_type_id}`}</Typography>
+            <Typography>
+              {leaveRequest.leave_type?.name ||
+                `Type #${leaveRequest.leave_type_id}`}
+            </Typography>
           </Tooltip>
         </Grid>
 
         <Grid size={{ xs: 12, md: 1.8 }}>
           <Tooltip title='Start Date'>
-            <Typography>{dayjs(leaveRequest.start_date).format('YYYY-MM-DD')}</Typography>
+            <Typography>
+              {dayjs(leaveRequest.start_date).format('YYYY-MM-DD')}
+            </Typography>
           </Tooltip>
         </Grid>
 
         <Grid size={{ xs: 12, md: 1.8 }}>
           <Tooltip title='End Date'>
-            <Typography>{dayjs(leaveRequest.end_date).format('YYYY-MM-DD')}</Typography>
+            <Typography>
+              {dayjs(leaveRequest.end_date).format('YYYY-MM-DD')}
+            </Typography>
           </Tooltip>
         </Grid>
 
@@ -67,7 +82,7 @@ const LeaveRequestsListItem = ({
 
         <Grid size={{ xs: 12, md: 1.6 }}>
           <Chip
-            label={leaveRequest.status}
+            label={formattedStatus}
             size='small'
             color={statusColor}
             variant='outlined'

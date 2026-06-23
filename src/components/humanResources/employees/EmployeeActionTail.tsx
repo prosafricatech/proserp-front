@@ -1,3 +1,4 @@
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { AddOutlined, UploadFileOutlined } from '@mui/icons-material';
 import {
   ButtonGroup,
@@ -8,9 +9,9 @@ import {
 } from '@mui/material';
 import { useState } from 'react';
 import { DepartmentsProvider } from '../departments/DepartmentsProvider';
-import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import EmployeeForm from './EmployeeForm';
 import EmployeeOnboardingDialog from './EmployeeOnboardingDialog';
+import { EmployeesProvider } from './EmployeesProvider';
 
 const EmployeeActionTail = () => {
   const [openDialog, setOpenDialog] = useState(false);
@@ -27,7 +28,9 @@ const EmployeeActionTail = () => {
         fullScreen={belowLargeScreen}
       >
         <DepartmentsProvider>
-          <EmployeeForm setOpenDialog={setOpenDialog} />
+          <EmployeesProvider>
+            <EmployeeForm setOpenDialog={setOpenDialog} />
+          </EmployeesProvider>
         </DepartmentsProvider>
       </Dialog>
       <Dialog

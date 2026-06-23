@@ -1,7 +1,7 @@
 'use client';
 
-import { yupResolver } from '@hookform/resolvers/yup';
 import CostCenterSelector from '@/components/masters/costCenters/CostCenterSelector';
+import { yupResolver } from '@hookform/resolvers/yup';
 import { Div } from '@jumbo/shared';
 import { LoadingButton } from '@mui/lab';
 import {
@@ -63,6 +63,22 @@ const LeaveRequestForm = ({
 }: LeaveRequestFormProps) => {
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
+  // const { employees } = useEmployees();
+
+  // const [selectedEmployee, setselectedEmployee] = useState<Employee | null>(
+  //   null
+  // );
+
+  // const defaultValue = useMemo(() => {
+  //   return (
+  //     employees &&
+  //     employees.find((ledger) => ledger.id === leaveRequest?.employee_id)
+  //   );
+  // }, [leaveRequest, employees]);
+
+  // useEffect(() => {
+  //   if (defaultValue) setselectedEmployee(defaultValue);
+  // }, [defaultValue]);
 
   const { data: leaveTypesResponse, isFetching: fetchingLeaveTypes } = useQuery(
     {
@@ -213,6 +229,30 @@ const LeaveRequestForm = ({
       <DialogContent>
         <form autoComplete='off' onSubmit={handleSubmit(onSubmit)}>
           <Grid container rowSpacing={{ xs: 1, md: 2 }} spacing={1}>
+            {/* <Grid size={{ xs: 12, md: 6 }}>
+              <Div sx={{ mt: 1, mb: 1 }}>
+                <EmployeeSelector
+                  frontError={errors.employee_id}
+                  value={selectedEmployee || undefined}
+                  onChange={(newValue) => {
+                    if (newValue && !Array.isArray(newValue)) {
+                      setselectedEmployee(newValue);
+                      setValue('employee_id', newValue.id, {
+                        shouldValidate: true,
+                        shouldDirty: true,
+                      });
+                    } else {
+                      setselectedEmployee(null);
+                      setValue('employee_id', 0, {
+                        shouldValidate: true,
+                        shouldDirty: true,
+                      });
+                    }
+                  }}
+                />
+              </Div>
+            </Grid> */}
+
             <Grid size={{ xs: 12, md: 6 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 {fetchingLeaveTypes ? (
@@ -275,7 +315,9 @@ const LeaveRequestForm = ({
                       label='Cost Center (optional)'
                       defaultValue={(leaveRequest as any)?.cost_center || null}
                       onChange={(value) => {
-                        const selected = Array.isArray(value) ? value[0] : value;
+                        const selected = Array.isArray(value)
+                          ? value[0]
+                          : value;
                         field.onChange(selected?.id || null);
                       }}
                       frontError={

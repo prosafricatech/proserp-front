@@ -1,5 +1,7 @@
 'use client';
 
+import LedgerGroupProvider from '@/components/accounts/ledgerGroups/LedgerGroupProvider';
+import LedgerSelectProvider from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
 import JumboListToolbar from '@jumbo/components/JumboList/components/JumboListToolbar';
 import JumboRqList from '@jumbo/components/JumboReactQuery/JumboRqList';
 import JumboSearch from '@jumbo/components/JumboSearch';
@@ -10,8 +12,6 @@ import humanResourcesServices from '../humanResourcesServices';
 import EmployeeActionTail from './EmployeeActionTail';
 import EmployeesListItem from './EmployeesListItem';
 import { Employee } from './EmployeesType';
-import LedgerGroupProvider from '@/components/accounts/ledgerGroups/LedgerGroupProvider';
-import LedgerSelectProvider from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
 
 const Employees = () => {
   const listRef = useRef<any>(null);
@@ -21,7 +21,7 @@ const Employees = () => {
 
   const [queryOptions, setQueryOptions] = React.useState({
     queryKey: 'employees',
-    queryParams: { id: params.id, keyword: '', },
+    queryParams: { id: params.id, keyword: '' },
     countKey: 'total',
     dataKey: 'data',
   });
@@ -77,17 +77,17 @@ const Employees = () => {
           }}
           toolbar={
             <JumboListToolbar
-                hideItemsPerPage={true}
-                actionTail={
-                  <Stack direction='row'>
-                    <JumboSearch
-                      onChange={handleOnChange}
-                      value={queryOptions.queryParams.keyword}
-                    />
-                    <EmployeeActionTail />
-                  </Stack>
-                }
-              ></JumboListToolbar>
+              hideItemsPerPage={true}
+              actionTail={
+                <Stack direction='row'>
+                  <JumboSearch
+                    onChange={handleOnChange}
+                    value={queryOptions.queryParams.keyword}
+                  />
+                  <EmployeeActionTail />
+                </Stack>
+              }
+            ></JumboListToolbar>
           }
         />
       </LedgerGroupProvider>

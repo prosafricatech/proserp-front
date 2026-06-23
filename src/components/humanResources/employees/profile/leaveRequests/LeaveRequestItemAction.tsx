@@ -151,8 +151,9 @@ const LeaveRequestItemAction = ({
         error.response?.data?.validation_errors
           ? enqueueSnackbar(
               String(
-                Object.values(error.response?.data?.validation_errors || {})?.flat?.()?.[0] ||
-                  message
+                Object.values(
+                  error.response?.data?.validation_errors || {}
+                )?.flat?.()?.[0] || message
               ),
               { variant: 'error' }
             )
@@ -166,21 +167,30 @@ const LeaveRequestItemAction = ({
       title: 'Edit',
       action: 'edit',
     },
-    {
-      icon: <CheckCircleOutline color='success' />,
-      title: 'Approve',
-      action: 'approve',
-    },
-    {
-      icon: <HighlightOffOutlined color='error' />,
-      title: 'Reject',
-      action: 'reject',
-    },
-    {
-      icon: <RemoveCircleOutline color='warning' />,
-      title: 'Cancel',
-      action: 'cancel',
-    },
+    ...(leaveRequest.status !== 'approved'
+      ? [
+          {
+            icon: <CheckCircleOutline color='success' />,
+            title: 'Approve',
+            action: 'approve',
+          },
+          {
+            icon: <HighlightOffOutlined color='error' />,
+            title: 'Reject',
+            action: 'reject',
+          },
+        ]
+      : []),
+
+    ...(leaveRequest.status !== 'cancelled'
+      ? [
+          {
+            icon: <RemoveCircleOutline color='warning' />,
+            title: 'Cancel',
+            action: 'cancel',
+          },
+        ]
+      : []),
     {
       icon: <DeleteOutlined color='error' />,
       title: 'Delete',
@@ -248,15 +258,23 @@ const LeaveRequestItemAction = ({
     const approvedLevelIds = new Set(
       (request.approvals || [])
         .filter((approval) => approval.status === 'approved')
-        .map((approval) => Number(approval.chain_level_id || approval.approval_chain_level_id))
+        .map((approval) =>
+          Number(approval.chain_level_id || approval.approval_chain_level_id)
+        )
     );
 
-    return levels.find((level) => !approvedLevelIds.has(Number(level.id))) || levels[0];
+    return (
+      levels.find((level) => !approvedLevelIds.has(Number(level.id))) ||
+      levels[0]
+    );
   };
 
   function getMaxDaysApproved(request: LeaveRequestType) {
     const approvedDays = (request.approvals || [])
-      .filter((approval) => approval.status === 'approved' && approval.days_approved != null)
+      .filter(
+        (approval) =>
+          approval.status === 'approved' && approval.days_approved != null
+      )
       .map((approval) => Number(approval.days_approved));
 
     return approvedDays.length
@@ -279,7 +297,8 @@ const LeaveRequestItemAction = ({
           leave_request_id: leaveRequest.id,
           chain_level_id: getPendingLevel(activeLeaveRequest)?.id,
           status: statusAction === 'approve' ? 'approved' : 'rejected',
-          days_approved: statusAction === 'approve' ? Number(daysApproved) : undefined,
+          days_approved:
+            statusAction === 'approve' ? Number(daysApproved) : undefined,
           remarks,
         },
       });
@@ -373,9 +392,17 @@ const LeaveRequestItemAction = ({
               type='number'
               sx={{ mt: 1 }}
               value={daysApproved}
-              inputProps={{ min: 0, max: getMaxDaysApproved(activeLeaveRequest), step: 0.5 }}
+              inputProps={{
+                min: 0,
+                max: getMaxDaysApproved(activeLeaveRequest),
+                step: 0.5,
+              }}
               helperText={`Maximum: ${getMaxDaysApproved(activeLeaveRequest)}`}
-              onChange={(event) => setDaysApproved(event.target.value === '' ? '' : Number(event.target.value))}
+              onChange={(event) =>
+                setDaysApproved(
+                  event.target.value === '' ? '' : Number(event.target.value)
+                )
+              }
             />
           )}
           {hasApprovalChain && statusAction !== 'cancel' && (
@@ -387,7 +414,9 @@ const LeaveRequestItemAction = ({
               sx={{ mt: 2 }}
               value={statusAction === 'approve' ? 'approved' : 'rejected'}
               onChange={(event) =>
-                setStatusAction(event.target.value === 'approved' ? 'approve' : 'reject')
+                setStatusAction(
+                  event.target.value === 'approved' ? 'approve' : 'reject'
+                )
               }
             >
               <MenuItem value='approved'>Approved</MenuItem>
@@ -403,7 +432,11 @@ const LeaveRequestItemAction = ({
             sx={{ mt: 2 }}
             value={remarks}
             onChange={(event) => setRemarks(event.target.value)}
-            helperText={statusAction === 'approve' ? 'Optional when approving' : 'Required'}
+            helperText={
+              statusAction === 'approve'
+                ? 'Optional when approving'
+                : 'Required'
+            }
           />
         </DialogContent>
         <DialogActions>
