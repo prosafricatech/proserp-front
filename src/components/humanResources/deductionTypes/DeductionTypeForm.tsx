@@ -1,5 +1,7 @@
 'use client';
 
+import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
+import { useLedgerSelect } from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Div } from '@jumbo/shared';
 import { LoadingButton } from '@mui/lab';
@@ -16,7 +18,7 @@ import {
 } from '@mui/material';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import humanResourcesServices from '../humanResourcesServices';
@@ -34,6 +36,15 @@ interface FormData extends Omit<DeductionType, 'id' | 'created_by'> {
 interface ApiResponse {
   message: string;
   validation_errors?: Record<string, string[] | string>;
+}
+
+interface Ledger {
+  id: number;
+  name: string;
+  code: string | null;
+  ledger_group_id: number;
+  alias: string | null;
+  nature_id?: number;
 }
 
 const getValidationMessage = (
@@ -67,6 +78,19 @@ const DeductionTypeForm = ({
 }: DeductionTypeFormProps) => {
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
+  const { ungroupedLedgerOptions } = useLedgerSelect();
+  const [recentlyAddedPayableLedger, setRecentlyAddedPayableLedger] =
+    useState<Ledger | null>(null);
+
+  const defaultValue = useMemo(() => {
+    return ungroupedLedgerOptions.find(
+      (ledger) => ledger.id === deductionType?.payable_ledger_id
+    );
+  }, [deductionType, ungroupedLedgerOptions]);
+
+  useEffect(() => {
+    if (defaultValue) setRecentlyAddedPayableLedger(defaultValue);
+  }, [defaultValue]);
 
   const {
     mutate: addDeductionType,
@@ -148,6 +172,10 @@ const DeductionTypeForm = ({
       .typeError('Default value must be a number')
       .required('Default value is required')
       .min(0, 'Default value must be 0 or greater'),
+    payable_ledger_id: yup
+      .number()
+      .required('This field is required')
+      .positive('Only positive values are allowed'),
     is_pre_tax: yup.boolean().required(),
     description: yup
       .string()
@@ -156,6 +184,7 @@ const DeductionTypeForm = ({
 
   const {
     register,
+    setValue,
     handleSubmit,
     control,
     reset,
@@ -169,6 +198,7 @@ const DeductionTypeForm = ({
       category: deductionType?.category || 'statutory',
       computation_method: deductionType?.computation_method || 'fixed',
       default_value: deductionType?.default_value ?? 0,
+      payable_ledger_id: deductionType?.payable_ledger_id ?? 0,
       is_pre_tax: deductionType?.is_pre_tax || false,
       description: deductionType?.description || '',
     },
@@ -318,7 +348,7 @@ const DeductionTypeForm = ({
               </Div>
             </Grid>
 
-            <Grid size={{ xs: 12, md: 6 }}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <Controller
                   name='default_value'
@@ -356,7 +386,37 @@ const DeductionTypeForm = ({
               </Div>
             </Grid>
 
-            <Grid size={{ xs: 12, md: 6 }}>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Div sx={{ my: 1 }}>
+                <LedgerSelect
+                  label='Payable Ledger'
+                  allowedGroups={['Accounts Payable']}
+                  frontError={errors.payable_ledger_id}
+                  key={'expense-ledger'}
+                  value={recentlyAddedPayableLedger || undefined}
+                  defaultValue={
+                    deductionType?.payable_ledger || defaultValue || undefined
+                  }
+                  onChange={(newValue) => {
+                    if (newValue && !Array.isArray(newValue)) {
+                      setRecentlyAddedPayableLedger(newValue);
+                      setValue('payable_ledger_id', newValue.id, {
+                        shouldValidate: true,
+                        shouldDirty: true,
+                      });
+                    } else {
+                      setRecentlyAddedPayableLedger(null);
+                      setValue('payable_ledger_id', 0, {
+                        shouldValidate: true,
+                        shouldDirty: true,
+                      });
+                    }
+                  }}
+                />
+              </Div>
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 4 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <Controller
                   name='is_pre_tax'
