@@ -212,6 +212,7 @@ const DeductionTypeForm = ({
       category: deductionType?.category || 'statutory',
       computation_method: deductionType?.computation_method || 'fixed',
       default_value: deductionType?.default_value ?? 0,
+      payable_ledger_id: deductionType?.payable_ledger_id ?? 0,
       is_pre_tax: deductionType?.is_pre_tax || false,
       description: deductionType?.description || '',
     });
@@ -348,7 +349,7 @@ const DeductionTypeForm = ({
               </Div>
             </Grid>
 
-            <Grid size={{ xs: 12, md: 4 }}>
+            <Grid size={{ xs: 12, md: 3 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <Controller
                   name='default_value'
@@ -386,13 +387,35 @@ const DeductionTypeForm = ({
               </Div>
             </Grid>
 
-            <Grid size={{ xs: 12, md: 4 }}>
+            <Grid size={{ xs: 12, md: 3 }}>
+              <Div sx={{ mt: 1, mb: 1 }}>
+                <Controller
+                  name='is_pre_tax'
+                  control={control}
+                  render={({ field }) => (
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={Boolean(field.value)}
+                          onChange={(event) =>
+                            field.onChange(event.target.checked)
+                          }
+                        />
+                      }
+                      label='Is Pre-tax'
+                    />
+                  )}
+                />
+              </Div>
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 6 }}>
               <Div sx={{ my: 1 }}>
                 <LedgerSelect
                   label='Payable Ledger'
                   allowedGroups={['Accounts Payable']}
                   frontError={errors.payable_ledger_id}
-                  key={'expense-ledger'}
+                  key={'account-payable-ledger'}
                   value={recentlyAddedPayableLedger || undefined}
                   defaultValue={
                     deductionType?.payable_ledger || defaultValue || undefined
@@ -412,28 +435,6 @@ const DeductionTypeForm = ({
                       });
                     }
                   }}
-                />
-              </Div>
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
-                <Controller
-                  name='is_pre_tax'
-                  control={control}
-                  render={({ field }) => (
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={Boolean(field.value)}
-                          onChange={(event) =>
-                            field.onChange(event.target.checked)
-                          }
-                        />
-                      }
-                      label='Is Pre-tax'
-                    />
-                  )}
                 />
               </Div>
             </Grid>

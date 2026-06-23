@@ -238,6 +238,8 @@ const EmployerContributionTypeForm = ({
       category: contributionType?.category || 'statutory',
       computation_method: contributionType?.computation_method || 'fixed',
       default_value: contributionType?.default_value ?? 0,
+      expense_ledger_id: contributionType?.expense_ledger_id ?? 0,
+      payable_ledger_id: contributionType?.payable_ledger_id ?? 0,
       description: contributionType?.description || '',
     });
   }, [contributionType, reset]);
@@ -455,7 +457,7 @@ const EmployerContributionTypeForm = ({
                   label='Payable Ledger'
                   allowedGroups={['Accounts Payable']}
                   frontError={errors.payable_ledger_id}
-                  key={'expense-ledger'}
+                  key={'account-payable-ledger'}
                   value={recentlyAddedPayableLedger || undefined}
                   defaultValue={
                     contributionType?.payable_ledger ||
