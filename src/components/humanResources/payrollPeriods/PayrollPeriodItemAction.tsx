@@ -86,7 +86,7 @@ const PayrollPeriodItemAction = ({
 
       {/* Edit Button - Only if no runs or period is draft */}
       {(!hasRuns || payrollPeriod.status?.toLowerCase() === 'draft') && (
-        <Tooltip title='Edit Period'>
+        <Tooltip title='Edit'>
           <IconButton size='small' onClick={handleEdit}>
             <EditOutlined fontSize='small' />
           </IconButton>
@@ -94,7 +94,7 @@ const PayrollPeriodItemAction = ({
       )}
 
       {/* Delete Button - Only if no runs */}
-      <Tooltip title={hasRuns ? 'Cannot delete (has runs)' : 'Delete Period'}>
+      <Tooltip title={hasRuns ? 'Cannot delete (has runs)' : 'Delete'}>
         <span>
           <IconButton
             size='small'

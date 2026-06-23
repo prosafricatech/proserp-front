@@ -30,6 +30,7 @@ import {
   ReceiptLongOutlined,
   AccountBalanceWalletOutlined,
   VerifiedRounded,
+  Add
 } from '@mui/icons-material';
 import RemoveIcon from '@mui/icons-material/Remove';
 import AddIcon from '@mui/icons-material/Add';
@@ -269,13 +270,33 @@ const PayrollPeriodsListItem = ({ payrollPeriod }: PayrollPeriodsListItemProps) 
             {/* Actions Row */}
             <Grid size={12}>
               <Stack direction="row" spacing={1} justifyContent="flex-end" alignItems="center">
-                <Tooltip title="Create Run">
+                <Tooltip title="New Run">
                   <IconButton
                     size="small"
                     onClick={() => setOpenCreateRunDialog(true)}
-                    color="primary"
+                    sx={{
+                      borderRadius: 1,
+                      position: 'relative',
+                    }}
                   >
-                    <AddCircleOutline />
+                    <Box sx={{ position: 'relative', display: 'inline-flex' }}>
+                      <ReceiptLongOutlined fontSize="small" />
+                      <Add
+                        fontSize="small" 
+                        sx={{ 
+                          position: 'absolute',
+                          right: -6,
+                          bottom: -6,
+                          fontSize: '12px',
+                          bgcolor: 'primary.main',
+                          color: 'white',
+                          borderRadius: '50%',
+                          border: '2px solid white',
+                          width: '14px',
+                          height: '14px',
+                        }} 
+                      />
+                    </Box>
                   </IconButton>
                 </Tooltip>
                 <PayrollPeriodItemAction 
