@@ -31,7 +31,7 @@ const PayrollRunActionTail = ({
   return (
     <React.Fragment>
       <Dialog
-        maxWidth='sm'
+        maxWidth='xs'
         fullWidth
         fullScreen={belowLargeScreen}
         open={openDialog}

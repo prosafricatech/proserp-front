@@ -41,7 +41,6 @@ import { useRouter } from 'next/navigation';
 import { lazy, useMemo, useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
 import { PayrollRunType } from './PayrollRunType';
-import { PayrollPeriodType } from '../payrollPeriods/PayrollPeriodType';
 
 // Lazy load the edit form
 const PayrollRunForm = lazy(() => import('./PayrollRunForm'));

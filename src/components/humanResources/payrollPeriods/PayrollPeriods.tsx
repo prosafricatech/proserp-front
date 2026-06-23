@@ -1,15 +1,18 @@
+// payrollPeriods/PayrollPeriods.tsx
 'use client';
 
+import { useLanguage } from '@/app/[lang]/contexts/LanguageContext';
 import JumboListToolbar from '@jumbo/components/JumboList/components/JumboListToolbar';
 import JumboRqList from '@jumbo/components/JumboReactQuery/JumboRqList';
 import JumboSearch from '@jumbo/components/JumboSearch';
 import { Card, Stack, Typography } from '@mui/material';
 import { useParams, useSearchParams } from 'next/navigation';
+import { getSanitizedSearchKeyword } from '@/utilities/getSanitizedSearchKeyword';
 import React, { useEffect, useRef, useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
-import { PayrollPeriodType } from './PayrollPeriodType';
 import PayrollPeriodActionTail from './PayrollPeriodActionTail';
 import PayrollPeriodsListItem from './PayrollPeriodsListItem';
+import { PayrollPeriodType } from './PayrollPeriodType';
 
 const PayrollPeriods = () => {
   const params = useParams<{ keyword?: string }>();
@@ -19,17 +22,16 @@ const PayrollPeriods = () => {
 
   const [queryOptions, setQueryOptions] = React.useState({
     queryKey: 'payrollPeriods',
-    queryParams: { keyword: params.keyword || '' },
+    queryParams: {
+      keyword: params.keyword || '',
+    },
     countKey: 'total',
     dataKey: 'data',
   });
 
-  const renderPayrollPeriods = React.useCallback(
-    (payrollPeriod: PayrollPeriodType) => {
-      return <PayrollPeriodsListItem payrollPeriod={payrollPeriod} />;
-    },
-    []
-  );
+  const renderPayrollPeriod = React.useCallback((payrollPeriod: PayrollPeriodType) => {
+    return <PayrollPeriodsListItem payrollPeriod={payrollPeriod} />;
+  }, []);
 
   const handleOnChange = React.useCallback((keyword: string) => {
     setQueryOptions((state) => ({
@@ -43,7 +45,7 @@ const PayrollPeriods = () => {
       ...state,
       queryParams: {
         ...state.queryParams,
-        keyword: searchParams?.get('search') || '',
+        keyword: getSanitizedSearchKeyword('Payroll Periods', searchParams),
       },
     }));
     setMounted(true);
@@ -62,9 +64,9 @@ const PayrollPeriods = () => {
         service={humanResourcesServices.getPayrollPeriodsList}
         primaryKey='id'
         queryOptions={queryOptions}
-        itemsPerPage={50}
+        itemsPerPage={20}
         itemsPerPageOptions={[10, 20, 30, 50]}
-        renderItem={renderPayrollPeriods}
+        renderItem={renderPayrollPeriod}
         componentElement='div'
         wrapperSx={{ flex: 1, display: 'flex', flexDirection: 'column' }}
         toolbar={
