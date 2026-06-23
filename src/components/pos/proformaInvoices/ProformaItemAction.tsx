@@ -1,24 +1,43 @@
-'use client'
-import React, { useState } from 'react';
-import { DeleteOutlined, EditOutlined, HighlightOff, MoreHorizOutlined, SellOutlined, VisibilityOutlined } from '@mui/icons-material';
-import { Box, Button, Dialog, DialogContent, Grid, IconButton, LinearProgress, Skeleton, Tab, Tabs, Tooltip, useMediaQuery } from '@mui/material';
-import { useSnackbar } from 'notistack';
-import proformaServices from './proforma-services';
-import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
-import ProformaForm from './form/ProformaForm';
-import ProformaInvoicePDF from './ProformaInvoicePDF';
-import PDFContent from '../../pdf/PDFContent';
-import ProformaSaleForm from './form/ProformaSaleForm';
-import ProformaOnScreen from '../onScreenPreviews/ProformaOnScreen';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
+'use client';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { Organization } from '@/types/auth-types';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { JumboDdMenu } from '@jumbo/components';
-import { Proforma } from './ProformaType';
-import { Organization } from '@/types/auth-types';
-import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { MenuItemProps } from '@jumbo/types';
+import {
+  DeleteOutlined,
+  EditOutlined,
+  HighlightOff,
+  MoreHorizOutlined,
+  SellOutlined,
+  VisibilityOutlined,
+} from '@mui/icons-material';
+import {
+  Box,
+  Button,
+  Dialog,
+  DialogContent,
+  Grid,
+  IconButton,
+  Skeleton,
+  Tab,
+  Tabs,
+  Tooltip,
+  useMediaQuery,
+} from '@mui/material';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useSnackbar } from 'notistack';
+import React, { useState } from 'react';
+import PDFContent from '../../pdf/PDFContent';
+import ProformaOnScreen from '../onScreenPreviews/ProformaOnScreen';
 import { useSalesOutlet } from '../outlet/OutletProvider';
+import ProformaForm from './form/ProformaForm';
+import ProformaSaleForm from './form/ProformaSaleForm';
+import proformaServices from './proforma-services';
+import ProformaInvoicePDF from './ProformaInvoicePDF';
+import { Proforma } from './ProformaType';
 
 interface EditProformaProps {
   proforma: Proforma;
@@ -37,18 +56,36 @@ interface DocumentDialogProps {
   organization: Organization;
 }
 
-const EditProforma: React.FC<EditProformaProps> = ({ proforma, setOpenEditDialog }) => {
+const EditProforma: React.FC<EditProformaProps> = ({
+  proforma,
+  setOpenEditDialog,
+}) => {
   const { data: proformaDetails, isPending } = useQuery({
     queryKey: ['proformaDetails', { id: proforma.id }],
-    queryFn: () => proformaServices.getProformaDetails(proforma.id)
+    queryFn: () => proformaServices.getProformaDetails(proforma.id),
   });
 
   if (isPending) {
-        return (
+    return (
       <div style={{ width: '100%', padding: '16px' }}>
-        <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-        <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-        <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+        <Skeleton
+          variant='text'
+          width={180}
+          height={32}
+          style={{ borderRadius: 4, marginLeft: 'auto' }}
+        />
+        <Skeleton
+          variant='rectangular'
+          width='100%'
+          height={48}
+          style={{ borderRadius: 4 }}
+        />
+        <Skeleton
+          variant='rectangular'
+          width='100%'
+          height={32}
+          style={{ borderRadius: 4 }}
+        />
       </div>
     );
   }
@@ -58,36 +95,57 @@ const EditProforma: React.FC<EditProformaProps> = ({ proforma, setOpenEditDialog
   );
 };
 
-const SaleProforma: React.FC<SaleProformaProps> = ({ proforma, setOpenSaleDialog }) => {
+const SaleProforma: React.FC<SaleProformaProps> = ({
+  proforma,
+  setOpenSaleDialog,
+}) => {
   const { data: proformaDetails, isPending } = useQuery({
     queryKey: ['proformaDetails', { id: proforma.id }],
-    queryFn: () => proformaServices.getProformaDetails(proforma.id)
+    queryFn: () => proformaServices.getProformaDetails(proforma.id),
   });
 
   if (isPending) {
-        return (
+    return (
       <div style={{ width: '100%', padding: '16px' }}>
-        <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-        <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-        <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+        <Skeleton
+          variant='text'
+          width={180}
+          height={32}
+          style={{ borderRadius: 4, marginLeft: 'auto' }}
+        />
+        <Skeleton
+          variant='rectangular'
+          width='100%'
+          height={48}
+          style={{ borderRadius: 4 }}
+        />
+        <Skeleton
+          variant='rectangular'
+          width='100%'
+          height={32}
+          style={{ borderRadius: 4 }}
+        />
       </div>
     );
   }
 
   return (
-    <ProformaSaleForm toggleOpen={setOpenSaleDialog} proforma={proformaDetails} />
+    <ProformaSaleForm
+      toggleOpen={setOpenSaleDialog}
+      proforma={proformaDetails}
+    />
   );
 };
 
-const DocumentDialog: React.FC<DocumentDialogProps> = ({ 
-  openDocumentDialog, 
-  setOpenDocumentDialog, 
-  proforma, 
-  organization 
+const DocumentDialog: React.FC<DocumentDialogProps> = ({
+  openDocumentDialog,
+  setOpenDocumentDialog,
+  proforma,
+  organization,
 }) => {
   const { data: proformaDetails, isPending } = useQuery({
     queryKey: ['proformaDetails', { id: proforma.id }],
-    queryFn: () => proformaServices.getProformaDetails(proforma.id)
+    queryFn: () => proformaServices.getProformaDetails(proforma.id),
   });
   const [selectedTab, setSelectedTab] = useState(0);
 
@@ -99,11 +157,26 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
   };
 
   if (isPending) {
-        return (
+    return (
       <div style={{ width: '100%', padding: '16px' }}>
-        <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-        <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-        <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+        <Skeleton
+          variant='text'
+          width={180}
+          height={32}
+          style={{ borderRadius: 4, marginLeft: 'auto' }}
+        />
+        <Skeleton
+          variant='rectangular'
+          width='100%'
+          height={48}
+          style={{ borderRadius: 4 }}
+        />
+        <Skeleton
+          variant='rectangular'
+          width='100%'
+          height={32}
+          style={{ borderRadius: 4 }}
+        />
       </div>
     );
   }
@@ -120,23 +193,23 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
       <DialogContent>
         {belowLargeScreen ? (
           <Box>
-            <Grid container alignItems="center" justifyContent="space-between">
-              <Grid size={{ xs: 11, md: 12 }}>
+            <Grid container alignItems='center' justifyContent='space-between'>
+              <Grid size={{ xs: 11, md: 11 }}>
                 <Tabs value={selectedTab} onChange={handleTabChange}>
-                  <Tab label="On Screen" />
-                  <Tab label="PDF" />
+                  <Tab label='On Screen' />
+                  <Tab label='PDF' />
                 </Tabs>
               </Grid>
 
               {belowLargeScreen && (
-                <Grid size={{ xs: 1 }} textAlign="right">
-                  <Tooltip title="Close">
+                <Grid size={{ xs: 1 }} textAlign='right'>
+                  <Tooltip title='Close'>
                     <IconButton
-                      size="small"
-                      color="primary"
+                      size='small'
+                      color='primary'
                       onClick={() => setOpenDocumentDialog(false)}
                     >
-                      <HighlightOff color="primary" />
+                      <HighlightOff color='primary' />
                     </IconButton>
                   </Tooltip>
                 </Grid>
@@ -144,14 +217,19 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
             </Grid>
             <Box>
               {selectedTab === 0 && (
-                <ProformaOnScreen 
-                  proforma={proformaDetails} 
-                  organization={organization} 
+                <ProformaOnScreen
+                  proforma={proformaDetails}
+                  organization={organization}
                 />
               )}
               {selectedTab === 1 && (
                 <PDFContent
-                  document={<ProformaInvoicePDF organization={organization} proforma={proformaDetails} />}
+                  document={
+                    <ProformaInvoicePDF
+                      organization={organization}
+                      proforma={proformaDetails}
+                    />
+                  }
                   fileName={proforma.proformaNo}
                 />
               )}
@@ -159,17 +237,22 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
           </Box>
         ) : (
           <PDFContent
-            document={<ProformaInvoicePDF organization={organization} proforma={proformaDetails} />}
+            document={
+              <ProformaInvoicePDF
+                organization={organization}
+                proforma={proformaDetails}
+              />
+            }
             fileName={proforma.proformaNo}
           />
         )}
       </DialogContent>
       {belowLargeScreen && (
-        <Box textAlign="right" margin={2}>
-          <Button 
-            variant="outlined" 
-            size='small' 
-            color="primary" 
+        <Box textAlign='right' margin={2}>
+          <Button
+            variant='outlined'
+            size='small'
+            color='primary'
             onClick={() => setOpenDocumentDialog(false)}
           >
             Close
@@ -184,7 +267,9 @@ interface ProformaItemActionProps {
   proforma: Proforma;
 }
 
-const ProformaItemAction: React.FC<ProformaItemActionProps> = ({ proforma }) => {
+const ProformaItemAction: React.FC<ProformaItemActionProps> = ({
+  proforma,
+}) => {
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [openSaleDialog, setOpenSaleDialog] = useState(false);
   const { showDialog, hideDialog } = useJumboDialog();
@@ -193,7 +278,7 @@ const ProformaItemAction: React.FC<ProformaItemActionProps> = ({ proforma }) => 
   const queryClient = useQueryClient();
   const { authOrganization, checkOrganizationPermission } = useJumboAuth();
   const organization = authOrganization?.organization;
-  const {activeOutlet} = useSalesOutlet();
+  const { activeOutlet } = useSalesOutlet();
 
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
@@ -210,11 +295,25 @@ const ProformaItemAction: React.FC<ProformaItemActionProps> = ({ proforma }) => 
   });
 
   const menuItems = [
-    { icon: <VisibilityOutlined />, title: "View", action: "open" },
-    checkOrganizationPermission(PERMISSIONS.SALES_CREATE) && String(activeOutlet?.id) !== 'all' && { icon: <SellOutlined />, title: 'Sale', action: 'sale' },
-    checkOrganizationPermission(PERMISSIONS.PROFORMA_INVOICES_EDIT) && String(activeOutlet?.id) !== 'all' && { icon: <EditOutlined />, title: 'Edit', action: 'edit' },
-    checkOrganizationPermission(PERMISSIONS.PROFORMA_INVOICES_DELETE) && { icon: <DeleteOutlined color='error' />, title: 'Delete', action: 'delete' }
-  ].filter(menuItem => !!menuItem);
+    { icon: <VisibilityOutlined />, title: 'View', action: 'open' },
+    checkOrganizationPermission(PERMISSIONS.SALES_CREATE) &&
+      String(activeOutlet?.id) !== 'all' && {
+        icon: <SellOutlined />,
+        title: 'Sale',
+        action: 'sale',
+      },
+    checkOrganizationPermission(PERMISSIONS.PROFORMA_INVOICES_EDIT) &&
+      String(activeOutlet?.id) !== 'all' && {
+        icon: <EditOutlined />,
+        title: 'Edit',
+        action: 'edit',
+      },
+    checkOrganizationPermission(PERMISSIONS.PROFORMA_INVOICES_DELETE) && {
+      icon: <DeleteOutlined color='error' />,
+      title: 'Delete',
+      action: 'delete',
+    },
+  ].filter((menuItem) => !!menuItem);
 
   const handleItemAction = (menuItem: MenuItemProps) => {
     switch (menuItem.action) {
@@ -230,7 +329,7 @@ const ProformaItemAction: React.FC<ProformaItemActionProps> = ({ proforma }) => 
             deleteProforma(proforma.id);
           },
           onNo: () => hideDialog(),
-          variant: 'confirm'
+          variant: 'confirm',
         });
         break;
       case 'sale':
@@ -256,15 +355,25 @@ const ProformaItemAction: React.FC<ProformaItemActionProps> = ({ proforma }) => 
         scroll={belowLargeScreen ? 'body' : 'paper'}
         fullWidth
         fullScreen={belowLargeScreen}
-        maxWidth="lg"
+        maxWidth='lg'
       >
-        {!!openEditDialog && <EditProforma proforma={proforma} setOpenEditDialog={setOpenEditDialog} />}
-        {!!openSaleDialog && <SaleProforma proforma={proforma} setOpenSaleDialog={setOpenSaleDialog} />}
+        {!!openEditDialog && (
+          <EditProforma
+            proforma={proforma}
+            setOpenEditDialog={setOpenEditDialog}
+          />
+        )}
+        {!!openSaleDialog && (
+          <SaleProforma
+            proforma={proforma}
+            setOpenSaleDialog={setOpenSaleDialog}
+          />
+        )}
         {!!openDocumentDialog && (
-          <DocumentDialog 
-            proforma={proforma} 
-            organization={organization as Organization} 
-            setOpenDocumentDialog={setOpenDocumentDialog} 
+          <DocumentDialog
+            proforma={proforma}
+            organization={organization as Organization}
+            setOpenDocumentDialog={setOpenDocumentDialog}
             openDocumentDialog={openDocumentDialog}
           />
         )}
