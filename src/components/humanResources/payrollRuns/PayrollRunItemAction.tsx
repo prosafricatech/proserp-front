@@ -9,6 +9,7 @@ import {
   AccountBalanceWalletOutlined,
   CheckCircleOutline,
   DeleteOutlined,
+  EditOutlined,
   MoreHorizOutlined,
   PaidOutlined,
   PreviewOutlined,
@@ -37,9 +38,13 @@ import {
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { lazy, useMemo, useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
 import { PayrollRunType } from './PayrollRunType';
+import { PayrollPeriodType } from '../payrollPeriods/PayrollPeriodType';
+
+// Lazy load the edit form
+const PayrollRunForm = lazy(() => import('./PayrollRunForm'));
 
 const money = (value: number | string | undefined) =>
   Number(value || 0).toLocaleString(undefined, {
@@ -53,7 +58,6 @@ const getErrorMessage = (error: any) => {
     const first = Object.values(validationErrors)[0] as any;
     return Array.isArray(first) ? first[0] : String(first);
   }
-
   return error?.response?.data?.message || error?.message || 'Something went wrong';
 };
 
@@ -64,7 +68,6 @@ const getPendingPayrollLevel = (payrollRun: PayrollRunType) => {
       .filter((approval) => approval.status === 'approved')
       .map((approval) => Number(approval.chain_level_id || approval.approval_chain_level_id))
   );
-
   return levels.find((level) => !approvedLevelIds.has(Number(level.id))) || levels[0];
 };
 
@@ -74,11 +77,13 @@ const PayrollRunItemAction = ({ payrollRun }: { payrollRun: PayrollRunType }) =>
   const queryClient = useQueryClient();
   const router = useRouter();
   const lang = useLanguage();
+  
   const [preview, setPreview] = useState<any | null>(null);
   const [openPreviewDialog, setOpenPreviewDialog] = useState(false);
   const [openPostDialog, setOpenPostDialog] = useState(false);
   const [openPayDialog, setOpenPayDialog] = useState(false);
   const [openChainApprovalDialog, setOpenChainApprovalDialog] = useState(false);
+  const [openEditDialog, setOpenEditDialog] = useState(false);
   const [chainStatus, setChainStatus] = useState<'approved' | 'rejected' | 'on hold'>('approved');
   const [chainRemarks, setChainRemarks] = useState('');
   const [postForm, setPostForm] = useState({
@@ -98,13 +103,9 @@ const PayrollRunItemAction = ({ payrollRun }: { payrollRun: PayrollRunType }) =>
     mutationFn: humanResourcesServices.finalizePayrollRun,
     onSuccess: () => {
       invalidatePayrollRunQueries();
-      enqueueSnackbar('Payroll Run Finalized Successfully', {
-        variant: 'success',
-      });
+      enqueueSnackbar('Payroll Run Finalized Successfully', { variant: 'success' });
     },
-    onError: (error: any) => {
-      enqueueSnackbar(getErrorMessage(error), { variant: 'error' });
-    },
+    onError: (error: any) => enqueueSnackbar(getErrorMessage(error), { variant: 'error' }),
   });
 
   const { mutate: previewPayrollRun, isPending: isPreviewing } = useMutation({
@@ -193,7 +194,6 @@ const PayrollRunItemAction = ({ payrollRun }: { payrollRun: PayrollRunType }) =>
 
   const status = (payrollRun.status || '').toLowerCase();
   const hasApprovalChain = Boolean(payrollRun.approval_chain_id || payrollRun.approval_chain);
-  const isFinalized = status === 'finalized';
   const isDraft = status === 'draft' || !status;
   const isSubmitted = status === 'submitted';
   const isApproved = status === 'approved';
@@ -212,6 +212,11 @@ const PayrollRunItemAction = ({ payrollRun }: { payrollRun: PayrollRunType }) =>
     },
     ...(isDraft
       ? [
+          {
+            icon: <EditOutlined color='primary' />,
+            title: 'Edit',
+            action: 'edit',
+          },
           {
             icon: <PreviewOutlined color='primary' />,
             title: 'Preview Salary Sheet',
@@ -256,19 +261,13 @@ const PayrollRunItemAction = ({ payrollRun }: { payrollRun: PayrollRunType }) =>
           },
         ]
       : []),
-    ...(!isFinalized && !['draft', 'submitted', 'approved', 'posted', 'paid'].includes(status)
-      ? [
-          {
-            icon: <CheckCircleOutline color='success' />,
-            title: 'Finalize',
-            action: 'finalize',
-          },
-        ]
-      : []),
   ];
 
   const handleItemAction = (menuItem: MenuItemProps) => {
     switch (menuItem.action) {
+      case 'edit':
+        setOpenEditDialog(true);
+        break;
       case 'viewPayslip':
         router.push(`/${lang}/humanResources/payroll/${payrollRun.payroll_period_id}?run_id=${payrollRun.id}`);
         break;
@@ -321,7 +320,6 @@ const PayrollRunItemAction = ({ payrollRun }: { payrollRun: PayrollRunType }) =>
         });
         break;
       case 'finalize':
-        if (isFinalized) return;
         showDialog({
           title: 'Finalize Payroll Run',
           content: 'Are you sure you want to finalize this payroll run?',
@@ -341,6 +339,7 @@ const PayrollRunItemAction = ({ payrollRun }: { payrollRun: PayrollRunType }) =>
   return (
     <>
       {(isPreviewing || isSubmitting || isApproving) && <LinearProgress />}
+
       <JumboDdMenu
         icon={
           <Tooltip title='Actions'>
@@ -351,6 +350,7 @@ const PayrollRunItemAction = ({ payrollRun }: { payrollRun: PayrollRunType }) =>
         onClickCallback={handleItemAction}
       />
 
+      {/* Preview Dialog */}
       <Dialog open={openPreviewDialog} onClose={() => setOpenPreviewDialog(false)} fullWidth maxWidth='lg'>
         <DialogTitle>Salary Sheet Preview</DialogTitle>
         <DialogContent>
@@ -404,6 +404,7 @@ const PayrollRunItemAction = ({ payrollRun }: { payrollRun: PayrollRunType }) =>
         </DialogActions>
       </Dialog>
 
+      {/* Chain Approval Dialog */}
       <Dialog open={openChainApprovalDialog} onClose={() => setOpenChainApprovalDialog(false)} fullWidth maxWidth='sm'>
         <DialogTitle>Payroll Approval</DialogTitle>
         <DialogContent>
@@ -435,7 +436,9 @@ const PayrollRunItemAction = ({ payrollRun }: { payrollRun: PayrollRunType }) =>
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenChainApprovalDialog(false)} disabled={isApprovingChain}>Cancel</Button>
+          <Button onClick={() => setOpenChainApprovalDialog(false)} disabled={isApprovingChain}>
+            Cancel
+          </Button>
           <Button
             variant='contained'
             onClick={() => approveChainPayrollRun()}
@@ -446,6 +449,7 @@ const PayrollRunItemAction = ({ payrollRun }: { payrollRun: PayrollRunType }) =>
         </DialogActions>
       </Dialog>
 
+      {/* Post Dialog */}
       <Dialog open={openPostDialog} onClose={() => setOpenPostDialog(false)} fullWidth maxWidth='sm'>
         <DialogTitle>Post Payroll Transactions</DialogTitle>
         <DialogContent>
@@ -468,7 +472,9 @@ const PayrollRunItemAction = ({ payrollRun }: { payrollRun: PayrollRunType }) =>
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenPostDialog(false)} disabled={isPosting}>Cancel</Button>
+          <Button onClick={() => setOpenPostDialog(false)} disabled={isPosting}>
+            Cancel
+          </Button>
           <Button
             variant='contained'
             onClick={() => postTransactions()}
@@ -484,6 +490,7 @@ const PayrollRunItemAction = ({ payrollRun }: { payrollRun: PayrollRunType }) =>
         </DialogActions>
       </Dialog>
 
+      {/* Pay Dialog */}
       <Dialog open={openPayDialog} onClose={() => setOpenPayDialog(false)} fullWidth maxWidth='sm'>
         <DialogTitle>Pay Employees</DialogTitle>
         <DialogContent>
@@ -498,8 +505,15 @@ const PayrollRunItemAction = ({ payrollRun }: { payrollRun: PayrollRunType }) =>
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenPayDialog(false)} disabled={isPaying}>Cancel</Button>
-          <Button variant='contained' color='success' onClick={() => payPayrollRun()} disabled={isPaying || !payForm.credit_ledger_id}>
+          <Button onClick={() => setOpenPayDialog(false)} disabled={isPaying}>
+            Cancel
+          </Button>
+          <Button
+            variant='contained'
+            color='success'
+            onClick={() => payPayrollRun()}
+            disabled={isPaying || !payForm.credit_ledger_id}
+          >
             Pay
           </Button>
         </DialogActions>

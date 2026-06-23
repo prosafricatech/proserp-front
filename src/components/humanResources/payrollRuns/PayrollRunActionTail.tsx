@@ -1,107 +1,67 @@
 'use client';
 
-import CostCenterSelector from '@/components/masters/costCenters/CostCenterSelector';
-import { CostCenter } from '@/components/masters/costCenters/CostCenterType';
-import { AddOutlined } from '@mui/icons-material';
+import { PayrollPeriodType } from '../payrollPeriods/PayrollPeriodType';
+import { AddOutlined, EditOutlined } from '@mui/icons-material';
 import {
-  Alert,
-  Button,
   ButtonGroup,
   Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   IconButton,
-  Stack,
   Tooltip,
-  Typography,
+  useMediaQuery,
 } from '@mui/material';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useSnackbar } from 'notistack';
-import { useState } from 'react';
-import humanResourcesServices from '../humanResourcesServices';
-import { PayrollPeriodType } from '../payrollPeriods/PayrollPeriodType';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
+import React, { lazy, useState } from 'react';
+import { PayrollRunType } from './PayrollRunType';
 
-const getErrorMessage = (error: any) => {
-  const validationErrors = error?.response?.data?.validation_errors;
-  if (validationErrors && typeof validationErrors === 'object') {
-    const first = Object.values(validationErrors)[0] as any;
-    return Array.isArray(first) ? first[0] : String(first);
-  }
+const PayrollRunForm = lazy(() => import('./PayrollRunForm'));
 
-  return error?.response?.data?.message || error?.message || 'Something went wrong';
-};
+interface PayrollRunActionTailProps {
+  payrollPeriod: PayrollPeriodType | null;
+  payrollRun?: PayrollRunType | null;
+}
 
 const PayrollRunActionTail = ({
   payrollPeriod,
-}: {
-  payrollPeriod: PayrollPeriodType | null;
-}) => {
+  payrollRun = null,
+}: PayrollRunActionTailProps) => {
   const [openDialog, setOpenDialog] = useState(false);
-  const [costCenter, setCostCenter] = useState<CostCenter | null>(null);
-  const queryClient = useQueryClient();
-  const { enqueueSnackbar } = useSnackbar();
-
-  const { mutate: addPayrollRun, isPending } = useMutation({
-    mutationFn: humanResourcesServices.addPayrollRun,
-    onSuccess: () => {
-      setOpenDialog(false);
-      setCostCenter(null);
-      queryClient.invalidateQueries({ queryKey: ['payrollRuns'] });
-      queryClient.invalidateQueries({ queryKey: ['payrollRunsForPeriod', String(payrollPeriod?.id)] });
-      queryClient.invalidateQueries({ queryKey: ['showPayrollPeriod', String(payrollPeriod?.id)] });
-      enqueueSnackbar('Payroll run created', { variant: 'success' });
-    },
-    onError: (error: any) => enqueueSnackbar(getErrorMessage(error), { variant: 'error' }),
-  });
+  const { theme } = useJumboTheme();
+  const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
   return (
-    <>
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} fullWidth maxWidth='sm'>
-        <DialogTitle>Create Payroll Run</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} mt={1}>
-            <Alert severity='info'>
-              Leave cost center empty for a company-wide run. Use a cost center when this month is split by branch, department, or project.
-            </Alert>
-            <Typography variant='body2' color='text.secondary'>
-              Period: {payrollPeriod ? `${payrollPeriod.year}-${payrollPeriod.month}` : '-'}
-            </Typography>
-            <CostCenterSelector
-              multiple={false}
-              withNotSpecified={false}
-              label='Cost Center (optional)'
-              defaultValue={costCenter}
-              onChange={(value) => setCostCenter((Array.isArray(value) ? value[0] : value) || null)}
-            />
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenDialog(false)} disabled={isPending}>Cancel</Button>
-          <Button
-            variant='contained'
-            disabled={isPending || !payrollPeriod?.id}
-            onClick={() =>
-              addPayrollRun({
-                payroll_period_id: payrollPeriod?.id,
-                cost_center_id: costCenter?.id || null,
-              })
-            }
-          >
-            Create
-          </Button>
-        </DialogActions>
+    <React.Fragment>
+      <Dialog
+        maxWidth='sm'
+        fullWidth
+        fullScreen={belowLargeScreen}
+        open={openDialog}
+        onClose={() => setOpenDialog(false)}
+      >
+        <PayrollRunForm
+          setOpenDialog={setOpenDialog}
+          payrollPeriod={payrollPeriod}
+          payrollRun={payrollRun}
+        />
       </Dialog>
-      <ButtonGroup variant='outlined' size='small' disableElevation>
+
+      <ButtonGroup
+        variant='outlined'
+        size='small'
+        disableElevation
+        sx={{ '& .MuiButton-root': { px: 1 } }}
+      >
         <Tooltip title='Create Payroll Run'>
           <span>
-            <IconButton disabled={!payrollPeriod?.id} onClick={() => setOpenDialog(true)}>
+            <IconButton
+              onClick={() => setOpenDialog(true)}
+              disabled={!payrollPeriod?.id}
+            >
               <AddOutlined />
             </IconButton>
           </span>
         </Tooltip>
       </ButtonGroup>
-    </>
+    </React.Fragment>
   );
 };
 
