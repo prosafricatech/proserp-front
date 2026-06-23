@@ -1,6 +1,7 @@
 'use client';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { FileExportGrid } from '@/components/sharedComponents/FileExportGrid';
+import PreviewTopBar from '@/components/sharedComponents/PreviewTopBar';
 import { Organization } from '@/types/auth-types';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
@@ -18,7 +19,6 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
-  Grid,
   IconButton,
   LinearProgress,
   Tooltip,
@@ -97,21 +97,10 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
     enabled: openDocumentDialog && !!requisition?.id,
   });
 
-  const [selectedTab, setSelectedTab] = useState(0);
   const [showOnScreen, setShowOnScreen] = useState(true);
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
   const [isExporting, setIsExporting] = useState(false);
-
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setSelectedTab(newValue);
-  };
-
-  const isPurchaseProcess =
-    requisition?.approval_chain?.process_type?.toLowerCase() === 'purchase';
-  const forcePDFView = isPurchaseProcess && !belowLargeScreen;
-  const showTabs =
-    !isPurchaseProcess || (isPurchaseProcess && belowLargeScreen);
 
   if (isFetching) {
     return <LinearProgress />;
@@ -130,7 +119,7 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'Purchase-Requisition.xlsx';
+      a.download = `Purchase-Requisition-${requisitionDetails?.requisitionNo}.xlsx`;
       a.click();
       window.URL.revokeObjectURL(url);
       // console.log('blob: ', blob);
@@ -151,95 +140,28 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
       fullScreen={belowLargeScreen}
     >
       <DialogContent sx={{ pt: 1.5 }}>
-        <Grid
-          container
-          alignItems='center'
-          justifyContent='space-between'
-          sx={{ mb: 1.5 }}
-        >
-          <Grid size={{ xs: belowLargeScreen ? 11 : 12 }} sx={{ minWidth: 0 }}>
-            {/* {showTabs && (
-              <Tabs value={selectedTab} onChange={handleTabChange}>
-                <Tab label='On Screen' />
-                <Tab label='PDF' />
-              </Tabs>
-            )} */}
-            <Grid
-              size={{ xs: belowLargeScreen ? 12 : 12 }}
-              textAlign='right'
-              sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5 }}
-            >
-              <FileExportGrid
-                exportExcel
-                exportPdf
-                handlExcelExport={() => handlExcelExport(exportedData)}
-                handlePdf={() => {
-                  setShowOnScreen((prev) => !prev);
-                }}
-                exportingExcel={isExporting}
-              />
-            </Grid>
-            {/* <LoadingButton
-              size='small'
-              onClick={() => handlExcelExport(exportedData)}
-              loading={isExporting}
-              variant='contained'
-              color='success'
-            >
-              <FontAwesomeIcon icon={faFileExcel} color='green' />
-              Excel
-            </LoadingButton> */}
-          </Grid>
-
-          {belowLargeScreen && (
-            <Grid size={{ xs: 1 }} textAlign='right'>
-              <Tooltip title='Close'>
-                <IconButton
-                  size='small'
-                  color='primary'
-                  onClick={() => setOpenDocumentDialog(false)}
-                >
-                  <HighlightOff color='primary' />
-                </IconButton>
-              </Tooltip>
-            </Grid>
-          )}
-        </Grid>
-
-        {/* <Box>
-          {forcePDFView ? (
-            <PDFContent
-              document={
-                <RequisitionPDF
-                  organization={organization}
-                  requisition={requisitionDetails}
-                />
-              }
-              fileName={requisition.requisitionNo}
+        <PreviewTopBar
+          fileExportGrid={
+            <FileExportGrid
+              exportExcel
+              handlExcelExport={() => handlExcelExport(exportedData)}
+              exportPdf
+              handlePdf={() => {
+                setShowOnScreen((prev) => !prev);
+              }}
+              exportingExcel={isExporting}
             />
-          ) : (
-            <>
-              {selectedTab === 0 && (
-                <RequisitionsOnScreen
-                  belowLargeScreen={belowLargeScreen}
-                  requisition={requisitionDetails}
-                  organization={organization}
-                />
-              )}
-              {selectedTab === 1 && (
-                <PDFContent
-                  document={
-                    <RequisitionPDF
-                      organization={organization}
-                      requisition={requisitionDetails}
-                    />
-                  }
-                  fileName={requisition.requisitionNo}
-                />
-              )}
-            </>
-          )}
-        </Box> */}
+          }
+          closeButton={
+            <IconButton
+              size='small'
+              color='primary'
+              onClick={() => setOpenDocumentDialog(false)}
+            >
+              <HighlightOff color='primary' />
+            </IconButton>
+          }
+        />
 
         <Box>
           {showOnScreen ? (

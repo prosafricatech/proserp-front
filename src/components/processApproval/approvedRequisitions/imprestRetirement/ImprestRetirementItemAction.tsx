@@ -3,6 +3,8 @@
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import PDFContent from '@/components/pdf/PDFContent';
 import imprestRetirementServices from '@/components/processApproval/imprestRetirements/imprestRetirementServices';
+import { FileExportGrid } from '@/components/sharedComponents/FileExportGrid';
+import PreviewTopBar from '@/components/sharedComponents/PreviewTopBar';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import {
@@ -19,11 +21,8 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Grid,
   IconButton,
   LinearProgress,
-  Tab,
-  Tabs,
   Tooltip,
   useMediaQuery,
 } from '@mui/material';
@@ -31,7 +30,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import { useSnackbar } from 'notistack';
-import React from 'react';
+import React, { useState } from 'react';
 import ImprestRetirementApprovalForm from './form/ImprestRetirementApprovalForm';
 import ImprestRetirementForm from './form/ImprestRetirementForm';
 import ImprestRetirementOnScreenPreview from './preview/ImprestRetirementOnScreenPreview';
@@ -65,7 +64,7 @@ function ImprestRetirementItemAction({
   const [openUpdateDialog, setOpenUpdateDialog] = React.useState(false);
   const [openApprovalDialog, setOpenApprovalDialog] = React.useState(false);
   const [openPreviewDialog, setOpenPreviewDialog] = React.useState(false);
-  const [activePreviewTab, setActivePreviewTab] = React.useState(0);
+  const [showOnScreen, setShowOnScreen] = useState(true);
 
   const { data: retirementDetails, isFetching: isFetchingRetirementDetails } =
     useQuery({
@@ -137,9 +136,9 @@ function ImprestRetirementItemAction({
 
   const canEditOrDeleteRetirement =
     approvalsCount === 0 &&
-    dayjs(retirementDetails?.retirement_date || retirement?.retirement_date).isSameOrAfter(
-      dayjs().startOf('day')
-    );
+    dayjs(
+      retirementDetails?.retirement_date || retirement?.retirement_date
+    ).isSameOrAfter(dayjs().startOf('day'));
 
   const { mutate: deleteRetirement } = useMutation({
     mutationFn: imprestRetirementServices.delete,
@@ -193,38 +192,28 @@ function ImprestRetirementItemAction({
         ) : (
           <>
             <DialogTitle>
-              <Grid
-                container
-                alignItems='center'
-                justifyContent='space-between'
-              >
-                <Grid size={{ xs: 11 }}>
-                  <Tabs
-                    value={activePreviewTab}
-                    onChange={(
-                      _event: React.SyntheticEvent,
-                      newValue: number
-                    ) => setActivePreviewTab(newValue)}
-                    aria-label='retirement preview tabs'
+              <PreviewTopBar
+                fileExportGrid={
+                  <FileExportGrid
+                    exportPdf
+                    handlePdf={() => {
+                      setShowOnScreen((prev) => !prev);
+                    }}
+                  />
+                }
+                closeButton={
+                  <IconButton
+                    size='small'
+                    color='primary'
+                    onClick={() => setOpenPreviewDialog(false)}
                   >
-                    <Tab label='ONSCREEN' />
-                    <Tab label='PDF' />
-                  </Tabs>
-                </Grid>
-                <Grid size={{ xs: 1 }} sx={{ textAlign: 'right' }}>
-                  <Tooltip title='Close'>
-                    <IconButton
-                      size='small'
-                      onClick={() => setOpenPreviewDialog(false)}
-                    >
-                      <HighlightOff color='primary' />
-                    </IconButton>
-                  </Tooltip>
-                </Grid>
-              </Grid>
+                    <HighlightOff color='primary' />
+                  </IconButton>
+                }
+              />
             </DialogTitle>
             <DialogContent>
-              {activePreviewTab === 0 ? (
+              {showOnScreen ? (
                 <ImprestRetirementOnScreenPreview
                   retirement={retirementDetails}
                 />
