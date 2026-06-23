@@ -36,9 +36,15 @@ const PayrollRunsListItem = ({ payrollRun }: { payrollRun: PayrollRunType }) => 
   const router = useRouter();
   const lang = useLanguage();
   const employeeName = `${payrollRun.employee?.first_name || ''} ${payrollRun.employee?.last_name || ''}`.trim();
-  const grossPay = Number(payrollRun.basic_salary || 0);
-  const totalDeductions = Number(payrollRun.paye || 0);
-  const netPay = Math.max(grossPay - totalDeductions, 0);
+  const runLabel = employeeName || payrollRun.cost_center?.name || 'Company-wide run';
+  const runSubLabel = employeeName
+    ? payrollRun.employee?.employee_number || payrollRun.cost_center?.name || '-'
+    : payrollRun.cost_center?.name
+      ? 'Cost center payroll'
+      : 'All eligible employees';
+  const grossPay = Number(payrollRun.gross_salary ?? payrollRun.basic_salary ?? 0);
+  const totalDeductions = Number(payrollRun.total_deductions ?? payrollRun.paye ?? 0);
+  const netPay = Number(payrollRun.net_salary ?? Math.max(grossPay - totalDeductions, 0));
   const taxRate = grossPay > 0 ? (totalDeductions / grossPay) * 100 : 0;
 
   return (
@@ -61,20 +67,20 @@ const PayrollRunsListItem = ({ payrollRun }: { payrollRun: PayrollRunType }) => 
         container
       >
         <Grid size={{ xs: 12, md: 3 }}>
-          <Tooltip title='Employee'>
+          <Tooltip title={employeeName ? 'Employee' : 'Payroll Scope'}>
             <div>
               <Typography variant='h6' fontSize={14} lineHeight={1.25} mb={0} noWrap>
-                {employeeName}
+                {runLabel}
               </Typography>
               <Typography variant='body2' color='text.secondary' noWrap>
-                {payrollRun.employee?.employee_number || '-'}
+                {runSubLabel}
               </Typography>
             </div>
           </Tooltip>
         </Grid>
 
         <Grid size={{ xs: 6, md: 1.75 }}>
-          <Tooltip title='Basic Salary'>
+          <Tooltip title='Gross Salary'>
             <Typography>
               {formatMoney(grossPay)}
             </Typography>
@@ -84,13 +90,13 @@ const PayrollRunsListItem = ({ payrollRun }: { payrollRun: PayrollRunType }) => 
         <Grid size={{ xs: 6, md: 1.5 }}>
           <Tooltip title='PAYE'>
             <Typography>
-              {formatMoney(totalDeductions)}
+              {formatMoney(Number(payrollRun.paye || 0))}
             </Typography>
           </Tooltip>
         </Grid>
 
         <Grid size={{ xs: 6, md: 1.75 }}>
-          <Tooltip title='Net Pay (Basic Salary - PAYE)'>
+          <Tooltip title='Net Pay'>
             <Typography fontWeight={600}>{formatMoney(netPay)}</Typography>
           </Tooltip>
         </Grid>

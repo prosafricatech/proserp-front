@@ -490,6 +490,26 @@ humanResourcesServices.updateLeaveRequest = async (leaveRequest) => {
     return data;
 }
 
+humanResourcesServices.approveLeaveRequest = async ({ id, ...payload }) => {
+    const { data } = await axios.post(`/api/humanResources/leaveRequests/${id}/approve`, payload);
+    return data;
+}
+
+humanResourcesServices.rejectLeaveRequest = async ({ id, ...payload }) => {
+    const { data } = await axios.post(`/api/humanResources/leaveRequests/${id}/reject`, payload);
+    return data;
+}
+
+humanResourcesServices.cancelLeaveRequest = async (id) => {
+    const { data } = await axios.post(`/api/humanResources/leaveRequests/${id}/cancel`);
+    return data;
+}
+
+humanResourcesServices.addLeaveRequestApproval = async (approval) => {
+    const { data } = await axios.post('/api/humanResources/leaveRequestApprovals', approval);
+    return data;
+}
+
 humanResourcesServices.showLeaveRequest = async (id) => {
     const { data } = await axios.get(`/api/humanResources/leaveRequests/${id}`);
     return data;
@@ -497,6 +517,22 @@ humanResourcesServices.showLeaveRequest = async (id) => {
 
 humanResourcesServices.deleteLeaveRequest = async (id) => {
     const { data } = await axios.delete(`/api/humanResources/leaveRequests/${id}/delete`);
+    return data;
+}
+
+humanResourcesServices.downloadEmployeesRegistrationTemplate = async () => {
+    const { data } = await axios.post('/api/humanResources/employees/registration-excel-template', {}, {
+        responseType: 'blob',
+    });
+    return data;
+}
+
+humanResourcesServices.importEmployeesRegistrationExcel = async (file) => {
+    const formData = new FormData();
+    formData.append('employees_excel', file);
+    const { data } = await axios.post('/api/humanResources/employees/import-registration-excel', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+    });
     return data;
 }
 
@@ -608,14 +644,74 @@ humanResourcesServices.getPayrollRunsList = async (params = {}) => {
     return data;
 };
 
+humanResourcesServices.addPayrollRun = async (payload) => {
+    const { data } = await axios.post('/api/humanResources/payrollRuns/add', payload);
+    return data;
+}
+
 humanResourcesServices.showPayrollRun = async (id) => {
     const { data } = await axios.get(`/api/humanResources/payrollRuns/${id}`);
     return data?.data || data;
 }
 
+humanResourcesServices.previewPayrollRun = async ({ id, employee_ids = [] }) => {
+    const payload = Array.isArray(employee_ids) && employee_ids.length ? { employee_ids } : {};
+    const { data } = await axios.post(`/api/humanResources/payrollRuns/${id}/preview`, payload);
+    return data;
+}
+
+humanResourcesServices.simulatePayrollRun = async ({ id, employee_id }) => {
+    const { data } = await axios.post(`/api/humanResources/payrollRuns/${id}/simulate`, { employee_id });
+    return data;
+}
+
+humanResourcesServices.submitPayrollRun = async ({ id, employee_ids = [] }) => {
+    const payload = Array.isArray(employee_ids) && employee_ids.length ? { employee_ids } : {};
+    const { data } = await axios.post(`/api/humanResources/payrollRuns/${id}/submit`, payload);
+    return data;
+}
+
+humanResourcesServices.approvePayrollRun = async (id) => {
+    const { data } = await axios.post(`/api/humanResources/payrollRuns/${id}/approve`);
+    return data;
+}
+
+humanResourcesServices.addPayrollRunApproval = async (approval) => {
+    const { data } = await axios.post('/api/humanResources/payrollRunApprovals', approval);
+    return data;
+}
+
+humanResourcesServices.postPayrollRunTransactions = async ({ id, ...payload }) => {
+    const { data } = await axios.post(`/api/humanResources/payrollRuns/${id}/post-transactions`, payload);
+    return data;
+}
+
+humanResourcesServices.payPayrollRun = async ({ id, ...payload }) => {
+    const { data } = await axios.post(`/api/humanResources/payrollRuns/${id}/pay`, payload);
+    return data;
+}
+
+humanResourcesServices.deletePayrollRun = async (id) => {
+    const { data } = await axios.delete(`/api/humanResources/payrollRuns/${id}/delete`);
+    return data;
+}
+
 humanResourcesServices.finalizePayrollRun = async (id) => {
     const { data } = await axios.post(`/api/humanResources/payrollRuns/${id}/finalize`);
     return data;
+}
+
+humanResourcesServices.getPayslipsList = async (params = {}) => {
+    const { page = 1, limit = 20, ...queryParams } = params;
+    const { data } = await axios.get('/api/humanResources/payslips', {
+        params: { page, limit, ...queryParams }
+    });
+    return data;
+}
+
+humanResourcesServices.showPayslip = async (id) => {
+    const { data } = await axios.get(`/api/humanResources/payslips/${id}`);
+    return data?.data || data;
 }
 
 export default humanResourcesServices;

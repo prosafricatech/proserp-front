@@ -1,15 +1,18 @@
 'use client';
 
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import CostCenterSelector from '@/components/masters/costCenters/CostCenterSelector';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Div } from '@jumbo/shared';
 import { LoadingButton } from '@mui/lab';
 import {
   Autocomplete,
   Button,
+  Checkbox,
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControlLabel,
   Grid,
   LinearProgress,
   TextField,
@@ -19,12 +22,14 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import dayjs, { Dayjs } from 'dayjs';
 import { useSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import * as yup from 'yup';
 import { useDepartments } from '../departments/DepartmentsProvider';
 import { Department } from '../departments/DepartmentsType';
 import humanResourcesServices from '../humanResourcesServices';
 import { Employee } from './EmployeesType';
+import { useLedgerSelect } from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
+import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
 
 interface EmployeeFormProps {
   setOpenDialog: (open: boolean) => void;
@@ -33,6 +38,8 @@ interface EmployeeFormProps {
 
 interface FormData extends Omit<Employee, 'id'> {
   id?: number;
+  basic_salary?: number | null;
+  contract_start_date?: string | null;
 }
 
 interface ApiResponse {
@@ -55,6 +62,7 @@ const EmployeeForm = ({
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
   const { authUser } = useJumboAuth();
+  const { ungroupedLedgerOptions } = useLedgerSelect();
   const { departments, isFetching } = useDepartments();
   const [departmentsData, setDepartmentsData] = useState<Department[] | []>([]);
   const [selectedDpt, setSelectedDpt] = useState<Department | null>(null);
@@ -72,14 +80,19 @@ const EmployeeForm = ({
 
   const [employeeDoB, setEmployeeDoB] = useState<string | undefined>(undefined);
   const [joinDate, setJoinDate] = useState<string | undefined>(undefined);
+  const [contractStartDate, setContractStartDate] = useState<string | undefined>(undefined);
   const [employeeGender, setEmployeeGender] = useState(genderOptions[0]);
   const [selectedemploymentType, setSelectedEmploymentType] =
     useState<empTypesOpt | null>(null);
+  
   const normalizedDateOfBirth = employee?.date_of_birth
     ? dayjs(employee.date_of_birth).format('YYYY-MM-DD')
     : '';
   const normalizedJoinDate = employee?.join_date
     ? dayjs(employee.join_date).format('YYYY-MM-DD')
+    : '';
+  const normalizedContractStartDate = employee?.contract_start_date
+    ? dayjs(employee.contract_start_date).format('YYYY-MM-DD')
     : '';
 
   useEffect(() => {
@@ -111,7 +124,6 @@ const EmployeeForm = ({
       const user_id = authUser?.user.id;
       const newData = { ...data, user_id: user_id };
       const response = await humanResourcesServices.addEmployee(newData);
-      console.log('newData: ', newData);
       return response;
     },
     onSuccess: (data) => {
@@ -176,16 +188,16 @@ const EmployeeForm = ({
     first_name: yup
       .string()
       .required('First name is required')
-      .max(100, 'First name should not exceed 50 characters'),
+      .max(100, 'First name should not exceed 100 characters'),
     middle_name: yup
       .string()
-      .max(100, 'Middle name should not exceed 50 characters'),
+      .max(100, 'Middle name should not exceed 100 characters'),
     last_name: yup
       .string()
       .required('Last name is required')
-      .max(100, 'Last name should not exceed 50 characters'),
+      .max(100, 'Last name should not exceed 100 characters'),
     gender: yup.string().required('Gender is required'),
-    email: yup.string().email(),
+    email: yup.string().email('Invalid email format'),
     phone_number: yup.string(),
     address: yup.string(),
     date_of_birth: yup.string(),
@@ -196,8 +208,25 @@ const EmployeeForm = ({
       .string()
       .max(50, 'Passport number should not exceed 50 characters'),
     department_id: yup.number(),
+    cost_center_id: yup.number().nullable().optional(),
+    payable_ledger_id: yup.number().nullable().optional(),
+    create_payable: yup.boolean().optional(),
+    payable_ledger_name: yup.string().nullable().optional(),
     employment_type: yup.string().required('Employment type is required'),
     join_date: yup.string(),
+    basic_salary: yup
+      .number()
+      .nullable()
+      .transform((value, originalValue) => {
+        // Handle empty string or undefined as null
+        if (originalValue === '' || originalValue === undefined || originalValue === null) {
+          return null;
+        }
+        return Number(value);
+      })
+      .min(0, 'Basic salary must be greater than or equal to 0')
+      .typeError('Basic salary must be a number'),
+    contract_start_date: yup.string().nullable(),
   });
 
   const {
@@ -222,9 +251,21 @@ const EmployeeForm = ({
       national_id: '',
       passport_number: '',
       department_id: undefined,
+      cost_center_id: null,
+      payable_ledger_id: null,
+      create_payable: false,
+      payable_ledger_name: '',
       employment_type: '',
       join_date: '',
+      basic_salary: null,
+      contract_start_date: null,
     },
+  });
+
+  // Watch the create_payable field to conditionally show/hide the payable_ledger_name
+  const createPayable = useWatch({
+    control,
+    name: 'create_payable',
   });
 
   useEffect(() => {
@@ -240,6 +281,7 @@ const EmployeeForm = ({
     setSelectedEmploymentType(resolvedEmploymentType);
     setEmployeeDoB(normalizedDateOfBirth || undefined);
     setJoinDate(normalizedJoinDate || undefined);
+    setContractStartDate(normalizedContractStartDate || undefined);
 
     reset({
       employee_number: employee?.employee_number || '',
@@ -254,18 +296,36 @@ const EmployeeForm = ({
       national_id: employee?.national_id || '',
       passport_number: employee?.passport_number || '',
       department_id: employee?.department_id || undefined,
+      cost_center_id: employee?.cost_center_id ?? null,
+      payable_ledger_id: employee?.payable_ledger_id ?? null,
+      create_payable: false,
+      payable_ledger_name: '',
       employment_type: resolvedEmploymentType?.value || '',
       join_date: normalizedJoinDate,
+      basic_salary: employee?.basic_salary ?? null,
+      contract_start_date: normalizedContractStartDate || null,
     });
-  }, [employee, normalizedDateOfBirth, normalizedJoinDate, reset]);
+  }, [employee, normalizedDateOfBirth, normalizedJoinDate, normalizedContractStartDate, reset]);
 
   const onSubmit = (data: FormData) => {
-    // saveMutation?.(data);
     if (employee?.id) {
       updateEmployee(data);
     } else {
       addEmployee(data);
     }
+  };
+
+  // Helper to format currency display
+  const formatCurrency = (value: number | null | undefined) => {
+    if (value === null || value === undefined) return '';
+    return value.toLocaleString();
+  };
+
+  // Helper to parse currency input
+  const parseCurrency = (value: string) => {
+    const cleaned = value.replace(/,/g, '');
+    const num = parseFloat(cleaned);
+    return isNaN(num) ? null : num;
   };
 
   return (
@@ -274,12 +334,19 @@ const EmployeeForm = ({
         <Grid size={12} textAlign={'center'}>
           {!employee?.id
             ? 'Add Employee'
-            : `Edit Employee ${employee.first_name} ${employee.middle_name} ${employee.last_name}`}
+            : `Edit ${employee.first_name} ${employee.middle_name} ${employee.last_name}`}
         </Grid>
       </DialogTitle>
       <DialogContent>
         <form autoComplete='off' onSubmit={handleSubmit(onSubmit)}>
-          <Grid container rowSpacing={{ xs: 1, md: 2 }} spacing={2}>
+          <Grid container spacing={1}>
+            {/* Personal Information Section */}
+            <Grid size={12}>
+              <Div sx={{ mt: 2, mb: 1, fontSize: '1.1rem' }}>
+                Personal Information
+              </Div>
+            </Grid>
+
             <Grid size={{ xs: 12, md: 4 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
@@ -386,7 +453,12 @@ const EmployeeForm = ({
                         newValue && setEmployeeGender(newValue);
                       }}
                       renderInput={(params) => (
-                        <TextField {...params} label='Gender' />
+                        <TextField 
+                          {...params} 
+                          label='Gender' 
+                          error={!!fieldState.error}
+                          helperText={fieldState.error?.message}
+                        />
                       )}
                     />
                   )}
@@ -395,10 +467,52 @@ const EmployeeForm = ({
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
+                <Controller
+                  name='date_of_birth'
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <DatePicker
+                      label='Date of Birth'
+                      {...field}
+                      value={employeeDoB ? dayjs(employeeDoB) : null}
+                      onChange={(value: Dayjs | null) => {
+                        if (value) {
+                          const formatted = value.format('YYYY-MM-DD');
+                          setEmployeeDoB(formatted);
+                          field.onChange(formatted);
+                        } else {
+                          setEmployeeDoB(undefined);
+                          field.onChange('');
+                        }
+                      }}
+                      slotProps={{
+                        textField: {
+                          size: 'small',
+                          fullWidth: true,
+                          error: !!fieldState.error,
+                          helperText: fieldState.error?.message,
+                        },
+                      }}
+                    />
+                  )}
+                />
+              </Div>
+            </Grid>
+
+            {/* Contact Information Section */}
+            <Grid size={12}>
+              <Div sx={{ mt: 2, mb: 1, fontSize: '1.1rem' }}>
+                Contact Information
+              </Div>
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='Email'
                   size='small'
                   fullWidth
+                  type='email'
                   error={
                     !!errors?.email ||
                     !!error?.response?.data?.validation_errors?.email ||
@@ -413,7 +527,6 @@ const EmployeeForm = ({
                 />
               </Div>
             </Grid>
-
             <Grid size={{ xs: 12, md: 4 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
@@ -437,43 +550,8 @@ const EmployeeForm = ({
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
-                <Controller
-                  name='date_of_birth'
-                  control={control}
-                  rules={{ required: true }}
-                  render={({ field, fieldState }) => (
-                    <DatePicker
-                      label='Date of Birth'
-                      {...field}
-                      value={employeeDoB ? dayjs(employeeDoB) : null}
-                      onChange={(value: Dayjs | null) => {
-                        if (value) {
-                          const formatted = value.format('YYYY-MM-DD');
-
-                          setEmployeeDoB(formatted);
-                          field.onChange(formatted);
-                        } else {
-                          setEmployeeDoB(undefined);
-                          field.onChange('');
-                        }
-                      }}
-                      slotProps={{
-                        textField: {
-                          size: 'small',
-                          fullWidth: true,
-                          error: !!fieldState.error,
-                          helperText: fieldState.error?.message,
-                        },
-                      }}
-                    />
-                  )}
-                />
-              </Div>
-            </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
-                  label='Adress'
+                  label='Address'
                   size='small'
                   fullWidth
                   error={
@@ -491,7 +569,14 @@ const EmployeeForm = ({
               </Div>
             </Grid>
 
-            <Grid size={{ xs: 12, md: 4 }}>
+            {/* Identification Section */}
+            <Grid size={12}>
+              <Div sx={{ mt: 2, mb: 1, fontSize: '1.1rem' }}>
+                Identification
+              </Div>
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 6 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='National ID'
@@ -512,7 +597,7 @@ const EmployeeForm = ({
                 />
               </Div>
             </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='Passport Number'
@@ -535,6 +620,14 @@ const EmployeeForm = ({
                 />
               </Div>
             </Grid>
+
+            {/* Employment Details Section */}
+            <Grid size={12}>
+              <Div sx={{ mt: 2, mb: 1, fontSize: '1.1rem' }}>
+                Employment Details
+              </Div>
+            </Grid>
+
             <Grid size={{ xs: 12, md: 4 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 {isFetching ? (
@@ -543,7 +636,6 @@ const EmployeeForm = ({
                   <Controller
                     name='department_id'
                     control={control}
-                    rules={{ required: true }}
                     render={({ field, fieldState }) => (
                       <Autocomplete
                         size='small'
@@ -610,12 +702,12 @@ const EmployeeForm = ({
                 />
               </Div>
             </Grid>
+
             <Grid size={{ xs: 12, md: 4 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <Controller
                   name='join_date'
                   control={control}
-                  rules={{ required: true }}
                   render={({ field, fieldState }) => (
                     <DatePicker
                       label='Join Date'
@@ -624,7 +716,6 @@ const EmployeeForm = ({
                       onChange={(value: Dayjs | null) => {
                         if (value) {
                           const formatted = value.format('YYYY-MM-DD');
-
                           setJoinDate(formatted);
                           field.onChange(formatted);
                         } else {
@@ -645,7 +736,196 @@ const EmployeeForm = ({
                 />
               </Div>
             </Grid>
+
+            {/* New Payroll-Ready Fields */}
+            <Grid size={12}>
+              <Div sx={{ mt: 2, mb: 1, fontSize: '1.1rem' }}>
+                Payroll & Contract Settings
+              </Div>
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Div sx={{ mt: 1, mb: 1 }}>
+                <Controller
+                  name='basic_salary'
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      label='Basic Salary'
+                      size='small'
+                      fullWidth
+                      value={field.value !== null && field.value !== undefined ? formatCurrency(field.value) : ''}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        const cleaned = value.replace(/,/g, '');
+                        const num = parseFloat(cleaned);
+                        field.onChange(isNaN(num) ? null : num);
+                      }}
+                      onBlur={() => {
+                        if (field.value !== null && field.value !== undefined) {
+                          const formatted = formatCurrency(field.value);
+                          // We need to set the displayed value, but keep the number in form state
+                          const input = document.querySelector('input[name="basic_salary_display"]') as HTMLInputElement;
+                          if (input) {
+                            input.value = formatted;
+                          }
+                        }
+                      }}
+                      error={
+                        !!errors?.basic_salary ||
+                        !!error?.response?.data?.validation_errors?.basic_salary ||
+                        !!updateError?.response?.data?.validation_errors?.basic_salary
+                      }
+                      helperText={
+                        errors.basic_salary?.message ||
+                        error?.response?.data?.validation_errors?.basic_salary ||
+                        updateError?.response?.data?.validation_errors?.basic_salary
+                      }
+                    />
+                  )}
+                />
+              </Div>
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Div sx={{ mt: 1, mb: 1 }}>
+                <Controller
+                  name='contract_start_date'
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <DatePicker
+                      label='Contract Start Date'
+                      {...field}
+                      value={contractStartDate ? dayjs(contractStartDate) : null}
+                      onChange={(value: Dayjs | null) => {
+                        if (value) {
+                          const formatted = value.format('YYYY-MM-DD');
+                          setContractStartDate(formatted);
+                          field.onChange(formatted);
+                        } else {
+                          setContractStartDate(undefined);
+                          field.onChange(null);
+                        }
+                      }}
+                      slotProps={{
+                        textField: {
+                          size: 'small',
+                          fullWidth: true,
+                          error: !!fieldState.error,
+                          helperText: fieldState.error?.message,
+                        },
+                      }}
+                    />
+                  )}
+                />
+              </Div>
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Div sx={{ mt: 1, mb: 1 }}>
+                <Controller
+                  name='cost_center_id'
+                  control={control}
+                  render={({ field }) => (
+                    <CostCenterSelector
+                      multiple={false}
+                      label='Cost Center'
+                      defaultValue={(employee as any)?.cost_center || null}
+                      onChange={(value) => {
+                        const selected = Array.isArray(value) ? value[0] : value;
+                        field.onChange(selected?.id || null);
+                      }}
+                    />
+                  )}
+                />
+              </Div>
+            </Grid>
+
+            {/* Accounting Section */}
+            <Grid size={12}>
+              <Div sx={{ mt: 2, mb: 1, fontSize: '1.1rem' }}>
+                Accounting Settings
+              </Div>
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Div sx={{ mt: 1, mb: 1 }}>
+                <LedgerSelect
+                  frontError={errors.payable_ledger_id}
+                  defaultValue={
+                    ungroupedLedgerOptions.find(
+                      (ledger) => ledger.id === employee?.payable_ledger_id
+                    ) || null
+                  }
+                  allowedGroups={['Accounts Payable']}
+                  onChange={(newValue) => {
+                    if (Array.isArray(newValue)) return;
+                    setValue('payable_ledger_id', newValue ? newValue.id : 0, {
+                      shouldValidate: true,
+                      shouldDirty: true,
+                    });
+                  }}
+                  label='Payable Account'
+                />
+              </Div>
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Div sx={{ mt: 1, mb: 1 }}>
+                <Controller
+                  name='create_payable'
+                  control={control}
+                  render={({ field }) => (
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={Boolean(field.value)}
+                          onChange={(event) => {
+                            field.onChange(event.target.checked);
+                            // If unchecked, clear the payable_ledger_name
+                            if (!event.target.checked) {
+                              setValue('payable_ledger_name', '');
+                            }
+                          }}
+                        />
+                      }
+                      label='Auto-create payable account'
+                    />
+                  )}
+                />
+              </Div>
+            </Grid>
+
+            {/* Payable Ledger Name - Show only when create_payable is true */}
+            {createPayable && (
+              <Grid size={{ xs: 12, md: 12 }}>
+                <Div sx={{ mt: 1, mb: 1 }}>
+                  <TextField
+                    label='Payable Ledger Name'
+                    size='small'
+                    fullWidth
+                    placeholder='e.g., Payable - Jane Doe'
+                    error={
+                      !!errors?.payable_ledger_name ||
+                      !!error?.response?.data?.validation_errors
+                        ?.payable_ledger_name ||
+                      !!updateError?.response?.data?.validation_errors
+                        ?.payable_ledger_name
+                    }
+                    helperText={
+                      errors.payable_ledger_name?.message ||
+                      error?.response?.data?.validation_errors
+                        ?.payable_ledger_name ||
+                      updateError?.response?.data?.validation_errors
+                        ?.payable_ledger_name
+                    }
+                    {...register('payable_ledger_name')}
+                  />
+                </Div>
+              </Grid>
+            )}
           </Grid>
+          
           <DialogActions>
             <Button size='small' onClick={() => setOpenDialog(false)}>
               Cancel
@@ -657,7 +937,7 @@ const EmployeeForm = ({
               sx={{ display: 'flex' }}
               loading={isPending || updateIsLoading}
             >
-              Submit
+              {employee?.id ? 'Update' : 'Create'}
             </LoadingButton>
           </DialogActions>
         </form>

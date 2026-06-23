@@ -10,6 +10,8 @@ import humanResourcesServices from '../humanResourcesServices';
 import EmployeeActionTail from './EmployeeActionTail';
 import EmployeesListItem from './EmployeesListItem';
 import { Employee } from './EmployeesType';
+import LedgerGroupProvider from '@/components/accounts/ledgerGroups/LedgerGroupProvider';
+import LedgerSelectProvider from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
 
 const Employees = () => {
   const listRef = useRef<any>(null);
@@ -53,41 +55,43 @@ const Employees = () => {
   if (!mounted) return null; // ⛔ Prevent mismatch during hydration
 
   return (
-    <>
-      <Typography variant={'h4'} mb={2}>
-        Employees
-      </Typography>
-      <JumboRqList
-        ref={listRef}
-        wrapperComponent={Card}
-        service={humanResourcesServices.getEmployeesList}
-        primaryKey='id'
-        queryOptions={queryOptions}
-        itemsPerPage={10}
-        itemsPerPageOptions={[5, 8, 10, 15, 20]}
-        renderItem={renderEmployees}
-        componentElement='div'
-        wrapperSx={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-        toolbar={
-          <JumboListToolbar
-            hideItemsPerPage={true}
-            actionTail={
-              <Stack direction='row'>
-                <JumboSearch
-                  onChange={handleOnChange}
-                  value={queryOptions.queryParams.keyword}
-                />
-                <EmployeeActionTail />
-              </Stack>
-            }
-          ></JumboListToolbar>
-        }
-      />
-    </>
+    <LedgerSelectProvider>
+      <LedgerGroupProvider>
+        <Typography variant={'h4'} mb={2}>
+          Employees
+        </Typography>
+        <JumboRqList
+          ref={listRef}
+          wrapperComponent={Card}
+          service={humanResourcesServices.getEmployeesList}
+          primaryKey='id'
+          queryOptions={queryOptions}
+          itemsPerPage={10}
+          itemsPerPageOptions={[5, 8, 10, 15, 20]}
+          renderItem={renderEmployees}
+          componentElement='div'
+          wrapperSx={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+          toolbar={
+            <JumboListToolbar
+                hideItemsPerPage={true}
+                actionTail={
+                  <Stack direction='row'>
+                    <JumboSearch
+                      onChange={handleOnChange}
+                      value={queryOptions.queryParams.keyword}
+                    />
+                    <EmployeeActionTail />
+                  </Stack>
+                }
+              ></JumboListToolbar>
+          }
+        />
+      </LedgerGroupProvider>
+    </LedgerSelectProvider>
   );
 };
 

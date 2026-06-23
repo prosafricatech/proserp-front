@@ -57,7 +57,11 @@ const LeaveRequestsListItem = ({
 
         <Grid size={{ xs: 12, md: 1.2 }}>
           <Tooltip title='Days'>
-            <Typography>{leaveRequest.days_requested}</Typography>
+            <Typography>
+              {leaveRequest.days_granted != null
+                ? `${leaveRequest.days_granted}/${leaveRequest.days_requested}`
+                : leaveRequest.days_requested}
+            </Typography>
           </Tooltip>
         </Grid>
 

@@ -19,6 +19,7 @@ import { getSanitizedSearchKeyword } from '@/utilities/getSanitizedSearchKeyword
 import React, { useEffect, useRef, useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
 import { PayrollPeriodType } from '../payrollPeriods/PayrollPeriodType';
+import PayrollRunActionTail from './PayrollRunActionTail';
 import PayrollRunsListItem from './PayrollRunsListItem';
 import { PayrollRunType } from './PayrollRunType';
 
@@ -154,6 +155,7 @@ const PayrollRuns = () => {
                     onChange={handleOnChange}
                     value={queryOptions.queryParams.keyword}
                   />
+                  <PayrollRunActionTail payrollPeriod={selectedPayrollPeriod} />
                 </Stack>
               }
             />

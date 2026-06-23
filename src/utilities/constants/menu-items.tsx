@@ -213,17 +213,23 @@ export async function getMenus(locale: string) {
           icon: icon('employees'),
         },
         {
+          uri: `/${locale}/humanResources/leave-requests`,
+          label: sidebar.menuItem.leave_requests,
+          type: 'nav-item',
+          icon: icon('reports'),
+        },
+        {
           label: sidebar.menuItem.payroll,
           type: 'collapsible',
           icon: icon('reports'),
           children: [
             {
-              uri: `/${locale}/humanResources/leave-requests`,
-              label: sidebar.menuItem.leave_requests,
+              uri: `/${locale}/humanResources/payroll-runs`,
+              label: sidebar.menuItem.payroll_runs,
               type: 'nav-item',
             },
             {
-              uri: `/${locale}/humanResources/payroll`,
+              uri: `/${locale}/humanResources/payroll-periods`,
               label: sidebar.menuItem.payroll_periods,
               type: 'nav-item',
             },
