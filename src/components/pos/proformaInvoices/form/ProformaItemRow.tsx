@@ -54,7 +54,8 @@ function ProformaItemRow({
   vat_percentage = 0,
 }: ProformaItemRowProps) {
   const product = item?.product;
-  const thumbnail = item?.product?.main_photo?.full_path || item?.product?.thumbnail;
+  const thumbnail =
+    item?.product?.main_photo?.full_path || item?.product?.thumbnail;
   const [showForm, setShowForm] = useState(false);
   const vat_factor = vat_percentage * 0.01;
 
