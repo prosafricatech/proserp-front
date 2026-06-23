@@ -1,3 +1,4 @@
+// payrollRuns/PayrollRunForm.tsx
 'use client';
 
 import { useLanguage } from '@/app/[lang]/contexts/LanguageContext';
@@ -29,6 +30,7 @@ interface PayrollRunFormProps {
   setOpenDialog: (open: boolean) => void;
   payrollPeriod: PayrollPeriodType | null;
   payrollRun?: PayrollRunType | null;
+  onSuccess?: () => void;
 }
 
 interface FormData {
@@ -49,9 +51,11 @@ const PayrollRunForm = ({
   setOpenDialog,
   payrollPeriod,
   payrollRun = null,
+  onSuccess,
 }: PayrollRunFormProps) => {
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
+  const lang = useLanguage();
   const [costCenter, setCostCenter] = useState<CostCenter | null>(null);
 
   const validationSchema = yup.object({
@@ -91,7 +95,8 @@ const PayrollRunForm = ({
       enqueueSnackbar('Payroll run created successfully', { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['payrollRuns'] });
       queryClient.invalidateQueries({ queryKey: ['payrollRunsForPeriod', String(payrollPeriod?.id)] });
-      queryClient.invalidateQueries({ queryKey: ['showPayrollPeriod', String(payrollPeriod?.id)] });
+      queryClient.invalidateQueries({ queryKey: ['payrollPeriods'] });
+      if (onSuccess) onSuccess();
     },
     onError: (error: any) => {
       enqueueSnackbar(getErrorMessage(error), { variant: 'error' });

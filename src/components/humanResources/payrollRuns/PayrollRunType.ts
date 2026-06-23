@@ -9,6 +9,8 @@ export interface PayrollRunType {
   paye: number;
   total_allowances?: number;
   total_deductions?: number;
+  payslip_count?: number;
+  employee_count?: number;
   net_salary?: number;
   requires_approval?: boolean;
   approval_chain_id?: number | null;
