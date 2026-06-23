@@ -186,6 +186,7 @@ const AllowanceTypeForm = ({
       name: allowanceType?.name || '',
       code: allowanceType?.code || '',
       is_taxable: allowanceType?.is_taxable || false,
+      expense_ledger_id: allowanceType?.expense_ledger_id ?? 0,
       description: allowanceType?.description || '',
     });
   }, [allowanceType, reset]);
