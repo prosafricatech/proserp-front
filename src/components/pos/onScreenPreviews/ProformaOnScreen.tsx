@@ -19,6 +19,7 @@ import {
 
 interface Product {
   name: string;
+  description: string;
   vat_exempted?: boolean;
   main_photo?: { full_path: string } | null;
 }
@@ -264,16 +265,29 @@ function ProformaOnScreen({ proforma, organization }: ProformaOnScreenProps) {
                       display={'flex'}
                       flexDirection={'column'}
                       alignItems={'start'}
+                      gap={1}
                     >
-                      {proformaItem.product.name}
+                      <span
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 4,
+                        }}
+                      >
+                        {proformaItem.product.name}
+                        <span style={{ color: '#888', fontStyle: 'italic' }}>
+                          ({proformaItem.product.description})
+                        </span>
+                      </span>
                       {proformaItem.description && (
                         <span
                           style={{
-                            color: '#888',
+                            color: '#9e9e9eff',
                             fontStyle: 'italic',
+                            fontSize: 12,
                           }}
                         >
-                          ({proformaItem.description})
+                          {proformaItem.description}
                         </span>
                       )}
                     </Box>

@@ -113,7 +113,19 @@ function ProformaItemRow({
                         mb={0}
                         noWrap
                       >
-                        {product?.name}
+                        <span
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 4,
+                          }}
+                        >
+                          {product?.name}
+                          <span style={{ color: '#888', fontStyle: 'italic' }}>
+                            ({product?.description})
+                          </span>
+                        </span>
+                        {/* {product?.name} */}
                       </Typography>
                     </Tooltip>
                   }
