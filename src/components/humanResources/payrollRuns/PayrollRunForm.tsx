@@ -1,7 +1,6 @@
 // payrollRuns/PayrollRunForm.tsx
 'use client';
 
-import { useLanguage } from '@/app/[lang]/contexts/LanguageContext';
 import CostCenterSelector from '@/components/masters/costCenters/CostCenterSelector';
 import { CostCenter } from '@/components/masters/costCenters/CostCenterType';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -14,7 +13,6 @@ import {
   DialogContent,
   DialogTitle,
   Grid,
-  TextField,
   Typography,
 } from '@mui/material';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -55,7 +53,6 @@ const PayrollRunForm = ({
 }: PayrollRunFormProps) => {
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
-  const lang = useLanguage();
   const [costCenter, setCostCenter] = useState<CostCenter | null>(null);
 
   const validationSchema = yup.object({
@@ -107,6 +104,11 @@ const PayrollRunForm = ({
     addPayrollRun(data);
   };
 
+  // Format period label for display
+  const monthName = payrollPeriod 
+    ? new Date(payrollPeriod.year, payrollPeriod.month - 1).toLocaleString('default', { month: 'long' })
+    : '';
+
   return (
     <>
       <DialogTitle>
@@ -116,30 +118,25 @@ const PayrollRunForm = ({
       </DialogTitle>
       <DialogContent>
         <form autoComplete='off' onSubmit={handleSubmit(onSubmit)}>
-          <Grid container spacing={1}>
+          <Grid container spacing={2}>
             <Grid size={12}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <Alert severity='info' sx={{ mb: 2 }}>
                   {payrollRun?.id 
                     ? 'Edit the payroll run details below.' 
-                    : 'Leave cost center empty for a company-wide run. Use a cost center when this month is split by branch, department, or project.'}
+                    : `Create a new payroll run for ${monthName} ${payrollPeriod?.year || ''}. Leave cost center empty for a company-wide run.`}
                 </Alert>
               </Div>
             </Grid>
 
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
-                <TextField
-                  label='Payroll Period'
-                  size='small'
-                  fullWidth
-                  disabled
-                  value={payrollPeriod ? `${payrollPeriod.year} - ${payrollPeriod.month}` : '-'}
-                />
-              </Div>
-            </Grid>
+            {/* Hidden field for payroll_period_id */}
+            <input 
+              type="hidden" 
+              {...control.register('payroll_period_id')} 
+              value={payrollPeriod?.id || 0}
+            />
 
-            <Grid size={{ xs: 12, md: 6 }}>
+            <Grid size={{ xs: 12, md: 12 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <Controller
                   name='cost_center_id'
@@ -148,7 +145,7 @@ const PayrollRunForm = ({
                     <CostCenterSelector
                       multiple={false}
                       withNotSpecified={false}
-                      label='Cost Center (optional)'
+                      label='Cost Center'
                       defaultValue={costCenter}
                       onChange={(value) => {
                         const selected = Array.isArray(value) ? value[0] : value;
