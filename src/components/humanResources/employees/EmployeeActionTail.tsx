@@ -1,28 +1,27 @@
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { AddOutlined, UploadFileOutlined } from '@mui/icons-material';
 import {
+  Box,
   ButtonGroup,
   Dialog,
   IconButton,
   Tooltip,
-  useMediaQuery,
-  Box,
   alpha,
+  useMediaQuery,
 } from '@mui/material';
 import { useState } from 'react';
 import { DepartmentsProvider } from '../departments/DepartmentsProvider';
 import EmployeeForm from './EmployeeForm';
 import EmployeeOnboardingDialog from './EmployeeOnboardingDialog';
-import { EmployeesProvider } from './EmployeesProvider';
 
 // Simple Excel-styled icon with "XLS" badge
 const ExcelUploadIcon = () => (
   <Box sx={{ position: 'relative', display: 'inline-flex' }}>
-    <UploadFileOutlined 
-      sx={{ 
+    <UploadFileOutlined
+      sx={{
         color: '#217346',
         fontSize: 24,
-      }} 
+      }}
     />
     <Box
       sx={{
@@ -60,9 +59,7 @@ const EmployeeActionTail = () => {
         onClose={() => setOpenDialog(false)}
       >
         <DepartmentsProvider>
-          <EmployeesProvider>
-            <EmployeeForm setOpenDialog={setOpenDialog} />
-          </EmployeesProvider>
+          <EmployeeForm setOpenDialog={setOpenDialog} />
         </DepartmentsProvider>
       </Dialog>
       <Dialog
@@ -78,7 +75,7 @@ const EmployeeActionTail = () => {
         variant='outlined'
         size='small'
         disableElevation
-        sx={{ 
+        sx={{
           '& .MuiButton-root': { px: 1 },
           '& .MuiButtonGroup-grouped:not(:last-of-type)': {
             borderColor: 'divider',
@@ -86,7 +83,7 @@ const EmployeeActionTail = () => {
         }}
       >
         <Tooltip title='Employee Onboarding Import'>
-          <IconButton 
+          <IconButton
             onClick={() => setOpenOnboardingDialog(true)}
             sx={{
               color: '#217346',

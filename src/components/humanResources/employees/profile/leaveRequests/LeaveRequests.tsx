@@ -1,13 +1,14 @@
 'use client';
 
+import { getSanitizedSearchKeyword } from '@/utilities/getSanitizedSearchKeyword';
 import JumboListToolbar from '@jumbo/components/JumboList/components/JumboListToolbar';
 import JumboRqList from '@jumbo/components/JumboReactQuery/JumboRqList';
 import JumboSearch from '@jumbo/components/JumboSearch';
-import { Card, Stack, Typography } from '@mui/material';
+import { Card, Stack } from '@mui/material';
 import { useParams, useSearchParams } from 'next/navigation';
-import { getSanitizedSearchKeyword } from '@/utilities/getSanitizedSearchKeyword';
 import React, { useEffect, useRef, useState } from 'react';
 import humanResourcesServices from '../../../humanResourcesServices';
+import { EmployeesProvider } from '../../EmployeesProvider';
 import LeaveRequestActionTail from './LeaveRequestActionTail';
 import { LeaveRequestType } from './LeaveRequestType';
 import LeaveRequestsListItem from './LeaveRequestsListItem';
@@ -68,36 +69,38 @@ const LeaveRequests = ({ employeeId }: { employeeId?: number }) => {
   if (!mounted) return null;
 
   return (
-    <JumboRqList
-      ref={listRef}
-      wrapperComponent={Card}
-      service={humanResourcesServices.getLeaveRequestsList}
-      primaryKey='id'
-      queryOptions={queryOptions}
-      itemsPerPage={10}
-      itemsPerPageOptions={[10, 20, 30, 50]}
-      renderItem={renderLeaveRequests}
-      componentElement='div'
-      wrapperSx={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-      toolbar={
-        <JumboListToolbar
-          hideItemsPerPage={true}
-          actionTail={
-            <Stack direction='row'>
-              <JumboSearch
-                onChange={handleOnChange}
-                value={queryOptions.queryParams.keyword}
-              />
-              <LeaveRequestActionTail employeeId={resolvedEmployeeId} />
-            </Stack>
-          }
-        ></JumboListToolbar>
-      }
-    />
+    <EmployeesProvider>
+      <JumboRqList
+        ref={listRef}
+        wrapperComponent={Card}
+        service={humanResourcesServices.getLeaveRequestsList}
+        primaryKey='id'
+        queryOptions={queryOptions}
+        itemsPerPage={10}
+        itemsPerPageOptions={[10, 20, 30, 50]}
+        renderItem={renderLeaveRequests}
+        componentElement='div'
+        wrapperSx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+        toolbar={
+          <JumboListToolbar
+            hideItemsPerPage={true}
+            actionTail={
+              <Stack direction='row'>
+                <JumboSearch
+                  onChange={handleOnChange}
+                  value={queryOptions.queryParams.keyword}
+                />
+                <LeaveRequestActionTail employeeId={resolvedEmployeeId} />
+              </Stack>
+            }
+          ></JumboListToolbar>
+        }
+      />
+    </EmployeesProvider>
   );
 };
 
