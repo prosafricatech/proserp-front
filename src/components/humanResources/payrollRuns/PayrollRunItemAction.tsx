@@ -221,16 +221,16 @@ const PayrollRunItemAction = ({ payrollRun }: { payrollRun: PayrollRunType }) =>
             title: 'Preview Salary Sheet',
             action: 'preview',
           },
-          // {
-          //   icon: <SendOutlined color='primary' />,
-          //   title: 'Submit',
-          //   action: 'submit',
-          // },
-          // {
-          //   icon: <DeleteOutlined color='error' />,
-          //   title: 'Delete Draft',
-          //   action: 'delete',
-          // },
+          {
+            icon: <SendOutlined color='primary' />,
+            title: 'Submit',
+            action: 'submit',
+          },
+          {
+            icon: <DeleteOutlined color='error' />,
+            title: 'Delete Draft',
+            action: 'delete',
+          },
         ]
       : []),
     ...(isSubmitted
