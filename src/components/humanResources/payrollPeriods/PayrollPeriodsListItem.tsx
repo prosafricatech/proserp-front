@@ -34,7 +34,6 @@ import {
 import RemoveIcon from '@mui/icons-material/Remove';
 import AddIcon from '@mui/icons-material/Add';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useSnackbar } from 'notistack';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
@@ -86,7 +85,6 @@ interface PayrollPeriodsListItemProps {
 const PayrollPeriodsListItem = ({ payrollPeriod }: PayrollPeriodsListItemProps) => {
   const router = useRouter();
   const lang = useLanguage();
-  const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
