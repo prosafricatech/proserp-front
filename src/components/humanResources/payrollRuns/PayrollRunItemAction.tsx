@@ -42,9 +42,6 @@ import { lazy, useMemo, useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
 import { PayrollRunType } from './PayrollRunType';
 
-// Lazy load the edit form
-const PayrollRunForm = lazy(() => import('./PayrollRunForm'));
-
 const money = (value: number | string | undefined) =>
   Number(value || 0).toLocaleString(undefined, {
     minimumFractionDigits: 2,

@@ -42,10 +42,6 @@ const PayrollRunsListItem = ({ payrollRun }: { payrollRun: PayrollRunType }) => 
     : payrollRun.cost_center?.name
       ? 'Cost center payroll'
       : 'All eligible employees';
-  const grossPay = Number(payrollRun.gross_salary ?? payrollRun.basic_salary ?? 0);
-  const totalDeductions = Number(payrollRun.total_deductions ?? payrollRun.paye ?? 0);
-  const netPay = Number(payrollRun.net_salary ?? Math.max(grossPay - totalDeductions, 0));
-  const taxRate = grossPay > 0 ? (totalDeductions / grossPay) * 100 : 0;
 
   return (
     <>
@@ -57,9 +53,9 @@ const PayrollRunsListItem = ({ payrollRun }: { payrollRun: PayrollRunType }) => 
           cursor: 'pointer',
           '&:hover': { bgcolor: 'action.hover' },
         }}
-        // onClick={() =>
-        //   router.push(`/${lang}/humanResources/payroll/${payrollRun.payroll_period_id}?run_id=${payrollRun.id}`)
-        // }
+        onClick={() =>
+          router.push(`/${lang}/humanResources/payroll/${payrollRun.payroll_period_id}?run_id=${payrollRun.id}`)
+        }
         paddingLeft={2}
         paddingRight={2}
         columnSpacing={1}
