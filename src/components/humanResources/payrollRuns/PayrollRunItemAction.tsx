@@ -490,7 +490,7 @@ const PayrollRunItemAction = ({
                       }}
                     ></TableCell>
                     <TableCell
-                      colSpan={allowanceTypes.length}
+                      colSpan={allowanceTypes?.length}
                       sx={{
                         textAlign: 'center',
                         borderRightColor: theme.palette.background.paper,
