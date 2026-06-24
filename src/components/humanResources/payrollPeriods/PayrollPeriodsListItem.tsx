@@ -33,7 +33,7 @@ import {
 } from '@mui/icons-material';
 import RemoveIcon from '@mui/icons-material/Remove';
 import AddIcon from '@mui/icons-material/Add';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -44,38 +44,20 @@ import PayrollPeriodItemAction from './PayrollPeriodItemAction';
 import PayrollRunItemAction from '../payrollRuns/PayrollRunItemAction';
 import PayrollRunForm from '../payrollRuns/PayrollRunForm';
 
-const MONTH_NAMES = [
-  '',
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-];
+const MONTH_NAMES = ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 const statusColor = (status: string): 'success' | 'warning' | 'error' | 'default' => {
   switch (status?.toLowerCase()) {
     case 'paid':
     case 'finalized':
-      return 'success';
     case 'approved':
       return 'success';
     case 'submitted':
-      return 'warning';
     case 'processing':
       return 'warning';
     case 'rejected':
     case 'cancelled':
       return 'error';
-    case 'draft':
-      return 'default';
     default:
       return 'default';
   }
@@ -89,8 +71,6 @@ const runStatusColor = (status: string): 'success' | 'warning' | 'error' | 'info
       return 'info';
     case 'submitted':
       return 'warning';
-    case 'draft':
-      return 'default';
     case 'rejected':
     case 'cancelled':
       return 'error';
@@ -114,79 +94,41 @@ const PayrollPeriodsListItem = ({ payrollPeriod }: PayrollPeriodsListItemProps) 
   const [expanded, setExpanded] = useState(false);
   const [openCreateRunDialog, setOpenCreateRunDialog] = useState(false);
 
-  // Fetch runs for this period when expanded
   const { data: runsData, isLoading: isLoadingRuns, refetch: refetchRuns } = useQuery({
     queryKey: ['payrollRunsForPeriod', String(payrollPeriod.id)],
-    queryFn: () =>
-      humanResourcesServices.getPayrollRunsList({
-        payroll_period_id: payrollPeriod.id,
-        limit: 100,
-      }),
-    enabled: expanded, // Only fetch when expanded
+    queryFn: () => humanResourcesServices.getPayrollRunsList({
+      payroll_period_id: payrollPeriod.id,
+      limit: 100,
+    }),
+    enabled: expanded,
   });
 
   const runs: PayrollRunType[] = runsData?.data || [];
-  const hasRuns = runs.length > 0;
-
-  // Format money
-  const formatMoney = (value: number) =>
-    Number(value || 0).toLocaleString();
-
-  // Delete period mutation
-  const { mutate: deletePeriod, isPending: isDeleting } = useMutation({
-    mutationFn: () => humanResourcesServices.deletePayrollPeriod(payrollPeriod.id),
-    onSuccess: () => {
-      enqueueSnackbar('Payroll period deleted successfully', {
-        variant: 'success',
-      });
-      queryClient.invalidateQueries({ queryKey: ['payrollPeriods'] });
-    },
-    onError: (error: any) => {
-      const message =
-        error?.response?.data?.message || 'Failed to delete period';
-      enqueueSnackbar(message, { variant: 'error' });
-    },
-  });
-
-  const handleDeletePeriod = () => {
-    if (hasRuns) {
-      enqueueSnackbar('Cannot delete period with existing runs', {
-        variant: 'error',
-      });
-      return;
-    }
-    // Will be handled by PayrollPeriodItemAction
-  };
+  const runCount = payrollPeriod.runs_count ?? runs.length ?? 0;
+  const monthName = MONTH_NAMES[payrollPeriod.month] || payrollPeriod.month;
 
   const handleRunClick = (runId: number) => {
     router.push(`/${lang}/humanResources/payroll/run/${runId}`);
   };
 
-  // Invalidate queries after run creation
   const handleRunCreated = () => {
     setOpenCreateRunDialog(false);
     refetchRuns();
     queryClient.invalidateQueries({ queryKey: ['payrollPeriods'] });
   };
 
-  const monthName = MONTH_NAMES[payrollPeriod.month] || payrollPeriod.month;
-
   return (
     <>
       <Accordion
         expanded={expanded}
-        onChange={() => setExpanded((prev) => !prev)}
+        onChange={() => setExpanded(!expanded)}
         square
         sx={{
           borderRadius: 2,
           borderTop: 2,
           borderColor: 'divider',
-          '&:hover': {
-            bgcolor: 'action.hover',
-          },
-          '&.Mui-expanded': {
-            margin: '0 0 16px 0',
-          },
+          '&:hover': { bgcolor: 'action.hover' },
+          '&.Mui-expanded': { margin: '0 0 16px 0' },
         }}
       >
         <AccordionSummary
@@ -196,9 +138,7 @@ const PayrollPeriodsListItem = ({ payrollPeriod }: PayrollPeriodsListItemProps) 
             flexDirection: 'row-reverse',
             '.MuiAccordionSummary-content': {
               alignItems: 'center',
-              '&.Mui-expanded': {
-                margin: '12px 0',
-              },
+              '&.Mui-expanded': { margin: '12px 0' },
             },
             '.MuiAccordionSummary-expandIconWrapper': {
               borderRadius: 1,
@@ -211,114 +151,74 @@ const PayrollPeriodsListItem = ({ payrollPeriod }: PayrollPeriodsListItemProps) 
                 color: 'primary.main',
                 borderColor: 'primary.main',
               },
-              '& svg': {
-                fontSize: '1.25rem',
-              },
+              '& svg': { fontSize: '1.25rem' },
             },
           }}
         >
-          <Grid 
-            container 
-            spacing={1} 
-            width="100%" 
-            sx={{ paddingLeft: 1, paddingRight: 1 }}
-          >
+          <Grid container spacing={1} width="100%" sx={{ px: 1 }}>
             <Grid size={{ xs: 12, md: 3 }}>
-              <Tooltip title="Year">
-                <Typography variant="body2">
-                  {payrollPeriod.year}
-                </Typography>
-              </Tooltip>
+              <Typography variant="body2">{payrollPeriod.year}</Typography>
             </Grid>
-
             <Grid size={{ xs: 12, md: 3 }}>
-              <Tooltip title="Month">
-                <Typography variant="body2">
-                  {monthName}
-                </Typography>
-              </Tooltip>
+              <Typography variant="body2">{monthName}</Typography>
             </Grid>
-
             <Grid size={{ xs: 12, md: 3 }}>
-              <Tooltip title="Status">
-                <Chip
-                  label={payrollPeriod.status || 'active'}
-                  color={statusColor(payrollPeriod.status || '')}
-                  size="small"
-                  sx={{ textTransform: 'capitalize' }}
-                />
-              </Tooltip>
+              <Chip
+                label={payrollPeriod.status || 'active'}
+                color={statusColor(payrollPeriod.status || '')}
+                size="small"
+                sx={{ textTransform: 'capitalize' }}
+              />
             </Grid>
-
             <Grid size={{ xs: 12, md: 3 }}>
-              <Tooltip title="Runs Count">
-                <Badge 
-                  badgeContent={payrollPeriod.runs_count ?? runs.length ?? 0} 
-                  color="info"
-                  showZero
-                >
-                  <ReceiptLongOutlined fontSize="small" color="action" />
-                </Badge>
-              </Tooltip>
+              <Badge badgeContent={runCount} color="info" showZero>
+                <ReceiptLongOutlined fontSize="small" color="action" />
+              </Badge>
             </Grid>
           </Grid>
         </AccordionSummary>
 
-        <AccordionDetails sx={{ backgroundColor: 'background.paper', marginBottom: 3 }}>
+        <AccordionDetails sx={{ bgcolor: 'background.paper', mb: 3 }}>
           <Grid container spacing={2}>
-            {/* Actions Row */}
             <Grid size={12}>
               <Stack direction="row" spacing={1} justifyContent="flex-end" alignItems="center">
                 <Tooltip title="New Run">
-                  <IconButton
-                    size="small"
-                    onClick={() => setOpenCreateRunDialog(true)}
-                    sx={{
-                      borderRadius: 1,
-                      position: 'relative',
-                    }}
-                  >
+                  <IconButton size="small" onClick={() => setOpenCreateRunDialog(true)}>
                     <Box sx={{ position: 'relative', display: 'inline-flex' }}>
                       <ReceiptLongOutlined fontSize="small" />
                       <Add
-                        fontSize="small" 
-                        sx={{ 
+                        fontSize="small"
+                        sx={{
                           position: 'absolute',
                           right: -6,
                           bottom: -6,
-                          fontSize: '12px',
+                          fontSize: 12,
                           bgcolor: 'primary.main',
                           color: 'white',
                           borderRadius: '50%',
                           border: '2px solid white',
-                          width: '14px',
-                          height: '14px',
-                        }} 
+                          width: 14,
+                          height: 14,
+                        }}
                       />
                     </Box>
                   </IconButton>
                 </Tooltip>
-                <PayrollPeriodItemAction 
-                  payrollPeriod={payrollPeriod} 
-                  hasRuns={hasRuns}
-                  onDelete={deletePeriod}
-                  isDeleting={isDeleting}
+                <PayrollPeriodItemAction
+                  payrollPeriod={payrollPeriod}
+                  hasRuns={runCount > 0}
                 />
               </Stack>
             </Grid>
 
-            {/* Runs List */}
             <Grid size={12}>
               {isLoadingRuns ? (
                 <Box display="flex" justifyContent="center" py={4}>
                   <CircularProgress size={30} />
                 </Box>
               ) : runs.length === 0 ? (
-                <Alert 
-                  severity="info" 
-                  sx={{ mb: 2 }}
-                >
-                  No payroll runs found for {monthName} {payrollPeriod.year}. 
+                <Alert severity="info">
+                  No payroll runs found for {monthName} {payrollPeriod.year}.
                   Click the + button to create a run.
                 </Alert>
               ) : (
@@ -333,63 +233,58 @@ const PayrollPeriodsListItem = ({ payrollPeriod }: PayrollPeriodsListItemProps) 
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {runs.map((run) => {
-                        const isFullyProcessed = run.status === 'paid' || run.status === 'finalized';
-                        
-                        return (
-                          <TableRow
-                            key={run.id}
-                            hover
-                            sx={{ cursor: 'pointer' }}
-                            onClick={() => handleRunClick(run.id)}
-                          >
-                            <TableCell>
-                              <Box display="flex" alignItems="center" gap={1}>
-                                <AccountBalanceWalletOutlined fontSize="small" color="action" />
-                                <Typography variant="body2">
-                                  {run.cost_center?.name || 'Company-wide Run'}
+                      {runs.map((run) => (
+                        <TableRow
+                          key={run.id}
+                          hover
+                          sx={{ cursor: 'pointer' }}
+                          onClick={() => handleRunClick(run.id)}
+                        >
+                          <TableCell>
+                            <Box display="flex" alignItems="center" gap={1}>
+                              <AccountBalanceWalletOutlined fontSize="small" color="action" />
+                              <Typography variant="body2">
+                                {run.cost_center?.name || 'Company-wide Run'}
+                              </Typography>
+                              {run.employee && (
+                                <Typography variant="caption" color="text.secondary">
+                                  ({run.employee.first_name} {run.employee.last_name})
                                 </Typography>
-                                {run.employee && (
-                                  <Typography variant="caption" color="text.secondary">
-                                    ({run.employee.first_name} {run.employee.last_name})
-                                  </Typography>
-                                )}
-                              </Box>
-                            </TableCell>
-                            <TableCell align="center">
-                              <Chip
-                                label={run.status || 'draft'}
-                                size="small"
-                                color={runStatusColor(run.status || '')}
-                                sx={{ textTransform: 'capitalize' }}
-                              />
-                            </TableCell>
-                            <TableCell align="center">
-                              <Badge 
-                                badgeContent={run.payslip_count || run.employee_count || 0} 
-                                color="info"
-                                showZero
-                              />
-                            </TableCell>
-                            <TableCell align="center">
-                              <Stack 
-                                direction="row" 
-                                spacing={0.5} 
-                                justifyContent="center"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                {/* Show completion badge if run is fully processed */}
-                                {isFullyProcessed && (
-                                  <Tooltip title="Fully Processed">
-                                    <VerifiedRounded fontSize="small" color="success" />
-                                  </Tooltip>
-                                )}
-                                <PayrollRunItemAction payrollRun={run} />
-                              </Stack>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
+                              )}
+                            </Box>
+                          </TableCell>
+                          <TableCell align="center">
+                            <Chip
+                              label={run.status || 'draft'}
+                              size="small"
+                              color={runStatusColor(run.status || '')}
+                              sx={{ textTransform: 'capitalize' }}
+                            />
+                          </TableCell>
+                          <TableCell align="center">
+                            <Badge
+                              badgeContent={run.payslip_count || run.employee_count || 0}
+                              color="info"
+                              showZero
+                            />
+                          </TableCell>
+                          <TableCell align="center">
+                            <Stack
+                              direction="row"
+                              spacing={0.5}
+                              justifyContent="center"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {(run.status === 'paid' || run.status === 'finalized') && (
+                                <Tooltip title="Fully Processed">
+                                  <VerifiedRounded fontSize="small" color="success" />
+                                </Tooltip>
+                              )}
+                              <PayrollRunItemAction payrollRun={run} />
+                            </Stack>
+                          </TableCell>
+                        </TableRow>
+                      ))}
                     </TableBody>
                   </Table>
                 </TableContainer>
@@ -399,7 +294,6 @@ const PayrollPeriodsListItem = ({ payrollPeriod }: PayrollPeriodsListItemProps) 
         </AccordionDetails>
       </Accordion>
 
-      {/* Create Run Dialog */}
       <Dialog
         open={openCreateRunDialog}
         onClose={() => setOpenCreateRunDialog(false)}
