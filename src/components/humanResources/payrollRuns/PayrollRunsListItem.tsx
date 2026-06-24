@@ -57,57 +57,26 @@ const PayrollRunsListItem = ({ payrollRun }: { payrollRun: PayrollRunType }) => 
           cursor: 'pointer',
           '&:hover': { bgcolor: 'action.hover' },
         }}
-        onClick={() =>
-          router.push(`/${lang}/humanResources/payroll/${payrollRun.payroll_period_id}?run_id=${payrollRun.id}`)
-        }
+        // onClick={() =>
+        //   router.push(`/${lang}/humanResources/payroll/${payrollRun.payroll_period_id}?run_id=${payrollRun.id}`)
+        // }
         paddingLeft={2}
         paddingRight={2}
         columnSpacing={1}
         alignItems={'center'}
         container
       >
-        <Grid size={{ xs: 12, md: 3 }}>
+        <Grid size={{ xs: 12, md: 5 }}>
           <Tooltip title={employeeName ? 'Employee' : 'Payroll Scope'}>
             <div>
               <Typography variant='h6' fontSize={14} lineHeight={1.25} mb={0} noWrap>
                 {runLabel}
               </Typography>
-              <Typography variant='body2' color='text.secondary' noWrap>
-                {runSubLabel}
-              </Typography>
             </div>
           </Tooltip>
         </Grid>
 
-        <Grid size={{ xs: 6, md: 1.75 }}>
-          <Tooltip title='Gross Salary'>
-            <Typography>
-              {formatMoney(grossPay)}
-            </Typography>
-          </Tooltip>
-        </Grid>
-
-        <Grid size={{ xs: 6, md: 1.5 }}>
-          <Tooltip title='PAYE'>
-            <Typography>
-              {formatMoney(Number(payrollRun.paye || 0))}
-            </Typography>
-          </Tooltip>
-        </Grid>
-
-        <Grid size={{ xs: 6, md: 1.75 }}>
-          <Tooltip title='Net Pay'>
-            <Typography fontWeight={600}>{formatMoney(netPay)}</Typography>
-          </Tooltip>
-        </Grid>
-
-        <Grid size={{ xs: 6, md: 1 }}>
-          <Tooltip title='Tax Rate (PAYE / Basic Salary)'>
-            <Typography>{formatPercent(taxRate)}</Typography>
-          </Tooltip>
-        </Grid>
-
-        <Grid size={{ xs: 6, md: 1 }}>
+        <Grid size={{ xs: 6, md: 5 }}>
           <Tooltip title='Status'>
             <Chip
               label={payrollRun.status || '-'}

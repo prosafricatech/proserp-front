@@ -1,15 +1,12 @@
 'use client';
 
-import { DeleteOutlined, EditOutlined, VisibilityOutlined } from '@mui/icons-material';
+import { DeleteOutlined, EditOutlined } from '@mui/icons-material';
 import { Dialog, IconButton, Tooltip, useMediaQuery } from '@mui/material';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
 import { useSnackbar } from 'notistack';
-import React, { lazy, useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { lazy, useState } from 'react';
 import { PayrollPeriodType } from './PayrollPeriodType';
-import { useRouter } from 'next/navigation';
-import { useLanguage } from '@/app/[lang]/contexts/LanguageContext';
 
 const PayrollPeriodForm = lazy(() => import('./PayrollPeriodForm'));
 
@@ -28,11 +25,8 @@ const PayrollPeriodItemAction = ({
 }: PayrollPeriodItemActionProps) => {
   const { showDialog, hideDialog } = useJumboDialog();
   const { enqueueSnackbar } = useSnackbar();
-  const queryClient = useQueryClient();
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
-  const router = useRouter();
-  const lang = useLanguage();
   const [openEditDialog, setOpenEditDialog] = useState(false);
 
   const handleDelete = () => {
@@ -55,18 +49,9 @@ const PayrollPeriodItemAction = ({
     });
   };
 
-  const handleView = () => {
-    router.push(`/${lang}/humanResources/payroll/${payrollPeriod.id}`);
-  };
-
   const handleEdit = () => {
     setOpenEditDialog(true);
   };
-
-  const monthName = new Date(payrollPeriod.year, payrollPeriod.month - 1).toLocaleString(
-    'default',
-    { month: 'long' }
-  );
 
   return (
     <>

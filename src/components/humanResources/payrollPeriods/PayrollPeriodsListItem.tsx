@@ -26,7 +26,6 @@ import {
   useMediaQuery,
 } from '@mui/material';
 import {
-  AddCircleOutline,
   ReceiptLongOutlined,
   AccountBalanceWalletOutlined,
   VerifiedRounded,
@@ -327,12 +326,10 @@ const PayrollPeriodsListItem = ({ payrollPeriod }: PayrollPeriodsListItemProps) 
                   <Table size="small" stickyHeader>
                     <TableHead>
                       <TableRow>
-                        <TableCell sx={{ fontWeight: 600 }}>Run Name</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }} align="center">Status</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }} align="right">Gross Salary</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }} align="right">Net Pay</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }} align="center">Employees</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }} align="center">Actions</TableCell>
+                        <TableCell>Cost Center</TableCell>
+                        <TableCell align="center">Status</TableCell>
+                        <TableCell align="center">Employees</TableCell>
+                        <TableCell align="center">Actions</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -349,7 +346,7 @@ const PayrollPeriodsListItem = ({ payrollPeriod }: PayrollPeriodsListItemProps) 
                             <TableCell>
                               <Box display="flex" alignItems="center" gap={1}>
                                 <AccountBalanceWalletOutlined fontSize="small" color="action" />
-                                <Typography variant="body2" fontWeight={500}>
+                                <Typography variant="body2">
                                   {run.cost_center?.name || 'Company-wide Run'}
                                 </Typography>
                                 {run.employee && (
@@ -366,12 +363,6 @@ const PayrollPeriodsListItem = ({ payrollPeriod }: PayrollPeriodsListItemProps) 
                                 color={runStatusColor(run.status || '')}
                                 sx={{ textTransform: 'capitalize' }}
                               />
-                            </TableCell>
-                            <TableCell align="right">
-                              {formatMoney(run.gross_salary || 0)}
-                            </TableCell>
-                            <TableCell align="right" sx={{ fontWeight: 600 }}>
-                              {formatMoney(run.net_salary || 0)}
                             </TableCell>
                             <TableCell align="center">
                               <Badge 

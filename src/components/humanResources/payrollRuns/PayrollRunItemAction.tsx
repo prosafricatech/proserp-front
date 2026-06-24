@@ -204,33 +204,33 @@ const PayrollRunItemAction = ({ payrollRun }: { payrollRun: PayrollRunType }) =>
   }, [preview]);
 
   const menuItems = [
-    {
-      icon: <ReceiptLongOutlined color='primary' />,
-      title: 'Full Payslip Detail',
-      action: 'viewPayslip',
-    },
+    // {
+    //   icon: <ReceiptLongOutlined color='primary' />,
+    //   title: 'Full Payslip Detail',
+    //   action: 'viewPayslip',
+    // },
     ...(isDraft
       ? [
-          {
-            icon: <EditOutlined color='primary' />,
-            title: 'Edit',
-            action: 'edit',
-          },
+          // {
+          //   icon: <EditOutlined color='primary' />,
+          //   title: 'Edit',
+          //   action: 'edit',
+          // },
           {
             icon: <PreviewOutlined color='primary' />,
             title: 'Preview Salary Sheet',
             action: 'preview',
           },
-          {
-            icon: <SendOutlined color='primary' />,
-            title: 'Submit',
-            action: 'submit',
-          },
-          {
-            icon: <DeleteOutlined color='error' />,
-            title: 'Delete Draft',
-            action: 'delete',
-          },
+          // {
+          //   icon: <SendOutlined color='primary' />,
+          //   title: 'Submit',
+          //   action: 'submit',
+          // },
+          // {
+          //   icon: <DeleteOutlined color='error' />,
+          //   title: 'Delete Draft',
+          //   action: 'delete',
+          // },
         ]
       : []),
     ...(isSubmitted
@@ -351,7 +351,7 @@ const PayrollRunItemAction = ({ payrollRun }: { payrollRun: PayrollRunType }) =>
 
       {/* Preview Dialog */}
       <Dialog open={openPreviewDialog} onClose={() => setOpenPreviewDialog(false)} fullWidth maxWidth='lg'>
-        <DialogTitle>Salary Sheet Preview</DialogTitle>
+        <DialogTitle sx={{ textAlign: 'center' }}>Salary Sheet Preview</DialogTitle>
         <DialogContent>
           <Alert severity='info' sx={{ mb: 2 }}>
             Preview is calculated live. Payslips are saved only after Submit.
