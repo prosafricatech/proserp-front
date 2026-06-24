@@ -22,6 +22,8 @@ import { PayrollPeriodType } from '../payrollPeriods/PayrollPeriodType';
 import PayrollRunActionTail from './PayrollRunActionTail';
 import PayrollRunsListItem from './PayrollRunsListItem';
 import { PayrollRunType } from './PayrollRunType';
+import LedgerGroupProvider from '@/components/accounts/ledgerGroups/LedgerGroupProvider';
+import LedgerSelectProvider from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
 
 const PayrollRuns = () => {
   const params = useParams<{ keyword?: string }>();
@@ -98,77 +100,79 @@ const PayrollRuns = () => {
   if (!mounted) return null;
 
   return (
-    <>
-      <Typography variant={'h4'} mb={2}>
-        Payroll Runs
-      </Typography>
-      <Grid container spacing={2} mb={2} mt={2} justifyContent='center'>
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Autocomplete
-            size='small'
-            loading={isPayrollPeriodsFetching}
-            options={payrollPeriods}
-            value={selectedPayrollPeriod}
-            isOptionEqualToValue={(option, value) => option?.id === value?.id}
-            getOptionLabel={(option) =>
-              `${option.year} - ${option.month}${
-                option.status ? ` (${option.status})` : ''
-              }`
-            }
-            onChange={(_, newValue) => {
-              setSelectedPayrollPeriod(newValue);
-              setQueryOptions((state) => ({
-                ...state,
-                queryParams: {
-                  ...state.queryParams,
-                  payroll_period_id: newValue?.id
-                    ? String(newValue.id)
-                    : '',
-                },
-              }));
-            }}
-            renderInput={(inputParams) => (
-              <TextField {...inputParams} label='Payroll Period' fullWidth />
-            )}
-          />
-        </Grid>
-      </Grid>
-
-      {selectedPayrollPeriod ? (
-        <JumboRqList
-          ref={listRef}
-          wrapperComponent={Card}
-          service={humanResourcesServices.getPayrollRunsList}
-          primaryKey='id'
-          queryOptions={queryOptions}
-          itemsPerPage={20}
-          itemsPerPageOptions={[10, 20, 30, 50]}
-          renderItem={renderPayrollRuns}
-          componentElement='div'
-          wrapperSx={{ flex: 1, display: 'flex', flexDirection: 'column' }}
-          toolbar={
-            <JumboListToolbar
-              hideItemsPerPage={true}
-              actionTail={
-                <Stack direction='row'>
-                  <JumboSearch
-                    onChange={handleOnChange}
-                    value={queryOptions.queryParams.keyword}
-                  />
-                  <PayrollRunActionTail payrollPeriod={selectedPayrollPeriod} />
-                </Stack>
+    <LedgerSelectProvider>
+      <LedgerGroupProvider>
+        <Typography variant={'h4'} mb={2}>
+          Payroll Runs
+        </Typography>
+        <Grid container spacing={2} mb={2} mt={2} justifyContent='center'>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Autocomplete
+              size='small'
+              loading={isPayrollPeriodsFetching}
+              options={payrollPeriods}
+              value={selectedPayrollPeriod}
+              isOptionEqualToValue={(option, value) => option?.id === value?.id}
+              getOptionLabel={(option) =>
+                `${option.year} - ${option.month}${
+                  option.status ? ` (${option.status})` : ''
+                }`
               }
+              onChange={(_, newValue) => {
+                setSelectedPayrollPeriod(newValue);
+                setQueryOptions((state) => ({
+                  ...state,
+                  queryParams: {
+                    ...state.queryParams,
+                    payroll_period_id: newValue?.id
+                      ? String(newValue.id)
+                      : '',
+                  },
+                }));
+              }}
+              renderInput={(inputParams) => (
+                <TextField {...inputParams} label='Payroll Period' fullWidth />
+              )}
             />
-          }
-        />
-      ) : (
-        <Box width='100%'>
-          <Alert variant='outlined' severity='info' sx={{ width: '100%' }}>
-            Please select a Payroll Period
-          </Alert>
-        </Box>
-      )}
-    </>
+          </Grid>
+        </Grid>
+
+        {selectedPayrollPeriod ? (
+          <JumboRqList
+            ref={listRef}
+            wrapperComponent={Card}
+            service={humanResourcesServices.getPayrollRunsList}
+            primaryKey='id'
+            queryOptions={queryOptions}
+            itemsPerPage={20}
+            itemsPerPageOptions={[10, 20, 30, 50]}
+            renderItem={renderPayrollRuns}
+            componentElement='div'
+            wrapperSx={{ flex: 1, display: 'flex', flexDirection: 'column' }}
+            toolbar={
+              <JumboListToolbar
+                hideItemsPerPage={true}
+                actionTail={
+                  <Stack direction='row'>
+                    <JumboSearch
+                      onChange={handleOnChange}
+                      value={queryOptions.queryParams.keyword}
+                    />
+                    <PayrollRunActionTail payrollPeriod={selectedPayrollPeriod} />
+                  </Stack>
+                }
+              />
+            }
+          />
+        ) : (
+          <Box width='100%'>
+            <Alert variant='outlined' severity='info' sx={{ width: '100%' }}>
+              Please select a Payroll Period
+            </Alert>
+          </Box>
+        )}
+      </LedgerGroupProvider>
+    </LedgerSelectProvider>
   );
 };
 

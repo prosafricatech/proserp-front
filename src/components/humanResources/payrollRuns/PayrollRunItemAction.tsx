@@ -77,8 +77,10 @@ const getPendingPayrollLevel = (payrollRun: PayrollRunType) => {
 
 const PayrollRunItemAction = ({
   payrollRun,
+  isFromPayrollPeriodsList = false
 }: {
   payrollRun: PayrollRunType;
+  isFromPayrollPeriodsList?: boolean;
 }) => {
   const { showDialog, hideDialog } = useJumboDialog();
   const { enqueueSnackbar } = useSnackbar();
@@ -278,17 +280,12 @@ const PayrollRunItemAction = ({
           // },
           {
             icon: <PreviewOutlined color='primary' />,
-            title: 'Preview Salary Sheet',
+            title: 'Preview',
             action: 'preview',
           },
           {
-            icon: <SendOutlined color='primary' />,
-            title: 'Submit',
-            action: 'submit',
-          },
-          {
             icon: <DeleteOutlined color='error' />,
-            title: 'Delete Draft',
+            title: 'Delete',
             action: 'delete',
           },
         ]
@@ -464,17 +461,6 @@ const PayrollRunItemAction = ({
           Salary Sheet Preview
         </DialogTitle>
         <DialogContent>
-          <Alert
-            severity='info'
-            sx={{
-              mb: 2,
-              color: theme.palette.getContrastText(
-                theme.palette.info.contrastText
-              ),
-            }}
-          >
-            Preview is calculated live. Payslips are saved only after Submit.
-          </Alert>
           <TableContainer>
             <Table size='small'>
               <TableHead>
@@ -508,7 +494,7 @@ const PayrollRunItemAction = ({
                       }}
                     ></TableCell>
                     <TableCell
-                      colSpan={deductionTypes.length + 1}
+                      colSpan={deductionTypes?.length + 1}
                       sx={{
                         textAlign: 'center',
                         borderRightColor: theme.palette.background.paper,
@@ -601,18 +587,6 @@ const PayrollRunItemAction = ({
           >
             Close
           </Button>
-          {isDraft && (
-            <Button
-              variant='contained'
-              onClick={() => {
-                submitPayrollRun();
-                setGetDeductions(false);
-              }}
-              disabled={isSubmitting}
-            >
-              Submit
-            </Button>
-          )}
         </DialogActions>
       </Dialog>
 
@@ -685,13 +659,9 @@ const PayrollRunItemAction = ({
         fullWidth
         maxWidth='sm'
       >
-        <DialogTitle>Post Payroll Transactions</DialogTitle>
+        <DialogTitle sx={{ textAlign: 'center' }}>Post Payroll Transactions</DialogTitle>
         <DialogContent>
           <Stack spacing={2} mt={1}>
-            <Typography variant='body2' color='text.secondary'>
-              Posting records payroll in the general ledger. It does not pay
-              employees yet.
-            </Typography>
             <LedgerSelect
               label='Salary Expense Account'
               onChange={(ledger: any) =>
