@@ -98,7 +98,6 @@ const PayrollPeriodsListItem = ({ payrollPeriod }: PayrollPeriodsListItemProps) 
     queryKey: ['payrollRunsForPeriod', String(payrollPeriod.id)],
     queryFn: () => humanResourcesServices.getPayrollRunsList({
       payroll_period_id: payrollPeriod.id,
-      limit: 100,
     }),
     enabled: expanded,
   });
