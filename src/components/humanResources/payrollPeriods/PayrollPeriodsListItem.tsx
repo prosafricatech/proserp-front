@@ -104,10 +104,6 @@ const PayrollPeriodsListItem = ({ payrollPeriod }: PayrollPeriodsListItemProps) 
   const runCount = payrollPeriod.runs_count ?? runs.length ?? 0;
   const monthName = MONTH_NAMES[payrollPeriod.month] || payrollPeriod.month;
 
-  const handleRunClick = (runId: number) => {
-    router.push(`/${lang}/humanResources/payroll/run/${runId}`);
-  };
-
   const handleRunCreated = () => {
     setOpenCreateRunDialog(false);
     refetchRuns();
@@ -225,7 +221,6 @@ const PayrollPeriodsListItem = ({ payrollPeriod }: PayrollPeriodsListItemProps) 
                       <TableRow>
                         <TableCell>Cost Center</TableCell>
                         <TableCell align="center">Status</TableCell>
-                        <TableCell align="center">Employees</TableCell>
                         <TableCell align="center">Actions</TableCell>
                       </TableRow>
                     </TableHead>
@@ -234,8 +229,6 @@ const PayrollPeriodsListItem = ({ payrollPeriod }: PayrollPeriodsListItemProps) 
                         <TableRow
                           key={run.id}
                           hover
-                          sx={{ cursor: 'pointer' }}
-                          onClick={() => handleRunClick(run.id)}
                         >
                           <TableCell>
                             <Box display="flex" alignItems="center" gap={1}>
@@ -259,13 +252,6 @@ const PayrollPeriodsListItem = ({ payrollPeriod }: PayrollPeriodsListItemProps) 
                             />
                           </TableCell>
                           <TableCell align="center">
-                            <Badge
-                              badgeContent={run.payslip_count || run.employee_count || 0}
-                              color="info"
-                              showZero
-                            />
-                          </TableCell>
-                          <TableCell align="center">
                             <Stack
                               direction="row"
                               spacing={0.5}
@@ -277,7 +263,7 @@ const PayrollPeriodsListItem = ({ payrollPeriod }: PayrollPeriodsListItemProps) 
                                   <VerifiedRounded fontSize="small" color="success" />
                                 </Tooltip>
                               )}
-                              <PayrollRunItemAction payrollRun={run} />
+                              <PayrollRunItemAction payrollRun={run} isFromPayrollPeriodsList={true} />
                             </Stack>
                           </TableCell>
                         </TableRow>
