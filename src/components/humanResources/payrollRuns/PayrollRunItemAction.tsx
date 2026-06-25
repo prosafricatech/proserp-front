@@ -1,21 +1,17 @@
 // components/humanResources/payrollRuns/PayrollRunItemAction.tsx
 'use client';
 
-import { useLanguage } from '@/app/[lang]/contexts/LanguageContext';
 import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
 import { JumboDdMenu } from '@jumbo/components';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { MenuItemProps } from '@jumbo/types';
 import {
-  AccountBalanceWalletOutlined,
   CheckCircleOutline,
   DeleteOutlined,
   MoreHorizOutlined,
   PaidOutlined,
   PreviewOutlined,
-  SendOutlined,
-  ReceiptLongOutlined,
   DownloadOutlined,
 } from '@mui/icons-material';
 import {
@@ -39,7 +35,6 @@ import {
   useMediaQuery,
 } from '@mui/material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
 import { useSnackbar } from 'notistack';
 import { useCallback, useMemo, useState } from 'react';
 import { AllowanceType } from '../allowanceTypes/AllowanceType';
@@ -88,8 +83,6 @@ const PayrollRunItemAction = ({
   const { showDialog, hideDialog } = useJumboDialog();
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
-  const router = useRouter();
-  const lang = useLanguage();
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
@@ -99,7 +92,6 @@ const PayrollRunItemAction = ({
   const [openPostDialog, setOpenPostDialog] = useState(false);
   const [openPayDialog, setOpenPayDialog] = useState(false);
   const [openChainApprovalDialog, setOpenChainApprovalDialog] = useState(false);
-  const [openEditDialog, setOpenEditDialog] = useState(false);
   const [chainStatus, setChainStatus] = useState<
     'approved' | 'rejected' | 'on hold'
   >('approved');
@@ -337,9 +329,6 @@ const PayrollRunItemAction = ({
 
   const handleItemAction = (menuItem: MenuItemProps) => {
     switch (menuItem.action) {
-      case 'edit':
-        setOpenEditDialog(true);
-        break;
       case 'preview':
         setGetDeductions(true);
         previewPayrollRun();
