@@ -1,3 +1,4 @@
+// payrollPeriods/SalarySheetPDF.tsx
 'use client';
 
 import { Document, Page, StyleSheet, Text, View } from '@react-pdf/renderer';
@@ -186,6 +187,38 @@ function slug(text: string) {
   return text.toLowerCase().replace(/\s+/g, ' ').trim();
 }
 
+// ✅ Fixed: Safely get employee name
+function getEmployeeName(run: PayrollRunType) {
+  if (!run.employee) return 'Unknown Employee';
+  
+  // Use type assertion to safely access name if it exists
+  const employee = run.employee as any;
+  if (employee.name) return employee.name;
+  
+  const firstName = run.employee.first_name || '';
+  const lastName = run.employee.last_name || '';
+  const fullName = `${firstName} ${lastName}`.trim();
+  return fullName || 'Unknown Employee';
+}
+
+// ✅ Fixed: Safely get employee number
+function getEmployeeNumber(run: PayrollRunType) {
+  return run.employee?.employee_number || '-';
+}
+
+// ✅ Fixed: Safely get designation
+function getDesignation(run: PayrollRunType) {
+  // Check contract designation first
+  if (run.contract?.designation?.title) {
+    return run.contract.designation.title;
+  }
+  // Check if there's a direct designation property (some preview data might have it)
+  if ((run as any).designation) {
+    return (run as any).designation;
+  }
+  return '-';
+}
+
 function sumAllowanceByType(run: PayrollRunType, type: SalaryTypeItem) {
   const targetId = type.id;
   const targetName = slug(type.name || '');
@@ -353,16 +386,16 @@ const SalarySheetPDF = ({
             <Text style={{ ...styles.headerCell, color: contrastText, borderColor: mainColor, flex: designationFlex }}>Designation</Text>
             <Text style={{ ...styles.headerCell, color: contrastText, borderColor: mainColor, flex: 2 }}>Basic Salary</Text>
 
-            {allowanceTypes.map((type) => (
-              <Text key={`pdf-allowance-${type.id || type.name}`} style={{ ...styles.headerCell, color: contrastText, borderColor: mainColor, flex: 2 }}>
+            {allowanceTypes.map((type, idx) => (
+              <Text key={`pdf-allowance-header-${type.id || type.name}-${idx}`} style={{ ...styles.headerCell, color: contrastText, borderColor: mainColor, flex: 2 }}>
                 {type.name || 'Allowance'}
               </Text>
             ))}
 
             <Text style={{ ...styles.headerCell, color: contrastText, borderColor: mainColor, flex: 2 }}>Gross</Text>
 
-            {preTaxDeductionTypes.map((type) => (
-              <Text key={`pdf-pre-tax-deduction-${type.id || type.name}`} style={{ ...styles.headerCell, color: contrastText, borderColor: mainColor, flex: 2 }}>
+            {preTaxDeductionTypes.map((type, idx) => (
+              <Text key={`pdf-pre-tax-header-${type.id || type.name}-${idx}`} style={{ ...styles.headerCell, color: contrastText, borderColor: mainColor, flex: 2 }}>
                 {fmtTypeLabel(type, 'Pre-Tax Deduction')}
               </Text>
             ))}
@@ -371,8 +404,8 @@ const SalarySheetPDF = ({
 
             <Text style={{ ...styles.headerCell, color: contrastText, borderColor: mainColor, flex: 2 }}>PAYE</Text>
 
-            {postTaxDeductionTypes.map((type) => (
-              <Text key={`pdf-post-tax-deduction-${type.id || type.name}`} style={{ ...styles.headerCell, color: contrastText, borderColor: mainColor, flex: 2 }}>
+            {postTaxDeductionTypes.map((type, idx) => (
+              <Text key={`pdf-post-tax-header-${type.id || type.name}-${idx}`} style={{ ...styles.headerCell, color: contrastText, borderColor: mainColor, flex: 2 }}>
                 {fmtTypeLabel(type, 'Post-Tax Deduction')}
               </Text>
             ))}
@@ -380,8 +413,8 @@ const SalarySheetPDF = ({
             <Text style={{ ...styles.headerCell, color: contrastText, borderColor: mainColor, flex: 2 }}>Total Ded.</Text>
             <Text style={{ ...styles.headerCell, color: contrastText, borderColor: mainColor, flex: 2 }}>Net Payable</Text>
 
-            {contributionTypes.map((type) => (
-              <Text key={`pdf-contribution-${type.id || type.name}`} style={{ ...styles.headerCell, color: contrastText, borderColor: mainColor, flex: 2 }}>
+            {contributionTypes.map((type, idx) => (
+              <Text key={`pdf-contribution-header-${type.id || type.name}-${idx}`} style={{ ...styles.headerCell, color: contrastText, borderColor: mainColor, flex: 2 }}>
                 {fmtTypeLabel(type, 'Contribution')}
               </Text>
             ))}
@@ -395,28 +428,27 @@ const SalarySheetPDF = ({
           </View>
 
           {rows.map((entry, index) => {
-            const name = [entry.run.employee?.first_name, entry.run.employee?.last_name]
-              .filter(Boolean)
-              .join(' ');
+            const name = getEmployeeName(entry.run);
+            const designation = getDesignation(entry.run);
             const backgroundColor = index % 2 === 0 ? '#FFFFFF' : lightColor;
 
             return (
-              <View key={entry.run.id} style={{ ...styles.tableRow, backgroundColor }} wrap={false}>
+              <View key={`pdf-row-${entry.run.id || index}-${index}`} style={{ ...styles.tableRow, backgroundColor }} wrap={false}>
                 <Text style={{ ...styles.cell, borderColor: '#C5C5C5', flex: serialFlex }}>{index + 1}</Text>
                 <Text style={{ ...styles.cell, borderColor: '#C5C5C5', flex: nameFlex }}>{name || '-'}</Text>
-                <Text style={{ ...styles.cell, borderColor: '#C5C5C5', flex: designationFlex }}>{entry.run.contract?.designation?.title || '-'}</Text>
+                <Text style={{ ...styles.cell, borderColor: '#C5C5C5', flex: designationFlex }}>{designation}</Text>
                 <Text style={{ ...styles.cell, borderColor: '#C5C5C5', flex: 2, textAlign: 'right' }}>{fmt(entry.computed.basicSalary)}</Text>
 
-                {allowanceTypes.map((type) => (
-                  <Text key={`pdf-allowance-value-${entry.run.id}-${type.id || type.name}`} style={{ ...styles.cell, borderColor: '#C5C5C5', flex: 2, textAlign: 'right' }}>
+                {allowanceTypes.map((type, typeIdx) => (
+                  <Text key={`pdf-allowance-value-${entry.run.id || index}-${type.id || type.name}-${typeIdx}`} style={{ ...styles.cell, borderColor: '#C5C5C5', flex: 2, textAlign: 'right' }}>
                     {fmt(sumAllowanceByType(entry.run, type))}
                   </Text>
                 ))}
 
                 <Text style={{ ...styles.cell, borderColor: '#C5C5C5', flex: 2, textAlign: 'right' }}>{fmt(entry.computed.grossSalary)}</Text>
 
-                {preTaxDeductionTypes.map((type) => (
-                  <Text key={`pdf-pre-tax-deduction-value-${entry.run.id}-${type.id || type.name}`} style={{ ...styles.cell, borderColor: '#C5C5C5', flex: 2, textAlign: 'right' }}>
+                {preTaxDeductionTypes.map((type, typeIdx) => (
+                  <Text key={`pdf-pre-tax-value-${entry.run.id || index}-${type.id || type.name}-${typeIdx}`} style={{ ...styles.cell, borderColor: '#C5C5C5', flex: 2, textAlign: 'right' }}>
                     {fmt(sumDeductionByType(entry.run, type))}
                   </Text>
                 ))}
@@ -425,8 +457,8 @@ const SalarySheetPDF = ({
 
                 <Text style={{ ...styles.cell, borderColor: '#C5C5C5', flex: 2, textAlign: 'right' }}>{fmt(entry.computed.paye)}</Text>
 
-                {postTaxDeductionTypes.map((type) => (
-                  <Text key={`pdf-post-tax-deduction-value-${entry.run.id}-${type.id || type.name}`} style={{ ...styles.cell, borderColor: '#C5C5C5', flex: 2, textAlign: 'right' }}>
+                {postTaxDeductionTypes.map((type, typeIdx) => (
+                  <Text key={`pdf-post-tax-value-${entry.run.id || index}-${type.id || type.name}-${typeIdx}`} style={{ ...styles.cell, borderColor: '#C5C5C5', flex: 2, textAlign: 'right' }}>
                     {fmt(sumDeductionByType(entry.run, type))}
                   </Text>
                 ))}
@@ -434,8 +466,8 @@ const SalarySheetPDF = ({
                 <Text style={{ ...styles.cell, borderColor: '#C5C5C5', flex: 2, textAlign: 'right' }}>{fmt(entry.computed.totalDeductions)}</Text>
                 <Text style={{ ...styles.cell, borderColor: '#C5C5C5', flex: 2, textAlign: 'right' }}>{fmt(entry.computed.netSalary)}</Text>
 
-                {contributionTypes.map((type) => (
-                  <Text key={`pdf-contribution-value-${entry.run.id}-${type.id || type.name}`} style={{ ...styles.cell, borderColor: '#C5C5C5', flex: 2, textAlign: 'right' }}>
+                {contributionTypes.map((type, typeIdx) => (
+                  <Text key={`pdf-contribution-value-${entry.run.id || index}-${type.id || type.name}-${typeIdx}`} style={{ ...styles.cell, borderColor: '#C5C5C5', flex: 2, textAlign: 'right' }}>
                     {fmt(sumContributionByType(entry.run, type))}
                   </Text>
                 ))}
@@ -467,7 +499,7 @@ const SalarySheetPDF = ({
             </Text>
 
             {totals.preTaxDeductionByType.map((amount, index) => (
-              <Text key={`pdf-pre-tax-deduction-total-${index}`} style={{ ...styles.headerCell, color: contrastText, borderColor: mainColor, flex: 2, textAlign: 'right' }}>
+              <Text key={`pdf-pre-tax-total-${index}`} style={{ ...styles.headerCell, color: contrastText, borderColor: mainColor, flex: 2, textAlign: 'right' }}>
                 {fmt(amount)}
               </Text>
             ))}
@@ -481,7 +513,7 @@ const SalarySheetPDF = ({
             </Text>
 
             {totals.postTaxDeductionByType.map((amount, index) => (
-              <Text key={`pdf-post-tax-deduction-total-${index}`} style={{ ...styles.headerCell, color: contrastText, borderColor: mainColor, flex: 2, textAlign: 'right' }}>
+              <Text key={`pdf-post-tax-total-${index}`} style={{ ...styles.headerCell, color: contrastText, borderColor: mainColor, flex: 2, textAlign: 'right' }}>
                 {fmt(amount)}
               </Text>
             ))}
@@ -534,7 +566,7 @@ const SalarySheetPDF = ({
             <Text style={styles.summaryPercent}>{percentOf(totals.paye, grossByEmployer)}</Text>
           </View>
           {contributionTypes.map((type, index) => (
-            <View key={`pdf-contribution-summary-${type.id || type.name}`} style={styles.summaryRow}>
+            <View key={`pdf-contribution-summary-${type.id || type.name}-${index}`} style={styles.summaryRow}>
               <Text style={styles.summarySubLabel}>{type.name}</Text>
               <Text style={styles.summarySubAmount}>{fmt(totals.contributionByType[index] || 0)}</Text>
               <Text style={styles.summaryBlank}></Text>

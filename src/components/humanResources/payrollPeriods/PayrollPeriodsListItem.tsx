@@ -83,8 +83,6 @@ interface PayrollPeriodsListItemProps {
 }
 
 const PayrollPeriodsListItem = ({ payrollPeriod }: PayrollPeriodsListItemProps) => {
-  const router = useRouter();
-  const lang = useLanguage();
   const queryClient = useQueryClient();
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
@@ -103,6 +101,15 @@ const PayrollPeriodsListItem = ({ payrollPeriod }: PayrollPeriodsListItemProps) 
   const runs: PayrollRunType[] = runsData?.data || [];
   const runCount = payrollPeriod.runs_count ?? runs.length ?? 0;
   const monthName = MONTH_NAMES[payrollPeriod.month] || payrollPeriod.month;
+
+  // Check if there's a company-wide run (no cost center)
+  const hasCompanyWideRun = runs.some(run => run.cost_center_id === null);
+  
+  // Check if there are only branch runs (with cost centers)
+  const hasBranchRuns = runs.some(run => run.cost_center_id !== null);
+  
+  // Determine if new run can be created
+  const canCreateRun = !hasCompanyWideRun && (runs.length === 0 || hasBranchRuns);
 
   const handleRunCreated = () => {
     setOpenCreateRunDialog(false);
@@ -175,28 +182,33 @@ const PayrollPeriodsListItem = ({ payrollPeriod }: PayrollPeriodsListItemProps) 
           <Grid container spacing={2}>
             <Grid size={12}>
               <Stack direction="row" spacing={1} justifyContent="flex-end" alignItems="center">
-                <Tooltip title="New Run">
-                  <IconButton size="small" onClick={() => setOpenCreateRunDialog(true)}>
-                    <Box sx={{ position: 'relative', display: 'inline-flex' }}>
-                      <ReceiptLongOutlined fontSize="small" />
-                      <Add
-                        fontSize="small"
-                        sx={{
-                          position: 'absolute',
-                          right: -6,
-                          bottom: -6,
-                          fontSize: 12,
-                          bgcolor: 'primary.main',
-                          color: 'white',
-                          borderRadius: '50%',
-                          border: '2px solid white',
-                          width: 14,
-                          height: 14,
-                        }}
-                      />
-                    </Box>
-                  </IconButton>
-                </Tooltip>
+                {canCreateRun && (
+                  <Tooltip title="New Run">
+                    <IconButton 
+                      size="small" 
+                      onClick={() => setOpenCreateRunDialog(true)}
+                    >
+                      <Box sx={{ position: 'relative', display: 'inline-flex' }}>
+                        <ReceiptLongOutlined fontSize="small" />
+                        <Add
+                          fontSize="small"
+                          sx={{
+                            position: 'absolute',
+                            right: -6,
+                            bottom: -6,
+                            fontSize: 12,
+                            bgcolor: 'primary.main',
+                            color: 'white',
+                            borderRadius: '50%',
+                            border: '2px solid white',
+                            width: 14,
+                            height: 14,
+                          }}
+                        />
+                      </Box>
+                    </IconButton>
+                  </Tooltip>
+                )}
                 <PayrollPeriodItemAction
                   payrollPeriod={payrollPeriod}
                   hasRuns={runCount > 0}
@@ -221,53 +233,61 @@ const PayrollPeriodsListItem = ({ payrollPeriod }: PayrollPeriodsListItemProps) 
                       <TableRow>
                         <TableCell>Cost Center</TableCell>
                         <TableCell align="center">Status</TableCell>
-                        <TableCell align="center">Actions</TableCell>
+                        <TableCell align="right">Actions</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {runs.map((run) => (
-                        <TableRow
-                          key={run.id}
-                          hover
-                        >
-                          <TableCell>
-                            <Box display="flex" alignItems="center" gap={1}>
-                              <AccountBalanceWalletOutlined fontSize="small" color="action" />
-                              <Typography variant="body2">
-                                {run.cost_center?.name || 'Company-wide Run'}
-                              </Typography>
-                              {run.employee && (
-                                <Typography variant="caption" color="text.secondary">
-                                  ({run.employee.first_name} {run.employee.last_name})
+                      {runs.map((run) => {
+                        const isCompanyWide = run.cost_center_id === null;
+                        return (
+                          <TableRow
+                            key={run.id}
+                            hover
+                            sx={{
+                              cursor: 'pointer',
+                              '&:hover': { bgcolor: 'action.hover' },
+                            }}
+                          >
+                            <TableCell>
+                              <Box display="flex" alignItems="center" gap={1}>
+                                <AccountBalanceWalletOutlined fontSize="small" color="action" />
+                                <Typography variant="body2">
+                                  {isCompanyWide ? 'Company-wide Run' : run.cost_center?.name || 'Run'}
                                 </Typography>
-                              )}
-                            </Box>
-                          </TableCell>
-                          <TableCell align="center">
-                            <Chip
-                              label={run.status || 'draft'}
-                              size="small"
-                              color={runStatusColor(run.status || '')}
-                              sx={{ textTransform: 'capitalize' }}
-                            />
-                          </TableCell>
-                          <TableCell align="center">
-                            <Stack
-                              direction="row"
-                              spacing={0.5}
-                              justifyContent="center"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              {(run.status === 'paid' || run.status === 'finalized') && (
-                                <Tooltip title="Fully Processed">
-                                  <VerifiedRounded fontSize="small" color="success" />
-                                </Tooltip>
-                              )}
-                              <PayrollRunItemAction payrollRun={run} isFromPayrollPeriodsList={true} />
-                            </Stack>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                                {run.employee && (
+                                  <Typography variant="caption" color="text.secondary">
+                                    ({run.employee.first_name} {run.employee.last_name})
+                                  </Typography>
+                                )}
+                              </Box>
+                            </TableCell>
+                            <TableCell align="center">
+                              <Chip
+                                label={run.status || 'draft'}
+                                size="small"
+                                color={runStatusColor(run.status || '')}
+                                sx={{ textTransform: 'capitalize' }}
+                              />
+                            </TableCell>
+                            <TableCell align="right">
+                              <Stack
+                                direction="row"
+                                spacing={0.5}
+                                justifyContent="flex-end"
+                              >
+                                {(run.status === 'paid' || run.status === 'finalized') && (
+                                  <Tooltip title="Fully Processed">
+                                    <VerifiedRounded fontSize="small" color="success" />
+                                  </Tooltip>
+                                )}
+                                <div onClick={(e) => e.stopPropagation()}>
+                                  <PayrollRunItemAction payrollRun={run} isFromPayrollPeriodsList={true} />
+                                </div>
+                              </Stack>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
                     </TableBody>
                   </Table>
                 </TableContainer>
@@ -288,6 +308,7 @@ const PayrollPeriodsListItem = ({ payrollPeriod }: PayrollPeriodsListItemProps) 
           setOpenDialog={setOpenCreateRunDialog}
           payrollPeriod={payrollPeriod}
           onSuccess={handleRunCreated}
+          runs={runs}
         />
       </Dialog>
     </>

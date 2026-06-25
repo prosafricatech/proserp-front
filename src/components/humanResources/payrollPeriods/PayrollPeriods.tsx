@@ -13,6 +13,8 @@ import humanResourcesServices from '../humanResourcesServices';
 import PayrollPeriodActionTail from './PayrollPeriodActionTail';
 import PayrollPeriodsListItem from './PayrollPeriodsListItem';
 import { PayrollPeriodType } from './PayrollPeriodType';
+import LedgerGroupProvider from '@/components/accounts/ledgerGroups/LedgerGroupProvider';
+import LedgerSelectProvider from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
 
 const PayrollPeriods = () => {
   const params = useParams<{ keyword?: string }>();
@@ -54,37 +56,39 @@ const PayrollPeriods = () => {
   if (!mounted) return null;
 
   return (
-    <>
-      <Typography variant={'h4'} mb={2}>
-        Payroll Periods
-      </Typography>
-      <JumboRqList
-        ref={listRef}
-        wrapperComponent={Card}
-        service={humanResourcesServices.getPayrollPeriodsList}
-        primaryKey='id'
-        queryOptions={queryOptions}
-        itemsPerPage={20}
-        itemsPerPageOptions={[10, 20, 30, 50]}
-        renderItem={renderPayrollPeriod}
-        componentElement='div'
-        wrapperSx={{ flex: 1, display: 'flex', flexDirection: 'column' }}
-        toolbar={
-          <JumboListToolbar
-            hideItemsPerPage={true}
-            actionTail={
-              <Stack direction='row'>
-                <JumboSearch
-                  onChange={handleOnChange}
-                  value={queryOptions.queryParams.keyword}
-                />
-                <PayrollPeriodActionTail />
-              </Stack>
-            }
-          />
-        }
-      />
-    </>
+    <LedgerSelectProvider>
+      <LedgerGroupProvider>
+        <Typography variant={'h4'} mb={2}>
+          Payroll Periods
+        </Typography>
+        <JumboRqList
+          ref={listRef}
+          wrapperComponent={Card}
+          service={humanResourcesServices.getPayrollPeriodsList}
+          primaryKey='id'
+          queryOptions={queryOptions}
+          itemsPerPage={20}
+          itemsPerPageOptions={[10, 20, 30, 50]}
+          renderItem={renderPayrollPeriod}
+          componentElement='div'
+          wrapperSx={{ flex: 1, display: 'flex', flexDirection: 'column' }}
+          toolbar={
+            <JumboListToolbar
+              hideItemsPerPage={true}
+              actionTail={
+                <Stack direction='row'>
+                  <JumboSearch
+                    onChange={handleOnChange}
+                    value={queryOptions.queryParams.keyword}
+                  />
+                  <PayrollPeriodActionTail />
+                </Stack>
+              }
+            />
+          }
+        />
+      </LedgerGroupProvider>
+    </LedgerSelectProvider>
   );
 };
 

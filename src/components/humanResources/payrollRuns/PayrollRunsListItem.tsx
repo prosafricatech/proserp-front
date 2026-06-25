@@ -4,7 +4,6 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
-  Badge,
   Box,
   Chip,
   Grid,
@@ -21,13 +20,23 @@ import AddIcon from '@mui/icons-material/Add';
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
-import PayrollRunItemAction from './PayrollRunItemAction';
 import { PayrollRunType } from './PayrollRunType';
 import humanResourcesServices from '../humanResourcesServices';
 import { statusColor, processPayslips } from './payrollUtils';
 import { TabPanel, EmployeesTab, PayslipsTab, ApprovalsTab } from './PayrollRunTabs';
 import { PayrollRunActions } from './PayrollRunActions';
 import { SimulationDialog, PayslipViewDialog } from './PayrollRunDialogs';
+
+const getErrorMessage = (error: any) => {
+  const validationErrors = error?.response?.data?.validation_errors;
+  if (validationErrors && typeof validationErrors === 'object') {
+    const first = Object.values(validationErrors)[0] as any;
+    return Array.isArray(first) ? first[0] : String(first);
+  }
+  return (
+    error?.response?.data?.message || error?.message || 'Something went wrong'
+  );
+};
 
 const PayrollRunsListItem = ({ payrollRun }: { payrollRun: PayrollRunType }) => {
   const { enqueueSnackbar } = useSnackbar();
@@ -50,12 +59,24 @@ const PayrollRunsListItem = ({ payrollRun }: { payrollRun: PayrollRunType }) => 
   const hasChain = Boolean(payrollRun.approval_chain_id || payrollRun.approval_chain);
   const hasPayslips = status === 'approved' || status === 'posted' || status === 'paid';
 
+  // Invalidate queries helper
+  const invalidatePayrollRunQueries = () => {
+    queryClient.invalidateQueries({ queryKey: ['payrollRuns'] });
+    queryClient.invalidateQueries({
+      queryKey: ['payrollRunsForPeriod', String(payrollRun.payroll_period_id)],
+    });
+    queryClient.invalidateQueries({
+      queryKey: ['showPayrollRun', payrollRun.id],
+    });
+    queryClient.invalidateQueries({ queryKey: ['payrollRunDetails', payrollRun.id] });
+    queryClient.invalidateQueries({ queryKey: ['previewPayrollRunEmployees', payrollRun.id] });
+  };
+
   // Fetch preview data
-  const { data: previewData, isLoading: isLoadingPreview, refetch: refetchPreview, isFetching: isRefetching } = useQuery({
+  const { data: previewData, isLoading: isLoadingPreview, isFetching: isRefetching } = useQuery({
     queryKey: ['previewPayrollRunEmployees', payrollRun.id],
     queryFn: () => humanResourcesServices.previewPayrollRun({ id: payrollRun.id }),
     enabled: expanded,
-    staleTime: 1000 * 60 * 5,
   });
 
   const previewRows = previewData?.data?.rows || previewData?.rows || [];
@@ -65,7 +86,6 @@ const PayrollRunsListItem = ({ payrollRun }: { payrollRun: PayrollRunType }) => 
     queryKey: ['payrollRunDetails', payrollRun.id],
     queryFn: () => humanResourcesServices.showPayrollRun(payrollRun.id),
     enabled: expanded,
-    staleTime: 1000 * 60 * 5,
   });
 
   const runDetails = runDetailsData?.data || runDetailsData || payrollRun;
@@ -78,63 +98,88 @@ const PayrollRunsListItem = ({ payrollRun }: { payrollRun: PayrollRunType }) => 
   const { mutate: submitPayrollRun, isPending: isSubmitting } = useMutation({
     mutationFn: () => humanResourcesServices.submitPayrollRun({ id: payrollRun.id }),
     onSuccess: (response) => {
-      queryClient.invalidateQueries({ queryKey: ['payrollRuns'] });
-      queryClient.invalidateQueries({ queryKey: ['payrollRunDetails', payrollRun.id] });
-      queryClient.invalidateQueries({ queryKey: ['previewPayrollRunEmployees', payrollRun.id] });
+      invalidatePayrollRunQueries();
       enqueueSnackbar(response?.message || 'Payroll submitted for approval', { variant: 'success' });
     },
-    onError: (error) => enqueueSnackbar('Something went wrong', { variant: 'error' }),
+    onError: (error) => enqueueSnackbar(getErrorMessage(error), { variant: 'error' }),
   });
 
   const { mutate: approvePayrollRun, isPending: isApproving } = useMutation({
     mutationFn: () => humanResourcesServices.approvePayrollRun(payrollRun.id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['payrollRuns'] });
-      queryClient.invalidateQueries({ queryKey: ['payrollRunDetails', payrollRun.id] });
-      queryClient.invalidateQueries({ queryKey: ['previewPayrollRunEmployees', payrollRun.id] });
+      invalidatePayrollRunQueries();
       enqueueSnackbar('Payroll run approved', { variant: 'success' });
     },
-    onError: (error) => enqueueSnackbar('Something went wrong', { variant: 'error' }),
+    onError: (error) => enqueueSnackbar(getErrorMessage(error), { variant: 'error' }),
   });
 
   const { mutate: postPayrollRun, isPending: isPosting } = useMutation({
-    mutationFn: () => humanResourcesServices.postPayrollRunTransactions({ id: payrollRun.id }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['payrollRuns'] });
-      queryClient.invalidateQueries({ queryKey: ['payrollRunDetails', payrollRun.id] });
-      queryClient.invalidateQueries({ queryKey: ['previewPayrollRunEmployees', payrollRun.id] });
-      enqueueSnackbar('Transactions posted successfully', { variant: 'success' });
+    mutationFn: (data: any) => {
+      return humanResourcesServices.postPayrollRunTransactions({
+        id: payrollRun.id,
+        ...data
+      });
     },
-    onError: (error) => enqueueSnackbar('Something went wrong', { variant: 'error' }),
+    onSuccess: (response: any) => {
+      invalidatePayrollRunQueries();
+      enqueueSnackbar(
+        response?.journal_voucher?.voucher_no
+          ? `Payroll posted: ${response.journal_voucher.voucher_no}`
+          : 'Payroll transactions posted',
+        { variant: 'success' }
+      );
+    },
+    onError: (error) => enqueueSnackbar(getErrorMessage(error), { variant: 'error' }),
   });
 
   const { mutate: payPayrollRun, isPending: isPaying } = useMutation({
-    mutationFn: () => humanResourcesServices.payPayrollRun({ id: payrollRun.id }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['payrollRuns'] });
-      queryClient.invalidateQueries({ queryKey: ['payrollRunDetails', payrollRun.id] });
-      queryClient.invalidateQueries({ queryKey: ['previewPayrollRunEmployees', payrollRun.id] });
-      enqueueSnackbar('Employees paid successfully', { variant: 'success' });
+    mutationFn: (data: any) => {
+      return humanResourcesServices.payPayrollRun({ 
+        id: payrollRun.id, 
+        ...data 
+      });
     },
-    onError: (error) => enqueueSnackbar('Something went wrong', { variant: 'error' }),
+    onSuccess: (response: any) => {
+      invalidatePayrollRunQueries();
+      enqueueSnackbar(
+        response?.payment?.voucher_no
+          ? `Payroll paid: ${response.payment.voucher_no}`
+          : 'Payroll run paid',
+        { variant: 'success' }
+      );
+    },
+    onError: (error) => enqueueSnackbar(getErrorMessage(error), { variant: 'error' }),
   });
 
   const { mutate: deletePayrollRun, isPending: isDeleting } = useMutation({
     mutationFn: () => humanResourcesServices.deletePayrollRun(payrollRun.id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['payrollRuns'] });
+      invalidatePayrollRunQueries();
       enqueueSnackbar('Payroll run deleted', { variant: 'success' });
     },
-    onError: (error) => enqueueSnackbar('Something went wrong', { variant: 'error' }),
+    onError: (error) => enqueueSnackbar(getErrorMessage(error), { variant: 'error' }),
   });
 
-  const handleAction = (action: string) => {
+  // Handle actions from PayrollRunActions
+  const handleAction = (action: string, data?: any) => {
     switch (action) {
-      case 'submit': submitPayrollRun(); break;
-      case 'approve': approvePayrollRun(); break;
-      case 'post': postPayrollRun(); break;
-      case 'pay': payPayrollRun(); break;
-      case 'delete': deletePayrollRun(); break;
+      case 'submit':
+        submitPayrollRun();
+        break;
+      case 'approve':
+        approvePayrollRun();
+        break;
+      case 'post':
+        postPayrollRun(data || {});
+        break;
+      case 'pay':
+        payPayrollRun(data || {});
+        break;
+      case 'delete':
+        deletePayrollRun();
+        break;
+      default:
+        break;
     }
   };
 
@@ -146,7 +191,7 @@ const PayrollRunsListItem = ({ payrollRun }: { payrollRun: PayrollRunType }) => 
       setOpenSimulationDialog(true);
       enqueueSnackbar('Employee simulation generated', { variant: 'success' });
     } catch (error: any) {
-      enqueueSnackbar('Failed to simulate employee', { variant: 'error' });
+      enqueueSnackbar(getErrorMessage(error), { variant: 'error' });
     } finally {
       setIsSimulating(false);
     }
@@ -176,7 +221,7 @@ const PayrollRunsListItem = ({ payrollRun }: { payrollRun: PayrollRunType }) => 
           },
         }}>
           <Grid container spacing={1} width="100%" sx={{ px: 1 }}>
-            <Grid size={{ xs: 12, md: 6 }}>
+            <Grid size={{ xs: 12, md: 8 }}>
               <Box display="flex" alignItems="center" gap={1}>
                 <ReceiptLongOutlined fontSize="small" color="action" />
                 <Typography variant="body2">{runLabel}</Typography>
@@ -185,8 +230,15 @@ const PayrollRunsListItem = ({ payrollRun }: { payrollRun: PayrollRunType }) => 
                 )}
               </Box>
             </Grid>
-            <Grid size={{ xs: 6, md: 6 }}>
-              <Chip label={payrollRun.status || 'draft'} color={statusColor(payrollRun.status || '')} size="small" sx={{ textTransform: 'capitalize' }} />
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Box display="flex" alignItems="center" justifyContent={{ xs: 'flex-start', md: 'flex-end' }} gap={1}>
+                <Chip 
+                  label={payrollRun.status || 'draft'} 
+                  color={statusColor(payrollRun.status || '')} 
+                  size="small" 
+                  sx={{ textTransform: 'capitalize' }} 
+                />
+              </Box>
             </Grid>
           </Grid>
         </AccordionSummary>
@@ -195,10 +247,21 @@ const PayrollRunsListItem = ({ payrollRun }: { payrollRun: PayrollRunType }) => 
           {isLoading ? <LinearProgress /> : (
             <>
               <PayrollRunActions
-                isDraft={isDraft} isSubmitted={isSubmitted} isApproved={isApproved} isPosted={isPosted}
-                hasChain={hasChain} onRefresh={refetchPreview} onAction={handleAction}
-                isLoading={isLoading} isSubmitting={isSubmitting} isDeleting={isDeleting}
-                isApproving={isApproving} isPosting={isPosting} isPaying={isPaying} isRefetching={isRefetching}
+                isDraft={isDraft}
+                isSubmitted={isSubmitted}
+                isApproved={isApproved}
+                isPosted={isPosted}
+                isPaid={isPaid}
+                hasChain={hasChain}
+                payrollRunId={payrollRun.id}
+                payrollRun={payrollRun}
+                previewRows={previewRows}  // <-- Add this line
+                onAction={handleAction}
+                isSubmitting={isSubmitting}
+                isDeleting={isDeleting}
+                isApproving={isApproving}
+                isPosting={isPosting}
+                isPaying={isPaying}
                 runLabel={runLabel}
               />
 

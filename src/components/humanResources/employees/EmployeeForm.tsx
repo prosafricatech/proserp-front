@@ -501,59 +501,7 @@ const EmployeeForm = ({ setOpenDialog, employee = null }: EmployeeFormProps) => 
               />
             </Grid>
 
-            {/* Payroll & Contract Settings */}
-            <Grid size={12}>
-              <Div sx={{ mt: 2, mb: 1, fontWeight: 600 }}>Payroll & Contract Settings</Div>
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Controller
-                name="basic_salary"
-                control={control}
-                render={({ field }) => (
-                  <TextField
-                    label="Basic Salary"
-                    size="small"
-                    fullWidth
-                    value={field.value ? formatCurrency(field.value) : ''}
-                    onChange={(e) => {
-                      const val = e.target.value.replace(/,/g, '');
-                      field.onChange(val ? Number(val) : null);
-                    }}
-                    error={!!errors.basic_salary}
-                    helperText={errors.basic_salary?.message}
-                  />
-                )}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Controller
-                name="contract_start_date"
-                control={control}
-                render={({ field, fieldState }) => (
-                  <DatePicker
-                    label="Contract Start Date"
-                    value={contractStartDate ? dayjs(contractStartDate) : null}
-                    onChange={(val) => {
-                      const formatted = val?.format('YYYY-MM-DD') || '';
-                      setContractStartDate(formatted);
-                      field.onChange(formatted || null);
-                    }}
-                    slotProps={{
-                      textField: {
-                        size: 'small',
-                        fullWidth: true,
-                        error: !!fieldState.error,
-                        helperText: fieldState.error?.message,
-                      },
-                    }}
-                  />
-                )}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 4 }}>
+            <Grid size={{ xs: 12, md: 8 }}>
               <Controller
                 name="cost_center_id"
                 control={control}
@@ -591,39 +539,16 @@ const EmployeeForm = ({ setOpenDialog, employee = null }: EmployeeFormProps) => 
             </Grid>
 
             <Grid size={{ xs: 12, md: 6 }}>
-              <Controller
-                name="create_payable"
-                control={control}
-                render={({ field }) => (
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={Boolean(field.value)}
-                        onChange={(e) => {
-                          field.onChange(e.target.checked);
-                          if (!e.target.checked) setValue('payable_ledger_name', '');
-                        }}
-                      />
-                    }
-                    label="Auto-create payable account"
-                  />
-                )}
+              <TextField
+                label="Payable Ledger Name"
+                size="small"
+                fullWidth
+                placeholder="e.g., Payable - Jane Doe"
+                error={!!errors.payable_ledger_name}
+                helperText={errors.payable_ledger_name?.message}
+                {...register('payable_ledger_name')}
               />
             </Grid>
-
-            {createPayable && (
-              <Grid size={12}>
-                <TextField
-                  label="Payable Ledger Name"
-                  size="small"
-                  fullWidth
-                  placeholder="e.g., Payable - Jane Doe"
-                  error={!!errors.payable_ledger_name}
-                  helperText={errors.payable_ledger_name?.message}
-                  {...register('payable_ledger_name')}
-                />
-              </Grid>
-            )}
           </Grid>
 
           <DialogActions>
