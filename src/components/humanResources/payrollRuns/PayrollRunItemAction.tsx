@@ -23,12 +23,6 @@ import {
   DialogTitle,
   LinearProgress,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TextField,
   Tooltip,
   Typography,
@@ -36,17 +30,11 @@ import {
 } from '@mui/material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
-import { useCallback, useMemo, useState } from 'react';
-import { AllowanceType } from '../allowanceTypes/AllowanceType';
-import { DeductionType } from '../deductionTypes/DeductionType';
+import { useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
 import { PayrollRunType } from './PayrollRunType';
-
-const money = (value: number | string | undefined) =>
-  Number(value || 0).toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
+import { getPayslipCalculations } from './payslipCalculations';
+import SalarySheetDialog from '../payrollPeriods/SalarySheetDialog';
 
 const getErrorMessage = (error: any) => {
   const validationErrors = error?.response?.data?.validation_errors;
@@ -86,9 +74,6 @@ const PayrollRunItemAction = ({
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
-  const [getDeductions, setGetDeductions] = useState(false);
-  const [preview, setPreview] = useState<any | null>(null);
-  const [openPreviewDialog, setOpenPreviewDialog] = useState(false);
   const [openPostDialog, setOpenPostDialog] = useState(false);
   const [openPayDialog, setOpenPayDialog] = useState(false);
   const [openChainApprovalDialog, setOpenChainApprovalDialog] = useState(false);
@@ -102,6 +87,11 @@ const PayrollRunItemAction = ({
     fallback_payable_ledger_id: 0,
   });
   const [payForm, setPayForm] = useState({ credit_ledger_id: 0 });
+
+  // State for Salary Sheet Dialog
+  const [openSalarySheetDialog, setOpenSalarySheetDialog] = useState(false);
+  const [salarySheetData, setSalarySheetData] = useState<any>(null);
+  const [isLoadingSalarySheet, setIsLoadingSalarySheet] = useState(false);
 
   const invalidatePayrollRunQueries = () => {
     queryClient.invalidateQueries({ queryKey: ['payrollRuns'] });
@@ -125,36 +115,108 @@ const PayrollRunItemAction = ({
       enqueueSnackbar(getErrorMessage(error), { variant: 'error' }),
   });
 
-  const { mutate: previewPayrollRun, isPending: isPreviewing } = useMutation({
-    mutationFn: () =>
-      humanResourcesServices.previewPayrollRun({ id: payrollRun.id }),
-    onSuccess: (response) => {
-      setPreview(response?.data || response);
-      setOpenPreviewDialog(true);
+  // Fetch allowance types for salary sheet
+  const { data: allowanceTypes } = useQuery({
+    queryKey: ['allowanceTypesForSalarySheetAction'],
+    queryFn: async () => {
+      const response = await humanResourcesServices.getAllowanceTypesList({ limit: 100 });
+      return response?.data || [];
     },
-    onError: (error: any) =>
-      enqueueSnackbar(getErrorMessage(error), { variant: 'error' }),
+    enabled: openSalarySheetDialog,
+    staleTime: 1000 * 60 * 5,
   });
 
-  // get company's deduction types
-  const { data: deductionTypes, isLoading: deductionLoading } = useQuery({
-    queryKey: ['deductionTypes'],
+  // Fetch deduction types for salary sheet
+  const { data: deductionTypes } = useQuery({
+    queryKey: ['deductionTypesForSalarySheetAction'],
     queryFn: async () => {
-      const response = await humanResourcesServices.getDeductionTypesList();
-      return response?.data;
+      const response = await humanResourcesServices.getDeductionTypesList({ limit: 100 });
+      return response?.data || [];
     },
-    enabled: getDeductions,
+    enabled: openSalarySheetDialog,
+    staleTime: 1000 * 60 * 5,
   });
 
-  // get company's aloowance types
-  const { data: allowanceTypes, isLoading: allowanceLoading } = useQuery({
-    queryKey: ['allowanceTypes'],
+  // Fetch contribution types for salary sheet
+  const { data: contributionTypes } = useQuery({
+    queryKey: ['contributionTypesForSalarySheetAction'],
     queryFn: async () => {
-      const response = await humanResourcesServices.getAllowanceTypesList();
-      return response?.data;
+      const response = await humanResourcesServices.getEmployerContributionTypesList({ limit: 100 });
+      return response?.data || [];
     },
-    enabled: getDeductions,
+    enabled: openSalarySheetDialog,
+    staleTime: 1000 * 60 * 5,
   });
+
+  // Fetch preview data for salary sheet
+  const { data: previewData, refetch: refetchPreview } = useQuery({
+    queryKey: ['previewPayrollRunForSalarySheetAction', payrollRun.id],
+    queryFn: () => humanResourcesServices.previewPayrollRun({ id: payrollRun.id }),
+    enabled: false,
+    staleTime: 0,
+  });
+
+  const handleOpenSalarySheet = async () => {
+    setIsLoadingSalarySheet(true);
+    setOpenSalarySheetDialog(true);
+
+    try {
+      // Fetch preview data
+      const previewResponse = await humanResourcesServices.previewPayrollRun({ id: payrollRun.id });
+      const previewRows = previewResponse?.data?.rows || previewResponse?.rows || [];
+
+      // Build salary sheet rows
+      const salaryRows = previewRows.map((row: any) => {
+        // Create a minimal run object from preview data
+        const run = {
+          ...payrollRun,
+          employee: row.employee,
+          allowances: row.allowances || [],
+          deductions: row.deductions || [],
+          employer_contributions: row.employer_contributions || [],
+          basic_salary: row.basic_salary || 0,
+          gross_salary: row.gross_salary || 0,
+          net_salary: row.net_salary || 0,
+          paye: row.paye || 0,
+          taxable_income: row.taxable_income || 0,
+          total_allowances: row.total_allowances || 0,
+          total_deductions: row.total_deductions || 0,
+        };
+        return {
+          run: run,
+          computed: getPayslipCalculations(run),
+        };
+      });
+
+      // Get period label
+      let periodLabel = payrollRun.cost_center?.name || 'Company-wide Run';
+      
+      if (payrollRun?.payroll_period) {
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        const monthIndex = payrollRun.payroll_period.month;
+        // Ensure month is within valid range (1-12)
+        const monthName = (monthIndex && monthIndex >= 1 && monthIndex <= 12) 
+          ? monthNames[monthIndex - 1] 
+          : 'Unknown';
+        const year = payrollRun.payroll_period.year || 'Unknown';
+        periodLabel = `${monthName} ${year} - ${periodLabel}`;
+      }
+
+      setSalarySheetData({
+        rows: salaryRows,
+        allowanceTypes: allowanceTypes || [],
+        deductionTypes: deductionTypes || [],
+        contributionTypes: contributionTypes || [],
+        periodLabel: periodLabel,
+      });
+
+      setIsLoadingSalarySheet(false);
+    } catch (error: any) {
+      enqueueSnackbar(getErrorMessage(error), { variant: 'error' });
+      setIsLoadingSalarySheet(false);
+      setOpenSalarySheetDialog(false);
+    }
+  };
 
   const { mutate: submitPayrollRun, isPending: isSubmitting } = useMutation({
     mutationFn: () =>
@@ -256,17 +318,13 @@ const PayrollRunItemAction = ({
   const isPosted = status === 'posted';
   const isPaid = status === 'paid';
 
-  const previewRows = useMemo(() => {
-    const rows = preview?.rows || preview?.data?.rows || [];
-    return Array.isArray(rows) ? rows : [];
-  }, [preview]);
-
   const menuItems: MenuItemProps[] = [];
 
+  // Preview action - always show
   menuItems.push(
     {
       icon: <PreviewOutlined color="primary" />,
-      title: 'Preview',
+      title: 'Preview Salary Sheet',
       action: 'preview',
     },
   );
@@ -300,15 +358,6 @@ const PayrollRunItemAction = ({
       });
     }
 
-    // REMOVED: Post Transactions from dropdown - now shown in PayrollRunActions
-    // if (isApproved) {
-    //   menuItems.push({
-    //     icon: <AccountBalanceWalletOutlined color="primary" />,
-    //     title: 'Post Transactions',
-    //     action: 'post',
-    //   });
-    // }
-
     if (isPosted && !isPaid) {
       menuItems.push({
         icon: <PaidOutlined color="success" />,
@@ -330,8 +379,7 @@ const PayrollRunItemAction = ({
   const handleItemAction = (menuItem: MenuItemProps) => {
     switch (menuItem.action) {
       case 'preview':
-        setGetDeductions(true);
-        previewPayrollRun();
+        handleOpenSalarySheet();
         break;
       case 'submit':
         showDialog({
@@ -398,49 +446,9 @@ const PayrollRunItemAction = ({
     }
   };
 
-  // get each deduction's amount
-  const getDeductionAmt = useCallback(
-    (employeeDeductions: any) => {
-      if (employeeDeductions) {
-        return employeeDeductions
-          .filter((itm: any) => itm.deduction_type_id !== null)
-          .find((itm: any) => {
-            return deductionTypes.map((ded: DeductionType) => {
-              return ded.id === itm.deduction_type_id;
-            });
-          })?.amount;
-      } else {
-        0;
-      }
-    },
-    [deductionTypes]
-  );
-
-  // get each allowance's amount
-  const getAllowanceAmt = useCallback(
-    (employeeAllowances: any) => {
-      if (employeeAllowances) {
-        return employeeAllowances
-          .filter((itm: any) => itm.allowance_type_id !== null)
-          .find((itm: any) => {
-            return allowanceTypes.map((allwance: DeductionType) => {
-              return allwance.id === itm.allowance_type_id;
-            });
-          })?.amount;
-      } else {
-        0;
-      }
-    },
-    [allowanceTypes]
-  );
-
   return (
     <>
-      {(isPreviewing ||
-        deductionLoading ||
-        allowanceLoading ||
-        isSubmitting ||
-        isApproving) && <LinearProgress />}
+      {(isSubmitting || isApproving) && <LinearProgress />}
 
       <JumboDdMenu
         icon={
@@ -451,147 +459,6 @@ const PayrollRunItemAction = ({
         menuItems={menuItems}
         onClickCallback={handleItemAction}
       />
-
-      {/* Preview Dialog */}
-      <Dialog
-        open={openPreviewDialog}
-        onClose={() => setOpenPreviewDialog(false)}
-        fullWidth
-        maxWidth="lg"
-        fullScreen={belowLargeScreen}
-      >
-        <DialogTitle sx={{ textAlign: 'center' }}>
-          Salary Sheet Preview
-        </DialogTitle>
-        <DialogContent>
-          <TableContainer>
-            <Table size="small">
-              <TableHead>
-                {(deductionTypes?.length > 0 || allowanceTypes?.length > 0) && (
-                  <TableRow sx={{ mb: 8 }}>
-                    <TableCell
-                      colSpan={2}
-                      sx={{
-                        textAlign: 'center',
-                        borderRightColor: theme.palette.background.paper,
-                        borderRightWidth: 4,
-                        borderRightStyle: 'solid',
-                      }}
-                    />
-                    <TableCell
-                      colSpan={allowanceTypes?.length}
-                      sx={{
-                        textAlign: 'center',
-                        borderRightColor: theme.palette.background.paper,
-                        borderRightWidth: 4,
-                        borderRightStyle: 'solid',
-                      }}
-                    >
-                      Allowances
-                    </TableCell>
-                    <TableCell
-                      sx={{
-                        borderRightColor: theme.palette.background.paper,
-                        borderRightWidth: 4,
-                        borderRightStyle: 'solid',
-                      }}
-                    />
-                    <TableCell
-                      colSpan={deductionTypes?.length + 1}
-                      sx={{
-                        textAlign: 'center',
-                        borderRightColor: theme.palette.background.paper,
-                        borderRightWidth: 4,
-                        borderRightStyle: 'solid',
-                      }}
-                    >
-                      Deductions
-                    </TableCell>
-                    <TableCell />
-                  </TableRow>
-                )}
-                <TableRow>
-                  <TableCell>Employee</TableCell>
-                  <TableCell align="right">Basic</TableCell>
-                  {allowanceTypes &&
-                    allowanceTypes.length > 0 &&
-                    allowanceTypes.map((itm: AllowanceType, idx: number) => (
-                      <TableCell key={idx} align="right">
-                        {itm.name}
-                      </TableCell>
-                    ))}
-                  <TableCell align="right">Gross</TableCell>
-                  <TableCell align="right">PAYE</TableCell>
-                  {deductionTypes &&
-                    deductionTypes.length > 0 &&
-                    deductionTypes.map((itm: DeductionType, idx: number) => (
-                      <TableCell key={idx} align="right">
-                        {itm.name}
-                      </TableCell>
-                    ))}
-                  <TableCell align="right">Net</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {previewRows.map((row: any, index: number) => {
-                  const filteredDedutctions = row?.deductions.filter(
-                    (itm: any) => itm.deduction_type_id !== null
-                  );
-                  return (
-                    <TableRow key={`${row?.employee?.id || index}`}>
-                      <TableCell>
-                        <Typography variant="body2">
-                          {row?.employee?.name || '-'}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {row?.employee?.employee_number || ''}
-                        </Typography>
-                      </TableCell>
-                      <TableCell align="right">
-                        {money(row?.basic_salary)}
-                      </TableCell>
-                      <TableCell align="right">
-                        {filteredDedutctions && filteredDedutctions.length > 0
-                          ? money(getAllowanceAmt(row?.allowances))
-                          : '-'}
-                      </TableCell>
-                      <TableCell align="right">
-                        {money(row?.gross_salary)}
-                      </TableCell>
-                      <TableCell align="right">{money(row?.paye)}</TableCell>
-                      <TableCell align="right">
-                        {filteredDedutctions && filteredDedutctions.length > 0
-                          ? money(getDeductionAmt(row?.deductions))
-                          : '-'}
-                      </TableCell>
-                      <TableCell align="right">
-                        {money(row?.net_salary)}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-                {!previewRows.length && (
-                  <TableRow>
-                    <TableCell colSpan={6} align="center">
-                      No preview rows returned.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            onClick={() => {
-              setOpenPreviewDialog(false);
-              setGetDeductions(false);
-            }}
-          >
-            Close
-          </Button>
-        </DialogActions>
-      </Dialog>
 
       {/* Chain Approval Dialog */}
       <Dialog
@@ -754,6 +621,23 @@ const PayrollRunItemAction = ({
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Salary Sheet Dialog */}
+      {salarySheetData && (
+        <SalarySheetDialog
+          open={openSalarySheetDialog}
+          onClose={() => {
+            setOpenSalarySheetDialog(false);
+            setSalarySheetData(null);
+          }}
+          periodLabel={salarySheetData.periodLabel}
+          rows={salarySheetData.rows}
+          allowanceTypes={salarySheetData.allowanceTypes}
+          deductionTypes={salarySheetData.deductionTypes}
+          contributionTypes={salarySheetData.contributionTypes}
+          isLoading={isLoadingSalarySheet}
+        />
+      )}
     </>
   );
 };

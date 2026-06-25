@@ -13,6 +13,14 @@ export interface PayrollRunType {
   employee_count?: number;
   net_salary?: number;
   requires_approval?: boolean;
+  payroll_period?: {
+    id: number;
+    name?: string;
+    month?: number;
+    year?: number;
+    start_date?: string;
+    end_date?: string;
+  };
   approval_chain_id?: number | null;
   status?: string;
   created_by?: number;
