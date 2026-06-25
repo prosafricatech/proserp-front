@@ -1,3 +1,4 @@
+// components/humanResources/payrollRuns/PayrollRunItemAction.tsx
 'use client';
 
 import { useLanguage } from '@/app/[lang]/contexts/LanguageContext';
@@ -14,6 +15,8 @@ import {
   PaidOutlined,
   PreviewOutlined,
   SendOutlined,
+  ReceiptLongOutlined,
+  DownloadOutlined,
 } from '@mui/icons-material';
 import {
   Alert,
@@ -62,7 +65,7 @@ const getErrorMessage = (error: any) => {
 };
 
 const getPendingPayrollLevel = (payrollRun: PayrollRunType) => {
-  const levels = payrollRun.approval_chain?.levels || [];
+  const levels = payrollRun?.approval_chain?.levels || [];
   const approvedLevelIds = new Set(
     (payrollRun.approvals || [])
       .filter((approval) => approval.status === 'approved')
@@ -77,7 +80,7 @@ const getPendingPayrollLevel = (payrollRun: PayrollRunType) => {
 
 const PayrollRunItemAction = ({
   payrollRun,
-  isFromPayrollPeriodsList = false
+  isFromPayrollPeriodsList = false,
 }: {
   payrollRun: PayrollRunType;
   isFromPayrollPeriodsList?: boolean;
@@ -251,83 +254,91 @@ const PayrollRunItemAction = ({
       enqueueSnackbar(getErrorMessage(error), { variant: 'error' }),
   });
 
-  const status = (payrollRun.status || '').toLowerCase();
+  const status = (payrollRun?.status || '').toLowerCase();
   const hasApprovalChain = Boolean(
-    payrollRun.approval_chain_id || payrollRun.approval_chain
+    payrollRun?.approval_chain_id || payrollRun?.approval_chain
   );
   const isDraft = status === 'draft' || !status;
   const isSubmitted = status === 'submitted';
   const isApproved = status === 'approved';
   const isPosted = status === 'posted';
+  const isPaid = status === 'paid';
 
   const previewRows = useMemo(() => {
     const rows = preview?.rows || preview?.data?.rows || [];
     return Array.isArray(rows) ? rows : [];
   }, [preview]);
 
-  const menuItems = [
-    // {
-    //   icon: <ReceiptLongOutlined color='primary' />,
-    //   title: 'Full Payslip Detail',
-    //   action: 'viewPayslip',
-    // },
-    ...(isDraft
-      ? [
-          // {
-          //   icon: <EditOutlined color='primary' />,
-          //   title: 'Edit',
-          //   action: 'edit',
-          // },
-          {
-            icon: <PreviewOutlined color='primary' />,
-            title: 'Preview',
-            action: 'preview',
-          },
-          {
-            icon: <DeleteOutlined color='error' />,
-            title: 'Delete',
-            action: 'delete',
-          },
-        ]
-      : []),
-    ...(isSubmitted
-      ? [
-          {
-            icon: <CheckCircleOutline color='success' />,
-            title: hasApprovalChain ? 'Approve Level' : 'Approve',
-            action: hasApprovalChain ? 'chainApprove' : 'approve',
-          },
-        ]
-      : []),
-    ...(isApproved
-      ? [
-          {
-            icon: <AccountBalanceWalletOutlined color='primary' />,
-            title: 'Post Transactions',
-            action: 'post',
-          },
-        ]
-      : []),
-    ...(isPosted
-      ? [
-          {
-            icon: <PaidOutlined color='success' />,
-            title: 'Pay Employees',
-            action: 'pay',
-          },
-        ]
-      : []),
-  ];
+  const menuItems: MenuItemProps[] = [];
+
+  menuItems.push(
+    {
+      icon: <PreviewOutlined color="primary" />,
+      title: 'Preview',
+      action: 'preview',
+    },
+  );
+
+  if (isFromPayrollPeriodsList) {
+    if (isDraft) {
+      menuItems.push(
+        {
+          icon: <DeleteOutlined color="error" />,
+          title: 'Delete',
+          action: 'delete',
+        }
+      );
+    }
+  } else {
+    if (isDraft) {
+      menuItems.push(
+        {
+          icon: <DeleteOutlined color="error" />,
+          title: 'Delete',
+          action: 'delete',
+        }
+      );
+    }
+
+    if (isSubmitted) {
+      menuItems.push({
+        icon: <CheckCircleOutline color="success" />,
+        title: hasApprovalChain ? 'Approve Level' : 'Approve',
+        action: hasApprovalChain ? 'chainApprove' : 'approve',
+      });
+    }
+
+    // REMOVED: Post Transactions from dropdown - now shown in PayrollRunActions
+    // if (isApproved) {
+    //   menuItems.push({
+    //     icon: <AccountBalanceWalletOutlined color="primary" />,
+    //     title: 'Post Transactions',
+    //     action: 'post',
+    //   });
+    // }
+
+    if (isPosted && !isPaid) {
+      menuItems.push({
+        icon: <PaidOutlined color="success" />,
+        title: 'Pay Employees',
+        action: 'pay',
+      });
+    }
+
+    // Add Export option for paid/approved/posted statuses
+    if (isPaid || isPosted || isApproved) {
+      menuItems.push({
+        icon: <DownloadOutlined color="primary" />,
+        title: 'Export Payslip',
+        action: 'export',
+      });
+    }
+  }
 
   const handleItemAction = (menuItem: MenuItemProps) => {
     switch (menuItem.action) {
       case 'edit':
         setOpenEditDialog(true);
-        break;
-      case 'viewPayslip':
-        router.push(
-          `/${lang}/humanResources/payroll/${payrollRun.payroll_period_id}?run_id=${payrollRun.id}`
-        );
         break;
       case 'preview':
         setGetDeductions(true);
@@ -390,6 +401,9 @@ const PayrollRunItemAction = ({
           variant: 'confirm',
         });
         break;
+      case 'export':
+        enqueueSnackbar('Export started', { variant: 'info' });
+        break;
       default:
         break;
     }
@@ -441,8 +455,8 @@ const PayrollRunItemAction = ({
 
       <JumboDdMenu
         icon={
-          <Tooltip title='Actions'>
-            <MoreHorizOutlined fontSize='small' />
+          <Tooltip title="Actions">
+            <MoreHorizOutlined fontSize="small" />
           </Tooltip>
         }
         menuItems={menuItems}
@@ -454,7 +468,7 @@ const PayrollRunItemAction = ({
         open={openPreviewDialog}
         onClose={() => setOpenPreviewDialog(false)}
         fullWidth
-        maxWidth='lg'
+        maxWidth="lg"
         fullScreen={belowLargeScreen}
       >
         <DialogTitle sx={{ textAlign: 'center' }}>
@@ -462,7 +476,7 @@ const PayrollRunItemAction = ({
         </DialogTitle>
         <DialogContent>
           <TableContainer>
-            <Table size='small'>
+            <Table size="small">
               <TableHead>
                 {(deductionTypes?.length > 0 || allowanceTypes?.length > 0) && (
                   <TableRow sx={{ mb: 8 }}>
@@ -474,7 +488,7 @@ const PayrollRunItemAction = ({
                         borderRightWidth: 4,
                         borderRightStyle: 'solid',
                       }}
-                    ></TableCell>
+                    />
                     <TableCell
                       colSpan={allowanceTypes?.length}
                       sx={{
@@ -492,7 +506,7 @@ const PayrollRunItemAction = ({
                         borderRightWidth: 4,
                         borderRightStyle: 'solid',
                       }}
-                    ></TableCell>
+                    />
                     <TableCell
                       colSpan={deductionTypes?.length + 1}
                       sx={{
@@ -504,29 +518,29 @@ const PayrollRunItemAction = ({
                     >
                       Deductions
                     </TableCell>
-                    <TableCell></TableCell>
+                    <TableCell />
                   </TableRow>
                 )}
                 <TableRow>
                   <TableCell>Employee</TableCell>
-                  <TableCell align='right'>Basic</TableCell>
+                  <TableCell align="right">Basic</TableCell>
                   {allowanceTypes &&
                     allowanceTypes.length > 0 &&
                     allowanceTypes.map((itm: AllowanceType, idx: number) => (
-                      <TableCell key={idx} align='right'>
+                      <TableCell key={idx} align="right">
                         {itm.name}
                       </TableCell>
                     ))}
-                  <TableCell align='right'>Gross</TableCell>
-                  <TableCell align='right'>PAYE Deduction</TableCell>
+                  <TableCell align="right">Gross</TableCell>
+                  <TableCell align="right">PAYE</TableCell>
                   {deductionTypes &&
                     deductionTypes.length > 0 &&
                     deductionTypes.map((itm: DeductionType, idx: number) => (
-                      <TableCell key={idx} align='right'>
+                      <TableCell key={idx} align="right">
                         {itm.name}
                       </TableCell>
                     ))}
-                  <TableCell align='right'>Net</TableCell>
+                  <TableCell align="right">Net</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -537,31 +551,31 @@ const PayrollRunItemAction = ({
                   return (
                     <TableRow key={`${row?.employee?.id || index}`}>
                       <TableCell>
-                        <Typography variant='body2'>
+                        <Typography variant="body2">
                           {row?.employee?.name || '-'}
                         </Typography>
-                        <Typography variant='caption' color='text.secondary'>
+                        <Typography variant="caption" color="text.secondary">
                           {row?.employee?.employee_number || ''}
                         </Typography>
                       </TableCell>
-                      <TableCell align='right'>
+                      <TableCell align="right">
                         {money(row?.basic_salary)}
                       </TableCell>
-                      <TableCell align='right'>
+                      <TableCell align="right">
                         {filteredDedutctions && filteredDedutctions.length > 0
                           ? money(getAllowanceAmt(row?.allowances))
                           : '-'}
                       </TableCell>
-                      <TableCell align='right'>
+                      <TableCell align="right">
                         {money(row?.gross_salary)}
                       </TableCell>
-                      <TableCell align='right'>{money(row?.paye)}</TableCell>
-                      <TableCell align='right'>
+                      <TableCell align="right">{money(row?.paye)}</TableCell>
+                      <TableCell align="right">
                         {filteredDedutctions && filteredDedutctions.length > 0
                           ? money(getDeductionAmt(row?.deductions))
                           : '-'}
                       </TableCell>
-                      <TableCell align='right'>
+                      <TableCell align="right">
                         {money(row?.net_salary)}
                       </TableCell>
                     </TableRow>
@@ -569,7 +583,7 @@ const PayrollRunItemAction = ({
                 })}
                 {!previewRows.length && (
                   <TableRow>
-                    <TableCell colSpan={6} align='center'>
+                    <TableCell colSpan={6} align="center">
                       No preview rows returned.
                     </TableCell>
                   </TableRow>
@@ -595,12 +609,12 @@ const PayrollRunItemAction = ({
         open={openChainApprovalDialog}
         onClose={() => setOpenChainApprovalDialog(false)}
         fullWidth
-        maxWidth='sm'
+        maxWidth="sm"
       >
         <DialogTitle>Payroll Approval</DialogTitle>
         <DialogContent>
           <Stack spacing={2} mt={1}>
-            <Alert severity='info'>
+            <Alert severity="info">
               Pending level:{' '}
               {getPendingPayrollLevel(payrollRun)?.name ||
                 getPendingPayrollLevel(payrollRun)?.level_name ||
@@ -609,18 +623,18 @@ const PayrollRunItemAction = ({
             <TextField
               select
               SelectProps={{ native: true }}
-              label='Decision'
-              size='small'
+              label="Decision"
+              size="small"
               value={chainStatus}
               onChange={(event) => setChainStatus(event.target.value as any)}
             >
-              <option value='approved'>Approved</option>
-              <option value='rejected'>Rejected</option>
-              <option value='on hold'>On Hold</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+              <option value="on hold">On Hold</option>
             </TextField>
             <TextField
-              label='Remarks'
-              size='small'
+              label="Remarks"
+              size="small"
               multiline
               minRows={2}
               value={chainRemarks}
@@ -641,7 +655,7 @@ const PayrollRunItemAction = ({
             Cancel
           </Button>
           <Button
-            variant='contained'
+            variant="contained"
             onClick={() => approveChainPayrollRun()}
             disabled={
               isApprovingChain || !getPendingPayrollLevel(payrollRun)?.id
@@ -657,13 +671,17 @@ const PayrollRunItemAction = ({
         open={openPostDialog}
         onClose={() => setOpenPostDialog(false)}
         fullWidth
-        maxWidth='sm'
+        maxWidth="xs"
       >
         <DialogTitle sx={{ textAlign: 'center' }}>Post Payroll Transactions</DialogTitle>
         <DialogContent>
           <Stack spacing={2} mt={1}>
+            <Typography variant="body2" color="text.secondary">
+              Posting records payroll in the general ledger. It does not pay employees yet.
+            </Typography>
             <LedgerSelect
-              label='Salary Expense Account'
+              label="Salary Expense Account"
+              allowedGroups={['Expenses']}
               onChange={(ledger: any) =>
                 setPostForm((state) => ({
                   ...state,
@@ -672,7 +690,8 @@ const PayrollRunItemAction = ({
               }
             />
             <LedgerSelect
-              label='PAYE Payable Account'
+              label="PAYE Payable Account"
+              allowedGroups={['Accounts Payable']}
               onChange={(ledger: any) =>
                 setPostForm((state) => ({
                   ...state,
@@ -681,7 +700,8 @@ const PayrollRunItemAction = ({
               }
             />
             <LedgerSelect
-              label='Fallback Employee Payable Account'
+              label="Fallback Employee Payable Account"
+              allowedGroups={['Accounts Payable']}
               onChange={(ledger: any) =>
                 setPostForm((state) => ({
                   ...state,
@@ -696,7 +716,7 @@ const PayrollRunItemAction = ({
             Cancel
           </Button>
           <Button
-            variant='contained'
+            variant="contained"
             onClick={() => postTransactions()}
             disabled={
               isPosting ||
@@ -715,17 +735,16 @@ const PayrollRunItemAction = ({
         open={openPayDialog}
         onClose={() => setOpenPayDialog(false)}
         fullWidth
-        maxWidth='sm'
+        maxWidth="xs"
       >
         <DialogTitle>Pay Employees</DialogTitle>
         <DialogContent>
           <Stack spacing={2} mt={1}>
-            <Typography variant='body2' color='text.secondary'>
-              Select the bank or cash account the payroll payment will come
-              from.
+            <Typography variant="body2" color="text.secondary">
+              Select the bank or cash account the payroll payment will come from.
             </Typography>
             <LedgerSelect
-              label='Bank or Cash Account'
+              label="Bank or Cash Account"
               onChange={(ledger: any) =>
                 setPayForm({ credit_ledger_id: ledger?.id || 0 })
               }
@@ -737,8 +756,8 @@ const PayrollRunItemAction = ({
             Cancel
           </Button>
           <Button
-            variant='contained'
-            color='success'
+            variant="contained"
+            color="success"
             onClick={() => payPayrollRun()}
             disabled={isPaying || !payForm.credit_ledger_id}
           >
