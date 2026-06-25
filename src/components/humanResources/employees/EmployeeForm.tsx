@@ -1,25 +1,27 @@
 'use client';
 
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
+import { useLedgerSelect } from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
+import costCenterservices from '@/components/masters/costCenters/cost-center-services';
 import CostCenterSelector from '@/components/masters/costCenters/CostCenterSelector';
+import { CostCenter } from '@/components/masters/costCenters/CostCenterType';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Div } from '@jumbo/shared';
 import { LoadingButton } from '@mui/lab';
 import {
   Autocomplete,
   Button,
-  Checkbox,
   DialogActions,
   DialogContent,
   DialogTitle,
-  FormControlLabel,
   Grid,
   LinearProgress,
   TextField,
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import dayjs, { Dayjs } from 'dayjs';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
@@ -28,8 +30,6 @@ import { useDepartments } from '../departments/DepartmentsProvider';
 import { Department } from '../departments/DepartmentsType';
 import humanResourcesServices from '../humanResourcesServices';
 import { Employee } from './EmployeesType';
-import { useLedgerSelect } from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
-import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
 
 interface EmployeeFormProps {
   setOpenDialog: (open: boolean) => void;
@@ -55,7 +55,10 @@ interface OptionType {
   value: string;
 }
 
-const EmployeeForm = ({ setOpenDialog, employee = null }: EmployeeFormProps) => {
+const EmployeeForm = ({
+  setOpenDialog,
+  employee = null,
+}: EmployeeFormProps) => {
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
   const { authUser } = useJumboAuth();
@@ -78,8 +81,30 @@ const EmployeeForm = ({ setOpenDialog, employee = null }: EmployeeFormProps) => 
   const [employeeDoB, setEmployeeDoB] = useState<string>('');
   const [joinDate, setJoinDate] = useState<string>('');
   const [contractStartDate, setContractStartDate] = useState<string>('');
-  const [employeeGender, setEmployeeGender] = useState<OptionType>(GENDER_OPTIONS[0]);
-  const [selectedEmploymentType, setSelectedEmploymentType] = useState<OptionType | null>(null);
+  const [employeeGender, setEmployeeGender] = useState<OptionType>(
+    GENDER_OPTIONS[0]
+  );
+  const [selectedEmploymentType, setSelectedEmploymentType] =
+    useState<OptionType | null>(null);
+  const [defaultCostCenter, setDefaultCostCenter] = useState<CostCenter | null>(
+    null
+  );
+
+  const { data: fetchedCostCenters, isLoading } = useQuery<CostCenter[]>({
+    queryKey: ['allCostCenters'],
+    queryFn: costCenterservices.getCostCenters,
+  });
+
+  useEffect(() => {
+    if (fetchedCostCenters) {
+      const costCenter = fetchedCostCenters.find(
+        (center) => center.id === employee?.cost_center_id
+      );
+      if (costCenter) setDefaultCostCenter(costCenter);
+    }
+  }, [fetchedCostCenters, employee?.cost_center_id]);
+
+  // getDefaultCostCenter();
 
   // Date helper
   const formatDateToAPI = (date: string | null | undefined): string | null => {
@@ -88,13 +113,14 @@ const EmployeeForm = ({ setOpenDialog, employee = null }: EmployeeFormProps) => 
   };
 
   // Normalize dates from employee data
-  const getNormalizedDate = (date: string | undefined) => 
+  const getNormalizedDate = (date: string | undefined) =>
     date ? dayjs(date).format('YYYY-MM-DD') : '';
 
   const normalizedDateOfBirth = getNormalizedDate(employee?.date_of_birth);
   const normalizedJoinDate = getNormalizedDate(employee?.join_date);
   const normalizedContractStartDate = getNormalizedDate(
-    (employee as any)?.active_contract?.start_date || employee?.contract_start_date
+    (employee as any)?.active_contract?.start_date ||
+      employee?.contract_start_date
   );
 
   useEffect(() => {
@@ -102,7 +128,9 @@ const EmployeeForm = ({ setOpenDialog, employee = null }: EmployeeFormProps) => 
       setDepartmentsData(departments.data);
       if (employee?.department_id) {
         setSelectedDpt(
-          departments.data.find((d: Department) => d.id === employee.department_id) ?? null
+          departments.data.find(
+            (d: Department) => d.id === employee.department_id
+          ) ?? null
         );
       }
     }
@@ -113,7 +141,11 @@ const EmployeeForm = ({ setOpenDialog, employee = null }: EmployeeFormProps) => 
   }, [employeeGender]);
 
   // Mutations
-  const { mutate: addEmployee, isPending, error } = useMutation<ApiResponse, any, FormData>({
+  const {
+    mutate: addEmployee,
+    isPending,
+    error,
+  } = useMutation<ApiResponse, any, FormData>({
     mutationFn: async (data) => {
       const formattedData = {
         ...data,
@@ -130,15 +162,17 @@ const EmployeeForm = ({ setOpenDialog, employee = null }: EmployeeFormProps) => 
       queryClient.invalidateQueries({ queryKey: ['employees'] });
     },
     onError: (err: any) => {
-      enqueueSnackbar(err?.response?.data?.message || 'Something went wrong', { variant: 'error' });
+      enqueueSnackbar(err?.response?.data?.message || 'Something went wrong', {
+        variant: 'error',
+      });
     },
   });
 
-  const { mutate: updateEmployee, isPending: updateIsLoading, error: updateError } = useMutation<
-    ApiResponse,
-    any,
-    FormData
-  >({
+  const {
+    mutate: updateEmployee,
+    isPending: updateIsLoading,
+    error: updateError,
+  } = useMutation<ApiResponse, any, FormData>({
     mutationFn: async (data) => {
       const formattedData = {
         ...data,
@@ -155,7 +189,9 @@ const EmployeeForm = ({ setOpenDialog, employee = null }: EmployeeFormProps) => 
       queryClient.invalidateQueries({ queryKey: ['employees'] });
     },
     onError: (err: any) => {
-      enqueueSnackbar(err?.response?.data?.message || 'Something went wrong', { variant: 'error' });
+      enqueueSnackbar(err?.response?.data?.message || 'Something went wrong', {
+        variant: 'error',
+      });
     },
   });
 
@@ -182,7 +218,9 @@ const EmployeeForm = ({ setOpenDialog, employee = null }: EmployeeFormProps) => 
     basic_salary: yup
       .number()
       .nullable()
-      .transform((_, val) => (val === '' || val === undefined || val === null ? null : Number(val)))
+      .transform((_, val) =>
+        val === '' || val === undefined || val === null ? null : Number(val)
+      )
       .min(0, 'Basic salary must be >= 0')
       .typeError('Basic salary must be a number'),
     contract_start_date: yup.string().nullable(),
@@ -228,9 +266,14 @@ const EmployeeForm = ({ setOpenDialog, employee = null }: EmployeeFormProps) => 
   useEffect(() => {
     if (!employee) return;
 
-    const resolvedGender = GENDER_OPTIONS.find((o) => o.value === employee.gender) ?? GENDER_OPTIONS[0];
-    const resolvedEmployment = EMPLOYMENT_OPTIONS.find((o) => o.value === employee.employment_type) ?? null;
-    const contractBasicSalary = (employee as any)?.active_contract?.basic_salary;
+    const resolvedGender =
+      GENDER_OPTIONS.find((o) => o.value === employee.gender) ??
+      GENDER_OPTIONS[0];
+    const resolvedEmployment =
+      EMPLOYMENT_OPTIONS.find((o) => o.value === employee.employment_type) ??
+      null;
+    const contractBasicSalary = (employee as any)?.active_contract
+      ?.basic_salary;
     const contractStart = (employee as any)?.active_contract?.start_date;
 
     setEmployeeGender(resolvedGender);
@@ -267,14 +310,16 @@ const EmployeeForm = ({ setOpenDialog, employee = null }: EmployeeFormProps) => 
     employee?.id ? updateEmployee(data) : addEmployee(data);
   };
 
-  const formatCurrency = (value: number | null | undefined) => 
+  const formatCurrency = (value: number | null | undefined) =>
     value ? value.toLocaleString() : '';
 
   return (
     <>
       <DialogTitle>
-        <Grid size={12} textAlign="center">
-          {employee?.id ? `Edit ${employee.first_name} ${employee.last_name}` : 'Add Employee'}
+        <Grid size={12} textAlign='center'>
+          {employee?.id
+            ? `Edit ${employee.first_name} ${employee.last_name}`
+            : 'Add Employee'}
         </Grid>
       </DialogTitle>
       <DialogContent>
@@ -282,13 +327,15 @@ const EmployeeForm = ({ setOpenDialog, employee = null }: EmployeeFormProps) => 
           <Grid container spacing={1}>
             {/* Personal Information */}
             <Grid size={12}>
-              <Div sx={{ mt: 2, mb: 1, fontWeight: 600 }}>Personal Information</Div>
+              <Div sx={{ mt: 2, mb: 1, fontWeight: 600 }}>
+                Personal Information
+              </Div>
             </Grid>
 
             <Grid size={{ xs: 12, md: 4 }}>
               <TextField
-                label="First Name *"
-                size="small"
+                label='First Name *'
+                size='small'
                 fullWidth
                 error={!!errors.first_name}
                 helperText={errors.first_name?.message}
@@ -297,8 +344,8 @@ const EmployeeForm = ({ setOpenDialog, employee = null }: EmployeeFormProps) => 
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
               <TextField
-                label="Middle Name"
-                size="small"
+                label='Middle Name'
+                size='small'
                 fullWidth
                 error={!!errors.middle_name}
                 helperText={errors.middle_name?.message}
@@ -307,8 +354,8 @@ const EmployeeForm = ({ setOpenDialog, employee = null }: EmployeeFormProps) => 
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
               <TextField
-                label="Last Name *"
-                size="small"
+                label='Last Name *'
+                size='small'
                 fullWidth
                 error={!!errors.last_name}
                 helperText={errors.last_name?.message}
@@ -318,8 +365,8 @@ const EmployeeForm = ({ setOpenDialog, employee = null }: EmployeeFormProps) => 
 
             <Grid size={{ xs: 12, md: 4 }}>
               <TextField
-                label="Employee Number"
-                size="small"
+                label='Employee Number'
+                size='small'
                 fullWidth
                 error={!!errors.employee_number}
                 helperText={errors.employee_number?.message}
@@ -328,11 +375,11 @@ const EmployeeForm = ({ setOpenDialog, employee = null }: EmployeeFormProps) => 
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
               <Controller
-                name="gender"
+                name='gender'
                 control={control}
                 render={({ field, fieldState }) => (
                   <Autocomplete
-                    size="small"
+                    size='small'
                     options={GENDER_OPTIONS}
                     getOptionLabel={(o) => o.label}
                     value={employeeGender}
@@ -341,7 +388,11 @@ const EmployeeForm = ({ setOpenDialog, employee = null }: EmployeeFormProps) => 
                       field.onChange(newVal?.value || '');
                     }}
                     renderInput={(params) => (
-                      <TextField {...params} label="Gender *" error={!!fieldState.error} />
+                      <TextField
+                        {...params}
+                        label='Gender *'
+                        error={!!fieldState.error}
+                      />
                     )}
                   />
                 )}
@@ -349,18 +400,24 @@ const EmployeeForm = ({ setOpenDialog, employee = null }: EmployeeFormProps) => 
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
               <Controller
-                name="date_of_birth"
+                name='date_of_birth'
                 control={control}
                 render={({ field, fieldState }) => (
                   <DatePicker
-                    label="Date of Birth"
+                    label='Date of Birth'
                     value={employeeDoB ? dayjs(employeeDoB) : null}
                     onChange={(val) => {
                       const formatted = val?.format('YYYY-MM-DD') || '';
                       setEmployeeDoB(formatted);
                       field.onChange(formatted);
                     }}
-                    slotProps={{ textField: { size: 'small', fullWidth: true, error: !!fieldState.error } }}
+                    slotProps={{
+                      textField: {
+                        size: 'small',
+                        fullWidth: true,
+                        error: !!fieldState.error,
+                      },
+                    }}
                   />
                 )}
               />
@@ -368,15 +425,17 @@ const EmployeeForm = ({ setOpenDialog, employee = null }: EmployeeFormProps) => 
 
             {/* Contact Information */}
             <Grid size={12}>
-              <Div sx={{ mt: 2, mb: 1, fontWeight: 600 }}>Contact Information</Div>
+              <Div sx={{ mt: 2, mb: 1, fontWeight: 600 }}>
+                Contact Information
+              </Div>
             </Grid>
 
             <Grid size={{ xs: 12, md: 4 }}>
               <TextField
-                label="Email"
-                size="small"
+                label='Email'
+                size='small'
                 fullWidth
-                type="email"
+                type='email'
                 error={!!errors.email}
                 helperText={errors.email?.message}
                 {...register('email')}
@@ -384,8 +443,8 @@ const EmployeeForm = ({ setOpenDialog, employee = null }: EmployeeFormProps) => 
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
               <TextField
-                label="Phone Number"
-                size="small"
+                label='Phone Number'
+                size='small'
                 fullWidth
                 error={!!errors.phone_number}
                 helperText={errors.phone_number?.message}
@@ -394,8 +453,8 @@ const EmployeeForm = ({ setOpenDialog, employee = null }: EmployeeFormProps) => 
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
               <TextField
-                label="Address"
-                size="small"
+                label='Address'
+                size='small'
                 fullWidth
                 error={!!errors.address}
                 helperText={errors.address?.message}
@@ -410,8 +469,8 @@ const EmployeeForm = ({ setOpenDialog, employee = null }: EmployeeFormProps) => 
 
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
-                label="National ID"
-                size="small"
+                label='National ID'
+                size='small'
                 fullWidth
                 error={!!errors.national_id}
                 helperText={errors.national_id?.message}
@@ -420,8 +479,8 @@ const EmployeeForm = ({ setOpenDialog, employee = null }: EmployeeFormProps) => 
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
-                label="Passport Number"
-                size="small"
+                label='Passport Number'
+                size='small'
                 fullWidth
                 error={!!errors.passport_number}
                 helperText={errors.passport_number?.message}
@@ -431,7 +490,9 @@ const EmployeeForm = ({ setOpenDialog, employee = null }: EmployeeFormProps) => 
 
             {/* Employment Details */}
             <Grid size={12}>
-              <Div sx={{ mt: 2, mb: 1, fontWeight: 600 }}>Employment Details</Div>
+              <Div sx={{ mt: 2, mb: 1, fontWeight: 600 }}>
+                Employment Details
+              </Div>
             </Grid>
 
             <Grid size={{ xs: 12, md: 4 }}>
@@ -439,11 +500,11 @@ const EmployeeForm = ({ setOpenDialog, employee = null }: EmployeeFormProps) => 
                 <LinearProgress />
               ) : (
                 <Controller
-                  name="department_id"
+                  name='department_id'
                   control={control}
                   render={({ field, fieldState }) => (
                     <Autocomplete
-                      size="small"
+                      size='small'
                       options={departmentsData}
                       getOptionLabel={(o) => o.name}
                       value={selectedDpt}
@@ -452,7 +513,11 @@ const EmployeeForm = ({ setOpenDialog, employee = null }: EmployeeFormProps) => 
                         field.onChange(newVal?.id || null);
                       }}
                       renderInput={(params) => (
-                        <TextField {...params} label="Department" error={!!fieldState.error} />
+                        <TextField
+                          {...params}
+                          label='Department'
+                          error={!!fieldState.error}
+                        />
                       )}
                     />
                   )}
@@ -462,11 +527,11 @@ const EmployeeForm = ({ setOpenDialog, employee = null }: EmployeeFormProps) => 
 
             <Grid size={{ xs: 12, md: 4 }}>
               <Controller
-                name="employment_type"
+                name='employment_type'
                 control={control}
                 render={({ field, fieldState }) => (
                   <Autocomplete
-                    size="small"
+                    size='small'
                     options={EMPLOYMENT_OPTIONS}
                     getOptionLabel={(o) => o.label}
                     value={selectedEmploymentType}
@@ -475,7 +540,11 @@ const EmployeeForm = ({ setOpenDialog, employee = null }: EmployeeFormProps) => 
                       field.onChange(newVal?.value || '');
                     }}
                     renderInput={(params) => (
-                      <TextField {...params} label="Employment Type" error={!!fieldState.error} />
+                      <TextField
+                        {...params}
+                        label='Employment Type'
+                        error={!!fieldState.error}
+                      />
                     )}
                   />
                 )}
@@ -484,18 +553,24 @@ const EmployeeForm = ({ setOpenDialog, employee = null }: EmployeeFormProps) => 
 
             <Grid size={{ xs: 12, md: 4 }}>
               <Controller
-                name="join_date"
+                name='join_date'
                 control={control}
                 render={({ field, fieldState }) => (
                   <DatePicker
-                    label="Join Date"
+                    label='Join Date'
                     value={joinDate ? dayjs(joinDate) : null}
                     onChange={(val) => {
                       const formatted = val?.format('YYYY-MM-DD') || '';
                       setJoinDate(formatted);
                       field.onChange(formatted);
                     }}
-                    slotProps={{ textField: { size: 'small', fullWidth: true, error: !!fieldState.error } }}
+                    slotProps={{
+                      textField: {
+                        size: 'small',
+                        fullWidth: true,
+                        error: !!fieldState.error,
+                      },
+                    }}
                   />
                 )}
               />
@@ -503,13 +578,17 @@ const EmployeeForm = ({ setOpenDialog, employee = null }: EmployeeFormProps) => 
 
             <Grid size={{ xs: 12, md: 8 }}>
               <Controller
-                name="cost_center_id"
+                name='cost_center_id'
                 control={control}
                 render={({ field }) => (
                   <CostCenterSelector
                     multiple={false}
-                    label="Cost Center"
-                    defaultValue={(employee as any)?.cost_center || null}
+                    label='Cost Center'
+                    defaultValue={
+                      (employee as any)?.cost_center ||
+                      defaultCostCenter ||
+                      null
+                    }
                     onChange={(val) => {
                       const selected = Array.isArray(val) ? val[0] : val;
                       field.onChange(selected?.id || null);
@@ -521,29 +600,38 @@ const EmployeeForm = ({ setOpenDialog, employee = null }: EmployeeFormProps) => 
 
             {/* Accounting Settings */}
             <Grid size={12}>
-              <Div sx={{ mt: 2, mb: 1, fontWeight: 600 }}>Accounting Settings</Div>
+              <Div sx={{ mt: 2, mb: 1, fontWeight: 600 }}>
+                Accounting Settings
+              </Div>
             </Grid>
 
             <Grid size={{ xs: 12, md: 6 }}>
               <LedgerSelect
                 frontError={errors.payable_ledger_id}
-                defaultValue={ungroupedLedgerOptions.find((l) => l.id === employee?.payable_ledger_id) || null}
+                defaultValue={
+                  ungroupedLedgerOptions.find(
+                    (l) => l.id === employee?.payable_ledger_id
+                  ) || null
+                }
                 allowedGroups={['Accounts Payable']}
                 onChange={(val) => {
                   if (!Array.isArray(val)) {
-                    setValue('payable_ledger_id', val?.id || 0, { shouldValidate: true, shouldDirty: true });
+                    setValue('payable_ledger_id', val?.id || 0, {
+                      shouldValidate: true,
+                      shouldDirty: true,
+                    });
                   }
                 }}
-                label="Payable Account"
+                label='Payable Account'
               />
             </Grid>
 
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
-                label="Payable Ledger Name"
-                size="small"
+                label='Payable Ledger Name'
+                size='small'
                 fullWidth
-                placeholder="e.g., Payable - Jane Doe"
+                placeholder='e.g., Payable - Jane Doe'
                 error={!!errors.payable_ledger_name}
                 helperText={errors.payable_ledger_name?.message}
                 {...register('payable_ledger_name')}
@@ -552,10 +640,15 @@ const EmployeeForm = ({ setOpenDialog, employee = null }: EmployeeFormProps) => 
           </Grid>
 
           <DialogActions>
-            <Button size="small" onClick={() => setOpenDialog(false)}>
+            <Button size='small' onClick={() => setOpenDialog(false)}>
               Cancel
             </Button>
-            <LoadingButton type="submit" variant="contained" size="small" loading={isPending || updateIsLoading}>
+            <LoadingButton
+              type='submit'
+              variant='contained'
+              size='small'
+              loading={isPending || updateIsLoading}
+            >
               {employee?.id ? 'Update' : 'Create'}
             </LoadingButton>
           </DialogActions>
