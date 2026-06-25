@@ -253,7 +253,9 @@ const PayrollRunsListItem = ({ payrollRun }: { payrollRun: PayrollRunType }) => 
                 isPosted={isPosted}
                 isPaid={isPaid}
                 hasChain={hasChain}
-                payrollRunId={payrollRun.id}  // <-- Add this
+                payrollRunId={payrollRun.id}
+                payrollRun={payrollRun}
+                previewRows={previewRows}  // <-- Add this line
                 onAction={handleAction}
                 isSubmitting={isSubmitting}
                 isDeleting={isDeleting}

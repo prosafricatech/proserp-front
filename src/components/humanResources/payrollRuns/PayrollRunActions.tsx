@@ -1,6 +1,6 @@
 'use client';
 
-import { Stack, Tooltip, IconButton, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Button, Typography, Alert, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, LinearProgress } from '@mui/material';
+import { Stack, Tooltip, IconButton, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Button, Typography, Alert } from '@mui/material';
 import {
   SendOutlined,
   DeleteOutlined,
@@ -13,6 +13,8 @@ import { useState } from 'react';
 import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
 import { useQuery } from '@tanstack/react-query';
 import humanResourcesServices from '../humanResourcesServices';
+import { getPayslipCalculations, PayslipComputed } from './payslipCalculations';
+import SalarySheetDialog from '../payrollPeriods/SalarySheetDialog';
 
 interface PayrollRunActionsProps {
   isDraft: boolean;
@@ -29,6 +31,8 @@ interface PayrollRunActionsProps {
   isPosting: boolean;
   isPaying: boolean;
   runLabel?: string;
+  payrollRun?: any;
+  previewRows?: any[]; // Add previewRows prop
 }
 
 interface PostFormData {
@@ -50,11 +54,19 @@ interface ConfirmDialogState {
   color: 'primary' | 'success' | 'error' | 'warning' | 'info';
 }
 
-const money = (value: number | string | undefined) =>
-  Number(value || 0).toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
+type SalaryTypeItem = {
+  id?: number;
+  name?: string;
+  category?: string;
+  is_pre_tax?: boolean;
+  computation_method?: string;
+  default_value?: number;
+};
+
+type SalarySheetRow = {
+  run: any;
+  computed: PayslipComputed;
+};
 
 export const PayrollRunActions = ({
   isDraft,
@@ -71,10 +83,12 @@ export const PayrollRunActions = ({
   isPosting,
   isPaying,
   runLabel = 'this run',
+  payrollRun,
+  previewRows = [], // Default to empty array
 }: PayrollRunActionsProps) => {
   const [openPostDialog, setOpenPostDialog] = useState(false);
   const [openPayDialog, setOpenPayDialog] = useState(false);
-  const [openPreviewDialog, setOpenPreviewDialog] = useState(false);
+  const [openSalarySheetDialog, setOpenSalarySheetDialog] = useState(false);
   const [postForm, setPostForm] = useState<PostFormData>({
     salary_expense_ledger_id: 0,
     paye_payable_ledger_id: 0,
@@ -93,20 +107,48 @@ export const PayrollRunActions = ({
     color: 'primary',
   });
 
-  // Fetch preview data
-  const { data: previewData, isLoading: isPreviewLoading, refetch: refetchPreview } = useQuery({
-    queryKey: ['previewPayrollRunEmployees', payrollRunId],
-    queryFn: () => humanResourcesServices.previewPayrollRun({ id: payrollRunId }),
-    enabled: false,
+  // Fetch run details for salary sheet (fallback if previewRows not provided)
+  const { data: runDetails, isLoading: isLoadingRun } = useQuery({
+    queryKey: ['payrollRunDetails', payrollRunId],
+    queryFn: () => humanResourcesServices.showPayrollRun(payrollRunId),
+    enabled: openSalarySheetDialog && previewRows.length === 0,
+    staleTime: 1000 * 60 * 5,
   });
 
-  const previewRows = previewData?.data?.rows || previewData?.rows || [];
+  // Fetch allowance types
+  const { data: allowanceTypes } = useQuery({
+    queryKey: ['allowanceTypes'],
+    queryFn: async () => {
+      const response = await humanResourcesServices.getAllowanceTypesList();
+      return response?.data || [];
+    },
+    enabled: openSalarySheetDialog,
+  });
+
+  // Fetch deduction types
+  const { data: deductionTypes } = useQuery({
+    queryKey: ['deductionTypes'],
+    queryFn: async () => {
+      const response = await humanResourcesServices.getDeductionTypesList();
+      return response?.data || [];
+    },
+    enabled: openSalarySheetDialog,
+  });
+
+  // Fetch employer contribution types
+  const { data: contributionTypes } = useQuery({
+    queryKey: ['employerContributionTypes'],
+    queryFn: async () => {
+      const response = await humanResourcesServices.getEmployerContributionTypesList();
+      return response?.data || [];
+    },
+    enabled: openSalarySheetDialog,
+  });
 
   const handleActionClick = (action: string) => {
     switch (action) {
       case 'preview':
-        refetchPreview();
-        setOpenPreviewDialog(true);
+        setOpenSalarySheetDialog(true);
         break;
       case 'submit':
         setConfirmDialog({
@@ -185,6 +227,71 @@ export const PayrollRunActions = ({
 
   const isPayFormValid = payForm.credit_ledger_id > 0;
 
+  // Prepare salary sheet data - use previewRows if available, otherwise use runDetails
+  const salarySheetRows: SalarySheetRow[] = [];
+  let periodLabel = '';
+
+  // If we have previewRows, use them directly
+  if (previewRows.length > 0) {
+    previewRows.forEach((row: any) => {
+      // Create a run object from the preview row
+      const run = {
+        ...payrollRun,
+        id: payrollRun?.id || row.employee_id,
+        employee: row.employee,
+        allowances: row.allowances || [],
+        deductions: row.deductions || [],
+        employer_contributions: row.employer_contributions || [],
+        basic_salary: row.basic_salary || 0,
+        gross_salary: row.gross_salary || 0,
+        net_salary: row.net_salary || 0,
+        paye: row.paye || 0,
+        taxable_income: row.taxable_income || 0,
+        total_allowances: row.total_allowances || 0,
+        total_deductions: row.total_deductions || 0,
+      };
+      
+      salarySheetRows.push({
+        run: run,
+        computed: getPayslipCalculations(run),
+      });
+    });
+
+    // Get period label from payrollRun or use default
+    if (payrollRun?.payroll_period) {
+      const period = payrollRun.payroll_period;
+      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+      periodLabel = `${monthNames[period.month - 1]} ${period.year}`;
+    } else {
+      periodLabel = runLabel || 'Payroll Run';
+    }
+  } 
+  // Fallback: use runDetails if no previewRows
+  else if (runDetails) {
+    const run = runDetails?.data || runDetails;
+    const runData = Array.isArray(run) ? run : [run];
+    
+    runData.forEach((r: any) => {
+      if (r) {
+        salarySheetRows.push({
+          run: r,
+          computed: getPayslipCalculations(r),
+        });
+      }
+    });
+
+    if (runData.length > 0 && runData[0]?.payroll_period) {
+      const period = runData[0].payroll_period;
+      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+      periodLabel = `${monthNames[period.month - 1]} ${period.year}`;
+    } else {
+      periodLabel = runLabel || 'Payroll Run';
+    }
+  }
+
+  const displayRows = salarySheetRows.length > 0 ? salarySheetRows : [];
+  const displayLabel = periodLabel || runLabel || 'Payroll Run';
+
   return (
     <>
       <Stack direction="row" spacing={1} mb={2} justifyContent="flex-end" alignItems="center" flexWrap="wrap" useFlexGap>
@@ -193,10 +300,10 @@ export const PayrollRunActions = ({
           <IconButton 
             size="small" 
             onClick={() => handleActionClick('preview')} 
-            disabled={isPreviewLoading}
+            disabled={isLoadingRun}
             color="info"
           >
-            {isPreviewLoading ? <CircularProgress size={18} /> : <PreviewOutlined fontSize="small" />}
+            {isLoadingRun ? <CircularProgress size={18} /> : <PreviewOutlined fontSize="small" />}
           </IconButton>
         </Tooltip>
 
@@ -292,6 +399,19 @@ export const PayrollRunActions = ({
         )}
       </Stack>
 
+      {/* Salary Sheet Dialog */}
+      {openSalarySheetDialog && (
+        <SalarySheetDialog
+          open={openSalarySheetDialog}
+          onClose={() => setOpenSalarySheetDialog(false)}
+          periodLabel={displayLabel}
+          rows={displayRows}
+          allowanceTypes={allowanceTypes || []}
+          deductionTypes={deductionTypes || []}
+          contributionTypes={contributionTypes || []}
+        />
+      )}
+
       {/* Confirmation Dialog */}
       <Dialog
         open={confirmDialog.open}
@@ -335,90 +455,6 @@ export const PayrollRunActions = ({
             ) : (
               confirmDialog.confirmText
             )}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Preview Dialog */}
-      <Dialog
-        open={openPreviewDialog}
-        onClose={() => setOpenPreviewDialog(false)}
-        fullWidth
-        maxWidth="lg"
-      >
-        <DialogTitle>
-          <Typography variant="h6" component="div" fontWeight={600}>
-            Salary Sheet Preview
-          </Typography>
-        </DialogTitle>
-        <DialogContent>
-          {isPreviewLoading ? (
-            <LinearProgress />
-          ) : (
-            <TableContainer>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Employee</TableCell>
-                    <TableCell align="right">Basic</TableCell>
-                    <TableCell align="right">Allowances</TableCell>
-                    <TableCell align="right">Gross</TableCell>
-                    <TableCell align="right">PAYE</TableCell>
-                    <TableCell align="right">Deductions</TableCell>
-                    <TableCell align="right">Net</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {previewRows.length > 0 ? (
-                    previewRows.map((row: any, index: number) => (
-                      <TableRow key={`${row?.employee?.id || index}`}>
-                        <TableCell>
-                          <Typography variant="body2">
-                            {row?.employee?.name || '-'}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {row?.employee?.employee_number || ''}
-                          </Typography>
-                        </TableCell>
-                        <TableCell align="right">
-                          {money(row?.basic_salary)}
-                        </TableCell>
-                        <TableCell align="right">
-                          {money(row?.total_allowances || 0)}
-                        </TableCell>
-                        <TableCell align="right">
-                          {money(row?.gross_salary)}
-                        </TableCell>
-                        <TableCell align="right">
-                          {money(row?.paye || 0)}
-                        </TableCell>
-                        <TableCell align="right">
-                          {money(row?.total_deductions || 0)}
-                        </TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 'bold' }}>
-                          {money(row?.net_salary)}
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={7} align="center">
-                        No employees found for this run.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button 
-            onClick={() => setOpenPreviewDialog(false)} 
-            variant="outlined"
-            size="small"
-          >
-            Close
           </Button>
         </DialogActions>
       </Dialog>

@@ -18,6 +18,7 @@ export interface PayrollRunType {
   created_by?: number;
   created_at?: string;
   updated_at?: string;
+  designation?: string;
   cost_center?: {
     id?: number;
     name?: string;
