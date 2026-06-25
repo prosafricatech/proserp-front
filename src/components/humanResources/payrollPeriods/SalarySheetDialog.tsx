@@ -101,13 +101,13 @@ function slug(text: string) {
 }
 
 function getEmployeeName(run: PayrollRunType) {
-  if (!run.employee) return 'Unknown Employee';
+  if (!run.employee) return '';
   const employee = run.employee as any;
   if (employee.name) return employee.name;
   const firstName = run.employee.first_name || '';
   const lastName = run.employee.last_name || '';
   const fullName = `${firstName} ${lastName}`.trim();
-  return fullName || 'Unknown Employee';
+  return fullName;
 }
 
 function getEmployeeNumber(run: PayrollRunType) {

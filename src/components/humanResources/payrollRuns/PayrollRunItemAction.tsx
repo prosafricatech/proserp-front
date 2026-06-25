@@ -197,8 +197,8 @@ const PayrollRunItemAction = ({
         // Ensure month is within valid range (1-12)
         const monthName = (monthIndex && monthIndex >= 1 && monthIndex <= 12) 
           ? monthNames[monthIndex - 1] 
-          : 'Unknown';
-        const year = payrollRun.payroll_period.year || 'Unknown';
+          : '';
+        const year = payrollRun.payroll_period.year || '';
         periodLabel = `${monthName} ${year} - ${periodLabel}`;
       }
 

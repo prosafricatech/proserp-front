@@ -187,9 +187,8 @@ function slug(text: string) {
   return text.toLowerCase().replace(/\s+/g, ' ').trim();
 }
 
-// ✅ Fixed: Safely get employee name
 function getEmployeeName(run: PayrollRunType) {
-  if (!run.employee) return 'Unknown Employee';
+  if (!run.employee) return '';
   
   // Use type assertion to safely access name if it exists
   const employee = run.employee as any;
@@ -198,15 +197,9 @@ function getEmployeeName(run: PayrollRunType) {
   const firstName = run.employee.first_name || '';
   const lastName = run.employee.last_name || '';
   const fullName = `${firstName} ${lastName}`.trim();
-  return fullName || 'Unknown Employee';
+  return fullName || '';
 }
 
-// ✅ Fixed: Safely get employee number
-function getEmployeeNumber(run: PayrollRunType) {
-  return run.employee?.employee_number || '-';
-}
-
-// ✅ Fixed: Safely get designation
 function getDesignation(run: PayrollRunType) {
   // Check contract designation first
   if (run.contract?.designation?.title) {

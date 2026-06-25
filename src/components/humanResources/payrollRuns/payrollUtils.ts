@@ -4,8 +4,8 @@ export const formatMoney = (value: number) =>
   Number(value || 0).toLocaleString();
 
 export const getEmployeeName = (employee: any) => {
-  if (!employee) return 'Unknown Employee';
-  return employee.name || `${employee.first_name || ''} ${employee.last_name || ''}`.trim() || 'Unknown Employee';
+  if (!employee) return '';
+  return employee.name || `${employee.first_name || ''} ${employee.last_name || ''}`.trim() || '';
 };
 
 export const calculateTotalAllowances = (allowances: any[]) => {
