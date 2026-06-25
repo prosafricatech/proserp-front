@@ -1,4 +1,3 @@
-// components/humanResources/payrollRuns/PayrollRunActionTail.tsx
 'use client';
 
 import { PayrollPeriodType } from '../payrollPeriods/PayrollPeriodType';
