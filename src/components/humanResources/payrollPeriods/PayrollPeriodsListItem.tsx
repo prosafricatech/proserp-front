@@ -119,10 +119,6 @@ const PayrollPeriodsListItem = ({ payrollPeriod }: PayrollPeriodsListItemProps) 
     queryClient.invalidateQueries({ queryKey: ['payrollPeriods'] });
   };
 
-  const handleRunClick = (runId: number) => {
-    router.push(`/${lang}/humanResources/payroll-runs/${runId}`);
-  };
-
   return (
     <>
       <Accordion
@@ -253,7 +249,6 @@ const PayrollPeriodsListItem = ({ payrollPeriod }: PayrollPeriodsListItemProps) 
                               cursor: 'pointer',
                               '&:hover': { bgcolor: 'action.hover' },
                             }}
-                            onClick={() => handleRunClick(run.id)}
                           >
                             <TableCell>
                               <Box display="flex" alignItems="center" gap={1}>
