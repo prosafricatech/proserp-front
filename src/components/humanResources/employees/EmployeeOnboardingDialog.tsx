@@ -35,7 +35,7 @@ import {
 } from '@mui/material';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
-import React, { ChangeEvent, useEffect, useState } from 'react';
+import React, { ChangeEvent, useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
 import ContributionsTab from './ContributionsTab';
 import DeductionsTab from './DeductionsTab';
@@ -81,10 +81,6 @@ const EmployeeOnboardingDialog = ({
     []
   );
 
-  useEffect(() => {
-    console.log('deductionSettings: ', deductionSettings);
-  }, [deductionSettings]);
-
   const [file, setFile] = useState<File | null>(null);
   const [importResult, setImportResult] = useState<any | null>(null);
   const { enqueueSnackbar } = useSnackbar();
@@ -127,8 +123,15 @@ const EmployeeOnboardingDialog = ({
       contributions: contributionSettings,
       leave_allocations: allocationsSettings,
     };
-    console.log('data: ', data);
-    console.log('payload: ', payload);
+
+    const formData = new FormData();
+
+    formData.append('employees_excel', data);
+    // For other fields as JSON
+    formData.append('deductions', JSON.stringify(deductionSettings));
+    formData.append('contributions', JSON.stringify(contributionSettings));
+    formData.append('leave_allocations', JSON.stringify(allocationsSettings));
+
     importExcelMutation(payload);
   };
 

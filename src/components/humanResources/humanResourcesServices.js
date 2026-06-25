@@ -46,11 +46,12 @@ humanResourcesServices.downloadEmployeesRegistrationTemplate = async () => {
 }
 
 humanResourcesServices.importEmployeesRegistrationExcel = async (file) => {
-    const formData = new FormData();
-    formData.append('employees_excel', file);
-    const { data } = await axios.post('/api/humanResources/employees/import-registration-excel', formData, {
+    // const formData = new FormData();
+    // formData.append('employees_excel', file);
+    const { data } = await axios.post('/api/humanResources/employees/import-registration-excel', file, {
         headers: { 'Content-Type': 'multipart/form-data' },
     });
+    // const { data } = await axios.post('/api/humanResources/employees/import-registration-excel', file);
     return data;
 }
 
