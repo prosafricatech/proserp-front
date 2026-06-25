@@ -42,34 +42,32 @@ export const SimulationDialog = ({ open, onClose, data }: SimulationDialogProps)
         {simulationRow ? (
           <Grid container spacing={2}>
             <Grid size={12}>
-              <Card variant="outlined" sx={{ p: 2 }}>
                 <Grid container spacing={2}>
-                  <Grid size={6}>
-                    <Typography variant="caption" color="text.secondary">Basic Salary</Typography>
-                    <Typography variant="h6">{formatMoney(simulationRow.basic_salary)}</Typography>
-                  </Grid>
-                  <Grid size={6}>
-                    <Typography variant="caption" color="text.secondary">Gross Salary</Typography>
-                    <Typography variant="h6">{formatMoney(simulationRow.gross_salary)}</Typography>
-                  </Grid>
-                  <Grid size={6}>
-                    <Typography variant="caption" color="text.secondary">Total Allowances</Typography>
-                    <Typography variant="h6">{formatMoney(simulationRow.total_allowances || 0)}</Typography>
-                  </Grid>
-                  <Grid size={6}>
-                    <Typography variant="caption" color="text.secondary">Total Deductions</Typography>
-                    <Typography variant="h6">{formatMoney(simulationRow.total_deductions || 0)}</Typography>
-                  </Grid>
-                  <Grid size={6}>
-                    <Typography variant="caption" color="text.secondary">PAYE</Typography>
-                    <Typography variant="h6" color="error.main">{formatMoney(simulationRow.paye || 0)}</Typography>
-                  </Grid>
-                  <Grid size={6}>
-                    <Typography variant="caption" color="text.secondary">Net Pay</Typography>
-                    <Typography variant="h6" color="success.main">{formatMoney(simulationRow.net_salary)}</Typography>
-                  </Grid>
+                    <Grid size={6}>
+                        <Typography variant="caption" color="text.secondary">Basic Salary</Typography>
+                        <Typography variant="h6">{formatMoney(simulationRow.basic_salary)}</Typography>
+                    </Grid>
+                    <Grid size={6}>
+                        <Typography variant="caption" color="text.secondary">Gross Salary</Typography>
+                        <Typography variant="h6">{formatMoney(simulationRow.gross_salary)}</Typography>
+                    </Grid>
+                    <Grid size={6}>
+                        <Typography variant="caption" color="text.secondary">Total Allowances</Typography>
+                        <Typography variant="h6">{formatMoney(simulationRow.total_allowances || 0)}</Typography>
+                    </Grid>
+                    <Grid size={6}>
+                        <Typography variant="caption" color="text.secondary">Total Deductions</Typography>
+                        <Typography variant="h6">{formatMoney(simulationRow.total_deductions || 0)}</Typography>
+                    </Grid>
+                    <Grid size={6}>
+                        <Typography variant="caption" color="text.secondary">PAYE</Typography>
+                        <Typography variant="h6" color="error.main">{formatMoney(simulationRow.paye || 0)}</Typography>
+                    </Grid>
+                    <Grid size={6}>
+                        <Typography variant="caption" color="text.secondary">Net Pay</Typography>
+                        <Typography variant="h6" color="success.main">{formatMoney(simulationRow.net_salary)}</Typography>
+                    </Grid>
                 </Grid>
-              </Card>
             </Grid>
             {simulationRow.allowances?.length > 0 && (
               <Grid size={12}>
