@@ -25,6 +25,7 @@ import {
   useMediaQuery,
   Alert,
   CircularProgress,
+  useTheme,
 } from '@mui/material';
 import { useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
@@ -99,32 +100,24 @@ function slug(text: string) {
   return text.toLowerCase().replace(/\s+/g, ' ').trim();
 }
 
-// ✅ Fixed: Safely get employee name
 function getEmployeeName(run: PayrollRunType) {
   if (!run.employee) return 'Unknown Employee';
-  
-  // Use type assertion to safely access name if it exists
   const employee = run.employee as any;
   if (employee.name) return employee.name;
-  
   const firstName = run.employee.first_name || '';
   const lastName = run.employee.last_name || '';
   const fullName = `${firstName} ${lastName}`.trim();
   return fullName || 'Unknown Employee';
 }
 
-// ✅ Fixed: Safely get employee number
 function getEmployeeNumber(run: PayrollRunType) {
   return run.employee?.employee_number || '-';
 }
 
-// ✅ Fixed: Safely get designation
 function getDesignation(run: PayrollRunType) {
-  // Check contract designation first
   if (run.contract?.designation?.title) {
     return run.contract.designation.title;
   }
-  // Check if there's a direct designation property (some preview data might have it)
   if ((run as any).designation) {
     return (run as any).designation;
   }
@@ -185,11 +178,14 @@ const SalarySheetDialog = ({
   isLoading = false,
 }: SalarySheetDialogProps) => {
   const authObject = useJumboAuth() as any;
+  const theme = useTheme();
   const [openPdfDialog, setOpenPdfDialog] = useState(false);
-  const { theme } = useJumboTheme();
-  const smallScreen = useMediaQuery(theme.breakpoints.down('md'));
+  const { theme: jumboTheme } = useJumboTheme();
+  const smallScreen = useMediaQuery(jumboTheme.breakpoints.down('md'));
 
   const [isExporting, setIsExporting] = useState(false);
+
+  const organization = authObject?.authOrganization?.organization;
 
   const preTaxDeductionTypes = deductionTypes.filter((type) =>
     Boolean(type.is_pre_tax)
@@ -197,6 +193,10 @@ const SalarySheetDialog = ({
   const postTaxDeductionTypes = deductionTypes.filter(
     (type) => !type.is_pre_tax
   );
+
+  const hasAllowances = allowanceTypes.length > 0;
+  const hasDeductions = deductionTypes.length > 0;
+  const hasContributions = contributionTypes.length > 0;
 
   const totals = rows.reduce(
     (sum, entry) => {
@@ -266,7 +266,7 @@ const SalarySheetDialog = ({
   }));
 
   const exportedData = {
-    organization: authObject?.authOrganization?.organization,
+    organization: organization,
     periodLabel: periodLabel,
     rows: exportedRows,
     allowanceTypes: allowanceTypes,
@@ -293,6 +293,14 @@ const SalarySheetDialog = ({
     }
   };
 
+  // Border style helper
+  const borderStyle = {
+    borderRight: '1px solid',
+    borderRightColor: 'divider',
+    borderLeft: '1px solid',
+    borderLeftColor: 'divider',
+  };
+
   return (
     <>
       <Dialog
@@ -301,6 +309,11 @@ const SalarySheetDialog = ({
         fullWidth
         maxWidth='xl'
         fullScreen={smallScreen}
+        PaperProps={{
+          sx: {
+            bgcolor: 'background.paper',
+          },
+        }}
       >
         <DialogTitle>
           <Stack
@@ -310,7 +323,7 @@ const SalarySheetDialog = ({
           >
             <Box>
               <Typography variant='h6'>
-                {authObject?.authOrganization?.organization?.name || 'Company'}
+                {organization?.name || 'Company'}
               </Typography>
               <Typography variant='body2' color='text.secondary'>
                 Salary Payroll - {periodLabel}
@@ -334,51 +347,205 @@ const SalarySheetDialog = ({
             <TableContainer>
               <Table size='small'>
                 <TableHead>
+                  {/* Group Headers - RECRUITMENT, EMPLOYEE, EMPLOYER */}
                   <TableRow>
-                    <TableCell>S/N</TableCell>
-                    <TableCell>Employee</TableCell>
-                    <TableCell>Employee No.</TableCell>
-                    <TableCell>Designation</TableCell>
-                    <TableCell align='right'>Basic</TableCell>
+                    <TableCell
+                      colSpan={4}
+                      sx={{
+                        textAlign: 'center',
+                        fontWeight: 700,
+                        backgroundColor: theme.palette.grey[100],
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        fontSize: '0.9rem',
+                      }}
+                    >
+                      RECRUITMENT
+                    </TableCell>
+                    <TableCell
+                      colSpan={
+                        2 + 
+                        (hasAllowances ? allowanceTypes.length : 0) + 
+                        (hasDeductions ? deductionTypes.length + 1 : 0)
+                      }
+                      sx={{
+                        textAlign: 'center',
+                        fontWeight: 700,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        fontSize: '0.9rem',
+                      }}
+                    >
+                      EMPLOYEE
+                    </TableCell>
+                    <TableCell
+                      colSpan={
+                        2 + 
+                        (hasContributions ? contributionTypes.length : 0)
+                      }
+                      sx={{
+                        textAlign: 'center',
+                        fontWeight: 700,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        fontSize: '0.9rem',
+                      }}
+                    >
+                      EMPLOYER
+                    </TableCell>
+                  </TableRow>
+
+                  {/* Sub-headers - Allowances, Deductions, Contributions */}
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 500, border: '1px solid', borderColor: 'divider' }}>S/N</TableCell>
+                    <TableCell sx={{ fontWeight: 500, border: '1px solid', borderColor: 'divider' }}>Employee</TableCell>
+                    <TableCell sx={{ fontWeight: 500, border: '1px solid', borderColor: 'divider' }}>Employee No.</TableCell>
+                    <TableCell sx={{ fontWeight: 500, border: '1px solid', borderColor: 'divider' }}>Designation</TableCell>
+                    <TableCell 
+                      align="right" 
+                      sx={{ 
+                        fontWeight: 500,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                      }}
+                    >
+                      Basic
+                    </TableCell>
+                    
+                    {hasAllowances && (
+                      <TableCell
+                        colSpan={allowanceTypes.length}
+                        align="center"
+                        sx={{
+                          fontWeight: 500,
+                          border: '1px solid',
+                          borderColor: 'divider',
+                        }}
+                      >
+                        Allowances
+                      </TableCell>
+                    )}
+                    
+                    <TableCell 
+                      align="right" 
+                      sx={{ 
+                        fontWeight: 500,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                      }}
+                    >
+                      Gross
+                    </TableCell>
+                    
+                    {hasDeductions && (
+                      <TableCell
+                        colSpan={deductionTypes.length + 1}
+                        align="center"
+                        sx={{
+                          fontWeight: 500,
+                          border: '1px solid',
+                          borderColor: 'divider',
+                        }}
+                      >
+                        Deductions
+                      </TableCell>
+                    )}
+                    
+                    <TableCell align="right" sx={{ fontWeight: 500, border: '1px solid', borderColor: 'divider' }}>Net Payable</TableCell>
+                    
+                    {hasContributions && (
+                      <TableCell
+                        colSpan={contributionTypes.length + 1}
+                        align="center"
+                        sx={{
+                          fontWeight: 500,
+                          border: '1px solid',
+                          borderColor: 'divider',
+                        }}
+                      >
+                        Employer Contributions
+                      </TableCell>
+                    )}
+                  </TableRow>
+
+                  {/* Column Headers */}
+                  <TableRow>
+                    <TableCell sx={{ border: '1px solid', borderColor: 'divider' }} />
+                    <TableCell sx={{ border: '1px solid', borderColor: 'divider' }} />
+                    <TableCell sx={{ border: '1px solid', borderColor: 'divider' }} />
+                    <TableCell sx={{ border: '1px solid', borderColor: 'divider' }} />
+                    <TableCell 
+                      align="right"
+                      sx={{
+                        border: '1px solid',
+                        borderColor: 'divider',
+                      
+                      }}
+                    />
+                    
                     {allowanceTypes.map((type, idx) => (
                       <TableCell
                         key={`allowance-header-${type.id || type.name}-${idx}`}
-                        align='right'
+                        sx={{
+                          border: '1px solid',
+                          borderColor: 'divider',
+                          fontWeight: 450,
+                        
+                        }}
                       >
                         {type.name || 'Allowance'}
                       </TableCell>
                     ))}
-                    <TableCell align='right'>Gross</TableCell>
-                    {preTaxDeductionTypes.map((type, idx) => (
+                    
+                    <TableCell 
+                      sx={{
+                        border: '1px solid',
+                        borderColor: 'divider',
+                      }}
+                    />
+                    
+                    {deductionTypes.map((type, idx) => (
                       <TableCell
-                        key={`pre-tax-header-${type.id || type.name}-${idx}`}
-                        align='right'
+                        key={`deduction-header-${type.id || type.name}-${idx}`}
+                        sx={{
+                          border: '1px solid',
+                          borderColor: 'divider',
+                          fontWeight: 450,
+                        }}
                       >
-                        {fmtTypeLabel(type, 'Pre-Tax Deduction')}
+                        {type.name || 'Deduction'}
                       </TableCell>
                     ))}
-                    <TableCell align='right'>Taxable Salary</TableCell>
-                    <TableCell align='right'>PAYE</TableCell>
-                    {postTaxDeductionTypes.map((type, idx) => (
-                      <TableCell
-                        key={`post-tax-header-${type.id || type.name}-${idx}`}
-                        align='right'
-                      >
-                        {fmtTypeLabel(type, 'Post-Tax Deduction')}
-                      </TableCell>
-                    ))}
-                    <TableCell align='right'>Total Deductions</TableCell>
-                    <TableCell align='right'>Net Payable</TableCell>
+                    
+                    <TableCell 
+                      sx={{
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        fontWeight: 450,
+                      }}
+                    >
+                      PAYE
+                    </TableCell>
+                    
+                    <TableCell sx={{ fontWeight: 400, border: '1px solid', borderColor: 'divider' }} />
+                    
                     {contributionTypes.map((type, idx) => (
                       <TableCell
                         key={`contribution-header-${type.id || type.name}-${idx}`}
-                        align='right'
+                        sx={{
+                          fontWeight: 450,
+                          border: '1px solid',
+                          borderColor: 'divider',
+                        
+                        }}
                       >
-                        {fmtTypeLabel(type, 'Contribution')}
+                        {type.name || 'Contribution'}
                       </TableCell>
                     ))}
-                    <TableCell align='right'>Total Employer Contrib.</TableCell>
-                    <TableCell align='right'>Employer Cost</TableCell>
+                    
+                    <TableCell sx={{ fontWeight: 450, border: '1px solid', borderColor: 'divider' }}>
+                      Total Empr. Cost
+                    </TableCell>
                   </TableRow>
                 </TableHead>
 
@@ -389,86 +556,123 @@ const SalarySheetDialog = ({
                     const name = getEmployeeName(run);
                     const employeeNumber = getEmployeeNumber(run);
                     const designation = getDesignation(run);
+                    const isEven = index % 2 === 0;
 
                     return (
-                      <TableRow key={`salary-row-${run.id || index}-${index}`}>
-                        <TableCell>{index + 1}</TableCell>
-                        <TableCell>{name}</TableCell>
-                        <TableCell>{employeeNumber}</TableCell>
-                        <TableCell>{designation}</TableCell>
-                        <TableCell align='right'>
+                      <TableRow 
+                        key={`salary-row-${run.id || index}-${index}`}
+                        sx={{
+                          backgroundColor: isEven 
+                            ? theme.palette.background.paper
+                            : theme.palette.action.hover,
+                          '&:hover': {
+                            backgroundColor: theme.palette.action.selected,
+                          },
+                        }}
+                      >
+                        <TableCell sx={{ border: '1px solid', borderColor: 'divider' }}>{index + 1}</TableCell>
+                        <TableCell sx={{ border: '1px solid', borderColor: 'divider' }}>{name}</TableCell>
+                        <TableCell sx={{ color: 'text.secondary', border: '1px solid', borderColor: 'divider' }}>{employeeNumber}</TableCell>
+                        <TableCell sx={{ color: 'text.secondary', border: '1px solid', borderColor: 'divider' }}>{designation}</TableCell>
+                        <TableCell 
+                          align="right"
+                          sx={{
+                            border: '1px solid',
+                            borderColor: 'divider',
+                          }}
+                        >
                           {fmt(computed.basicSalary)}
                         </TableCell>
 
                         {allowanceTypes.map((type, typeIdx) => (
                           <TableCell
                             key={`allowance-value-${run.id || index}-${type.id || type.name}-${typeIdx}`}
-                            align='right'
+                            align="right"
+                            sx={{
+                              border: '1px solid',
+                              borderColor: 'divider',
+                            }}
                           >
                             {fmt(sumAllowanceByType(run, type))}
                           </TableCell>
                         ))}
 
-                        <TableCell align='right'>
+                        <TableCell 
+                          align="right"
+                          sx={{
+                            fontWeight: 400,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                          }}
+                        >
                           {fmt(computed.grossSalary)}
                         </TableCell>
 
-                        {preTaxDeductionTypes.map((type, typeIdx) => (
+                        {deductionTypes.map((type, typeIdx) => (
                           <TableCell
-                            key={`pre-tax-value-${run.id || index}-${type.id || type.name}-${typeIdx}`}
-                            align='right'
+                            key={`deduction-value-${run.id || index}-${type.id || type.name}-${typeIdx}`}
+                            align="right"
+                            sx={{
+                              border: '1px solid',
+                              borderColor: 'divider',
+                            }}
                           >
                             {fmt(sumDeductionByType(run, type))}
                           </TableCell>
                         ))}
 
-                        <TableCell align='right'>
-                          {fmt(computed.taxableIncome)}
-                        </TableCell>
-                        <TableCell align='right'>
+                        <TableCell 
+                          align="right"
+                          sx={{
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            fontWeight: 400,
+                          }}
+                        >
                           {fmt(computed.paye)}
                         </TableCell>
 
-                        {postTaxDeductionTypes.map((type, typeIdx) => (
-                          <TableCell
-                            key={`post-tax-value-${run.id || index}-${type.id || type.name}-${typeIdx}`}
-                            align='right'
-                          >
-                            {fmt(sumDeductionByType(run, type))}
-                          </TableCell>
-                        ))}
-
-                        <TableCell align='right'>
-                          {fmt(computed.totalDeductions)}
-                        </TableCell>
-                        <TableCell align='right'>
+                        <TableCell 
+                          align="right"
+                          sx={{ fontWeight: 400, border: '1px solid', borderColor: 'divider' }}
+                        >
                           {fmt(computed.netSalary)}
                         </TableCell>
 
                         {contributionTypes.map((type, typeIdx) => (
                           <TableCell
                             key={`contribution-value-${run.id || index}-${type.id || type.name}-${typeIdx}`}
-                            align='right'
+                            align="right"
+                            sx={{
+                              border: '1px solid',
+                              borderColor: 'divider',
+                            }}
                           >
                             {fmt(sumContributionByType(run, type))}
                           </TableCell>
                         ))}
 
-                        <TableCell align='right'>
-                          {fmt(computed.totalEmployerContributions)}
-                        </TableCell>
-                        <TableCell align='right'>
+                        <TableCell 
+                          align="right"
+                          sx={{ fontWeight: 400, border: '1px solid', borderColor: 'divider' }}
+                        >
                           {fmt(computed.totalEmployerCost)}
                         </TableCell>
                       </TableRow>
                     );
                   })}
 
-                  <TableRow>
+                  {/* Totals Row */}
+                  <TableRow
+                    sx={{
+                      backgroundColor: theme.palette.grey[100],
+                    }}
+                  >
                     <TableCell
                       colSpan={4}
                       sx={{
                         fontWeight: 700,
+                        textAlign: 'center',
                         borderTop: '2px solid',
                         borderColor: 'divider',
                       }}
@@ -476,7 +680,7 @@ const SalarySheetDialog = ({
                       TOTALS
                     </TableCell>
                     <TableCell
-                      align='right'
+                      align="right"
                       sx={{
                         fontWeight: 700,
                         borderTop: '2px solid',
@@ -489,7 +693,7 @@ const SalarySheetDialog = ({
                     {totals.allowanceByType.map((amount, idx) => (
                       <TableCell
                         key={`allowance-total-${idx}`}
-                        align='right'
+                        align="right"
                         sx={{
                           fontWeight: 700,
                           borderTop: '2px solid',
@@ -501,7 +705,7 @@ const SalarySheetDialog = ({
                     ))}
 
                     <TableCell
-                      align='right'
+                      align="right"
                       sx={{
                         fontWeight: 700,
                         borderTop: '2px solid',
@@ -514,7 +718,7 @@ const SalarySheetDialog = ({
                     {totals.preTaxDeductionByType.map((amount, idx) => (
                       <TableCell
                         key={`pre-tax-total-${idx}`}
-                        align='right'
+                        align="right"
                         sx={{
                           fontWeight: 700,
                           borderTop: '2px solid',
@@ -526,17 +730,7 @@ const SalarySheetDialog = ({
                     ))}
 
                     <TableCell
-                      align='right'
-                      sx={{
-                        fontWeight: 700,
-                        borderTop: '2px solid',
-                        borderColor: 'divider',
-                      }}
-                    >
-                      {fmt(totals.taxableSalary)}
-                    </TableCell>
-                    <TableCell
-                      align='right'
+                      align="right"
                       sx={{
                         fontWeight: 700,
                         borderTop: '2px solid',
@@ -546,32 +740,8 @@ const SalarySheetDialog = ({
                       {fmt(totals.paye)}
                     </TableCell>
 
-                    {totals.postTaxDeductionByType.map((amount, idx) => (
-                      <TableCell
-                        key={`post-tax-total-${idx}`}
-                        align='right'
-                        sx={{
-                          fontWeight: 700,
-                          borderTop: '2px solid',
-                          borderColor: 'divider',
-                        }}
-                      >
-                        {fmt(amount)}
-                      </TableCell>
-                    ))}
-
                     <TableCell
-                      align='right'
-                      sx={{
-                        fontWeight: 700,
-                        borderTop: '2px solid',
-                        borderColor: 'divider',
-                      }}
-                    >
-                      {fmt(totals.totalDeductions)}
-                    </TableCell>
-                    <TableCell
-                      align='right'
+                      align="right"
                       sx={{
                         fontWeight: 700,
                         borderTop: '2px solid',
@@ -584,7 +754,7 @@ const SalarySheetDialog = ({
                     {totals.contributionByType.map((amount, idx) => (
                       <TableCell
                         key={`contribution-total-${idx}`}
-                        align='right'
+                        align="right"
                         sx={{
                           fontWeight: 700,
                           borderTop: '2px solid',
@@ -596,17 +766,7 @@ const SalarySheetDialog = ({
                     ))}
 
                     <TableCell
-                      align='right'
-                      sx={{
-                        fontWeight: 700,
-                        borderTop: '2px solid',
-                        borderColor: 'divider',
-                      }}
-                    >
-                      {fmt(totals.totalEmployerContributions)}
-                    </TableCell>
-                    <TableCell
-                      align='right'
+                      align="right"
                       sx={{
                         fontWeight: 700,
                         borderTop: '2px solid',
@@ -634,17 +794,23 @@ const SalarySheetDialog = ({
         </DialogActions>
       </Dialog>
 
+      {/* PDF Dialog */}
       <Dialog
         open={openPdfDialog}
         onClose={() => setOpenPdfDialog(false)}
         fullWidth
         maxWidth='xl'
+        PaperProps={{
+          sx: {
+            bgcolor: 'background.paper',
+          },
+        }}
       >
         <DialogContent>
           <PDFContent
             document={
               <SalarySheetPDF
-                organization={authObject?.authOrganization?.organization}
+                organization={organization}
                 periodLabel={periodLabel}
                 rows={exportedRows}
                 allowanceTypes={allowanceTypes}
