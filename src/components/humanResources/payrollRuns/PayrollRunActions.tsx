@@ -41,6 +41,15 @@ interface PayFormData {
   credit_ledger_id: number;
 }
 
+interface ConfirmDialogState {
+  open: boolean;
+  action: string | null;
+  title: string;
+  message: string;
+  confirmText: string;
+  color: 'primary' | 'success' | 'error' | 'warning' | 'info';
+}
+
 const money = (value: number | string | undefined) =>
   Number(value || 0).toLocaleString(undefined, {
     minimumFractionDigits: 2,
@@ -75,11 +84,20 @@ export const PayrollRunActions = ({
     credit_ledger_id: 0,
   });
 
+  const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState>({
+    open: false,
+    action: null,
+    title: '',
+    message: '',
+    confirmText: '',
+    color: 'primary',
+  });
+
   // Fetch preview data
   const { data: previewData, isLoading: isPreviewLoading, refetch: refetchPreview } = useQuery({
     queryKey: ['previewPayrollRunEmployees', payrollRunId],
     queryFn: () => humanResourcesServices.previewPayrollRun({ id: payrollRunId }),
-    enabled: false, // Don't fetch on mount, only when preview is clicked
+    enabled: false,
   });
 
   const previewRows = previewData?.data?.rows || previewData?.rows || [];
@@ -91,22 +109,36 @@ export const PayrollRunActions = ({
         setOpenPreviewDialog(true);
         break;
       case 'submit':
-        if (window.confirm(`Are you sure you want to submit "${runLabel}" for approval?`)) {
-          onAction('submit');
-        }
+        setConfirmDialog({
+          open: true,
+          action: 'submit',
+          title: 'Submit Payroll Run',
+          message: `Are you sure you want to submit "${runLabel}" for approval? This will save all payslips.`,
+          confirmText: 'Submit',
+          color: 'primary',
+        });
         break;
       case 'delete':
-        if (window.confirm(`Are you sure you want to delete "${runLabel}"? This action cannot be undone.`)) {
-          onAction('delete');
-        }
+        setConfirmDialog({
+          open: true,
+          action: 'delete',
+          title: 'Delete Payroll Run',
+          message: `Are you sure you want to delete "${runLabel}"? This action cannot be undone.`,
+          confirmText: 'Delete',
+          color: 'error',
+        });
         break;
       case 'approve':
-        if (window.confirm(hasChain 
-          ? `Are you sure you want to approve this level for "${runLabel}"?`
-          : `Are you sure you want to approve "${runLabel}"? This action cannot be undone.`
-        )) {
-          onAction('approve');
-        }
+        setConfirmDialog({
+          open: true,
+          action: 'approve',
+          title: hasChain ? 'Approve Level' : 'Approve Payroll Run',
+          message: hasChain 
+            ? `Are you sure you want to approve this level for "${runLabel}"?`
+            : `Are you sure you want to approve "${runLabel}"? This action cannot be undone.`,
+          confirmText: 'Approve',
+          color: 'success',
+        });
         break;
       case 'post':
         setOpenPostDialog(true);
@@ -117,6 +149,17 @@ export const PayrollRunActions = ({
       default:
         break;
     }
+  };
+
+  const handleConfirmAction = () => {
+    if (confirmDialog.action) {
+      onAction(confirmDialog.action);
+    }
+    setConfirmDialog({ ...confirmDialog, open: false });
+  };
+
+  const handleCloseConfirm = () => {
+    setConfirmDialog({ ...confirmDialog, open: false });
   };
 
   const handlePostConfirm = () => {
@@ -146,11 +189,12 @@ export const PayrollRunActions = ({
     <>
       <Stack direction="row" spacing={1} mb={2} justifyContent="flex-end" alignItems="center" flexWrap="wrap" useFlexGap>
         {/* 1. PREVIEW - Always visible */}
-        <Tooltip title="Preview">
+        <Tooltip title="Preview Salary Sheet">
           <IconButton 
             size="small" 
             onClick={() => handleActionClick('preview')} 
             disabled={isPreviewLoading}
+            color="info"
           >
             {isPreviewLoading ? <CircularProgress size={18} /> : <PreviewOutlined fontSize="small" />}
           </IconButton>
@@ -163,6 +207,7 @@ export const PayrollRunActions = ({
               size="small" 
               onClick={() => handleActionClick('submit')} 
               disabled={isSubmitting} 
+              color="primary"
             >
               {isSubmitting ? <CircularProgress size={18} /> : <SendOutlined fontSize="small" />}
             </IconButton>
@@ -176,6 +221,7 @@ export const PayrollRunActions = ({
               size="small" 
               onClick={() => handleActionClick('approve')} 
               disabled={isApproving} 
+              color="success"
             >
               {isApproving ? <CircularProgress size={18} /> : <CheckCircleOutline fontSize="small" />}
             </IconButton>
@@ -189,7 +235,11 @@ export const PayrollRunActions = ({
               size="small" 
               onClick={() => handleActionClick('post')} 
               disabled={isPosting} 
+              color="primary"
               sx={{ 
+                bgcolor: 'primary.main', 
+                color: 'white',
+                '&:hover': { bgcolor: 'primary.dark' },
                 '&.Mui-disabled': { bgcolor: 'action.disabledBackground', color: 'action.disabled' }
               }}
             >
@@ -241,6 +291,53 @@ export const PayrollRunActions = ({
           </Tooltip>
         )}
       </Stack>
+
+      {/* Confirmation Dialog */}
+      <Dialog
+        open={confirmDialog.open}
+        onClose={handleCloseConfirm}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          <Typography variant="h6" component="div" fontWeight={600}>
+            {confirmDialog.title}
+          </Typography>
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary">
+            {confirmDialog.message}
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button 
+            onClick={handleCloseConfirm} 
+            variant="outlined"
+            size="small"
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color={confirmDialog.color}
+            size="small"
+            onClick={handleConfirmAction}
+            disabled={
+              (confirmDialog.action === 'submit' && isSubmitting) ||
+              (confirmDialog.action === 'delete' && isDeleting) ||
+              (confirmDialog.action === 'approve' && isApproving)
+            }
+          >
+            {(confirmDialog.action === 'submit' && isSubmitting) ||
+            (confirmDialog.action === 'delete' && isDeleting) ||
+            (confirmDialog.action === 'approve' && isApproving) ? (
+              <CircularProgress size={18} color="inherit" />
+            ) : (
+              confirmDialog.confirmText
+            )}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Preview Dialog */}
       <Dialog
