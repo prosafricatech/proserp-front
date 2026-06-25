@@ -73,11 +73,10 @@ const PayrollRunsListItem = ({ payrollRun }: { payrollRun: PayrollRunType }) => 
   };
 
   // Fetch preview data
-  const { data: previewData, isLoading: isLoadingPreview, refetch: refetchPreview, isFetching: isRefetching } = useQuery({
+  const { data: previewData, isLoading: isLoadingPreview, isFetching: isRefetching } = useQuery({
     queryKey: ['previewPayrollRunEmployees', payrollRun.id],
     queryFn: () => humanResourcesServices.previewPayrollRun({ id: payrollRun.id }),
     enabled: expanded,
-    staleTime: 1000 * 60 * 5,
   });
 
   const previewRows = previewData?.data?.rows || previewData?.rows || [];
@@ -87,7 +86,6 @@ const PayrollRunsListItem = ({ payrollRun }: { payrollRun: PayrollRunType }) => 
     queryKey: ['payrollRunDetails', payrollRun.id],
     queryFn: () => humanResourcesServices.showPayrollRun(payrollRun.id),
     enabled: expanded,
-    staleTime: 1000 * 60 * 5,
   });
 
   const runDetails = runDetailsData?.data || runDetailsData || payrollRun;

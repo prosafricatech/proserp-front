@@ -83,8 +83,6 @@ interface PayrollPeriodsListItemProps {
 }
 
 const PayrollPeriodsListItem = ({ payrollPeriod }: PayrollPeriodsListItemProps) => {
-  const router = useRouter();
-  const lang = useLanguage();
   const queryClient = useQueryClient();
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
