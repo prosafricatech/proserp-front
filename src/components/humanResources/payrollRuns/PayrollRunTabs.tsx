@@ -704,7 +704,7 @@ export const ApprovalsTab = ({ hasChain, approvalChain, approvals }: ApprovalsTa
               )}
             </Box>
             <Chip
-              label={isApproved ? 'Approved' : isRejected ? 'Rejected' : isPending ? 'Pending' : 'Unknown'}
+              label={isApproved ? 'Approved' : isRejected ? 'Rejected' : isPending ? 'Pending' : ''}
               color={isApproved ? 'success' : isRejected ? 'error' : isPending ? 'warning' : 'default'}
               size="small"
             />

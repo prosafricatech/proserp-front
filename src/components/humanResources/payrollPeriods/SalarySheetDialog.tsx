@@ -101,13 +101,13 @@ function slug(text: string) {
 }
 
 function getEmployeeName(run: PayrollRunType) {
-  if (!run.employee) return 'Unknown Employee';
+  if (!run.employee) return '';
   const employee = run.employee as any;
   if (employee.name) return employee.name;
   const firstName = run.employee.first_name || '';
   const lastName = run.employee.last_name || '';
   const fullName = `${firstName} ${lastName}`.trim();
-  return fullName || 'Unknown Employee';
+  return fullName;
 }
 
 function getEmployeeNumber(run: PayrollRunType) {
@@ -357,7 +357,6 @@ const SalarySheetDialog = ({
                       sx={{
                         textAlign: 'center',
                         fontWeight: 700,
-                        backgroundColor: theme.palette.grey[100],
                         border: '1px solid',
                         borderColor: 'divider',
                         fontSize: '0.9rem',
@@ -756,9 +755,6 @@ const SalarySheetDialog = ({
 
                   {/* Totals Row */}
                   <TableRow
-                    sx={{
-                      backgroundColor: theme.palette.grey[100],
-                    }}
                   >
                     <TableCell
                       colSpan={4}
@@ -766,6 +762,8 @@ const SalarySheetDialog = ({
                         fontWeight: 700,
                         textAlign: 'center',
                         borderTop: '2px solid',
+                        borderLeft: '2px solid',
+                        borderRight: '2px solid',
                         borderColor: 'divider',
                       }}
                     >
@@ -777,6 +775,7 @@ const SalarySheetDialog = ({
                         fontWeight: 700,
                         borderTop: '2px solid',
                         borderColor: 'divider',
+                        borderRight: '0.001px solid white',
                       }}
                     >
                       {fmt(totals.basicSalary)}
@@ -790,6 +789,7 @@ const SalarySheetDialog = ({
                           fontWeight: 700,
                           borderTop: '2px solid',
                           borderColor: 'divider',
+                          borderRight: '0.001px solid white',
                         }}
                       >
                         {fmt(amount)}
@@ -802,6 +802,7 @@ const SalarySheetDialog = ({
                         fontWeight: 700,
                         borderTop: '2px solid',
                         borderColor: 'divider',
+                        borderRight: '0.001px solid white',
                       }}
                     >
                       {fmt(totals.grossSalary)}
@@ -815,6 +816,7 @@ const SalarySheetDialog = ({
                           fontWeight: 700,
                           borderTop: '2px solid',
                           borderColor: 'divider',
+                          borderRight: '0.001px solid white',
                         }}
                       >
                         {fmt(amount)}
@@ -827,6 +829,7 @@ const SalarySheetDialog = ({
                         fontWeight: 700,
                         borderTop: '2px solid',
                         borderColor: 'divider',
+                        borderRight: '0.001px solid white',
                       }}
                     >
                       {fmt(totals.paye)}
@@ -838,6 +841,7 @@ const SalarySheetDialog = ({
                         fontWeight: 700,
                         borderTop: '2px solid',
                         borderColor: 'divider',
+                        borderRight: '0.001px solid white',
                       }}
                     >
                       {fmt(totals.netSalary)}
@@ -851,6 +855,7 @@ const SalarySheetDialog = ({
                           fontWeight: 700,
                           borderTop: '2px solid',
                           borderColor: 'divider',
+                          borderRight: '0.001px solid white',
                         }}
                       >
                         {fmt(amount)}
@@ -863,6 +868,7 @@ const SalarySheetDialog = ({
                         fontWeight: 700,
                         borderTop: '2px solid',
                         borderColor: 'divider',
+                        borderRight: '0.001px solid white',
                       }}
                     >
                       {fmt(totals.totalEmployerCost)}

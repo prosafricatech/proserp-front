@@ -154,7 +154,7 @@ const PayslipDialog = ({ open, onClose, runId, periodId }: PayslipDialogProps) =
                           {authObject?.authOrganization?.organization?.name || 'Organization'}
                         </Typography>
                         <Typography variant='body2' color='text.secondary'>
-                          {name || 'Unknown Employee'}
+                          {name || ''}
                         </Typography>
                       </Box>
                     </Stack>
