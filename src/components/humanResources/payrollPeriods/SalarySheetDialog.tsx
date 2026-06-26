@@ -8,8 +8,10 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { LoadingButton } from '@mui/lab';
 import {
+  Alert,
   Box,
   Button,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -23,8 +25,6 @@ import {
   TableRow,
   Typography,
   useMediaQuery,
-  Alert,
-  CircularProgress,
   useTheme,
 } from '@mui/material';
 import { useState } from 'react';
@@ -224,10 +224,8 @@ const SalarySheetDialog = ({
         totalDeductions: sum.totalDeductions + computed.totalDeductions,
         netSalary: sum.netSalary + computed.netSalary,
         totalEmployerContributions:
-          sum.totalEmployerContributions +
-          computed.totalEmployerContributions,
-        totalEmployerCost:
-          sum.totalEmployerCost + computed.totalEmployerCost,
+          sum.totalEmployerContributions + computed.totalEmployerContributions,
+        totalEmployerCost: sum.totalEmployerCost + computed.totalEmployerCost,
         allowanceByType: sum.allowanceByType.map(
           (value, index) => value + allowanceByType[index]
         ),
@@ -333,14 +331,19 @@ const SalarySheetDialog = ({
         </DialogTitle>
         <DialogContent>
           {isLoading ? (
-            <Box display="flex" justifyContent="center" alignItems="center" py={8}>
+            <Box
+              display='flex'
+              justifyContent='center'
+              alignItems='center'
+              py={8}
+            >
               <CircularProgress />
-              <Typography variant="body2" color="text.secondary" sx={{ ml: 2 }}>
+              <Typography variant='body2' color='text.secondary' sx={{ ml: 2 }}>
                 Generating salary sheet...
               </Typography>
             </Box>
           ) : rows.length === 0 ? (
-            <Alert severity="info">
+            <Alert severity='info'>
               No employees found for this payroll run.
             </Alert>
           ) : (
@@ -364,8 +367,8 @@ const SalarySheetDialog = ({
                     </TableCell>
                     <TableCell
                       colSpan={
-                        2 + 
-                        (hasAllowances ? allowanceTypes.length : 0) + 
+                        2 +
+                        (hasAllowances ? allowanceTypes.length : 0) +
                         (hasDeductions ? deductionTypes.length + 1 : 0)
                       }
                       sx={{
@@ -380,8 +383,7 @@ const SalarySheetDialog = ({
                     </TableCell>
                     <TableCell
                       colSpan={
-                        2 + 
-                        (hasContributions ? contributionTypes.length : 0)
+                        2 + (hasContributions ? contributionTypes.length : 0)
                       }
                       sx={{
                         textAlign: 'center',
@@ -397,13 +399,45 @@ const SalarySheetDialog = ({
 
                   {/* Sub-headers - Allowances, Deductions, Contributions */}
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 500, border: '1px solid', borderColor: 'divider' }}>S/N</TableCell>
-                    <TableCell sx={{ fontWeight: 500, border: '1px solid', borderColor: 'divider' }}>Employee</TableCell>
-                    <TableCell sx={{ fontWeight: 500, border: '1px solid', borderColor: 'divider' }}>Employee No.</TableCell>
-                    <TableCell sx={{ fontWeight: 500, border: '1px solid', borderColor: 'divider' }}>Designation</TableCell>
-                    <TableCell 
-                      align="right" 
-                      sx={{ 
+                    <TableCell
+                      sx={{
+                        fontWeight: 500,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                      }}
+                    >
+                      S/N
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        fontWeight: 500,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                      }}
+                    >
+                      Employee
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        fontWeight: 500,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                      }}
+                    >
+                      Employee No.
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        fontWeight: 500,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                      }}
+                    >
+                      Designation
+                    </TableCell>
+                    <TableCell
+                      align='right'
+                      sx={{
                         fontWeight: 500,
                         border: '1px solid',
                         borderColor: 'divider',
@@ -411,11 +445,11 @@ const SalarySheetDialog = ({
                     >
                       Basic
                     </TableCell>
-                    
+
                     {hasAllowances && (
                       <TableCell
                         colSpan={allowanceTypes.length}
-                        align="center"
+                        align='center'
                         sx={{
                           fontWeight: 500,
                           border: '1px solid',
@@ -425,10 +459,10 @@ const SalarySheetDialog = ({
                         Allowances
                       </TableCell>
                     )}
-                    
-                    <TableCell 
-                      align="right" 
-                      sx={{ 
+
+                    <TableCell
+                      align='right'
+                      sx={{
                         fontWeight: 500,
                         border: '1px solid',
                         borderColor: 'divider',
@@ -436,11 +470,11 @@ const SalarySheetDialog = ({
                     >
                       Gross
                     </TableCell>
-                    
+
                     {hasDeductions && (
                       <TableCell
                         colSpan={deductionTypes.length + 1}
-                        align="center"
+                        align='center'
                         sx={{
                           fontWeight: 500,
                           border: '1px solid',
@@ -450,13 +484,22 @@ const SalarySheetDialog = ({
                         Deductions
                       </TableCell>
                     )}
-                    
-                    <TableCell align="right" sx={{ fontWeight: 500, border: '1px solid', borderColor: 'divider' }}>Net Payable</TableCell>
-                    
+
+                    <TableCell
+                      align='right'
+                      sx={{
+                        fontWeight: 500,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                      }}
+                    >
+                      Net Payable
+                    </TableCell>
+
                     {hasContributions && (
                       <TableCell
                         colSpan={contributionTypes.length + 1}
-                        align="center"
+                        align='center'
                         sx={{
                           fontWeight: 500,
                           border: '1px solid',
@@ -470,19 +513,26 @@ const SalarySheetDialog = ({
 
                   {/* Column Headers */}
                   <TableRow>
-                    <TableCell sx={{ border: '1px solid', borderColor: 'divider' }} />
-                    <TableCell sx={{ border: '1px solid', borderColor: 'divider' }} />
-                    <TableCell sx={{ border: '1px solid', borderColor: 'divider' }} />
-                    <TableCell sx={{ border: '1px solid', borderColor: 'divider' }} />
-                    <TableCell 
-                      align="right"
+                    <TableCell
+                      sx={{ border: '1px solid', borderColor: 'divider' }}
+                    />
+                    <TableCell
+                      sx={{ border: '1px solid', borderColor: 'divider' }}
+                    />
+                    <TableCell
+                      sx={{ border: '1px solid', borderColor: 'divider' }}
+                    />
+                    <TableCell
+                      sx={{ border: '1px solid', borderColor: 'divider' }}
+                    />
+                    <TableCell
+                      align='right'
                       sx={{
                         border: '1px solid',
                         borderColor: 'divider',
-                      
                       }}
                     />
-                    
+
                     {allowanceTypes.map((type, idx) => (
                       <TableCell
                         key={`allowance-header-${type.id || type.name}-${idx}`}
@@ -490,20 +540,19 @@ const SalarySheetDialog = ({
                           border: '1px solid',
                           borderColor: 'divider',
                           fontWeight: 450,
-                        
                         }}
                       >
                         {type.name || 'Allowance'}
                       </TableCell>
                     ))}
-                    
-                    <TableCell 
+
+                    <TableCell
                       sx={{
                         border: '1px solid',
                         borderColor: 'divider',
                       }}
                     />
-                    
+
                     {deductionTypes.map((type, idx) => (
                       <TableCell
                         key={`deduction-header-${type.id || type.name}-${idx}`}
@@ -516,8 +565,8 @@ const SalarySheetDialog = ({
                         {type.name || 'Deduction'}
                       </TableCell>
                     ))}
-                    
-                    <TableCell 
+
+                    <TableCell
                       sx={{
                         border: '1px solid',
                         borderColor: 'divider',
@@ -526,9 +575,15 @@ const SalarySheetDialog = ({
                     >
                       PAYE
                     </TableCell>
-                    
-                    <TableCell sx={{ fontWeight: 400, border: '1px solid', borderColor: 'divider' }} />
-                    
+
+                    <TableCell
+                      sx={{
+                        fontWeight: 400,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                      }}
+                    />
+
                     {contributionTypes.map((type, idx) => (
                       <TableCell
                         key={`contribution-header-${type.id || type.name}-${idx}`}
@@ -536,14 +591,19 @@ const SalarySheetDialog = ({
                           fontWeight: 450,
                           border: '1px solid',
                           borderColor: 'divider',
-                        
                         }}
                       >
                         {type.name || 'Contribution'}
                       </TableCell>
                     ))}
-                    
-                    <TableCell sx={{ fontWeight: 450, border: '1px solid', borderColor: 'divider' }}>
+
+                    <TableCell
+                      sx={{
+                        fontWeight: 450,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                      }}
+                    >
                       Total Empr. Cost
                     </TableCell>
                   </TableRow>
@@ -559,10 +619,10 @@ const SalarySheetDialog = ({
                     const isEven = index % 2 === 0;
 
                     return (
-                      <TableRow 
+                      <TableRow
                         key={`salary-row-${run.id || index}-${index}`}
                         sx={{
-                          backgroundColor: isEven 
+                          backgroundColor: isEven
                             ? theme.palette.background.paper
                             : theme.palette.action.hover,
                           '&:hover': {
@@ -570,12 +630,36 @@ const SalarySheetDialog = ({
                           },
                         }}
                       >
-                        <TableCell sx={{ border: '1px solid', borderColor: 'divider' }}>{index + 1}</TableCell>
-                        <TableCell sx={{ border: '1px solid', borderColor: 'divider' }}>{name}</TableCell>
-                        <TableCell sx={{ color: 'text.secondary', border: '1px solid', borderColor: 'divider' }}>{employeeNumber}</TableCell>
-                        <TableCell sx={{ color: 'text.secondary', border: '1px solid', borderColor: 'divider' }}>{designation}</TableCell>
-                        <TableCell 
-                          align="right"
+                        <TableCell
+                          sx={{ border: '1px solid', borderColor: 'divider' }}
+                        >
+                          {index + 1}
+                        </TableCell>
+                        <TableCell
+                          sx={{ border: '1px solid', borderColor: 'divider' }}
+                        >
+                          {name}
+                        </TableCell>
+                        <TableCell
+                          sx={{
+                            color: 'text.secondary',
+                            border: '1px solid',
+                            borderColor: 'divider',
+                          }}
+                        >
+                          {employeeNumber}
+                        </TableCell>
+                        <TableCell
+                          sx={{
+                            color: 'text.secondary',
+                            border: '1px solid',
+                            borderColor: 'divider',
+                          }}
+                        >
+                          {designation}
+                        </TableCell>
+                        <TableCell
+                          align='right'
                           sx={{
                             border: '1px solid',
                             borderColor: 'divider',
@@ -587,7 +671,7 @@ const SalarySheetDialog = ({
                         {allowanceTypes.map((type, typeIdx) => (
                           <TableCell
                             key={`allowance-value-${run.id || index}-${type.id || type.name}-${typeIdx}`}
-                            align="right"
+                            align='right'
                             sx={{
                               border: '1px solid',
                               borderColor: 'divider',
@@ -597,8 +681,8 @@ const SalarySheetDialog = ({
                           </TableCell>
                         ))}
 
-                        <TableCell 
-                          align="right"
+                        <TableCell
+                          align='right'
                           sx={{
                             fontWeight: 400,
                             border: '1px solid',
@@ -611,7 +695,7 @@ const SalarySheetDialog = ({
                         {deductionTypes.map((type, typeIdx) => (
                           <TableCell
                             key={`deduction-value-${run.id || index}-${type.id || type.name}-${typeIdx}`}
-                            align="right"
+                            align='right'
                             sx={{
                               border: '1px solid',
                               borderColor: 'divider',
@@ -621,8 +705,8 @@ const SalarySheetDialog = ({
                           </TableCell>
                         ))}
 
-                        <TableCell 
-                          align="right"
+                        <TableCell
+                          align='right'
                           sx={{
                             border: '1px solid',
                             borderColor: 'divider',
@@ -632,9 +716,13 @@ const SalarySheetDialog = ({
                           {fmt(computed.paye)}
                         </TableCell>
 
-                        <TableCell 
-                          align="right"
-                          sx={{ fontWeight: 400, border: '1px solid', borderColor: 'divider' }}
+                        <TableCell
+                          align='right'
+                          sx={{
+                            fontWeight: 400,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                          }}
                         >
                           {fmt(computed.netSalary)}
                         </TableCell>
@@ -642,7 +730,7 @@ const SalarySheetDialog = ({
                         {contributionTypes.map((type, typeIdx) => (
                           <TableCell
                             key={`contribution-value-${run.id || index}-${type.id || type.name}-${typeIdx}`}
-                            align="right"
+                            align='right'
                             sx={{
                               border: '1px solid',
                               borderColor: 'divider',
@@ -652,9 +740,13 @@ const SalarySheetDialog = ({
                           </TableCell>
                         ))}
 
-                        <TableCell 
-                          align="right"
-                          sx={{ fontWeight: 400, border: '1px solid', borderColor: 'divider' }}
+                        <TableCell
+                          align='right'
+                          sx={{
+                            fontWeight: 400,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                          }}
                         >
                           {fmt(computed.totalEmployerCost)}
                         </TableCell>
@@ -680,7 +772,7 @@ const SalarySheetDialog = ({
                       TOTALS
                     </TableCell>
                     <TableCell
-                      align="right"
+                      align='right'
                       sx={{
                         fontWeight: 700,
                         borderTop: '2px solid',
@@ -693,7 +785,7 @@ const SalarySheetDialog = ({
                     {totals.allowanceByType.map((amount, idx) => (
                       <TableCell
                         key={`allowance-total-${idx}`}
-                        align="right"
+                        align='right'
                         sx={{
                           fontWeight: 700,
                           borderTop: '2px solid',
@@ -705,7 +797,7 @@ const SalarySheetDialog = ({
                     ))}
 
                     <TableCell
-                      align="right"
+                      align='right'
                       sx={{
                         fontWeight: 700,
                         borderTop: '2px solid',
@@ -718,7 +810,7 @@ const SalarySheetDialog = ({
                     {totals.preTaxDeductionByType.map((amount, idx) => (
                       <TableCell
                         key={`pre-tax-total-${idx}`}
-                        align="right"
+                        align='right'
                         sx={{
                           fontWeight: 700,
                           borderTop: '2px solid',
@@ -730,7 +822,7 @@ const SalarySheetDialog = ({
                     ))}
 
                     <TableCell
-                      align="right"
+                      align='right'
                       sx={{
                         fontWeight: 700,
                         borderTop: '2px solid',
@@ -741,7 +833,7 @@ const SalarySheetDialog = ({
                     </TableCell>
 
                     <TableCell
-                      align="right"
+                      align='right'
                       sx={{
                         fontWeight: 700,
                         borderTop: '2px solid',
@@ -754,7 +846,7 @@ const SalarySheetDialog = ({
                     {totals.contributionByType.map((amount, idx) => (
                       <TableCell
                         key={`contribution-total-${idx}`}
-                        align="right"
+                        align='right'
                         sx={{
                           fontWeight: 700,
                           borderTop: '2px solid',
@@ -766,7 +858,7 @@ const SalarySheetDialog = ({
                     ))}
 
                     <TableCell
-                      align="right"
+                      align='right'
                       sx={{
                         fontWeight: 700,
                         borderTop: '2px solid',
@@ -783,9 +875,9 @@ const SalarySheetDialog = ({
         </DialogContent>
 
         <DialogActions>
-          <Button 
-            variant='outlined' 
-            onClick={() => setOpenPdfDialog(true)} 
+          <Button
+            variant='outlined'
+            onClick={() => setOpenPdfDialog(true)}
             disabled={rows.length === 0 || isLoading}
           >
             Print

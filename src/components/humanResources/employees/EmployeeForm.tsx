@@ -104,8 +104,6 @@ const EmployeeForm = ({
     }
   }, [fetchedCostCenters, employee?.cost_center_id]);
 
-  // getDefaultCostCenter();
-
   // Date helper
   const formatDateToAPI = (date: string | null | undefined): string | null => {
     if (!date) return null;

@@ -9,10 +9,10 @@ import { MenuItemProps } from '@jumbo/types';
 import {
   CheckCircleOutline,
   DeleteOutlined,
+  DownloadOutlined,
   MoreHorizOutlined,
   PaidOutlined,
   PreviewOutlined,
-  DownloadOutlined,
 } from '@mui/icons-material';
 import {
   Alert,
@@ -32,9 +32,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import { useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
+import SalarySheetDialog from '../payrollPeriods/SalarySheetDialog';
 import { PayrollRunType } from './PayrollRunType';
 import { getPayslipCalculations } from './payslipCalculations';
-import SalarySheetDialog from '../payrollPeriods/SalarySheetDialog';
 
 const getErrorMessage = (error: any) => {
   const validationErrors = error?.response?.data?.validation_errors;
@@ -116,10 +116,12 @@ const PayrollRunItemAction = ({
   });
 
   // Fetch allowance types for salary sheet
-  const { data: allowanceTypes } = useQuery({
+  const { data: allowanceTypes, isLoading: allowanceLoading } = useQuery({
     queryKey: ['allowanceTypesForSalarySheetAction'],
     queryFn: async () => {
-      const response = await humanResourcesServices.getAllowanceTypesList({ limit: 100 });
+      const response = await humanResourcesServices.getAllowanceTypesList({
+        limit: 100,
+      });
       return response?.data || [];
     },
     enabled: openSalarySheetDialog,
@@ -127,10 +129,12 @@ const PayrollRunItemAction = ({
   });
 
   // Fetch deduction types for salary sheet
-  const { data: deductionTypes } = useQuery({
+  const { data: deductionTypes, isLoading: deductionLoading } = useQuery({
     queryKey: ['deductionTypesForSalarySheetAction'],
     queryFn: async () => {
-      const response = await humanResourcesServices.getDeductionTypesList({ limit: 100 });
+      const response = await humanResourcesServices.getDeductionTypesList({
+        limit: 100,
+      });
       return response?.data || [];
     },
     enabled: openSalarySheetDialog,
@@ -138,10 +142,13 @@ const PayrollRunItemAction = ({
   });
 
   // Fetch contribution types for salary sheet
-  const { data: contributionTypes } = useQuery({
+  const { data: contributionTypes, isLoading: contributionLoading } = useQuery({
     queryKey: ['contributionTypesForSalarySheetAction'],
     queryFn: async () => {
-      const response = await humanResourcesServices.getEmployerContributionTypesList({ limit: 100 });
+      const response =
+        await humanResourcesServices.getEmployerContributionTypesList({
+          limit: 100,
+        });
       return response?.data || [];
     },
     enabled: openSalarySheetDialog,
@@ -151,7 +158,8 @@ const PayrollRunItemAction = ({
   // Fetch preview data for salary sheet
   const { data: previewData, refetch: refetchPreview } = useQuery({
     queryKey: ['previewPayrollRunForSalarySheetAction', payrollRun.id],
-    queryFn: () => humanResourcesServices.previewPayrollRun({ id: payrollRun.id }),
+    queryFn: () =>
+      humanResourcesServices.previewPayrollRun({ id: payrollRun.id }),
     enabled: false,
     staleTime: 0,
   });
@@ -162,8 +170,11 @@ const PayrollRunItemAction = ({
 
     try {
       // Fetch preview data
-      const previewResponse = await humanResourcesServices.previewPayrollRun({ id: payrollRun.id });
-      const previewRows = previewResponse?.data?.rows || previewResponse?.rows || [];
+      const previewResponse = await humanResourcesServices.previewPayrollRun({
+        id: payrollRun.id,
+      });
+      const previewRows =
+        previewResponse?.data?.rows || previewResponse?.rows || [];
 
       // Build salary sheet rows
       const salaryRows = previewRows.map((row: any) => {
@@ -190,14 +201,28 @@ const PayrollRunItemAction = ({
 
       // Get period label
       let periodLabel = payrollRun.cost_center?.name || 'Company-wide Run';
-      
+
       if (payrollRun?.payroll_period) {
-        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        const monthNames = [
+          'January',
+          'February',
+          'March',
+          'April',
+          'May',
+          'June',
+          'July',
+          'August',
+          'September',
+          'October',
+          'November',
+          'December',
+        ];
         const monthIndex = payrollRun.payroll_period.month;
         // Ensure month is within valid range (1-12)
-        const monthName = (monthIndex && monthIndex >= 1 && monthIndex <= 12) 
-          ? monthNames[monthIndex - 1] 
-          : 'Unknown';
+        const monthName =
+          monthIndex && monthIndex >= 1 && monthIndex <= 12
+            ? monthNames[monthIndex - 1]
+            : 'Unknown';
         const year = payrollRun.payroll_period.year || 'Unknown';
         periodLabel = `${monthName} ${year} - ${periodLabel}`;
       }
@@ -321,38 +346,32 @@ const PayrollRunItemAction = ({
   const menuItems: MenuItemProps[] = [];
 
   // Preview action - always show
-  menuItems.push(
-    {
-      icon: <PreviewOutlined color="primary" />,
-      title: 'Preview Salary Sheet',
-      action: 'preview',
-    },
-  );
+  menuItems.push({
+    icon: <PreviewOutlined color='primary' />,
+    title: 'Preview Salary Sheet',
+    action: 'preview',
+  });
 
   if (isFromPayrollPeriodsList) {
     if (isDraft) {
-      menuItems.push(
-        {
-          icon: <DeleteOutlined color="error" />,
-          title: 'Delete',
-          action: 'delete',
-        }
-      );
+      menuItems.push({
+        icon: <DeleteOutlined color='error' />,
+        title: 'Delete',
+        action: 'delete',
+      });
     }
   } else {
     if (isDraft) {
-      menuItems.push(
-        {
-          icon: <DeleteOutlined color="error" />,
-          title: 'Delete',
-          action: 'delete',
-        }
-      );
+      menuItems.push({
+        icon: <DeleteOutlined color='error' />,
+        title: 'Delete',
+        action: 'delete',
+      });
     }
 
     if (isSubmitted) {
       menuItems.push({
-        icon: <CheckCircleOutline color="success" />,
+        icon: <CheckCircleOutline color='success' />,
         title: hasApprovalChain ? 'Approve Level' : 'Approve',
         action: hasApprovalChain ? 'chainApprove' : 'approve',
       });
@@ -360,7 +379,7 @@ const PayrollRunItemAction = ({
 
     if (isPosted && !isPaid) {
       menuItems.push({
-        icon: <PaidOutlined color="success" />,
+        icon: <PaidOutlined color='success' />,
         title: 'Pay Employees',
         action: 'pay',
       });
@@ -369,7 +388,7 @@ const PayrollRunItemAction = ({
     // Add Export option for paid/approved/posted statuses
     if (isPaid || isPosted || isApproved) {
       menuItems.push({
-        icon: <DownloadOutlined color="primary" />,
+        icon: <DownloadOutlined color='primary' />,
         title: 'Export Payslip',
         action: 'export',
       });
@@ -452,8 +471,8 @@ const PayrollRunItemAction = ({
 
       <JumboDdMenu
         icon={
-          <Tooltip title="Actions">
-            <MoreHorizOutlined fontSize="small" />
+          <Tooltip title='Actions'>
+            <MoreHorizOutlined fontSize='small' />
           </Tooltip>
         }
         menuItems={menuItems}
@@ -465,12 +484,12 @@ const PayrollRunItemAction = ({
         open={openChainApprovalDialog}
         onClose={() => setOpenChainApprovalDialog(false)}
         fullWidth
-        maxWidth="sm"
+        maxWidth='sm'
       >
         <DialogTitle>Payroll Approval</DialogTitle>
         <DialogContent>
           <Stack spacing={2} mt={1}>
-            <Alert severity="info">
+            <Alert severity='info'>
               Pending level:{' '}
               {getPendingPayrollLevel(payrollRun)?.name ||
                 getPendingPayrollLevel(payrollRun)?.level_name ||
@@ -479,18 +498,18 @@ const PayrollRunItemAction = ({
             <TextField
               select
               SelectProps={{ native: true }}
-              label="Decision"
-              size="small"
+              label='Decision'
+              size='small'
               value={chainStatus}
               onChange={(event) => setChainStatus(event.target.value as any)}
             >
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
-              <option value="on hold">On Hold</option>
+              <option value='approved'>Approved</option>
+              <option value='rejected'>Rejected</option>
+              <option value='on hold'>On Hold</option>
             </TextField>
             <TextField
-              label="Remarks"
-              size="small"
+              label='Remarks'
+              size='small'
               multiline
               minRows={2}
               value={chainRemarks}
@@ -511,7 +530,7 @@ const PayrollRunItemAction = ({
             Cancel
           </Button>
           <Button
-            variant="contained"
+            variant='contained'
             onClick={() => approveChainPayrollRun()}
             disabled={
               isApprovingChain || !getPendingPayrollLevel(payrollRun)?.id
@@ -527,16 +546,19 @@ const PayrollRunItemAction = ({
         open={openPostDialog}
         onClose={() => setOpenPostDialog(false)}
         fullWidth
-        maxWidth="xs"
+        maxWidth='xs'
       >
-        <DialogTitle sx={{ textAlign: 'center' }}>Post Payroll Transactions</DialogTitle>
+        <DialogTitle sx={{ textAlign: 'center' }}>
+          Post Payroll Transactions
+        </DialogTitle>
         <DialogContent>
           <Stack spacing={2} mt={1}>
-            <Typography variant="body2" color="text.secondary">
-              Posting records payroll in the general ledger. It does not pay employees yet.
+            <Typography variant='body2' color='text.secondary'>
+              Posting records payroll in the general ledger. It does not pay
+              employees yet.
             </Typography>
             <LedgerSelect
-              label="Salary Expense Account"
+              label='Salary Expense Account'
               allowedGroups={['Expenses']}
               onChange={(ledger: any) =>
                 setPostForm((state) => ({
@@ -546,7 +568,7 @@ const PayrollRunItemAction = ({
               }
             />
             <LedgerSelect
-              label="PAYE Payable Account"
+              label='PAYE Payable Account'
               allowedGroups={['Accounts Payable']}
               onChange={(ledger: any) =>
                 setPostForm((state) => ({
@@ -556,7 +578,7 @@ const PayrollRunItemAction = ({
               }
             />
             <LedgerSelect
-              label="Fallback Employee Payable Account"
+              label='Fallback Employee Payable Account'
               allowedGroups={['Accounts Payable']}
               onChange={(ledger: any) =>
                 setPostForm((state) => ({
@@ -572,7 +594,7 @@ const PayrollRunItemAction = ({
             Cancel
           </Button>
           <Button
-            variant="contained"
+            variant='contained'
             onClick={() => postTransactions()}
             disabled={
               isPosting ||
@@ -591,16 +613,17 @@ const PayrollRunItemAction = ({
         open={openPayDialog}
         onClose={() => setOpenPayDialog(false)}
         fullWidth
-        maxWidth="xs"
+        maxWidth='xs'
       >
         <DialogTitle>Pay Employees</DialogTitle>
         <DialogContent>
           <Stack spacing={2} mt={1}>
-            <Typography variant="body2" color="text.secondary">
-              Select the bank or cash account the payroll payment will come from.
+            <Typography variant='body2' color='text.secondary'>
+              Select the bank or cash account the payroll payment will come
+              from.
             </Typography>
             <LedgerSelect
-              label="Bank or Cash Account"
+              label='Bank or Cash Account'
               onChange={(ledger: any) =>
                 setPayForm({ credit_ledger_id: ledger?.id || 0 })
               }
@@ -612,8 +635,8 @@ const PayrollRunItemAction = ({
             Cancel
           </Button>
           <Button
-            variant="contained"
-            color="success"
+            variant='contained'
+            color='success'
             onClick={() => payPayrollRun()}
             disabled={isPaying || !payForm.credit_ledger_id}
           >
@@ -623,20 +646,27 @@ const PayrollRunItemAction = ({
       </Dialog>
 
       {/* Salary Sheet Dialog */}
-      {salarySheetData && (
-        <SalarySheetDialog
-          open={openSalarySheetDialog}
-          onClose={() => {
-            setOpenSalarySheetDialog(false);
-            setSalarySheetData(null);
-          }}
-          periodLabel={salarySheetData.periodLabel}
-          rows={salarySheetData.rows}
-          allowanceTypes={salarySheetData.allowanceTypes}
-          deductionTypes={salarySheetData.deductionTypes}
-          contributionTypes={salarySheetData.contributionTypes}
-          isLoading={isLoadingSalarySheet}
-        />
+      {salarySheetData &&
+      (allowanceLoading || deductionLoading || contributionLoading) ? (
+        <Dialog open fullWidth>
+          <LinearProgress />
+        </Dialog>
+      ) : (
+        salarySheetData && (
+          <SalarySheetDialog
+            open={openSalarySheetDialog}
+            onClose={() => {
+              setOpenSalarySheetDialog(false);
+              setSalarySheetData(null);
+            }}
+            periodLabel={salarySheetData.periodLabel}
+            rows={salarySheetData.rows}
+            allowanceTypes={allowanceTypes || []}
+            deductionTypes={deductionTypes || []}
+            contributionTypes={contributionTypes || []}
+            isLoading={isLoadingSalarySheet}
+          />
+        )
       )}
     </>
   );
