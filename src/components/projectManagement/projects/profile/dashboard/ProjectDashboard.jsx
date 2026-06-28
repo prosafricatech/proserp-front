@@ -429,7 +429,7 @@ function ProjectDashboard() {
   // fetch liabilities (creditors)
   const params = {
     as_at: dayjs().toISOString(),
-    cost_center_ids: [project?.id],
+    cost_center_ids: [project?.cost_center?.id ?? project?.id],
   };
   const { data: creditors, isLoading: liabilitesLoading } = useQuery({
     queryKey: [project?.id, 'creditors'],
