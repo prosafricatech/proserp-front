@@ -1,7 +1,6 @@
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import {
-  Alert,
   Box,
   Button,
   CircularProgress,
@@ -317,13 +316,9 @@ const PayrollPeriodViewDialog = ({
           >
             <CircularProgress />
             <Typography variant='body2' color='text.secondary' sx={{ ml: 2 }}>
-              Generating salary sheet...
+              Generating Preview...
             </Typography>
           </Box>
-        ) : mappedRows?.length === 0 ? (
-          <Alert severity='info'>
-            No payrollws found for this payroll run.
-          </Alert>
         ) : (
           <TableContainer>
             <Table size='small'>
@@ -333,16 +328,13 @@ const PayrollPeriodViewDialog = ({
                   <TableCell
                     sx={{
                       width: 'fit-content',
-                      textWrap: 'nowrap',
                       textAlign: 'center',
                       fontWeight: 700,
                       border: '1px solid',
                       borderColor: 'divider',
                       fontSize: '0.9rem',
                     }}
-                  >
-                    COST CENTER
-                  </TableCell>
+                  ></TableCell>
                   <TableCell
                     colSpan={4}
                     sx={{
@@ -394,6 +386,7 @@ const PayrollPeriodViewDialog = ({
                       fontWeight: 500,
                       border: '1px solid',
                       borderColor: 'divider',
+                      textWrap: 'nowrap',
                     }}
                   >
                     cost center
@@ -640,7 +633,12 @@ const PayrollPeriodViewDialog = ({
                         {isFirstEmployee && (
                           <TableCell
                             rowSpan={totalEmployees}
-                            sx={{ border: '1px solid', borderColor: 'divider' }}
+                            sx={{
+                              border: '1px solid',
+                              borderColor: 'divider',
+                              textWrap: 'nowrap',
+                              maxWidth: 300,
+                            }}
                           >
                             {row.cost_center?.name || '-'}
                           </TableCell>

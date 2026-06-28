@@ -33,7 +33,10 @@ const SummaryTab = ({
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }),
-    Paye: paye,
+    Paye: paye.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }),
     'Total Allowances': total_allowances.toLocaleString('en-US', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
