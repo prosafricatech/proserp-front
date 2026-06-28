@@ -8,12 +8,14 @@ import { Div } from '@jumbo/shared';
 import { LoadingButton } from '@mui/lab';
 import {
   Button,
+  Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   Grid,
   MenuItem,
   TextField,
+  Typography,
 } from '@mui/material';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
@@ -30,11 +32,15 @@ interface EmployerContributionTypeFormProps {
 
 interface FormData extends Omit<EmployerContributionType, 'id' | 'created_by'> {
   id?: number;
+  apply_scope?: 'none' | 'all' | 'active_contracts';
+  force_update?: boolean;
 }
 
 interface ApiResponse {
   message: string;
   validation_errors?: Record<string, string[] | string>;
+  would_update?: number;
+  would_create?: number;
 }
 
 interface Ledger {
@@ -86,9 +92,21 @@ const EmployerContributionTypeForm = ({
   const [recentlyAddedExpenseLedger, setRecentlyAddedExpenseLedger] =
     useState<Ledger | null>(null);
 
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    data: FormData | null;
+    wouldUpdate: number;
+    wouldCreate: number;
+  }>({
+    open: false,
+    data: null,
+    wouldUpdate: 0,
+    wouldCreate: 0,
+  });
+
   const defaultExpenseValue = useMemo(() => {
     return ungroupedLedgerOptions.find(
-      (ledger) => ledger.id === contributionType?.payable_ledger_id
+      (ledger) => ledger.id === contributionType?.expense_ledger_id
     );
   }, [contributionType, ungroupedLedgerOptions]);
 
@@ -119,19 +137,7 @@ const EmployerContributionTypeForm = ({
       });
     },
     onError: (mutationError) => {
-      let message = 'Something went wrong';
-
-      if (
-        typeof mutationError === 'object' &&
-        mutationError !== null &&
-        'response' in mutationError &&
-        typeof (mutationError as any).response?.data?.message === 'string'
-      ) {
-        message = (mutationError as any).response.data.message;
-      } else if (mutationError instanceof Error) {
-        message = mutationError.message;
-      }
-      enqueueSnackbar(message, { variant: 'error' });
+      handleErrorResponse(mutationError);
     },
   });
 
@@ -151,21 +157,52 @@ const EmployerContributionTypeForm = ({
       });
     },
     onError: (mutationError) => {
-      let message = 'Something went wrong';
-
-      if (
-        typeof mutationError === 'object' &&
-        mutationError !== null &&
-        'response' in mutationError &&
-        typeof (mutationError as any).response?.data?.message === 'string'
-      ) {
-        message = (mutationError as any).response.data.message;
-      } else if (mutationError instanceof Error) {
-        message = mutationError.message;
-      }
-      enqueueSnackbar(message, { variant: 'error' });
+      handleErrorResponse(mutationError);
     },
   });
+
+  const handleErrorResponse = (mutationError: any) => {
+    const responseData = mutationError?.response?.data;
+    
+    // Check if this is a bulk update confirmation error
+    if (responseData?.would_update !== undefined || responseData?.would_create !== undefined) {
+      setConfirmDialog({
+        open: true,
+        data: mutationError?.config?.data ? JSON.parse(mutationError.config.data) : null,
+        wouldUpdate: responseData.would_update || 0,
+        wouldCreate: responseData.would_create || 0,
+      });
+      return;
+    }
+
+    let message = 'Something went wrong';
+    if (
+      typeof mutationError === 'object' &&
+      mutationError !== null &&
+      'response' in mutationError &&
+      typeof (mutationError as any).response?.data?.message === 'string'
+    ) {
+      message = (mutationError as any).response.data.message;
+    } else if (mutationError instanceof Error) {
+      message = mutationError.message;
+    }
+    enqueueSnackbar(message, { variant: 'error' });
+  };
+
+  const handleConfirmBulkUpdate = () => {
+    if (confirmDialog.data) {
+      const dataWithForce = {
+        ...confirmDialog.data,
+        force_update: true,
+      };
+      saveMutation(dataWithForce);
+    }
+    setConfirmDialog({ open: false, data: null, wouldUpdate: 0, wouldCreate: 0 });
+  };
+
+  const handleCancelBulkUpdate = () => {
+    setConfirmDialog({ open: false, data: null, wouldUpdate: 0, wouldCreate: 0 });
+  };
 
   const validationSchema = yup.object({
     id: yup.number().optional(),
@@ -206,6 +243,10 @@ const EmployerContributionTypeForm = ({
     description: yup
       .string()
       .max(500, 'Description cannot exceed 500 characters'),
+    apply_scope: yup
+      .string()
+      .oneOf(['none', 'all', 'active_contracts'])
+      .optional(),
   });
 
   const {
@@ -214,6 +255,7 @@ const EmployerContributionTypeForm = ({
     handleSubmit,
     control,
     reset,
+    watch,
     formState: { errors },
   } = useForm<FormData>({
     resolver: yupResolver(validationSchema) as any,
@@ -227,8 +269,11 @@ const EmployerContributionTypeForm = ({
       payable_ledger_id: contributionType?.payable_ledger_id ?? 0,
       expense_ledger_id: contributionType?.expense_ledger_id ?? 0,
       description: contributionType?.description || '',
+      apply_scope: 'none',
     },
   });
+
+  const applyScope = watch('apply_scope');
 
   useEffect(() => {
     reset({
@@ -241,6 +286,7 @@ const EmployerContributionTypeForm = ({
       expense_ledger_id: contributionType?.expense_ledger_id ?? 0,
       payable_ledger_id: contributionType?.payable_ledger_id ?? 0,
       description: contributionType?.description || '',
+      apply_scope: 'none',
     });
   }, [contributionType, reset]);
 
@@ -483,6 +529,37 @@ const EmployerContributionTypeForm = ({
               </Div>
             </Grid>
 
+            {/* Apply To Employees Dropdown */}
+            <Grid size={{ xs: 12, md: 12 }}>
+              <Div sx={{ mt: 1, mb: 1 }}>
+                <Controller
+                  name='apply_scope'
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      select
+                      label='Apply To Employees'
+                      size='small'
+                      fullWidth
+                      value={field.value || 'none'}
+                      onChange={field.onChange}
+                      helperText={
+                        applyScope !== 'none'
+                          ? 'This will apply to all existing employees'
+                          : 'Select an option to bulk apply this contribution'
+                      }
+                    >
+                      <MenuItem value='none'>None</MenuItem>
+                      <MenuItem value='all'>All Employees</MenuItem>
+                      <MenuItem value='active_contracts'>
+                        Employees With Active Contracts
+                      </MenuItem>
+                    </TextField>
+                  )}
+                />
+              </Div>
+            </Grid>
+
             <Grid size={{ xs: 12 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
@@ -521,6 +598,58 @@ const EmployerContributionTypeForm = ({
           </DialogActions>
         </form>
       </DialogContent>
+
+      {/* Confirmation Dialog for Bulk Update */}
+      <Dialog
+        open={confirmDialog.open}
+        onClose={handleCancelBulkUpdate}
+        maxWidth='sm'
+        fullWidth
+      >
+        <DialogTitle>
+          <Typography variant='h6' fontWeight={600}>
+            Confirm Bulk Application
+          </Typography>
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant='body2' color='text.secondary' sx={{ mb: 2 }}>
+            This action will apply this employer contribution to multiple employees:
+          </Typography>
+          <Grid container spacing={1}>
+            <Grid size={12}>
+              <Typography variant='body2'>
+                <strong>Will Update:</strong> {confirmDialog.wouldUpdate} employees
+                {confirmDialog.wouldUpdate > 0 && (
+                  <Typography variant='caption' display='block' color='text.secondary'>
+                    (Employees who already have this contribution will be updated with the new rate)
+                  </Typography>
+                )}
+              </Typography>
+            </Grid>
+            <Grid size={12}>
+              <Typography variant='body2'>
+                <strong>Will Create:</strong> {confirmDialog.wouldCreate} new employees
+                {confirmDialog.wouldCreate > 0 && (
+                  <Typography variant='caption' display='block' color='text.secondary'>
+                    (Employees who don't have this contribution will get it added)
+                  </Typography>
+                )}
+              </Typography>
+            </Grid>
+          </Grid>
+          <Typography variant='body2' color='warning.main' sx={{ mt: 2 }}>
+            This action cannot be undone. Continue?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelBulkUpdate} variant='outlined'>
+            Cancel
+          </Button>
+          <Button onClick={handleConfirmBulkUpdate} variant='contained' color='warning'>
+            Continue
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };
