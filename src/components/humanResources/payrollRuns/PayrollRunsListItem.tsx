@@ -52,7 +52,9 @@ const PayrollRunsListItem = ({
   const [expanded, setExpanded] = useState(false);
   const [tabValue, setTabValue] = useState(0);
   const [employeeSearch, setEmployeeSearch] = useState('');
-  const [selectedEmployees, setSelectedEmployees] = useState<[]>([]);
+  const [selectedEmployees, setSelectedEmployees] = useState<Array<any> | null>(
+    null
+  );
   const [simulationResult, setSimulationResult] = useState<any>(null);
   const [openSimulationDialog, setOpenSimulationDialog] = useState(false);
   const [isSimulating, setIsSimulating] = useState(false);
@@ -89,17 +91,24 @@ const PayrollRunsListItem = ({
   };
 
   // Fetch preview data
+  const params = {
+    id: payrollRun.id,
+    employee_ids: selectedEmployees
+      ? selectedEmployees?.map((employee) =>
+          Array.isArray(employee)
+            ? employee.map((itm: any) => itm?.id)
+            : employee?.id
+        )
+      : [],
+  };
+
   const {
     data: previewData,
     isLoading: isLoadingPreview,
     isFetching: isRefetching,
   } = useQuery({
-    queryKey: ['previewPayrollRunEmployees', payrollRun.id],
-    queryFn: () =>
-      humanResourcesServices.previewPayrollRun({
-        id: payrollRun.id,
-        employee_ids: selectedEmployees,
-      }),
+    queryKey: ['previewPayrollRunEmployees', payrollRun.id, selectedEmployees],
+    queryFn: () => humanResourcesServices.previewPayrollRun(params),
     enabled: expanded,
   });
 
