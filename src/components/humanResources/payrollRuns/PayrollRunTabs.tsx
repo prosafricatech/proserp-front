@@ -10,6 +10,7 @@ import {
   Box,
   Chip,
   CircularProgress,
+  Grid,
   IconButton,
   InputAdornment,
   Paper,
@@ -25,6 +26,9 @@ import {
   Typography,
 } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
+import { useEffect } from 'react';
+import EmployeeSelector from '../employees/EmployeeSelector';
+import { Employee } from '../employees/EmployeesType';
 import humanResourcesServices from '../humanResourcesServices';
 import {
   calculateGrossSalary,
@@ -57,6 +61,8 @@ interface EmployeesTabProps {
   rows: any[];
   search: string;
   onSearchChange: (value: string) => void;
+  selectedEmployees: Employee[] | [];
+  setSelectedEmployees: (value: any) => void;
   onSimulate: (employeeId: number) => void;
   isSimulating: boolean;
   allowanceTypes?: any[];
@@ -69,6 +75,8 @@ export const EmployeesTab = ({
   rows,
   search,
   onSearchChange,
+  selectedEmployees = [],
+  setSelectedEmployees,
   onSimulate,
   isSimulating,
   allowanceTypes = [],
@@ -139,8 +147,17 @@ export const EmployeesTab = ({
     const employee = row.employee || row;
     const name = getEmployeeName(employee).toLowerCase();
     const number = (employee?.employee_number || '').toLowerCase();
+    const id = employee?.id;
     return name.includes(term) || number.includes(term);
   });
+
+  console.log('rows: ', rows);
+
+  useEffect(() => {
+    console.log('selectedEmployees: ', selectedEmployees);
+    // if (!selectedEmployees || !Array.isArray(selectedEmployees))
+    //   setSelectedEmployees([]);
+  }, [selectedEmployees]);
 
   // Helper to get allowance amount for specific type
   const getAllowanceAmount = (allowances: any[], typeId: number) => {
@@ -206,39 +223,70 @@ export const EmployeesTab = ({
 
   return (
     <>
-      <Stack
+      {/* <Stack
         direction='row'
         spacing={1}
         mb={2}
         alignItems='center'
         flexWrap='wrap'
         useFlexGap
+        sx={{ backgroundColor: 'red' }}
+      > */}
+      <Grid
+        container
+        columnSpacing={2}
+        rowSpacing={2}
+        alignItems={'center'}
+        mb={2}
       >
-        <TextField
-          size='small'
-          placeholder='Search employee...'
-          value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
-          sx={{ minWidth: 260 }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position='start'>
-                <SearchOutlined fontSize='small' />
-              </InputAdornment>
-            ),
-            endAdornment: search && (
-              <InputAdornment position='end'>
-                <IconButton size='small' onClick={() => onSearchChange('')}>
-                  <CloseOutlined fontSize='small' />
-                </IconButton>
-              </InputAdornment>
-            ),
-          }}
-        />
-        <Typography variant='caption' color='text.secondary'>
-          {filteredRows.length} of {rows.length} employees
-        </Typography>
-      </Stack>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <EmployeeSelector
+            value={selectedEmployees}
+            onChange={(value) =>
+              setSelectedEmployees((prev: Employee[]) => {
+                console.log('prev from select: ', prev);
+                if (!prev || !Array.isArray(prev)) return;
+                if (value) {
+                  if (Array.isArray(value)) {
+                    return value.map((val) => [...prev, val]);
+                  } else {
+                    return [...prev, value];
+                  }
+                }
+              })
+            }
+          />
+        </Grid>
+        <Grid size={{ xs: 8, md: 4 }}>
+          <TextField
+            size='small'
+            placeholder='Search employee...'
+            value={search}
+            onChange={(e) => onSearchChange(e.target.value)}
+            fullWidth
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position='start'>
+                  <SearchOutlined fontSize='small' />
+                </InputAdornment>
+              ),
+              endAdornment: search && (
+                <InputAdornment position='end'>
+                  <IconButton size='small' onClick={() => onSearchChange('')}>
+                    <CloseOutlined fontSize='small' />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Grid>
+        <Grid size={{ xs: 4, md: 4 }} textAlign={'left'}>
+          <Typography variant='caption' color='text.secondary'>
+            {filteredRows.length} of {rows.length} employees
+          </Typography>
+        </Grid>
+      </Grid>
+      {/* </Stack> */}
 
       {filteredRows.length === 0 ? (
         <Typography variant='body2' color='text.secondary' py={2}>

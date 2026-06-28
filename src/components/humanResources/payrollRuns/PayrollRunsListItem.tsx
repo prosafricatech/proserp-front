@@ -52,6 +52,7 @@ const PayrollRunsListItem = ({
   const [expanded, setExpanded] = useState(false);
   const [tabValue, setTabValue] = useState(0);
   const [employeeSearch, setEmployeeSearch] = useState('');
+  const [selectedEmployees, setSelectedEmployees] = useState<[]>([]);
   const [simulationResult, setSimulationResult] = useState<any>(null);
   const [openSimulationDialog, setOpenSimulationDialog] = useState(false);
   const [isSimulating, setIsSimulating] = useState(false);
@@ -95,7 +96,10 @@ const PayrollRunsListItem = ({
   } = useQuery({
     queryKey: ['previewPayrollRunEmployees', payrollRun.id],
     queryFn: () =>
-      humanResourcesServices.previewPayrollRun({ id: payrollRun.id }),
+      humanResourcesServices.previewPayrollRun({
+        id: payrollRun.id,
+        employee_ids: selectedEmployees,
+      }),
     enabled: expanded,
   });
 
@@ -360,6 +364,8 @@ const PayrollRunsListItem = ({
                   rows={previewRows}
                   search={employeeSearch}
                   onSearchChange={setEmployeeSearch}
+                  selectedEmployees={selectedEmployees}
+                  setSelectedEmployees={setSelectedEmployees}
                   onSimulate={handleSimulateEmployee}
                   isSimulating={isSimulating}
                 />
