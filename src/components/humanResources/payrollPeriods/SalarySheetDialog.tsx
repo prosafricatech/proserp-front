@@ -754,8 +754,7 @@ const SalarySheetDialog = ({
                   })}
 
                   {/* Totals Row */}
-                  <TableRow
-                  >
+                  <TableRow>
                     <TableCell
                       colSpan={4}
                       sx={{
@@ -809,6 +808,20 @@ const SalarySheetDialog = ({
                     </TableCell>
 
                     {totals.preTaxDeductionByType.map((amount, idx) => (
+                      <TableCell
+                        key={`pre-tax-total-${idx}`}
+                        align='right'
+                        sx={{
+                          fontWeight: 700,
+                          borderTop: '2px solid',
+                          borderColor: 'divider',
+                          borderRight: '0.001px solid white',
+                        }}
+                      >
+                        {fmt(amount)}
+                      </TableCell>
+                    ))}
+                    {totals.postTaxDeductionByType.map((amount, idx) => (
                       <TableCell
                         key={`pre-tax-total-${idx}`}
                         align='right'
