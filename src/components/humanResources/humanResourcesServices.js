@@ -762,5 +762,11 @@ humanResourcesServices.ExportPayrollToExcel = async (exportedData) => {
     });
     return res.data;
 }
+humanResourcesServices.ExportPayrollPeriodToExcel = async (exportedData) => {
+    const res = await axios.post(`/api/exports/excel/payrollPeriod/`, exportedData, {
+        responseType: 'blob',
+    });
+    return res.data;
+}
 
 export default humanResourcesServices;
