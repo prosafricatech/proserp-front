@@ -705,19 +705,7 @@ declare global {
     params: Promise<ParamMap[AppRouteHandlerRoute]>
   }
 }
-ver
-}
-
-
-export type { AppRoutes, PageRoutes, LayoutRoutes, RedirectRoutes, RewriteRoutes, ParamMap, AppRouteHandlerRoutes }
-
-declare global {
-  /**
-   * Props for Next.js App Router page components
-   * @example
-   * ```tsx
-   * export default function Page(props: PageProps<'/blog/[slug]'>) {
-   *   const { slug } = await props.params
+params
    *   return <div>Blog post: {slug}</div>
    * }
    * ```
@@ -757,7 +745,18 @@ declare global {
     params: Promise<ParamMap[AppRouteHandlerRoute]>
   }
 }
- await context.params
+Promise<ParamMap[LayoutRoute]>
+    children: React.ReactNode
+  } & {
+    [K in LayoutSlotMap[LayoutRoute]]: React.ReactNode
+  }
+
+  /**
+   * Context for Next.js App Router route handlers
+   * @example
+   * ```tsx
+   * export async function GET(request: NextRequest, context: RouteContext<'/api/users/[id]'>) {
+   *   const { id } = await context.params
    *   return Response.json({ id })
    * }
    * ```
