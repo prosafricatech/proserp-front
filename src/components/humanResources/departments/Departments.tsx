@@ -10,6 +10,8 @@ import humanResourcesServices from '../humanResourcesServices';
 import DepartmentActionTail from './DepartmentActionTail';
 import DepartmentsListItem from './DepartmentsListItem';
 import { Department } from './DepartmentsType';
+import LedgerGroupProvider from '@/components/accounts/ledgerGroups/LedgerGroupProvider';
+import LedgerSelectProvider from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
 
 const Departments = () => {
   const params = useParams<{ id?: string; keyword?: string }>();
@@ -53,41 +55,43 @@ const Departments = () => {
   if (!mounted) return null; // ⛔ Prevent mismatch during hydration
 
   return (
-    <>
-      <Typography variant={'h4'} mb={2}>
-        Departments
-      </Typography>
-      <JumboRqList
-        ref={listRef}
-        wrapperComponent={Card}
-        service={humanResourcesServices.getDepartmentsList}
-        primaryKey='id'
-        queryOptions={queryOptions}
-        itemsPerPage={10}
-        itemsPerPageOptions={[5, 8, 10, 15, 20]}
-        renderItem={renderDepartments}
-        componentElement='div'
-        wrapperSx={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-        toolbar={
-          <JumboListToolbar
-            hideItemsPerPage={true}
-            actionTail={
-              <Stack direction='row'>
-                <JumboSearch
-                  onChange={handleOnChange}
-                  value={queryOptions.queryParams.keyword}
-                />
-                <DepartmentActionTail />
-              </Stack>
-            }
-          ></JumboListToolbar>
-        }
-      />
-    </>
+    <LedgerSelectProvider>
+      <LedgerGroupProvider>
+        <Typography variant={'h4'} mb={2}>
+          Departments
+        </Typography>
+        <JumboRqList
+          ref={listRef}
+          wrapperComponent={Card}
+          service={humanResourcesServices.getDepartmentsList}
+          primaryKey='id'
+          queryOptions={queryOptions}
+          itemsPerPage={10}
+          itemsPerPageOptions={[5, 8, 10, 15, 20]}
+          renderItem={renderDepartments}
+          componentElement='div'
+          wrapperSx={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+          toolbar={
+            <JumboListToolbar
+              hideItemsPerPage={true}
+              actionTail={
+                <Stack direction='row'>
+                  <JumboSearch
+                    onChange={handleOnChange}
+                    value={queryOptions.queryParams.keyword}
+                  />
+                  <DepartmentActionTail />
+                </Stack>
+              }
+            ></JumboListToolbar>
+          }
+        />
+      </LedgerGroupProvider>
+    </LedgerSelectProvider>
   );
 };
 
