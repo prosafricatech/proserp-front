@@ -131,6 +131,7 @@ function ApprovalChainLevelDialog({
     setValue,
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: yupResolver(getValidationSchema(approvalChain)) as any,
@@ -147,6 +148,31 @@ function ApprovalChainLevelDialog({
     },
   });
 
+  // Watch the role_id to update the Autocomplete value
+  const selectedRoleId = watch('role_id');
+  const selectedRole = watch('role');
+
+  // Find the selected role from the roles list
+  const selectedRoleValue = useMemo(() => {
+    if (!roles) return null;
+    // First try to find by role_id
+    if (selectedRoleId) {
+      const found = roles.find((r) => r.id === selectedRoleId);
+      if (found) return found;
+    }
+    // Then try by the stored role object
+    if (selectedRole) {
+      const found = roles.find((r) => r.id === selectedRole.id);
+      if (found) return found;
+    }
+    // Finally try the approvalChainLevel
+    if (approvalChainLevel?.role) {
+      const found = roles.find((r) => r.id === approvalChainLevel.role?.id);
+      if (found) return found;
+    }
+    return null;
+  }, [roles, selectedRoleId, selectedRole, approvalChainLevel]);
+
   // ✅ Ensure required hidden field is always set
   useEffect(() => {
     if (approvalChain?.id) {
@@ -155,7 +181,6 @@ function ApprovalChainLevelDialog({
   }, [approvalChain?.id, setValue]);
 
   const onSubmit: SubmitHandler<FormValues> = (formData) => {
-    // ✅ IMPORTANT: pick add vs edit by approvalChainLevel.id (not approvalChain)
     if (isEditMode) {
       editApprovalChainLevel.mutate(formData);
     } else {
@@ -183,8 +208,8 @@ function ApprovalChainLevelDialog({
                 <Div sx={{ mt: 1 }}>
                   <Autocomplete
                     options={roles || []}
-                    value={approvalChainLevel?.role ?? null}
-                    isOptionEqualToValue={(option, value) => option.id === value.id}
+                    value={selectedRoleValue}
+                    isOptionEqualToValue={(option, value) => option?.id === value?.id}
                     getOptionLabel={(option: Role) => option.name}
                     renderInput={(params) => (
                       <TextField
