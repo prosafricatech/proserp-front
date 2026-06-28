@@ -18,6 +18,7 @@ import {
   Grid,
   LinearProgress,
   TextField,
+  Typography,
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -40,6 +41,7 @@ interface FormData extends Omit<Employee, 'id'> {
   id?: number;
   basic_salary?: number | null;
   contract_start_date?: string | null;
+  reason?: string | null;
 }
 
 interface ApiResponse {
@@ -151,6 +153,7 @@ const EmployeeForm = ({
         join_date: formatDateToAPI(data.join_date),
         contract_start_date: formatDateToAPI(data.contract_start_date),
         user_id: authUser?.user.id,
+        reason: data.reason || null,
       };
       return humanResourcesServices.addEmployee(formattedData);
     },
@@ -178,6 +181,7 @@ const EmployeeForm = ({
         date_of_birth: formatDateToAPI(data.date_of_birth),
         join_date: formatDateToAPI(data.join_date),
         contract_start_date: formatDateToAPI(data.contract_start_date),
+        reason: data.reason || null,
       };
       return humanResourcesServices.updateEmployee(formattedData);
     },
@@ -222,6 +226,7 @@ const EmployeeForm = ({
       .min(0, 'Basic salary must be >= 0')
       .typeError('Basic salary must be a number'),
     contract_start_date: yup.string().nullable(),
+    reason: yup.string().nullable().optional(),
   });
 
   // Form
@@ -231,6 +236,7 @@ const EmployeeForm = ({
     reset,
     setValue,
     control,
+    watch,
     formState: { errors },
   } = useForm<FormData>({
     resolver: yupResolver(validationSchema) as any,
@@ -255,10 +261,27 @@ const EmployeeForm = ({
       join_date: '',
       basic_salary: null,
       contract_start_date: null,
+      reason: '',
     },
   });
 
   const createPayable = useWatch({ control, name: 'create_payable' });
+
+  // Watch for changes to detect if cost center or department changed
+  const watchCostCenterId = watch('cost_center_id');
+  const watchDepartmentId = watch('department_id');
+  const [originalCostCenterId, setOriginalCostCenterId] = useState<number | null>(null);
+  const [originalDepartmentId, setOriginalDepartmentId] = useState<number | null>(null);
+  const [hasUserInteracted, setHasUserInteracted] = useState(false);
+
+  // Check if cost center or department has changed from original values
+  const hasCostCenterChanged = originalCostCenterId !== null && 
+    originalCostCenterId !== watchCostCenterId;
+  const hasDepartmentChanged = originalDepartmentId !== null && 
+    originalDepartmentId !== watchDepartmentId;
+  
+  // Only show reason field when there's an actual change AND user has interacted
+  const showReasonField = hasUserInteracted && (hasCostCenterChanged || hasDepartmentChanged);
 
   // Populate form when editing
   useEffect(() => {
@@ -279,6 +302,10 @@ const EmployeeForm = ({
     setEmployeeDoB(normalizedDateOfBirth);
     setJoinDate(normalizedJoinDate);
     setContractStartDate(normalizedContractStartDate || contractStart || '');
+    
+    // Store original values for comparison
+    setOriginalCostCenterId(employee.cost_center_id ?? null);
+    setOriginalDepartmentId(employee.department_id ?? null);
 
     reset({
       employee_number: employee.employee_number || '',
@@ -301,8 +328,26 @@ const EmployeeForm = ({
       join_date: normalizedJoinDate,
       basic_salary: contractBasicSalary ?? employee.basic_salary ?? null,
       contract_start_date: normalizedContractStartDate || contractStart || null,
+      reason: '',
     });
+    
+    // Reset interaction flag when employee changes
+    setHasUserInteracted(false);
   }, [employee, reset]);
+
+  // Track user interaction with cost center and department fields
+  useEffect(() => {
+    if (employee) {
+      // If values differ from original, user has made changes
+      const hasChanged = 
+        (originalCostCenterId !== watchCostCenterId) ||
+        (originalDepartmentId !== watchDepartmentId);
+      
+      if (hasChanged) {
+        setHasUserInteracted(true);
+      }
+    }
+  }, [watchCostCenterId, watchDepartmentId, originalCostCenterId, originalDepartmentId, employee]);
 
   const onSubmit = (data: FormData) => {
     employee?.id ? updateEmployee(data) : addEmployee(data);
@@ -590,6 +635,75 @@ const EmployeeForm = ({
                     onChange={(val) => {
                       const selected = Array.isArray(val) ? val[0] : val;
                       field.onChange(selected?.id || null);
+                    }}
+                  />
+                )}
+              />
+            </Grid>
+
+            {showReasonField && (
+              <Grid size={12}>
+                <Div sx={{ mt: 1, mb: 1 }}>
+                  <TextField
+                    label='Reason for Change'
+                    size='small'
+                    fullWidth
+                    multiline
+                    minRows={2}
+                    placeholder='e.g., Site relocation, Team restructuring, Promotion, Department transfer...'
+                    error={!!errors.reason}
+                    helperText={
+                      errors.reason?.message ||
+                      'Please provide a reason for this change for audit trail purposes'
+                    }
+                    {...register('reason')}
+                  />
+                </Div>
+              </Grid>
+            )}
+
+            {/* Payroll & Contract Settings */}
+            <Grid size={12}>
+              <Div sx={{ mt: 2, mb: 1, fontWeight: 600 }}>
+                Payroll & Contract Settings
+              </Div>
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                label='Basic Salary'
+                size='small'
+                fullWidth
+                value={formatCurrency(watch('basic_salary'))}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/,/g, '');
+                  setValue('basic_salary', val ? Number(val) : null);
+                }}
+                error={!!errors.basic_salary}
+                helperText={errors.basic_salary?.message}
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Controller
+                name='contract_start_date'
+                control={control}
+                render={({ field, fieldState }) => (
+                  <DatePicker
+                    label='Contract Start Date'
+                    value={contractStartDate ? dayjs(contractStartDate) : null}
+                    onChange={(val) => {
+                      const formatted = val?.format('YYYY-MM-DD') || '';
+                      setContractStartDate(formatted);
+                      field.onChange(formatted || null);
+                    }}
+                    slotProps={{
+                      textField: {
+                        size: 'small',
+                        fullWidth: true,
+                        error: !!fieldState.error,
+                        helperText: fieldState.error?.message,
+                      },
                     }}
                   />
                 )}

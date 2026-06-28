@@ -46,14 +46,33 @@ humanResourcesServices.downloadEmployeesRegistrationTemplate = async () => {
 }
 
 humanResourcesServices.importEmployeesRegistrationExcel = async (file) => {
-    // const formData = new FormData();
-    // formData.append('employees_excel', file);
     const { data } = await axios.post('/api/humanResources/employees/import-registration-excel', file, {
         headers: { 'Content-Type': 'multipart/form-data' },
     });
-    // const { data } = await axios.post('/api/humanResources/employees/import-registration-excel', file);
     return data;
 }
+
+humanResourcesServices.getMovements = async (employeeId, type= 'all', params) => {
+  const { page = 1, limit = 10, keyword = '', ...rest } = params;
+  const { data } = await axios.get(`/api/humanResources/employees/${employeeId}/movements`, {
+    params: { type, page, limit, keyword, ...rest }
+  });
+  return data;
+};
+
+humanResourcesServices.getEmployeeSalaryHistory = async (employeeId, params) => {
+  const { page = 1, limit = 10, keyword = '', ...rest } = params;
+  const { data } = await axios.get(`/api/humanResources/employees/${employeeId}/salary-history`, {
+    params: { page, limit, keyword, ...rest }
+  });
+  return data;
+};
+
+// Get salary history for a specific contract
+humanResourcesServices.getContractSalaryHistory = async (contractId) => {
+  const { data } = await axios.get(`/api/humanResources/employee-contracts/${contractId}/salary-history`);
+  return data;
+};
 
 // ============================================
 // EMPLOYEE CONTRACTS
