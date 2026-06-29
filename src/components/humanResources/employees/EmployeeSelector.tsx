@@ -54,6 +54,11 @@ const EmployeeSelector = (props: EmployeeSelector) => {
   }, [employees]);
 
   useEffect(() => {
+    console.log('options: ', options);
+  }, [options]);
+
+  useEffect(() => {
+    console.log('value from selector: ', value);
     if (value) setSelectedValue(value);
   }, [value]);
 
@@ -73,7 +78,7 @@ const EmployeeSelector = (props: EmployeeSelector) => {
     <Autocomplete
       options={options}
       getOptionLabel={(option: Employee) =>
-        `${option.first_name} ${' '} ${option.middle_name ? option.middle_name : ''} ${' '} ${option.last_name}`
+        `${option.first_name} ${option.middle_name ? option.middle_name : ''} ${option.last_name}`
       }
       value={selectedValue}
       multiple={multiple}
@@ -115,7 +120,7 @@ const EmployeeSelector = (props: EmployeeSelector) => {
                 style={{ marginRight: 8 }}
                 checked={selected}
               />
-              {`${option.first_name} ${' '} ${option.middle_name ? option.middle_name : ''} ${' '} ${option.last_name}`}
+              {`${option.first_name} ${option.middle_name ? option.middle_name : ''} ${option.last_name}`}
             </li>
           );
         },
@@ -134,7 +139,7 @@ const EmployeeSelector = (props: EmployeeSelector) => {
             <Chip
               {...restProps}
               key={`${option.id}-${key}`}
-              label={`${option.first_name} ${' '} ${option.middle_name ? option.middle_name : ''} ${' '} ${option.last_name}`}
+              label={`${option.first_name} ${option.middle_name ? option.middle_name : ''} ${option.last_name}`}
             />
           );
         });

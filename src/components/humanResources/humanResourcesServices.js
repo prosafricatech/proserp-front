@@ -713,7 +713,7 @@ humanResourcesServices.finalizePayrollRun = async (id) => {
 }
 
 // Preview - calculate live without saving
-humanResourcesServices.previewPayrollRun = async ({ id, employee_ids = [] }) => {
+humanResourcesServices.previewPayrollRun = async ({ id, employee_ids }) => {
     const payload = Array.isArray(employee_ids) && employee_ids.length ? { employee_ids } : {};
     const { data } = await axios.post(`/api/humanResources/payrollRuns/${id}/preview`, payload);
     return data;
@@ -777,6 +777,12 @@ humanResourcesServices.showPayslip = async (id) => {
 // ============================================
 humanResourcesServices.ExportPayrollToExcel = async (exportedData) => {
     const res = await axios.post(`/api/exports/excel/payrolls/`, exportedData, {
+        responseType: 'blob',
+    });
+    return res.data;
+}
+humanResourcesServices.ExportPayrollPeriodToExcel = async (exportedData) => {
+    const res = await axios.post(`/api/exports/excel/payrollPeriod/`, exportedData, {
         responseType: 'blob',
     });
     return res.data;

@@ -2,35 +2,41 @@
 'use client';
 
 import {
+  CloseOutlined,
+  SearchOutlined,
+  VisibilityOutlined,
+} from '@mui/icons-material';
+import {
   Box,
-  Tab,
-  Tabs,
+  Chip,
+  CircularProgress,
+  Grid,
+  IconButton,
+  InputAdornment,
+  Paper,
+  Stack,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Typography,
-  Paper,
-  Stack,
   TextField,
-  InputAdornment,
-  IconButton,
   Tooltip,
-  CircularProgress,
-  Chip,
-  Alert,
+  Typography,
 } from '@mui/material';
-import {
-  SearchOutlined,
-  CloseOutlined,
-  VisibilityOutlined,
-  Visibility,
-} from '@mui/icons-material';
-import { formatMoney, getEmployeeName, calculateTotalAllowances, calculateTotalDeductions, calculateGrossSalary, calculateNetSalary } from './payrollUtils';
 import { useQuery } from '@tanstack/react-query';
+import EmployeeSelector from '../employees/EmployeeSelector';
+import { Employee } from '../employees/EmployeesType';
 import humanResourcesServices from '../humanResourcesServices';
+import {
+  calculateGrossSalary,
+  calculateNetSalary,
+  calculateTotalAllowances,
+  calculateTotalDeductions,
+  formatMoney,
+  getEmployeeName,
+} from './payrollUtils';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -39,7 +45,7 @@ interface TabPanelProps {
 }
 
 export const TabPanel = ({ children, value, index }: TabPanelProps) => (
-  <div hidden={value !== index} role="tabpanel">
+  <div hidden={value !== index} role='tabpanel'>
     {value === index && <Box sx={{ pt: 2 }}>{children}</Box>}
   </div>
 );
@@ -54,6 +60,8 @@ interface EmployeesTabProps {
   rows: any[];
   search: string;
   onSearchChange: (value: string) => void;
+  selectedEmployees: Array<any> | null;
+  setSelectedEmployees: (value: any) => void;
   onSimulate: (employeeId: number) => void;
   isSimulating: boolean;
   allowanceTypes?: any[];
@@ -62,11 +70,13 @@ interface EmployeesTabProps {
   isLoading?: boolean;
 }
 
-export const EmployeesTab = ({ 
-  rows, 
-  search, 
-  onSearchChange, 
-  onSimulate, 
+export const EmployeesTab = ({
+  rows,
+  search,
+  onSearchChange,
+  selectedEmployees = null,
+  setSelectedEmployees,
+  onSimulate,
   isSimulating,
   allowanceTypes = [],
   deductionTypes = [],
@@ -74,42 +84,61 @@ export const EmployeesTab = ({
   isLoading = false,
 }: EmployeesTabProps) => {
   // Fetch allowance types if not provided
-  const { data: fetchedAllowanceTypes, isLoading: isLoadingAllowances } = useQuery({
-    queryKey: ['allowanceTypesForEmployeesTab'],
-    queryFn: async () => {
-      const response = await humanResourcesServices.getAllowanceTypesList({ limit: 100 });
-      return response?.data || [];
-    },
-    enabled: allowanceTypes.length === 0,
-    staleTime: 1000 * 60 * 5,
-  });
+  const { data: fetchedAllowanceTypes, isLoading: isLoadingAllowances } =
+    useQuery({
+      queryKey: ['allowanceTypesForEmployeesTab'],
+      queryFn: async () => {
+        const response = await humanResourcesServices.getAllowanceTypesList({
+          limit: 100,
+        });
+        return response?.data || [];
+      },
+      enabled: allowanceTypes.length === 0,
+      staleTime: 1000 * 60 * 5,
+    });
 
   // Fetch deduction types if not provided
-  const { data: fetchedDeductionTypes, isLoading: isLoadingDeductions } = useQuery({
-    queryKey: ['deductionTypesForEmployeesTab'],
-    queryFn: async () => {
-      const response = await humanResourcesServices.getDeductionTypesList({ limit: 100 });
-      return response?.data || [];
-    },
-    enabled: deductionTypes.length === 0,
-    staleTime: 1000 * 60 * 5,
-  });
+  const { data: fetchedDeductionTypes, isLoading: isLoadingDeductions } =
+    useQuery({
+      queryKey: ['deductionTypesForEmployeesTab'],
+      queryFn: async () => {
+        const response = await humanResourcesServices.getDeductionTypesList({
+          limit: 100,
+        });
+        return response?.data || [];
+      },
+      enabled: deductionTypes.length === 0,
+      staleTime: 1000 * 60 * 5,
+    });
 
   // Fetch employer contribution types if not provided
-  const { data: fetchedContributionTypes, isLoading: isLoadingContributions } = useQuery({
-    queryKey: ['contributionTypesForEmployeesTab'],
-    queryFn: async () => {
-      const response = await humanResourcesServices.getEmployerContributionTypesList({ limit: 100 });
-      return response?.data || [];
-    },
-    enabled: contributionTypes.length === 0,
-    staleTime: 1000 * 60 * 5,
-  });
+  const { data: fetchedContributionTypes, isLoading: isLoadingContributions } =
+    useQuery({
+      queryKey: ['contributionTypesForEmployeesTab'],
+      queryFn: async () => {
+        const response =
+          await humanResourcesServices.getEmployerContributionTypesList({
+            limit: 100,
+          });
+        return response?.data || [];
+      },
+      enabled: contributionTypes.length === 0,
+      staleTime: 1000 * 60 * 5,
+    });
 
-  const finalAllowanceTypes = allowanceTypes.length > 0 ? allowanceTypes : (fetchedAllowanceTypes || []);
-  const finalDeductionTypes = deductionTypes.length > 0 ? deductionTypes : (fetchedDeductionTypes || []);
-  const finalContributionTypes = contributionTypes.length > 0 ? contributionTypes : (fetchedContributionTypes || []);
-  const loading = isLoading || isLoadingAllowances || isLoadingDeductions || isLoadingContributions;
+  const finalAllowanceTypes =
+    allowanceTypes.length > 0 ? allowanceTypes : fetchedAllowanceTypes || [];
+  const finalDeductionTypes =
+    deductionTypes.length > 0 ? deductionTypes : fetchedDeductionTypes || [];
+  const finalContributionTypes =
+    contributionTypes.length > 0
+      ? contributionTypes
+      : fetchedContributionTypes || [];
+  const loading =
+    isLoading ||
+    isLoadingAllowances ||
+    isLoadingDeductions ||
+    isLoadingContributions;
 
   const filteredRows = rows.filter((row: any) => {
     if (!search.trim()) return true;
@@ -117,6 +146,7 @@ export const EmployeesTab = ({
     const employee = row.employee || row;
     const name = getEmployeeName(employee).toLowerCase();
     const number = (employee?.employee_number || '').toLowerCase();
+    const id = employee?.id;
     return name.includes(term) || number.includes(term);
   });
 
@@ -137,22 +167,30 @@ export const EmployeesTab = ({
   // Helper to get contribution amount for specific type
   const getContributionAmount = (contributions: any[], typeId: number) => {
     if (!contributions) return 0;
-    const found = contributions.find((c: any) => c.employer_contribution_type_id === typeId);
+    const found = contributions.find(
+      (c: any) => c.employer_contribution_type_id === typeId
+    );
     return found?.amount || 0;
   };
 
   // Helper to calculate totals for dynamic columns
-  const calculateTotalByType = (rows: any[], typeId: number, type: 'allowance' | 'deduction' | 'contribution') => {
+  const calculateTotalByType = (
+    rows: any[],
+    typeId: number,
+    type: 'allowance' | 'deduction' | 'contribution'
+  ) => {
     return rows.reduce((sum, row) => {
       let items = [];
       if (type === 'allowance') items = row.allowances || [];
       else if (type === 'deduction') items = row.deductions || [];
-      else if (type === 'contribution') items = row.employer_contributions || [];
-      
+      else if (type === 'contribution')
+        items = row.employer_contributions || [];
+
       const found = items.find((item: any) => {
         if (type === 'allowance') return item.allowance_type_id === typeId;
         if (type === 'deduction') return item.deduction_type_id === typeId;
-        if (type === 'contribution') return item.employer_contribution_type_id === typeId;
+        if (type === 'contribution')
+          return item.employer_contribution_type_id === typeId;
         return false;
       });
       return sum + (found?.amount || 0);
@@ -161,9 +199,9 @@ export const EmployeesTab = ({
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" py={4}>
+      <Box display='flex' justifyContent='center' alignItems='center' py={4}>
         <CircularProgress size={30} />
-        <Typography variant="body2" color="text.secondary" sx={{ ml: 2 }}>
+        <Typography variant='body2' color='text.secondary' sx={{ ml: 2 }}>
           Loading salary types...
         </Typography>
       </Box>
@@ -176,40 +214,54 @@ export const EmployeesTab = ({
 
   return (
     <>
-      <Stack direction="row" spacing={1} mb={2} alignItems="center" flexWrap="wrap" useFlexGap>
-        <TextField
-          size="small"
-          placeholder="Search employee..."
-          value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
-          sx={{ minWidth: 260 }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchOutlined fontSize="small" />
-              </InputAdornment>
-            ),
-            endAdornment: search && (
-              <InputAdornment position="end">
-                <IconButton size="small" onClick={() => onSearchChange('')}>
-                  <CloseOutlined fontSize="small" />
-                </IconButton>
-              </InputAdornment>
-            ),
-          }}
-        />
-        <Typography variant="caption" color="text.secondary">
-          {filteredRows.length} of {rows.length} employees
-        </Typography>
-      </Stack>
+      <Grid
+        container
+        columnSpacing={2}
+        rowSpacing={2}
+        alignItems={'center'}
+        mb={2}
+      >
+        <Grid size={{ xs: 12, md: 4 }}>
+          <EmployeeSelector
+            value={selectedEmployees}
+            multiple
+            onChange={(value) =>
+              setSelectedEmployees((prev: Employee[]) => {
+                if (value) {
+                  if (Array.isArray(value)) {
+                    if (!prev || !Array.isArray(prev)) {
+                      return value.map((val) => val);
+                    } else {
+                      return value;
+                    }
+                  } else {
+                    if (!prev || !Array.isArray(prev)) {
+                      return [value];
+                    } else {
+                      return [...prev, value];
+                    }
+                  }
+                }
+              })
+            }
+          />
+        </Grid>
+        <Grid size={{ xs: 4, md: 4 }} textAlign={'left'}>
+          <Typography variant='caption' color='text.secondary'>
+            {filteredRows.length} of {rows.length} employees
+          </Typography>
+        </Grid>
+      </Grid>
 
       {filteredRows.length === 0 ? (
-        <Typography variant="body2" color="text.secondary" py={2}>
-          {search ? 'No employees match your search.' : 'No employees found for this run.'}
+        <Typography variant='body2' color='text.secondary' py={2}>
+          {search
+            ? 'No employees match your search.'
+            : 'No employees found for this run.'}
         </Typography>
       ) : (
-        <TableContainer component={Paper} variant="outlined">
-          <Table size="small">
+        <TableContainer component={Paper} variant='outlined'>
+          <Table size='small'>
             <TableHead>
               {/* Group Headers */}
               <TableRow>
@@ -231,7 +283,7 @@ export const EmployeesTab = ({
                       backgroundColor: 'action.hover',
                     }}
                   >
-                    <Typography variant="subtitle2" fontWeight={600}>
+                    <Typography variant='subtitle2' fontWeight={600}>
                       Allowances
                     </Typography>
                   </TableCell>
@@ -252,7 +304,7 @@ export const EmployeesTab = ({
                       backgroundColor: 'action.hover',
                     }}
                   >
-                    <Typography variant="subtitle2" fontWeight={600}>
+                    <Typography variant='subtitle2' fontWeight={600}>
                       Deductions
                     </Typography>
                   </TableCell>
@@ -268,7 +320,7 @@ export const EmployeesTab = ({
                       backgroundColor: 'action.hover',
                     }}
                   >
-                    <Typography variant="subtitle2" fontWeight={600}>
+                    <Typography variant='subtitle2' fontWeight={600}>
                       Employer Contributions
                     </Typography>
                   </TableCell>
@@ -279,13 +331,15 @@ export const EmployeesTab = ({
               {/* Column Headers */}
               <TableRow>
                 <TableCell sx={{ fontWeight: 700 }}>Employee</TableCell>
-                <TableCell align="right" sx={{ fontWeight: 700 }}>Basic</TableCell>
-                
+                <TableCell align='right' sx={{ fontWeight: 700 }}>
+                  Basic
+                </TableCell>
+
                 {finalAllowanceTypes.map((type: any) => (
-                  <TableCell 
-                    key={`allowance-header-${type.id}`} 
-                    align="right"
-                    sx={{ 
+                  <TableCell
+                    key={`allowance-header-${type.id}`}
+                    align='right'
+                    sx={{
                       fontWeight: 600,
                       borderRight: '2px solid',
                       borderRightColor: 'divider',
@@ -294,14 +348,16 @@ export const EmployeesTab = ({
                     {type.name || 'Allowance'}
                   </TableCell>
                 ))}
-                
-                <TableCell align="right" sx={{ fontWeight: 700 }}>Gross</TableCell>
-                
+
+                <TableCell align='right' sx={{ fontWeight: 700 }}>
+                  Gross
+                </TableCell>
+
                 {finalDeductionTypes.map((type: any) => (
-                  <TableCell 
-                    key={`deduction-header-${type.id}`} 
-                    align="right"
-                    sx={{ 
+                  <TableCell
+                    key={`deduction-header-${type.id}`}
+                    align='right'
+                    sx={{
                       fontWeight: 600,
                       borderRight: '2px solid',
                       borderRightColor: 'divider',
@@ -310,15 +366,25 @@ export const EmployeesTab = ({
                     {type.name || 'Deduction'}
                   </TableCell>
                 ))}
-                
-                <TableCell align="right" sx={{ fontWeight: 700, color: 'error.main' }}>PAYE</TableCell>
-                <TableCell align="right" sx={{ fontWeight: 700, color: 'success.main' }}>Net</TableCell>
-                
+
+                <TableCell
+                  align='right'
+                  sx={{ fontWeight: 700, color: 'error.main' }}
+                >
+                  PAYE
+                </TableCell>
+                <TableCell
+                  align='right'
+                  sx={{ fontWeight: 700, color: 'success.main' }}
+                >
+                  Net
+                </TableCell>
+
                 {finalContributionTypes.map((type: any) => (
-                  <TableCell 
-                    key={`contribution-header-${type.id}`} 
-                    align="right"
-                    sx={{ 
+                  <TableCell
+                    key={`contribution-header-${type.id}`}
+                    align='right'
+                    sx={{
                       fontWeight: 600,
                       borderRight: '2px solid',
                       borderRightColor: 'divider',
@@ -327,9 +393,13 @@ export const EmployeesTab = ({
                     {type.name || 'Contribution'}
                   </TableCell>
                 ))}
-                
-                <TableCell align="right" sx={{ fontWeight: 700 }}>Total Empr. Cost</TableCell>
-                <TableCell align="center" sx={{ fontWeight: 700 }}>Actions</TableCell>
+
+                <TableCell align='right' sx={{ fontWeight: 700 }}>
+                  Total Empr. Cost
+                </TableCell>
+                <TableCell align='center' sx={{ fontWeight: 700 }}>
+                  Actions
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -341,25 +411,34 @@ export const EmployeesTab = ({
                 const paye = row.paye || 0;
                 const totalAllowances = calculateTotalAllowances(allowances);
                 const totalDeductions = calculateTotalDeductions(deductions);
-                const totalContributions = calculateTotalEmployerContributions(contributions);
-                const grossSalary = row.gross_salary || calculateGrossSalary(basicSalary, allowances);
-                const netSalary = row.net_salary || calculateNetSalary(basicSalary, allowances, deductions, paye);
+                const totalContributions =
+                  calculateTotalEmployerContributions(contributions);
+                const grossSalary =
+                  row.gross_salary ||
+                  calculateGrossSalary(basicSalary, allowances);
+                const netSalary =
+                  row.net_salary ||
+                  calculateNetSalary(basicSalary, allowances, deductions, paye);
                 const employerCost = grossSalary + totalContributions;
 
                 return (
                   <TableRow key={index}>
                     <TableCell>
-                      <Typography variant="body2">{getEmployeeName(row.employee)}</Typography>
-                      <Typography variant="caption" color="text.secondary">
+                      <Typography variant='body2'>
+                        {getEmployeeName(row.employee)}
+                      </Typography>
+                      <Typography variant='caption' color='text.secondary'>
                         {row.employee?.employee_number}
                       </Typography>
                     </TableCell>
-                    <TableCell align="right">{formatMoney(basicSalary)}</TableCell>
-                    
+                    <TableCell align='right'>
+                      {formatMoney(basicSalary)}
+                    </TableCell>
+
                     {finalAllowanceTypes.map((type: any) => (
-                      <TableCell 
-                        key={`allowance-value-${row.employee?.id || index}-${type.id}`} 
-                        align="right"
+                      <TableCell
+                        key={`allowance-value-${row.employee?.id || index}-${type.id}`}
+                        align='right'
                         sx={{
                           borderRight: '2px solid',
                           borderRightColor: 'divider',
@@ -368,15 +447,15 @@ export const EmployeesTab = ({
                         {formatMoney(getAllowanceAmount(allowances, type.id))}
                       </TableCell>
                     ))}
-                    
-                    <TableCell align="right" sx={{ fontWeight: 600 }}>
+
+                    <TableCell align='right' sx={{ fontWeight: 600 }}>
                       {formatMoney(grossSalary)}
                     </TableCell>
-                    
+
                     {finalDeductionTypes.map((type: any) => (
-                      <TableCell 
-                        key={`deduction-value-${row.employee?.id || index}-${type.id}`} 
-                        align="right"
+                      <TableCell
+                        key={`deduction-value-${row.employee?.id || index}-${type.id}`}
+                        align='right'
                         sx={{
                           borderRight: '2px solid',
                           borderRightColor: 'divider',
@@ -385,39 +464,51 @@ export const EmployeesTab = ({
                         {formatMoney(getDeductionAmount(deductions, type.id))}
                       </TableCell>
                     ))}
-                    
-                    <TableCell align="right" sx={{ color: 'error.main' }}>
+
+                    <TableCell align='right' sx={{ color: 'error.main' }}>
                       {formatMoney(paye)}
                     </TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 700, color: 'success.main' }}>
+                    <TableCell
+                      align='right'
+                      sx={{ fontWeight: 700, color: 'success.main' }}
+                    >
                       {formatMoney(netSalary)}
                     </TableCell>
-                    
+
                     {finalContributionTypes.map((type: any) => (
-                      <TableCell 
-                        key={`contribution-value-${row.employee?.id || index}-${type.id}`} 
-                        align="right"
+                      <TableCell
+                        key={`contribution-value-${row.employee?.id || index}-${type.id}`}
+                        align='right'
                         sx={{
                           borderRight: '2px solid',
                           borderRightColor: 'divider',
                         }}
                       >
-                        {formatMoney(getContributionAmount(contributions, type.id))}
+                        {formatMoney(
+                          getContributionAmount(contributions, type.id)
+                        )}
                       </TableCell>
                     ))}
-                    
-                    <TableCell align="right" sx={{ fontWeight: 600, color: 'primary.main' }}>
+
+                    <TableCell
+                      align='right'
+                      sx={{ fontWeight: 600, color: 'primary.main' }}
+                    >
                       {formatMoney(employerCost)}
                     </TableCell>
-                    <TableCell align="center">
-                      <Tooltip title="Simulate Employee">
+                    <TableCell align='center'>
+                      <Tooltip title='Simulate Employee'>
                         <IconButton
-                          size="small"
+                          size='small'
                           onClick={() => onSimulate(row.employee?.id)}
                           disabled={isSimulating}
-                          color="primary"
+                          color='primary'
                         >
-                          {isSimulating ? <CircularProgress size={16} /> : <VisibilityOutlined fontSize="small" />}
+                          {isSimulating ? (
+                            <CircularProgress size={16} />
+                          ) : (
+                            <VisibilityOutlined fontSize='small' />
+                          )}
                         </IconButton>
                       </Tooltip>
                     </TableCell>
@@ -426,11 +517,16 @@ export const EmployeesTab = ({
               })}
               {filteredRows.length > 10 && (
                 <TableRow>
-                  <TableCell 
-                    colSpan={8 + finalAllowanceTypes.length + finalDeductionTypes.length + finalContributionTypes.length} 
-                    align="center"
+                  <TableCell
+                    colSpan={
+                      8 +
+                      finalAllowanceTypes.length +
+                      finalDeductionTypes.length +
+                      finalContributionTypes.length
+                    }
+                    align='center'
                   >
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant='caption' color='text.secondary'>
                       Showing 10 of {filteredRows.length} employees
                     </Typography>
                   </TableCell>
@@ -438,68 +534,144 @@ export const EmployeesTab = ({
               )}
               {/* Totals Row */}
               {filteredRows.length > 1 && (
-                <TableRow sx={{ fontWeight: 'bold', bgcolor: 'action.hover' }}>
-                  <TableCell>Totals</TableCell>
-                  <TableCell align="right">
-                    {formatMoney(filteredRows.reduce((s: number, r: any) => s + (r.basic_salary || 0), 0))}
+                <TableRow sx={{ fontWeight: 500, bgcolor: 'action.hover' }}>
+                  <TableCell sx={{ fontWeight: 600, fontSize: 16 }}>
+                    Totals
                   </TableCell>
-                  
+                  <TableCell
+                    sx={{ fontWeight: 600, fontSize: 16 }}
+                    align='right'
+                  >
+                    {formatMoney(
+                      filteredRows.reduce(
+                        (s: number, r: any) => s + (r.basic_salary || 0),
+                        0
+                      )
+                    )}
+                  </TableCell>
+
                   {finalAllowanceTypes.map((type: any) => (
-                    <TableCell 
-                      key={`allowance-total-${type.id}`} 
-                      align="right"
+                    <TableCell
+                      key={`allowance-total-${type.id}`}
+                      align='right'
                       sx={{
+                        fontWeight: 500,
+                        fontSize: 18,
                         borderRight: '2px solid',
                         borderRightColor: 'divider',
                       }}
                     >
-                      {formatMoney(calculateTotalByType(filteredRows, type.id, 'allowance'))}
+                      {formatMoney(
+                        calculateTotalByType(filteredRows, type.id, 'allowance')
+                      )}
                     </TableCell>
                   ))}
-                  
-                  <TableCell align="right">
-                    {formatMoney(filteredRows.reduce((s: number, r: any) => s + (r.gross_salary || calculateGrossSalary(r.basic_salary || 0, r.allowances || [])), 0))}
+
+                  <TableCell
+                    sx={{ fontWeight: 600, fontSize: 16 }}
+                    align='right'
+                  >
+                    {formatMoney(
+                      filteredRows.reduce(
+                        (s: number, r: any) =>
+                          s +
+                          (r.gross_salary ||
+                            calculateGrossSalary(
+                              r.basic_salary || 0,
+                              r.allowances || []
+                            )),
+                        0
+                      )
+                    )}
                   </TableCell>
-                  
+
                   {finalDeductionTypes.map((type: any) => (
-                    <TableCell 
-                      key={`deduction-total-${type.id}`} 
-                      align="right"
+                    <TableCell
+                      key={`deduction-total-${type.id}`}
+                      align='right'
                       sx={{
+                        fontWeight: 500,
+                        fontSize: 18,
                         borderRight: '2px solid',
                         borderRightColor: 'divider',
                       }}
                     >
-                      {formatMoney(calculateTotalByType(filteredRows, type.id, 'deduction'))}
+                      {formatMoney(
+                        calculateTotalByType(filteredRows, type.id, 'deduction')
+                      )}
                     </TableCell>
                   ))}
-                  
-                  <TableCell align="right">
-                    {formatMoney(filteredRows.reduce((s: number, r: any) => s + (r.paye || 0), 0))}
+
+                  <TableCell
+                    sx={{ fontWeight: 600, fontSize: 16 }}
+                    align='right'
+                  >
+                    {formatMoney(
+                      filteredRows.reduce(
+                        (s: number, r: any) => s + (r.paye || 0),
+                        0
+                      )
+                    )}
                   </TableCell>
-                  <TableCell align="right">
-                    {formatMoney(filteredRows.reduce((s: number, r: any) => s + (r.net_salary || calculateNetSalary(r.basic_salary || 0, r.allowances || [], r.deductions || [], r.paye || 0)), 0))}
+                  <TableCell
+                    sx={{ fontWeight: 600, fontSize: 16 }}
+                    align='right'
+                  >
+                    {formatMoney(
+                      filteredRows.reduce(
+                        (s: number, r: any) =>
+                          s +
+                          (r.net_salary ||
+                            calculateNetSalary(
+                              r.basic_salary || 0,
+                              r.allowances || [],
+                              r.deductions || [],
+                              r.paye || 0
+                            )),
+                        0
+                      )
+                    )}
                   </TableCell>
-                  
+
                   {finalContributionTypes.map((type: any) => (
-                    <TableCell 
-                      key={`contribution-total-${type.id}`} 
-                      align="right"
+                    <TableCell
+                      key={`contribution-total-${type.id}`}
+                      align='right'
                       sx={{
+                        fontWeight: 500,
+                        fontSize: 18,
                         borderRight: '2px solid',
                         borderRightColor: 'divider',
                       }}
                     >
-                      {formatMoney(calculateTotalByType(filteredRows, type.id, 'contribution'))}
+                      {formatMoney(
+                        calculateTotalByType(
+                          filteredRows,
+                          type.id,
+                          'contribution'
+                        )
+                      )}
                     </TableCell>
                   ))}
-                  
-                  <TableCell align="right">
-                    {formatMoney(filteredRows.reduce((s: number, r: any) => {
-                      const gross = r.gross_salary || calculateGrossSalary(r.basic_salary || 0, r.allowances || []);
-                      const contribs = calculateTotalEmployerContributions(r.employer_contributions || []);
-                      return s + gross + contribs;
-                    }, 0))}
+
+                  <TableCell
+                    sx={{ fontWeight: 600, fontSize: 16 }}
+                    align='right'
+                  >
+                    {formatMoney(
+                      filteredRows.reduce((s: number, r: any) => {
+                        const gross =
+                          r.gross_salary ||
+                          calculateGrossSalary(
+                            r.basic_salary || 0,
+                            r.allowances || []
+                          );
+                        const contribs = calculateTotalEmployerContributions(
+                          r.employer_contributions || []
+                        );
+                        return s + gross + contribs;
+                      }, 0)
+                    )}
                   </TableCell>
                   <TableCell />
                 </TableRow>
@@ -522,7 +694,15 @@ interface PayslipsTabProps {
   isPosted: boolean;
 }
 
-export const PayslipsTab = ({ payslips, search, onSearchChange, onViewPayslip, runStatus, isPaid, isPosted }: PayslipsTabProps) => {
+export const PayslipsTab = ({
+  payslips,
+  search,
+  onSearchChange,
+  onViewPayslip,
+  runStatus,
+  isPaid,
+  isPosted,
+}: PayslipsTabProps) => {
   const filteredPayslips = payslips.filter((payslip: any) => {
     if (!search.trim()) return true;
     const term = search.toLowerCase().trim();
@@ -534,87 +714,147 @@ export const PayslipsTab = ({ payslips, search, onSearchChange, onViewPayslip, r
 
   return (
     <>
-      <Stack direction="row" spacing={1} mb={2} alignItems="center" flexWrap="wrap" useFlexGap>
+      <Stack
+        direction='row'
+        spacing={1}
+        mb={2}
+        alignItems='center'
+        flexWrap='wrap'
+        useFlexGap
+      >
         <TextField
-          size="small"
-          placeholder="Search payslip..."
+          size='small'
+          placeholder='Search payslip...'
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
           sx={{ minWidth: 260 }}
           InputProps={{
             startAdornment: (
-              <InputAdornment position="start">
-                <SearchOutlined fontSize="small" />
+              <InputAdornment position='start'>
+                <SearchOutlined fontSize='small' />
               </InputAdornment>
             ),
             endAdornment: search && (
-              <InputAdornment position="end">
-                <IconButton size="small" onClick={() => onSearchChange('')}>
-                  <CloseOutlined fontSize="small" />
+              <InputAdornment position='end'>
+                <IconButton size='small' onClick={() => onSearchChange('')}>
+                  <CloseOutlined fontSize='small' />
                 </IconButton>
               </InputAdornment>
             ),
           }}
         />
-        <Typography variant="caption" color="text.secondary">
+        <Typography variant='caption' color='text.secondary'>
           {filteredPayslips.length} of {payslips.length} payslips
         </Typography>
       </Stack>
 
       {filteredPayslips.length === 0 ? (
-        <Typography variant="body2" color="text.secondary" py={2}>
-          {search ? 'No payslips match your search.' : 'No payslips found for this run.'}
+        <Typography variant='body2' color='text.secondary' py={2}>
+          {search
+            ? 'No payslips match your search.'
+            : 'No payslips found for this run.'}
         </Typography>
       ) : (
-        <TableContainer component={Paper} variant="outlined">
-          <Table size="small">
+        <TableContainer component={Paper} variant='outlined'>
+          <Table size='small'>
             <TableHead>
               <TableRow>
                 <TableCell sx={{ fontWeight: 700 }}>Employee</TableCell>
-                <TableCell align="right" sx={{ fontWeight: 700 }}>Basic Salary</TableCell>
-                <TableCell align="right" sx={{ fontWeight: 700 }}>Allowances</TableCell>
-                <TableCell align="right" sx={{ fontWeight: 700 }}>Gross Pay</TableCell>
-                <TableCell align="right" sx={{ fontWeight: 700 }}>Deductions</TableCell>
-                <TableCell align="right" sx={{ fontWeight: 700, color: 'error.main' }}>PAYE</TableCell>
-                <TableCell align="right" sx={{ fontWeight: 700, color: 'success.main' }}>Net Pay</TableCell>
-                <TableCell align="center" sx={{ fontWeight: 700 }}>Status</TableCell>
-                <TableCell align="center" sx={{ fontWeight: 700 }}>Actions</TableCell>
+                <TableCell align='right' sx={{ fontWeight: 700 }}>
+                  Basic Salary
+                </TableCell>
+                <TableCell align='right' sx={{ fontWeight: 700 }}>
+                  Allowances
+                </TableCell>
+                <TableCell align='right' sx={{ fontWeight: 700 }}>
+                  Gross Pay
+                </TableCell>
+                <TableCell align='right' sx={{ fontWeight: 700 }}>
+                  Deductions
+                </TableCell>
+                <TableCell
+                  align='right'
+                  sx={{ fontWeight: 700, color: 'error.main' }}
+                >
+                  PAYE
+                </TableCell>
+                <TableCell
+                  align='right'
+                  sx={{ fontWeight: 700, color: 'success.main' }}
+                >
+                  Net Pay
+                </TableCell>
+                <TableCell align='center' sx={{ fontWeight: 700 }}>
+                  Status
+                </TableCell>
+                <TableCell align='center' sx={{ fontWeight: 700 }}>
+                  Actions
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredPayslips.slice(0, 10).map((payslip: any, index: number) => {
-                const employee = payslip.employee || payslip;
-                return (
-                  <TableRow key={index}>
-                    <TableCell>
-                      <Typography variant="body2">{getEmployeeName(employee)}</Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {employee?.employee_number || 'No ID'}
-                      </Typography>
-                    </TableCell>
-                    <TableCell align="right">{formatMoney(payslip.basic_salary || 0)}</TableCell>
-                    <TableCell align="right">{formatMoney(payslip.total_allowances || 0)}</TableCell>
-                    <TableCell align="right">{formatMoney(payslip.gross_salary || 0)}</TableCell>
-                    <TableCell align="right">{formatMoney(payslip.total_deductions || 0)}</TableCell>
-                    <TableCell align="right" sx={{ color: 'error.main' }}>{formatMoney(payslip.paye || 0)}</TableCell>
-                    <TableCell align="right" sx={{ fontWeight: 600, color: 'success.main' }}>{formatMoney(payslip.net_salary || 0)}</TableCell>
-                    <TableCell align="center">
-                      <Chip label={runStatus || 'approved'} size="small" color={isPaid ? 'success' : isPosted ? 'primary' : 'info'} />
-                    </TableCell>
-                    <TableCell align="center">
-                      <Tooltip title="View Payslip">
-                        <IconButton size="small" onClick={() => onViewPayslip(payslip)} color="primary">
-                          <VisibilityOutlined fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
+              {filteredPayslips
+                .slice(0, 10)
+                .map((payslip: any, index: number) => {
+                  const employee = payslip.employee || payslip;
+                  return (
+                    <TableRow key={index}>
+                      <TableCell>
+                        <Typography variant='body2'>
+                          {getEmployeeName(employee)}
+                        </Typography>
+                        <Typography variant='caption' color='text.secondary'>
+                          {employee?.employee_number}
+                        </Typography>
+                      </TableCell>
+                      <TableCell align='right'>
+                        {formatMoney(payslip.basic_salary || 0)}
+                      </TableCell>
+                      <TableCell align='right'>
+                        {formatMoney(payslip.total_allowances || 0)}
+                      </TableCell>
+                      <TableCell align='right'>
+                        {formatMoney(payslip.gross_salary || 0)}
+                      </TableCell>
+                      <TableCell align='right'>
+                        {formatMoney(payslip.total_deductions || 0)}
+                      </TableCell>
+                      <TableCell align='right' sx={{ color: 'error.main' }}>
+                        {formatMoney(payslip.paye || 0)}
+                      </TableCell>
+                      <TableCell
+                        align='right'
+                        sx={{ fontWeight: 600, color: 'success.main' }}
+                      >
+                        {formatMoney(payslip.net_salary || 0)}
+                      </TableCell>
+                      <TableCell align='center'>
+                        <Chip
+                          label={runStatus || 'approved'}
+                          size='small'
+                          color={
+                            isPaid ? 'success' : isPosted ? 'primary' : 'info'
+                          }
+                        />
+                      </TableCell>
+                      <TableCell align='center'>
+                        <Tooltip title='View Payslip'>
+                          <IconButton
+                            size='small'
+                            onClick={() => onViewPayslip(payslip)}
+                            color='primary'
+                          >
+                            <VisibilityOutlined fontSize='small' />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               {filteredPayslips.length > 10 && (
                 <TableRow>
-                  <TableCell colSpan={9} align="center">
-                    <Typography variant="caption" color="text.secondary">
+                  <TableCell colSpan={9} align='center'>
+                    <Typography variant='caption' color='text.secondary'>
                       Showing 10 of {filteredPayslips.length} payslips
                     </Typography>
                   </TableCell>
@@ -622,24 +862,54 @@ export const PayslipsTab = ({ payslips, search, onSearchChange, onViewPayslip, r
               )}
               {filteredPayslips.length > 1 && (
                 <TableRow sx={{ fontWeight: 'bold', bgcolor: 'action.hover' }}>
-                  <TableCell>Totals</TableCell>
-                  <TableCell align="right">
-                    {formatMoney(filteredPayslips.reduce((s: number, p: any) => s + (p.basic_salary || 0), 0))}
+                  <TableCell sx={{ fontWeight: 'bold' }}>Totals</TableCell>
+                  <TableCell align='right'>
+                    {formatMoney(
+                      filteredPayslips.reduce(
+                        (s: number, p: any) => s + (p.basic_salary || 0),
+                        0
+                      )
+                    )}
                   </TableCell>
-                  <TableCell align="right">
-                    {formatMoney(filteredPayslips.reduce((s: number, p: any) => s + (p.total_allowances || 0), 0))}
+                  <TableCell align='right'>
+                    {formatMoney(
+                      filteredPayslips.reduce(
+                        (s: number, p: any) => s + (p.total_allowances || 0),
+                        0
+                      )
+                    )}
                   </TableCell>
-                  <TableCell align="right">
-                    {formatMoney(filteredPayslips.reduce((s: number, p: any) => s + (p.gross_salary || 0), 0))}
+                  <TableCell align='right'>
+                    {formatMoney(
+                      filteredPayslips.reduce(
+                        (s: number, p: any) => s + (p.gross_salary || 0),
+                        0
+                      )
+                    )}
                   </TableCell>
-                  <TableCell align="right">
-                    {formatMoney(filteredPayslips.reduce((s: number, p: any) => s + (p.total_deductions || 0), 0))}
+                  <TableCell align='right'>
+                    {formatMoney(
+                      filteredPayslips.reduce(
+                        (s: number, p: any) => s + (p.total_deductions || 0),
+                        0
+                      )
+                    )}
                   </TableCell>
-                  <TableCell align="right">
-                    {formatMoney(filteredPayslips.reduce((s: number, p: any) => s + (p.paye || 0), 0))}
+                  <TableCell align='right'>
+                    {formatMoney(
+                      filteredPayslips.reduce(
+                        (s: number, p: any) => s + (p.paye || 0),
+                        0
+                      )
+                    )}
                   </TableCell>
-                  <TableCell align="right">
-                    {formatMoney(filteredPayslips.reduce((s: number, p: any) => s + (p.net_salary || 0), 0))}
+                  <TableCell align='right'>
+                    {formatMoney(
+                      filteredPayslips.reduce(
+                        (s: number, p: any) => s + (p.net_salary || 0),
+                        0
+                      )
+                    )}
                   </TableCell>
                   <TableCell />
                   <TableCell />
@@ -659,10 +929,14 @@ interface ApprovalsTabProps {
   approvals: any[];
 }
 
-export const ApprovalsTab = ({ hasChain, approvalChain, approvals }: ApprovalsTabProps) => {
+export const ApprovalsTab = ({
+  hasChain,
+  approvalChain,
+  approvals,
+}: ApprovalsTabProps) => {
   if (!hasChain || !approvalChain?.levels) {
     return (
-      <Typography variant="body2" color="text.secondary" py={2}>
+      <Typography variant='body2' color='text.secondary' py={2}>
         This run uses direct approval (no approval chain).
       </Typography>
     );
@@ -670,9 +944,13 @@ export const ApprovalsTab = ({ hasChain, approvalChain, approvals }: ApprovalsTa
 
   return (
     <Box>
-      <Typography variant="subtitle2" gutterBottom>Approval Chain</Typography>
+      <Typography variant='subtitle2' gutterBottom>
+        Approval Chain
+      </Typography>
       {approvalChain.levels.map((level: any, index: number) => {
-        const approval = approvals?.find((a: any) => a.chain_level_id === level.id);
+        const approval = approvals?.find(
+          (a: any) => a.chain_level_id === level.id
+        );
         const isApproved = approval?.status === 'approved';
         const isPending = !approval || approval.status === 'pending';
         const isRejected = approval?.status === 'rejected';
@@ -686,27 +964,53 @@ export const ApprovalsTab = ({ hasChain, approvalChain, approvals }: ApprovalsTa
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              bgcolor: isApproved ? 'success.light' : isRejected ? 'error.light' : isPending ? 'warning.light' : 'transparent',
+              bgcolor: isApproved
+                ? 'success.light'
+                : isRejected
+                  ? 'error.light'
+                  : isPending
+                    ? 'warning.light'
+                    : 'transparent',
               borderRadius: 1,
             }}
           >
             <Box>
-              <Typography variant="body2" fontWeight={500}>
+              <Typography variant='body2' fontWeight={500}>
                 Level {index + 1}: {level.name || level.level_name}
               </Typography>
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant='caption' color='text.secondary'>
                 {level.role?.name || 'Approver'}
               </Typography>
               {approval?.remarks && (
-                <Typography variant="caption" display="block" color="text.secondary">
+                <Typography
+                  variant='caption'
+                  display='block'
+                  color='text.secondary'
+                >
                   Remark: {approval.remarks}
                 </Typography>
               )}
             </Box>
             <Chip
-              label={isApproved ? 'Approved' : isRejected ? 'Rejected' : isPending ? 'Pending' : ''}
-              color={isApproved ? 'success' : isRejected ? 'error' : isPending ? 'warning' : 'default'}
-              size="small"
+              label={
+                isApproved
+                  ? 'Approved'
+                  : isRejected
+                    ? 'Rejected'
+                    : isPending
+                      ? 'Pending'
+                      : ''
+              }
+              color={
+                isApproved
+                  ? 'success'
+                  : isRejected
+                    ? 'error'
+                    : isPending
+                      ? 'warning'
+                      : 'default'
+              }
+              size='small'
             />
           </Paper>
         );
