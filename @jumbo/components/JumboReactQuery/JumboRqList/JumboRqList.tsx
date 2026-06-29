@@ -125,7 +125,7 @@ const JumboRqList = React.forwardRef<
       queryOptions?.dataKey
     );
     return {
-      data: Array.isArray(dataArray) ? dataArray : [],
+      data: Array.isArray(dataArray) ? dataArray : (dataArray?.data ?? []),
       totalCount:
         getArrayElementFromKey(listQuery?.data, queryOptions.countKey) || 0,
     };
