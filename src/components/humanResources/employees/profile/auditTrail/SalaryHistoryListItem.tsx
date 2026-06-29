@@ -1,3 +1,4 @@
+// components/humanResources/employees/auditTrail/SalaryHistoryListItem.tsx
 'use client';
 
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
@@ -15,6 +16,7 @@ const formatMoney = (value: number) => {
 };
 
 const SalaryHistoryListItem = ({ change }: { change: SalaryChange }) => {
+  console.log('SalaryHistoryListItem change:', change); // Debugging line
   return (
     <>
       <Divider />
@@ -30,7 +32,7 @@ const SalaryHistoryListItem = ({ change }: { change: SalaryChange }) => {
         alignItems="center"
         container
       >
-        <Grid size={{ xs: 12, md: 3.5 }}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Tooltip title="Salary Change">
             <Typography variant="body2">
               {formatMoney(change.from_basic_salary)} 
@@ -48,7 +50,7 @@ const SalaryHistoryListItem = ({ change }: { change: SalaryChange }) => {
           </Tooltip>
         </Grid>
 
-        <Grid size={{ xs: 12, md: 2.5 }}>
+        <Grid size={{ xs: 12, md: 3 }}>
           {change.reason && (
             <Tooltip title="Reason">
               <Typography variant="body2" color="text.secondary" noWrap>
@@ -58,7 +60,7 @@ const SalaryHistoryListItem = ({ change }: { change: SalaryChange }) => {
           )}
         </Grid>
 
-        <Grid size={{ xs: 12, md: 2.5 }}>
+        <Grid size={{ xs: 12, md: 2 }}>
           <Tooltip title="Change Date">
             <Typography variant="caption" color="text.secondary">
               {change.created_at ? readableDate(change.created_at) : '-'}
@@ -66,7 +68,7 @@ const SalaryHistoryListItem = ({ change }: { change: SalaryChange }) => {
           </Tooltip>
         </Grid>
 
-        <Grid size={{ xs: 12, md: 1.5 }} textAlign="end">
+        <Grid size={{ xs: 12, md: 1 }} textAlign="end">
           {change.creator && (
             <Tooltip title={`Changed by: ${change.creator.first_name || ''} ${change.creator.last_name || ''}`}>
               <Person fontSize="small" color="action" />

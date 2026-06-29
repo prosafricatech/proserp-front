@@ -17,6 +17,7 @@ export async function GET(
     headers,
     credentials: 'include',
   });
+  console.log(res)
 
   return handleJsonResponse(res);
 }

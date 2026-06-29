@@ -23,6 +23,8 @@ import { Controller, useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import humanResourcesServices from '../humanResourcesServices';
 import { AllowanceType } from './AllowanceType';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { MODULES } from '@/utilities/constants/modules';
 
 interface AllowanceTypeFormProps {
   setOpenDialog: (open: boolean) => void;
@@ -64,6 +66,7 @@ const AllowanceTypeForm = ({
   const { enqueueSnackbar } = useSnackbar();
   const dictionary = useDictionary();
   const { ungroupedLedgerOptions } = useLedgerSelect();
+  const { organizationHasSubscribed } = useJumboAuth();
 
   const [recentlyAddedExpenseLedger, setRecentlyAddedExpenseLedger] =
     useState<Ledger | null>(null);
@@ -251,44 +254,47 @@ const AllowanceTypeForm = ({
               </Div>
             </Grid>
 
-            <Grid size={{ xs: 12 }}>
-              <Div sx={{ my: 1 }}>
-                <LedgerSelect
-                  label={dictionary.productCategories.form.labels.expenseLedger}
-                  allowedGroups={['Expenses']}
-                  frontError={errors.expense_ledger_id}
-                  key={'expense-ledger'}
-                  value={recentlyAddedExpenseLedger || undefined}
-                  defaultValue={allowanceType?.expense_ledger || undefined}
-                  onChange={(newValue) => {
-                    if (newValue && !Array.isArray(newValue)) {
-                      setRecentlyAddedExpenseLedger(newValue);
-                      setValue('expense_ledger_id', newValue.id, {
-                        shouldValidate: true,
-                        shouldDirty: true,
-                      });
-                    } else {
-                      setRecentlyAddedExpenseLedger(null);
-                      setValue('expense_ledger_id', 0, {
-                        shouldValidate: true,
-                        shouldDirty: true,
-                      });
-                    }
-                  }}
-                  // startAdornment={
-                  //   <Tooltip
-                  //     title={'Quick Add Ledger'}
-                  //     onClick={() => {
-                  //       setLedgertType('debit');
-                  //       setOpenQuickAddLedger(true);
-                  //     }}
-                  //   >
-                  //     <AddOutlined sx={{ cursor: 'pointer' }} />
-                  //   </Tooltip>
-                  // }
-                />
-              </Div>
-            </Grid>
+            {
+              organizationHasSubscribed(MODULES.ACCOUNTS_AND_FINANCE) && 
+                <Grid size={{ xs: 12 }}>
+                  <Div sx={{ my: 1 }}>
+                    <LedgerSelect
+                      label={dictionary.productCategories.form.labels.expenseLedger}
+                      allowedGroups={['Expenses']}
+                      frontError={errors.expense_ledger_id}
+                    key={'expense-ledger'}
+                    value={recentlyAddedExpenseLedger || undefined}
+                    defaultValue={allowanceType?.expense_ledger || undefined}
+                    onChange={(newValue) => {
+                      if (newValue && !Array.isArray(newValue)) {
+                        setRecentlyAddedExpenseLedger(newValue);
+                        setValue('expense_ledger_id', newValue.id, {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                        });
+                      } else {
+                        setRecentlyAddedExpenseLedger(null);
+                        setValue('expense_ledger_id', 0, {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                        });
+                      }
+                    }}
+                    // startAdornment={
+                    //   <Tooltip
+                    //     title={'Quick Add Ledger'}
+                    //     onClick={() => {
+                    //       setLedgertType('debit');
+                    //       setOpenQuickAddLedger(true);
+                    //     }}
+                    //   >
+                    //     <AddOutlined sx={{ cursor: 'pointer' }} />
+                    //   </Tooltip>
+                    // }
+                  />
+                </Div>
+              </Grid>
+            }
 
             <Grid size={{ xs: 12 }}>
               <Div sx={{ mt: 1, mb: 1 }}>

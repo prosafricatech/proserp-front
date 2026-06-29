@@ -27,6 +27,7 @@ const SalaryHistoryTab = ({ employeeId }: SalaryHistoryTabProps) => {
   });
 
   const renderSalaryHistory = useCallback((change: SalaryChange) => {
+    console.log('renderSalaryHistory change:', change);
     return <SalaryHistoryListItem change={change} />;
   }, []);
 

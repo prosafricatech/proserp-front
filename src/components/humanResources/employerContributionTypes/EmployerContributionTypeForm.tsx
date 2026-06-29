@@ -24,6 +24,8 @@ import { Controller, useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import humanResourcesServices from '../humanResourcesServices';
 import { EmployerContributionType } from './EmployerContributionType';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { MODULES } from '@/utilities/constants/modules';
 
 interface EmployerContributionTypeFormProps {
   setOpenDialog: (open: boolean) => void;
@@ -85,6 +87,7 @@ const EmployerContributionTypeForm = ({
   const { enqueueSnackbar } = useSnackbar();
   const dictionary = useDictionary();
   const { ungroupedLedgerOptions } = useLedgerSelect();
+  const { organizationHasSubscribed } = useJumboAuth();
 
   const [recentlyAddedPayableLedger, setRecentlyAddedPayableLedger] =
     useState<Ledger | null>(null);
@@ -219,27 +222,6 @@ const EmployerContributionTypeForm = ({
       .string()
       .oneOf(['fixed', 'percentage_of_basic', 'percentage_of_gross'])
       .required('Computation method is required'),
-    default_value: yup
-      .number()
-      .typeError('Default value must be a number')
-      .required('Default value is required')
-      .min(0, 'Default value must be 0 or greater'),
-
-    payable_ledger_id: yup
-      .number()
-      .required('This field is required')
-      .positive('Only positive values are allowed'),
-
-    expense_ledger_id: yup
-      .number()
-      .required(
-        dictionary.productCategories.form.errors.validation.expense_ledger_id
-          .required
-      )
-      .positive(
-        dictionary.productCategories.form.errors.validation.expense_ledger_id
-          .positive
-      ),
     description: yup
       .string()
       .max(500, 'Description cannot exceed 500 characters'),
@@ -465,70 +447,73 @@ const EmployerContributionTypeForm = ({
               </Div>
             </Grid>
 
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Div sx={{ my: 1 }}>
-                <LedgerSelect
-                  label={dictionary.productCategories.form.labels.expenseLedger}
-                  allowedGroups={['Expenses']}
-                  frontError={errors.expense_ledger_id}
-                  key={'expense-ledger'}
-                  value={recentlyAddedExpenseLedger || undefined}
-                  defaultValue={
-                    contributionType?.expense_ledger ||
-                    defaultExpenseValue ||
-                    undefined
-                  }
-                  onChange={(newValue) => {
-                    if (newValue && !Array.isArray(newValue)) {
-                      setRecentlyAddedExpenseLedger(newValue);
-                      setValue('expense_ledger_id', newValue.id, {
-                        shouldValidate: true,
-                        shouldDirty: true,
-                      });
-                    } else {
-                      setRecentlyAddedExpenseLedger(null);
-                      setValue('expense_ledger_id', 0, {
-                        shouldValidate: true,
-                        shouldDirty: true,
-                      });
-                    }
-                  }}
-                />
-              </Div>
-            </Grid>
+            {organizationHasSubscribed(MODULES.ACCOUNTS_AND_FINANCE) &&
+              <>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Div sx={{ my: 1 }}>
+                    <LedgerSelect
+                      label={dictionary.productCategories.form.labels.expenseLedger}
+                      allowedGroups={['Expenses']}
+                      frontError={errors.expense_ledger_id}
+                      key={'expense-ledger'}
+                      value={recentlyAddedExpenseLedger || undefined}
+                      defaultValue={
+                        contributionType?.expense_ledger ||
+                        defaultExpenseValue ||
+                        undefined
+                      }
+                      onChange={(newValue) => {
+                        if (newValue && !Array.isArray(newValue)) {
+                          setRecentlyAddedExpenseLedger(newValue);
+                          setValue('expense_ledger_id', newValue.id, {
+                            shouldValidate: true,
+                            shouldDirty: true,
+                          });
+                        } else {
+                          setRecentlyAddedExpenseLedger(null);
+                          setValue('expense_ledger_id', 0, {
+                            shouldValidate: true,
+                            shouldDirty: true,
+                          });
+                        }
+                      }}
+                    />
+                  </Div>
+                </Grid>
 
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Div sx={{ my: 1 }}>
-                <LedgerSelect
-                  label='Payable Ledger'
-                  allowedGroups={['Accounts Payable']}
-                  frontError={errors.payable_ledger_id}
-                  key={'account-payable-ledger'}
-                  value={recentlyAddedPayableLedger || undefined}
-                  defaultValue={
-                    contributionType?.payable_ledger ||
-                    defaultPayableValue ||
-                    undefined
-                  }
-                  onChange={(newValue) => {
-                    if (newValue && !Array.isArray(newValue)) {
-                      setRecentlyAddedPayableLedger(newValue);
-                      setValue('payable_ledger_id', newValue.id, {
-                        shouldValidate: true,
-                        shouldDirty: true,
-                      });
-                    } else {
-                      setRecentlyAddedPayableLedger(null);
-                      setValue('payable_ledger_id', 0, {
-                        shouldValidate: true,
-                        shouldDirty: true,
-                      });
-                    }
-                  }}
-                />
-              </Div>
-            </Grid>
-
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Div sx={{ my: 1 }}>
+                    <LedgerSelect
+                      label='Payable Ledger'
+                      allowedGroups={['Accounts Payable']}
+                      frontError={errors.payable_ledger_id}
+                      key={'account-payable-ledger'}
+                      value={recentlyAddedPayableLedger || undefined}
+                      defaultValue={
+                        contributionType?.payable_ledger ||
+                        defaultPayableValue ||
+                        undefined
+                      }
+                      onChange={(newValue) => {
+                        if (newValue && !Array.isArray(newValue)) {
+                          setRecentlyAddedPayableLedger(newValue);
+                          setValue('payable_ledger_id', newValue.id, {
+                            shouldValidate: true,
+                            shouldDirty: true,
+                          });
+                        } else {
+                          setRecentlyAddedPayableLedger(null);
+                          setValue('payable_ledger_id', 0, {
+                            shouldValidate: true,
+                            shouldDirty: true,
+                          });
+                        }
+                      }}
+                    />
+                  </Div>
+                </Grid>
+              </>
+            }
             {/* Apply To Employees Dropdown */}
             <Grid size={{ xs: 12, md: 12 }}>
               <Div sx={{ mt: 1, mb: 1 }}>

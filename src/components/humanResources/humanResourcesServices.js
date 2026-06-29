@@ -62,7 +62,7 @@ humanResourcesServices.getMovements = async (employeeId, type= 'all', params) =>
 
 humanResourcesServices.getEmployeeSalaryHistory = async (employeeId, params) => {
   const { page = 1, limit = 10, keyword = '', ...rest } = params;
-  const { data } = await axios.get(`/api/humanResources/employees/${employeeId}/salary-history`, {
+  const {data} = await axios.get(`/api/humanResources/employees/${employeeId}/salary-history`, {
     params: { page, limit, keyword, ...rest }
   });
   return data;

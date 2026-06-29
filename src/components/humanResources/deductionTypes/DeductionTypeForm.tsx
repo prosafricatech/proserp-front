@@ -25,6 +25,8 @@ import { Controller, useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import humanResourcesServices from '../humanResourcesServices';
 import { DeductionType } from './DeductionType';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { MODULES } from '@/utilities/constants/modules';
 
 interface DeductionTypeFormProps {
   setOpenDialog: (open: boolean) => void;
@@ -85,6 +87,7 @@ const DeductionTypeForm = ({
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
   const { ungroupedLedgerOptions } = useLedgerSelect();
+  const { organizationHasSubscribed } = useJumboAuth();
   const [recentlyAddedPayableLedger, setRecentlyAddedPayableLedger] =
     useState<Ledger | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -208,10 +211,6 @@ const DeductionTypeForm = ({
       .typeError('Default value must be a number')
       .required('Default value is required')
       .min(0, 'Default value must be 0 or greater'),
-    payable_ledger_id: yup
-      .number()
-      .required('This field is required')
-      .positive('Only positive values are allowed'),
     is_pre_tax: yup.boolean().required(),
     description: yup
       .string()
@@ -454,35 +453,37 @@ const DeductionTypeForm = ({
               </Div>
             </Grid>
 
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Div sx={{ my: 1 }}>
-                <LedgerSelect
-                  label='Payable Ledger'
-                  allowedGroups={['Accounts Payable']}
-                  frontError={errors.payable_ledger_id}
-                  key={'account-payable-ledger'}
-                  value={recentlyAddedPayableLedger || undefined}
-                  defaultValue={
-                    deductionType?.payable_ledger || defaultValue || undefined
-                  }
-                  onChange={(newValue) => {
-                    if (newValue && !Array.isArray(newValue)) {
-                      setRecentlyAddedPayableLedger(newValue);
-                      setValue('payable_ledger_id', newValue.id, {
-                        shouldValidate: true,
-                        shouldDirty: true,
-                      });
-                    } else {
-                      setRecentlyAddedPayableLedger(null);
-                      setValue('payable_ledger_id', 0, {
-                        shouldValidate: true,
-                        shouldDirty: true,
-                      });
+            {organizationHasSubscribed(MODULES.ACCOUNTS_AND_FINANCE) &&
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Div sx={{ my: 1 }}>
+                  <LedgerSelect
+                    label='Payable Ledger'
+                    allowedGroups={['Accounts Payable']}
+                    frontError={errors.payable_ledger_id}
+                    key={'account-payable-ledger'}
+                    value={recentlyAddedPayableLedger || undefined}
+                    defaultValue={
+                      deductionType?.payable_ledger || defaultValue || undefined
                     }
-                  }}
-                />
-              </Div>
-            </Grid>
+                    onChange={(newValue) => {
+                      if (newValue && !Array.isArray(newValue)) {
+                        setRecentlyAddedPayableLedger(newValue);
+                        setValue('payable_ledger_id', newValue.id, {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                        });
+                      } else {
+                        setRecentlyAddedPayableLedger(null);
+                        setValue('payable_ledger_id', 0, {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                        });
+                      }
+                    }}
+                  />
+                </Div>
+              </Grid>
+            }
 
             {/* Apply To Employees Dropdown */}
             <Grid size={{ xs: 12, md: 6 }}>
