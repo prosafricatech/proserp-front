@@ -1,12 +1,16 @@
-// components/humanResources/employees/auditTrail/AuditTrailListItem.tsx
 'use client';
 
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
-import { ArrowForward, Person } from '@mui/icons-material';
-import { Chip, Divider, Grid, Tooltip, Typography } from '@mui/material';
+import { Person } from '@mui/icons-material';
+import { Chip, TableCell, TableRow, Tooltip, Typography } from '@mui/material';
 import { Movement } from './AuditTrailType';
 
-const AuditTrailListItem = ({ movement }: { movement: Movement }) => {
+interface AuditTrailListItemProps {
+  movement: Movement;
+  showType?: boolean;
+}
+
+const AuditTrailListItem = ({ movement, showType = false }: AuditTrailListItemProps) => {
   const isCostCenter = movement.from_cost_center_id || movement.to_cost_center_id;
   const isDepartment = movement.from_department_id || movement.to_department_id;
 
@@ -19,67 +23,80 @@ const AuditTrailListItem = ({ movement }: { movement: Movement }) => {
 
   const movementType = isCostCenter ? 'Cost Center' : 'Department';
 
+  const creatorName = movement.creator 
+    ? `${movement.creator.first_name || ''} ${movement.creator.last_name || ''}`.trim() 
+    : '-';
+
   return (
-    <>
-      <Divider />
-      <Grid
-        mt={1}
-        mb={1}
-        sx={{
-          '&:hover': { bgcolor: 'action.hover' },
-        }}
-        paddingLeft={2}
-        paddingRight={2}
-        columnSpacing={1}
-        alignItems="center"
-        container
-      >
-        <Grid size={{ xs: 12, md: 2.5 }}>
-          <Tooltip title="Movement Type">
-            <Chip 
-              label={movementType} 
-              size="small" 
-              color={isCostCenter ? 'primary' : 'info'}
-              variant="outlined"
-            />
-          </Tooltip>
-        </Grid>
+    <TableRow
+      hover
+      sx={{
+        '&:hover': { bgcolor: 'action.hover' },
+        '& td, & th': {
+          border: '1px solid',
+          borderColor: 'divider',
+          py: 1.5,
+          px: 2,
+        },
+      }}
+    >
+      {/* Date */}
+      <TableCell>
+        <Typography variant="body2">
+          {movement.moved_date ? readableDate(movement.moved_date) : '-'}
+        </Typography>
+      </TableCell>
 
-        <Grid size={{ xs: 12, md: 3.5 }}>
-          <Tooltip title="From → To">
-            <Typography variant="body2">
-              {fromName || '-'} <ArrowForward fontSize="small" sx={{ mx: 0.5 }} /> {toName || '-'}
+      {/* From */}
+      <TableCell>
+        <Typography variant="body2">
+          {fromName || '-'}
+        </Typography>
+        {showType && (
+          <Chip 
+            label={movementType} 
+            size="small" 
+            color={isCostCenter ? 'primary' : 'info'}
+            variant="outlined"
+            sx={{ mt: 0.5 }}
+          />
+        )}
+      </TableCell>
+
+      {/* To */}
+      <TableCell>
+        <Typography variant="body2">
+          {toName || '-'}
+        </Typography>
+      </TableCell>
+
+      {/* Reason */}
+      <TableCell>
+        {movement.reason ? (
+          <Tooltip title={movement.reason}>
+            <Typography variant="body2" color="text.secondary" noWrap sx={{ maxWidth: 200 }}>
+              {movement.reason}
             </Typography>
           </Tooltip>
-        </Grid>
+        ) : (
+          <Typography variant="body2" color="text.disabled">-</Typography>
+        )}
+      </TableCell>
 
-        <Grid size={{ xs: 12, md: 2 }}>
-          <Tooltip title="Movement Date">
-            <Typography variant="body2">
-              {movement.moved_date ? readableDate(movement.moved_date) : '-'}
-            </Typography>
-          </Tooltip>
-        </Grid>
-
-        <Grid size={{ xs: 12, md: 3 }}>
-          {movement.reason && (
-            <Tooltip title="Reason">
-              <Typography variant="body2" color="text.secondary" noWrap>
-                {movement.reason}
-              </Typography>
-            </Tooltip>
-          )}
-        </Grid>
-
-        <Grid size={{ xs: 12, md: 1 }} textAlign="end">
-          {movement.creator && (
-            <Tooltip title={`Changed by: ${movement.creator.first_name || ''} ${movement.creator.last_name || ''}`}>
+      {/* Changed By */}
+      <TableCell>
+        {movement.creator ? (
+          <Tooltip title={`Changed by: ${creatorName}`}>
+            <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
               <Person fontSize="small" color="action" />
-            </Tooltip>
-          )}
-        </Grid>
-      </Grid>
-    </>
+              {creatorName}
+            </Typography>
+          </Tooltip>
+        ) : (
+          <Typography variant="body2" color="text.disabled">-</Typography>
+        )}
+      </TableCell>
+    </TableRow>
   );
 };
 

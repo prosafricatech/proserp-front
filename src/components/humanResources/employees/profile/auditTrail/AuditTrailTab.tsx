@@ -1,10 +1,9 @@
-// components/humanResources/employees/auditTrail/AuditTrailTab.tsx
 'use client';
 
 import JumboListToolbar from '@jumbo/components/JumboList/components/JumboListToolbar';
 import JumboRqList from '@jumbo/components/JumboReactQuery/JumboRqList';
 import JumboSearch from '@jumbo/components/JumboSearch/JumboSearch';
-import { Card, Grid, Stack } from '@mui/material';
+import { Card, Grid, Stack, TableCell, TableRow } from '@mui/material';
 import { useCallback, useRef, useState, useEffect } from 'react';
 import AuditTrailListItem from './AuditTrailListItem';
 import MovementTypeSelector from './MovementTypeSelector';
@@ -14,6 +13,9 @@ import humanResourcesServices from '@/components/humanResources/humanResourcesSe
 interface AuditTrailTabProps {
   employeeId: number;
 }
+
+// ✅ Define table headers
+const TABLE_HEADERS = ['Date', 'From', 'To', 'Reason'];
 
 const AuditTrailTab = ({ employeeId }: AuditTrailTabProps) => {
   const listRef = useRef<any>(null);
@@ -36,9 +38,10 @@ const AuditTrailTab = ({ employeeId }: AuditTrailTabProps) => {
     }));
   }, [employeeId, movementType]);
 
+  // ✅ Custom renderItem for table view
   const renderAuditTrail = useCallback((movement: Movement) => {
-    return <AuditTrailListItem movement={movement} />;
-  }, []);
+    return <AuditTrailListItem movement={movement} showType={movementType === 'all'} />;
+  }, [movementType]);
 
   const handleOnChange = useCallback((keyword: string) => {
     setQueryOptions((state) => ({
@@ -65,6 +68,9 @@ const AuditTrailTab = ({ employeeId }: AuditTrailTabProps) => {
       itemsPerPage={20}
       itemsPerPageOptions={[10, 20, 50]}
       renderItem={renderAuditTrail}
+      // ✅ Use table view
+      view="table"
+      tableHeader={TABLE_HEADERS}
       componentElement="div"
       wrapperSx={{
         flex: 1,
@@ -76,16 +82,13 @@ const AuditTrailTab = ({ employeeId }: AuditTrailTabProps) => {
           hideItemsPerPage={true}
           actionTail={
             <Grid container columnSpacing={1} rowSpacing={1}>
-              {/* Movement Type Selector */}
-              <Grid size={{ xs: 12, lg: 4 }} alignItems="center">
-                <MovementTypeSelector 
+              <Grid size={{ xs: 12, lg: 6 }} alignItems="center">
+                <MovementTypeSelector
                   value={movementType}
                   onChange={handleMovementTypeChange}
                 />
               </Grid>
-              
-              {/* Search */}
-              <Grid size={{ xs: 12, lg: 8 }}>
+              <Grid size={{ xs: 12, lg: 6 }}>
                 <Stack direction="row">
                   <JumboSearch
                     onChange={handleOnChange}

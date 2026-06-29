@@ -49,7 +49,7 @@ const MovementTypeSelector = ({ onChange, value }: MovementTypeSelectorProps) =>
   }, []);
 
   return (
-    <Box sx={{ minWidth: 200 }}>
+    <Box sx={{ minWidth: 100 }}>
       <FormControl fullWidth size="small">
         <InputLabel id="movement-type-select-label">Movement Type</InputLabel>
         <Select
