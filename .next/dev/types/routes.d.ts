@@ -705,7 +705,43 @@ declare global {
     params: Promise<ParamMap[AppRouteHandlerRoute]>
   }
 }
-params
+ckAdjustment/add": {}
+  "/api/stores": {}
+  "/api/stores/[id]/delete": { "id": string; }
+  "/api/stores/[id]/downloadExcelTemplate": { "id": string; }
+  "/api/stores/[id]/getExistedProducts": { "id": string; }
+  "/api/stores/[id]/getGrnsList": { "id": string; }
+  "/api/stores/[id]/getInventoryTransferList": { "id": string; }
+  "/api/stores/[id]/getStock": { "id": string; }
+  "/api/stores/[id]/getStockAdjustmentList": { "id": string; }
+  "/api/stores/[id]/getStockList": { "id": string; }
+  "/api/stores/[id]/getStockMovement": { "id": string; }
+  "/api/stores/[id]/getStockMovementExcel": { "id": string; }
+  "/api/stores/[id]/show": { "id": string; }
+  "/api/stores/[id]/update": { "id": string; }
+  "/api/stores/add": {}
+  "/api/stores/getAddresses": {}
+  "/api/stores/getStoreOptions": {}
+  "/manifest.json": {}
+}
+
+
+export type ParamsOf<Route extends Routes> = ParamMap[Route]
+
+interface LayoutSlotMap {
+  "/[lang]": never
+}
+
+
+export type { AppRoutes, PageRoutes, LayoutRoutes, RedirectRoutes, RewriteRoutes, ParamMap, AppRouteHandlerRoutes }
+
+declare global {
+  /**
+   * Props for Next.js App Router page components
+   * @example
+   * ```tsx
+   * export default function Page(props: PageProps<'/blog/[slug]'>) {
+   *   const { slug } = await props.params
    *   return <div>Blog post: {slug}</div>
    * }
    * ```
@@ -726,26 +762,6 @@ params
    */
   type LayoutProps<LayoutRoute extends LayoutRoutes> = {
     params: Promise<ParamMap[LayoutRoute]>
-    children: React.ReactNode
-  } & {
-    [K in LayoutSlotMap[LayoutRoute]]: React.ReactNode
-  }
-
-  /**
-   * Context for Next.js App Router route handlers
-   * @example
-   * ```tsx
-   * export async function GET(request: NextRequest, context: RouteContext<'/api/users/[id]'>) {
-   *   const { id } = await context.params
-   *   return Response.json({ id })
-   * }
-   * ```
-   */
-  interface RouteContext<AppRouteHandlerRoute extends AppRouteHandlerRoutes> {
-    params: Promise<ParamMap[AppRouteHandlerRoute]>
-  }
-}
-Promise<ParamMap[LayoutRoute]>
     children: React.ReactNode
   } & {
     [K in LayoutSlotMap[LayoutRoute]]: React.ReactNode
