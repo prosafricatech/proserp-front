@@ -147,12 +147,17 @@ const DeductionTypeForm = ({
 
   const handleErrorResponse = (mutationError: any) => {
     const responseData = mutationError?.response?.data;
-    
+
     // Check if this is a bulk update confirmation error
-    if (responseData?.would_update !== undefined || responseData?.would_create !== undefined) {
+    if (
+      responseData?.would_update !== undefined ||
+      responseData?.would_create !== undefined
+    ) {
       setConfirmDialog({
         open: true,
-        data: mutationError?.config?.data ? JSON.parse(mutationError.config.data) : null,
+        data: mutationError?.config?.data
+          ? JSON.parse(mutationError.config.data)
+          : null,
         wouldUpdate: responseData.would_update || 0,
         wouldCreate: responseData.would_create || 0,
       });
@@ -181,11 +186,21 @@ const DeductionTypeForm = ({
       };
       saveMutation(dataWithForce);
     }
-    setConfirmDialog({ open: false, data: null, wouldUpdate: 0, wouldCreate: 0 });
+    setConfirmDialog({
+      open: false,
+      data: null,
+      wouldUpdate: 0,
+      wouldCreate: 0,
+    });
   };
 
   const handleCancelBulkUpdate = () => {
-    setConfirmDialog({ open: false, data: null, wouldUpdate: 0, wouldCreate: 0 });
+    setConfirmDialog({
+      open: false,
+      data: null,
+      wouldUpdate: 0,
+      wouldCreate: 0,
+    });
   };
 
   const validationSchema = yup.object({
@@ -211,7 +226,7 @@ const DeductionTypeForm = ({
     payable_ledger_id: yup
       .number()
       .required('This field is required')
-      .positive('Only positive values are allowed'),
+      .positive('This field is required'),
     is_pre_tax: yup.boolean().required(),
     description: yup
       .string()
@@ -573,19 +588,30 @@ const DeductionTypeForm = ({
           <Grid container spacing={1}>
             <Grid size={12}>
               <Typography variant='body2'>
-                <strong>Will Update:</strong> {confirmDialog.wouldUpdate} employees
+                <strong>Will Update:</strong> {confirmDialog.wouldUpdate}{' '}
+                employees
                 {confirmDialog.wouldUpdate > 0 && (
-                  <Typography variant='caption' display='block' color='text.secondary'>
-                    (Employees who already have this deduction will be updated with the new rate)
+                  <Typography
+                    variant='caption'
+                    display='block'
+                    color='text.secondary'
+                  >
+                    (Employees who already have this deduction will be updated
+                    with the new rate)
                   </Typography>
                 )}
               </Typography>
             </Grid>
             <Grid size={12}>
               <Typography variant='body2'>
-                <strong>Will Create:</strong> {confirmDialog.wouldCreate} new employees
+                <strong>Will Create:</strong> {confirmDialog.wouldCreate} new
+                employees
                 {confirmDialog.wouldCreate > 0 && (
-                  <Typography variant='caption' display='block' color='text.secondary'>
+                  <Typography
+                    variant='caption'
+                    display='block'
+                    color='text.secondary'
+                  >
                     (Employees who don't have this deduction will get it added)
                   </Typography>
                 )}
@@ -600,7 +626,11 @@ const DeductionTypeForm = ({
           <Button onClick={handleCancelBulkUpdate} variant='outlined'>
             Cancel
           </Button>
-          <Button onClick={handleConfirmBulkUpdate} variant='contained' color='warning'>
+          <Button
+            onClick={handleConfirmBulkUpdate}
+            variant='contained'
+            color='warning'
+          >
             Continue
           </Button>
         </DialogActions>
