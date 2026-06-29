@@ -15,10 +15,11 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControlLabel,
   Grid,
   LinearProgress,
+  Switch,
   TextField,
-  Typography,
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -91,6 +92,7 @@ const EmployeeForm = ({
   const [defaultCostCenter, setDefaultCostCenter] = useState<CostCenter | null>(
     null
   );
+  const [customeName, setCustomeName] = useState(false);
 
   const { data: fetchedCostCenters, isLoading } = useQuery<CostCenter[]>({
     queryKey: ['allCostCenters'],
@@ -270,18 +272,23 @@ const EmployeeForm = ({
   // Watch for changes to detect if cost center or department changed
   const watchCostCenterId = watch('cost_center_id');
   const watchDepartmentId = watch('department_id');
-  const [originalCostCenterId, setOriginalCostCenterId] = useState<number | null>(null);
-  const [originalDepartmentId, setOriginalDepartmentId] = useState<number | null>(null);
+  const [originalCostCenterId, setOriginalCostCenterId] = useState<
+    number | null
+  >(null);
+  const [originalDepartmentId, setOriginalDepartmentId] = useState<
+    number | null
+  >(null);
   const [hasUserInteracted, setHasUserInteracted] = useState(false);
 
   // Check if cost center or department has changed from original values
-  const hasCostCenterChanged = originalCostCenterId !== null && 
-    originalCostCenterId !== watchCostCenterId;
-  const hasDepartmentChanged = originalDepartmentId !== null && 
-    originalDepartmentId !== watchDepartmentId;
-  
+  const hasCostCenterChanged =
+    originalCostCenterId !== null && originalCostCenterId !== watchCostCenterId;
+  const hasDepartmentChanged =
+    originalDepartmentId !== null && originalDepartmentId !== watchDepartmentId;
+
   // Only show reason field when there's an actual change AND user has interacted
-  const showReasonField = hasUserInteracted && (hasCostCenterChanged || hasDepartmentChanged);
+  const showReasonField =
+    hasUserInteracted && (hasCostCenterChanged || hasDepartmentChanged);
 
   // Populate form when editing
   useEffect(() => {
@@ -302,7 +309,7 @@ const EmployeeForm = ({
     setEmployeeDoB(normalizedDateOfBirth);
     setJoinDate(normalizedJoinDate);
     setContractStartDate(normalizedContractStartDate || contractStart || '');
-    
+
     // Store original values for comparison
     setOriginalCostCenterId(employee.cost_center_id ?? null);
     setOriginalDepartmentId(employee.department_id ?? null);
@@ -330,7 +337,7 @@ const EmployeeForm = ({
       contract_start_date: normalizedContractStartDate || contractStart || null,
       reason: '',
     });
-    
+
     // Reset interaction flag when employee changes
     setHasUserInteracted(false);
   }, [employee, reset]);
@@ -339,15 +346,21 @@ const EmployeeForm = ({
   useEffect(() => {
     if (employee) {
       // If values differ from original, user has made changes
-      const hasChanged = 
-        (originalCostCenterId !== watchCostCenterId) ||
-        (originalDepartmentId !== watchDepartmentId);
-      
+      const hasChanged =
+        originalCostCenterId !== watchCostCenterId ||
+        originalDepartmentId !== watchDepartmentId;
+
       if (hasChanged) {
         setHasUserInteracted(true);
       }
     }
-  }, [watchCostCenterId, watchDepartmentId, originalCostCenterId, originalDepartmentId, employee]);
+  }, [
+    watchCostCenterId,
+    watchDepartmentId,
+    originalCostCenterId,
+    originalDepartmentId,
+    employee,
+  ]);
 
   const onSubmit = (data: FormData) => {
     employee?.id ? updateEmployee(data) : addEmployee(data);
@@ -718,37 +731,55 @@ const EmployeeForm = ({
             </Grid>
 
             <Grid size={{ xs: 12, md: 6 }}>
-              <LedgerSelect
-                frontError={errors.payable_ledger_id}
-                defaultValue={
-                  ungroupedLedgerOptions.find(
-                    (l) => l.id === employee?.payable_ledger_id
-                  ) || null
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={customeName}
+                    onChange={() => {
+                      setCustomeName((prev) => !prev);
+                      setValue('payable_ledger_id', null);
+                      setValue('payable_ledger_name', '');
+                    }}
+                  />
                 }
-                allowedGroups={['Accounts Payable']}
-                onChange={(val) => {
-                  if (!Array.isArray(val)) {
-                    setValue('payable_ledger_id', val?.id || 0, {
-                      shouldValidate: true,
-                      shouldDirty: true,
-                    });
-                  }
-                }}
-                label='Payable Account'
+                label='Enter custom account name'
               />
             </Grid>
 
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TextField
-                label='Payable Ledger Name'
-                size='small'
-                fullWidth
-                placeholder='e.g., Payable - Jane Doe'
-                error={!!errors.payable_ledger_name}
-                helperText={errors.payable_ledger_name?.message}
-                {...register('payable_ledger_name')}
-              />
-            </Grid>
+            {!customeName ? (
+              <Grid size={{ xs: 12, md: 6 }}>
+                <LedgerSelect
+                  frontError={errors.payable_ledger_id}
+                  defaultValue={
+                    ungroupedLedgerOptions.find(
+                      (l) => l.id === employee?.payable_ledger_id
+                    ) || null
+                  }
+                  allowedGroups={['Accounts Payable']}
+                  onChange={(val) => {
+                    if (!Array.isArray(val)) {
+                      setValue('payable_ledger_id', val?.id || 0, {
+                        shouldValidate: true,
+                        shouldDirty: true,
+                      });
+                    }
+                  }}
+                  label='Payable Account'
+                />
+              </Grid>
+            ) : (
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  label='Payable Ledger Name'
+                  size='small'
+                  fullWidth
+                  placeholder='e.g., Payable - Jane Doe'
+                  error={!!errors.payable_ledger_name}
+                  helperText={errors.payable_ledger_name?.message}
+                  {...register('payable_ledger_name')}
+                />
+              </Grid>
+            )}
           </Grid>
 
           <DialogActions>

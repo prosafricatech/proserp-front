@@ -1,10 +1,13 @@
 'use client';
 
 import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
 import { useLedgerSelect } from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
+import { MODULES } from '@/utilities/constants/modules';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Div } from '@jumbo/shared';
+import { AddOutlined } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 import {
   Button,
@@ -15,6 +18,7 @@ import {
   Grid,
   MenuItem,
   TextField,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -24,8 +28,6 @@ import { Controller, useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import humanResourcesServices from '../humanResourcesServices';
 import { EmployerContributionType } from './EmployerContributionType';
-import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
-import { MODULES } from '@/utilities/constants/modules';
 
 interface EmployerContributionTypeFormProps {
   setOpenDialog: (open: boolean) => void;
@@ -94,6 +96,9 @@ const EmployerContributionTypeForm = ({
 
   const [recentlyAddedExpenseLedger, setRecentlyAddedExpenseLedger] =
     useState<Ledger | null>(null);
+
+  const [openQuickAddLedger, setOpenQuickAddLedger] = useState(false);
+  const [ledgertType, setLedgertType] = useState<'credit' | 'debit'>('credit');
 
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
@@ -166,12 +171,17 @@ const EmployerContributionTypeForm = ({
 
   const handleErrorResponse = (mutationError: any) => {
     const responseData = mutationError?.response?.data;
-    
+
     // Check if this is a bulk update confirmation error
-    if (responseData?.would_update !== undefined || responseData?.would_create !== undefined) {
+    if (
+      responseData?.would_update !== undefined ||
+      responseData?.would_create !== undefined
+    ) {
       setConfirmDialog({
         open: true,
-        data: mutationError?.config?.data ? JSON.parse(mutationError.config.data) : null,
+        data: mutationError?.config?.data
+          ? JSON.parse(mutationError.config.data)
+          : null,
         wouldUpdate: responseData.would_update || 0,
         wouldCreate: responseData.would_create || 0,
       });
@@ -200,11 +210,21 @@ const EmployerContributionTypeForm = ({
       };
       saveMutation(dataWithForce);
     }
-    setConfirmDialog({ open: false, data: null, wouldUpdate: 0, wouldCreate: 0 });
+    setConfirmDialog({
+      open: false,
+      data: null,
+      wouldUpdate: 0,
+      wouldCreate: 0,
+    });
   };
 
   const handleCancelBulkUpdate = () => {
-    setConfirmDialog({ open: false, data: null, wouldUpdate: 0, wouldCreate: 0 });
+    setConfirmDialog({
+      open: false,
+      data: null,
+      wouldUpdate: 0,
+      wouldCreate: 0,
+    });
   };
 
   const validationSchema = yup.object({
@@ -447,12 +467,14 @@ const EmployerContributionTypeForm = ({
               </Div>
             </Grid>
 
-            {organizationHasSubscribed(MODULES.ACCOUNTS_AND_FINANCE) &&
+            {organizationHasSubscribed(MODULES.ACCOUNTS_AND_FINANCE) && (
               <>
                 <Grid size={{ xs: 12, md: 6 }}>
                   <Div sx={{ my: 1 }}>
                     <LedgerSelect
-                      label={dictionary.productCategories.form.labels.expenseLedger}
+                      label={
+                        dictionary.productCategories.form.labels.expenseLedger
+                      }
                       allowedGroups={['Expenses']}
                       frontError={errors.expense_ledger_id}
                       key={'expense-ledger'}
@@ -477,6 +499,17 @@ const EmployerContributionTypeForm = ({
                           });
                         }
                       }}
+                      startAdornment={
+                        <Tooltip
+                          title={'Quick Add Ledger'}
+                          onClick={() => {
+                            setLedgertType('debit');
+                            setOpenQuickAddLedger(true);
+                          }}
+                        >
+                          <AddOutlined sx={{ cursor: 'pointer' }} />
+                        </Tooltip>
+                      }
                     />
                   </Div>
                 </Grid>
@@ -513,7 +546,7 @@ const EmployerContributionTypeForm = ({
                   </Div>
                 </Grid>
               </>
-            }
+            )}
             {/* Apply To Employees Dropdown */}
             <Grid size={{ xs: 12, md: 12 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
@@ -598,25 +631,38 @@ const EmployerContributionTypeForm = ({
         </DialogTitle>
         <DialogContent>
           <Typography variant='body2' color='text.secondary' sx={{ mb: 2 }}>
-            This action will apply this employer contribution to multiple employees:
+            This action will apply this employer contribution to multiple
+            employees:
           </Typography>
           <Grid container spacing={1}>
             <Grid size={12}>
               <Typography variant='body2'>
-                <strong>Will Update:</strong> {confirmDialog.wouldUpdate} employees
+                <strong>Will Update:</strong> {confirmDialog.wouldUpdate}{' '}
+                employees
                 {confirmDialog.wouldUpdate > 0 && (
-                  <Typography variant='caption' display='block' color='text.secondary'>
-                    (Employees who already have this contribution will be updated with the new rate)
+                  <Typography
+                    variant='caption'
+                    display='block'
+                    color='text.secondary'
+                  >
+                    (Employees who already have this contribution will be
+                    updated with the new rate)
                   </Typography>
                 )}
               </Typography>
             </Grid>
             <Grid size={12}>
               <Typography variant='body2'>
-                <strong>Will Create:</strong> {confirmDialog.wouldCreate} new employees
+                <strong>Will Create:</strong> {confirmDialog.wouldCreate} new
+                employees
                 {confirmDialog.wouldCreate > 0 && (
-                  <Typography variant='caption' display='block' color='text.secondary'>
-                    (Employees who don't have this contribution will get it added)
+                  <Typography
+                    variant='caption'
+                    display='block'
+                    color='text.secondary'
+                  >
+                    (Employees who don't have this contribution will get it
+                    added)
                   </Typography>
                 )}
               </Typography>
@@ -630,11 +676,41 @@ const EmployerContributionTypeForm = ({
           <Button onClick={handleCancelBulkUpdate} variant='outlined'>
             Cancel
           </Button>
-          <Button onClick={handleConfirmBulkUpdate} variant='contained' color='warning'>
+          <Button
+            onClick={handleConfirmBulkUpdate}
+            variant='contained'
+            color='warning'
+          >
             Continue
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* ledger quick add dialog */}
+      {/* <Dialog open={openQuickAddLedger} maxWidth={'md'}>
+              <LedgerGroupProvider>
+                <QuickAddLedger
+                  ledgerType={ledgertType}
+                  toggleOpen={setOpenQuickAddLedger}
+                  heading='Quick Add Ledger'
+                  setAddedLedger={(v) => {
+                    if (ledgertType === 'credit') {
+                      setRecentlyAddedIncomeLedger(v);
+                      setValue('income_ledger_id', v.id, {
+                        shouldValidate: true,
+                        shouldDirty: true,
+                      });
+                    } else {
+                      setRecentlyAddedExpenseLedger(v);
+                      setValue('expense_ledger_id', v.id, {
+                        shouldValidate: true,
+                        shouldDirty: true,
+                      });
+                    }
+                  }}
+                />
+              </LedgerGroupProvider>
+            </Dialog> */}
     </>
   );
 };
