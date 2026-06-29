@@ -111,7 +111,7 @@ function getEmployeeName(run: PayrollRunType) {
 }
 
 function getEmployeeNumber(run: PayrollRunType) {
-  return run.employee?.employee_number || '-';
+  return run.employee?.employee_number;
 }
 
 function getDesignation(run: PayrollRunType) {
@@ -120,6 +120,9 @@ function getDesignation(run: PayrollRunType) {
   }
   if ((run as any).designation) {
     return (run as any).designation;
+  }
+  if ((run as any).employee?.designation) {
+    return (run as any).employee?.designation;
   }
   return '-';
 }
@@ -182,6 +185,8 @@ const SalarySheetDialog = ({
   const [openPdfDialog, setOpenPdfDialog] = useState(false);
   const { theme: jumboTheme } = useJumboTheme();
   const smallScreen = useMediaQuery(jumboTheme.breakpoints.down('md'));
+
+  console.log('rows: ', rows);
 
   const [isExporting, setIsExporting] = useState(false);
 
@@ -353,7 +358,7 @@ const SalarySheetDialog = ({
                   {/* Group Headers - RECRUITMENT, EMPLOYEE, EMPLOYER */}
                   <TableRow>
                     <TableCell
-                      colSpan={4}
+                      colSpan={3}
                       sx={{
                         textAlign: 'center',
                         fontWeight: 700,
@@ -415,15 +420,6 @@ const SalarySheetDialog = ({
                       }}
                     >
                       Employee
-                    </TableCell>
-                    <TableCell
-                      sx={{
-                        fontWeight: 500,
-                        border: '1px solid',
-                        borderColor: 'divider',
-                      }}
-                    >
-                      Employee No.
                     </TableCell>
                     <TableCell
                       sx={{
@@ -635,19 +631,22 @@ const SalarySheetDialog = ({
                           {index + 1}
                         </TableCell>
                         <TableCell
-                          sx={{ border: '1px solid', borderColor: 'divider' }}
-                        >
-                          {name}
-                        </TableCell>
-                        <TableCell
                           sx={{
-                            color: 'text.secondary',
                             border: '1px solid',
                             borderColor: 'divider',
+                            textWrap: 'nowrap',
                           }}
                         >
-                          {employeeNumber}
+                          {name}
+                          <Typography
+                            variant='body2'
+                            fontSize={10}
+                            color='textSecondary'
+                          >
+                            {employeeNumber && `(${employeeNumber})`}
+                          </Typography>
                         </TableCell>
+
                         <TableCell
                           sx={{
                             color: 'text.secondary',
