@@ -129,7 +129,11 @@ function QuickReports() {
             setOpenSalesAndCashSummary={setOpenSalesAndCashSummary}
           />
         )}
-        {debtorsCreditorsDialogOpen && <DebtorCreditorReport setOpenDebtorsCreditorsDialog={setDebtorsCreditorsDialogOpen}/>}
+        {debtorsCreditorsDialogOpen && (
+          <DebtorCreditorReport
+            setOpenDebtorsCreditorsDialog={setDebtorsCreditorsDialogOpen}
+          />
+        )}
         {openCashierReport && (
           <LedgerSelectProvider>
             <CashierReport setOpenCashierReport={setOpenCashierReport} />
@@ -155,7 +159,9 @@ function QuickReports() {
             isFromDashboard={true}
           />
         )}
-        {openDippingReport && <DippingReport closeDialog={setOpenDippingReport}/>}
+        {openDippingReport && (
+          <DippingReport closeDialog={setOpenDippingReport} />
+        )}
         {openSalesManifest && (
           <StakeholderSelectProvider>
             <SalesManifest setOpenSalesManifest={setOpenSalesManifest} />
@@ -233,27 +239,29 @@ function QuickReports() {
                   <Typography>Sales Manifest</Typography>
                 </Grid>
               )}
-            {checkOrganizationPermission(PERMISSIONS.ACCOUNTS_REPORTS) && (
-              <Grid
-                size={{ xs: 6, md: 2, lg: 1.5 }}
-                p={1}
-                textAlign={'center'}
-                sx={{
-                  cursor: 'pointer',
-                  '&:hover': {
-                    bgcolor: 'action.hover',
-                  },
-                }}
-                onClick={() => handleOpenDialog(setOpenCashierReport)}
-              >
-                <FontAwesomeIcon
-                  size='lg'
-                  icon={faMoneyBill1}
-                  style={{ fontSize: '48px' }}
-                />
-                <Typography>Cashier Report</Typography>
-              </Grid>
-            )}
+
+            {organizationHasSubscribed(MODULES.ACCOUNTS_AND_FINANCE) &&
+              checkOrganizationPermission(PERMISSIONS.ACCOUNTS_REPORTS) && (
+                <Grid
+                  size={{ xs: 6, md: 2, lg: 1.5 }}
+                  p={1}
+                  textAlign={'center'}
+                  sx={{
+                    cursor: 'pointer',
+                    '&:hover': {
+                      bgcolor: 'action.hover',
+                    },
+                  }}
+                  onClick={() => handleOpenDialog(setOpenCashierReport)}
+                >
+                  <FontAwesomeIcon
+                    size='lg'
+                    icon={faMoneyBill1}
+                    style={{ fontSize: '48px' }}
+                  />
+                  <Typography>Cashier Report</Typography>
+                </Grid>
+              )}
             {organizationHasSubscribed(MODULES.FUEL_STATION) && (
               <Grid
                 size={{ xs: 6, md: 2, lg: 1.5 }}
@@ -297,6 +305,7 @@ function QuickReports() {
                   <Typography>Stock Report</Typography>
                 </Grid>
               )}
+
             {organizationHasSubscribed(MODULES.PROCUREMENT_AND_SUPPLY) &&
               checkOrganizationPermission(PERMISSIONS.STORES_REPORTS) && (
                 <Grid
@@ -333,23 +342,26 @@ function QuickReports() {
                   <Typography>Stock Movement</Typography>
                 </Grid>
               )}
-            {checkOrganizationPermission(PERMISSIONS.ACCOUNTS_REPORTS) && (
-              <Grid
-                size={{ xs: 6, md: 2, lg: 1.5 }}
-                p={1}
-                textAlign={'center'}
-                sx={{
-                  cursor: 'pointer',
-                  '&:hover': {
-                    bgcolor: 'action.hover',
-                  },
-                }}
-                onClick={() => handleOpenDialog(setDebtorsCreditorsDialogOpen)}
-              >
-                <Money sx={{ fontSize: '40px' }} />
-                <Typography>Debtors & Creditors</Typography>
-              </Grid>
-            )}
+            {organizationHasSubscribed(MODULES.ACCOUNTS_AND_FINANCE) &&
+              checkOrganizationPermission(PERMISSIONS.ACCOUNTS_REPORTS) && (
+                <Grid
+                  size={{ xs: 6, md: 2, lg: 1.5 }}
+                  p={1}
+                  textAlign={'center'}
+                  sx={{
+                    cursor: 'pointer',
+                    '&:hover': {
+                      bgcolor: 'action.hover',
+                    },
+                  }}
+                  onClick={() =>
+                    handleOpenDialog(setDebtorsCreditorsDialogOpen)
+                  }
+                >
+                  <Money sx={{ fontSize: '40px' }} />
+                  <Typography>Debtors & Creditors</Typography>
+                </Grid>
+              )}
             {organizationHasSubscribed(MODULES.FUEL_STATION) && (
               <Grid
                 size={{ xs: 6, md: 2, lg: 1.5 }}
