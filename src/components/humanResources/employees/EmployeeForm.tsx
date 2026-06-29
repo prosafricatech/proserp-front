@@ -6,6 +6,7 @@ import { useLedgerSelect } from '@/components/accounts/ledgers/forms/LedgerSelec
 import costCenterservices from '@/components/masters/costCenters/cost-center-services';
 import CostCenterSelector from '@/components/masters/costCenters/CostCenterSelector';
 import { CostCenter } from '@/components/masters/costCenters/CostCenterType';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Div } from '@jumbo/shared';
 import { LoadingButton } from '@mui/lab';
@@ -64,7 +65,7 @@ const EmployeeForm = ({
 }: EmployeeFormProps) => {
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
-  const { authUser } = useJumboAuth();
+  const { authUser, checkOrganizationPermission } = useJumboAuth();
   const { ungroupedLedgerOptions } = useLedgerSelect();
   const { departments, isFetching } = useDepartments();
 
@@ -724,61 +725,67 @@ const EmployeeForm = ({
             </Grid>
 
             {/* Accounting Settings */}
-            <Grid size={12}>
-              <Div sx={{ mt: 2, mb: 1, fontWeight: 600 }}>
-                Accounting Settings
-              </Div>
-            </Grid>
+            {checkOrganizationPermission(
+              PERMISSIONS.ACCOUNTS_MASTERS_CREATE
+            ) && (
+              <>
+                <Grid size={12}>
+                  <Div sx={{ mt: 2, mb: 1, fontWeight: 600 }}>
+                    Accounting Settings
+                  </Div>
+                </Grid>
 
-            <Grid size={{ xs: 12, md: 6 }}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={customeName}
-                    onChange={() => {
-                      setCustomeName((prev) => !prev);
-                      setValue('payable_ledger_id', null);
-                      setValue('payable_ledger_name', '');
-                    }}
-                  />
-                }
-                label='Enter custom account name'
-              />
-            </Grid>
-
-            {!customeName ? (
-              <Grid size={{ xs: 12, md: 6 }}>
-                <LedgerSelect
-                  frontError={errors.payable_ledger_id}
-                  defaultValue={
-                    ungroupedLedgerOptions.find(
-                      (l) => l.id === employee?.payable_ledger_id
-                    ) || null
-                  }
-                  allowedGroups={['Accounts Payable']}
-                  onChange={(val) => {
-                    if (!Array.isArray(val)) {
-                      setValue('payable_ledger_id', val?.id || 0, {
-                        shouldValidate: true,
-                        shouldDirty: true,
-                      });
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={customeName}
+                        onChange={() => {
+                          setCustomeName((prev) => !prev);
+                          setValue('payable_ledger_id', null);
+                          setValue('payable_ledger_name', '');
+                        }}
+                      />
                     }
-                  }}
-                  label='Payable Account'
-                />
-              </Grid>
-            ) : (
-              <Grid size={{ xs: 12, md: 6 }}>
-                <TextField
-                  label='Payable Ledger Name'
-                  size='small'
-                  fullWidth
-                  placeholder='e.g., Payable - Jane Doe'
-                  error={!!errors.payable_ledger_name}
-                  helperText={errors.payable_ledger_name?.message}
-                  {...register('payable_ledger_name')}
-                />
-              </Grid>
+                    label='Enter custom account name'
+                  />
+                </Grid>
+
+                {!customeName ? (
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <LedgerSelect
+                      frontError={errors.payable_ledger_id}
+                      defaultValue={
+                        ungroupedLedgerOptions.find(
+                          (l) => l.id === employee?.payable_ledger_id
+                        ) || null
+                      }
+                      allowedGroups={['Accounts Payable']}
+                      onChange={(val) => {
+                        if (!Array.isArray(val)) {
+                          setValue('payable_ledger_id', val?.id || 0, {
+                            shouldValidate: true,
+                            shouldDirty: true,
+                          });
+                        }
+                      }}
+                      label='Payable Account'
+                    />
+                  </Grid>
+                ) : (
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <TextField
+                      label='Payable Ledger Name'
+                      size='small'
+                      fullWidth
+                      placeholder='e.g., Payable - Jane Doe'
+                      error={!!errors.payable_ledger_name}
+                      helperText={errors.payable_ledger_name?.message}
+                      {...register('payable_ledger_name')}
+                    />
+                  </Grid>
+                )}
+              </>
             )}
           </Grid>
 

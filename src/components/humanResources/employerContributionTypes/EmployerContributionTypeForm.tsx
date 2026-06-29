@@ -2,9 +2,12 @@
 
 import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import LedgerGroupProvider from '@/components/accounts/ledgerGroups/LedgerGroupProvider';
 import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
 import { useLedgerSelect } from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
+import QuickAddLedger from '@/components/accounts/ledgers/forms/QuickAddLedger';
 import { MODULES } from '@/utilities/constants/modules';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Div } from '@jumbo/shared';
 import { AddOutlined } from '@mui/icons-material';
@@ -89,7 +92,8 @@ const EmployerContributionTypeForm = ({
   const { enqueueSnackbar } = useSnackbar();
   const dictionary = useDictionary();
   const { ungroupedLedgerOptions } = useLedgerSelect();
-  const { organizationHasSubscribed } = useJumboAuth();
+  const { organizationHasSubscribed, checkOrganizationPermission } =
+    useJumboAuth();
 
   const [recentlyAddedPayableLedger, setRecentlyAddedPayableLedger] =
     useState<Ledger | null>(null);
@@ -500,15 +504,19 @@ const EmployerContributionTypeForm = ({
                         }
                       }}
                       startAdornment={
-                        <Tooltip
-                          title={'Quick Add Ledger'}
-                          onClick={() => {
-                            setLedgertType('debit');
-                            setOpenQuickAddLedger(true);
-                          }}
-                        >
-                          <AddOutlined sx={{ cursor: 'pointer' }} />
-                        </Tooltip>
+                        checkOrganizationPermission(
+                          PERMISSIONS.ACCOUNTS_MASTERS_CREATE
+                        ) && (
+                          <Tooltip
+                            title={'Quick Add Ledger'}
+                            onClick={() => {
+                              setLedgertType('debit');
+                              setOpenQuickAddLedger(true);
+                            }}
+                          >
+                            <AddOutlined sx={{ cursor: 'pointer' }} />
+                          </Tooltip>
+                        )
                       }
                     />
                   </Div>
@@ -542,6 +550,21 @@ const EmployerContributionTypeForm = ({
                           });
                         }
                       }}
+                      startAdornment={
+                        checkOrganizationPermission(
+                          PERMISSIONS.ACCOUNTS_MASTERS_CREATE
+                        ) && (
+                          <Tooltip
+                            title={'Quick Add Ledger'}
+                            onClick={() => {
+                              setLedgertType('credit');
+                              setOpenQuickAddLedger(true);
+                            }}
+                          >
+                            <AddOutlined sx={{ cursor: 'pointer' }} />
+                          </Tooltip>
+                        )
+                      }
                     />
                   </Div>
                 </Grid>
@@ -687,30 +710,30 @@ const EmployerContributionTypeForm = ({
       </Dialog>
 
       {/* ledger quick add dialog */}
-      {/* <Dialog open={openQuickAddLedger} maxWidth={'md'}>
-              <LedgerGroupProvider>
-                <QuickAddLedger
-                  ledgerType={ledgertType}
-                  toggleOpen={setOpenQuickAddLedger}
-                  heading='Quick Add Ledger'
-                  setAddedLedger={(v) => {
-                    if (ledgertType === 'credit') {
-                      setRecentlyAddedIncomeLedger(v);
-                      setValue('income_ledger_id', v.id, {
-                        shouldValidate: true,
-                        shouldDirty: true,
-                      });
-                    } else {
-                      setRecentlyAddedExpenseLedger(v);
-                      setValue('expense_ledger_id', v.id, {
-                        shouldValidate: true,
-                        shouldDirty: true,
-                      });
-                    }
-                  }}
-                />
-              </LedgerGroupProvider>
-            </Dialog> */}
+      <Dialog open={openQuickAddLedger} maxWidth={'md'}>
+        <LedgerGroupProvider>
+          <QuickAddLedger
+            ledgerType={ledgertType}
+            toggleOpen={setOpenQuickAddLedger}
+            heading='Quick Add Ledger'
+            setAddedLedger={(v) => {
+              if (ledgertType === 'credit') {
+                setRecentlyAddedPayableLedger(v);
+                setValue('payable_ledger_id', v.id, {
+                  shouldValidate: true,
+                  shouldDirty: true,
+                });
+              } else {
+                setRecentlyAddedExpenseLedger(v);
+                setValue('expense_ledger_id', v.id, {
+                  shouldValidate: true,
+                  shouldDirty: true,
+                });
+              }
+            }}
+          />
+        </LedgerGroupProvider>
+      </Dialog>
     </>
   );
 };
