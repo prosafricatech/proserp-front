@@ -52,26 +52,26 @@ humanResourcesServices.importEmployeesRegistrationExcel = async (file) => {
     return data;
 }
 
-humanResourcesServices.getMovements = async (employeeId, type= 'all', params) => {
-  const { page = 1, limit = 10, keyword = '', ...rest } = params;
-  const { data } = await axios.get(`/api/humanResources/employees/${employeeId}/movements`, {
-    params: { type, page, limit, keyword, ...rest }
-  });
-  return data;
+humanResourcesServices.getMovements = async (employeeId, type = 'all', params) => {
+    const { page = 1, limit = 10, keyword = '', ...rest } = params;
+    const { data } = await axios.get(`/api/humanResources/employees/${employeeId}/movements`, {
+        params: { type, page, limit, keyword, ...rest }
+    });
+    return data;
 };
 
 humanResourcesServices.getEmployeeSalaryHistory = async (employeeId, params) => {
-  const { page = 1, limit = 10, keyword = '', ...rest } = params;
-  const {data} = await axios.get(`/api/humanResources/employees/${employeeId}/salary-history`, {
-    params: { page, limit, keyword, ...rest }
-  });
-  return data;
+    const { page = 1, limit = 10, keyword = '', ...rest } = params;
+    const { data } = await axios.get(`/api/humanResources/employees/${employeeId}/salary-history`, {
+        params: { page, limit, keyword, ...rest }
+    });
+    return data;
 };
 
 // Get salary history for a specific contract
 humanResourcesServices.getContractSalaryHistory = async (contractId) => {
-  const { data } = await axios.get(`/api/humanResources/employee-contracts/${contractId}/salary-history`);
-  return data;
+    const { data } = await axios.get(`/api/humanResources/employee-contracts/${contractId}/salary-history`);
+    return data;
 };
 
 // ============================================
@@ -713,7 +713,7 @@ humanResourcesServices.finalizePayrollRun = async (id) => {
 }
 
 // Preview - calculate live without saving
-humanResourcesServices.previewPayrollRun = async ({ id, employee_ids }) => {
+humanResourcesServices.previewPayrollRun = async ({ id, employee_ids = null }) => {
     const payload = Array.isArray(employee_ids) && employee_ids.length ? { employee_ids } : {};
     const { data } = await axios.post(`/api/humanResources/payrollRuns/${id}/preview`, payload);
     return data;

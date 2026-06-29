@@ -156,14 +156,6 @@ const PayrollRunItemAction = ({
   });
 
   // Fetch preview data for salary sheet
-  const { data: previewData, refetch: refetchPreview } = useQuery({
-    queryKey: ['previewPayrollRunForSalarySheetAction', payrollRun.id],
-    queryFn: () =>
-      humanResourcesServices.previewPayrollRun({ id: payrollRun.id }),
-    enabled: false,
-    staleTime: 0,
-  });
-
   const handleOpenSalarySheet = async () => {
     setIsLoadingSalarySheet(true);
     setOpenSalarySheetDialog(true);
