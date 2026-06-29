@@ -642,9 +642,14 @@ function ProductSalesCard() {
                     <TableCell>
                       <Typography sx={{ color: COLORS.cogs }}>CoGS</Typography>
                     </TableCell>
-                    <TableCell colSpan={2}>
+                    <TableCell>
                       <Typography sx={{ color: COLORS.profit }}>
-                        Profit & Margin
+                        Profit
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography sx={{ color: COLORS.profit }}>
+                        Margin
                       </Typography>
                     </TableCell>
                   </TableRow>
