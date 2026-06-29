@@ -479,27 +479,24 @@ function ProductSalesCard() {
             >
               <Grid size={{ xs: 12, md: 6, lg: 3.5 }}>
                 <Typography sx={{ color: COLORS.default }}>
-                  -{' '}
                   {topOptions.find((option) => option.value === params.top)
                     ?.name || params.top}
                 </Typography>
               </Grid>
               <Grid size={{ xs: 6, lg: 1.5 }} textAlign={'end'}>
                 <Typography sx={{ color: COLORS.quantity }}>
-                  - Quantity
+                  Quantity
                 </Typography>
               </Grid>
               <Grid size={{ xs: 6, lg: 2 }} textAlign={'end'}>
-                <Typography sx={{ color: COLORS.revenue }}>
-                  - Revenue
-                </Typography>
+                <Typography sx={{ color: COLORS.revenue }}>Revenue</Typography>
               </Grid>
               <Grid size={{ xs: 6, lg: 2 }} textAlign={'end'}>
-                <Typography sx={{ color: COLORS.cogs }}>- CoGS</Typography>
+                <Typography sx={{ color: COLORS.cogs }}>CoGS</Typography>
               </Grid>
               <Grid size={{ xs: 6, lg: 2 }} textAlign={'end'}>
                 <Typography sx={{ color: COLORS.profit }}>
-                  - Profit & Margin
+                  Profit & Margin
                 </Typography>
               </Grid>
               <Grid size={{ xs: 6, lg: 2 }} textAlign={'end'}></Grid>
@@ -627,7 +624,6 @@ function ProductSalesCard() {
                   <TableRow>
                     <TableCell>
                       <Typography sx={{ color: COLORS.default }}>
-                        -{' '}
                         {topOptions.find(
                           (option) => option.value === params.top
                         )?.name || params.top}
@@ -635,22 +631,20 @@ function ProductSalesCard() {
                     </TableCell>
                     <TableCell>
                       <Typography sx={{ color: COLORS.quantity }}>
-                        - Quantity
+                        Quantity
                       </Typography>
                     </TableCell>
                     <TableCell>
                       <Typography sx={{ color: COLORS.revenue }}>
-                        - Revenue
+                        Revenue
                       </Typography>
                     </TableCell>
                     <TableCell>
-                      <Typography sx={{ color: COLORS.cogs }}>
-                        - CoGS
-                      </Typography>
+                      <Typography sx={{ color: COLORS.cogs }}>CoGS</Typography>
                     </TableCell>
                     <TableCell colSpan={2}>
                       <Typography sx={{ color: COLORS.profit }}>
-                        - Profit & Margin
+                        Profit & Margin
                       </Typography>
                     </TableCell>
                   </TableRow>

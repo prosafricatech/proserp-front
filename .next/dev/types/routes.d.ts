@@ -727,6 +727,7 @@ declare global {
   }
 }
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 ckAdjustment/add": {}
   "/api/stores": {}
@@ -747,23 +748,30 @@ ckAdjustment/add": {}
   "/api/stores/getStoreOptions": {}
   "/manifest.json": {}
 }
+=======
+ps<LayoutRoute extends LayoutRoutes> = {
+    params: Promise<ParamMap[LayoutRoute]>
+    children: React.ReactNode
+  } & {
+    [K in LayoutSlotMap[LayoutRoute]]: React.ReactNode
+  }
+>>>>>>> origin/junior-development
 
-
-export type ParamsOf<Route extends Routes> = ParamMap[Route]
-
-interface LayoutSlotMap {
-  "/[lang]": never
-}
-
-
-export type { AppRoutes, PageRoutes, LayoutRoutes, RedirectRoutes, RewriteRoutes, ParamMap, AppRouteHandlerRoutes }
-
-declare global {
   /**
-   * Props for Next.js App Router page components
+   * Context for Next.js App Router route handlers
    * @example
    * ```tsx
-   * export default function Page(props: PageProps<'/blog/[slug]'>) {
+   * export async function GET(request: NextRequest, context: RouteContext<'/api/users/[id]'>) {
+   *   const { id } = await context.params
+   *   return Response.json({ id })
+   * }
+   * ```
+   */
+  interface RouteContext<AppRouteHandlerRoute extends AppRouteHandlerRoutes> {
+    params: Promise<ParamMap[AppRouteHandlerRoute]>
+  }
+}
+ge(props: PageProps<'/blog/[slug]'>) {
    *   const { slug } = await props.params
    *   return <div>Blog post: {slug}</div>
    * }
