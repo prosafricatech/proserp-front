@@ -335,6 +335,7 @@ function QuickLinks() {
               <PeopleAltOutlined sx={{ fontSize: '40px' }} />
               <Typography>Employees</Typography>
             </Grid>
+
             <Grid
               size={{ xs: 6, md: 2, lg: 1.5 }}
               p={1}

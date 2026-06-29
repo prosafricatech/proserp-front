@@ -239,6 +239,7 @@ function QuickReports() {
                   <Typography>Sales Manifest</Typography>
                 </Grid>
               )}
+
             {organizationHasSubscribed(MODULES.ACCOUNTS_AND_FINANCE) &&
               checkOrganizationPermission(PERMISSIONS.ACCOUNTS_REPORTS) && (
                 <Grid
@@ -304,6 +305,7 @@ function QuickReports() {
                   <Typography>Stock Report</Typography>
                 </Grid>
               )}
+
             {organizationHasSubscribed(MODULES.PROCUREMENT_AND_SUPPLY) &&
               checkOrganizationPermission(PERMISSIONS.STORES_REPORTS) && (
                 <Grid
