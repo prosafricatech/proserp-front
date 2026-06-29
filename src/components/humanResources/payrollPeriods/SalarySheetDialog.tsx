@@ -518,9 +518,6 @@ const SalarySheetDialog = ({
                       sx={{ border: '1px solid', borderColor: 'divider' }}
                     />
                     <TableCell
-                      sx={{ border: '1px solid', borderColor: 'divider' }}
-                    />
-                    <TableCell
                       align='right'
                       sx={{
                         border: '1px solid',
@@ -755,7 +752,7 @@ const SalarySheetDialog = ({
                   {/* Totals Row */}
                   <TableRow>
                     <TableCell
-                      colSpan={4}
+                      colSpan={3}
                       sx={{
                         fontWeight: 700,
                         textAlign: 'center',
