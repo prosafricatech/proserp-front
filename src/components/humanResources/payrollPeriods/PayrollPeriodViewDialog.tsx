@@ -1,3 +1,4 @@
+import { useLanguage } from '@/app/[lang]/contexts/LanguageContext';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import PDFContent from '@/components/pdf/PDFContent';
 import { faFileExcel } from '@fortawesome/free-solid-svg-icons';
@@ -23,6 +24,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { useMediaQuery } from '@mui/system';
+import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
 import { PayrollRunType } from '../payrollRuns/PayrollRunType';
@@ -112,7 +114,7 @@ function getEmployeeName(run: PayrollRunType) {
 }
 
 function getEmployeeNumber(run: PayrollRunType) {
-  return run.employee?.employee_number || '-';
+  return run.employee?.employee_number;
 }
 
 function getDesignation(run: PayrollRunType) {
@@ -121,6 +123,9 @@ function getDesignation(run: PayrollRunType) {
   }
   if ((run as any).designation) {
     return (run as any).designation;
+  }
+  if ((run as any).employee?.designation) {
+    return (run as any).employee?.designation;
   }
   return '-';
 }
@@ -188,6 +193,8 @@ const PayrollPeriodViewDialog = ({
   year,
   isLoading,
 }: PayrollPeriodViewDialogProp) => {
+  const router = useRouter();
+  const lang = useLanguage();
   const authObject = useJumboAuth() as any;
   const theme = useTheme();
   const [openPdfDialog, setOpenPdfDialog] = useState(false);
@@ -390,7 +397,7 @@ const PayrollPeriodViewDialog = ({
                       }}
                     ></TableCell>
                     <TableCell
-                      colSpan={4}
+                      colSpan={3}
                       sx={{
                         textAlign: 'center',
                         fontWeight: 700,
@@ -462,15 +469,6 @@ const PayrollPeriodViewDialog = ({
                       }}
                     >
                       Employee
-                    </TableCell>
-                    <TableCell
-                      sx={{
-                        fontWeight: 500,
-                        border: '1px solid',
-                        borderColor: 'divider',
-                      }}
-                    >
-                      Employee No.
                     </TableCell>
                     <TableCell
                       sx={{
@@ -559,9 +557,6 @@ const PayrollPeriodViewDialog = ({
 
                   {/* Column Headers */}
                   <TableRow>
-                    <TableCell
-                      sx={{ border: '1px solid', borderColor: 'divider' }}
-                    />
                     <TableCell
                       sx={{ border: '1px solid', borderColor: 'divider' }}
                     />
@@ -706,16 +701,31 @@ const PayrollPeriodViewDialog = ({
 
                           {/* Employee Name */}
                           <TableCell
-                            sx={{ border: '1px solid', borderColor: 'divider' }}
+                            sx={{
+                              border: '1px solid',
+                              borderColor: 'divider',
+                              textWrap: 'nowrap',
+                              cursor: 'pointer',
+                              '&:hover': {
+                                color: 'primary.main',
+                                textDecoration: 'underline',
+                              },
+                            }}
+                            onClick={() =>
+                              router.push(
+                                `/${lang}/humanResources/employees/${entry.run.employee?.id}`
+                              )
+                            }
                           >
                             {name}
-                          </TableCell>
-
-                          {/* Employee Number */}
-                          <TableCell
-                            sx={{ border: '1px solid', borderColor: 'divider' }}
-                          >
-                            {employeeNumber}
+                            {/* Employee Number */}
+                            <Typography
+                              variant='body2'
+                              fontSize={10}
+                              color='textSecondary'
+                            >
+                              {employeeNumber && `(${employeeNumber})`}
+                            </Typography>
                           </TableCell>
 
                           {/* Designation */}
@@ -817,7 +827,7 @@ const PayrollPeriodViewDialog = ({
                       sx={{ border: '1px solid', borderColor: 'divider' }}
                     />
                     <TableCell
-                      colSpan={4}
+                      colSpan={3}
                       sx={{
                         fontWeight: 700,
                         textAlign: 'center',
