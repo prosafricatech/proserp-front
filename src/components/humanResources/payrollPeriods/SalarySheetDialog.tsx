@@ -1,6 +1,7 @@
 // payrollPeriods/SalarySheetDialog.tsx
 'use client';
 
+import { useLanguage } from '@/app/[lang]/contexts/LanguageContext';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import PDFContent from '@/components/pdf/PDFContent';
 import { faFileExcel } from '@fortawesome/free-solid-svg-icons';
@@ -27,6 +28,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
 import { PayrollRunType } from '../payrollRuns/PayrollRunType';
@@ -180,46 +182,115 @@ const SalarySheetDialog = ({
   contributionTypes,
   isLoading = false,
 }: SalarySheetDialogProps) => {
+  const router = useRouter();
+  const lang = useLanguage();
   const authObject = useJumboAuth() as any;
   const theme = useTheme();
   const [openPdfDialog, setOpenPdfDialog] = useState(false);
   const { theme: jumboTheme } = useJumboTheme();
   const smallScreen = useMediaQuery(jumboTheme.breakpoints.down('md'));
 
-  console.log('rows: ', rows);
-
   const [isExporting, setIsExporting] = useState(false);
 
   const organization = authObject?.authOrganization?.organization;
 
-  const preTaxDeductionTypes = deductionTypes.filter((type) =>
-    Boolean(type.is_pre_tax)
+  // const preTaxDeductionTypes = deductionTypes.filter((type) =>
+  //   Boolean(type.is_pre_tax)
+  // );
+  // const postTaxDeductionTypes = deductionTypes.filter(
+  //   (type) => !type.is_pre_tax
+  // );
+
+  const employeeDeductions = rows.flatMap((itm) =>
+    itm.run?.deductions?.map((deduction: any) => ({
+      ...deduction,
+      employee_contract_id: itm.run.employee?.id,
+    }))
   );
-  const postTaxDeductionTypes = deductionTypes.filter(
-    (type) => !type.is_pre_tax
+  const employeeAllowance = rows.flatMap((itm) =>
+    itm.run?.allowances?.map((allowance: any) => ({
+      ...allowance,
+      employee_contract_id: itm.run.employee?.id,
+    }))
+  );
+  const employeecontributions = rows.flatMap((itm) =>
+    itm.run?.employer_contributions?.map((contribution: any) => ({
+      ...contribution,
+      employee_contract_id: itm.run.employee?.id,
+    }))
   );
 
-  const hasAllowances = allowanceTypes.length > 0;
-  const hasDeductions = deductionTypes.length > 0;
-  const hasContributions = contributionTypes.length > 0;
+  const getUniqueTypes = (value: Array<any>) => {
+    const filteredDeductions = Array.from(
+      new Map(
+        value.map((itm) => [
+          itm?.deduction_type_id ??
+            itm?.allowance_type_id ??
+            itm?.employer_contribution_type_id ??
+            itm?.label,
+          itm,
+        ])
+      ).values()
+    );
+    return filteredDeductions;
+  };
+
+  const unique_deductions_types = getUniqueTypes(employeeDeductions);
+  const unique_allowances_types = getUniqueTypes(employeeAllowance);
+  const unique_contributions_types = getUniqueTypes(employeecontributions);
+
+  const hasAllowances = unique_allowances_types.length > 0;
+  const hasDeductions = unique_deductions_types.length > 0;
+  const hasContributions = unique_contributions_types.length > 0;
+
+  const calculateTotalAmtByType = (
+    typeObj: any,
+    type_id: number,
+    type: 'deduction' | 'allowance' | 'contribution'
+  ) => {
+    if (type === 'allowance') {
+      return employeecontributions.reduce(
+        (sum, item) =>
+          item.allowance_type_id === type_id || item.label === typeObj.label
+            ? sum + item.amount
+            : sum,
+        0
+      );
+    }
+    if (type === 'deduction') {
+      return employeeDeductions.reduce((sum, item) => {
+        return item.deduction_type_id === type_id ||
+          item.label === typeObj.label
+          ? sum + item.amount
+          : sum;
+      }, 0);
+    }
+    if (type === 'contribution') {
+      return employeecontributions.reduce((sum, item) => {
+        return item.employer_contribution_type_id === type_id
+          ? sum + item.amount
+          : sum;
+      }, 0);
+    }
+  };
 
   const totals = rows.reduce(
     (sum, entry) => {
       const run = entry.run;
       const computed = entry.computed;
 
-      const allowanceByType = allowanceTypes.map((type) =>
-        sumAllowanceByType(run, type)
-      );
-      const preTaxDeductionByType = preTaxDeductionTypes.map((type) =>
-        sumDeductionByType(run, type)
-      );
-      const postTaxDeductionByType = postTaxDeductionTypes.map((type) =>
-        sumDeductionByType(run, type)
-      );
-      const contributionByType = contributionTypes.map((type) =>
-        sumContributionByType(run, type)
-      );
+      // const allowanceByType = allowanceTypes.map((type) =>
+      //   sumAllowanceByType(run, type)
+      // );
+      // const preTaxDeductionByType = preTaxDeductionTypes.map((type) =>
+      //   sumDeductionByType(run, type)
+      // );
+      // const postTaxDeductionByType = postTaxDeductionTypes.map((type) =>
+      //   sumDeductionByType(run, type)
+      // );
+      // const contributionByType = contributionTypes.map((type) =>
+      //   sumContributionByType(run, type)
+      // );
 
       return {
         basicSalary: sum.basicSalary + computed.basicSalary,
@@ -231,18 +302,19 @@ const SalarySheetDialog = ({
         totalEmployerContributions:
           sum.totalEmployerContributions + computed.totalEmployerContributions,
         totalEmployerCost: sum.totalEmployerCost + computed.totalEmployerCost,
-        allowanceByType: sum.allowanceByType.map(
-          (value, index) => value + allowanceByType[index]
-        ),
-        preTaxDeductionByType: sum.preTaxDeductionByType.map(
-          (value, index) => value + preTaxDeductionByType[index]
-        ),
-        postTaxDeductionByType: sum.postTaxDeductionByType.map(
-          (value, index) => value + postTaxDeductionByType[index]
-        ),
-        contributionByType: sum.contributionByType.map(
-          (value, index) => value + contributionByType[index]
-        ),
+
+        // allowanceByType: sum.allowanceByType.map(
+        //   (value, index) => value + allowanceByType[index]
+        // ),
+        // preTaxDeductionByType: sum.preTaxDeductionByType.map(
+        //   (value, index) => value + preTaxDeductionByType[index]
+        // ),
+        // postTaxDeductionByType: sum.postTaxDeductionByType.map(
+        //   (value, index) => value + postTaxDeductionByType[index]
+        // ),
+        // contributionByType: sum.contributionByType.map(
+        //   (value, index) => value + contributionByType[index]
+        // ),
       };
     },
     {
@@ -254,10 +326,10 @@ const SalarySheetDialog = ({
       netSalary: 0,
       totalEmployerContributions: 0,
       totalEmployerCost: 0,
-      allowanceByType: allowanceTypes.map(() => 0),
-      preTaxDeductionByType: preTaxDeductionTypes.map(() => 0),
-      postTaxDeductionByType: postTaxDeductionTypes.map(() => 0),
-      contributionByType: contributionTypes.map(() => 0),
+      // allowanceByType: allowanceTypes.map(() => 0),
+      // preTaxDeductionByType: preTaxDeductionTypes.map(() => 0),
+      // postTaxDeductionByType: postTaxDeductionTypes.map(() => 0),
+      // contributionByType: contributionTypes.map(() => 0),
     }
   );
 
@@ -372,8 +444,8 @@ const SalarySheetDialog = ({
                     <TableCell
                       colSpan={
                         2 +
-                        (hasAllowances ? allowanceTypes.length : 0) +
-                        (hasDeductions ? deductionTypes.length + 1 : 0)
+                        (hasAllowances ? unique_allowances_types.length : 0) +
+                        (hasDeductions ? unique_deductions_types.length : 0)
                       }
                       sx={{
                         textAlign: 'center',
@@ -387,7 +459,10 @@ const SalarySheetDialog = ({
                     </TableCell>
                     <TableCell
                       colSpan={
-                        2 + (hasContributions ? contributionTypes.length : 0)
+                        2 +
+                        (hasContributions
+                          ? unique_contributions_types.length
+                          : 0)
                       }
                       sx={{
                         textAlign: 'center',
@@ -443,7 +518,7 @@ const SalarySheetDialog = ({
 
                     {hasAllowances && (
                       <TableCell
-                        colSpan={allowanceTypes.length}
+                        colSpan={unique_allowances_types.length}
                         align='center'
                         sx={{
                           fontWeight: 500,
@@ -468,7 +543,7 @@ const SalarySheetDialog = ({
 
                     {hasDeductions && (
                       <TableCell
-                        colSpan={deductionTypes.length + 1}
+                        colSpan={unique_deductions_types.length}
                         align='center'
                         sx={{
                           fontWeight: 500,
@@ -493,7 +568,7 @@ const SalarySheetDialog = ({
 
                     {hasContributions && (
                       <TableCell
-                        colSpan={contributionTypes.length + 1}
+                        colSpan={unique_contributions_types.length + 1}
                         align='center'
                         sx={{
                           fontWeight: 500,
@@ -525,16 +600,16 @@ const SalarySheetDialog = ({
                       }}
                     />
 
-                    {allowanceTypes.map((type, idx) => (
+                    {unique_allowances_types.map((type, idx) => (
                       <TableCell
-                        key={`allowance-header-${type.id || type.name}-${idx}`}
+                        key={`allowance-header-${type.allowance_type_id || type.label}-${idx}`}
                         sx={{
                           border: '1px solid',
                           borderColor: 'divider',
                           fontWeight: 450,
                         }}
                       >
-                        {type.name || 'Allowance'}
+                        {type.label || 'Allowance'}
                       </TableCell>
                     ))}
 
@@ -545,18 +620,22 @@ const SalarySheetDialog = ({
                       }}
                     />
 
-                    {deductionTypes.map((type, idx) => (
-                      <TableCell
-                        key={`deduction-header-${type.id || type.name}-${idx}`}
-                        sx={{
-                          border: '1px solid',
-                          borderColor: 'divider',
-                          fontWeight: 450,
-                        }}
-                      >
-                        {type.name || 'Deduction'}
-                      </TableCell>
-                    ))}
+                    {unique_deductions_types.map((type, idx) => {
+                      if (type.deduction_type_id !== null) {
+                        return (
+                          <TableCell
+                            key={`deduction-header-${type.deduction_type_id || type.label}-${idx}`}
+                            sx={{
+                              border: '1px solid',
+                              borderColor: 'divider',
+                              fontWeight: 450,
+                            }}
+                          >
+                            {type.label || 'Deduction'}
+                          </TableCell>
+                        );
+                      }
+                    })}
 
                     <TableCell
                       sx={{
@@ -576,16 +655,16 @@ const SalarySheetDialog = ({
                       }}
                     />
 
-                    {contributionTypes.map((type, idx) => (
+                    {unique_contributions_types.map((type, idx) => (
                       <TableCell
-                        key={`contribution-header-${type.id || type.name}-${idx}`}
+                        key={`contribution-header-${type.employer_contribution_type_id || type.label}-${idx}`}
                         sx={{
                           fontWeight: 450,
                           border: '1px solid',
                           borderColor: 'divider',
                         }}
                       >
-                        {type.name || 'Contribution'}
+                        {type.label || 'Contribution'}
                       </TableCell>
                     ))}
 
@@ -632,7 +711,17 @@ const SalarySheetDialog = ({
                             border: '1px solid',
                             borderColor: 'divider',
                             textWrap: 'nowrap',
+                            cursor: 'pointer',
+                            '&:hover': {
+                              color: 'primary.main',
+                              textDecoration: 'underline',
+                            },
                           }}
+                          onClick={() =>
+                            router.push(
+                              `/${lang}/humanResources/employees/${entry.run.employee?.id}`
+                            )
+                          }
                         >
                           {name}
                           <Typography
@@ -663,16 +752,25 @@ const SalarySheetDialog = ({
                           {fmt(computed.basicSalary)}
                         </TableCell>
 
-                        {allowanceTypes.map((type, typeIdx) => (
+                        {unique_allowances_types.map((type, typeIdx) => (
                           <TableCell
-                            key={`allowance-value-${run.id || index}-${type.id || type.name}-${typeIdx}`}
+                            key={`allowance-value-${run.id || index}-${type.allowance_type_id || type.label}-${typeIdx}`}
                             align='right'
                             sx={{
                               border: '1px solid',
                               borderColor: 'divider',
                             }}
                           >
-                            {fmt(sumAllowanceByType(run, type))}
+                            {fmt(
+                              employeeAllowance.find(
+                                (itm) =>
+                                  itm.employee_contract_id ===
+                                    entry.run.employee?.id &&
+                                  (itm.label === type.label ||
+                                    itm.allowance_type_id ===
+                                      type.allowance_type_id)
+                              ).amount ?? 0
+                            )}
                           </TableCell>
                         ))}
 
@@ -687,18 +785,31 @@ const SalarySheetDialog = ({
                           {fmt(computed.grossSalary)}
                         </TableCell>
 
-                        {deductionTypes.map((type, typeIdx) => (
-                          <TableCell
-                            key={`deduction-value-${run.id || index}-${type.id || type.name}-${typeIdx}`}
-                            align='right'
-                            sx={{
-                              border: '1px solid',
-                              borderColor: 'divider',
-                            }}
-                          >
-                            {fmt(sumDeductionByType(run, type))}
-                          </TableCell>
-                        ))}
+                        {unique_deductions_types.map((type, typeIdx) => {
+                          if (type.deduction_type_id !== null) {
+                            return (
+                              <TableCell
+                                key={`deduction-value-${run.id || index}-${type.deduction_type_id || type.label}-${typeIdx}`}
+                                align='right'
+                                sx={{
+                                  border: '1px solid',
+                                  borderColor: 'divider',
+                                }}
+                              >
+                                {fmt(
+                                  employeeDeductions.find(
+                                    (itm) =>
+                                      itm.employee_contract_id ===
+                                        entry.run.employee?.id &&
+                                      (itm.label === type.label ||
+                                        itm.deduction_type_id ===
+                                          type.deduction_type_id)
+                                  ).amount ?? 0
+                                )}
+                              </TableCell>
+                            );
+                          }
+                        })}
 
                         <TableCell
                           align='right'
@@ -722,16 +833,25 @@ const SalarySheetDialog = ({
                           {fmt(computed.netSalary)}
                         </TableCell>
 
-                        {contributionTypes.map((type, typeIdx) => (
+                        {unique_contributions_types.map((type, typeIdx) => (
                           <TableCell
-                            key={`contribution-value-${run.id || index}-${type.id || type.name}-${typeIdx}`}
+                            key={`contribution-value-${run.id || index}-${type.employer_contribution_type_id || type.label}-${typeIdx}`}
                             align='right'
                             sx={{
                               border: '1px solid',
                               borderColor: 'divider',
                             }}
                           >
-                            {fmt(sumContributionByType(run, type))}
+                            {fmt(
+                              employeecontributions.find(
+                                (itm) =>
+                                  itm.employee_contract_id ===
+                                    entry.run.employee?.id &&
+                                  (itm.label === type.label ||
+                                    itm.employer_contribution_type_id ===
+                                      type.employer_contribution_type_id)
+                              ).amount ?? 0
+                            )}
                           </TableCell>
                         ))}
 
@@ -776,9 +896,9 @@ const SalarySheetDialog = ({
                       {fmt(totals.basicSalary)}
                     </TableCell>
 
-                    {totals.allowanceByType.map((amount, idx) => (
+                    {unique_allowances_types.map((type: any) => (
                       <TableCell
-                        key={`allowance-total-${idx}`}
+                        key={`allowance-total-${type.allowance_type_id}`}
                         align='right'
                         sx={{
                           fontWeight: 700,
@@ -787,7 +907,13 @@ const SalarySheetDialog = ({
                           borderRight: '0.001px solid white',
                         }}
                       >
-                        {fmt(amount)}
+                        {fmt(
+                          calculateTotalAmtByType(
+                            type,
+                            type.allowance_type_id,
+                            'allowance'
+                          )
+                        )}
                       </TableCell>
                     ))}
 
@@ -803,34 +929,30 @@ const SalarySheetDialog = ({
                       {fmt(totals.grossSalary)}
                     </TableCell>
 
-                    {totals.preTaxDeductionByType.map((amount, idx) => (
-                      <TableCell
-                        key={`pre-tax-total-${idx}`}
-                        align='right'
-                        sx={{
-                          fontWeight: 700,
-                          borderTop: '2px solid',
-                          borderColor: 'divider',
-                          borderRight: '0.001px solid white',
-                        }}
-                      >
-                        {fmt(amount)}
-                      </TableCell>
-                    ))}
-                    {totals.postTaxDeductionByType.map((amount, idx) => (
-                      <TableCell
-                        key={`pre-tax-total-${idx}`}
-                        align='right'
-                        sx={{
-                          fontWeight: 700,
-                          borderTop: '2px solid',
-                          borderColor: 'divider',
-                          borderRight: '0.001px solid white',
-                        }}
-                      >
-                        {fmt(amount)}
-                      </TableCell>
-                    ))}
+                    {unique_deductions_types.map((type: any) => {
+                      if (type.deduction_type_id !== null) {
+                        return (
+                          <TableCell
+                            key={`deduction-total-${type.deduction_type_id}`}
+                            align='right'
+                            sx={{
+                              fontWeight: 700,
+                              borderTop: '2px solid',
+                              borderColor: 'divider',
+                              borderRight: '0.001px solid white',
+                            }}
+                          >
+                            {fmt(
+                              calculateTotalAmtByType(
+                                type,
+                                type.deduction_type_id,
+                                'deduction'
+                              )
+                            )}
+                          </TableCell>
+                        );
+                      }
+                    })}
 
                     <TableCell
                       align='right'
@@ -856,9 +978,9 @@ const SalarySheetDialog = ({
                       {fmt(totals.netSalary)}
                     </TableCell>
 
-                    {totals.contributionByType.map((amount, idx) => (
+                    {unique_contributions_types.map((type: any) => (
                       <TableCell
-                        key={`contribution-total-${idx}`}
+                        key={`contribution-total-${type.employer_contribution_type_id}`}
                         align='right'
                         sx={{
                           fontWeight: 700,
@@ -867,7 +989,13 @@ const SalarySheetDialog = ({
                           borderRight: '0.001px solid white',
                         }}
                       >
-                        {fmt(amount)}
+                        {fmt(
+                          calculateTotalAmtByType(
+                            type,
+                            type.employer_contribution_type_id,
+                            'contribution'
+                          )
+                        )}
                       </TableCell>
                     ))}
 

@@ -54,11 +54,6 @@ const EmployeeSelector = (props: EmployeeSelector) => {
   }, [employees]);
 
   useEffect(() => {
-    console.log('options: ', options);
-  }, [options]);
-
-  useEffect(() => {
-    console.log('value from selector: ', value);
     if (value) setSelectedValue(value);
   }, [value]);
 
