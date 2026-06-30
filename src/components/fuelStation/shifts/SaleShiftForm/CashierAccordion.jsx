@@ -22,6 +22,7 @@ export default function CashierAccordion({
   control,
   watch,
   setValue,
+  errors,
   setCheckShiftBalanced,
   getCashierLedgers,
   getAvailablePumpsForCashier,

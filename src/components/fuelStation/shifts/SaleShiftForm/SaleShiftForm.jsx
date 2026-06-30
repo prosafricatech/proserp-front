@@ -1367,6 +1367,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
                   index={index}
                   control={control}
                   watch={watch}
+                  errors={errors}
                   lastClosingReadings={lastClosingReadings}
                   handleCashierPumpSelection={handleCashierPumpSelection}
                   getCashierLedgers={getCashierLedgers}
