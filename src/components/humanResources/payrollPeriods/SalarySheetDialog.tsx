@@ -194,13 +194,6 @@ const SalarySheetDialog = ({
 
   const organization = authObject?.authOrganization?.organization;
 
-  // const preTaxDeductionTypes = deductionTypes.filter((type) =>
-  //   Boolean(type.is_pre_tax)
-  // );
-  // const postTaxDeductionTypes = deductionTypes.filter(
-  //   (type) => !type.is_pre_tax
-  // );
-
   const employeeDeductions = rows.flatMap((itm) =>
     itm.run?.deductions?.map((deduction: any) => ({
       ...deduction,
@@ -279,19 +272,6 @@ const SalarySheetDialog = ({
       const run = entry.run;
       const computed = entry.computed;
 
-      // const allowanceByType = allowanceTypes.map((type) =>
-      //   sumAllowanceByType(run, type)
-      // );
-      // const preTaxDeductionByType = preTaxDeductionTypes.map((type) =>
-      //   sumDeductionByType(run, type)
-      // );
-      // const postTaxDeductionByType = postTaxDeductionTypes.map((type) =>
-      //   sumDeductionByType(run, type)
-      // );
-      // const contributionByType = contributionTypes.map((type) =>
-      //   sumContributionByType(run, type)
-      // );
-
       return {
         basicSalary: sum.basicSalary + computed.basicSalary,
         grossSalary: sum.grossSalary + computed.grossSalary,
@@ -302,19 +282,6 @@ const SalarySheetDialog = ({
         totalEmployerContributions:
           sum.totalEmployerContributions + computed.totalEmployerContributions,
         totalEmployerCost: sum.totalEmployerCost + computed.totalEmployerCost,
-
-        // allowanceByType: sum.allowanceByType.map(
-        //   (value, index) => value + allowanceByType[index]
-        // ),
-        // preTaxDeductionByType: sum.preTaxDeductionByType.map(
-        //   (value, index) => value + preTaxDeductionByType[index]
-        // ),
-        // postTaxDeductionByType: sum.postTaxDeductionByType.map(
-        //   (value, index) => value + postTaxDeductionByType[index]
-        // ),
-        // contributionByType: sum.contributionByType.map(
-        //   (value, index) => value + contributionByType[index]
-        // ),
       };
     },
     {
@@ -326,10 +293,6 @@ const SalarySheetDialog = ({
       netSalary: 0,
       totalEmployerContributions: 0,
       totalEmployerCost: 0,
-      // allowanceByType: allowanceTypes.map(() => 0),
-      // preTaxDeductionByType: preTaxDeductionTypes.map(() => 0),
-      // postTaxDeductionByType: postTaxDeductionTypes.map(() => 0),
-      // contributionByType: contributionTypes.map(() => 0),
     }
   );
 
@@ -1048,9 +1011,9 @@ const SalarySheetDialog = ({
                 organization={organization}
                 periodLabel={periodLabel}
                 rows={exportedRows}
-                allowanceTypes={allowanceTypes}
-                deductionTypes={deductionTypes}
-                contributionTypes={contributionTypes}
+                allowanceTypes={employeeAllowance}
+                deductionTypes={employeeDeductions}
+                contributionTypes={employeecontributions}
               />
             }
             fileName={`Salary-Sheet-${periodLabel}`}

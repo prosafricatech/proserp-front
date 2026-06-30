@@ -78,9 +78,6 @@ export const EmployeesTab = ({
   setSelectedEmployees,
   onSimulate,
   isSimulating,
-  allowanceTypes = [],
-  deductionTypes = [],
-  contributionTypes = [],
   isLoading = false,
 }: EmployeesTabProps) => {
   const router = useRouter();
@@ -97,46 +94,6 @@ export const EmployeesTab = ({
     return name.includes(term) || number.includes(term);
   });
 
-  // Helper to get deduction amount for specific type
-  const getDeductionAmount = (deductions: any[], typeId: number) => {
-    if (!deductions) return 0;
-    const found = deductions.find((d: any) => d.deduction_type_id === typeId);
-    return found?.amount || 0;
-  };
-
-  // Helper to get contribution amount for specific type
-  const getContributionAmount = (contributions: any[], typeId: number) => {
-    if (!contributions) return 0;
-    const found = contributions.find(
-      (c: any) => c.employer_contribution_type_id === typeId
-    );
-    return found?.amount || 0;
-  };
-
-  // Helper to calculate totals for dynamic columns
-  const calculateTotalByType = (
-    rows: any[],
-    typeId: number,
-    type: 'allowance' | 'deduction' | 'contribution'
-  ) => {
-    return rows.reduce((sum, row) => {
-      let items = [];
-      if (type === 'allowance') items = row.allowances || [];
-      else if (type === 'deduction') items = row.deductions || [];
-      else if (type === 'contribution')
-        items = row.employer_contributions || [];
-
-      const found = items.find((item: any) => {
-        if (type === 'allowance') return item.allowance_type_id === typeId;
-        if (type === 'deduction') return item.deduction_type_id === typeId;
-        if (type === 'contribution')
-          return item.employer_contribution_type_id === typeId;
-        return false;
-      });
-      return sum + (found?.amount || 0);
-    }, 0);
-  };
-
   if (loading) {
     return (
       <Box display='flex' justifyContent='center' alignItems='center' py={4}>
@@ -147,9 +104,6 @@ export const EmployeesTab = ({
       </Box>
     );
   }
-
-  // console.log('rows: ', rows);
-  // console.log('filteredRows:', filteredRows);
 
   const employeeDeductions = rows.flatMap((itm) =>
     (itm.run?.deductions ?? itm.deductions)?.map((deduction: any) => ({
@@ -196,11 +150,6 @@ export const EmployeesTab = ({
   const hasAllowances = unique_allowances_types.length > 0;
   const hasDeductions = unique_deductions_types.length > 0;
   const hasContributions = unique_contributions_types.length > 0;
-
-  // console.log('unique_allowances: ', unique_allowances_types);
-  // console.log('unique_deductions: ', unique_deductions_types);
-  // console.log('employee deductions: ', employeeDeductions);
-  // console.log('unique_contributions: ', unique_contributions_types);
 
   const calculateTotalAmtByType = (
     typeObj: any,
