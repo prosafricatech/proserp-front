@@ -203,83 +203,6 @@ export async function getMenus(locale: string) {
       ],
     },
     {
-      label: sidebar.menu.humanResources,
-      type: 'section',
-      children: [
-        {
-          uri: `/${locale}/humanResources/employees`,
-          label: sidebar.menuItem.employees,
-          type: 'nav-item',
-          icon: icon('employees'),
-        },
-        {
-          uri: `/${locale}/humanResources/leave-requests`,
-          label: sidebar.menuItem.leave_requests,
-          type: 'nav-item',
-          icon: icon('reports'),
-        },
-        {
-          label: sidebar.menuItem.payroll,
-          type: 'collapsible',
-          icon: icon('reports'),
-          children: [
-            {
-              uri: `/${locale}/humanResources/payroll-runs`,
-              label: sidebar.menuItem.payroll_runs,
-              type: 'nav-item',
-            },
-            {
-              uri: `/${locale}/humanResources/payroll-periods`,
-              label: sidebar.menuItem.payroll_periods,
-              type: 'nav-item',
-            },
-          ],
-        },
-        {
-          label: sidebar.menuItem.masters,
-          type: 'collapsible',
-          icon: icon('businessCenter'),
-          children: [
-            {
-              uri: `/${locale}/humanResources/departments`,
-              label: sidebar.menuItem.departments,
-              type: 'nav-item',
-            },
-            {
-              uri: `/${locale}/humanResources/designations`,
-              label: sidebar.menuItem.designations,
-              type: 'nav-item',
-            },
-            {
-              uri: `/${locale}/humanResources/leave_types`,
-              label: sidebar.menuItem.leave_types,
-              type: 'nav-item',
-            },
-            {
-              uri: `/${locale}/humanResources/allowance-types`,
-              label: sidebar.menuItem.allowance_types,
-              type: 'nav-item',
-            },
-            {
-              uri: `/${locale}/humanResources/deduction-types`,
-              label: sidebar.menuItem.deduction_types,
-              type: 'nav-item',
-            },
-            {
-              uri: `/${locale}/humanResources/employer-contribution-types`,
-              label: 'Employer Contribution Types',
-              type: 'nav-item',
-            },
-            {
-              uri: `/${locale}/humanResources/paye-tax-bands`,
-              label: sidebar.menuItem.paye_tax_bands,
-              type: 'nav-item',
-            },
-          ],
-        },
-      ],
-    },
-    {
       label: sidebar.menu.accounts_and_finance,
       type: 'section',
       children: [
@@ -382,6 +305,83 @@ export async function getMenus(locale: string) {
             {
               uri: `/${locale}/procurement/stores`,
               label: sidebar.menuItem.stores,
+              type: 'nav-item',
+            },
+          ],
+        },
+      ],
+    },
+    {
+      label: sidebar.menu.humanResources,
+      type: 'section',
+      children: [
+        {
+          uri: `/${locale}/humanResources/employees`,
+          label: sidebar.menuItem.employees,
+          type: 'nav-item',
+          icon: icon('employees'),
+        },
+        {
+          uri: `/${locale}/humanResources/leave-requests`,
+          label: sidebar.menuItem.leave_requests,
+          type: 'nav-item',
+          icon: icon('reports'),
+        },
+        {
+          label: sidebar.menuItem.payroll,
+          type: 'collapsible',
+          icon: icon('reports'),
+          children: [
+            {
+              uri: `/${locale}/humanResources/payroll-runs`,
+              label: sidebar.menuItem.payroll_runs,
+              type: 'nav-item',
+            },
+            {
+              uri: `/${locale}/humanResources/payroll-periods`,
+              label: sidebar.menuItem.payroll_periods,
+              type: 'nav-item',
+            },
+          ],
+        },
+        {
+          label: sidebar.menuItem.masters,
+          type: 'collapsible',
+          icon: icon('businessCenter'),
+          children: [
+            {
+              uri: `/${locale}/humanResources/departments`,
+              label: sidebar.menuItem.departments,
+              type: 'nav-item',
+            },
+            {
+              uri: `/${locale}/humanResources/designations`,
+              label: sidebar.menuItem.designations,
+              type: 'nav-item',
+            },
+            {
+              uri: `/${locale}/humanResources/leave_types`,
+              label: sidebar.menuItem.leave_types,
+              type: 'nav-item',
+            },
+            {
+              uri: `/${locale}/humanResources/allowance-types`,
+              label: sidebar.menuItem.allowance_types,
+              type: 'nav-item',
+            },
+            {
+              uri: `/${locale}/humanResources/deduction-types`,
+              label: sidebar.menuItem.deduction_types,
+              type: 'nav-item',
+            },
+            {
+              uri: `/${locale}/humanResources/employer-contribution-types`,
+              label: 'Employer Contribution Types',
+              type: 'nav-item',
+            },
+            {
+              uri: `/${locale}/humanResources/paye-tax-bands`,
+              label: sidebar.menuItem.paye_tax_bands,
               type: 'nav-item',
             },
           ],

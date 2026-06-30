@@ -14,7 +14,6 @@ interface AuditTrailTabProps {
   employeeId: number;
 }
 
-// ✅ Define table headers
 const TABLE_HEADERS = ['Date', 'From', 'To', 'Reason'];
 
 const AuditTrailTab = ({ employeeId }: AuditTrailTabProps) => {
@@ -38,7 +37,6 @@ const AuditTrailTab = ({ employeeId }: AuditTrailTabProps) => {
     }));
   }, [employeeId, movementType]);
 
-  // ✅ Custom renderItem for table view
   const renderAuditTrail = useCallback((movement: Movement) => {
     return <AuditTrailListItem movement={movement} showType={movementType === 'all'} />;
   }, [movementType]);
@@ -68,7 +66,6 @@ const AuditTrailTab = ({ employeeId }: AuditTrailTabProps) => {
       itemsPerPage={20}
       itemsPerPageOptions={[10, 20, 50]}
       renderItem={renderAuditTrail}
-      // ✅ Use table view
       view="table"
       tableHeader={TABLE_HEADERS}
       componentElement="div"

@@ -108,7 +108,7 @@ const PayrollRunsListItem = ({
     isFetching: isRefetching,
   } = useQuery({
     queryKey: ['previewPayrollRunEmployees', payrollRun.id, selectedEmployees],
-    queryFn: () => humanResourcesServices.previewPayrollRun(params),
+    queryFn: () => humanResourcesServices.previewPayrollRun(params as any),
     enabled: expanded,
   });
 

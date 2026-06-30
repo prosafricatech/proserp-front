@@ -384,10 +384,6 @@ function Sidebar({ menus }) {
                 }
             }
 
-            if (organizationHasSubscribed(MODULES.HUMAN_RESOURCES)) {
-                // Human Resources
-                updatedMenus = [...updatedMenus, ...menus.filter(menu => menu.label === dictionary.sidebar.menu.humanResources)];
-            }
 
             if (organizationHasSubscribed(MODULES.ACCOUNTS_AND_FINANCE)) {
 
@@ -604,6 +600,11 @@ function Sidebar({ menus }) {
                 }
             }
 
+            if (organizationHasSubscribed(MODULES.HUMAN_RESOURCES)) {
+                // Human Resources
+                updatedMenus = [...updatedMenus, ...menus.filter(menu => menu.label === dictionary.sidebar.menu.humanResources)];
+            }
+            
             //Tools
             if (authOrganization?.organization?.active_subscriptions?.length > 0 && checkOrganizationPermission(
                 [

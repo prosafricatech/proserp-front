@@ -1,4 +1,3 @@
-// components/humanResources/employees/auditTrail/SalaryHistoryTab.tsx
 'use client';
 
 import JumboListToolbar from '@jumbo/components/JumboList/components/JumboListToolbar';
@@ -27,7 +26,6 @@ const SalaryHistoryTab = ({ employeeId }: SalaryHistoryTabProps) => {
   });
 
   const renderSalaryHistory = useCallback((change: SalaryChange) => {
-    console.log('renderSalaryHistory change:', change);
     return <SalaryHistoryListItem change={change} />;
   }, []);
 
