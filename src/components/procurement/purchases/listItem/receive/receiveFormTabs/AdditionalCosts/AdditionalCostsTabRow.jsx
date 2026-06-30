@@ -9,7 +9,6 @@ function AdditionalCostsTabRow({
   index,
   additionalCosts = [],
   setAdditionalCosts,
-  percentageReceived = 0,
 }) {
   const [showForm, setShowForm] = useState(false);
 

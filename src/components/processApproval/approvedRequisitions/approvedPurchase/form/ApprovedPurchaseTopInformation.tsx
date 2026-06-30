@@ -12,27 +12,11 @@ import { Grid, TextField, Tooltip } from '@mui/material';
 import { DateTimePicker } from '@mui/x-date-pickers';
 import dayjs, { Dayjs } from 'dayjs';
 import React, { useEffect } from 'react';
-import { useFormContext } from 'react-hook-form';
 import { ApprovalRequisition } from '../../ApprovalRequisitionType';
 import { CostCenter } from '@/components/masters/costCenters/CostCenterType';
 import { Product } from '@/components/productAndServices/products/ProductType';
 import { MeasurementUnit } from '@/components/masters/measurementUnits/MeasurementUnitType';
 import { Vendor } from '@/components/processApproval/RequisitionType';
-
-interface FormValues {
-  order_date: string;
-  stakeholder_id?: number | null;
-  tin?: string | null;
-  vrn?: string | null;
-  instant_pay: boolean;
-  instant_receive: boolean;
-  instant_invoice?: boolean;
-  reference?: string;
-  date_required?: string | null;
-  currency_id: number;
-  exchange_rate?: number;
-  cost_centers: CostCenter[];
-}
 
 interface Order {
   id?: number;
@@ -67,6 +51,10 @@ interface ApprovedPurchaseTopInformationProps {
   order_date: Dayjs;
   stakeholderQuickAddDisplay: boolean;
   approvedDetails?: any;
+  setValue: any,
+  watch: any,
+  register: any,
+  errors: any
 }
 
 function ApprovedPurchaseTopInformation({
@@ -77,14 +65,12 @@ function ApprovedPurchaseTopInformation({
   approvedRequisition,
   order_date,
   stakeholderQuickAddDisplay,
-  approvedDetails
+  approvedDetails,
+  setValue,
+  watch,
+  register,
+  errors
 }: ApprovedPurchaseTopInformationProps) {
-  const {
-    setValue,
-    watch,
-    register,
-    formState: { errors }
-  } = useFormContext<FormValues>();
 
   const { authOrganization, checkOrganizationPermission } = useJumboAuth();
   const cp = { id: null, name: 'Cash Purchase' };

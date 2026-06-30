@@ -2,12 +2,10 @@
 
 import { Grid, TextField, Typography, Card, CardContent } from '@mui/material';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
-import { useFormContext } from 'react-hook-form';
 import { StationFormContext } from '../SalesShifts';
 import { useContext } from 'react';
 
-function FuelPrices() {
-  const { watch } = useFormContext();
+function FuelPrices({watch}) {
   const {activeStation} = useContext(StationFormContext);
   const { products } = activeStation;
 

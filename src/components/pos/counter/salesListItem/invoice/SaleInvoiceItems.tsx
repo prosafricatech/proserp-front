@@ -1,7 +1,6 @@
 import { Div } from '@jumbo/shared';
 import { Alert, Divider, Grid, LinearProgress, ListItemText, Tooltip, Typography } from '@mui/material';
 import React from 'react';
-import { useFormContext } from 'react-hook-form';
 
 interface SaleItem {
   product?: {
@@ -17,17 +16,12 @@ interface SaleItem {
   rate: number;
 }
 
-interface ExtendedFormContext {
-  formState: any;
-  watch: any;
-  setValue: any;
+interface Props {
   isRetrieving: boolean;
   sale_items: SaleItem[];
 }
 
-function SaleInvoiceItems() {
-    const context = useFormContext() as unknown as ExtendedFormContext;
-    const { isRetrieving, sale_items = [] } = context;
+function SaleInvoiceItems({isRetrieving, sale_items = []}: Props) {
 
     if (isRetrieving) {
         return <LinearProgress />;

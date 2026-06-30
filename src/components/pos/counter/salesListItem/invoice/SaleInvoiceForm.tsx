@@ -114,7 +114,7 @@ const SaleInvoiceForm: React.FC<SaleInvoiceFormProps> = ({ toggleOpen, sale = nu
           </DialogTitle>
 
           <DialogContent>
-              <SaleInvoiceItems/>
+              <SaleInvoiceItems isRetrieving={isRetrieving} sale_items={sale_items as any}/>
           </DialogContent>
 
           <DialogActions>

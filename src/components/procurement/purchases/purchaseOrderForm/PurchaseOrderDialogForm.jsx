@@ -287,7 +287,7 @@ function PurchaseOrderDialogForm({toggleOpen, order = null}) {
           </Grid>
           <Grid size={{xs: 12, md: 8, lg: 9}}>
             <form autoComplete='off'>
-              <PurchaseOrderTopInformation order={order} setStakeholderQuickAddDisplay={setStakeholderQuickAddDisplay} setAddedStakeholder={setAddedStakeholder} stakeholderQuickAddDisplay={stakeholderQuickAddDisplay} addedStakeholder={addedStakeholder} order_date={order_date} costCenters={costCenters} />
+              <PurchaseOrderTopInformation setValue={setValue} errors={errors} clearErrors={clearErrors} watch={watch} register={register} order={order} setStakeholderQuickAddDisplay={setStakeholderQuickAddDisplay} setAddedStakeholder={setAddedStakeholder} stakeholderQuickAddDisplay={stakeholderQuickAddDisplay} addedStakeholder={addedStakeholder} order_date={order_date} costCenters={costCenters} />
             </form>
           </Grid>
           <Grid size={{xs: 12, md: 4, lg: 3}}>
@@ -307,6 +307,7 @@ function PurchaseOrderDialogForm({toggleOpen, order = null}) {
             order={order}
             items={items}
             errors={errors}
+            setValue={setValue} watch={watch} register={register}
           />
         </Grid>
       </DialogTitle>

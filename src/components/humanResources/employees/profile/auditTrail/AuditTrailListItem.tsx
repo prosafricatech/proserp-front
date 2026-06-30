@@ -12,7 +12,6 @@ interface AuditTrailListItemProps {
 
 const AuditTrailListItem = ({ movement, showType = false }: AuditTrailListItemProps) => {
   const isCostCenter = movement.from_cost_center_id || movement.to_cost_center_id;
-  const isDepartment = movement.from_department_id || movement.to_department_id;
 
   const fromName = isCostCenter 
     ? movement.from_cost_center?.name 
@@ -22,11 +21,7 @@ const AuditTrailListItem = ({ movement, showType = false }: AuditTrailListItemPr
     : movement.to_department?.name;
 
   const movementType = isCostCenter ? 'Cost Center' : 'Department';
-
-  const creatorName = movement.creator 
-    ? `${movement.creator.first_name || ''} ${movement.creator.last_name || ''}`.trim() 
-    : '-';
-
+  
   return (
     <TableRow
       hover
@@ -43,7 +38,7 @@ const AuditTrailListItem = ({ movement, showType = false }: AuditTrailListItemPr
       {/* Date */}
       <TableCell>
         <Typography variant="body2">
-          {movement.moved_date ? readableDate(movement.moved_date) : '-'}
+          {movement.moved_date ? readableDate(movement.moved_date, false) : '-'}
         </Typography>
       </TableCell>
 
@@ -76,20 +71,6 @@ const AuditTrailListItem = ({ movement, showType = false }: AuditTrailListItemPr
           <Tooltip title={movement.reason}>
             <Typography variant="body2" color="text.secondary" noWrap sx={{ maxWidth: 200 }}>
               {movement.reason}
-            </Typography>
-          </Tooltip>
-        ) : (
-          <Typography variant="body2" color="text.disabled">-</Typography>
-        )}
-      </TableCell>
-
-      {/* Changed By */}
-      <TableCell>
-        {movement.creator ? (
-          <Tooltip title={`Changed by: ${creatorName}`}>
-            <Typography variant="body2" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Person fontSize="small" color="action" />
-              {creatorName}
             </Typography>
           </Tooltip>
         ) : (

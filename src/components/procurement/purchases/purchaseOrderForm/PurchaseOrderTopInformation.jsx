@@ -12,10 +12,8 @@ import { Grid, TextField, Tooltip } from '@mui/material';
 import { DatePicker, DateTimePicker } from '@mui/x-date-pickers';
 import dayjs from 'dayjs';
 import React, { useEffect } from 'react'
-import { useFormContext } from 'react-hook-form';
 
-function PurchaseOrderTopInformation({order, setStakeholderQuickAddDisplay, setAddedStakeholder, stakeholderQuickAddDisplay, addedStakeholder, order_date, costCenters}) {
-    const {setValue, errors, clearErrors, watch, register} = useFormContext();
+function PurchaseOrderTopInformation({setValue, errors, clearErrors, watch, register, order, setStakeholderQuickAddDisplay, setAddedStakeholder, stakeholderQuickAddDisplay, addedStakeholder, order_date, costCenters}) {
     const {authOrganization,checkOrganizationPermission} = useJumboAuth();
     const cp = {id:null,name: 'Cash Purchase'};
 
