@@ -375,6 +375,9 @@ function ProductionBatchesForm2({ toggleOpen, production }) {
                             productionDates={productionDates}
                             fetchedBOMs={fetchedBOMs}
                             outputs={outputs}
+                            watch={watch} 
+                            setValue={setValue}
+                            errors={errors}
                         />
                     }
                 </Box>

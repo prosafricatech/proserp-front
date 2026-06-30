@@ -16,7 +16,6 @@ import AdjustmentsTab from './tabs/adjustments/AdjustmentsTab';
 import RemoveIcon from '@mui/icons-material/Remove';
 import AddIcon from '@mui/icons-material/Add'
 import { StationFormContext } from '../SalesShifts';
-
 export default function CashierAccordion({
   cashier,
   index,
@@ -34,7 +33,6 @@ export default function CashierAccordion({
   const [expanded, setExpanded] = useState(false);
   const {activeStation} = useContext(StationFormContext);
   const { fuel_pumps, products } = activeStation;
-  
   const watchedFuelVouchers = watch(`cashiers.${index}.fuel_vouchers`);
   const watchedAdjustments = watch(`cashiers.${index}.adjustments`);
   const watchedPumpReadings = watch(`cashiers.${index}.pump_readings`);
@@ -43,7 +41,6 @@ export default function CashierAccordion({
   const formPumpReadings = Array.isArray(watchedPumpReadings) ? watchedPumpReadings : [];
   const formSelectedPumps = watch(`cashiers.${index}.selected_pumps`) || [];
   const prevKey = `${index}-${JSON.stringify(lastClosingReadings || {})}`;
-  
   const [localFuelVouchers, setLocalFuelVouchers] = useState(formFuelVouchers);
   const [localAdjustments, setLocalAdjustments] = useState(formAdjustments);
   const [localPumpReadings, setLocalPumpReadings] = useState(formPumpReadings);
@@ -119,8 +116,13 @@ export default function CashierAccordion({
   };
 
   const updateAdjustments = (newAdjustments) => {
-    setLocalAdjustments(newAdjustments);
-    setValue(`cashiers.${index}.adjustments`, newAdjustments, {
+    const resolvedAdjustments = typeof newAdjustments === 'function'
+      ? newAdjustments(Array.isArray(localAdjustments) ? localAdjustments : [])
+      : newAdjustments;
+    const safeAdjustments = Array.isArray(resolvedAdjustments) ? resolvedAdjustments : [];
+
+    setLocalAdjustments(safeAdjustments);
+    setValue(`cashiers.${index}.adjustments`, safeAdjustments, {
       shouldValidate: true,
       shouldDirty: true
     });
@@ -213,6 +215,9 @@ export default function CashierAccordion({
             name={`cashiers.${index}.pump_readings`}
             control={control}
             cashierIndex={index}
+            formSetValue={setValue} 
+            errors={errors}
+            watch={watch}
             selectedPumps={formSelectedPumps}
             localPumpReadings={localPumpReadings}
             lastClosingReadings={lastClosingReadings}
@@ -223,7 +228,7 @@ export default function CashierAccordion({
         </div>
         <div style={{ display: tab === 1 ? 'block' : 'none' }}>
           <FuelVouchersTab
-            cashierIndex={index}
+            watch={watch}
             localFuelVouchers={localFuelVouchers}
             setLocalFuelVouchers={updateFuelVouchers}
             cashierPumpProducts={cashierPumpProducts}

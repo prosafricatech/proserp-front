@@ -4,16 +4,15 @@ import {
   Typography,
   Box,
 } from '@mui/material';
-import { useFormContext } from 'react-hook-form';
 import FuelVouchers from './FuelVouchers';
 import FuelVouchersItemRow from './FuelVouchersItemRow';
 
 function FuelVouchersTab({ 
   localFuelVouchers, 
   setLocalFuelVouchers,
-  cashierPumpProducts
+  cashierPumpProducts,
+  watch
 }) {
-    const { watch } = useFormContext();
     const productPrices = watch(`product_prices`) || [];
     const safeFuelVouchers = Array.isArray(localFuelVouchers) ? localFuelVouchers : [];
 
