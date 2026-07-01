@@ -12,17 +12,17 @@ export async function GET(
   const { headers, response } = await getAuthHeaders(req);
   if (response) return response;
 
-  const res = await fetch(`${API_BASE}/payroll-periods/${id}`, {
-    headers,
-    credentials: 'include',
-  });
-  // const res = await fetch(
-  //   `${API_BASE}/payroll-periods/${id}/runs-with-details`,
-  //   {
-  //     headers,
-  //     credentials: 'include',
-  //   }
-  // );
+  // const res = await fetch(`${API_BASE}/payroll-periods/${id}`, {
+  //   headers,
+  //   credentials: 'include',
+  // });
+  const res = await fetch(
+    `${API_BASE}/payroll-periods/${id}/runs-with-details`,
+    {
+      headers,
+      credentials: 'include',
+    }
+  );
 
   return handleJsonResponse(res);
 }
