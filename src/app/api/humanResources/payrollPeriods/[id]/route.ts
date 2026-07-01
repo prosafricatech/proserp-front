@@ -16,6 +16,13 @@ export async function GET(
     headers,
     credentials: 'include',
   });
+  // const res = await fetch(
+  //   `${API_BASE}/payroll-periods/${id}/runs-with-details`,
+  //   {
+  //     headers,
+  //     credentials: 'include',
+  //   }
+  // );
 
   return handleJsonResponse(res);
 }

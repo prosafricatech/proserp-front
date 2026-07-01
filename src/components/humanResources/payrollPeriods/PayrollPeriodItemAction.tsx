@@ -161,6 +161,29 @@ const PayrollPeriodItemAction = ({
       }
     };
 
+    // const fetchAllData = async () => {
+    //   if (!payrollPeriod?.id) return;
+
+    //   setIsLoading(true);
+    //   setFetchingRows(true);
+
+    //   try {
+    //     // Fetch period details
+    //     const periodResponse = await humanResourcesServices.showPayrollPeriod(
+    //       payrollPeriod.id
+    //     );
+    //     console.log('periodResponse: ', periodResponse);
+    //     const periodDetails = periodResponse?.data || periodResponse || {};
+
+    //     setFetchingRows(false);
+    //     setIsLoading(false);
+    //   } catch (error: any) {
+    //     enqueueSnackbar(getErrorMessage(error), { variant: 'error' });
+    //     setIsLoading(false);
+    //     setFetchingRows(false);
+    //   }
+    // };
+
     if (isLoading && !openPreviewDialog) {
       fetchAllData();
     }

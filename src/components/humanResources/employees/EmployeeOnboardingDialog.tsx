@@ -111,6 +111,7 @@ const EmployeeOnboardingDialog = ({
       enqueueSnackbar(response?.message || 'Employees import completed', {
         variant: 'success',
       });
+      setOpenDialog(false);
     },
     onError: (error: any) =>
       enqueueSnackbar(getErrorMessage(error), { variant: 'error' }),
