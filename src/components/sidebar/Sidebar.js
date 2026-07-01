@@ -392,6 +392,9 @@ function Sidebar({ menus }) {
                 // HR > Employee
                 if (!checkOrganizationPermission([
                     PERMISSIONS.EMPLOYEES_READ,
+                    PERMISSIONS.EMPLOYEES_CREATE,
+                    PERMISSIONS.EMPLOYEES_UPDATE,
+                    PERMISSIONS.EMPLOYEES_DELETE
                 ])) {
                     const hrMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.humanResources);
                     if (hrMenuIndex >= 0) {
@@ -404,6 +407,7 @@ function Sidebar({ menus }) {
                 // HR > payrollrun
                 if (!checkOrganizationPermission([
                     PERMISSIONS.PAYROLL_READ,
+                    PERMISSIONS.PAYROLLRUNS_CREATE
                 ])) {
                     const hrMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.humanResources);
                     if (hrMenuIndex >= 0) {
