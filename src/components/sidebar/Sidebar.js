@@ -384,6 +384,35 @@ function Sidebar({ menus }) {
                 }
             }
 
+            if (organizationHasSubscribed(MODULES.HUMAN_RESOURCES)) {
+                // Human Resources
+                updatedMenus = [...updatedMenus, ...menus.filter(menu => menu.label === dictionary.sidebar.menu.humanResources)];
+
+
+                // HR > Employee
+                if (!checkOrganizationPermission([
+                    PERMISSIONS.EMPLOYEES_READ,
+                ])) {
+                    const hrMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.humanResources);
+                    if (hrMenuIndex >= 0) {
+                        updatedMenus[hrMenuIndex].children = updatedMenus[hrMenuIndex].children.filter(
+                            child => child.label !== dictionary.sidebar.menuItem.employees
+                        );
+                    }
+                }
+
+                // HR > payrollrun
+                if (!checkOrganizationPermission([
+                    PERMISSIONS.PAYROLL_READ,
+                ])) {
+                    const hrMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.humanResources);
+                    if (hrMenuIndex >= 0) {
+                        updatedMenus[hrMenuIndex].children = updatedMenus[hrMenuIndex].children.filter(
+                            child => child.label !== dictionary.sidebar.menuItem.payroll
+                        );
+                    }
+                }
+            }
 
             if (organizationHasSubscribed(MODULES.ACCOUNTS_AND_FINANCE)) {
 
@@ -600,11 +629,6 @@ function Sidebar({ menus }) {
                 }
             }
 
-            if (organizationHasSubscribed(MODULES.HUMAN_RESOURCES)) {
-                // Human Resources
-                updatedMenus = [...updatedMenus, ...menus.filter(menu => menu.label === dictionary.sidebar.menu.humanResources)];
-            }
-            
             //Tools
             if (authOrganization?.organization?.active_subscriptions?.length > 0 && checkOrganizationPermission(
                 [

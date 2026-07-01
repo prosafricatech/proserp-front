@@ -1,7 +1,9 @@
 'use client';
 
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import LedgerGroupProvider from '@/components/accounts/ledgerGroups/LedgerGroupProvider';
 import LedgerSelectProvider from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
 import JumboListToolbar from '@jumbo/components/JumboList/components/JumboListToolbar';
 import JumboRqList from '@jumbo/components/JumboReactQuery/JumboRqList';
 import JumboSearch from '@jumbo/components/JumboSearch';
@@ -17,6 +19,7 @@ const Employees = () => {
   const listRef = useRef<any>(null);
   const params = useParams<{ id?: string; keyword?: string }>();
   const searchParams = useSearchParams();
+  const { checkOrganizationPermission } = useJumboAuth();
   const [mounted, setMounted] = useState(false);
 
   const [queryOptions, setQueryOptions] = React.useState({
@@ -84,7 +87,9 @@ const Employees = () => {
                     onChange={handleOnChange}
                     value={queryOptions.queryParams.keyword}
                   />
-                  <EmployeeActionTail />
+                  {checkOrganizationPermission([
+                    PERMISSIONS.EMPLOYEES_CREATE,
+                  ]) && <EmployeeActionTail />}
                 </Stack>
               }
             ></JumboListToolbar>

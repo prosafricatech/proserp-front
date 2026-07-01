@@ -18,6 +18,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import { lazy, useEffect, useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
+import { getPayslipCalculations } from '../payrollRuns/payslipCalculations';
 import { PayrollPeriodType } from './PayrollPeriodType';
 import PayrollPeriodViewDialog, {
   PayrollPeriodViewDialogProp,
@@ -76,90 +77,6 @@ const PayrollPeriodItemAction = ({
   });
 
   useEffect(() => {
-    // const fetchAllData = async () => {
-    //   if (!payrollPeriod?.id) return;
-
-    //   setIsLoading(true);
-    //   setFetchingRows(true);
-
-    //   try {
-    //     // Fetch period details
-    //     const periodResponse = await humanResourcesServices.showPayrollPeriod(
-    //       payrollPeriod.id
-    //     );
-    //     const periodDetails = periodResponse?.data || periodResponse || {};
-
-    //     // Fetch all runs details in parallel
-    //     const runs = periodDetails.runs || [];
-    //     const runPromises = runs.map((run: any) =>
-    //       humanResourcesServices.previewPayrollRun({ id: run.id })
-    //     );
-    //     const runResponses = await Promise.all(runPromises);
-
-    //     // Build salary rows
-    //     const salaryRows = runResponses.flatMap((response, index) => {
-    //       const previewRows = response?.data?.rows || response?.rows || [];
-    //       const run = runs[index];
-
-    //       return previewRows.map((row: any) => ({
-    //         run: { ...run, ...row },
-    //         computed: getPayslipCalculations({ ...run, ...row }),
-    //       }));
-    //     });
-
-    //     // Fetch types
-    //     const [allowanceRes, deductionRes, contributionRes] = await Promise.all(
-    //       [
-    //         humanResourcesServices.getAllowanceTypesList(),
-    //         humanResourcesServices.getDeductionTypesList(),
-    //         humanResourcesServices.getEmployerContributionTypesList(),
-    //       ]
-    //     );
-
-    //     // Build period label
-    //     let periodLabel = periodDetails.cost_center?.name || 'Company-wide Run';
-    //     if (periodDetails.month) {
-    //       const monthNames = [
-    //         'January',
-    //         'February',
-    //         'March',
-    //         'April',
-    //         'May',
-    //         'June',
-    //         'July',
-    //         'August',
-    //         'September',
-    //         'October',
-    //         'November',
-    //         'December',
-    //       ];
-    //       periodLabel = `${monthNames[periodDetails.month - 1]} ${periodDetails.year} - ${periodLabel}`;
-    //     }
-
-    //     // Set ALL data at once
-    //     setPeriodData({
-    //       ...periodDetails,
-    //       rows: salaryRows,
-    //       runs: runs,
-    //       allowanceTypes: allowanceRes?.data || [],
-    //       deductionTypes: deductionRes?.data || [],
-    //       contributionTypes: contributionRes?.data || [],
-    //       periodLabel: periodLabel,
-    //       isLoading: false,
-    //     });
-
-    //     setFetchingRows(false);
-    //     setIsLoading(false);
-
-    //     // Open dialog immediately after data is set
-    //     setOpenPreviewDialog(true);
-    //   } catch (error: any) {
-    //     enqueueSnackbar(getErrorMessage(error), { variant: 'error' });
-    //     setIsLoading(false);
-    //     setFetchingRows(false);
-    //   }
-    // };
-
     const fetchAllData = async () => {
       if (!payrollPeriod?.id) return;
 
@@ -171,45 +88,72 @@ const PayrollPeriodItemAction = ({
         const periodResponse = await humanResourcesServices.showPayrollPeriod(
           payrollPeriod.id
         );
-        console.log('periodResponse: ', periodResponse);
-        const period = periodResponse.period;
-        const runs = periodResponse.runs;
-        const total_employees = periodResponse.total_employees;
-        const total_runs = periodResponse.total_runs;
+        const periodDetails = periodResponse?.data || periodResponse || {};
 
-        const employeeAlloances = runs.flatMap((run: any) =>
-          run.payslips?.flatMap((slip: any) =>
-            slip.allowances?.flatMap((allowance: any) => ({
-              ...allowance,
-              employee_contract_id: slip.contract?.id,
-            }))
-          )
+        // Fetch all runs details in parallel
+        const runs = periodDetails.runs || [];
+        const runPromises = runs.map((run: any) =>
+          humanResourcesServices.previewPayrollRun({ id: run.id })
+        );
+        const runResponses = await Promise.all(runPromises);
+
+        // Build salary rows
+        const salaryRows = runResponses.flatMap((response, index) => {
+          const previewRows = response?.data?.rows || response?.rows || [];
+          const run = runs[index];
+
+          return previewRows.map((row: any) => ({
+            run: { ...run, ...row },
+            computed: getPayslipCalculations({ ...run, ...row }),
+          }));
+        });
+
+        // Fetch types
+        const [allowanceRes, deductionRes, contributionRes] = await Promise.all(
+          [
+            humanResourcesServices.getAllowanceTypesList(),
+            humanResourcesServices.getDeductionTypesList(),
+            humanResourcesServices.getEmployerContributionTypesList(),
+          ]
         );
 
-        const employeeDeductions = runs.flatMap((run: any) =>
-          run.payslips?.flatMap((slip: any) =>
-            slip.deductions?.flatMap((deduction: any) => ({
-              ...deduction,
-              employee_contract_id: slip.contract?.id,
-            }))
-          )
-        );
+        // Build period label
+        let periodLabel = periodDetails.cost_center?.name || 'Company-wide Run';
+        if (periodDetails.month) {
+          const monthNames = [
+            'January',
+            'February',
+            'March',
+            'April',
+            'May',
+            'June',
+            'July',
+            'August',
+            'September',
+            'October',
+            'November',
+            'December',
+          ];
+          periodLabel = `${monthNames[periodDetails.month - 1]} ${periodDetails.year} - ${periodLabel}`;
+        }
 
-        const employeeContributions = runs.flatMap((run: any) =>
-          run.payslips?.flatMap((slip: any) =>
-            slip.employer_contributions?.flatMap((contribution: any) => ({
-              ...contribution,
-              employee_contract_id: slip.contract?.id,
-            }))
-          )
-        );
-
-        console.log('employeeAlloances: ', employeeAlloances);
-        console.log('employeeDeductions: ', employeeDeductions);
-        console.log('employeeContributions: ', employeeContributions);
+        // Set ALL data at once
+        setPeriodData({
+          ...periodDetails,
+          rows: salaryRows,
+          runs: runs,
+          allowanceTypes: allowanceRes?.data || [],
+          deductionTypes: deductionRes?.data || [],
+          contributionTypes: contributionRes?.data || [],
+          periodLabel: periodLabel,
+          isLoading: false,
+        });
 
         setFetchingRows(false);
         setIsLoading(false);
+
+        // Open dialog immediately after data is set
+        setOpenPreviewDialog(true);
       } catch (error: any) {
         enqueueSnackbar(getErrorMessage(error), { variant: 'error' });
         setIsLoading(false);
