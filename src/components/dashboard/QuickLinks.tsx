@@ -320,37 +320,48 @@ function QuickLinks() {
           )}
         {organizationHasSubscribed(MODULES.HUMAN_RESOURCES) && (
           <>
-            <Grid
-              size={{ xs: 6, md: 2, lg: 1.5 }}
-              p={1}
-              textAlign={'center'}
-              sx={{
-                cursor: 'pointer',
-                '&:hover': {
-                  bgcolor: 'action.hover',
-                },
-              }}
-              onClick={() => handleNavigation('/humanResources/employees')}
-            >
-              <PeopleAltOutlined sx={{ fontSize: '40px' }} />
-              <Typography>Employees</Typography>
-            </Grid>
+            {checkOrganizationPermission([
+              PERMISSIONS.EMPLOYEES_READ,
+              PERMISSIONS.EMPLOYEES_CREATE,
+              PERMISSIONS.EMPLOYEES_UPDATE,
+            ]) && (
+              <Grid
+                size={{ xs: 6, md: 2, lg: 1.5 }}
+                p={1}
+                textAlign={'center'}
+                sx={{
+                  cursor: 'pointer',
+                  '&:hover': {
+                    bgcolor: 'action.hover',
+                  },
+                }}
+                onClick={() => handleNavigation('/humanResources/employees')}
+              >
+                <PeopleAltOutlined sx={{ fontSize: '40px' }} />
+                <Typography>Employees</Typography>
+              </Grid>
+            )}
 
-            <Grid
-              size={{ xs: 6, md: 2, lg: 1.5 }}
-              p={1}
-              textAlign={'center'}
-              sx={{
-                cursor: 'pointer',
-                '&:hover': {
-                  bgcolor: 'action.hover',
-                },
-              }}
-              onClick={() => handleNavigation('/humanResources/payroll-runs')}
-            >
-              <AssessmentOutlined sx={{ fontSize: '40px' }} />
-              <Typography>Payroll Runs</Typography>
-            </Grid>
+            {checkOrganizationPermission([
+              PERMISSIONS.PAYROLLRUNS_CREATE,
+              PERMISSIONS.PAYROLL_READ,
+            ]) && (
+              <Grid
+                size={{ xs: 6, md: 2, lg: 1.5 }}
+                p={1}
+                textAlign={'center'}
+                sx={{
+                  cursor: 'pointer',
+                  '&:hover': {
+                    bgcolor: 'action.hover',
+                  },
+                }}
+                onClick={() => handleNavigation('/humanResources/payroll-runs')}
+              >
+                <AssessmentOutlined sx={{ fontSize: '40px' }} />
+                <Typography>Payroll Runs</Typography>
+              </Grid>
+            )}
           </>
         )}
       </Grid>

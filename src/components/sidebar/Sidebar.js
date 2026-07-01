@@ -386,7 +386,28 @@ function Sidebar({ menus }) {
 
             if (organizationHasSubscribed(MODULES.HUMAN_RESOURCES)) {
                 // Human Resources
-                updatedMenus = [...updatedMenus, ...menus.filter(menu => menu.label === dictionary.sidebar.menu.humanResources)];
+                if (checkOrganizationPermission([
+                    PERMISSIONS.EMPLOYEES_READ,
+                    PERMISSIONS.EMPLOYEES_CREATE,
+                    PERMISSIONS.EMPLOYEES_UPDATE,
+                    PERMISSIONS.PAYROLLRUNS_CREATE,
+                    PERMISSIONS.PAYROLL_READ,
+                ])) {
+                    updatedMenus = [...updatedMenus, ...menus.filter(menu => menu.label === dictionary.sidebar.menu.humanResources)];
+                }
+
+
+                // HR > Employee
+                if (!checkOrganizationPermission([
+                    PERMISSIONS.EMPLOYEES_READ,
+                ])) {
+                    const hrMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.humanResources);
+                    if (hrMenuIndex >= 0) {
+                        updatedMenus[hrMenuIndex].children = updatedMenus[hrMenuIndex].children.filter(
+                            child => child.label !== dictionary.sidebar.menuItem.employees
+                        );
+                    }
+                }
             }
 
             if (organizationHasSubscribed(MODULES.ACCOUNTS_AND_FINANCE)) {

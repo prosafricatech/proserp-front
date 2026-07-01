@@ -54,7 +54,8 @@ export const PERMISSIONS = {
   APPROVED_REQUISITIONS_PURCHASE: 'ApprovedRequisitions:Purchase',
   APPROVED_REQUISITIONS_READ: 'ApprovedRequisitions:Read',
   IMPREST_RETIREMENTS_READ: 'ImprestRetirements:Read',
-  IMPREST_RETIREMENT_APPROVALS_DELETE_ANY: 'ImprestRetirementApprovals:DeleteAny',
+  IMPREST_RETIREMENT_APPROVALS_DELETE_ANY:
+    'ImprestRetirementApprovals:DeleteAny',
   REQUISITIONS_BACKDATE: 'Requisitions:BackDate',
   REQUISITIONS_CREATE: 'Requisitions:Create',
   REQUISITIONS_DELETE: 'Requisitions:Delete',
@@ -153,6 +154,14 @@ export const PERMISSIONS = {
   STORES_EDIT: 'Stores:Edit',
   STORES_READ: 'Stores:Read',
   STORES_REPORTS: 'Stores:Reports',
+
+  // human resources
+  EMPLOYEES_CREATE: 'Employees:Create',
+  EMPLOYEES_READ: 'Employees:Read',
+  EMPLOYEES_UPDATE: 'Employees:Update',
+  EMPLOYEES_DELETE: 'Employees:Delete',
+  PAYROLLRUNS_CREATE: 'PayrollRuns:Create',
+  PAYROLL_READ: 'Payroll:Read',
 
   // Manufacturing & Processing
   BOM_CREATE: 'BOM:Create',
