@@ -53,7 +53,7 @@ export const TabPanel = ({ children, value, index }: TabPanelProps) => (
 // Helper to calculate total employer contributions
 const calculateTotalEmployerContributions = (contributions: any[]) => {
   if (!contributions || !Array.isArray(contributions)) return 0;
-  return contributions.reduce((sum, item) => sum + (item?.amount || 0), 0);
+  return contributions?.reduce((sum, item) => sum + (item?.amount || 0), 0);
 };
 
 interface EmployeesTabProps {
@@ -157,7 +157,7 @@ export const EmployeesTab = ({
     type: 'deduction' | 'allowance' | 'contribution'
   ) => {
     if (type === 'allowance') {
-      return employeecontributions.reduce(
+      return employeecontributions?.reduce(
         (sum, item) =>
           item.allowance_type_id === type_id || item.label === typeObj.label
             ? sum + item?.amount
@@ -166,7 +166,7 @@ export const EmployeesTab = ({
       );
     }
     if (type === 'deduction') {
-      return employeeDeductions.reduce((sum, item) => {
+      return employeeDeductions?.reduce((sum, item) => {
         return item.deduction_type_id === type_id ||
           item.label === typeObj.label
           ? sum + item?.amount
@@ -174,7 +174,7 @@ export const EmployeesTab = ({
       }, 0);
     }
     if (type === 'contribution') {
-      return employeecontributions.reduce((sum, item) => {
+      return employeecontributions?.reduce((sum, item) => {
         return item.employer_contribution_type_id === type_id
           ? sum + item?.amount
           : sum;
@@ -572,7 +572,7 @@ export const EmployeesTab = ({
                     align='right'
                   >
                     {formatMoney(
-                      filteredRows.reduce(
+                      filteredRows?.reduce(
                         (s: number, r: any) => s + (r.basic_salary || 0),
                         0
                       )
@@ -605,7 +605,7 @@ export const EmployeesTab = ({
                     align='right'
                   >
                     {formatMoney(
-                      filteredRows.reduce(
+                      filteredRows?.reduce(
                         (s: number, r: any) =>
                           s +
                           (r.gross_salary ||
@@ -648,7 +648,7 @@ export const EmployeesTab = ({
                     align='right'
                   >
                     {formatMoney(
-                      filteredRows.reduce(
+                      filteredRows?.reduce(
                         (s: number, r: any) => s + (r.paye || 0),
                         0
                       )
@@ -659,7 +659,7 @@ export const EmployeesTab = ({
                     align='right'
                   >
                     {formatMoney(
-                      filteredRows.reduce(
+                      filteredRows?.reduce(
                         (s: number, r: any) =>
                           s +
                           (r.net_salary ||
@@ -700,7 +700,7 @@ export const EmployeesTab = ({
                     align='right'
                   >
                     {formatMoney(
-                      filteredRows.reduce((s: number, r: any) => {
+                      filteredRows?.reduce((s: number, r: any) => {
                         const gross =
                           r.gross_salary ||
                           calculateGrossSalary(
@@ -906,7 +906,7 @@ export const PayslipsTab = ({
                   <TableCell sx={{ fontWeight: 'bold' }}>Totals</TableCell>
                   <TableCell align='right'>
                     {formatMoney(
-                      filteredPayslips.reduce(
+                      filteredPayslips?.reduce(
                         (s: number, p: any) => s + (p.basic_salary || 0),
                         0
                       )
@@ -914,7 +914,7 @@ export const PayslipsTab = ({
                   </TableCell>
                   <TableCell align='right'>
                     {formatMoney(
-                      filteredPayslips.reduce(
+                      filteredPayslips?.reduce(
                         (s: number, p: any) => s + (p.total_allowances || 0),
                         0
                       )
@@ -922,7 +922,7 @@ export const PayslipsTab = ({
                   </TableCell>
                   <TableCell align='right'>
                     {formatMoney(
-                      filteredPayslips.reduce(
+                      filteredPayslips?.reduce(
                         (s: number, p: any) => s + (p.gross_salary || 0),
                         0
                       )
@@ -930,7 +930,7 @@ export const PayslipsTab = ({
                   </TableCell>
                   <TableCell align='right'>
                     {formatMoney(
-                      filteredPayslips.reduce(
+                      filteredPayslips?.reduce(
                         (s: number, p: any) => s + (p.total_deductions || 0),
                         0
                       )
@@ -938,7 +938,7 @@ export const PayslipsTab = ({
                   </TableCell>
                   <TableCell align='right'>
                     {formatMoney(
-                      filteredPayslips.reduce(
+                      filteredPayslips?.reduce(
                         (s: number, p: any) => s + (p.paye || 0),
                         0
                       )
@@ -946,7 +946,7 @@ export const PayslipsTab = ({
                   </TableCell>
                   <TableCell align='right'>
                     {formatMoney(
-                      filteredPayslips.reduce(
+                      filteredPayslips?.reduce(
                         (s: number, p: any) => s + (p.net_salary || 0),
                         0
                       )
