@@ -1,10 +1,6 @@
 import { useLanguage } from '@/app/[lang]/contexts/LanguageContext';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
-import PDFContent from '@/components/pdf/PDFContent';
-import { faFileExcel } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
-import { LoadingButton } from '@mui/lab';
 import {
   Box,
   Button,
@@ -28,7 +24,6 @@ import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
 import { PayrollRunType } from '../payrollRuns/PayrollRunType';
-import PayrollPeriodPDF from './PayrollPeriodPDF';
 
 type SalaryTypeItem = {
   id?: number;
@@ -70,24 +65,6 @@ function fmt(value: number) {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
-}
-
-function fmtTypeLabel(type: SalaryTypeItem, fallback: string) {
-  const name = type.name || fallback;
-  const raw = Number(type.default_value ?? 0);
-  if (!Number.isFinite(raw) || raw <= 0) return name;
-
-  const isPercentage = String(type.computation_method || '').startsWith(
-    'percentage'
-  );
-  const valueText = isPercentage
-    ? `${raw.toLocaleString(undefined, { maximumFractionDigits: 2 })}%`
-    : raw.toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      });
-
-  return `${name} (${valueText})`;
 }
 
 function toNumber(value: unknown) {
@@ -984,7 +961,7 @@ const PayrollPeriodViewDialog = ({
       </Dialog>
 
       {/* PDF Dialog */}
-      <Dialog
+      {/* <Dialog
         open={openPdfDialog}
         onClose={() => setOpenPdfDialog(false)}
         fullWidth
@@ -1040,7 +1017,7 @@ const PayrollPeriodViewDialog = ({
           </LoadingButton>
           <Button onClick={() => setOpenPdfDialog(false)}>Close</Button>
         </DialogActions>
-      </Dialog>
+      </Dialog> */}
     </>
   );
 };
