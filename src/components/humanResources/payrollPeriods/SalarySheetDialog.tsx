@@ -133,7 +133,7 @@ function sumAllowanceByType(run: PayrollRunType, type: SalaryTypeItem) {
   const targetId = type.id;
   const targetName = slug(type.name || '');
 
-  return (run.allowances || []).reduce((sum, item) => {
+  return (run.allowances || [])?.reduce((sum, item) => {
     const byId = targetId != null && item.allowance_type_id === targetId;
     const byName =
       targetName &&
@@ -147,7 +147,7 @@ function sumDeductionByType(run: PayrollRunType, type: SalaryTypeItem) {
   const targetId = type.id;
   const targetName = slug(type.name || '');
 
-  return (run.deductions || []).reduce((sum, item) => {
+  return (run.deductions || [])?.reduce((sum, item) => {
     const byId = targetId != null && item.deduction_type_id === targetId;
     const byName =
       targetName &&
@@ -161,7 +161,7 @@ function sumContributionByType(run: PayrollRunType, type: SalaryTypeItem) {
   const targetId = type.id;
   const targetName = slug(type.name || '');
 
-  return (run.employer_contributions || []).reduce((sum, item) => {
+  return (run.employer_contributions || [])?.reduce((sum, item) => {
     const byId =
       targetId != null && item.employer_contribution_type_id === targetId;
     const byName =
@@ -242,7 +242,7 @@ const SalarySheetDialog = ({
     type: 'deduction' | 'allowance' | 'contribution'
   ) => {
     if (type === 'allowance') {
-      return employeecontributions.reduce(
+      return employeecontributions?.reduce(
         (sum, item) =>
           item.allowance_type_id === type_id || item.label === typeObj.label
             ? sum + item?.amount
@@ -251,7 +251,7 @@ const SalarySheetDialog = ({
       );
     }
     if (type === 'deduction') {
-      return employeeDeductions.reduce((sum, item) => {
+      return employeeDeductions?.reduce((sum, item) => {
         return item.deduction_type_id === type_id ||
           item.label === typeObj.label
           ? sum + item?.amount
@@ -259,7 +259,7 @@ const SalarySheetDialog = ({
       }, 0);
     }
     if (type === 'contribution') {
-      return employeecontributions.reduce((sum, item) => {
+      return employeecontributions?.reduce((sum, item) => {
         return item.employer_contribution_type_id === type_id
           ? sum + item?.amount
           : sum;
@@ -267,7 +267,7 @@ const SalarySheetDialog = ({
     }
   };
 
-  const totals = rows.reduce(
+  const totals = rows?.reduce(
     (sum, entry) => {
       const run = entry.run;
       const computed = entry.computed;
