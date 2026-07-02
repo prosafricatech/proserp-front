@@ -1,5 +1,5 @@
-import PayrollSalaryComponentsDashboard from '@/components/humanResources/payrollPeriods/PayrollSalaryComponentsDashboard';
+import HumanResourcesReports from '@/components/humanResources/reports/HumanResourcesReports';
 
 export default function HumanResourcesReportsPage() {
-  return <PayrollSalaryComponentsDashboard />;
+  return <HumanResourcesReports />;
 }

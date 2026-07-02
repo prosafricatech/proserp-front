@@ -235,7 +235,7 @@ function sumAllowanceByType(run: PayrollRunType, type: SalaryTypeItem) {
       targetName &&
       slug(item.allowance_type?.name || item.label || '') === targetName;
     if (!byId && !byName) return sum;
-    return sum + toNumber(item.amount ?? item.value);
+    return sum + toNumber(item?.amount ?? item.value);
   }, 0);
 }
 
@@ -249,7 +249,7 @@ function sumDeductionByType(run: PayrollRunType, type: SalaryTypeItem) {
       targetName &&
       slug(item.deduction_type?.name || item.label || '') === targetName;
     if (!byId && !byName) return sum;
-    return sum + toNumber(item.amount ?? item.value);
+    return sum + toNumber(item?.amount ?? item.value);
   }, 0);
 }
 
@@ -264,7 +264,7 @@ function sumContributionByType(run: PayrollRunType, type: SalaryTypeItem) {
       targetName &&
       slug(item.contribution_type?.name || item.label || '') === targetName;
     if (!byId && !byName) return sum;
-    return sum + toNumber(item.amount ?? item.value);
+    return sum + toNumber(item?.amount ?? item.value);
   }, 0);
 }
 
@@ -319,7 +319,7 @@ const SalarySheetPDF = ({
       return allowanceTypes.reduce(
         (sum, item) =>
           item.allowance_type_id === type_id || item.label === typeObj.label
-            ? sum + item.amount
+            ? sum + item?.amount
             : sum,
         0
       );
@@ -328,14 +328,14 @@ const SalarySheetPDF = ({
       return deductionTypes.reduce((sum, item) => {
         return item.deduction_type_id === type_id ||
           item.label === typeObj.label
-          ? sum + item.amount
+          ? sum + item?.amount
           : sum;
       }, 0);
     }
     if (type === 'contribution') {
       return contributionTypes.reduce((sum, item) => {
         return item.employer_contribution_type_id === type_id
-          ? sum + item.amount
+          ? sum + item?.amount
           : sum;
       }, 0);
     }
@@ -679,7 +679,7 @@ const SalarySheetPDF = ({
                           itm.employee_contract_id === entry.run.employee?.id &&
                           (itm.label === type.label ||
                             itm.allowance_type_id === type.allowance_type_id)
-                      ).amount ?? 0
+                      )?.amount ?? 0
                     )}
                   </Text>
                 ))}
@@ -738,7 +738,7 @@ const SalarySheetPDF = ({
                               (itm.label === type.label ||
                                 itm.deduction_type_id ===
                                   type.deduction_type_id)
-                          ).amount ?? 0
+                          )?.amount ?? 0
                         )}
                       </Text>
                     );
@@ -783,7 +783,7 @@ const SalarySheetPDF = ({
                           (itm.label === type.label ||
                             itm.employer_contribution_type_id ===
                               type.employer_contribution_type_id)
-                      ).amount ?? 0
+                      )?.amount ?? 0
                     )}
                   </Text>
                 ))}

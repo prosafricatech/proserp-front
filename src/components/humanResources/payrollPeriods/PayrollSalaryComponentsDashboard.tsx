@@ -6,10 +6,10 @@ import { CostCenter } from '@/components/masters/costCenters/CostCenterType';
 import {
   Alert,
   Box,
-  Card,
+  Button,
   CardContent,
   Chip,
-  Divider,
+  DialogContent,
   Grid,
   LinearProgress,
   MenuItem,
@@ -203,6 +203,11 @@ export default function PayrollSalaryComponentsDashboard() {
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1);
   const [selectedCostCenters, setSelectedCostCenters] = useState<CostCenter[]>([]);
+  const [appliedFilters, setAppliedFilters] = useState({
+    year: now.getFullYear(),
+    month: now.getMonth() + 1,
+    costCenterIds: [] as number[],
+  });
 
   const costCenterIds = useMemo(
     () => selectedCostCenters.map((costCenter) => costCenter.id),
@@ -210,23 +215,33 @@ export default function PayrollSalaryComponentsDashboard() {
   );
 
   const { data, isFetching, isError, error, refetch } = useQuery<SalarySummaryResponse>({
-    queryKey: ['payroll-salary-components-summary', selectedYear, selectedMonth, costCenterIds.join(',')],
+    queryKey: ['payroll-salary-components-summary', appliedFilters.year, appliedFilters.month, appliedFilters.costCenterIds.join(',')],
     queryFn: async () => {
-      const months = Array.from({ length: selectedMonth }, (_, index) => index + 1);
+      const months = Array.from({ length: appliedFilters.month }, (_, index) => index + 1);
       const responses = await Promise.all(
         months.map((month) =>
           humanResourcesServices.getSalaryComponentsSummary({
-            year: selectedYear,
+            year: appliedFilters.year,
             month,
-            ...(costCenterIds.length ? { cost_center_ids: costCenterIds } : {}),
+            ...(appliedFilters.costCenterIds.length ? { cost_center_ids: appliedFilters.costCenterIds } : {}),
           })
         )
       );
 
-      return aggregateResponses(responses, selectedYear, selectedMonth);
+      return aggregateResponses(responses, appliedFilters.year, appliedFilters.month);
     },
+    enabled: false,
     staleTime: 60_000,
   });
+
+  const handleFilter = () => {
+    setAppliedFilters({
+      year: selectedYear,
+      month: selectedMonth,
+      costCenterIds: costCenterIds,
+    });
+    refetch();
+  };
 
   const summary = data?.summary;
   const basicSalary = data?.salary_components?.basic_salary;
@@ -239,8 +254,8 @@ export default function PayrollSalaryComponentsDashboard() {
   const monthOptions = monthNames.map((name, index) => ({ value: index + 1, label: name }));
 
   return (
-    <Card sx={{ mb: 3 }}>
-      <CardContent>
+    <DialogContent dividers sx={{ p: { xs: 2, md: 3 } }}>
+      <Box>
         <Stack
           direction={{ xs: 'column', md: 'row' }}
           spacing={2}
@@ -296,6 +311,10 @@ export default function PayrollSalaryComponentsDashboard() {
                 }}
               />
             </Box>
+
+            <Button variant='contained' size='small' onClick={handleFilter}>
+              Filter
+            </Button>
           </Stack>
         </Stack>
 
@@ -315,114 +334,97 @@ export default function PayrollSalaryComponentsDashboard() {
           <Box>
             <Grid container spacing={2} mb={2}>
               <Grid size={{ xs: 12, md: 3 }}>
-                <Card variant='outlined'>
-                  <CardContent>
-                    <Typography variant='body2' color='text.secondary'>Period</Typography>
-                    <Typography variant='h6'>{summary?.period || '-'}</Typography>
-                  </CardContent>
-                </Card>
+                <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 2, height: '100%' }}>
+                  <Typography variant='body2' color='text.secondary'>Period</Typography>
+                  <Typography variant='h6'>{summary?.period || '-'}</Typography>
+                </Box>
               </Grid>
               <Grid size={{ xs: 12, md: 3 }}>
-                <Card variant='outlined'>
-                  <CardContent>
-                    <Typography variant='body2' color='text.secondary'>Employees</Typography>
-                    <Typography variant='h6'>{formatNumber(summary?.total_employees)}</Typography>
-                  </CardContent>
-                </Card>
+                <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 2, height: '100%' }}>
+                  <Typography variant='body2' color='text.secondary'>Employees</Typography>
+                  <Typography variant='h6'>{formatNumber(summary?.total_employees)}</Typography>
+                </Box>
               </Grid>
               <Grid size={{ xs: 12, md: 3 }}>
-                <Card variant='outlined'>
-                  <CardContent>
-                    <Typography variant='body2' color='text.secondary'>Payroll Runs</Typography>
-                    <Typography variant='h6'>{formatNumber(summary?.total_payroll_runs)}</Typography>
-                  </CardContent>
-                </Card>
+                <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 2, height: '100%' }}>
+                  <Typography variant='body2' color='text.secondary'>Payroll Runs</Typography>
+                  <Typography variant='h6'>{formatNumber(summary?.total_payroll_runs)}</Typography>
+                </Box>
               </Grid>
               <Grid size={{ xs: 12, md: 3 }}>
-                <Card variant='outlined'>
-                  <CardContent>
-                    <Typography variant='body2' color='text.secondary'>Cost Centers</Typography>
-                    <Stack direction='row' spacing={1} flexWrap='wrap' useFlexGap>
-                      {(summary?.cost_centers?.length ? summary.cost_centers : [authOrganization?.organization?.name || 'All']).map((value) => (
-                        <Chip key={String(value)} label={String(value)} size='small' />
-                      ))}
-                    </Stack>
-                  </CardContent>
-                </Card>
+                <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 2, height: '100%' }}>
+                  <Typography variant='body2' color='text.secondary'>Cost Centers</Typography>
+                  <Stack direction='row' spacing={1} flexWrap='wrap' useFlexGap>
+                    {(summary?.cost_centers?.length ? summary.cost_centers : [authOrganization?.organization?.name || 'All']).map((value) => (
+                      <Chip key={String(value)} label={String(value)} size='small' />
+                    ))}
+                  </Stack>
+                </Box>
               </Grid>
             </Grid>
 
             <Grid container spacing={2} mb={2}>
               <Grid size={{ xs: 12, md: 4 }}>
-                <Card variant='outlined'>
-                  <CardContent>
-                    <Typography variant='body2' color='text.secondary'>Basic Salary</Typography>
-                    <Typography variant='h5'>TZS {formatCurrency(basicSalary?.total)}</Typography>
-                    <Typography variant='caption' color='text.secondary'>
-                      Avg/employee: TZS {formatCurrency(basicSalary?.average_per_employee)}
-                    </Typography>
-                  </CardContent>
-                </Card>
+                <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 2, height: '100%' }}>
+                  <Typography variant='body2' color='text.secondary'>Basic Salary</Typography>
+                  <Typography variant='h5'>TZS {formatCurrency(basicSalary?.total)}</Typography>
+                  <Typography variant='caption' color='text.secondary'>
+                    Avg/employee: TZS {formatCurrency(basicSalary?.average_per_employee)}
+                  </Typography>
+                </Box>
               </Grid>
               <Grid size={{ xs: 12, md: 4 }}>
-                <Card variant='outlined'>
-                  <CardContent>
-                    <Typography variant='body2' color='text.secondary'>Gross Salary</Typography>
-                    <Typography variant='h5'>TZS {formatCurrency(data?.salary_components?.gross_salary)}</Typography>
-                  </CardContent>
-                </Card>
+                <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 2, height: '100%' }}>
+                  <Typography variant='body2' color='text.secondary'>Gross Salary</Typography>
+                  <Typography variant='h5'>TZS {formatCurrency(data?.salary_components?.gross_salary)}</Typography>
+                </Box>
               </Grid>
               <Grid size={{ xs: 12, md: 4 }}>
-                <Card variant='outlined'>
-                  <CardContent>
-                    <Typography variant='body2' color='text.secondary'>Net Salary</Typography>
-                    <Typography variant='h5'>TZS {formatCurrency(netSalary?.total)}</Typography>
-                    <Typography variant='caption' color='text.secondary'>
-                      Avg: TZS {formatCurrency(netSalary?.average)}
-                    </Typography>
-                  </CardContent>
-                </Card>
+                <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 2, height: '100%' }}>
+                  <Typography variant='body2' color='text.secondary'>Net Salary</Typography>
+                  <Typography variant='h5'>TZS {formatCurrency(netSalary?.total)}</Typography>
+                  <Typography variant='caption' color='text.secondary'>
+                    Avg: TZS {formatCurrency(netSalary?.average)}
+                  </Typography>
+                </Box>
               </Grid>
             </Grid>
 
             <Grid container spacing={2}>
               <Grid size={{ xs: 12, lg: 4 }}>
-                <Card variant='outlined'>
-                  <CardContent>
-                    <Typography variant='subtitle1' fontWeight={600} mb={1}>Allowances</Typography>
-                    <TableContainer>
-                      <Table size='small'>
-                        <TableHead>
-                          <TableRow>
-                            <TableCell>Type</TableCell>
-                            <TableCell align='right'>Total</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {allowances.length ? (
-                            allowances.map((allowance) => (
-                              <TableRow key={String(allowance.type_id ?? allowance.type_name ?? allowance.label)}>
-                                <TableCell>{allowance.type_name || allowance.label || allowance.name || '-'}</TableCell>
-                                <TableCell align='right'>TZS {formatCurrency(allowance.total)}</TableCell>
-                              </TableRow>
-                            ))
-                          ) : (
-                            <TableRow>
-                              <TableCell colSpan={2}>No allowances</TableCell>
+                <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 2, height: '100%' }}>
+                  <Typography variant='subtitle1' fontWeight={600} mb={1}>Allowances</Typography>
+                  <TableContainer>
+                    <Table size='small'>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Type</TableCell>
+                          <TableCell align='right'>Total</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {allowances.length ? (
+                          allowances.map((allowance) => (
+                            <TableRow key={String(allowance.type_id ?? allowance.type_name ?? allowance.label)}>
+                              <TableCell>{allowance.type_name || allowance.label || allowance.name || '-'}</TableCell>
+                              <TableCell align='right'>TZS {formatCurrency(allowance.total)}</TableCell>
                             </TableRow>
-                          )}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  </CardContent>
-                </Card>
+                          ))
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={2}>No allowances</TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Box>
               </Grid>
 
               <Grid size={{ xs: 12, lg: 4 }}>
-                <Card variant='outlined'>
-                  <CardContent>
-                    <Typography variant='subtitle1' fontWeight={600} mb={1}>Deductions</Typography>
-                    <TableContainer>
+                <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 2, height: '100%' }}>
+                  <Typography variant='subtitle1' fontWeight={600} mb={1}>Deductions</Typography>
+                  <TableContainer>
                       <Table size='small'>
                         <TableHead>
                           <TableRow>
@@ -446,14 +448,12 @@ export default function PayrollSalaryComponentsDashboard() {
                         </TableBody>
                       </Table>
                     </TableContainer>
-                  </CardContent>
-                </Card>
+                </Box>
               </Grid>
 
               <Grid size={{ xs: 12, lg: 4 }}>
-                <Card variant='outlined'>
-                  <CardContent>
-                    <Typography variant='subtitle1' fontWeight={600} mb={1}>Employer Contributions</Typography>
+                <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 2, height: '100%' }}>
+                  <Typography variant='subtitle1' fontWeight={600} mb={1}>Employer Contributions</Typography>
                     <TableContainer>
                       <Table size='small'>
                         <TableHead>
@@ -478,13 +478,12 @@ export default function PayrollSalaryComponentsDashboard() {
                         </TableBody>
                       </Table>
                     </TableContainer>
-                  </CardContent>
-                </Card>
+                </Box>
               </Grid>
             </Grid>
           </Box>
         )}
-      </CardContent>
-    </Card>
+      </Box>
+    </DialogContent>
   );
 }
