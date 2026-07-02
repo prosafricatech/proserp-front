@@ -29,6 +29,7 @@ interface SimulationDialogProps {
 
 export const SimulationDialog = ({ open, onClose, data }: SimulationDialogProps) => {
   const simulationRow = data?.row || data?.data?.row || data;
+  console.log('SimulationDialog data:', simulationRow);
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
@@ -71,7 +72,9 @@ export const SimulationDialog = ({ open, onClose, data }: SimulationDialogProps)
             </Grid>
             {simulationRow.allowances?.length > 0 && (
               <Grid size={12}>
-                <Typography variant="subtitle2" gutterBottom>Allowances</Typography>
+                <Typography variant="subtitle2" gutterBottom textAlign={'center'}>
+                  Allowances
+                </Typography>
                 <TableContainer component={Paper} variant="outlined">
                   <Table size="small">
                     <TableHead>
@@ -91,7 +94,9 @@ export const SimulationDialog = ({ open, onClose, data }: SimulationDialogProps)
             )}
             {simulationRow.deductions?.length > 0 && (
               <Grid size={12}>
-                <Typography variant="subtitle2" gutterBottom>Deductions</Typography>
+                <Typography variant="subtitle2" gutterBottom textAlign={'center'}>
+                  Deductions
+                </Typography>
                 <TableContainer component={Paper} variant="outlined">
                   <Table size="small">
                     <TableHead>
@@ -99,6 +104,28 @@ export const SimulationDialog = ({ open, onClose, data }: SimulationDialogProps)
                     </TableHead>
                     <TableBody>
                       {simulationRow.deductions.map((item: any, idx: number) => (
+                        <TableRow key={idx}>
+                          <TableCell>{item.label}</TableCell>
+                          <TableCell align="right">{formatMoney(item.amount)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Grid>
+            )}
+            {simulationRow.employer_contributions?.length > 0 && (
+              <Grid size={12}>
+                <Typography variant="subtitle2" gutterBottom textAlign={'center'}>
+                  Employer Contributions
+                </Typography>
+                <TableContainer component={Paper} variant="outlined">
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow><TableCell>Label</TableCell><TableCell align="right">Amount</TableCell></TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {simulationRow.employer_contributions.map((item: any, idx: number) => (
                         <TableRow key={idx}>
                           <TableCell>{item.label}</TableCell>
                           <TableCell align="right">{formatMoney(item.amount)}</TableCell>

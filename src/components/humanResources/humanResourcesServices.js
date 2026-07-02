@@ -676,6 +676,19 @@ humanResourcesServices.markPayrollPeriodPaid = async (id) => {
     return data;
 }
 
+humanResourcesServices.getSalaryComponentsSummary = async (params = {}) => {
+    const { year, month, cost_center_ids = [] } = params;
+    const queryParams = {
+        year,
+        month,
+        ...(cost_center_ids?.length ? { cost_center_ids } : {}),
+    };
+    const { data } = await axios.get('/api/humanResources/payroll-reports/salary-components-summary', {
+        params: queryParams,
+    });
+    return data;
+};
+
 // ============================================
 // PAYROLL RUNS
 // ============================================
