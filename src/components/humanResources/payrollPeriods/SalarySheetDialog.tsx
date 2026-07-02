@@ -732,7 +732,7 @@ const SalarySheetDialog = ({
                                   (itm.label === type.label ||
                                     itm.allowance_type_id ===
                                       type.allowance_type_id)
-                              ).amount ?? 0
+                              )?.amount ?? 0
                             )}
                           </TableCell>
                         ))}
@@ -767,7 +767,7 @@ const SalarySheetDialog = ({
                                       (itm.label === type.label ||
                                         itm.deduction_type_id ===
                                           type.deduction_type_id)
-                                  ).amount ?? 0
+                                  )?.amount ?? 0
                                 )}
                               </TableCell>
                             );
@@ -813,7 +813,7 @@ const SalarySheetDialog = ({
                                   (itm.label === type.label ||
                                     itm.employer_contribution_type_id ===
                                       type.employer_contribution_type_id)
-                              ).amount ?? 0
+                              )?.amount ?? 0
                             )}
                           </TableCell>
                         ))}
