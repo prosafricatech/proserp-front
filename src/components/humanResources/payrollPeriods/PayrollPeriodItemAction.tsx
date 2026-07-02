@@ -18,11 +18,10 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import { lazy, useEffect, useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
-import { getPayslipCalculations } from '../payrollRuns/payslipCalculations';
+import PayrollPeriodNewViewDialog, {
+  PayrollPeriodNewViewDialogProp,
+} from './PayrollPeriodNewViewDialog';
 import { PayrollPeriodType } from './PayrollPeriodType';
-import PayrollPeriodViewDialog, {
-  PayrollPeriodViewDialogProp,
-} from './PayrollPeriodViewDialog';
 
 const PayrollPeriodForm = lazy(() => import('./PayrollPeriodForm'));
 
@@ -55,7 +54,7 @@ const PayrollPeriodItemAction = ({
   const [openPreviewDialog, setOpenPreviewDialog] = useState(false);
   const [salarySheetData, setSalarySheetData] = useState<any>(null);
   const [periodData, setPeriodData] =
-    useState<PayrollPeriodViewDialogProp | null>(null);
+    useState<PayrollPeriodNewViewDialogProp | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [fetchingRows, setFetchingRows] = useState(false);
 
@@ -88,64 +87,96 @@ const PayrollPeriodItemAction = ({
         const periodResponse = await humanResourcesServices.showPayrollPeriod(
           payrollPeriod.id
         );
-        const periodDetails = periodResponse?.data || periodResponse || {};
+        const period = periodResponse?.period;
+        const runs = periodResponse?.runs;
 
-        // Fetch all runs details in parallel
-        const runs = periodDetails.runs || [];
-        const runPromises = runs.map((run: any) =>
-          humanResourcesServices.previewPayrollRun({ id: run.id })
-        );
-        const runResponses = await Promise.all(runPromises);
-
-        // Build salary rows
-        const salaryRows = runResponses.flatMap((response, index) => {
-          const previewRows = response?.data?.rows || response?.rows || [];
-          const run = runs[index];
-
-          return previewRows.map((row: any) => ({
-            run: { ...run, ...row },
-            computed: getPayslipCalculations({ ...run, ...row }),
-          }));
-        });
-
-        // Fetch types
-        const [allowanceRes, deductionRes, contributionRes] = await Promise.all(
-          [
-            humanResourcesServices.getAllowanceTypesList(),
-            humanResourcesServices.getDeductionTypesList(),
-            humanResourcesServices.getEmployerContributionTypesList(),
-          ]
+        const employeeDeductions = runs.flatMap((run: any) =>
+          run?.payslips?.flatMap((slip: any) =>
+            slip.deductions?.map((deduction: any) => ({
+              ...deduction,
+              employee_contract_id: slip.contract?.id,
+            }))
+          )
         );
 
-        // Build period label
-        let periodLabel = periodDetails.cost_center?.name || 'Company-wide Run';
-        if (periodDetails.month) {
-          const monthNames = [
-            'January',
-            'February',
-            'March',
-            'April',
-            'May',
-            'June',
-            'July',
-            'August',
-            'September',
-            'October',
-            'November',
-            'December',
-          ];
-          periodLabel = `${monthNames[periodDetails.month - 1]} ${periodDetails.year} - ${periodLabel}`;
-        }
+        const employeeAllowances = runs.flatMap((run: any) =>
+          run?.payslips?.flatMap((slip: any) =>
+            slip.allowances?.map((allowance: any) => ({
+              ...allowance,
+              employee_contract_id: slip.contract?.id,
+            }))
+          )
+        );
 
-        // Set ALL data at once
+        const employeecontributions = runs.flatMap((run: any) =>
+          run?.payslips?.flatMap((slip: any) =>
+            slip.employer_contributions?.map((contribution: any) => ({
+              ...contribution,
+              employee_contract_id: slip.contract?.id,
+            }))
+          )
+        );
+
+        const getUniqueTypes = (value: Array<any>) => {
+          const filteredDeductions = Array.from(
+            new Map(
+              value.map((itm) => [
+                itm?.deduction_type_id ??
+                  itm?.allowance_type_id ??
+                  itm?.employer_contribution_type_id ??
+                  itm?.label,
+                itm,
+              ])
+            ).values()
+          );
+          return filteredDeductions;
+        };
+
+        const unique_deductions_types = getUniqueTypes(employeeDeductions);
+        const unique_allowances_types = getUniqueTypes(employeeAllowances);
+        const unique_contributions_types = getUniqueTypes(
+          employeecontributions
+        );
+
+        const hasAllowances = unique_allowances_types.length > 0;
+        const hasDeductions = unique_deductions_types.length > 0;
+        const hasContributions = unique_contributions_types.length > 0;
+
+        const hasTypes = {
+          hasAllowances: hasAllowances,
+          hasDeductions: hasDeductions,
+          hasContributions: hasContributions,
+        };
+        const employeetypes = {
+          employeeDeductions: employeeDeductions,
+          employeeAllowances: employeeAllowances,
+          employeecontributions: employeecontributions,
+        };
+
+        const uniqueTypes = {
+          unique_allowances_types: unique_allowances_types,
+          unique_deductions_types: unique_deductions_types,
+          unique_contributions_types: unique_contributions_types,
+        };
+
+        const employees = runs.flatMap((run: any) =>
+          run?.payslips.flatMap((slip: any, idx: number) => ({
+            ...slip.employee,
+            basic_salary: slip.contract?.basic_salary ?? 0,
+            allwances: slip.allowances ?? [],
+            deductions: slip.deductions ?? [],
+            employer_contributions: slip.employer_contributions ?? [],
+            paye: slip.paye ?? 0,
+            slipIndex: idx,
+          }))
+        );
+
         setPeriodData({
-          ...periodDetails,
-          rows: salaryRows,
+          period: period,
           runs: runs,
-          allowanceTypes: allowanceRes?.data || [],
-          deductionTypes: deductionRes?.data || [],
-          contributionTypes: contributionRes?.data || [],
-          periodLabel: periodLabel,
+          hasTypes: hasTypes,
+          employeeTypes: employeetypes,
+          uniqueTypes: uniqueTypes,
           isLoading: false,
         });
 
@@ -155,6 +186,7 @@ const PayrollPeriodItemAction = ({
         // Open dialog immediately after data is set
         setOpenPreviewDialog(true);
       } catch (error: any) {
+        console.error(error);
         enqueueSnackbar(getErrorMessage(error), { variant: 'error' });
         setIsLoading(false);
         setFetchingRows(false);
@@ -213,28 +245,43 @@ const PayrollPeriodItemAction = ({
         </Dialog>
       )}
       {openPreviewDialog && !isLoading && (
-        <PayrollPeriodViewDialog
+        // <PayrollPeriodViewDialog
+        //   open={openPreviewDialog && !isLoading}
+        //   onClose={() => {
+        //     setOpenPreviewDialog(false);
+        //     setSalarySheetData(null);
+        //     setPeriodData(null);
+        //   }}
+        //   allowanceTypes={periodData?.allowanceTypes}
+        //   contributionTypes={periodData?.contributionTypes}
+        //   created_at={periodData?.created_at}
+        //   created_by={periodData?.created_by}
+        //   deductionTypes={periodData?.deductionTypes}
+        //   deleted_at={periodData?.deleted_at}
+        //   id={periodData?.id}
+        //   month={periodData?.month}
+        //   periodLabel={periodData?.periodLabel}
+        //   remarks={periodData?.remarks}
+        //   rows={periodData?.rows}
+        //   runs={periodData?.runs}
+        //   runs_count={periodData?.runs_count}
+        //   updated_at={periodData?.updated_at}
+        //   year={periodData?.year}
+        //   isLoading={isLoading}
+        // />
+
+        <PayrollPeriodNewViewDialog
           open={openPreviewDialog && !isLoading}
           onClose={() => {
             setOpenPreviewDialog(false);
             setSalarySheetData(null);
             setPeriodData(null);
           }}
-          allowanceTypes={periodData?.allowanceTypes}
-          contributionTypes={periodData?.contributionTypes}
-          created_at={periodData?.created_at}
-          created_by={periodData?.created_by}
-          deductionTypes={periodData?.deductionTypes}
-          deleted_at={periodData?.deleted_at}
-          id={periodData?.id}
-          month={periodData?.month}
-          periodLabel={periodData?.periodLabel}
-          remarks={periodData?.remarks}
-          rows={periodData?.rows}
+          period={periodData?.period}
           runs={periodData?.runs}
-          runs_count={periodData?.runs_count}
-          updated_at={periodData?.updated_at}
-          year={periodData?.year}
+          hasTypes={periodData?.hasTypes}
+          employeeTypes={periodData?.employeeTypes}
+          uniqueTypes={periodData?.uniqueTypes}
           isLoading={isLoading}
         />
       )}
