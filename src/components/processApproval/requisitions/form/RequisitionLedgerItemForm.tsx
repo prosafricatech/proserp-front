@@ -4,37 +4,44 @@ import {
 } from '@/app/helpers/input-sanitization-helpers';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
+import measurementUnitServices from '@/components/masters/measurementUnits/measurement-unit-services';
 import MeasurementSelector from '@/components/masters/measurementUnits/MeasurementSelector';
+import MeasurementUnitForm from '@/components/masters/measurementUnits/MeasurementUnitForm';
+import { MeasurementUnit } from '@/components/masters/measurementUnits/MeasurementUnitType';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { MODULES } from '@/utilities/constants/modules';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { Div } from '@jumbo/shared';
 import {
-  AddOutlined,
   AccountBalanceWalletOutlined,
+  AddOutlined,
   CheckOutlined,
   DisabledByDefault,
 } from '@mui/icons-material';
 import {
   Autocomplete,
   Button,
+  Dialog,
   Divider,
   Grid,
   IconButton,
   LinearProgress,
   TextField,
   Tooltip,
+  useMediaQuery,
 } from '@mui/material';
+import { useQuery } from '@tanstack/react-query';
 import { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
+import requisitionsServices from '../../requisitionsServices';
 import {
   RelatableTransaction,
   RequisitionLedgerItem,
 } from '../../RequisitionType';
 import LedgerBudgetCheckDetails from '../listItem/tabs/form/LedgerBudgetCheckDetails';
-import requisitionsServices from '../../requisitionsServices';
 
 interface RequisitionLedgerItemFormProps {
   requisition_ledger_items: RequisitionLedgerItem[];
@@ -63,6 +70,30 @@ function RequisitionLedgerItemForm({
   costCenterId,
   notAllowedLedgers = [],
 }: RequisitionLedgerItemFormProps) {
+  //Screen handling constants
+  const { theme } = useJumboTheme();
+  const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
+  const { data: measurementUnits, isLoading } = useQuery<
+    MeasurementUnit[],
+    Error
+  >({
+    queryKey: ['measurementUnitsOptions'],
+    queryFn: () => measurementUnitServices.getAllMeasurementUnits(),
+  });
+
+  const [measurementUnitFormOpen, setMeasurementUnitFormOpen] = useState(false);
+
+  const [newUnit, setNewUnit] = useState<MeasurementUnit | undefined>(
+    undefined
+  );
+  const [selectedUnit, setSelectedUnit] = useState(() =>
+    ledger_item?.id
+      ? measurementUnits?.find(
+          (unit) => unit.id === ledger_item?.measurement_unit_id
+        )
+      : null
+  );
+
   const [isAdding, setIsAdding] = useState(false);
   const [calculatedAmount, setCalculatedAmount] = useState(0);
   const [formResetKey, setFormResetKey] = useState(0);
@@ -70,7 +101,8 @@ function RequisitionLedgerItemForm({
   const [relatedTransactions, setRelatedTransactions] = useState<
     RelatableTransaction[]
   >([]);
-  const [selectedRelated, setSelectedRelated]= useState<RelatableTransaction | null>(null);
+  const [selectedRelated, setSelectedRelated] =
+    useState<RelatableTransaction | null>(null);
   const [openLedgerBudgetDialog, setOpenLedgerBudgetDialog] = useState(false);
   const [ledgerDialogData, setLedgerDialogData] = useState<{
     ledgerId: number;
@@ -79,7 +111,8 @@ function RequisitionLedgerItemForm({
     currency?: any;
   } | null>(null);
 
-  const { organizationHasSubscribed, checkOrganizationPermission } = useJumboAuth();
+  const { organizationHasSubscribed, checkOrganizationPermission } =
+    useJumboAuth();
 
   const relatableTypes = [
     {
@@ -223,6 +256,15 @@ function RequisitionLedgerItemForm({
   };
 
   useEffect(() => {
+    if (newUnit !== undefined) {
+      setValue('measurement_unit_id', newUnit ? newUnit.id : 0, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    }
+  }, [newUnit]);
+
+  useEffect(() => {
     const amount = calculateAmount();
     setCalculatedAmount(Number(amount));
   }, [watch('quantity'), watch('rate')]);
@@ -318,7 +360,8 @@ function RequisitionLedgerItemForm({
 
             if (isDuplicate || currencyChanged) {
               const currentAmount =
-                sanitizedNumber(watch('quantity')) * sanitizedNumber(watch('rate'));
+                sanitizedNumber(watch('quantity')) *
+                sanitizedNumber(watch('rate'));
               const maxUnapprovedAmount = Number(
                 latestRelated?.unapproved_amount ?? 0
               );
@@ -368,7 +411,8 @@ function RequisitionLedgerItemForm({
     setSelectedRelated(null);
   }, [currencyChanged]);
 
-  const hasValidationErrors = (isDuplicate || currencyChanged) && Object.keys(errors).length > 0;
+  const hasValidationErrors =
+    (isDuplicate || currencyChanged) && Object.keys(errors).length > 0;
   const selectedLedger = (watch('ledger') as any) || ledger_item?.ledger;
   const hasCostCenter = Boolean(costCenterId);
   const canSeeBudget = checkOrganizationPermission([
@@ -383,314 +427,337 @@ function RequisitionLedgerItemForm({
   }
 
   return (
-    <form autoComplete='off' onSubmit={handleSubmit(updateItems)}>
-      <Grid container spacing={1}>
-        <Grid size={12}>
-          <Divider />
-        </Grid>
-        <Grid size={{ xs: 12, md: selectedLedger && canSeeBudget ? 3 : 3.5 }}>
-          <Div sx={{ mt: 0.3 }}>
-            <LedgerSelect
-              key={`ledger-select-${formResetKey}`}
-              multiple={false}
-              label='Ledger Name'
-              notAllowedLedgers={notAllowedLedgers}
-              allowedGroups={[
-                'Accounts Receivable',
-                'Accounts Payable',
-                'Expenses',
-                'Liabilities',
-              ]}
-              defaultValue={ledger_item?.ledger}
-              frontError={
-                errors.ledger_id
-                  ? { message: errors.ledger_id.message || '' }
-                  : undefined
-              }
-              onChange={(newValue: any) => {
-                setValue('ledger', newValue);
-                setValue('ledger_id', newValue?.id ?? null, {
-                  shouldValidate: true,
-                  shouldDirty: true,
-                });
-                setValue('relatable_id', null);
-                setValue('relatable', null);
-                setSelectedRelated(null);
-                setRelatedTransactions([]);
-                getRelatedTransactions();
-              }}
-            />
-          </Div>
-        </Grid>
-        {selectedLedger && canSeeBudget &&
-          <Grid size={{ xs: 12, md: 0.5 }}>
-            <Div sx={{ mt: 0.3, display: 'flex', alignItems: 'flex-start' }}>
-              <Tooltip
-                title={
-                  hasCostCenter
-                    ? `${selectedLedger?.name} Budget check`
-                    : 'Select cost center first'
-                }
-              >
-                <span>
-                  <IconButton
-                    size='small'
-                    disabled={!hasCostCenter}
-                    onClick={() => {
-                      if (!selectedLedger?.id || !hasCostCenter) return;
-                      setLedgerDialogData({
-                        ledgerId: selectedLedger.id,
-                        ledgerName: selectedLedger.name,
-                        costCenterId,
-                        currency: currencyDetails,
-                      });
-                      setOpenLedgerBudgetDialog(true);
-                    }}
-                  >
-                    <AccountBalanceWalletOutlined fontSize='small' />
-                  </IconButton>
-                </span>
-              </Tooltip>
-            </Div>
+    <>
+      <form autoComplete='off' onSubmit={handleSubmit(updateItems)}>
+        <Grid container spacing={1}>
+          <Grid size={12}>
+            <Divider />
           </Grid>
-        }
-        <Grid size={{ xs: 12, md: 2 }}>
-          <Div sx={{ mt: 0.3 }}>
-            <MeasurementSelector
-              key={`measurement-selector-${formResetKey}`}
-              label='Unit'
-              frontError={
-                errors.measurement_unit_id
-                  ? { message: errors.measurement_unit_id.message || '' }
-                  : undefined
-              }
-              defaultValue={
-                ledger_item?.measurement_unit_id ??
-                ledger_item?.measurement_unit?.id
-              }
-              onChange={(newValue: any) => {
-                setValue('unit_symbol', newValue?.symbol);
-                setValue('measurement_unit_id', newValue?.id ?? null, {
-                  shouldDirty: true,
-                  shouldValidate: true,
-                });
-              }}
-            />
-          </Div>
-        </Grid>
-        <Grid size={{ xs: 12, md: 2 }}>
-          <Div sx={{ mt: 0.3 }}>
-            <TextField
-              key={`quantity-${formResetKey}`}
-              label='Quantity'
-              fullWidth
-              size='small'
-              defaultValue={ledger_item?.quantity}
-              InputProps={{
-                inputComponent: CommaSeparatedField,
-              }}
-              error={!!errors?.quantity}
-              helperText={errors?.quantity?.message}
-              onChange={(e) => {
-                setValue(
-                  'quantity',
-                  e.target.value ? sanitizedNumber(e.target.value) : 0,
-                  {
+          <Grid size={{ xs: 12, md: selectedLedger && canSeeBudget ? 3 : 3.5 }}>
+            <Div sx={{ mt: 0.3 }}>
+              <LedgerSelect
+                key={`ledger-select-${formResetKey}`}
+                multiple={false}
+                label='Ledger Name'
+                notAllowedLedgers={notAllowedLedgers}
+                allowedGroups={[
+                  'Accounts Receivable',
+                  'Accounts Payable',
+                  'Expenses',
+                  'Liabilities',
+                ]}
+                defaultValue={ledger_item?.ledger}
+                frontError={
+                  errors.ledger_id
+                    ? { message: errors.ledger_id.message || '' }
+                    : undefined
+                }
+                onChange={(newValue: any) => {
+                  setValue('ledger', newValue);
+                  setValue('ledger_id', newValue?.id ?? null, {
                     shouldValidate: true,
                     shouldDirty: true,
-                  }
-                );
-              }}
-            />
-          </Div>
-        </Grid>
-        <Grid size={{ xs: 12, md: 2 }}>
-          <Div sx={{ mt: 0.3 }}>
-            <TextField
-              key={`rate-${formResetKey}`}
-              label='Rate'
-              fullWidth
-              size='small'
-              defaultValue={ledger_item?.rate}
-              error={!!errors?.rate}
-              helperText={errors?.rate?.message}
-              InputProps={{
-                inputComponent: CommaSeparatedField,
-              }}
-              onChange={(e) => {
-                setValue(
-                  'rate',
-                  e.target.value ? sanitizedNumber(e.target.value) : 0,
-                  {
-                    shouldValidate: true,
-                    shouldDirty: true,
-                  }
-                );
-              }}
-            />
-          </Div>
-        </Grid>
-        <Grid size={{ xs: 12, md: 2.5 }}>
-          <Div sx={{ mt: 0.3 }}>
-            <TextField
-              label='Amount'
-              fullWidth
-              size='small'
-              value={calculatedAmount}
-              error={!!errors?.amount}
-              helperText={errors?.amount?.message}
-              InputProps={{
-                inputComponent: CommaSeparatedField,
-                readOnly: true,
-              }}
-              InputLabelProps={{
-                shrink: true,
-              }}
-            />
-          </Div>
-        </Grid>
-        <Grid size={{ xs: 12, md: 3.5 }}>
-          <Div sx={{ mt: 0.3 }}>
-            <Autocomplete
-              key={`relatable-type-${formResetKey}`}
-              id='checkboxes-linked_to_types'
-              options={processedRelatableTypes}
-              isOptionEqualToValue={(option, value) =>
-                option.value === value.value
-              }
-              getOptionLabel={(option) => option.label}
-              defaultValue={
-                ledger_item
-                  ? processedRelatableTypes.find(
-                      (link) => link.value === watch('relatable_type')
-                    )
-                  : null
-              }
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label='Linked To'
-                  size='small'
-                  fullWidth
-                />
-              )}
-              onChange={(e, newValue) => {
-                if (newValue) {
-                  setSelectedRelated(null);
-                  setValue('relatable_type', newValue.value);
+                  });
                   setValue('relatable_id', null);
-                  getRelatedTransactions();
-                } else {
-                  setValue('relatable_type', undefined);
                   setValue('relatable', null);
                   setSelectedRelated(null);
                   setRelatedTransactions([]);
-                }
-              }}
-            />
-          </Div>
-        </Grid>
-        {isRetrieving ? (
-          <Grid size={{ xs: 12, md: 4 }}>
-            <LinearProgress />
+                  getRelatedTransactions();
+                }}
+              />
+            </Div>
           </Grid>
-        ) : (
-          <Grid size={{ xs: 12, md: 4 }}>
+          {selectedLedger && canSeeBudget && (
+            <Grid size={{ xs: 12, md: 0.5 }}>
+              <Div sx={{ mt: 0.3, display: 'flex', alignItems: 'flex-start' }}>
+                <Tooltip
+                  title={
+                    hasCostCenter
+                      ? `${selectedLedger?.name} Budget check`
+                      : 'Select cost center first'
+                  }
+                >
+                  <span>
+                    <IconButton
+                      size='small'
+                      disabled={!hasCostCenter}
+                      onClick={() => {
+                        if (!selectedLedger?.id || !hasCostCenter) return;
+                        setLedgerDialogData({
+                          ledgerId: selectedLedger.id,
+                          ledgerName: selectedLedger.name,
+                          costCenterId,
+                          currency: currencyDetails,
+                        });
+                        setOpenLedgerBudgetDialog(true);
+                      }}
+                    >
+                      <AccountBalanceWalletOutlined fontSize='small' />
+                    </IconButton>
+                  </span>
+                </Tooltip>
+              </Div>
+            </Grid>
+          )}
+          <Grid size={{ xs: 12, md: 2 }}>
+            <Div sx={{ mt: 0.3 }}>
+              <MeasurementSelector
+                key={`measurement-selector-${formResetKey}`}
+                label='Unit'
+                value={selectedUnit ? selectedUnit : null}
+                frontError={
+                  errors.measurement_unit_id
+                    ? { message: errors.measurement_unit_id.message || '' }
+                    : undefined
+                }
+                defaultValue={
+                  ledger_item?.measurement_unit_id ??
+                  ledger_item?.measurement_unit?.id
+                }
+                onChange={(newValue: any) => {
+                  setValue('unit_symbol', newValue?.symbol);
+                  setValue('measurement_unit_id', newValue?.id ?? null, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  });
+                  setSelectedUnit(newValue);
+                }}
+                showQuickAdd
+                onQuickAddClick={() => setMeasurementUnitFormOpen(true)}
+              />
+            </Div>
+          </Grid>
+          <Grid size={{ xs: 12, md: 2 }}>
+            <Div sx={{ mt: 0.3 }}>
+              <TextField
+                key={`quantity-${formResetKey}`}
+                label='Quantity'
+                fullWidth
+                size='small'
+                defaultValue={ledger_item?.quantity}
+                InputProps={{
+                  inputComponent: CommaSeparatedField,
+                }}
+                error={!!errors?.quantity}
+                helperText={errors?.quantity?.message}
+                onChange={(e) => {
+                  setValue(
+                    'quantity',
+                    e.target.value ? sanitizedNumber(e.target.value) : 0,
+                    {
+                      shouldValidate: true,
+                      shouldDirty: true,
+                    }
+                  );
+                }}
+              />
+            </Div>
+          </Grid>
+          <Grid size={{ xs: 12, md: 2 }}>
+            <Div sx={{ mt: 0.3 }}>
+              <TextField
+                key={`rate-${formResetKey}`}
+                label='Rate'
+                fullWidth
+                size='small'
+                defaultValue={ledger_item?.rate}
+                error={!!errors?.rate}
+                helperText={errors?.rate?.message}
+                InputProps={{
+                  inputComponent: CommaSeparatedField,
+                }}
+                onChange={(e) => {
+                  setValue(
+                    'rate',
+                    e.target.value ? sanitizedNumber(e.target.value) : 0,
+                    {
+                      shouldValidate: true,
+                      shouldDirty: true,
+                    }
+                  );
+                }}
+              />
+            </Div>
+          </Grid>
+          <Grid size={{ xs: 12, md: 2.5 }}>
+            <Div sx={{ mt: 0.3 }}>
+              <TextField
+                label='Amount'
+                fullWidth
+                size='small'
+                value={calculatedAmount}
+                error={!!errors?.amount}
+                helperText={errors?.amount?.message}
+                InputProps={{
+                  inputComponent: CommaSeparatedField,
+                  readOnly: true,
+                }}
+                InputLabelProps={{
+                  shrink: true,
+                }}
+              />
+            </Div>
+          </Grid>
+          <Grid size={{ xs: 12, md: 3.5 }}>
             <Div sx={{ mt: 0.3 }}>
               <Autocomplete
-                id='checkboxes-related_transitions'
-                key={`${watch('relatable_type')}-${formResetKey}`}
-                options={relatedTransactions}
-                isOptionEqualToValue={(option, value) => option.id === value.id}
-                getOptionLabel={(option) =>
-                  `${option.relatableNo || option.certificateNo || ''} (${readableDate(option.order_date || option.certificate_date, false)} - ${option.unapproved_amount?.toLocaleString(
-                    'en-US',
-                    {
-                      style: 'currency',
-                      currency: option.currency?.code,
-                    }
-                  )})`
+                key={`relatable-type-${formResetKey}`}
+                id='checkboxes-linked_to_types'
+                options={processedRelatableTypes}
+                isOptionEqualToValue={(option, value) =>
+                  option.value === value.value
                 }
-                value={selectedRelated}
+                getOptionLabel={(option) => option.label}
+                defaultValue={
+                  ledger_item
+                    ? processedRelatableTypes.find(
+                        (link) => link.value === watch('relatable_type')
+                      )
+                    : null
+                }
                 renderInput={(params) => (
                   <TextField
                     {...params}
-                    label='Relatable To'
+                    label='Linked To'
                     size='small'
                     fullWidth
                   />
                 )}
                 onChange={(e, newValue) => {
-                  setSelectedRelated(newValue);
-                  setValue('relatable', newValue ?? null);
-                  setValue('relatable_id', newValue?.id ?? null);
-                  setValue('amount', watch('amount'), {
-                    shouldValidate: true,
-                    shouldDirty: true,
-                  });
+                  if (newValue) {
+                    setSelectedRelated(null);
+                    setValue('relatable_type', newValue.value);
+                    setValue('relatable_id', null);
+                    getRelatedTransactions();
+                  } else {
+                    setValue('relatable_type', undefined);
+                    setValue('relatable', null);
+                    setSelectedRelated(null);
+                    setRelatedTransactions([]);
+                  }
                 }}
               />
             </Div>
           </Grid>
-        )}
-        <Grid size={{ xs: 12, md: 4.5 }}>
-          <Div sx={{ mt: 0.3 }}>
-            <TextField
-              key={`remarks-${formResetKey}`}
-              label='Remarks'
-              fullWidth
-              size='small'
-              {...register('remarks')}
-            />
-          </Div>
-        </Grid>
-        <Grid size={12} textAlign={'end'} paddingBottom={0.5}>
-          <Button variant='contained' size='small' type='submit'>
-            {ledger_item ? (
-              <>
-                <CheckOutlined fontSize='small' /> Done
-              </>
-            ) : (
-              <>
-                <AddOutlined fontSize='small' /> Add
-              </>
-            )}
-          </Button>
-          {ledger_item && (
-            <Tooltip
-              title={
-                hasValidationErrors
-                  ? 'Resolve validation errors before closing edit'
-                  : 'Close Edit'
-              }
-            >
-              <span>
-              <IconButton
-                size='small'
-                disabled={hasValidationErrors}
-                onClick={() => {
-                  if (!hasValidationErrors) {
-                    setShowForm?.(false);
+          {isRetrieving ? (
+            <Grid size={{ xs: 12, md: 4 }}>
+              <LinearProgress />
+            </Grid>
+          ) : (
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Div sx={{ mt: 0.3 }}>
+                <Autocomplete
+                  id='checkboxes-related_transitions'
+                  key={`${watch('relatable_type')}-${formResetKey}`}
+                  options={relatedTransactions}
+                  isOptionEqualToValue={(option, value) =>
+                    option.id === value.id
                   }
-                }}
-              >
-                <DisabledByDefault fontSize='small' color='success' />
-              </IconButton>
-              </span>
-            </Tooltip>
+                  getOptionLabel={(option) =>
+                    `${option.relatableNo || option.certificateNo || ''} (${readableDate(option.order_date || option.certificate_date, false)} - ${option.unapproved_amount?.toLocaleString(
+                      'en-US',
+                      {
+                        style: 'currency',
+                        currency: option.currency?.code,
+                      }
+                    )})`
+                  }
+                  value={selectedRelated}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label='Relatable To'
+                      size='small'
+                      fullWidth
+                    />
+                  )}
+                  onChange={(e, newValue) => {
+                    setSelectedRelated(newValue);
+                    setValue('relatable', newValue ?? null);
+                    setValue('relatable_id', newValue?.id ?? null);
+                    setValue('amount', watch('amount'), {
+                      shouldValidate: true,
+                      shouldDirty: true,
+                    });
+                  }}
+                />
+              </Div>
+            </Grid>
           )}
+          <Grid size={{ xs: 12, md: 4.5 }}>
+            <Div sx={{ mt: 0.3 }}>
+              <TextField
+                key={`remarks-${formResetKey}`}
+                label='Remarks'
+                fullWidth
+                size='small'
+                {...register('remarks')}
+              />
+            </Div>
+          </Grid>
+          <Grid size={12} textAlign={'end'} paddingBottom={0.5}>
+            <Button variant='contained' size='small' type='submit'>
+              {ledger_item ? (
+                <>
+                  <CheckOutlined fontSize='small' /> Done
+                </>
+              ) : (
+                <>
+                  <AddOutlined fontSize='small' /> Add
+                </>
+              )}
+            </Button>
+            {ledger_item && (
+              <Tooltip
+                title={
+                  hasValidationErrors
+                    ? 'Resolve validation errors before closing edit'
+                    : 'Close Edit'
+                }
+              >
+                <span>
+                  <IconButton
+                    size='small'
+                    disabled={hasValidationErrors}
+                    onClick={() => {
+                      if (!hasValidationErrors) {
+                        setShowForm?.(false);
+                      }
+                    }}
+                  >
+                    <DisabledByDefault fontSize='small' color='success' />
+                  </IconButton>
+                </span>
+              </Tooltip>
+            )}
+          </Grid>
         </Grid>
-      </Grid>
 
-      <LedgerBudgetCheckDetails
-        open={openLedgerBudgetDialog}
-        onClose={() => setOpenLedgerBudgetDialog(false)}
-        ledgerId={ledgerDialogData?.ledgerId || 0}
-        costCenterId={ledgerDialogData?.costCenterId || 0}
-        currency={ledgerDialogData?.currency}
-        ledgerName={ledgerDialogData?.ledgerName || ''}
-      />
-    </form>
+        <LedgerBudgetCheckDetails
+          open={openLedgerBudgetDialog}
+          onClose={() => setOpenLedgerBudgetDialog(false)}
+          ledgerId={ledgerDialogData?.ledgerId || 0}
+          costCenterId={ledgerDialogData?.costCenterId || 0}
+          currency={ledgerDialogData?.currency}
+          ledgerName={ledgerDialogData?.ledgerName || ''}
+        />
+      </form>
+      {measurementUnitFormOpen && (
+        <Dialog
+          maxWidth='md'
+          fullScreen={belowLargeScreen}
+          open={measurementUnitFormOpen}
+        >
+          <MeasurementUnitForm
+            setOpenDialog={() => setMeasurementUnitFormOpen((prev) => !prev)}
+            addNewUnit={(unit) => {
+              setNewUnit(unit?.measurementUnit);
+              setSelectedUnit(unit?.measurementUnit);
+            }}
+          />
+        </Dialog>
+      )}
+    </>
   );
 }
 
