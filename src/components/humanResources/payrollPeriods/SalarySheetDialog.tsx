@@ -139,7 +139,7 @@ function sumAllowanceByType(run: PayrollRunType, type: SalaryTypeItem) {
       targetName &&
       slug(item.allowance_type?.name || item.label || '') === targetName;
     if (!byId && !byName) return sum;
-    return sum + toNumber(item.amount ?? item.value);
+    return sum + toNumber(item?.amount ?? item.value);
   }, 0);
 }
 
@@ -153,7 +153,7 @@ function sumDeductionByType(run: PayrollRunType, type: SalaryTypeItem) {
       targetName &&
       slug(item.deduction_type?.name || item.label || '') === targetName;
     if (!byId && !byName) return sum;
-    return sum + toNumber(item.amount ?? item.value);
+    return sum + toNumber(item?.amount ?? item.value);
   }, 0);
 }
 
@@ -168,7 +168,7 @@ function sumContributionByType(run: PayrollRunType, type: SalaryTypeItem) {
       targetName &&
       slug(item.contribution_type?.name || item.label || '') === targetName;
     if (!byId && !byName) return sum;
-    return sum + toNumber(item.amount ?? item.value);
+    return sum + toNumber(item?.amount ?? item.value);
   }, 0);
 }
 
@@ -245,7 +245,7 @@ const SalarySheetDialog = ({
       return employeecontributions.reduce(
         (sum, item) =>
           item.allowance_type_id === type_id || item.label === typeObj.label
-            ? sum + item.amount
+            ? sum + item?.amount
             : sum,
         0
       );
@@ -254,14 +254,14 @@ const SalarySheetDialog = ({
       return employeeDeductions.reduce((sum, item) => {
         return item.deduction_type_id === type_id ||
           item.label === typeObj.label
-          ? sum + item.amount
+          ? sum + item?.amount
           : sum;
       }, 0);
     }
     if (type === 'contribution') {
       return employeecontributions.reduce((sum, item) => {
         return item.employer_contribution_type_id === type_id
-          ? sum + item.amount
+          ? sum + item?.amount
           : sum;
       }, 0);
     }

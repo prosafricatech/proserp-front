@@ -53,7 +53,7 @@ export const TabPanel = ({ children, value, index }: TabPanelProps) => (
 // Helper to calculate total employer contributions
 const calculateTotalEmployerContributions = (contributions: any[]) => {
   if (!contributions || !Array.isArray(contributions)) return 0;
-  return contributions.reduce((sum, item) => sum + (item.amount || 0), 0);
+  return contributions.reduce((sum, item) => sum + (item?.amount || 0), 0);
 };
 
 interface EmployeesTabProps {
@@ -160,7 +160,7 @@ export const EmployeesTab = ({
       return employeecontributions.reduce(
         (sum, item) =>
           item.allowance_type_id === type_id || item.label === typeObj.label
-            ? sum + item.amount
+            ? sum + item?.amount
             : sum,
         0
       );
@@ -169,14 +169,14 @@ export const EmployeesTab = ({
       return employeeDeductions.reduce((sum, item) => {
         return item.deduction_type_id === type_id ||
           item.label === typeObj.label
-          ? sum + item.amount
+          ? sum + item?.amount
           : sum;
       }, 0);
     }
     if (type === 'contribution') {
       return employeecontributions.reduce((sum, item) => {
         return item.employer_contribution_type_id === type_id
-          ? sum + item.amount
+          ? sum + item?.amount
           : sum;
       }, 0);
     }
@@ -448,7 +448,7 @@ export const EmployeesTab = ({
                               (itm.label === type.label ||
                                 itm.allowance_type_id ===
                                   type.allowance_type_id)
-                          ).amount ?? 0
+                          )?.amount ?? 0
                         )}
                       </TableCell>
                     ))}
@@ -476,7 +476,7 @@ export const EmployeesTab = ({
                                   (itm.label === type.label ||
                                     itm.deduction_type_id ===
                                       type.deduction_type_id)
-                              ).amount ?? 0
+                              )?.amount ?? 0
                             )}
                           </TableCell>
                         );
@@ -512,7 +512,7 @@ export const EmployeesTab = ({
                                   (itm.label === type.label ||
                                     itm.employer_contribution_type_id ===
                                       type.employer_contribution_type_id)
-                              ).amount ?? 0
+                              )?.amount ?? 0
                             )}
                           </TableCell>
                         );
