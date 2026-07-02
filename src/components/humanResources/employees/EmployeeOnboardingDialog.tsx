@@ -453,7 +453,7 @@ const EmployeeOnboardingDialog = ({
             >
               <Tab label='Deductions' />
               <Tab label='Contributions' />
-              <Tab label='Leave Allocations' />
+              <Tab label='Allowance' />
             </Tabs>
 
             {settingTab === 0 && (
