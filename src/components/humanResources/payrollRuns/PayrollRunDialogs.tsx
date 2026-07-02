@@ -44,27 +44,31 @@ export const SimulationDialog = ({ open, onClose, data }: SimulationDialogProps)
           <Grid container spacing={2}>
             <Grid size={12}>
                 <Grid container spacing={2}>
-                    <Grid size={6}>
+                    <Grid size={{ xs: 6, md: 4 }}>
                         <Typography variant="caption" color="text.secondary">Basic Salary</Typography>
                         <Typography variant="h6">{formatMoney(simulationRow.basic_salary)}</Typography>
                     </Grid>
-                    <Grid size={6}>
+                    <Grid size={{ xs: 6, md: 4 }}>
                         <Typography variant="caption" color="text.secondary">Gross Salary</Typography>
                         <Typography variant="h6">{formatMoney(simulationRow.gross_salary)}</Typography>
                     </Grid>
-                    <Grid size={6}>
-                        <Typography variant="caption" color="text.secondary">Total Allowances</Typography>
-                        <Typography variant="h6">{formatMoney(simulationRow.total_allowances || 0)}</Typography>
-                    </Grid>
-                    <Grid size={6}>
-                        <Typography variant="caption" color="text.secondary">Total Deductions</Typography>
-                        <Typography variant="h6">{formatMoney(simulationRow.total_deductions || 0)}</Typography>
-                    </Grid>
-                    <Grid size={6}>
+                      <Grid size={{ xs: 6, md: 4 }}>
                         <Typography variant="caption" color="text.secondary">PAYE</Typography>
                         <Typography variant="h6" color="error.main">{formatMoney(simulationRow.paye || 0)}</Typography>
                     </Grid>
-                    <Grid size={6}>
+                    <Grid size={{ xs: 6, md: 4 }}>
+                        <Typography variant="caption" color="text.secondary">Total Allowances</Typography>
+                        <Typography variant="h6">{formatMoney(simulationRow.total_allowances || 0)}</Typography>
+                    </Grid>
+                    <Grid size={{ xs: 6, md: 4 }}>
+                        <Typography variant="caption" color="text.secondary">Total Deductions</Typography>
+                        <Typography variant="h6">{formatMoney(simulationRow.total_deductions || 0)}</Typography>
+                    </Grid>
+                      <Grid size={{ xs: 6, md: 4 }}>
+                        <Typography variant="caption" color="text.secondary">Total Employer Contributions</Typography>
+                        <Typography variant="h6">{formatMoney(simulationRow.employer_contributions.reduce((acc: number, curr: any) => acc + curr.amount, 0) || 0)}</Typography>
+                    </Grid>
+                    <Grid size={{ xs: 6, md: 4 }}>
                         <Typography variant="caption" color="text.secondary">Net Pay</Typography>
                         <Typography variant="h6" color="success.main">{formatMoney(simulationRow.net_salary)}</Typography>
                     </Grid>
