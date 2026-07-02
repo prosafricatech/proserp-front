@@ -1,24 +1,33 @@
+import { readableDate } from '@/app/helpers/input-sanitization-helpers';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import purchaseServices from '@/components/procurement/purchases/purchase-services';
+import CertificateOnScreen from '@/components/projectManagement/projects/profile/subcontracts/tabs/certificatesTab/preview/CertificateOnScreen';
+import projectsServices from '@/components/projectManagement/projects/project-services.js';
+import { Organization } from '@/types/auth-types';
+import { Currency } from '@/utilities/constants/countries';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
 import {
+  AccountBalanceWalletOutlined,
   DisabledByDefault,
   EditOutlined,
   VisibilityOutlined,
-  AccountBalanceWalletOutlined,
 } from '@mui/icons-material';
-import { Dialog, Divider, Grid, IconButton, LinearProgress, ListItemText, Tooltip, Typography } from '@mui/material';
-import React, { useState, Dispatch, SetStateAction, useEffect } from 'react';
+import {
+  Dialog,
+  Divider,
+  Grid,
+  IconButton,
+  LinearProgress,
+  ListItemText,
+  Tooltip,
+  Typography,
+} from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
-import { readableDate } from '@/app/helpers/input-sanitization-helpers';
+import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { RequisitionLedgerItem } from '../../RequisitionType';
-import { Currency } from '@/utilities/constants/countries';
-import purchaseServices from '@/components/procurement/purchases/purchase-services';
+import LedgerBudgetCheckDetails from '../listItem/tabs/form/LedgerBudgetCheckDetails';
 import RelatableOrderDetails from '../listItem/tabs/form/RelatableOrderDetails';
 import RequisitionLedgerItemForm from './RequisitionLedgerItemForm';
-import projectsServices from '@/components/projectManagement/projects/project-services.js';
-import CertificateOnScreen from '@/components/projectManagement/projects/profile/subcontracts/tabs/certificatesTab/preview/CertificateOnScreen';
-import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
-import { Organization } from '@/types/auth-types';
-import LedgerBudgetCheckDetails from '../listItem/tabs/form/LedgerBudgetCheckDetails';
-import { PERMISSIONS } from '@/utilities/constants/permissions';
 
 interface FetchRelatableDetailsProps {
   relatable: any;
@@ -31,17 +40,26 @@ interface RequisitionLedgerItemRowProps {
   ledger_item: RequisitionLedgerItem;
   index: number;
   requisition_ledger_items?: RequisitionLedgerItem[];
-  setRequisition_ledger_items: Dispatch<SetStateAction<RequisitionLedgerItem[]>>;
+  setRequisition_ledger_items: Dispatch<
+    SetStateAction<RequisitionLedgerItem[]>
+  >;
   isDuplicate?: boolean;
   costCenterId?: number;
   notAllowedLedgers?: Array<number | { id: number }>;
 }
 
-const FetchRelatableDetails = ({ relatable, toggleOpen, ledger_item }: FetchRelatableDetailsProps & { ledger_item: RequisitionLedgerItem }) => {
+const FetchRelatableDetails = ({
+  relatable,
+  toggleOpen,
+  ledger_item,
+}: FetchRelatableDetailsProps & { ledger_item: RequisitionLedgerItem }) => {
   const { authOrganization } = useJumboAuth();
   if (!relatable) return null;
 
-  if (relatable.relatable_type === 'purchase' || ledger_item.relatable_type === 'purchase') {
+  if (
+    relatable.relatable_type === 'purchase' ||
+    ledger_item.relatable_type === 'purchase'
+  ) {
     const { data: orderDetails, isFetching } = useQuery({
       queryKey: ['purchaseOrder', relatable?.id],
       queryFn: () => purchaseServices.orderDetails(relatable?.id),
@@ -49,10 +67,15 @@ const FetchRelatableDetails = ({ relatable, toggleOpen, ledger_item }: FetchRela
     if (isFetching) {
       return <LinearProgress />;
     }
-    return <RelatableOrderDetails order={orderDetails} toggleOpen={toggleOpen} />;
+    return (
+      <RelatableOrderDetails order={orderDetails} toggleOpen={toggleOpen} />
+    );
   }
 
-  if (relatable.relatable_type === 'subcontract_certificate' || ledger_item.relatable_type === 'subcontract_certificate') {
+  if (
+    relatable.relatable_type === 'subcontract_certificate' ||
+    ledger_item.relatable_type === 'subcontract_certificate'
+  ) {
     const { data: certificateDetails, isFetching } = useQuery({
       queryKey: ['subcontractCertificate', relatable?.id],
       queryFn: () => projectsServices.getCertificateDetails(relatable?.id),
@@ -60,7 +83,13 @@ const FetchRelatableDetails = ({ relatable, toggleOpen, ledger_item }: FetchRela
     if (isFetching) {
       return <LinearProgress />;
     }
-    return <CertificateOnScreen isFromProcessApproval={true} certificate={certificateDetails} organization={authOrganization?.organization as Organization} />;
+    return (
+      <CertificateOnScreen
+        isFromProcessApproval={true}
+        certificate={certificateDetails}
+        organization={authOrganization?.organization as Organization}
+      />
+    );
   }
 
   return null;
@@ -98,7 +127,7 @@ function RequisitionLedgerItemRow({
   } | null>(null);
 
   const handleRemoveItem = () => {
-    setRequisition_ledger_items(currentItems => {
+    setRequisition_ledger_items((currentItems) => {
       const newItems = [...currentItems];
       newItems.splice(index, 1);
       return newItems;
@@ -109,8 +138,8 @@ function RequisitionLedgerItemRow({
     if (currencyChanged && ledger_item?.relatable_id) {
       setShowForm(true);
     }
-  }, [currencyChanged])
-  
+  }, [currencyChanged]);
+
   return (
     <React.Fragment>
       <Divider />
@@ -121,17 +150,21 @@ function RequisitionLedgerItemRow({
             cursor: 'pointer',
             '&:hover': {
               bgcolor: 'action.hover',
-            }
+            },
           }}
         >
-          <Grid size={{xs: 1, md: 0.5}}>
-            {index + 1}.
-          </Grid>
-          <Grid size={{xs: 11, md: !ledger_item.relatable_id ? 5.5 : 4.5, lg: !ledger_item.relatable_id ? 4.5 : 3.5}}>
+          <Grid size={{ xs: 1, md: 0.5 }}>{index + 1}.</Grid>
+          <Grid
+            size={{
+              xs: 11,
+              md: !ledger_item.relatable_id ? 5.5 : 4.5,
+              lg: !ledger_item.relatable_id ? 4.5 : 3.5,
+            }}
+          >
             <ListItemText
               primary={
                 <Typography
-                  variant={"h5"}
+                  variant={'h5'}
                   fontSize={14}
                   lineHeight={1.25}
                   mb={0}
@@ -171,19 +204,31 @@ function RequisitionLedgerItemRow({
               }
               secondary={
                 <Tooltip title={'Remarks'}>
-                    <Typography component="span" variant="body2" fontSize={14} lineHeight={1.25} mb={0}>
-                        {ledger_item.remarks}
-                    </Typography>
+                  <Typography
+                    component='span'
+                    variant='body2'
+                    fontSize={14}
+                    lineHeight={1.25}
+                    mb={0}
+                  >
+                    {ledger_item.remarks}
+                  </Typography>
                 </Tooltip>
               }
             />
           </Grid>
           {ledger_item.relatable_id && (
-            <Grid size={{xs: 7, md: 1}}>
+            <Grid size={{ xs: 7, md: 1 }}>
               <ListItemText
                 primary={
                   <Tooltip title={'Relatable To'}>
-                    <Typography variant={"caption"} fontSize={14} lineHeight={1.25} mb={0} noWrap>
+                    <Typography
+                      variant={'caption'}
+                      fontSize={14}
+                      lineHeight={1.25}
+                      mb={0}
+                      noWrap
+                    >
                       {ledger_item?.relatableNo}
                     </Typography>
                   </Tooltip>
@@ -191,20 +236,32 @@ function RequisitionLedgerItemRow({
                 secondary={
                   <>
                     <Tooltip title={'Order Date - (Amount)'}>
-                      <Typography variant={"caption"} fontSize={14} lineHeight={1.25} mb={0}>
-                        {`${readableDate(ledger_item.relatable?.order_date || ledger_item.relatable?.certificate_date, false)} - ${ledger_item.relatable?.unapproved_amount?.toLocaleString('en-US', 
-                          {
-                            style: 'currency',
-                            currency: ledger_item.relatable?.currency?.code,
-                          })|| ''}`
-                        }
+                      <Typography
+                        variant={'caption'}
+                        fontSize={14}
+                        lineHeight={1.25}
+                        mb={0}
+                      >
+                        {`${readableDate(ledger_item.relatable?.order_date || ledger_item.relatable?.certificate_date, false)} - ${
+                          ledger_item.relatable?.unapproved_amount?.toLocaleString(
+                            'en-US',
+                            {
+                              style: 'currency',
+                              currency: ledger_item.relatable?.currency?.code,
+                            }
+                          ) || ''
+                        }`}
                       </Typography>
                     </Tooltip>
-                    <Tooltip title={`View ${ledger_item.relatable_type === 'purchase' ? 'Order' : 'Certificate'} Details`}>
-                      <IconButton onClick={() => {
-                        setSelectedRelated(ledger_item.relatable); 
-                        setOpenViewDialog(true);
-                      }}>
+                    <Tooltip
+                      title={`View ${ledger_item.relatable_type === 'purchase' ? 'Order' : 'Certificate'} Details`}
+                    >
+                      <IconButton
+                        onClick={() => {
+                          setSelectedRelated(ledger_item.relatable);
+                          setOpenViewDialog(true);
+                        }}
+                      >
                         <VisibilityOutlined />
                       </IconButton>
                     </Tooltip>
@@ -213,43 +270,50 @@ function RequisitionLedgerItemRow({
               />
             </Grid>
           )}
-          <Grid 
+          <Grid
             textAlign={!ledger_item.relatable_id ? { md: 'end' } : 'end'}
-            size={{xs: !ledger_item.relatable_id ? 8 : 5, md: 2}}
+            size={{ xs: !ledger_item.relatable_id ? 8 : 5, md: 2 }}
           >
-            <Tooltip title="Quantity">
+            <Tooltip title='Quantity'>
               <Typography>
                 {ledger_item.quantity?.toLocaleString()} {''}
-                {ledger_item?.unit_symbol || 
-                 ledger_item.measurement_unit?.symbol || 
-                 ledger_item.product?.unit_symbol}
+                {ledger_item?.unit_symbol ||
+                  ledger_item.measurement_unit?.symbol ||
+                  ledger_item.product?.unit_symbol}
               </Typography>
             </Tooltip>
           </Grid>
-          <Grid 
+          <Grid
             textAlign={!ledger_item.relatable_id ? 'end' : { md: 'end' }}
-            size={{xs: !ledger_item.relatable_id ? 4 : 6, md: 2}}
+            size={{ xs: !ledger_item.relatable_id ? 4 : 6, md: 2 }}
           >
-            <Tooltip title="Rate">
+            <Tooltip title='Rate'>
               <Typography>{ledger_item.rate?.toLocaleString()}</Typography>
             </Tooltip>
           </Grid>
-          <Grid 
-            textAlign={!ledger_item.relatable_id ? { md: 'end' } : 'end'} 
-            size={{xs: 6, md: 2}}
+          <Grid
+            textAlign={!ledger_item.relatable_id ? { md: 'end' } : 'end'}
+            size={{ xs: 6, md: 2 }}
           >
-            <Tooltip title="Amount">
-                <Typography>
-                    {((ledger_item?.rate ?? 0) * (ledger_item?.quantity ?? 0)).toLocaleString('en-US', {
-                        style: 'currency',
-                        currency: currencyDetails?.code,
-                    })}
-                </Typography>
+            <Tooltip title='Amount'>
+              <Typography>
+                {(
+                  (ledger_item?.rate ?? 0) * (ledger_item?.quantity ?? 0)
+                ).toLocaleString('en-US', {
+                  style: 'currency',
+                  currency: currencyDetails?.code,
+                })}
+              </Typography>
             </Tooltip>
           </Grid>
-          <Grid textAlign={'end'} size={{xs: 12, lg: 1}}>
+          <Grid textAlign={'end'} size={{ xs: 12, lg: 1 }}>
             <Tooltip title='Edit Item'>
-              <IconButton size='small' onClick={() => setShowForm(true)}>
+              <IconButton
+                size='small'
+                onClick={() => {
+                  setShowForm(true);
+                }}
+              >
                 <EditOutlined fontSize='small' />
               </IconButton>
             </Tooltip>
@@ -262,21 +326,30 @@ function RequisitionLedgerItemRow({
         </Grid>
       ) : (
         <RequisitionLedgerItemForm
-          ledger_item={ledger_item} 
-          setShowForm={setShowForm} 
+          ledger_item={ledger_item}
+          setShowForm={setShowForm}
           index={index}
           isDuplicate={isDuplicate}
           currencyChanged={currencyChanged}
           currencyDetails={currencyDetails}
           costCenterId={costCenterId}
           notAllowedLedgers={notAllowedLedgers}
-          requisition_ledger_items={requisition_ledger_items} 
+          requisition_ledger_items={requisition_ledger_items}
           setRequisition_ledger_items={setRequisition_ledger_items}
         />
       )}
 
-      <Dialog open={openViewDialog} maxWidth='md' fullWidth onClose={() => setOpenViewDialog(false)}>
-        <FetchRelatableDetails relatable={selectedRelated} toggleOpen={setOpenViewDialog} ledger_item={ledger_item} />
+      <Dialog
+        open={openViewDialog}
+        maxWidth='md'
+        fullWidth
+        onClose={() => setOpenViewDialog(false)}
+      >
+        <FetchRelatableDetails
+          relatable={selectedRelated}
+          toggleOpen={setOpenViewDialog}
+          ledger_item={ledger_item}
+        />
       </Dialog>
 
       <LedgerBudgetCheckDetails

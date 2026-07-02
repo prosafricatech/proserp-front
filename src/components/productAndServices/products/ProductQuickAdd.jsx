@@ -1,10 +1,20 @@
+import MeasurementSelector from '@/components/masters/measurementUnits/MeasurementSelector';
+import MeasurementUnitForm from '@/components/masters/measurementUnits/MeasurementUnitForm';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { Div } from '@jumbo/shared';
 import { LoadingButton } from '@mui/lab';
-import { Autocomplete, Button, Grid, TextField } from '@mui/material';
+import {
+  Autocomplete,
+  Button,
+  Dialog,
+  Grid,
+  TextField,
+  useMediaQuery,
+} from '@mui/material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import productCategoryServices from '../productCategories/productCategoryServices';
@@ -12,6 +22,9 @@ import productServices from './productServices';
 import { useProductApp } from './ProductsProvider';
 
 function ProductQuickAdd({ setOpen, setAddedProduct }) {
+  //Screen handling constants
+  const { theme } = useJumboTheme();
+  const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
   const {
     // productCategories,
     item_names,
@@ -28,6 +41,13 @@ function ProductQuickAdd({ setOpen, setAddedProduct }) {
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
 
+  const [formResetKey, setFormResetKey] = useState(0);
+
+  const [measurementUnitFormOpen, setMeasurementUnitFormOpen] = useState(false);
+
+  const [newUnit, setNewUnit] = useState(undefined);
+  const [selectedUnit, setSelectedUnit] = useState(null);
+
   const addProduct = useMutation({
     mutationFn: productServices.add,
     onSuccess: (data) => {
@@ -37,6 +57,7 @@ function ProductQuickAdd({ setOpen, setAddedProduct }) {
       setAddedProduct(data.product);
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['productParams'] });
+      setFormResetKey((prev) => prev + 1);
     },
     onError: (error) => {
       enqueueSnackbar(
@@ -76,6 +97,15 @@ function ProductQuickAdd({ setOpen, setAddedProduct }) {
       vat_exempted: false,
     },
   });
+
+  useEffect(() => {
+    if (newUnit !== undefined) {
+      setValue('measurement_unit_id', newUnit ? newUnit.id : 0, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    }
+  }, [newUnit]);
 
   const saveMutation = React.useMemo(() => {
     return addProduct.mutate;
@@ -259,29 +289,24 @@ function ProductQuickAdd({ setOpen, setAddedProduct }) {
       </Grid>
       <Grid size={{ xs: 12, md: 4 }}>
         <Div sx={{ mt: 1, mb: 1 }}>
-          <Autocomplete
-            size='small'
-            getOptionLabel={(option) =>
-              option.name !== option.symbol
-                ? `${option.name} (${option.symbol})`
-                : option.name
+          <MeasurementSelector
+            key={`measurement-selector-${formResetKey}`}
+            label='Measurement Unit'
+            value={selectedUnit ? selectedUnit : null}
+            frontError={
+              errors.measurement_unit_id
+                ? { message: errors.measurement_unit_id.message || '' }
+                : undefined
             }
-            isOptionEqualToValue={(option, value) => option.id === value.id}
-            options={measurementUnits}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label='Measurement Unit'
-                error={!!errors.measurement_unit_id}
-                helperText={errors.measurement_unit_id?.message}
-              />
-            )}
-            onChange={(event, newValue) => {
-              setValue('measurement_unit_id', newValue ? newValue.id : 0, {
-                shouldValidate: true,
+            onChange={(newValue) => {
+              setValue('measurement_unit_id', newValue?.id ?? null, {
                 shouldDirty: true,
+                shouldValidate: true,
               });
+              setSelectedUnit(newValue);
             }}
+            showQuickAdd
+            onQuickAddClick={() => setMeasurementUnitFormOpen(true)}
           />
         </Div>
       </Grid>
@@ -323,6 +348,21 @@ function ProductQuickAdd({ setOpen, setAddedProduct }) {
           </LoadingButton>
         </Div>
       </Grid>
+      {measurementUnitFormOpen && (
+        <Dialog
+          maxWidth='md'
+          fullScreen={belowLargeScreen}
+          open={measurementUnitFormOpen}
+        >
+          <MeasurementUnitForm
+            setOpenDialog={() => setMeasurementUnitFormOpen((prev) => !prev)}
+            addNewUnit={(unit) => {
+              setNewUnit(unit?.measurementUnit);
+              setSelectedUnit(unit?.measurementUnit);
+            }}
+          />
+        </Dialog>
+      )}
     </>
   );
 }
