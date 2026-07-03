@@ -41,12 +41,13 @@ function MaterialIssuedForm({projectTaskIndex, taskProgressItem, material = null
         )
         .test(
           'negative-balance-check',
-          'This quantity will lead to negative balance',
           function (value) {
-            const currentBalance = this.parent.current_balance;
-            const availableBalance = this.parent.available_balance;
+            const currentBalance = parseFloat(this.parent.current_balance) || 0;
+            const availableBalance = parseFloat(this.parent.available_balance || 0);
             if (currentBalance >= availableBalance) return true;
-            return !value || value <= currentBalance;
+            return !value || value <= currentBalance || this.createError({
+              message: `This quantity will lead to negative balance. Current balance today is ${currentBalance.toLocaleString()}`
+            });
           }
         )
   });
