@@ -18,6 +18,7 @@ import {
   DialogContent,
   DialogTitle,
   Divider,
+  FormControlLabel,
   Grid,
   IconButton,
   LinearProgress,
@@ -27,6 +28,7 @@ import {
   ListItemText,
   Paper,
   Stack,
+  Switch,
   Tab,
   Tabs,
   Tooltip,
@@ -80,6 +82,7 @@ const EmployeeOnboardingDialog = ({
   const [allocationsSettings, setAllocationsSettings] = useState<Array<any>>(
     []
   );
+  const [autoCreateLedger, setAutoCreateLedger] = useState(false);
 
   const [file, setFile] = useState<File | null>(null);
   const [importResult, setImportResult] = useState<any | null>(null);
@@ -120,18 +123,11 @@ const EmployeeOnboardingDialog = ({
   const importExcel = (data: any) => {
     const payload = {
       employees_excel: data,
+      create_payable_ledgers: autoCreateLedger,
       deductions: deductionSettings,
       contributions: contributionSettings,
       leave_allocations: allocationsSettings,
     };
-
-    const formData = new FormData();
-
-    formData.append('employees_excel', data);
-    // For other fields as JSON
-    formData.append('deductions', JSON.stringify(deductionSettings));
-    formData.append('contributions', JSON.stringify(contributionSettings));
-    formData.append('leave_allocations', JSON.stringify(allocationsSettings));
 
     importExcelMutation(payload);
   };
@@ -429,6 +425,19 @@ const EmployeeOnboardingDialog = ({
                 </>
               )}
             </Paper>
+
+            {/* ledger auto-create switch */}
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={autoCreateLedger}
+                  onChange={() => {
+                    setAutoCreateLedger((prev) => !prev);
+                  }}
+                />
+              }
+              label='Auto create payable ledger'
+            />
 
             {/* optional data */}
             <Tabs
