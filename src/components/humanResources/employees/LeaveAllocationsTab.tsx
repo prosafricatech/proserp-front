@@ -14,12 +14,12 @@ import { useQuery } from '@tanstack/react-query';
 import { Dispatch, SetStateAction } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import * as yup from 'yup';
-import { AllowanceType } from '../allowanceTypes/AllowanceType';
 import humanResourcesServices from '../humanResourcesServices';
+import { LeaveType } from '../leaveTypes/LeaveTypesType';
 
 interface FormData {
   id: number | null;
-  allowance_name: string;
+  leave_name: string;
   allocation_amount: number;
 }
 
@@ -40,27 +40,30 @@ const LeaveAllocationsTab = ({
 }: LeaveAllocationsTabProps) => {
   const { theme } = useJumboTheme();
 
-  const { data: allowanceTypesResponse, isFetching: fetchingAllowanceTypes } =
-    useQuery({
-      queryKey: ['fetchAllowanceTypesForEmployeeAllowanceForm'],
+  const { data: leaveTypesResponse, isFetching: fetchingLeaveTypes } = useQuery(
+    {
+      queryKey: ['leaveTypes'],
       queryFn: async () => {
-        return humanResourcesServices.getAllowanceTypesList({
+        return humanResourcesServices.getLeaveTypesList({
           page: 1,
           limit: 200,
         });
       },
-    });
+    }
+  );
 
-  const allowanceTypes = (allowanceTypesResponse?.data ||
-    []) as AllowanceType[];
+  const leaveTypes = (leaveTypesResponse?.data || []) as LeaveType[];
 
   const validationSchema = yup.object({
     id: yup
       .number()
       .required('Allowance Type is required')
-      .typeError('Allowance type ID shoud be a number'),
-    allowance_name: yup.string(),
-    allocation_amount: yup.number().required('Allocation Amount is required'),
+      .typeError('Allowance Type is required'),
+    leave_name: yup.string(),
+    allocation_amount: yup
+      .number()
+      .required('Allocation Amount is required')
+      .typeError('Allocation Amount is required'),
   });
 
   const {
@@ -73,7 +76,7 @@ const LeaveAllocationsTab = ({
     resolver: yupResolver(validationSchema) as any,
     defaultValues: {
       id: null,
-      allowance_name: '',
+      leave_name: '',
       allocation_amount: 0,
     },
   });
@@ -94,24 +97,23 @@ const LeaveAllocationsTab = ({
       >
         <Grid size={{ xs: 12, md: 6 }}>
           <Div sx={{ mt: 1, mb: 1 }}>
-            {fetchingAllowanceTypes ? (
+            {fetchingLeaveTypes ? (
               <LinearProgress />
             ) : (
               <Controller
                 name='id'
                 control={control}
-                rules={{ required: 'Allowance type is required' }}
+                rules={{ required: 'leave type is required' }}
                 render={({ field, fieldState }) => (
                   <Autocomplete
                     size='small'
-                    options={allowanceTypes}
+                    options={leaveTypes}
                     isOptionEqualToValue={(option, value) =>
                       option.id === value.id
                     }
                     getOptionLabel={(option) => option.name || ''}
                     value={
-                      allowanceTypes.find((type) => type.id === field.value) ||
-                      null
+                      leaveTypes.find((type) => type.id === field.value) || null
                     }
                     onChange={(event, newValue) => {
                       field.onChange(newValue?.id || null);
@@ -121,17 +123,16 @@ const LeaveAllocationsTab = ({
                           shouldDirty: true,
                           shouldValidate: true,
                         });
-                        const deduction = allowanceTypes.find(
+                        const leave = leaveTypes.find(
                           (itm) => itm.id === newValue.id
                         );
-                        if (deduction)
-                          setValue('allowance_name', deduction?.name);
+                        if (leave) setValue('leave_name', leave?.name);
                       }
                     }}
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label='Allowance Type'
+                        label='Leave Type'
                         error={!!fieldState.error}
                         helperText={fieldState.error?.message}
                       />

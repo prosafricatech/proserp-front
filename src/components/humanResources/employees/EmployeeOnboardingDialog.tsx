@@ -453,7 +453,7 @@ const EmployeeOnboardingDialog = ({
             >
               <Tab label='Deductions' />
               <Tab label='Contributions' />
-              <Tab label='Allowance' />
+              <Tab label='Leave Allocations' />
             </Tabs>
 
             {settingTab === 0 && (
@@ -549,8 +549,8 @@ const EmployeeOnboardingDialog = ({
                   <Divider sx={{ py: 0, my: 0 }} />
                   <Grid container>
                     <Grid size={5}>
-                      <Tooltip title='Deduction'>
-                        <Typography>{itm.allowance_name}</Typography>
+                      <Tooltip title='Leave Name'>
+                        <Typography>{itm.leave_name}</Typography>
                       </Tooltip>
                     </Grid>
                     <Grid size={5}>
