@@ -218,7 +218,7 @@ const EmployeeForm = ({
     payable_ledger_id: yup.number().nullable().optional(),
     create_payable: yup.boolean().optional(),
     payable_ledger_name: yup.string().nullable().optional(),
-    employment_type: yup.string().nullable(),
+    employment_type: yup.string().required('This field is required'),
     join_date: yup.string().nullable(),
     basic_salary: yup
       .number()
@@ -601,6 +601,7 @@ const EmployeeForm = ({
                         {...params}
                         label='Employment Type'
                         error={!!fieldState.error}
+                        helperText={errors.employment_type?.message}
                       />
                     )}
                   />
@@ -740,6 +741,7 @@ const EmployeeForm = ({
                     control={
                       <Switch
                         checked={customeName}
+                        disabled={!!employee}
                         onChange={() => {
                           setCustomeName((prev) => !prev);
                           setValue('payable_ledger_id', null);
@@ -773,17 +775,19 @@ const EmployeeForm = ({
                     />
                   </Grid>
                 ) : (
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <TextField
-                      label='Payable Ledger Name'
-                      size='small'
-                      fullWidth
-                      placeholder='e.g., Payable - Jane Doe'
-                      error={!!errors.payable_ledger_name}
-                      helperText={errors.payable_ledger_name?.message}
-                      {...register('payable_ledger_name')}
-                    />
-                  </Grid>
+                  !employee && (
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <TextField
+                        label='Payable Ledger Name'
+                        size='small'
+                        fullWidth
+                        placeholder='e.g., Payable - Jane Doe'
+                        error={!!errors.payable_ledger_name}
+                        helperText={errors.payable_ledger_name?.message}
+                        {...register('payable_ledger_name')}
+                      />
+                    </Grid>
+                  )
                 )}
               </>
             )}
