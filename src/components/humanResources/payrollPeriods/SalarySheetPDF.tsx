@@ -166,37 +166,6 @@ const percentOf = (part: number, total: number) => {
   return `${Math.round((part / total) * 100)}%`;
 };
 
-function fmtTypeLabel(type: SalaryTypeItem, fallback: string) {
-  const name = type.name || fallback;
-  const raw = Number(type.default_value ?? 0);
-  if (!Number.isFinite(raw) || raw <= 0) return name;
-
-  const isPercentage = String(type.computation_method || '').startsWith(
-    'percentage'
-  );
-  const valueText = isPercentage
-    ? `${raw.toLocaleString(undefined, { maximumFractionDigits: 2 })}%`
-    : raw.toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      });
-
-  return `${name} (${valueText})`;
-}
-
-function toNumber(value: unknown) {
-  if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
-  if (typeof value === 'string') {
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : 0;
-  }
-  return 0;
-}
-
-function slug(text: string) {
-  return text.toLowerCase().replace(/\s+/g, ' ').trim();
-}
-
 function getEmployeeName(run: PayrollRunType) {
   if (!run.employee) return '';
 
@@ -225,49 +194,6 @@ function getDesignation(run: PayrollRunType) {
   return '-';
 }
 
-function sumAllowanceByType(run: PayrollRunType, type: SalaryTypeItem) {
-  const targetId = type.id;
-  const targetName = slug(type.name || '');
-
-  return (run.allowances || []).reduce((sum, item) => {
-    const byId = targetId != null && item.allowance_type_id === targetId;
-    const byName =
-      targetName &&
-      slug(item.allowance_type?.name || item.label || '') === targetName;
-    if (!byId && !byName) return sum;
-    return sum + toNumber(item?.amount ?? item.value);
-  }, 0);
-}
-
-function sumDeductionByType(run: PayrollRunType, type: SalaryTypeItem) {
-  const targetId = type.id;
-  const targetName = slug(type.name || '');
-
-  return (run.deductions || []).reduce((sum, item) => {
-    const byId = targetId != null && item.deduction_type_id === targetId;
-    const byName =
-      targetName &&
-      slug(item.deduction_type?.name || item.label || '') === targetName;
-    if (!byId && !byName) return sum;
-    return sum + toNumber(item?.amount ?? item.value);
-  }, 0);
-}
-
-function sumContributionByType(run: PayrollRunType, type: SalaryTypeItem) {
-  const targetId = type.id;
-  const targetName = slug(type.name || '');
-
-  return (run.employer_contributions || []).reduce((sum, item) => {
-    const byId =
-      targetId != null && item.employer_contribution_type_id === targetId;
-    const byName =
-      targetName &&
-      slug(item.contribution_type?.name || item.label || '') === targetName;
-    if (!byId && !byName) return sum;
-    return sum + toNumber(item?.amount ?? item.value);
-  }, 0);
-}
-
 const SalarySheetPDF = ({
   organization,
   periodLabel,
@@ -279,13 +205,6 @@ const SalarySheetPDF = ({
   const mainColor = organization.settings?.main_color || '#2113AD';
   const lightColor = organization.settings?.light_color || '#d9dfef';
   const contrastText = organization.settings?.contrast_text || '#FFFFFF';
-
-  const preTaxDeductionTypes = deductionTypes.filter((type) =>
-    Boolean(type.is_pre_tax)
-  );
-  const postTaxDeductionTypes = deductionTypes.filter(
-    (type) => !type.is_pre_tax
-  );
 
   const getUniqueTypes = (value: Array<any>) => {
     const filteredDeductions = Array.from(
@@ -334,7 +253,7 @@ const SalarySheetPDF = ({
     }
     if (type === 'contribution') {
       return contributionTypes.reduce((sum, item) => {
-        return item.employer_contribution_type_id === type_id
+        return item?.employer_contribution_type_id === type_id
           ? sum + item?.amount
           : sum;
       }, 0);

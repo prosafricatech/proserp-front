@@ -248,7 +248,7 @@ const PayrollPeriodNewViewDialog = ({
     }
     if (type === 'contribution') {
       return contributionTypes?.reduce((sum, item) => {
-        return item.employer_contribution_type_id === type_id
+        return item?.employer_contribution_type_id === type_id
           ? sum + item?.amount
           : sum;
       }, 0);

@@ -87,7 +87,7 @@ function RequisitionLedgerItemForm({
     undefined
   );
   const [selectedUnit, setSelectedUnit] = useState(() =>
-    ledger_item?.id
+    ledger_item
       ? measurementUnits?.find(
           (unit) => unit.id === ledger_item?.measurement_unit_id
         )
@@ -261,6 +261,7 @@ function RequisitionLedgerItemForm({
         shouldValidate: true,
         shouldDirty: true,
       });
+      setValue('unit_symbol', newUnit?.symbol);
     }
   }, [newUnit]);
 
@@ -297,13 +298,14 @@ function RequisitionLedgerItemForm({
       await setRequisition_ledger_items((prevItems) => [...prevItems, newItem]);
 
       // Keep form ready for next add by clearing UI state and remounting uncontrolled fields.
+
       reset(getEmptyFormValues());
       setCalculatedAmount(0);
       setSelectedRelated(null);
       setRelatedTransactions([]);
       setFormResetKey((prev) => prev + 1);
     }
-
+    setSelectedUnit(null);
     setIsAdding(false);
     setShowForm?.(false);
   };

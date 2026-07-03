@@ -33,12 +33,13 @@ function InventoryTrasferItemForm({ setClearFormKey, submitMainForm, submitItemF
                     if (availableBalance === 'N/A' || !value) return true;
                     return value <= parseFloat(availableBalance);
                 })
-                .test('current-balance-check', 'This quantity will lead to negative balance', function(value) {
-                    const currentBalance = this.parent.current_balance;
-                    const availableBalance = this.parent.available_balance;
-                    
+                .test('current-balance-check', function(value) {
+                    const currentBalance = parseFloat(this.parent.current_balance) || 0;
+                    const availableBalance = parseFloat(this.parent.available_balance || 0);
                     if (currentBalance >= availableBalance) return true;
-                    return value <= parseFloat(currentBalance);
+                    return value <= currentBalance || this.createError({
+                        message: `This quantity will lead to negative balance. Current balance today is ${currentBalance.toLocaleString()}`
+                    });
                 }),
             otherwise: (schema) => schema
                 .required("Quantity is required")

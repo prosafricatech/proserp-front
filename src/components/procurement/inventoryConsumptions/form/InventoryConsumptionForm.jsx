@@ -93,7 +93,7 @@ const InventoryConsumptionForm = ({setOpenDialog, inventoryConsumption = null, c
       narration: inventoryConsumption?.narration,
       consumption_date: consumption_date.toISOString(),
       consumptionable_id: inventoryConsumption?.consumptionable_id,
-      consumptionable_type: inventoryConsumption?.cost_center.type === 'Work Center' ? 'production_batch' : null,
+      consumptionable_type: (inventoryConsumption?.cost_center.type === 'Work Center' && !!inventoryConsumption?.consumption_type) ? 'production_batch' : null,
       cost_center: inventoryConsumption?.cost_center || (costCenters.length === 1 && costCenters[0]),
       cost_center_id: inventoryConsumption ? inventoryConsumption.cost_center.id : (costCenters.length === 1 && costCenters[0].id),
       items: inventoryConsumption ? inventoryConsumption.items : [],
