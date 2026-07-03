@@ -1,5 +1,5 @@
 import { ExportPayrollPeriodToExcel } from '@/lib/excel/exporters/PayrollPeriod';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
 export async function POST(req: NextRequest) {
   try {
@@ -7,17 +7,17 @@ export async function POST(req: NextRequest) {
 
     const buffer = await ExportPayrollPeriodToExcel(body);
 
-    // return new Response(buffer, {
-    //   headers: {
-    //     'Content-Type':
-    //       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    //     'Content-Disposition': 'attachment; filename="payroll.xlsx"',
-    //   },
-    // });
-
-    return NextResponse.json({
-      message: buffer,
+    return new Response(buffer, {
+      headers: {
+        'Content-Type':
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'Content-Disposition': 'attachment; filename="payroll.xlsx"',
+      },
     });
+
+    // return NextResponse.json({
+    //   message: buffer,
+    // });
   } catch (error: any) {
     console.error('Error in API route:', error);
     return new Response(

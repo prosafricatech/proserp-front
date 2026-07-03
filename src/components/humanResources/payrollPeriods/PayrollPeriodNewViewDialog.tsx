@@ -294,6 +294,8 @@ const PayrollPeriodNewViewDialog = ({
     }
   );
 
+  const downloadFileName = `Payroll-period-${periodLabel}`;
+
   const exportedData = {
     organization: organization,
     period: period,
@@ -310,14 +312,14 @@ const PayrollPeriodNewViewDialog = ({
       const blob =
         await humanResourcesServices.ExportPayrollPeriodToExcel(exportedData);
 
-      // const url = window.URL.createObjectURL(blob);
-      // const a = document.createElement('a');
-      // a.href = url;
-      // a.download = `${downloadFileName}.xlsx`;
-      // a.click();
-      // window.URL.revokeObjectURL(url);
-      // setIsExporting(false);
-      console.log('blob: ', blob);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${downloadFileName}.xlsx`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      setIsExporting(false);
+      // console.log('blob: ', blob);
     } catch (e: any) {
       console.log('error exporting excel: ', e);
       setIsExporting(false);
