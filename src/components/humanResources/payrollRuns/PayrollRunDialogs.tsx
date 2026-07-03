@@ -7,7 +7,6 @@ import {
   DialogContent,
   DialogTitle,
   Button,
-  Card,
   Grid,
   Typography,
   Table,
@@ -29,7 +28,6 @@ interface SimulationDialogProps {
 
 export const SimulationDialog = ({ open, onClose, data }: SimulationDialogProps) => {
   const simulationRow = data?.row || data?.data?.row || data;
-  console.log('SimulationDialog data:', simulationRow);
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
