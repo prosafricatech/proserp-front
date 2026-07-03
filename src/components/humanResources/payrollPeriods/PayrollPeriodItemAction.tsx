@@ -159,18 +159,6 @@ const PayrollPeriodItemAction = ({
           unique_contributions_types: unique_contributions_types,
         };
 
-        const employees = runs.flatMap((run: any) =>
-          run?.payslips.flatMap((slip: any, idx: number) => ({
-            ...slip.employee,
-            basic_salary: slip.contract?.basic_salary ?? 0,
-            allwances: slip.allowances ?? [],
-            deductions: slip.deductions ?? [],
-            employer_contributions: slip.employer_contributions ?? [],
-            paye: slip.paye ?? 0,
-            slipIndex: idx,
-          }))
-        );
-
         setPeriodData({
           period: period,
           runs: runs,
@@ -245,31 +233,6 @@ const PayrollPeriodItemAction = ({
         </Dialog>
       )}
       {openPreviewDialog && !isLoading && (
-        // <PayrollPeriodViewDialog
-        //   open={openPreviewDialog && !isLoading}
-        //   onClose={() => {
-        //     setOpenPreviewDialog(false);
-        //     setSalarySheetData(null);
-        //     setPeriodData(null);
-        //   }}
-        //   allowanceTypes={periodData?.allowanceTypes}
-        //   contributionTypes={periodData?.contributionTypes}
-        //   created_at={periodData?.created_at}
-        //   created_by={periodData?.created_by}
-        //   deductionTypes={periodData?.deductionTypes}
-        //   deleted_at={periodData?.deleted_at}
-        //   id={periodData?.id}
-        //   month={periodData?.month}
-        //   periodLabel={periodData?.periodLabel}
-        //   remarks={periodData?.remarks}
-        //   rows={periodData?.rows}
-        //   runs={periodData?.runs}
-        //   runs_count={periodData?.runs_count}
-        //   updated_at={periodData?.updated_at}
-        //   year={periodData?.year}
-        //   isLoading={isLoading}
-        // />
-
         <PayrollPeriodNewViewDialog
           open={openPreviewDialog && !isLoading}
           onClose={() => {
