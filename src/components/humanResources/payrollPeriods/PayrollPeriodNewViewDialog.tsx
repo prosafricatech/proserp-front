@@ -150,15 +150,15 @@ function employeeComputedTotals(employee: EmployeeType) {
   const deductions = employee.deductions;
   const contributions = employee.employer_contributions;
   const totalAllowances = allowances.reduce(
-    (sum: number, allowance) => sum + (allowance.amount ?? 0),
+    (sum: number, allowance) => sum + (allowance?.amount ?? 0),
     0
   );
   const totalDeductions = deductions.reduce(
-    (sum: number, deduction) => sum + (deduction.amount ?? 0),
+    (sum: number, deduction) => sum + (deduction?.amount ?? 0),
     0
   );
   const totalContributions = contributions.reduce(
-    (sum: number, contributions) => sum + (contributions.amount ?? 0),
+    (sum: number, contributions) => sum + (contributions?.amount ?? 0),
     0
   );
 
