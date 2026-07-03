@@ -22,7 +22,6 @@ import {
 import { useMediaQuery } from '@mui/system';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
-import humanResourcesServices from '../humanResourcesServices';
 import { PayrollRunType } from '../payrollRuns/PayrollRunType';
 
 type SalaryTypeItem = {
@@ -155,19 +154,10 @@ const PayrollPeriodViewDialog = ({
   onClose,
   allowanceTypes,
   contributionTypes,
-  created_at,
-  created_by,
   deductionTypes,
-  deleted_at,
-  id,
-  month,
   periodLabel,
-  remarks,
   rows,
   runs,
-  runs_count,
-  updated_at,
-  year,
   isLoading,
 }: PayrollPeriodViewDialogProp) => {
   const router = useRouter();
@@ -193,8 +183,6 @@ const PayrollPeriodViewDialog = ({
       };
     });
   }, [runs, rows]);
-
-  const [isExporting, setIsExporting] = useState(false);
 
   const organization = authObject?.authOrganization?.organization;
 
@@ -266,53 +254,6 @@ const PayrollPeriodViewDialog = ({
       contributionByType: contributionTypes?.map(() => 0),
     }
   );
-
-  const downloadFileName = `Payroll-period-${periodLabel}`;
-
-  const exportedRows = rows?.map((entry) => ({
-    run: entry.run,
-    computed: entry.computed,
-  }));
-
-  const exportedData = {
-    organization: organization,
-    allowanceTypes: allowanceTypes,
-    contributionTypes: contributionTypes,
-    created_at: created_at,
-    created_by: created_by,
-    deductionTypes: deductionTypes,
-    deleted_at: deleted_at,
-    id: id,
-    month: month,
-    periodLabel: periodLabel,
-    remarks: remarks,
-    rows: rows,
-    runs: runs,
-    runs_count: runs_count,
-    updated_at: updated_at,
-    year: year,
-    isLoading: isLoading,
-  };
-
-  const handleExcelExport = async (exportedData: any) => {
-    try {
-      setIsExporting(true);
-      const blob =
-        await humanResourcesServices.ExportPayrollPeriodToExcel(exportedData);
-
-      // const url = window.URL.createObjectURL(blob);
-      // const a = document.createElement('a');
-      // a.href = url;
-      // a.download = `${downloadFileName}.xlsx`;
-      // a.click();
-      // window.URL.revokeObjectURL(url);
-      // setIsExporting(false);
-      console.log('blob: ', blob);
-    } catch (e: any) {
-      console.log('error exporting excel: ', e);
-      setIsExporting(false);
-    }
-  };
 
   return (
     <>
@@ -959,65 +900,6 @@ const PayrollPeriodViewDialog = ({
           <Button onClick={onClose}>Close</Button>
         </DialogActions>
       </Dialog>
-
-      {/* PDF Dialog */}
-      {/* <Dialog
-        open={openPdfDialog}
-        onClose={() => setOpenPdfDialog(false)}
-        fullWidth
-        maxWidth='xl'
-        PaperProps={{
-          sx: {
-            bgcolor: 'background.paper',
-          },
-        }}
-      >
-        <DialogContent>
-          <PDFContent
-            document={
-              <PayrollPeriodPDF
-                organization={organization}
-                allowanceTypes={allowanceTypes}
-                contributionTypes={contributionTypes}
-                created_at={created_at}
-                created_by={created_by}
-                deductionTypes={deductionTypes}
-                deleted_at={deleted_at}
-                id={id}
-                month={month}
-                periodLabel={periodLabel}
-                remarks={remarks}
-                rows={rows}
-                runs={runs}
-                runs_count={runs_count}
-                updated_at={updated_at}
-                year={year}
-                isLoading={isLoading}
-              />
-            }
-            fileName={`Salary-Sheet-${periodLabel}`}
-          />
-        </DialogContent>
-        <DialogActions>
-          <LoadingButton
-            size='small'
-            onClick={() => handleExcelExport(exportedData)}
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              padding: '4px',
-              gap: 1,
-            }}
-            color='success'
-            variant='contained'
-            disabled={isExporting || rows?.length === 0 || isLoading}
-            loading={isExporting}
-          >
-            <FontAwesomeIcon icon={faFileExcel} color='green' /> Excel
-          </LoadingButton>
-          <Button onClick={() => setOpenPdfDialog(false)}>Close</Button>
-        </DialogActions>
-      </Dialog> */}
     </>
   );
 };
