@@ -203,7 +203,7 @@ function SalesShiftPDF({
               {shiftData.creator?.name}
             </Text>
           </View>
-          {!!shiftData.updator &&
+          {!!shiftData.updator && (shiftData.updator?.name !== shiftData.creator?.name) &&
             <View style={{ flex: 1, padding: 2 }}>
               <Text style={{ ...pdfStyles.midInfo, color: mainColor }}>
                 Updated By:
