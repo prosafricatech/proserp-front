@@ -123,7 +123,7 @@ const EmployeeOnboardingDialog = ({
   const importExcel = (data: any) => {
     const payload = {
       employees_excel: data,
-      create_payable_ledgers: autoCreateLedger,
+      create_payable_ledgers: !autoCreateLedger ? 0 : 1,
       deductions: deductionSettings,
       contributions: contributionSettings,
       leave_allocations: allocationsSettings,
