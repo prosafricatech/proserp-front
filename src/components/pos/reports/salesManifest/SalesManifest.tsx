@@ -997,7 +997,6 @@ const SalesManifest: React.FC<SalesManifestProps> = ({
   const organization = authOrganization?.organization;
   const is_vat_registered = organization?.settings?.vat_registered;
 
-  // const [displayAs, setDisplayAs] = useState<'on screen' | 'pdf'>('on screen');
   const [showOnScreen, setShowOnScreen] = useState(true);
   const [counters, setCounters] = useState<any[]>([]);
   const [selectedCounter, setSelectedCounter] = useState<any[]>([]);
