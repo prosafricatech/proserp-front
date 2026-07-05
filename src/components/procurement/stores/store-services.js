@@ -81,6 +81,12 @@ storeServices.downloadExcelTemplate = async (filters) => {
     );
     return data;
 };
+storeServices.exportStockReportToExcel = async (params) => {
+    const { data } = await axios.post(`/api/exports/excel/stockReport/`, params, {
+        responseType: 'blob',
+    })
+    return data;
+}
 
 storeServices.getStockMovementExcel = async (filters) => {
     const payload = {
