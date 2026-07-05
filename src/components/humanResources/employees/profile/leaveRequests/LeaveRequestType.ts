@@ -5,8 +5,11 @@ export interface LeaveRequestType {
   start_date: string;
   end_date: string;
   days_requested: number;
+  days_granted?: number | null;
   reason?: string;
-  status: 'pending' | 'approved' | 'rejected' | 'cancelled';
+  status: 'pending' | 'in_review' | 'approved' | 'rejected' | 'cancelled';
+  cost_center_id?: number | null;
+  approval_chain_id?: number | null;
   reviewed_by?: number | null;
   review_remarks?: string | null;
   reviewed_at?: string | null;
@@ -24,4 +27,23 @@ export interface LeaveRequestType {
     id: number;
     name: string;
   };
+  approval_chain?: {
+    id?: number;
+    levels?: Array<{
+      id: number;
+      name?: string;
+      level_name?: string;
+      level?: number;
+      status?: string;
+    }>;
+  } | null;
+  approvals?: Array<{
+    id?: number;
+    chain_level_id?: number;
+    approval_chain_level_id?: number;
+    status?: string;
+    days_approved?: number;
+    remarks?: string;
+    approval_date?: string;
+  }>;
 }

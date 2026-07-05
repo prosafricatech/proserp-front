@@ -5,16 +5,19 @@ import { Div } from '@jumbo/shared';
 import { LoadingButton } from '@mui/lab';
 import {
   Button,
+  Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   Grid,
+  MenuItem,
   TextField,
+  Typography,
 } from '@mui/material';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
-import { useEffect, useMemo } from 'react';
-import { useForm } from 'react-hook-form';
+import { useEffect, useMemo, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import humanResourcesServices from '../humanResourcesServices';
 import { LeaveType } from './LeaveTypesType';
@@ -26,6 +29,8 @@ interface LeaveTypeFormProp {
 
 interface FormData extends Omit<LeaveType, 'id'> {
   id?: number;
+  apply_scope?: 'none' | 'all' | 'active_contracts';
+  force_update?: boolean;
 }
 
 interface ApiResponse {
@@ -34,11 +39,25 @@ interface ApiResponse {
     name?: string;
     days_per_year?: number;
   };
+  would_update?: number;
+  would_create?: number;
 }
 
 const LeaveTypeForm = ({ setOpenDialog, leaveType }: LeaveTypeFormProp) => {
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
+
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    data: FormData | null;
+    wouldUpdate: number;
+    wouldCreate: number;
+  }>({
+    open: false,
+    data: null,
+    wouldUpdate: 0,
+    wouldCreate: 0,
+  });
 
   const {
     mutate: addLeaveType,
@@ -53,20 +72,8 @@ const LeaveTypeForm = ({ setOpenDialog, leaveType }: LeaveTypeFormProp) => {
       });
       queryClient.invalidateQueries({ queryKey: ['leaveTypes'] });
     },
-    onError: (error) => {
-      let message = 'Something went wrong';
-
-      if (
-        typeof error === 'object' &&
-        error !== null &&
-        'response' in error &&
-        typeof (error as any).response?.data?.message === 'string'
-      ) {
-        message = (error as any).response.data.message;
-      } else if (error instanceof Error) {
-        message = error.message;
-      }
-      enqueueSnackbar(message, { variant: 'error' });
+    onError: (mutationError) => {
+      handleErrorResponse(mutationError);
     },
   });
 
@@ -83,22 +90,53 @@ const LeaveTypeForm = ({ setOpenDialog, leaveType }: LeaveTypeFormProp) => {
       });
       queryClient.invalidateQueries({ queryKey: ['leaveTypes'] });
     },
-    onError: (error) => {
-      let message = 'Something went wrong';
-
-      if (
-        typeof error === 'object' &&
-        error !== null &&
-        'response' in error &&
-        typeof (error as any).response?.data?.message === 'string'
-      ) {
-        message = (error as any).response.data.message;
-      } else if (error instanceof Error) {
-        message = error.message;
-      }
-      enqueueSnackbar(message, { variant: 'error' });
+    onError: (mutationError) => {
+      handleErrorResponse(mutationError);
     },
   });
+
+  const handleErrorResponse = (mutationError: any) => {
+    const responseData = mutationError?.response?.data;
+    
+    // Check if this is a bulk update confirmation error
+    if (responseData?.would_update !== undefined || responseData?.would_create !== undefined) {
+      setConfirmDialog({
+        open: true,
+        data: mutationError?.config?.data ? JSON.parse(mutationError.config.data) : null,
+        wouldUpdate: responseData.would_update || 0,
+        wouldCreate: responseData.would_create || 0,
+      });
+      return;
+    }
+
+    let message = 'Something went wrong';
+    if (
+      typeof mutationError === 'object' &&
+      mutationError !== null &&
+      'response' in mutationError &&
+      typeof (mutationError as any).response?.data?.message === 'string'
+    ) {
+      message = (mutationError as any).response.data.message;
+    } else if (mutationError instanceof Error) {
+      message = mutationError.message;
+    }
+    enqueueSnackbar(message, { variant: 'error' });
+  };
+
+  const handleConfirmBulkUpdate = () => {
+    if (confirmDialog.data) {
+      const dataWithForce = {
+        ...confirmDialog.data,
+        force_update: true,
+      };
+      saveMutation(dataWithForce);
+    }
+    setConfirmDialog({ open: false, data: null, wouldUpdate: 0, wouldCreate: 0 });
+  };
+
+  const handleCancelBulkUpdate = () => {
+    setConfirmDialog({ open: false, data: null, wouldUpdate: 0, wouldCreate: 0 });
+  };
 
   const validationSchema = yup.object({
     id: yup.number().optional(),
@@ -110,12 +148,18 @@ const LeaveTypeForm = ({ setOpenDialog, leaveType }: LeaveTypeFormProp) => {
       .number()
       .required('days per year is required')
       .min(1, 'Days per year must be greater than 0'),
+    apply_scope: yup
+      .string()
+      .oneOf(['none', 'all', 'active_contracts'])
+      .optional(),
   });
 
   const {
     register,
     handleSubmit,
     reset,
+    control,
+    watch,
     formState: { errors },
   } = useForm<FormData>({
     resolver: yupResolver(validationSchema) as any,
@@ -123,14 +167,18 @@ const LeaveTypeForm = ({ setOpenDialog, leaveType }: LeaveTypeFormProp) => {
       id: leaveType?.id,
       name: leaveType?.name || '',
       days_per_year: leaveType?.days_per_year || 1,
+      apply_scope: 'none',
     },
   });
+
+  const applyScope = watch('apply_scope');
 
   useEffect(() => {
     reset({
       id: leaveType?.id,
       name: leaveType?.name || '',
       days_per_year: leaveType?.days_per_year || 1,
+      apply_scope: 'none',
     });
   }, [leaveType, reset]);
 
@@ -154,8 +202,8 @@ const LeaveTypeForm = ({ setOpenDialog, leaveType }: LeaveTypeFormProp) => {
       <DialogContent>
         <form autoComplete='off' onSubmit={handleSubmit(onSubmit)}>
           <Grid container rowSpacing={{ xs: 1, md: 2 }} spacing={2}>
-            <Grid size={{ xs: 12, md: 8 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Div sx={{ mt: 1 }}>
                 <TextField
                   label='Name'
                   placeholder='Leave Type Name'
@@ -175,8 +223,8 @@ const LeaveTypeForm = ({ setOpenDialog, leaveType }: LeaveTypeFormProp) => {
                 />
               </Div>
             </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Div sx={{ mt: 1 }}>
                 <TextField
                   label='Days Per Year'
                   placeholder='Days Per Year'
@@ -198,6 +246,37 @@ const LeaveTypeForm = ({ setOpenDialog, leaveType }: LeaveTypeFormProp) => {
                 />
               </Div>
             </Grid>
+
+            {/* Apply To Employees Dropdown */}
+            <Grid size={{ xs: 12 }}>
+              <Div sx={{ mt: 1 }}>
+                <Controller
+                  name='apply_scope'
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      select
+                      label='Apply To Employees'
+                      size='small'
+                      fullWidth
+                      value={field.value || 'none'}
+                      onChange={field.onChange}
+                      helperText={
+                        applyScope !== 'none'
+                          ? 'This will allocate leave days to all existing employees'
+                          : 'Select an option to bulk allocate leave days'
+                      }
+                    >
+                      <MenuItem value='none'>None</MenuItem>
+                      <MenuItem value='all'>All Employees</MenuItem>
+                      <MenuItem value='active_contracts'>
+                        Employees With Active Contracts
+                      </MenuItem>
+                    </TextField>
+                  )}
+                />
+              </Div>
+            </Grid>
           </Grid>
           <DialogActions>
             <Button size='small' onClick={() => setOpenDialog(false)}>
@@ -215,6 +294,58 @@ const LeaveTypeForm = ({ setOpenDialog, leaveType }: LeaveTypeFormProp) => {
           </DialogActions>
         </form>
       </DialogContent>
+
+      {/* Confirmation Dialog for Bulk Update */}
+      <Dialog
+        open={confirmDialog.open}
+        onClose={handleCancelBulkUpdate}
+        maxWidth='sm'
+        fullWidth
+      >
+        <DialogTitle>
+          <Typography variant='h6' fontWeight={600}>
+            Confirm Bulk Leave Allocation
+          </Typography>
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant='body2' color='text.secondary' sx={{ mb: 2 }}>
+            This action will allocate {confirmDialog.data?.days_per_year || 0} leave days to multiple employees:
+          </Typography>
+          <Grid container spacing={1}>
+            <Grid size={12}>
+              <Typography variant='body2'>
+                <strong>Will Update:</strong> {confirmDialog.wouldUpdate} employees
+                {confirmDialog.wouldUpdate > 0 && (
+                  <Typography variant='caption' display='block' color='text.secondary'>
+                    (Employees who already have this leave type will have their allocation updated)
+                  </Typography>
+                )}
+              </Typography>
+            </Grid>
+            <Grid size={12}>
+              <Typography variant='body2'>
+                <strong>Will Create:</strong> {confirmDialog.wouldCreate} new employees
+                {confirmDialog.wouldCreate > 0 && (
+                  <Typography variant='caption' display='block' color='text.secondary'>
+                    (Employees who don't have this leave type will get it allocated)
+                  </Typography>
+                )}
+              </Typography>
+            </Grid>
+          </Grid>
+          <Typography variant='body2' color='warning.main' sx={{ mt: 2 }}>
+            This action cannot be undone. Continue?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelBulkUpdate} variant='outlined'>
+            Cancel
+          </Button>
+          <Button onClick={handleConfirmBulkUpdate} variant='contained' color='warning'>
+            Continue
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };

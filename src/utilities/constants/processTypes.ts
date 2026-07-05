@@ -3,7 +3,8 @@ export const PROCESS_TYPES = [
     'PAYMENT',
     'IMPREST',
     'IMPREST RETIREMENT',
-    'LEAVE REQUEST'
+    'LEAVE REQUEST',
+    'PAYROLL'
 ];
 
 export const getProcessTypes = (hasHumanResourcesModule: boolean) => {
@@ -11,5 +12,5 @@ export const getProcessTypes = (hasHumanResourcesModule: boolean) => {
         return PROCESS_TYPES;
     }
 
-    return PROCESS_TYPES.filter((type) => type !== 'LEAVE REQUEST');
+    return PROCESS_TYPES.filter((type) => !['LEAVE REQUEST', 'PAYROLL'].includes(type));
 };

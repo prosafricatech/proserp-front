@@ -1,5 +1,7 @@
+// payrollPeriods/SalarySheetDialog.tsx
 'use client';
 
+import { useLanguage } from '@/app/[lang]/contexts/LanguageContext';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import PDFContent from '@/components/pdf/PDFContent';
 import { faFileExcel } from '@fortawesome/free-solid-svg-icons';
@@ -7,8 +9,10 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { LoadingButton } from '@mui/lab';
 import {
+  Alert,
   Box,
   Button,
+  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -22,7 +26,9 @@ import {
   TableRow,
   Typography,
   useMediaQuery,
+  useTheme,
 } from '@mui/material';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
 import { PayrollRunType } from '../payrollRuns/PayrollRunType';
@@ -55,6 +61,7 @@ type SalarySheetDialogProps = {
   allowanceTypes: SalaryTypeItem[];
   deductionTypes: SalaryTypeItem[];
   contributionTypes: SalaryTypeItem[];
+  isLoading?: boolean;
 };
 
 function fmt(value: number) {
@@ -95,17 +102,44 @@ function slug(text: string) {
   return text.toLowerCase().replace(/\s+/g, ' ').trim();
 }
 
+function getEmployeeName(run: PayrollRunType) {
+  if (!run.employee) return '';
+  const employee = run.employee as any;
+  if (employee.name) return employee.name;
+  const firstName = run.employee.first_name || '';
+  const lastName = run.employee.last_name || '';
+  const fullName = `${firstName} ${lastName}`.trim();
+  return fullName;
+}
+
+function getEmployeeNumber(run: PayrollRunType) {
+  return run.employee?.employee_number;
+}
+
+function getDesignation(run: PayrollRunType) {
+  if (run.contract?.designation?.title) {
+    return run.contract.designation.title;
+  }
+  if ((run as any).designation) {
+    return (run as any).designation;
+  }
+  if ((run as any).employee?.designation) {
+    return (run as any).employee?.designation;
+  }
+  return '-';
+}
+
 function sumAllowanceByType(run: PayrollRunType, type: SalaryTypeItem) {
   const targetId = type.id;
   const targetName = slug(type.name || '');
 
-  return (run.allowances || []).reduce((sum, item) => {
+  return (run.allowances || [])?.reduce((sum, item) => {
     const byId = targetId != null && item.allowance_type_id === targetId;
     const byName =
       targetName &&
       slug(item.allowance_type?.name || item.label || '') === targetName;
     if (!byId && !byName) return sum;
-    return sum + toNumber(item.amount ?? item.value);
+    return sum + toNumber(item?.amount ?? item.value);
   }, 0);
 }
 
@@ -113,13 +147,13 @@ function sumDeductionByType(run: PayrollRunType, type: SalaryTypeItem) {
   const targetId = type.id;
   const targetName = slug(type.name || '');
 
-  return (run.deductions || []).reduce((sum, item) => {
+  return (run.deductions || [])?.reduce((sum, item) => {
     const byId = targetId != null && item.deduction_type_id === targetId;
     const byName =
       targetName &&
       slug(item.deduction_type?.name || item.label || '') === targetName;
     if (!byId && !byName) return sum;
-    return sum + toNumber(item.amount ?? item.value);
+    return sum + toNumber(item?.amount ?? item.value);
   }, 0);
 }
 
@@ -127,14 +161,14 @@ function sumContributionByType(run: PayrollRunType, type: SalaryTypeItem) {
   const targetId = type.id;
   const targetName = slug(type.name || '');
 
-  return (run.employer_contributions || []).reduce((sum, item) => {
+  return (run.employer_contributions || [])?.reduce((sum, item) => {
     const byId =
       targetId != null && item.employer_contribution_type_id === targetId;
     const byName =
       targetName &&
       slug(item.contribution_type?.name || item.label || '') === targetName;
     if (!byId && !byName) return sum;
-    return sum + toNumber(item.amount ?? item.value);
+    return sum + toNumber(item?.amount ?? item.value);
   }, 0);
 }
 
@@ -146,60 +180,108 @@ const SalarySheetDialog = ({
   allowanceTypes,
   deductionTypes,
   contributionTypes,
+  isLoading = false,
 }: SalarySheetDialogProps) => {
+  const router = useRouter();
+  const lang = useLanguage();
   const authObject = useJumboAuth() as any;
+  const theme = useTheme();
   const [openPdfDialog, setOpenPdfDialog] = useState(false);
-  const { theme } = useJumboTheme();
-  const smallScreen = useMediaQuery(theme.breakpoints.down('md'));
+  const { theme: jumboTheme } = useJumboTheme();
+  const smallScreen = useMediaQuery(jumboTheme.breakpoints.down('md'));
 
   const [isExporting, setIsExporting] = useState(false);
 
-  const preTaxDeductionTypes = deductionTypes.filter((type) =>
-    Boolean(type.is_pre_tax)
+  const organization = authObject?.authOrganization?.organization;
+
+  const employeeDeductions = rows.flatMap((itm) =>
+    itm.run?.deductions?.map((deduction: any) => ({
+      ...deduction,
+      employee_contract_id: itm.run.employee?.id,
+    }))
   );
-  const postTaxDeductionTypes = deductionTypes.filter(
-    (type) => !type.is_pre_tax
+  const employeeAllowance = rows.flatMap((itm) =>
+    itm.run?.allowances?.map((allowance: any) => ({
+      ...allowance,
+      employee_contract_id: itm.run.employee?.id,
+    }))
+  );
+  const employeecontributions = rows.flatMap((itm) =>
+    itm.run?.employer_contributions?.map((contribution: any) => ({
+      ...contribution,
+      employee_contract_id: itm.run.employee?.id,
+    }))
   );
 
-  const totals = rows.reduce(
+  const getUniqueTypes = (value: Array<any>) => {
+    const filteredDeductions = Array.from(
+      new Map(
+        value.map((itm) => [
+          itm?.deduction_type_id ??
+            itm?.allowance_type_id ??
+            itm?.employer_contribution_type_id ??
+            itm?.label,
+          itm,
+        ])
+      ).values()
+    );
+    return filteredDeductions;
+  };
+
+  const unique_deductions_types = getUniqueTypes(employeeDeductions);
+  const unique_allowances_types = getUniqueTypes(employeeAllowance);
+  const unique_contributions_types = getUniqueTypes(employeecontributions);
+
+  const hasAllowances = unique_allowances_types.length > 0;
+  const hasDeductions = unique_deductions_types.length > 0;
+  const hasContributions = unique_contributions_types.length > 0;
+
+  const calculateTotalAmtByType = (
+    typeObj: any,
+    type_id: number,
+    type: 'deduction' | 'allowance' | 'contribution'
+  ) => {
+    if (type === 'allowance') {
+      return employeeAllowance?.reduce(
+        (sum, item) =>
+          item.allowance_type_id === type_id || item.label === typeObj.label
+            ? sum + item?.amount
+            : sum,
+        0
+      );
+    }
+    if (type === 'deduction') {
+      return employeeDeductions?.reduce((sum, item) => {
+        return item.deduction_type_id === type_id ||
+          item.label === typeObj.label
+          ? sum + item?.amount
+          : sum;
+      }, 0);
+    }
+    if (type === 'contribution') {
+      return employeecontributions?.reduce((sum, item) => {
+        return item?.employer_contribution_type_id === type_id
+          ? sum + item?.amount
+          : sum;
+      }, 0);
+    }
+  };
+
+  const totals = rows?.reduce(
     (sum, entry) => {
-      const allowanceByType = allowanceTypes.map((type) =>
-        sumAllowanceByType(entry.run, type)
-      );
-      const preTaxDeductionByType = preTaxDeductionTypes.map((type) =>
-        sumDeductionByType(entry.run, type)
-      );
-      const postTaxDeductionByType = postTaxDeductionTypes.map((type) =>
-        sumDeductionByType(entry.run, type)
-      );
-      const contributionByType = contributionTypes.map((type) =>
-        sumContributionByType(entry.run, type)
-      );
+      const run = entry.run;
+      const computed = entry.computed;
 
       return {
-        basicSalary: sum.basicSalary + entry.computed.basicSalary,
-        grossSalary: sum.grossSalary + entry.computed.grossSalary,
-        taxableSalary: sum.taxableSalary + entry.computed.taxableIncome,
-        paye: sum.paye + entry.computed.paye,
-        totalDeductions: sum.totalDeductions + entry.computed.totalDeductions,
-        netSalary: sum.netSalary + entry.computed.netSalary,
+        basicSalary: sum.basicSalary + computed.basicSalary,
+        grossSalary: sum.grossSalary + computed.grossSalary,
+        taxableSalary: sum.taxableSalary + computed.taxableIncome,
+        paye: sum.paye + computed.paye,
+        totalDeductions: sum.totalDeductions + computed.totalDeductions,
+        netSalary: sum.netSalary + computed.netSalary,
         totalEmployerContributions:
-          sum.totalEmployerContributions +
-          entry.computed.totalEmployerContributions,
-        totalEmployerCost:
-          sum.totalEmployerCost + entry.computed.totalEmployerCost,
-        allowanceByType: sum.allowanceByType.map(
-          (value, index) => value + allowanceByType[index]
-        ),
-        preTaxDeductionByType: sum.preTaxDeductionByType.map(
-          (value, index) => value + preTaxDeductionByType[index]
-        ),
-        postTaxDeductionByType: sum.postTaxDeductionByType.map(
-          (value, index) => value + postTaxDeductionByType[index]
-        ),
-        contributionByType: sum.contributionByType.map(
-          (value, index) => value + contributionByType[index]
-        ),
+          sum.totalEmployerContributions + computed.totalEmployerContributions,
+        totalEmployerCost: sum.totalEmployerCost + computed.totalEmployerCost,
       };
     },
     {
@@ -211,19 +293,20 @@ const SalarySheetDialog = ({
       netSalary: 0,
       totalEmployerContributions: 0,
       totalEmployerCost: 0,
-      allowanceByType: allowanceTypes.map(() => 0),
-      preTaxDeductionByType: preTaxDeductionTypes.map(() => 0),
-      postTaxDeductionByType: postTaxDeductionTypes.map(() => 0),
-      contributionByType: contributionTypes.map(() => 0),
     }
   );
 
   const downloadFileName = `Salary-Sheet-${periodLabel}`;
 
+  const exportedRows = rows.map((entry) => ({
+    run: entry.run,
+    computed: entry.computed,
+  }));
+
   const exportedData = {
-    organization: authObject?.authOrganization?.organization,
+    organization: organization,
     periodLabel: periodLabel,
-    rows: rows,
+    rows: exportedRows,
     allowanceTypes: allowanceTypes,
     deductionTypes: deductionTypes,
     contributionTypes: contributionTypes,
@@ -234,7 +317,6 @@ const SalarySheetDialog = ({
       setIsExporting(true);
       const blob =
         await humanResourcesServices.ExportPayrollToExcel(exportedData);
-      // console.log('blob: ', blob);
 
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -249,6 +331,14 @@ const SalarySheetDialog = ({
     }
   };
 
+  // Border style helper
+  const borderStyle = {
+    borderRight: '1px solid',
+    borderRightColor: 'divider',
+    borderLeft: '1px solid',
+    borderLeftColor: 'divider',
+  };
+
   return (
     <>
       <Dialog
@@ -257,6 +347,11 @@ const SalarySheetDialog = ({
         fullWidth
         maxWidth='xl'
         fullScreen={smallScreen}
+        PaperProps={{
+          sx: {
+            bgcolor: 'background.paper',
+          },
+        }}
       >
         <DialogTitle>
           <Stack
@@ -266,7 +361,7 @@ const SalarySheetDialog = ({
           >
             <Box>
               <Typography variant='h6'>
-                {authObject?.authOrganization?.organization?.name || 'Company'}
+                {organization?.name || 'Company'}
               </Typography>
               <Typography variant='body2' color='text.secondary'>
                 Salary Payroll - {periodLabel}
@@ -275,325 +370,659 @@ const SalarySheetDialog = ({
           </Stack>
         </DialogTitle>
         <DialogContent>
-          <TableContainer>
-            <Table size='small'>
-              <TableHead>
-                <TableRow>
-                  <TableCell>S/N</TableCell>
-                  <TableCell>Employee</TableCell>
-                  <TableCell>Employee No.</TableCell>
-                  <TableCell>Designation</TableCell>
-                  <TableCell align='right'>Basic</TableCell>
-                  {allowanceTypes.map((type) => (
+          {isLoading ? (
+            <Box
+              display='flex'
+              justifyContent='center'
+              alignItems='center'
+              py={8}
+            >
+              <CircularProgress />
+              <Typography variant='body2' color='text.secondary' sx={{ ml: 2 }}>
+                Generating salary sheet...
+              </Typography>
+            </Box>
+          ) : rows.length === 0 ? (
+            <Alert severity='info'>
+              No employees found for this payroll run.
+            </Alert>
+          ) : (
+            <TableContainer>
+              <Table size='small'>
+                <TableHead>
+                  {/* Group Headers - RECRUITMENT, EMPLOYEE, EMPLOYER */}
+                  <TableRow>
                     <TableCell
-                      key={`allowance-${type.id || type.name}`}
-                      align='right'
+                      colSpan={3}
+                      sx={{
+                        textAlign: 'center',
+                        fontWeight: 700,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        fontSize: '0.9rem',
+                      }}
                     >
-                      {type.name || 'Allowance'}
+                      RECRUITMENT
                     </TableCell>
-                  ))}
-                  <TableCell align='right'>Gross</TableCell>
-                  {preTaxDeductionTypes.map((type) => (
                     <TableCell
-                      key={`pre-tax-deduction-${type.id || type.name}`}
-                      align='right'
+                      colSpan={
+                        3 +
+                        (hasAllowances ? unique_allowances_types.length : 0) +
+                        (hasDeductions ? unique_deductions_types.length : 0)
+                      }
+                      sx={{
+                        textAlign: 'center',
+                        fontWeight: 700,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        fontSize: '0.9rem',
+                      }}
                     >
-                      {fmtTypeLabel(type, 'Pre-Tax Deduction')}
+                      EMPLOYEE
                     </TableCell>
-                  ))}
-                  <TableCell align='right'>Taxable Salary</TableCell>
-                  <TableCell align='right'>PAYE</TableCell>
-                  {postTaxDeductionTypes.map((type) => (
                     <TableCell
-                      key={`post-tax-deduction-${type.id || type.name}`}
-                      align='right'
+                      colSpan={
+                        1 +
+                        (hasContributions
+                          ? unique_contributions_types.length
+                          : 0)
+                      }
+                      sx={{
+                        textAlign: 'center',
+                        fontWeight: 700,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        fontSize: '0.9rem',
+                      }}
                     >
-                      {fmtTypeLabel(type, 'Post-Tax Deduction')}
+                      EMPLOYER
                     </TableCell>
-                  ))}
-                  <TableCell align='right'>Total Deductions</TableCell>
-                  <TableCell align='right'>Net Payable</TableCell>
-                  {contributionTypes.map((type) => (
+                  </TableRow>
+
+                  {/* Sub-headers - Allowances, Deductions, Contributions */}
+                  <TableRow>
                     <TableCell
-                      key={`contribution-${type.id || type.name}`}
-                      align='right'
+                      sx={{
+                        fontWeight: 500,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                      }}
                     >
-                      {fmtTypeLabel(type, 'Contribution')}
+                      S/N
                     </TableCell>
-                  ))}
-                  <TableCell align='right'>Total Employer Contrib.</TableCell>
-                  <TableCell align='right'>Employer Cost</TableCell>
-                </TableRow>
-              </TableHead>
-
-              <TableBody>
-                {rows.map((entry, index) => {
-                  const name = [
-                    entry.run.employee?.first_name,
-                    entry.run.employee?.last_name,
-                  ]
-                    .filter(Boolean)
-                    .join(' ');
-
-                  return (
-                    <TableRow key={entry.run.id}>
-                      <TableCell>{index + 1}</TableCell>
-                      <TableCell>{name || '-'}</TableCell>
-                      <TableCell>
-                        {entry.run.employee?.employee_number || '-'}
-                      </TableCell>
-                      <TableCell>
-                        {entry.run.contract?.designation?.title || '-'}
-                      </TableCell>
-                      <TableCell align='right'>
-                        {fmt(entry.computed.basicSalary)}
-                      </TableCell>
-
-                      {allowanceTypes.map((type) => (
-                        <TableCell
-                          key={`allowance-value-${entry.run.id}-${type.id || type.name}`}
-                          align='right'
-                        >
-                          {fmt(sumAllowanceByType(entry.run, type))}
-                        </TableCell>
-                      ))}
-
-                      <TableCell align='right'>
-                        {fmt(entry.computed.grossSalary)}
-                      </TableCell>
-
-                      {preTaxDeductionTypes.map((type) => (
-                        <TableCell
-                          key={`pre-tax-deduction-value-${entry.run.id}-${type.id || type.name}`}
-                          align='right'
-                        >
-                          {fmt(sumDeductionByType(entry.run, type))}
-                        </TableCell>
-                      ))}
-
-                      <TableCell align='right'>
-                        {fmt(entry.computed.taxableIncome)}
-                      </TableCell>
-                      <TableCell align='right'>
-                        {fmt(entry.computed.paye)}
-                      </TableCell>
-
-                      {postTaxDeductionTypes.map((type) => (
-                        <TableCell
-                          key={`post-tax-deduction-value-${entry.run.id}-${type.id || type.name}`}
-                          align='right'
-                        >
-                          {fmt(sumDeductionByType(entry.run, type))}
-                        </TableCell>
-                      ))}
-
-                      <TableCell align='right'>
-                        {fmt(entry.computed.totalDeductions)}
-                      </TableCell>
-                      <TableCell align='right'>
-                        {fmt(entry.computed.netSalary)}
-                      </TableCell>
-
-                      {contributionTypes.map((type) => (
-                        <TableCell
-                          key={`contribution-value-${entry.run.id}-${type.id || type.name}`}
-                          align='right'
-                        >
-                          {fmt(sumContributionByType(entry.run, type))}
-                        </TableCell>
-                      ))}
-
-                      <TableCell align='right'>
-                        {fmt(entry.computed.totalEmployerContributions)}
-                      </TableCell>
-                      <TableCell align='right'>
-                        {fmt(entry.computed.totalEmployerCost)}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-
-                <TableRow>
-                  <TableCell
-                    colSpan={4}
-                    sx={{
-                      fontWeight: 700,
-                      borderTop: '2px solid',
-                      borderColor: 'divider',
-                    }}
-                  >
-                    TOTALS
-                  </TableCell>
-                  <TableCell
-                    align='right'
-                    sx={{
-                      fontWeight: 700,
-                      borderTop: '2px solid',
-                      borderColor: 'divider',
-                    }}
-                  >
-                    {fmt(totals.basicSalary)}
-                  </TableCell>
-
-                  {totals.allowanceByType.map((amount, index) => (
                     <TableCell
-                      key={`allowance-total-${index}`}
+                      sx={{
+                        fontWeight: 500,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                      }}
+                    >
+                      Employee
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        fontWeight: 500,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                      }}
+                    >
+                      Designation
+                    </TableCell>
+                    <TableCell
+                      align='right'
+                      sx={{
+                        fontWeight: 500,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                      }}
+                    >
+                      Basic
+                    </TableCell>
+
+                    {hasAllowances && (
+                      <TableCell
+                        colSpan={unique_allowances_types.length}
+                        align='center'
+                        sx={{
+                          fontWeight: 500,
+                          border: '1px solid',
+                          borderColor: 'divider',
+                        }}
+                      >
+                        Allowances
+                      </TableCell>
+                    )}
+
+                    <TableCell
+                      align='right'
+                      sx={{
+                        fontWeight: 500,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                      }}
+                    >
+                      Gross
+                    </TableCell>
+
+                    {hasDeductions && (
+                      <TableCell
+                        colSpan={unique_deductions_types.length}
+                        align='center'
+                        sx={{
+                          fontWeight: 500,
+                          border: '1px solid',
+                          borderColor: 'divider',
+                        }}
+                      >
+                        Deductions
+                      </TableCell>
+                    )}
+
+                    <TableCell
+                      align='right'
+                      sx={{
+                        fontWeight: 500,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                      }}
+                    >
+                      Net Payable
+                    </TableCell>
+
+                    {hasContributions ? (
+                      <TableCell
+                        colSpan={unique_contributions_types.length + 1}
+                        align='center'
+                        sx={{
+                          fontWeight: 500,
+                          border: '1px solid',
+                          borderColor: 'divider',
+                        }}
+                      >
+                        Employer Contributions
+                      </TableCell>
+                    ) : (
+                      <TableCell
+                        align='center'
+                        sx={{
+                          fontWeight: 500,
+                          border: '1px solid',
+                          borderColor: 'divider',
+                        }}
+                      />
+                    )}
+                  </TableRow>
+
+                  {/* Column Headers */}
+                  <TableRow>
+                    <TableCell
+                      sx={{ border: '1px solid', borderColor: 'divider' }}
+                    />
+                    <TableCell
+                      sx={{ border: '1px solid', borderColor: 'divider' }}
+                    />
+                    <TableCell
+                      sx={{ border: '1px solid', borderColor: 'divider' }}
+                    />
+                    <TableCell
+                      align='right'
+                      sx={{
+                        border: '1px solid',
+                        borderColor: 'divider',
+                      }}
+                    />
+
+                    {unique_allowances_types.map((type, idx) => (
+                      <TableCell
+                        key={`allowance-header-${type.allowance_type_id || type.label}-${idx}`}
+                        sx={{
+                          border: '1px solid',
+                          borderColor: 'divider',
+                          fontWeight: 450,
+                        }}
+                      >
+                        {type.label || 'Allowance'}
+                      </TableCell>
+                    ))}
+
+                    <TableCell
+                      sx={{
+                        border: '1px solid',
+                        borderColor: 'divider',
+                      }}
+                    />
+
+                    {unique_deductions_types.map((type, idx) => {
+                      if (type.deduction_type_id !== null) {
+                        return (
+                          <TableCell
+                            key={`deduction-header-${type.deduction_type_id || type.label}-${idx}`}
+                            sx={{
+                              border: '1px solid',
+                              borderColor: 'divider',
+                              fontWeight: 450,
+                            }}
+                          >
+                            {type.label || 'Deduction'}
+                          </TableCell>
+                        );
+                      }
+                    })}
+
+                    <TableCell
+                      sx={{
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        fontWeight: 450,
+                      }}
+                    >
+                      PAYE
+                    </TableCell>
+
+                    <TableCell
+                      sx={{
+                        fontWeight: 400,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                      }}
+                    />
+
+                    {unique_contributions_types.map((type, idx) => (
+                      <TableCell
+                        key={`contribution-header-${type.employer_contribution_type_id || type.label}-${idx}`}
+                        sx={{
+                          fontWeight: 450,
+                          border: '1px solid',
+                          borderColor: 'divider',
+                        }}
+                      >
+                        {type.label || 'Contribution'}
+                      </TableCell>
+                    ))}
+
+                    <TableCell
+                      sx={{
+                        fontWeight: 450,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                      }}
+                    >
+                      Total Empr. Cost
+                    </TableCell>
+                  </TableRow>
+                </TableHead>
+
+                <TableBody>
+                  {rows.map((entry, index) => {
+                    const run = entry.run;
+                    const computed = entry.computed;
+                    const name = getEmployeeName(run);
+                    const employeeNumber = getEmployeeNumber(run);
+                    const designation = getDesignation(run);
+                    const isEven = index % 2 === 0;
+
+                    return (
+                      <TableRow
+                        key={`salary-row-${run.id || index}-${index}`}
+                        sx={{
+                          backgroundColor: isEven
+                            ? theme.palette.background.paper
+                            : theme.palette.action.hover,
+                          '&:hover': {
+                            backgroundColor: theme.palette.action.selected,
+                          },
+                        }}
+                      >
+                        <TableCell
+                          sx={{ border: '1px solid', borderColor: 'divider' }}
+                        >
+                          {index + 1}
+                        </TableCell>
+                        <TableCell
+                          sx={{
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            textWrap: 'nowrap',
+                            cursor: 'pointer',
+                            '&:hover': {
+                              color: 'primary.main',
+                              textDecoration: 'underline',
+                            },
+                          }}
+                          onClick={() =>
+                            router.push(
+                              `/${lang}/humanResources/employees/${entry.run.employee?.id}`
+                            )
+                          }
+                        >
+                          {name}
+                          <Typography
+                            variant='body2'
+                            fontSize={10}
+                            color='textSecondary'
+                          >
+                            {employeeNumber && `(${employeeNumber})`}
+                          </Typography>
+                        </TableCell>
+
+                        <TableCell
+                          sx={{
+                            color: 'text.secondary',
+                            border: '1px solid',
+                            borderColor: 'divider',
+                          }}
+                        >
+                          {designation}
+                        </TableCell>
+                        <TableCell
+                          align='right'
+                          sx={{
+                            border: '1px solid',
+                            borderColor: 'divider',
+                          }}
+                        >
+                          {fmt(computed.basicSalary)}
+                        </TableCell>
+
+                        {unique_allowances_types.map((type, typeIdx) => (
+                          <TableCell
+                            key={`allowance-value-${run.id || index}-${type.allowance_type_id || type.label}-${typeIdx}`}
+                            align='right'
+                            sx={{
+                              border: '1px solid',
+                              borderColor: 'divider',
+                            }}
+                          >
+                            {fmt(
+                              employeeAllowance.find(
+                                (itm) =>
+                                  itm.employee_contract_id ===
+                                    entry.run.employee?.id &&
+                                  (itm.label === type.label ||
+                                    itm.allowance_type_id ===
+                                      type.allowance_type_id)
+                              )?.amount ?? 0
+                            )}
+                          </TableCell>
+                        ))}
+
+                        <TableCell
+                          align='right'
+                          sx={{
+                            fontWeight: 400,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                          }}
+                        >
+                          {fmt(computed.grossSalary)}
+                        </TableCell>
+
+                        {unique_deductions_types.map((type, typeIdx) => {
+                          if (type.deduction_type_id !== null) {
+                            return (
+                              <TableCell
+                                key={`deduction-value-${run.id || index}-${type.deduction_type_id || type.label}-${typeIdx}`}
+                                align='right'
+                                sx={{
+                                  border: '1px solid',
+                                  borderColor: 'divider',
+                                }}
+                              >
+                                {fmt(
+                                  employeeDeductions.find(
+                                    (itm) =>
+                                      itm.employee_contract_id ===
+                                        entry.run.employee?.id &&
+                                      (itm.label === type.label ||
+                                        itm.deduction_type_id ===
+                                          type.deduction_type_id)
+                                  )?.amount ?? 0
+                                )}
+                              </TableCell>
+                            );
+                          }
+                        })}
+
+                        <TableCell
+                          align='right'
+                          sx={{
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            fontWeight: 400,
+                          }}
+                        >
+                          {fmt(computed.paye)}
+                        </TableCell>
+
+                        <TableCell
+                          align='right'
+                          sx={{
+                            fontWeight: 400,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                          }}
+                        >
+                          {fmt(computed.netSalary)}
+                        </TableCell>
+
+                        {unique_contributions_types.map((type, typeIdx) => (
+                          <TableCell
+                            key={`contribution-value-${run.id || index}-${type.employer_contribution_type_id || type.label}-${typeIdx}`}
+                            align='right'
+                            sx={{
+                              border: '1px solid',
+                              borderColor: 'divider',
+                            }}
+                          >
+                            {fmt(
+                              employeecontributions.find(
+                                (itm) =>
+                                  itm.employee_contract_id ===
+                                    entry.run.employee?.id &&
+                                  (itm.label === type.label ||
+                                    itm.employer_contribution_type_id ===
+                                      type.employer_contribution_type_id)
+                              )?.amount ?? 0
+                            )}
+                          </TableCell>
+                        ))}
+
+                        <TableCell
+                          align='right'
+                          sx={{
+                            fontWeight: 400,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                          }}
+                        >
+                          {fmt(computed.totalEmployerCost)}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+
+                  {/* Totals Row */}
+                  <TableRow>
+                    <TableCell
+                      colSpan={3}
+                      sx={{
+                        fontWeight: 700,
+                        textAlign: 'center',
+                        borderTop: '2px solid',
+                        borderLeft: '2px solid',
+                        borderRight: '2px solid',
+                        borderColor: 'divider',
+                      }}
+                    >
+                      TOTALS
+                    </TableCell>
+                    <TableCell
                       align='right'
                       sx={{
                         fontWeight: 700,
                         borderTop: '2px solid',
                         borderColor: 'divider',
+                        borderRight: '0.001px solid white',
                       }}
                     >
-                      {fmt(amount)}
+                      {fmt(totals.basicSalary)}
                     </TableCell>
-                  ))}
 
-                  <TableCell
-                    align='right'
-                    sx={{
-                      fontWeight: 700,
-                      borderTop: '2px solid',
-                      borderColor: 'divider',
-                    }}
-                  >
-                    {fmt(totals.grossSalary)}
-                  </TableCell>
+                    {unique_allowances_types.map((type: any) => (
+                      <TableCell
+                        key={`allowance-total-${type.allowance_type_id}`}
+                        align='right'
+                        sx={{
+                          fontWeight: 700,
+                          borderTop: '2px solid',
+                          borderColor: 'divider',
+                          borderRight: '0.001px solid white',
+                        }}
+                      >
+                        {fmt(
+                          calculateTotalAmtByType(
+                            type,
+                            type.allowance_type_id,
+                            'allowance'
+                          )
+                        )}
+                      </TableCell>
+                    ))}
 
-                  {totals.preTaxDeductionByType.map((amount, index) => (
                     <TableCell
-                      key={`pre-tax-deduction-total-${index}`}
                       align='right'
                       sx={{
                         fontWeight: 700,
                         borderTop: '2px solid',
                         borderColor: 'divider',
+                        borderRight: '0.001px solid white',
                       }}
                     >
-                      {fmt(amount)}
+                      {fmt(totals.grossSalary)}
                     </TableCell>
-                  ))}
 
-                  <TableCell
-                    align='right'
-                    sx={{
-                      fontWeight: 700,
-                      borderTop: '2px solid',
-                      borderColor: 'divider',
-                    }}
-                  >
-                    {fmt(totals.taxableSalary)}
-                  </TableCell>
-                  <TableCell
-                    align='right'
-                    sx={{
-                      fontWeight: 700,
-                      borderTop: '2px solid',
-                      borderColor: 'divider',
-                    }}
-                  >
-                    {fmt(totals.paye)}
-                  </TableCell>
+                    {unique_deductions_types.map((type: any) => {
+                      if (type.deduction_type_id !== null) {
+                        return (
+                          <TableCell
+                            key={`deduction-total-${type.deduction_type_id}`}
+                            align='right'
+                            sx={{
+                              fontWeight: 700,
+                              borderTop: '2px solid',
+                              borderColor: 'divider',
+                              borderRight: '0.001px solid white',
+                            }}
+                          >
+                            {fmt(
+                              calculateTotalAmtByType(
+                                type,
+                                type.deduction_type_id,
+                                'deduction'
+                              )
+                            )}
+                          </TableCell>
+                        );
+                      }
+                    })}
 
-                  {totals.postTaxDeductionByType.map((amount, index) => (
                     <TableCell
-                      key={`post-tax-deduction-total-${index}`}
                       align='right'
                       sx={{
                         fontWeight: 700,
                         borderTop: '2px solid',
                         borderColor: 'divider',
+                        borderRight: '0.001px solid white',
                       }}
                     >
-                      {fmt(amount)}
+                      {fmt(totals.paye)}
                     </TableCell>
-                  ))}
 
-                  <TableCell
-                    align='right'
-                    sx={{
-                      fontWeight: 700,
-                      borderTop: '2px solid',
-                      borderColor: 'divider',
-                    }}
-                  >
-                    {fmt(totals.totalDeductions)}
-                  </TableCell>
-                  <TableCell
-                    align='right'
-                    sx={{
-                      fontWeight: 700,
-                      borderTop: '2px solid',
-                      borderColor: 'divider',
-                    }}
-                  >
-                    {fmt(totals.netSalary)}
-                  </TableCell>
-
-                  {totals.contributionByType.map((amount, index) => (
                     <TableCell
-                      key={`contribution-total-${index}`}
                       align='right'
                       sx={{
                         fontWeight: 700,
                         borderTop: '2px solid',
                         borderColor: 'divider',
+                        borderRight: '0.001px solid white',
                       }}
                     >
-                      {fmt(amount)}
+                      {fmt(totals.netSalary)}
                     </TableCell>
-                  ))}
 
-                  <TableCell
-                    align='right'
-                    sx={{
-                      fontWeight: 700,
-                      borderTop: '2px solid',
-                      borderColor: 'divider',
-                    }}
-                  >
-                    {fmt(totals.totalEmployerContributions)}
-                  </TableCell>
-                  <TableCell
-                    align='right'
-                    sx={{
-                      fontWeight: 700,
-                      borderTop: '2px solid',
-                      borderColor: 'divider',
-                    }}
-                  >
-                    {fmt(totals.totalEmployerCost)}
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          </TableContainer>
+                    {unique_contributions_types.map((type: any) => (
+                      <TableCell
+                        key={`contribution-total-${type.employer_contribution_type_id}`}
+                        align='right'
+                        sx={{
+                          fontWeight: 700,
+                          borderTop: '2px solid',
+                          borderColor: 'divider',
+                          borderRight: '0.001px solid white',
+                        }}
+                      >
+                        {fmt(
+                          calculateTotalAmtByType(
+                            type,
+                            type.employer_contribution_type_id,
+                            'contribution'
+                          )
+                        )}
+                      </TableCell>
+                    ))}
+
+                    <TableCell
+                      align='right'
+                      sx={{
+                        fontWeight: 700,
+                        borderTop: '2px solid',
+                        borderColor: 'divider',
+                        borderRight: '0.001px solid white',
+                      }}
+                    >
+                      {fmt(totals.totalEmployerCost)}
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
         </DialogContent>
 
         <DialogActions>
-          <Button variant='outlined' onClick={() => setOpenPdfDialog(true)}>
+          <Button
+            variant='outlined'
+            onClick={() => setOpenPdfDialog(true)}
+            disabled={rows.length === 0 || isLoading}
+          >
             Print
           </Button>
           <Button onClick={onClose}>Close</Button>
         </DialogActions>
       </Dialog>
 
+      {/* PDF Dialog */}
       <Dialog
         open={openPdfDialog}
         onClose={() => setOpenPdfDialog(false)}
         fullWidth
         maxWidth='xl'
+        PaperProps={{
+          sx: {
+            bgcolor: 'background.paper',
+          },
+        }}
       >
         <DialogContent>
           <PDFContent
             document={
               <SalarySheetPDF
-                organization={authObject?.authOrganization?.organization}
+                organization={organization}
                 periodLabel={periodLabel}
-                rows={rows}
-                allowanceTypes={allowanceTypes}
-                deductionTypes={deductionTypes}
-                contributionTypes={contributionTypes}
+                rows={exportedRows}
+                allowanceTypes={employeeAllowance}
+                deductionTypes={employeeDeductions}
+                contributionTypes={employeecontributions}
               />
             }
             fileName={`Salary-Sheet-${periodLabel}`}
@@ -611,7 +1040,7 @@ const SalarySheetDialog = ({
             }}
             color='success'
             variant='contained'
-            disabled={isExporting}
+            disabled={isExporting || rows.length === 0 || isLoading}
             loading={isExporting}
           >
             <FontAwesomeIcon icon={faFileExcel} color='green' /> Excel

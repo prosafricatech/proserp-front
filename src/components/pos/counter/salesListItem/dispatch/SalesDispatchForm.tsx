@@ -126,11 +126,13 @@ const SalesDispatchForm: React.FC<SalesDispatchFormProps> = ({ toggleOpen, sale 
             }
             return true;
           })
-          .test('maxQuantityyy', 'This quantity will lead to negative balance', function (value) {
-            const availableBalance = this.parent.available_balance;
-            const currentBalance = this.parent.current_balance;
+          .test('maxQuantityyy', function (value) {
+            const availableBalance = parseFloat(this.parent.available_balance || 0);
+            const currentBalance = parseFloat(this.parent.current_balance || 0);
             if (availableBalance > currentBalance && value > currentBalance) {
-              return false;
+              return this.createError({
+                message: `This quantity will lead to negative balance. Current balance today is ${currentBalance.toLocaleString()}`
+              });
             }
             return true;
           })

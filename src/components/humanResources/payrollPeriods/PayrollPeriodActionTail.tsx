@@ -1,6 +1,6 @@
+// payrollPeriods/PayrollPeriodActionTail.tsx
 'use client';
 
-import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { AddOutlined } from '@mui/icons-material';
 import {
   ButtonGroup,
@@ -9,8 +9,10 @@ import {
   Tooltip,
   useMediaQuery,
 } from '@mui/material';
-import { useState } from 'react';
-import PayrollPeriodForm from './PayrollPeriodForm';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
+import React, { lazy, useState } from 'react';
+
+const PayrollPeriodForm = lazy(() => import('./PayrollPeriodForm'));
 
 const PayrollPeriodActionTail = () => {
   const [openDialog, setOpenDialog] = useState(false);
@@ -18,23 +20,30 @@ const PayrollPeriodActionTail = () => {
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
   return (
-    <>
-      <Dialog maxWidth='md' fullWidth fullScreen={belowLargeScreen} open={openDialog}>
+    <React.Fragment>
+      <Dialog
+        maxWidth='sm'
+        fullWidth
+        fullScreen={belowLargeScreen}
+        open={openDialog}
+        onClose={() => setOpenDialog(false)}
+      >
         <PayrollPeriodForm setOpenDialog={setOpenDialog} />
       </Dialog>
+
       <ButtonGroup
         variant='outlined'
         size='small'
         disableElevation
         sx={{ '& .MuiButton-root': { px: 1 } }}
       >
-        <Tooltip title='Add Payroll Period'>
+        <Tooltip title='Create Payroll Period'>
           <IconButton onClick={() => setOpenDialog(true)}>
             <AddOutlined />
           </IconButton>
         </Tooltip>
       </ButtonGroup>
-    </>
+    </React.Fragment>
   );
 };
 

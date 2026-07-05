@@ -1,3 +1,4 @@
+// In EmployeesType.ts
 export interface Employee {
   id: number;
   employee_number: string;
@@ -9,10 +10,16 @@ export interface Employee {
   phone_number: string;
   address: string;
   date_of_birth: string;
+  basic_salary?: number | null;
+  contract_start_date?: string | null;
   national_id: string;
   passport_number?: string;
   photo_path?: string;
   department_id?: number;
+  cost_center_id?: number | null;
+  payable_ledger_id?: number | null;
+  create_payable?: boolean;
+  payable_ledger_name?: string | null;
   employment_type?: string;
   join_date?: string;
   user_id: number;
@@ -24,6 +31,10 @@ export interface Employee {
     name: string;
     code: string;
   };
+  cost_center?: {
+    id: number;
+    name: string;
+  } | null;
   active_contract: {
     id: number;
     basic_salary: number;

@@ -1,5 +1,3 @@
-// app/api/auth/status/route.ts  (or app/api/me/route.ts)
-
 import { NextRequest } from 'next/server';
 import { getAuthHeaders } from '@/lib/utils/apiUtils';
 
@@ -9,18 +7,32 @@ export async function GET(req: NextRequest) {
   const { headers, response: authResponse } = await getAuthHeaders(req);
   if (authResponse) return authResponse;
 
+  if (!API_BASE) {
+    return Response.json(
+      { 
+        authenticated: false, 
+        verified: false,
+        error: 'API_BASE_URL not configured'
+      },
+      { status: 500 }
+    );
+  }
+
   try {
-    const res = await fetch(`${API_BASE}/getuser`, {
+    const url = `${API_BASE}/getuser`;
+    
+    const res = await fetch(url, {
       method: 'GET',
       headers,
       credentials: 'include',
       cache: 'no-store',
+      signal: AbortSignal.timeout(10000), // 10 second timeout
     });
 
     if (!res.ok) {
       return Response.json(
         { authenticated: false, verified: false },
-        { status: 401 }
+        { status: res.status }
       );
     }
 
@@ -33,10 +45,15 @@ export async function GET(req: NextRequest) {
       verified: isVerified,
       user: data?.authUser?.user || null,
     });
-  } catch (error) {
-    console.error('Auth status check failed:', error);
+  } catch (error: any) {
+    
     return Response.json(
-      { authenticated: false, verified: false },
+      { 
+        authenticated: false, 
+        verified: false,
+        error: error.message,
+        code: error.code
+      },
       { status: 500 }
     );
   }

@@ -41,6 +41,8 @@ import EmployeeForm from '../EmployeeForm';
 import AttachmentForm from '@/components/filesShelf/attachments/AttachmentForm';
 import humanResourcesServices from '../../humanResourcesServices';
 import { Employee } from '../EmployeesType';
+import AuditTrailTab from './auditTrail/AuditTrailTab';
+import SalaryHistoryTab from './auditTrail/SalaryHistoryTab';
 
 type TabKey =
   | 'personalInfo'
@@ -51,6 +53,8 @@ type TabKey =
   | 'deductions'
   | 'employerContributions'
   | 'leave'
+  | 'movements'
+  | 'salaryHistory'
   | 'attachments';
 
 const VALID_TABS: TabKey[] = [
@@ -63,6 +67,8 @@ const VALID_TABS: TabKey[] = [
   'employerContributions',
   'leave',
   'attachments',
+  'movements',  
+  'salaryHistory',
 ];
 
 const formatEmploymentType = (employmentType?: string | null) => {
@@ -184,6 +190,10 @@ function ProfileContent() {
         return <EmployeeDeductions employeeId={employeeId} />;
       case 'employerContributions':
         return <EmployeeEmployerContributions employeeId={employeeId} />;
+        case 'movements':
+        return <AuditTrailTab employeeId={employeeId} />;
+      case 'salaryHistory':
+        return <SalaryHistoryTab employeeId={employeeId} />;
       case 'leave':
         return <EmployeeLeaveTab employeeId={employeeId} />;
       case 'attachments':
@@ -290,6 +300,8 @@ function ProfileContent() {
               <Tab label='Employer Contributions' value='employerContributions' />
               <Tab label='Leave' value='leave' />
               <Tab label='Attachments' value='attachments' />
+              <Tab label='Movements' value='movements' />
+              <Tab label='Salary History' value='salaryHistory' />
             </Tabs>
 
             {renderTabContent}

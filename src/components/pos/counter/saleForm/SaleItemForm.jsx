@@ -76,12 +76,15 @@ function SaleItemForm({
             )
             .test(
                 'negative-balance-check',
-                'This quantity will lead to negative balance',
                 function (value) {
-                    const currentBalance = this.parent.current_balance;
+                    const currentBalance = parseFloat(this.parent.current_balance) || 0;
                     const availableBalance = this.parent.available_balance;
-                    if (currentBalance >= availableBalance) return true;
-                    return value <= currentBalance;
+                    if (availableBalance === 'N/A' || currentBalance >= parseFloat(availableBalance || 0)) {
+                        return true;
+                    }
+                    return value <= currentBalance || this.createError({
+                        message: `This quantity will lead to negative balance. Current balance today is ${currentBalance.toLocaleString()}`
+                    });
                 }
             )
     };

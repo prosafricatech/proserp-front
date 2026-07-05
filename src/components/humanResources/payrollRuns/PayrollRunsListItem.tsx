@@ -1,125 +1,425 @@
 'use client';
 
-import { useLanguage } from '@/app/[lang]/contexts/LanguageContext';
-import { Chip, Divider, Grid, Tooltip, Typography } from '@mui/material';
-import { useRouter } from 'next/navigation';
-import PayrollRunItemAction from './PayrollRunItemAction';
+import { ReceiptLongOutlined } from '@mui/icons-material';
+import AddIcon from '@mui/icons-material/Add';
+import RemoveIcon from '@mui/icons-material/Remove';
+import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Box,
+  Chip,
+  Grid,
+  LinearProgress,
+  Tab,
+  Tabs,
+  Typography,
+} from '@mui/material';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useSnackbar } from 'notistack';
+import { useMemo, useState } from 'react';
+import humanResourcesServices from '../humanResourcesServices';
+import { PayrollRunActions } from './PayrollRunActions';
+import { PayslipViewDialog, SimulationDialog } from './PayrollRunDialogs';
+import {
+  ApprovalsTab,
+  EmployeesTab,
+  PayslipsTab,
+  TabPanel,
+} from './PayrollRunTabs';
 import { PayrollRunType } from './PayrollRunType';
+import { processPayslips, statusColor } from './payrollUtils';
+import SummaryTab from './SummaryTab';
 
-const statusColor = (
-  status: string
-): 'success' | 'warning' | 'error' | 'default' => {
-  switch (status?.toLowerCase()) {
-    case 'finalized':
-    case 'approved':
-    case 'paid':
-      return 'success';
-    case 'processing':
-      return 'warning';
-    case 'rejected':
-    case 'cancelled':
-      return 'error';
-    default:
-      return 'default';
+const getErrorMessage = (error: any) => {
+  const validationErrors = error?.response?.data?.validation_errors;
+  if (validationErrors && typeof validationErrors === 'object') {
+    const first = Object.values(validationErrors)[0] as any;
+    return Array.isArray(first) ? first[0] : String(first);
   }
+  return (
+    error?.response?.data?.message || error?.message || 'Something went wrong'
+  );
 };
 
-const formatMoney = (value: number) =>
-  Number(value || 0).toLocaleString('en-US', {
-    style: 'currency',
-    currency: 'TZS',
+const PayrollRunsListItem = ({
+  payrollRun,
+}: {
+  payrollRun: PayrollRunType;
+}) => {
+  const { enqueueSnackbar } = useSnackbar();
+  const queryClient = useQueryClient();
+  const [expanded, setExpanded] = useState(false);
+  const [tabValue, setTabValue] = useState(0);
+  const [employeeSearch, setEmployeeSearch] = useState('');
+  const [selectedEmployees, setSelectedEmployees] = useState<Array<any> | null>(
+    null
+  );
+  const [simulationResult, setSimulationResult] = useState<any>(null);
+  const [openSimulationDialog, setOpenSimulationDialog] = useState(false);
+  const [isSimulating, setIsSimulating] = useState(false);
+  const [selectedPayslip, setSelectedPayslip] = useState<any>(null);
+  const [openPayslipDialog, setOpenPayslipDialog] = useState(false);
+
+  const status = payrollRun.status?.toLowerCase() || 'draft';
+  const isDraft = status === 'draft';
+  const isSubmitted = status === 'submitted';
+  const isApproved = status === 'approved';
+  const isPosted = status === 'posted';
+  const isPaid = status === 'paid';
+  const hasChain = Boolean(
+    payrollRun.approval_chain_id || payrollRun.approval_chain
+  );
+  const hasPayslips =
+    status === 'approved' || status === 'posted' || status === 'paid';
+
+  // Invalidate queries helper
+  const invalidatePayrollRunQueries = () => {
+    queryClient.invalidateQueries({ queryKey: ['payrollRuns'] });
+    queryClient.invalidateQueries({
+      queryKey: ['payrollRunsForPeriod', String(payrollRun.payroll_period_id)],
+    });
+    queryClient.invalidateQueries({
+      queryKey: ['showPayrollRun', payrollRun.id],
+    });
+    queryClient.invalidateQueries({
+      queryKey: ['payrollRunDetails', payrollRun.id],
+    });
+    queryClient.invalidateQueries({
+      queryKey: ['previewPayrollRunEmployees', payrollRun.id],
+    });
+  };
+
+  // Fetch preview data
+  const params = {
+    id: payrollRun.id,
+    employee_ids: selectedEmployees
+      ? selectedEmployees?.map((employee) =>
+          Array.isArray(employee)
+            ? employee.map((itm: any) => itm?.id)
+            : employee?.id
+        )
+      : [],
+  };
+
+  const {
+    data: previewData,
+    isLoading: isLoadingPreview,
+    isFetching: isRefetching,
+  } = useQuery({
+    queryKey: ['previewPayrollRunEmployees', payrollRun.id, selectedEmployees],
+    queryFn: () => humanResourcesServices.previewPayrollRun(params as any),
+    enabled: expanded,
   });
 
-const formatPercent = (value: number) => `${value.toFixed(2)}%`;
+  const previewRows = previewData?.data?.rows || previewData?.rows || [];
+  const previewTotals =
+    previewData?.data?.totals || previewData?.totals || null;
 
-const PayrollRunsListItem = ({ payrollRun }: { payrollRun: PayrollRunType }) => {
-  const router = useRouter();
-  const lang = useLanguage();
-  const employeeName = `${payrollRun.employee?.first_name || ''} ${payrollRun.employee?.last_name || ''}`.trim();
-  const grossPay = Number(payrollRun.basic_salary || 0);
-  const totalDeductions = Number(payrollRun.paye || 0);
-  const netPay = Math.max(grossPay - totalDeductions, 0);
-  const taxRate = grossPay > 0 ? (totalDeductions / grossPay) * 100 : 0;
+  // Fetch run details
+  const { data: runDetailsData, isLoading: isLoadingDetails } = useQuery({
+    queryKey: ['payrollRunDetails', payrollRun.id],
+    queryFn: () => humanResourcesServices.showPayrollRun(payrollRun.id),
+    enabled: expanded,
+  });
+
+  const runDetails = runDetailsData?.data || runDetailsData || payrollRun;
+  const processedPayslips = useMemo(
+    () => processPayslips(runDetails?.payslips || []),
+    [runDetails]
+  );
+
+  const employeeName =
+    `${payrollRun.employee?.first_name || ''} ${payrollRun.employee?.last_name || ''}`.trim();
+  const runLabel =
+    employeeName || payrollRun.cost_center?.name || 'Company-wide run';
+
+  // Mutations
+  const { mutate: submitPayrollRun, isPending: isSubmitting } = useMutation({
+    mutationFn: () =>
+      humanResourcesServices.submitPayrollRun({ id: payrollRun.id }),
+    onSuccess: (response) => {
+      invalidatePayrollRunQueries();
+      enqueueSnackbar(response?.message || 'Payroll submitted for approval', {
+        variant: 'success',
+      });
+    },
+    onError: (error) =>
+      enqueueSnackbar(getErrorMessage(error), { variant: 'error' }),
+  });
+
+  const { mutate: approvePayrollRun, isPending: isApproving } = useMutation({
+    mutationFn: () => humanResourcesServices.approvePayrollRun(payrollRun.id),
+    onSuccess: () => {
+      invalidatePayrollRunQueries();
+      enqueueSnackbar('Payroll run approved', { variant: 'success' });
+    },
+    onError: (error) =>
+      enqueueSnackbar(getErrorMessage(error), { variant: 'error' }),
+  });
+
+  const { mutate: postPayrollRun, isPending: isPosting } = useMutation({
+    mutationFn: (data: any) => {
+      return humanResourcesServices.postPayrollRunTransactions({
+        id: payrollRun.id,
+        ...data,
+      });
+    },
+    onSuccess: (response: any) => {
+      invalidatePayrollRunQueries();
+      enqueueSnackbar(
+        response?.journal_voucher?.voucher_no
+          ? `Payroll posted: ${response.journal_voucher.voucher_no}`
+          : 'Payroll transactions posted',
+        { variant: 'success' }
+      );
+    },
+    onError: (error) =>
+      enqueueSnackbar(getErrorMessage(error), { variant: 'error' }),
+  });
+
+  const { mutate: payPayrollRun, isPending: isPaying } = useMutation({
+    mutationFn: (data: any) => {
+      return humanResourcesServices.payPayrollRun({
+        id: payrollRun.id,
+        ...data,
+      });
+    },
+    onSuccess: (response: any) => {
+      invalidatePayrollRunQueries();
+      enqueueSnackbar(
+        response?.payment?.voucher_no
+          ? `Payroll paid: ${response.payment.voucher_no}`
+          : 'Payroll run paid',
+        { variant: 'success' }
+      );
+    },
+    onError: (error) =>
+      enqueueSnackbar(getErrorMessage(error), { variant: 'error' }),
+  });
+
+  const { mutate: deletePayrollRun, isPending: isDeleting } = useMutation({
+    mutationFn: () => humanResourcesServices.deletePayrollRun(payrollRun.id),
+    onSuccess: () => {
+      invalidatePayrollRunQueries();
+      enqueueSnackbar('Payroll run deleted', { variant: 'success' });
+    },
+    onError: (error) =>
+      enqueueSnackbar(getErrorMessage(error), { variant: 'error' }),
+  });
+
+  // Handle actions from PayrollRunActions
+  const handleAction = (action: string, data?: any) => {
+    switch (action) {
+      case 'submit':
+        submitPayrollRun();
+        break;
+      case 'approve':
+        approvePayrollRun();
+        break;
+      case 'post':
+        postPayrollRun(data || {});
+        break;
+      case 'pay':
+        payPayrollRun(data || {});
+        break;
+      case 'delete':
+        deletePayrollRun();
+        break;
+      default:
+        break;
+    }
+  };
+
+  const handleSimulateEmployee = async (employeeId: number) => {
+    setIsSimulating(true);
+    try {
+      const response = await humanResourcesServices.simulatePayrollRun({
+        id: payrollRun.id,
+        employee_id: employeeId,
+      });
+      setSimulationResult(response?.data || response);
+      setOpenSimulationDialog(true);
+      enqueueSnackbar('Employee simulation generated', { variant: 'success' });
+    } catch (error: any) {
+      enqueueSnackbar(getErrorMessage(error), { variant: 'error' });
+    } finally {
+      setIsSimulating(false);
+    }
+  };
+
+  const handleViewPayslip = (payslip: any) => {
+    setSelectedPayslip(payslip);
+    setOpenPayslipDialog(true);
+  };
+
+  const isLoading = isLoadingPreview || isLoadingDetails || isRefetching;
 
   return (
     <>
-      <Divider />
-      <Grid
-        mt={1}
-        mb={1}
+      <Accordion
+        expanded={expanded}
+        onChange={() => setExpanded(!expanded)}
+        square
         sx={{
-          cursor: 'pointer',
+          borderRadius: 2,
+          borderTop: 2,
+          borderColor: 'divider',
           '&:hover': { bgcolor: 'action.hover' },
+          '&.Mui-expanded': { margin: '0 0 16px 0' },
         }}
-        onClick={() =>
-          router.push(`/${lang}/humanResources/payroll/${payrollRun.payroll_period_id}?run_id=${payrollRun.id}`)
-        }
-        paddingLeft={2}
-        paddingRight={2}
-        columnSpacing={1}
-        alignItems={'center'}
-        container
       >
-        <Grid size={{ xs: 12, md: 3 }}>
-          <Tooltip title='Employee'>
-            <div>
-              <Typography variant='h6' fontSize={14} lineHeight={1.25} mb={0} noWrap>
-                {employeeName}
-              </Typography>
-              <Typography variant='body2' color='text.secondary' noWrap>
-                {payrollRun.employee?.employee_number || '-'}
-              </Typography>
-            </div>
-          </Tooltip>
-        </Grid>
-
-        <Grid size={{ xs: 6, md: 1.75 }}>
-          <Tooltip title='Basic Salary'>
-            <Typography>
-              {formatMoney(grossPay)}
-            </Typography>
-          </Tooltip>
-        </Grid>
-
-        <Grid size={{ xs: 6, md: 1.5 }}>
-          <Tooltip title='PAYE'>
-            <Typography>
-              {formatMoney(totalDeductions)}
-            </Typography>
-          </Tooltip>
-        </Grid>
-
-        <Grid size={{ xs: 6, md: 1.75 }}>
-          <Tooltip title='Net Pay (Basic Salary - PAYE)'>
-            <Typography fontWeight={600}>{formatMoney(netPay)}</Typography>
-          </Tooltip>
-        </Grid>
-
-        <Grid size={{ xs: 6, md: 1 }}>
-          <Tooltip title='Tax Rate (PAYE / Basic Salary)'>
-            <Typography>{formatPercent(taxRate)}</Typography>
-          </Tooltip>
-        </Grid>
-
-        <Grid size={{ xs: 6, md: 1 }}>
-          <Tooltip title='Status'>
-            <Chip
-              label={payrollRun.status || '-'}
-              color={statusColor(payrollRun.status || '')}
-              size='small'
-              sx={{ textTransform: 'capitalize' }}
-            />
-          </Tooltip>
-        </Grid>
-
-        <Grid
-          size={{ xs: 12, md: 2 }}
-          textAlign={'end'}
-          onClick={(event) => event.stopPropagation()}
+        <AccordionSummary
+          expandIcon={expanded ? <RemoveIcon /> : <AddIcon />}
+          sx={{
+            px: 3,
+            flexDirection: 'row-reverse',
+            '.MuiAccordionSummary-content': {
+              alignItems: 'center',
+              '&.Mui-expanded': { margin: '12px 0' },
+            },
+            '.MuiAccordionSummary-expandIconWrapper': {
+              borderRadius: 1,
+              border: 1,
+              color: 'text.secondary',
+              transform: 'none',
+              mr: 1,
+              '&.Mui-expanded': {
+                transform: 'none',
+                color: 'primary.main',
+                borderColor: 'primary.main',
+              },
+              '& svg': { fontSize: '1.25rem' },
+            },
+          }}
         >
-          <PayrollRunItemAction payrollRun={payrollRun} />
-        </Grid>
-      </Grid>
+          <Grid container spacing={1} width='100%' sx={{ px: 1 }}>
+            <Grid size={{ xs: 12, md: 8 }}>
+              <Box display='flex' alignItems='center' gap={1}>
+                <ReceiptLongOutlined fontSize='small' color='action' />
+                <Typography variant='body2'>{runLabel}</Typography>
+                {payrollRun.employee && (
+                  <Typography variant='caption' color='text.secondary'>
+                    ({payrollRun.employee.employee_number})
+                  </Typography>
+                )}
+              </Box>
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Box
+                display='flex'
+                alignItems='center'
+                justifyContent={{ xs: 'flex-start', md: 'flex-end' }}
+                gap={1}
+              >
+                <Chip
+                  label={payrollRun.status || 'draft'}
+                  color={statusColor(payrollRun.status || '')}
+                  size='small'
+                  sx={{ textTransform: 'capitalize' }}
+                />
+              </Box>
+            </Grid>
+          </Grid>
+        </AccordionSummary>
+
+        <AccordionDetails sx={{ backgroundColor: 'background.paper', mb: 2 }}>
+          {isLoading ? (
+            <LinearProgress />
+          ) : (
+            <>
+              <PayrollRunActions
+                isDraft={isDraft}
+                isSubmitted={isSubmitted}
+                isApproved={isApproved}
+                isPosted={isPosted}
+                isPaid={isPaid}
+                hasChain={hasChain}
+                payrollRunId={payrollRun.id}
+                payrollRun={payrollRun}
+                previewRows={previewRows} // <-- Add this line
+                onAction={handleAction}
+                isSubmitting={isSubmitting}
+                isDeleting={isDeleting}
+                isApproving={isApproving}
+                isPosting={isPosting}
+                isPaying={isPaying}
+                runLabel={runLabel}
+              />
+
+              <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+                <Tabs value={tabValue} onChange={(_, v) => setTabValue(v)}>
+                  <Tab label='Summary' />
+                  <Tab label='Employees' />
+                  {hasPayslips && <Tab label='Payslips' />}
+                  <Tab label='Approvals' />
+                </Tabs>
+              </Box>
+
+              <TabPanel value={tabValue} index={0}>
+                <SummaryTab
+                  basic_salary={previewTotals?.basic_salary}
+                  employees={previewTotals?.employees}
+                  gross_salary={previewTotals?.gross_salary}
+                  net_salary={previewTotals?.net_salary}
+                  paye={previewTotals?.paye}
+                  total_allowances={previewTotals?.total_allowances}
+                  total_deductions={previewTotals?.total_deductions}
+                />
+              </TabPanel>
+
+              <TabPanel value={tabValue} index={1}>
+                <EmployeesTab
+                  rows={previewRows}
+                  search={employeeSearch}
+                  onSearchChange={setEmployeeSearch}
+                  selectedEmployees={selectedEmployees}
+                  setSelectedEmployees={setSelectedEmployees}
+                  onSimulate={handleSimulateEmployee}
+                  isSimulating={isSimulating}
+                />
+              </TabPanel>
+
+              {hasPayslips && (
+                <TabPanel value={tabValue} index={2}>
+                  <PayslipsTab
+                    payslips={processedPayslips}
+                    search={employeeSearch}
+                    onSearchChange={setEmployeeSearch}
+                    onViewPayslip={handleViewPayslip}
+                    runStatus={payrollRun.status || 'approved'}
+                    isPaid={isPaid}
+                    isPosted={isPosted}
+                  />
+                </TabPanel>
+              )}
+
+              <TabPanel value={tabValue} index={hasPayslips ? 3 : 2}>
+                <ApprovalsTab
+                  hasChain={hasChain}
+                  approvalChain={runDetails?.approval_chain}
+                  approvals={runDetails?.approvals}
+                />
+              </TabPanel>
+            </>
+          )}
+        </AccordionDetails>
+      </Accordion>
+
+      <SimulationDialog
+        open={openSimulationDialog}
+        onClose={() => setOpenSimulationDialog(false)}
+        data={simulationResult}
+      />
+
+      <PayslipViewDialog
+        open={openPayslipDialog}
+        onClose={() => {
+          setOpenPayslipDialog(false);
+          setSelectedPayslip(null);
+        }}
+        payslip={selectedPayslip}
+      />
     </>
   );
 };

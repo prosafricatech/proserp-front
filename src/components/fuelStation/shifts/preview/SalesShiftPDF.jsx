@@ -203,6 +203,16 @@ function SalesShiftPDF({
               {shiftData.creator?.name}
             </Text>
           </View>
+          {!!shiftData.updator && (shiftData.updator?.name !== shiftData.creator?.name) &&
+            <View style={{ flex: 1, padding: 2 }}>
+              <Text style={{ ...pdfStyles.midInfo, color: mainColor }}>
+                Updated By:
+              </Text>
+              <Text style={{ ...pdfStyles.midInfo }}>
+                {shiftData.updator?.name}
+              </Text>
+            </View>
+          }
           {shiftData.fuel_prices?.map((price, index) => {
             const product = productOptions?.find(
               (p) => p.id === price.product_id

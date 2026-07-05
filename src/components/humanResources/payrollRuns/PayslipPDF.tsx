@@ -59,7 +59,7 @@ const PayslipPDF: React.FC<PayslipPDFProps> = ({ payrollRun, organization }) => 
     ? [payrollRun.employee?.first_name, payrollRun.employee?.last_name]
         .filter(Boolean)
         .join(' ')
-    : 'Unknown Employee';
+    : '';
 
   const {
     paye,

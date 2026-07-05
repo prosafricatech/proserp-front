@@ -1324,7 +1324,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
             </Grid>
 
             <Grid size={{ xs: 12, md: 12, lg: 8 }}>
-              <FuelPrices />
+              <FuelPrices watch={watch}/>
             </Grid>
           </Grid>
         </form>
@@ -1367,6 +1367,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
                   index={index}
                   control={control}
                   watch={watch}
+                  errors={errors}
                   lastClosingReadings={lastClosingReadings}
                   handleCashierPumpSelection={handleCashierPumpSelection}
                   getCashierLedgers={getCashierLedgers}
@@ -1419,7 +1420,7 @@ function SaleShiftForm({ SalesShift, setOpenDialog }) {
           </>
         )}
 
-        {activeTab === 2 && <Dipping SalesShift={SalesShift} lastClosingDipping={lastClosingDipping} />}
+        {activeTab === 2 && <Dipping SalesShift={SalesShift} lastClosingDipping={lastClosingDipping} setValue={setValue} watch={watch}/>}
 
         {activeTab === 3 && (
           <ShiftSummary paymentItems={paymentItems} />

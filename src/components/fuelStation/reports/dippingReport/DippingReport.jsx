@@ -1,8 +1,7 @@
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import useProsERPStyles from '@/app/helpers/style-helpers';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
-import { faFileExcel } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { FileExportGrid } from '@/components/sharedComponents/FileExportGrid';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { Div, Span } from '@jumbo/shared';
@@ -15,7 +14,6 @@ import {
   DialogTitle,
   Grid,
   IconButton,
-  LinearProgress,
   Skeleton,
   Stack,
   TextField,
@@ -159,9 +157,24 @@ function DippingReport({ closeDialog }) {
   if (isFetchingStation) {
     return (
       <div style={{ width: '100%', padding: '16px' }}>
-        <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-        <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-        <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+        <Skeleton
+          variant='text'
+          width={180}
+          height={32}
+          style={{ borderRadius: 4, marginLeft: 'auto' }}
+        />
+        <Skeleton
+          variant='rectangular'
+          width='100%'
+          height={48}
+          style={{ borderRadius: 4 }}
+        />
+        <Skeleton
+          variant='rectangular'
+          width='100%'
+          height={32}
+          style={{ borderRadius: 4 }}
+        />
       </div>
     );
   }
@@ -293,22 +306,11 @@ function DippingReport({ closeDialog }) {
                   gap: 1,
                 }}
               >
-                <LoadingButton
-                  size='small'
-                  onClick={handleExcelExport}
-                  // disabled={
-                  //   isFetching ||
-                  //   isExporting ||
-                  //   !reportData ||
-                  //   reportData?.length < 1
-                  // }
-                  loading={isExporting}
-                  sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-                  color='success'
-                  variant='contained'
-                >
-                  <FontAwesomeIcon icon={faFileExcel} color='green' /> Excel
-                </LoadingButton>
+                <FileExportGrid
+                  exportExcel
+                  handlExcelExport={handleExcelExport}
+                  exportingExcel={isExporting}
+                />
                 <LoadingButton
                   loading={isFetching}
                   type='submit'
@@ -325,9 +327,24 @@ function DippingReport({ closeDialog }) {
       <DialogContent>
         {isFetching ? (
           <div style={{ width: '100%', padding: '16px' }}>
-            <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-            <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-            <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+            <Skeleton
+              variant='text'
+              width={180}
+              height={32}
+              style={{ borderRadius: 4, marginLeft: 'auto' }}
+            />
+            <Skeleton
+              variant='rectangular'
+              width='100%'
+              height={48}
+              style={{ borderRadius: 4 }}
+            />
+            <Skeleton
+              variant='rectangular'
+              width='100%'
+              height={32}
+              style={{ borderRadius: 4 }}
+            />
           </div>
         ) : reportData && reportData?.length > 0 ? (
           <PDFContent

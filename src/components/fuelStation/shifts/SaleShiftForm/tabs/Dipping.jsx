@@ -1,12 +1,10 @@
 import { useState, useEffect, useContext } from 'react';
 import { Box, Card, CardContent, Grid, TextField, Switch, Typography } from '@mui/material';
-import { useFormContext } from 'react-hook-form';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import { StationFormContext } from '../../SalesShifts';
 
-function Dipping({SalesShift, lastClosingDipping}) {
-    const { setValue, watch } = useFormContext();
+function Dipping({SalesShift, lastClosingDipping, setValue, watch}) {
     const [openSwitch, setOpenSwitch] = useState(!!SalesShift?.opening_dipping);
     const [closingSwitch, setClosingSwitch] = useState(!!SalesShift?.closing_dipping);
     const {activeStation} = useContext(StationFormContext);

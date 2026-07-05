@@ -1,14 +1,62 @@
 export interface PayrollRunType {
   id: number;
   payroll_period_id: number;
+  cost_center_id?: number | null;
   employee_id: number;
   employee_contract_id: number;
   basic_salary: number;
+  gross_salary?: number;
   paye: number;
+  total_allowances?: number;
+  total_deductions?: number;
+  payslip_count?: number;
+  employee_count?: number;
+  net_salary?: number;
+  requires_approval?: boolean;
+  payroll_period?: {
+    id: number;
+    name?: string;
+    month?: number;
+    year?: number;
+    start_date?: string;
+    end_date?: string;
+  };
+  approval_chain_id?: number | null;
   status?: string;
   created_by?: number;
   created_at?: string;
   updated_at?: string;
+  designation?: string;
+  cost_center?: {
+    id?: number;
+    name?: string;
+  } | null;
+  journal_voucher?: {
+    id?: number;
+    voucher_no?: string;
+  };
+  payment?: {
+    id?: number;
+    voucher_no?: string;
+  };
+  approval_chain?: {
+    id?: number;
+    levels?: Array<{
+      id: number;
+      name?: string;
+      level_name?: string;
+      level?: number;
+      status?: string;
+    }>;
+  } | null;
+  approvals?: Array<{
+    id?: number;
+    chain_level_id?: number;
+    approval_chain_level_id?: number;
+    status?: string;
+    remarks?: string;
+    approval_date?: string;
+  }>;
   employee?: {
     id: number;
     first_name?: string;

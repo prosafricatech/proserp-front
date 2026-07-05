@@ -1,232 +1,285 @@
 'use client';
 
-import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
-import { JumboDdMenu } from '@jumbo/components';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
-import { MenuItemProps } from '@jumbo/types';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import {
   DeleteOutlined,
-  MoreHorizOutlined,
-  ReceiptLongOutlined,
+  EditOutlined,
+  VisibilityOutlined,
 } from '@mui/icons-material';
-import { Tooltip } from '@mui/material';
 import {
-  useMutation,
-  useQueries,
-  useQuery,
-  useQueryClient,
-} from '@tanstack/react-query';
+  Dialog,
+  IconButton,
+  LinearProgress,
+  Tooltip,
+  useMediaQuery,
+} from '@mui/material';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
-import { useState } from 'react';
+import { lazy, useEffect, useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
-import { PayrollRunType } from '../payrollRuns/PayrollRunType';
-import { getPayslipCalculations } from '../payrollRuns/payslipCalculations';
+import PayrollPeriodNewViewDialog, {
+  PayrollPeriodNewViewDialogProp,
+} from './PayrollPeriodNewViewDialog';
 import { PayrollPeriodType } from './PayrollPeriodType';
-import SalarySheetDialog from './SalarySheetDialog';
 
-type SalaryTypeItem = {
-  id?: number;
-  name?: string;
-  category?: string;
+const PayrollPeriodForm = lazy(() => import('./PayrollPeriodForm'));
+
+const getErrorMessage = (error: any) => {
+  const validationErrors = error?.response?.data?.validation_errors;
+  if (validationErrors && typeof validationErrors === 'object') {
+    const first = Object.values(validationErrors)[0] as any;
+    return Array.isArray(first) ? first[0] : String(first);
+  }
+  return (
+    error?.response?.data?.message || error?.message || 'Something went wrong'
+  );
 };
 
-const extractList = (payload: any): SalaryTypeItem[] => {
-  if (Array.isArray(payload)) return payload;
-  if (Array.isArray(payload?.data)) return payload.data;
-  if (Array.isArray(payload?.data?.data)) return payload.data.data;
-  return [];
-};
-
-const MONTH_NAMES = [
-  '',
-  'January',
-  'February',
-  'March',
-  'April',
-  'May',
-  'June',
-  'July',
-  'August',
-  'September',
-  'October',
-  'November',
-  'December',
-];
+interface PayrollPeriodItemActionProps {
+  payrollPeriod: PayrollPeriodType;
+  hasRuns?: boolean;
+}
 
 const PayrollPeriodItemAction = ({
   payrollPeriod,
-}: {
-  payrollPeriod: PayrollPeriodType;
-}) => {
-  const [openSalarySheetDialog, setOpenSalarySheetDialog] = useState(false);
+  hasRuns = false,
+}: PayrollPeriodItemActionProps) => {
   const { showDialog, hideDialog } = useJumboDialog();
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
-  const { authOrganization } = useJumboAuth();
-  const organization = authOrganization?.organization;
+  const { theme } = useJumboTheme();
+  const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
+  const [openEditDialog, setOpenEditDialog] = useState(false);
+  const [openPreviewDialog, setOpenPreviewDialog] = useState(false);
+  const [salarySheetData, setSalarySheetData] = useState<any>(null);
+  const [periodData, setPeriodData] =
+    useState<PayrollPeriodNewViewDialogProp | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [fetchingRows, setFetchingRows] = useState(false);
 
-  const [isExporting, setIsExporting] = useState(false);
-
-  const { mutate: deletePayrollPeriod } = useMutation({
-    mutationFn: humanResourcesServices.deletePayrollPeriod,
+  // Delete mutation
+  const { mutate: deletePeriod, isPending: isDeleting } = useMutation({
+    mutationFn: () =>
+      humanResourcesServices.deletePayrollPeriod(payrollPeriod.id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['payrollPeriods'] });
-      enqueueSnackbar('Payroll Period Deleted Successfully', {
+      enqueueSnackbar('Payroll period deleted successfully', {
         variant: 'success',
       });
+      queryClient.invalidateQueries({ queryKey: ['payrollPeriods'] });
     },
     onError: (error: any) => {
-      let message = 'Something went wrong';
-
-      if (
-        typeof error === 'object' &&
-        error !== null &&
-        'response' in error &&
-        typeof (error as any).response?.data?.message === 'string'
-      ) {
-        message = (error as any).response.data.message;
-      } else if (error instanceof Error) {
-        message = error.message;
-      }
+      const message =
+        error?.response?.data?.message || 'Failed to delete period';
       enqueueSnackbar(message, { variant: 'error' });
     },
   });
 
-  const status = (payrollPeriod.status || '').toLowerCase();
-  const isPaid = status === 'paid';
-  const isApproved = status === 'approved';
-  const canViewSalarySheet = isApproved || isPaid;
-  const isDeleteDisabled = isApproved || isPaid;
+  useEffect(() => {
+    const fetchAllData = async () => {
+      if (!payrollPeriod?.id) return;
 
-  const { data: runsResponse } = useQuery({
-    queryKey: ['payrollRunsForSalarySheet', payrollPeriod.id],
-    queryFn: () =>
-      humanResourcesServices.getPayrollRunsList({
-        payroll_period_id: payrollPeriod.id,
-        page: 1,
-        limit: 500,
-      }),
-    enabled: openSalarySheetDialog,
-  });
+      setIsLoading(true);
+      setFetchingRows(true);
 
-  const runs: PayrollRunType[] = runsResponse?.data || [];
+      try {
+        // Fetch period details
+        const periodResponse = await humanResourcesServices.showPayrollPeriod(
+          payrollPeriod.id
+        );
+        const period = periodResponse?.period;
+        const runs = periodResponse?.runs;
 
-  const { data: allowanceTypesResponse } = useQuery({
-    queryKey: ['allowanceTypesForSalarySheet'],
-    queryFn: () =>
-      humanResourcesServices.getAllowanceTypesList({ page: 1, limit: 500 }),
-    enabled: openSalarySheetDialog,
-    staleTime: 1000 * 60,
-  });
+        const employeeDeductions = runs.flatMap((run: any) =>
+          run?.payslips?.flatMap((slip: any) =>
+            slip.deductions?.map((deduction: any) => ({
+              ...deduction,
+              employee_contract_id: slip.contract?.id,
+            }))
+          )
+        );
 
-  const { data: deductionTypesResponse } = useQuery({
-    queryKey: ['deductionTypesForSalarySheet'],
-    queryFn: () =>
-      humanResourcesServices.getDeductionTypesList({ page: 1, limit: 500 }),
-    enabled: openSalarySheetDialog,
-    staleTime: 1000 * 60,
-  });
+        const employeeAllowances = runs.flatMap((run: any) =>
+          run?.payslips?.flatMap((slip: any) =>
+            slip.allowances?.map((allowance: any) => ({
+              ...allowance,
+              employee_contract_id: slip.contract?.id,
+            }))
+          )
+        );
 
-  const { data: contributionTypesResponse } = useQuery({
-    queryKey: ['contributionTypesForSalarySheet'],
-    queryFn: () =>
-      humanResourcesServices.getEmployerContributionTypesList({
-        page: 1,
-        limit: 500,
-      }),
-    enabled: openSalarySheetDialog,
-    staleTime: 1000 * 60,
-  });
+        const employeecontributions = runs.flatMap((run: any) =>
+          run?.payslips?.flatMap((slip: any) =>
+            slip.employer_contributions?.map((contribution: any) => ({
+              ...contribution,
+              employee_contract_id: slip.contract?.id,
+            }))
+          )
+        );
 
-  const allowanceTypes = extractList(allowanceTypesResponse);
-  const deductionTypes = extractList(deductionTypesResponse);
-  const contributionTypes = extractList(contributionTypesResponse);
+        const getUniqueTypes = (value: Array<any>) => {
+          const filteredDeductions = Array.from(
+            new Map(
+              value.map((itm) => [
+                itm?.deduction_type_id ??
+                  itm?.allowance_type_id ??
+                  itm?.employer_contribution_type_id ??
+                  itm?.label,
+                itm,
+              ])
+            ).values()
+          );
+          return filteredDeductions;
+        };
 
-  const runDetailsQueries = useQueries({
-    queries: runs.map((run) => ({
-      queryKey: ['showPayrollRun', run.id],
-      queryFn: () => humanResourcesServices.showPayrollRun(String(run.id)),
-      enabled: openSalarySheetDialog && Boolean(run.id),
-    })),
-  });
+        const unique_deductions_types = getUniqueTypes(employeeDeductions);
+        const unique_allowances_types = getUniqueTypes(employeeAllowances);
+        const unique_contributions_types = getUniqueTypes(
+          employeecontributions
+        );
 
-  const salarySheetRows = runs.map((run, index) => {
-    const queryData = runDetailsQueries[index]?.data as any;
-    const detailedRun = queryData?.data ?? queryData ?? run;
-    return {
-      run: detailedRun,
-      computed: getPayslipCalculations(detailedRun),
-    };
-  });
+        const hasAllowances = unique_allowances_types.length > 0;
+        const hasDeductions = unique_deductions_types.length > 0;
+        const hasContributions = unique_contributions_types.length > 0;
 
-  const periodLabel = `${MONTH_NAMES[payrollPeriod.month] ?? payrollPeriod.month} ${payrollPeriod.year}`;
+        const hasTypes = {
+          hasAllowances: hasAllowances,
+          hasDeductions: hasDeductions,
+          hasContributions: hasContributions,
+        };
+        const employeetypes = {
+          employeeDeductions: employeeDeductions,
+          employeeAllowances: employeeAllowances,
+          employeecontributions: employeecontributions,
+        };
 
-  const menuItems = [
-    ...(canViewSalarySheet
-      ? [
-          {
-            icon: <ReceiptLongOutlined color='primary' />,
-            title: 'Salary Sheet',
-            action: 'salary-sheet',
-          },
-        ]
-      : []),
-    ...(!isDeleteDisabled
-      ? [
-          {
-            icon: <DeleteOutlined color='error' />,
-            title: 'Delete',
-            action: 'delete',
-          },
-        ]
-      : []),
-  ];
+        const uniqueTypes = {
+          unique_allowances_types: unique_allowances_types,
+          unique_deductions_types: unique_deductions_types,
+          unique_contributions_types: unique_contributions_types,
+        };
 
-  const handleItemAction = (menuItem: MenuItemProps) => {
-    switch (menuItem.action) {
-      case 'delete':
-        if (isDeleteDisabled) return;
-        showDialog({
-          title: 'Confirm Delete',
-          content: 'Are you sure you want to delete this Payroll Period?',
-          onYes: () => {
-            hideDialog();
-            deletePayrollPeriod(payrollPeriod.id);
-          },
-          onNo: () => hideDialog(),
-          variant: 'confirm',
+        setPeriodData({
+          period: period,
+          runs: runs,
+          hasTypes: hasTypes,
+          employeeTypes: employeetypes,
+          uniqueTypes: uniqueTypes,
+          isLoading: false,
         });
-        break;
-      case 'salary-sheet':
-        if (!canViewSalarySheet) return;
-        setOpenSalarySheetDialog(true);
-        break;
-      default:
-        break;
+
+        setFetchingRows(false);
+        setIsLoading(false);
+
+        // Open dialog immediately after data is set
+        setOpenPreviewDialog(true);
+      } catch (error: any) {
+        console.error(error);
+        enqueueSnackbar(getErrorMessage(error), { variant: 'error' });
+        setIsLoading(false);
+        setFetchingRows(false);
+      }
+    };
+
+    if (isLoading && !openPreviewDialog) {
+      fetchAllData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [payrollPeriod?.id, isLoading]); // Add isLoading to dependencies
+
+  const handleDelete = () => {
+    if (hasRuns) {
+      enqueueSnackbar('Cannot delete period with existing runs', {
+        variant: 'error',
+      });
+      return;
+    }
+
+    showDialog({
+      title: 'Delete Payroll Period',
+      content: `Delete ${payrollPeriod.year} - ${payrollPeriod.month}?`,
+      onYes: () => {
+        hideDialog();
+        deletePeriod();
+      },
+      onNo: () => hideDialog(),
+      variant: 'confirm',
+    });
   };
+
+  const canEdit = !hasRuns || payrollPeriod.status?.toLowerCase() === 'draft';
 
   return (
     <>
-      <JumboDdMenu
-        icon={
-          <Tooltip title='Actions'>
-            <MoreHorizOutlined fontSize='small' />
-          </Tooltip>
-        }
-        menuItems={menuItems}
-        onClickCallback={handleItemAction}
-      />
+      <Dialog
+        open={openEditDialog}
+        onClose={() => setOpenEditDialog(false)}
+        fullWidth
+        maxWidth='sm'
+        fullScreen={belowLargeScreen}
+      >
+        {openEditDialog && (
+          <PayrollPeriodForm
+            setOpenDialog={setOpenEditDialog}
+            payrollPeriod={payrollPeriod}
+          />
+        )}
+      </Dialog>
 
-      <SalarySheetDialog
-        open={openSalarySheetDialog}
-        onClose={() => setOpenSalarySheetDialog(false)}
-        periodLabel={periodLabel}
-        rows={salarySheetRows}
-        allowanceTypes={allowanceTypes}
-        deductionTypes={deductionTypes}
-        contributionTypes={contributionTypes}
-      />
+      {/* Salary Sheet Dialog */}
+      {!openPreviewDialog && isLoading && (
+        <Dialog open={!openPreviewDialog && isLoading} fullWidth>
+          <LinearProgress />
+        </Dialog>
+      )}
+      {openPreviewDialog && !isLoading && (
+        <PayrollPeriodNewViewDialog
+          open={openPreviewDialog && !isLoading}
+          onClose={() => {
+            setOpenPreviewDialog(false);
+            setSalarySheetData(null);
+            setPeriodData(null);
+          }}
+          period={periodData?.period}
+          runs={periodData?.runs}
+          hasTypes={periodData?.hasTypes}
+          employeeTypes={periodData?.employeeTypes}
+          uniqueTypes={periodData?.uniqueTypes}
+          isLoading={isLoading}
+        />
+      )}
+
+      <Tooltip title='Preview Period Run'>
+        <IconButton
+          size='small'
+          onClick={() => {
+            setIsLoading(true);
+          }}
+        >
+          <VisibilityOutlined fontSize='small' />
+        </IconButton>
+      </Tooltip>
+
+      {canEdit && (
+        <Tooltip title='Edit'>
+          <IconButton size='small' onClick={() => setOpenEditDialog(true)}>
+            <EditOutlined fontSize='small' />
+          </IconButton>
+        </Tooltip>
+      )}
+
+      {!hasRuns && (
+        <Tooltip title='Delete'>
+          <IconButton
+            size='small'
+            onClick={handleDelete}
+            color='error'
+            disabled={isDeleting}
+          >
+            <DeleteOutlined fontSize='small' />
+          </IconButton>
+        </Tooltip>
+      )}
     </>
   );
 };

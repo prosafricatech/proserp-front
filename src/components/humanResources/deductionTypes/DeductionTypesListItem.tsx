@@ -27,7 +27,7 @@ const DeductionTypesListItem = ({
         alignItems={'center'}
         container
       >
-        <Grid size={{ xs: 12, md: 2.2 }}>
+        <Grid size={{ xs: 12, md: 3.2 }}>
           <Tooltip title='Name'>
             <Typography variant='h6' fontSize={14} lineHeight={1.25} mb={0}>
               {deductionType.name}

@@ -1,21 +1,37 @@
-'use client'
-import { DeleteOutlined, DownloadOutlined, EditOutlined, MoreHorizOutlined, VisibilityOutlined } from '@mui/icons-material';
-import { Dialog, DialogContent, LinearProgress, Skeleton, Tooltip, useMediaQuery } from '@mui/material';
-import { useSnackbar } from 'notistack';
-import React, { lazy, useState } from 'react';
-import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
-import priceListServices from './priceLists-services';
-import PriceListPDF from './PriceListPDF';
-import PDFContent from '../../pdf/PDFContent';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { PERMISSIONS } from '@/utilities/constants/permissions';
-import UnauthorizedAccess from '@/shared/Information/UnauthorizedAccess';
+'use client';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
-import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
+import UnauthorizedAccess from '@/shared/Information/UnauthorizedAccess';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { JumboDdMenu } from '@jumbo/components';
-import { PriceList } from './PriceListType';
+import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { MenuItemProps } from '@jumbo/types';
+import {
+  DeleteOutlined,
+  DownloadOutlined,
+  EditOutlined,
+  HighlightOff,
+  MoreHorizOutlined,
+  VisibilityOutlined,
+} from '@mui/icons-material';
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  Skeleton,
+  Stack,
+  Tooltip,
+  useMediaQuery,
+} from '@mui/material';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useSnackbar } from 'notistack';
+import React, { lazy, useState } from 'react';
+import PDFContent from '../../pdf/PDFContent';
+import PriceListPDF from './PriceListPDF';
+import priceListServices from './priceLists-services';
+import { PriceList } from './PriceListType';
 
 const PriceListForm = lazy(() => import('./form/PriceListForm'));
 
@@ -34,37 +50,80 @@ interface PriceListsItemActionProps {
   priceList: PriceList;
 }
 
-const EditForm: React.FC<EditFormProps & { fuelPriceLists?: boolean }> = ({ fuelPriceLists, priceList, toggleOpen }) => {
+const EditForm: React.FC<EditFormProps & { fuelPriceLists?: boolean }> = ({
+  fuelPriceLists,
+  priceList,
+  toggleOpen,
+}) => {
   const { data, isFetching } = useQuery({
     queryKey: ['priceList', { id: priceList.id }],
     queryFn: () => priceListServices.show(priceList.id),
   });
 
   if (isFetching) {
-        return (
+    return (
       <div style={{ width: '100%', padding: '16px' }}>
-        <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-        <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-        <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+        <Skeleton
+          variant='text'
+          width={180}
+          height={32}
+          style={{ borderRadius: 4, marginLeft: 'auto' }}
+        />
+        <Skeleton
+          variant='rectangular'
+          width='100%'
+          height={48}
+          style={{ borderRadius: 4 }}
+        />
+        <Skeleton
+          variant='rectangular'
+          width='100%'
+          height={32}
+          style={{ borderRadius: 4 }}
+        />
       </div>
     );
   }
 
-  return <PriceListForm fuelPriceLists={fuelPriceLists} priceList={data} toggleOpen={toggleOpen} />;
+  return (
+    <PriceListForm
+      fuelPriceLists={fuelPriceLists}
+      priceList={data}
+      toggleOpen={toggleOpen}
+    />
+  );
 };
 
-const DocumentDialog: React.FC<DocumentDialogProps> = ({ priceList, authObject }) => {
+const DocumentDialog: React.FC<DocumentDialogProps> = ({
+  priceList,
+  authObject,
+}) => {
   const { data, isLoading } = useQuery({
     queryKey: ['priceList', { id: priceList.id }],
     queryFn: () => priceListServices.show(priceList.id),
   });
 
   if (isLoading) {
-        return (
+    return (
       <div style={{ width: '100%', padding: '16px' }}>
-        <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-        <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-        <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+        <Skeleton
+          variant='text'
+          width={180}
+          height={32}
+          style={{ borderRadius: 4, marginLeft: 'auto' }}
+        />
+        <Skeleton
+          variant='rectangular'
+          width='100%'
+          height={48}
+          style={{ borderRadius: 4 }}
+        />
+        <Skeleton
+          variant='rectangular'
+          width='100%'
+          height={32}
+          style={{ borderRadius: 4 }}
+        />
       </div>
     );
   }
@@ -74,7 +133,9 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({ priceList, authObject }
       {authObject.checkOrganizationPermission(PERMISSIONS.PRICE_LISTS_READ) ? (
         <PDFContent
           fileName={`PriceList From ${readableDate(priceList.effective_date)}`}
-          document={<PriceListPDF authObject={authObject as any} priceList={data}/>}
+          document={
+            <PriceListPDF authObject={authObject as any} priceList={data} />
+          }
         />
       ) : (
         <UnauthorizedAccess />
@@ -83,7 +144,10 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({ priceList, authObject }
   );
 };
 
-const PriceListsItemAction: React.FC<PriceListsItemActionProps> = ({ fuelPriceLists, priceList }) => {
+const PriceListsItemAction: React.FC<PriceListsItemActionProps> = ({
+  fuelPriceLists,
+  priceList,
+}) => {
   const [openEditDialog, setOpenEditDialog] = useState<boolean>(false);
   const [openDocumentDialog, setOpenDocumentDialog] = useState<boolean>(false);
   const { showDialog, hideDialog } = useJumboDialog();
@@ -110,18 +174,22 @@ const PriceListsItemAction: React.FC<PriceListsItemActionProps> = ({ fuelPriceLi
     {
       icon: belowLargeScreen ? <DownloadOutlined /> : <VisibilityOutlined />,
       title: belowLargeScreen ? 'Download' : 'View',
-      action: 'open'
+      action: 'open',
     },
-    checkOrganizationPermission(PERMISSIONS.PRICE_LISTS_EDIT) ? {
-      icon: <EditOutlined />,
-      title: 'Edit',
-      action: 'edit'
-    } : null,
-    checkOrganizationPermission(PERMISSIONS.PRICE_LISTS_DELETE) ? {
-      icon: <DeleteOutlined color='error' />,
-      title: 'Delete',
-      action: 'delete'
-    } : null
+    checkOrganizationPermission(PERMISSIONS.PRICE_LISTS_EDIT)
+      ? {
+          icon: <EditOutlined />,
+          title: 'Edit',
+          action: 'edit',
+        }
+      : null,
+    checkOrganizationPermission(PERMISSIONS.PRICE_LISTS_DELETE)
+      ? {
+          icon: <DeleteOutlined color='error' />,
+          title: 'Delete',
+          action: 'delete',
+        }
+      : null,
   ].filter(Boolean) as MenuItemProps[];
 
   const handleItemAction = (menuItem: MenuItemProps) => {
@@ -161,21 +229,50 @@ const PriceListsItemAction: React.FC<PriceListsItemActionProps> = ({ fuelPriceLi
         fullWidth
         fullScreen={belowLargeScreen}
         onClose={handleCloseDialog}
-        maxWidth={(openDocumentDialog || fuelPriceLists) ? "md" : "lg"}
+        maxWidth={openDocumentDialog || fuelPriceLists ? 'md' : 'lg'}
       >
-        {openEditDialog && (checkOrganizationPermission(PERMISSIONS.PRICE_LISTS_EDIT) ? (
-          <EditForm fuelPriceLists={fuelPriceLists} priceList={priceList} toggleOpen={setOpenEditDialog} />
-        ) : (
-          <UnauthorizedAccess />
-        ))}
+        <DialogTitle>
+          <Stack
+            width={'100%'}
+            display={'flex'}
+            alignItems={'center'}
+            justifyContent={'end'}
+            my={2}
+            sx={{ backgroundColor: 'red' }}
+          >
+            {belowLargeScreen && (
+              <Tooltip title='Close'>
+                <IconButton
+                  size='small'
+                  sx={{ position: 'absolute', right: 20, top: 10 }}
+                  onClick={() => setOpenDocumentDialog(false)}
+                >
+                  <HighlightOff color='primary' />
+                </IconButton>
+              </Tooltip>
+            )}
+          </Stack>
+        </DialogTitle>
+        {openEditDialog &&
+          (checkOrganizationPermission(PERMISSIONS.PRICE_LISTS_EDIT) ? (
+            <EditForm
+              fuelPriceLists={fuelPriceLists}
+              priceList={priceList}
+              toggleOpen={setOpenEditDialog}
+            />
+          ) : (
+            <UnauthorizedAccess />
+          ))}
 
-        {openDocumentDialog && <DocumentDialog priceList={priceList} authObject={authObject} />}
+        {openDocumentDialog && (
+          <DocumentDialog priceList={priceList} authObject={authObject} />
+        )}
       </Dialog>
 
       <JumboDdMenu
         icon={
-          <Tooltip title="Actions">
-            <MoreHorizOutlined fontSize="small" />
+          <Tooltip title='Actions'>
+            <MoreHorizOutlined fontSize='small' />
           </Tooltip>
         }
         menuItems={menuItems}

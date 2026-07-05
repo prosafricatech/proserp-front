@@ -15,7 +15,6 @@ import {
   Box,
   Alert
 } from '@mui/material';
-import { useFormContext } from 'react-hook-form';
 import { useContext, useEffect, useMemo } from 'react';
 import { StationFormContext } from '../../SalesShifts';
 
@@ -28,13 +27,11 @@ function PumpReadings({
   setLocalPumpReadings,
   getAvailablePumpsForCashier,
   lastClosingReadings,
-  handleCashierPumpSelection
+  handleCashierPumpSelection,
+  formSetValue, 
+  errors,
+  watch
 }) {
-  const { 
-    setValue: formSetValue, 
-    errors,
-    watch
-  } = useFormContext();
   
   const {activeStation} = useContext(StationFormContext);
   const {fuel_pumps, tanks, products } = activeStation;

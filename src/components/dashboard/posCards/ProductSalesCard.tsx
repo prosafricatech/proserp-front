@@ -23,6 +23,12 @@ import {
   Select,
   Skeleton,
   Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   TextField,
   Tooltip,
   Typography,
@@ -101,6 +107,7 @@ function ProductSalesCard() {
   const { theme } = useJumboTheme();
   const isDark = theme.type === 'dark';
   const smallScreen = useMediaQuery(theme.breakpoints.down('md'));
+  const largeScreen = useMediaQuery(theme.breakpoints.up('lg'));
 
   const COLORS = {
     quantity: theme.palette.text.primary,
@@ -461,135 +468,285 @@ function ProductSalesCard() {
         }}
       >
         {smallScreen && <Actions />}
-        <Grid
-          container
-          columnSpacing={1}
-          mt={smallScreen ? 2 : 0}
-          mb={1}
-          justifyContent={'center'}
-        >
-          <Grid size={{ xs: 12, md: 6, lg: 3.5 }}>
-            <Typography sx={{ color: COLORS.default }}>
-              -{' '}
-              {topOptions.find((option) => option.value === params.top)?.name ||
-                params.top}
-            </Typography>
-          </Grid>
-          <Grid size={{ xs: 6, lg: 1.5 }} textAlign={'end'}>
-            <Typography sx={{ color: COLORS.quantity }}>- Quantity</Typography>
-          </Grid>
-          <Grid size={{ xs: 6, lg: 2 }} textAlign={'end'}>
-            <Typography sx={{ color: COLORS.revenue }}>- Revenue</Typography>
-          </Grid>
-          <Grid size={{ xs: 6, lg: 2 }} textAlign={'end'}>
-            <Typography sx={{ color: COLORS.cogs }}>- CoGS</Typography>
-          </Grid>
-          <Grid size={{ xs: 6, lg: 2 }} textAlign={'end'}>
-            <Typography sx={{ color: COLORS.profit }}>
-              - Profit & Margin
-            </Typography>
-          </Grid>
-          <Grid size={{ xs: 6, lg: 2 }} textAlign={'end'}></Grid>
-        </Grid>
-        <JumboScrollbar
-          autoHeight
-          autoHeightMin={
-            !isLoading && popularProducts.length < 1
-              ? smallScreen
-                ? 400
-                : 300
-              : smallScreen
-                ? 0
-                : 173
-          }
-          autoHide
-          autoHideDuration={200}
-          autoHideTimeout={500}
-        >
-          <List>
-            {isLoading ? (
-              <Skeleton
-                variant='rectangular'
-                width='100%'
-                height={40}
-                sx={{ borderRadius: 2 }}
-              />
-            ) : popularProducts.length > 0 ? (
-              popularProducts.map((product: any, index: number) => (
-                <React.Fragment key={index}>
-                  <ListItem
-                    sx={{
-                      cursor: 'pointer',
-                      borderTop: 1,
-                      borderColor: 'divider',
-                      '&:hover': {
-                        bgcolor: 'action.hover',
-                      },
-                    }}
-                  >
-                    <Grid container width={'100%'}>
-                      <Grid size={{ xs: 12, md: 6, lg: 3.5 }}>
-                        <Tooltip title={'Product Name'}>
-                          <Typography sx={{ color: COLORS.default }}>
-                            {product.name}
-                          </Typography>
-                        </Tooltip>
-                      </Grid>
-                      <Grid size={{ xs: 6, lg: 1.5 }} textAlign={'end'}>
-                        <Tooltip title={'Quantity Sold'}>
-                          <Typography sx={{ color: COLORS.quantity }}>
-                            {`${product.unit_symbol} ${product.quantity.toLocaleString()}`}
-                          </Typography>
-                        </Tooltip>
-                      </Grid>
-                      <Grid size={{ xs: 6, lg: 2 }} textAlign={'end'}>
-                        <Tooltip title={'Sales'}>
-                          <Typography sx={{ color: COLORS.revenue }}>
-                            {product.revenue.toLocaleString('en-US', {
-                              maximumFractionDigits: 2,
-                              minimumFractionDigits: 2,
-                            })}
-                          </Typography>
-                        </Tooltip>
-                      </Grid>
-                      <Grid size={{ xs: 6, lg: 2 }} textAlign={'end'}>
-                        <Tooltip title={'CoGS'}>
-                          <Typography sx={{ color: COLORS.cogs }}>
-                            {product.cogs.toLocaleString('en-US', {
-                              maximumFractionDigits: 2,
-                              minimumFractionDigits: 2,
-                            })}
-                          </Typography>
-                        </Tooltip>
-                      </Grid>
-                      <Grid size={{ xs: 6, lg: 2 }} textAlign={'end'}>
-                        <Tooltip title={'Profit'}>
-                          <Typography sx={{ color: COLORS.profit }}>
-                            {product.profit.toLocaleString('en-US', {
-                              maximumFractionDigits: 2,
-                              minimumFractionDigits: 2,
-                            })}
-                          </Typography>
-                        </Tooltip>
-                      </Grid>
-                      <Grid size={{ xs: 6, lg: 1 }} textAlign={'end'}>
-                        <Tooltip title={'Margin'}>
-                          <Typography sx={{ color: COLORS.margin }}>
-                            {`${((product.profit * 100) / product.revenue).toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}%`}
-                          </Typography>
-                        </Tooltip>
-                      </Grid>
-                    </Grid>
-                  </ListItem>
-                </React.Fragment>
-              ))
-            ) : (
-              <Alert variant={'outlined'} severity={'info'}>
-                No product data was found
-              </Alert>
-            )}
-          </List>
-        </JumboScrollbar>
+        {!largeScreen ? (
+          <>
+            <Grid
+              container
+              columnSpacing={1}
+              mt={smallScreen ? 2 : 0}
+              mb={1}
+              justifyContent={'center'}
+            >
+              <Grid size={{ xs: 12, md: 6, lg: 3.5 }}>
+                <Typography sx={{ color: COLORS.default }}>
+                  {topOptions.find((option) => option.value === params.top)
+                    ?.name || params.top}
+                </Typography>
+              </Grid>
+              <Grid size={{ xs: 6, lg: 1.5 }} textAlign={'end'}>
+                <Typography sx={{ color: COLORS.quantity }}>
+                  Quantity
+                </Typography>
+              </Grid>
+              <Grid size={{ xs: 6, lg: 2 }} textAlign={'end'}>
+                <Typography sx={{ color: COLORS.revenue }}>Revenue</Typography>
+              </Grid>
+              <Grid size={{ xs: 6, lg: 2 }} textAlign={'end'}>
+                <Typography sx={{ color: COLORS.cogs }}>CoGS</Typography>
+              </Grid>
+              <Grid size={{ xs: 6, lg: 2 }} textAlign={'end'}>
+                <Typography sx={{ color: COLORS.profit }}>
+                  Profit & Margin
+                </Typography>
+              </Grid>
+              <Grid size={{ xs: 6, lg: 2 }} textAlign={'end'}></Grid>
+            </Grid>
+
+            <JumboScrollbar
+              autoHeight
+              autoHeightMin={
+                !isLoading && popularProducts.length < 1
+                  ? smallScreen
+                    ? 400
+                    : 300
+                  : smallScreen
+                    ? 0
+                    : 173
+              }
+              autoHide
+              autoHideDuration={200}
+              autoHideTimeout={500}
+            >
+              <List>
+                {isLoading ? (
+                  <Skeleton
+                    variant='rectangular'
+                    width='100%'
+                    height={40}
+                    sx={{ borderRadius: 2 }}
+                  />
+                ) : popularProducts.length > 0 ? (
+                  popularProducts.map((product: any, index: number) => (
+                    <React.Fragment key={index}>
+                      <ListItem
+                        sx={{
+                          cursor: 'pointer',
+                          borderTop: 1,
+                          borderColor: 'divider',
+                          '&:hover': {
+                            bgcolor: 'action.hover',
+                          },
+                        }}
+                      >
+                        <Grid container width={'100%'}>
+                          <Grid size={{ xs: 12, md: 6, lg: 3.5 }}>
+                            <Tooltip title={'Product Name'}>
+                              <Typography sx={{ color: COLORS.default }}>
+                                {product.name}
+                              </Typography>
+                            </Tooltip>
+                          </Grid>
+                          <Grid size={{ xs: 6, lg: 1.5 }} textAlign={'end'}>
+                            <Tooltip title={'Quantity Sold'}>
+                              <Typography sx={{ color: COLORS.quantity }}>
+                                {`${product.unit_symbol} ${product.quantity.toLocaleString()}`}
+                              </Typography>
+                            </Tooltip>
+                          </Grid>
+                          <Grid size={{ xs: 6, lg: 2 }} textAlign={'end'}>
+                            <Tooltip title={'Sales'}>
+                              <Typography sx={{ color: COLORS.revenue }}>
+                                {product.revenue.toLocaleString('en-US', {
+                                  maximumFractionDigits: 2,
+                                  minimumFractionDigits: 2,
+                                })}
+                              </Typography>
+                            </Tooltip>
+                          </Grid>
+                          <Grid size={{ xs: 6, lg: 2 }} textAlign={'end'}>
+                            <Tooltip title={'CoGS'}>
+                              <Typography sx={{ color: COLORS.cogs }}>
+                                {product.cogs.toLocaleString('en-US', {
+                                  maximumFractionDigits: 2,
+                                  minimumFractionDigits: 2,
+                                })}
+                              </Typography>
+                            </Tooltip>
+                          </Grid>
+                          <Grid size={{ xs: 6, lg: 2 }} textAlign={'end'}>
+                            <Tooltip title={'Profit'}>
+                              <Typography sx={{ color: COLORS.profit }}>
+                                {product.profit.toLocaleString('en-US', {
+                                  maximumFractionDigits: 2,
+                                  minimumFractionDigits: 2,
+                                })}
+                              </Typography>
+                            </Tooltip>
+                          </Grid>
+                          <Grid size={{ xs: 6, lg: 1 }} textAlign={'end'}>
+                            <Tooltip title={'Margin'}>
+                              <Typography sx={{ color: COLORS.margin }}>
+                                {`${((product.profit * 100) / product.revenue).toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}%`}
+                              </Typography>
+                            </Tooltip>
+                          </Grid>
+                        </Grid>
+                      </ListItem>
+                    </React.Fragment>
+                  ))
+                ) : (
+                  <Alert variant={'outlined'} severity={'info'}>
+                    No product data was found
+                  </Alert>
+                )}
+              </List>
+            </JumboScrollbar>
+          </>
+        ) : (
+          <JumboScrollbar
+            autoHeight
+            autoHeightMin={
+              !isLoading && popularProducts.length < 1
+                ? smallScreen
+                  ? 400
+                  : 300
+                : smallScreen
+                  ? 0
+                  : 173
+            }
+            autoHide
+            autoHideDuration={200}
+            autoHideTimeout={500}
+          >
+            <TableContainer>
+              <Table size='small'>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>
+                      <Typography sx={{ color: COLORS.default }}>
+                        {topOptions.find(
+                          (option) => option.value === params.top
+                        )?.name || params.top}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography sx={{ color: COLORS.quantity }}>
+                        Quantity
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography sx={{ color: COLORS.revenue }}>
+                        Revenue
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography sx={{ color: COLORS.cogs }}>CoGS</Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography sx={{ color: COLORS.profit }}>
+                        Profit
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography sx={{ color: COLORS.profit }}>
+                        Margin
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {isLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={5}>
+                        <Skeleton
+                          variant='rectangular'
+                          width='100%'
+                          height={40}
+                          sx={{ borderRadius: 2 }}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ) : popularProducts.length > 0 ? (
+                    popularProducts.map((product: any, index: number) => (
+                      <TableRow
+                        key={index}
+                        sx={{
+                          backgroundColor:
+                            index % 2 === 0
+                              ? theme.palette.background.paper
+                              : theme.palette.action.hover,
+                          '&:hover': {
+                            backgroundColor: theme.palette.action.selected,
+                          },
+                        }}
+                      >
+                        <TableCell>
+                          <Tooltip title={'Product Name'}>
+                            <Typography sx={{ color: COLORS.default }}>
+                              {product.name}
+                            </Typography>
+                          </Tooltip>
+                        </TableCell>
+                        <TableCell>
+                          <Tooltip title={'Quantity Sold'}>
+                            <Typography sx={{ color: COLORS.quantity }}>
+                              {`${product.unit_symbol} ${product.quantity.toLocaleString()}`}
+                            </Typography>
+                          </Tooltip>
+                        </TableCell>
+                        <TableCell>
+                          <Tooltip title={'Sales'}>
+                            <Typography sx={{ color: COLORS.revenue }}>
+                              {product.revenue.toLocaleString('en-US', {
+                                maximumFractionDigits: 2,
+                                minimumFractionDigits: 2,
+                              })}
+                            </Typography>
+                          </Tooltip>
+                        </TableCell>
+                        <TableCell>
+                          <Tooltip title={'CoGS'}>
+                            <Typography sx={{ color: COLORS.cogs }}>
+                              {product.cogs.toLocaleString('en-US', {
+                                maximumFractionDigits: 2,
+                                minimumFractionDigits: 2,
+                              })}
+                            </Typography>
+                          </Tooltip>
+                        </TableCell>
+                        <TableCell>
+                          <Tooltip title={'Profit'}>
+                            <Typography sx={{ color: COLORS.profit }}>
+                              {product.profit.toLocaleString('en-US', {
+                                maximumFractionDigits: 2,
+                                minimumFractionDigits: 2,
+                              })}
+                            </Typography>
+                          </Tooltip>
+                        </TableCell>
+                        <TableCell>
+                          <Tooltip title={'Margin'}>
+                            <Typography sx={{ color: COLORS.margin }}>
+                              {`${((product.profit * 100) / product.revenue).toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}%`}
+                            </Typography>
+                          </Tooltip>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={5}>
+                        <Alert variant={'outlined'} severity={'info'}>
+                          No product data was found
+                        </Alert>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </JumboScrollbar>
+        )}
       </JumboCardQuick>
 
       {/* Render the DocumentDialog */}
