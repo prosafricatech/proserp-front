@@ -2,9 +2,9 @@
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { useLedgerSelect } from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
+import { FileExportGrid } from '@/components/sharedComponents/FileExportGrid';
+import PreviewTopBar from '@/components/sharedComponents/PreviewTopBar';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
-import { faFileExcel } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { JumboDdMenu } from '@jumbo/components';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
@@ -24,17 +24,15 @@ import {
   LinearProgress,
   Stack,
   Switch,
-  Tab,
-  Tabs,
   Tooltip,
   Typography,
   useMediaQuery,
 } from '@mui/material';
-import { Box, Grid } from '@mui/system';
+import { Box } from '@mui/system';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useState } from 'react';
 import PDFContent from '../../pdf/PDFContent';
 import { useProductsSelect } from '../../productAndServices/products/ProductsSelectProvider';
 import fuelStationServices from '../fuelStationServices';
@@ -85,13 +83,9 @@ const DocumentDialog = ({
     queryFn: () => fuelStationServices.showShiftDetails(ClosedShift.id),
   });
 
-  const [activeTab, setActiveTab] = useState(0);
+  const [showOnScreen, setShowOnScreen] = useState(true);
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
-
-  useEffect(() => {
-    belowLargeScreen && setActiveTab(1);
-  }, [belowLargeScreen]);
 
   if (isFetching) {
     return <LinearProgress />;
@@ -181,70 +175,21 @@ const DocumentDialog = ({
         </Stack>
       </DialogTitle>
       <DialogContent>
-        <Grid
-          container
-          alignItems='center'
-          justifyContent='space-between'
-          mb={2}
-        >
-          <Grid size={10}>
-            {belowLargeScreen && (
-              <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)}>
-                <Tab label='PDF' />
-                <Tab label='ONSCREEN' />
-              </Tabs>
-            )}
-          </Grid>
-          <Grid
-            size={2}
-            textAlign='right'
-            sx={{
-              display: 'flex',
-              flexDirection: 'row',
-              justifyContent: 'space-evenly',
-              gap: 1,
-            }}
-          >
-            {!belowLargeScreen && (
-              <Button
-                size='small'
-                onClick={() => handlExcelExport(exportedData)}
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '4px',
-                  gap: 1,
-                }}
-                color='success'
-                variant='contained'
-                disabled={isExporting}
-              >
-                <FontAwesomeIcon icon={faFileExcel} color='green' />
-                {!belowLargeScreen && 'Excel'}
-              </Button>
-            )}
+        <PreviewTopBar
+          fileExportGrid={
+            <FileExportGrid
+              exportExcel
+              handlExcelExport={() => handlExcelExport(exportedData)}
+              exportPdf
+              handlePdf={() => {
+                setShowOnScreen((prev) => !prev);
+              }}
+              exportingExcel={isExporting}
+            />
+          }
+        />
 
-            {belowLargeScreen && (
-              <IconButton
-                size='small'
-                onClick={() => handlExcelExport(exportedData)}
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: '0px',
-                  gap: 1,
-                }}
-                color='success'
-                variant='contained'
-                disabled={isExporting}
-              >
-                <FontAwesomeIcon icon={faFileExcel} color='green' />
-                {!belowLargeScreen && 'Excel'}
-              </IconButton>
-            )}
-          </Grid>
-        </Grid>
-        {belowLargeScreen && activeTab === 1 && (
+        {showOnScreen && (
           <SalesShiftOnScreen
             stationName={activeStation?.name}
             openDetails={openDetails}
@@ -258,7 +203,7 @@ const DocumentDialog = ({
             allPaymentsReceived={allPaymentsReceived}
           />
         )}
-        {(!belowLargeScreen || activeTab === 0) && (
+        {!showOnScreen && (
           <PDFContent
             key={pdfKey}
             fileName={shiftData.shiftNo}
@@ -337,18 +282,18 @@ const SalesShiftsItemAction = ({ ClosedShift }) => {
     PERMISSIONS.FUEL_SALES_SHIFTS_BACKDATE,
   ]);
 
-  const isToday = ClosedShift?.shift_end && dayjs(ClosedShift.shift_end).isSame(dayjs(), 'day');
+  const isToday =
+    ClosedShift?.shift_end &&
+    dayjs(ClosedShift.shift_end).isSame(dayjs(), 'day');
   const canEdit = canUpdate || isToday || canBackdate;
   const canDeleteAction = canDelete || isToday || canBackdate;
 
   const menuItems = [
     { icon: <VisibilityOutlined />, title: 'View', action: 'open' },
-    canEdit
-      ? { icon: <EditOutlined />, title: 'Edit', action: 'edit' }
-      : null,
+    canEdit ? { icon: <EditOutlined />, title: 'Edit', action: 'edit' } : null,
     canDeleteAction
       ? {
-          icon: <DeleteOutlined color='error' />, 
+          icon: <DeleteOutlined color='error' />,
           title: 'Delete',
           action: 'delete',
         }
