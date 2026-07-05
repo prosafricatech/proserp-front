@@ -105,4 +105,11 @@ storeServices.getStockMovementExcel = async (filters) => {
     return data;
 };
 
+storeServices.exportStockMovementReportToExcel = async (params) => {
+    const { data } = await axios.post(`/api/exports/excel/stockMovement/`, params, {
+        responseType: 'blob',
+    })
+    return data;
+}
+
 export default storeServices;

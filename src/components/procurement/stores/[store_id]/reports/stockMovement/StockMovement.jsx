@@ -529,6 +529,7 @@ function StockMovement({ toggleOpen, dormantStock = false, isFromDashboard }) {
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
   const [includeChildren, setIncludeChildren] = useState(true);
+  const [withDetails, setWithDetails] = useState(false);
 
   // Validation schema
   const validationSchema = yup.object({
@@ -625,6 +626,42 @@ function StockMovement({ toggleOpen, dormantStock = false, isFromDashboard }) {
 
   const reportTitle = dormantStock ? 'Dormant Stock' : 'Stock Movement';
   document.title = `${isFromDashboard ? 'Store' : activeStore?.name} - ${reportTitle} Report`;
+
+  const exportedData = {
+    organizationHasSubscribed: organizationHasSubscribed(
+      MODULES.MANUFACTURING_AND_PROCESSING
+    ),
+    productCategories: watch('product_categories'),
+    movementsData: movements,
+    authOrganization: authOrganization,
+    user: user,
+    checkOrganizationPermission: checkOrganizationPermission(
+      PERMISSIONS.ACCOUNTS_REPORTS
+    ),
+    store: isFromDashboard ? watch('store') : activeStore,
+    reportTitle: reportTitle,
+    withDetails: withDetails,
+  };
+
+  const handlExcelExport = async (exportedData) => {
+    setIsDownloadingTemplate(true);
+    try {
+      // Get all current filter parameters
+      const filters = buildFilters();
+      const blob =
+        await storeServices.exportStockMovementReportToExcel(exportedData);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Stock-Movement ${readableDate(filters.as_at, true)}.xlsx`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      console.log('error exporting: ', e);
+    } finally {
+      setIsDownloadingTemplate(false);
+    }
+  };
 
   const { data: productCategories, isLoading: isLoadingProductCategories } =
     useQuery({
@@ -813,7 +850,7 @@ function StockMovement({ toggleOpen, dormantStock = false, isFromDashboard }) {
                 </Div>
               </Grid>
               <Grid container size={{ xs: 12, md: 12 }} textAlign={'right'}>
-                <Grid size={{ xs: 6, md: 6 }} textAlign={'left'}>
+                <Grid size={{ xs: 6, md: 4 }} textAlign={'left'}>
                   <Div sx={{ mt: 0.3 }}>
                     <FormControlLabel
                       control={
@@ -835,7 +872,24 @@ function StockMovement({ toggleOpen, dormantStock = false, isFromDashboard }) {
                     />
                   </Div>
                 </Grid>
-                <Grid size={6}>
+                {checkOrganizationPermission(PERMISSIONS.ACCOUNTS_REPORTS) && (
+                  <Grid size={{ xs: 6, md: 4 }} textAlign={'left'}>
+                    <Div sx={{ mt: 0.3 }}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={withDetails}
+                            onChange={(e) => {
+                              setWithDetails((prev) => !prev);
+                            }}
+                          />
+                        }
+                        label='With more details (View In Excel)'
+                      />
+                    </Div>
+                  </Grid>
+                )}
+                <Grid size={{ xs: 12, md: 4 }} textAlign={'right'}>
                   <Stack
                     direction='row'
                     spacing={0.5}
@@ -845,7 +899,8 @@ function StockMovement({ toggleOpen, dormantStock = false, isFromDashboard }) {
                     <>
                       <LoadingButton
                         size='small'
-                        onClick={downloadExcelTemplate}
+                        onClick={() => handlExcelExport(exportedData)}
+                        // onClick={downloadExcelTemplate}
                         loading={isDownloadingTemplate}
                         variant='contained'
                         color='success'
