@@ -1,20 +1,28 @@
 'use client';
 
 import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import LedgerGroupProvider from '@/components/accounts/ledgerGroups/LedgerGroupProvider';
 import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
 import { useLedgerSelect } from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
+import QuickAddLedger from '@/components/accounts/ledgers/forms/QuickAddLedger';
+import { MODULES } from '@/utilities/constants/modules';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Div } from '@jumbo/shared';
+import { AddOutlined } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 import {
   Button,
   Checkbox,
+  Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   FormControlLabel,
   Grid,
   TextField,
+  Tooltip,
 } from '@mui/material';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
@@ -23,8 +31,6 @@ import { Controller, useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import humanResourcesServices from '../humanResourcesServices';
 import { AllowanceType } from './AllowanceType';
-import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
-import { MODULES } from '@/utilities/constants/modules';
 
 interface AllowanceTypeFormProps {
   setOpenDialog: (open: boolean) => void;
@@ -66,10 +72,14 @@ const AllowanceTypeForm = ({
   const { enqueueSnackbar } = useSnackbar();
   const dictionary = useDictionary();
   const { ungroupedLedgerOptions } = useLedgerSelect();
-  const { organizationHasSubscribed } = useJumboAuth();
+  const { organizationHasSubscribed, checkOrganizationPermission } =
+    useJumboAuth();
 
   const [recentlyAddedExpenseLedger, setRecentlyAddedExpenseLedger] =
     useState<Ledger | null>(null);
+
+  const [openQuickAddLedger, setOpenQuickAddLedger] = useState(false);
+  const [ledgertType, setLedgertType] = useState<'credit' | 'debit'>('credit');
 
   const defaultValue = useMemo(() => {
     return ungroupedLedgerOptions.find(
@@ -149,16 +159,7 @@ const AllowanceTypeForm = ({
       .max(255, 'Name cannot exceed 255 characters'),
     code: yup.string().max(50, 'Code cannot exceed 50 characters'),
     is_taxable: yup.boolean().required(),
-    expense_ledger_id: yup
-      .number()
-      .required(
-        dictionary.productCategories.form.errors.validation.expense_ledger_id
-          .required
-      )
-      .positive(
-        dictionary.productCategories.form.errors.validation.expense_ledger_id
-          .positive
-      ),
+    expense_ledger_id: yup.number().nullable(),
     description: yup
       .string()
       .max(500, 'Description cannot exceed 500 characters'),
@@ -178,7 +179,7 @@ const AllowanceTypeForm = ({
       name: allowanceType?.name || '',
       code: allowanceType?.code || '',
       is_taxable: allowanceType?.is_taxable || false,
-      expense_ledger_id: allowanceType?.expense_ledger_id ?? 0,
+      expense_ledger_id: allowanceType?.expense_ledger_id ?? undefined,
       description: allowanceType?.description || '',
     },
   });
@@ -189,7 +190,7 @@ const AllowanceTypeForm = ({
       name: allowanceType?.name || '',
       code: allowanceType?.code || '',
       is_taxable: allowanceType?.is_taxable || false,
-      expense_ledger_id: allowanceType?.expense_ledger_id ?? 0,
+      expense_ledger_id: allowanceType?.expense_ledger_id ?? undefined,
       description: allowanceType?.description || '',
     });
   }, [allowanceType, reset]);
@@ -254,14 +255,15 @@ const AllowanceTypeForm = ({
               </Div>
             </Grid>
 
-            {
-              organizationHasSubscribed(MODULES.ACCOUNTS_AND_FINANCE) && 
-                <Grid size={{ xs: 12 }}>
-                  <Div sx={{ my: 1 }}>
-                    <LedgerSelect
-                      label={dictionary.productCategories.form.labels.expenseLedger}
-                      allowedGroups={['Expenses']}
-                      frontError={errors.expense_ledger_id}
+            {organizationHasSubscribed(MODULES.ACCOUNTS_AND_FINANCE) && (
+              <Grid size={{ xs: 12 }}>
+                <Div sx={{ my: 1 }}>
+                  <LedgerSelect
+                    label={
+                      dictionary.productCategories.form.labels.expenseLedger
+                    }
+                    allowedGroups={['Expenses']}
+                    frontError={errors.expense_ledger_id}
                     key={'expense-ledger'}
                     value={recentlyAddedExpenseLedger || undefined}
                     defaultValue={allowanceType?.expense_ledger || undefined}
@@ -280,21 +282,25 @@ const AllowanceTypeForm = ({
                         });
                       }
                     }}
-                    // startAdornment={
-                    //   <Tooltip
-                    //     title={'Quick Add Ledger'}
-                    //     onClick={() => {
-                    //       setLedgertType('debit');
-                    //       setOpenQuickAddLedger(true);
-                    //     }}
-                    //   >
-                    //     <AddOutlined sx={{ cursor: 'pointer' }} />
-                    //   </Tooltip>
-                    // }
+                    startAdornment={
+                      checkOrganizationPermission(
+                        PERMISSIONS.ACCOUNTS_MASTERS_CREATE
+                      ) && (
+                        <Tooltip
+                          title={'Quick Add Ledger'}
+                          onClick={() => {
+                            setLedgertType('debit');
+                            setOpenQuickAddLedger(true);
+                          }}
+                        >
+                          <AddOutlined sx={{ cursor: 'pointer' }} />
+                        </Tooltip>
+                      )
+                    }
                   />
                 </Div>
               </Grid>
-            }
+            )}
 
             <Grid size={{ xs: 12 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
@@ -356,6 +362,24 @@ const AllowanceTypeForm = ({
           </DialogActions>
         </form>
       </DialogContent>
+
+      {/* ledger quick add dialog */}
+      <Dialog open={openQuickAddLedger} maxWidth={'md'}>
+        <LedgerGroupProvider>
+          <QuickAddLedger
+            ledgerType={ledgertType}
+            toggleOpen={setOpenQuickAddLedger}
+            heading='Quick Add Ledger'
+            setAddedLedger={(v) => {
+              setRecentlyAddedExpenseLedger(v);
+              setValue('expense_ledger_id', v.id, {
+                shouldValidate: true,
+                shouldDirty: true,
+              });
+            }}
+          />
+        </LedgerGroupProvider>
+      </Dialog>
     </>
   );
 };

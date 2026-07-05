@@ -1,9 +1,16 @@
 'use client';
 
+import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import LedgerGroupProvider from '@/components/accounts/ledgerGroups/LedgerGroupProvider';
 import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
 import { useLedgerSelect } from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
+import QuickAddLedger from '@/components/accounts/ledgers/forms/QuickAddLedger';
+import { MODULES } from '@/utilities/constants/modules';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Div } from '@jumbo/shared';
+import { AddOutlined } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 import {
   Button,
@@ -16,6 +23,7 @@ import {
   MenuItem,
   Switch,
   TextField,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -25,8 +33,6 @@ import { Controller, useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import humanResourcesServices from '../humanResourcesServices';
 import { DeductionType } from './DeductionType';
-import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
-import { MODULES } from '@/utilities/constants/modules';
 
 interface DeductionTypeFormProps {
   setOpenDialog: (open: boolean) => void;
@@ -86,8 +92,10 @@ const DeductionTypeForm = ({
 }: DeductionTypeFormProps) => {
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
+  const dictionary = useDictionary();
   const { ungroupedLedgerOptions } = useLedgerSelect();
-  const { organizationHasSubscribed } = useJumboAuth();
+  const { organizationHasSubscribed, checkOrganizationPermission } =
+    useJumboAuth();
   const [recentlyAddedPayableLedger, setRecentlyAddedPayableLedger] =
     useState<Ledger | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -101,6 +109,9 @@ const DeductionTypeForm = ({
     wouldUpdate: 0,
     wouldCreate: 0,
   });
+
+  const [openQuickAddLedger, setOpenQuickAddLedger] = useState(false);
+  const [ledgertType, setLedgertType] = useState<'credit' | 'debit'>('credit');
 
   const defaultValue = useMemo(() => {
     return ungroupedLedgerOptions.find(
@@ -150,12 +161,17 @@ const DeductionTypeForm = ({
 
   const handleErrorResponse = (mutationError: any) => {
     const responseData = mutationError?.response?.data;
-    
+
     // Check if this is a bulk update confirmation error
-    if (responseData?.would_update !== undefined || responseData?.would_create !== undefined) {
+    if (
+      responseData?.would_update !== undefined ||
+      responseData?.would_create !== undefined
+    ) {
       setConfirmDialog({
         open: true,
-        data: mutationError?.config?.data ? JSON.parse(mutationError.config.data) : null,
+        data: mutationError?.config?.data
+          ? JSON.parse(mutationError.config.data)
+          : null,
         wouldUpdate: responseData.would_update || 0,
         wouldCreate: responseData.would_create || 0,
       });
@@ -184,11 +200,21 @@ const DeductionTypeForm = ({
       };
       saveMutation(dataWithForce);
     }
-    setConfirmDialog({ open: false, data: null, wouldUpdate: 0, wouldCreate: 0 });
+    setConfirmDialog({
+      open: false,
+      data: null,
+      wouldUpdate: 0,
+      wouldCreate: 0,
+    });
   };
 
   const handleCancelBulkUpdate = () => {
-    setConfirmDialog({ open: false, data: null, wouldUpdate: 0, wouldCreate: 0 });
+    setConfirmDialog({
+      open: false,
+      data: null,
+      wouldUpdate: 0,
+      wouldCreate: 0,
+    });
   };
 
   const validationSchema = yup.object({
@@ -211,6 +237,10 @@ const DeductionTypeForm = ({
       .typeError('Default value must be a number')
       .required('Default value is required')
       .min(0, 'Default value must be 0 or greater'),
+    payable_ledger_id: yup
+      .number()
+      .required('This field is required')
+      .positive('This field is required'),
     is_pre_tax: yup.boolean().required(),
     description: yup
       .string()
@@ -453,7 +483,7 @@ const DeductionTypeForm = ({
               </Div>
             </Grid>
 
-            {organizationHasSubscribed(MODULES.ACCOUNTS_AND_FINANCE) &&
+            {organizationHasSubscribed(MODULES.ACCOUNTS_AND_FINANCE) && (
               <Grid size={{ xs: 12, md: 6 }}>
                 <Div sx={{ my: 1 }}>
                   <LedgerSelect
@@ -480,10 +510,25 @@ const DeductionTypeForm = ({
                         });
                       }
                     }}
+                    startAdornment={
+                      checkOrganizationPermission(
+                        PERMISSIONS.ACCOUNTS_MASTERS_CREATE
+                      ) && (
+                        <Tooltip
+                          title={'Quick Add Ledger'}
+                          onClick={() => {
+                            setLedgertType('credit');
+                            setOpenQuickAddLedger(true);
+                          }}
+                        >
+                          <AddOutlined sx={{ cursor: 'pointer' }} />
+                        </Tooltip>
+                      )
+                    }
                   />
                 </Div>
               </Grid>
-            }
+            )}
 
             {/* Apply To Employees Dropdown */}
             <Grid size={{ xs: 12, md: 6 }}>
@@ -574,19 +619,30 @@ const DeductionTypeForm = ({
           <Grid container spacing={1}>
             <Grid size={12}>
               <Typography variant='body2'>
-                <strong>Will Update:</strong> {confirmDialog.wouldUpdate} employees
+                <strong>Will Update:</strong> {confirmDialog.wouldUpdate}{' '}
+                employees
                 {confirmDialog.wouldUpdate > 0 && (
-                  <Typography variant='caption' display='block' color='text.secondary'>
-                    (Employees who already have this deduction will be updated with the new rate)
+                  <Typography
+                    variant='caption'
+                    display='block'
+                    color='text.secondary'
+                  >
+                    (Employees who already have this deduction will be updated
+                    with the new rate)
                   </Typography>
                 )}
               </Typography>
             </Grid>
             <Grid size={12}>
               <Typography variant='body2'>
-                <strong>Will Create:</strong> {confirmDialog.wouldCreate} new employees
+                <strong>Will Create:</strong> {confirmDialog.wouldCreate} new
+                employees
                 {confirmDialog.wouldCreate > 0 && (
-                  <Typography variant='caption' display='block' color='text.secondary'>
+                  <Typography
+                    variant='caption'
+                    display='block'
+                    color='text.secondary'
+                  >
                     (Employees who don't have this deduction will get it added)
                   </Typography>
                 )}
@@ -601,10 +657,34 @@ const DeductionTypeForm = ({
           <Button onClick={handleCancelBulkUpdate} variant='outlined'>
             Cancel
           </Button>
-          <Button onClick={handleConfirmBulkUpdate} variant='contained' color='warning'>
+          <Button
+            onClick={handleConfirmBulkUpdate}
+            variant='contained'
+            color='warning'
+          >
             Continue
           </Button>
         </DialogActions>
+      </Dialog>
+
+      {/* ledger quick add dialog */}
+      <Dialog open={openQuickAddLedger} maxWidth={'md'}>
+        <LedgerGroupProvider>
+          <QuickAddLedger
+            ledgerType={ledgertType}
+            toggleOpen={setOpenQuickAddLedger}
+            heading='Quick Add Ledger'
+            setAddedLedger={(v) => {
+              if (ledgertType === 'credit') {
+                setRecentlyAddedPayableLedger(v);
+                setValue('payable_ledger_id', v.id, {
+                  shouldValidate: true,
+                  shouldDirty: true,
+                });
+              }
+            }}
+          />
+        </LedgerGroupProvider>
       </Dialog>
     </>
   );
