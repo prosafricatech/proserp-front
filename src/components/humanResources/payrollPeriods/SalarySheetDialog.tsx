@@ -406,7 +406,7 @@ const SalarySheetDialog = ({
                     </TableCell>
                     <TableCell
                       colSpan={
-                        2 +
+                        3 +
                         (hasAllowances ? unique_allowances_types.length : 0) +
                         (hasDeductions ? unique_deductions_types.length : 0)
                       }
@@ -422,7 +422,7 @@ const SalarySheetDialog = ({
                     </TableCell>
                     <TableCell
                       colSpan={
-                        2 +
+                        1 +
                         (hasContributions
                           ? unique_contributions_types.length
                           : 0)
