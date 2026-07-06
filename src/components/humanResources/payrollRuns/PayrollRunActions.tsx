@@ -1,20 +1,44 @@
 'use client';
 
-import { Stack, Tooltip, IconButton, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Button, Typography, Alert } from '@mui/material';
-import {
-  SendOutlined,
-  DeleteOutlined,
-  CheckCircleOutline,
-  PaidOutlined,
-  ReceiptLongOutlined,
-  PreviewOutlined,
-} from '@mui/icons-material';
-import { useState } from 'react';
 import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
-import { useQuery } from '@tanstack/react-query';
+import {
+  CheckCircleOutline,
+  DeleteOutlined,
+  PaidOutlined,
+  PreviewOutlined,
+  ReceiptLongOutlined,
+  SendOutlined,
+} from '@mui/icons-material';
+import {
+  Alert,
+  Button,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  LinearProgress,
+  Stack,
+  Tooltip,
+  Typography,
+} from '@mui/material';
+import { useSnackbar } from 'notistack';
+import { useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
-import { getPayslipCalculations, PayslipComputed } from './payslipCalculations';
 import SalarySheetDialog from '../payrollPeriods/SalarySheetDialog';
+import { getPayslipCalculations, PayslipComputed } from './payslipCalculations';
+
+const getErrorMessage = (error: any) => {
+  const validationErrors = error?.response?.data?.validation_errors;
+  if (validationErrors && typeof validationErrors === 'object') {
+    const first = Object.values(validationErrors)[0] as any;
+    return Array.isArray(first) ? first[0] : String(first);
+  }
+  return (
+    error?.response?.data?.message || error?.message || 'Something went wrong'
+  );
+};
 
 interface PayrollRunActionsProps {
   isDraft: boolean;
@@ -86,9 +110,12 @@ export const PayrollRunActions = ({
   payrollRun,
   previewRows = [], // Default to empty array
 }: PayrollRunActionsProps) => {
+  const { enqueueSnackbar } = useSnackbar();
   const [openPostDialog, setOpenPostDialog] = useState(false);
   const [openPayDialog, setOpenPayDialog] = useState(false);
   const [openSalarySheetDialog, setOpenSalarySheetDialog] = useState(false);
+  const [isLoadingSalarySheet, setIsLoadingSalarySheet] = useState(false);
+  const [salarySheetData, setSalarySheetData] = useState<any>(null);
   const [postForm, setPostForm] = useState<PostFormData>({
     salary_expense_ledger_id: 0,
     paye_payable_ledger_id: 0,
@@ -107,48 +134,90 @@ export const PayrollRunActions = ({
     color: 'primary',
   });
 
-  // Fetch run details for salary sheet (fallback if previewRows not provided)
-  const { data: runDetails, isLoading: isLoadingRun } = useQuery({
-    queryKey: ['payrollRunDetails', payrollRunId],
-    queryFn: () => humanResourcesServices.showPayrollRun(payrollRunId),
-    enabled: openSalarySheetDialog && previewRows.length === 0,
-    staleTime: 1000 * 60 * 5,
-  });
+  const handleOpenSalarySheet = async () => {
+    setIsLoadingSalarySheet(true);
+    setOpenSalarySheetDialog(true);
 
-  // Fetch allowance types
-  const { data: allowanceTypes } = useQuery({
-    queryKey: ['allowanceTypes'],
-    queryFn: async () => {
-      const response = await humanResourcesServices.getAllowanceTypesList();
-      return response?.data || [];
-    },
-    enabled: openSalarySheetDialog,
-  });
+    try {
+      // Fetch preview data
+      const previewResponse = await humanResourcesServices.previewPayrollRun({
+        id: payrollRun.id,
+      });
+      const previewRows =
+        previewResponse?.data?.rows || previewResponse?.rows || [];
 
-  // Fetch deduction types
-  const { data: deductionTypes } = useQuery({
-    queryKey: ['deductionTypes'],
-    queryFn: async () => {
-      const response = await humanResourcesServices.getDeductionTypesList();
-      return response?.data || [];
-    },
-    enabled: openSalarySheetDialog,
-  });
+      // Build salary sheet rows
+      const salaryRows = previewRows.map((row: any) => {
+        // Create a minimal run object from preview data
+        const run = {
+          ...payrollRun,
+          employee: row.employee,
+          allowances: row.allowances || [],
+          deductions: row.deductions || [],
+          employer_contributions: row.employer_contributions || [],
+          basic_salary: row.basic_salary || 0,
+          gross_salary: row.gross_salary || 0,
+          net_salary: row.net_salary || 0,
+          paye: row.paye || 0,
+          taxable_income: row.taxable_income || 0,
+          total_allowances: row.total_allowances || 0,
+          total_deductions: row.total_deductions || 0,
+        };
+        return {
+          run: run,
+          computed: getPayslipCalculations(run),
+        };
+      });
 
-  // Fetch employer contribution types
-  const { data: contributionTypes } = useQuery({
-    queryKey: ['employerContributionTypes'],
-    queryFn: async () => {
-      const response = await humanResourcesServices.getEmployerContributionTypesList();
-      return response?.data || [];
-    },
-    enabled: openSalarySheetDialog,
-  });
+      // Get period label
+      let periodLabel = payrollRun.cost_center?.name || 'Company-wide Run';
+
+      if (payrollRun?.payroll_period) {
+        const monthNames = [
+          'January',
+          'February',
+          'March',
+          'April',
+          'May',
+          'June',
+          'July',
+          'August',
+          'September',
+          'October',
+          'November',
+          'December',
+        ];
+        const monthIndex = payrollRun.payroll_period.month;
+        // Ensure month is within valid range (1-12)
+        const monthName =
+          monthIndex && monthIndex >= 1 && monthIndex <= 12
+            ? monthNames[monthIndex - 1]
+            : '';
+        const year = payrollRun.payroll_period.year || '';
+        periodLabel = `${monthName} ${year} - ${periodLabel}`;
+      }
+
+      setSalarySheetData({
+        rows: salaryRows,
+        // allowanceTypes: allowanceTypes || [],
+        // deductionTypes: deductionTypes || [],
+        // contributionTypes: contributionTypes || [],
+        periodLabel: periodLabel,
+      });
+
+      setIsLoadingSalarySheet(false);
+    } catch (error: any) {
+      enqueueSnackbar(getErrorMessage(error), { variant: 'error' });
+      setIsLoadingSalarySheet(false);
+      setOpenSalarySheetDialog(false);
+    }
+  };
 
   const handleActionClick = (action: string) => {
     switch (action) {
       case 'preview':
-        setOpenSalarySheetDialog(true);
+        // setOpenSalarySheetDialog(true);
+        handleOpenSalarySheet();
         break;
       case 'submit':
         setConfirmDialog({
@@ -175,7 +244,7 @@ export const PayrollRunActions = ({
           open: true,
           action: 'approve',
           title: hasChain ? 'Approve Level' : 'Approve Payroll Run',
-          message: hasChain 
+          message: hasChain
             ? `Are you sure you want to approve this level for "${runLabel}"?`
             : `Are you sure you want to approve "${runLabel}"? This action cannot be undone.`,
           confirmText: 'Approve',
@@ -220,7 +289,7 @@ export const PayrollRunActions = ({
     setPayForm({ credit_ledger_id: 0 });
   };
 
-  const isPostFormValid = 
+  const isPostFormValid =
     postForm.salary_expense_ledger_id > 0 &&
     postForm.paye_payable_ledger_id > 0 &&
     postForm.fallback_payable_ledger_id > 0;
@@ -231,92 +300,47 @@ export const PayrollRunActions = ({
   const salarySheetRows: SalarySheetRow[] = [];
   let periodLabel = '';
 
-  // If we have previewRows, use them directly
-  if (previewRows.length > 0) {
-    previewRows.forEach((row: any) => {
-      // Create a run object from the preview row
-      const run = {
-        ...payrollRun,
-        id: payrollRun?.id || row.employee_id,
-        employee: row.employee,
-        allowances: row.allowances || [],
-        deductions: row.deductions || [],
-        employer_contributions: row.employer_contributions || [],
-        basic_salary: row.basic_salary || 0,
-        gross_salary: row.gross_salary || 0,
-        net_salary: row.net_salary || 0,
-        paye: row.paye || 0,
-        taxable_income: row.taxable_income || 0,
-        total_allowances: row.total_allowances || 0,
-        total_deductions: row.total_deductions || 0,
-      };
-      
-      salarySheetRows.push({
-        run: run,
-        computed: getPayslipCalculations(run),
-      });
-    });
-
-    // Get period label from payrollRun or use default
-    if (payrollRun?.payroll_period) {
-      const period = payrollRun.payroll_period;
-      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-      periodLabel = `${monthNames[period.month - 1]} ${period.year}`;
-    } else {
-      periodLabel = runLabel || 'Payroll Run';
-    }
-  } 
-  // Fallback: use runDetails if no previewRows
-  else if (runDetails) {
-    const run = runDetails?.data || runDetails;
-    const runData = Array.isArray(run) ? run : [run];
-    
-    runData.forEach((r: any) => {
-      if (r) {
-        salarySheetRows.push({
-          run: r,
-          computed: getPayslipCalculations(r),
-        });
-      }
-    });
-
-    if (runData.length > 0 && runData[0]?.payroll_period) {
-      const period = runData[0].payroll_period;
-      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-      periodLabel = `${monthNames[period.month - 1]} ${period.year}`;
-    } else {
-      periodLabel = runLabel || 'Payroll Run';
-    }
-  }
-
-  const displayRows = salarySheetRows.length > 0 ? salarySheetRows : [];
-  const displayLabel = periodLabel || runLabel || 'Payroll Run';
-
   return (
     <>
-      <Stack direction="row" spacing={1} mb={2} justifyContent="flex-end" alignItems="center" flexWrap="wrap" useFlexGap>
+      <Stack
+        direction='row'
+        spacing={1}
+        mb={2}
+        justifyContent='flex-end'
+        alignItems='center'
+        flexWrap='wrap'
+        useFlexGap
+      >
         {/* 1. PREVIEW - Always visible */}
-        <Tooltip title="Preview Salary Sheet">
-          <IconButton 
-            size="small" 
-            onClick={() => handleActionClick('preview')} 
-            disabled={isLoadingRun}
-            color="info"
+        <Tooltip title='Preview Salary Sheet'>
+          <IconButton
+            size='small'
+            onClick={() => handleActionClick('preview')}
+            disabled={isLoadingSalarySheet}
+            color='info'
           >
-            {isLoadingRun ? <CircularProgress size={18} /> : <PreviewOutlined fontSize="small" />}
+            {isLoadingSalarySheet ? (
+              <CircularProgress size={18} />
+            ) : (
+              <PreviewOutlined fontSize='small' />
+            )}
           </IconButton>
         </Tooltip>
 
         {/* 2. SUBMIT - For draft runs */}
         {isDraft && (
-          <Tooltip title="Submit for Approval">
-            <IconButton 
-              size="small" 
-              onClick={() => handleActionClick('submit')} 
-              disabled={isSubmitting} 
-              color="primary"
+          <Tooltip title='Submit for Approval'>
+            <IconButton
+              size='small'
+              onClick={() => handleActionClick('submit')}
+              disabled={isSubmitting}
+              color='primary'
             >
-              {isSubmitting ? <CircularProgress size={18} /> : <SendOutlined fontSize="small" />}
+              {isSubmitting ? (
+                <CircularProgress size={18} />
+              ) : (
+                <SendOutlined fontSize='small' />
+              )}
             </IconButton>
           </Tooltip>
         )}
@@ -324,123 +348,148 @@ export const PayrollRunActions = ({
         {/* 3. APPROVE - For submitted runs */}
         {isSubmitted && (
           <Tooltip title={hasChain ? 'Approve Level' : 'Approve'}>
-            <IconButton 
-              size="small" 
-              onClick={() => handleActionClick('approve')} 
-              disabled={isApproving} 
-              color="success"
+            <IconButton
+              size='small'
+              onClick={() => handleActionClick('approve')}
+              disabled={isApproving}
+              color='success'
             >
-              {isApproving ? <CircularProgress size={18} /> : <CheckCircleOutline fontSize="small" />}
+              {isApproving ? (
+                <CircularProgress size={18} />
+              ) : (
+                <CheckCircleOutline fontSize='small' />
+              )}
             </IconButton>
           </Tooltip>
         )}
 
         {/* 4. POST PAYROLL TRANSACTIONS - For approved runs */}
         {isApproved && (
-          <Tooltip title="Post Payroll Transactions">
-            <IconButton 
-              size="small" 
-              onClick={() => handleActionClick('post')} 
-              disabled={isPosting} 
-              color="primary"
-              sx={{ 
-                bgcolor: 'primary.main', 
+          <Tooltip title='Post Payroll Transactions'>
+            <IconButton
+              size='small'
+              onClick={() => handleActionClick('post')}
+              disabled={isPosting}
+              color='primary'
+              sx={{
+                bgcolor: 'primary.main',
                 color: 'white',
                 '&:hover': { bgcolor: 'primary.dark' },
-                '&.Mui-disabled': { bgcolor: 'action.disabledBackground', color: 'action.disabled' }
+                '&.Mui-disabled': {
+                  bgcolor: 'action.disabledBackground',
+                  color: 'action.disabled',
+                },
               }}
             >
-              {isPosting ? <CircularProgress size={18} color="inherit" /> : <ReceiptLongOutlined fontSize="small" />}
+              {isPosting ? (
+                <CircularProgress size={18} color='inherit' />
+              ) : (
+                <ReceiptLongOutlined fontSize='small' />
+              )}
             </IconButton>
           </Tooltip>
         )}
 
         {/* 5. PAY EMPLOYEES - For posted runs */}
         {isPosted && !isPaid && (
-          <Tooltip title="Pay Employees">
-            <IconButton 
-              size="small" 
-              onClick={() => handleActionClick('pay')} 
-              disabled={isPaying} 
-              color="success"
-              sx={{ 
-                bgcolor: 'success.main', 
+          <Tooltip title='Pay Employees'>
+            <IconButton
+              size='small'
+              onClick={() => handleActionClick('pay')}
+              disabled={isPaying}
+              color='success'
+              sx={{
+                bgcolor: 'success.main',
                 color: 'white',
                 '&:hover': { bgcolor: 'success.dark' },
-                '&.Mui-disabled': { bgcolor: 'action.disabledBackground', color: 'action.disabled' }
+                '&.Mui-disabled': {
+                  bgcolor: 'action.disabledBackground',
+                  color: 'action.disabled',
+                },
               }}
             >
-              {isPaying ? <CircularProgress size={18} color="inherit" /> : <PaidOutlined fontSize="small" />}
+              {isPaying ? (
+                <CircularProgress size={18} color='inherit' />
+              ) : (
+                <PaidOutlined fontSize='small' />
+              )}
             </IconButton>
           </Tooltip>
         )}
 
         {/* 6. PAID - Status indicator */}
         {isPaid && (
-          <Tooltip title="Paid">
-            <IconButton size="small" color="success" disabled>
-              <PaidOutlined fontSize="small" />
+          <Tooltip title='Paid'>
+            <IconButton size='small' color='success' disabled>
+              <PaidOutlined fontSize='small' />
             </IconButton>
           </Tooltip>
         )}
 
         {/* 7. DELETE - For draft runs */}
         {isDraft && (
-          <Tooltip title="Delete Run">
-            <IconButton 
-              size="small" 
-              onClick={() => handleActionClick('delete')} 
-              disabled={isDeleting} 
-              color="error"
+          <Tooltip title='Delete Run'>
+            <IconButton
+              size='small'
+              onClick={() => handleActionClick('delete')}
+              disabled={isDeleting}
+              color='error'
             >
-              {isDeleting ? <CircularProgress size={18} /> : <DeleteOutlined fontSize="small" />}
+              {isDeleting ? (
+                <CircularProgress size={18} />
+              ) : (
+                <DeleteOutlined fontSize='small' />
+              )}
             </IconButton>
           </Tooltip>
         )}
       </Stack>
 
       {/* Salary Sheet Dialog */}
-      {openSalarySheetDialog && (
-        <SalarySheetDialog
-          open={openSalarySheetDialog}
-          onClose={() => setOpenSalarySheetDialog(false)}
-          periodLabel={displayLabel}
-          rows={displayRows}
-          allowanceTypes={allowanceTypes || []}
-          deductionTypes={deductionTypes || []}
-          contributionTypes={contributionTypes || []}
-        />
+      {salarySheetData && isLoadingSalarySheet ? (
+        <Dialog open fullWidth>
+          <LinearProgress />
+        </Dialog>
+      ) : (
+        salarySheetData && (
+          <SalarySheetDialog
+            open={openSalarySheetDialog}
+            onClose={() => {
+              setOpenSalarySheetDialog(false);
+              setSalarySheetData(null);
+            }}
+            periodLabel={salarySheetData.periodLabel}
+            rows={salarySheetData.rows}
+            isLoading={isLoadingSalarySheet}
+          />
+        )
       )}
 
       {/* Confirmation Dialog */}
       <Dialog
         open={confirmDialog.open}
         onClose={handleCloseConfirm}
-        maxWidth="sm"
+        maxWidth='sm'
         fullWidth
       >
         <DialogTitle>
-          <Typography variant="h6" component="div" fontWeight={600}>
+          <Typography variant='h6' component='div' fontWeight={600}>
             {confirmDialog.title}
           </Typography>
         </DialogTitle>
         <DialogContent>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant='body2' color='text.secondary'>
             {confirmDialog.message}
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button 
-            onClick={handleCloseConfirm} 
-            variant="outlined"
-            size="small"
-          >
+          <Button onClick={handleCloseConfirm} variant='outlined' size='small'>
             Cancel
           </Button>
           <Button
-            variant="contained"
+            variant='contained'
             color={confirmDialog.color}
-            size="small"
+            size='small'
             onClick={handleConfirmAction}
             disabled={
               (confirmDialog.action === 'submit' && isSubmitting) ||
@@ -451,7 +500,7 @@ export const PayrollRunActions = ({
             {(confirmDialog.action === 'submit' && isSubmitting) ||
             (confirmDialog.action === 'delete' && isDeleting) ||
             (confirmDialog.action === 'approve' && isApproving) ? (
-              <CircularProgress size={18} color="inherit" />
+              <CircularProgress size={18} color='inherit' />
             ) : (
               confirmDialog.confirmText
             )}
@@ -464,21 +513,22 @@ export const PayrollRunActions = ({
         open={openPostDialog}
         onClose={() => setOpenPostDialog(false)}
         fullWidth
-        maxWidth="xs"
+        maxWidth='xs'
       >
         <DialogTitle>
-          <Typography variant="h6" component="div" fontWeight={600}>
+          <Typography variant='h6' component='div' fontWeight={600}>
             Post Payroll Transactions
           </Typography>
         </DialogTitle>
         <DialogContent>
           <Stack spacing={2} mt={1}>
-            <Alert severity="info" sx={{ mb: 1 }}>
-              Posting records payroll in the general ledger. It does not pay employees yet.
+            <Alert severity='info' sx={{ mb: 1 }}>
+              Posting records payroll in the general ledger. It does not pay
+              employees yet.
             </Alert>
-            
+
             <LedgerSelect
-              label="Salary Expense Account"
+              label='Salary Expense Account'
               allowedGroups={['Expenses']}
               onChange={(ledger: any) =>
                 setPostForm((state) => ({
@@ -487,9 +537,9 @@ export const PayrollRunActions = ({
                 }))
               }
             />
-            
+
             <LedgerSelect
-              label="PAYE Payable Account"
+              label='PAYE Payable Account'
               allowedGroups={['Accounts Payable']}
               onChange={(ledger: any) =>
                 setPostForm((state) => ({
@@ -498,9 +548,9 @@ export const PayrollRunActions = ({
                 }))
               }
             />
-            
+
             <LedgerSelect
-              label="Fallback Employee Payable Account"
+              label='Fallback Employee Payable Account'
               allowedGroups={['Accounts Payable']}
               onChange={(ledger: any) =>
                 setPostForm((state) => ({
@@ -512,18 +562,18 @@ export const PayrollRunActions = ({
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button 
-            onClick={() => setOpenPostDialog(false)} 
-            variant="outlined"
-            size="small"
+          <Button
+            onClick={() => setOpenPostDialog(false)}
+            variant='outlined'
+            size='small'
             disabled={isPosting}
           >
             Cancel
           </Button>
           <Button
-            variant="contained"
-            color="primary"
-            size="small"
+            variant='contained'
+            color='primary'
+            size='small'
             onClick={handlePostConfirm}
             disabled={isPosting || !isPostFormValid}
           >
@@ -537,21 +587,22 @@ export const PayrollRunActions = ({
         open={openPayDialog}
         onClose={() => setOpenPayDialog(false)}
         fullWidth
-        maxWidth="xs"
+        maxWidth='xs'
       >
         <DialogTitle>
-          <Typography variant="h6" component="div" fontWeight={600}>
+          <Typography variant='h6' component='div' fontWeight={600}>
             Pay Employees
           </Typography>
         </DialogTitle>
         <DialogContent>
           <Stack spacing={2} mt={1}>
-            <Alert severity="info" sx={{ mb: 1 }}>
-              Select the bank or cash account the payroll payment will come from.
+            <Alert severity='info' sx={{ mb: 1 }}>
+              Select the bank or cash account the payroll payment will come
+              from.
             </Alert>
-            
+
             <LedgerSelect
-              label="Bank or Cash Account"
+              label='Bank or Cash Account'
               onChange={(ledger: any) =>
                 setPayForm({ credit_ledger_id: ledger?.id || 0 })
               }
@@ -559,18 +610,18 @@ export const PayrollRunActions = ({
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button 
-            onClick={() => setOpenPayDialog(false)} 
-            variant="outlined"
-            size="small"
+          <Button
+            onClick={() => setOpenPayDialog(false)}
+            variant='outlined'
+            size='small'
             disabled={isPaying}
           >
             Cancel
           </Button>
           <Button
-            variant="contained"
-            color="success"
-            size="small"
+            variant='contained'
+            color='success'
+            size='small'
             onClick={handlePayConfirm}
             disabled={isPaying || !isPayFormValid}
           >

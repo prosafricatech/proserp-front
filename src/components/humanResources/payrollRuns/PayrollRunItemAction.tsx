@@ -28,7 +28,7 @@ import {
   Typography,
   useMediaQuery,
 } from '@mui/material';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import { useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
@@ -115,46 +115,6 @@ const PayrollRunItemAction = ({
       enqueueSnackbar(getErrorMessage(error), { variant: 'error' }),
   });
 
-  // Fetch allowance types for salary sheet
-  const { data: allowanceTypes, isLoading: allowanceLoading } = useQuery({
-    queryKey: ['allowanceTypesForSalarySheetAction'],
-    queryFn: async () => {
-      const response = await humanResourcesServices.getAllowanceTypesList({
-        limit: 100,
-      });
-      return response?.data || [];
-    },
-    enabled: openSalarySheetDialog,
-    staleTime: 1000 * 60 * 5,
-  });
-
-  // Fetch deduction types for salary sheet
-  const { data: deductionTypes, isLoading: deductionLoading } = useQuery({
-    queryKey: ['deductionTypesForSalarySheetAction'],
-    queryFn: async () => {
-      const response = await humanResourcesServices.getDeductionTypesList({
-        limit: 100,
-      });
-      return response?.data || [];
-    },
-    enabled: openSalarySheetDialog,
-    staleTime: 1000 * 60 * 5,
-  });
-
-  // Fetch contribution types for salary sheet
-  const { data: contributionTypes, isLoading: contributionLoading } = useQuery({
-    queryKey: ['contributionTypesForSalarySheetAction'],
-    queryFn: async () => {
-      const response =
-        await humanResourcesServices.getEmployerContributionTypesList({
-          limit: 100,
-        });
-      return response?.data || [];
-    },
-    enabled: openSalarySheetDialog,
-    staleTime: 1000 * 60 * 5,
-  });
-
   // Fetch preview data for salary sheet
   const handleOpenSalarySheet = async () => {
     setIsLoadingSalarySheet(true);
@@ -221,9 +181,9 @@ const PayrollRunItemAction = ({
 
       setSalarySheetData({
         rows: salaryRows,
-        allowanceTypes: allowanceTypes || [],
-        deductionTypes: deductionTypes || [],
-        contributionTypes: contributionTypes || [],
+        // allowanceTypes: allowanceTypes || [],
+        // deductionTypes: deductionTypes || [],
+        // contributionTypes: contributionTypes || [],
         periodLabel: periodLabel,
       });
 
@@ -638,8 +598,7 @@ const PayrollRunItemAction = ({
       </Dialog>
 
       {/* Salary Sheet Dialog */}
-      {salarySheetData &&
-      (allowanceLoading || deductionLoading || contributionLoading) ? (
+      {salarySheetData && isLoadingSalarySheet ? (
         <Dialog open fullWidth>
           <LinearProgress />
         </Dialog>
@@ -653,9 +612,6 @@ const PayrollRunItemAction = ({
             }}
             periodLabel={salarySheetData.periodLabel}
             rows={salarySheetData.rows}
-            allowanceTypes={allowanceTypes || []}
-            deductionTypes={deductionTypes || []}
-            contributionTypes={contributionTypes || []}
             isLoading={isLoadingSalarySheet}
           />
         )
