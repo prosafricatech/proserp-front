@@ -884,7 +884,7 @@ function StockMovement({ toggleOpen, dormantStock = false, isFromDashboard }) {
                             }}
                           />
                         }
-                        label='With more details (View In Excel)'
+                        label='With more details (Only In Excel)'
                       />
                     </Div>
                   </Grid>
