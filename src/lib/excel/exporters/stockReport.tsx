@@ -70,10 +70,6 @@ export async function exportStockReportToExcel(exportedData: any) {
           { label: 'Category', getValue: (s: any) => s.category?.name || '' },
           { label: 'Description', getValue: (s: any) => s.description || '' },
           { label: 'Type', getValue: (s: any) => s.type || '' },
-          {
-            label: 'VAT Exempted',
-            getValue: (s: any) => s.vat_exempted,
-          },
         ]
       : [];
 
@@ -109,7 +105,6 @@ export async function exportStockReportToExcel(exportedData: any) {
         { width: 20 }, // Category
         { width: 30 }, // Description
         { width: 14 }, // Type
-        { width: 14 }, // VAT Exempted
       ] : []),
       { width: 12 }, // Unit
       { width: 16 }, // Balance
