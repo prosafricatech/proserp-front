@@ -19,12 +19,19 @@ import ApprovedPaymentActionTail from './approvedPayment/ApprovedPaymentActionTa
 import ApprovedPaymentListItem from './approvedPayment/ApprovedPaymentListItem';
 import ImprestRequisitionTabs from './imprestRetirement/ImprestRequisitionTabs';
 import ApprovalItemAction from '../requisitions/listItem/tabs/ApprovalItemAction';
-import { CreditScoreOutlined, ShoppingCartOutlined, VerifiedRounded } from '@mui/icons-material';
+import { CreditScoreOutlined, Inventory2Outlined, ShoppingCartOutlined, VerifiedRounded } from '@mui/icons-material';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
-import { ApprovalRequisition, PaymentApprovalRequisition, PurchaseApprovalRequisition } from './ApprovalRequisitionType';
+import {
+  ApprovalRequisition,
+  MaterialApprovalRequisition,
+  PaymentApprovalRequisition,
+  PurchaseApprovalRequisition,
+} from './ApprovalRequisitionType';
 import { processTypeConfig } from '../utils/requisition';
+import MaterialRequisitionTabs from './material/MaterialRequisitionTabs';
+import ApprovedIssueActionTail from './approvedIssue/ApprovedIssueActionTail';
 
 interface ApprovedRequisitionsListItemProps {
   approvedRequisition: ApprovalRequisition;
@@ -45,20 +52,32 @@ const ApprovedRequisitionsListItem: React.FC<ApprovedRequisitionsListItemProps> 
   const isPayment = ['PAYMENT', 'IMPREST'].includes(approvedRequisition.process_type);
   const isImprest = approvedRequisition.process_type === 'IMPREST';
   const isPurchase = approvedRequisition.process_type === 'PURCHASE';
+  const isMaterial = approvedRequisition.process_type === 'MATERIAL';
   const processConfig = processTypeConfig[approvedRequisition.process_type as keyof typeof processTypeConfig] || {
     label: approvedRequisition.process_type,
     color: 'default' as const,
   };
-  const paymentsCount = isPayment ? (approvedRequisition as PaymentApprovalRequisition).payments_count : 0;
-  const purchasesCount = isPurchase ? (approvedRequisition as PurchaseApprovalRequisition).purchase_orders_count : 0;
+  const paymentsCount =
+    isPayment || isMaterial
+      ? (approvedRequisition as PaymentApprovalRequisition).payments_count || 0
+      : 0;
+  const purchasesCount =
+    isPurchase || isMaterial
+      ? (approvedRequisition as PurchaseApprovalRequisition).purchase_orders_count || 0
+      : 0;
+  const issuesCount = isMaterial
+    ? (approvedRequisition as MaterialApprovalRequisition).issues_count || 0
+    : 0;
   const paymentsOrPurchasesCount = isPayment ? paymentsCount : purchasesCount;
   const paymentRequisition = approvedRequisition as PaymentApprovalRequisition & { is_fully_paid?: boolean | number | string };
   const isFullyPaid = paymentRequisition?.is_fully_paid === true;
 
-  const isFullyProcessed = isPayment
+  const isFullyProcessed = isMaterial
+    ? (approvedRequisition as MaterialApprovalRequisition).is_fully_fulfilled
+    : isPayment
     ? isFullyPaid
     : (approvedRequisition as PurchaseApprovalRequisition).is_fully_ordered;
-  const hasProcessItems = paymentsOrPurchasesCount > 0;
+  const hasProcessItems = paymentsOrPurchasesCount > 0 || issuesCount > 0;
 
   return (
     <Accordion
@@ -150,7 +169,7 @@ const ApprovedRequisitionsListItem: React.FC<ApprovedRequisitionsListItemProps> 
 
           <Grid size={{ xs: 4, md: 1 }}>
             <Stack direction="row" spacing={1.5} justifyContent="flex-end" alignItems="center" mt={2}>
-              {(hasProcessItems && (!isFullyProcessed || paymentsOrPurchasesCount > 1)) && (
+              {(hasProcessItems && (!isFullyProcessed || paymentsOrPurchasesCount > 1 || issuesCount > 0)) && (
                 <Tooltip title={isPayment ? 'Payments Count' : 'Purchase Orders Count'}>
                   <Badge badgeContent={paymentsOrPurchasesCount} color="info">
                     {isPayment ? <CreditScoreOutlined fontSize="small" /> : <ShoppingCartOutlined fontSize="small" />}
@@ -158,8 +177,24 @@ const ApprovedRequisitionsListItem: React.FC<ApprovedRequisitionsListItemProps> 
                 </Tooltip>
               )}
 
+              {isMaterial && issuesCount > 0 && (
+                <Tooltip title='Store Issues Count'>
+                  <Badge badgeContent={issuesCount} color='info'>
+                    <Inventory2Outlined fontSize='small' />
+                  </Badge>
+                </Tooltip>
+              )}
+
               {isFullyProcessed && (
-                <Tooltip title={isPayment ? 'Fully Paid' : 'Fully Ordered'}>
+                <Tooltip
+                  title={
+                    isMaterial
+                      ? 'Fully Fulfilled'
+                      : isPayment
+                        ? 'Fully Paid'
+                        : 'Fully Ordered'
+                  }
+                >
                   <VerifiedRounded fontSize="small" color="success" />
                 </Tooltip>
               )}
@@ -184,11 +219,35 @@ const ApprovedRequisitionsListItem: React.FC<ApprovedRequisitionsListItemProps> 
                       isExpanded={expanded[approvedRequisition.id]}
                     />
                   )}
+                {isMaterial &&
+                  checkOrganizationPermission([PERMISSIONS.APPROVED_REQUISITIONS_PURCHASE]) &&
+                  !(approvedRequisition as MaterialApprovalRequisition).is_fully_ordered && (
+                    <ApprovedPurchaseActionTail
+                      approvedRequisition={approvedRequisition as any}
+                      isExpanded={expanded[approvedRequisition.id]}
+                    />
+                  )}
                 {(!isImprest && isPayment) &&
                   checkOrganizationPermission([PERMISSIONS.APPROVED_REQUISITIONS_PAY]) &&
                   !isFullyPaid && (
                     <ApprovedPaymentActionTail
                       approvedRequisition={approvedRequisition as PaymentApprovalRequisition}
+                      isExpanded={expanded[approvedRequisition.id]}
+                    />
+                  )}
+                {isMaterial &&
+                  checkOrganizationPermission([PERMISSIONS.APPROVED_REQUISITIONS_PAY]) &&
+                  !(approvedRequisition as MaterialApprovalRequisition).is_fully_paid && (
+                    <ApprovedPaymentActionTail
+                      approvedRequisition={approvedRequisition}
+                      isExpanded={expanded[approvedRequisition.id]}
+                    />
+                  )}
+                {isMaterial &&
+                  checkOrganizationPermission([PERMISSIONS.INVENTORY_CONSUMPTIONS_CREATE]) &&
+                  !(approvedRequisition as MaterialApprovalRequisition).is_fully_issued && (
+                    <ApprovedIssueActionTail
+                      approvedRequisition={approvedRequisition as MaterialApprovalRequisition}
                       isExpanded={expanded[approvedRequisition.id]}
                     />
                   )}
@@ -202,6 +261,11 @@ const ApprovedRequisitionsListItem: React.FC<ApprovedRequisitionsListItemProps> 
                 approvedRequisition={approvedRequisition as PaymentApprovalRequisition}
                 activeTab={activeImprestTab}
                 setActiveTab={setActiveImprestTab}
+                isExpanded={expanded[approvedRequisition.id]}
+              />
+            ) : isMaterial ? (
+              <MaterialRequisitionTabs
+                approvedRequisition={approvedRequisition as MaterialApprovalRequisition}
                 isExpanded={expanded[approvedRequisition.id]}
               />
             ) : isPayment ? (

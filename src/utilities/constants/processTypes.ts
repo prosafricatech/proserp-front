@@ -1,5 +1,6 @@
 export const PROCESS_TYPES = [
     'PURCHASE',
+    'MATERIAL',
     'PAYMENT',
     'IMPREST',
     'IMPREST RETIREMENT',

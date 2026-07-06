@@ -90,7 +90,10 @@ function ApprovalOnScreen({ approval, organization, belowLargeScreen }: Approval
     const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || "#2113AD");
     const contrastText = organization.settings?.contrast_text || "#FFFFFF";
 
-    const isPurchase = approval.requisition?.process_type?.toLowerCase() === 'purchase';
+        const isPurchase = ['purchase', 'material'].includes(
+            approval.requisition?.process_type?.toLowerCase() || ''
+        );
+        const isMaterial = approval.requisition?.process_type?.toLowerCase() === 'material';
     const isImprest = approval.requisition?.process_type?.toLowerCase() === 'imprest';
     const additionalCosts = isPurchase
         ? ((((approval as any).additional_costs) || (approval.requisition as any)?.additional_costs || []) as any[])
@@ -143,8 +146,10 @@ function ApprovalOnScreen({ approval, organization, belowLargeScreen }: Approval
                             }}
                         >
                             <Typography variant="h4" sx={{ color: headerColor }}>
-                                                                {isPurchase
-                                                                    ? 'PURCHASE REQUISITION APPROVAL'
+                                                                {isMaterial
+                                                                    ? 'MATERIAL REQUISITION APPROVAL'
+                                                                    : isPurchase
+                                                                        ? 'PURCHASE REQUISITION APPROVAL'
                                                                     : isImprest
                                                                         ? 'IMPREST REQUISITION APPROVAL'
                                                                         : 'PAYMENT REQUISITION APPROVAL'}

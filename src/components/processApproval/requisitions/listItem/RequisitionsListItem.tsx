@@ -182,9 +182,17 @@ const RequisitionsListItem = ({ requisition }: RequisitionsListItemProps) => {
               )}
               {(requisition.process_type === 'PAYMENT'
                 ? requisition.is_fully_paid
-                : requisition.is_fully_ordered) && (
+                : requisition.process_type === 'MATERIAL'
+                  ? (requisition as any).is_fully_fulfilled
+                  : requisition.is_fully_ordered) && (
                 <Tooltip
-                  title={requisition.process_type === 'PAYMENT' ? 'Fully Paid' : 'Fully Ordered'}
+                  title={
+                    requisition.process_type === 'PAYMENT'
+                      ? 'Fully Paid'
+                      : requisition.process_type === 'MATERIAL'
+                        ? 'Fully Fulfilled'
+                        : 'Fully Ordered'
+                  }
                 >
                   <VerifiedRounded fontSize="small" color="success" />
                 </Tooltip>

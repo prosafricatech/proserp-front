@@ -50,7 +50,7 @@ export interface Approval {
 
 export interface ApprovalChain {
   id: number;
-  process_type: 'PURCHASE' | 'PAYMENT' | 'LEAVE_REQUEST' | 'IMPREST';
+  process_type: 'PURCHASE' | 'MATERIAL' | 'PAYMENT' | 'LEAVE_REQUEST' | 'IMPREST';
   cost_center_id: number;
 }
 
@@ -161,7 +161,7 @@ export interface BaseRequisition {
   creator: User;
   currency: Currency;
   next_approval_level: ApprovalChainLevel | null;
-  process_type: 'PURCHASE' | 'PAYMENT' | 'LEAVE_REQUEST' | 'IMPREST';
+  process_type: 'PURCHASE' | 'MATERIAL' | 'PAYMENT' | 'LEAVE_REQUEST' | 'IMPREST';
   reference: string | null;
   remarks: string | null;
   status: string;
@@ -175,6 +175,15 @@ export interface PurchaseRequisition extends BaseRequisition {
   process_type: 'PURCHASE';
   items: PurchaseItem[];
   is_fully_ordered: boolean;
+}
+
+export interface MaterialRequisition extends BaseRequisition {
+  process_type: 'MATERIAL';
+  items: PurchaseItem[];
+  is_fully_ordered?: boolean;
+  is_fully_paid?: boolean;
+  is_fully_fulfilled?: boolean;
+  has_issues?: boolean;
 }
 
 export interface PaymentRequisition extends BaseRequisition {
@@ -199,6 +208,7 @@ export interface LeaveRequestRequisition extends BaseRequisition {
 
 export type Requisition =
   | PurchaseRequisition
+  | MaterialRequisition
   | PaymentRequisition
   | LeaveRequestRequisition
   | ImprestRequisition;

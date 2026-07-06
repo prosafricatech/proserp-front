@@ -37,6 +37,16 @@ function ImprestRetirementOnScreenPreview({ retirement }: RetirementPreviewProps
     0
   );
 
+  const getItemSource = (item: any) => {
+    if (item?.ledger) {
+      return `${imprestLedgerName} (${item.ledger?.name || '-'})`;
+    }
+
+    const productName = item?.product?.item_name || item?.product?.name || '-';
+    const storeName = item?.store?.name || '-';
+    return `${productName} @ ${storeName}`;
+  };
+
   return (
     <Box sx={{ p: 1.5 }}>
       <Box sx={{ mb: 2.5, borderBottom: `2px solid ${theme.palette.divider}`, pb: 1.5 }}>
@@ -99,7 +109,7 @@ function ImprestRetirementOnScreenPreview({ retirement }: RetirementPreviewProps
           <TableHead>
             <TableRow>
               <TableCell sx={{ width: 50 }}>S/N</TableCell>
-              <TableCell>Paid Through (Item Ledger)</TableCell>
+              <TableCell>Item Source</TableCell>
               <TableCell>Description</TableCell>
               <TableCell align="right">Amount ({currencyCode})</TableCell>
             </TableRow>
@@ -109,7 +119,7 @@ function ImprestRetirementOnScreenPreview({ retirement }: RetirementPreviewProps
               items.map((item: any, index: number) => (
                 <TableRow key={item?.id || index}>
                   <TableCell>{index + 1}</TableCell>
-                  <TableCell>{`${imprestLedgerName} (${item?.ledger?.name || '-'})`}</TableCell>
+                  <TableCell>{getItemSource(item)}</TableCell>
                   <TableCell>{item?.description || '-'}</TableCell>
                   <TableCell align="right">
                     {Number(item?.amount || 0).toLocaleString('en-US', {

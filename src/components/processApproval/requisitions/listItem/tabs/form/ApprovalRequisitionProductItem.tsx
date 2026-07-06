@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Divider, Typography, TextField, Tabs, Tab, Tooltip, InputAdornment, Checkbox, IconButton, Box, Button, Grid } from '@mui/material';
+import { Divider, Typography, TextField, Tabs, Tab, Tooltip, InputAdornment, Checkbox, IconButton, Box, Button, Grid, MenuItem } from '@mui/material';
 import { AccountBalanceWalletOutlined } from '@mui/icons-material';
 import ProductBudgetCheckDetails from './ProductBudgetCheckDetails';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 import Vendors from './Vendors';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { Restore } from '@mui/icons-material';
+import CallSplitOutlinedIcon from '@mui/icons-material/CallSplitOutlined';
 import { Div } from '@jumbo/shared';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
@@ -13,6 +14,7 @@ import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { Approval, Requisition, RequisitionItem } from '@/components/processApproval/RequisitionType';
 import { MeasurementUnit } from '@/components/masters/measurementUnits/MeasurementUnitType';
 import { Currency } from '@/components/masters/Currencies/CurrencyType';
+import StoreSelector from '@/components/procurement/stores/StoreSelector';
 
 interface ApprovalRequisitionProductItemProps {
     approval?: Approval;
@@ -21,6 +23,7 @@ interface ApprovalRequisitionProductItemProps {
     handleItemChange: any
     requisitionProductItem: RequisitionItem[];
     setRequisitionProductItem: (items: RequisitionItem[]) => void;
+    isMaterialMode?: boolean;
 }
 
 interface ItemState {
@@ -36,7 +39,8 @@ function ApprovalRequisitionProductItem({
     errors, 
     handleItemChange, 
     requisitionProductItem, 
-    setRequisitionProductItem 
+    setRequisitionProductItem,
+    isMaterialMode = false,
 }: ApprovalRequisitionProductItemProps) {
     const { authOrganization, checkOrganizationPermission } = useJumboAuth();
     const canSeeBudget = checkOrganizationPermission([
@@ -88,9 +92,194 @@ function ApprovalRequisitionProductItem({
         setRequisitionProductItem([...initialItems]);
     };
 
+    const handleSplitItem = (index: number) => {
+        const item = requisitionProductItem[index];
+        if (!item) return;
+
+        const splitItem: RequisitionItem = {
+            ...item,
+            quantity: 0,
+            rate: Number(item.rate || 0),
+            remarks: '',
+            fulfillment_type: (item as any).fulfillment_type || 'PURCHASE',
+            store_id: (item as any).store_id || null,
+        };
+
+        const updatedItems = [...requisitionProductItem];
+        updatedItems.splice(index + 1, 0, splitItem);
+        setRequisitionProductItem(updatedItems);
+    };
+
     return (
         <React.Fragment>
             {requisitionProductItem.map((item: RequisitionItem, itemIndex: number) => {
+                if (isMaterialMode) {
+                    const fulfillmentType = String((item as any).fulfillment_type || 'PURCHASE');
+                    const stockBalances = Array.isArray((item as any).stock_balances)
+                        ? (item as any).stock_balances
+                        : [];
+
+                    return (
+                        <Grid
+                            container
+                            key={`${item.id}-${itemIndex}`}
+                            spacing={1}
+                            pb={2}
+                            pr={0.5}
+                            sx={{
+                                cursor: 'pointer',
+                                '&:hover': {
+                                    bgcolor: 'action.hover',
+                                },
+                            }}
+                        >
+                            <Grid size={{xs: 12}}>
+                                <Divider sx={{ borderColor: 'primary.main', pb: 2 }} />
+                            </Grid>
+                            <Grid size={{xs: 1}}>
+                                <Div sx={{ mt: 2, mb: 1.7 }}>{itemIndex + 1}.</Div>
+                            </Grid>
+                            <Grid size={{xs: 11, md: 4}}>
+                                <Div sx={{ mt: 1, mb: 1 }}>
+                                    <Typography>{item.product?.name}</Typography>
+                                    {stockBalances.length > 0 && (
+                                        <Typography variant='caption' color='text.secondary'>
+                                            {stockBalances
+                                                .map((balance: any) => `Store ${balance.store_id}: ${Number(balance.balance || 0).toLocaleString()}`)
+                                                .join(' | ')}
+                                        </Typography>
+                                    )}
+                                </Div>
+                            </Grid>
+                            <Grid size={{xs: 12, md: 2}}>
+                                <TextField
+                                    label="Quantity"
+                                    fullWidth
+                                    size="small"
+                                    defaultValue={item.quantity}
+                                    onChange={(e) =>
+                                        handleItemChange({
+                                            index: itemIndex,
+                                            key: 'quantity',
+                                            value: sanitizedNumber(e.target.value),
+                                        })
+                                    }
+                                    error={!!errors?.[itemIndex]?.quantity}
+                                    helperText={errors?.[itemIndex]?.quantity?.message || ''}
+                                    InputProps={{
+                                        inputComponent: CommaSeparatedField,
+                                        endAdornment: (
+                                            <InputAdornment position="end">
+                                                {item.measurement_unit?.symbol}
+                                            </InputAdornment>
+                                        ),
+                                    }}
+                                />
+                            </Grid>
+                            <Grid size={{xs: 12, md: 2}}>
+                                <TextField
+                                    select
+                                    label='Fulfillment'
+                                    size='small'
+                                    fullWidth
+                                    value={fulfillmentType}
+                                    error={!!errors?.[itemIndex]?.fulfillment_type}
+                                    helperText={errors?.[itemIndex]?.fulfillment_type?.message || ''}
+                                    onChange={(e) =>
+                                        handleItemChange({
+                                            index: itemIndex,
+                                            key: 'fulfillment_type',
+                                            value: e.target.value,
+                                        })
+                                    }
+                                >
+                                    <MenuItem value='STOCK'>Stock</MenuItem>
+                                    <MenuItem value='PURCHASE'>Purchase</MenuItem>
+                                    <MenuItem value='IMPREST'>Imprest</MenuItem>
+                                </TextField>
+                            </Grid>
+                            <Grid size={{xs: 12, md: 3}}>
+                                {fulfillmentType === 'STOCK' ? (
+                                    <StoreSelector
+                                        label='Store'
+                                        frontError={errors?.[itemIndex]?.store_id}
+                                        multiple={false}
+                                        defaultValue={(item as any).store || null}
+                                        onChange={(store: any) => {
+                                            handleItemChange({
+                                                index: itemIndex,
+                                                key: 'store_id',
+                                                value: store?.id || null,
+                                            });
+                                            handleItemChange({
+                                                index: itemIndex,
+                                                key: 'store',
+                                                value: store || null,
+                                            });
+                                        }}
+                                    />
+                                ) : (
+                                    <TextField
+                                        label='Rate'
+                                        fullWidth
+                                        size='small'
+                                        value={Number(item.rate || 0).toLocaleString()}
+                                        error={!!errors?.[itemIndex]?.rate}
+                                        helperText={errors?.[itemIndex]?.rate?.message || ''}
+                                        InputProps={{
+                                            inputComponent: CommaSeparatedField,
+                                        }}
+                                        onChange={(e) =>
+                                            handleItemChange({
+                                                index: itemIndex,
+                                                key: 'rate',
+                                                value: sanitizedNumber(e.target.value),
+                                            })
+                                        }
+                                    />
+                                )}
+                            </Grid>
+                            <Grid size={{xs: 12, md: 9}}>
+                                <TextField
+                                    label="Remarks"
+                                    fullWidth
+                                    size="small"
+                                    defaultValue={item.remarks}
+                                    onChange={(e) =>
+                                        handleItemChange({
+                                            index: itemIndex,
+                                            key: 'remarks',
+                                            value: e.target.value,
+                                        })
+                                    }
+                                />
+                            </Grid>
+                            <Grid size={{xs: 12, md: 3}} textAlign='end'>
+                                <Tooltip title="Split this item">
+                                    <IconButton
+                                        size="small"
+                                        color="primary"
+                                        onClick={() => handleSplitItem(itemIndex)}
+                                    >
+                                        <CallSplitOutlinedIcon fontSize='small' />
+                                    </IconButton>
+                                </Tooltip>
+                                {requisitionProductItem.length > 1 && (
+                                    <Tooltip title="Delete item">
+                                        <IconButton
+                                            size="small"
+                                            color="error"
+                                            onClick={() => handleDeleteItem(itemIndex)}
+                                        >
+                                            <DeleteIcon fontSize="small" />
+                                        </IconButton>
+                                    </Tooltip>
+                                )}
+                            </Grid>
+                        </Grid>
+                    );
+                }
+
                 const vat_factor = (item.vat_percentage || 0) * 0.01;
                 const rate = item.rate || 0;
                 const itemState = vatFieldStates[itemIndex] || {} as ItemState;
@@ -98,7 +287,7 @@ function ApprovalRequisitionProductItem({
                 return (
                     <Grid 
                         container
-                        key={item.id}
+                        key={`${item.id}-${itemIndex}`}
                         spacing={1}
                         pb={2}
                         pr={0.5}

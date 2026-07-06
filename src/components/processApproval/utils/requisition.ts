@@ -2,6 +2,7 @@ import { LeaveRequisitionItem, Requisition } from '../RequisitionType';
 
 export const processTypeConfig = {
   PURCHASE: { label: 'Purchase', color: 'primary' as const },
+  MATERIAL: { label: 'Material', color: 'primary' as const },
   PAYMENT: { label: 'Payment', color: 'primary' as const },
   IMPREST: { label: 'Imprest', color: 'primary' as const },
   LEAVE_REQUEST: { label: 'Leave Request', color: 'primary' as const },

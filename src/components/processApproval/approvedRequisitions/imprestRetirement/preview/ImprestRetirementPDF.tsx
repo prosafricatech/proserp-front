@@ -25,6 +25,16 @@ function ImprestRetirementPDF({ retirement, organization }: ImprestRetirementPDF
     0
   );
 
+  const getItemSource = (item: any) => {
+    if (item?.ledger) {
+      return `${imprestLedgerName} (${item.ledger?.name || '-'})`;
+    }
+
+    const productName = item?.product?.item_name || item?.product?.name || '-';
+    const storeName = item?.store?.name || '-';
+    return `${productName} @ ${storeName}`;
+  };
+
   const mainColor = organization?.settings?.main_color || '#2113AD';
   const lightColor = organization?.settings?.light_color || '#eceef8';
   const contrastText = organization?.settings?.contrast_text || '#FFFFFF';
@@ -100,7 +110,7 @@ function ImprestRetirementPDF({ retirement, organization }: ImprestRetirementPDF
         <View style={{ ...pdfStyles.table, minHeight: 220, marginBottom: 14 }}>
           <View style={pdfStyles.tableRow}>
             <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.5 }}>S/N</Text>
-            <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2.5 }}>Paid Through (Item Ledger)</Text>
+            <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2.5 }}>Item Source</Text>
             <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2 }}>Description</Text>
             <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.5, textAlign: 'right' }}>
               Amount ({currencyCode})
@@ -114,7 +124,7 @@ function ImprestRetirementPDF({ retirement, organization }: ImprestRetirementPDF
                   {index + 1}
                 </Text>
                 <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 2.5 }}>
-                  {`${imprestLedgerName} (${item?.ledger?.name || '-'})`}
+                  {getItemSource(item)}
                 </Text>
                 <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 2 }}>
                   {item?.description || '-'}

@@ -12,6 +12,7 @@ import {
   Divider,
   Grid,
   IconButton,
+  MenuItem,
   TextField,
   Tooltip,
   Typography,
@@ -29,17 +30,36 @@ import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import userLedgerServices from '@/components/accounts/ledgers/user-ledger-services';
 import AttachmentForm from '@/components/filesShelf/attachments/AttachmentForm';
 import imprestRetirementServices from '@/components/processApproval/imprestRetirements/imprestRetirementServices';
+import ProductSelect from '@/components/productAndServices/products/ProductSelect';
+import StoreSelector from '@/components/procurement/stores/StoreSelector';
 
 type RetirementItem = {
   id?: number;
   imprest_retirement_item_id?: number;
+  line_type?: 'EXPENSE' | 'PRODUCT';
   ledger_id: number | null;
+  product_id?: number | null;
+  store_id?: number | null;
   measurement_unit_id: number | null;
   quantity: number | null;
   rate: number | null;
   amount?: number;
   description: string;
   ledger?: {
+    id: number;
+    name: string;
+  };
+  product?: {
+    id: number;
+    item_name?: string;
+    name?: string;
+    measurement_unit_id?: number;
+    measurement_unit?: {
+      id: number;
+      symbol?: string;
+    };
+  };
+  store?: {
     id: number;
     name: string;
   };
@@ -106,7 +126,10 @@ type ImprestRetirementFormProps = {
 };
 
 const EMPTY_ITEM: RetirementItem = {
+  line_type: 'EXPENSE',
   ledger_id: null,
+  product_id: null,
+  store_id: null,
   measurement_unit_id: null,
   quantity: null,
   rate: null,
@@ -298,7 +321,13 @@ function ImprestRetirementForm({
       id: item.id,
       imprest_retirement_item_id:
         Number(item?.imprest_retirement_item_id || item?.id || 0) || undefined,
+      line_type:
+        Number(item.product_id || item.product?.id)
+          ? 'PRODUCT'
+          : 'EXPENSE',
       ledger_id: Number(item.ledger_id || item.ledger?.id) || null,
+      product_id: Number(item.product_id || item.product?.id) || null,
+      store_id: Number(item.store_id || item.store?.id) || null,
       measurement_unit_id:
         Number(item.measurement_unit_id || item.measurement_unit?.id) || null,
       quantity: Number.isFinite(Number(item.quantity)) ? Number(item.quantity) : 1,
@@ -306,6 +335,8 @@ function ImprestRetirementForm({
       amount: Number.isFinite(Number(item.amount)) ? Number(item.amount) : undefined,
       description: item.description || item.remarks || '',
       ledger: item.ledger,
+      product: item.product,
+      store: item.store,
       measurement_unit: item.measurement_unit,
     }));
 
@@ -539,8 +570,12 @@ function ImprestRetirementForm({
     const hasInvalidItem = items.some((item) => {
       const quantity = Number(item.quantity);
       const rate = Number(item.rate);
+      const isProductLine = String(item.line_type || 'EXPENSE') === 'PRODUCT';
+      const hasInvalidSource = isProductLine
+        ? !item.product_id || !item.store_id
+        : !item.ledger_id;
       return (
-        !item.ledger_id ||
+        hasInvalidSource ||
         !item.measurement_unit_id ||
         !Number.isFinite(quantity) ||
         quantity <= 0 ||
@@ -550,7 +585,7 @@ function ImprestRetirementForm({
     });
 
     if (hasInvalidItem) {
-      setClientError('Each item requires ledger, measurement unit, quantity > 0 and rate > 0.');
+      setClientError('Each item requires source account/product, measurement unit, quantity > 0 and rate > 0.');
       return false;
     }
 
@@ -574,7 +609,10 @@ function ImprestRetirementForm({
     retirement_date: retirementDate ? retirementDate.format('YYYY-MM-DD') : null,
     remarks,
     items: items.map((item) => ({
+      line_type: item.line_type || 'EXPENSE',
       ledger_id: item.ledger_id,
+      product_id: item.product_id || null,
+      store_id: item.store_id || null,
       measurement_unit_id: item.measurement_unit_id,
       quantity: Number.isFinite(Number(item.quantity)) ? Number(item.quantity) : 0,
       rate: Number.isFinite(Number(item.rate)) ? Number(item.rate) : 0,
@@ -592,7 +630,12 @@ function ImprestRetirementForm({
     formData.append('remarks', payload.remarks || '');
 
     payload.items.forEach((item, index) => {
-      formData.append(`items[${index}][ledger_id]`, String(item.ledger_id || ''));
+      if (item.line_type === 'PRODUCT') {
+        formData.append(`items[${index}][product_id]`, String(item.product_id || ''));
+        formData.append(`items[${index}][store_id]`, String(item.store_id || ''));
+      } else {
+        formData.append(`items[${index}][ledger_id]`, String(item.ledger_id || ''));
+      }
       formData.append(
         `items[${index}][measurement_unit_id]`,
         String(item.measurement_unit_id || '')
@@ -812,8 +855,12 @@ function ImprestRetirementForm({
               <>
                 <Grid size={{ xs: 12, md: 4.5 }}>
                   <ReadOnlyField
-                    label="Paid Through (Item Ledger)"
-                    value={`${paidThroughLabel} (${item.ledger?.name || (item.ledger_id ? `Ledger #${item.ledger_id}` : '-')})`}
+                    label={String(item.line_type || 'EXPENSE') === 'PRODUCT' ? 'Product / Store' : 'Paid Through (Item Ledger)'}
+                    value={
+                      String(item.line_type || 'EXPENSE') === 'PRODUCT'
+                        ? `${item.product?.item_name || item.product?.name || (item.product_id ? `Product #${item.product_id}` : '-')} (${item.store?.name || (item.store_id ? `Store #${item.store_id}` : '-')})`
+                        : `${paidThroughLabel} (${item.ledger?.name || (item.ledger_id ? `Ledger #${item.ledger_id}` : '-')})`
+                    }
                   />
                 </Grid>
                 <Grid size={{ xs: 12, md: 2 }}>
@@ -851,18 +898,82 @@ function ImprestRetirementForm({
               </>
             ) : (
               <>
-                <Grid size={{ xs: 11, md: 3.5 }}>
-                  <LedgerSelect
-                    label={`Item Ledger (Paid via ${paidThroughLabel})`}
-                    defaultValue={item.ledger_id ? ({ id: item.ledger_id, name: item.ledger?.name || '' } as any) : null}
-                    onChange={(newValue: any) => {
-                      const singleValue = Array.isArray(newValue) ? newValue[0] : newValue;
+                <Grid size={{ xs: 12, md: 2 }}>
+                  <TextField
+                    select
+                    size='small'
+                    fullWidth
+                    label='Line Type'
+                    value={item.line_type || 'EXPENSE'}
+                    onChange={(e) => {
+                      const lineType = String(e.target.value) === 'PRODUCT' ? 'PRODUCT' : 'EXPENSE';
                       updateItem(index, {
-                        ledger_id: Number(singleValue?.id || 0) || null,
-                        ledger: singleValue,
+                        line_type: lineType,
+                        ledger_id: lineType === 'EXPENSE' ? item.ledger_id : null,
+                        product_id: lineType === 'PRODUCT' ? item.product_id : null,
+                        store_id: lineType === 'PRODUCT' ? item.store_id : null,
                       });
                     }}
-                  />
+                  >
+                    <MenuItem value='EXPENSE'>Expense</MenuItem>
+                    <MenuItem value='PRODUCT'>Product</MenuItem>
+                  </TextField>
+                </Grid>
+                <Grid size={{ xs: 12, md: 3.5 }}>
+                  {String(item.line_type || 'EXPENSE') === 'PRODUCT' ? (
+                    <ProductSelect
+                      label='Product'
+                      defaultValue={item.product || null}
+                      onChange={(newValue: any) => {
+                        updateItem(index, {
+                          product_id: Number(newValue?.id || 0) || null,
+                          product: newValue || undefined,
+                          measurement_unit_id:
+                            Number(
+                              newValue?.primary_unit?.id ||
+                                newValue?.measurement_unit_id ||
+                                newValue?.measurement_unit?.id ||
+                                0
+                            ) || item.measurement_unit_id,
+                        });
+                      }}
+                    />
+                  ) : (
+                    <LedgerSelect
+                      label={`Item Ledger (Paid via ${paidThroughLabel})`}
+                      defaultValue={item.ledger_id ? ({ id: item.ledger_id, name: item.ledger?.name || '' } as any) : null}
+                      onChange={(newValue: any) => {
+                        const singleValue = Array.isArray(newValue) ? newValue[0] : newValue;
+                        updateItem(index, {
+                          ledger_id: Number(singleValue?.id || 0) || null,
+                          ledger: singleValue,
+                        });
+                      }}
+                    />
+                  )}
+                </Grid>
+                <Grid size={{ xs: 12, md: 2 }}>
+                  {String(item.line_type || 'EXPENSE') === 'PRODUCT' ? (
+                    <StoreSelector
+                      label='Store'
+                      multiple={false}
+                      defaultValue={item.store || null}
+                      onChange={(newValue: any) => {
+                        updateItem(index, {
+                          store_id: Number(newValue?.id || 0) || null,
+                          store: newValue || undefined,
+                        });
+                      }}
+                    />
+                  ) : (
+                    <TextField
+                      size='small'
+                      fullWidth
+                      label='Store'
+                      value='N/A'
+                      disabled
+                    />
+                  )}
                 </Grid>
                 <Grid size={{ xs: 12, md: 2 }}>
                   <MeasurementSelector

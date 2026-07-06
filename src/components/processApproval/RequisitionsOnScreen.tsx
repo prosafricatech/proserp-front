@@ -113,8 +113,11 @@ const RequisitionsOnScreen: React.FC<Props> = ({
       : organization.settings?.main_color || '#2113AD';
   const contrastText = organization.settings?.contrast_text || '#FFFFFF';
 
-  const isPurchase =
-    requisition?.approval_chain.process_type?.toLowerCase() === 'purchase';
+  const isPurchase = ['purchase', 'material'].includes(
+    requisition?.approval_chain.process_type?.toLowerCase() || ''
+  );
+  const isMaterial =
+    requisition?.approval_chain.process_type?.toLowerCase() === 'material';
   const isImprest =
     requisition?.approval_chain.process_type?.toLowerCase() === 'imprest';
   const requisitionItems: RequisitionItem[] =
@@ -178,8 +181,10 @@ const RequisitionsOnScreen: React.FC<Props> = ({
               }}
             >
               <Typography variant='h4' sx={{ color: headerColor }}>
-                {isPurchase
-                  ? 'PURCHASE REQUISITION'
+                {isMaterial
+                  ? 'MATERIAL REQUISITION'
+                  : isPurchase
+                    ? 'PURCHASE REQUISITION'
                   : isImprest
                     ? 'IMPREST REQUISITION'
                     : 'PAYMENT REQUISITION'}
