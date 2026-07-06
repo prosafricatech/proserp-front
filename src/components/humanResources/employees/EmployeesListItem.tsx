@@ -1,6 +1,8 @@
 'use client';
 
 import { useLanguage } from '@/app/[lang]/contexts/LanguageContext';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { Chip, Divider, Grid, Tooltip, Typography } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import EmployeeItemAction from './EmployeeItemAction';
@@ -14,8 +16,13 @@ const formatEmploymentType = (value?: string) =>
 const EmployeesListItem = ({ employee }: { employee: Employee }) => {
   const router = useRouter();
   const lang = useLanguage();
+  const { checkOrganizationPermission } = useJumboAuth();
 
-  const fullName = [employee.first_name, employee.middle_name, employee.last_name]
+  const fullName = [
+    employee.first_name,
+    employee.middle_name,
+    employee.last_name,
+  ]
     .filter(Boolean)
     .join(' ');
 
@@ -47,11 +54,16 @@ const EmployeesListItem = ({ employee }: { employee: Employee }) => {
                 mb={0}
                 noWrap
                 onClick={() =>
-                  router.push(`/${lang}/humanResources/employees/${employee.id}`)
+                  router.push(
+                    `/${lang}/humanResources/employees/${employee.id}`
+                  )
                 }
                 sx={{
                   cursor: 'pointer',
-                  '&:hover': { color: 'primary.main', textDecoration: 'underline' },
+                  '&:hover': {
+                    color: 'primary.main',
+                    textDecoration: 'underline',
+                  },
                 }}
               >
                 {fullName}
@@ -95,14 +107,19 @@ const EmployeesListItem = ({ employee }: { employee: Employee }) => {
                 sx={{ textTransform: 'capitalize', mb: 0.5 }}
               />
               <Typography variant='body2' color='text.secondary' noWrap>
-                Joined: {employee.join_date ? new Date(employee.join_date).toLocaleDateString() : '-'}
+                Joined:{' '}
+                {employee.join_date
+                  ? new Date(employee.join_date).toLocaleDateString()
+                  : '-'}
               </Typography>
             </div>
           </Tooltip>
         </Grid>
 
         <Grid size={{ xs: 12, md: 1 }} textAlign={'end'}>
-          <EmployeeItemAction employee={employee} />
+          {checkOrganizationPermission([PERMISSIONS.EMPLOYEES_UPDATE]) && (
+            <EmployeeItemAction employee={employee} />
+          )}
         </Grid>
       </Grid>
     </>

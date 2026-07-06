@@ -101,6 +101,13 @@ function ProductSelect(props) {
       isOptionEqualToValue={(o, v) => o.id === v.id}
       renderOption={(props, option, { selected }) => {
         const { key, ...rest } = props;
+        const imageSrc =
+          option.thumbnail ||
+          option.image_url ||
+          (Array.isArray(option.images) && option.images.length > 0
+            ? option.images[0]?.url
+            : undefined);
+        const hasImage = Boolean(imageSrc);
 
         return (
           <li {...rest} key={`${option.id}-${key}`}>
@@ -121,20 +128,22 @@ function ProductSelect(props) {
                 />
               )}
 
-              <Avatar
-                src={option.thumbnail || undefined}
-                variant='rounded'
-                sx={{
-                  width: 36,
-                  height: 36,
-                  mr: 1.5,
-                  fontWeight: 700,
-                  fontSize: 14,
-                  flexShrink: 0,
-                }}
-              >
-                {option.name?.charAt(0)?.toUpperCase()}
-              </Avatar>
+              {hasImage && (
+                <Avatar
+                  src={imageSrc}
+                  variant='rounded'
+                  sx={{
+                    width: 36,
+                    height: 36,
+                    mr: 1.5,
+                    fontWeight: 700,
+                    fontSize: 14,
+                    flexShrink: 0,
+                  }}
+                >
+                  {option.name?.charAt(0)?.toUpperCase()}
+                </Avatar>
+              )}
 
               <Box>
                 <Typography
@@ -144,7 +153,7 @@ function ProductSelect(props) {
                   {option.name}
                 </Typography>
 
-                {option.type && (
+                {hasImage && option.type && (
                   <Typography variant='caption' color='text.secondary'>
                     {option.type}
                   </Typography>

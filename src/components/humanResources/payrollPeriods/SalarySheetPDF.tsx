@@ -1,8 +1,9 @@
+// payrollPeriods/SalarySheetPDF.tsx
 'use client';
 
-import { Document, Page, StyleSheet, Text, View } from '@react-pdf/renderer';
 import PdfLogo from '@/components/pdf/PdfLogo';
 import { Organization } from '@/types/auth-types';
+import { Document, Page, StyleSheet, Text, View } from '@react-pdf/renderer';
 import { PayrollRunType } from '../payrollRuns/PayrollRunType';
 import { PayslipComputed } from '../payrollRuns/payslipCalculations';
 
@@ -11,7 +12,11 @@ type SalaryTypeItem = {
   name?: string;
   category?: string;
   is_pre_tax?: boolean;
-  computation_method?: 'fixed' | 'percentage_of_basic' | 'percentage_of_gross' | string;
+  computation_method?:
+    | 'fixed'
+    | 'percentage_of_basic'
+    | 'percentage_of_gross'
+    | string;
   default_value?: number;
 };
 
@@ -24,9 +29,10 @@ type SalarySheetPDFProps = {
   organization: Organization;
   periodLabel: string;
   rows: SalarySheetRow[];
-  allowanceTypes: SalaryTypeItem[];
-  deductionTypes: SalaryTypeItem[];
-  contributionTypes: SalaryTypeItem[];
+  allowanceTypes: Array<any>;
+  deductionTypes: Array<any>;
+  // contributionTypes: SalaryTypeItem[];
+  contributionTypes: Array<any>;
 };
 
 const styles = StyleSheet.create({
@@ -160,66 +166,32 @@ const percentOf = (part: number, total: number) => {
   return `${Math.round((part / total) * 100)}%`;
 };
 
-function fmtTypeLabel(type: SalaryTypeItem, fallback: string) {
-  const name = type.name || fallback;
-  const raw = Number(type.default_value ?? 0);
-  if (!Number.isFinite(raw) || raw <= 0) return name;
+function getEmployeeName(run: PayrollRunType) {
+  if (!run.employee) return '';
 
-  const isPercentage = String(type.computation_method || '').startsWith('percentage');
-  const valueText = isPercentage
-    ? `${raw.toLocaleString(undefined, { maximumFractionDigits: 2 })}%`
-    : raw.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  // Use type assertion to safely access name if it exists
+  const employee = run.employee as any;
+  if (employee.name) return employee.name;
 
-  return `${name} (${valueText})`;
+  const firstName = run.employee.first_name || '';
+  const lastName = run.employee.last_name || '';
+  const fullName = `${firstName} ${lastName}`.trim();
+  return fullName || '';
 }
 
-function toNumber(value: unknown) {
-  if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
-  if (typeof value === 'string') {
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : 0;
+function getDesignation(run: PayrollRunType) {
+  // Check contract designation first
+  if (run.contract?.designation?.title) {
+    return run.contract.designation.title;
   }
-  return 0;
-}
-
-function slug(text: string) {
-  return text.toLowerCase().replace(/\s+/g, ' ').trim();
-}
-
-function sumAllowanceByType(run: PayrollRunType, type: SalaryTypeItem) {
-  const targetId = type.id;
-  const targetName = slug(type.name || '');
-
-  return (run.allowances || []).reduce((sum, item) => {
-    const byId = targetId != null && item.allowance_type_id === targetId;
-    const byName = targetName && slug(item.allowance_type?.name || item.label || '') === targetName;
-    if (!byId && !byName) return sum;
-    return sum + toNumber(item.amount ?? item.value);
-  }, 0);
-}
-
-function sumDeductionByType(run: PayrollRunType, type: SalaryTypeItem) {
-  const targetId = type.id;
-  const targetName = slug(type.name || '');
-
-  return (run.deductions || []).reduce((sum, item) => {
-    const byId = targetId != null && item.deduction_type_id === targetId;
-    const byName = targetName && slug(item.deduction_type?.name || item.label || '') === targetName;
-    if (!byId && !byName) return sum;
-    return sum + toNumber(item.amount ?? item.value);
-  }, 0);
-}
-
-function sumContributionByType(run: PayrollRunType, type: SalaryTypeItem) {
-  const targetId = type.id;
-  const targetName = slug(type.name || '');
-
-  return (run.employer_contributions || []).reduce((sum, item) => {
-    const byId = targetId != null && item.employer_contribution_type_id === targetId;
-    const byName = targetName && slug(item.contribution_type?.name || item.label || '') === targetName;
-    if (!byId && !byName) return sum;
-    return sum + toNumber(item.amount ?? item.value);
-  }, 0);
+  // Check if there's a direct designation property (some preview data might have it)
+  if ((run as any).designation) {
+    return (run as any).designation;
+  }
+  if ((run as any).employee?.designation) {
+    return (run as any).employee?.designation;
+  }
+  return '-';
 }
 
 const SalarySheetPDF = ({
@@ -234,27 +206,77 @@ const SalarySheetPDF = ({
   const lightColor = organization.settings?.light_color || '#d9dfef';
   const contrastText = organization.settings?.contrast_text || '#FFFFFF';
 
-  const preTaxDeductionTypes = deductionTypes.filter((type) => Boolean(type.is_pre_tax));
-  const postTaxDeductionTypes = deductionTypes.filter((type) => !type.is_pre_tax);
+  const getUniqueTypes = (value: Array<any>) => {
+    const filteredDeductions = Array.from(
+      new Map(
+        value.map((itm) => [
+          itm?.deduction_type_id ??
+            itm?.allowance_type_id ??
+            itm?.employer_contribution_type_id ??
+            itm?.label,
+          itm,
+        ])
+      ).values()
+    );
+    return filteredDeductions;
+  };
+
+  const unique_deductions_types = getUniqueTypes(deductionTypes);
+  const unique_allowances_types = getUniqueTypes(allowanceTypes);
+  const unique_contributions_types = getUniqueTypes(contributionTypes);
+
+  const hasAllowances = unique_allowances_types.length > 0;
+  const hasDeductions = unique_deductions_types.length > 0;
+  const hasContributions = unique_contributions_types.length > 0;
+
+  const calculateTotalAmtByType = (
+    typeObj: any,
+    type_id: number,
+    type: 'deduction' | 'allowance' | 'contribution'
+  ) => {
+    if (type === 'allowance') {
+      return allowanceTypes.reduce(
+        (sum, item) =>
+          item.allowance_type_id === type_id || item.label === typeObj.label
+            ? sum + item?.amount
+            : sum,
+        0
+      );
+    }
+    if (type === 'deduction') {
+      return deductionTypes.reduce((sum, item) => {
+        return item.deduction_type_id === type_id ||
+          item.label === typeObj.label
+          ? sum + item?.amount
+          : sum;
+      }, 0);
+    }
+    if (type === 'contribution') {
+      return contributionTypes.reduce((sum, item) => {
+        return item?.employer_contribution_type_id === type_id
+          ? sum + item?.amount
+          : sum;
+      }, 0);
+    }
+  };
 
   const serialFlex = 1;
   const nameFlex = 4;
   const designationFlex = 2;
   const recruitmentNudge = 0.25;
 
-  const recruitmentFlex = serialFlex + nameFlex + designationFlex - recruitmentNudge;
+  const recruitmentFlex =
+    serialFlex + nameFlex + designationFlex - recruitmentNudge;
   const totalsLeadFlex = serialFlex + nameFlex + designationFlex;
   const employeeFlex =
-    2 * (allowanceTypes.length + preTaxDeductionTypes.length + postTaxDeductionTypes.length + 6) +
+    2 * (unique_allowances_types.length + unique_deductions_types.length + 5) +
     recruitmentNudge;
-  const employerFlex = 2 * (contributionTypes.length + 2);
+  const employerFlex = 2 * (unique_contributions_types.length + 2);
 
   const totals = rows.reduce(
     (sum, entry) => {
-      const allowanceByType = allowanceTypes.map((type) => sumAllowanceByType(entry.run, type));
-      const preTaxDeductionByType = preTaxDeductionTypes.map((type) => sumDeductionByType(entry.run, type));
-      const postTaxDeductionByType = postTaxDeductionTypes.map((type) => sumDeductionByType(entry.run, type));
-      const contributionByType = contributionTypes.map((type) => sumContributionByType(entry.run, type));
+      const run = entry.run;
+      const computed = entry.computed;
 
       return {
         basicSalary: sum.basicSalary + entry.computed.basicSalary,
@@ -264,16 +286,10 @@ const SalarySheetPDF = ({
         totalDeductions: sum.totalDeductions + entry.computed.totalDeductions,
         netSalary: sum.netSalary + entry.computed.netSalary,
         totalEmployerContributions:
-          sum.totalEmployerContributions + entry.computed.totalEmployerContributions,
-        totalEmployerCost: sum.totalEmployerCost + entry.computed.totalEmployerCost,
-        allowanceByType: sum.allowanceByType.map((value, index) => value + allowanceByType[index]),
-        preTaxDeductionByType: sum.preTaxDeductionByType.map(
-          (value, index) => value + preTaxDeductionByType[index]
-        ),
-        postTaxDeductionByType: sum.postTaxDeductionByType.map(
-          (value, index) => value + postTaxDeductionByType[index]
-        ),
-        contributionByType: sum.contributionByType.map((value, index) => value + contributionByType[index]),
+          sum.totalEmployerContributions +
+          entry.computed.totalEmployerContributions,
+        totalEmployerCost:
+          sum.totalEmployerCost + entry.computed.totalEmployerCost,
       };
     },
     {
@@ -285,27 +301,31 @@ const SalarySheetPDF = ({
       netSalary: 0,
       totalEmployerContributions: 0,
       totalEmployerCost: 0,
-      allowanceByType: allowanceTypes.map(() => 0),
-      preTaxDeductionByType: preTaxDeductionTypes.map(() => 0),
-      postTaxDeductionByType: postTaxDeductionTypes.map(() => 0),
-      contributionByType: contributionTypes.map(() => 0),
     }
   );
 
   const grossByEmployer = totals.totalEmployerCost;
   const netEmployeePayment = totals.netSalary;
-  const payrollTaxesAndBenefits = totals.paye + totals.totalEmployerContributions;
-  const summaryTotal = grossByEmployer + netEmployeePayment + payrollTaxesAndBenefits;
+  const payrollTaxesAndBenefits =
+    totals.paye + totals.totalEmployerContributions;
+  const summaryTotal =
+    grossByEmployer + netEmployeePayment + payrollTaxesAndBenefits;
 
   return (
-    <Document title={`Salary Sheet ${periodLabel}`} author={organization.name} subject='Salary Sheet'>
+    <Document
+      title={`Salary Sheet ${periodLabel}`}
+      author={organization.name}
+      subject='Salary Sheet'
+    >
       <Page size='A3' orientation='landscape' style={styles.page}>
         <View style={styles.headerRow}>
           <View style={{ width: 110 }}>
             <PdfLogo organization={organization} />
           </View>
           <View style={{ alignItems: 'flex-end' }}>
-            <Text style={{ ...styles.title, color: mainColor }}>SALARY PAYROLL</Text>
+            <Text style={{ ...styles.title, color: mainColor }}>
+              SALARY PAYROLL
+            </Text>
             <Text style={styles.subtitle}>{periodLabel}</Text>
           </View>
         </View>
@@ -348,161 +368,536 @@ const SalarySheetPDF = ({
           </View>
 
           <View style={{ ...styles.tableRow, backgroundColor: mainColor }}>
-            <Text style={{ ...styles.headerCell, color: contrastText, borderColor: mainColor, flex: serialFlex }}>S/N</Text>
-            <Text style={{ ...styles.headerCell, color: contrastText, borderColor: mainColor, flex: nameFlex }}>Name</Text>
-            <Text style={{ ...styles.headerCell, color: contrastText, borderColor: mainColor, flex: designationFlex }}>Designation</Text>
-            <Text style={{ ...styles.headerCell, color: contrastText, borderColor: mainColor, flex: 2 }}>Basic Salary</Text>
+            <Text
+              style={{
+                ...styles.headerCell,
+                color: contrastText,
+                borderColor: mainColor,
+                flex: serialFlex,
+              }}
+            >
+              S/N
+            </Text>
+            <Text
+              style={{
+                ...styles.headerCell,
+                color: contrastText,
+                borderColor: mainColor,
+                flex: nameFlex,
+              }}
+            >
+              Name
+            </Text>
+            <Text
+              style={{
+                ...styles.headerCell,
+                color: contrastText,
+                borderColor: mainColor,
+                flex: designationFlex,
+              }}
+            >
+              Designation
+            </Text>
+            <Text
+              style={{
+                ...styles.headerCell,
+                color: contrastText,
+                borderColor: mainColor,
+                flex: 2,
+              }}
+            >
+              Basic Salary
+            </Text>
 
-            {allowanceTypes.map((type) => (
-              <Text key={`pdf-allowance-${type.id || type.name}`} style={{ ...styles.headerCell, color: contrastText, borderColor: mainColor, flex: 2 }}>
+            {unique_allowances_types.map((type, idx) => (
+              <Text
+                key={`pdf-allowance-header-${type.allowance_type_id || type.label}-${idx}`}
+                style={{
+                  ...styles.headerCell,
+                  color: contrastText,
+                  borderColor: mainColor,
+                  flex: 2,
+                }}
+              >
                 {type.name || 'Allowance'}
               </Text>
             ))}
 
-            <Text style={{ ...styles.headerCell, color: contrastText, borderColor: mainColor, flex: 2 }}>Gross</Text>
+            <Text
+              style={{
+                ...styles.headerCell,
+                color: contrastText,
+                borderColor: mainColor,
+                flex: 2,
+              }}
+            >
+              Gross
+            </Text>
 
-            {preTaxDeductionTypes.map((type) => (
-              <Text key={`pdf-pre-tax-deduction-${type.id || type.name}`} style={{ ...styles.headerCell, color: contrastText, borderColor: mainColor, flex: 2 }}>
-                {fmtTypeLabel(type, 'Pre-Tax Deduction')}
+            <Text
+              style={{
+                ...styles.headerCell,
+                color: contrastText,
+                borderColor: mainColor,
+                flex: 2,
+              }}
+            >
+              Taxable Salary
+            </Text>
+
+            <Text
+              style={{
+                ...styles.headerCell,
+                color: contrastText,
+                borderColor: mainColor,
+                flex: 2,
+              }}
+            >
+              PAYE
+            </Text>
+
+            {unique_deductions_types.map((type: any) => {
+              if (type.deduction_type_id !== null) {
+                return (
+                  <Text
+                    key={`deduction-total-${type.deduction_type_id}`}
+                    style={{
+                      ...styles.headerCell,
+                      color: contrastText,
+                      borderColor: mainColor,
+                      flex: 2,
+                    }}
+                  >
+                    {type.label}
+                  </Text>
+                );
+              }
+            })}
+
+            <Text
+              style={{
+                ...styles.headerCell,
+                color: contrastText,
+                borderColor: mainColor,
+                flex: 2,
+              }}
+            >
+              Total Ded.
+            </Text>
+            <Text
+              style={{
+                ...styles.headerCell,
+                color: contrastText,
+                borderColor: mainColor,
+                flex: 2,
+              }}
+            >
+              Net Payable
+            </Text>
+
+            {unique_contributions_types.map((type, idx) => (
+              <Text
+                key={`pdf-contribution-header-${type.employer_contribution_type_id || type.label}-${idx}`}
+                style={{
+                  ...styles.headerCell,
+                  color: contrastText,
+                  borderColor: mainColor,
+                  flex: 2,
+                }}
+              >
+                {/* {fmtTypeLabel(type, 'Contribution')} */}
+                {type.label}
               </Text>
             ))}
 
-            <Text style={{ ...styles.headerCell, color: contrastText, borderColor: mainColor, flex: 2 }}>Taxable Salary</Text>
-
-            <Text style={{ ...styles.headerCell, color: contrastText, borderColor: mainColor, flex: 2 }}>PAYE</Text>
-
-            {postTaxDeductionTypes.map((type) => (
-              <Text key={`pdf-post-tax-deduction-${type.id || type.name}`} style={{ ...styles.headerCell, color: contrastText, borderColor: mainColor, flex: 2 }}>
-                {fmtTypeLabel(type, 'Post-Tax Deduction')}
-              </Text>
-            ))}
-
-            <Text style={{ ...styles.headerCell, color: contrastText, borderColor: mainColor, flex: 2 }}>Total Ded.</Text>
-            <Text style={{ ...styles.headerCell, color: contrastText, borderColor: mainColor, flex: 2 }}>Net Payable</Text>
-
-            {contributionTypes.map((type) => (
-              <Text key={`pdf-contribution-${type.id || type.name}`} style={{ ...styles.headerCell, color: contrastText, borderColor: mainColor, flex: 2 }}>
-                {fmtTypeLabel(type, 'Contribution')}
-              </Text>
-            ))}
-
-            <Text style={{ ...styles.headerCell, color: contrastText, borderColor: mainColor, flex: 2 }}>
+            <Text
+              style={{
+                ...styles.headerCell,
+                color: contrastText,
+                borderColor: mainColor,
+                flex: 2,
+              }}
+            >
               Total Empr. Contrib.
             </Text>
-            <Text style={{ ...styles.headerCell, color: contrastText, borderColor: mainColor, flex: 2 }}>
+            <Text
+              style={{
+                ...styles.headerCell,
+                color: contrastText,
+                borderColor: mainColor,
+                flex: 2,
+              }}
+            >
               Employer Cost
             </Text>
           </View>
 
           {rows.map((entry, index) => {
-            const name = [entry.run.employee?.first_name, entry.run.employee?.last_name]
-              .filter(Boolean)
-              .join(' ');
+            const name = getEmployeeName(entry.run);
+            const designation = getDesignation(entry.run);
             const backgroundColor = index % 2 === 0 ? '#FFFFFF' : lightColor;
 
             return (
-              <View key={entry.run.id} style={{ ...styles.tableRow, backgroundColor }} wrap={false}>
-                <Text style={{ ...styles.cell, borderColor: '#C5C5C5', flex: serialFlex }}>{index + 1}</Text>
-                <Text style={{ ...styles.cell, borderColor: '#C5C5C5', flex: nameFlex }}>{name || '-'}</Text>
-                <Text style={{ ...styles.cell, borderColor: '#C5C5C5', flex: designationFlex }}>{entry.run.contract?.designation?.title || '-'}</Text>
-                <Text style={{ ...styles.cell, borderColor: '#C5C5C5', flex: 2, textAlign: 'right' }}>{fmt(entry.computed.basicSalary)}</Text>
+              <View
+                key={`pdf-row-${entry.run.id || index}-${index}`}
+                style={{ ...styles.tableRow, backgroundColor }}
+                wrap={false}
+              >
+                <Text
+                  style={{
+                    ...styles.cell,
+                    borderColor: '#C5C5C5',
+                    flex: serialFlex,
+                  }}
+                >
+                  {index + 1}
+                </Text>
+                <Text
+                  style={{
+                    ...styles.cell,
+                    borderColor: '#C5C5C5',
+                    flex: nameFlex,
+                  }}
+                >
+                  {name || '-'}
+                </Text>
+                <Text
+                  style={{
+                    ...styles.cell,
+                    borderColor: '#C5C5C5',
+                    flex: designationFlex,
+                  }}
+                >
+                  {designation}
+                </Text>
+                <Text
+                  style={{
+                    ...styles.cell,
+                    borderColor: '#C5C5C5',
+                    flex: 2,
+                    textAlign: 'right',
+                  }}
+                >
+                  {fmt(entry.computed.basicSalary)}
+                </Text>
 
-                {allowanceTypes.map((type) => (
-                  <Text key={`pdf-allowance-value-${entry.run.id}-${type.id || type.name}`} style={{ ...styles.cell, borderColor: '#C5C5C5', flex: 2, textAlign: 'right' }}>
-                    {fmt(sumAllowanceByType(entry.run, type))}
+                {unique_allowances_types.map((type, typeIdx) => (
+                  <Text
+                    key={`pdf-allowance-value-${entry.run.id || index}-${type.allowance_type_id || type.label}-${typeIdx}`}
+                    style={{
+                      ...styles.cell,
+                      borderColor: '#C5C5C5',
+                      flex: 2,
+                      textAlign: 'right',
+                    }}
+                  >
+                    {/* {fmt(sumAllowanceByType(entry.run, type))} */}
+                    {fmt(
+                      allowanceTypes.find(
+                        (itm) =>
+                          itm.employee_contract_id === entry.run.employee?.id &&
+                          (itm.label === type.label ||
+                            itm.allowance_type_id === type.allowance_type_id)
+                      )?.amount ?? 0
+                    )}
                   </Text>
                 ))}
 
-                <Text style={{ ...styles.cell, borderColor: '#C5C5C5', flex: 2, textAlign: 'right' }}>{fmt(entry.computed.grossSalary)}</Text>
+                <Text
+                  style={{
+                    ...styles.cell,
+                    borderColor: '#C5C5C5',
+                    flex: 2,
+                    textAlign: 'right',
+                  }}
+                >
+                  {fmt(entry.computed.grossSalary)}
+                </Text>
 
-                {preTaxDeductionTypes.map((type) => (
-                  <Text key={`pdf-pre-tax-deduction-value-${entry.run.id}-${type.id || type.name}`} style={{ ...styles.cell, borderColor: '#C5C5C5', flex: 2, textAlign: 'right' }}>
-                    {fmt(sumDeductionByType(entry.run, type))}
+                <Text
+                  style={{
+                    ...styles.cell,
+                    borderColor: '#C5C5C5',
+                    flex: 2,
+                    textAlign: 'right',
+                  }}
+                >
+                  {fmt(entry.computed.taxableIncome)}
+                </Text>
+
+                <Text
+                  style={{
+                    ...styles.cell,
+                    borderColor: '#C5C5C5',
+                    flex: 2,
+                    textAlign: 'right',
+                  }}
+                >
+                  {fmt(entry.computed.paye)}
+                </Text>
+
+                {unique_deductions_types.map((type: any) => {
+                  if (type.deduction_type_id !== null) {
+                    return (
+                      <Text
+                        key={`pdf-post-tax-value-${entry.run.id || index}-${type.deduction_type_id || type.label}`}
+                        style={{
+                          ...styles.cell,
+                          borderColor: '#C5C5C5',
+                          flex: 2,
+                          textAlign: 'right',
+                        }}
+                      >
+                        {/* {fmt(sumDeductionByType(entry.run, type))} */}
+                        {fmt(
+                          deductionTypes.find(
+                            (itm) =>
+                              itm.employee_contract_id ===
+                                entry.run.employee?.id &&
+                              (itm.label === type.label ||
+                                itm.deduction_type_id ===
+                                  type.deduction_type_id)
+                          )?.amount ?? 0
+                        )}
+                      </Text>
+                    );
+                  }
+                })}
+
+                <Text
+                  style={{
+                    ...styles.cell,
+                    borderColor: '#C5C5C5',
+                    flex: 2,
+                    textAlign: 'right',
+                  }}
+                >
+                  {fmt(entry.computed.totalDeductions)}
+                </Text>
+                <Text
+                  style={{
+                    ...styles.cell,
+                    borderColor: '#C5C5C5',
+                    flex: 2,
+                    textAlign: 'right',
+                  }}
+                >
+                  {fmt(entry.computed.netSalary)}
+                </Text>
+
+                {unique_contributions_types.map((type, typeIdx) => (
+                  <Text
+                    key={`pdf-contribution-value-${entry.run.id || index}-${type.employer_contribution_type_id || type.label}-${typeIdx}`}
+                    style={{
+                      ...styles.cell,
+                      borderColor: '#C5C5C5',
+                      flex: 2,
+                      textAlign: 'right',
+                    }}
+                  >
+                    {fmt(
+                      contributionTypes.find(
+                        (itm) =>
+                          itm.employee_contract_id === entry.run.employee?.id &&
+                          (itm.label === type.label ||
+                            itm.employer_contribution_type_id ===
+                              type.employer_contribution_type_id)
+                      )?.amount ?? 0
+                    )}
                   </Text>
                 ))}
 
-                <Text style={{ ...styles.cell, borderColor: '#C5C5C5', flex: 2, textAlign: 'right' }}>{fmt(entry.computed.taxableIncome)}</Text>
-
-                <Text style={{ ...styles.cell, borderColor: '#C5C5C5', flex: 2, textAlign: 'right' }}>{fmt(entry.computed.paye)}</Text>
-
-                {postTaxDeductionTypes.map((type) => (
-                  <Text key={`pdf-post-tax-deduction-value-${entry.run.id}-${type.id || type.name}`} style={{ ...styles.cell, borderColor: '#C5C5C5', flex: 2, textAlign: 'right' }}>
-                    {fmt(sumDeductionByType(entry.run, type))}
-                  </Text>
-                ))}
-
-                <Text style={{ ...styles.cell, borderColor: '#C5C5C5', flex: 2, textAlign: 'right' }}>{fmt(entry.computed.totalDeductions)}</Text>
-                <Text style={{ ...styles.cell, borderColor: '#C5C5C5', flex: 2, textAlign: 'right' }}>{fmt(entry.computed.netSalary)}</Text>
-
-                {contributionTypes.map((type) => (
-                  <Text key={`pdf-contribution-value-${entry.run.id}-${type.id || type.name}`} style={{ ...styles.cell, borderColor: '#C5C5C5', flex: 2, textAlign: 'right' }}>
-                    {fmt(sumContributionByType(entry.run, type))}
-                  </Text>
-                ))}
-
-                <Text style={{ ...styles.cell, borderColor: '#C5C5C5', flex: 2, textAlign: 'right' }}>
+                <Text
+                  style={{
+                    ...styles.cell,
+                    borderColor: '#C5C5C5',
+                    flex: 2,
+                    textAlign: 'right',
+                  }}
+                >
                   {fmt(entry.computed.totalEmployerContributions)}
                 </Text>
-                <Text style={{ ...styles.cell, borderColor: '#C5C5C5', flex: 2, textAlign: 'right' }}>
+                <Text
+                  style={{
+                    ...styles.cell,
+                    borderColor: '#C5C5C5',
+                    flex: 2,
+                    textAlign: 'right',
+                  }}
+                >
                   {fmt(entry.computed.totalEmployerCost)}
                 </Text>
               </View>
             );
           })}
 
-          <View style={{ ...styles.tableRow, backgroundColor: mainColor }} wrap={false}>
-            <Text style={{ ...styles.headerCell, color: contrastText, borderColor: mainColor, flex: totalsLeadFlex }}></Text>
-            <Text style={{ ...styles.headerCell, color: contrastText, borderColor: mainColor, flex: 2, textAlign: 'right' }}>
+          <View
+            style={{ ...styles.tableRow, backgroundColor: mainColor }}
+            wrap={false}
+          >
+            <Text
+              style={{
+                ...styles.headerCell,
+                color: contrastText,
+                borderColor: mainColor,
+                flex: totalsLeadFlex,
+              }}
+            ></Text>
+            <Text
+              style={{
+                ...styles.headerCell,
+                color: contrastText,
+                borderColor: mainColor,
+                flex: 2,
+                textAlign: 'right',
+              }}
+            >
               {fmt(totals.basicSalary)}
             </Text>
-
-            {totals.allowanceByType.map((amount, index) => (
-              <Text key={`pdf-allowance-total-${index}`} style={{ ...styles.headerCell, color: contrastText, borderColor: mainColor, flex: 2, textAlign: 'right' }}>
-                {fmt(amount)}
+            {unique_allowances_types.map((type: any) => (
+              <Text
+                key={`allowance-total-${type.allowance_type_id}`}
+                style={{
+                  ...styles.headerCell,
+                  color: contrastText,
+                  borderColor: mainColor,
+                  flex: 2,
+                  textAlign: 'right',
+                }}
+              >
+                {fmt(
+                  calculateTotalAmtByType(
+                    type,
+                    type.allowance_type_id,
+                    'allowance'
+                  )
+                )}
               </Text>
             ))}
 
-            <Text style={{ ...styles.headerCell, color: contrastText, borderColor: mainColor, flex: 2, textAlign: 'right' }}>
+            <Text
+              style={{
+                ...styles.headerCell,
+                color: contrastText,
+                borderColor: mainColor,
+                flex: 2,
+                textAlign: 'right',
+              }}
+            >
               {fmt(totals.grossSalary)}
             </Text>
-
-            {totals.preTaxDeductionByType.map((amount, index) => (
-              <Text key={`pdf-pre-tax-deduction-total-${index}`} style={{ ...styles.headerCell, color: contrastText, borderColor: mainColor, flex: 2, textAlign: 'right' }}>
-                {fmt(amount)}
-              </Text>
-            ))}
-
-            <Text style={{ ...styles.headerCell, color: contrastText, borderColor: mainColor, flex: 2, textAlign: 'right' }}>
+            <Text
+              style={{
+                ...styles.headerCell,
+                color: contrastText,
+                borderColor: mainColor,
+                flex: 2,
+                textAlign: 'right',
+              }}
+            >
               {fmt(totals.taxableSalary)}
             </Text>
 
-            <Text style={{ ...styles.headerCell, color: contrastText, borderColor: mainColor, flex: 2, textAlign: 'right' }}>
+            <Text
+              style={{
+                ...styles.headerCell,
+                color: contrastText,
+                borderColor: mainColor,
+                flex: 2,
+                textAlign: 'right',
+              }}
+            >
               {fmt(totals.paye)}
             </Text>
 
-            {totals.postTaxDeductionByType.map((amount, index) => (
-              <Text key={`pdf-post-tax-deduction-total-${index}`} style={{ ...styles.headerCell, color: contrastText, borderColor: mainColor, flex: 2, textAlign: 'right' }}>
-                {fmt(amount)}
-              </Text>
-            ))}
+            {unique_deductions_types.map((type: any) => {
+              if (type.deduction_type_id !== null) {
+                return (
+                  <Text
+                    key={`deduction-total-${type.deduction_type_id}`}
+                    style={{
+                      ...styles.headerCell,
+                      color: contrastText,
+                      borderColor: mainColor,
+                      flex: 2,
+                      textAlign: 'right',
+                    }}
+                  >
+                    {fmt(
+                      calculateTotalAmtByType(
+                        type,
+                        type.deduction_type_id,
+                        'deduction'
+                      )
+                    )}
+                  </Text>
+                );
+              }
+            })}
 
-            <Text style={{ ...styles.headerCell, color: contrastText, borderColor: mainColor, flex: 2, textAlign: 'right' }}>
+            <Text
+              style={{
+                ...styles.headerCell,
+                color: contrastText,
+                borderColor: mainColor,
+                flex: 2,
+                textAlign: 'right',
+              }}
+            >
               {fmt(totals.totalDeductions)}
             </Text>
-            <Text style={{ ...styles.headerCell, color: contrastText, borderColor: mainColor, flex: 2, textAlign: 'right' }}>
+            <Text
+              style={{
+                ...styles.headerCell,
+                color: contrastText,
+                borderColor: mainColor,
+                flex: 2,
+                textAlign: 'right',
+              }}
+            >
               {fmt(totals.netSalary)}
             </Text>
-
-            {totals.contributionByType.map((amount, index) => (
-              <Text key={`pdf-contribution-total-${index}`} style={{ ...styles.headerCell, color: contrastText, borderColor: mainColor, flex: 2, textAlign: 'right' }}>
-                {fmt(amount)}
+            {unique_contributions_types.map((type: any) => (
+              <Text
+                key={`contribution-total-${type.employer_contribution_type_id}`}
+                style={{
+                  ...styles.headerCell,
+                  color: contrastText,
+                  borderColor: mainColor,
+                  flex: 2,
+                  textAlign: 'right',
+                }}
+              >
+                {fmt(
+                  calculateTotalAmtByType(
+                    type,
+                    type.employer_contribution_type_id,
+                    'contribution'
+                  )
+                )}
               </Text>
             ))}
 
-            <Text style={{ ...styles.headerCell, color: contrastText, borderColor: mainColor, flex: 2, textAlign: 'right' }}>
+            <Text
+              style={{
+                ...styles.headerCell,
+                color: contrastText,
+                borderColor: mainColor,
+                flex: 2,
+                textAlign: 'right',
+              }}
+            >
               {fmt(totals.totalEmployerContributions)}
             </Text>
-            <Text style={{ ...styles.headerCell, color: contrastText, borderColor: mainColor, flex: 2, textAlign: 'right' }}>
+            <Text
+              style={{
+                ...styles.headerCell,
+                color: contrastText,
+                borderColor: mainColor,
+                flex: 2,
+                textAlign: 'right',
+              }}
+            >
               {fmt(totals.totalEmployerCost)}
             </Text>
           </View>
@@ -513,35 +908,71 @@ const SalarySheetPDF = ({
             <Text style={styles.summaryLabel}>Gross Pay by Employer</Text>
             <Text style={styles.summaryBlank}></Text>
             <Text style={styles.summaryAmount}>{fmt(grossByEmployer)}</Text>
-            <Text style={styles.summaryPercent}>{percentOf(grossByEmployer, grossByEmployer)}</Text>
+            <Text style={styles.summaryPercent}>
+              {percentOf(grossByEmployer, grossByEmployer)}
+            </Text>
           </View>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Net Employee Payment</Text>
             <Text style={styles.summaryBlank}></Text>
             <Text style={styles.summaryAmount}>{fmt(netEmployeePayment)}</Text>
-            <Text style={styles.summaryPercent}>{percentOf(netEmployeePayment, grossByEmployer)}</Text>
+            <Text style={styles.summaryPercent}>
+              {percentOf(netEmployeePayment, grossByEmployer)}
+            </Text>
           </View>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Payroll Taxes & Benefits</Text>
             <Text style={styles.summaryBlank}></Text>
-            <Text style={styles.summaryAmount}>{fmt(payrollTaxesAndBenefits)}</Text>
-            <Text style={styles.summaryPercent}>{percentOf(payrollTaxesAndBenefits, grossByEmployer)}</Text>
+            <Text style={styles.summaryAmount}>
+              {fmt(payrollTaxesAndBenefits)}
+            </Text>
+            <Text style={styles.summaryPercent}>
+              {percentOf(payrollTaxesAndBenefits, grossByEmployer)}
+            </Text>
           </View>
           <View style={styles.summaryRow}>
             <Text style={styles.summarySubLabel}>P.A.Y.E</Text>
             <Text style={styles.summarySubAmount}>{fmt(totals.paye)}</Text>
             <Text style={styles.summaryBlank}></Text>
-            <Text style={styles.summaryPercent}>{percentOf(totals.paye, grossByEmployer)}</Text>
+            <Text style={styles.summaryPercent}>
+              {percentOf(totals.paye, grossByEmployer)}
+            </Text>
           </View>
-          {contributionTypes.map((type, index) => (
-            <View key={`pdf-contribution-summary-${type.id || type.name}`} style={styles.summaryRow}>
+
+          {unique_contributions_types.map((type: any) => (
+            <View
+              key={`pdf-contribution-summary-${type.employer_contribution_type_id || type.label}`}
+              style={styles.summaryRow}
+            >
               <Text style={styles.summarySubLabel}>{type.name}</Text>
-              <Text style={styles.summarySubAmount}>{fmt(totals.contributionByType[index] || 0)}</Text>
+              <Text style={styles.summarySubAmount}>
+                {fmt(
+                  calculateTotalAmtByType(
+                    type,
+                    type.employer_contribution_type_id,
+                    'contribution'
+                  ) || 0
+                )}
+              </Text>
               <Text style={styles.summaryBlank}></Text>
-              <Text style={styles.summaryPercent}>{percentOf(totals.contributionByType[index] || 0, grossByEmployer)}</Text>
+              <Text style={styles.summaryPercent}>
+                {percentOf(
+                  calculateTotalAmtByType(
+                    type,
+                    type.employer_contribution_type_id,
+                    'contribution'
+                  ) || 0,
+                  grossByEmployer
+                )}
+              </Text>
             </View>
           ))}
-          <View style={[styles.summaryRow, { borderTopWidth: 1, borderTopColor: '#000' }]}>
+          <View
+            style={[
+              styles.summaryRow,
+              { borderTopWidth: 1, borderTopColor: '#000' },
+            ]}
+          >
             <Text style={styles.summaryLabel}></Text>
             <Text style={styles.summaryBlank}></Text>
             <Text style={styles.summaryAmount}>{fmt(summaryTotal)}</Text>
@@ -551,16 +982,31 @@ const SalarySheetPDF = ({
 
         <View style={styles.signaturesWrap}>
           <View style={styles.signatureRow}>
-            <Text style={styles.signatureLabel}>Prepared by.............................................................................................................</Text>
-            <Text style={styles.signatureText}>Signature..................................</Text>
+            <Text style={styles.signatureLabel}>
+              Prepared
+              by.............................................................................................................
+            </Text>
+            <Text style={styles.signatureText}>
+              Signature..................................
+            </Text>
           </View>
           <View style={styles.signatureRow}>
-            <Text style={styles.signatureLabel}>Verified by................................................................................................................</Text>
-            <Text style={styles.signatureText}>Signature..................................</Text>
+            <Text style={styles.signatureLabel}>
+              Verified
+              by................................................................................................................
+            </Text>
+            <Text style={styles.signatureText}>
+              Signature..................................
+            </Text>
           </View>
           <View style={styles.signatureRow}>
-            <Text style={styles.signatureLabel}>Approved by..............................................................................................................</Text>
-            <Text style={styles.signatureText}>Signature..................................</Text>
+            <Text style={styles.signatureLabel}>
+              Approved
+              by..............................................................................................................
+            </Text>
+            <Text style={styles.signatureText}>
+              Signature..................................
+            </Text>
           </View>
         </View>
       </Page>

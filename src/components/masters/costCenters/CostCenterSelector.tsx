@@ -1,11 +1,18 @@
-'use client'
+'use client';
 
-import { CheckBox, CheckBoxOutlineBlank } from '@mui/icons-material';
-import { Autocomplete, Box, Checkbox, Chip, LinearProgress, TextField } from '@mui/material';
-import React, { useState } from 'react';
-import costCenterservices from './cost-center-services';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { CheckBox, CheckBoxOutlineBlank } from '@mui/icons-material';
+import {
+  Autocomplete,
+  Box,
+  Checkbox,
+  Chip,
+  LinearProgress,
+  TextField,
+} from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
+import React, { useEffect, useState } from 'react';
+import costCenterservices from './cost-center-services';
 import { CostCenter } from './CostCenterType';
 
 interface CostCenterSelectorProps {
@@ -24,28 +31,33 @@ interface CostCenterSelectorProps {
 
 function CostCenterSelector(props: CostCenterSelectorProps) {
   const { authOrganization } = useJumboAuth();
-  const { 
-    frontError = null, 
-    removedCostCenters = [], 
-    removedCostCentersIds = false, 
-    disabled = false, 
-    readOnly = false, 
-    allowSameType = false, 
-    label = 'Cost Center', 
-    multiple = true, 
+  const {
+    frontError = null,
+    removedCostCenters = [],
+    removedCostCentersIds = false,
+    disabled = false,
+    readOnly = false,
+    allowSameType = false,
+    label = 'Cost Center',
+    multiple = true,
     withNotSpecified = false,
-    onChange
+    defaultValue = null,
+    onChange,
   } = props;
 
   type SelectedType = CostCenter[] | CostCenter | null;
   const [selectedItems, setSelectedItems] = useState<SelectedType>(
-    props.defaultValue ?? (multiple ? [] : null)
+    defaultValue ?? (multiple ? [] : null)
   );
+
+  useEffect(() => {
+    if (defaultValue) setSelectedItems(defaultValue);
+  }, [defaultValue]);
 
   const { data: fetchedCostCenters, isLoading } = useQuery<CostCenter[]>({
     queryKey: ['allCostCenters'],
     queryFn: costCenterservices.getCostCenters,
-    enabled: !!removedCostCentersIds
+    enabled: !!removedCostCentersIds,
   });
 
   // Helper function to create a "Not Specified" option
@@ -63,16 +75,16 @@ function CostCenterSelector(props: CostCenterSelectorProps) {
       ? [createNotSpecifiedOption(), ...authOrganization.costCenters]
       : authOrganization.costCenters
     : withNotSpecified
-    ? [createNotSpecifiedOption()]
-    : [];
+      ? [createNotSpecifiedOption()]
+      : [];
 
   const allCostCenters = fetchedCostCenters
     ? withNotSpecified
       ? [createNotSpecifiedOption(), ...fetchedCostCenters]
       : fetchedCostCenters
     : withNotSpecified
-    ? [createNotSpecifiedOption()]
-    : [];
+      ? [createNotSpecifiedOption()]
+      : [];
 
   // Filter out removed cost centers
   const filteredCostCenters = (costCenters: CostCenter[]) =>
@@ -85,14 +97,17 @@ function CostCenterSelector(props: CostCenterSelectorProps) {
     : filteredCostCenters(authOrganizationCostCenters);
 
   const handleOnChange = (
-    event: React.SyntheticEvent, 
+    event: React.SyntheticEvent,
     newValue: CostCenter | CostCenter[] | null
   ) => {
     if (!allowSameType && multiple && Array.isArray(newValue)) {
-      const uniqueTypes = Array.from(new Set(newValue.map(item => item.type)));
+      const uniqueTypes = Array.from(
+        new Set(newValue.map((item) => item.type))
+      );
       if (uniqueTypes.length !== newValue.length) {
         newValue = newValue.filter(
-          (item, index, arr) => arr.findIndex(i => i.type === item.type) === index
+          (item, index, arr) =>
+            arr.findIndex((i) => i.type === item.type) === index
         );
       }
     }
@@ -113,7 +128,9 @@ function CostCenterSelector(props: CostCenterSelectorProps) {
         disabled={disabled}
         readOnly={readOnly}
         getOptionLabel={(option: CostCenter) => option.name}
-        isOptionEqualToValue={(option: CostCenter, value: CostCenter) => option.id === value.id}
+        isOptionEqualToValue={(option: CostCenter, value: CostCenter) =>
+          option.id === value.id
+        }
         renderInput={(params) => (
           <TextField
             {...params}
@@ -130,10 +147,16 @@ function CostCenterSelector(props: CostCenterSelectorProps) {
         renderTags={(tagValue: CostCenter[], getTagProps) => {
           return tagValue.map((option: CostCenter, index: number) => {
             const { key, ...restProps } = getTagProps({ index });
-            return <Chip {...restProps} key={`${option.id}-${key}`} label={option.name} />;
+            return (
+              <Chip
+                {...restProps}
+                key={`${option.id}-${key}`}
+                label={option.name}
+              />
+            );
           });
         }}
-        {...(multiple && { 
+        {...(multiple && {
           renderOption: (
             props: React.HTMLAttributes<HTMLLIElement> & { key?: React.Key }, // extend type to include key optionally
             option: CostCenter,
@@ -144,15 +167,15 @@ function CostCenterSelector(props: CostCenterSelectorProps) {
             return (
               <li key={option.id} {...otherProps}>
                 <Checkbox
-                  icon={<CheckBoxOutlineBlank fontSize="small" />}
-                  checkedIcon={<CheckBox fontSize="small" />}
+                  icon={<CheckBoxOutlineBlank fontSize='small' />}
+                  checkedIcon={<CheckBox fontSize='small' />}
                   style={{ marginRight: 8 }}
                   checked={selected}
                 />
                 {option.name}
               </li>
             );
-          }
+          },
         })}
       />
     </Box>

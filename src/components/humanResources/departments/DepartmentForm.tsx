@@ -1,5 +1,8 @@
 'use client';
 
+import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
+import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
+import { useLedgerSelect } from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Div } from '@jumbo/shared';
 import { LoadingButton } from '@mui/lab';
@@ -13,8 +16,8 @@ import {
 } from '@mui/material';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
-import { useEffect, useMemo } from 'react';
-import { useForm } from 'react-hook-form';
+import { useEffect, useMemo, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import humanResourcesServices from '../humanResourcesServices';
 import { Department } from './DepartmentsType';
@@ -32,8 +35,27 @@ interface ApiResponse {
   message: string;
   validation_errors?: {
     name?: string;
+    salary_expense_ledger_id?: string;
   };
 }
+
+interface Ledger {
+  id: number;
+  name: string;
+  code: string | null;
+  ledger_group_id: number;
+  alias: string | null;
+  nature_id?: number;
+}
+
+const getValidationMessage = (
+  validationErrors: Record<string, string[] | string> | undefined,
+  field: string
+) => {
+  const message = validationErrors?.[field];
+  if (!message) return undefined;
+  return Array.isArray(message) ? message[0] : message;
+};
 
 const DepartmentForm = ({
   setOpenDialog,
@@ -41,6 +63,20 @@ const DepartmentForm = ({
 }: DepartmentFormProp) => {
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
+  const dictionary = useDictionary();
+  const { ungroupedLedgerOptions } = useLedgerSelect();
+
+  const [recentlyAddedLedger, setRecentlyAddedLedger] = useState<Ledger | null>(null);
+
+  const defaultValue = useMemo(() => {
+    return ungroupedLedgerOptions.find(
+      (ledger) => ledger.id === department?.salary_expense_ledger_id
+    );
+  }, [department, ungroupedLedgerOptions]);
+
+  useEffect(() => {
+    if (defaultValue) setRecentlyAddedLedger(defaultValue);
+  }, [defaultValue]);
 
   const {
     mutate: addDepartment,
@@ -104,15 +140,22 @@ const DepartmentForm = ({
 
   const validationSchema = yup.object({
     id: yup.number().optional(),
-    name: yup.string().required('name is required').max(255),
+    name: yup.string().required('Name is required').max(255),
     code: yup.string().max(50),
     description: yup.string(),
+    salary_expense_ledger_id: yup
+      .number()
+      .nullable()
+      .optional()
+      .positive('Invalid ledger selected'),
   });
 
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
+    control,
     formState: { errors },
   } = useForm<FormData>({
     resolver: yupResolver(validationSchema) as any,
@@ -121,6 +164,7 @@ const DepartmentForm = ({
       name: department?.name || '',
       code: department?.code || '',
       description: department?.description || '',
+      salary_expense_ledger_id: department?.salary_expense_ledger_id ?? null,
     },
   });
 
@@ -130,12 +174,17 @@ const DepartmentForm = ({
       name: department?.name || '',
       code: department?.code || '',
       description: department?.description || '',
+      salary_expense_ledger_id: department?.salary_expense_ledger_id ?? null,
     });
   }, [department, reset]);
 
   const saveMutation = useMemo(() => {
     return department?.id ? updateDepartment : addDepartment;
   }, [department, updateDepartment, addDepartment]);
+
+  const validationErrors =
+    error?.response?.data?.validation_errors ||
+    updateError?.response?.data?.validation_errors;
 
   const onSubmit = (data: FormData) => {
     saveMutation(data);
@@ -147,13 +196,13 @@ const DepartmentForm = ({
         <Grid size={12} textAlign={'center'}>
           {!department?.id
             ? 'Add Department'
-            : `Edit Department ${department.name}`}
+            : `Edit ${department.name} Department`}
         </Grid>
       </DialogTitle>
       <DialogContent>
         <form autoComplete='off' onSubmit={handleSubmit(onSubmit)}>
-          <Grid container rowSpacing={{ xs: 1, md: 2 }} spacing={2}>
-            <Grid size={{ xs: 12, md: 6 }}>
+          <Grid container spacing={1}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='Name'
@@ -162,19 +211,17 @@ const DepartmentForm = ({
                   fullWidth
                   error={
                     !!errors?.name ||
-                    !!error?.response?.data?.validation_errors?.name ||
-                    !!updateError?.response?.data?.validation_errors?.name
+                    !!getValidationMessage(validationErrors, 'name')
                   }
                   helperText={
                     errors.name?.message ||
-                    error?.response?.data?.validation_errors?.name ||
-                    updateError?.response?.data?.validation_errors?.name
+                    getValidationMessage(validationErrors, 'name')
                   }
                   {...register('name')}
                 />
               </Div>
             </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
+            <Grid size={{ xs: 12, md: 3 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='Code'
@@ -183,18 +230,52 @@ const DepartmentForm = ({
                   fullWidth
                   error={
                     !!errors?.code ||
-                    !!error?.response?.data?.validation_errors?.code ||
-                    !!updateError?.response?.data?.validation_errors?.code
+                    !!getValidationMessage(validationErrors, 'code')
                   }
                   helperText={
                     errors.code?.message ||
-                    error?.response?.data?.validation_errors?.code ||
-                    updateError?.response?.data?.validation_errors?.code
+                    getValidationMessage(validationErrors, 'code')
                   }
                   {...register('code')}
                 />
               </Div>
             </Grid>
+
+            {/* Salary Expense Ledger Selector */}
+            <Grid size={{ xs: 12, md: 5 }}>
+              <Div sx={{ mt: 1, mb: 1 }}>
+                <Controller
+                  name='salary_expense_ledger_id'
+                  control={control}
+                  render={({ field }) => (
+                    <LedgerSelect
+                      label='Salary Expense Ledger (Optional)'
+                      allowedGroups={['Expenses']}
+                      frontError={errors.salary_expense_ledger_id}
+                      key='salary-expense-ledger'
+                      value={recentlyAddedLedger || undefined}
+                      defaultValue={department?.salary_expense_ledger_id || undefined as any}
+                      onChange={(newValue) => {
+                        if (newValue && !Array.isArray(newValue)) {
+                          setRecentlyAddedLedger(newValue);
+                          setValue('salary_expense_ledger_id', newValue.id, {
+                            shouldValidate: true,
+                            shouldDirty: true,
+                          });
+                        } else {
+                          setRecentlyAddedLedger(null);
+                          setValue('salary_expense_ledger_id', null, {
+                            shouldValidate: true,
+                            shouldDirty: true,
+                          });
+                        }
+                      }}
+                    />
+                  )}
+                />
+              </Div>
+            </Grid>
+
             <Grid size={{ xs: 12 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
@@ -206,20 +287,18 @@ const DepartmentForm = ({
                   fullWidth
                   error={
                     !!errors?.description ||
-                    !!error?.response?.data?.validation_errors?.description ||
-                    !!updateError?.response?.data?.validation_errors
-                      ?.description
+                    !!getValidationMessage(validationErrors, 'description')
                   }
                   helperText={
                     errors.description?.message ||
-                    error?.response?.data?.validation_errors?.description ||
-                    updateError?.response?.data?.validation_errors?.description
+                    getValidationMessage(validationErrors, 'description')
                   }
                   {...register('description')}
                 />
               </Div>
             </Grid>
           </Grid>
+
           <DialogActions>
             <Button size='small' onClick={() => setOpenDialog(false)}>
               Cancel

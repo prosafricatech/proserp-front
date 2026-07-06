@@ -148,6 +148,11 @@ const PERMISSION_MODULES: PermissionModuleConfig[] = [
     prefixes: ['ProjectCategories', 'Projects', 'ProjectClaims', 'ProjectSubcontracts'],
   },
   {
+    key: 'human_resources',
+    displayName: MODULES.HUMAN_RESOURCES,
+    prefixes: ['Employees', 'Payroll', 'PayrollRuns'],
+  },
+  {
     key: 'shared',
     displayName: 'Shared / Organization',
     prefixes: [

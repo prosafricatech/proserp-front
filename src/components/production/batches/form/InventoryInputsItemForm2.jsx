@@ -13,7 +13,6 @@ import {
   import React, { useContext, useEffect, useState } from 'react';
   import { ProductionBatchesContext } from '../ProductionBatchesList';
   import dayjs from 'dayjs';
-  import { useFormContext } from 'react-hook-form';
 import productServices from '@/components/productAndServices/products/productServices';
 import { Div } from '@jumbo/shared';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
@@ -69,9 +68,9 @@ import StoreSelector from '@/components/procurement/stores/StoreSelector';
     inventoryInputs = [],
     productionDates,
     fetchedBOMs,
-    outputs
+    outputs,
+    watch, setValue, errors
     }) {
-    const { watch, setValue, errors } = useFormContext();
     const { activeWorkCenter } = useContext(ProductionBatchesContext);
     const currentOutput = outputs[0];
     const [isRetrieving, setIsRetrieving] = useState({});

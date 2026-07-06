@@ -1,5 +1,6 @@
 'use client';
 
+import CostCenterSelector from '@/components/masters/costCenters/CostCenterSelector';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Div } from '@jumbo/shared';
 import { LoadingButton } from '@mui/lab';
@@ -17,11 +18,14 @@ import { DateTimePicker } from '@mui/x-date-pickers';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import humanResourcesServices from '../../../humanResourcesServices';
 import { LeaveType } from '../../../leaveTypes/LeaveTypesType';
+import EmployeeSelector from '../../EmployeeSelector';
+import { useEmployees } from '../../EmployeesProvider';
+import { Employee } from '../../EmployeesType';
 import { LeaveRequestType } from './LeaveRequestType';
 
 interface LeaveRequestFormProps {
@@ -34,6 +38,7 @@ interface FormData {
   id?: number;
   employee_id: number;
   leave_type_id: number;
+  cost_center_id?: number | null;
   start_date: string;
   end_date: string;
   days_requested: number;
@@ -61,6 +66,22 @@ const LeaveRequestForm = ({
 }: LeaveRequestFormProps) => {
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
+  const { employees } = useEmployees();
+
+  const [selectedEmployee, setselectedEmployee] = useState<Employee | null>(
+    null
+  );
+
+  const defaultValue = useMemo(() => {
+    return (
+      employees &&
+      employees.find((ledger) => ledger.id === leaveRequest?.employee_id)
+    );
+  }, [leaveRequest, employees]);
+
+  useEffect(() => {
+    if (defaultValue) setselectedEmployee(defaultValue);
+  }, [defaultValue]);
 
   const { data: leaveTypesResponse, isFetching: fetchingLeaveTypes } = useQuery(
     {
@@ -140,6 +161,7 @@ const LeaveRequestForm = ({
     id: yup.number().optional(),
     employee_id: yup.number().required('Employee is required'),
     leave_type_id: yup.number().required('Leave type is required'),
+    cost_center_id: yup.number().nullable().optional(),
     start_date: yup.string().required('Start date is required'),
     end_date: yup.string().required('End date is required'),
     days_requested: yup
@@ -163,6 +185,7 @@ const LeaveRequestForm = ({
       id: leaveRequest?.id,
       employee_id: leaveRequest?.employee_id,
       leave_type_id: leaveRequest?.leave_type_id,
+      cost_center_id: leaveRequest?.cost_center_id ?? null,
       start_date: leaveRequest?.start_date || '',
       end_date: leaveRequest?.end_date || '',
       days_requested: leaveRequest?.days_requested ?? 1,
@@ -175,6 +198,7 @@ const LeaveRequestForm = ({
       id: leaveRequest?.id,
       employee_id: leaveRequest?.employee_id,
       leave_type_id: leaveRequest?.leave_type_id,
+      cost_center_id: leaveRequest?.cost_center_id ?? null,
       start_date: leaveRequest?.start_date || '',
       end_date: leaveRequest?.end_date || '',
       days_requested: leaveRequest?.days_requested ?? 1,
@@ -208,6 +232,30 @@ const LeaveRequestForm = ({
       <DialogContent>
         <form autoComplete='off' onSubmit={handleSubmit(onSubmit)}>
           <Grid container rowSpacing={{ xs: 1, md: 2 }} spacing={1}>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Div sx={{ mt: 1, mb: 1 }}>
+                <EmployeeSelector
+                  frontError={errors.employee_id}
+                  value={selectedEmployee || undefined}
+                  onChange={(newValue: Employee | Employee[] | null) => {
+                    if (newValue && !Array.isArray(newValue)) {
+                      setselectedEmployee(newValue);
+                      setValue('employee_id', newValue.id, {
+                        shouldValidate: true,
+                        shouldDirty: true,
+                      });
+                    } else {
+                      setselectedEmployee(null);
+                      setValue('employee_id', 0, {
+                        shouldValidate: true,
+                        shouldDirty: true,
+                      });
+                    }
+                  }}
+                />
+              </Div>
+            </Grid>
+
             <Grid size={{ xs: 12, md: 6 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 {fetchingLeaveTypes ? (
@@ -256,6 +304,38 @@ const LeaveRequestForm = ({
                     )}
                   />
                 )}
+              </Div>
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Div sx={{ mt: 1, mb: 1 }}>
+                <Controller
+                  name='cost_center_id'
+                  control={control}
+                  render={({ field }) => (
+                    <CostCenterSelector
+                      multiple={false}
+                      label='Cost Center (optional)'
+                      defaultValue={(leaveRequest as any)?.cost_center || null}
+                      onChange={(value) => {
+                        const selected = Array.isArray(value)
+                          ? value[0]
+                          : value;
+                        field.onChange(selected?.id || null);
+                      }}
+                      frontError={
+                        getValidationMessage(validationErrors, 'cost_center_id')
+                          ? {
+                              message: getValidationMessage(
+                                validationErrors,
+                                'cost_center_id'
+                              ),
+                            }
+                          : null
+                      }
+                    />
+                  )}
+                />
               </Div>
             </Grid>
 

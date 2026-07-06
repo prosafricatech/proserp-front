@@ -386,25 +386,33 @@ function Sidebar({ menus }) {
 
             if (organizationHasSubscribed(MODULES.HUMAN_RESOURCES)) {
                 // Human Resources
-                if (checkOrganizationPermission([
-                    PERMISSIONS.EMPLOYEES_READ,
-                    PERMISSIONS.EMPLOYEES_CREATE,
-                    PERMISSIONS.EMPLOYEES_UPDATE,
-                    PERMISSIONS.PAYROLLRUNS_CREATE,
-                    PERMISSIONS.PAYROLL_READ,
-                ])) {
-                    updatedMenus = [...updatedMenus, ...menus.filter(menu => menu.label === dictionary.sidebar.menu.humanResources)];
-                }
+                updatedMenus = [...updatedMenus, ...menus.filter(menu => menu.label === dictionary.sidebar.menu.humanResources)];
 
 
                 // HR > Employee
                 if (!checkOrganizationPermission([
                     PERMISSIONS.EMPLOYEES_READ,
+                    PERMISSIONS.EMPLOYEES_CREATE,
+                    PERMISSIONS.EMPLOYEES_UPDATE,
+                    PERMISSIONS.EMPLOYEES_DELETE
                 ])) {
                     const hrMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.humanResources);
                     if (hrMenuIndex >= 0) {
                         updatedMenus[hrMenuIndex].children = updatedMenus[hrMenuIndex].children.filter(
                             child => child.label !== dictionary.sidebar.menuItem.employees
+                        );
+                    }
+                }
+
+                // HR > payrollrun
+                if (!checkOrganizationPermission([
+                    PERMISSIONS.PAYROLL_READ,
+                    PERMISSIONS.PAYROLLRUNS_CREATE
+                ])) {
+                    const hrMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.humanResources);
+                    if (hrMenuIndex >= 0) {
+                        updatedMenus[hrMenuIndex].children = updatedMenus[hrMenuIndex].children.filter(
+                            child => child.label !== dictionary.sidebar.menuItem.payroll
                         );
                     }
                 }

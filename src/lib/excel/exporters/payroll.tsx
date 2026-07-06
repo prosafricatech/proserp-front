@@ -1,3 +1,4 @@
+import { PayrollRunType } from '@/components/humanResources/payrollRuns/PayrollRunType';
 import { applyCellStyle, CELL_STYLES, getAlternatingRowFill } from '../styles';
 import { getExcelColumnName } from '../uitls';
 import { createWorkbook } from '../workBook';
@@ -92,6 +93,19 @@ export async function ExportPayrollToExcel(exportedData: any) {
     const postTaxDeductionTypes = deductionTypes.filter(
       (t: any) => !t.is_pre_tax
     );
+
+    const getEmployeeName = (run: PayrollRunType) => {
+      if (!run.employee) return 'Unknown Employee';
+
+      // Use type assertion to safely access name if it exists
+      const employee = run.employee as any;
+      if (employee.name) return employee.name;
+
+      const firstName = run.employee.first_name || '';
+      const lastName = run.employee.last_name || '';
+      const fullName = `${firstName} ${lastName}`.trim();
+      return fullName || 'Unknown Employee';
+    };
 
     // Column index layout (1-based)
     const n = allowanceTypes.length; // allowance columns
@@ -262,12 +276,14 @@ export async function ExportPayrollToExcel(exportedData: any) {
     // ---- Data rows ----
     rows.forEach((entry: any, index: number) => {
       const ROW = 5 + index;
-      const name = [
-        entry.run.employee?.first_name,
-        entry.run.employee?.last_name,
-      ]
-        .filter(Boolean)
-        .join(' ');
+      // const name = [
+      //   entry.run.employee?.first_name,
+      //   entry.run.employee?.last_name,
+      // ]
+      //   .filter(Boolean)
+      //   .join(' ');
+
+      const name = getEmployeeName(entry.run);
       const fill = getAlternatingRowFill(index);
 
       const setTxt = (col: number, value: string) => {

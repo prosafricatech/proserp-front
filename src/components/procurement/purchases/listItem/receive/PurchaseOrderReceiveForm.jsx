@@ -765,6 +765,10 @@ function PurchaseOrderReceiveForm({ toggleOpen, order, grn }) {
             onRemoveItem={handleRemoveItem}
             onResetItems={handleResetItems}
             canReset={itemsState.length < initialItems.length}
+            errors={errors}
+            register={register} 
+            setValue={setValue}
+            watch={watch}
           />
         )}
 

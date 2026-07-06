@@ -2,28 +2,29 @@
 
 import React, { useState } from 'react';
 import { Tooltip, IconButton, Dialog, useMediaQuery } from '@mui/material';
-import { DeleteOutlined, EditOutlined } from '@mui/icons-material';
+import { DeleteOutlined, EditOutlined, ContentCopyOutlined } from '@mui/icons-material';
 import SubscriptionsForm from './SubscriptionsForm';
 import { useSnackbar } from 'notistack';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { Subscription } from './SubscriptionTypes';
-import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
 import subscriptionServices from './subscriptionServices';
 
 interface EditSubscriptionProps {
   subscription: Subscription;
   toggleOpen: (open: boolean) => void;
+  duplicateSubscription?: boolean;
 }
 
-const EditSubscription: React.FC<EditSubscriptionProps> = ({ subscription, toggleOpen }) => {
+const EditSubscription: React.FC<EditSubscriptionProps> = ({ subscription, toggleOpen, duplicateSubscription }) => {
   return (
     <SubscriptionsForm 
       setOpenDialog={toggleOpen} 
       subscription={subscription} 
       isFromProsAfricanSubscriptions={true}
+      duplicateSubscription={duplicateSubscription}
     />
   );
 };
@@ -40,6 +41,7 @@ const SubscriptionItemAction: React.FC<SubscriptionItemActionProps> = ({ subscri
   const { enqueueSnackbar } = useSnackbar();
   const { showDialog, hideDialog } = useJumboDialog();
   const [openEditDialog, setOpenEditDialog] = useState(false);
+  const [duplicateSubscription, setDuplicateSubscription] = useState(false);
 
   const deleteSubscription = useMutation({
     mutationFn: (subscription: Subscription) => 
@@ -75,16 +77,17 @@ const SubscriptionItemAction: React.FC<SubscriptionItemActionProps> = ({ subscri
   return (
     <>
       <Dialog
-        open={openEditDialog}
+        open={openEditDialog || duplicateSubscription}
         fullWidth   
         fullScreen={belowLargeScreen}
-        maxWidth={openEditDialog ? 'lg' : undefined}
+        maxWidth={openEditDialog || duplicateSubscription ? 'lg' : undefined}
         scroll={belowLargeScreen ? 'body' : 'paper'}
       >
-        {openEditDialog && (
+        {(openEditDialog || duplicateSubscription) && (
           <EditSubscription 
             subscription={subscription} 
-            toggleOpen={setOpenEditDialog} 
+            toggleOpen={openEditDialog ? setOpenEditDialog : setDuplicateSubscription} 
+            duplicateSubscription={duplicateSubscription}
           />
         )}
       </Dialog>
@@ -92,6 +95,19 @@ const SubscriptionItemAction: React.FC<SubscriptionItemActionProps> = ({ subscri
       <Tooltip title={`${subsDict.buttons.edit} ${subscription.subscriptionNo}`}>
         <IconButton onClick={() => setOpenEditDialog(true)}>
           <EditOutlined />
+        </IconButton>
+      </Tooltip>
+
+      <Tooltip title='Duplicate'>
+        <IconButton
+          color='primary'
+          size='small'
+          onClick={(e) => {
+            e.stopPropagation();
+            setDuplicateSubscription(true);
+          }}
+        >
+          <ContentCopyOutlined />
         </IconButton>
       </Tooltip>
 

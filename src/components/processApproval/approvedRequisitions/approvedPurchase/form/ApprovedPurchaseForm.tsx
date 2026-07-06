@@ -384,6 +384,7 @@ const ApprovedPurchaseForm: React.FC<ApprovedPurchaseFormProps> = ({
     setValue,
     handleSubmit,
     watch,
+    register,
     formState: { errors },
   } = formMethods;
 
@@ -610,6 +611,10 @@ const ApprovedPurchaseForm: React.FC<ApprovedPurchaseFormProps> = ({
                 approvedRequisition={approvedRequisition}
                 order_date={order_date}
                 approvedDetails={approvedDetails}
+                setValue={setValue}
+                watch={watch}
+                register={register}
+                errors={errors}
               />
             </form>
           </Grid>
@@ -631,6 +636,9 @@ const ApprovedPurchaseForm: React.FC<ApprovedPurchaseFormProps> = ({
             order={order}
             items={items}
             errors={errors}
+            setValue={setValue} 
+            watch={watch} 
+            register={register}
           />
         </Grid>
       </DialogTitle>

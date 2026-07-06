@@ -2,7 +2,9 @@ import axios from '@/lib/services/config';
 
 const humanResourcesServices = {};
 
-// employees methods
+// ============================================
+// EMPLOYEES
+// ============================================
 humanResourcesServices.getEmployeesList = async (params = {}) => {
     const { page = 1, limit = 10, ...queryParams } = params;
     const { data } = await axios.get("/api/humanResources/employees", {
@@ -36,7 +38,45 @@ humanResourcesServices.deleteEmployee = async (id) => {
     return data;
 }
 
-// ===== EMPLOYEE CONTRACTS ===== //
+humanResourcesServices.downloadEmployeesRegistrationTemplate = async () => {
+    const { data } = await axios.post('/api/humanResources/employees/registration-excel-template', {}, {
+        responseType: 'blob',
+    });
+    return data;
+}
+
+humanResourcesServices.importEmployeesRegistrationExcel = async (file) => {
+    const { data } = await axios.post('/api/humanResources/employees/import-registration-excel', file, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return data;
+}
+
+humanResourcesServices.getMovements = async (employeeId, type = 'all', params) => {
+    const { page = 1, limit = 10, keyword = '', ...rest } = params;
+    const { data } = await axios.get(`/api/humanResources/employees/${employeeId}/movements`, {
+        params: { type, page, limit, keyword, ...rest }
+    });
+    return data;
+};
+
+humanResourcesServices.getEmployeeSalaryHistory = async (employeeId, params) => {
+    const { page = 1, limit = 10, keyword = '', ...rest } = params;
+    const { data } = await axios.get(`/api/humanResources/employees/${employeeId}/salary-history`, {
+        params: { page, limit, keyword, ...rest }
+    });
+    return data;
+};
+
+// Get salary history for a specific contract
+humanResourcesServices.getContractSalaryHistory = async (contractId) => {
+    const { data } = await axios.get(`/api/humanResources/employee-contracts/${contractId}/salary-history`);
+    return data;
+};
+
+// ============================================
+// EMPLOYEE CONTRACTS
+// ============================================
 humanResourcesServices.getEmployeesContactList = async (params = {}) => {
     const { page = 1, limit = 10, ...queryParams } = params;
     const { data } = await axios.get("/api/humanResources/employeesContracts", {
@@ -73,8 +113,9 @@ humanResourcesServices.deleteEmployeeContract = async (id) => {
     return data;
 }
 
-
-// departments methods
+// ============================================
+// DEPARTMENTS
+// ============================================
 humanResourcesServices.getDepartmentsList = async (params = {}) => {
     const { page = 1, limit = 10, ...queryParams } = params;
     const { data } = await axios.get('/api/humanResources/departments', {
@@ -108,17 +149,14 @@ humanResourcesServices.deleteDepartment = async (id) => {
     return data;
 }
 
-// designations methods
+// ============================================
+// DESIGNATIONS
+// ============================================
 humanResourcesServices.getDesignationsList = async (params = {}) => {
     const { page = 1, limit = 10, ...queryParams } = params;
     const { data } = await axios.get('/api/humanResources/designations', {
         params: { page, limit, ...queryParams }
     });
-    return data;
-};
-
-humanResourcesServices.getAllDesignations = async () => {
-    const { data } = await axios.get('/api/humanResources/designations/all_designations');
     return data;
 };
 
@@ -147,7 +185,9 @@ humanResourcesServices.deleteDesignation = async (id) => {
     return data;
 }
 
-// leave types methods
+// ============================================
+// LEAVE TYPES
+// ============================================
 humanResourcesServices.getLeaveTypesList = async (params = {}) => {
     const { page = 1, limit = 10, ...queryParams } = params;
     const { data } = await axios.get('/api/humanResources/leave_types', {
@@ -181,7 +221,9 @@ humanResourcesServices.deleteLeaveType = async (id) => {
     return data;
 }
 
-// banks methods
+// ============================================
+// BANKS
+// ============================================
 humanResourcesServices.getBanksList = async (params = {}) => {
     const { page = 1, limit = 50, ...queryParams } = params;
     const { data } = await axios.get('/api/masters/banks', {
@@ -210,7 +252,9 @@ humanResourcesServices.deleteBank = async (id) => {
     return data;
 }
 
-// employee bank accounts methods
+// ============================================
+// EMPLOYEE BANK ACCOUNTS
+// ============================================
 humanResourcesServices.getEmployeeBankAccountsList = async (params = {}) => {
     const { page = 1, limit = 20, ...queryParams } = params;
     const { data } = await axios.get('/api/humanResources/employeesBankAccounts', {
@@ -239,7 +283,9 @@ humanResourcesServices.deleteEmployeeBankAccount = async (id) => {
     return data;
 }
 
-// employee next of kins methods
+// ============================================
+// EMPLOYEE NEXT OF KINS
+// ============================================
 humanResourcesServices.getEmployeeNextOfKinsList = async (params = {}) => {
     const { page = 1, limit = 20, ...queryParams } = params;
     const { data } = await axios.get('/api/humanResources/employeesNextOfKins', {
@@ -268,7 +314,9 @@ humanResourcesServices.deleteEmployeeNextOfKin = async (id) => {
     return data;
 }
 
-// allowance types methods
+// ============================================
+// ALLOWANCE TYPES
+// ============================================
 humanResourcesServices.getAllowanceTypesList = async (params = {}) => {
     const { page = 1, limit = 50, ...queryParams } = params;
     const { data } = await axios.get('/api/humanResources/allowanceTypes', {
@@ -297,7 +345,9 @@ humanResourcesServices.deleteAllowanceType = async (id) => {
     return data;
 }
 
-// deduction types methods
+// ============================================
+// DEDUCTION TYPES
+// ============================================
 humanResourcesServices.getDeductionTypesList = async (params = {}) => {
     const { page = 1, limit = 50, ...queryParams } = params;
     const { data } = await axios.get('/api/humanResources/deductionTypes', {
@@ -326,7 +376,9 @@ humanResourcesServices.deleteDeductionType = async (id) => {
     return data;
 }
 
-// employer contribution types methods
+// ============================================
+// EMPLOYER CONTRIBUTION TYPES
+// ============================================
 humanResourcesServices.getEmployerContributionTypesList = async (params = {}) => {
     const { page = 1, limit = 50, ...queryParams } = params;
     const { data } = await axios.get('/api/humanResources/employerContributionTypes', {
@@ -355,7 +407,9 @@ humanResourcesServices.deleteEmployerContributionType = async (id) => {
     return data;
 }
 
-// employee allowances methods
+// ============================================
+// EMPLOYEE ALLOWANCES
+// ============================================
 humanResourcesServices.getEmployeeAllowancesList = async (params = {}) => {
     const { page = 1, limit = 20, ...queryParams } = params;
     const { data } = await axios.get('/api/humanResources/employeeAllowances', {
@@ -384,7 +438,9 @@ humanResourcesServices.deleteEmployeeAllowance = async (id) => {
     return data;
 }
 
-// employee deductions methods
+// ============================================
+// EMPLOYEE DEDUCTIONS
+// ============================================
 humanResourcesServices.getEmployeeDeductionsList = async (params = {}) => {
     const { page = 1, limit = 20, ...queryParams } = params;
     const { data } = await axios.get('/api/humanResources/employeeDeductions', {
@@ -413,7 +469,9 @@ humanResourcesServices.deleteEmployeeDeduction = async (id) => {
     return data;
 }
 
-// employee employer contributions methods
+// ============================================
+// EMPLOYEE EMPLOYER CONTRIBUTIONS
+// ============================================
 humanResourcesServices.getEmployeeEmployerContributionsList = async (params = {}) => {
     const { page = 1, limit = 20, ...queryParams } = params;
     const { data } = await axios.get('/api/humanResources/employeeEmployerContributions', {
@@ -442,7 +500,9 @@ humanResourcesServices.deleteEmployeeEmployerContribution = async (id) => {
     return data;
 }
 
-// leave allocations methods
+// ============================================
+// LEAVE ALLOCATIONS
+// ============================================
 humanResourcesServices.getLeaveAllocationsList = async (params = {}) => {
     const { page = 1, limit = 20, ...queryParams } = params;
     const { data } = await axios.get('/api/humanResources/leaveAllocations', {
@@ -471,7 +531,9 @@ humanResourcesServices.deleteLeaveAllocation = async (id) => {
     return data;
 }
 
-// leave requests methods
+// ============================================
+// LEAVE REQUESTS
+// ============================================
 humanResourcesServices.getLeaveRequestsList = async (params = {}) => {
     const { page = 1, limit = 20, ...queryParams } = params;
     const { data } = await axios.get('/api/humanResources/leaveRequests', {
@@ -490,6 +552,26 @@ humanResourcesServices.updateLeaveRequest = async (leaveRequest) => {
     return data;
 }
 
+humanResourcesServices.approveLeaveRequest = async ({ id, ...payload }) => {
+    const { data } = await axios.post(`/api/humanResources/leaveRequests/${id}/approve`, payload);
+    return data;
+}
+
+humanResourcesServices.rejectLeaveRequest = async ({ id, ...payload }) => {
+    const { data } = await axios.post(`/api/humanResources/leaveRequests/${id}/reject`, payload);
+    return data;
+}
+
+humanResourcesServices.cancelLeaveRequest = async (id) => {
+    const { data } = await axios.post(`/api/humanResources/leaveRequests/${id}/cancel`);
+    return data;
+}
+
+humanResourcesServices.addLeaveRequestApproval = async (approval) => {
+    const { data } = await axios.post('/api/humanResources/leaveRequestApprovals', approval);
+    return data;
+}
+
 humanResourcesServices.showLeaveRequest = async (id) => {
     const { data } = await axios.get(`/api/humanResources/leaveRequests/${id}`);
     return data;
@@ -500,7 +582,9 @@ humanResourcesServices.deleteLeaveRequest = async (id) => {
     return data;
 }
 
-// PAYE tax bands methods
+// ============================================
+// PAYE TAX BANDS
+// ============================================
 humanResourcesServices.getPayeTaxBandsList = async (params = {}) => {
     const { page = 1, limit = 50, ...queryParams } = params;
     const { data } = await axios.get('/api/humanResources/payeTaxBands', {
@@ -529,7 +613,9 @@ humanResourcesServices.deletePayeTaxBand = async (id) => {
     return data;
 }
 
-// payroll periods methods
+// ============================================
+// PAYROLL PERIODS
+// ============================================
 humanResourcesServices.getPayrollPeriodsList = async (params = {}) => {
     const { page = 1, limit = 50, ...queryParams } = params;
     const { data } = await axios.get('/api/humanResources/payrollPeriods', {
@@ -550,6 +636,11 @@ humanResourcesServices.updatePayrollPeriod = async (payrollPeriod) => {
 
 humanResourcesServices.deletePayrollPeriod = async (id) => {
     const { data } = await axios.delete(`/api/humanResources/payrollPeriods/${id}/delete`);
+    return data;
+}
+
+humanResourcesServices.showPayrollPeriod = async (id) => {
+    const { data } = await axios.get(`/api/humanResources/payrollPeriods/${id}`);
     return data;
 }
 
@@ -575,11 +666,6 @@ humanResourcesServices.processPayrollPeriodEmployees = async (payload = {}) => {
     return data;
 }
 
-humanResourcesServices.showPayrollPeriod = async (id) => {
-    const { data } = await axios.get(`/api/humanResources/payrollPeriods/${id}`);
-    return data;
-}
-
 humanResourcesServices.approvePayrollPeriod = async (id) => {
     const { data } = await axios.post(`/api/humanResources/payrollPeriods/${id}/approve`);
     return data;
@@ -590,16 +676,22 @@ humanResourcesServices.markPayrollPeriodPaid = async (id) => {
     return data;
 }
 
-// export payroll
-humanResourcesServices.ExportPayrollToExcel = async (exportedData) => {
-    const res = await axios.post(`/api/exports/excel/payrolls/`, exportedData, {
-        responseType: 'blob',
+humanResourcesServices.getSalaryComponentsSummary = async (params = {}) => {
+    const { year, month, cost_center_ids = [] } = params;
+    const queryParams = {
+        year,
+        month,
+        ...(cost_center_ids?.length ? { cost_center_ids } : {}),
+    };
+    const { data } = await axios.get('/api/humanResources/payroll-reports/salary-components-summary', {
+        params: queryParams,
     });
-    // const res = await axios.post(`/api/exports/excel/payrolls/`, exportedData);
-    return res.data;
-}
+    return data;
+};
 
-// payroll runs methods
+// ============================================
+// PAYROLL RUNS
+// ============================================
 humanResourcesServices.getPayrollRunsList = async (params = {}) => {
     const { page = 1, limit = 20, ...queryParams } = params;
     const { data } = await axios.get('/api/humanResources/payrollRuns', {
@@ -608,14 +700,105 @@ humanResourcesServices.getPayrollRunsList = async (params = {}) => {
     return data;
 };
 
+humanResourcesServices.addPayrollRun = async (payload) => {
+    const { data } = await axios.post('/api/humanResources/payrollRuns/add', payload);
+    return data;
+}
+
+humanResourcesServices.updatePayrollRun = async (payload) => {
+    const { data } = await axios.put(`/api/humanResources/payrollRuns/${payload.id}/update`, payload);
+    return data;
+}
+
 humanResourcesServices.showPayrollRun = async (id) => {
     const { data } = await axios.get(`/api/humanResources/payrollRuns/${id}`);
     return data?.data || data;
 }
 
+humanResourcesServices.deletePayrollRun = async (id) => {
+    const { data } = await axios.delete(`/api/humanResources/payrollRuns/${id}/delete`);
+    return data;
+}
+
 humanResourcesServices.finalizePayrollRun = async (id) => {
     const { data } = await axios.post(`/api/humanResources/payrollRuns/${id}/finalize`);
     return data;
+}
+
+// Preview - calculate live without saving
+humanResourcesServices.previewPayrollRun = async ({ id, employee_ids = null }) => {
+    const payload = Array.isArray(employee_ids) && employee_ids.length ? { employee_ids } : {};
+    const { data } = await axios.post(`/api/humanResources/payrollRuns/${id}/preview`, payload);
+    return data;
+}
+
+// Simulate - calculate for a single employee
+humanResourcesServices.simulatePayrollRun = async ({ id, employee_id }) => {
+    const { data } = await axios.post(`/api/humanResources/payrollRuns/${id}/simulate`, { employee_id });
+    return data;
+}
+
+// Submit - saves payslips and moves to submitted status
+humanResourcesServices.submitPayrollRun = async ({ id, employee_ids = [] }) => {
+    const payload = Array.isArray(employee_ids) && employee_ids.length ? { employee_ids } : {};
+    const { data } = await axios.post(`/api/humanResources/payrollRuns/${id}/submit`, payload);
+    return data;
+}
+
+// Direct Approval (no chain)
+humanResourcesServices.approvePayrollRun = async (id) => {
+    const { data } = await axios.post(`/api/humanResources/payrollRuns/${id}/approve`);
+    return data;
+}
+
+// Chain Approval
+humanResourcesServices.addPayrollRunApproval = async (approval) => {
+    const { data } = await axios.post('/api/humanResources/payrollRunApprovals', approval);
+    return data;
+}
+
+// Post Transactions - creates Journal Voucher
+humanResourcesServices.postPayrollRunTransactions = async ({ id, ...payload }) => {
+    const { data } = await axios.post(`/api/humanResources/payrollRuns/${id}/post-transactions`, payload);
+    return data;
+}
+
+// Pay Employees - creates Payment Voucher
+humanResourcesServices.payPayrollRun = async ({ id, ...payload }) => {
+    const { data } = await axios.post(`/api/humanResources/payrollRuns/${id}/pay`, payload);
+    return data;
+}
+
+// ============================================
+// PAYSLIPS
+// ============================================
+humanResourcesServices.getPayslipsList = async (params = {}) => {
+    const { page = 1, limit = 20, ...queryParams } = params;
+    const { data } = await axios.get('/api/humanResources/payslips', {
+        params: { page, limit, ...queryParams }
+    });
+    return data;
+}
+
+humanResourcesServices.showPayslip = async (id) => {
+    const { data } = await axios.get(`/api/humanResources/payslips/${id}`);
+    return data?.data || data;
+}
+
+// ============================================
+// EXPORT
+// ============================================
+humanResourcesServices.ExportPayrollToExcel = async (exportedData) => {
+    const res = await axios.post(`/api/exports/excel/payrolls/`, exportedData, {
+        responseType: 'blob',
+    });
+    return res.data;
+}
+humanResourcesServices.ExportPayrollPeriodToExcel = async (exportedData) => {
+    const res = await axios.post(`/api/exports/excel/payrollPeriod/`, exportedData, {
+        responseType: 'blob',
+    });
+    return res.data;
 }
 
 export default humanResourcesServices;

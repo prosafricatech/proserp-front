@@ -47,10 +47,10 @@ export const staticMenuItems = [
   { label: 'SMS', uri: '/en-US/prosControl/nextSMS' },
   { label: 'Organizations', uri: '/en-US/organizations' },
   { label: 'Invitations', uri: '/en-US/invitations' },
-  // Human Resources
   { label: 'Employees', uri: '/en-US/humanResources/employees' },
   { label: 'Leave Requests', uri: '/en-US/humanResources/leave-requests' },
-  { label: 'Payroll Periods', uri: '/en-US/humanResources/payroll' },
+  { label: 'Payroll Runs', uri: '/en-US/humanResources/payroll-runs' },
+  { label: 'Payroll Periods', uri: '/en-US/humanResources/payroll-periods' },
   { label: 'Departments', uri: '/en-US/humanResources/departments' },
   { label: 'Designations', uri: '/en-US/humanResources/designations' },
   { label: 'Leave Types', uri: '/en-US/humanResources/leave_types' },

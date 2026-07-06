@@ -1,6 +1,12 @@
 'use client';
 
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
+import { useLedgerSelect } from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
+import costCenterservices from '@/components/masters/costCenters/cost-center-services';
+import CostCenterSelector from '@/components/masters/costCenters/CostCenterSelector';
+import { CostCenter } from '@/components/masters/costCenters/CostCenterType';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Div } from '@jumbo/shared';
 import { LoadingButton } from '@mui/lab';
@@ -10,16 +16,18 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControlLabel,
   Grid,
   LinearProgress,
+  Switch,
   TextField,
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import dayjs, { Dayjs } from 'dayjs';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import * as yup from 'yup';
 import { useDepartments } from '../departments/DepartmentsProvider';
 import { Department } from '../departments/DepartmentsType';
@@ -33,6 +41,9 @@ interface EmployeeFormProps {
 
 interface FormData extends Omit<Employee, 'id'> {
   id?: number;
+  basic_salary?: number | null;
+  contract_start_date?: string | null;
+  reason?: string | null;
 }
 
 interface ApiResponse {
@@ -43,7 +54,7 @@ interface ApiResponse {
   };
 }
 
-interface empTypesOpt {
+interface OptionType {
   label: string;
   value: string;
 }
@@ -54,87 +65,110 @@ const EmployeeForm = ({
 }: EmployeeFormProps) => {
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
-  const { authUser } = useJumboAuth();
+  const { authUser, checkOrganizationPermission } = useJumboAuth();
+  const { ungroupedLedgerOptions } = useLedgerSelect();
   const { departments, isFetching } = useDepartments();
-  const [departmentsData, setDepartmentsData] = useState<Department[] | []>([]);
-  const [selectedDpt, setSelectedDpt] = useState<Department | null>(null);
 
-  const genderOptions = [
+  // Constants
+  const GENDER_OPTIONS: OptionType[] = [
     { label: 'Male', value: 'male' },
     { label: 'Female', value: 'female' },
   ];
-
-  const employmentTypesOptions: empTypesOpt[] = [
+  const EMPLOYMENT_OPTIONS: OptionType[] = [
     { label: 'Full Time', value: 'full_time' },
     { label: 'Part Time', value: 'part_time' },
     { label: 'Casual', value: 'casual' },
   ];
 
-  const [employeeDoB, setEmployeeDoB] = useState<string | undefined>(undefined);
-  const [joinDate, setJoinDate] = useState<string | undefined>(undefined);
-  const [employeeGender, setEmployeeGender] = useState(genderOptions[0]);
-  const [selectedemploymentType, setSelectedEmploymentType] =
-    useState<empTypesOpt | null>(null);
-  const normalizedDateOfBirth = employee?.date_of_birth
-    ? dayjs(employee.date_of_birth).format('YYYY-MM-DD')
-    : '';
-  const normalizedJoinDate = employee?.join_date
-    ? dayjs(employee.join_date).format('YYYY-MM-DD')
-    : '';
+  const [departmentsData, setDepartmentsData] = useState<Department[]>([]);
+  const [selectedDpt, setSelectedDpt] = useState<Department | null>(null);
+  const [employeeDoB, setEmployeeDoB] = useState<string>('');
+  const [joinDate, setJoinDate] = useState<string>('');
+  const [contractStartDate, setContractStartDate] = useState<string>('');
+  const [employeeGender, setEmployeeGender] = useState<OptionType>(
+    GENDER_OPTIONS[0]
+  );
+  const [selectedEmploymentType, setSelectedEmploymentType] =
+    useState<OptionType | null>(null);
+  const [defaultCostCenter, setDefaultCostCenter] = useState<CostCenter | null>(
+    null
+  );
+  const [customeName, setCustomeName] = useState(false);
+
+  const { data: fetchedCostCenters, isLoading } = useQuery<CostCenter[]>({
+    queryKey: ['allCostCenters'],
+    queryFn: costCenterservices.getCostCenters,
+  });
 
   useEffect(() => {
-    if (departments?.data.length) {
-      setDepartmentsData(departments.data);
+    if (fetchedCostCenters) {
+      const costCenter = fetchedCostCenters.find(
+        (center) => center.id === employee?.cost_center_id
+      );
+      if (costCenter) setDefaultCostCenter(costCenter);
+    }
+  }, [fetchedCostCenters, employee?.cost_center_id]);
 
+  // Date helper
+  const formatDateToAPI = (date: string | null | undefined): string | null => {
+    if (!date) return null;
+    return dayjs(date).format('YYYY-MM-DD[T]HH:mm:ss.SSSSSS[Z]');
+  };
+
+  // Normalize dates from employee data
+  const getNormalizedDate = (date: string | undefined) =>
+    date ? dayjs(date).format('YYYY-MM-DD') : '';
+
+  const normalizedDateOfBirth = getNormalizedDate(employee?.date_of_birth);
+  const normalizedJoinDate = getNormalizedDate(employee?.join_date);
+  const normalizedContractStartDate = getNormalizedDate(
+    (employee as any)?.active_contract?.start_date ||
+      employee?.contract_start_date
+  );
+
+  useEffect(() => {
+    if (departments?.data?.length) {
+      setDepartmentsData(departments.data);
       if (employee?.department_id) {
         setSelectedDpt(
           departments.data.find(
-            (department: Department) => department.id === employee.department_id
+            (d: Department) => d.id === employee.department_id
           ) ?? null
         );
-      } else {
-        setSelectedDpt(null);
       }
     }
-  }, [departments, isFetching, employee?.department_id]);
+  }, [departments, employee?.department_id]);
 
   useEffect(() => {
     setValue('gender', employeeGender.value);
   }, [employeeGender]);
 
+  // Mutations
   const {
     mutate: addEmployee,
     isPending,
     error,
   } = useMutation<ApiResponse, any, FormData>({
     mutationFn: async (data) => {
-      const user_id = authUser?.user.id;
-      const newData = { ...data, user_id: user_id };
-      const response = await humanResourcesServices.addEmployee(newData);
-      console.log('newData: ', newData);
-      return response;
+      const formattedData = {
+        ...data,
+        date_of_birth: formatDateToAPI(data.date_of_birth),
+        join_date: formatDateToAPI(data.join_date),
+        contract_start_date: formatDateToAPI(data.contract_start_date),
+        user_id: authUser?.user.id,
+        reason: data.reason || null,
+      };
+      return humanResourcesServices.addEmployee(formattedData);
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       setOpenDialog(false);
-      enqueueSnackbar('Success Adding Employee', {
-        variant: 'success',
-      });
+      enqueueSnackbar('Employee added successfully', { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['employees'] });
     },
-    onError: (error) => {
-      let message = 'Something went wrong';
-
-      if (
-        typeof error === 'object' &&
-        error !== null &&
-        'response' in error &&
-        typeof (error as any).response?.data?.message === 'string'
-      ) {
-        message = (error as any).response.data.message;
-      } else if (error instanceof Error) {
-        message = error.message;
-      }
-      enqueueSnackbar(message, { variant: 'error' });
+    onError: (err: any) => {
+      enqueueSnackbar(err?.response?.data?.message || 'Something went wrong', {
+        variant: 'error',
+      });
     },
   });
 
@@ -144,68 +178,68 @@ const EmployeeForm = ({
     error: updateError,
   } = useMutation<ApiResponse, any, FormData>({
     mutationFn: async (data) => {
-      const newData = { ...data, id: employee?.id };
-      return humanResourcesServices.updateEmployee(newData);
+      const formattedData = {
+        ...data,
+        id: employee?.id,
+        date_of_birth: formatDateToAPI(data.date_of_birth),
+        join_date: formatDateToAPI(data.join_date),
+        contract_start_date: formatDateToAPI(data.contract_start_date),
+        reason: data.reason || null,
+      };
+      return humanResourcesServices.updateEmployee(formattedData);
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       setOpenDialog(false);
-      enqueueSnackbar('Employee update success', {
-        variant: 'success',
-      });
+      enqueueSnackbar('Employee updated successfully', { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['employees'] });
     },
-    onError: (error) => {
-      let message = 'Something went wrong';
-
-      if (
-        typeof error === 'object' &&
-        error !== null &&
-        'response' in error &&
-        typeof (error as any).response?.data?.message === 'string'
-      ) {
-        message = (error as any).response.data.message;
-      } else if (error instanceof Error) {
-        message = error.message;
-      }
-      enqueueSnackbar(message, { variant: 'error' });
+    onError: (err: any) => {
+      enqueueSnackbar(err?.response?.data?.message || 'Something went wrong', {
+        variant: 'error',
+      });
     },
   });
 
+  // Validation Schema
   const validationSchema = yup.object({
-    employee_number: yup.string(),
-    first_name: yup
-      .string()
-      .required('First name is required')
-      .max(100, 'First name should not exceed 50 characters'),
-    middle_name: yup
-      .string()
-      .max(100, 'Middle name should not exceed 50 characters'),
-    last_name: yup
-      .string()
-      .required('Last name is required')
-      .max(100, 'Last name should not exceed 50 characters'),
+    employee_number: yup.string().nullable(),
+    first_name: yup.string().required('First name is required').max(100),
+    middle_name: yup.string().nullable().max(100),
+    last_name: yup.string().required('Last name is required').max(100),
     gender: yup.string().required('Gender is required'),
-    email: yup.string().email(),
-    phone_number: yup.string(),
-    address: yup.string(),
-    date_of_birth: yup.string(),
-    national_id: yup
-      .string()
-      .max(50, 'National ID should not exceed 50 characters'),
-    passport_number: yup
-      .string()
-      .max(50, 'Passport number should not exceed 50 characters'),
-    department_id: yup.number(),
-    employment_type: yup.string().required('Employment type is required'),
-    join_date: yup.string(),
+    email: yup.string().email('Invalid email format').nullable(),
+    phone_number: yup.string().nullable(),
+    address: yup.string().nullable(),
+    date_of_birth: yup.string().nullable(),
+    national_id: yup.string().nullable().max(50),
+    passport_number: yup.string().nullable().max(50),
+    department_id: yup.number().nullable(),
+    cost_center_id: yup.number().nullable().optional(),
+    payable_ledger_id: yup.number().nullable().optional(),
+    create_payable: yup.boolean().optional(),
+    payable_ledger_name: yup.string().nullable().optional(),
+    employment_type: yup.string().required('This field is required'),
+    join_date: yup.string().nullable(),
+    basic_salary: yup
+      .number()
+      .nullable()
+      .transform((_, val) =>
+        val === '' || val === undefined || val === null ? null : Number(val)
+      )
+      .min(0, 'Basic salary must be >= 0')
+      .typeError('Basic salary must be a number'),
+    contract_start_date: yup.string().nullable(),
+    reason: yup.string().nullable().optional(),
   });
 
+  // Form
   const {
     register,
     handleSubmit,
     reset,
     setValue,
     control,
+    watch,
     formState: { errors },
   } = useForm<FormData>({
     resolver: yupResolver(validationSchema) as any,
@@ -214,7 +248,7 @@ const EmployeeForm = ({
       first_name: '',
       middle_name: '',
       last_name: '',
-      gender: employeeGender.value,
+      gender: GENDER_OPTIONS[0].value,
       email: '',
       phone_number: '',
       address: '',
@@ -222,430 +256,543 @@ const EmployeeForm = ({
       national_id: '',
       passport_number: '',
       department_id: undefined,
+      cost_center_id: null,
+      payable_ledger_id: null,
+      create_payable: false,
+      payable_ledger_name: '',
       employment_type: '',
       join_date: '',
+      basic_salary: null,
+      contract_start_date: null,
+      reason: '',
     },
   });
 
+  const createPayable = useWatch({ control, name: 'create_payable' });
+
+  // Watch for changes to detect if cost center or department changed
+  const watchCostCenterId = watch('cost_center_id');
+  const watchDepartmentId = watch('department_id');
+  const [originalCostCenterId, setOriginalCostCenterId] = useState<
+    number | null
+  >(null);
+  const [originalDepartmentId, setOriginalDepartmentId] = useState<
+    number | null
+  >(null);
+  const [hasUserInteracted, setHasUserInteracted] = useState(false);
+
+  // Check if cost center or department has changed from original values
+  const hasCostCenterChanged =
+    originalCostCenterId !== null && originalCostCenterId !== watchCostCenterId;
+  const hasDepartmentChanged =
+    originalDepartmentId !== null && originalDepartmentId !== watchDepartmentId;
+
+  // Only show reason field when there's an actual change AND user has interacted
+  const showReasonField =
+    hasUserInteracted && (hasCostCenterChanged || hasDepartmentChanged);
+
+  // Populate form when editing
   useEffect(() => {
+    if (!employee) return;
+
     const resolvedGender =
-      genderOptions.find((option) => option.value === employee?.gender) ??
-      genderOptions[0];
-    const resolvedEmploymentType =
-      employmentTypesOptions.find(
-        (option) => option.value === employee?.employment_type
-      ) ?? null;
+      GENDER_OPTIONS.find((o) => o.value === employee.gender) ??
+      GENDER_OPTIONS[0];
+    const resolvedEmployment =
+      EMPLOYMENT_OPTIONS.find((o) => o.value === employee.employment_type) ??
+      null;
+    const contractBasicSalary = (employee as any)?.active_contract
+      ?.basic_salary;
+    const contractStart = (employee as any)?.active_contract?.start_date;
 
     setEmployeeGender(resolvedGender);
-    setSelectedEmploymentType(resolvedEmploymentType);
-    setEmployeeDoB(normalizedDateOfBirth || undefined);
-    setJoinDate(normalizedJoinDate || undefined);
+    setSelectedEmploymentType(resolvedEmployment);
+    setEmployeeDoB(normalizedDateOfBirth);
+    setJoinDate(normalizedJoinDate);
+    setContractStartDate(normalizedContractStartDate || contractStart || '');
+
+    // Store original values for comparison
+    setOriginalCostCenterId(employee.cost_center_id ?? null);
+    setOriginalDepartmentId(employee.department_id ?? null);
 
     reset({
-      employee_number: employee?.employee_number || '',
-      first_name: employee?.first_name || '',
-      middle_name: employee?.middle_name || '',
-      last_name: employee?.last_name || '',
+      employee_number: employee.employee_number || '',
+      first_name: employee.first_name || '',
+      middle_name: employee.middle_name || '',
+      last_name: employee.last_name || '',
       gender: resolvedGender.value,
-      email: employee?.email || '',
-      phone_number: employee?.phone_number || '',
-      address: employee?.address || '',
+      email: employee.email || '',
+      phone_number: employee.phone_number || '',
+      address: employee.address || '',
       date_of_birth: normalizedDateOfBirth,
-      national_id: employee?.national_id || '',
-      passport_number: employee?.passport_number || '',
-      department_id: employee?.department_id || undefined,
-      employment_type: resolvedEmploymentType?.value || '',
+      national_id: employee.national_id || '',
+      passport_number: employee.passport_number || '',
+      department_id: employee.department_id || undefined,
+      cost_center_id: employee.cost_center_id ?? null,
+      payable_ledger_id: employee.payable_ledger_id ?? null,
+      create_payable: false,
+      payable_ledger_name: '',
+      employment_type: resolvedEmployment?.value || '',
       join_date: normalizedJoinDate,
+      basic_salary: contractBasicSalary ?? employee.basic_salary ?? null,
+      contract_start_date: normalizedContractStartDate || contractStart || null,
+      reason: '',
     });
-  }, [employee, normalizedDateOfBirth, normalizedJoinDate, reset]);
+
+    // Reset interaction flag when employee changes
+    setHasUserInteracted(false);
+  }, [employee, reset]);
+
+  // Track user interaction with cost center and department fields
+  useEffect(() => {
+    if (employee) {
+      // If values differ from original, user has made changes
+      const hasChanged =
+        originalCostCenterId !== watchCostCenterId ||
+        originalDepartmentId !== watchDepartmentId;
+
+      if (hasChanged) {
+        setHasUserInteracted(true);
+      }
+    }
+  }, [
+    watchCostCenterId,
+    watchDepartmentId,
+    originalCostCenterId,
+    originalDepartmentId,
+    employee,
+  ]);
 
   const onSubmit = (data: FormData) => {
-    // saveMutation?.(data);
-    if (employee?.id) {
-      updateEmployee(data);
-    } else {
-      addEmployee(data);
-    }
+    employee?.id ? updateEmployee(data) : addEmployee(data);
   };
+
+  const formatCurrency = (value: number | null | undefined) =>
+    value ? value.toLocaleString() : '';
 
   return (
     <>
       <DialogTitle>
-        <Grid size={12} textAlign={'center'}>
-          {!employee?.id
-            ? 'Add Employee'
-            : `Edit Employee ${employee.first_name} ${employee.middle_name} ${employee.last_name}`}
+        <Grid size={12} textAlign='center'>
+          {employee?.id
+            ? `Edit ${employee.first_name} ${employee.last_name}`
+            : 'Add Employee'}
         </Grid>
       </DialogTitle>
       <DialogContent>
-        <form autoComplete='off' onSubmit={handleSubmit(onSubmit)}>
-          <Grid container rowSpacing={{ xs: 1, md: 2 }} spacing={2}>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
-                <TextField
-                  label='First Name'
-                  size='small'
-                  fullWidth
-                  error={
-                    !!errors?.first_name ||
-                    !!error?.response?.data?.validation_errors?.first_name ||
-                    !!updateError?.response?.data?.validation_errors?.first_name
-                  }
-                  helperText={
-                    errors.first_name?.message ||
-                    error?.response?.data?.validation_errors?.first_name ||
-                    updateError?.response?.data?.validation_errors?.first_name
-                  }
-                  {...register('first_name')}
-                />
-              </Div>
-            </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
-                <TextField
-                  label='Middle Name'
-                  size='small'
-                  fullWidth
-                  error={
-                    !!errors?.middle_name ||
-                    !!error?.response?.data?.validation_errors?.middle_name ||
-                    !!updateError?.response?.data?.validation_errors
-                      ?.middle_name
-                  }
-                  helperText={
-                    errors.middle_name?.message ||
-                    error?.response?.data?.validation_errors?.middle_name ||
-                    updateError?.response?.data?.validation_errors?.middle_name
-                  }
-                  {...register('middle_name')}
-                />
-              </Div>
-            </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
-                <TextField
-                  label='Last Name'
-                  size='small'
-                  fullWidth
-                  error={
-                    !!errors?.last_name ||
-                    !!error?.response?.data?.validation_errors?.last_name ||
-                    !!updateError?.response?.data?.validation_errors?.last_name
-                  }
-                  helperText={
-                    errors.last_name?.message ||
-                    error?.response?.data?.validation_errors?.last_name ||
-                    updateError?.response?.data?.validation_errors?.last_name
-                  }
-                  {...register('last_name')}
-                />
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <Grid container spacing={1}>
+            {/* Personal Information */}
+            <Grid size={12}>
+              <Div sx={{ mt: 2, mb: 1, fontWeight: 600 }}>
+                Personal Information
               </Div>
             </Grid>
 
             <Grid size={{ xs: 12, md: 4 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
-                <TextField
-                  label='Employee Number'
-                  size='small'
-                  fullWidth
-                  error={
-                    !!errors?.employee_number ||
-                    !!error?.response?.data?.validation_errors
-                      ?.employee_number ||
-                    !!updateError?.response?.data?.validation_errors
-                      ?.employee_number
-                  }
-                  helperText={
-                    errors.employee_number?.message ||
-                    error?.response?.data?.validation_errors?.employee_number ||
-                    updateError?.response?.data?.validation_errors
-                      ?.employee_number
-                  }
-                  {...register('employee_number')}
-                />
-              </Div>
+              <TextField
+                label='First Name *'
+                size='small'
+                fullWidth
+                error={!!errors.first_name}
+                helperText={errors.first_name?.message}
+                {...register('first_name')}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
-                <Controller
-                  name='gender'
-                  control={control}
-                  rules={{ required: true }}
-                  render={({ field, fieldState }) => (
-                    <Autocomplete
-                      size='small'
-                      options={genderOptions}
-                      isOptionEqualToValue={(option, value) =>
-                        option.label === value.label
-                      }
-                      getOptionLabel={(option) => option.label}
-                      {...field}
-                      value={employeeGender}
-                      onChange={(event, newValue) => {
-                        field.onChange(newValue?.value);
-                        newValue && setEmployeeGender(newValue);
-                      }}
-                      renderInput={(params) => (
-                        <TextField {...params} label='Gender' />
-                      )}
-                    />
-                  )}
-                />
-              </Div>
+              <TextField
+                label='Middle Name'
+                size='small'
+                fullWidth
+                error={!!errors.middle_name}
+                helperText={errors.middle_name?.message}
+                {...register('middle_name')}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
-                <TextField
-                  label='Email'
-                  size='small'
-                  fullWidth
-                  error={
-                    !!errors?.email ||
-                    !!error?.response?.data?.validation_errors?.email ||
-                    !!updateError?.response?.data?.validation_errors?.email
-                  }
-                  helperText={
-                    errors.email?.message ||
-                    error?.response?.data?.validation_errors?.email ||
-                    updateError?.response?.data?.validation_errors?.email
-                  }
-                  {...register('email')}
-                />
-              </Div>
+              <TextField
+                label='Last Name *'
+                size='small'
+                fullWidth
+                error={!!errors.last_name}
+                helperText={errors.last_name?.message}
+                {...register('last_name')}
+              />
             </Grid>
 
             <Grid size={{ xs: 12, md: 4 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
-                <TextField
-                  label='Phone Number'
-                  size='small'
-                  fullWidth
-                  error={
-                    !!errors?.phone_number ||
-                    !!error?.response?.data?.validation_errors?.phone_number ||
-                    !!updateError?.response?.data?.validation_errors
-                      ?.phone_number
-                  }
-                  helperText={
-                    errors.phone_number?.message ||
-                    error?.response?.data?.validation_errors?.phone_number ||
-                    updateError?.response?.data?.validation_errors?.phone_number
-                  }
-                  {...register('phone_number')}
-                />
-              </Div>
+              <TextField
+                label='Employee Number'
+                size='small'
+                fullWidth
+                error={!!errors.employee_number}
+                helperText={errors.employee_number?.message}
+                {...register('employee_number')}
+              />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
-                <Controller
-                  name='date_of_birth'
-                  control={control}
-                  rules={{ required: true }}
-                  render={({ field, fieldState }) => (
-                    <DatePicker
-                      label='Date of Birth'
-                      {...field}
-                      value={employeeDoB ? dayjs(employeeDoB) : null}
-                      onChange={(value: Dayjs | null) => {
-                        if (value) {
-                          const formatted = value.format('YYYY-MM-DD');
-
-                          setEmployeeDoB(formatted);
-                          field.onChange(formatted);
-                        } else {
-                          setEmployeeDoB(undefined);
-                          field.onChange('');
-                        }
-                      }}
-                      slotProps={{
-                        textField: {
-                          size: 'small',
-                          fullWidth: true,
-                          error: !!fieldState.error,
-                          helperText: fieldState.error?.message,
-                        },
-                      }}
-                    />
-                  )}
-                />
-              </Div>
-            </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
-                <TextField
-                  label='Adress'
-                  size='small'
-                  fullWidth
-                  error={
-                    !!errors?.address ||
-                    !!error?.response?.data?.validation_errors?.address ||
-                    !!updateError?.response?.data?.validation_errors?.address
-                  }
-                  helperText={
-                    errors.address?.message ||
-                    error?.response?.data?.validation_errors?.address ||
-                    updateError?.response?.data?.validation_errors?.address
-                  }
-                  {...register('address')}
-                />
-              </Div>
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
-                <TextField
-                  label='National ID'
-                  size='small'
-                  fullWidth
-                  error={
-                    !!errors?.national_id ||
-                    !!error?.response?.data?.validation_errors?.national_id ||
-                    !!updateError?.response?.data?.validation_errors
-                      ?.national_id
-                  }
-                  helperText={
-                    errors.national_id?.message ||
-                    error?.response?.data?.validation_errors?.national_id ||
-                    updateError?.response?.data?.validation_errors?.national_id
-                  }
-                  {...register('national_id')}
-                />
-              </Div>
-            </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
-                <TextField
-                  label='Passport Number'
-                  size='small'
-                  fullWidth
-                  error={
-                    !!errors?.passport_number ||
-                    !!error?.response?.data?.validation_errors
-                      ?.passport_number ||
-                    !!updateError?.response?.data?.validation_errors
-                      ?.passport_number
-                  }
-                  helperText={
-                    errors.passport_number?.message ||
-                    error?.response?.data?.validation_errors?.passport_number ||
-                    updateError?.response?.data?.validation_errors
-                      ?.passport_number
-                  }
-                  {...register('passport_number')}
-                />
-              </Div>
-            </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
-                {isFetching ? (
-                  <LinearProgress />
-                ) : (
-                  <Controller
-                    name='department_id'
-                    control={control}
-                    rules={{ required: true }}
-                    render={({ field, fieldState }) => (
-                      <Autocomplete
-                        size='small'
-                        options={departmentsData}
-                        isOptionEqualToValue={(option, value) =>
-                          option.id === value.id
-                        }
-                        getOptionLabel={(option) => option?.name || ''}
-                        {...field}
-                        value={selectedDpt}
-                        onChange={(event, newValue) => {
-                          setSelectedDpt(newValue);
-                          field.onChange(newValue ? newValue.id : null);
-                        }}
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            label='Department'
-                            error={!!fieldState.error}
-                            helperText={fieldState.error?.message}
-                          />
-                        )}
+              <Controller
+                name='gender'
+                control={control}
+                render={({ field, fieldState }) => (
+                  <Autocomplete
+                    size='small'
+                    options={GENDER_OPTIONS}
+                    getOptionLabel={(o) => o.label}
+                    value={employeeGender}
+                    onChange={(_, newVal) => {
+                      setEmployeeGender(newVal || GENDER_OPTIONS[0]);
+                      field.onChange(newVal?.value || '');
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label='Gender *'
+                        error={!!fieldState.error}
                       />
                     )}
                   />
                 )}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Controller
+                name='date_of_birth'
+                control={control}
+                render={({ field, fieldState }) => (
+                  <DatePicker
+                    label='Date of Birth'
+                    value={employeeDoB ? dayjs(employeeDoB) : null}
+                    onChange={(val) => {
+                      const formatted = val?.format('YYYY-MM-DD') || '';
+                      setEmployeeDoB(formatted);
+                      field.onChange(formatted);
+                    }}
+                    slotProps={{
+                      textField: {
+                        size: 'small',
+                        fullWidth: true,
+                        error: !!fieldState.error,
+                      },
+                    }}
+                  />
+                )}
+              />
+            </Grid>
+
+            {/* Contact Information */}
+            <Grid size={12}>
+              <Div sx={{ mt: 2, mb: 1, fontWeight: 600 }}>
+                Contact Information
               </Div>
             </Grid>
 
             <Grid size={{ xs: 12, md: 4 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
+              <TextField
+                label='Email'
+                size='small'
+                fullWidth
+                type='email'
+                error={!!errors.email}
+                helperText={errors.email?.message}
+                {...register('email')}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <TextField
+                label='Phone Number'
+                size='small'
+                fullWidth
+                error={!!errors.phone_number}
+                helperText={errors.phone_number?.message}
+                {...register('phone_number')}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <TextField
+                label='Address'
+                size='small'
+                fullWidth
+                error={!!errors.address}
+                helperText={errors.address?.message}
+                {...register('address')}
+              />
+            </Grid>
+
+            {/* Identification */}
+            <Grid size={12}>
+              <Div sx={{ mt: 2, mb: 1, fontWeight: 600 }}>Identification</Div>
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                label='National ID'
+                size='small'
+                fullWidth
+                error={!!errors.national_id}
+                helperText={errors.national_id?.message}
+                {...register('national_id')}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                label='Passport Number'
+                size='small'
+                fullWidth
+                error={!!errors.passport_number}
+                helperText={errors.passport_number?.message}
+                {...register('passport_number')}
+              />
+            </Grid>
+
+            {/* Employment Details */}
+            <Grid size={12}>
+              <Div sx={{ mt: 2, mb: 1, fontWeight: 600 }}>
+                Employment Details
+              </Div>
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 4 }}>
+              {isFetching ? (
+                <LinearProgress />
+              ) : (
                 <Controller
-                  name='employment_type'
+                  name='department_id'
                   control={control}
-                  rules={{ required: true }}
                   render={({ field, fieldState }) => (
                     <Autocomplete
                       size='small'
-                      options={employmentTypesOptions}
-                      isOptionEqualToValue={(option, value) =>
-                        option.label === value.label
-                      }
-                      getOptionLabel={(option) => option.label}
-                      {...field}
-                      value={selectedemploymentType}
-                      onChange={(event, newValue) => {
-                        if (newValue) {
-                          setSelectedEmploymentType(newValue);
-                        } else {
-                          setSelectedEmploymentType(null);
-                        }
-                        field.onChange(newValue ? newValue.value : '');
+                      options={departmentsData}
+                      getOptionLabel={(o) => o.name}
+                      value={selectedDpt}
+                      onChange={(_, newVal) => {
+                        setSelectedDpt(newVal);
+                        field.onChange(newVal?.id || null);
                       }}
                       renderInput={(params) => (
                         <TextField
                           {...params}
-                          label='Employment Type'
+                          label='Department'
                           error={!!fieldState.error}
-                          helperText={fieldState.error?.message}
                         />
                       )}
                     />
                   )}
                 />
+              )}
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Controller
+                name='employment_type'
+                control={control}
+                render={({ field, fieldState }) => (
+                  <Autocomplete
+                    size='small'
+                    options={EMPLOYMENT_OPTIONS}
+                    getOptionLabel={(o) => o.label}
+                    value={selectedEmploymentType}
+                    onChange={(_, newVal) => {
+                      setSelectedEmploymentType(newVal);
+                      field.onChange(newVal?.value || '');
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label='Employment Type'
+                        error={!!fieldState.error}
+                        helperText={errors.employment_type?.message}
+                      />
+                    )}
+                  />
+                )}
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Controller
+                name='join_date'
+                control={control}
+                render={({ field, fieldState }) => (
+                  <DatePicker
+                    label='Join Date'
+                    value={joinDate ? dayjs(joinDate) : null}
+                    onChange={(val) => {
+                      const formatted = val?.format('YYYY-MM-DD') || '';
+                      setJoinDate(formatted);
+                      field.onChange(formatted);
+                    }}
+                    slotProps={{
+                      textField: {
+                        size: 'small',
+                        fullWidth: true,
+                        error: !!fieldState.error,
+                      },
+                    }}
+                  />
+                )}
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 8 }}>
+              <Controller
+                name='cost_center_id'
+                control={control}
+                render={({ field }) => (
+                  <CostCenterSelector
+                    multiple={false}
+                    label='Cost Center'
+                    defaultValue={
+                      (employee as any)?.cost_center ||
+                      defaultCostCenter ||
+                      null
+                    }
+                    onChange={(val) => {
+                      const selected = Array.isArray(val) ? val[0] : val;
+                      field.onChange(selected?.id || null);
+                    }}
+                  />
+                )}
+              />
+            </Grid>
+
+            {showReasonField && (
+              <Grid size={12}>
+                <Div sx={{ mt: 1, mb: 1 }}>
+                  <TextField
+                    label='Reason for Change'
+                    size='small'
+                    fullWidth
+                    multiline
+                    minRows={2}
+                    placeholder='e.g., Site relocation, Team restructuring, Promotion, Department transfer...'
+                    error={!!errors.reason}
+                    helperText={
+                      errors.reason?.message ||
+                      'Please provide a reason for this change for audit trail purposes'
+                    }
+                    {...register('reason')}
+                  />
+                </Div>
+              </Grid>
+            )}
+
+            {/* Payroll & Contract Settings */}
+            <Grid size={12}>
+              <Div sx={{ mt: 2, mb: 1, fontWeight: 600 }}>
+                Payroll & Contract Settings
               </Div>
             </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
-                <Controller
-                  name='join_date'
-                  control={control}
-                  rules={{ required: true }}
-                  render={({ field, fieldState }) => (
-                    <DatePicker
-                      label='Join Date'
-                      {...field}
-                      value={joinDate ? dayjs(joinDate) : null}
-                      onChange={(value: Dayjs | null) => {
-                        if (value) {
-                          const formatted = value.format('YYYY-MM-DD');
 
-                          setJoinDate(formatted);
-                          field.onChange(formatted);
-                        } else {
-                          setJoinDate(undefined);
-                          field.onChange('');
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextField
+                label='Basic Salary'
+                size='small'
+                fullWidth
+                value={formatCurrency(watch('basic_salary'))}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/,/g, '');
+                  setValue('basic_salary', val ? Number(val) : null);
+                }}
+                error={!!errors.basic_salary}
+                helperText={errors.basic_salary?.message}
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Controller
+                name='contract_start_date'
+                control={control}
+                render={({ field, fieldState }) => (
+                  <DatePicker
+                    label='Contract Start Date'
+                    value={contractStartDate ? dayjs(contractStartDate) : null}
+                    onChange={(val) => {
+                      const formatted = val?.format('YYYY-MM-DD') || '';
+                      setContractStartDate(formatted);
+                      field.onChange(formatted || null);
+                    }}
+                    slotProps={{
+                      textField: {
+                        size: 'small',
+                        fullWidth: true,
+                        error: !!fieldState.error,
+                        helperText: fieldState.error?.message,
+                      },
+                    }}
+                  />
+                )}
+              />
+            </Grid>
+
+            {/* Accounting Settings */}
+            {checkOrganizationPermission(
+              PERMISSIONS.ACCOUNTS_MASTERS_CREATE
+            ) && (
+              <>
+                <Grid size={12}>
+                  <Div sx={{ mt: 2, mb: 1, fontWeight: 600 }}>
+                    Accounting Settings
+                  </Div>
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={customeName}
+                        disabled={!!employee}
+                        onChange={() => {
+                          setCustomeName((prev) => !prev);
+                          setValue('payable_ledger_id', null);
+                          setValue('payable_ledger_name', '');
+                        }}
+                      />
+                    }
+                    label='Enter custom account name'
+                  />
+                </Grid>
+
+                {!customeName ? (
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <LedgerSelect
+                      frontError={errors.payable_ledger_id}
+                      defaultValue={
+                        ungroupedLedgerOptions.find(
+                          (l) => l.id === employee?.payable_ledger_id
+                        ) || null
+                      }
+                      allowedGroups={['Accounts Payable']}
+                      onChange={(val) => {
+                        if (!Array.isArray(val)) {
+                          setValue('payable_ledger_id', val?.id || 0, {
+                            shouldValidate: true,
+                            shouldDirty: true,
+                          });
                         }
                       }}
-                      slotProps={{
-                        textField: {
-                          size: 'small',
-                          fullWidth: true,
-                          error: !!fieldState.error,
-                          helperText: fieldState.error?.message,
-                        },
-                      }}
+                      label='Payable Account'
                     />
-                  )}
-                />
-              </Div>
-            </Grid>
+                  </Grid>
+                ) : (
+                  !employee && (
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <TextField
+                        label='Payable Ledger Name'
+                        size='small'
+                        fullWidth
+                        placeholder='e.g., Payable - Jane Doe'
+                        error={!!errors.payable_ledger_name}
+                        helperText={errors.payable_ledger_name?.message}
+                        {...register('payable_ledger_name')}
+                      />
+                    </Grid>
+                  )
+                )}
+              </>
+            )}
           </Grid>
+
           <DialogActions>
             <Button size='small' onClick={() => setOpenDialog(false)}>
               Cancel
@@ -654,10 +801,9 @@ const EmployeeForm = ({
               type='submit'
               variant='contained'
               size='small'
-              sx={{ display: 'flex' }}
               loading={isPending || updateIsLoading}
             >
-              Submit
+              {employee?.id ? 'Update' : 'Create'}
             </LoadingButton>
           </DialogActions>
         </form>

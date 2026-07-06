@@ -1,7 +1,6 @@
 import { Checkbox, FormControlLabel, Grid, TextField } from '@mui/material';
 import React, { useState } from 'react'
 import StoreSelector from '../../stores/StoreSelector';
-import { useFormContext } from 'react-hook-form';
 import storeServices from '../../stores/store-services';
 import { useProductsSelect } from '@/components/productAndServices/products/ProductsSelectProvider';
 import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
@@ -13,9 +12,11 @@ function PurchaseOrderPaymentAndReceive({
   setDisplayStoreSelector,
   order,
   items,
-  errors
+  errors,
+  setValue, 
+  watch, 
+  register
 }) {
-    const { setValue, watch, register} = useFormContext();
     const [storeOptions, setStoreOptions] = useState([]);
     const {productOptions} = useProductsSelect();
 
