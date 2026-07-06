@@ -27,6 +27,7 @@ interface FormData {
   id: number | null;
   contribution_name: string;
   scope: string;
+  scope_lable: string;
 }
 
 interface ContributionsTabProps {
@@ -63,9 +64,10 @@ const ContributionsTab = ({
     id: yup
       .number()
       .required('Contribution Type is required')
-      .typeError('Contribution type ID shoud be a number'),
+      .typeError('Deduction Type is required'),
     contribution_name: yup.string(),
     scope: yup.string().required('Scope is required'),
+    scope_lable: yup.string(),
   });
 
   const {
@@ -80,6 +82,7 @@ const ContributionsTab = ({
       id: null,
       contribution_name: '',
       scope: '',
+      scope_lable: '',
     },
   });
 
@@ -167,7 +170,15 @@ const ContributionsTab = ({
                 value={scopeValue}
                 onChange={(_, v) => {
                   handleRadioChange(v);
-                  setValue('scope', v);
+                  setValue('scope', v, {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                  });
+                  if (v === 'all') {
+                    setValue('scope_lable', 'All');
+                  } else {
+                    setValue('scope_lable', 'Active Contracts');
+                  }
                 }}
               >
                 <FormControlLabel value='all' control={<Radio />} label='All' />
