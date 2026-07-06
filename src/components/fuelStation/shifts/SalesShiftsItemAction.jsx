@@ -146,7 +146,7 @@ const DocumentDialog = ({
   };
 
   return (
-    <Dialog open={isOpen} maxWidth='xl' fullWidth fullScreen={belowLargeScreen}>
+    <Dialog open={isOpen} maxWidth='lg' fullWidth fullScreen={belowLargeScreen}>
       <DialogTitle>
         <Stack
           direction={'row'}
