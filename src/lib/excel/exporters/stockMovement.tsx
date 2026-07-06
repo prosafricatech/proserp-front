@@ -56,12 +56,17 @@ function getQuantityFromMovement(movement: any, key: string): number {
       const quantityProduced = parseFloat(movement.quantity_produced || 0);
       const quantitySold = parseFloat(movement.quantity_sold || 0);
       const quantityConsumed = parseFloat(movement.quantity_consumed || 0);
-      const quantityTransferredIn = parseFloat(movement.quantity_transferred_in || 0);
-      const quantityTransferredOut = parseFloat(movement.quantity_transferred_out || 0);
+      const quantityTransferredIn = parseFloat(
+        movement.quantity_transferred_in || 0
+      );
+      const quantityTransferredOut = parseFloat(
+        movement.quantity_transferred_out || 0
+      );
       const stockGain = parseFloat(movement.stock_gain || 0);
       const stockLoss = parseFloat(movement.stock_loss || 0);
-      
-      return openingBalance +
+
+      return (
+        openingBalance +
         quantityReceived +
         quantityProduced -
         quantitySold -
@@ -69,7 +74,8 @@ function getQuantityFromMovement(movement: any, key: string): number {
         quantityTransferredOut +
         quantityTransferredIn +
         stockGain -
-        stockLoss;
+        stockLoss
+      );
     default:
       return 0;
   }
@@ -128,7 +134,10 @@ export async function exportStockMovementReportToExcel(exportedData: any) {
     // Calculate total estimated closing value
     const totalEstimatedValue = (movementsData?.movements || []).reduce(
       (total: number, movement: any) => {
-        const closingBalance = getQuantityFromMovement(movement, 'closingBalance');
+        const closingBalance = getQuantityFromMovement(
+          movement,
+          'closingBalance'
+        );
         return total + (movement.latest_rate || 0) * closingBalance;
       },
       0
@@ -604,7 +613,10 @@ export async function exportStockMovementReportToExcel(exportedData: any) {
           case 'latestRate':
             return latestRate;
           case 'estimatedValue':
-            const closingBal = getQuantityFromMovement(movement, 'closingBalance');
+            const closingBal = getQuantityFromMovement(
+              movement,
+              'closingBalance'
+            );
             return latestRate * closingBal;
           default:
             return getQuantityFromMovement(movement, key);
@@ -689,7 +701,8 @@ export async function exportStockMovementReportToExcel(exportedData: any) {
           const qtyCell = ws.getCell(
             `${getExcelColumnName(currentCol)}${totalRowNum}`
           );
-          setNum(qtyCell, totalQty, QTY_FMT);
+          // setNum(qtyCell, totalQty, QTY_FMT);
+          setNum(qtyCell, '', QTY_FMT);
           applyCellStyle(qtyCell, CELL_STYLES.totalRowNumeric);
 
           // Amount total
@@ -798,7 +811,7 @@ export async function exportStockMovementReportToExcel(exportedData: any) {
       // Estimated Closing Value total (only when without details and has permission)
       if (!withDetails && hasAccountsPermission) {
         const cell = ws.getCell(
-          `${getExcelColumnName(currentCol)}${totalRowNum}`
+          `${getExcelColumnName(currentCol - 1)}${totalRowNum}`
         );
         setNum(cell, totalEstimatedValue, AMT_FMT);
         applyCellStyle(cell, CELL_STYLES.totalRowNumeric);
