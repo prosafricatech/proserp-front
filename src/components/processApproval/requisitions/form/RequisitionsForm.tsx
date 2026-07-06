@@ -23,7 +23,7 @@ import {
   TextField,
   Tooltip,
 } from '@mui/material';
-import { DateTimePicker } from '@mui/x-date-pickers';
+import { DatePicker, DateTimePicker } from '@mui/x-date-pickers';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
@@ -80,6 +80,7 @@ interface Requisition {
   id?: number;
   additional_costs: Array<any>;
   requisition_date?: string;
+  date_required?: string;
   approval_chain?: {
     process_type?: string;
   };
@@ -123,6 +124,14 @@ function RequisitionsForm({
       : requisition && !isDuplicate
         ? dayjs(requisition.requisition_date)
         : dayjs()
+  );
+
+  const [date_required] = useState(
+    isDuplicate
+      ? dayjs()
+      : requisition && !isDuplicate
+        ? dayjs(requisition.date_required)
+        : null
   );
   const { setIsEditAction } = useContext(requisitionContext);
   const { enqueueSnackbar } = useSnackbar();
@@ -216,17 +225,20 @@ function RequisitionsForm({
     defaultValues: {
       id: requisition?.id,
       requisition_date: requisition_date.toISOString(),
+      date_required:
+        requisition?.approval_chain?.process_type === 'MATERIAL'
+          ? date_required
+          : null,
       process_type: requisition?.approval_chain?.process_type,
       currency_id: requisition ? requisition?.currency?.id : 1,
       cost_center_id: requisition?.cost_center?.id,
       exchange_rate: requisition ? requisition?.exchange_rate : 1,
       remarks: requisition?.remarks,
-      product_items:
-        ['PURCHASE', 'MATERIAL'].includes(
-          String(requisition?.approval_chain?.process_type || '').toUpperCase()
-        )
-          ? requisition?.items
-          : null,
+      product_items: ['PURCHASE', 'MATERIAL'].includes(
+        String(requisition?.approval_chain?.process_type || '').toUpperCase()
+      )
+        ? requisition?.items
+        : null,
       additional_costs:
         requisition?.approval_chain?.process_type?.toUpperCase() === 'PURCHASE'
           ? requisition?.additional_costs || []
@@ -487,10 +499,7 @@ function RequisitionsForm({
       handleSubmit((data) => {
         const updatedData = {
           ...data,
-          product_items:
-            isProductType
-              ? requisition_product_items
-              : null,
+          product_items: isProductType ? requisition_product_items : null,
           ledger_items:
             selectedProcessType === 'PAYMENT' ||
             selectedProcessType === 'IMPREST'
@@ -514,8 +523,7 @@ function RequisitionsForm({
     handleSubmit((data) => {
       const updatedData = {
         ...data,
-        product_items:
-          isProductType ? requisition_product_items : null,
+        product_items: isProductType ? requisition_product_items : null,
         ledger_items:
           selectedProcessType === 'PAYMENT' || selectedProcessType === 'IMPREST'
             ? requisition_ledger_items
@@ -767,6 +775,53 @@ function RequisitionsForm({
                     </Div>
                   </Grid>
                 )}
+
+                <Grid size={{ xs: 12, md: 4, lg: 4 }}>
+                  <Div sx={{ mt: 0.3 }}>
+                    <DatePicker
+                      label='Date Required'
+                      defaultValue={date_required}
+                      minDate={
+                        checkOrganizationPermission(
+                          PERMISSIONS.REQUISITIONS_BACKDATE
+                        )
+                          ? dayjs(
+                              authOrganization?.organization
+                                .recording_start_date
+                            )
+                          : dayjs().startOf('day')
+                      }
+                      maxDate={
+                        checkOrganizationPermission(
+                          PERMISSIONS.REQUISITIONS_POSTDATE
+                        )
+                          ? dayjs().add(10, 'year').endOf('year')
+                          : dayjs().endOf('day')
+                      }
+                      slotProps={{
+                        textField: {
+                          size: 'small',
+                          fullWidth: true,
+                          error: !!errors?.date_required,
+                          helperText: errors?.date_required?.message,
+                          inputProps: {
+                            readOnly: true,
+                          },
+                        },
+                      }}
+                      onChange={(newValue: any) => {
+                        setValue(
+                          'date_required',
+                          newValue ? newValue.toISOString() : null,
+                          {
+                            shouldValidate: true,
+                            shouldDirty: true,
+                          }
+                        );
+                      }}
+                    />
+                  </Div>
+                </Grid>
               </Grid>
             </form>
           </Grid>
@@ -819,7 +874,8 @@ function RequisitionsForm({
                     setAdditionalCosts={setAdditionalCosts}
                   />
                 )}
-                {isPurchaseType && activeTab === 1 &&
+                {isPurchaseType &&
+                  activeTab === 1 &&
                   additionalCosts.map((additionalCost, index) => {
                     return (
                       <PurchaseRequisitionAdditionalCostsTabRow
