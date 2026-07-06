@@ -216,7 +216,7 @@ const RequisitionsOnScreen: React.FC<Props> = ({
                   Requested By
                 </Typography>
                 <Typography variant='body1'>
-                  {requisition.creator.name}
+                  {requisition?.creator?.name}
                 </Typography>
               </Box>
             </Grid>
