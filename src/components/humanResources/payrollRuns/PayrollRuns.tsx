@@ -44,6 +44,29 @@ const PayrollRuns = () => {
   const payrollPeriods: PayrollPeriodType[] =
     payrollPeriodsResponse?.data || [];
 
+  const monthNames = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+  ];
+
+  const periodWithMonthNames = payrollPeriods.map((period) => {
+    const selectedMonth = monthNames[period.month - 1];
+    return {
+      ...period,
+      monthName: selectedMonth,
+    };
+  });
+
   const [queryOptions, setQueryOptions] = React.useState({
     queryKey: 'payrollRuns',
     queryParams: {
@@ -116,13 +139,13 @@ const PayrollRuns = () => {
               <Autocomplete
                 size='small'
                 loading={isPayrollPeriodsFetching}
-                options={payrollPeriods}
+                options={periodWithMonthNames}
                 value={selectedPayrollPeriod}
                 isOptionEqualToValue={(option, value) =>
                   option?.id === value?.id
                 }
                 getOptionLabel={(option) =>
-                  `${option.year} - ${option.month}${
+                  `${option.year} - ${option.monthName || option.month}${
                     option.status ? ` (${option.status})` : ''
                   }`
                 }

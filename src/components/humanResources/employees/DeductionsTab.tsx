@@ -27,6 +27,7 @@ interface FormData {
   id: number | null;
   deduction_name: string;
   scope: string;
+  scope_lable: string;
 }
 
 interface DeductionsTabProps {
@@ -58,9 +59,10 @@ const DeductionsTab = ({ setDeductionSettings }: DeductionsTabProps) => {
     id: yup
       .number()
       .required('Deduction Type is required')
-      .typeError('Deduction type ID shoud be a number'),
+      .typeError('Deduction Type is required'),
     deduction_name: yup.string(),
     scope: yup.string().required('Scope is required'),
+    scope_lable: yup.string(),
   });
 
   const {
@@ -75,6 +77,7 @@ const DeductionsTab = ({ setDeductionSettings }: DeductionsTabProps) => {
       id: null,
       deduction_name: '',
       scope: '',
+      scope_lable: '',
     },
   });
 
@@ -161,7 +164,15 @@ const DeductionsTab = ({ setDeductionSettings }: DeductionsTabProps) => {
                 value={scopeValue}
                 onChange={(_, v) => {
                   handleRadioChange(v);
-                  setValue('scope', v);
+                  setValue('scope', v, {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                  });
+                  if (v === 'all') {
+                    setValue('scope_lable', 'All');
+                  } else {
+                    setValue('scope_lable', 'Active Contracts');
+                  }
                 }}
               >
                 <FormControlLabel value='all' control={<Radio />} label='All' />

@@ -58,9 +58,9 @@ type SalarySheetDialogProps = {
   onClose: () => void;
   periodLabel: string;
   rows: SalarySheetRow[];
-  allowanceTypes: SalaryTypeItem[];
-  deductionTypes: SalaryTypeItem[];
-  contributionTypes: SalaryTypeItem[];
+  // allowanceTypes: SalaryTypeItem[];
+  // deductionTypes: SalaryTypeItem[];
+  // contributionTypes: SalaryTypeItem[];
   isLoading?: boolean;
 };
 
@@ -69,37 +69,6 @@ function fmt(value: number) {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
-}
-
-function fmtTypeLabel(type: SalaryTypeItem, fallback: string) {
-  const name = type.name || fallback;
-  const raw = Number(type.default_value ?? 0);
-  if (!Number.isFinite(raw) || raw <= 0) return name;
-
-  const isPercentage = String(type.computation_method || '').startsWith(
-    'percentage'
-  );
-  const valueText = isPercentage
-    ? `${raw.toLocaleString(undefined, { maximumFractionDigits: 2 })}%`
-    : raw.toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      });
-
-  return `${name} (${valueText})`;
-}
-
-function toNumber(value: unknown) {
-  if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
-  if (typeof value === 'string') {
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : 0;
-  }
-  return 0;
-}
-
-function slug(text: string) {
-  return text.toLowerCase().replace(/\s+/g, ' ').trim();
 }
 
 function getEmployeeName(run: PayrollRunType) {
@@ -129,57 +98,11 @@ function getDesignation(run: PayrollRunType) {
   return '-';
 }
 
-function sumAllowanceByType(run: PayrollRunType, type: SalaryTypeItem) {
-  const targetId = type.id;
-  const targetName = slug(type.name || '');
-
-  return (run.allowances || [])?.reduce((sum, item) => {
-    const byId = targetId != null && item.allowance_type_id === targetId;
-    const byName =
-      targetName &&
-      slug(item.allowance_type?.name || item.label || '') === targetName;
-    if (!byId && !byName) return sum;
-    return sum + toNumber(item?.amount ?? item.value);
-  }, 0);
-}
-
-function sumDeductionByType(run: PayrollRunType, type: SalaryTypeItem) {
-  const targetId = type.id;
-  const targetName = slug(type.name || '');
-
-  return (run.deductions || [])?.reduce((sum, item) => {
-    const byId = targetId != null && item.deduction_type_id === targetId;
-    const byName =
-      targetName &&
-      slug(item.deduction_type?.name || item.label || '') === targetName;
-    if (!byId && !byName) return sum;
-    return sum + toNumber(item?.amount ?? item.value);
-  }, 0);
-}
-
-function sumContributionByType(run: PayrollRunType, type: SalaryTypeItem) {
-  const targetId = type.id;
-  const targetName = slug(type.name || '');
-
-  return (run.employer_contributions || [])?.reduce((sum, item) => {
-    const byId =
-      targetId != null && item.employer_contribution_type_id === targetId;
-    const byName =
-      targetName &&
-      slug(item.contribution_type?.name || item.label || '') === targetName;
-    if (!byId && !byName) return sum;
-    return sum + toNumber(item?.amount ?? item.value);
-  }, 0);
-}
-
 const SalarySheetDialog = ({
   open,
   onClose,
   periodLabel,
   rows,
-  allowanceTypes,
-  deductionTypes,
-  contributionTypes,
   isLoading = false,
 }: SalarySheetDialogProps) => {
   const router = useRouter();
@@ -194,38 +117,45 @@ const SalarySheetDialog = ({
 
   const organization = authObject?.authOrganization?.organization;
 
-  const employeeDeductions = rows.flatMap((itm) =>
-    itm.run?.deductions?.map((deduction: any) => ({
-      ...deduction,
-      employee_contract_id: itm.run.employee?.id,
-    }))
+  const employeeDeductions = rows.flatMap(
+    (itm) =>
+      itm.run?.deductions?.map((deduction: any) => ({
+        ...deduction,
+        employee_contract_id: itm.run.employee?.id,
+      })) || []
   );
-  const employeeAllowance = rows.flatMap((itm) =>
-    itm.run?.allowances?.map((allowance: any) => ({
-      ...allowance,
-      employee_contract_id: itm.run.employee?.id,
-    }))
+  const employeeAllowance = rows.flatMap(
+    (itm) =>
+      itm.run?.allowances?.map((allowance: any) => ({
+        ...allowance,
+        employee_contract_id: itm.run.employee?.id,
+      })) || []
   );
-  const employeecontributions = rows.flatMap((itm) =>
-    itm.run?.employer_contributions?.map((contribution: any) => ({
-      ...contribution,
-      employee_contract_id: itm.run.employee?.id,
-    }))
+  const employeecontributions = rows.flatMap(
+    (itm) =>
+      itm.run?.employer_contributions?.map((contribution: any) => ({
+        ...contribution,
+        employee_contract_id: itm.run.employee?.id,
+      })) || []
   );
 
   const getUniqueTypes = (value: Array<any>) => {
-    const filteredDeductions = Array.from(
-      new Map(
-        value.map((itm) => [
-          itm?.deduction_type_id ??
-            itm?.allowance_type_id ??
-            itm?.employer_contribution_type_id ??
-            itm?.label,
-          itm,
-        ])
-      ).values()
-    );
-    return filteredDeductions;
+    if (value?.length > 0) {
+      const filteredDeductions = Array.from(
+        new Map(
+          value.map((itm) => [
+            itm?.deduction_type_id ??
+              itm?.allowance_type_id ??
+              itm?.employer_contribution_type_id ??
+              itm?.label,
+            itm,
+          ])
+        ).values()
+      );
+      return filteredDeductions;
+    } else {
+      return [];
+    }
   };
 
   const unique_deductions_types = getUniqueTypes(employeeDeductions);
@@ -307,9 +237,9 @@ const SalarySheetDialog = ({
     organization: organization,
     periodLabel: periodLabel,
     rows: exportedRows,
-    allowanceTypes: allowanceTypes,
-    deductionTypes: deductionTypes,
-    contributionTypes: contributionTypes,
+    allowanceTypes: employeeAllowance,
+    deductionTypes: employeeDeductions,
+    contributionTypes: employeecontributions,
   };
 
   const handleExcelExport = async (exportedData: any) => {
@@ -581,7 +511,7 @@ const SalarySheetDialog = ({
                           fontWeight: 450,
                         }}
                       >
-                        {type.label || 'Allowance'}
+                        {type?.label || 'Allowance'}
                       </TableCell>
                     ))}
 
@@ -603,7 +533,7 @@ const SalarySheetDialog = ({
                               fontWeight: 450,
                             }}
                           >
-                            {type.label || 'Deduction'}
+                            {type?.label || 'Deduction'}
                           </TableCell>
                         );
                       }
@@ -636,7 +566,7 @@ const SalarySheetDialog = ({
                           borderColor: 'divider',
                         }}
                       >
-                        {type.label || 'Contribution'}
+                        {type?.label || 'Contribution'}
                       </TableCell>
                     ))}
 

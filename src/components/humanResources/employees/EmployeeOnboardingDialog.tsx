@@ -494,7 +494,7 @@ const EmployeeOnboardingDialog = ({
                     </Grid>
                     <Grid size={5}>
                       <Tooltip title='Scope'>
-                        <Typography>{itm.scope}</Typography>
+                        <Typography>{itm.scope_lable}</Typography>
                       </Tooltip>
                     </Grid>
                     <Grid size={2}>
@@ -529,7 +529,7 @@ const EmployeeOnboardingDialog = ({
                     </Grid>
                     <Grid size={5}>
                       <Tooltip title='Scope'>
-                        <Typography>{itm.scope}</Typography>
+                        <Typography>{itm.scope_lable}</Typography>
                       </Tooltip>
                     </Grid>
                     <Grid size={2}>

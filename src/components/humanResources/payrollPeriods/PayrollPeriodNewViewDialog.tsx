@@ -319,7 +319,6 @@ const PayrollPeriodNewViewDialog = ({
       a.click();
       window.URL.revokeObjectURL(url);
       setIsExporting(false);
-      // console.log('blob: ', blob);
     } catch (e: any) {
       console.log('error exporting excel: ', e);
       setIsExporting(false);
@@ -399,7 +398,7 @@ const PayrollPeriodNewViewDialog = ({
                     </TableCell>
                     <TableCell
                       colSpan={
-                        2 +
+                        3 +
                         (hasAllowances
                           ? (unique_allowances_types?.length ?? 0)
                           : 0) +
@@ -419,7 +418,7 @@ const PayrollPeriodNewViewDialog = ({
                     </TableCell>
                     <TableCell
                       colSpan={
-                        2 +
+                        1 +
                         (hasContributions
                           ? (unique_contributions_types?.length ?? 0)
                           : 0)
