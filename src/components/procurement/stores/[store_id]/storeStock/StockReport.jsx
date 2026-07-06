@@ -349,6 +349,7 @@ function StockReport({ setOpenDialog, isFromDashboard }) {
     PERMISSIONS.ACCOUNTS_REPORTS
   );
   const [includeChildren, setIncludeChildren] = useState(true);
+  const [withDetails, setWithDetails] = useState(false);
 
   const validationSchema = yup.object().shape({
     isFromDashboard: yup.boolean().default(false),
@@ -420,31 +421,61 @@ function StockReport({ setOpenDialog, isFromDashboard }) {
     ...overrides,
   });
 
-  const downloadExcelTemplate = async () => {
+  const exportedData = {
+    stockData: stockAvailable,
+    authObject: authObject,
+    store: isFromDashboard ? watch('store') : activeStore,
+    productCategories: watch('product_categories'),
+    costCenter: costCenter,
+    date: watch('as_at'),
+    hasPermissionToView: hasPermissionToView,
+    withDetails: withDetails,
+  };
+
+  const handlExcelExport = async (exportedData) => {
+    setIsDownloadingTemplate(true);
     try {
-      setIsDownloadingTemplate(true);
-      setUploadFieldsKey((prevKey) => prevKey + 1);
-
-      // Get all current filter parameters
-      const filters = buildFilters();
-
-      // Pass all filters to the service
-      const responseData = await storeServices.downloadExcelTemplate(filters);
-
-      const blob = new Blob([responseData], {
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      });
-
-      const link = document.createElement('a');
-      link.href = window.URL.createObjectURL(blob);
-      link.download = 'Stock Report.xlsx';
-      link.click();
-      setIsDownloadingTemplate(false);
-    } catch (error) {
-      enqueueSnackbar('Error downloading Excel template', { variant: 'error' });
+      const blob = await storeServices.exportStockReportToExcel(exportedData);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Stock-Report.xlsx`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      console.log('error exporting: ', e);
+    } finally {
       setIsDownloadingTemplate(false);
     }
   };
+
+  // const downloadExcelTemplate = async () => {
+  //   try {
+  //     setIsDownloadingTemplate(true);
+  //     setUploadFieldsKey((prevKey) => prevKey + 1);
+
+  //     // Get all current filter parameters
+  //     const filters = buildFilters();
+  //     const finalFIlters = { ...filters, withDetails: withDetails };
+
+  //     // Pass all filters to the service
+  //     const responseData = await storeServices.downloadExcelTemplate(filters);
+
+  //     const blob = new Blob([responseData], {
+  //       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  //     });
+
+  //     const link = document.createElement('a');
+  //     link.href = window.URL.createObjectURL(blob);
+  //     link.download = 'Stock Report.xlsx';
+  //     link.click();
+
+  //     setIsDownloadingTemplate(false);
+  //   } catch (error) {
+  //     enqueueSnackbar('Error downloading Excel template', { variant: 'error' });
+  //     setIsDownloadingTemplate(false);
+  //   }
+  // };
 
   useEffect(() => {
     getAvailableStock(buildFilters());
@@ -747,7 +778,7 @@ function StockReport({ setOpenDialog, isFromDashboard }) {
                 </Div>
               </Grid>
               <Grid container size={12} textAlign={'right'}>
-                <Grid size={{ xs: 6, md: 6 }} textAlign={'left'}>
+                <Grid size={{ xs: 6, md: 4 }} textAlign={'left'}>
                   <Div sx={{ mt: 0.3 }}>
                     <FormControlLabel
                       control={
@@ -769,7 +800,22 @@ function StockReport({ setOpenDialog, isFromDashboard }) {
                     />
                   </Div>
                 </Grid>
-                <Grid size={6}>
+                <Grid size={{ xs: 6, md: 4 }} textAlign={'left'}>
+                  <Div sx={{ mt: 0.3 }}>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={withDetails}
+                          onChange={(e) => {
+                            setWithDetails((prev) => !prev);
+                          }}
+                        />
+                      }
+                      label='With more details (View In Excel)'
+                    />
+                  </Div>
+                </Grid>
+                <Grid size={{ xs: 12, md: 4 }} textAlign={'right'}>
                   <Stack
                     direction='row'
                     spacing={0.5}
@@ -779,7 +825,8 @@ function StockReport({ setOpenDialog, isFromDashboard }) {
                     <>
                       <LoadingButton
                         size='small'
-                        onClick={downloadExcelTemplate}
+                        onClick={() => handlExcelExport(exportedData)}
+                        // onClick={downloadExcelTemplate}
                         loading={isDownloadingTemplate}
                         disabled={isFromDashboard && !watch('store_id')}
                         variant='contained'

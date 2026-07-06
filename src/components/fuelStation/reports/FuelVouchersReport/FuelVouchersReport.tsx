@@ -5,8 +5,7 @@ import useProsERPStyles from '@/app/helpers/style-helpers';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
 import StakeholderSelector from '@/components/masters/stakeholders/StakeholderSelector';
-import { faFileExcel } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { FileExportGrid } from '@/components/sharedComponents/FileExportGrid';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { Div, Span } from '@jumbo/shared';
@@ -21,11 +20,8 @@ import {
   FormControlLabel,
   Grid,
   IconButton,
-  LinearProgress,
   Skeleton,
   Stack,
-  Tab,
-  Tabs,
   TextField,
   Tooltip,
   Typography,
@@ -121,6 +117,7 @@ const FuelVouchersReport: React.FC<fvPdfDialog> = ({ closeDialog }) => {
   const [isExporting, setIsExporting] = useState(false);
   const [filterBy, setFilterBy] = useState<string>('');
   const [activeTab, setActiveTab] = useState(0);
+  const [showOnScreen, setShowOnScreen] = useState(true);
   const [queryParams, setQueryParams] = useState<QueryParams | null>(null);
   const [pdfFilters, setPdfFilters] = useState<PDFFilters | null>(null);
   const [pdfKey, setPdfKey] = useState(0);
@@ -276,11 +273,27 @@ const FuelVouchersReport: React.FC<fvPdfDialog> = ({ closeDialog }) => {
     }
   };
 
-  if (isFetchingStations)     return (
+  if (isFetchingStations)
+    return (
       <div style={{ width: '100%', padding: '16px' }}>
-        <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-        <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-        <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+        <Skeleton
+          variant='text'
+          width={180}
+          height={32}
+          style={{ borderRadius: 4, marginLeft: 'auto' }}
+        />
+        <Skeleton
+          variant='rectangular'
+          width='100%'
+          height={48}
+          style={{ borderRadius: 4 }}
+        />
+        <Skeleton
+          variant='rectangular'
+          width='100%'
+          height={32}
+          style={{ borderRadius: 4 }}
+        />
       </div>
     );
 
@@ -464,17 +477,15 @@ const FuelVouchersReport: React.FC<fvPdfDialog> = ({ closeDialog }) => {
                   gap: 1,
                 }}
               >
-                <LoadingButton
-                  size='small'
-                  onClick={handleExcelExport}
-                  // disabled={!hasData || isExporting || isFetchingReport}
-                  loading={isExporting}
-                  sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-                  color='success'
-                  variant='contained'
-                >
-                  <FontAwesomeIcon icon={faFileExcel} color='green' /> Excel
-                </LoadingButton>
+                <FileExportGrid
+                  exportExcel
+                  handlExcelExport={handleExcelExport}
+                  exportingExcel={isExporting}
+                  exportPdf
+                  handlePdf={() => {
+                    setShowOnScreen((prev) => !prev);
+                  }}
+                />
 
                 <LoadingButton
                   size='small'
@@ -493,20 +504,28 @@ const FuelVouchersReport: React.FC<fvPdfDialog> = ({ closeDialog }) => {
       <DialogContent>
         {isFetchingReport ? (
           <div style={{ width: '100%', padding: '16px' }}>
-            <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-            <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-            <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+            <Skeleton
+              variant='text'
+              width={180}
+              height={32}
+              style={{ borderRadius: 4, marginLeft: 'auto' }}
+            />
+            <Skeleton
+              variant='rectangular'
+              width='100%'
+              height={48}
+              style={{ borderRadius: 4 }}
+            />
+            <Skeleton
+              variant='rectangular'
+              width='100%'
+              height={32}
+              style={{ borderRadius: 4 }}
+            />
           </div>
         ) : hasData ? (
           <>
-            {belowLargeScreen && (
-              <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)}>
-                <Tab label='PDF' />
-                <Tab label='ONSCREEN' />
-              </Tabs>
-            )}
-
-            {activeTab === 0 && (
+            {!showOnScreen && (
               <PDFContent
                 key={pdfKey}
                 fileName={`Fuel Vouchers Report ${pdfFilters!.from}-${pdfFilters!.to}`}
@@ -520,7 +539,7 @@ const FuelVouchersReport: React.FC<fvPdfDialog> = ({ closeDialog }) => {
               />
             )}
 
-            {(belowLargeScreen || activeTab === 1) && (
+            {showOnScreen && (
               <FuelVoucherReportOnScreen
                 reportData={reportData}
                 organization={organization}
