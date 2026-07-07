@@ -776,52 +776,54 @@ function RequisitionsForm({
                   </Grid>
                 )}
 
-                <Grid size={{ xs: 12, md: 4, lg: 4 }}>
-                  <Div sx={{ mt: 0.3 }}>
-                    <DatePicker
-                      label='Date Required'
-                      defaultValue={date_required}
-                      minDate={
-                        checkOrganizationPermission(
-                          PERMISSIONS.REQUISITIONS_BACKDATE
-                        )
-                          ? dayjs(
-                              authOrganization?.organization
-                                .recording_start_date
-                            )
-                          : dayjs().startOf('day')
-                      }
-                      maxDate={
-                        checkOrganizationPermission(
-                          PERMISSIONS.REQUISITIONS_POSTDATE
-                        )
-                          ? dayjs().add(10, 'year').endOf('year')
-                          : dayjs().endOf('day')
-                      }
-                      slotProps={{
-                        textField: {
-                          size: 'small',
-                          fullWidth: true,
-                          error: !!errors?.date_required,
-                          helperText: errors?.date_required?.message,
-                          inputProps: {
-                            readOnly: true,
+                {selectedProcessType === 'MATERIAL' && (
+                  <Grid size={{ xs: 12, md: 4, lg: 4 }}>
+                    <Div sx={{ mt: 0.3 }}>
+                      <DatePicker
+                        label='Date Required'
+                        defaultValue={date_required}
+                        minDate={
+                          checkOrganizationPermission(
+                            PERMISSIONS.REQUISITIONS_BACKDATE
+                          )
+                            ? dayjs(
+                                authOrganization?.organization
+                                  .recording_start_date
+                              )
+                            : dayjs().startOf('day')
+                        }
+                        maxDate={
+                          checkOrganizationPermission(
+                            PERMISSIONS.REQUISITIONS_POSTDATE
+                          )
+                            ? dayjs().add(10, 'year').endOf('year')
+                            : dayjs().endOf('day')
+                        }
+                        slotProps={{
+                          textField: {
+                            size: 'small',
+                            fullWidth: true,
+                            error: !!errors?.date_required,
+                            helperText: errors?.date_required?.message,
+                            inputProps: {
+                              readOnly: true,
+                            },
                           },
-                        },
-                      }}
-                      onChange={(newValue: any) => {
-                        setValue(
-                          'date_required',
-                          newValue ? newValue.toISOString() : null,
-                          {
-                            shouldValidate: true,
-                            shouldDirty: true,
-                          }
-                        );
-                      }}
-                    />
-                  </Div>
-                </Grid>
+                        }}
+                        onChange={(newValue: any) => {
+                          setValue(
+                            'date_required',
+                            newValue ? newValue.toISOString() : null,
+                            {
+                              shouldValidate: true,
+                              shouldDirty: true,
+                            }
+                          );
+                        }}
+                      />
+                    </Div>
+                  </Grid>
+                )}
               </Grid>
             </form>
           </Grid>
