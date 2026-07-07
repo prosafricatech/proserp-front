@@ -94,6 +94,9 @@ const EmployerContributionTypeForm = ({
   const { ungroupedLedgerOptions } = useLedgerSelect();
   const { organizationHasSubscribed, checkOrganizationPermission } =
     useJumboAuth();
+  const orgHasSubscribedAccountsAndFinance = organizationHasSubscribed(
+    MODULES.ACCOUNTS_AND_FINANCE
+  );
 
   const [recentlyAddedPayableLedger, setRecentlyAddedPayableLedger] =
     useState<Ledger | null>(null);
@@ -246,6 +249,18 @@ const EmployerContributionTypeForm = ({
       .string()
       .oneOf(['fixed', 'percentage_of_basic', 'percentage_of_gross'])
       .required('Computation method is required'),
+    payable_ledger_id: orgHasSubscribedAccountsAndFinance
+      ? yup
+          .number()
+          .required('This field is required')
+          .positive('This field is required')
+      : yup.number().nullable(),
+    expense_ledger_id: orgHasSubscribedAccountsAndFinance
+      ? yup
+          .number()
+          .required('This field is required')
+          .positive('This field is required')
+      : yup.number().nullable(),
     description: yup
       .string()
       .max(500, 'Description cannot exceed 500 characters'),
@@ -471,7 +486,7 @@ const EmployerContributionTypeForm = ({
               </Div>
             </Grid>
 
-            {organizationHasSubscribed(MODULES.ACCOUNTS_AND_FINANCE) && (
+            {orgHasSubscribedAccountsAndFinance && (
               <>
                 <Grid size={{ xs: 12, md: 6 }}>
                   <Div sx={{ my: 1 }}>
