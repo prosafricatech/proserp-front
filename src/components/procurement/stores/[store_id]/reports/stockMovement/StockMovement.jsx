@@ -654,7 +654,7 @@ function StockMovement({ toggleOpen, dormantStock = false, isFromDashboard }) {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `Stock-Movement ${readableDate(filters.as_at, true)}.xlsx`;
+      a.download = `${!dormantStock ? 'Stock-Movement' : 'Dormant-Stock'} ${readableDate(filters.as_at, true)}.xlsx`;
       a.click();
       window.URL.revokeObjectURL(url);
       enqueueSnackbar('Excel exported successfully!', { variant: 'success' });
@@ -885,12 +885,12 @@ function StockMovement({ toggleOpen, dormantStock = false, isFromDashboard }) {
                             onChange={async (e) => {
                               const newValue = e.target.checked;
                               setWithDetails(newValue);
-                              
+
                               // Reset to On-Screen tab when withDetails is enabled
                               if (newValue) {
                                 setSelectedTab(0);
                               }
-                              
+
                               // Fetch data with the new withDetails value
                               const filters = buildFilters({
                                 with_details: newValue,
@@ -990,14 +990,15 @@ function StockMovement({ toggleOpen, dormantStock = false, isFromDashboard }) {
                   textAlign: 'center',
                 }}
               >
-                <Typography variant="h2" sx={{ fontSize: 40, mb: 2 }}>
+                <Typography variant='h2' sx={{ fontSize: 40, mb: 2 }}>
                   📊
                 </Typography>
                 <Typography variant='h6' color='text.secondary' gutterBottom>
                   Download Excel to view more details
                 </Typography>
                 <Typography variant='body2' color='text.secondary'>
-                  The detailed view is only available in Excel format. Please click the Excel button above to download the complete report.
+                  The detailed view is only available in Excel format. Please
+                  click the Excel button above to download the complete report.
                 </Typography>
               </Box>
             ) : (
@@ -1023,7 +1024,9 @@ function StockMovement({ toggleOpen, dormantStock = false, isFromDashboard }) {
                         movementsData={movements}
                         authOrganization={authOrganization}
                         user={user}
-                        checkOrganizationPermission={checkOrganizationPermission}
+                        checkOrganizationPermission={
+                          checkOrganizationPermission
+                        }
                         store={isFromDashboard ? watch('store') : activeStore}
                         reportTitle={reportTitle}
                       />
