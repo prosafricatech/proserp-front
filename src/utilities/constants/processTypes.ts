@@ -1,17 +1,19 @@
 export const PROCESS_TYPES = [
-    'PURCHASE',
-    'MATERIAL',
-    'PAYMENT',
-    'IMPREST',
-    'IMPREST RETIREMENT',
-    'LEAVE REQUEST',
-    'PAYROLL'
+  'PURCHASE',
+  'MATERIAL',
+  'PAYMENT',
+  'IMPREST',
+  'IMPREST RETIREMENT',
+  'LEAVE REQUEST',
+  // 'PAYROLL'
 ];
 
 export const getProcessTypes = (hasHumanResourcesModule: boolean) => {
-    if (hasHumanResourcesModule) {
-        return PROCESS_TYPES;
-    }
+  if (hasHumanResourcesModule) {
+    return PROCESS_TYPES;
+  }
 
-    return PROCESS_TYPES.filter((type) => !['LEAVE REQUEST', 'PAYROLL'].includes(type));
+  return PROCESS_TYPES.filter(
+    (type) => !['LEAVE REQUEST', 'PAYROLL'].includes(type)
+  );
 };

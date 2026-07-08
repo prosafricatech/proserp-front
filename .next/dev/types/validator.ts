@@ -2747,6 +2747,15 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../../src/app/api/humanResources/payrollRuns/[id]/complete/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/humanResources/payrollRuns/[id]/complete">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/humanResources/payrollRuns/[id]/complete/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../../src/app/api/humanResources/payrollRuns/[id]/delete/route.ts
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/humanResources/payrollRuns/[id]/delete">> = Specific

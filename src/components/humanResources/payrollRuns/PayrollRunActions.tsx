@@ -1,9 +1,12 @@
 'use client';
 
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
+import { MODULES } from '@/utilities/constants/modules';
 import {
   CheckCircleOutline,
   DeleteOutlined,
+  DoneAllOutlined,
   PaidOutlined,
   PreviewOutlined,
   ReceiptLongOutlined,
@@ -54,6 +57,7 @@ interface PayrollRunActionsProps {
   isApproving: boolean;
   isPosting: boolean;
   isPaying: boolean;
+  isCompleting: boolean;
   runLabel?: string;
   payrollRun?: any;
   previewRows?: any[]; // Add previewRows prop
@@ -106,13 +110,19 @@ export const PayrollRunActions = ({
   isApproving,
   isPosting,
   isPaying,
+  isCompleting,
   runLabel = 'this run',
   payrollRun,
   previewRows = [], // Default to empty array
 }: PayrollRunActionsProps) => {
   const { enqueueSnackbar } = useSnackbar();
+  const { organizationHasSubscribed } = useJumboAuth();
+  const orgHasSubscribedAccountsAndFinance = organizationHasSubscribed(
+    MODULES.ACCOUNTS_AND_FINANCE
+  );
   const [openPostDialog, setOpenPostDialog] = useState(false);
   const [openPayDialog, setOpenPayDialog] = useState(false);
+  const [openCompleteDialog, setOpenCompleteDialog] = useState(false);
   const [openSalarySheetDialog, setOpenSalarySheetDialog] = useState(false);
   const [isLoadingSalarySheet, setIsLoadingSalarySheet] = useState(false);
   const [salarySheetData, setSalarySheetData] = useState<any>(null);
@@ -257,6 +267,9 @@ export const PayrollRunActions = ({
       case 'pay':
         setOpenPayDialog(true);
         break;
+      case 'complete':
+        setOpenCompleteDialog(true);
+        break;
       default:
         break;
     }
@@ -287,6 +300,11 @@ export const PayrollRunActions = ({
     onAction('pay', payForm);
     setOpenPayDialog(false);
     setPayForm({ credit_ledger_id: 0 });
+  };
+
+  const handleCompleteConfirm = () => {
+    onAction('complete');
+    setOpenCompleteDialog;
   };
 
   const isPostFormValid =
@@ -364,7 +382,7 @@ export const PayrollRunActions = ({
         )}
 
         {/* 4. POST PAYROLL TRANSACTIONS - For approved runs */}
-        {isApproved && (
+        {isApproved && orgHasSubscribedAccountsAndFinance && (
           <Tooltip title='Post Payroll Transactions'>
             <IconButton
               size='small'
@@ -391,7 +409,7 @@ export const PayrollRunActions = ({
         )}
 
         {/* 5. PAY EMPLOYEES - For posted runs */}
-        {isPosted && !isPaid && (
+        {isPosted && !isPaid && orgHasSubscribedAccountsAndFinance && (
           <Tooltip title='Pay Employees'>
             <IconButton
               size='small'
@@ -412,6 +430,24 @@ export const PayrollRunActions = ({
                 <CircularProgress size={18} color='inherit' />
               ) : (
                 <PaidOutlined fontSize='small' />
+              )}
+            </IconButton>
+          </Tooltip>
+        )}
+
+        {/* SHOW COMPLETE BUTTON IF NOT SUBSCRIBED TO ACCOUNTS AND FINANCE */}
+        {isApproved && !orgHasSubscribedAccountsAndFinance && (
+          <Tooltip title='Complete Payroll'>
+            <IconButton
+              size='small'
+              onClick={() => handleActionClick('complete')}
+              disabled={isCompleting}
+              color='success'
+            >
+              {isCompleting ? (
+                <CircularProgress size={18} color='inherit' />
+              ) : (
+                <DoneAllOutlined fontSize='small' />
               )}
             </IconButton>
           </Tooltip>
@@ -626,6 +662,38 @@ export const PayrollRunActions = ({
             disabled={isPaying || !isPayFormValid}
           >
             {isPaying ? <CircularProgress size={18} /> : 'Pay Employees'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Complete payroll confirmation Dialog */}
+      <Dialog
+        open={openCompleteDialog}
+        onClose={() => setOpenCompleteDialog(false)}
+        fullWidth
+        maxWidth='xs'
+      >
+        <DialogTitle>
+          <Typography variant='h6' component='div' fontWeight={600}>
+            Are you sure you want to complete the payroll
+          </Typography>
+        </DialogTitle>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            onClick={() => setOpenCompleteDialog(false)}
+            variant='outlined'
+            size='small'
+            disabled={isCompleting}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant='contained'
+            size='small'
+            onClick={handleCompleteConfirm}
+            disabled={isCompleting}
+          >
+            {isCompleting ? <CircularProgress size={18} /> : 'Complete Payroll'}
           </Button>
         </DialogActions>
       </Dialog>
