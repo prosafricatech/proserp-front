@@ -240,6 +240,7 @@ function ProformaSaleForm({ proforma, toggleOpen }) {
   }
 
   const vat_percentage = parseFloat(watch('vat_percentage'));
+  console.log(activeOutlet)
 
   return (
     <FormProvider>
@@ -334,9 +335,12 @@ function ProformaSaleForm({ proforma, toggleOpen }) {
                     <StakeholderSelector
                       label='Client'
                       frontError={errors?.stakeholder_id}
-                      defaultValue={proforma?.stakeholder_id}
-                      onChange={(e, newValue) => {
-                        setValue(`client_id`, newValue);
+                      defaultValue={proforma?.stakeholder?.id ?? proforma?.stakeholder_id}
+                      onChange={(newValue) => {
+                        setValue(`stakeholder_id`, newValue?.id ?? null, {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                        });
                       }}
                     />
                   </Div>

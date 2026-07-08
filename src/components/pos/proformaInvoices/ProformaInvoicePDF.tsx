@@ -234,11 +234,13 @@ function ProformaInvoicePDF({
                     }}
                   >
                     <Text>{proformaItem.product.name}</Text>
-                    <Text style={{ fontSize: 9, color: '#888', marginTop: 2 }}>
-                      {' ('}
-                      {proformaItem.product.description}
-                      {')'}
-                    </Text>
+                    {proformaItem.product.description && (
+                      <Text style={{ fontSize: 9, color: '#888', marginTop: 2 }}>
+                        {' ('}
+                        {proformaItem.product.description}
+                        {')'}
+                      </Text>
+                    )}
                   </View>
                   {proformaItem.description && (
                     <Text style={{ fontSize: 10, color: '#888', marginTop: 2 }}>

@@ -275,9 +275,11 @@ function ProformaOnScreen({ proforma, organization }: ProformaOnScreenProps) {
                         }}
                       >
                         {proformaItem.product.name}
-                        <span style={{ color: '#888', fontStyle: 'italic' }}>
-                          ({proformaItem.product.description})
-                        </span>
+                        {proformaItem.product.description &&
+                          <span style={{ color: '#888', fontStyle: 'italic' }}>
+                            ({proformaItem.product.description})
+                          </span>
+                        }
                       </span>
                       {proformaItem.description && (
                         <span
