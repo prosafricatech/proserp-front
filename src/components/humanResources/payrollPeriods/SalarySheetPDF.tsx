@@ -31,7 +31,6 @@ type SalarySheetPDFProps = {
   rows: SalarySheetRow[];
   allowanceTypes: Array<any>;
   deductionTypes: Array<any>;
-  // contributionTypes: SalaryTypeItem[];
   contributionTypes: Array<any>;
 };
 
@@ -63,17 +62,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   groupHeaderCell: {
-    paddingVertical: 4,
-    paddingHorizontal: 4,
+    paddingVertical: 3,
+    paddingHorizontal: 3,
     fontSize: 7,
     fontWeight: 'bold',
     textAlign: 'center',
-    borderWidth: 1,
+    borderWidth: 0.5,
+    borderStyle: 'solid',
+  },
+  subHeaderCell: {
+    // paddingVertical: 3,
+    // paddingHorizontal: 4,
+    padding: 3,
+    fontSize: 6.5,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    borderWidth: 0.5,
     borderStyle: 'solid',
   },
   headerCell: {
     padding: 3,
-    fontSize: 6.5,
+    fontSize: 6.2,
     fontWeight: 'bold',
     borderWidth: 0.5,
     borderStyle: 'solid',
@@ -169,7 +178,6 @@ const percentOf = (part: number, total: number) => {
 function getEmployeeName(run: PayrollRunType) {
   if (!run.employee) return '';
 
-  // Use type assertion to safely access name if it exists
   const employee = run.employee as any;
   if (employee.name) return employee.name;
 
@@ -180,11 +188,9 @@ function getEmployeeName(run: PayrollRunType) {
 }
 
 function getDesignation(run: PayrollRunType) {
-  // Check contract designation first
   if (run.contract?.designation?.title) {
     return run.contract.designation.title;
   }
-  // Check if there's a direct designation property (some preview data might have it)
   if ((run as any).designation) {
     return (run as any).designation;
   }
@@ -221,7 +227,9 @@ const SalarySheetPDF = ({
     return filteredDeductions;
   };
 
-  const unique_deductions_types = getUniqueTypes(deductionTypes);
+  const unique_deductions_types = getUniqueTypes(deductionTypes).filter(
+    (type) => type.deduction_type_id !== null
+  );
   const unique_allowances_types = getUniqueTypes(allowanceTypes);
   const unique_contributions_types = getUniqueTypes(contributionTypes);
 
@@ -260,24 +268,35 @@ const SalarySheetPDF = ({
     }
   };
 
-  const serialFlex = 1;
-  const nameFlex = 4;
-  const designationFlex = 2;
-  const recruitmentNudge = 0.25;
+  // Base Column Sizing Units
+  const serialFlex = 1.2;
+  const nameFlex = 4.5;
+  const designationFlex = 3.0;
+  const dataColumnFlex = 1.5; // Dedicated flex unit sizing for clean alignment
 
-  const recruitmentFlex =
-    serialFlex + nameFlex + designationFlex - recruitmentNudge;
-  const totalsLeadFlex = serialFlex + nameFlex + designationFlex;
-  const employeeFlex =
-    2 * (unique_allowances_types.length + unique_deductions_types.length + 5) +
-    recruitmentNudge;
-  const employerFlex = 2 * (unique_contributions_types.length + 2);
+  // --- SEGMENT COMPONENT CALCULATIONS ---
+  // Recruitment Segment (S/N + Name + Designation)
+  const recruitmentFlex = serialFlex + nameFlex + designationFlex;
+
+  // Employee Segment: Basic (1) + Allowances (N) + Gross (1) + Taxable (1) + PAYE (1) + Deductions (M) + Total Ded (1) + Net Payable (1)
+  const employeeColumnsCount =
+    1 +
+    (hasAllowances ? unique_allowances_types.length : 0) +
+    1 +
+    1 +
+    1 +
+    (hasDeductions ? unique_deductions_types.length : 0) +
+    1 +
+    1;
+  const employeeFlex = dataColumnFlex * employeeColumnsCount;
+
+  // Employer Segment: Contributions (K) + Total Empr Contrib (1) + Total Empr Cost (1)
+  const employerColumnsCount =
+    (hasContributions ? unique_contributions_types.length : 0) + 1 + 1;
+  const employerFlex = dataColumnFlex * employerColumnsCount;
 
   const totals = rows.reduce(
     (sum, entry) => {
-      const run = entry.run;
-      const computed = entry.computed;
-
       return {
         basicSalary: sum.basicSalary + entry.computed.basicSalary,
         grossSalary: sum.grossSalary + entry.computed.grossSalary,
@@ -311,6 +330,11 @@ const SalarySheetPDF = ({
   const summaryTotal =
     grossByEmployer + netEmployeePayment + payrollTaxesAndBenefits;
 
+  // Colors for strict structural mapping
+  const borderColor = '#000000';
+  const lightBorderColor = '#555555';
+  const subHeaderBg = '#EFEFEF';
+
   return (
     <Document
       title={`Salary Sheet ${periodLabel}`}
@@ -318,6 +342,7 @@ const SalarySheetPDF = ({
       subject='Salary Sheet'
     >
       <Page size='A3' orientation='landscape' style={styles.page}>
+        {/* Company Header Info Block */}
         <View style={styles.headerRow}>
           <View style={{ width: 110 }}>
             <PdfLogo organization={organization} />
@@ -330,7 +355,9 @@ const SalarySheetPDF = ({
           </View>
         </View>
 
+        {/* Core Table Engine */}
         <View style={styles.table}>
+          {/* ROW 1: Level 1 Top-level Grouping (RECRUITMENT | EMPLOYEE | EMPLOYER) */}
           <View style={styles.tableRow}>
             <Text
               style={{
@@ -338,7 +365,7 @@ const SalarySheetPDF = ({
                 flex: recruitmentFlex,
                 backgroundColor: '#FFFFFF',
                 color: mainColor,
-                borderColor: mainColor,
+                borderColor: borderColor,
               }}
             >
               RECRUITMENT
@@ -346,10 +373,10 @@ const SalarySheetPDF = ({
             <Text
               style={{
                 ...styles.groupHeaderCell,
-                flex: employeeFlex,
+                flex: employeeFlex + 0.5,
                 backgroundColor: lightColor,
                 color: mainColor,
-                borderColor: mainColor,
+                borderColor: borderColor,
               }}
             >
               EMPLOYEE
@@ -357,56 +384,210 @@ const SalarySheetPDF = ({
             <Text
               style={{
                 ...styles.groupHeaderCell,
-                flex: employerFlex,
+                flex: employerFlex + 0.27,
                 backgroundColor: '#FFFFFF',
                 color: mainColor,
-                borderColor: mainColor,
+                borderColor: borderColor,
               }}
             >
               EMPLOYER
             </Text>
           </View>
 
-          <View style={{ ...styles.tableRow, backgroundColor: mainColor }}>
+          {/* ROW 2: Level 2 Sub-Group Categorization (S/N, Employee, Designation, Basic, Allowances, Gross, Deductions, Net, etc.) */}
+          <View style={styles.tableRow}>
             <Text
               style={{
-                ...styles.headerCell,
-                color: contrastText,
-                borderColor: mainColor,
+                ...styles.subHeaderCell,
+                borderColor: borderColor,
                 flex: serialFlex,
+                backgroundColor: subHeaderBg,
               }}
             >
               S/N
             </Text>
             <Text
               style={{
-                ...styles.headerCell,
-                color: contrastText,
-                borderColor: mainColor,
+                ...styles.subHeaderCell,
+                borderColor: borderColor,
                 flex: nameFlex,
+                backgroundColor: subHeaderBg,
               }}
             >
-              Name
+              Employee
             </Text>
             <Text
               style={{
-                ...styles.headerCell,
-                color: contrastText,
-                borderColor: mainColor,
+                ...styles.subHeaderCell,
+                borderColor: borderColor,
                 flex: designationFlex,
+                backgroundColor: subHeaderBg,
               }}
             >
               Designation
             </Text>
             <Text
               style={{
-                ...styles.headerCell,
-                color: contrastText,
-                borderColor: mainColor,
-                flex: 2,
+                ...styles.subHeaderCell,
+                borderColor: borderColor,
+                flex: dataColumnFlex,
+                backgroundColor: subHeaderBg,
               }}
             >
               Basic Salary
+            </Text>
+
+            {hasAllowances && (
+              <Text
+                style={{
+                  ...styles.subHeaderCell,
+                  borderColor: borderColor,
+                  flex: dataColumnFlex * unique_allowances_types.length,
+                  backgroundColor: subHeaderBg,
+                }}
+              >
+                Allowances
+              </Text>
+            )}
+
+            <Text
+              style={{
+                ...styles.subHeaderCell,
+                borderColor: borderColor,
+                flex: dataColumnFlex,
+                backgroundColor: subHeaderBg,
+              }}
+            >
+              Gross Salary
+            </Text>
+            <Text
+              style={{
+                ...styles.subHeaderCell,
+                borderColor: borderColor,
+                flex: dataColumnFlex,
+                backgroundColor: subHeaderBg,
+              }}
+            >
+              Taxable Salary
+            </Text>
+            <Text
+              style={{
+                ...styles.subHeaderCell,
+                borderColor: borderColor,
+                flex: dataColumnFlex,
+                backgroundColor: subHeaderBg,
+              }}
+            >
+              PAYE
+            </Text>
+
+            {hasDeductions && (
+              <Text
+                style={{
+                  ...styles.subHeaderCell,
+                  borderColor: borderColor,
+                  flex: dataColumnFlex * unique_deductions_types.length,
+                  backgroundColor: subHeaderBg,
+                }}
+              >
+                Deductions
+              </Text>
+            )}
+
+            <Text
+              style={{
+                ...styles.subHeaderCell,
+                borderColor: borderColor,
+                flex: dataColumnFlex,
+                backgroundColor: subHeaderBg,
+              }}
+            >
+              Total Ded.
+            </Text>
+            <Text
+              style={{
+                ...styles.subHeaderCell,
+                borderColor: borderColor,
+                flex: dataColumnFlex,
+                backgroundColor: subHeaderBg,
+              }}
+            >
+              Net Payable
+            </Text>
+
+            {hasContributions && (
+              <Text
+                style={{
+                  ...styles.subHeaderCell,
+                  borderColor: borderColor,
+                  flex:
+                    dataColumnFlex * unique_contributions_types.length + 0.2,
+                  backgroundColor: subHeaderBg,
+                }}
+              >
+                Employer Contributions
+              </Text>
+            )}
+            <Text
+              style={{
+                ...styles.subHeaderCell,
+                borderColor: borderColor,
+                flex: dataColumnFlex,
+                backgroundColor: subHeaderBg,
+              }}
+            >
+              Total Empr. Cont.
+            </Text>
+            <Text
+              style={{
+                ...styles.subHeaderCell,
+                borderColor: borderColor,
+                flex: dataColumnFlex,
+                backgroundColor: subHeaderBg,
+              }}
+            >
+              Total Empr. Cost
+            </Text>
+          </View>
+
+          {/* ROW 3: Detailed Data Column Sub-headers */}
+          <View style={{ ...styles.tableRow, backgroundColor: mainColor }}>
+            <Text
+              style={{
+                ...styles.headerCell,
+                color: contrastText,
+                borderColor: borderColor,
+                flex: serialFlex,
+              }}
+            >
+              #
+            </Text>
+            <Text
+              style={{
+                ...styles.headerCell,
+                color: contrastText,
+                borderColor: borderColor,
+                flex: nameFlex,
+              }}
+            ></Text>
+            <Text
+              style={{
+                ...styles.headerCell,
+                color: contrastText,
+                borderColor: borderColor,
+                flex: designationFlex,
+              }}
+            ></Text>
+            <Text
+              style={{
+                ...styles.headerCell,
+                color: contrastText,
+                borderColor: borderColor,
+                flex: dataColumnFlex,
+                textAlign: 'right',
+              }}
+            >
+              Amount
             </Text>
 
             {unique_allowances_types.map((type, idx) => (
@@ -415,11 +596,12 @@ const SalarySheetPDF = ({
                 style={{
                   ...styles.headerCell,
                   color: contrastText,
-                  borderColor: mainColor,
-                  flex: 2,
+                  borderColor: borderColor,
+                  flex: dataColumnFlex,
+                  textAlign: 'right',
                 }}
               >
-                {type.name || 'Allowance'}
+                {type.label || type.name || 'Allowance'}
               </Text>
             ))}
 
@@ -427,72 +609,72 @@ const SalarySheetPDF = ({
               style={{
                 ...styles.headerCell,
                 color: contrastText,
-                borderColor: mainColor,
-                flex: 2,
+                borderColor: borderColor,
+                flex: dataColumnFlex,
+                textAlign: 'right',
               }}
             >
-              Gross
-            </Text>
-
-            <Text
-              style={{
-                ...styles.headerCell,
-                color: contrastText,
-                borderColor: mainColor,
-                flex: 2,
-              }}
-            >
-              Taxable Salary
-            </Text>
-
-            <Text
-              style={{
-                ...styles.headerCell,
-                color: contrastText,
-                borderColor: mainColor,
-                flex: 2,
-              }}
-            >
-              PAYE
-            </Text>
-
-            {unique_deductions_types.map((type: any) => {
-              if (type.deduction_type_id !== null) {
-                return (
-                  <Text
-                    key={`deduction-total-${type.deduction_type_id}`}
-                    style={{
-                      ...styles.headerCell,
-                      color: contrastText,
-                      borderColor: mainColor,
-                      flex: 2,
-                    }}
-                  >
-                    {type.label}
-                  </Text>
-                );
-              }
-            })}
-
-            <Text
-              style={{
-                ...styles.headerCell,
-                color: contrastText,
-                borderColor: mainColor,
-                flex: 2,
-              }}
-            >
-              Total Ded.
+              Amount
             </Text>
             <Text
               style={{
                 ...styles.headerCell,
                 color: contrastText,
-                borderColor: mainColor,
-                flex: 2,
+                borderColor: borderColor,
+                flex: dataColumnFlex,
+                textAlign: 'right',
               }}
             >
-              Net Payable
+              Amount
+            </Text>
+            <Text
+              style={{
+                ...styles.headerCell,
+                color: contrastText,
+                borderColor: borderColor,
+                flex: dataColumnFlex,
+                textAlign: 'right',
+              }}
+            >
+              Amount
+            </Text>
+
+            {unique_deductions_types.map((type, idx) => (
+              <Text
+                key={`pdf-deduction-header-${type.deduction_type_id || type.label}-${idx}`}
+                style={{
+                  ...styles.headerCell,
+                  color: contrastText,
+                  borderColor: borderColor,
+                  flex: dataColumnFlex,
+                  textAlign: 'right',
+                }}
+              >
+                {type.label || 'Deduction'}
+              </Text>
+            ))}
+
+            <Text
+              style={{
+                ...styles.headerCell,
+                color: contrastText,
+                borderColor: borderColor,
+                flex: dataColumnFlex,
+                textAlign: 'right',
+              }}
+            >
+              Amount
+            </Text>
+            <Text
+              style={{
+                ...styles.headerCell,
+                color: contrastText,
+                borderColor: borderColor,
+                flex: dataColumnFlex,
+                textAlign: 'right',
+              }}
+            >
+              Amount
             </Text>
 
             {unique_contributions_types.map((type, idx) => (
@@ -501,12 +683,12 @@ const SalarySheetPDF = ({
                 style={{
                   ...styles.headerCell,
                   color: contrastText,
-                  borderColor: mainColor,
-                  flex: 2,
+                  borderColor: borderColor,
+                  flex: dataColumnFlex,
+                  textAlign: 'right',
                 }}
               >
-                {/* {fmtTypeLabel(type, 'Contribution')} */}
-                {type.label}
+                {type.label || 'Contribution'}
               </Text>
             ))}
 
@@ -514,24 +696,27 @@ const SalarySheetPDF = ({
               style={{
                 ...styles.headerCell,
                 color: contrastText,
-                borderColor: mainColor,
-                flex: 2,
+                borderColor: borderColor,
+                flex: dataColumnFlex,
+                textAlign: 'right',
               }}
             >
-              Total Empr. Contrib.
+              Total
             </Text>
             <Text
               style={{
                 ...styles.headerCell,
                 color: contrastText,
-                borderColor: mainColor,
-                flex: 2,
+                borderColor: borderColor,
+                flex: dataColumnFlex,
+                textAlign: 'right',
               }}
             >
-              Employer Cost
+              Cost
             </Text>
           </View>
 
+          {/* Dynamic Employee Data Payload Rows */}
           {rows.map((entry, index) => {
             const name = getEmployeeName(entry.run);
             const designation = getDesignation(entry.run);
@@ -546,7 +731,7 @@ const SalarySheetPDF = ({
                 <Text
                   style={{
                     ...styles.cell,
-                    borderColor: '#C5C5C5',
+                    borderColor: lightBorderColor,
                     flex: serialFlex,
                   }}
                 >
@@ -555,7 +740,7 @@ const SalarySheetPDF = ({
                 <Text
                   style={{
                     ...styles.cell,
-                    borderColor: '#C5C5C5',
+                    borderColor: lightBorderColor,
                     flex: nameFlex,
                   }}
                 >
@@ -564,7 +749,7 @@ const SalarySheetPDF = ({
                 <Text
                   style={{
                     ...styles.cell,
-                    borderColor: '#C5C5C5',
+                    borderColor: lightBorderColor,
                     flex: designationFlex,
                   }}
                 >
@@ -573,8 +758,8 @@ const SalarySheetPDF = ({
                 <Text
                   style={{
                     ...styles.cell,
-                    borderColor: '#C5C5C5',
-                    flex: 2,
+                    borderColor: lightBorderColor,
+                    flex: dataColumnFlex,
                     textAlign: 'right',
                   }}
                 >
@@ -586,12 +771,11 @@ const SalarySheetPDF = ({
                     key={`pdf-allowance-value-${entry.run.id || index}-${type.allowance_type_id || type.label}-${typeIdx}`}
                     style={{
                       ...styles.cell,
-                      borderColor: '#C5C5C5',
-                      flex: 2,
+                      borderColor: lightBorderColor,
+                      flex: dataColumnFlex,
                       textAlign: 'right',
                     }}
                   >
-                    {/* {fmt(sumAllowanceByType(entry.run, type))} */}
                     {fmt(
                       allowanceTypes.find(
                         (itm) =>
@@ -606,69 +790,60 @@ const SalarySheetPDF = ({
                 <Text
                   style={{
                     ...styles.cell,
-                    borderColor: '#C5C5C5',
-                    flex: 2,
+                    borderColor: lightBorderColor,
+                    flex: dataColumnFlex,
                     textAlign: 'right',
                   }}
                 >
                   {fmt(entry.computed.grossSalary)}
                 </Text>
-
                 <Text
                   style={{
                     ...styles.cell,
-                    borderColor: '#C5C5C5',
-                    flex: 2,
+                    borderColor: lightBorderColor,
+                    flex: dataColumnFlex,
                     textAlign: 'right',
                   }}
                 >
                   {fmt(entry.computed.taxableIncome)}
                 </Text>
-
                 <Text
                   style={{
                     ...styles.cell,
-                    borderColor: '#C5C5C5',
-                    flex: 2,
+                    borderColor: lightBorderColor,
+                    flex: dataColumnFlex,
                     textAlign: 'right',
                   }}
                 >
                   {fmt(entry.computed.paye)}
                 </Text>
 
-                {unique_deductions_types.map((type: any) => {
-                  if (type.deduction_type_id !== null) {
-                    return (
-                      <Text
-                        key={`pdf-post-tax-value-${entry.run.id || index}-${type.deduction_type_id || type.label}`}
-                        style={{
-                          ...styles.cell,
-                          borderColor: '#C5C5C5',
-                          flex: 2,
-                          textAlign: 'right',
-                        }}
-                      >
-                        {/* {fmt(sumDeductionByType(entry.run, type))} */}
-                        {fmt(
-                          deductionTypes.find(
-                            (itm) =>
-                              itm.employee_contract_id ===
-                                entry.run.employee?.id &&
-                              (itm.label === type.label ||
-                                itm.deduction_type_id ===
-                                  type.deduction_type_id)
-                          )?.amount ?? 0
-                        )}
-                      </Text>
-                    );
-                  }
-                })}
+                {unique_deductions_types.map((type, typeIdx) => (
+                  <Text
+                    key={`pdf-deduction-value-${entry.run.id || index}-${type.deduction_type_id || type.label}-${typeIdx}`}
+                    style={{
+                      ...styles.cell,
+                      borderColor: lightBorderColor,
+                      flex: dataColumnFlex,
+                      textAlign: 'right',
+                    }}
+                  >
+                    {fmt(
+                      deductionTypes.find(
+                        (itm) =>
+                          itm.employee_contract_id === entry.run.employee?.id &&
+                          (itm.label === type.label ||
+                            itm.deduction_type_id === type.deduction_type_id)
+                      )?.amount ?? 0
+                    )}
+                  </Text>
+                ))}
 
                 <Text
                   style={{
                     ...styles.cell,
-                    borderColor: '#C5C5C5',
-                    flex: 2,
+                    borderColor: lightBorderColor,
+                    flex: dataColumnFlex,
                     textAlign: 'right',
                   }}
                 >
@@ -677,8 +852,8 @@ const SalarySheetPDF = ({
                 <Text
                   style={{
                     ...styles.cell,
-                    borderColor: '#C5C5C5',
-                    flex: 2,
+                    borderColor: lightBorderColor,
+                    flex: dataColumnFlex,
                     textAlign: 'right',
                   }}
                 >
@@ -690,8 +865,8 @@ const SalarySheetPDF = ({
                     key={`pdf-contribution-value-${entry.run.id || index}-${type.employer_contribution_type_id || type.label}-${typeIdx}`}
                     style={{
                       ...styles.cell,
-                      borderColor: '#C5C5C5',
-                      flex: 2,
+                      borderColor: lightBorderColor,
+                      flex: dataColumnFlex,
                       textAlign: 'right',
                     }}
                   >
@@ -710,8 +885,8 @@ const SalarySheetPDF = ({
                 <Text
                   style={{
                     ...styles.cell,
-                    borderColor: '#C5C5C5',
-                    flex: 2,
+                    borderColor: lightBorderColor,
+                    flex: dataColumnFlex,
                     textAlign: 'right',
                   }}
                 >
@@ -720,8 +895,8 @@ const SalarySheetPDF = ({
                 <Text
                   style={{
                     ...styles.cell,
-                    borderColor: '#C5C5C5',
-                    flex: 2,
+                    borderColor: lightBorderColor,
+                    flex: dataColumnFlex,
                     textAlign: 'right',
                   }}
                 >
@@ -731,6 +906,7 @@ const SalarySheetPDF = ({
             );
           })}
 
+          {/* Table Footer Totals Accumulation Row */}
           <View
             style={{ ...styles.tableRow, backgroundColor: mainColor }}
             wrap={false}
@@ -739,29 +915,34 @@ const SalarySheetPDF = ({
               style={{
                 ...styles.headerCell,
                 color: contrastText,
-                borderColor: mainColor,
-                flex: totalsLeadFlex,
+                borderColor: borderColor,
+                flex: recruitmentFlex,
+                textAlign: 'center',
+                fontWeight: 'bold',
               }}
-            ></Text>
+            >
+              TOTALS
+            </Text>
             <Text
               style={{
                 ...styles.headerCell,
                 color: contrastText,
-                borderColor: mainColor,
-                flex: 2,
+                borderColor: borderColor,
+                flex: dataColumnFlex,
                 textAlign: 'right',
               }}
             >
               {fmt(totals.basicSalary)}
             </Text>
-            {unique_allowances_types.map((type: any) => (
+
+            {unique_allowances_types.map((type: any, idx) => (
               <Text
-                key={`allowance-total-${type.allowance_type_id}`}
+                key={`allowance-total-${type.allowance_type_id || idx}`}
                 style={{
                   ...styles.headerCell,
                   color: contrastText,
-                  borderColor: mainColor,
-                  flex: 2,
+                  borderColor: borderColor,
+                  flex: dataColumnFlex,
                   textAlign: 'right',
                 }}
               >
@@ -779,8 +960,8 @@ const SalarySheetPDF = ({
               style={{
                 ...styles.headerCell,
                 color: contrastText,
-                borderColor: mainColor,
-                flex: 2,
+                borderColor: borderColor,
+                flex: dataColumnFlex,
                 textAlign: 'right',
               }}
             >
@@ -790,57 +971,52 @@ const SalarySheetPDF = ({
               style={{
                 ...styles.headerCell,
                 color: contrastText,
-                borderColor: mainColor,
-                flex: 2,
+                borderColor: borderColor,
+                flex: dataColumnFlex,
                 textAlign: 'right',
               }}
             >
               {fmt(totals.taxableSalary)}
             </Text>
-
             <Text
               style={{
                 ...styles.headerCell,
                 color: contrastText,
-                borderColor: mainColor,
-                flex: 2,
+                borderColor: borderColor,
+                flex: dataColumnFlex,
                 textAlign: 'right',
               }}
             >
               {fmt(totals.paye)}
             </Text>
 
-            {unique_deductions_types.map((type: any) => {
-              if (type.deduction_type_id !== null) {
-                return (
-                  <Text
-                    key={`deduction-total-${type.deduction_type_id}`}
-                    style={{
-                      ...styles.headerCell,
-                      color: contrastText,
-                      borderColor: mainColor,
-                      flex: 2,
-                      textAlign: 'right',
-                    }}
-                  >
-                    {fmt(
-                      calculateTotalAmtByType(
-                        type,
-                        type.deduction_type_id,
-                        'deduction'
-                      )
-                    )}
-                  </Text>
-                );
-              }
-            })}
+            {unique_deductions_types.map((type: any, idx) => (
+              <Text
+                key={`deduction-total-${type.deduction_type_id || idx}`}
+                style={{
+                  ...styles.headerCell,
+                  color: contrastText,
+                  borderColor: borderColor,
+                  flex: dataColumnFlex,
+                  textAlign: 'right',
+                }}
+              >
+                {fmt(
+                  calculateTotalAmtByType(
+                    type,
+                    type.deduction_type_id,
+                    'deduction'
+                  )
+                )}
+              </Text>
+            ))}
 
             <Text
               style={{
                 ...styles.headerCell,
                 color: contrastText,
-                borderColor: mainColor,
-                flex: 2,
+                borderColor: borderColor,
+                flex: dataColumnFlex,
                 textAlign: 'right',
               }}
             >
@@ -850,21 +1026,22 @@ const SalarySheetPDF = ({
               style={{
                 ...styles.headerCell,
                 color: contrastText,
-                borderColor: mainColor,
-                flex: 2,
+                borderColor: borderColor,
+                flex: dataColumnFlex,
                 textAlign: 'right',
               }}
             >
               {fmt(totals.netSalary)}
             </Text>
-            {unique_contributions_types.map((type: any) => (
+
+            {unique_contributions_types.map((type: any, idx) => (
               <Text
-                key={`contribution-total-${type.employer_contribution_type_id}`}
+                key={`contribution-total-${type.employer_contribution_type_id || idx}`}
                 style={{
                   ...styles.headerCell,
                   color: contrastText,
-                  borderColor: mainColor,
-                  flex: 2,
+                  borderColor: borderColor,
+                  flex: dataColumnFlex,
                   textAlign: 'right',
                 }}
               >
@@ -882,8 +1059,8 @@ const SalarySheetPDF = ({
               style={{
                 ...styles.headerCell,
                 color: contrastText,
-                borderColor: mainColor,
-                flex: 2,
+                borderColor: borderColor,
+                flex: dataColumnFlex,
                 textAlign: 'right',
               }}
             >
@@ -893,8 +1070,8 @@ const SalarySheetPDF = ({
               style={{
                 ...styles.headerCell,
                 color: contrastText,
-                borderColor: mainColor,
-                flex: 2,
+                borderColor: borderColor,
+                flex: dataColumnFlex,
                 textAlign: 'right',
               }}
             >
@@ -903,6 +1080,7 @@ const SalarySheetPDF = ({
           </View>
         </View>
 
+        {/* Breakdown Financial Summaries Panel */}
         <View style={styles.summaryWrap}>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Gross Pay by Employer</Text>
@@ -944,7 +1122,9 @@ const SalarySheetPDF = ({
               key={`pdf-contribution-summary-${type.employer_contribution_type_id || type.label}`}
               style={styles.summaryRow}
             >
-              <Text style={styles.summarySubLabel}>{type.name}</Text>
+              <Text style={styles.summarySubLabel}>
+                {type.label || type.name}
+              </Text>
               <Text style={styles.summarySubAmount}>
                 {fmt(
                   calculateTotalAmtByType(
@@ -980,6 +1160,7 @@ const SalarySheetPDF = ({
           </View>
         </View>
 
+        {/* Corporate Approvals and Signatures Field Area */}
         <View style={styles.signaturesWrap}>
           <View style={styles.signatureRow}>
             <Text style={styles.signatureLabel}>
