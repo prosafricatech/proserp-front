@@ -1005,13 +1005,13 @@ export const ApprovalsTab = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              bgcolor: isApproved
-                ? 'success.light'
-                : isRejected
-                  ? 'error.light'
-                  : isPending
-                    ? 'warning.light'
-                    : 'transparent',
+              // bgcolor: isApproved
+              //   ? 'success.light'
+              //   : isRejected
+              //     ? 'error.light'
+              //     : isPending
+              //       ? 'warning.light'
+              //       : 'transparent',
               borderRadius: 1,
             }}
           >

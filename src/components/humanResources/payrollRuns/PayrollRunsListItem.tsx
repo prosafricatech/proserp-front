@@ -352,7 +352,10 @@ const PayrollRunsListItem = ({
                   <Tab label='Summary' />
                   <Tab label='Employees' />
                   {hasPayslips && <Tab label='Payslips' />}
-                  <Tab label='Approvals' />
+                  {payrollRun.status === 'approved' ||
+                    (payrollRun.status === 'submitted' && (
+                      <Tab label='Approvals' />
+                    ))}
                 </Tabs>
               </Box>
 
