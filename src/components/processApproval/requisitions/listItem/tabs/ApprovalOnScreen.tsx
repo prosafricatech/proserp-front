@@ -127,7 +127,6 @@ function ApprovalOnScreen({
       (total: number, cost: any) => total + Number(cost?.amount || 0),
       0
     ) || 0;
-
   const totalVAT =
     approval.items
       ?.filter((item: RequisitionItem) => (item.vat_percentage ?? 0) > 0)
@@ -593,6 +592,7 @@ function ApprovalOnScreen({
               <Typography variant='subtitle2' sx={{ color: headerColor }}>
                 Approved By
               </Typography>
+
               <Typography variant='body1'>{approval?.creator?.name}</Typography>
             </Box>
           </Grid>

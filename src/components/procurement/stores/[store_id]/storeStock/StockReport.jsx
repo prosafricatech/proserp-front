@@ -449,34 +449,6 @@ function StockReport({ setOpenDialog, isFromDashboard }) {
     }
   };
 
-  // const downloadExcelTemplate = async () => {
-  //   try {
-  //     setIsDownloadingTemplate(true);
-  //     setUploadFieldsKey((prevKey) => prevKey + 1);
-
-  //     // Get all current filter parameters
-  //     const filters = buildFilters();
-  //     const finalFIlters = { ...filters, withDetails: withDetails };
-
-  //     // Pass all filters to the service
-  //     const responseData = await storeServices.downloadExcelTemplate(filters);
-
-  //     const blob = new Blob([responseData], {
-  //       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  //     });
-
-  //     const link = document.createElement('a');
-  //     link.href = window.URL.createObjectURL(blob);
-  //     link.download = 'Stock Report.xlsx';
-  //     link.click();
-
-  //     setIsDownloadingTemplate(false);
-  //   } catch (error) {
-  //     enqueueSnackbar('Error downloading Excel template', { variant: 'error' });
-  //     setIsDownloadingTemplate(false);
-  //   }
-  // };
-
   useEffect(() => {
     getAvailableStock(buildFilters());
   }, [!isFromDashboard]);
@@ -853,20 +825,20 @@ function StockReport({ setOpenDialog, isFromDashboard }) {
             </Grid>
           </form>
           {/* Tabs - hidden when withDetails is true on below large screens */}
-          {belowLargeScreen && 
-            !isFetching && 
-            stockAvailable.length > 0 && 
+          {belowLargeScreen &&
+            !isFetching &&
+            stockAvailable.length > 0 &&
             !withDetails && (
-            <Tabs
-              value={selectedTab}
-              onChange={handleTabChange}
-              indicatorColor='primary'
-              textColor='primary'
-            >
-              <Tab label='On-Screen' />
-              <Tab label='PDF' />
-            </Tabs>
-          )}
+              <Tabs
+                value={selectedTab}
+                onChange={handleTabChange}
+                indicatorColor='primary'
+                textColor='primary'
+              >
+                <Tab label='On-Screen' />
+                <Tab label='PDF' />
+              </Tabs>
+            )}
         </Span>
       </DialogTitle>
       <DialogContent>
@@ -886,14 +858,15 @@ function StockReport({ setOpenDialog, isFromDashboard }) {
                   textAlign: 'center',
                 }}
               >
-                <Typography variant="h2" sx={{ fontSize: 40, mb: 2 }}>
+                <Typography variant='h2' sx={{ fontSize: 40, mb: 2 }}>
                   📊
                 </Typography>
                 <Typography variant='h6' color='text.secondary' gutterBottom>
                   Download Excel to view more details
                 </Typography>
                 <Typography variant='body2' color='text.secondary'>
-                  The detailed view is only available in Excel format. Please click the Excel button above to download the complete report.
+                  The detailed view is only available in Excel format. Please
+                  click the Excel button above to download the complete report.
                 </Typography>
               </Box>
             ) : (
