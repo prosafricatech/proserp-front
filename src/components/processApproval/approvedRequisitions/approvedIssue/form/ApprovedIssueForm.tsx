@@ -1,4 +1,6 @@
-import React from 'react';
+import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
+import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
+import { LoadingButton } from '@mui/lab';
 import {
   Alert,
   Button,
@@ -10,12 +12,10 @@ import {
   Typography,
 } from '@mui/material';
 import { DateTimePicker } from '@mui/x-date-pickers';
-import { LoadingButton } from '@mui/lab';
-import dayjs, { Dayjs } from 'dayjs';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import dayjs, { Dayjs } from 'dayjs';
 import { useSnackbar } from 'notistack';
-import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
-import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
+import React from 'react';
 import requisitionsServices from '../../../requisitionsServices';
 import { MaterialApprovalRequisition } from '../../ApprovalRequisitionType';
 
@@ -167,10 +167,13 @@ function ApprovedIssueForm({
               <React.Fragment key={item.id}>
                 <Grid size={{ xs: 12, md: 6 }}>
                   <Typography variant='body2' sx={{ mt: 1.2 }}>
-                    {index + 1}. {item?.requisition_product?.product?.name || 'Product'}
+                    {index + 1}.{' '}
+                    {item?.requisition_product?.product?.name || 'Product'}
                   </Typography>
                   <Typography variant='caption' color='text.secondary'>
-                    Unissued: {Number(item?.unissued_quantity || 0).toLocaleString()} {item?.measurement_unit?.symbol || ''}
+                    Unissued:{' '}
+                    {Number(item?.unissued_quantity || 0).toLocaleString()}{' '}
+                    {item?.measurement_unit?.symbol || ''}
                   </Typography>
                 </Grid>
                 <Grid size={{ xs: 12, md: 3 }}>
