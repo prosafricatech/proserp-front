@@ -1,3 +1,18 @@
+import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { MeasurementUnit } from '@/components/masters/measurementUnits/MeasurementUnitType';
+import ProductQuickAdd from '@/components/productAndServices/products/ProductQuickAdd';
+import productServices from '@/components/productAndServices/products/productServices';
+import { useProductsSelect } from '@/components/productAndServices/products/ProductsSelectProvider';
+import { Product } from '@/components/productAndServices/products/ProductType';
+import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
+import { yupResolver } from '@hookform/resolvers/yup';
+import {
+  AddOutlined,
+  CheckOutlined,
+  DisabledByDefault,
+} from '@mui/icons-material';
 import {
   Button,
   Divider,
@@ -11,22 +26,12 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import React, { useEffect, useState } from 'react';
-import { useForm, SubmitHandler } from 'react-hook-form';
-import ProductSelect from '../../../productAndServices/products/ProductSelect';
-import * as yup from 'yup';
-import { yupResolver } from '@hookform/resolvers/yup';
-import { AddOutlined, CheckOutlined, DisabledByDefault } from '@mui/icons-material';
-import { useSalesOutlet } from '../../outlet/OutletProvider';
-import { useProductsSelect } from '@/components/productAndServices/products/ProductsSelectProvider';
-import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
-import productServices from '@/components/productAndServices/products/productServices';
 import { useQuery } from '@tanstack/react-query';
-import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
-import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
-import ProductQuickAdd from '@/components/productAndServices/products/ProductQuickAdd';
-import { MeasurementUnit } from '@/components/masters/measurementUnits/MeasurementUnitType';
-import { Product } from '@/components/productAndServices/products/ProductType';
+import React, { useEffect, useState } from 'react';
+import { SubmitHandler, useForm } from 'react-hook-form';
+import * as yup from 'yup';
+import ProductSelect from '../../../productAndServices/products/ProductSelect';
+import { useSalesOutlet } from '../../outlet/OutletProvider';
 
 interface FormValues {
   product?: Product | null;
@@ -103,7 +108,9 @@ const ProformaItemForm: React.FC<ProformaItemFormProps> = ({
   const { checkOrganizationPermission } = useJumboAuth();
   const [calculatedAmount, setCalculatedAmount] = useState(0);
   const [selectedUnit, setSelectedUnit] = useState<number | null>(
-    item ? item.measurement_unit_id ?? item.measurement_unit?.id ?? null : null
+    item
+      ? (item.measurement_unit_id ?? item.measurement_unit?.id ?? null)
+      : null
   );
   const [priceInclusiveVAT, setPriceInclusiveVAT] = useState(0);
   const [isVatfieldChange, setIsVatfieldChange] = useState(false);
@@ -120,14 +127,19 @@ const ProformaItemForm: React.FC<ProformaItemFormProps> = ({
   } = useForm<FormValues>({
     resolver: yupResolver(validationSchema) as any,
     defaultValues: {
-      product: item && productOptions.find((product: Product) => product.id === (item.product_id ?? item.product?.id)),
+      product:
+        item &&
+        productOptions.find(
+          (product: Product) =>
+            product.id === (item.product_id ?? item.product?.id)
+        ),
       quantity: item?.quantity,
       rate: item?.rate,
       measurement_unit_id: item
-        ? item.measurement_unit_id ?? item.measurement_unit?.id ?? null
+        ? (item.measurement_unit_id ?? item.measurement_unit?.id ?? null)
         : null,
       unit_symbol: item
-        ? item.measurement_unit?.unit_symbol ?? item.unit_symbol ?? null
+        ? (item.measurement_unit?.unit_symbol ?? item.unit_symbol ?? null)
         : null,
       description: item?.description,
     },
@@ -136,16 +148,6 @@ const ProformaItemForm: React.FC<ProformaItemFormProps> = ({
   useEffect(() => {
     setIsDirty(Object.keys(dirtyFields).length > 0);
   }, [dirtyFields, setIsDirty]);
-
-  useEffect(() => {
-    if (addedProduct?.id) {
-      setValue('product', addedProduct);
-      setValue('measurement_unit_id', addedProduct.measurement_unit_id);
-      setValue('unit_symbol', addedProduct.measurement_unit?.symbol ?? '');
-      setSelectedUnit(addedProduct.measurement_unit_id);
-      setOpenProductQuickAdd(false);
-    }
-  }, [addedProduct, setValue]);
 
   const { isFetching } = useQuery({
     queryKey: ['sellingPrice', { id: watch('product')?.id }],
@@ -220,42 +222,52 @@ const ProformaItemForm: React.FC<ProformaItemFormProps> = ({
     }
   }, [submitItemForm, handleSubmit]);
 
+  const product = watch('product') as Product | undefined;
+  const combinedUnits: MeasurementUnit[] = [
+    ...(product?.secondary_units?.map((unit) => ({
+      id: unit.id,
+      name: unit.name ?? unit.unit_symbol,
+      unit_symbol: unit.unit_symbol,
+      conversion_factor: unit.conversion_factor,
+    })) ?? []),
+    ...(product?.primary_unit
+      ? [
+          {
+            id: product.primary_unit.id,
+            name: product.primary_unit.name ?? product.primary_unit.unit_symbol,
+            unit_symbol: product.primary_unit.unit_symbol,
+            conversion_factor: undefined,
+          },
+        ]
+      : []),
+  ];
+
+  useEffect(() => {
+    if (addedProduct?.id) {
+      setValue('product', addedProduct);
+      setSelectedUnit(addedProduct.measurement_unit_id);
+      setValue('measurement_unit_id', addedProduct.measurement_unit_id);
+      setValue('unit_symbol', addedProduct.measurement_unit?.symbol ?? '');
+      setOpenProductQuickAdd(false);
+    }
+  }, [addedProduct, setValue]);
+
   if (isAdding) {
     return <LinearProgress />;
   }
 
-  const product = watch('product') as Product | undefined;
-  const combinedUnits: MeasurementUnit[] = [
-  ...(product?.secondary_units?.map((unit) => ({
-    id: unit.id,
-    name: unit.name ?? unit.unit_symbol,
-    unit_symbol: unit.unit_symbol,
-    conversion_factor: unit.conversion_factor,
-  })) ?? []),
-  ...(product?.primary_unit
-    ? [
-        {
-          id: product.primary_unit.id,
-          name: product.primary_unit.name ?? product.primary_unit.unit_symbol,
-          unit_symbol: product.primary_unit.unit_symbol,
-          conversion_factor: undefined,
-        },
-      ]
-    : []),
-];
-
   return (
-    <form autoComplete="off" onSubmit={handleSubmit(updateItems)}>
+    <form autoComplete='off' onSubmit={handleSubmit(updateItems)}>
       <Divider />
       <Grid container columnSpacing={1} rowSpacing={1} mb={1} mt={1}>
         {!openProductQuickAdd && !item && (
           <Grid size={{ xs: 12 }} textAlign={'center'}>
-            <Typography variant="h5">Add Item</Typography>
+            <Typography variant='h5'>Add Item</Typography>
           </Grid>
         )}
         {openProductQuickAdd && !item && (
           <Grid size={{ xs: 12 }} textAlign={'center'}>
-            <Typography variant="h5">Quick Product Registration</Typography>
+            <Typography variant='h5'>Quick Product Registration</Typography>
           </Grid>
         )}
 
@@ -263,7 +275,7 @@ const ProformaItemForm: React.FC<ProformaItemFormProps> = ({
           <>
             <Grid size={{ xs: 12, md: vat_factor ? 3.5 : 5 }}>
               <ProductSelect
-                label="Product/Service"
+                label='Product/Service'
                 frontError={errors.product}
                 defaultValue={item?.product}
                 addedProduct={addedProduct}
@@ -275,9 +287,23 @@ const ProformaItemForm: React.FC<ProformaItemFormProps> = ({
                       shouldValidate: true,
                     });
                     setAddedProduct(null);
-                    setSelectedUnit(newValue.primary_unit ? newValue.primary_unit.id : newValue.measurement_unit_id);
-                    setValue('measurement_unit_id', newValue.primary_unit ? newValue.primary_unit.id : newValue.measurement_unit_id);
-                    setValue('unit_symbol', newValue.primary_unit ? newValue.primary_unit.unit_symbol : newValue.measurement_unit?.symbol ?? '');
+                    setSelectedUnit(
+                      newValue.primary_unit
+                        ? newValue.primary_unit.id
+                        : newValue.measurement_unit_id
+                    );
+                    setValue(
+                      'measurement_unit_id',
+                      newValue.primary_unit
+                        ? newValue.primary_unit.id
+                        : newValue.measurement_unit_id
+                    );
+                    setValue(
+                      'unit_symbol',
+                      newValue.primary_unit
+                        ? newValue.primary_unit.unit_symbol
+                        : (newValue.measurement_unit?.symbol ?? '')
+                    );
                     setValue('product_id', newValue.id);
                   } else {
                     setValue('product', null, {
@@ -295,8 +321,10 @@ const ProformaItemForm: React.FC<ProformaItemFormProps> = ({
                   }
                 }}
                 startAdornment={
-                  checkOrganizationPermission(['products_create']) && (
-                    <Tooltip title="Add New Product">
+                  checkOrganizationPermission([
+                    PERMISSIONS.PRODUCTS_CREATE,
+                  ]) && (
+                    <Tooltip title='Quick Add New Product'>
                       <AddOutlined
                         onClick={() => setOpenProductQuickAdd(true)}
                         sx={{ cursor: 'pointer' }}
@@ -309,9 +337,9 @@ const ProformaItemForm: React.FC<ProformaItemFormProps> = ({
 
             <Grid size={{ xs: 12, md: vat_factor ? 2.5 : 3 }}>
               <TextField
-                label="Quantity"
+                label='Quantity'
                 fullWidth
-                size="small"
+                size='small'
                 defaultValue={item?.quantity ?? ''}
                 InputProps={{
                   inputComponent: CommaSeparatedField,
@@ -323,14 +351,16 @@ const ProformaItemForm: React.FC<ProformaItemFormProps> = ({
                           onChange={(e) => {
                             const selectedUnitId = e.target.value as number;
                             setSelectedUnit(selectedUnitId);
-                            const selectedUnit = combinedUnits.find((unit) => unit.id === selectedUnitId);
+                            const selectedUnit = combinedUnits.find(
+                              (unit) => unit.id === selectedUnitId
+                            );
                             if (selectedUnit) {
                               setValue('measurement_unit_id', selectedUnit.id);
                               setValue('unit_symbol', selectedUnit.unit_symbol);
                             }
                           }}
-                          variant="standard"
-                          size="small"
+                          variant='standard'
+                          size='small'
                           MenuProps={{
                             PaperProps: {
                               style: {
@@ -360,23 +390,31 @@ const ProformaItemForm: React.FC<ProformaItemFormProps> = ({
                 <LinearProgress />
               ) : (
                 <TextField
-                  label="Price"
+                  label='Price'
                   fullWidth
                   key={priceFieldKey}
-                  size="small"
+                  size='small'
                   error={!!errors.rate}
                   helperText={errors.rate?.message}
                   InputProps={{
                     inputComponent: CommaSeparatedField,
                   }}
-                  defaultValue={watch('rate') ? Math.round((watch('rate') ?? 0) * 100000) / 100000 : ''}
+                  defaultValue={
+                    watch('rate')
+                      ? Math.round((watch('rate') ?? 0) * 100000) / 100000
+                      : ''
+                  }
                   onChange={(e) => {
                     setIsVatfieldChange(false);
                     setPriceInclusiveVAT(0);
-                    setValue('rate', e.target.value ? sanitizedNumber(e.target.value) : 0, {
-                      shouldValidate: true,
-                      shouldDirty: true,
-                    });
+                    setValue(
+                      'rate',
+                      e.target.value ? sanitizedNumber(e.target.value) : 0,
+                      {
+                        shouldValidate: true,
+                        shouldDirty: true,
+                      }
+                    );
                     setVatPriceFieldKey((key) => key + 1);
                   }}
                 />
@@ -386,10 +424,10 @@ const ProformaItemForm: React.FC<ProformaItemFormProps> = ({
             {vat_factor > 0 && (
               <Grid size={{ xs: 12, md: 2 }}>
                 <TextField
-                  label="Price (VAT Inclusive)"
+                  label='Price (VAT Inclusive)'
                   fullWidth
                   key={vatPriceFieldKey}
-                  size="small"
+                  size='small'
                   error={!!errors.rate}
                   helperText={errors.rate?.message}
                   InputProps={{
@@ -397,15 +435,28 @@ const ProformaItemForm: React.FC<ProformaItemFormProps> = ({
                   }}
                   value={
                     isVatfieldChange
-                      ? (priceInclusiveVAT ? Math.round(priceInclusiveVAT * 100000) / 100000 : '')
-                      : (watch('rate') ? Math.round(((watch('rate') ?? 0) * (1 + (product?.vat_exempted ? 0 : vat_factor)) * 100000)) / 100000 : '')
+                      ? priceInclusiveVAT
+                        ? Math.round(priceInclusiveVAT * 100000) / 100000
+                        : ''
+                      : watch('rate')
+                        ? Math.round(
+                            (watch('rate') ?? 0) *
+                              (1 + (product?.vat_exempted ? 0 : vat_factor)) *
+                              100000
+                          ) / 100000
+                        : ''
                   }
                   onChange={(e) => {
                     setIsVatfieldChange(true);
-                    setPriceInclusiveVAT(e.target.value ? sanitizedNumber(e.target.value) : 0);
+                    setPriceInclusiveVAT(
+                      e.target.value ? sanitizedNumber(e.target.value) : 0
+                    );
                     setValue(
                       'rate',
-                      e.target.value ? sanitizedNumber(e.target.value) / (1 + (product?.vat_exempted ? 0 : vat_factor)) : 0,
+                      e.target.value
+                        ? sanitizedNumber(e.target.value) /
+                            (1 + (product?.vat_exempted ? 0 : vat_factor))
+                        : 0,
                       {
                         shouldValidate: true,
                         shouldDirty: true,
@@ -419,9 +470,9 @@ const ProformaItemForm: React.FC<ProformaItemFormProps> = ({
 
             <Grid size={{ xs: 12, md: 2 }}>
               <TextField
-                label="Amount"
+                label='Amount'
                 fullWidth
-                size="small"
+                size='small'
                 value={calculatedAmount}
                 InputProps={{
                   inputComponent: CommaSeparatedField,
@@ -432,9 +483,9 @@ const ProformaItemForm: React.FC<ProformaItemFormProps> = ({
 
             <Grid size={{ xs: 12, md: vat_factor ? 10 : 11 }}>
               <TextField
-                label="Description"
+                label='Description'
                 fullWidth
-                size="small"
+                size='small'
                 rows={2}
                 multiline
                 defaultValue={item?.description ?? ''}
@@ -444,32 +495,32 @@ const ProformaItemForm: React.FC<ProformaItemFormProps> = ({
 
             <Grid size={{ xs: 12, md: vat_factor ? 2 : 1 }} textAlign={'end'}>
               <Button
-                variant="contained"
-                size="small"
-                type="submit"
+                variant='contained'
+                size='small'
+                type='submit'
                 onClick={() => {
                   setAddedProduct(null);
                 }}
               >
                 {item ? (
                   <>
-                    <CheckOutlined fontSize="small" /> Done
+                    <CheckOutlined fontSize='small' /> Done
                   </>
                 ) : (
                   <>
-                    <AddOutlined fontSize="small" /> Add
+                    <AddOutlined fontSize='small' /> Add
                   </>
                 )}
               </Button>
               {item && (
-                <Tooltip title="Close Edit">
+                <Tooltip title='Close Edit'>
                   <IconButton
-                    size="small"
+                    size='small'
                     onClick={() => {
                       setShowForm && setShowForm(false);
                     }}
                   >
-                    <DisabledByDefault fontSize="small" color="success" />
+                    <DisabledByDefault fontSize='small' color='success' />
                   </IconButton>
                 </Tooltip>
               )}
@@ -477,7 +528,12 @@ const ProformaItemForm: React.FC<ProformaItemFormProps> = ({
           </>
         )}
 
-        {openProductQuickAdd && <ProductQuickAdd setOpen={setOpenProductQuickAdd} setAddedProduct={setAddedProduct} />}
+        {openProductQuickAdd && (
+          <ProductQuickAdd
+            setOpen={setOpenProductQuickAdd}
+            setAddedProduct={setAddedProduct}
+          />
+        )}
       </Grid>
     </form>
   );
