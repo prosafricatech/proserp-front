@@ -223,19 +223,22 @@ const ProformaItemForm: React.FC<ProformaItemFormProps> = ({
   }, [submitItemForm, handleSubmit]);
 
   const product = watch('product') as Product | undefined;
+  const [currentProduct, setCurrentProduct] = useState<Product | null>(null);
   const combinedUnits: MeasurementUnit[] = [
-    ...(product?.secondary_units?.map((unit) => ({
+    ...(currentProduct?.secondary_units?.map((unit) => ({
       id: unit.id,
       name: unit.name ?? unit.unit_symbol,
       unit_symbol: unit.unit_symbol,
       conversion_factor: unit.conversion_factor,
     })) ?? []),
-    ...(product?.primary_unit
+    ...(currentProduct?.primary_unit
       ? [
           {
-            id: product.primary_unit.id,
-            name: product.primary_unit.name ?? product.primary_unit.unit_symbol,
-            unit_symbol: product.primary_unit.unit_symbol,
+            id: currentProduct.primary_unit.id,
+            name:
+              currentProduct.primary_unit.name ??
+              currentProduct.primary_unit.unit_symbol,
+            unit_symbol: currentProduct.primary_unit.unit_symbol,
             conversion_factor: undefined,
           },
         ]
@@ -244,6 +247,7 @@ const ProformaItemForm: React.FC<ProformaItemFormProps> = ({
 
   useEffect(() => {
     if (addedProduct?.id) {
+      setCurrentProduct(addedProduct);
       setValue('product', addedProduct);
       setSelectedUnit(addedProduct.measurement_unit_id);
       setValue('measurement_unit_id', addedProduct.measurement_unit_id);
@@ -281,6 +285,7 @@ const ProformaItemForm: React.FC<ProformaItemFormProps> = ({
                 addedProduct={addedProduct}
                 onChange={(newValue: Product | null) => {
                   if (newValue) {
+                    setCurrentProduct(newValue);
                     setIsVatfieldChange(false);
                     setValue('product', newValue, {
                       shouldDirty: true,
@@ -306,6 +311,7 @@ const ProformaItemForm: React.FC<ProformaItemFormProps> = ({
                     );
                     setValue('product_id', newValue.id);
                   } else {
+                    setCurrentProduct(null);
                     setValue('product', null, {
                       shouldDirty: true,
                       shouldValidate: true,

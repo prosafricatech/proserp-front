@@ -42,6 +42,7 @@ interface Proforma {
   vat_amount: number;
   vat_percentage: number;
   currency: Currency;
+  reference?: string | null;
   remarks?: string | null;
 }
 
@@ -110,7 +111,12 @@ function ProformaOnScreen({ proforma, organization }: ProformaOnScreenProps) {
 
       {/* Metadata Section */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid size={{ xs: 12, md: proforma?.expiry_date ? 8 : 12 }}>
+        <Grid
+          size={{
+            xs: 12,
+            md: proforma?.expiry_date && proforma?.reference ? 4 : 8,
+          }}
+        >
           <Box>
             <Typography
               variant='subtitle2'
@@ -125,6 +131,22 @@ function ProformaOnScreen({ proforma, organization }: ProformaOnScreenProps) {
             </Typography>
           </Box>
         </Grid>
+        {proforma?.reference && (
+          <Grid size={{ xs: 12, md: proforma?.expiry_date ? 4 : 8 }}>
+            {/* reference */}
+            <>
+              <Typography
+                variant='subtitle2'
+                color={headerColor}
+                fontWeight='bold'
+                gutterBottom
+              >
+                Reference
+              </Typography>
+              <Typography variant='body1'>{proforma.reference}</Typography>
+            </>
+          </Grid>
+        )}
         {proforma?.expiry_date && (
           <Grid size={{ xs: 12, md: 4 }}>
             <Box sx={{ textAlign: { xs: 'left', md: 'right' } }}>
@@ -404,20 +426,24 @@ function ProformaOnScreen({ proforma, organization }: ProformaOnScreenProps) {
         </Grid>
       </Box>
 
-      {/* Remarks Section */}
-      {proforma?.remarks && (
-        <>
-          <Typography
-            variant='subtitle2'
-            color={headerColor}
-            fontWeight='bold'
-            gutterBottom
-          >
-            Remarks
-          </Typography>
-          <Typography variant='body1'>{proforma.remarks}</Typography>
-        </>
-      )}
+      <Grid container mt={3}>
+        <Grid size={{ xs: 12, md: 6 }}>
+          {/* Remarks Section */}
+          {proforma?.remarks && (
+            <>
+              <Typography
+                variant='subtitle2'
+                color={headerColor}
+                fontWeight='bold'
+                gutterBottom
+              >
+                Remarks
+              </Typography>
+              <Typography variant='body1'>{proforma.remarks}</Typography>
+            </>
+          )}
+        </Grid>
+      </Grid>
     </Box>
   );
 }
