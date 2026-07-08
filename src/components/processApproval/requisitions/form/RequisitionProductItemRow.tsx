@@ -30,6 +30,7 @@ interface RequisitionProductItemRowProps {
   setRequisition_product_items: (items: React.SetStateAction<RequisitionProductItem[]>) => void;
   product_item: RequisitionProductItem;
   index: number;
+  showVendors?: boolean;
 }
 
 function RequisitionProductItemRow({
@@ -39,6 +40,7 @@ function RequisitionProductItemRow({
   setRequisition_product_items,
   product_item,
   index,
+  showVendors = true,
 }: RequisitionProductItemRowProps) {
   const [expanded, setExpanded] = useState<number | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -303,26 +305,28 @@ function RequisitionProductItemRow({
             </Box>
           )}
         </AccordionSummary>
-        <AccordionDetails>
-          <ProductVendor 
-            vendorIndex={index} 
-            setRequisition_product_items={setRequisition_product_items} 
-            vendors={vendors} 
-            setVendors={setVendors}
-          />
-          
-          {vendors.map((vendor: Vendor, vendorIndex: number) => (
-            <ProductVendorRow 
-              key={vendorIndex} 
-              index={vendorIndex} 
-              vendor={vendor} 
+        {showVendors && (
+          <AccordionDetails>
+            <ProductVendor 
+              vendorIndex={index} 
+              setRequisition_product_items={setRequisition_product_items} 
               vendors={vendors} 
               setVendors={setVendors}
-              vendorIndex={index}
-              setRequisition_product_items={setRequisition_product_items}
             />
-          ))}
-        </AccordionDetails>
+            
+            {vendors.map((vendor: Vendor, vendorIndex: number) => (
+              <ProductVendorRow 
+                key={vendorIndex} 
+                index={vendorIndex} 
+                vendor={vendor} 
+                vendors={vendors} 
+                setVendors={setVendors}
+                vendorIndex={index}
+                setRequisition_product_items={setRequisition_product_items}
+              />
+            ))}
+          </AccordionDetails>
+        )}
       </Accordion>
 
       <ProductBudgetCheckDetails

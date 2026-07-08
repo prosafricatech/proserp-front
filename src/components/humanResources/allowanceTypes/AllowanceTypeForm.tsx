@@ -74,6 +74,9 @@ const AllowanceTypeForm = ({
   const { ungroupedLedgerOptions } = useLedgerSelect();
   const { organizationHasSubscribed, checkOrganizationPermission } =
     useJumboAuth();
+  const orgHasSubscribedAccountsAndFinance = organizationHasSubscribed(
+    MODULES.ACCOUNTS_AND_FINANCE
+  );
 
   const [recentlyAddedExpenseLedger, setRecentlyAddedExpenseLedger] =
     useState<Ledger | null>(null);
@@ -159,7 +162,12 @@ const AllowanceTypeForm = ({
       .max(255, 'Name cannot exceed 255 characters'),
     code: yup.string().max(50, 'Code cannot exceed 50 characters'),
     is_taxable: yup.boolean().required(),
-    expense_ledger_id: yup.number().nullable(),
+    expense_ledger_id: orgHasSubscribedAccountsAndFinance
+      ? yup
+          .number()
+          .required('This field is required')
+          .positive('This field is required')
+      : yup.number().nullable(),
     description: yup
       .string()
       .max(500, 'Description cannot exceed 500 characters'),
