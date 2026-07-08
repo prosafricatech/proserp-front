@@ -59,6 +59,7 @@ const ReportDocument = ({
   costCenter,
   date,
   hasPermissionToView,
+  withDetails = false,
 }) => {
   const {
     authOrganization,
@@ -72,11 +73,75 @@ const ReportDocument = ({
     authOrganization.organization.settings?.contrast_text || '#FFFFFF';
   const reportPeriod = `As at: ${readableDate(date, true)}`;
 
-  //Total amount
   const totalAmount = stockData.reduce(
     (total, stock) => total + stock.latest_rate * stock.balance,
     0
   );
+
+  // Detail column definitions — same order as the Excel exporter
+  const detailCols = [
+    {
+      key: 'item_name',
+      label: 'Item Name',
+      flex: 1.5,
+      getValue: (s) => s.item_name || '',
+    },
+    { key: 'brand', label: 'Brand', flex: 1, getValue: (s) => s.brand || '' },
+    { key: 'model', label: 'Model', flex: 1, getValue: (s) => s.model || '' },
+    {
+      key: 'specifications',
+      label: 'Specifications',
+      flex: 1.2,
+      getValue: (s) => s.specifications || '',
+    },
+    { key: 'sku', label: 'SKU', flex: 0.8, getValue: (s) => s.sku || '' },
+    {
+      key: 'category',
+      label: 'Category',
+      flex: 1,
+      getValue: (s) => s.category?.name || '',
+    },
+    {
+      key: 'description',
+      label: 'Description',
+      flex: 1.5,
+      getValue: (s) => s.description || '',
+    },
+  ];
+
+  // Flex values per mode
+  const snFlex = withDetails ? 0.4 : 0.5;
+  const unitFlex = withDetails ? 0.6 : 1;
+  const balanceFlex = withDetails ? 1 : 2;
+  const rateFlex = withDetails ? 1 : 2;
+  const amountFlex = withDetails ? 1 : 2;
+
+  // Total label flex = sum of all cols except Amount
+  // Portrait:  S/N(0.5) + ProductName(2.5) + Type(0.8) + Unit(1) + Balance(2) + Rate(2) = 8.8
+  // Landscape: S/N(0.4) + detailCols(1.5+1+1+1.2+0.8+1+1.5) + Unit(0.6) + Balance(1) + Rate(1) = 11
+  const totalLabelFlex = withDetails
+    ? snFlex +
+      detailCols.reduce((s, c) => s + c.flex, 0) +
+      unitFlex +
+      balanceFlex +
+      rateFlex
+    : snFlex + 2.5 + 0.8 + unitFlex + balanceFlex + rateFlex;
+
+  const headerCell = (flex, extra = {}) => ({
+    ...pdfStyles.tableCell,
+    ...pdfStyles.tableHeader,
+    backgroundColor: mainColor,
+    color: contrastText,
+    flex,
+    ...extra,
+  });
+
+  const dataCell = (flex, index, extra = {}) => ({
+    ...pdfStyles.tableCell,
+    backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
+    flex,
+    ...extra,
+  });
 
   return stockData ? (
     <Document
@@ -84,21 +149,26 @@ const ReportDocument = ({
       title={`${store.name} Stock Report ${reportPeriod}`}
       producer='ProsERP'
     >
-      <Page size='A4' style={pdfStyles.page}>
+      <Page
+        size='A4'
+        orientation={withDetails ? 'landscape' : 'portrait'}
+        style={pdfStyles.page}
+      >
         <View style={pdfStyles.table}>
           <View style={{ ...pdfStyles.tableRow, marginBottom: 20 }}>
             <View style={{ flex: 1, maxWidth: 120 }}>
               <PdfLogo organization={authOrganization.organization} />
             </View>
             <View style={{ flex: 1, textAlign: 'right' }}>
-              <Text
-                style={{ ...pdfStyles.majorInfo, color: mainColor }}
-              >{`Stock Report`}</Text>
-              <Text style={{ ...pdfStyles.midInfo }}>{`${store.name}`}</Text>
+              <Text style={{ ...pdfStyles.majorInfo, color: mainColor }}>
+                Stock Report
+              </Text>
+              <Text style={{ ...pdfStyles.midInfo }}>{store.name}</Text>
               <Text style={{ ...pdfStyles.minInfo }}>{reportPeriod}</Text>
             </View>
           </View>
         </View>
+
         <View
           style={{ ...pdfStyles.tableRow, marginTop: 10, marginBottom: 10 }}
         >
@@ -108,7 +178,7 @@ const ReportDocument = ({
                 Cost Centers
               </Text>
               <Text style={{ ...pdfStyles.minInfo }}>
-                {costCenter.map((cost_center) => cost_center.name).join(', ')}
+                {costCenter.map((cc) => cc.name).join(', ')}
               </Text>
             </View>
           )}
@@ -118,7 +188,7 @@ const ReportDocument = ({
                 Categories
               </Text>
               <Text style={{ ...pdfStyles.minInfo }}>
-                {productCategories.map((category) => category.name).join(', ')}
+                {productCategories.map((cat) => cat.name).join(', ')}
               </Text>
             </View>
           )}
@@ -137,179 +207,104 @@ const ReportDocument = ({
             </Text>
           </View>
         </View>
+
         <View style={pdfStyles.table}>
+          {/* Table header row */}
           <View style={pdfStyles.tableRow}>
-            <Text
-              style={{
-                ...pdfStyles.tableCell,
-                ...pdfStyles.tableHeader,
-                backgroundColor: mainColor,
-                color: contrastText,
-                flex: 0.5,
-              }}
-            >
-              S/N
-            </Text>
-            <Text
-              style={{
-                ...pdfStyles.tableCell,
-                ...pdfStyles.tableHeader,
-                backgroundColor: mainColor,
-                color: contrastText,
-                flex: 3,
-              }}
-            >
-              Product Name
-            </Text>
-            <Text
-              style={{
-                ...pdfStyles.tableCell,
-                ...pdfStyles.tableHeader,
-                backgroundColor: mainColor,
-                color: contrastText,
-                flex: 1,
-              }}
-            >
-              Unit
-            </Text>
-            <Text
-              style={{
-                ...pdfStyles.tableCell,
-                ...pdfStyles.tableHeader,
-                backgroundColor: mainColor,
-                color: contrastText,
-                flex: 2,
-              }}
-            >
+            <Text style={headerCell(snFlex)}>S/N</Text>
+
+            {!withDetails && (
+              <>
+                <Text style={headerCell(2.5)}>Product Name</Text>
+                <Text style={headerCell(0.8)}>Type</Text>
+              </>
+            )}
+
+            {withDetails &&
+              detailCols.map((col) => (
+                <Text key={col.key} style={headerCell(col.flex)}>
+                  {col.label}
+                </Text>
+              ))}
+
+            <Text style={headerCell(unitFlex)}>Unit</Text>
+            <Text style={headerCell(balanceFlex, { textAlign: 'right' })}>
               Balance
             </Text>
+
             {hasPermissionToView && (
               <>
-                <Text
-                  style={{
-                    ...pdfStyles.tableCell,
-                    ...pdfStyles.tableHeader,
-                    backgroundColor: mainColor,
-                    color: contrastText,
-                    flex: 2,
-                  }}
-                >
+                <Text style={headerCell(rateFlex, { textAlign: 'right' })}>
                   Latest Rate
                 </Text>
-                <Text
-                  style={{
-                    ...pdfStyles.tableCell,
-                    ...pdfStyles.tableHeader,
-                    backgroundColor: mainColor,
-                    color: contrastText,
-                    flex: 2,
-                  }}
-                >
+                <Text style={headerCell(amountFlex, { textAlign: 'right' })}>
                   Amount
                 </Text>
               </>
             )}
           </View>
-          {stockData.map((stock, index) => {
-            return (
-              <View key={index} style={pdfStyles.tableRow}>
-                <Text
-                  style={{
-                    ...pdfStyles.tableCell,
-                    backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
-                    flex: 0.5,
-                  }}
-                >
-                  {index + 1}
-                </Text>
-                <Text
-                  style={{
-                    ...pdfStyles.tableCell,
-                    backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
-                    flex: 3,
-                  }}
-                >
-                  {stock.name}
-                </Text>
-                <Text
-                  style={{
-                    ...pdfStyles.tableCell,
-                    backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
-                    flex: 1,
-                  }}
-                >
-                  {stock.measurement_unit.symbol}
-                </Text>
-                <Text
-                  style={{
-                    ...pdfStyles.tableCell,
-                    backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
-                    flex: 2,
-                    textAlign: 'right',
-                  }}
-                >
-                  {stock.balance.toLocaleString()}
-                </Text>
-                {hasPermissionToView && (
-                  <>
-                    <Text
-                      style={{
-                        ...pdfStyles.tableCell,
-                        backgroundColor:
-                          index % 2 === 0 ? '#FFFFFF' : lightColor,
-                        flex: 2,
-                        textAlign: 'right',
-                      }}
-                    >
-                      {stock.latest_rate.toLocaleString('en-US', {
-                        maximumFractionDigits: 2,
-                        minimumFractionDigits: 2,
-                      })}
-                    </Text>
-                    <Text
-                      style={{
-                        ...pdfStyles.tableCell,
-                        backgroundColor:
-                          index % 2 === 0 ? '#FFFFFF' : lightColor,
-                        flex: 2,
-                        textAlign: 'right',
-                      }}
-                    >
-                      {(stock.balance * stock.latest_rate).toLocaleString(
-                        'en-US',
-                        { maximumFractionDigits: 2, minimumFractionDigits: 2 }
-                      )}
-                    </Text>
-                  </>
-                )}
-              </View>
-            );
-          })}
+
+          {/* Data rows */}
+          {stockData.map((stock, index) => (
+            <View key={index} style={pdfStyles.tableRow}>
+              <Text style={dataCell(snFlex, index)}>{index + 1}</Text>
+
+              {!withDetails && (
+                <>
+                  <Text style={dataCell(2.5, index)}>{stock.name}</Text>
+                  <Text style={dataCell(0.8, index)}>{stock.type || ''}</Text>
+                </>
+              )}
+
+              {withDetails &&
+                detailCols.map((col) => (
+                  <Text key={col.key} style={dataCell(col.flex, index)}>
+                    {col.getValue(stock)}
+                  </Text>
+                ))}
+
+              <Text style={dataCell(unitFlex, index)}>
+                {stock.measurement_unit.symbol}
+              </Text>
+              <Text
+                style={dataCell(balanceFlex, index, { textAlign: 'right' })}
+              >
+                {stock.balance.toLocaleString()}
+              </Text>
+
+              {hasPermissionToView && (
+                <>
+                  <Text
+                    style={dataCell(rateFlex, index, { textAlign: 'right' })}
+                  >
+                    {stock.latest_rate.toLocaleString('en-US', {
+                      maximumFractionDigits: 2,
+                      minimumFractionDigits: 2,
+                    })}
+                  </Text>
+                  <Text
+                    style={dataCell(amountFlex, index, { textAlign: 'right' })}
+                  >
+                    {(stock.balance * stock.latest_rate).toLocaleString(
+                      'en-US',
+                      { maximumFractionDigits: 2, minimumFractionDigits: 2 }
+                    )}
+                  </Text>
+                </>
+              )}
+            </View>
+          ))}
+
+          {/* Total row */}
           <View style={pdfStyles.tableRow}>
             {hasPermissionToView && (
               <>
                 <Text
-                  style={{
-                    ...pdfStyles.tableCell,
-                    ...pdfStyles.tableHeader,
-                    backgroundColor: mainColor,
-                    color: contrastText,
-                    textAlign: 'center',
-                    flex: 9.3,
-                  }}
+                  style={headerCell(totalLabelFlex, { textAlign: 'center' })}
                 >
                   Total
                 </Text>
-                <Text
-                  style={{
-                    ...pdfStyles.tableCell,
-                    ...pdfStyles.tableHeader,
-                    backgroundColor: mainColor,
-                    color: contrastText,
-                    textAlign: 'right',
-                    flex: 2,
-                  }}
-                >
+                <Text style={headerCell(amountFlex, { textAlign: 'right' })}>
                   {totalAmount?.toLocaleString('en-US', {
                     maximumFractionDigits: 2,
                     minimumFractionDigits: 2,
@@ -825,27 +820,24 @@ function StockReport({ setOpenDialog, isFromDashboard }) {
             </Grid>
           </form>
           {/* Tabs - hidden when withDetails is true on below large screens */}
-          {belowLargeScreen &&
-            !isFetching &&
-            stockAvailable.length > 0 &&
-            !withDetails && (
-              <Tabs
-                value={selectedTab}
-                onChange={handleTabChange}
-                indicatorColor='primary'
-                textColor='primary'
-              >
-                <Tab label='On-Screen' />
-                <Tab label='PDF' />
-              </Tabs>
-            )}
+          {belowLargeScreen && !isFetching && stockAvailable.length > 0 && (
+            <Tabs
+              value={selectedTab}
+              onChange={handleTabChange}
+              indicatorColor='primary'
+              textColor='primary'
+            >
+              <Tab label='On-Screen' />
+              <Tab label='PDF' />
+            </Tabs>
+          )}
         </Span>
       </DialogTitle>
       <DialogContent>
         {isFetching && <LinearProgress />}
         {!isFetching && stockAvailable.length > 0 && (
           <React.Fragment>
-            {withDetails ? (
+            {withDetails && belowLargeScreen && selectedTab === 0 && (
               // Show this message on ALL screens when withDetails is true
               <Box
                 sx={{
@@ -862,43 +854,43 @@ function StockReport({ setOpenDialog, isFromDashboard }) {
                   📊
                 </Typography>
                 <Typography variant='h6' color='text.secondary' gutterBottom>
-                  Download Excel to view more details
+                  Preview PDF or Download Excel to view more details
                 </Typography>
                 <Typography variant='body2' color='text.secondary'>
-                  The detailed view is only available in Excel format. Please
-                  click the Excel button above to download the complete report.
+                  The detailed view is only available in PDF and Excel format.
+                  Please click the PDF tab or Excel button above to download the
+                  complete report.
                 </Typography>
               </Box>
-            ) : (
+            )}
+            {!withDetails && belowLargeScreen && selectedTab === 0 && (
               // Show normal content when withDetails is false
-              <React.Fragment>
-                {belowLargeScreen && selectedTab === 0 ? (
-                  <StockReportOnScreen
+              <StockReportOnScreen
+                stockData={stockAvailable}
+                authObject={authObject}
+                hasPermissionToView={hasPermissionToView}
+              />
+            )}
+            {(!belowLargeScreen || selectedTab === 1) && (
+              <PDFContent
+                document={
+                  <ReportDocument
                     stockData={stockAvailable}
                     authObject={authObject}
+                    store={isFromDashboard ? watch('store') : activeStore}
+                    productCategories={watch('product_categories')}
+                    costCenter={costCenter}
+                    date={watch('as_at')}
                     hasPermissionToView={hasPermissionToView}
+                    withDetails={withDetails}
                   />
-                ) : (
-                  <PDFContent
-                    document={
-                      <ReportDocument
-                        stockData={stockAvailable}
-                        authObject={authObject}
-                        store={isFromDashboard ? watch('store') : activeStore}
-                        productCategories={watch('product_categories')}
-                        costCenter={costCenter}
-                        date={watch('as_at')}
-                        hasPermissionToView={hasPermissionToView}
-                      />
-                    }
-                    fileName={
-                      isFromDashboard
-                        ? watch('store')?.name
-                        : `${activeStore?.name} Stock Report ${readableDate(dayjs().toISOString())}`
-                    }
-                  />
-                )}
-              </React.Fragment>
+                }
+                fileName={
+                  isFromDashboard
+                    ? watch('store')?.name
+                    : `${activeStore?.name} Stock Report ${readableDate(dayjs().toISOString())}`
+                }
+              />
             )}
           </React.Fragment>
         )}
