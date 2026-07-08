@@ -45,5 +45,9 @@ export interface LeaveRequestType {
     days_approved?: number;
     remarks?: string;
     approval_date?: string;
+    creator?: {
+      id?: number;
+      name?: string;
+    };
   }>;
 }

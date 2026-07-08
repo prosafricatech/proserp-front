@@ -294,7 +294,7 @@ const PayrollRunsListItem = ({
           }}
         >
           <Grid container spacing={1} width='100%' sx={{ px: 1 }}>
-            <Grid size={{ xs: 12, md: 8 }}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Box display='flex' alignItems='center' gap={1}>
                 <ReceiptLongOutlined fontSize='small' color='action' />
                 <Typography variant='body2'>{runLabel}</Typography>
@@ -315,6 +315,21 @@ const PayrollRunsListItem = ({
                 <Chip
                   label={payrollRun.status || 'draft'}
                   color={statusColor(payrollRun.status || '')}
+                  size='small'
+                  sx={{ textTransform: 'capitalize' }}
+                />
+              </Box>
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Box
+                display='flex'
+                alignItems='center'
+                justifyContent={{ xs: 'flex-start', md: 'flex-end' }}
+                gap={1}
+              >
+                <Chip
+                  label={payrollRun.status_label || 'draft'}
+                  color={statusColor(payrollRun.status_label || '')}
                   size='small'
                   sx={{ textTransform: 'capitalize' }}
                 />
@@ -395,11 +410,7 @@ const PayrollRunsListItem = ({
               )}
 
               <TabPanel value={tabValue} index={hasPayslips ? 3 : 2}>
-                <ApprovalsTab
-                  hasChain={hasChain}
-                  approvalChain={runDetails?.approval_chain}
-                  approvals={runDetails?.approvals}
-                />
+                <ApprovalsTab payrollRun={runDetails} />
               </TabPanel>
             </>
           )}
