@@ -592,6 +592,7 @@ function StockMovement({ toggleOpen, dormantStock = false, isFromDashboard }) {
     cost_center_ids: watch('cost_center_ids'),
     product_category_ids: watch('product_category_ids'),
     include_children: includeChildren,
+    with_details: withDetails,
     ...overrides,
   });
 
@@ -656,8 +657,10 @@ function StockMovement({ toggleOpen, dormantStock = false, isFromDashboard }) {
       a.download = `Stock-Movement ${readableDate(filters.as_at, true)}.xlsx`;
       a.click();
       window.URL.revokeObjectURL(url);
+      enqueueSnackbar('Excel exported successfully!', { variant: 'success' });
     } catch (e) {
       console.log('error exporting: ', e);
+      enqueueSnackbar('Error exporting Excel', { variant: 'error' });
     } finally {
       setIsDownloadingTemplate(false);
     }
@@ -879,12 +882,24 @@ function StockMovement({ toggleOpen, dormantStock = false, isFromDashboard }) {
                         control={
                           <Switch
                             checked={withDetails}
-                            onChange={(e) => {
-                              setWithDetails((prev) => !prev);
+                            onChange={async (e) => {
+                              const newValue = e.target.checked;
+                              setWithDetails(newValue);
+                              
+                              // Reset to On-Screen tab when withDetails is enabled
+                              if (newValue) {
+                                setSelectedTab(0);
+                              }
+                              
+                              // Fetch data with the new withDetails value
+                              const filters = buildFilters({
+                                with_details: newValue,
+                              });
+                              await getMovements(filters);
                             }}
                           />
                         }
-                        label='With more details (View In Excel)'
+                        label='With more details'
                       />
                     </Div>
                   </Grid>
@@ -900,7 +915,6 @@ function StockMovement({ toggleOpen, dormantStock = false, isFromDashboard }) {
                       <LoadingButton
                         size='small'
                         onClick={() => handlExcelExport(exportedData)}
-                        // onClick={downloadExcelTemplate}
                         loading={isDownloadingTemplate}
                         variant='contained'
                         color='success'
@@ -921,9 +935,11 @@ function StockMovement({ toggleOpen, dormantStock = false, isFromDashboard }) {
               </Grid>
             </Grid>
           </form>
+          {/* Tabs - hidden when withDetails is true on below large screens */}
           {belowLargeScreen &&
             !isFetching &&
-            movements?.movements?.length > 0 && (
+            movements?.movements?.length > 0 &&
+            !withDetails && (
               <Tabs
                 value={selectedTab}
                 onChange={handleTabChange}
@@ -961,37 +977,65 @@ function StockMovement({ toggleOpen, dormantStock = false, isFromDashboard }) {
         )}
         {!isFetching && movements?.movements?.length > 0 && (
           <React.Fragment>
-            {belowLargeScreen && selectedTab === 0 ? (
-              <StockMovementOnScreen
-                movementsData={movements}
-                authOrganization={authOrganization}
-                user={user}
-                productCategories={watch('product_categories')}
-                checkOrganizationPermission={checkOrganizationPermission}
-                organizationHasSubscribed={organizationHasSubscribed}
-                store={isFromDashboard ? watch('store') : activeStore}
-                reportTitle={reportTitle}
-              />
+            {withDetails ? (
+              // Show this message on ALL screens when withDetails is true
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minHeight: 200,
+                  p: 4,
+                  textAlign: 'center',
+                }}
+              >
+                <Typography variant="h2" sx={{ fontSize: 40, mb: 2 }}>
+                  📊
+                </Typography>
+                <Typography variant='h6' color='text.secondary' gutterBottom>
+                  Download Excel to view more details
+                </Typography>
+                <Typography variant='body2' color='text.secondary'>
+                  The detailed view is only available in Excel format. Please click the Excel button above to download the complete report.
+                </Typography>
+              </Box>
             ) : (
-              <PDFContent
-                document={
-                  <ReportDocument
-                    organizationHasSubscribed={organizationHasSubscribed}
-                    productCategories={watch('product_categories')}
+              // Show normal content when withDetails is false
+              <React.Fragment>
+                {belowLargeScreen && selectedTab === 0 ? (
+                  <StockMovementOnScreen
                     movementsData={movements}
                     authOrganization={authOrganization}
                     user={user}
+                    productCategories={watch('product_categories')}
                     checkOrganizationPermission={checkOrganizationPermission}
+                    organizationHasSubscribed={organizationHasSubscribed}
                     store={isFromDashboard ? watch('store') : activeStore}
                     reportTitle={reportTitle}
                   />
-                }
-                fileName={
-                  isFromDashboard
-                    ? watch('store')?.name
-                    : `${activeStore?.name} ${dormantStock ? 'Dormant Stock' : 'Stock Movement'} ${readableDate(watch('from'))}-${readableDate(watch('to'))}`
-                }
-              />
+                ) : (
+                  <PDFContent
+                    document={
+                      <ReportDocument
+                        organizationHasSubscribed={organizationHasSubscribed}
+                        productCategories={watch('product_categories')}
+                        movementsData={movements}
+                        authOrganization={authOrganization}
+                        user={user}
+                        checkOrganizationPermission={checkOrganizationPermission}
+                        store={isFromDashboard ? watch('store') : activeStore}
+                        reportTitle={reportTitle}
+                      />
+                    }
+                    fileName={
+                      isFromDashboard
+                        ? watch('store')?.name
+                        : `${activeStore?.name} ${dormantStock ? 'Dormant Stock' : 'Stock Movement'} ${readableDate(watch('from'))}-${readableDate(watch('to'))}`
+                    }
+                  />
+                )}
+              </React.Fragment>
             )}
           </React.Fragment>
         )}

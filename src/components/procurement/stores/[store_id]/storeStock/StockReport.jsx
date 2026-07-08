@@ -807,11 +807,16 @@ function StockReport({ setOpenDialog, isFromDashboard }) {
                         <Switch
                           checked={withDetails}
                           onChange={(e) => {
-                            setWithDetails((prev) => !prev);
+                            const newValue = e.target.checked;
+                            setWithDetails(newValue);
+                            // Reset to On-Screen tab when withDetails is enabled
+                            if (newValue) {
+                              setSelectedTab(0);
+                            }
                           }}
                         />
                       }
-                      label='With more details (View In Excel)'
+                      label='With more details'
                     />
                   </Div>
                 </Grid>
@@ -826,7 +831,6 @@ function StockReport({ setOpenDialog, isFromDashboard }) {
                       <LoadingButton
                         size='small'
                         onClick={() => handlExcelExport(exportedData)}
-                        // onClick={downloadExcelTemplate}
                         loading={isDownloadingTemplate}
                         disabled={isFromDashboard && !watch('store_id')}
                         variant='contained'
@@ -848,7 +852,11 @@ function StockReport({ setOpenDialog, isFromDashboard }) {
               </Grid>
             </Grid>
           </form>
-          {belowLargeScreen && !isFetching && stockAvailable.length > 0 && (
+          {/* Tabs - hidden when withDetails is true on below large screens */}
+          {belowLargeScreen && 
+            !isFetching && 
+            stockAvailable.length > 0 && 
+            !withDetails && (
             <Tabs
               value={selectedTab}
               onChange={handleTabChange}
@@ -865,31 +873,59 @@ function StockReport({ setOpenDialog, isFromDashboard }) {
         {isFetching && <LinearProgress />}
         {!isFetching && stockAvailable.length > 0 && (
           <React.Fragment>
-            {belowLargeScreen && selectedTab === 0 ? (
-              <StockReportOnScreen
-                stockData={stockAvailable}
-                authObject={authObject}
-                hasPermissionToView={hasPermissionToView}
-              />
+            {withDetails ? (
+              // Show this message on ALL screens when withDetails is true
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minHeight: 200,
+                  p: 4,
+                  textAlign: 'center',
+                }}
+              >
+                <Typography variant="h2" sx={{ fontSize: 40, mb: 2 }}>
+                  📊
+                </Typography>
+                <Typography variant='h6' color='text.secondary' gutterBottom>
+                  Download Excel to view more details
+                </Typography>
+                <Typography variant='body2' color='text.secondary'>
+                  The detailed view is only available in Excel format. Please click the Excel button above to download the complete report.
+                </Typography>
+              </Box>
             ) : (
-              <PDFContent
-                document={
-                  <ReportDocument
+              // Show normal content when withDetails is false
+              <React.Fragment>
+                {belowLargeScreen && selectedTab === 0 ? (
+                  <StockReportOnScreen
                     stockData={stockAvailable}
                     authObject={authObject}
-                    store={isFromDashboard ? watch('store') : activeStore}
-                    productCategories={watch('product_categories')}
-                    costCenter={costCenter}
-                    date={watch('as_at')}
                     hasPermissionToView={hasPermissionToView}
                   />
-                }
-                fileName={
-                  isFromDashboard
-                    ? watch('store')?.name
-                    : `${activeStore?.name} Stock Report ${readableDate(dayjs().toISOString())}`
-                }
-              />
+                ) : (
+                  <PDFContent
+                    document={
+                      <ReportDocument
+                        stockData={stockAvailable}
+                        authObject={authObject}
+                        store={isFromDashboard ? watch('store') : activeStore}
+                        productCategories={watch('product_categories')}
+                        costCenter={costCenter}
+                        date={watch('as_at')}
+                        hasPermissionToView={hasPermissionToView}
+                      />
+                    }
+                    fileName={
+                      isFromDashboard
+                        ? watch('store')?.name
+                        : `${activeStore?.name} Stock Report ${readableDate(dayjs().toISOString())}`
+                    }
+                  />
+                )}
+              </React.Fragment>
             )}
           </React.Fragment>
         )}
