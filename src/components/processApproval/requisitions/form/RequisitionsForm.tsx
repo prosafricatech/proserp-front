@@ -336,7 +336,11 @@ function RequisitionsForm({
   const isProductType = isPurchaseType || isMaterialType;
   const isPurchaseLastTab = activeTab === 1;
   const processTypeOptions = React.useMemo(
-    () => PROCESS_TYPES.filter((type) => !String(type).includes('LEAVE') && type !== 'IMPREST RETIREMENT'),
+    () => PROCESS_TYPES.filter((type) => 
+      !String(type).includes('LEAVE') && 
+      type !== 'IMPREST RETIREMENT' &&
+      type !== 'PAYROLL'
+    ),
     []
   );
 
