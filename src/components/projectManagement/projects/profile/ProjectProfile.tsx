@@ -14,6 +14,7 @@ import ProjectClaims from './claims/ProjectClaims';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 
 const AttachmentForm = lazy(() => import('@/components/filesShelf/attachments/AttachmentForm'));
+const ProjectStoresList = lazy(() => import('./stores/ProjectStoresList'));
 const Subcontracts = lazy(() => import('./subcontracts/Subcontracts'));
 const ProjectUsers = lazy(() => import('./projectUsers/ProjectUsers'));
 const TimelineActivitiesListItem = lazy(() => import('./wbs/WBSListItem'));
@@ -30,6 +31,7 @@ type TabKey =
   | 'subcontracts'
   | 'claims'
   | 'users'
+  | 'stores'
   | 'attachments';
 
 const TABS_NEEDING_DELIVERABLES: TabKey[] = [
@@ -65,7 +67,7 @@ function ProfileContent() {
   const [activeTab, setActiveTab] = useState<TabKey>(() => {
     if (typeof window !== 'undefined') {
       const savedTab = sessionStorage.getItem('projectProfileActiveTab') as TabKey;
-      const validTabs: TabKey[] = ['dashboard', 'deliverables', 'wbs', 'updates', 'budgets', 'subcontracts', 'claims', 'users', 'attachments'];
+      const validTabs: TabKey[] = ['dashboard', 'deliverables', 'wbs', 'updates', 'budgets', 'subcontracts', 'claims', 'users', 'stores', 'attachments'];
       return savedTab && validTabs.includes(savedTab) ? savedTab : 'dashboard';
     }
     return 'dashboard';
@@ -220,6 +222,8 @@ function ProfileContent() {
       case 'users':
         if (!showUsersTab) return null;
         return <ProjectUsers />;
+      case 'stores':
+        return <ProjectStoresList />;
       case 'attachments':
         return (
           <AttachmentForm
@@ -262,6 +266,7 @@ function ProfileContent() {
             <Tab label="Subcontracts" value="subcontracts" />
             {project?.client_id && <Tab label="Claims" value="claims" />}
             {showUsersTab && <Tab label="Users" value="users" />}
+            <Tab label="Stores" value="stores" />
             <Tab label="Attachments" value="attachments" />
           </Tabs>
 

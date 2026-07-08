@@ -149,12 +149,12 @@ const EditPayment: React.FC<EditPaymentProps> = ({
   );
 };
 
-interface ApprovedPurchaseItemActionProps {
+interface ApprovedPaymentItemActionProps {
   approvedRequisition: ApprovalRequisition;
   payment: Payment;
 }
 
-const ApprovedPurchaseItemAction: React.FC<ApprovedPurchaseItemActionProps> = ({
+const ApprovedPaymentItemAction: React.FC<ApprovedPaymentItemActionProps> = ({
   approvedRequisition,
   payment,
 }) => {
@@ -276,4 +276,4 @@ const ApprovedPurchaseItemAction: React.FC<ApprovedPurchaseItemActionProps> = ({
   );
 };
 
-export default React.memo(ApprovedPurchaseItemAction);
+export default React.memo(ApprovedPaymentItemAction);

@@ -54,9 +54,10 @@ interface SubscriptionsFormProps {
   setOpenDialog: (open: boolean) => void;
   isFromProsAfricanSubscriptions?: boolean;
   subscription?: Subscription;
+  duplicateSubscription?: boolean;
 }
 
-function SubscriptionsForm({ setOpenDialog, isFromProsAfricanSubscriptions = false, subscription }: SubscriptionsFormProps) {
+function SubscriptionsForm({ setOpenDialog, isFromProsAfricanSubscriptions = false, subscription, duplicateSubscription }: SubscriptionsFormProps) {
   const dictionary= useDictionary();
   const subDictForm= dictionary.organizations.profile.subscriptionsTab.form;
   
@@ -65,7 +66,7 @@ function SubscriptionsForm({ setOpenDialog, isFromProsAfricanSubscriptions = fal
   const queryClient = useQueryClient();
   const [moduleValues, setModuleValues] = useState<SubscriptionModule[]>([]);
   const [additionalFeatureValues, setAdditionalFeatureValues] = useState<Record<string | number, AdditionalFeatureValue>>({});
-  const [start_date] = useState<Dayjs>(subscription ? dayjs(subscription.start_date) : dayjs());
+  const [start_date] = useState<Dayjs>(duplicateSubscription ? dayjs() : subscription ? dayjs(subscription.start_date) : dayjs());
   const { enqueueSnackbar } = useSnackbar();
   const [activeTab, setActiveTab] = useState(0);
   const [totalModulesMonthly, setTotalModulesMonthly] = useState(0);
@@ -77,7 +78,7 @@ function SubscriptionsForm({ setOpenDialog, isFromProsAfricanSubscriptions = fal
     onSuccess: () => {
       setOpenDialog(false);
       enqueueSnackbar(
-        subDictForm.messages.createSuccess, 
+        duplicateSubscription ? `${'Duplicate'} ${subscription?.subscriptionNo}` : subDictForm.messages.createSuccess, 
         { variant: 'success' }
       );
 
@@ -98,7 +99,7 @@ function SubscriptionsForm({ setOpenDialog, isFromProsAfricanSubscriptions = fal
     onSuccess: () => {
       setOpenDialog(false);
       enqueueSnackbar(
-        subDictForm.messages.createSuccess, 
+        duplicateSubscription ? `${'Duplicate'} ${subscription?.subscriptionNo}` : subDictForm.messages.createSuccess, 
         { variant: 'success' }
       );
       queryClient.invalidateQueries({ queryKey: ['subscriptions'] });
@@ -112,8 +113,8 @@ function SubscriptionsForm({ setOpenDialog, isFromProsAfricanSubscriptions = fal
   });
 
   const saveMutation = useMemo(() => {
-    return subscription ? updateSubscription.mutate : addSubscription.mutate;
-  }, [addSubscription, updateSubscription, subscription]);
+    return duplicateSubscription ? addSubscription.mutate : subscription ? updateSubscription.mutate : addSubscription.mutate;
+  }, [addSubscription, updateSubscription, subscription, duplicateSubscription]);
 
   const userIsProsAfrican = checkPermission([PROS_CONTROL_PERMISSIONS.SUBSCRIPTIONS_MANAGE]);
 
@@ -162,7 +163,7 @@ function SubscriptionsForm({ setOpenDialog, isFromProsAfricanSubscriptions = fal
   const formMethods= useForm({
     resolver: yupResolver(validationSchema),
     defaultValues: {
-      id: subscription?.id,
+      id: duplicateSubscription ? undefined : subscription?.id,
       organization_id: subscription 
       ? Number(subscription.organization?.id) 
       : isFromProsAfricanSubscriptions 
@@ -321,8 +322,8 @@ function SubscriptionsForm({ setOpenDialog, isFromProsAfricanSubscriptions = fal
     <FormProvider {...formMethods}>
       <SubscriptionFormProvider value={contextValue}>
         <DialogTitle sx={{ textAlign: 'center' }}>
-          {subscription 
-            ? `${subDictForm.messages.edit} ${subscription.subscriptionNo}` 
+          {duplicateSubscription ? `${'Duplicate'} ${subscription?.subscriptionNo}` 
+            : subscription ? `${subDictForm.messages.edit} ${subscription.subscriptionNo}` 
             : subDictForm.messages.new
           }
           <Grid container spacing={1} mt={1}>

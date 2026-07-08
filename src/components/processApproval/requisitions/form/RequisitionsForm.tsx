@@ -255,8 +255,6 @@ function RequisitionsForm({
       additionalCosts?.map((additionalCost) => ({
         credit_ledger_name: additionalCost.credit_ledger_name,
         ledger_id: additionalCost.ledger_id,
-        // currency_id: additionalCost.currency_id || additionalCost.currency?.id,
-        // exchange_rate: additionalCost.exchange_rate,
         reference: additionalCost.reference,
         amount: additionalCost.amount,
       }))
@@ -326,7 +324,7 @@ function RequisitionsForm({
   const isProductType = isPurchaseType || isMaterialType;
   const isPurchaseLastTab = activeTab === 1;
   const processTypeOptions = React.useMemo(
-    () => PROCESS_TYPES.filter((type) => !String(type).includes('LEAVE')),
+    () => PROCESS_TYPES.filter((type) => !String(type).includes('LEAVE') && type !== 'IMPREST RETIREMENT'),
     []
   );
 

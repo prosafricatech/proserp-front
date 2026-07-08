@@ -5,7 +5,7 @@ import { getExcelColumnName } from '../uitls';
 import { createWorkbook } from '../workBook';
 
 const AMT_FMT = '#,##0.00';
-const QTY_FMT = '#,##0.##';
+const QTY_FMT = '#,##0.00';
 
 function styleHeaderRow(ws: any, rowNum: number, totalCols: number) {
   for (let i = 1; i <= totalCols; i++) {
@@ -18,7 +18,7 @@ function styleHeaderRow(ws: any, rowNum: number, totalCols: number) {
 
 function setNum(cell: any, value: any, fmt: string) {
   cell.value = value ?? null;
-  if (value != null && !isNaN(value)) {
+  if (value != null && !isNaN(value) && value !== '') {
     cell.numFmt = fmt;
     cell.alignment = { horizontal: 'right', vertical: 'middle' };
   }
@@ -27,6 +27,86 @@ function setNum(cell: any, value: any, fmt: string) {
 function setText(cell: any, value: any) {
   cell.value = value ?? '';
   cell.alignment = { horizontal: 'left', vertical: 'middle' };
+}
+
+// Helper function to get quantity value from movement based on column key
+function getQuantityFromMovement(movement: any, key: string): number {
+  switch (key) {
+    case 'openingBalance':
+      return parseFloat(movement.opening_balance || 0);
+    case 'purchaseReceived':
+      return parseFloat(movement.quantity_received || 0);
+    case 'produced':
+      return parseFloat(movement.quantity_produced || 0);
+    case 'transferIn':
+      return parseFloat(movement.quantity_transferred_in || 0);
+    case 'transferOut':
+      return parseFloat(movement.quantity_transferred_out || 0);
+    case 'stockGain':
+      return parseFloat(movement.stock_gain || 0);
+    case 'stockLoss':
+      return parseFloat(movement.stock_loss || 0);
+    case 'consumed':
+      return parseFloat(movement.quantity_consumed || 0);
+    case 'sold':
+      return parseFloat(movement.quantity_sold || 0);
+    case 'closingBalance':
+      const openingBalance = parseFloat(movement.opening_balance || 0);
+      const quantityReceived = parseFloat(movement.quantity_received || 0);
+      const quantityProduced = parseFloat(movement.quantity_produced || 0);
+      const quantitySold = parseFloat(movement.quantity_sold || 0);
+      const quantityConsumed = parseFloat(movement.quantity_consumed || 0);
+      const quantityTransferredIn = parseFloat(
+        movement.quantity_transferred_in || 0
+      );
+      const quantityTransferredOut = parseFloat(
+        movement.quantity_transferred_out || 0
+      );
+      const stockGain = parseFloat(movement.stock_gain || 0);
+      const stockLoss = parseFloat(movement.stock_loss || 0);
+
+      return (
+        openingBalance +
+        quantityReceived +
+        quantityProduced -
+        quantitySold -
+        quantityConsumed -
+        quantityTransferredOut +
+        quantityTransferredIn +
+        stockGain -
+        stockLoss
+      );
+    default:
+      return 0;
+  }
+}
+
+// Helper function to get the field name for database field
+function getDbFieldName(key: string): string {
+  switch (key) {
+    case 'openingBalance':
+      return 'opening_balance';
+    case 'purchaseReceived':
+      return 'quantity_received';
+    case 'produced':
+      return 'quantity_produced';
+    case 'transferIn':
+      return 'quantity_transferred_in';
+    case 'transferOut':
+      return 'quantity_transferred_out';
+    case 'stockGain':
+      return 'stock_gain';
+    case 'stockLoss':
+      return 'stock_loss';
+    case 'consumed':
+      return 'quantity_consumed';
+    case 'sold':
+      return 'quantity_sold';
+    case 'closingBalance':
+      return 'closing_balance';
+    default:
+      return key;
+  }
 }
 
 export async function exportStockMovementReportToExcel(exportedData: any) {
@@ -54,17 +134,10 @@ export async function exportStockMovementReportToExcel(exportedData: any) {
     // Calculate total estimated closing value
     const totalEstimatedValue = (movementsData?.movements || []).reduce(
       (total: number, movement: any) => {
-        const closingBalance =
-          parseFloat(movement.opening_balance || 0) +
-          parseFloat(movement.quantity_received || 0) +
-          parseFloat(movement.quantity_produced || 0) -
-          parseFloat(movement.quantity_sold || 0) -
-          parseFloat(movement.quantity_consumed || 0) -
-          parseFloat(movement.quantity_transferred_out || 0) +
-          parseFloat(movement.quantity_transferred_in || 0) +
-          parseFloat(movement.stock_gain || 0) -
-          parseFloat(movement.stock_loss || 0);
-
+        const closingBalance = getQuantityFromMovement(
+          movement,
+          'closingBalance'
+        );
         return total + (movement.latest_rate || 0) * closingBalance;
       },
       0
@@ -114,7 +187,6 @@ export async function exportStockMovementReportToExcel(exportedData: any) {
         },
       ];
 
-      // Add Produced Quantity column if manufacturing module is enabled
       const producedColumn = hasManufacturingModule
         ? [
             {
@@ -179,23 +251,10 @@ export async function exportStockMovementReportToExcel(exportedData: any) {
         },
       ];
 
-      const accountsColumns = hasAccountsPermission
-        ? [
-            {
-              key: 'estimatedValue',
-              label: 'Est. Closing Value',
-              width: 18,
-              isNumeric: true,
-              hasSub: false,
-            },
-          ]
-        : [];
-
       columnDefinitions = [
         ...baseColumns,
         ...producedColumn,
         ...remainingColumns,
-        ...accountsColumns,
       ];
     } else {
       // WITHOUT DETAILS: Original format
@@ -326,7 +385,7 @@ export async function exportStockMovementReportToExcel(exportedData: any) {
     let totalCols = 0;
     columnDefinitions.forEach((col) => {
       if (withDetails && col.hasSub) {
-        totalCols += 2; // Each hasSub column takes 2 columns (Quantity + Amount)
+        totalCols += 2;
       } else {
         totalCols += 1;
       }
@@ -352,7 +411,6 @@ export async function exportStockMovementReportToExcel(exportedData: any) {
     });
 
     // ---- HEADER SECTION ----
-    // Row 1: Org name (left) + Report title (right)
     const r1 = Array(totalCols).fill('');
     r1[0] = orgName;
     r1[totalCols - 1] = reportTitle || 'Stock Movement';
@@ -365,7 +423,6 @@ export async function exportStockMovementReportToExcel(exportedData: any) {
     };
     ws.getRow(1).height = 25;
 
-    // Row 2: Store name (right)
     const r2 = Array(totalCols).fill('');
     r2[totalCols - 1] = store?.name || '';
     ws.addRow(r2);
@@ -376,7 +433,6 @@ export async function exportStockMovementReportToExcel(exportedData: any) {
     };
     ws.getRow(2).height = 20;
 
-    // Row 3: Period (right)
     const r3 = Array(totalCols).fill('');
     r3[totalCols - 1] = reportPeriod;
     ws.addRow(r3);
@@ -387,7 +443,6 @@ export async function exportStockMovementReportToExcel(exportedData: any) {
     };
     ws.getRow(3).height = 18;
 
-    // Row 4: Spacer
     ws.addRow([]);
 
     // ---- META INFO SECTION ----
@@ -401,7 +456,6 @@ export async function exportStockMovementReportToExcel(exportedData: any) {
       ws.getCell(`B${rowNum}`).value = value;
       ws.getCell(`B${rowNum}`).font = { size: 10 };
 
-      // Apply borders to meta row cells
       for (let i = 1; i <= 2; i++) {
         applyCellStyle(
           ws.getCell(`${getExcelColumnName(i)}${rowNum}`),
@@ -413,7 +467,6 @@ export async function exportStockMovementReportToExcel(exportedData: any) {
 
     let metaRow = (ws.lastRow?.number ?? 0) + 1;
 
-    // Cost Centers
     if (costCenters.length > 0) {
       costCenters.forEach((cc: any, index: number) => {
         addMetaRow(index === 0 ? 'Cost Centers' : '', cc.name, metaRow);
@@ -424,7 +477,6 @@ export async function exportStockMovementReportToExcel(exportedData: any) {
       metaRow++;
     }
 
-    // Product Categories
     if (productCategories?.length > 0) {
       addMetaRow(
         'Categories',
@@ -437,8 +489,7 @@ export async function exportStockMovementReportToExcel(exportedData: any) {
       metaRow++;
     }
 
-    // Estimated Closing Value (if permission)
-    if (hasAccountsPermission) {
+    if (!withDetails && hasAccountsPermission) {
       addMetaRow(
         'Estimated Closing Value',
         totalEstimatedValue.toLocaleString(undefined, {
@@ -450,13 +501,11 @@ export async function exportStockMovementReportToExcel(exportedData: any) {
       metaRow++;
     }
 
-    // Printed By & On
     addMetaRow('Printed By', user?.name || '', metaRow);
     metaRow++;
     addMetaRow('Printed On', readableDate(undefined, true), metaRow);
     metaRow++;
 
-    // Spacer before table
     ws.addRow([]);
     const tableStartRow = (ws.lastRow?.number ?? 0) + 1;
 
@@ -464,15 +513,10 @@ export async function exportStockMovementReportToExcel(exportedData: any) {
     let headerRow = tableStartRow;
 
     if (withDetails) {
-      // WITH DETAILS: Two header rows - main headers + sub-headers (Quantity/Amount)
-
-      // Row 1: Main headers with merges for columns with sub-columns
       let currentCol = 1;
 
-      // First pass: Set header values and merges
       columnDefinitions.forEach((col) => {
         if (col.hasSub) {
-          // This column needs a merged header for Quantity/Amount
           const startCol = getExcelColumnName(currentCol);
           const endCol = getExcelColumnName(currentCol + 1);
           ws.mergeCells(`${startCol}${headerRow}:${endCol}${headerRow}`);
@@ -499,11 +543,9 @@ export async function exportStockMovementReportToExcel(exportedData: any) {
       ws.getRow(headerRow).height = 22;
       headerRow++;
 
-      // Row 2: Sub-headers (Quantity/Amount for columns with sub-columns)
       currentCol = 1;
       columnDefinitions.forEach((col) => {
         if (col.hasSub) {
-          // Quantity sub-header
           const qtyCell = ws.getCell(
             `${getExcelColumnName(currentCol)}${headerRow}`
           );
@@ -512,7 +554,6 @@ export async function exportStockMovementReportToExcel(exportedData: any) {
           qtyCell.alignment = { horizontal: 'center', vertical: 'middle' };
           qtyCell.font = { bold: true, size: 9 };
 
-          // Amount sub-header
           const amtCell = ws.getCell(
             `${getExcelColumnName(currentCol + 1)}${headerRow}`
           );
@@ -523,7 +564,6 @@ export async function exportStockMovementReportToExcel(exportedData: any) {
 
           currentCol += 2;
         } else {
-          // Regular column (no sub-header) - empty
           const cell = ws.getCell(
             `${getExcelColumnName(currentCol)}${headerRow}`
           );
@@ -536,7 +576,6 @@ export async function exportStockMovementReportToExcel(exportedData: any) {
 
       ws.getRow(headerRow).height = 18;
     } else {
-      // WITHOUT DETAILS: Single header row
       let currentCol = 1;
       columnDefinitions.forEach((col) => {
         const cell = ws.getCell(
@@ -561,31 +600,7 @@ export async function exportStockMovementReportToExcel(exportedData: any) {
       const rowNum = dataStartRow + index;
       const fill = getAlternatingRowFill(index);
 
-      const openingBalance = parseFloat(movement.opening_balance || 0);
-      const quantityReceived = parseFloat(movement.quantity_received || 0);
-      const quantityProduced = parseFloat(movement.quantity_produced || 0);
-      const quantitySold = parseFloat(movement.quantity_sold || 0);
-      const quantityConsumed = parseFloat(movement.quantity_consumed || 0);
-      const quantityTransferredIn = parseFloat(
-        movement.quantity_transferred_in || 0
-      );
-      const quantityTransferredOut = parseFloat(
-        movement.quantity_transferred_out || 0
-      );
-      const stockGain = parseFloat(movement.stock_gain || 0);
-      const stockLoss = parseFloat(movement.stock_loss || 0);
       const latestRate = movement.latest_rate || 0;
-
-      const closingBalance =
-        openingBalance +
-        quantityReceived +
-        quantityProduced -
-        quantitySold -
-        quantityConsumed -
-        quantityTransferredOut +
-        quantityTransferredIn +
-        stockGain -
-        stockLoss;
 
       const getValue = (key: string) => {
         switch (key) {
@@ -597,30 +612,14 @@ export async function exportStockMovementReportToExcel(exportedData: any) {
             return movement.unit_symbol || '';
           case 'latestRate':
             return latestRate;
-          case 'openingBalance':
-            return openingBalance;
-          case 'purchaseReceived':
-            return quantityReceived;
-          case 'produced':
-            return quantityProduced;
-          case 'transferIn':
-            return quantityTransferredIn;
-          case 'transferOut':
-            return quantityTransferredOut;
-          case 'stockGain':
-            return stockGain;
-          case 'stockLoss':
-            return stockLoss;
-          case 'consumed':
-            return quantityConsumed;
-          case 'sold':
-            return quantitySold;
-          case 'closingBalance':
-            return closingBalance;
           case 'estimatedValue':
-            return latestRate * closingBalance;
+            const closingBal = getQuantityFromMovement(
+              movement,
+              'closingBalance'
+            );
+            return latestRate * closingBal;
           default:
-            return null;
+            return getQuantityFromMovement(movement, key);
         }
       };
 
@@ -632,19 +631,16 @@ export async function exportStockMovementReportToExcel(exportedData: any) {
 
       columnDefinitions.forEach((col) => {
         if (withDetails && col.hasSub) {
-          // With Details: This column has Quantity and Amount sub-columns
           const qtyValue = getValue(col.key);
           const qtyNum = typeof qtyValue === 'number' ? qtyValue : 0;
           const amtValue = getAmount(qtyNum);
 
-          // Quantity column
           const qtyCell = ws.getCell(
             `${getExcelColumnName(currentCol)}${rowNum}`
           );
           setNum(qtyCell, qtyValue, QTY_FMT);
           applyCellStyle(qtyCell, { ...CELL_STYLES.dataRowNumeric, fill });
 
-          // Amount column (next column)
           const amtCell = ws.getCell(
             `${getExcelColumnName(currentCol + 1)}${rowNum}`
           );
@@ -653,7 +649,6 @@ export async function exportStockMovementReportToExcel(exportedData: any) {
 
           currentCol += 2;
         } else {
-          // Without Details: Regular column
           const cell = ws.getCell(`${getExcelColumnName(currentCol)}${rowNum}`);
           const value = getValue(col.key);
           if (col.isNumeric || typeof value === 'number') {
@@ -683,31 +678,34 @@ export async function exportStockMovementReportToExcel(exportedData: any) {
     const movements = movementsData?.movements || [];
 
     if (withDetails) {
-      // With Details: Total row with merged cells
+      // With Details: Total row
       let currentCol = 1;
 
       columnDefinitions.forEach((col) => {
         if (col.hasSub) {
-          // Calculate totals for quantity and amount
+          // Calculate total quantity for this column
           let totalQty = 0;
           movements.forEach((movement: any) => {
-            const qty = parseFloat(movement[col.key] || 0);
+            const qty = getQuantityFromMovement(movement, col.key);
             totalQty += qty;
+          });
+
+          // Calculate total amount for this column
+          let totalAmt = 0;
+          movements.forEach((movement: any) => {
+            const qty = getQuantityFromMovement(movement, col.key);
+            totalAmt += (movement.latest_rate || 0) * qty;
           });
 
           // Quantity total
           const qtyCell = ws.getCell(
             `${getExcelColumnName(currentCol)}${totalRowNum}`
           );
-          setNum(qtyCell, totalQty, QTY_FMT);
+          // setNum(qtyCell, totalQty, QTY_FMT);
+          setNum(qtyCell, '', QTY_FMT);
           applyCellStyle(qtyCell, CELL_STYLES.totalRowNumeric);
 
           // Amount total
-          const totalAmt = movements.reduce((sum: number, movement: any) => {
-            const qty = parseFloat(movement[col.key] || 0);
-            return sum + (movement.latest_rate || 0) * qty;
-          }, 0);
-
           const amtCell = ws.getCell(
             `${getExcelColumnName(currentCol + 1)}${totalRowNum}`
           );
@@ -737,7 +735,6 @@ export async function exportStockMovementReportToExcel(exportedData: any) {
           }
           currentCol++;
         } else if (col.key === 'latestRate') {
-          // Skip Latest Rate in totals
           const cell = ws.getCell(
             `${getExcelColumnName(currentCol)}${totalRowNum}`
           );
@@ -745,16 +742,16 @@ export async function exportStockMovementReportToExcel(exportedData: any) {
           applyCellStyle(cell, CELL_STYLES.totalRowText);
           currentCol++;
         } else {
-          // For regular columns, calculate total
+          // For regular numeric columns without sub-columns
           let total = 0;
           movements.forEach((movement: any) => {
-            const val = parseFloat(movement[col.key] || 0);
+            const val = getQuantityFromMovement(movement, col.key);
             total += val;
           });
           const cell = ws.getCell(
             `${getExcelColumnName(currentCol)}${totalRowNum}`
           );
-          setNum(cell, total, AMT_FMT);
+          setNum(cell, total, QTY_FMT);
           applyCellStyle(cell, CELL_STYLES.totalRowNumeric);
           currentCol++;
         }
@@ -786,10 +783,9 @@ export async function exportStockMovementReportToExcel(exportedData: any) {
       // Calculate totals for remaining columns
       columnDefinitions.forEach((col) => {
         if (col.key === 'sn' || col.key === 'product' || col.key === 'unit') {
-          return; // Already handled
+          return;
         }
         if (col.key === 'latestRate') {
-          // Skip Latest Rate in totals (non-finance view)
           const cell = ws.getCell(
             `${getExcelColumnName(currentCol)}${totalRowNum}`
           );
@@ -801,21 +797,21 @@ export async function exportStockMovementReportToExcel(exportedData: any) {
 
         let total = 0;
         movements.forEach((movement: any) => {
-          const val = parseFloat(movement[col.key] || 0);
+          const val = getQuantityFromMovement(movement, col.key);
           total += val;
         });
         const cell = ws.getCell(
           `${getExcelColumnName(currentCol)}${totalRowNum}`
         );
-        setNum(cell, total, AMT_FMT);
+        setNum(cell, total, QTY_FMT);
         applyCellStyle(cell, CELL_STYLES.totalRowNumeric);
         currentCol++;
       });
 
-      // Estimated Closing Value total (if permission)
-      if (hasAccountsPermission) {
+      // Estimated Closing Value total (only when without details and has permission)
+      if (!withDetails && hasAccountsPermission) {
         const cell = ws.getCell(
-          `${getExcelColumnName(currentCol)}${totalRowNum}`
+          `${getExcelColumnName(currentCol - 1)}${totalRowNum}`
         );
         setNum(cell, totalEstimatedValue, AMT_FMT);
         applyCellStyle(cell, CELL_STYLES.totalRowNumeric);

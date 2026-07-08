@@ -3,11 +3,10 @@ import axios from "@/lib/services/config";
 const budgetsServices = {};
 
 budgetsServices.getBudgets = async (params = {}) => {
-    const { page = 1, limit = 10, ...queryParams } = params;
-    const { data } = await axios.get(`/api/accountsAndFinance/budgets`, {
-        params: { page, limit, ...queryParams }
+    const response = await axios.get('/api/accountsAndFinance/budgets', {
+        params,  // pass all query params here directly
     });
-    return data;
+    return response.data;
 };
 
 export default budgetsServices;

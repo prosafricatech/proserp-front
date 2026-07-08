@@ -47,7 +47,6 @@ export const staticMenuItems = [
   { label: 'SMS', uri: '/en-US/prosControl/nextSMS' },
   { label: 'Organizations', uri: '/en-US/organizations' },
   { label: 'Invitations', uri: '/en-US/invitations' },
-  // Human Resources
   { label: 'Employees', uri: '/en-US/humanResources/employees' },
   { label: 'Leave Requests', uri: '/en-US/humanResources/leave-requests' },
   { label: 'Payroll Runs', uri: '/en-US/humanResources/payroll-runs' },
