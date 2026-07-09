@@ -431,11 +431,7 @@ const PayrollRunsListItem = ({
               )}
 
               <TabPanel value={tabValue} index={hasPayslips ? 3 : 2}>
-                <ApprovalsTab
-                  hasChain={hasChain}
-                  approvalChain={runDetails?.approval_chain}
-                  approvals={runDetails?.approvals}
-                />
+                <ApprovalsTab payrollRun={runDetails} />
               </TabPanel>
             </>
           )}

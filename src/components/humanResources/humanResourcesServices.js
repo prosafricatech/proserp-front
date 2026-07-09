@@ -572,6 +572,16 @@ humanResourcesServices.addLeaveRequestApproval = async (approval) => {
     return data;
 }
 
+humanResourcesServices.deleteLeaveRequestApproval = async (id) => {
+    const { data } = await axios.delete(`/api/humanResources/leaveRequestApprovals/${id}/delete`);
+    return data;
+}
+
+humanResourcesServices.updateLeaveRequestApproval = async (id, payload) => {
+    const { data } = await axios.put(`/api/humanResources/leaveRequestApprovals/${id}`, payload);
+    return data;
+}
+
 humanResourcesServices.showLeaveRequest = async (id) => {
     const { data } = await axios.get(`/api/humanResources/leaveRequests/${id}`);
     return data;
@@ -754,6 +764,16 @@ humanResourcesServices.approvePayrollRun = async (id) => {
 // Chain Approval
 humanResourcesServices.addPayrollRunApproval = async (approval) => {
     const { data } = await axios.post('/api/humanResources/payrollRunApprovals', approval);
+    return data;
+}
+
+humanResourcesServices.deletePayrollRunApproval = async (id) => {
+    const { data } = await axios.delete(`/api/humanResources/payrollRunApprovals/${id}/delete`);
+    return data;
+}
+
+humanResourcesServices.updatePayrollRunApproval = async (id, payload) => {
+    const { data } = await axios.put(`/api/humanResources/payrollRunApprovals/${id}`, payload);
     return data;
 }
 

@@ -151,7 +151,7 @@ function PurchaseOrderPDF({
             </View>
           )}
         </View>
-        <View style={{ ...pdfStyles.table, minHeight: 230 }}>
+        <View style={{ ...pdfStyles.table }}>
           <View style={styles.tableRow}>
             <Text
               style={{

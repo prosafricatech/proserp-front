@@ -134,6 +134,7 @@ function ProformaForm({ toggleOpen, proforma = null }: ProformaFormProps) {
     setValue,
     setError,
     handleSubmit,
+    register,
     watch,
     clearErrors,
     formState: { errors },
@@ -470,6 +471,50 @@ function ProformaForm({ toggleOpen, proforma = null }: ProformaFormProps) {
                       }}
                     >
                       <Div sx={{ mt: 0.3 }}>
+                        {/* <Autocomplete
+                          freeSolo
+                          options={proformaRemarks || []}
+                          getOptionLabel={(option) => option}
+                          defaultValue={watch('remarks')}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              label='Remarks'
+                              size='small'
+                              fullWidth
+                              multiline
+                              rows={2}
+                              error={!!errors.remarks}
+                              helperText={errors.remarks?.message}
+                            />
+                          )}
+                          onChange={(e, newValue) => {
+                            setValue('remarks', newValue ?? undefined, {
+                              shouldValidate: true,
+                              shouldDirty: true,
+                            });
+                          }}
+                        /> */}
+                        <TextField
+                          label='Reference'
+                          variant='outlined'
+                          fullWidth
+                          size='small'
+                          defaultValue={watch('reference')}
+                          error={!!errors.reference}
+                          helperText={errors.reference?.message}
+                          {...register('reference')}
+                        />
+                      </Div>
+                    </Grid>
+
+                    <Grid
+                      size={{
+                        xs: 12,
+                        md: 12,
+                      }}
+                    >
+                      <Div sx={{ mt: 0.3 }}>
                         <Autocomplete
                           freeSolo
                           options={proformaRemarks || []}
@@ -490,6 +535,11 @@ function ProformaForm({ toggleOpen, proforma = null }: ProformaFormProps) {
                           onChange={(e, newValue) => {
                             setValue('remarks', newValue ?? undefined, {
                               shouldValidate: true,
+                              shouldDirty: true,
+                            });
+                          }}
+                          onInputChange={(e, newValue) => {
+                            setValue('remarks', newValue || undefined, {
                               shouldDirty: true,
                             });
                           }}

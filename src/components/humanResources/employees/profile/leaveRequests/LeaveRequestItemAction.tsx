@@ -1,15 +1,10 @@
 'use client';
 
-import { JumboDdMenu } from '@jumbo/components';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
-import { MenuItemProps } from '@jumbo/types';
 import {
-  CheckCircleOutline,
   DeleteOutlined,
   EditOutlined,
-  HighlightOffOutlined,
-  MoreHorizOutlined,
   RemoveCircleOutline,
 } from '@mui/icons-material';
 import {
@@ -18,6 +13,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  IconButton,
   LinearProgress,
   MenuItem,
   TextField,
@@ -161,94 +157,23 @@ const LeaveRequestItemAction = ({
       },
     });
 
-  const menuItems = [
-    {
-      icon: <EditOutlined />,
-      title: 'Edit',
-      action: 'edit',
-    },
-    ...(leaveRequest.status !== 'approved'
-      ? [
-          {
-            icon: <CheckCircleOutline color='success' />,
-            title: 'Approve',
-            action: 'approve',
-          },
-          {
-            icon: <HighlightOffOutlined color='error' />,
-            title: 'Reject',
-            action: 'reject',
-          },
-        ]
-      : []),
+  const handleDelete = () => {
+    showDialog({
+      title: 'Confirm Delete',
+      content: 'Are you sure you want to delete this Leave Request?',
+      onYes: () => {
+        hideDialog();
+        deleteLeaveRequest(leaveRequest.id);
+      },
+      onNo: () => hideDialog(),
+      variant: 'confirm',
+    });
+  };
 
-    ...(leaveRequest.status !== 'cancelled'
-      ? [
-          {
-            icon: <RemoveCircleOutline color='warning' />,
-            title: 'Cancel',
-            action: 'cancel',
-          },
-        ]
-      : []),
-    {
-      icon: <DeleteOutlined color='error' />,
-      title: 'Delete',
-      action: 'delete',
-    },
-  ];
-
-  const handleItemAction = (menuItem: MenuItemProps) => {
-    switch (menuItem.action) {
-      case 'edit':
-        setOpenEditDialog(true);
-        break;
-      case 'delete':
-        showDialog({
-          title: 'Confirm Delete',
-          content: 'Are you sure you want to delete this Leave Request?',
-          onYes: () => {
-            hideDialog();
-            deleteLeaveRequest(leaveRequest.id);
-          },
-          onNo: () => hideDialog(),
-          variant: 'confirm',
-        });
-        break;
-      case 'approve':
-        setStatusAction('approve');
-        setRemarks('');
-        setDaysApproved(leaveRequest.days_requested);
-        setDetailedLeaveRequest(null);
-        setOpenStatusDialog(true);
-        humanResourcesServices
-          .showLeaveRequest(leaveRequest.id)
-          .then((data: any) => {
-            const detail = data?.data || data;
-            setDetailedLeaveRequest(detail);
-            setDaysApproved(getMaxDaysApproved(detail));
-          })
-          .catch(() => undefined);
-        break;
-      case 'reject':
-        setStatusAction('reject');
-        setRemarks('');
-        setDaysApproved('');
-        setDetailedLeaveRequest(null);
-        setOpenStatusDialog(true);
-        humanResourcesServices
-          .showLeaveRequest(leaveRequest.id)
-          .then((data: any) => setDetailedLeaveRequest(data?.data || data))
-          .catch(() => undefined);
-        break;
-      case 'cancel':
-        setStatusAction('cancel');
-        setRemarks('');
-        setOpenStatusDialog(true);
-        break;
-      default:
-        break;
-    }
+  const handleCancel = () => {
+    setStatusAction('cancel');
+    setRemarks('');
+    setOpenStatusDialog(true);
   };
 
   const activeLeaveRequest = detailedLeaveRequest || leaveRequest;
@@ -462,15 +387,30 @@ const LeaveRequestItemAction = ({
         </DialogActions>
       </Dialog>
 
-      <JumboDdMenu
-        icon={
-          <Tooltip title='Actions'>
-            <MoreHorizOutlined fontSize='small' />
-          </Tooltip>
-        }
-        menuItems={menuItems}
-        onClickCallback={handleItemAction}
-      />
+      <Tooltip title='Edit'>
+        <IconButton
+          size='small'
+          onClick={() => {
+            setOpenEditDialog(true);
+          }}
+        >
+          <EditOutlined />
+        </IconButton>
+      </Tooltip>
+
+      {leaveRequest.status !== 'cancelled' && (
+        <Tooltip title='Cancel'>
+          <IconButton size='small' onClick={handleCancel}>
+            <RemoveCircleOutline color='warning' />
+          </IconButton>
+        </Tooltip>
+      )}
+
+      <Tooltip title='Delete'>
+        <IconButton size='small' onClick={handleDelete}>
+          <DeleteOutlined color='error' />
+        </IconButton>
+      </Tooltip>
     </>
   );
 };

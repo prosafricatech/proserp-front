@@ -249,18 +249,6 @@ export const PayrollRunActions = ({
           color: 'error',
         });
         break;
-      case 'approve':
-        setConfirmDialog({
-          open: true,
-          action: 'approve',
-          title: hasChain ? 'Approve Level' : 'Approve Payroll Run',
-          message: hasChain
-            ? `Are you sure you want to approve this level for "${runLabel}"?`
-            : `Are you sure you want to approve "${runLabel}"? This action cannot be undone.`,
-          confirmText: 'Approve',
-          color: 'success',
-        });
-        break;
       case 'post':
         setOpenPostDialog(true);
         break;
@@ -358,24 +346,6 @@ export const PayrollRunActions = ({
                 <CircularProgress size={18} />
               ) : (
                 <SendOutlined fontSize='small' />
-              )}
-            </IconButton>
-          </Tooltip>
-        )}
-
-        {/* 3. APPROVE - For submitted runs */}
-        {isSubmitted && (
-          <Tooltip title={hasChain ? 'Approve Level' : 'Approve'}>
-            <IconButton
-              size='small'
-              onClick={() => handleActionClick('approve')}
-              disabled={isApproving}
-              color='success'
-            >
-              {isApproving ? (
-                <CircularProgress size={18} />
-              ) : (
-                <CheckCircleOutline fontSize='small' />
               )}
             </IconButton>
           </Tooltip>

@@ -48,6 +48,10 @@ export interface PayrollRunType {
       level_name?: string;
       level?: number;
       status?: string;
+      role?: {
+        id?: number;
+        name?: string;
+      };
     }>;
   } | null;
   approvals?: Array<{
@@ -55,8 +59,13 @@ export interface PayrollRunType {
     chain_level_id?: number;
     approval_chain_level_id?: number;
     status?: string;
+    label?: string;
     remarks?: string;
     approval_date?: string;
+    creator?: {
+      id?: number;
+      name?: string;
+    };
   }>;
   employee?: {
     id: number;
@@ -115,4 +124,22 @@ export interface PayrollRunType {
       category?: string;
     };
   }>;
+  payslips?: Array<{
+    id?: number;
+    payroll_run_id?: number;
+    employee_id?: number;
+    basic_salary?: number;
+    gross_salary?: number;
+    net_salary?: number;
+    paye?: number;
+    total_allowances?: number;
+    total_deductions?: number;
+    [key: string]: any;
+  }>;
+  status_label?: string;
+  next_approval_level?: {
+    role?: {
+      name?: string;
+    };
+  };
 }

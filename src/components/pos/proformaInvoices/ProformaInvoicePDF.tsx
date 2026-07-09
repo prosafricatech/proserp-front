@@ -40,6 +40,7 @@ interface Proforma {
   currency: Currency;
   creator?: Creator;
   stakeholder?: Stakeholder;
+  reference?: string | null;
   remarks?: string;
 }
 
@@ -97,6 +98,14 @@ function ProformaInvoicePDF({
               {readableDate(proforma.proforma_date)}
             </Text>
           </View>
+          {proforma?.reference && (
+            <View style={{ flex: 1, padding: 2 }}>
+              <Text style={{ ...pdfStyles.minInfo, color: mainColor }}>
+                Reference
+              </Text>
+              <Text style={{ ...pdfStyles.minInfo }}>{proforma.reference}</Text>
+            </View>
+          )}
           {proforma?.expiry_date && (
             <View style={{ flex: 1, padding: 2 }}>
               <Text style={{ ...pdfStyles.minInfo, color: mainColor }}>
@@ -234,11 +243,13 @@ function ProformaInvoicePDF({
                     }}
                   >
                     <Text>{proformaItem.product.name}</Text>
-                    <Text style={{ fontSize: 9, color: '#888', marginTop: 2 }}>
-                      {' ('}
-                      {proformaItem.product.description}
-                      {')'}
-                    </Text>
+                    {proformaItem.product.description && (
+                      <Text style={{ fontSize: 9, color: '#888', marginTop: 2 }}>
+                        {' ('}
+                        {proformaItem.product.description}
+                        {')'}
+                      </Text>
+                    )}
                   </View>
                   {proformaItem.description && (
                     <Text style={{ fontSize: 10, color: '#888', marginTop: 2 }}>

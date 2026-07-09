@@ -34,7 +34,12 @@ export interface LeaveRequestType {
       name?: string;
       level_name?: string;
       level?: number;
+      position_index?: number;
       status?: string;
+      role?: {
+        id?: number;
+        name?: string;
+      };
     }>;
   } | null;
   approvals?: Array<{
@@ -42,8 +47,14 @@ export interface LeaveRequestType {
     chain_level_id?: number;
     approval_chain_level_id?: number;
     status?: string;
+    label?: string;
+    status_label?: string;
     days_approved?: number;
     remarks?: string;
     approval_date?: string;
+    creator?: {
+      id?: number;
+      name?: string;
+    };
   }>;
 }
