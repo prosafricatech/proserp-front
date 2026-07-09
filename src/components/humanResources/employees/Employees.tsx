@@ -10,6 +10,7 @@ import JumboSearch from '@jumbo/components/JumboSearch';
 import { Card, Stack, Typography } from '@mui/material';
 import { useParams, useSearchParams } from 'next/navigation';
 import React, { useEffect, useRef, useState } from 'react';
+import { DesignationsProvider } from '../designations/DesignationsProvider';
 import humanResourcesServices from '../humanResourcesServices';
 import EmployeeActionTail from './EmployeeActionTail';
 import EmployeesListItem from './EmployeesListItem';
@@ -60,41 +61,43 @@ const Employees = () => {
   return (
     <LedgerSelectProvider>
       <LedgerGroupProvider>
-        <Typography variant={'h4'} mb={2}>
-          Employees
-        </Typography>
-        <JumboRqList
-          ref={listRef}
-          wrapperComponent={Card}
-          service={humanResourcesServices.getEmployeesList}
-          primaryKey='id'
-          queryOptions={queryOptions}
-          itemsPerPage={10}
-          itemsPerPageOptions={[5, 8, 10, 15, 20]}
-          renderItem={renderEmployees}
-          componentElement='div'
-          wrapperSx={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-          toolbar={
-            <JumboListToolbar
-              hideItemsPerPage={true}
-              actionTail={
-                <Stack direction='row'>
-                  <JumboSearch
-                    onChange={handleOnChange}
-                    value={queryOptions.queryParams.keyword}
-                  />
-                  {checkOrganizationPermission([
-                    PERMISSIONS.EMPLOYEES_CREATE,
-                  ]) && <EmployeeActionTail />}
-                </Stack>
-              }
-            ></JumboListToolbar>
-          }
-        />
+        <DesignationsProvider>
+          <Typography variant={'h4'} mb={2}>
+            Employees
+          </Typography>
+          <JumboRqList
+            ref={listRef}
+            wrapperComponent={Card}
+            service={humanResourcesServices.getEmployeesList}
+            primaryKey='id'
+            queryOptions={queryOptions}
+            itemsPerPage={10}
+            itemsPerPageOptions={[5, 8, 10, 15, 20]}
+            renderItem={renderEmployees}
+            componentElement='div'
+            wrapperSx={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+            toolbar={
+              <JumboListToolbar
+                hideItemsPerPage={true}
+                actionTail={
+                  <Stack direction='row'>
+                    <JumboSearch
+                      onChange={handleOnChange}
+                      value={queryOptions.queryParams.keyword}
+                    />
+                    {checkOrganizationPermission([
+                      PERMISSIONS.EMPLOYEES_CREATE,
+                    ]) && <EmployeeActionTail />}
+                  </Stack>
+                }
+              ></JumboListToolbar>
+            }
+          />
+        </DesignationsProvider>
       </LedgerGroupProvider>
     </LedgerSelectProvider>
   );
