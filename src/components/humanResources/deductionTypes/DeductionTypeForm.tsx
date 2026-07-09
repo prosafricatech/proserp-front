@@ -273,7 +273,7 @@ const DeductionTypeForm = ({
       category: deductionType?.category || 'statutory',
       computation_method: deductionType?.computation_method || 'fixed',
       default_value: deductionType?.default_value ?? 0,
-      payable_ledger_id: deductionType?.payable_ledger_id ?? 0,
+      payable_ledger_id: deductionType?.payable_ledger_id ?? undefined,
       is_pre_tax: deductionType?.is_pre_tax || false,
       description: deductionType?.description || '',
       apply_scope: 'none',
@@ -509,7 +509,7 @@ const DeductionTypeForm = ({
                         });
                       } else {
                         setRecentlyAddedPayableLedger(null);
-                        setValue('payable_ledger_id', 0, {
+                        setValue('payable_ledger_id', undefined, {
                           shouldValidate: true,
                           shouldDirty: true,
                         });
