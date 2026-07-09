@@ -287,8 +287,8 @@ const EmployerContributionTypeForm = ({
       category: contributionType?.category || 'statutory',
       computation_method: contributionType?.computation_method || 'fixed',
       default_value: contributionType?.default_value ?? 0,
-      payable_ledger_id: contributionType?.payable_ledger_id ?? 0,
-      expense_ledger_id: contributionType?.expense_ledger_id ?? 0,
+      payable_ledger_id: contributionType?.payable_ledger_id ?? undefined,
+      expense_ledger_id: contributionType?.expense_ledger_id ?? undefined,
       description: contributionType?.description || '',
       apply_scope: 'none',
     },
@@ -304,8 +304,8 @@ const EmployerContributionTypeForm = ({
       category: contributionType?.category || 'statutory',
       computation_method: contributionType?.computation_method || 'fixed',
       default_value: contributionType?.default_value ?? 0,
-      expense_ledger_id: contributionType?.expense_ledger_id ?? 0,
-      payable_ledger_id: contributionType?.payable_ledger_id ?? 0,
+      expense_ledger_id: contributionType?.expense_ledger_id ?? undefined,
+      payable_ledger_id: contributionType?.payable_ledger_id ?? undefined,
       description: contributionType?.description || '',
       apply_scope: 'none',
     });
@@ -512,7 +512,7 @@ const EmployerContributionTypeForm = ({
                           });
                         } else {
                           setRecentlyAddedExpenseLedger(null);
-                          setValue('expense_ledger_id', 0, {
+                          setValue('expense_ledger_id', undefined, {
                             shouldValidate: true,
                             shouldDirty: true,
                           });
@@ -559,7 +559,7 @@ const EmployerContributionTypeForm = ({
                           });
                         } else {
                           setRecentlyAddedPayableLedger(null);
-                          setValue('payable_ledger_id', 0, {
+                          setValue('payable_ledger_id', undefined, {
                             shouldValidate: true,
                             shouldDirty: true,
                           });

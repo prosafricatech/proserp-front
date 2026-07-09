@@ -284,7 +284,7 @@ const AllowanceTypeForm = ({
                         });
                       } else {
                         setRecentlyAddedExpenseLedger(null);
-                        setValue('expense_ledger_id', 0, {
+                        setValue('expense_ledger_id', undefined, {
                           shouldValidate: true,
                           shouldDirty: true,
                         });

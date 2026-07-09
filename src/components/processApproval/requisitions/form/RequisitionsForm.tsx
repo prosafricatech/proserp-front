@@ -826,6 +826,7 @@ function RequisitionsForm({
               </Grid>
             </form>
           </Grid>
+
           <Grid size={{ xs: 12, md: 4, lg: 3 }}>
             <RequisitionSummary
               isPurchase={selectedProcessType === 'PURCHASE'}
@@ -833,6 +834,7 @@ function RequisitionsForm({
               totalAmount={totalAmount}
             />
           </Grid>
+
           <Grid size={{ xs: 12 }}>
             {selectedProcessType === 'PAYMENT' ||
             selectedProcessType === 'IMPREST' ? (
