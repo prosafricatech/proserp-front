@@ -996,8 +996,6 @@ export const ApprovalsTab = ({ payrollRun }: ApprovalsTabProps) => {
                     : approvalStatus === 'approved'
                       ? 'success'
                       : 'info';
-
-<<<<<<< HEAD
               const chainLevel = payrollRun?.approval_chain?.levels?.find(
                 (level) =>
                   Number(level.id) ===
@@ -1010,7 +1008,7 @@ export const ApprovalsTab = ({ payrollRun }: ApprovalsTabProps) => {
                   size={{ xs: 12 }}
                   sx={{
                     cursor: 'pointer',
-                    borderTop: 1,
+                    borderTop: index === 0 ? 0 : 1,
                     borderColor: 'divider',
                     '&:hover': { bgcolor: 'action.hover' },
                     padding: 1,
@@ -1019,39 +1017,6 @@ export const ApprovalsTab = ({ payrollRun }: ApprovalsTabProps) => {
                   spacing={2}
                   width={'100%'}
                   alignItems={'center'}
-=======
-        return (
-          <Paper
-            key={level.id}
-            sx={{
-              p: 1.5,
-              mb: 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              // bgcolor: isApproved
-              //   ? 'success.light'
-              //   : isRejected
-              //     ? 'error.light'
-              //     : isPending
-              //       ? 'warning.light'
-              //       : 'transparent',
-              borderRadius: 1,
-            }}
-          >
-            <Box>
-              <Typography variant='body2' fontWeight={500}>
-                Level {index + 1}: {level.name || level.level_name}
-              </Typography>
-              <Typography variant='caption' color='text.secondary'>
-                {level.role?.name || 'Approver'}
-              </Typography>
-              {approval?.remarks && (
-                <Typography
-                  variant='caption'
-                  display='block'
-                  color='text.secondary'
->>>>>>> 18676b299e294c0bcc2d539b573c60014957d23e
                 >
                   <Grid size={{ xs: 12, md: 3, lg: 3 }}>
                     <Tooltip title={'Action Date'}>

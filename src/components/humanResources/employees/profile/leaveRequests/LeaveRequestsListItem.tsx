@@ -110,7 +110,7 @@ const LeaveRequestsListItem = ({
           paddingLeft={1}
           paddingRight={1}
         >
-          <Grid size={{ xs: 12, md: 2.2 }}>
+          <Grid size={{ xs: 12, md: 3.2 }}>
             <Tooltip title='Leave Type'>
               <Typography>
                 {leaveRequest.leave_type?.name ||
@@ -135,7 +135,7 @@ const LeaveRequestsListItem = ({
             </Tooltip>
           </Grid>
 
-          <Grid size={{ xs: 12, md: 1.2 }}>
+          <Grid size={{ xs: 12, md: 2.2 }}>
             <Tooltip title='Days'>
               <Typography>
                 {leaveRequest.days_granted != null
@@ -145,7 +145,7 @@ const LeaveRequestsListItem = ({
             </Tooltip>
           </Grid>
 
-          <Grid size={{ xs: 12, md: 1.6 }}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <Chip
               label={formattedStatus}
               size='small'
@@ -154,21 +154,14 @@ const LeaveRequestsListItem = ({
               sx={{ textTransform: 'capitalize' }}
             />
           </Grid>
-
-          <Grid size={{ xs: 12, md: 2.4 }}>
-            <Tooltip title='Reason'>
-              <Typography noWrap>{leaveRequest.reason || '-'}</Typography>
-            </Tooltip>
-          </Grid>
-
-          <Grid size={{ xs: 2, md: 1.0 }} textAlign='end'>
-            <LeaveRequestItemAction leaveRequest={leaveRequest} />
-          </Grid>
         </Grid>
       </AccordionSummary>
 
       <AccordionDetails sx={{ backgroundColor: 'background.paper', mb: 3 }}>
-        <Grid container spacing={1}>
+        <Grid container spacing={1}>     
+          <Grid size={{ xs: 12 }} textAlign='end'>
+            <LeaveRequestItemAction leaveRequest={leaveRequest} />
+          </Grid>
           <Grid size={{ xs: 12 }}>
             <Tabs
               value={activeTab}
@@ -272,11 +265,6 @@ const LeaveRequestsListItem = ({
                                   color={chipColor as any}
                                   sx={{ textTransform: 'capitalize' }}
                                 />
-                                {approval.days_approved != null && (
-                                  <Typography variant='caption' sx={{ ml: 1 }}>
-                                    Days approved: {approval.days_approved}
-                                  </Typography>
-                                )}
                               </Grid>
 
                               <Grid size={{ xs: 12, md: 2, lg: 2 }} textAlign='right'>

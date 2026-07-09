@@ -59,6 +59,7 @@ export interface PayrollRunType {
     chain_level_id?: number;
     approval_chain_level_id?: number;
     status?: string;
+    label?: string;
     remarks?: string;
     approval_date?: string;
     creator?: {

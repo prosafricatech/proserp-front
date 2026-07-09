@@ -312,7 +312,7 @@ const PayrollRunsListItem = ({
           }}
         >
           <Grid container spacing={1} width='100%' sx={{ px: 1 }}>
-            <Grid size={{ xs: 12, md: 4 }}>
+            <Grid size={{ xs: 12, md: 8 }}>
               <Box display='flex' alignItems='center' gap={1}>
                 <ReceiptLongOutlined fontSize='small' color='action' />
                 <Typography variant='body2'>{runLabel}</Typography>
@@ -349,21 +349,6 @@ const PayrollRunsListItem = ({
                               ? theme.palette.success.contrastText
                               : theme.palette.error.contrastText,
                   }}
-                />
-              </Box>
-            </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Box
-                display='flex'
-                alignItems='center'
-                justifyContent={{ xs: 'flex-start', md: 'flex-end' }}
-                gap={1}
-              >
-                <Chip
-                  label={payrollRun.status_label || 'draft'}
-                  color={statusColor(payrollRun.status_label || '')}
-                  size='small'
-                  sx={{ textTransform: 'capitalize' }}
                 />
               </Box>
             </Grid>
