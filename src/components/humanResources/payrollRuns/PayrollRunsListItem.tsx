@@ -14,6 +14,7 @@ import {
   Tab,
   Tabs,
   Typography,
+  useTheme,
 } from '@mui/material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
@@ -47,6 +48,7 @@ const PayrollRunsListItem = ({
 }: {
   payrollRun: PayrollRunType;
 }) => {
+  const theme = useTheme();
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
   const [expanded, setExpanded] = useState(false);
@@ -158,6 +160,16 @@ const PayrollRunsListItem = ({
       enqueueSnackbar(getErrorMessage(error), { variant: 'error' }),
   });
 
+  const { mutate: completePayrollRun, isPending: isCompleting } = useMutation({
+    mutationFn: () => humanResourcesServices.completePayrollRun(payrollRun.id),
+    onSuccess: () => {
+      invalidatePayrollRunQueries();
+      enqueueSnackbar('Payroll run completed', { variant: 'success' });
+    },
+    onError: (error) =>
+      enqueueSnackbar(getErrorMessage(error), { variant: 'error' }),
+  });
+
   const { mutate: postPayrollRun, isPending: isPosting } = useMutation({
     mutationFn: (data: any) => {
       return humanResourcesServices.postPayrollRunTransactions({
@@ -223,6 +235,9 @@ const PayrollRunsListItem = ({
       case 'pay':
         payPayrollRun(data || {});
         break;
+      case 'complete':
+        completePayrollRun();
+        break;
       case 'delete':
         deletePayrollRun();
         break;
@@ -252,6 +267,9 @@ const PayrollRunsListItem = ({
     setSelectedPayslip(payslip);
     setOpenPayslipDialog(true);
   };
+
+  // get contras colors
+  const chipColor = statusColor(payrollRun.status || '');
 
   const isLoading = isLoadingPreview || isLoadingDetails || isRefetching;
 
@@ -313,10 +331,24 @@ const PayrollRunsListItem = ({
                 gap={1}
               >
                 <Chip
-                  label={payrollRun.status || 'draft'}
+                  label={
+                    payrollRun.status_label || payrollRun.status || 'draft'
+                  }
                   color={statusColor(payrollRun.status || '')}
                   size='small'
-                  sx={{ textTransform: 'capitalize' }}
+                  sx={{
+                    textTransform: 'capitalize',
+                    color:
+                      chipColor === 'default'
+                        ? theme.palette.secondary.contrastText
+                        : chipColor === 'info'
+                          ? theme.palette.info.contrastText
+                          : chipColor === 'warning'
+                            ? theme.palette.warning.contrastText
+                            : chipColor === 'success'
+                              ? theme.palette.success.contrastText
+                              : theme.palette.error.contrastText,
+                  }}
                 />
               </Box>
             </Grid>
@@ -360,6 +392,7 @@ const PayrollRunsListItem = ({
                 isPosting={isPosting}
                 isPaying={isPaying}
                 runLabel={runLabel}
+                isCompleting={isCompleting}
               />
 
               <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
@@ -367,7 +400,10 @@ const PayrollRunsListItem = ({
                   <Tab label='Summary' />
                   <Tab label='Employees' />
                   {hasPayslips && <Tab label='Payslips' />}
-                  <Tab label='Approvals' />
+                  {payrollRun.status === 'approved' ||
+                    (payrollRun.status === 'submitted' && (
+                      <Tab label='Approvals' />
+                    ))}
                 </Tabs>
               </Box>
 

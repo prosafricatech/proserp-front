@@ -789,6 +789,12 @@ humanResourcesServices.payPayrollRun = async ({ id, ...payload }) => {
     return data;
 }
 
+// complete payroll run - if orgnization has not subscribed to accounts and finance module
+humanResourcesServices.completePayrollRun = async (id) => {
+    const { data } = await axios.post(`/api/humanResources/payrollRuns/${id}/complete`);
+    return data;
+}
+
 // ============================================
 // PAYSLIPS
 // ============================================
