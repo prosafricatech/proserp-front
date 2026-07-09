@@ -37,8 +37,6 @@ import { Employee } from '../employees/EmployeesType';
 import {
   calculateGrossSalary,
   calculateNetSalary,
-  calculateTotalAllowances,
-  calculateTotalDeductions,
   formatMoney,
   getEmployeeName,
 } from './payrollUtils';
@@ -396,8 +394,6 @@ export const EmployeesTab = ({
                 const contributions = row.employer_contributions || [];
                 const basicSalary = row.basic_salary || 0;
                 const paye = row.paye || 0;
-                const totalAllowances = calculateTotalAllowances(allowances);
-                const totalDeductions = calculateTotalDeductions(deductions);
                 const totalContributions =
                   calculateTotalEmployerContributions(contributions);
                 const grossSalary =
@@ -1039,7 +1035,7 @@ export const ApprovalsTab = ({ payrollRun }: ApprovalsTabProps) => {
                   <Grid size={{ xs: 12, md: 4, lg: 4 }}>
                     <Tooltip title='Level'>
                       <Typography variant='body2' color='text.secondary'>
-                        {chainLevel?.name || chainLevel?.level_name || '-'}
+                        {chainLevel?.name || chainLevel?.level_name || ''}
                       </Typography>
                     </Tooltip>
                     <Chip
