@@ -269,7 +269,7 @@ const SalePDF: React.FC<SalePDFProps> = ({ sale, organization, thermalPrinter = 
                     <Text style={{...pdfStyles.minInfo }}>{sale.creator?.name}</Text>
                 </View>
             </View>
-            <View style={{...pdfStyles.table, minHeight: 230 }}>
+            <View style={{...pdfStyles.table }}>
                 <View style={pdfStyles.tableRow}>
                     <Text style={{...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.3 }}>S/N</Text>
                     <Text style={{...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 3 }}>Product/Service</Text>
@@ -321,7 +321,7 @@ const SalePDF: React.FC<SalePDFProps> = ({ sale, organization, thermalPrinter = 
                     </View>
                 ))}
             </View> 
-            <View style={pdfStyles.tableRow}>
+            <View style={{ ...pdfStyles.tableRow, paddingTop: 15 }}>
                 <Text style={{ textAlign: 'center', flex: 4.5 }}></Text>
                 <Text style={{ ...pdfStyles.tableCell, ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2, textAlign: 'right' }}>Total</Text>
                 <Text style={{ ...pdfStyles.tableCell, ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2.2, textAlign: 'right' }}>

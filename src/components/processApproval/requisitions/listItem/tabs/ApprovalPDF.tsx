@@ -96,6 +96,14 @@ function ApprovalPDF({ approval, organization }: ApprovalPDFProps) {
             <Text style={{...pdfStyles.minInfo, color: mainColor }}>Approval Date</Text>
             <Text style={{...pdfStyles.minInfo }}>{readableDate(approval.approval_date)}</Text>
           </View>
+          <View style={{ flex: 1, padding: 0.5 }}>
+            <Text style={{...pdfStyles.minInfo, color: mainColor }}>Date Required</Text>
+            <Text style={{...pdfStyles.minInfo }}>
+              {approval.requisition?.date_required
+                ? readableDate(approval.requisition.date_required)
+                : '-'}
+            </Text>
+          </View>
         </View>
         
         <View style={{...pdfStyles.table, minHeight: 150, marginBottom: 50}}>

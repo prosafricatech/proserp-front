@@ -208,6 +208,18 @@ const RequisitionsOnScreen: React.FC<Props> = ({
             <Grid size={{ xs: 12, sm: 6, md: 4 }}>
               <Box>
                 <Typography variant='subtitle2' sx={{ color: headerColor }}>
+                  Date Required
+                </Typography>
+                <Typography variant='body1'>
+                  {requisition.date_required
+                    ? readableDate(requisition.date_required)
+                    : '-'}
+                </Typography>
+              </Box>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <Box>
+                <Typography variant='subtitle2' sx={{ color: headerColor }}>
                   Cost Center
                 </Typography>
                 <Typography variant='body1'>

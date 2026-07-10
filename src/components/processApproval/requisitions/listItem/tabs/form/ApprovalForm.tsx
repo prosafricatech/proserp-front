@@ -50,6 +50,7 @@ interface FormValues {
   id?: number;
   requisition_id: number;
   approval_date: string;
+  date_required: string;
   process_type: string;
   remarks?: string;
   product_items?: any[];
@@ -91,6 +92,9 @@ function ApprovalForm({
   isEdit = false,
 }: ApprovalFormProps) {
   const [approvalDate] = useState<Dayjs>(dayjs());
+  const [dateRequired] = useState<Dayjs | null>(
+    requisition?.date_required ? dayjs(requisition.date_required) : null
+  );
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
   const { checkOrganizationPermission } = useJumboAuth();
@@ -262,6 +266,10 @@ function ApprovalForm({
       .string()
       .required('Approval Date is required')
       .typeError('Approval Date is required'),
+    date_required: yup
+      .string()
+      .required('Date Required is required')
+      .typeError('Date Required is required'),
     product_items:
       isPurchaseType || isMaterialType
         ? yup.array().of(
@@ -366,6 +374,7 @@ function ApprovalForm({
       id: approval?.id,
       requisition_id: requisition.id,
       approval_date: approvalDate.toISOString(),
+      date_required: dateRequired?.toISOString() || '',
       process_type: requisition?.approval_chain?.process_type,
       remarks: approval?.remarks || requisition?.remarks || '',
       product_items:
@@ -526,6 +535,7 @@ function ApprovalForm({
   }, [isEdit, editApprovalRequisition, approveRequisition]);
 
   const watchedImprestLedgerId = watch('imprest_ledger_id');
+  const watchedApprovalDate = watch('approval_date');
 
   const onSubmit: SubmitHandler<FormValues> = (formData) => {
     const payload = {
@@ -654,6 +664,35 @@ function ApprovalForm({
                 onChange={(newValue: Dayjs | null) => {
                   if (newValue) {
                     setValue('approval_date', newValue.toISOString(), {
+                      shouldValidate: true,
+                      shouldDirty: true,
+                    });
+                  }
+                }}
+              />
+            </Div>
+          </Grid>
+          <Grid size={{ xs: 12, md: 4, lg: 4 }}>
+            <Div sx={{ mt: 1 }}>
+              <DateTimePicker
+                label='Date Required'
+                defaultValue={dateRequired}
+                minDate={
+                  watchedApprovalDate
+                    ? dayjs(watchedApprovalDate)
+                    : dayjs(requisition.requisition_date)
+                }
+                slotProps={{
+                  textField: {
+                    size: 'small',
+                    fullWidth: true,
+                    error: !!errors?.date_required,
+                    helperText: errors?.date_required?.message,
+                  },
+                }}
+                onChange={(newValue: Dayjs | null) => {
+                  if (newValue) {
+                    setValue('date_required', newValue.toISOString(), {
                       shouldValidate: true,
                       shouldDirty: true,
                     });

@@ -191,13 +191,25 @@ function ApprovalOnScreen({
 
           {/* Approval Information */}
           <Grid container spacing={2} sx={{ mb: 3 }} width={'100%'}>
-            <Grid size={{ xs: 12 }}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Box>
                 <Typography variant='subtitle2' sx={{ color: headerColor }}>
                   Approval Date
                 </Typography>
                 <Typography variant='body1'>
                   {readableDate(approval.approval_date)}
+                </Typography>
+              </Box>
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Box>
+                <Typography variant='subtitle2' sx={{ color: headerColor }}>
+                  Date Required
+                </Typography>
+                <Typography variant='body1'>
+                  {approval.requisition?.date_required
+                    ? readableDate(approval.requisition.date_required)
+                    : '-'}
                 </Typography>
               </Box>
             </Grid>

@@ -81,6 +81,12 @@ function RequisitionPDF({ requisition, organization }: RequisitionPDFProps) {
                         <Text style={{ ...pdfStyles.minInfo }}>{readableDate(requisition?.requisition_date)}</Text>
                     </View>
                     <View style={{ flex: 1, padding: 0.5 }}>
+                        <Text style={{ ...pdfStyles.minInfo, color: mainColor }}>Date Required</Text>
+                        <Text style={{ ...pdfStyles.minInfo }}>
+                            {requisition?.date_required ? readableDate(requisition.date_required) : '-'}
+                        </Text>
+                    </View>
+                    <View style={{ flex: 1, padding: 0.5 }}>
                         <Text style={{ ...pdfStyles.minInfo, color: mainColor }}>Cost Center</Text>
                         <Text style={{ ...pdfStyles.minInfo }}>{requisition.cost_center?.name}</Text>
                     </View>
