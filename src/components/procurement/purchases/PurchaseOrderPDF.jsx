@@ -21,8 +21,8 @@ function PurchaseOrderPDF({
   const withPrices = [
     PERMISSIONS.ACCOUNTS_REPORTS,
     PERMISSIONS.PURCHASES_CREATE,
-    PERMISSIONS.APPROVED_REQUISITIONS_PURCHASE
-  ].some(perm => checkOrganizationPermission([perm]));
+    PERMISSIONS.APPROVED_REQUISITIONS_PURCHASE,
+  ].some((perm) => checkOrganizationPermission([perm]));
 
   const vatAmount = order.purchase_order_items.reduce((total, item) => {
     return (total += item.rate * item.quantity * item.vat_percentage * 0.01);
@@ -117,6 +117,25 @@ function PurchaseOrderPDF({
               </Text>
             </View>
           )}
+          {order?.currency_id > 1 && (
+            <View style={{ flex: 1, padding: 2 }}>
+              <Text
+                style={{
+                  ...pdfStyles.minInfo,
+                  color: mainColor,
+                  fontFamily: 'Helvetica-Bold',
+                }}
+              >
+                Exchange Rate
+              </Text>
+              <Text style={{ ...pdfStyles.minInfo }}>
+                {order.exchange_rate}
+              </Text>
+            </View>
+          )}
+        </View>
+
+        <View style={{ ...pdfStyles.tableRow, marginBottom: 10 }}>
           {(order?.reference || order?.requisitionNo) && (
             <View style={{ flex: 1, padding: 2.5 }}>
               <Text
@@ -131,22 +150,6 @@ function PurchaseOrderPDF({
               <Text style={{ ...pdfStyles.minInfo }}>{order.reference}</Text>
               <Text style={{ ...pdfStyles.minInfo }}>
                 {order.requisitionNo}
-              </Text>
-            </View>
-          )}
-          {order?.currency_id > 1 && (
-            <View style={{ flex: 1, padding: 2 }}>
-              <Text
-                style={{
-                  ...pdfStyles.minInfo,
-                  color: mainColor,
-                  fontFamily: 'Helvetica-Bold',
-                }}
-              >
-                Exchange Rate
-              </Text>
-              <Text style={{ ...pdfStyles.minInfo }}>
-                {order.exchange_rate}
               </Text>
             </View>
           )}
@@ -385,7 +388,9 @@ function PurchaseOrderPDF({
 
                 return (
                   <View
-                    key={cost.id || cost.requisition_additional_cost_id || index}
+                    key={
+                      cost.id || cost.requisition_additional_cost_id || index
+                    }
                     style={{ ...pdfStyles.tableRow, marginTop: 4 }}
                   >
                     <Text style={{ textAlign: 'center', flex: 4.5 }}></Text>
@@ -470,7 +475,11 @@ function PurchaseOrderPDF({
                       textAlign: 'right',
                     }}
                   >
-                    {(productsTotal + vatAmount + totalAdditionalCosts).toLocaleString('en-US', {
+                    {(
+                      productsTotal +
+                      vatAmount +
+                      totalAdditionalCosts
+                    ).toLocaleString('en-US', {
                       style: 'currency',
                       currency: currencyCode,
                     })}
@@ -571,18 +580,18 @@ function PurchaseOrderPDF({
               >
                 S/N
               </Text>
-                <Text
-                    style={{
-                    ...styles.tableCell,
-                    ...styles.tableHeader,
-                    ...styles.midInfo,
-                    backgroundColor: mainColor,
-                    color: contrastText,
-                    flex: 1,
-                    }}
-                >
-                    Date
-                </Text>
+              <Text
+                style={{
+                  ...styles.tableCell,
+                  ...styles.tableHeader,
+                  ...styles.midInfo,
+                  backgroundColor: mainColor,
+                  color: contrastText,
+                  flex: 1,
+                }}
+              >
+                Date
+              </Text>
               <Text
                 style={{
                   ...styles.tableCell,
