@@ -161,7 +161,9 @@ humanResourcesServices.getDesignationsList = async (params = {}) => {
 };
 
 humanResourcesServices.getAllDesignations = async () => {
-    const { data } = await axios.get('/api/humanResources/designations/all_designations');
+    const { data } = await axios.get('/api/humanResources/designations/all_designations', {
+        params: { limit: 1000 }
+    });
     return data;
 };
 
