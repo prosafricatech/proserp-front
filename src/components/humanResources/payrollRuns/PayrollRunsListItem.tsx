@@ -18,7 +18,7 @@ import {
 } from '@mui/material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
 import { PayrollRunActions } from './PayrollRunActions';
 import { PayslipViewDialog, SimulationDialog } from './PayrollRunDialogs';
@@ -126,6 +126,33 @@ const PayrollRunsListItem = ({
   });
 
   const runDetails = runDetailsData?.data || runDetailsData || payrollRun;
+  const hasApprovalsTab =
+    hasChain ||
+    ['submitted', 'approved', 'posted', 'paid'].includes(status) ||
+    (runDetails?.approvals?.length ?? 0) > 0;
+  const approvalsTabIndex = hasPayslips ? 3 : 2;
+
+  const previousHasPayslips = useRef(hasPayslips);
+
+  useEffect(() => {
+    // Keep user on Approvals tab when the run transitions from submitted -> approved
+    // and Payslips tab is inserted before Approvals.
+    if (
+      previousHasPayslips.current === false &&
+      hasPayslips === true &&
+      hasApprovalsTab &&
+      tabValue === 2
+    ) {
+      setTabValue(3);
+    }
+
+    if (previousHasPayslips.current === true && hasPayslips === false && tabValue === 3) {
+      setTabValue(2);
+    }
+
+    previousHasPayslips.current = hasPayslips;
+  }, [hasPayslips, hasApprovalsTab, tabValue]);
+
   const processedPayslips = useMemo(
     () => processPayslips(runDetails?.payslips || []),
     [runDetails]
@@ -385,10 +412,7 @@ const PayrollRunsListItem = ({
                   <Tab label='Summary' />
                   <Tab label='Employees' />
                   {hasPayslips && <Tab label='Payslips' />}
-                  {payrollRun.status === 'approved' ||
-                    (payrollRun.status === 'submitted' && (
-                      <Tab label='Approvals' />
-                    ))}
+                  {hasApprovalsTab && <Tab label='Approvals' />}
                 </Tabs>
               </Box>
 
@@ -430,9 +454,11 @@ const PayrollRunsListItem = ({
                 </TabPanel>
               )}
 
-              <TabPanel value={tabValue} index={hasPayslips ? 3 : 2}>
-                <ApprovalsTab payrollRun={runDetails} />
-              </TabPanel>
+              {hasApprovalsTab && (
+                <TabPanel value={tabValue} index={approvalsTabIndex}>
+                  <ApprovalsTab payrollRun={runDetails} />
+                </TabPanel>
+              )}
             </>
           )}
         </AccordionDetails>

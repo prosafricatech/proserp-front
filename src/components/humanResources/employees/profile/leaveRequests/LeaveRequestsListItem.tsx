@@ -160,7 +160,10 @@ const LeaveRequestsListItem = ({
       <AccordionDetails sx={{ backgroundColor: 'background.paper', mb: 3 }}>
         <Grid container spacing={1}>     
           <Grid size={{ xs: 12 }} textAlign='end'>
-            <LeaveRequestItemAction leaveRequest={leaveRequest} />
+            <LeaveRequestItemAction
+              leaveRequest={leaveRequest}
+              approvalsCount={approvals.length}
+            />
           </Grid>
           <Grid size={{ xs: 12 }}>
             <Tabs
@@ -240,7 +243,7 @@ const LeaveRequestsListItem = ({
                                   <Typography variant='h6'>
                                     {approval.approval_date
                                       ? readableDate(approval.approval_date)
-                                      : '-'}
+                                      : ''}
                                   </Typography>
                                 </Tooltip>
                               </Grid>
@@ -248,17 +251,12 @@ const LeaveRequestsListItem = ({
                               <Grid size={{ xs: 12, md: 3, lg: 3 }}>
                                 <Tooltip title='Done By'>
                                   <Typography variant='h6'>
-                                    {(approval as any).creator?.name || '-'}
+                                    {(approval as any).creator?.name || ''}
                                   </Typography>
                                 </Tooltip>
                               </Grid>
 
                               <Grid size={{ xs: 12, md: 4, lg: 4 }}>
-                                <Tooltip title='Level'>
-                                  <Typography variant='body2' color='text.secondary'>
-                                    {chainLevel?.name || chainLevel?.level_name || '-'}
-                                  </Typography>
-                                </Tooltip>
                                 <Chip
                                   size='small'
                                   label={approval.status || 'Pending'}

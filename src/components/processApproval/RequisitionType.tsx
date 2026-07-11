@@ -35,6 +35,7 @@ export interface Approval {
   items: RequisitionItem[];
   requisition?: Requisition;
   approval_date: string;
+  date_required?: string;
   amount: number;
   has_orders?: boolean;
   approval_chain_level: ApprovalChainLevel;
@@ -150,6 +151,7 @@ export interface BaseRequisition {
   id: number;
   requisitionNo: string;
   requisition_date: string;
+  date_required?: string;
   amount: number;
   vat_amount: number;
   approval_chain: ApprovalChain;

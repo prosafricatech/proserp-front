@@ -2,7 +2,7 @@ export const PROCESS_TYPES = [
   'PURCHASE',
   'PAYMENT',
   'IMPREST',
-  // 'MATERIAL',
+  'MATERIAL',
   'IMPREST RETIREMENT',
   'LEAVE REQUEST',
   'PAYROLL',
