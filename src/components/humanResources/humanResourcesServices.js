@@ -5,10 +5,9 @@ const humanResourcesServices = {};
 // ============================================
 // EMPLOYEES
 // ============================================
-humanResourcesServices.getEmployeesList = async (params = {}) => {
-    const { page = 1, limit = 10, ...queryParams } = params;
+humanResourcesServices.getEmployeesList = async (params) => {
     const { data } = await axios.get("/api/humanResources/employees", {
-        params: { page, limit, ...queryParams }
+        params
     });
     return data;
 };
