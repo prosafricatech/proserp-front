@@ -731,3 +731,7 @@ declare global {
     params: Promise<ParamMap[AppRouteHandlerRoute]>
   }
 }
+t<AppRouteHandlerRoute extends AppRouteHandlerRoutes> {
+    params: Promise<ParamMap[AppRouteHandlerRoute]>
+  }
+}
