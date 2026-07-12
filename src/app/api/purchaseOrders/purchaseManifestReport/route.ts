@@ -12,30 +12,10 @@ export async function GET(
     const { headers, response } = await getAuthHeaders(req);
     if (response) return response;
 
-    const searchParams = req.nextUrl.searchParams;
+    const { searchParams } = new URL(req.url);
+    const queryString = searchParams.toString();
 
-    const newSearchParams = new URLSearchParams();
-
-    const groupedParams: Record<string, string[]> = {};
-
-    searchParams.forEach((value, key) => {
-      if (!groupedParams[key]) {
-        groupedParams[key] = [];
-      }
-      groupedParams[key].push(value);
-    });
-
-    Object.keys(groupedParams).forEach((key) => {
-      if (groupedParams[key].length > 1) {
-        groupedParams[key].forEach((value) => {
-          newSearchParams.append(`${key}[]`, value);
-        });
-      } else {
-        newSearchParams.append(key, groupedParams[key][0]);
-      }
-    });
-
-    const url = `${API_BASE}/purchase-manifest-report?${newSearchParams.toString()}`;
+    const url = `${API_BASE}/purchase-manifest-report?${queryString}`;
 
     const res = await fetch(url, {
       headers,
