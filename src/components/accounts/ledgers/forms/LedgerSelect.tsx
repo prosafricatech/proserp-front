@@ -1,6 +1,6 @@
 import { CheckBox, CheckBoxOutlineBlank } from '@mui/icons-material';
-import { Autocomplete, Box, Checkbox, Chip, TextField } from '@mui/material';
-import React, { useEffect } from 'react';
+import { Autocomplete, Box, Checkbox, Chip, TextField, CircularProgress } from '@mui/material';
+import React, { useEffect, useMemo, useCallback, useState, useRef } from 'react';
 import { useLedgerSelect } from './LedgerSelectProvider';
 
 const EMPTY_LEDGER_REFS: LedgerRef[] = [];
@@ -35,6 +35,7 @@ interface LedgerSelectProps {
     option: Ledger,
     state: { selected: boolean }
   ) => React.ReactNode;
+  limit?: number; // Add limit prop for performance
 }
 
 function LedgerSelect(props: LedgerSelectProps) {
@@ -51,79 +52,124 @@ function LedgerSelect(props: LedgerSelectProps) {
     addedLedger = null,
     multiple = false,
     startAdornment,
+    limit = 1000, // Default limit to prevent rendering too many items
   } = props;
 
-  const { ledgerOptions, extractLedgers } = useLedgerSelect();
-  const [options, setOptions] = React.useState<Ledger[]>([]);
-  const [selectedValue, setSelectedValue] = React.useState<
-    Ledger | Ledger[] | null
-  >(defaultValue ? defaultValue : multiple ? [] : value);
+  const { extractLedgers, isLoading: isLoadingLedgers } = useLedgerSelect();
+  const [options, setOptions] = useState<Ledger[]>([]);
+  const [selectedValue, setSelectedValue] = useState<Ledger | Ledger[] | null>(
+    defaultValue ? defaultValue : multiple ? [] : value
+  );
+  const [isProcessing, setIsProcessing] = useState(false);
+  const processingRef = useRef(false);
 
-  useEffect(() => {
-    if (value) setSelectedValue(value);
-  }, [value]);
-
-  const toLedgerId = React.useCallback((entry: LedgerRef) => {
+  const toLedgerId = useCallback((entry: LedgerRef) => {
     return typeof entry === 'number' ? entry : entry.id;
   }, []);
 
-  React.useEffect(() => {
-    const extractedOptions: Ledger[] = [];
-    extractLedgers(
-      ledgerOptions,
-      notAllowedGroups,
-      allowedGroups,
-      (updater) => {
-        if (typeof updater === 'function') {
-          const next = updater(extractedOptions);
-          extractedOptions.splice(0, extractedOptions.length, ...next);
-        } else {
-          extractedOptions.splice(0, extractedOptions.length, ...updater);
+  // Create Set for faster lookups
+  const allowedLedgerIds = useMemo(() => {
+    return new Set(allowedLedgers.map(toLedgerId));
+  }, [allowedLedgers, toLedgerId]);
+
+  const notAllowedLedgerIds = useMemo(() => {
+    return new Set(notAllowedLedgers.map(toLedgerId));
+  }, [notAllowedLedgers, toLedgerId]);
+
+  // Use requestIdleCallback or setTimeout for async processing
+  const processLedgers = useCallback(() => {
+    if (processingRef.current) return;
+    processingRef.current = true;
+    setIsProcessing(true);
+
+    const processData = () => {
+      try {
+        // Extract ledgers based on filters - now returns array directly
+        const extractedOptions = extractLedgers(notAllowedGroups, allowedGroups);
+        
+        // Filter by allowed/not allowed ledgers
+        let filtered = extractedOptions;
+        
+        if (notAllowedLedgerIds.size > 0) {
+          filtered = filtered.filter(ledger => !notAllowedLedgerIds.has(ledger.id));
         }
+        
+        if (allowedLedgerIds.size > 0) {
+          filtered = filtered.filter(ledger => allowedLedgerIds.has(ledger.id));
+        }
+
+        // Limit results to prevent rendering issues
+        if (filtered.length > limit) {
+          filtered = filtered.slice(0, limit);
+        }
+
+        // Update state
+        setOptions(prev => {
+          // Only update if the arrays are actually different
+          if (prev.length === filtered.length && 
+              prev.every((ledger, index) => ledger.id === filtered[index]?.id)) {
+            return prev;
+          }
+          return filtered;
+        });
+      } catch (error) {
+        console.error('Error processing ledgers:', error);
+      } finally {
+        processingRef.current = false;
+        setIsProcessing(false);
       }
-    );
+    };
 
-    const allowedLedgerIds = new Set(allowedLedgers.map(toLedgerId));
-    const notAllowedLedgerIds = new Set(notAllowedLedgers.map(toLedgerId));
+    // Use requestIdleCallback for better performance with large datasets
+    if (typeof requestIdleCallback !== 'undefined') {
+      requestIdleCallback(processData, { timeout: 2000 });
+    } else {
+      setTimeout(processData, 0);
+    }
+  }, [extractLedgers, notAllowedGroups, allowedGroups, notAllowedLedgerIds, allowedLedgerIds, limit]);
 
-    const filtered = extractedOptions.filter((ledger) => {
-      if (notAllowedLedgerIds.has(ledger.id)) return false;
-      if (allowedLedgerIds.size > 0 && !allowedLedgerIds.has(ledger.id))
-        return false;
-      return true;
-    });
+  // Process ledgers when dependencies change
+  useEffect(() => {
+    processLedgers();
+  }, [processLedgers]);
 
-    setOptions((prev) => {
-      if (
-        prev.length === filtered.length &&
-        prev.every((ledger, index) => ledger.id === filtered[index]?.id)
-      ) {
-        return prev;
-      }
+  // Update selected value when prop changes
+  useEffect(() => {
+    if (value !== undefined && value !== null) {
+      setSelectedValue(value);
+    }
+  }, [value]);
 
-      return filtered;
-    });
-  }, [
-    ledgerOptions,
-    allowedGroups,
-    notAllowedGroups,
-    allowedLedgers,
-    notAllowedLedgers,
-    extractLedgers,
-    toLedgerId,
-  ]);
-
-  React.useEffect(() => {
+  // Handle added ledger
+  useEffect(() => {
     if (!addedLedger) return;
 
-    const value = multiple ? [addedLedger] : addedLedger;
-    setSelectedValue(value);
-    onChange?.(value);
-  }, [addedLedger]);
+    const newValue = multiple ? [addedLedger] : addedLedger;
+    setSelectedValue(newValue);
+    onChange?.(newValue);
+  }, [addedLedger, multiple, onChange]);
+
+  // Memoize options for Autocomplete
+  const memoizedOptions = useMemo(() => options, [options]);
+
+  // If still loading, show loading state
+  if (isLoadingLedgers || isProcessing) {
+    return (
+      <TextField
+        size='small'
+        fullWidth
+        label={label}
+        disabled
+        InputProps={{
+          endAdornment: <CircularProgress size={20} />
+        }}
+      />
+    );
+  }
 
   return (
     <Autocomplete
-      options={options}
+      options={memoizedOptions}
       getOptionLabel={(option: Ledger) => option.name}
       value={selectedValue}
       multiple={multiple}
@@ -151,7 +197,7 @@ function LedgerSelect(props: LedgerSelectProps) {
       )}
       {...(multiple && {
         renderOption: (
-          props: React.HTMLAttributes<HTMLLIElement> & { key?: React.Key }, // extend type to include key optionally
+          props: React.HTMLAttributes<HTMLLIElement> & { key?: React.Key },
           option: Ledger,
           { selected }
         ) => {
@@ -189,6 +235,21 @@ function LedgerSelect(props: LedgerSelectProps) {
           );
         });
       }}
+      // Performance optimizations
+      disableListWrap={true}
+      autoHighlight={false}
+      blurOnSelect={true}
+      {...(memoizedOptions.length > 100 && {
+        ListboxProps: {
+          style: { maxHeight: 300 },
+          ...(typeof window !== 'undefined' && {
+            // Virtual scroll for large lists
+            onScroll: (e: React.UIEvent<HTMLUListElement>) => {
+              // Could implement virtual scrolling here if needed
+            }
+          })
+        }
+      })}
     />
   );
 }
