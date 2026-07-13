@@ -52,6 +52,8 @@ interface Order {
   stakeholder?: Stakeholder;
   store?: { id: number };
   date_required?: string;
+  remarks?: string;
+  terms_of_payment?: string;
   instant_pay?: boolean;
   instant_receive?: boolean;
   credit_ledger?: { id: number };
@@ -107,6 +109,8 @@ interface FormValues {
   stakeholder_id: number | null;
   store_id: number | null;
   date_required?: string;
+  remarks?: string;
+  terms_of_payment?: string;
   instant_pay: boolean;
   instant_receive: boolean;
   credit_ledger_id: number | null;
@@ -357,6 +361,8 @@ const ApprovedPurchaseForm: React.FC<ApprovedPurchaseFormProps> = ({
       stakeholder_id: order?.stakeholder?.id || null,
       store_id: order?.instant_receive && order?.store ? order.store.id : null,
       date_required: order?.date_required,
+      remarks: order?.remarks,
+      terms_of_payment: order?.terms_of_payment,
       instant_pay: getBool(order?.instant_pay, true),
       instant_receive: getBool(order?.instant_receive, false),
       credit_ledger_id:
@@ -636,8 +642,8 @@ const ApprovedPurchaseForm: React.FC<ApprovedPurchaseFormProps> = ({
             order={order}
             items={items}
             errors={errors}
-            setValue={setValue} 
-            watch={watch} 
+            setValue={setValue}
+            watch={watch}
             register={register}
           />
         </Grid>

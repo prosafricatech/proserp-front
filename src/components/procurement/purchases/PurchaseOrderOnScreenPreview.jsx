@@ -561,6 +561,44 @@ function PurchaseOrderOnScreenPreview({ order }) {
         </Box>
       )}
 
+      {/* payment terms and remarks */}
+      <Grid container rowSpacing={2}>
+        <Grid size={{ xs: 12, md: 8 }}>
+          {order?.terms_of_payment && (
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <Box>
+                <Typography
+                  variant='subtitle2'
+                  sx={{ color: headerColor }}
+                  gutterBottom
+                >
+                  Payment Terms
+                </Typography>
+                <Typography variant='body1'>
+                  {order?.terms_of_payment}
+                </Typography>
+              </Box>
+            </Grid>
+          )}
+        </Grid>
+        <Grid size={{ xs: 12, md: 4 }}>
+          {order?.remarks && (
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <Box>
+                <Typography
+                  variant='subtitle2'
+                  sx={{ color: headerColor }}
+                  gutterBottom
+                >
+                  Remarks
+                </Typography>
+                <Typography variant='body1'>{order?.remarks}</Typography>
+              </Box>
+            </Grid>
+          )}
+        </Grid>
+      </Grid>
+
       {/* Closures */}
       {order.closures && order.closures.length > 0 && (
         <Box sx={{ mb: 3, mt: 3 }}>
