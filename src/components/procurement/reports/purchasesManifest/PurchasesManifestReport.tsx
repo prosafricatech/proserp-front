@@ -1,17 +1,24 @@
+import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import CostCenterSelector from '@/components/masters/costCenters/CostCenterSelector';
 import StakeholderSelector from '@/components/masters/stakeholders/StakeholderSelector';
+import PDFContent from '@/components/pdf/PDFContent';
+import { FileExportGrid } from '@/components/sharedComponents/FileExportGrid';
+import { Organization, User } from '@/types/auth-types';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { Div } from '@jumbo/shared';
-import { HighlightOff } from '@mui/icons-material';
+import { HighlightOff, InfoOutline } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 import {
+  Alert,
+  DialogContent,
   DialogTitle,
   FormControl,
   Grid,
   IconButton,
   InputLabel,
+  LinearProgress,
   MenuItem,
   Select,
   SelectChangeEvent,
@@ -21,13 +28,35 @@ import {
   useMediaQuery,
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers';
-import axios from 'axios';
 import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import purchaseServices from '../../purchases/purchase-services';
+import PurchasesManifestOnScreen, {
+  PurchaseManifestItem,
+} from './PurchasesManifestOnScreen';
+import PurchasesManifestPDF from './PurchasesManifestPDF';
+
+interface PurchasesManifestOnScreenProps {
+  reportData: {
+    filters: {
+      cost_centers: Array<{
+        id: number;
+        name: string;
+        code: string | null;
+        type: string;
+      }> | null;
+      from: string;
+      to: string;
+      suppliers: any;
+      status: string;
+    };
+    items: PurchaseManifestItem[];
+  };
+  organization: Organization;
+}
 
 const STATUS_OPTIONS = [
   { value: 'All', label: 'All' },
@@ -42,49 +71,28 @@ const PurchasesManifestReport = ({
 }: {
   toggleOpen: (value: boolean) => {};
 }) => {
-  const { authOrganization } = useJumboAuth();
+  const { authOrganization, authUser } = useJumboAuth();
+  const user = authUser?.user;
   const { enqueueSnackbar } = useSnackbar();
   //Screen handling constants
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
   const [isFetching, setisFetching] = useState(false);
-  const [reprotsData, setReprotsData] = useState<any>(null);
+  const [reportsData, setReportsData] = useState<any>(null);
   const [selectedStatus, setSelectedStatus] = useState<string>('All');
-
-  const handleChange = (e: SelectChangeEvent) => {
-    setSelectedStatus(e.target.value);
-  };
+  const [showOnScreen, setShowOnScreen] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
 
   const getMovements = async (filters: any) => {
     try {
       console.log('filters: ', filters);
       setisFetching(true);
       const data = await purchaseServices.getPurchasesManifestData(filters);
-
-      setReprotsData(data);
+      setReportsData(data);
       console.log('data: ', data);
       setisFetching(false);
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        // 1. Server response message (most common)
-        console.log(error.response?.data?.message);
-
-        // 2. Server response error
-        console.log(error.response?.data?.error);
-
-        // 3. HTTP status message
-        console.log(error.response?.statusText); // e.g., "Not Found"
-
-        // 4. Axios error message
-        console.log(error.message); // e.g., "Network Error", "Request failed with status code 404"
-
-        // 5. Error code
-        console.log(error.code); // e.g., "ERR_NETWORK", "ERR_BAD_REQUEST"
-
-        // 6. Full error object
-        console.log(error);
-      }
       enqueueSnackbar('an error occurred', { variant: 'error' });
       setisFetching(false);
     }
@@ -96,6 +104,7 @@ const PurchasesManifestReport = ({
     to: yup.string(),
     stakeholder_ids: yup.array().of(yup.number()).nullable(),
     cost_center_ids: yup.array().of(yup.number()).nullable(),
+    status: yup.string(),
   });
 
   const {
@@ -114,6 +123,40 @@ const PurchasesManifestReport = ({
       ),
     },
   });
+
+  useEffect(() => {
+    setValue('status', selectedStatus);
+  }, [selectedStatus]);
+
+  const handleChange = (e: SelectChangeEvent) => {
+    setSelectedStatus(e.target.value);
+  };
+
+  const exportedData = {
+    reportData: reportsData,
+    organization: authOrganization?.organization,
+    user: user as User,
+  };
+
+  const handlExcelExport = async (exportedData: any) => {
+    setIsExporting(true);
+    try {
+      const blob =
+        await purchaseServices.exportPurchaseManifestReportToExcel(
+          exportedData
+        );
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${`Purchase-Manifest-Report from ${readableDate(watch('from'), true)} to ${readableDate(watch('to'), true)}`}.xlsx`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      console.log('error exporting: ', e);
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   return (
     <>
@@ -150,10 +193,10 @@ const PurchasesManifestReport = ({
               <Div sx={{ mt: 0.3 }}>
                 <DatePicker
                   label='From (MM/DD/YYYY)'
-                  // minDate={dayjs(
-                  //   authOrganization?.organization.recording_start_date
-                  // )}
-                  //   maxDate={dayjs()}
+                  minDate={dayjs(
+                    authOrganization?.organization.recording_start_date
+                  )}
+                  maxDate={dayjs()}
                   value={watch('from') ? dayjs(watch('from')) : null}
                   onChange={(newValue) => {
                     setValue(
@@ -178,10 +221,10 @@ const PurchasesManifestReport = ({
               <Div sx={{ mt: 0.3 }}>
                 <DatePicker
                   label='To (MM/DD/YYYY)'
-                  // minDate={dayjs(
-                  //   authOrganization.organization.recording_start_date
-                  // )}
-                  //   maxDate={dayjs()}
+                  minDate={dayjs(
+                    authOrganization?.organization.recording_start_date
+                  )}
+                  maxDate={dayjs()}
                   value={watch('to') ? dayjs(watch('to')) : null}
                   onChange={(newValue) => {
                     setValue(
@@ -240,11 +283,11 @@ const PurchasesManifestReport = ({
             <Grid container size={{ xs: 12, md: 12 }}>
               <Grid size={{ xs: 12, md: 6 }}>
                 <FormControl fullWidth size='small'>
-                  <InputLabel id='process-types-filter-label'>Type</InputLabel>
+                  <InputLabel id='status-label'>Type</InputLabel>
                   <Select
-                    labelId='process-types-filter-label'
+                    labelId='status-label'
                     id='process-types-filter-select'
-                    label='Type'
+                    label='Status'
                     value={selectedStatus}
                     onChange={handleChange}
                     sx={{ textAlign: 'left' }}
@@ -275,15 +318,17 @@ const PurchasesManifestReport = ({
                   alignItems='center'
                 >
                   <>
-                    <LoadingButton
-                      size='small'
-                      // onClick={() => handlExcelExport(exportedData)}
-                      // loading={isDownloadingTemplate}
-                      variant='contained'
-                      color='success'
-                    >
-                      Excel
-                    </LoadingButton>
+                    {reportsData?.items.length > 0 && (
+                      <FileExportGrid
+                        exportExcel
+                        handlExcelExport={() => handlExcelExport(exportedData)}
+                        exportingExcel={isExporting}
+                        exportPdf
+                        handlePdf={() => {
+                          setShowOnScreen((prev) => !prev);
+                        }}
+                      />
+                    )}
                     <LoadingButton
                       loading={isFetching}
                       type='submit'
@@ -298,8 +343,37 @@ const PurchasesManifestReport = ({
             </Grid>
           </Grid>
         </form>
-        {/* Tabs - hidden when withDetails is true on below large screens */}
       </DialogTitle>
+      <DialogContent>
+        {isFetching ? (
+          <LinearProgress />
+        ) : reportsData && reportsData?.items.length > 0 ? (
+          showOnScreen ? (
+            <PurchasesManifestOnScreen
+              reportData={reportsData}
+              organization={authOrganization?.organization}
+            />
+          ) : (
+            <PDFContent
+              document={
+                <PurchasesManifestPDF
+                  reportData={reportsData}
+                  organization={authOrganization?.organization}
+                  user={user as User}
+                />
+              }
+              fileName={`Purchase-Manifest-Report from ${readableDate(watch('from'), true)} to ${readableDate(watch('to'), true)}`}
+            />
+          )
+        ) : (
+          !isFetching &&
+          reportsData?.items.length < 1 && (
+            <Alert variant='outlined' color='info' icon={<InfoOutline />}>
+              No records found for the selected filters
+            </Alert>
+          )
+        )}
+      </DialogContent>
     </>
   );
 };
