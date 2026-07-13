@@ -8,7 +8,6 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
     const { headers, response } = await getAuthHeaders(req);
     if (response) return response;
 
@@ -24,6 +23,7 @@ export async function GET(
 
     return handleJsonResponse(res);
   } catch (error: any) {
+    console.log('error: ', error);
     return handleJsonResponse(error);
   }
 }

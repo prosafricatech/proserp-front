@@ -581,6 +581,7 @@ function PurchaseOrderOnScreenPreview({ order }) {
             </Grid>
           )}
         </Grid>
+
         <Grid size={{ xs: 12, md: 4 }}>
           {order?.remarks && (
             <Grid size={{ xs: 12, sm: 6, md: 4 }}>
