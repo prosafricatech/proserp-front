@@ -1,35 +1,47 @@
-import { LoadingButton } from '@mui/lab'
-import { Button, DialogActions, DialogContent, DialogTitle, Divider, Grid, Alert, Dialog, Tooltip, IconButton } from '@mui/material'
-import dayjs from 'dayjs'
-import React, { useEffect, useState } from 'react'
-import { FormProvider, useForm } from 'react-hook-form'
-import * as yup  from "yup";
-import {yupResolver} from '@hookform/resolvers/yup'
-import purchaseServices from '../purchase-services'
-import { useSnackbar } from 'notistack'
-import stakeholderServices from '../../../masters/stakeholders/stakeholder-services'
-import PurchaseOrderItemForm from './PurchaseOrderItemForm'
-import PurchaseOrderItemRow from './PurchaseOrderItemRow'
-import PurchaseOrderSummary from './PurchaseOrderSummary'
-import PurchaseOrderTopInformation from './PurchaseOrderTopInformation'
-import PurchaseOrderPaymentAndReceive from './PurchaseOrderPaymentAndReceive'
-import { HighlightOff } from '@mui/icons-material'
-import { useJumboAuth } from '@/app/providers/JumboAuthProvider'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { HighlightOff } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
+import {
+  Alert,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  Grid,
+  IconButton,
+  Tooltip,
+} from '@mui/material';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import dayjs from 'dayjs';
+import { useSnackbar } from 'notistack';
+import React, { useEffect, useState } from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
+import * as yup from 'yup';
+import stakeholderServices from '../../../masters/stakeholders/stakeholder-services';
+import purchaseServices from '../purchase-services';
+import PurchaseOrderItemForm from './PurchaseOrderItemForm';
+import PurchaseOrderItemRow from './PurchaseOrderItemRow';
+import PurchaseOrderPaymentAndReceive from './PurchaseOrderPaymentAndReceive';
+import PurchaseOrderSummary from './PurchaseOrderSummary';
+import PurchaseOrderTopInformation from './PurchaseOrderTopInformation';
 
-function PurchaseOrderDialogForm({toggleOpen, order = null}) {
-  const {authOrganization} = useJumboAuth();
+function PurchaseOrderDialogForm({ toggleOpen, order = null }) {
+  const { authOrganization } = useJumboAuth();
   const costCenters = authOrganization?.costCenters;
   const [totalAmount, setTotalAmount] = useState(0);
   const [vatableAmount, setVatableAmount] = useState(0);
-  const itemTemplate = {product_id: null, quantity: null, rate: null};
+  const itemTemplate = { product_id: null, quantity: null, rate: null };
   const [order_date] = useState(order ? dayjs(order.order_date) : dayjs());
   const [displayStoreSelector, setDisplayStoreSelector] = useState(false);
   const [items, setItems] = useState(order ? order.purchase_order_items : []);
   const [checked, setChecked] = useState(false);
-  const [stakeholderQuickAddDisplay, setStakeholderQuickAddDisplay] = useState(false);
+  const [stakeholderQuickAddDisplay, setStakeholderQuickAddDisplay] =
+    useState(false);
   const [addedStakeholder, setAddedStakeholder] = useState(null);
-  const {enqueueSnackbar} =  useSnackbar();
+  const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
 
   const [showWarning, setShowWarning] = useState(false);
@@ -39,32 +51,43 @@ function PurchaseOrderDialogForm({toggleOpen, order = null}) {
 
   const validationSchema = yup.object({
     order_date: yup.string().required('Order date is required'),
-    currency_id: yup.number().positive('Currency is required').required('Currency is required').typeError('Currency is required'),
-    cost_centers: yup.array().min(1, 'At least one cost center must be selected').required('Cost Center is required').typeError('At least one cost center must be selected'),
-    exchange_rate: yup.number().positive('Exchange rate is required').required('Exchange rate is required').typeError('Exchange rate is required'),
-    stakeholder_id: yup
+    currency_id: yup
       .number()
-      .positive()
-      .nullable()
-      .notRequired(),
+      .positive('Currency is required')
+      .required('Currency is required')
+      .typeError('Currency is required'),
+    cost_centers: yup
+      .array()
+      .min(1, 'At least one cost center must be selected')
+      .required('Cost Center is required')
+      .typeError('At least one cost center must be selected'),
+    exchange_rate: yup
+      .number()
+      .positive('Exchange rate is required')
+      .required('Exchange rate is required')
+      .typeError('Exchange rate is required'),
+    stakeholder_id: yup.number().positive().nullable().notRequired(),
     instant_pay: yup.boolean(),
     instant_receive: yup.boolean(),
-    credit_ledger_id: yup.number()
-      .when('instant_pay', {
-        is: true,
-        then: (schema) => schema.positive('Credit Account(From) is required')
+    credit_ledger_id: yup.number().when('instant_pay', {
+      is: true,
+      then: (schema) =>
+        schema
+          .positive('Credit Account(From) is required')
           .required('Credit Account(From) is required')
           .typeError('Credit Account(From) is required'),
-        otherwise: (schema) => schema.nullable()
-      }),
-    store_id: yup.number()
-      .when(['instant_receive', 'displayStoreSelector'], {
-        is: (instant_receive, displayStoreSelector) => instant_receive && displayStoreSelector,
-        then: (schema) => schema.positive('Receiving store is required')
+      otherwise: (schema) => schema.nullable(),
+    }),
+    store_id: yup.number().when(['instant_receive', 'displayStoreSelector'], {
+      is: (instant_receive, displayStoreSelector) =>
+        instant_receive && displayStoreSelector,
+      then: (schema) =>
+        schema
+          .positive('Receiving store is required')
           .required('Receiving store is required')
           .typeError('Receiving store is required'),
-        otherwise: (schema) => schema.nullable()
-      }),
+      otherwise: (schema) => schema.nullable(),
+    }),
     stakeholder_ledger_id: yup
       .number()
       .when(['instant_pay', 'stakeholder_id', 'instant_receive'], {
@@ -79,22 +102,44 @@ function PurchaseOrderDialogForm({toggleOpen, order = null}) {
             .required('Supplier account is required')
             .positive('Supplier account is required'),
 
-        otherwise: (schema) =>
-          schema.notRequired().nullable(),
+        otherwise: (schema) => schema.notRequired().nullable(),
       }),
 
-    items: yup.array().min(1, "You must add at least one item")
+    items: yup
+      .array()
+      .min(1, 'You must add at least one item')
       .typeError('You must add at least one item')
       .of(
         yup.object().shape({
-          product_id: yup.number().required("Product is required").positive('Product is required').typeError('Product is required'),
-          quantity: yup.number().required("Quantity is required").positive("Quantity is required").typeError('Quantity is required'),
-          rate: yup.number().required("Price is required").positive("Price is required").typeError('Price is required'),
+          product_id: yup
+            .number()
+            .required('Product is required')
+            .positive('Product is required')
+            .typeError('Product is required'),
+          quantity: yup
+            .number()
+            .required('Quantity is required')
+            .positive('Quantity is required')
+            .typeError('Quantity is required'),
+          rate: yup
+            .number()
+            .required('Price is required')
+            .positive('Price is required')
+            .typeError('Price is required'),
         })
       ),
   });
 
-  const {register,setValue, setError, getValues, handleSubmit, clearErrors, watch, formState : {errors}} = useForm({
+  const {
+    register,
+    setValue,
+    setError,
+    getValues,
+    handleSubmit,
+    clearErrors,
+    watch,
+    formState: { errors },
+  } = useForm({
     resolver: yupResolver(validationSchema),
     defaultValues: {
       id: order && order.id,
@@ -108,58 +153,66 @@ function PurchaseOrderDialogForm({toggleOpen, order = null}) {
       date_required: order && order.date_required,
       instant_pay: order ? !!order.instant_pay : true,
       instant_receive: order ? !!order.instant_receive : false,
-      credit_ledger_id: (order && order.instant_pay) ? order.credit_ledger.id : null,
+      credit_ledger_id:
+        order && order.instant_pay ? order.credit_ledger.id : null,
       store_id: order && !!order.instant_receive ? order.store.id : null,
-      cost_centers: order?.cost_centers ? order.cost_centers : costCenters.length === 1 && costCenters,
-      items : order ? order.purchase_order_items : [itemTemplate],
+      cost_centers: order?.cost_centers
+        ? order.cost_centers
+        : costCenters.length === 1 && costCenters,
+      items: order ? order.purchase_order_items : [itemTemplate],
       terms_of_payment: order && order.terms_of_payment,
       remarks: order && order.remarks,
-    }
+    },
   });
-
   const getLastPriceItems = {
-    stakeholder_id : watch(`stakeholder_id`) || null,
+    stakeholder_id: watch(`stakeholder_id`) || null,
     currency_id: watch(`currency_id`),
     date: watch(`order_date`),
-  }
+  };
 
   //Set Item values and calculate total amount
   const orderTotalAmount = () => {
     let total = 0;
     let vatableAmount = 0;
 
-      //Total For all Items
-      async function loopItems(){
-        await setValue(`items`,null);
-        await items.forEach((item,index) => {
-          total += item.rate*item.quantity
-          setValue(`items.${index}.product_id`, item?.product?.id ? item.product.id : item.product_id);
-          setValue(`items.${index}.quantity`, item.quantity);
-          setValue(`items.${index}.measurement_unit_id`, item.measurement_unit_id);
-          setValue(`items.${index}.rate`, item.rate);
-          setValue(`items.${index}.store_id`, item.store_id);
-          setValue(`items.${index}.vat_percentage`, item.vat_percentage);
-          setValue(`items.${index}.amount`, item.amount);
-          setValue(`items.${index}.item_vat`, item.item_vat);
-        });
-        setTotalAmount(total);
-      }
+    //Total For all Items
+    async function loopItems() {
+      await setValue(`items`, null);
+      await items.forEach((item, index) => {
+        total += item.rate * item.quantity;
+        setValue(
+          `items.${index}.product_id`,
+          item?.product?.id ? item.product.id : item.product_id
+        );
+        setValue(`items.${index}.quantity`, item.quantity);
+        setValue(
+          `items.${index}.measurement_unit_id`,
+          item.measurement_unit_id
+        );
+        setValue(`items.${index}.rate`, item.rate);
+        setValue(`items.${index}.store_id`, item.store_id);
+        setValue(`items.${index}.vat_percentage`, item.vat_percentage);
+        setValue(`items.${index}.amount`, item.amount);
+        setValue(`items.${index}.item_vat`, item.item_vat);
+      });
+      setTotalAmount(total);
+    }
 
-      //Total For only Items require VAT Inclusive
-      async function loopItemsForVAT(){
-        await setValue(`items`,null);
-        await items.forEach((item) => {
-          vatableAmount += (item.quantity*item.rate*item.vat_percentage*0.01)
-        });
-        setVatableAmount(vatableAmount);
-      }
+    //Total For only Items require VAT Inclusive
+    async function loopItemsForVAT() {
+      await setValue(`items`, null);
+      await items.forEach((item) => {
+        vatableAmount += item.quantity * item.rate * item.vat_percentage * 0.01;
+      });
+      setVatableAmount(vatableAmount);
+    }
     loopItems();
     loopItemsForVAT();
-  }
+  };
 
   React.useEffect(() => {
     orderTotalAmount();
-  },[items]);
+  }, [items]);
 
   const stakeholder_id = watch('stakeholder_id');
   const { data: stakeholderPayableLedgers = [] } = useQuery({
@@ -170,7 +223,7 @@ function PurchaseOrderDialogForm({toggleOpen, order = null}) {
         stakeholder_id,
         type: 'all',
       });
-      return response.data || response || []; 
+      return response.data || response || [];
     },
     enabled: !!stakeholder_id,
   });
@@ -214,7 +267,6 @@ function PurchaseOrderDialogForm({toggleOpen, order = null}) {
         shouldTouch: true,
       });
     }
-
   }, [
     watchInstantPay,
     watchInstantReceive,
@@ -248,8 +300,8 @@ function PurchaseOrderDialogForm({toggleOpen, order = null}) {
   });
 
   const saveMutation = React.useMemo(() => {
-    return order ? updatePurchaseOrder : addPurchaseOrder
-  },[updatePurchaseOrder, addPurchaseOrder]);
+    return order ? updatePurchaseOrder : addPurchaseOrder;
+  }, [updatePurchaseOrder, addPurchaseOrder]);
 
   const instant_pay = watch('instant_pay');
   const instant_receive = watch('instant_receive');
@@ -257,12 +309,12 @@ function PurchaseOrderDialogForm({toggleOpen, order = null}) {
   const onSubmit = handleSubmit((formData) => {
     if (items.length === 0) {
       setError(`items`, {
-        type: "manual",
-        message: "You must add at least one item",
+        type: 'manual',
+        message: 'You must add at least one item',
       });
       return;
     }
-    
+
     if (isDirty) {
       setShowWarning(true);
       return;
@@ -275,27 +327,79 @@ function PurchaseOrderDialogForm({toggleOpen, order = null}) {
     handleSubmit((data) => saveMutation.mutate(data))();
     setIsDirty(false);
     setShowWarning(false);
-    setClearFormKey(prev => prev + 1)
+    setClearFormKey((prev) => prev + 1);
   };
 
   return (
-    <FormProvider {...{items, instant_receive, instant_pay, displayStoreSelector, setDisplayStoreSelector, addedStakeholder, order_date, costCenters, totalAmount, vatableAmount, checked, setChecked, setValue, stakeholderQuickAddDisplay, errors, order, clearErrors, watch, setStakeholderQuickAddDisplay, setAddedStakeholder, register}}>
+    <FormProvider
+      {...{
+        items,
+        instant_receive,
+        instant_pay,
+        displayStoreSelector,
+        setDisplayStoreSelector,
+        addedStakeholder,
+        order_date,
+        costCenters,
+        totalAmount,
+        vatableAmount,
+        checked,
+        setChecked,
+        setValue,
+        stakeholderQuickAddDisplay,
+        errors,
+        order,
+        clearErrors,
+        watch,
+        setStakeholderQuickAddDisplay,
+        setAddedStakeholder,
+        register,
+      }}
+    >
       <DialogTitle>
         <Grid container columnSpacing={2}>
-          <Grid textAlign={'center'} size={{xs: 12}} mb={5}>
-            {!order ? `New Purchase Order` : `Edit Order: ${order.orderNo}` }
+          <Grid textAlign={'center'} size={{ xs: 12 }} mb={5}>
+            {!order ? `New Purchase Order` : `Edit Order: ${order.orderNo}`}
           </Grid>
-          <Grid size={{xs: 12, md: 8, lg: 9}}>
+          <Grid size={{ xs: 12, md: 8, lg: 9 }}>
             <form autoComplete='off'>
-              <PurchaseOrderTopInformation setValue={setValue} errors={errors} clearErrors={clearErrors} watch={watch} register={register} order={order} setStakeholderQuickAddDisplay={setStakeholderQuickAddDisplay} setAddedStakeholder={setAddedStakeholder} stakeholderQuickAddDisplay={stakeholderQuickAddDisplay} addedStakeholder={addedStakeholder} order_date={order_date} costCenters={costCenters} />
+              <PurchaseOrderTopInformation
+                setValue={setValue}
+                errors={errors}
+                clearErrors={clearErrors}
+                watch={watch}
+                register={register}
+                order={order}
+                setStakeholderQuickAddDisplay={setStakeholderQuickAddDisplay}
+                setAddedStakeholder={setAddedStakeholder}
+                stakeholderQuickAddDisplay={stakeholderQuickAddDisplay}
+                addedStakeholder={addedStakeholder}
+                order_date={order_date}
+                costCenters={costCenters}
+              />
             </form>
           </Grid>
-          <Grid size={{xs: 12, md: 4, lg: 3}}>
-            <PurchaseOrderSummary totalAmount={totalAmount} vatableAmount={vatableAmount} checked={checked} setChecked={setChecked}/>
+          <Grid size={{ xs: 12, md: 4, lg: 3 }}>
+            <PurchaseOrderSummary
+              totalAmount={totalAmount}
+              vatableAmount={vatableAmount}
+              checked={checked}
+              setChecked={setChecked}
+            />
           </Grid>
           <Grid size={12}>
-            <PurchaseOrderItemForm setClearFormKey={setClearFormKey} submitMainForm={handleSubmit((data) => saveMutation.mutate(data))} submitItemForm={submitItemForm} setSubmitItemForm={setSubmitItemForm} key={clearFormKey} setIsDirty={setIsDirty} setItems={setItems} checked={checked} getLastPriceItems={getLastPriceItems}/>
-            <Divider/>
+            <PurchaseOrderItemForm
+              setClearFormKey={setClearFormKey}
+              submitMainForm={handleSubmit((data) => saveMutation.mutate(data))}
+              submitItemForm={submitItemForm}
+              setSubmitItemForm={setSubmitItemForm}
+              key={clearFormKey}
+              setIsDirty={setIsDirty}
+              setItems={setItems}
+              checked={checked}
+              getLastPriceItems={getLastPriceItems}
+            />
+            <Divider />
           </Grid>
 
           {/* Payment And Receive */}
@@ -307,46 +411,65 @@ function PurchaseOrderDialogForm({toggleOpen, order = null}) {
             order={order}
             items={items}
             errors={errors}
-            setValue={setValue} watch={watch} register={register}
+            setValue={setValue}
+            watch={watch}
+            register={register}
           />
         </Grid>
       </DialogTitle>
       <DialogContent>
-        {
-          errors?.items?.message && items.length < 1 && <Alert severity='error'>{errors.items.message}</Alert>
-        }
-        {
-          items.map((item,index) => (
-            <PurchaseOrderItemRow setClearFormKey={setClearFormKey} submitMainForm={handleSubmit((data) => saveMutation.mutate(data))} submitItemForm={submitItemForm} setSubmitItemForm={setSubmitItemForm} setIsDirty={setIsDirty} key={index} index={index} setItems={setItems} items={items} item={item} checked={checked} getLastPriceItems={getLastPriceItems}/>
-          ))
-        }
+        {errors?.items?.message && items.length < 1 && (
+          <Alert severity='error'>{errors.items.message}</Alert>
+        )}
+        {items.map((item, index) => (
+          <PurchaseOrderItemRow
+            setClearFormKey={setClearFormKey}
+            submitMainForm={handleSubmit((data) => saveMutation.mutate(data))}
+            submitItemForm={submitItemForm}
+            setSubmitItemForm={setSubmitItemForm}
+            setIsDirty={setIsDirty}
+            key={index}
+            index={index}
+            setItems={setItems}
+            items={items}
+            item={item}
+            checked={checked}
+            getLastPriceItems={getLastPriceItems}
+          />
+        ))}
 
         <Dialog open={showWarning} onClose={() => setShowWarning(false)}>
-          <DialogTitle>            
-            <Grid container alignItems="center" justifyContent="space-between">
-              <Grid size={11}>
-                Unsaved Changes
-              </Grid>
-              <Grid size={1} textAlign="right">
-                <Tooltip title="Close">
+          <DialogTitle>
+            <Grid container alignItems='center' justifyContent='space-between'>
+              <Grid size={11}>Unsaved Changes</Grid>
+              <Grid size={1} textAlign='right'>
+                <Tooltip title='Close'>
                   <IconButton
-                    size="small" 
+                    size='small'
                     onClick={() => setShowWarning(false)}
                   >
-                    <HighlightOff color="primary" />
+                    <HighlightOff color='primary' />
                   </IconButton>
                 </Tooltip>
               </Grid>
             </Grid>
           </DialogTitle>
-          <DialogContent>
-            Last item was not added to the list
-          </DialogContent>
+          <DialogContent>Last item was not added to the list</DialogContent>
           <DialogActions>
-            <Button size="small" onClick={() => {setSubmitItemForm(true); setShowWarning(false);}}>
+            <Button
+              size='small'
+              onClick={() => {
+                setSubmitItemForm(true);
+                setShowWarning(false);
+              }}
+            >
               Add and Submit
             </Button>
-            <Button size="small" onClick={handleConfirmSubmitWithoutAdd} color="secondary">
+            <Button
+              size='small'
+              onClick={handleConfirmSubmitWithoutAdd}
+              color='secondary'
+            >
               Submit without add
             </Button>
           </DialogActions>
@@ -356,16 +479,17 @@ function PurchaseOrderDialogForm({toggleOpen, order = null}) {
         <Button size='small' onClick={() => toggleOpen(false)}>
           Cancel
         </Button>
-        <LoadingButton 
-          variant='contained' 
+        <LoadingButton
+          variant='contained'
           size='small'
           onClick={onSubmit}
-          loading={addPurchaseOrder.isPending || updatePurchaseOrder.isPending}>
-            Submit
+          loading={addPurchaseOrder.isPending || updatePurchaseOrder.isPending}
+        >
+          Submit
         </LoadingButton>
       </DialogActions>
     </FormProvider>
-  )
+  );
 }
 
-export default PurchaseOrderDialogForm
+export default PurchaseOrderDialogForm;
