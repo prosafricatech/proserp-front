@@ -310,14 +310,6 @@ function SaleDialogForm({ toggleOpen, sale = null }) {
     }
   };
 
-  const onError = (errors) => {
-    console.log('🔥 Form validation errors:', errors);
-    // Log each error field
-    Object.keys(errors).forEach((field) => {
-      console.log(`❌ ${field}:`, errors[field].message);
-    });
-  };
-
   const handleConfirmSubmitWithoutAdd = async (data) => {
     handleSubmit((data) => handleSubmitForm(data))();
     setIsDirty(false);
@@ -526,7 +518,7 @@ function SaleDialogForm({ toggleOpen, sale = null }) {
                   type='submit'
                   color='success'
                   variant='contained'
-                  onClick={handleSubmit(onSubmit, onError)}
+                  onClick={handleSubmit(onSubmit)}
                 >
                   Checkout
                 </Button>
