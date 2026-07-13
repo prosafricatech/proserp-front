@@ -33,6 +33,7 @@ function ProcurementReports() {
   const css = useProsERPStyles();
   const [openDialog, setOpenDialog] = useState(false);
   const [report, setReport] = useState(null);
+  const [reportName, setReportName] = useState('');
   const [mounted, setMounted] = useState(false);
   const searchParams = useSearchParams();
 
@@ -78,7 +79,7 @@ function ProcurementReports() {
             scroll={belowLargeScreen ? 'body' : 'paper'}
             fullWidth
             fullScreen={belowLargeScreen}
-            maxWidth={'md'}
+            maxWidth={reportName !== 'PurchasesManifestReport' ? 'md' : 'lg'}
             open={openDialog}
           >
             {report}
@@ -116,6 +117,7 @@ function ProcurementReports() {
                 p={1}
                 textAlign={'center'}
                 onClick={() => {
+                  setReportName('ProductInsights');
                   setReport(<ProductInsights />);
                   setOpenDialog(true);
                 }}
@@ -135,6 +137,7 @@ function ProcurementReports() {
                   p={1}
                   textAlign={'center'}
                   onClick={() => {
+                    setReportName('PurchasesReport');
                     setReport(<PurchasesReport />);
                     setOpenDialog(true);
                   }}
@@ -154,6 +157,7 @@ function ProcurementReports() {
                 p={1}
                 textAlign={'center'}
                 onClick={() => {
+                  setReportName('PurchasesManifestReport');
                   setReport(<PurchasesManifestReport />);
                   setOpenDialog(true);
                 }}

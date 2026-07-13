@@ -1,11 +1,11 @@
-import { ExportPayrollToExcel } from '@/lib/excel/exporters/payroll';
+import { exportPurchaseManifestReportToExcel } from '@/lib/excel/exporters/purchaseManifestReport';
 import { NextRequest } from 'next/server';
 
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as any;
 
-    const buffer = await ExportPayrollToExcel(body);
+    const buffer = await exportPurchaseManifestReportToExcel(body);
 
     return new Response(buffer, {
       headers: {
