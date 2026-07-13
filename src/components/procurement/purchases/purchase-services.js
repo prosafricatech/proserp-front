@@ -3,59 +3,59 @@ import axios from "@/lib/services/config";
 const purchaseServices = {};
 
 purchaseServices.getList = async (params) => {
-  const response = await axios.get('/api/purchaseOrders', {
-    params,
-  });
-  return response.data;
+    const response = await axios.get('/api/purchaseOrders', {
+        params,
+    });
+    return response.data;
 };
 
 purchaseServices.getEditComplements = async (order_id) => {
-    const {data} = await axios.get(`/api/purchaseOrders/${order_id}/getEditComplements`);
+    const { data } = await axios.get(`/api/purchaseOrders/${order_id}/getEditComplements`);
     return data;
 }
 
 purchaseServices.PurchaseGrnsReport = async (id) => {
-    const {data} = await axios.get(`/api/purchaseOrders/${id}/PurchaseGrnsReport`);
+    const { data } = await axios.get(`/api/purchaseOrders/${id}/PurchaseGrnsReport`);
     return data;
 }
 
-purchaseServices.add = async(order) => {
-    const {data} = await axios.post(`/api/purchaseOrders/add`,order)
+purchaseServices.add = async (order) => {
+    const { data } = await axios.post(`/api/purchaseOrders/add`, order)
     return data;
 }
 
-purchaseServices.update = async(order) => {
-    const {data} = await axios.put(`/api/purchaseOrders/${order.id}/update`,order)
+purchaseServices.update = async (order) => {
+    const { data } = await axios.put(`/api/purchaseOrders/${order.id}/update`, order)
     return data;
 }
 
 purchaseServices.delete = async (order) => {
-    const {data} = await axios.delete(`/api/purchaseOrders/${order.id}/delete`);
+    const { data } = await axios.delete(`/api/purchaseOrders/${order.id}/delete`);
     return data;
 };
 
 purchaseServices.orderDetails = async (id) => {
-    const {data} = await axios.get(`/api/purchaseOrders/${id}/orderDetails`);
+    const { data } = await axios.get(`/api/purchaseOrders/${id}/orderDetails`);
     return data;
 }
 
 purchaseServices.getPurchaseOrderGrns = async (id) => {
-    const {data} = await axios.get(`/api/purchaseOrders/${id}/getPurchaseOrderGrns`);
+    const { data } = await axios.get(`/api/purchaseOrders/${id}/getPurchaseOrderGrns`);
     return data;
 }
 
 purchaseServices.unReceiveOrderGrn = async (id) => {
-    const {data} = await axios.delete(`/api/purchaseOrders/${id}/unReceiveOrderGrn`);
+    const { data } = await axios.delete(`/api/purchaseOrders/${id}/unReceiveOrderGrn`);
     return data;
 }
 
-purchaseServices.purchaseValues = async(params) => {
-    const {data} = await axios.get(`/api/purchaseOrders/purchaseValues`,{params});
+purchaseServices.purchaseValues = async (params) => {
+    const { data } = await axios.get(`/api/purchaseOrders/purchaseValues`, { params });
     return data;
 }
 
-purchaseServices.receive = async(order) => {
-    const {data} = await axios.post(`/api/purchaseOrders/${order.id}/receive`,order)
+purchaseServices.receive = async (order) => {
+    const { data } = await axios.post(`/api/purchaseOrders/${order.id}/receive`, order)
     return data;
 }
 
@@ -64,7 +64,7 @@ purchaseServices.getPurchasesReport = async (params) => {
         params: params,
         paramsSerializer: (params) => {
             const searchParams = new URLSearchParams();
-            
+
             Object.keys(params).forEach(key => {
                 const value = params[key];
                 if (Array.isArray(value)) {
@@ -73,32 +73,37 @@ purchaseServices.getPurchasesReport = async (params) => {
                     searchParams.append(key, value);
                 }
             });
-            
+
             return searchParams.toString();
         }
     });
     return data;
 };
 
-purchaseServices.getLastPrice = async(params) => {
-    const {data} = await axios.get(`/api/purchaseOrders/getLastPrice`,{
+purchaseServices.getPurchasesManifestData = async (params) => {
+    const { data } = await axios.get(`/api/purchaseOrders/purchaseManifestReport`, { params });
+    return data;
+}
+
+purchaseServices.getLastPrice = async (params) => {
+    const { data } = await axios.get(`/api/purchaseOrders/getLastPrice`, {
         params
     });
     return data;
 }
 
-purchaseServices.closeOrder = async(order) => {
-    const {data} = await axios.post(`/api/purchaseOrders/${order.id}/closeOrder`,order)
+purchaseServices.closeOrder = async (order) => {
+    const { data } = await axios.post(`/api/purchaseOrders/${order.id}/closeOrder`, order)
     return data;
 }
 
-purchaseServices.reOpenOrder = async(order) => {
-    const {data} = await axios.put(`/api/purchaseOrders/${order.id}/reOpenOrder`,order)
+purchaseServices.reOpenOrder = async (order) => {
+    const { data } = await axios.put(`/api/purchaseOrders/${order.id}/reOpenOrder`, order)
     return data;
 }
 
 purchaseServices.editGrn = async (grnId, grnData) => {
-    const {data} = await axios.put(`/api/grns/${grnId}/editGrn`,grnData)
+    const { data } = await axios.put(`/api/grns/${grnId}/editGrn`, grnData)
     return data;
 };
 
