@@ -201,8 +201,8 @@ const PurchasesManifestPDF = ({
   const currencyTotals: Record<string, { symbol: string; total: number }> =
     items.reduce(
       (acc, item) => {
-        const code = item.currency?.code || 'TZS';
-        const symbol = item.currency?.symbol || code;
+        const code = item.currency?.code;
+        const symbol = code || item.currency?.symbol || 'TZS';
         const amount = (item.quantity_ordered || 0) * (item.rate || 0);
         if (!acc[code]) acc[code] = { symbol, total: 0 };
         acc[code].total += amount;
@@ -490,7 +490,7 @@ const PurchasesManifestPDF = ({
                 >
                   {fmtCurrency(
                     itemAmount,
-                    item.currency?.symbol || item.currency?.code || ''
+                    item.currency?.code || item.currency?.symbol || ''
                   )}
                 </Text>
               </View>

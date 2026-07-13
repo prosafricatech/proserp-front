@@ -40,7 +40,7 @@ export async function exportPurchaseManifestReportToExcel(exportedData: any) {
     const currencyTotals: Record<string, { symbol: string; total: number }> =
       items.reduce((acc: any, item: any) => {
         const code = item.currency?.code || 'TZS';
-        const symbol = item.currency?.symbol || code;
+        const symbol = code || item.currency?.symbol || 'TZS';
         const amount = (item.quantity_ordered || 0) * (item.rate || 0);
         if (!acc[code]) acc[code] = { symbol, total: 0 };
         acc[code].total += amount;
@@ -210,7 +210,7 @@ export async function exportPurchaseManifestReportToExcel(exportedData: any) {
       // Override total cell to include currency code prefix
       const totalCell = ws.getCell(`${getExcelColumnName(COL_TOTAL)}${ROW}`);
       totalCell.value = itemAmount;
-      totalCell.numFmt = `"${item.currency?.symbol || item.currency?.code || ''} "#,##0.00`;
+      totalCell.numFmt = `"${item.currency?.code || item.currency?.symbol || ''} "#,##0.00`;
       applyCellStyle(totalCell, { ...CELL_STYLES.dataRowNumeric, fill });
       totalCell.alignment = { horizontal: 'right', vertical: 'middle' };
 
