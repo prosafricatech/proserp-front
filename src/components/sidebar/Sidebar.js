@@ -534,6 +534,10 @@ function Sidebar({ menus }) {
                         PERMISSIONS.PURCHASES_CREATE,
                         PERMISSIONS.PURCHASES_RECEIVE,
                         PERMISSIONS.PURCHASES_UNRECEIVE,
+                        PERMISSIONS.RFQS_READ,
+                        PERMISSIONS.RFQS_CREATE,
+                        PERMISSIONS.RFQS_EDIT,
+                        PERMISSIONS.RFQS_DELETE,
                         PERMISSIONS.PRODUCTS_READ,
                         PERMISSIONS.PRODUCTS_CREATE,
                         PERMISSIONS.PRODUCT_CATEGORIES_READ,
@@ -559,6 +563,21 @@ function Sidebar({ menus }) {
                     if (procurementsMenuIndex >= 0) {
                         updatedMenus[procurementsMenuIndex].children = updatedMenus[procurementsMenuIndex].children.filter(
                             child => child.label !== dictionary.sidebar.menuItem.purchases
+                        );
+                    }
+                }
+
+                // Procurement > RFQs
+                if (!checkOrganizationPermission([
+                    PERMISSIONS.RFQS_READ,
+                    PERMISSIONS.RFQS_CREATE,
+                    PERMISSIONS.RFQS_EDIT,
+                    PERMISSIONS.RFQS_DELETE
+                ])) {
+                    const procurementsMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.procurementAndSupply);
+                    if (procurementsMenuIndex >= 0) {
+                        updatedMenus[procurementsMenuIndex].children = updatedMenus[procurementsMenuIndex].children.filter(
+                            child => child.label !== 'RFQs'
                         );
                     }
                 }
