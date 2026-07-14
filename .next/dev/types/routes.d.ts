@@ -732,6 +732,3 @@ declare global {
     params: Promise<ParamMap[AppRouteHandlerRoute]>
   }
 }
-dlerRoute]>
-  }
-}
