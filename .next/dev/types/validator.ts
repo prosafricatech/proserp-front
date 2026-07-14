@@ -5807,24 +5807,6 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
-// Validate ../../../src/app/api/rfqs/[id]/comparison/route.ts
-{
-  type __IsExpected<Specific extends RouteHandlerConfig<"/api/rfqs/[id]/comparison">> = Specific
-  const handler = {} as typeof import("../../../src/app/api/rfqs/[id]/comparison/route.js")
-  type __Check = __IsExpected<typeof handler>
-  // @ts-ignore
-  type __Unused = __Check
-}
-
-// Validate ../../../src/app/api/rfqs/[id]/responses/route.ts
-{
-  type __IsExpected<Specific extends RouteHandlerConfig<"/api/rfqs/[id]/responses">> = Specific
-  const handler = {} as typeof import("../../../src/app/api/rfqs/[id]/responses/route.js")
-  type __Check = __IsExpected<typeof handler>
-  // @ts-ignore
-  type __Unused = __Check
-}
-
 // Validate ../../../src/app/api/rfqs/[id]/route.ts
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/rfqs/[id]">> = Specific
