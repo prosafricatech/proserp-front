@@ -250,26 +250,12 @@ function ApprovalForm({
   const isLeaveType =
     requisition?.approval_chain?.process_type?.toLowerCase() ===
     'leave_request';
-  const approvalRequisitionItems: RequisitionItem[] =
-    approval?.requisition && 'items' in approval.requisition
-      ? approval.requisition.items || []
-      : [];
-  const leaveSummaryItems =
-    requisition.leave_items ||
-    approval?.requisition?.leave_items ||
-    requisitionItems ||
-    approvalRequisitionItems ||
-    [];
 
   const validationSchema = yup.object().shape({
     approval_date: yup
       .string()
       .required('Approval Date is required')
       .typeError('Approval Date is required'),
-    date_required: yup
-      .string()
-      .required('Date Required is required')
-      .typeError('Date Required is required'),
     product_items:
       isPurchaseType || isMaterialType
         ? yup.array().of(

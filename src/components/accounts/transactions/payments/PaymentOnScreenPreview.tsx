@@ -151,7 +151,7 @@ const PaymentOnScreenPreview: React.FC<PaymentOnScreenPreviewProps> = ({
           <TableHead>
             <TableRow>
               <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
-                #
+                S/N
               </TableCell>
               <TableCell sx={{ backgroundColor: mainColor, color: contrastText, fontSize: '0.875rem' }}>
                 Account Paid (Debit)
