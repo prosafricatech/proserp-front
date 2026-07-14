@@ -111,7 +111,7 @@ function SalesDispatchItemForm({
     [dispatch_date, cost_center?.id, outlet?.id, setValue]
   );
 
-  // const getBulkItemBalance = useCallback(() => {
+  // get bulk item balances
   useEffect(() => {
     if (selectedStore) {
       filteredItems.map((item, index) => {
@@ -128,8 +128,6 @@ function SalesDispatchItemForm({
       });
     }
   }, [selectedStore]);
-
-  // getBulkItemBalance();
 
   // Initialize quantities when component mounts
   useEffect(() => {

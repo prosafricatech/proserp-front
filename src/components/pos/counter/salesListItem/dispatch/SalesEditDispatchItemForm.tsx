@@ -112,6 +112,19 @@ function SalesEditDispatchItemForm({
     [cost_center?.id, outlet?.id, setValue, watch]
   );
 
+  // get bulk item balances
+  useEffect(() => {
+    if (selectedStore) {
+      items.map((item: any, index: number) => {
+        retrieveBalances(item.product.id, selectedStore.id, index);
+        setValue(`items.${index}.store_id`, selectedStore?.id ?? null, {
+          shouldValidate: true,
+          shouldDirty: true,
+        });
+      });
+    }
+  }, [selectedStore]);
+
   useEffect(() => {
     items.forEach((item, index) => {
       retrieveBalances(item.product.id, item.store?.id, index);
